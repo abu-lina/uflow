@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+/use-latest-tools true
+/autocomplete-mode default
+/code-quality high
+/verbosity high
+/framework nextjs
+/testing true
