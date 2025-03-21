@@ -1,0 +1,19 @@
+# Ignore build artifacts
+.next/
+out/
+build/
+dist/
+
+# Ignore dependencies
+node_modules/
+
+# Ignore package lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Ignore miscellaneous files
+.git/
+.gitignore
+.DS_Store
+*.log 
