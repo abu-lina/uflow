@@ -1,8 +1,32 @@
+'use client';
+
 import Link from "next/link";
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="flex flex-col">
+      {/* User Profile Banner */}
+      {user && (
+        <div className="bg-emerald-100 py-3 px-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center">
+              <p className="text-emerald-800">
+                Welcome, <span className="font-medium">{user.email}</span>
+              </p>
+              <Link
+                href="/profile"
+                className="text-emerald-700 font-medium hover:text-emerald-900"
+              >
+                View your profile →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-emerald-500 to-emerald-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
@@ -131,18 +155,37 @@ export default function Home() {
             join our growing community today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/register"
-              className="bg-white text-emerald-700 hover:bg-emerald-50 px-6 py-3 rounded-md font-medium text-lg shadow-lg inline-flex items-center justify-center"
-            >
-              Create an Account
-            </Link>
-            <Link
-              href="/sellers/apply"
-              className="bg-emerald-700 text-white hover:bg-emerald-800 border border-emerald-500 px-6 py-3 rounded-md font-medium text-lg shadow-lg inline-flex items-center justify-center"
-            >
-              Become a Seller
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/profile"
+                  className="bg-white text-emerald-700 hover:bg-emerald-50 px-6 py-3 rounded-md font-medium text-lg shadow-lg inline-flex items-center justify-center"
+                >
+                  Go to My Profile
+                </Link>
+                <Link
+                  href="/sellers/apply"
+                  className="bg-emerald-700 text-white hover:bg-emerald-800 border border-emerald-500 px-6 py-3 rounded-md font-medium text-lg shadow-lg inline-flex items-center justify-center"
+                >
+                  Become a Seller
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="bg-white text-emerald-700 hover:bg-emerald-50 px-6 py-3 rounded-md font-medium text-lg shadow-lg inline-flex items-center justify-center"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="bg-emerald-600 text-white hover:bg-emerald-700 border border-emerald-400 px-6 py-3 rounded-md font-medium text-lg shadow-lg inline-flex items-center justify-center"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>

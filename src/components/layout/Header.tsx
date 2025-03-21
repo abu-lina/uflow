@@ -2,9 +2,15 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -43,6 +49,19 @@ export default function Header() {
               </Link>
             </nav>
           </div>
+          
+          {user && (
+            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
+              <Link
+                href="/profile"
+                className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 px-4 py-2 rounded-full flex items-center space-x-2"
+              >
+                <span className="font-bold">{user.email?.split('@')[0] || 'Profile'}</span>
+                <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full"></span>
+              </Link>
+            </div>
+          )}
+          
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
             <Link
               href="/cart"
@@ -50,18 +69,38 @@ export default function Header() {
             >
               Cart
             </Link>
-            <Link
-              href="/login"
-              className="text-gray-700 hover:text-emerald-600 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Login
-            </Link>
-            <Link
-              href="/register"
-              className="bg-emerald-600 text-white hover:bg-emerald-700 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Register
-            </Link>
+            
+            {user ? (
+              <>
+                <Link
+                  href="/profile"
+                  className="text-gray-700 hover:text-emerald-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="text-gray-700 hover:text-emerald-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="text-gray-700 hover:text-emerald-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="bg-emerald-600 text-white hover:bg-emerald-700 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Register
+                </Link>
+              </>
+            )}
           </div>
           <div className="-mr-2 flex items-center sm:hidden">
             <button
@@ -144,18 +183,38 @@ export default function Header() {
             >
               Cart
             </Link>
-            <Link
-              href="/login"
-              className="text-gray-700 hover:text-emerald-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Login
-            </Link>
-            <Link
-              href="/register"
-              className="text-gray-700 hover:text-emerald-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Register
-            </Link>
+            
+            {user ? (
+              <>
+                <Link
+                  href="/profile"
+                  className="text-gray-700 hover:text-emerald-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="text-gray-700 hover:text-emerald-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="text-gray-700 hover:text-emerald-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="text-gray-700 hover:text-emerald-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
