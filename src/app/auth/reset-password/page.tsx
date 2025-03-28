@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { BismillahButton } from '@/components/ui/bismillah-button';
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('');
@@ -106,17 +107,11 @@ export default function ResetPassword() {
           </div>
 
           <div className="flex flex-col items-center">
-            <button
+            <BismillahButton
               type="submit"
               disabled={!isValid || isSubmitting || success}
-              className={`w-[263px] h-[40px] rounded-[15px] flex items-center justify-center text-[17.54px] font-medium leading-[31px] tracking-[0.153846px] shadow-[0px_6.15385px_12.3077px_4.61538px_rgba(0,0,0,0.15),0px_1.53846px_4.61538px_rgba(0,0,0,0.3)] ${
-                isValid && !success
-                  ? 'bg-[#BFDBD8] text-[#232323] hover:bg-[#A8C9C5]'
-                  : 'bg-[#EEEEEE] text-[#CDCDCD] cursor-not-allowed'
-              }`}
-            >
-              Bismillah
-            </button>
+              isActive={isValid && !success}
+            />
           </div>
 
           <div className="text-sm text-center">
