@@ -9,6 +9,7 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  supabase: typeof supabase;
   signIn: (email: string, password: string) => Promise<{
     error: AuthError | Error | null;
     success: boolean;
@@ -127,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     isLoading,
+    supabase,
     signIn,
     signUp,
     signOut
