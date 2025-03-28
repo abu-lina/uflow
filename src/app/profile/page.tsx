@@ -76,7 +76,7 @@ export default function ProfilePage() {
           
           // Also fetch data from profiles table
           const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('*')
             .eq('id', data.session.user.id)
             .single();
@@ -87,7 +87,7 @@ export default function ProfilePage() {
               
               // Create profile if it doesn't exist
               const { error: createError } = await supabase
-                .from('profiles')
+                .from('users')
                 .insert({
                   id: data.session.user.id,
                   email: data.session.user.email,
@@ -148,7 +148,7 @@ export default function ProfilePage() {
       // Then update profiles table
       console.log("Updating profiles table for user:", user.id, "with full_name:", fullName);
       const { error: profileError, data: profileData } = await supabase
-        .from('profiles')
+        .from('users')
         .upsert({
           id: user.id,
           full_name: fullName,
