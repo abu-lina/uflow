@@ -19,7 +19,7 @@ export default function SignupForm() {
     setMessage(null);
 
     try {
-      const { error: signUpError, success } = await signUp(email, password);
+      const { error: signUpError, success, message } = await signUp(email, password);
 
       if (signUpError) {
         setError(signUpError.message);
@@ -27,7 +27,9 @@ export default function SignupForm() {
       }
 
       if (success) {
-        setMessage('Check your email for a confirmation link!');
+        setMessage(message || 'Check your email for a confirmation link!');
+        setEmail('');
+        setPassword('');
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

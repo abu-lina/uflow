@@ -1,12 +1,15 @@
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
-import { CookieOptions } from '@supabase/ssr';
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
   
   // For debugging
-  console.log('Middleware executing for path:', req.nextUrl.pathname);
+  console.log('Middleware executing for path:', request.nextUrl.pathname);
   
   // Create a Supabase client
   const supabase = createServerClient(
@@ -15,11 +18,11 @@ export async function middleware(req: NextRequest) {
     {
       cookies: {
         get(name: string) {
-          return req.cookies.get(name)?.value;
+          return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
           // This is used for setting cookies during auth operations
-          res.cookies.set({
+          response.cookies.set({
             name,
             value,
             ...options,
@@ -27,7 +30,7 @@ export async function middleware(req: NextRequest) {
         },
         remove(name: string, options: CookieOptions) {
           // This is used for removing cookies during auth operations like sign-out
-          res.cookies.set({
+          response.cookies.set({
             name,
             value: '',
             ...options,
@@ -47,31 +50,31 @@ export async function middleware(req: NextRequest) {
   }
 
   // TEMPORARY: Allow direct access to profile page for debugging
-  if (req.nextUrl.pathname === '/profile') {
+  if (request.nextUrl.pathname === '/profile') {
     console.log('Middleware - Allowing direct access to profile page');
-    return res;
+    return response;
   }
 
   // Check if this is a protected route (excluding profile for now)
-  const isProtectedRoute = req.nextUrl.pathname.startsWith('/dashboard');
+  const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard');
   
   // Check if this is an auth route (login/signup)
-  const isAuthRoute = req.nextUrl.pathname.startsWith('/auth/login') || 
-                      req.nextUrl.pathname.startsWith('/auth/signup');
+  const isAuthRoute = request.nextUrl.pathname.startsWith('/auth/login') || 
+                      request.nextUrl.pathname.startsWith('/auth/signup');
 
   // If user is not logged in and tries to access protected route, redirect to login
   if (!session && isProtectedRoute) {
-    const redirectUrl = new URL('/auth/login', req.url);
-    redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname);
+    const redirectUrl = new URL('/auth/login', request.url);
+    redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
   // If user is logged in and tries to access auth routes, redirect to profile
   if (session && isAuthRoute) {
-    return NextResponse.redirect(new URL('/profile', req.url));
+    return NextResponse.redirect(new URL('/profile', request.url));
   }
 
-  return res;
+  return response;
 }
 
 // Specify which routes this middleware should run on (but we're now ignoring profile)
