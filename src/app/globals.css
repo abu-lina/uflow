@@ -1,26 +1,99 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Brand Colors - Using our actual brand color values */
+    --primary: 164 43% 48%; /* #589d96 */
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 164 43% 87%; /* #bfdbd8 */
+    --secondary-foreground: 0 0% 9%;
+
+    /* Background & Foreground */
+    --background: 164 100% 98%; /* #f1ffff */
+    --foreground: 0 0% 14%; /* #232323 */
+
+    /* UI Colors */
+    --muted: 164 20% 96%;
+    --muted-foreground: 164 8% 46%;
+    
+    --accent: 164 43% 87%;
+    --accent-foreground: 0 0% 9%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Border & Ring */
+    --border: 164 20% 90%;
+    --input: 164 20% 90%;
+    --ring: var(--primary);
+
+    /* Border Radius */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 164 15% 9%;
+    --foreground: 164 10% 98%;
+
+    --primary: 164 43% 48%;
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 164 43% 87%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 164 15% 15%;
+    --muted-foreground: 164 10% 64%;
+    
+    --accent: 164 15% 15%;
+    --accent-foreground: 0 0% 98%;
+    
+    --card: 164 15% 9%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 164 15% 9%;
+    --popover-foreground: 0 0% 98%;
+    
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 164 15% 15%;
+    --input: 164 15% 15%;
+    --ring: 164 43% 48%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium tracking-tight text-foreground;
+  }
+  p {
+    @apply text-muted-foreground;
+  }
 }
+
+@layer utilities {
+  /* Custom gradient using our brand colors */
+  .bg-brand-gradient {
+    background: linear-gradient(180deg, hsl(var(--secondary) / 0.2) 0%, hsl(var(--secondary) / 0) 100%);
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
