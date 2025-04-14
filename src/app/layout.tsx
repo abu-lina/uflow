@@ -2,6 +2,8 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter_Tight } from "next/font/google"
 import "./globals.css"
+import Header from "@/components/ui/Header"
+import { AuthProvider } from "@/context/AuthContext"
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -21,7 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className={interTight.className}>{children}</body>
+      <body className={interTight.className}>
+        <AuthProvider>
+          <Header />
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }

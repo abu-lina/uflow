@@ -5,100 +5,6 @@ import Link from "next/link"
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="flex items-center justify-between px-4 py-3 md:px-12">
-        <div className="flex items-center space-x-6">
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/placeholder.svg?height=40&width=40"
-              alt="Ummah Flow Logo"
-              width={40}
-              height={40}
-              className="text-primary"
-            />
-          </Link>
-          <Link href="/about" className="text-sm font-medium text-gray-dark">
-            Über Uns
-          </Link>
-          <div className="relative">
-            <button className="flex items-center text-sm font-medium text-gray-dark">
-              Kategorien
-              <svg
-                className="ml-1 h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div className="relative flex w-full max-w-md items-center mx-4">
-          <input
-            type="text"
-            placeholder="In Stuttgart suchen"
-            className="w-full rounded-full border border-gray-light bg-white py-2 pl-10 pr-4 text-sm focus:outline-none"
-          />
-          <svg
-            className="absolute left-3 h-5 w-5 text-gray-medium"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <button className="absolute right-3">
-            <svg
-              className="h-5 w-5 text-gray-medium"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <button className="rounded-full p-2">
-            <svg
-              className="h-5 w-5 text-gray-dark"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
-            </svg>
-          </button>
-          <button className="rounded-md border border-gray-light px-4 py-1.5 text-sm font-medium text-gray-dark">
-            Anmelden
-          </button>
-          <button className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-white">Registrieren</button>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <section className="flex flex-col md:flex-row items-center justify-between px-4 py-12 md:px-12 md:py-16">
         <div className="md:w-1/2 space-y-6">
@@ -110,7 +16,9 @@ export default function Home() {
           <p className="text-gray-dark max-w-md">
             Der erste halal-konforme Marktplatz der sicherstellt, das jeder Anbieter die Zakat entrichtet.
           </p>
-          <button className="bg-primary text-white px-4 py-2 rounded-md text-sm">Entdecke deine Ummah!</button>
+          <Link href="/about" className="inline-block bg-primary text-white px-4 py-2 rounded-md text-sm">
+            Entdecke deine Ummah!
+          </Link>
         </div>
         <div className="md:w-1/2 mt-8 md:mt-0">
           <div className="bg-secondary rounded-3xl p-8 relative">
