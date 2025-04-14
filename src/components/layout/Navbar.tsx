@@ -10,7 +10,7 @@ export default function Navbar() {
           <div className="absolute w-[6.14px] h-[4.37px] left-[7.49px] top-[9.89px] bg-[#DBF7F4] shadow-[inset_0px_0.256px_0.192px_rgba(0,0,0,0.4)]" />
           <div className="absolute w-[11.67px] h-[9.49px] left-[7.49px] top-0 bg-white shadow-[inset_0px_0.256px_0.256px_rgba(0,0,0,0.25)] rounded-[8.6432px]" />
           <div className="absolute w-[14.23px] h-[9.18px] left-0 top-[14.22px] bg-gradient-to-r from-[#F1F2F2] to-[#DBF7F4] shadow-[inset_0px_0.256px_0.256px_rgba(0,0,0,0.25)] rounded-[8.6432px] -rotate-90" />
-          <div className="absolute w-[9.22px] h-[9.07px] left-[7.49px] top-[5.46px] bg-[#F1FFFF] shadow-[inset_0px_0.256px_0.256px_rgba(0,0,0,0.25)] rounded-[8.6432px]" />
+          <div className="absolute w-[9.22px] h-[9.07px] left-[7.49px] top-[5.46px] bg-transparent shadow-[inset_0px_0.256px_0.256px_rgba(0,0,0,0.25)] rounded-[8.6432px]" />
         </div>
       </Link>
 

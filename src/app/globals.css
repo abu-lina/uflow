@@ -12,7 +12,7 @@
     --secondary-foreground: 0 0% 9%;
 
     /* Background & Foreground */
-    --background: 164 100% 98%; /* #f1ffff */
+    --background: 0 0% 100%; /* white */
     --foreground: 0 0% 14%; /* #232323 */
 
     /* UI Colors */
