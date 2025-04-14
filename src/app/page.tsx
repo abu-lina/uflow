@@ -1,6 +1,6 @@
-import Image from "next/image"
-import { Globe, Phone, TwitterIcon as TikTok, Instagram, Heart } from "lucide-react"
 import Link from "next/link"
+import ProjectCard from "@/components/ui/ProjectCard"
+import Placeholder from "@/components/ui/Placeholder"
 
 export default function Home() {
   return (
@@ -24,7 +24,7 @@ export default function Home() {
           <div className="bg-secondary rounded-3xl p-8 relative">
             <div className="bg-[#dbf7f4] rounded-2xl p-6 relative">
               <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                <Image src="/placeholder.svg?height=30&width=100" alt="Decorative element" width={100} height={30} />
+                <Placeholder width={100} height={30} />
               </div>
               <div className="text-center space-y-4">
                 <h2 className="text-xl font-medium">
@@ -39,7 +39,7 @@ export default function Home() {
                 <p className="text-sm">-Der Prophet Mohammed ﷺ, Sahih Muslim</p>
               </div>
               <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-                <Image src="/placeholder.svg?height=30&width=100" alt="Decorative element" width={100} height={30} />
+                <Placeholder width={100} height={30} />
               </div>
             </div>
           </div>
@@ -52,16 +52,6 @@ export default function Home() {
       </section>
 
       {/* Projects Section */}
-      <section className="px-4 py-8 md:px-12 md:py-12">
-        <h2 className="text-3xl font-bold text-dark mb-8">Unsere Zakat Projekte</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <ProjectCard key={i} />
-          ))}
-        </div>
-      </section>
-
-      {/* Second Projects Section */}
       <section className="px-4 py-8 md:px-12 md:py-12">
         <h2 className="text-3xl font-bold text-dark mb-8">Unsere Zakat Projekte</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -96,13 +86,7 @@ export default function Home() {
         </div>
         <div className="md:w-1/2 flex justify-center mt-8 md:mt-0">
           <div className="bg-primary rounded-full p-16 relative">
-            <Image
-              src="/placeholder.svg?height=200&width=200"
-              alt="Ummah Flow Logo"
-              width={200}
-              height={200}
-              className="text-white"
-            />
+            <Placeholder width={200} height={200} className="text-white" />
           </div>
         </div>
       </section>
@@ -110,46 +94,3 @@ export default function Home() {
   )
 }
 
-function ProjectCard() {
-  return (
-    <div className="border border-gray-light rounded-lg overflow-hidden">
-      <div className="relative">
-        <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Projects.png-VhIRVamfOZQyzuW5LvZtyMZQlCUf26.jpeg"
-          alt="Project Image"
-          width={300}
-          height={200}
-          className="w-full h-48 object-cover"
-        />
-        <button className="absolute top-2 right-2 bg-white p-1 rounded-full">
-          <Heart className="h-5 w-5 text-gray-medium" />
-        </button>
-        <div className="absolute bottom-2 left-2 bg-white px-2 py-1 rounded-md text-xs font-medium">Zakat</div>
-      </div>
-      <div className="p-4">
-        <h3 className="font-medium text-dark">Wüstenkind e.V.</h3>
-        <p className="text-xs text-gray-medium">Helfen spüren</p>
-        <div className="flex flex-wrap gap-1 mt-2">
-          <span className="text-xs bg-gray-light bg-opacity-30 px-2 py-0.5 rounded-full">Waisen</span>
-          <span className="text-xs bg-gray-light bg-opacity-30 px-2 py-0.5 rounded-full">Bangladesch</span>
-          <span className="text-xs bg-gray-light bg-opacity-30 px-2 py-0.5 rounded-full">Afghanistan</span>
-          <button className="text-xs bg-gray-light bg-opacity-30 px-2 py-0.5 rounded-full">+</button>
-        </div>
-        <div className="flex justify-between mt-4">
-          <button className="p-1">
-            <Globe className="h-5 w-5 text-gray-medium" />
-          </button>
-          <button className="p-1">
-            <Phone className="h-5 w-5 text-gray-medium" />
-          </button>
-          <button className="p-1">
-            <TikTok className="h-5 w-5 text-gray-medium" />
-          </button>
-          <button className="p-1">
-            <Instagram className="h-5 w-5 text-gray-medium" />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}

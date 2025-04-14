@@ -76,7 +76,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased min-h-screen;
+  }
+  main {
+    background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-medium tracking-tight text-foreground;

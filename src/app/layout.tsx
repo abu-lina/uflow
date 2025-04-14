@@ -22,11 +22,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="de">
-      <body className={interTight.className}>
+    <html lang="de" className="h-full">
+      <body className={`${interTight.className} min-h-screen bg-[#F5F5F5]`}>
         <AuthProvider>
           <Header />
-          {children}
+          <main className="pt-[90px]">
+            {children}
+          </main>
         </AuthProvider>
       </body>
     </html>
