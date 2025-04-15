@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Service as ServiceType } from '@/types/service';
+import { Button } from "@/components/ui/button"
 
 export default function ReviewerDashboardPage() {
   const { user, supabase, isLoading: authLoading, userRole } = useAuth();
@@ -12,6 +13,8 @@ export default function ReviewerDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [pendingServices, setPendingServices] = useState<ServiceType[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   // Check if user has the halal_reviewer role
   const isHalalReviewer = userRole === 'halal_reviewer' || userRole === 'admin';
@@ -108,6 +111,15 @@ export default function ReviewerDashboardPage() {
     );
   }
 
+  const handleReviewClick = (service: ServiceType) => {
+    setSelectedService(service);
+    setSelectedStatus(service.service_status);
+  };
+
+  const handleStatusUpdate = () => {
+    // Implementation of status update logic
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Halal Reviewer Dashboard</h1>
@@ -183,12 +195,13 @@ export default function ReviewerDashboardPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Link
-                            href={`/reviewer/services/${service.service_id}`}
-                            className="text-primary hover:text-primary-dark"
+                          <Button
+                            onClick={() => handleReviewClick(service)}
+                            variant="default"
+                            size="default"
                           >
-                            Review
-                          </Link>
+                            Review Service
+                          </Button>
                         </td>
                       </tr>
                     );
@@ -199,6 +212,32 @@ export default function ReviewerDashboardPage() {
           )}
         </div>
       </div>
+
+      {selectedService && (
+        <div className="mt-6 p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Review Service</h2>
+          
+          {/* Review service form content */}
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button
+              onClick={() => setSelectedService(null)}
+              variant="outline"
+              size="default"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleStatusUpdate}
+              disabled={!selectedStatus}
+              variant="default"
+              size="default"
+            >
+              Update Status
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

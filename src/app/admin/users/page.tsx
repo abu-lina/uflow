@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { Button } from "@/components/ui/button"
 
 type User = {
   id?: string;
@@ -197,15 +198,16 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
+                        <Button
                           onClick={() => {
                             setEditingUser(user);
                             setNewRole(user.role || '');
                           }}
-                          className="text-primary hover:text-primary-dark"
+                          variant="default"
+                          size="default"
                         >
                           Edit Role
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -245,22 +247,24 @@ export default function AdminUsersPage() {
             </div>
             
             <div className="flex justify-end space-x-3 mt-6">
-              <button
+              <Button
                 onClick={() => {
                   setEditingUser(null);
                   setNewRole('');
                 }}
-                className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                variant="outline"
+                size="default"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleRoleUpdate}
                 disabled={!newRole}
-                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="default"
+                size="default"
               >
                 Update Role
-              </button>
+              </Button>
             </div>
           </div>
         </div>

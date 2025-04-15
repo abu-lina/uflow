@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { Button } from "@/components/ui/button"
 
 const formSchema = z.object({
   service_name: z.string().min(1, 'Service name is required'),
@@ -572,13 +573,14 @@ export default function ServiceForm() {
           Debug Auth
         </button>
         
-        <button
+        <Button
           type="submit"
+          variant="default"
+          size="default"
           disabled={isSubmitting}
-          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Creating...' : 'Create Service'}
-        </button>
+          {isSubmitting ? 'Submitting...' : 'Submit Service'}
+        </Button>
       </div>
     </form>
   );

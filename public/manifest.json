@@ -1,7 +1,7 @@
 {
   "name": "Ummah Flow PWA",
   "short_name": "Ummah Flow",
-  "theme_color": "#10B981",
+  "theme_color": "#589D96",
   "background_color": "#ffffff",
   "display": "standalone",
   "orientation": "portrait",

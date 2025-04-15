@@ -14,19 +14,21 @@ const config: Config = {
       colors: {
         // Brand colors
         brand: {
-          primary: "#589d96",
-          secondary: "#bfdbd8",
+          primary: "#589D96",
+          secondary: "#BFDBD8",
         },
-        // Semantic colors using HSL variables
+        // Background gradient colors
+        gradient: {
+          start: "#F5F5F5",
+          end: "#FBFBFB",
+        },
+        // Semantic colors
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
+        primary: "#589D96",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
@@ -77,9 +79,9 @@ const config: Config = {
             maxWidth: '65ch',
             color: 'hsl(var(--foreground))',
             a: {
-              color: 'hsl(var(--primary))',
+              color: '#589D96',
               '&:hover': {
-                color: 'hsl(var(--primary) / 0.8)',
+                color: '#589D96',
               },
             },
           },

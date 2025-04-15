@@ -1,15 +1,21 @@
+@import '../styles/typography.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Brand Colors - Using our actual brand color values */
-    --primary: 164 43% 48%; /* #589d96 */
+    /* Brand Colors */
+    --primary: #589D96;
     --primary-foreground: 0 0% 98%;
     
-    --secondary: 164 43% 87%; /* #bfdbd8 */
+    --secondary: 164 43% 87%; /* #BFDBD8 */
     --secondary-foreground: 0 0% 9%;
+
+    /* Background Gradient */
+    --bg-gradient-start: #F5F5F5;
+    --bg-gradient-end: #FBFBFB;
 
     /* Background & Foreground */
     --background: 0 0% 100%; /* white */
@@ -79,7 +85,7 @@
     @apply text-foreground antialiased min-h-screen;
   }
   main {
-    background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%);
+    background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
     background-attachment: fixed;
     min-height: 100vh;
   }
@@ -100,5 +106,29 @@
   .text-balance {
     text-wrap: balance;
   }
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
 }
 

@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { Service as ServiceType } from '@/types/service';
+import { Button } from "@/components/ui/button"
 
 export default function ServiceReviewPage() {
   const { user, supabase, isLoading: authLoading, userRole } = useAuth();
@@ -18,6 +19,8 @@ export default function ServiceReviewPage() {
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   // Check if user has the halal_reviewer role
   const isHalalReviewer = userRole === 'halal_reviewer' || userRole === 'admin';
@@ -206,6 +209,41 @@ export default function ServiceReviewPage() {
       console.error('Error in direct approve:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
       toast.error(`Failed to directly approve: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!service || !selectedStatus) return;
+    
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      const response = await fetch('/api/reviewer/update-service-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          serviceId: service.service_id,
+          status: selectedStatus
+        }),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update service status');
+      }
+      
+      toast.success('Service status updated successfully');
+      router.push('/reviewer/dashboard');
+    } catch (err) {
+      console.error('Error updating service status:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error('Failed to update service status');
     } finally {
       setIsSubmitting(false);
     }
@@ -528,6 +566,56 @@ export default function ServiceReviewPage() {
           </div>
         </div>
       </div>
+
+      <div className="mt-4">
+        <Button
+          onClick={() => setIsEditing(true)}
+          variant="default"
+          size="default"
+        >
+          Review Service
+        </Button>
+      </div>
+
+      {isEditing && (
+        <div className="mt-6">
+          <h2 className="text-lg font-medium text-gray-900">Update Service Status</h2>
+          <div className="mt-4">
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+              Select new status:
+            </label>
+            <select
+              id="status"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+            >
+              <option value="">Select a status</option>
+              <option value="pending">Pending</option>
+              <option value="published">Published</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button
+              onClick={() => setIsEditing(false)}
+              variant="outline"
+              size="default"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleStatusUpdate}
+              disabled={!selectedStatus}
+              variant="default"
+              size="default"
+            >
+              Update Status
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

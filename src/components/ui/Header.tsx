@@ -4,11 +4,14 @@ import { Menu, X, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Logo from "./Logo";
 import Link from 'next/link';
+import { Button } from './button';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,12 +29,19 @@ export default function Header() {
           <Link href="/" className="flex items-center">
             <Logo width={48} height={48} />
           </Link>
-          <Link href="/about" className="h-12 flex items-center text-sm font-medium text-gray-dark hover:text-primary transition-colors ml-12">
-            Über Uns
-          </Link>
+          <Button
+            variant="unframed"
+            size="default"
+            className="flex items-center text-[16px] font-medium ml-12"
+            asChild
+          >
+            <Link href="/about">Über Uns</Link>
+          </Button>
           <div className="relative ml-6">
-            <button 
-              className="h-12 flex items-center text-sm font-medium text-gray-dark hover:text-primary transition-colors"
+            <Button 
+              variant="unframed"
+              size="default"
+              className="flex items-center text-[16px] font-medium"
               onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
             >
               Kategorien
@@ -43,17 +53,21 @@ export default function Header() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-            </button>
+            </Button>
             {isCategoriesOpen && (
               <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
                 {['Lebensmittel', 'Mode', 'Dienstleistungen'].map((category) => (
-                  <Link
+                  <Button
                     key={category}
-                    href={`/categories/${category.toLowerCase()}`}
-                    className="h-12 flex items-center px-4 text-sm text-gray-dark hover:bg-gray-50 hover:text-primary"
+                    variant="unframed"
+                    size="default"
+                    className="w-full flex items-center px-4 text-[16px] text-gray-dark hover:text-primary"
+                    asChild
                   >
-                    {category}
-                  </Link>
+                    <Link href={`/categories/${category.toLowerCase()}`}>
+                      {category}
+                    </Link>
+                  </Button>
                 ))}
               </div>
             )}
@@ -63,82 +77,140 @@ export default function Header() {
         <div className="flex items-center">
           <div className="relative flex items-center gap-3">
             <div className="relative w-[640px]">
-              <input
-                type="text"
-                placeholder="In Stuttgart suchen"
-                className="w-full h-12 rounded-lg border-none bg-white pl-8 pr-7 text-sm text-[#7C7C7C] focus:outline-none"
-              />
+              <Button
+                variant="search"
+                size="search"
+                className="w-full flex items-center justify-start pl-8 pr-7"
+                asChild
+              >
+                <Link href="/search">
+                  <span className="text-[16px] text-[#7A7A7A]">In Stuttgart suchen</span>
+                </Link>
+              </Button>
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#232323]" />
             </div>
-            <button className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
+            <Button 
+              variant="location"
+              size="location"
+              className="w-12"
+            >
               <svg width="32" height="32" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M14.2525 18.9748L25.9125 13.4228C27.6125 12.6128 29.3865 14.3878 28.5775 16.0888L23.0255 27.7478C22.2665 29.3408 19.9665 29.2428 19.3465 27.5898L18.3205 24.8508C18.2203 24.5836 18.064 24.3409 17.8622 24.1391C17.6604 23.9373 17.4177 23.781 17.1505 23.6808L14.4105 22.6538C12.7585 22.0338 12.6595 19.7338 14.2525 18.9748Z" stroke="#232323" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </button>
+            </Button>
           </div>
         </div>
 
         <div className="flex items-center">
-          <Link 
-            href="/auth/login" 
-            className="h-12 flex items-center rounded-lg border border-gray-light px-3 text-sm font-medium text-gray-dark hover:border-primary transition-colors"
-          >
-            Anmelden
-          </Link>
-          <Link 
-            href="/auth/signup"
-            className="h-12 flex items-center rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors ml-6"
-          >
-            Registrieren
-          </Link>
+          {!isLoading && !user ? (
+            <>
+              <Button
+                variant="framed"
+                size="default"
+                asChild
+              >
+                <Link href="/auth/login">Anmelden</Link>
+              </Button>
+              <Button
+                variant="highlight"
+                size="default"
+                className="ml-6"
+                asChild
+              >
+                <Link href="/auth/signup">Registrieren</Link>
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="action"
+              size="action"
+              asChild
+            >
+              <Link href="/dashboard">Dashboard</Link>
+            </Button>
+          )}
         </div>
 
         <div className="md:hidden">
-          <button
+          <Button
+            variant="unframed"
+            size="default"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="inline-flex items-center justify-center p-1.5 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none"
           >
-            <span className="sr-only">Open main menu</span>
             {isMenuOpen ? (
               <X className="h-4 w-4" />
             ) : (
               <Menu className="h-4 w-4" />
             )}
-          </button>
+          </Button>
         </div>
       </nav>
 
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link href="/about" className="block px-3 py-2 text-base font-medium text-gray-dark hover:text-primary">
-              Über Uns
-            </Link>
-            <button 
-              className="block w-full px-3 py-2 text-base font-medium text-gray-dark hover:text-primary text-left"
+            <Button
+              variant="unframed"
+              size="default"
+              className="w-full text-left"
+              asChild
+            >
+              <Link href="/about">Über Uns</Link>
+            </Button>
+            <Button 
+              variant="unframed"
+              size="default"
+              className="w-full text-left"
               onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
             >
               Kategorien
-            </button>
+            </Button>
             {isCategoriesOpen && (
               <div className="pl-4 space-y-1">
                 {['Lebensmittel', 'Mode', 'Dienstleistungen'].map((category) => (
-                  <Link
+                  <Button
                     key={category}
-                    href={`/categories/${category.toLowerCase()}`}
-                    className="block px-3 py-2 text-base font-medium text-gray-dark hover:text-primary"
+                    variant="unframed"
+                    size="default"
+                    className="w-full text-left"
+                    asChild
                   >
-                    {category}
-                  </Link>
+                    <Link href={`/categories/${category.toLowerCase()}`}>
+                      {category}
+                    </Link>
+                  </Button>
                 ))}
               </div>
             )}
-            <Link href="/auth/login" className="block px-3 py-2 text-base font-medium text-gray-dark hover:text-primary">
-              Anmelden
-            </Link>
-            <Link href="/auth/signup" className="block px-3 py-2 text-base font-medium text-primary hover:text-primary/90">
-              Registrieren
-            </Link>
+            {!isLoading && !user ? (
+              <>
+                <Button
+                  variant="framed"
+                  size="default"
+                  className="w-full"
+                  asChild
+                >
+                  <Link href="/auth/login">Anmelden</Link>
+                </Button>
+                <Button
+                  variant="highlight"
+                  size="default"
+                  className="w-full mt-2"
+                  asChild
+                >
+                  <Link href="/auth/signup">Registrieren</Link>
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="action"
+                size="action"
+                className="w-full"
+                asChild
+              >
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            )}
           </div>
         </div>
       )}

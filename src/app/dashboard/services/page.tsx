@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Service as ServiceType, ServiceStatus } from '@/types/service';
+import { Button } from "@/components/ui/button"
 
 export default function ServicesDashboardPage() {
   const { user, supabase, isLoading: authLoading } = useAuth();
@@ -134,12 +135,9 @@ export default function ServicesDashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">My Services</h1>
-        <Link
-          href="/services/create"
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-        >
-          Create New Service
-        </Link>
+        <Button asChild variant="default" size="default">
+          <Link href="/services/create">Create New Service</Link>
+        </Button>
       </div>
       
       {error && (
@@ -151,12 +149,9 @@ export default function ServicesDashboardPage() {
       {services.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-600 mb-4">You haven&apos;t created any services yet</p>
-          <Link
-            href="/services/create"
-            className="inline-block px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-          >
-            Create Your First Service
-          </Link>
+          <Button asChild variant="default" size="default">
+            <Link href="/services/create">Create Your First Service</Link>
+          </Button>
         </div>
       ) : (
         <div className="overflow-x-auto">
