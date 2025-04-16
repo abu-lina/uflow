@@ -3,9 +3,10 @@ import React from 'react';
 interface OrnamentStarProps {
   className?: string;
   isActive?: boolean;
+  onClick?: () => void;
 }
 
-const OrnamentStar: React.FC<OrnamentStarProps> = ({ className, isActive = false }) => {
+const OrnamentStar: React.FC<OrnamentStarProps> = ({ className, isActive = false, onClick }) => {
   const color = isActive ? '#589D96' : '#CDCDCD';
   
   return (
@@ -16,6 +17,7 @@ const OrnamentStar: React.FC<OrnamentStarProps> = ({ className, isActive = false
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      onClick={onClick}
     >
       <path
         fillRule="evenodd"

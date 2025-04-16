@@ -1,60 +1,103 @@
-import React from "react"
-import Ornament from "./Ornament"
+"use client"
+
+import React, { useState, useCallback } from "react"
 import InnerFrame from "./InnerFrame"
 import OrnamentStar from "./ornamentStar"
 
 interface QuoteCardProps {
-  quote: string
-  attribution: string
   className?: string
-  title?: string
 }
 
-export default function QuoteCard({ quote, attribution, className = "", title = "Viele Muslime aber wenig Gemeinschaft" }: QuoteCardProps) {
+const quotes = [
+  {
+    title: "Viele Muslime aber wenig Gemeinschaft",
+    quote: "Es wird eine Zeit kommen, in der die Muslime viele sein werden, doch ihr Zusammenhalt wird so schwach sein wie der Schaum des Meeres.",
+    attribution: "Der Prophet Mohammed ﷺ, Sahih Muslim"
+  },
+  {
+    title: "Gemeinsam sind wir stark",
+    quote: "Die Gläubigen sind wie ein Gebäude, dessen Teile einander stützen.",
+    attribution: "Der Prophet Mohammed ﷺ, Sahih Muslim"
+  },
+  {
+    title: "Einheit in der Vielfalt",
+    quote: "Die Muslime sind wie ein Körper. Wenn ein Teil leidet, leidet der ganze Körper.",
+    attribution: "Der Prophet Mohammed ﷺ, Sahih Muslim"
+  }
+]
+
+export default function QuoteCard({ className = "" }: QuoteCardProps) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [touchStart, setTouchStart] = useState(0)
+  const [touchEnd, setTouchEnd] = useState(0)
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % quotes.length)
+  }, [])
+
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + quotes.length) % quotes.length)
+  }, [])
+
+  const handleStarClick = useCallback((index: number) => {
+    setCurrentIndex(index)
+  }, [])
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 50) {
+      handleNext()
+    } else if (touchEnd - touchStart > 50) {
+      handlePrev()
+    }
+  }
+
   return (
-    <div className={`flex flex-col items-center gap-[8px] relative w-[546px] h-[363.8px] ${className}`}>
+    <div className={`relative w-[560px] h-[400px] ${className}`}>
       {/* Main Card */}
-      <div className="relative w-[546px] h-[355px] bg-[#BFDBD8] rounded-[30.4364px] flex-none order-0">
+      <div className="absolute inset-0 bg-[#BFDBD8] rounded-[32px]">
         {/* Background Rectangle */}
-        <div className="absolute inset-0 rounded-[30.4364px] bg-[#BFDBD8]" />
+        <div className="absolute inset-0 rounded-[32px] bg-[#BFDBD8]" />
 
-        {/* Inner Frame Container */}
-        <div className="absolute w-[487px] h-[287px] left-[30px] top-[34px]">
-          <InnerFrame className="absolute w-[485px] h-[285px] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 [&>g>path]:stroke-white [&>g>path]:stroke-[1.52941]" />
+        {/* Inner Frame Container - equal padding on all sides */}
+        <div className="absolute inset-[24px]">
+          <InnerFrame className="w-full h-full [&>g>path]:stroke-white [&>g>path]:stroke-[1.52941]" />
         </div>
 
-        {/* Top Ornament - Aligned with InnerFrame top line */}
-        <div className="absolute w-[53.53px] h-[26.37px] left-1/2 -translate-x-1/2 top-[23px]">
-          <Ornament className="w-full h-full [&>path]:fill-white [&>path]:stroke-[#BFDBD8] [&>path]:stroke-[0.087747]" />
-        </div>
-
-        {/* Bottom Ornament - Aligned with InnerFrame bottom line */}
-        <div className="absolute w-[53.53px] h-[26.37px] left-1/2 -translate-x-1/2 bottom-[23px]">
-          <Ornament className="w-full h-full [&>path]:fill-white [&>path]:stroke-[#BFDBD8] [&>path]:stroke-[0.087747] rotate-180" />
-        </div>
-
-        {/* Content */}
-        <div className="absolute w-[444px] h-[199px] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="flex flex-col items-center text-center">
-            {/* Title */}
-            <div className="relative w-[406px] h-[100px] -mt-[8px] mb-[8px] font-inter-tight font-medium text-[36px] leading-[140%] flex items-center text-center text-black">
-              {title}
-            </div>
-            <blockquote className="mb-[8.06px] w-[443.29px]">
-              <p className="font-inter italic font-medium text-[16px] leading-[150%] text-[#232323] text-justify">&ldquo;{quote}&rdquo;</p>
-            </blockquote>
-            <footer className="w-[443.29px] font-inter italic font-light text-[12.8px] leading-[140%] text-right text-black">
-              - {attribution}
-            </footer>
+        {/* Content Container - with proper text padding */}
+        <div className="absolute inset-[44px] flex flex-col items-center justify-center text-center">
+          {/* Title */}
+          <div className="w-full px-5 font-inter-tight font-medium text-[32px] leading-[120%] text-black mb-6">
+            {quotes[currentIndex].title}
           </div>
+          <blockquote className="w-full px-5">
+            <p className="font-inter italic font-medium text-[20px] leading-[140%] text-[#232323] text-center mb-6">
+              &ldquo;{quotes[currentIndex].quote}&rdquo;
+            </p>
+          </blockquote>
+          <footer className="w-full px-5 font-inter italic font-light text-[14px] leading-[140%] text-right text-[#7A7A7A]">
+            - {quotes[currentIndex].attribution}
+          </footer>
         </div>
       </div>
 
       {/* Page Switcher */}
-      <div className="flex flex-row items-center gap-[8px] w-[53px] h-[12px] flex-none order-1">
-        <OrnamentStar isActive={true} className="transform scale-y-[-1]" />
-        <OrnamentStar isActive={false} className="transform scale-y-[-1]" />
-        <OrnamentStar isActive={false} className="transform scale-y-[-1]" />
+      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex flex-row items-center gap-[8px] w-[53px] h-[12px]">
+        {quotes.map((_, index) => (
+          <OrnamentStar 
+            key={index}
+            isActive={index === currentIndex}
+            className="transform scale-y-[-1] cursor-pointer"
+            onClick={() => handleStarClick(index)}
+          />
+        ))}
       </div>
     </div>
   )
