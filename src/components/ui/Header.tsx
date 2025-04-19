@@ -6,12 +6,87 @@ import Logo from "./Logo";
 import Link from 'next/link';
 import { Button } from './button';
 import { useAuth } from '@/context/AuthContext';
+import { CATEGORIES } from '@/constants/categories';
+
+// Extracted components for better organization
+const CategoryDropdown = ({ isOpen }: { isOpen: boolean }) => (
+  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+    {CATEGORIES.map(({ id, label }) => (
+      <Button
+        key={id}
+        variant="unframed"
+        size="default"
+        className="w-full flex items-center px-4 text-[16px] text-gray-dark hover:text-primary"
+        asChild
+      >
+        <Link href={`/categories/${id}`}>
+          {label}
+        </Link>
+      </Button>
+    ))}
+  </div>
+);
+
+const AuthButtons = ({ className = "" }: { className?: string }) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return null;
+
+  if (!user) {
+    return (
+      <>
+        <Button
+          variant="framed"
+          size="default"
+          className={className}
+          asChild
+        >
+          <Link href="/auth/login">Anmelden</Link>
+        </Button>
+        <Button
+          variant="highlight"
+          size="default"
+          className={`ml-6 ${className}`}
+          asChild
+        >
+          <Link href="/auth/signup">Registrieren</Link>
+        </Button>
+      </>
+    );
+  }
+
+  return (
+    <Button
+      variant="action"
+      size="action"
+      className={className}
+      asChild
+    >
+      <Link href="/dashboard">Dashboard</Link>
+    </Button>
+  );
+};
+
+const SearchBar = () => (
+  <div className="relative w-[640px]">
+    <Button
+      variant="search"
+      size="search"
+      className="w-full flex items-center justify-start pl-8 pr-7"
+      asChild
+    >
+      <Link href="/search">
+        <span className="text-[16px] text-[#7A7A7A]">In Stuttgart suchen</span>
+      </Link>
+    </Button>
+    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#232323]" />
+  </div>
+);
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,41 +129,13 @@ export default function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </Button>
-            {isCategoriesOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                {['Lebensmittel', 'Mode', 'Dienstleistungen'].map((category) => (
-                  <Button
-                    key={category}
-                    variant="unframed"
-                    size="default"
-                    className="w-full flex items-center px-4 text-[16px] text-gray-dark hover:text-primary"
-                    asChild
-                  >
-                    <Link href={`/categories/${category.toLowerCase()}`}>
-                      {category}
-                    </Link>
-                  </Button>
-                ))}
-              </div>
-            )}
+            {isCategoriesOpen && <CategoryDropdown isOpen={isCategoriesOpen} />}
           </div>
         </div>
 
         <div className="flex items-center">
           <div className="relative flex items-center gap-3">
-            <div className="relative w-[640px]">
-              <Button
-                variant="search"
-                size="search"
-                className="w-full flex items-center justify-start pl-8 pr-7"
-                asChild
-              >
-                <Link href="/search">
-                  <span className="text-[16px] text-[#7A7A7A]">In Stuttgart suchen</span>
-                </Link>
-              </Button>
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#232323]" />
-            </div>
+            <SearchBar />
             <Button 
               variant="location"
               size="location"
@@ -101,34 +148,8 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="flex items-center">
-          {!isLoading && !user ? (
-            <>
-              <Button
-                variant="framed"
-                size="default"
-                asChild
-              >
-                <Link href="/auth/login">Anmelden</Link>
-              </Button>
-              <Button
-                variant="highlight"
-                size="default"
-                className="ml-6"
-                asChild
-              >
-                <Link href="/auth/signup">Registrieren</Link>
-              </Button>
-            </>
-          ) : (
-            <Button
-              variant="action"
-              size="action"
-              asChild
-            >
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
-          )}
+        <div className="hidden md:flex items-center">
+          <AuthButtons />
         </div>
 
         <div className="md:hidden">
@@ -167,50 +188,22 @@ export default function Header() {
             </Button>
             {isCategoriesOpen && (
               <div className="pl-4 space-y-1">
-                {['Lebensmittel', 'Mode', 'Dienstleistungen'].map((category) => (
+                {CATEGORIES.map(({ id, label }) => (
                   <Button
-                    key={category}
+                    key={id}
                     variant="unframed"
                     size="default"
                     className="w-full text-left"
                     asChild
                   >
-                    <Link href={`/categories/${category.toLowerCase()}`}>
-                      {category}
+                    <Link href={`/categories/${id}`}>
+                      {label}
                     </Link>
                   </Button>
                 ))}
               </div>
             )}
-            {!isLoading && !user ? (
-              <>
-                <Button
-                  variant="framed"
-                  size="default"
-                  className="w-full"
-                  asChild
-                >
-                  <Link href="/auth/login">Anmelden</Link>
-                </Button>
-                <Button
-                  variant="highlight"
-                  size="default"
-                  className="w-full mt-2"
-                  asChild
-                >
-                  <Link href="/auth/signup">Registrieren</Link>
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="action"
-                size="action"
-                className="w-full"
-                asChild
-              >
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            )}
+            <AuthButtons className="w-full" />
           </div>
         </div>
       )}

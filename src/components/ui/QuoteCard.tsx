@@ -3,28 +3,29 @@
 import React, { useState, useCallback } from "react"
 import InnerFrame from "./InnerFrame"
 import OrnamentStar from "./ornamentStar"
+import { QUOTES } from "@/constants/quotes"
 
 interface QuoteCardProps {
   className?: string
 }
 
-const quotes = [
-  {
-    title: "Viele Muslime aber wenig Gemeinschaft",
-    quote: "Es wird eine Zeit kommen, in der die Muslime viele sein werden, doch ihr Zusammenhalt wird so schwach sein wie der Schaum des Meeres.",
-    attribution: "Der Prophet Mohammed ﷺ, Sahih Muslim"
-  },
-  {
-    title: "Gemeinsam sind wir stark",
-    quote: "Die Gläubigen sind wie ein Gebäude, dessen Teile einander stützen.",
-    attribution: "Der Prophet Mohammed ﷺ, Sahih Muslim"
-  },
-  {
-    title: "Einheit in der Vielfalt",
-    quote: "Die Muslime sind wie ein Körper. Wenn ein Teil leidet, leidet der ganze Körper.",
-    attribution: "Der Prophet Mohammed ﷺ, Sahih Muslim"
-  }
-]
+const SWIPE_THRESHOLD = 50;
+
+const QuoteContent = ({ title, quote, attribution }: typeof QUOTES[number]) => (
+  <div className="absolute inset-[44px] flex flex-col items-center justify-center text-center">
+    <div className="w-full px-5 font-inter-tight font-medium text-[32px] leading-[120%] text-black mb-6">
+      {title}
+    </div>
+    <blockquote className="w-full px-5">
+      <p className="font-inter italic font-medium text-[20px] leading-[140%] text-[#232323] text-center mb-6">
+        &ldquo;{quote}&rdquo;
+      </p>
+    </blockquote>
+    <footer className="w-full px-5 font-inter italic font-light text-[14px] leading-[140%] text-right text-[#7A7A7A]">
+      - {attribution}
+    </footer>
+  </div>
+);
 
 export default function QuoteCard({ className = "" }: QuoteCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -32,11 +33,11 @@ export default function QuoteCard({ className = "" }: QuoteCardProps) {
   const [touchEnd, setTouchEnd] = useState(0)
 
   const handleNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % quotes.length)
+    setCurrentIndex((prev) => (prev + 1) % QUOTES.length)
   }, [])
 
   const handlePrev = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + quotes.length) % quotes.length)
+    setCurrentIndex((prev) => (prev - 1 + QUOTES.length) % QUOTES.length)
   }, [])
 
   const handleStarClick = useCallback((index: number) => {
@@ -52,15 +53,20 @@ export default function QuoteCard({ className = "" }: QuoteCardProps) {
   }
 
   const handleTouchEnd = () => {
-    if (touchStart - touchEnd > 50) {
+    if (touchStart - touchEnd > SWIPE_THRESHOLD) {
       handleNext()
-    } else if (touchEnd - touchStart > 50) {
+    } else if (touchEnd - touchStart > SWIPE_THRESHOLD) {
       handlePrev()
     }
   }
 
   return (
-    <div className={`relative w-[560px] h-[400px] ${className}`}>
+    <div 
+      className={`relative w-[560px] h-[400px] ${className}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Main Card */}
       <div className="absolute inset-0 bg-[#BFDBD8] rounded-[32px]">
         {/* Background Rectangle */}
@@ -71,26 +77,13 @@ export default function QuoteCard({ className = "" }: QuoteCardProps) {
           <InnerFrame className="w-full h-full [&>g>path]:stroke-white [&>g>path]:stroke-[1.52941]" />
         </div>
 
-        {/* Content Container - with proper text padding */}
-        <div className="absolute inset-[44px] flex flex-col items-center justify-center text-center">
-          {/* Title */}
-          <div className="w-full px-5 font-inter-tight font-medium text-[32px] leading-[120%] text-black mb-6">
-            {quotes[currentIndex].title}
-          </div>
-          <blockquote className="w-full px-5">
-            <p className="font-inter italic font-medium text-[20px] leading-[140%] text-[#232323] text-center mb-6">
-              &ldquo;{quotes[currentIndex].quote}&rdquo;
-            </p>
-          </blockquote>
-          <footer className="w-full px-5 font-inter italic font-light text-[14px] leading-[140%] text-right text-[#7A7A7A]">
-            - {quotes[currentIndex].attribution}
-          </footer>
-        </div>
+        {/* Content Container */}
+        <QuoteContent {...QUOTES[currentIndex]} />
       </div>
 
       {/* Page Switcher */}
       <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex flex-row items-center gap-[8px] w-[53px] h-[12px]">
-        {quotes.map((_, index) => (
+        {QUOTES.map((_, index) => (
           <OrnamentStar 
             key={index}
             isActive={index === currentIndex}

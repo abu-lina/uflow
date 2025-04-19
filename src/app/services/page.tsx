@@ -1,10 +1,11 @@
 import { Suspense } from 'react';
 import { createServerClient } from '@/lib/supabase-server';
-import ServicesList from '@/components/ServicesList';
+import ServicesList from '@/features/services/components/ServicesList';
 import SearchFilter from '@/components/SearchFilter';
 import CategoryFilter from '@/components/CategoryFilter';
 import { Service } from '@/types/service';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Type for search params
 interface SearchParams {
@@ -171,7 +172,7 @@ export default async function ServicesPage({
         </div>
         
         <div className="flex-1">
-          <Suspense fallback={<div className="text-center py-10">Loading services...</div>}>
+          <Suspense fallback={<Skeleton className="h-[200px]" />}>
             <ServicesList 
               services={formattedServices}
               pagination={{

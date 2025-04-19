@@ -1,12 +1,11 @@
 export type ServiceStatus = 'draft' | 'published' | 'rejected' | 'archived' | 'suspended';
 
-interface ServiceOwner {
+export interface ServiceOwner {
   id: string;
   full_name: string;
   avatar_url?: string;
 }
 
-// Define types for nested join data
 export interface ServiceUser {
   user_id?: string;
   id?: string;
@@ -19,16 +18,6 @@ export interface ServiceCategory {
 }
 
 export interface Service {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  location: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-  category: string;
-  status: 'active' | 'inactive' | 'pending';
   service_id: string;
   service_owner_id: string;
   service_name: string;
@@ -43,6 +32,8 @@ export interface Service {
   service_view_count?: number;
   purchase_count?: number;
   category_id?: string;
+  created_at?: string;
+  updated_at?: string;
   contact_email?: string;
   contact_phone?: string;
   social_instagram?: string;
@@ -54,36 +45,33 @@ export interface Service {
   location_longitude?: number;
   service_status?: ServiceStatus;
   owner?: ServiceOwner;
-  // Review fields
-  reviewer_id?: string;
-  review_feedback?: string;
-  reviewed_at?: string;
-  
-  // Relations (for joined data)
-  // Supabase can return either a single object or an array depending on the join
   users?: ServiceUser | ServiceUser[];
   categories?: ServiceCategory | ServiceCategory[];
 }
 
-// Type for creating a new service (omits auto-generated fields)
-export type CreateServiceInput = Omit<Service, 
+export interface ServiceListItem extends Pick<Service, 
   'service_id' | 
-  'created_at' | 
-  'updated_at' | 
-  'service_view_count' | 
-  'purchase_count' | 
-  'is_verified' | 
-  'verified_at' | 
-  'verified_by' |
-  'owner' |
-  'reviewer_id' |
-  'review_feedback' |
-  'reviewed_at' |
-  'users' |
-  'categories'
->;
+  'service_name' | 
+  'service_description' | 
+  'service_logo' | 
+  'category_id' | 
+  'contact_email' | 
+  'contact_phone' | 
+  'address_country' | 
+  'owner'
+> {
+  price?: number;
+  location?: string;
+}
 
-// Type for updating a service (all fields optional except service_id)
-export type UpdateServiceInput = Partial<Omit<Service, 'service_id' | 'owner' | 'users' | 'categories'>> & {
-  service_id: string;
-}; 
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface ServiceListProps {
+  services: ServiceListItem[];
+  pagination: PaginationParams;
+} 
