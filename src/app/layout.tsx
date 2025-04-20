@@ -1,15 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter_Tight } from "next/font/google"
+import { Inter } from 'next/font/google'
 import "./globals.css"
 import Header from "@/components/ui/Header"
 import { AuthProvider } from "@/context/AuthContext"
 
-const interTight = Inter_Tight({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter-tight",
-})
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: "Ummah Flow - Von Muslimen für Muslime",
@@ -23,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" className="h-full">
-      <body className={`${interTight.className} min-h-screen bg-[#F5F5F5]`}>
+      <body className={`${inter.className} min-h-screen bg-[#F5F5F5]`}>
         <AuthProvider>
           <Header />
           <main className="pt-[90px]">

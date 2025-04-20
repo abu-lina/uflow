@@ -26,7 +26,7 @@ const buttonVariants = cva(
         location: 'bg-white border border-gray-light',
       },
       size: {
-        default: 'h-[40px] px-[14px] text-sm rounded-[12px]',
+        default: 'h-[40px] px-[14px] text-[16px] rounded-[12px]',
         sm: 'h-[36px] px-3 text-sm rounded-[12px]',
         lg: 'h-[44px] px-8 text-base rounded-[12px]',
         action: 'h-[56px] px-[20px] text-[16px] font-medium rounded-[12px]',
