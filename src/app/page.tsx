@@ -1,17 +1,31 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Header from "@/components/ui/Header"
-import ProjectCard from "@/components/ui/SoukCard"
+import SoukCard from "@/components/ui/SoukCard"
 import Placeholder from "@/components/ui/Placeholder"
 import QuoteCard from "@/components/ui/QuoteCard"
 import { Button } from "@/components/ui/button"
 import { Bisma } from "@/components/ui/bisma"
 import { BismaDE } from "@/components/ui/BismaDE"
+import { getAllSoukItems, SearchResult } from "@/lib/search"
 
 export default function Home() {
+  const [souks, setSouks] = useState<SearchResult[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchSouks = async () => {
+      const data = await getAllSoukItems()
+      setSouks(data)
+      setIsLoading(false)
+    }
+    fetchSouks()
+  }, [])
+
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,_#F5F5F5_0%,_#FBFBFB_100%)]">
+    <div className="flex flex-col items-center w-full min-h-screen bg-[#F5F5F5]">
       {/* Hero Section - Full Viewport Height */}
       <section className="h-[calc(100vh-90px)] mt-[90px] flex flex-col items-center">
         {/* Div 1: Bisma Logo */}
@@ -30,16 +44,20 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Div 3: Button */}
-        <button className="w-[274px] h-[56px] flex items-center justify-between px-5 bg-[#589D96] rounded-[16.8px]">
-          <span className="text-white font-['Inter_Tight'] text-[20px] leading-[24px]">
-            Entdecke deine Ummah!
-          </span>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-            xmlns="http://www.w3.org/2000/svg" className="rotate-180">
-            <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        {/* Div3 Section */}
+        <div className="flex flex-col items-center w-full max-w-[1200px] px-4 py-8 gap-8">
+          <div className="flex flex-col items-center gap-8 w-full">
+            <Link href="/souk" className="w-[274px] h-[56px] flex items-center justify-between px-5 bg-[#589D96] rounded-[16.8px] hover:bg-[#4a8a84] transition-colors">
+              <span className="text-white font-['Inter_Tight'] text-[20px] leading-[24px]">
+                Entdecke deine Ummah!
+              </span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg" className="rotate-180">
+                <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* Why Section - Full Viewport Height */}
@@ -63,9 +81,15 @@ export default function Home() {
               Unsere Zakat Projekte
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[...Array(4)].map((_, i) => (
-                <ProjectCard key={i} />
-              ))}
+              {isLoading ? (
+                [...Array(4)].map((_, i) => (
+                  <SoukCard key={i} souk={null} />
+                ))
+              ) : (
+                souks.map((souk) => (
+                  <SoukCard key={souk.souk_id} souk={souk} />
+                ))
+              )}
             </div>
           </div>
         </div>

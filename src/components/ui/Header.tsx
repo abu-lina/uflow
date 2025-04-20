@@ -2,15 +2,19 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "./button"
 import { useAuth } from "@/context/AuthContext"
 import { Menu, Heart, X, ChevronDown, Search as SearchIcon } from "lucide-react"
 import Logo from "./Logo"
+import { getAllCategories, Category } from "@/lib/search"
+import { supabase } from "@/lib/supabase"
 
-const categories = ["Alle", "Lebensmittel", "Mode", "Dienstleistungen"]
 const locations = ["Deutschland", "Österreich", "Schweiz"]
 
 export default function Header() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [isSearchCategoryOpen, setIsSearchCategoryOpen] = useState(false)
@@ -18,20 +22,50 @@ export default function Header() {
   const { user, isLoading } = useAuth()
   const [visible, setVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("Alle")
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "")
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "Alle")
   const [selectedLocation, setSelectedLocation] = useState("Deutschland")
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    const fetchCategoriesWithSouks = async () => {
+      // Get all categories that have associated souks
+      const { data: soukCategories, error } = await supabase
+        .from('souks')
+        .select('category_id')
+
+      if (error) {
+        console.error('Error fetching souk categories:', error)
+        return
+      }
+
+      // Get unique category IDs
+      const uniqueCategoryIds = [...new Set(soukCategories.map((sc: { category_id: string }) => sc.category_id))]
+
+      // Get the category details for these IDs
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('categories')
+        .select('*')
+        .in('category_id', uniqueCategoryIds)
+
+      if (categoryError) {
+        console.error('Error fetching categories:', categoryError)
+        return
+      }
+
+      setCategories(categoryData || [])
+    }
+
+    fetchCategoriesWithSouks()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       
-      // Show header when scrolling up or at the top
       if (currentScrollY < lastScrollY || currentScrollY < 90) {
         setVisible(true)
-      } 
-      // Hide header when scrolling down
-      else if (currentScrollY > lastScrollY) {
+      } else if (currentScrollY > lastScrollY) {
         setVisible(false)
       }
       
@@ -48,13 +82,26 @@ export default function Header() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement search functionality
-    console.log("Searching for:", searchTerm, "in category:", selectedCategory, "location:", selectedLocation)
+    const params = new URLSearchParams()
+    if (searchTerm) params.set('search', searchTerm)
+    if (selectedCategory !== "Alle") params.set('category', selectedCategory)
+    router.push(`/souk?${params.toString()}`)
   }
 
-  const handleCategorySelect = (category: string) => {
-    setSelectedCategory(category)
+  const handleClearSearch = () => {
+    setSearchTerm("")
+    const params = new URLSearchParams()
+    if (selectedCategory !== "Alle") params.set('category', selectedCategory)
+    router.push(`/souk?${params.toString()}`)
+  }
+
+  const handleCategorySelect = (category: Category) => {
+    setSelectedCategory(category.name_de)
     setIsSearchCategoryOpen(false)
+    const params = new URLSearchParams()
+    if (searchTerm) params.set('search', searchTerm)
+    if (category.category_id !== "Alle") params.set('category', category.category_id)
+    router.push(`/souk?${params.toString()}`)
   }
 
   const handleLocationSelect = (location: string) => {
@@ -82,16 +129,16 @@ export default function Header() {
           <div className="relative ml-6">
             {isCategoriesOpen && (
               <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                {["Lebensmittel", "Mode", "Dienstleistungen"].map((category) => (
+                {categories.map((category) => (
                   <Button
-                    key={category}
+                    key={category.category_id}
                     variant="unframed"
                     size="default"
                     className="w-full flex items-center px-4 text-[16px] text-gray-dark hover:text-primary"
                     asChild
                   >
-                    <Link href={`/categories/${category.toLowerCase()}`}>
-                      {category}
+                    <Link href={`/categories/${category.category_id}`}>
+                      {category.name_de}
                     </Link>
                   </Button>
                 ))}
@@ -112,6 +159,15 @@ export default function Header() {
                   placeholder="In Stuttgart suchen"
                   className="w-full font-['Inter_Tight'] text-[16px] leading-[19px] text-[#232323] placeholder:text-[#7C7C7C] bg-transparent outline-none"
                 />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="flex items-center justify-center w-6 h-6 text-[#7C7C7C] hover:text-[#232323] transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               <div className="flex items-center">
@@ -132,16 +188,25 @@ export default function Header() {
                   
                   {isSearchCategoryOpen && (
                     <div className="absolute top-full left-0 mt-3 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                      <button
+                        type="button"
+                        onClick={() => handleCategorySelect({ category_id: "Alle", name_de: "Alle" } as Category)}
+                        className={`w-full text-left px-4 py-2 text-[16px] hover:bg-gray-50 ${
+                          "Alle" === selectedCategory ? "text-primary" : "text-[#232323]"
+                        }`}
+                      >
+                        Alle
+                      </button>
                       {categories.map((category) => (
                         <button
-                          key={category}
+                          key={category.category_id}
                           type="button"
                           onClick={() => handleCategorySelect(category)}
                           className={`w-full text-left px-4 py-2 text-[16px] hover:bg-gray-50 ${
-                            category === selectedCategory ? "text-primary" : "text-[#232323]"
+                            category.name_de === selectedCategory ? "text-primary" : "text-[#232323]"
                           }`}
                         >
-                          {category}
+                          {category.name_de}
                         </button>
                       ))}
                     </div>
@@ -246,16 +311,16 @@ export default function Header() {
             </Button>
             {isCategoriesOpen && (
               <div className="pl-4 space-y-1">
-                {["Lebensmittel", "Mode", "Dienstleistungen"].map((category) => (
+                {categories.map((category) => (
                   <Button
-                    key={category}
+                    key={category.category_id}
                     variant="unframed"
                     size="default"
                     className="w-full text-left"
                     asChild
                   >
-                    <Link href={`/categories/${category.toLowerCase()}`}>
-                      {category}
+                    <Link href={`/categories/${category.category_id}`}>
+                      {category.name_de}
                     </Link>
                   </Button>
                 ))}
