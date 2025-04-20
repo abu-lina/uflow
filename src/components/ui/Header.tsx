@@ -4,15 +4,23 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "./button"
 import { useAuth } from "@/context/AuthContext"
-import { Menu, X, ChevronDown, Search as SearchIcon } from "lucide-react"
+import { Menu, Heart, X, ChevronDown, Search as SearchIcon } from "lucide-react"
 import Logo from "./Logo"
+
+const categories = ["Alle", "Lebensmittel", "Mode", "Dienstleistungen"]
+const locations = ["Deutschland", "Österreich", "Schweiz"]
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
+  const [isSearchCategoryOpen, setIsSearchCategoryOpen] = useState(false)
+  const [isLocationOpen, setIsLocationOpen] = useState(false)
   const { user, isLoading } = useAuth()
   const [visible, setVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("Alle")
+  const [selectedLocation, setSelectedLocation] = useState("Deutschland")
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,6 +42,26 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [lastScrollY])
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+  }
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // TODO: Implement search functionality
+    console.log("Searching for:", searchTerm, "in category:", selectedCategory, "location:", selectedLocation)
+  }
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category)
+    setIsSearchCategoryOpen(false)
+  }
+
+  const handleLocationSelect = (location: string) => {
+    setSelectedLocation(location)
+    setIsLocationOpen(false)
+  }
+
   return (
     <header className={`fixed top-0 left-0 right-0 w-full z-50 transition-transform duration-300 ${
       visible ? "translate-y-0" : "-translate-y-full"
@@ -49,7 +77,7 @@ export default function Header() {
             className="flex items-center text-[16px] font-regular ml-12"
             asChild
           >
-            <Link href="/about">Über Uns</Link>
+            <Link href="#about">Über Uns</Link>
           </Button>
           <div className="relative ml-6">
             {isCategoriesOpen && (
@@ -74,33 +102,87 @@ export default function Header() {
 
         <div className="flex items-center">
           <div className="relative flex items-center gap-3">
-            <div className="w-[720px] h-[40px] flex flex-row items-center justify-between px-2 bg-white rounded-[12px]">
-              <div className="flex items-center gap-4">
-                <SearchIcon className="w-6 h-6 text-[#232323]" />
-                <span className="font-['Inter_Tight'] text-[16px] leading-[19px] text-[#7C7C7C]">
-                  In Stuttgart suchen
-                </span>
+            <form onSubmit={handleSearchSubmit} className="w-[720px] h-[40px] flex flex-row items-center justify-between px-2 bg-white rounded-[12px]">
+              <div className="flex items-center gap-4 flex-1">
+                <SearchIcon className="w-6 h-6 text-[#232323] min-w-6" />
+                <input 
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  placeholder="In Stuttgart suchen"
+                  className="w-full font-['Inter_Tight'] text-[16px] leading-[19px] text-[#232323] placeholder:text-[#7C7C7C] bg-transparent outline-none"
+                />
               </div>
 
               <div className="flex items-center">
                 <div className="w-[1px] h-[24px] bg-[#232323] mx-4" />
-                <div className="flex items-center gap-0">
-                  <span className="font-['Inter_Tight'] text-[16px] leading-[19px] text-[#232323]">
-                    Alle
-                  </span>
-                  <ChevronDown className="w-6 h-6 text-[#232323]" />
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsSearchCategoryOpen(!isSearchCategoryOpen)}
+                    className="flex items-center gap-0 hover:text-primary"
+                  >
+                    <span className="font-['Inter_Tight'] text-[16px] leading-[19px] text-[#232323]">
+                      {selectedCategory}
+                    </span>
+                    <ChevronDown className={`w-6 h-6 text-[#232323] transition-transform duration-200 ${
+                      isSearchCategoryOpen ? "rotate-180" : ""
+                    }`} />
+                  </button>
+                  
+                  {isSearchCategoryOpen && (
+                    <div className="absolute top-full left-0 mt-3 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => handleCategorySelect(category)}
+                          className={`w-full text-left px-4 py-2 text-[16px] hover:bg-gray-50 ${
+                            category === selectedCategory ? "text-primary" : "text-[#232323]"
+                          }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="w-[1px] h-[24px] bg-[#232323] mx-4" />
 
-                <div className="flex items-center gap-0">
-                  <span className="font-['Inter_Tight'] text-[16px] leading-[19px] text-[#232323]">
-                    Deutschland
-                  </span>
-                  <ChevronDown className="w-6 h-6 text-[#232323]" />
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsLocationOpen(!isLocationOpen)}
+                    className="flex items-center gap-0 hover:text-primary"
+                  >
+                    <span className="font-['Inter_Tight'] text-[16px] leading-[19px] text-[#232323]">
+                      {selectedLocation}
+                    </span>
+                    <ChevronDown className={`w-6 h-6 text-[#232323] transition-transform duration-200 ${
+                      isLocationOpen ? "rotate-180" : ""
+                    }`} />
+                  </button>
+                  
+                  {isLocationOpen && (
+                    <div className="absolute top-full left-0 mt-3 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                      {locations.map((location) => (
+                        <button
+                          key={location}
+                          type="button"
+                          onClick={() => handleLocationSelect(location)}
+                          className={`w-full text-left px-4 py-2 text-[16px] hover:bg-gray-50 ${
+                            location === selectedLocation ? "text-primary" : "text-[#232323]"
+                          }`}
+                        >
+                          {location}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            </form>
           </div>
         </div>
 
@@ -115,9 +197,16 @@ export default function Header() {
               </Button>
             </>
           ) : (
-            <Button variant="action" size="action" asChild>
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
+            <div className="flex items-center gap-6">
+              <button className="hover:text-primary transition-colors">
+                <Heart className="w-8 h-8" />
+              </button>
+              <button className="w-8 h-8 rounded-full bg-[#232323] flex items-center justify-center text-white hover:bg-primary transition-colors">
+                <span className="text-[16px] font-medium">
+                  {user?.email?.[0].toUpperCase() || 'U'}
+                </span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -145,7 +234,7 @@ export default function Header() {
               className="w-full text-left"
               asChild
             >
-              <Link href="/about">Über Uns</Link>
+              <Link href="#about">Über Uns</Link>
             </Button>
             <Button 
               variant="unframed"
