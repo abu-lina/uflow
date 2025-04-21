@@ -83,11 +83,11 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {isLoading ? (
                 [...Array(4)].map((_, i) => (
-                  <SoukCard key={i} souk={null} />
+                  <SoukCard key={i} souk={null} ownerName="Loading..." />
                 ))
               ) : (
                 souks.map((souk) => (
-                  <SoukCard key={souk.souk_id} souk={souk} />
+                  <SoukCard key={souk.souk_id} souk={souk} ownerName={souk.souk_owner_id} />
                 ))
               )}
             </div>

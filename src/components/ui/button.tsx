@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Share2, Phone, Globe } from 'lucide-react';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background',
@@ -24,6 +24,9 @@ const buttonVariants = cva(
         highlight: 'bg-primary text-white hover:bg-primary/90',
         search: 'bg-white border border-gray-light text-gray-400',
         location: 'bg-white border border-gray-light',
+        share: 'w-[92px] h-[40px] px-3 gap-[6px] rounded-[12px] text-[#272727] hover:bg-gray-50',
+        phone: 'w-[102px] h-[40px] px-3 gap-[6px] rounded-[12px] text-[#272727] hover:bg-gray-50',
+        website: 'w-[108px] h-[40px] px-3 gap-[6px] rounded-[12px] text-[#272727] hover:bg-gray-50',
       },
       size: {
         default: 'h-[40px] px-[14px] text-[16px] rounded-[12px]',
@@ -49,10 +52,13 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   showChevron?: boolean;
+  showShare?: boolean;
+  showPhone?: boolean;
+  showWebsite?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, showChevron = false, children, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, showChevron = false, showShare = false, showPhone = false, showWebsite = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
     
     if (asChild) {
@@ -73,6 +79,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
+        {showShare && <Share2 className="w-[20px] h-[20px] text-[#272727]" />}
+        {showPhone && <Phone className="w-[20px] h-[20px] text-[#272727]" />}
+        {showWebsite && <Globe className="w-[20px] h-[20px] text-[#272727]" />}
         {children}
         {showChevron && (
           <ChevronDown className="ml-1 h-4 w-4" />
