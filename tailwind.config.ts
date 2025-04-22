@@ -21,7 +21,8 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter-tight)"],
+        sans: ['Inter Tight', 'sans-serif'],
+        'inter-tight': ['Inter Tight', 'sans-serif'],
       },
       colors: {
         // Brand colors

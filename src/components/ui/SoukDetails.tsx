@@ -34,9 +34,9 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
 
   const summary = generateSummary(
     souk.souk_name || '',
-    souk.description || '',
+    souk.souk_description || '',
     souk.address_city || '',
-    souk.opening_hours || ''
+    souk.souk_description || ''
   );
 
   // Parse the souk_images JSON and get the urls array
@@ -57,7 +57,7 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
     if (navigator.share) {
       navigator.share({
         title: souk.souk_name,
-        text: souk.description || '',
+        text: souk.souk_description || '',
         url: window.location.href,
       }).catch(console.error);
     } else {
@@ -68,14 +68,14 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
   };
 
   const handlePhone = () => {
-    if (souk.phone_number) {
-      window.location.href = `tel:${souk.phone_number}`;
+    if (souk.contact_phone) {
+      window.location.href = `tel:${souk.contact_phone}`;
     }
   };
 
   const handleWebsite = () => {
-    if (souk.website_url) {
-      window.open(souk.website_url, '_blank');
+    if (souk.social_website) {
+      window.open(souk.social_website, '_blank');
     }
   };
 
@@ -91,12 +91,12 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
           {/* Title section */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-8">
-              <h1 className="font-['Inter_Tight'] text-[32px] font-semi-bold leading-[39px] text-[#232323]">
+              <h1 className="font-sans text-[32px] font-semi-bold leading-[39px] text-[#232323]">
                 {souk.souk_name}
               </h1>
             </div>
-            <p className="font-['Inter'] text-[16px] font-normal leading-[19px] text-[#7A7A7A]">
-              {souk.description}
+            <p className="font-sans text-[16px] font-normal leading-[19px] text-[#7A7A7A]">
+              {souk.souk_description}
             </p>
           </div>
 
@@ -156,7 +156,7 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
           {/* Barakah section */}
           <div className="w-[432px] h-[243.92px] p-4 border border-[#EEEEEE] rounded-[16px] flex flex-col gap-[10px]">
             <div className="flex flex-col gap-4 w-full">
-              <h2 className="font-['Inter_Tight'] text-[24px] font-semi-bold leading-[29px] text-[#232323]">
+              <h2 className="font-sans text-[24px] font-semi-bold leading-[29px] text-[#232323]">
                 Unser Barakah Effekt:
               </h2>
               <div className="flex justify-between w-full">
@@ -166,10 +166,10 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
                     <div className="absolute w-[211.45px] h-[181.72px] left-0 top-[-0.18px] border border-white rounded-none" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-['Inter_Tight'] text-[17.219px] font-semi-bold leading-[21px] text-[#232323]">
+                    <span className="font-sans text-[17.219px] font-semi-bold leading-[21px] text-[#232323]">
                       Wüstenkind e.V.
                     </span>
-                    <span className="font-['Inter_Tight'] text-[17.219px] font-normal leading-[21px] text-[#272727]">
+                    <span className="font-sans text-[17.219px] font-normal leading-[21px] text-[#272727]">
                       Hatem Ipsum
                     </span>
                   </div>
@@ -191,7 +191,7 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
                       <div className="w-[48px] h-[48px] bg-[#589D96] rounded-[12px] flex items-center justify-center">
                         <Icon className="w-[36px] h-[36px] text-white" />
                       </div>
-                      <span className="font-['Inter_Tight'] text-[12px] leading-[12px] text-center text-black">
+                      <span className="font-sans text-[12px] leading-[12px] text-center text-black">
                         {label}
                       </span>
                     </div>
@@ -204,10 +204,10 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
           {/* Description section */}
           <div className="w-[432px] h-[203px] p-4 border border-[#EEEEEE] rounded-[16px] flex flex-col gap-[10px]">
             <div className="flex flex-col gap-4 w-full">
-              <h2 className="font-['Inter_Tight'] text-[24px] font-semi-bold leading-[29px] text-[#232323]">
+              <h2 className="font-sans text-[24px] font-semi-bold leading-[29px] text-[#232323]">
                 Beschreibung:
               </h2>
-              <p className="font-['Inter_Tight'] text-[16px] font-normal leading-[21px] text-[#272727]">
+              <p className="font-sans text-[16px] font-normal leading-[21px] text-[#272727]">
                 {summary}
               </p>
             </div>
@@ -219,10 +219,10 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
               <div className="flex justify-between w-full">
                 {/* Left side - Address */}
                 <div className="flex flex-col gap-2 w-[200px]">
-                  <h2 className="font-['Inter_Tight'] text-[24px] font-semi-bold leading-[29px] text-[#232323]">
+                  <h2 className="font-sans text-[24px] font-semi-bold leading-[29px] text-[#232323]">
                     Adresse:
                   </h2>
-                  <p className="font-['Inter_Tight'] text-[16px] font-normal leading-[21px] text-[#272727]">
+                  <p className="font-sans text-[16px] font-normal leading-[21px] text-[#272727]">
                      {souk.address_street}, <br /> {souk.address_zip} {souk.address_city} 
                   </p>
                 </div>
@@ -232,15 +232,15 @@ const SoukDetails: React.FC<SoukDetailsProps> = ({
 
                 {/* Right side - Opening hours */}
                 <div className="flex flex-col gap-4 w-[200px] items-end">
-                  <h2 className="font-['Inter_Tight'] text-[24px] font-semi-bold leading-[29px] text-[#232323] tracking-[-0.04em]">
+                  <h2 className="font-sans text-[24px] font-semi-bold leading-[29px] text-[#232323] tracking-[-0.04em]">
                     Öffnungszeiten:
                   </h2>
                   <div className="flex justify-end gap-2">
-                    <span className="font-['Inter_Tight'] text-[16px] font-normal leading-[19px] text-[#272727]">
+                    <span className="font-sans text-[16px] font-normal leading-[19px] text-[#272727]">
                       Mo-Fr:
                     </span>
-                    <span className="font-['Inter_Tight'] text-[16px] font-normal leading-[19px] text-[#272727] text-right">
-                     {souk.opening_hours}
+                    <span className="font-sans text-[16px] font-normal leading-[19px] text-[#272727] text-right">
+                     {souk.souk_description}
                     </span>
                   </div>
                 </div>

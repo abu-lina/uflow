@@ -22,10 +22,10 @@ export default function Navbar() {
             href="/about"
             className="flex flex-row items-center px-2 w-[74px] h-[28px] rounded-lg hover:bg-gray-100"
           >
-            <span className="font-[Inter Tight] text-sm font-medium text-[#232323]">Über Uns</span>
+            <span className="font-sans text-sm font-medium text-[#232323]">Über Uns</span>
           </Link>
           <div className="flex flex-row items-center px-2 w-[99px] h-[28px] rounded-lg hover:bg-gray-100 cursor-pointer">
-            <span className="font-[Inter Tight] text-sm font-medium text-[#232323]">Kategorien</span>
+            <span className="font-sans text-sm font-medium text-[#232323]">Kategorien</span>
             <ChevronDown className="w-[15px] h-[15px] -rotate-90 text-[#272727]" />
           </div>
         </div>
@@ -35,7 +35,7 @@ export default function Navbar() {
           <div className="flex flex-row items-center px-[10px] py-[5px] gap-[15px] w-[352px] h-[42px] bg-white rounded-[15px]">
             <div className="flex flex-row items-center gap-[15px] w-[148px] h-6">
               <Search className="w-6 h-6 text-[#232323] transform scale-x-[-1]" />
-              <span className="font-inter text-xs text-[#7C7C7C]">In Stuttgart suchen</span>
+              <span className="font-sans text-xs text-[#7C7C7C]">In Stuttgart suchen</span>
             </div>
           </div>
           <div className="w-[42px] h-[42px] bg-white rounded-[15px] relative flex-shrink-0">
@@ -49,13 +49,13 @@ export default function Navbar() {
             href="/auth/login"
             className="flex justify-center items-center px-2 w-[145px] h-[42px] bg-white rounded-lg hover:bg-gray-50"
           >
-            <span className="font-[Inter Tight] text-sm font-medium text-[#232323]">Anmelden</span>
+            <span className="font-sans text-sm font-medium text-[#232323]">Anmelden</span>
           </Link>
           <Link
             href="/auth/signup"
             className="flex justify-center items-center px-2 gap-2 w-[145px] h-[42px] bg-white rounded-lg hover:bg-gray-50"
           >
-            <span className="font-[Inter Tight] text-sm font-medium text-[#232323]">Registrieren</span>
+            <span className="font-sans text-sm font-medium text-[#232323]">Registrieren</span>
           </Link>
         </div>
       </div>

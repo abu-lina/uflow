@@ -49,7 +49,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
           variant={selectedAction === 'like' ? "white24" : "black24"} 
           className={`w-[24px] h-[24px] ${getButtonStyle('like', selectedAction === 'like').iconColor}`} 
         />
-        <span className={`font-['Inter_Tight'] text-[16px] font-medium leading-[19px] ${getButtonStyle('like', selectedAction === 'like').textColor} ${getButtonStyle('like', selectedAction === 'like').textDisplay}`}>
+        <span className={`font-sans text-[16px] font-medium leading-[19px] ${getButtonStyle('like', selectedAction === 'like').textColor} ${getButtonStyle('like', selectedAction === 'like').textDisplay}`}>
           {isLiked ? 'Gemerkt' : 'Merken'}
         </span>
       </Button>
@@ -63,7 +63,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       >
         <Share2 className={`w-[20px] h-[20px] ${getButtonStyle('share', selectedAction === 'share').iconColor}`} />
         {selectedAction === 'share' && (
-          <span className={`font-['Inter_Tight'] text-[16px] font-medium leading-[19px] ${getButtonStyle('share', selectedAction === 'share').textColor} ml-2`}>
+          <span className={`font-sans text-[16px] font-medium leading-[19px] ${getButtonStyle('share', selectedAction === 'share').textColor} ml-2`}>
             Teilen
           </span>
         )}
@@ -78,7 +78,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       >
         <Phone className={`w-[20px] h-[20px] ${getButtonStyle('phone', selectedAction === 'phone').iconColor}`} />
         {selectedAction === 'phone' && (
-          <span className={`font-['Inter_Tight'] text-[16px] font-medium leading-[19px] ${getButtonStyle('phone', selectedAction === 'phone').textColor} ml-2`}>
+          <span className={`font-sans text-[16px] font-medium leading-[19px] ${getButtonStyle('phone', selectedAction === 'phone').textColor} ml-2`}>
             Telefon
           </span>
         )}
@@ -93,7 +93,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       >
         <Globe className={`w-[20px] h-[20px] ${getButtonStyle('website', selectedAction === 'website').iconColor}`} />
         {selectedAction === 'website' && (
-          <span className={`font-['Inter_Tight'] text-[16px] font-medium leading-[19px] ${getButtonStyle('website', selectedAction === 'website').textColor} ml-2`}>
+          <span className={`font-sans text-[16px] font-medium leading-[19px] ${getButtonStyle('website', selectedAction === 'website').textColor} ml-2`}>
             Website
           </span>
         )}

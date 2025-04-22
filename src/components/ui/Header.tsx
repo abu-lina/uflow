@@ -5,12 +5,10 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "./button"
 import { useAuth } from "@/context/AuthContext"
-import { Menu, Heart, X, ChevronDown, Search as SearchIcon } from "lucide-react"
+import { Menu, Heart, X, ChevronDown, Search as SearchIcon, MapPin } from "lucide-react"
 import Logo from "./Logo"
 import { getAllCategories, Category } from "@/lib/search"
 import { supabase } from "@/lib/supabase"
-
-const locations = ["Deutschland", "Österreich", "Schweiz"]
 
 export default function Header() {
   const router = useRouter()
@@ -24,8 +22,9 @@ export default function Header() {
   const [lastScrollY, setLastScrollY] = useState(0)
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "")
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "Alle")
-  const [selectedLocation, setSelectedLocation] = useState("Deutschland")
+  const [selectedLocation, setSelectedLocation] = useState("Überall")
   const [categories, setCategories] = useState<Category[]>([])
+  const [locations, setLocations] = useState<string[]>([])
 
   useEffect(() => {
     const fetchCategoriesWithSouks = async () => {
@@ -56,7 +55,24 @@ export default function Header() {
       setCategories(categoryData || [])
     }
 
+    const fetchUniqueLocations = async () => {
+      const { data, error } = await supabase
+        .from('souks')
+        .select('address_city')
+        .not('address_city', 'is', null)
+
+      if (error) {
+        console.error('Error fetching locations:', error)
+        return
+      }
+
+      // Get unique cities and sort them alphabetically
+      const uniqueCities = [...new Set(data.map(item => item.address_city))].sort()
+      setLocations(uniqueCities)
+    }
+
     fetchCategoriesWithSouks()
+    fetchUniqueLocations()
   }, [])
 
   useEffect(() => {
@@ -85,6 +101,7 @@ export default function Header() {
     const params = new URLSearchParams()
     if (searchTerm) params.set('search', searchTerm)
     if (selectedCategory !== "Alle") params.set('category', selectedCategory)
+    if (selectedLocation !== "Überall") params.set('location', selectedLocation)
     router.push(`/souk?${params.toString()}`)
   }
 
@@ -124,7 +141,7 @@ export default function Header() {
             className="flex items-center text-[16px] font-regular ml-12"
             asChild
           >
-            <Link href="#about">Über Uns</Link>
+            <Link href="/#about">Über Uns</Link>
           </Button>
           <div className="relative ml-6">
             {isCategoriesOpen && (
@@ -176,8 +193,9 @@ export default function Header() {
                   <button
                     type="button"
                     onClick={() => setIsSearchCategoryOpen(!isSearchCategoryOpen)}
-                    className="flex items-center gap-0 hover:text-primary"
+                    className="flex items-center gap-2 hover:text-primary"
                   >
+                    <Menu className="w-6 h-6 text-[#232323]" />
                     <span className="font-['Inter_Tight'] text-[16px] leading-[19px] text-[#232323]">
                       {selectedCategory}
                     </span>
@@ -219,8 +237,9 @@ export default function Header() {
                   <button
                     type="button"
                     onClick={() => setIsLocationOpen(!isLocationOpen)}
-                    className="flex items-center gap-0 hover:text-primary"
+                    className="flex items-center gap-2 hover:text-primary"
                   >
+                    <MapPin className="w-6 h-6 text-[#232323]" />
                     <span className="font-['Inter_Tight'] text-[16px] leading-[19px] text-[#232323]">
                       {selectedLocation}
                     </span>
@@ -231,6 +250,15 @@ export default function Header() {
                   
                   {isLocationOpen && (
                     <div className="absolute top-full left-0 mt-3 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                      <button
+                        type="button"
+                        onClick={() => handleLocationSelect("Überall")}
+                        className={`w-full text-left px-4 py-2 text-[16px] hover:bg-gray-50 ${
+                          "Überall" === selectedLocation ? "text-primary" : "text-[#232323]"
+                        }`}
+                      >
+                        Überall
+                      </button>
                       {locations.map((location) => (
                         <button
                           key={location}
@@ -299,7 +327,7 @@ export default function Header() {
               className="w-full text-left"
               asChild
             >
-              <Link href="#about">Über Uns</Link>
+              <Link href="/#about">Über Uns</Link>
             </Button>
             <Button 
               variant="unframed"

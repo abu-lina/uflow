@@ -23,6 +23,9 @@ export default function SoukPage() {
             *,
             categories (
               name_de
+            ),
+            profiles!souk_owner_id (
+              full_name
             )
           `)
 

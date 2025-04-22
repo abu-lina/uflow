@@ -1,22 +1,24 @@
 import React, { useState, useRef, useEffect } from "react"
-import { Globe, Phone, TwitterIcon as TikTok, Instagram } from "lucide-react"
-import { SearchResult } from "../../types/souk"
+import { Globe, Phone, Share2 } from "lucide-react"
+import { SearchResult } from "@/types/souk"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/context/AuthContext"
 import { useRouter } from "next/navigation"
 import Placeholder from "./Placeholder"
 import LikeButton from "./LikeButton"
 import SoukDetails from "./SoukDetails"
+import Ornament from "./Ornament"
+import ActionBar from './ActionBar'
+import { Heart, MapPin, Clock, Star } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface SoukCardProps {
   souk: SearchResult | null
-  ownerName: string
   className?: string
 }
 
 const SoukCard: React.FC<SoukCardProps> = ({
   souk,
-  ownerName,
   className = '',
 }) => {
   const [isLiked, setIsLiked] = useState(false)
@@ -27,6 +29,7 @@ const SoukCard: React.FC<SoukCardProps> = ({
   const { user } = useAuth()
   const router = useRouter()
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [ownerName, setOwnerName] = useState<string>("")
 
   useEffect(() => {
     if (tagsContainerRef.current && tagsRef.current) {
@@ -76,9 +79,24 @@ const SoukCard: React.FC<SoukCardProps> = ({
       }
     }
 
+    const fetchOwnerName = async () => {
+      if (souk?.souk_owner_id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', souk.souk_owner_id)
+          .single();
+
+        if (!error && data) {
+          setOwnerName(data.full_name || 'Unknown');
+        }
+      }
+    };
+
     fetchCategoryName()
     checkBookmarkStatus()
-  }, [souk?.category_id, souk?.souk_id, user])
+    fetchOwnerName()
+  }, [souk?.category_id, souk?.souk_id, user, souk?.souk_owner_id])
 
   const handleBookmark = async () => {
     if (!user) {
@@ -207,61 +225,53 @@ const SoukCard: React.FC<SoukCardProps> = ({
 
         {/* Content Section */}
         <div 
-          className="w-[296px] h-[143.38px] bg-white border border-[#D4D4D4] rounded-b-[22.2px] p-[14.8px]"
+          className="w-[296px] h-[114.6px] bg-white border-[0.835915px] border-[#D4D4D4] rounded-b-[22.2px] p-[14.8px]"
           onClick={() => setIsDetailsOpen(true)}
         >
-          <div className="w-[266.4px] h-[110.07px] flex flex-col justify-between">
-            <div className="w-[266.4px] h-[78.58px] flex flex-col gap-[14.8px]">
-              <div className="w-[266.4px] h-[43.78px] flex flex-col gap-[2.78px]">
-                <h3 className="font-['Inter_Tight'] text-[20px] font-semibold leading-[24px] text-[#232323]">
-                  {souk.souk_name}
-                </h3>
-                <p className="w-[266.4px] h-[17px] font-sans text-[16px] font-normal leading-[17px] text-[#7A7A7A] flex-none order-1 self-stretch flex-grow-0">
-                  {ownerName}
-                </p>
-              </div>
+          <div className="w-[266.4px] h-[85px] flex flex-col gap-[8px]">
+            <div className="w-[266.4px] h-[41px] flex flex-col gap-[12px]">
+              <h3 className="font-sans text-[20px] font-semibold leading-[24px] text-[#232323]">
+                {souk.souk_name}
+              </h3>
+              <p className="font-sans text-[14px] font-normal leading-[17px] text-[#232323]">
+                {ownerName}
+              </p>
+            </div>
 
-              {/* Tags */}
-              <div ref={tagsContainerRef} className="flex flex-row items-start gap-[7.4px] w-[calc(100%-29.6px)] h-[20px] overflow-hidden">
-                <div ref={tagsRef} className="flex flex-row items-start gap-[7.4px] flex-1 overflow-hidden">
-                  {souk.address_city && (
-                    <div className="flex flex-row justify-center items-center px-1 py-0.5 gap-[9.25px] h-[20px] border border-[#CDCDCD] rounded-[3.7px] whitespace-nowrap">
-                      <span className="font-['Inter_Tight'] text-[14px] font-regular leading-[16px] text-[#232323]">
-                        {souk.address_city}
-                      </span>
-                    </div>
-                  )}
-                  {souk.review_feedback === 'halal' && (
-                    <div className="flex flex-row justify-center items-center px-1 py-0.5 gap-[9.25px] h-[20px] border border-[#CDCDCD] rounded-[3.7px] whitespace-nowrap">
-                      <span className="font-['Inter_Tight'] text-[14px] font-regular leading-[16px] text-[#232323]">
-                        Quran
-                      </span>
-                    </div>
-                  )}
-                  {souk.is_verified && (
-                    <div className="flex flex-row justify-center items-center px-1 py-0.5 gap-[9.25px] h-[20px] border border-[#CDCDCD] rounded-[3.7px] whitespace-nowrap">
-                      <span className="font-['Inter_Tight'] text-[14px] font-regular leading-[16px] text-[#232323]">
-                        Juma
-                      </span>
-                    </div>
-                  )}
-                </div>
-                {hasHiddenTags && (
-                  <div className="flex flex-row justify-center items-center px-[3.7px] py-[2px] gap-[9.25px] w-[20px] h-[20px] border border-[#CDCDCD] rounded-[3.7px] flex-shrink-0">
-                    <span className="font-['Inter_Tight'] text-[12px] font-regular leading-[16px] text-[#232323]">
-                      +
+            <div className="w-[266.4px] h-[1px] bg-[#EEEEEE] transform -rotate-180" />
+
+            {/* Tags */}
+            <div ref={tagsContainerRef} className="flex flex-row items-start gap-[7.4px] w-[203.2px] h-[20px]">
+              <div ref={tagsRef} className="flex flex-row items-start gap-[7.4px]">
+                {souk.address_city && (
+                  <div className="flex flex-row justify-center items-center px-1 py-0.5 gap-[9.25px] h-[20px] border-[0.925px] border-[#CDCDCD] rounded-[3.7px]">
+                    <span className="font-sans text-[12px] font-medium leading-[16px] tracking-[-0.02em] text-[#232323]">
+                      {souk.address_city}
+                    </span>
+                  </div>
+                )}
+                {souk.review_feedback === 'halal' && (
+                  <div className="flex flex-row justify-center items-center px-1 py-0.5 gap-[9.25px] h-[20px] border-[0.925px] border-[#CDCDCD] rounded-[3.7px]">
+                    <span className="font-sans text-[12px] font-medium leading-[16px] tracking-[-0.02em] text-[#232323]">
+                      Quran
+                    </span>
+                  </div>
+                )}
+                {souk.is_verified && (
+                  <div className="flex flex-row justify-center items-center px-1 py-0.5 gap-[9.25px] h-[20px] border-[0.925px] border-[#CDCDCD] rounded-[3.7px]">
+                    <span className="font-sans text-[12px] font-medium leading-[16px] tracking-[-0.02em] text-[#232323]">
+                      Juma
                     </span>
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Social Icons */}
-            <div className="flex flex-row items-center gap-[22.2px]">
-              <Globe className="w-[22.2px] h-[22.2px]" />
-              <Phone className="w-[22.2px] h-[22.2px]" />
-              <TikTok className="w-[22.2px] h-[22.2px]" />
-              <Instagram className="w-[22.2px] h-[22.2px]" />
+              {hasHiddenTags && (
+                <div className="flex flex-row justify-center items-center px-[3.7px] py-[2px] gap-[9.25px] w-[20px] h-[20px] border-[0.925px] border-[#CDCDCD] rounded-[3.7px]">
+                  <span className="font-sans text-[14px] font-medium leading-[16px] text-[#232323]">
+                    +
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

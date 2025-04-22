@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import "./globals.css"
 import Header from "@/components/ui/Header"
 import { AuthProvider } from "@/context/AuthContext"
+import { Toaster } from "react-hot-toast"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,12 +20,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" className="h-full">
-      <body className={`${inter.className} min-h-screen bg-[#F5F5F5]`}>
+      <body className={inter.className}>
         <AuthProvider>
-          <Header />
-          <main className="pt-[90px]">
-            {children}
-          </main>
+          <div className="relative flex min-h-screen flex-col bg-transparent">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
+          <Toaster position="top-right" />
         </AuthProvider>
       </body>
     </html>

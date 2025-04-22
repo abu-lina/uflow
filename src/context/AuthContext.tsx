@@ -9,6 +9,8 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  supabase: typeof supabase;
+  userRole: string | null;
   signIn: (email: string, password: string) => Promise<{
     error: AuthError | Error | null;
     success: boolean;
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -36,6 +39,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session) {
           setSession(session);
           setUser(session.user);
+          // Fetch user role
+          const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .single();
+          setUserRole(userData?.role || null);
         }
       } catch (error) {
         console.error('Error loading user:', error);
@@ -50,6 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          // Fetch user role on auth state change
+          const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .single();
+          setUserRole(userData?.role || null);
+        } else {
+          setUserRole(null);
+        }
         setIsLoading(false);
         if (session) {
           router.refresh();
@@ -165,6 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    supabase,
+    userRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
