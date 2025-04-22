@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BusinessWithOwner } from '@/types/business';
 import BookmarkButton from '@/components/BookmarkButton';
-import supabase from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 
 export default function BusinessDetailsPage({ params }: { params: { id: string } }) {

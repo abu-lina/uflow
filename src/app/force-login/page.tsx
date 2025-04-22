@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import supabase from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export default function ForceLoginPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
