@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/core/button"
 
 type User = {
   id?: string;

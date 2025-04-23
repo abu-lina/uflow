@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import SoukCard from '@/components/ui/SoukCard';
+import SoukCard from '@/components/core/SoukCard';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter_Tight } from "next/font/google"
 import "./globals.css"
 import Header from "@/components/core/layout/header"
-import { AuthProvider } from "@/context/AuthContext"
+import { AuthProvider } from "@/features/auth/context/AuthContext"
 
 const interTight = Inter_Tight({
   subsets: ["latin"],

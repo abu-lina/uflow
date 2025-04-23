@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable react/no-unescaped-entities */
 
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useState } from 'react';
 import Link from 'next/link';
 import { PostgrestError } from '@supabase/supabase-js';

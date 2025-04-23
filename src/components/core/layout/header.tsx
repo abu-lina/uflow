@@ -5,7 +5,7 @@ import { useState, useEffect, HTMLAttributes, forwardRef } from 'react';
 import Logo from "@/components/core/visuals/logo";
 import { ButtonLink, FramedButton, FilledButton } from "@/components/core/button";
 import { SearchBar } from "@/components/core/input";
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib";
 
 interface HeaderBaseProps extends HTMLAttributes<HTMLElement> {
   variant?: 'default' | 'transparent';

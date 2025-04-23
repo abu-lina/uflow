@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/core/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/core/card';
+import { Input } from '@/components/core/input';
+import { Label } from '@/components/core/label';
 import { Loader2, LogOut, User } from 'lucide-react';
 
 interface ProfileData {

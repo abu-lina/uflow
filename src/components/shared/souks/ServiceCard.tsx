@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/core/card";
 import { ServiceListItem } from "../types";
 import { cn } from "@/lib/utils";
 

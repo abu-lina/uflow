@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { BismillahButton } from '@/components/ui/bismillah-button';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { BismillahButton } from '@/components/core/bismillah-button';
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('');

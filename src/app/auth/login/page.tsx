@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { BismillahButton } from '@/components/ui/bismillah-button';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { BismillahButton } from '@/components/core/bismillah-button';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
