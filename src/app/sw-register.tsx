@@ -38,6 +38,7 @@ export default function ServiceWorkerRegister() {
         // Register the service worker when the page is fully loaded
         const registration = await navigator.serviceWorker.register('/sw.js', { 
           scope: '/',
+          type: 'module', // Enable ES modules in service worker
         });
         
         console.log('Service Worker registered successfully:', registration.scope);
@@ -54,39 +55,98 @@ export default function ServiceWorkerRegister() {
                 // New content is available, notify the user
                 console.log('New version available!');
                 toast.success(
-                  'A new version is available. Close all tabs to upgrade.',
-                  { id: 'sw-update', duration: 5000 }
+                  'Eine neue Version ist verfügbar. Schließe alle Tabs, um zu aktualisieren.',
+                  { 
+                    id: 'sw-update',
+                    duration: 5000,
+                    position: 'bottom-center',
+                    style: {
+                      background: '#333',
+                      color: '#fff',
+                    },
+                  }
                 );
               } else {
                 // Content is cached for offline use
                 console.log('Content cached for offline use');
+                toast.success(
+                  'Die App ist jetzt offline verfügbar!',
+                  { 
+                    id: 'sw-cached',
+                    duration: 3000,
+                    position: 'bottom-center',
+                  }
+                );
               }
             }
           };
         };
+
+        // Handle service worker errors
+        registration.addEventListener('error', (event: Event) => {
+          console.error('Service Worker error:', event);
+          setStatus('failed');
+          toast.error(
+            'Ein Fehler ist aufgetreten. Bitte versuche es später erneut.',
+            { 
+              id: 'sw-error',
+              duration: 5000,
+              position: 'bottom-center',
+            }
+          );
+        });
+
+        // Handle service worker updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available
+              toast.success(
+                'Eine neue Version ist verfügbar. Klicke hier, um zu aktualisieren.',
+                { 
+                  id: 'sw-update',
+                  duration: 5000,
+                  position: 'bottom-center',
+                }
+              );
+              // Add click handler to reload the page
+              const toastElement = document.querySelector(`[data-toast-id="sw-update"]`);
+              if (toastElement) {
+                toastElement.addEventListener('click', () => {
+                  window.location.reload();
+                });
+              }
+            }
+          });
+        });
+
       } catch (error) {
         console.error('Service Worker registration failed:', error);
         setStatus('failed');
         
         // Show error toast to the user
-        toast.error('Could not enable offline mode. This app may not work offline.', {
-          id: 'sw-error',
-          duration: 5000,
-        });
+        toast.error(
+          'Offline-Modus konnte nicht aktiviert werden. Die App funktioniert möglicherweise nicht offline.',
+          { 
+            id: 'sw-error',
+            duration: 5000,
+            position: 'bottom-center',
+          }
+        );
       }
     };
     
     // Register on load to ensure the page is fully loaded
     window.addEventListener('load', registerServiceWorker);
     
-    // Log status changes for debugging
-    console.log(`Service worker status: ${status}`);
-    
     // Clean up
     return () => {
       window.removeEventListener('load', registerServiceWorker);
     };
-  }, [status]); // Add status to dependencies to log changes
+  }, []); // Remove status from dependencies to prevent unnecessary re-renders
   
   return null;
 } 

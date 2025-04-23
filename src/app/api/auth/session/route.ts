@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import type { Database } from '@/types/supabase';
+import type { Database } from '@/types/database';
 
 export async function GET() {
   try {
@@ -33,14 +33,14 @@ export async function GET() {
     let userError = null;
     
     try {
-      // Try to get user data from our users table
+      // Get user data from profiles table
       const { data, error } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*')
-        .or(`user_id.eq.${session.user.id},id.eq.${session.user.id}`)
-        .limit(1);
+        .eq('id', session.user.id)
+        .single();
         
-      userData = data && data.length > 0 ? data[0] : null;
+      userData = data;
       userError = error;
       
       if (error) {
@@ -50,8 +50,6 @@ export async function GET() {
       console.error('Error fetching user data:', err);
       userError = err instanceof Error ? err.message : String(err);
     }
-    
-    // Remove cookie debugging to fix build issues
     
     return NextResponse.json({
       authenticated: true,

@@ -8,6 +8,7 @@ export default function AuthCheckPage() {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [authState, setAuthState] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [browserInfo, setBrowserInfo] = useState({
     userAgent: '',
@@ -19,6 +20,7 @@ export default function AuthCheckPage() {
     const checkAuth = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         // Create a fresh Supabase client
         const supabase = createClientComponentClient();
         
@@ -107,7 +109,8 @@ export default function AuthCheckPage() {
   // Function to fix the user role directly
   const fixUserRole = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
+      setError(null);
       const supabase = createClientComponentClient();
       
       // Get the current user
@@ -187,14 +190,15 @@ export default function AuthCheckPage() {
       console.error('Fix role error:', err);
       alert(`Error fixing role: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
   
   // Function to logout and clear all auth state
   const clearAuthState = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
+      setError(null);
       const supabase = createClientComponentClient();
       await supabase.auth.signOut();
       alert('Successfully signed out. Auth state cleared.');
@@ -203,7 +207,7 @@ export default function AuthCheckPage() {
       console.error('Sign out error:', err);
       alert(`Error signing out: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
   
@@ -214,7 +218,7 @@ export default function AuthCheckPage() {
         This page bypasses the AuthContext and directly checks your authentication status with Supabase.
       </p>
       
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin h-8 w-8 mr-3 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
           <p>Checking authentication state...</p>
@@ -230,14 +234,14 @@ export default function AuthCheckPage() {
             <h2 className="text-xl font-bold mb-4">Authentication State</h2>
             
             <div className="mb-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mr-2 mb-2 
-                {authState?.hasSession ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mr-2 mb-2 
+                ${authState?.hasSession ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                 {authState?.hasSession ? 'Authenticated' : 'Not Authenticated'}
               </span>
               
               {authState?.role && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mr-2 mb-2 
-                  {authState.role === 'service_owner' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mr-2 mb-2 
+                  ${authState.role === 'service_owner' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
                   Role: {authState.role}
                 </span>
               )}
@@ -271,7 +275,7 @@ export default function AuthCheckPage() {
             <div className="space-y-4">
               <button
                 onClick={fixUserRole}
-                disabled={loading || !authState?.user}
+                disabled={isLoading || !authState?.user}
                 className="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Set Role to Service Owner
@@ -279,7 +283,7 @@ export default function AuthCheckPage() {
               
               <button
                 onClick={clearAuthState}
-                disabled={loading}
+                disabled={isLoading}
                 className="w-full py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Clear Auth State & Logout
@@ -287,15 +291,23 @@ export default function AuthCheckPage() {
               
               <button
                 onClick={() => window.location.reload()}
-                disabled={loading}
+                disabled={isLoading}
                 className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Refresh Page
               </button>
               
               <div className="mt-4 space-x-4">
-                <button onClick={fixUserRole} className="bg-green-600 text-white px-4 py-2 rounded">Force Create Role</button>
-                <Link href="/services/create/" className="bg-blue-600 text-white px-4 py-2 rounded inline-block">Go to Create</Link>
+                <button 
+                  onClick={fixUserRole}
+                  disabled={isLoading}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Force Create Role
+                </button>
+                <Link href="/services/create/" className="bg-blue-600 text-white px-4 py-2 rounded inline-block hover:bg-blue-700">
+                  Go to Create
+                </Link>
               </div>
             </div>
             

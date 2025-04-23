@@ -9,6 +9,9 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  userRole: string | null;
+  supabase: typeof supabase;
+  hasRole: (role: string) => boolean;
   signIn: (email: string, password: string) => Promise<{
     error: AuthError | Error | null;
     success: boolean;
@@ -27,7 +30,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
+
+  const hasRole = (role: string): boolean => {
+    return userRole === role;
+  };
+
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user role:', error);
+        return;
+      }
+
+      setUserRole(data?.role || null);
+    } catch (error) {
+      console.error('Error in fetchUserRole:', error);
+    }
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -36,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session) {
           setSession(session);
           setUser(session.user);
+          await fetchUserRole(session.user.id);
         }
       } catch (error) {
         console.error('Error loading user:', error);
@@ -50,6 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchUserRole(session.user.id);
+        } else {
+          setUserRole(null);
+        }
         setIsLoading(false);
         if (session) {
           router.refresh();
@@ -162,6 +195,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     isLoading,
+    userRole,
+    supabase,
+    hasRole,
     signIn,
     signUp,
     signOut,

@@ -2,19 +2,39 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import supabase from '@/lib/supabase';
-import BusinessCard from '@/components/BusinessCard';
+import { supabase } from '@/lib/supabase';
+import SoukCard from '@/components/ui/SoukCard';
 import { useRouter } from 'next/navigation';
-import { BusinessWithOwner } from '@/types/business';
 import Link from 'next/link';
 
-interface BookmarkWithBusiness {
+interface BookmarkData {
   id: string;
-  business: BusinessWithOwner;
+  bookmarkable_id: string;
+}
+
+interface SoukData {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  location: string | null;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  category: string | null;
+  status: 'active' | 'inactive';
+  price_range: string | null;
+  rating: number | null;
+  review_count: number;
+}
+
+interface BookmarkWithSouk {
+  id: string;
+  souk: SoukData;
 }
 
 export default function MyBookmarks() {
-  const [bookmarks, setBookmarks] = useState<BookmarkWithBusiness[]>([]);
+  const [bookmarks, setBookmarks] = useState<BookmarkWithSouk[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -50,7 +70,7 @@ export default function MyBookmarks() {
           .from('bookmarks')
           .select('id, bookmarkable_id')
           .eq('user_id', user.id)
-          .eq('bookmarkable_type', 'business');
+          .eq('bookmarkable_type', 'souk');
         
         if (bookmarkError) throw bookmarkError;
         
@@ -59,23 +79,23 @@ export default function MyBookmarks() {
           return;
         }
         
-        // Then get the business data
-        const businessIds = bookmarkData.map(b => b.bookmarkable_id);
-        const { data: businessData, error: businessError } = await supabase
-          .from('businesses')
+        // Then get the souk data
+        const soukIds = bookmarkData.map((bookmark: BookmarkData) => bookmark.bookmarkable_id);
+        const { data: soukData, error: soukError } = await supabase
+          .from('souks')
           .select('*')
-          .in('id', businessIds);
+          .in('id', soukIds);
           
-        if (businessError) throw businessError;
+        if (soukError) throw soukError;
         
         // Combine the data
-        const combinedData = bookmarkData.map(bookmark => {
-          const business = businessData.find(b => b.id === bookmark.bookmarkable_id);
+        const combinedData = bookmarkData.map((bookmark: BookmarkData) => {
+          const souk = soukData.find((s: SoukData) => s.id === bookmark.bookmarkable_id);
           return {
             id: bookmark.id,
-            business: business as BusinessWithOwner
+            souk: souk as SoukData
           };
-        }).filter(item => item.business); // Filter out any where business wasn't found
+        }).filter((item: BookmarkWithSouk) => item.souk); // Filter out any where souk wasn't found
           
         setBookmarks(combinedData);
       } catch (err) {
@@ -133,21 +153,20 @@ export default function MyBookmarks() {
         </div>
       ) : bookmarks.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-gray-600">You haven&apos;t bookmarked any businesses yet.</p>
+          <p className="text-gray-600">You haven&apos;t bookmarked any souks yet.</p>
           <button 
-            onClick={() => router.push('/businesses')}
+            onClick={() => router.push('/souk')}
             className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
-            Explore Businesses
+            Explore Souks
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {bookmarks.map((bookmark) => (
-            <BusinessCard
+            <SoukCard
               key={bookmark.id}
-              business={bookmark.business}
-              isBookmarked={true}
+              souk={bookmark.souk}
             />
           ))}
         </div>
