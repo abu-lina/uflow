@@ -1,139 +1,145 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { Session, User, AuthChangeEvent, SupabaseClient, createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import type { Database } from '@/types/database';
 
-// Types
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+// Initialize Supabase client with explicit types
+const supabase = createClient<Database, 'public'>(supabaseUrl, supabaseAnonKey);
+
 interface AuthResponse {
-  error: AuthError | Error | null;
+  error: Error | null;
+  data: User | null;
   success: boolean;
   message?: string;
 }
 
-interface UserProfile {
-  id: string;
-  email: string;
-  created_at: string;
-  updated_at: string;
-}
-
 interface AuthContextType {
-  user: User | null;
   session: Session | null;
+  user: User | null;
   isLoading: boolean;
-  userRole: string | null;
-  supabase: typeof supabase;
-  hasRole: (role: string) => boolean;
+  userRole: Database['public']['Enums']['user_role'] | null;
+  supabase: SupabaseClient<Database, 'public'>;
+  hasRole: (role: Database['public']['Enums']['user_role']) => boolean;
   signIn: (email: string, password: string) => Promise<AuthResponse>;
   signUp: (email: string, password: string) => Promise<AuthResponse>;
   signOut: () => Promise<void>;
 }
 
-// Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Error Messages
 const AUTH_ERRORS = {
-  USER_EXISTS: 'This email is already registered. Please try logging in instead.',
+  PROFILE_CREATE_FAILED: 'Failed to create user profile',
+  USER_EXISTS: 'User already exists',
   NO_USER_DATA: 'No user data returned',
   UNKNOWN: 'An unknown error occurred',
-  PROFILE_CREATE_FAILED: 'Failed to create user profile',
-  CONTEXT_ERROR: 'useAuth must be used within an AuthProvider',
 } as const;
 
-// Helper Functions
-const createUserProfile = async (user: User): Promise<AuthResponse> => {
-  const profile: UserProfile = {
-    id: user.id,
-    email: user.email!,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  const { error } = await supabase
-    .from('profiles')
-    .insert(profile)
-    .select()
-    .single();
-
-  if (error) {
-    await supabase.auth.signOut();
-    return { 
-      error: new Error(AUTH_ERRORS.PROFILE_CREATE_FAILED), 
-      success: false 
-    };
-  }
-
-  return { 
-    error: null, 
-    success: true,
-    message: 'Please check your email for confirmation link!' 
-  };
-};
-
-// Provider Component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<Database['public']['Enums']['user_role'] | null>(null);
   const router = useRouter();
 
-  const hasRole = (role: string): boolean => userRole === role;
+  const hasRole = (role: Database['public']['Enums']['user_role']): boolean => userRole === role;
+
+  const createProfile = async (user: User): Promise<AuthResponse> => {
+    if (!user.email) {
+      return { 
+        error: new Error('User email is required'), 
+        data: null,
+        success: false
+      };
+    }
+
+    const profile: Database['public']['Tables']['profiles']['Insert'] = {
+      id: user.id,
+      email: user.email,
+      role: 'customer' as const,
+    };
+
+    const { error } = await supabase.from('profiles').insert(profile);
+
+    if (error) {
+      await supabase.auth.signOut();
+      return { 
+        error: new Error(AUTH_ERRORS.PROFILE_CREATE_FAILED), 
+        data: null,
+        success: false
+      };
+    }
+
+    return { 
+      error: null, 
+      data: user,
+      success: true
+    };
+  };
 
   const fetchUserRole = async (userId: string): Promise<void> => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('profiles')
         .select('role')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single();
 
-      if (error) throw error;
-      setUserRole(data?.role ?? null);
+      if (error) {
+        console.error('Error fetching user role:', error);
+        return;
+      }
+
+      if (data && 'role' in data) {
+        setUserRole(data.role);
+      }
     } catch (error) {
-      console.error('Error fetching user role:', error);
-      setUserRole(null);
+      console.error('Error in fetchUserRole:', error);
+    }
+  };
+
+  const initializeAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+        await fetchUserRole(session.user.id);
+      }
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          setSession(session);
-          setUser(session.user);
-          await fetchUserRole(session.user.id);
-        }
-      } catch (error) {
-        console.error('Error loading user:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session: Session | null) => {
+      async (_event: AuthChangeEvent, session: Session | null) => {
         setSession(session);
-        setUser(session?.user ?? null);
-        
+        setUser(session?.user || null);
         if (session?.user) {
           await fetchUserRole(session.user.id);
-          router.refresh();
         } else {
           setUserRole(null);
         }
-        
-        setIsLoading(false);
       }
     );
 
-    initializeAuth();
-    return () => subscription.unsubscribe();
-  }, [router]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [initializeAuth]);
 
   const signIn = async (email: string, password: string): Promise<AuthResponse> => {
     try {
@@ -142,16 +148,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
 
-      if (error) throw error;
-      if (!data?.user) throw new Error(AUTH_ERRORS.NO_USER_DATA);
+      if (error) {
+        return { error, data: null, success: false };
+      }
 
-      router.refresh();
-      return { error: null, success: true };
+      return { error: null, data: data.user, success: true };
     } catch (error) {
-      console.error('Sign in error:', error);
-      return {
-        error: error instanceof Error ? error : new Error(AUTH_ERRORS.UNKNOWN),
-        success: false,
+      return { 
+        error: error instanceof Error ? error : new Error('An unexpected error occurred'), 
+        data: null,
+        success: false
       };
     }
   };
@@ -161,26 +167,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
       });
 
       if (error) {
-        if (error.message.toLowerCase().includes('user already registered')) {
-          throw new Error(AUTH_ERRORS.USER_EXISTS);
-        }
-        throw error;
+        return { error, data: null, success: false };
       }
 
-      if (!data?.user) throw new Error(AUTH_ERRORS.NO_USER_DATA);
+      if (data.user) {
+        return await createProfile(data.user);
+      }
 
-      return createUserProfile(data.user);
+      return { error: null, data: null, success: true, message: 'Please check your email for confirmation link!' };
     } catch (error) {
-      console.error('Sign up error:', error);
-      return {
-        error: error instanceof Error ? error : new Error(AUTH_ERRORS.UNKNOWN),
-        success: false,
+      return { 
+        error: error instanceof Error ? error : new Error('An unexpected error occurred'), 
+        data: null,
+        success: false
       };
     }
   };
@@ -197,8 +199,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider 
       value={{
-        user,
         session,
+        user,
         isLoading,
         userRole,
         supabase,
@@ -213,11 +215,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Hook
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error(AUTH_ERRORS.CONTEXT_ERROR);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 } 

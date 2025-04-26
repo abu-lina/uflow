@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next"
-import { Inter_Tight } from "next/font/google"
+import { Inter } from "next/font/google"
 import "./globals.css"
-import Header from "@/components/core/layout/header"
-import { AuthProvider } from "@/features/auth/context/AuthContext"
+import { Header } from "@/components/ui/layout/header"
+import { AuthProvider } from "@/providers/AuthProvider"
+import { Navbar } from '@/components/layout/navbar'
 
-const interTight = Inter_Tight({
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter-tight",
+  variable: "--font-inter",
 })
 
 export const metadata: Metadata = {
@@ -73,9 +74,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="de" className={`${interTight.variable} h-full`}>
+    <html lang="de" className={`${inter.variable} h-full`}>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+      </head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <AuthProvider>
+          <Navbar />
           <Header />
           <main className="pt-[90px] min-h-[calc(100vh-90px)]">
             {children}

@@ -118,7 +118,10 @@ export default function LoginForm() {
                 Willkommen zurück bei<br />Ummah Flow
               </h2>
               <p className="text-[16px] text-[#7A7A7A] font-['Inter']">
-                Entdecke muslimische Angebote in deiner Nähe insha'Allah.
+                Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
+              </p>
+              <p className="text-[8px] text-[#7A7A7A] text-center">
+                Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.
               </p>
             </div>
           </div>

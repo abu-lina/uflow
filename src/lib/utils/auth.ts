@@ -1,8 +1,9 @@
-import { supabase } from '../supabase';
+import { createClientClient } from '@/lib/database/supabase-server';
 import { type User, type Session } from '@supabase/supabase-js';
 
 // Sign up with email and password
 export async function signUp(email: string, password: string) {
+  const supabase = createClientClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -13,6 +14,7 @@ export async function signUp(email: string, password: string) {
 
 // Sign in with email and password
 export async function signIn(email: string, password: string) {
+  const supabase = createClientClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -23,18 +25,21 @@ export async function signIn(email: string, password: string) {
 
 // Sign out
 export async function signOut() {
+  const supabase = createClientClient();
   const { error } = await supabase.auth.signOut();
   return { error };
 }
 
 // Get current session
 export async function getSession(): Promise<Session | null> {
+  const supabase = createClientClient();
   const { data: { session } } = await supabase.auth.getSession();
   return session;
 }
 
 // Get current user
 export async function getUser(): Promise<User | null> {
+  const supabase = createClientClient();
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 }
@@ -51,16 +56,19 @@ export interface ProfileType {
 
 // Update user profile
 export async function updateProfile(profile: ProfileType) {
+  const supabase = createClientClient();
   const { data, error } = await supabase
     .from('profiles')
     .upsert(profile)
-    .select();
+    .select()
+    .single();
   
   return { data, error };
 }
 
 // Get user profile
 export async function getProfile(userId: string) {
+  const supabase = createClientClient();
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -72,12 +80,14 @@ export async function getProfile(userId: string) {
 
 // Reset password
 export async function resetPassword(email: string) {
+  const supabase = createClientClient();
   const { data, error } = await supabase.auth.resetPasswordForEmail(email);
   return { data, error };
 }
 
 // Update password
 export async function updatePassword(password: string) {
+  const supabase = createClientClient();
   const { data, error } = await supabase.auth.updateUser({
     password,
   });

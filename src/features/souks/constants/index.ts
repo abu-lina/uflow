@@ -20,11 +20,9 @@ export const MAX_PAGE_SIZE = 50;
 
 export const SOUK_STATUS = {
   DRAFT: 'draft',
-  PENDING: 'pending',
   PUBLISHED: 'published',
-  REJECTED: 'rejected',
   ARCHIVED: 'archived',
-  SUSPENDED: 'suspended',
+  SUSPENDED: 'suspended'
 } as const;
 
 export const SOUK_VISIBILITY = {

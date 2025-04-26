@@ -1,4 +1,4 @@
-import { SERVICE_STATUS } from '@/config/constants';
+import { SOUK_STATUS } from '@/config/constants';
 
 // Base Types
 interface BaseSouk {
@@ -53,7 +53,7 @@ export interface Souk extends BaseSouk {
     created_at: string;
     updated_at: string;
   };
-  status: typeof SERVICE_STATUS[keyof typeof SERVICE_STATUS];
+  status: typeof SOUK_STATUS[keyof typeof SOUK_STATUS];
 }
 
 // Offer Types
