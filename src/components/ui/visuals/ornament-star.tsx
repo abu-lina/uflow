@@ -1,4 +1,5 @@
 import { HTMLAttributes, forwardRef } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface OrnamentStarProps extends HTMLAttributes<HTMLDivElement> {
@@ -25,14 +26,14 @@ export const OrnamentStar = forwardRef<HTMLDivElement, OrnamentStarProps>(
         {...props}
       >
         <svg
-          width="11"
-          height="10"
-          viewBox="0 0 11 10"
           fill="none"
+          height="10"
           stroke="currentColor"
-          strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
+          strokeWidth="1.5"
+          viewBox="0 0 11 10"
+          width="11"
         >
           <path d="M5.5 0L6.8 3.4L10.5 3.4L7.4 5.5L8.7 8.9L5.5 6.8L2.3 8.9L3.6 5.5L0.5 3.4L4.2 3.4L5.5 0Z" />
         </svg>
@@ -41,4 +42,4 @@ export const OrnamentStar = forwardRef<HTMLDivElement, OrnamentStarProps>(
   }
 );
 
-OrnamentStar.displayName = 'OrnamentStar'; 
+OrnamentStar.displayName = 'OrnamentStar';

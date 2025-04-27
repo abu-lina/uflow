@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+
 import { useRouter, usePathname } from 'next/navigation';
 
 interface SearchFilterProps {
@@ -8,9 +9,9 @@ interface SearchFilterProps {
   placeholder?: string;
 }
 
-export default function SearchFilter({ 
-  initialQuery = '', 
-  placeholder = 'Search...' 
+export default function SearchFilter({
+  initialQuery = '',
+  placeholder = 'Search...',
 }: SearchFilterProps) {
   const [query, setQuery] = useState(initialQuery);
   const [isPending, startTransition] = useTransition();
@@ -19,20 +20,20 @@ export default function SearchFilter({
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Create new URL search params using current URL
     const params = new URLSearchParams(window.location.search);
-    
+
     // Update or remove the query parameter based on input
     if (query) {
       params.set('query', query);
     } else {
       params.delete('query');
     }
-    
+
     // Reset to page 1 when search changes
     params.set('page', '1');
-    
+
     // Update the URL
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
@@ -40,37 +41,37 @@ export default function SearchFilter({
   };
 
   return (
-    <form onSubmit={handleSearch} className="relative">
-      <div className="flex items-center border border-gray-300 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
+    <form className="relative" onSubmit={handleSearch}>
+      <div className="flex items-center overflow-hidden rounded-md border border-gray-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary">
         <input
+          aria-label="Search query"
+          className="flex-grow px-4 py-2 focus:outline-none"
+          placeholder={placeholder}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
-          className="flex-grow px-4 py-2 focus:outline-none"
-          aria-label="Search query"
         />
         <button
-          type="submit"
-          className="bg-primary hover:bg-primary-dark text-white px-4 py-2 transition-colors"
-          disabled={isPending}
           aria-label="Search"
+          className="bg-primary px-4 py-2 text-white transition-colors hover:bg-primary-dark"
+          disabled={isPending}
+          type="submit"
         >
           {isPending ? (
-            <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
           ) : (
             <svg
-              xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
               fill="none"
-              viewBox="0 0 24 24"
               stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
               <path
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
           )}
@@ -78,4 +79,4 @@ export default function SearchFilter({
       </div>
     </form>
   );
-} 
+}

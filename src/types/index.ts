@@ -75,4 +75,20 @@ export type AuthUser = {
   email: string;
   role: UserRole;
   profile?: Profile;
-}; 
+};
+
+export interface Souk {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}

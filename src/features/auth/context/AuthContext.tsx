@@ -1,37 +1,19 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User, AuthChangeEvent, SupabaseClient, createClient } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useCallback, useState } from 'react';
+
 import { useRouter } from 'next/navigation';
-import type { Database } from '@/types/database';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { createClient, Session, User, SupabaseClient } from '@supabase/supabase-js';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-// Initialize Supabase client with explicit types
-const supabase = createClient<Database, 'public'>(supabaseUrl, supabaseAnonKey);
+import { env } from '@/config/environment';
+import type { Database, ProfileInsert } from '@/types/database';
 
 interface AuthResponse {
   error: Error | null;
   data: User | null;
   success: boolean;
   message?: string;
-}
-
-interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  isLoading: boolean;
-  userRole: Database['public']['Enums']['user_role'] | null;
-  supabase: SupabaseClient<Database, 'public'>;
-  hasRole: (role: Database['public']['Enums']['user_role']) => boolean;
-  signIn: (email: string, password: string) => Promise<AuthResponse>;
-  signUp: (email: string, password: string) => Promise<AuthResponse>;
-  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,178 +29,143 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<Database['public']['Enums']['user_role'] | null>(null);
+  const [userRole, setUserRole] = useState<
+    Database['public']['Tables']['profiles']['Row']['role'] | null
+  >(null);
   const router = useRouter();
+  const supabase = createClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    }
+  );
 
-  const hasRole = (role: Database['public']['Enums']['user_role']): boolean => userRole === role;
+  const hasRole = (role: Database['public']['Tables']['profiles']['Row']['role']): boolean =>
+    userRole === role;
 
   const createProfile = async (user: User): Promise<AuthResponse> => {
     if (!user.email) {
-      return { 
-        error: new Error('User email is required'), 
+      return {
+        error: new Error('User email is required'),
         data: null,
-        success: false
+        success: false,
       };
     }
 
-    const profile: Database['public']['Tables']['profiles']['Insert'] = {
+    const profile: ProfileInsert = {
       id: user.id,
       email: user.email,
-      role: 'customer' as const,
+      role: 'customer',
     };
 
-    const { error } = await supabase.from('profiles').insert(profile);
+    const { error } = await supabase.from('profiles').insert([profile]);
 
     if (error) {
       await supabase.auth.signOut();
-      return { 
-        error: new Error(AUTH_ERRORS.PROFILE_CREATE_FAILED), 
+      return {
+        error: new Error(AUTH_ERRORS.PROFILE_CREATE_FAILED),
         data: null,
-        success: false
+        success: false,
       };
     }
 
-    return { 
-      error: null, 
+    return {
+      error: null,
       data: user,
-      success: true
+      success: true,
     };
   };
 
-  const fetchUserRole = async (userId: string): Promise<void> => {
+  const initializeAuth = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
 
-      if (error) {
-        console.error('Error fetching user role:', error);
-        return;
-      }
+      if (currentSession?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', currentSession.user.id)
+          .single();
 
-      if (data && 'role' in data) {
-        setUserRole(data.role);
-      }
-    } catch (error) {
-      console.error('Error in fetchUserRole:', error);
-    }
-  };
-
-  const initializeAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-        await fetchUserRole(session.user.id);
+        setUserRole(profile?.role ?? null);
       }
     } catch (error) {
       console.error('Error initializing auth:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: AuthChangeEvent, session: Session | null) => {
-        setSession(session);
-        setUser(session?.user || null);
-        if (session?.user) {
-          await fetchUserRole(session.user.id);
-        } else {
-          setUserRole(null);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        setUserRole(profile?.role ?? null);
+      } else {
+        setUserRole(null);
       }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [initializeAuth]);
+  }, [initializeAuth, supabase]);
 
-  const signIn = async (email: string, password: string): Promise<AuthResponse> => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.refresh();
+  }, [router, supabase.auth]);
 
-      if (error) {
-        return { error, data: null, success: false };
-      }
-
-      return { error: null, data: data.user, success: true };
-    } catch (error) {
-      return { 
-        error: error instanceof Error ? error : new Error('An unexpected error occurred'), 
-        data: null,
-        success: false
-      };
-    }
+  const value = {
+    session,
+    user,
+    isLoading,
+    userRole,
+    hasRole,
+    createProfile,
+    signOut,
+    supabase,
   };
 
-  const signUp = async (email: string, password: string): Promise<AuthResponse> => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { error, data: null, success: false };
-      }
-
-      if (data.user) {
-        return await createProfile(data.user);
-      }
-
-      return { error: null, data: null, success: true, message: 'Please check your email for confirmation link!' };
-    } catch (error) {
-      return { 
-        error: error instanceof Error ? error : new Error('An unexpected error occurred'), 
-        data: null,
-        success: false
-      };
-    }
-  };
-
-  const signOut = async (): Promise<void> => {
-    try {
-      await supabase.auth.signOut();
-      router.push('/auth/login');
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  };
-
-  return (
-    <AuthContext.Provider 
-      value={{
-        session,
-        user,
-        isLoading,
-        userRole,
-        supabase,
-        hasRole,
-        signIn,
-        signUp,
-        signOut,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+};
+
+interface AuthContextType {
+  session: Session | null;
+  user: User | null;
+  isLoading: boolean;
+  userRole: Database['public']['Tables']['profiles']['Row']['role'] | null;
+  hasRole: (role: Database['public']['Tables']['profiles']['Row']['role']) => boolean;
+  createProfile: (user: User) => Promise<AuthResponse>;
+  signOut: () => Promise<void>;
+  supabase: SupabaseClient<Database>;
+}

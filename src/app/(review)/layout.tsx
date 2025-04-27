@@ -1,30 +1,25 @@
-'use client'
+'use client';
 
-import { redirect } from 'next/navigation'
-import { useAuthContext } from '@/providers/auth-provider'
-import { Navbar } from '@/components/layout/navbar'
+import { redirect } from 'next/navigation';
 
-export default function ReviewLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { user, loading } = useAuthContext()
+import { Navbar } from '@/components/layout/navbar';
+import { useAuthContext } from '@/providers/auth-provider';
+
+export default function ReviewLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuthContext();
 
   if (loading) {
-    return null
+    return null;
   }
 
   if (!user || user.role !== 'reviewer') {
-    redirect('/dashboard')
+    redirect('/dashboard');
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container mx-auto py-6 px-4">
-        {children}
-      </main>
+      <main className="container mx-auto px-4 py-6">{children}</main>
     </div>
-  )
-} 
+  );
+}

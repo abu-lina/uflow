@@ -1,6 +1,7 @@
-import type { Database } from "@/types/database";
-import { SoukCard } from "./SoukCard";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
+import type { Database } from '@/types/database';
+
+import { SoukCard } from './SoukCard';
 
 type Souk = Database['public']['Tables']['souks']['Row'];
 
@@ -10,19 +11,17 @@ interface SouksListProps {
   className?: string;
 }
 
-export function SouksList({ 
-  souks, 
-  isLoading = false,
-  className 
-}: SouksListProps) {
+export function SouksList({ souks, isLoading = false, className }: SouksListProps) {
   if (isLoading) {
     return (
-      <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6", className)}>
+      <div
+        className={cn(
+          'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+          className
+        )}
+      >
         {Array.from({ length: 8 }).map((_, index) => (
-          <div 
-            key={index}
-            className="h-48 bg-gray-100 rounded-lg animate-pulse"
-          />
+          <div key={index} className="h-48 animate-pulse rounded-lg bg-gray-100" />
         ))}
       </div>
     );
@@ -30,11 +29,9 @@ export function SouksList({
 
   if (!souks?.length) {
     return (
-      <div className={cn("text-center py-8", className)}>
-        <p className="text-gray-500">
-          Keine Souks gefunden.
-        </p>
-        <p className="text-sm text-gray-400 mt-2">
+      <div className={cn('py-8 text-center', className)}>
+        <p className="text-gray-500">Keine Souks gefunden.</p>
+        <p className="mt-2 text-sm text-gray-400">
           Bitte versuchen Sie es mit anderen Suchkriterien.
         </p>
       </div>
@@ -42,16 +39,15 @@ export function SouksList({
   }
 
   return (
-    <div className={cn(
-      "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6",
-      className
-    )}>
+    <div
+      className={cn(
+        'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+        className
+      )}
+    >
       {souks.map((souk) => (
-        <SoukCard 
-          key={souk.souk_id} 
-          souk={souk}
-        />
+        <SoukCard key={souk.souk_id} souk={souk} />
       ))}
     </div>
   );
-} 
+}

@@ -1,14 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { supabaseClient } from '@/lib/supabase/client';
+
+import Image from 'next/image';
 import Link from 'next/link';
+
+import { Loader2, LogOut, User } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, LogOut, User } from 'lucide-react';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { supabase } from '@/lib/supabase/client';
 
 interface ProfileData {
   id: string;
@@ -26,11 +36,14 @@ export default function UserPage() {
   const { user, isLoading } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [updateMessage, setUpdateMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [updateMessage, setUpdateMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
-    bio: ''
+    bio: '',
   });
 
   useEffect(() => {
@@ -38,7 +51,7 @@ export default function UserPage() {
       if (!user) return;
 
       try {
-        const { data, error } = await supabaseClient
+        const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
@@ -47,7 +60,7 @@ export default function UserPage() {
         if (error) {
           if (error.code === 'PGRST116') {
             // Profile doesn't exist, create it
-            const { data: newProfile, error: createError } = await supabaseClient
+            const { data: newProfile, error: createError } = await supabase
               .from('profiles')
               .insert([
                 {
@@ -55,8 +68,8 @@ export default function UserPage() {
                   email: user.email,
                   full_name: user.user_metadata?.full_name || null,
                   created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                }
+                  updated_at: new Date().toISOString(),
+                },
               ])
               .select()
               .single();
@@ -66,7 +79,7 @@ export default function UserPage() {
             setFormData({
               full_name: newProfile.full_name || '',
               phone: newProfile.phone || '',
-              bio: newProfile.bio || ''
+              bio: newProfile.bio || '',
             });
           } else {
             throw error;
@@ -76,14 +89,14 @@ export default function UserPage() {
           setFormData({
             full_name: data.full_name || '',
             phone: data.phone || '',
-            bio: data.bio || ''
+            bio: data.bio || '',
           });
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
         setUpdateMessage({
           text: 'Error loading profile data',
-          type: 'error'
+          type: 'error',
         });
       }
     };
@@ -93,7 +106,7 @@ export default function UserPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,13 +117,13 @@ export default function UserPage() {
     setUpdateMessage(null);
 
     try {
-      const { error } = await supabaseClient
+      const { error } = await supabase
         .from('profiles')
         .update({
           full_name: formData.full_name || null,
           phone: formData.phone || null,
           bio: formData.bio || null,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
 
@@ -118,22 +131,18 @@ export default function UserPage() {
 
       setUpdateMessage({
         text: 'Profile updated successfully!',
-        type: 'success'
+        type: 'success',
       });
 
       // Refresh profile data
-      const { data } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
       setProfileData(data);
     } catch (error) {
       console.error('Error updating profile:', error);
       setUpdateMessage({
         text: 'Error updating profile. Please try again.',
-        type: 'error'
+        type: 'error',
       });
     } finally {
       setIsUpdating(false);
@@ -141,7 +150,7 @@ export default function UserPage() {
   };
 
   const handleSignOut = async () => {
-    await supabaseClient.auth.signOut();
+    await supabase.auth.signOut();
     window.location.href = '/';
   };
 
@@ -176,19 +185,21 @@ export default function UserPage() {
 
   return (
     <div className="container mx-auto p-4 py-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="mx-auto max-w-2xl">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
                 {profileData?.avatar_url ? (
-                  <img 
-                    src={profileData.avatar_url} 
-                    alt="Profile" 
-                    className="w-full h-full rounded-full object-cover"
+                  <Image
+                    alt="Profile"
+                    className="h-full w-full rounded-full object-cover"
+                    height={64}
+                    src={profileData.avatar_url}
+                    width={64}
                   />
                 ) : (
-                  <User className="w-8 h-8 text-gray-400" />
+                  <User className="h-8 w-8 text-gray-400" />
                 )}
               </div>
               <div>
@@ -199,22 +210,26 @@ export default function UserPage() {
           </CardHeader>
           <CardContent>
             {updateMessage && (
-              <div className={`mb-4 p-3 rounded-md ${
-                updateMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}>
+              <div
+                className={`mb-4 rounded-md p-3 ${
+                  updateMessage.type === 'success'
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-red-50 text-red-700'
+                }`}
+              >
                 {updateMessage.text}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="full_name">Full Name</Label>
                 <Input
                   id="full_name"
                   name="full_name"
+                  placeholder="Enter your full name"
                   value={formData.full_name}
                   onChange={handleInputChange}
-                  placeholder="Enter your full name"
                 />
               </div>
 
@@ -223,30 +238,26 @@ export default function UserPage() {
                 <Input
                   id="phone"
                   name="phone"
+                  placeholder="Enter your phone number"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  placeholder="Enter your phone number"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
                 <textarea
+                  className="min-h-[100px] w-full rounded-md border p-2"
                   id="bio"
                   name="bio"
+                  placeholder="Tell us about yourself"
                   value={formData.bio}
                   onChange={handleInputChange}
-                  placeholder="Tell us about yourself"
-                  className="w-full min-h-[100px] p-2 border rounded-md"
                 />
               </div>
 
               <div className="flex justify-between pt-4">
-                <Button
-                  type="submit"
-                  disabled={isUpdating}
-                  className="flex items-center gap-2"
-                >
+                <Button className="flex items-center gap-2" disabled={isUpdating} type="submit">
                   {isUpdating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -258,10 +269,10 @@ export default function UserPage() {
                 </Button>
 
                 <Button
+                  className="flex items-center gap-2"
                   type="button"
                   variant="outline"
                   onClick={handleSignOut}
-                  className="flex items-center gap-2"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign Out
@@ -269,12 +280,22 @@ export default function UserPage() {
               </div>
             </form>
 
-            <div className="mt-8 pt-4 border-t">
-              <h3 className="font-medium mb-2">Account Information</h3>
+            <div className="mt-8 border-t pt-4">
+              <h3 className="mb-2 font-medium">Account Information</h3>
               <div className="space-y-2 text-sm text-gray-600">
-                <p><span className="font-medium">Role:</span> {profileData?.role || 'Not set'}</p>
-                <p><span className="font-medium">Member since:</span> {new Date(profileData?.created_at || '').toLocaleDateString()}</p>
-                <p><span className="font-medium">Last updated:</span> {profileData?.updated_at ? new Date(profileData.updated_at).toLocaleString() : 'Never'}</p>
+                <p>
+                  <span className="font-medium">Role:</span> {profileData?.role || 'Not set'}
+                </p>
+                <p>
+                  <span className="font-medium">Member since:</span>{' '}
+                  {new Date(profileData?.created_at || '').toLocaleDateString()}
+                </p>
+                <p>
+                  <span className="font-medium">Last updated:</span>{' '}
+                  {profileData?.updated_at
+                    ? new Date(profileData.updated_at).toLocaleString()
+                    : 'Never'}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -282,4 +303,4 @@ export default function UserPage() {
       </div>
     </div>
   );
-} 
+}

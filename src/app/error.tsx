@@ -1,23 +1,32 @@
-'use client'
+'use client';
 
-import { APP_CONFIG } from '@/config/constants/app'
-import { errorMetadata } from '@/config/metadata'
-import { FilledButton } from '@/components/ui/button/filled'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card/card'
-import { AlertCircle, Home, RefreshCw } from 'lucide-react'
-import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect } from 'react';
 
-export const metadata = errorMetadata
+import Link from 'next/link';
+
+import { AlertCircle, Home, RefreshCw } from 'lucide-react';
+
+import { FilledButton } from '@/components/ui/button/filled';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card/card';
+import { APP_CONFIG } from '@/config/constants/app';
+import { errorMetadata } from '@/config/metadata';
+
+export const metadata = errorMetadata;
 
 interface ErrorProps {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
 /**
  * Error Page Component
- * 
+ *
  * This page is shown when an unexpected error occurs in the application.
  * It provides options to retry the failed action or return to the homepage.
  */
@@ -28,8 +37,8 @@ export default function Error({ error, reset }: ErrorProps) {
       message: error.message,
       digest: error.digest,
       stack: error.stack,
-    })
-  }, [error])
+    });
+  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -40,19 +49,17 @@ export default function Error({ error, reset }: ErrorProps) {
           </div>
           <CardTitle className="text-center">Oops! Something went wrong</CardTitle>
           <CardDescription className="text-center">
-            {error.message || `An unexpected error occurred in ${APP_CONFIG.name}. Please try again later.`}
+            {error.message ||
+              `An unexpected error occurred in ${APP_CONFIG.name}. Please try again later.`}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <FilledButton
-            onClick={reset}
-            className="w-full"
-          >
+          <FilledButton className="w-full" onClick={reset}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
           </FilledButton>
-          <Link href="/" className="w-full">
-            <FilledButton variant="outline" className="w-full">
+          <Link className="w-full" href="/">
+            <FilledButton className="w-full" variant="outline">
               <Home className="mr-2 h-4 w-4" />
               Go to Homepage
             </FilledButton>
@@ -60,5 +67,5 @@ export default function Error({ error, reset }: ErrorProps) {
         </CardContent>
       </Card>
     </div>
-  )
-} 
+  );
+}

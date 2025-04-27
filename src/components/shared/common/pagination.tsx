@@ -8,11 +8,7 @@ interface PaginationProps {
   onPageChange?: (page: number) => void;
 }
 
-export default function Pagination({ 
-  currentPage, 
-  totalPages,
-  onPageChange
-}: PaginationProps) {
+export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -22,28 +18,28 @@ export default function Pagination({
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     // Adjust start page if we're at the end
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     for (let i = startPage; i <= endPage; i++) {
       range.push(i);
     }
-    
+
     return range;
   };
 
   const handlePageChange = (page: number) => {
     if (page === currentPage) return;
-    
+
     // If client provided an onPageChange callback, use it
     if (onPageChange) {
       onPageChange(page);
       return;
     }
-    
+
     // Otherwise update URL params
     const params = new URLSearchParams(window.location.search);
     params.set('page', page.toString());
@@ -56,74 +52,65 @@ export default function Pagination({
   const pageRange = getPageRange();
 
   return (
-    <nav 
-      className="flex justify-center mt-8" 
-      aria-label="Pagination"
-    >
+    <nav aria-label="Pagination" className="mt-8 flex justify-center">
       <ul className="flex items-center gap-1">
         {/* Previous button */}
         <li>
           <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className={`px-3 py-1 rounded ${
+            aria-label="Go to previous page"
+            className={`rounded px-3 py-1 ${
               currentPage <= 1
-                ? 'text-gray-400 cursor-not-allowed'
+                ? 'cursor-not-allowed text-gray-400'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
-            aria-label="Go to previous page"
+            disabled={currentPage <= 1}
+            onClick={() => handlePageChange(currentPage - 1)}
           >
             &laquo;
           </button>
         </li>
-        
+
         {/* First page if not in range */}
         {pageRange[0] > 1 && (
           <>
             <li>
               <button
-                onClick={() => handlePageChange(1)}
-                className="px-3 py-1 rounded hover:bg-gray-100"
                 aria-label="Go to page 1"
+                className="rounded px-3 py-1 hover:bg-gray-100"
+                onClick={() => handlePageChange(1)}
               >
                 1
               </button>
             </li>
-            {pageRange[0] > 2 && (
-              <li className="px-2">...</li>
-            )}
+            {pageRange[0] > 2 && <li className="px-2">...</li>}
           </>
         )}
-        
+
         {/* Page numbers */}
-        {pageRange.map(page => (
+        {pageRange.map((page) => (
           <li key={page}>
             <button
-              onClick={() => handlePageChange(page)}
-              className={`px-3 py-1 rounded ${
-                page === currentPage
-                  ? 'bg-primary text-white font-medium'
-                  : 'hover:bg-gray-100'
-              }`}
-              aria-label={`Go to page ${page}`}
               aria-current={page === currentPage ? 'page' : undefined}
+              aria-label={`Go to page ${page}`}
+              className={`rounded px-3 py-1 ${
+                page === currentPage ? 'bg-primary font-medium text-white' : 'hover:bg-gray-100'
+              }`}
+              onClick={() => handlePageChange(page)}
             >
               {page}
             </button>
           </li>
         ))}
-        
+
         {/* Last page if not in range */}
         {pageRange[pageRange.length - 1] < totalPages && (
           <>
-            {pageRange[pageRange.length - 1] < totalPages - 1 && (
-              <li className="px-2">...</li>
-            )}
+            {pageRange[pageRange.length - 1] < totalPages - 1 && <li className="px-2">...</li>}
             <li>
               <button
-                onClick={() => handlePageChange(totalPages)}
-                className="px-3 py-1 rounded hover:bg-gray-100"
                 aria-label="Go to last page"
+                className="rounded px-3 py-1 hover:bg-gray-100"
+                onClick={() => handlePageChange(totalPages)}
               >
                 {totalPages}
               </button>
@@ -133,4 +120,4 @@ export default function Pagination({
       </ul>
     </nav>
   );
-} 
+}

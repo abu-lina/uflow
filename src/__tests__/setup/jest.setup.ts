@@ -5,7 +5,8 @@
 
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
-import { afterEach } from '@jest/globals';
+import { afterEach, jest } from '@jest/globals';
+import React from 'react';
 
 // Cleanup after each test
 afterEach(() => {
@@ -33,8 +34,8 @@ jest.mock('next/router', () => ({
 // Mock next/image
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
     // eslint-disable-next-line jsx-a11y/alt-text
-    return <img {...props} />;
+    return React.createElement('img', props);
   },
-})); 
+}));

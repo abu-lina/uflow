@@ -1,9 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-import type { SupabaseClient } from '@supabase/supabase-js';
+
+import { createClient } from '@supabase/supabase-js';
+
+import { env } from '@/config/environment';
 import type { Database } from '@/types/database';
+
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export default function SupabaseLogger() {
   useEffect(() => {
@@ -11,19 +15,27 @@ export default function SupabaseLogger() {
     let subscription: { unsubscribe: () => void };
 
     try {
-      supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      supabase = createClient<Database>(
+        env.NEXT_PUBLIC_SUPABASE_URL,
+        env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+          },
+        }
       );
 
       // Log connection status (safely)
       console.log('[Supabase] Connection Status:', {
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + '...'
+        url: env.NEXT_PUBLIC_SUPABASE_URL,
+        anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY.slice(0, 10) + '...',
       });
 
       // Subscribe to auth state changes
-      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((event, session) => {
+      const {
+        data: { subscription: sub },
+      } = supabase.auth.onAuthStateChange((event, session) => {
         console.log('[Supabase] Auth State Changed:', { event, session });
       });
 
@@ -38,4 +50,4 @@ export default function SupabaseLogger() {
   }, []);
 
   return null;
-} 
+}

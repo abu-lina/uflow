@@ -5,6 +5,13 @@
 
 /// <reference lib="webworker" />
 
+interface WorkerGlobalScope {
+  clients: Clients;
+  skipWaiting(): Promise<void>;
+  addEventListener(type: string, listener: EventListener): void;
+  removeEventListener(type: string, listener: EventListener): void;
+}
+
 export interface ExtendableEvent extends Event {
   waitUntil(promise: Promise<void>): void;
 }
@@ -100,4 +107,4 @@ export interface ServiceWorkerEventMap {
   sync: SyncEvent;
   push: PushEvent;
   notificationclick: NotificationEvent;
-} 
+}

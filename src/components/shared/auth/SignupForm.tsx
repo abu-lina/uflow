@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
-import { createServerClient } from '@/lib/database/supabase-server';
-import { Label } from '@/components/ui/label/label';
-import { Input } from '@/components/ui/input/input';
+
 import { FilledButton } from '@/components/ui/button/filled';
+import { Input } from '@/components/ui/input/input';
+import { Label } from '@/components/ui/label/label';
+import { createServerClient } from '@/lib/database/supabase-server';
 
 interface FormData {
   email: string;
@@ -48,7 +50,7 @@ export const SignupForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -76,15 +78,15 @@ export const SignupForm = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
@@ -92,49 +94,45 @@ export const SignupForm = () => {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {Object.entries(errors).map(([key, value]) => (
-            <div key={key} className="bg-red-50 text-red-600 p-3 rounded-md">
+            <div key={key} className="rounded-md bg-red-50 p-3 text-red-600">
               {value}
             </div>
           ))}
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
+              error={errors.email}
               id="email"
               name="email"
               type="email"
               value={formData.email}
               onChange={handleChange}
-              error={errors.email}
             />
           </div>
           <div>
             <Label htmlFor="password">Password</Label>
             <Input
+              error={errors.password}
               id="password"
               name="password"
               type="password"
               value={formData.password}
               onChange={handleChange}
-              error={errors.password}
             />
           </div>
           <div>
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
+              error={errors.confirmPassword}
               id="confirmPassword"
               name="confirmPassword"
               type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
-              error={errors.confirmPassword}
             />
           </div>
           <div>
-            <FilledButton
-              type="submit"
-              disabled={isLoading}
-              className="w-full"
-            >
+            <FilledButton className="w-full" disabled={isLoading} type="submit">
               {isLoading ? 'Signing up...' : 'Sign Up'}
             </FilledButton>
           </div>
@@ -142,4 +140,4 @@ export const SignupForm = () => {
       </div>
     </div>
   );
-}; 
+};

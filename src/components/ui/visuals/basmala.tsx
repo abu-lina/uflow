@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
+
 import { cn } from '@/lib/utils';
-import { forwardRef } from 'react';
 
 interface BasmalaProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg';
@@ -24,35 +24,36 @@ const Basmala = forwardRef<HTMLDivElement, BasmalaProps>(
       >
         {/* Existing SVG */}
         <svg
-          width="100%"
+          fill="none"
           height="100%"
           viewBox="0 0 100 100"
-          fill="none"
+          width="100%"
           xmlns="http://www.w3.org/2000/svg"
         >
           {/* ... existing SVG content ... */}
         </svg>
 
         {/* Text with gradient */}
-        <p 
+        <p
+          className={cn(
+            'flex h-[18px] w-[369px] items-center justify-center',
+            "text-center font-['Baskerville'] text-base font-normal leading-[18px]"
+          )}
           style={{
-            background: 'linear-gradient(180deg, #D2B581 -49.22%, #DCC391 -3.81%, #AF8650 88.33%, #E5D1A0 228.56%)',
+            background:
+              'linear-gradient(180deg, #D2B581 -49.22%, #DCC391 -3.81%, #AF8650 88.33%, #E5D1A0 228.56%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
           }}
-          className={cn(
-            "w-[369px] h-[18px] flex items-center justify-center",
-            "font-['Baskerville'] text-base leading-[18px] font-normal text-center"
-          )}
         >
           Im Namen Allahs des Allerbarmers, des Allbarmherzigen
         </p>
       </div>
-    )
+    );
   }
-)
+);
 
-Basmala.displayName = "Basmala"
+Basmala.displayName = 'Basmala';
 
-export { Basmala } 
+export { Basmala };

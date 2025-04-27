@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
@@ -12,19 +13,10 @@ interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   name?: string;
 }
 
-export const Form: React.FC<FormProps> = ({
-  children,
-  className,
-  name,
-  ...props
-}) => {
+export const Form: React.FC<FormProps> = ({ children, className, name, ...props }) => {
   return (
-    <form
-      className={cn('space-y-4', className)}
-      name={name}
-      {...props}
-    >
+    <form className={cn('space-y-4', className)} name={name} {...props}>
       {children}
     </form>
   );
-}; 
+};

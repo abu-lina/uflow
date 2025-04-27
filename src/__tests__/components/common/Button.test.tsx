@@ -3,13 +3,16 @@
  * @module tests/components/common
  */
 
+import React from 'react';
+
+import { Button } from '@/components/common/Button';
 import { render, screen } from '@/tests/utils/test-utils';
-import Button from '@/components/common/Button';
 
 describe('Button', () => {
   it('renders with default props', () => {
     render(<Button>Click me</Button>);
-    expect(screen.getByRole('button')).toHaveTextContent('Click me');
+    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(screen.getByText('Click me')).toBeInTheDocument();
   });
 
   it('applies variant classes correctly', () => {
@@ -23,8 +26,8 @@ describe('Button', () => {
   it('handles click events', () => {
     const handleClick = jest.fn();
     render(<Button onClick={handleClick}>Click me</Button>);
-    
+
     screen.getByRole('button').click();
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
-}); 
+});

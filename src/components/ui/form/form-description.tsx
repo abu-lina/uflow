@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface FormDescriptionProps {
@@ -12,17 +13,10 @@ interface FormDescriptionProps {
   id?: string;
 }
 
-export const FormDescription: React.FC<FormDescriptionProps> = ({
-  children,
-  className,
-  id
-}) => {
+export const FormDescription: React.FC<FormDescriptionProps> = ({ children, className, id }) => {
   return (
-    <p
-      id={id}
-      className={cn('text-sm text-gray-500', className)}
-    >
+    <p className={cn('text-sm text-gray-500', className)} id={id}>
       {children}
     </p>
   );
-}; 
+};

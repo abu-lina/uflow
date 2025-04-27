@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useAuth } from '@/features/auth/context/AuthContext';
 
 export default function UserProfile() {
@@ -20,7 +21,7 @@ export default function UserProfile() {
 
     try {
       // Simulate profile update
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setUpdateSuccess(true);
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -31,72 +32,69 @@ export default function UserProfile() {
   };
 
   if (!user) {
-    return <div className="text-center py-10">You must be logged in to view this page.</div>;
+    return <div className="py-10 text-center">You must be logged in to view this page.</div>;
   }
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Your Profile</h1>
-      
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4">
-          {error}
-        </div>
-      )}
-      
+    <div className="mx-auto max-w-lg rounded-lg bg-white p-6 shadow-md">
+      <h1 className="mb-6 text-2xl font-bold">Your Profile</h1>
+
+      {error && <div className="mb-4 rounded-md bg-red-50 p-3 text-red-600">{error}</div>}
+
       {updateSuccess && (
-        <div className="bg-green-50 text-green-600 p-3 rounded-md mb-4">
+        <div className="mb-4 rounded-md bg-green-50 p-3 text-green-600">
           Profile updated successfully!
         </div>
       )}
-      
-      <div className="mb-6 p-4 bg-gray-50 rounded-md">
+
+      <div className="mb-6 rounded-md bg-gray-50 p-4">
         <div className="mb-2">
           <span className="font-medium">Email:</span> {user.email}
         </div>
         <div className="mb-2">
-          <span className="font-medium">User ID:</span> <span className="text-xs font-mono">{user.id}</span>
+          <span className="font-medium">User ID:</span>{' '}
+          <span className="font-mono text-xs">{user.id}</span>
         </div>
         <div>
           <span className="font-medium">Last Sign In:</span>{' '}
           {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
         </div>
       </div>
-      
-      <form onSubmit={handleUpdateProfile} className="mb-6">
+
+      <form className="mb-6" onSubmit={handleUpdateProfile}>
         <div className="mb-4">
-          <label htmlFor="fullName" className="block text-gray-700 font-medium mb-2">
+          <label className="mb-2 block font-medium text-gray-700" htmlFor="fullName">
             Full Name
           </label>
           <input
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             id="fullName"
+            placeholder="Enter your full name"
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter your full name"
           />
         </div>
-        
+
         <button
-          type="submit"
-          disabled={updating}
-          className={`w-full py-2 px-4 rounded-md bg-blue-600 text-white font-medium ${
-            updating ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700'
+          className={`w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white ${
+            updating ? 'cursor-not-allowed opacity-70' : 'hover:bg-blue-700'
           }`}
+          disabled={updating}
+          type="submit"
         >
           {updating ? 'Updating...' : 'Update Profile'}
         </button>
       </form>
-      
-      <div className="mt-6 pt-6 border-t border-gray-200">
+
+      <div className="mt-6 border-t border-gray-200 pt-6">
         <button
+          className="w-full rounded-md border border-red-500 px-4 py-2 font-medium text-red-500 hover:bg-red-50"
           onClick={() => signOut()}
-          className="w-full py-2 px-4 rounded-md border border-red-500 text-red-500 font-medium hover:bg-red-50"
         >
           Sign Out
         </button>
       </div>
     </div>
   );
-} 
+}

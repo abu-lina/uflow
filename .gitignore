@@ -1,24 +1,22 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+node_modules
+.pnp
+.pnp.js
+.yarn/install-state.gz
 
 # testing
-/coverage
+coverage
+.nyc_output
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build
+dist
 
 # misc
 .DS_Store
@@ -31,8 +29,11 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
-!.env.example
+.env
+.env*.local
+.env.development
+.env.test
+.env.production
 
 # vercel
 .vercel
@@ -40,3 +41,53 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local files
+*.local
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+Thumbs.db
+
+# PWA / Service Worker
+**/public/sw.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/sw.js.map
+**/public/workbox-*.js.map
+**/public/worker-*.js.map
+
+# Supabase
+.branches
+.temp
+.supabase
+
+# Cache and Logs
+.cache
+*.log
+logs
+*.log.*
+.eslintcache
+.stylelintcache
+
+# Build artifacts
+dist-ssr
+*.local
+storybook-static
+
+# Misc
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

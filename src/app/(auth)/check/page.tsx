@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import { useAuthContext } from '@/providers/auth-provider';
 
 export default function AuthCheck() {
@@ -19,4 +21,4 @@ export default function AuthCheck() {
   }, [user, loading, router]);
 
   return null;
-} 
+}

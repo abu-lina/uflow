@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+
 import { useAuth } from '@/features/auth/context/AuthContext';
 
 export default function AuthLogger() {
@@ -13,4 +14,4 @@ export default function AuthLogger() {
   }, [user, isLoading]);
 
   return null; // This component doesn't render anything
-} 
+}

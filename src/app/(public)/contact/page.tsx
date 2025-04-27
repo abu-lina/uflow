@@ -1,11 +1,9 @@
 export default function ContactPage() {
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
-      <h1 className="text-4xl font-bold mb-8">Contact Us</h1>
+    <div className="mx-auto max-w-4xl px-4 py-12">
+      <h1 className="mb-8 text-4xl font-bold">Contact Us</h1>
       <div className="prose prose-lg">
-        <p>
-          Have questions or feedback? We'd love to hear from you.
-        </p>
+        <p>We&apos;d love to hear from you!</p>
         <div className="mt-8 space-y-4">
           <div>
             <h2 className="text-xl font-semibold">Email</h2>
@@ -19,5 +17,5 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

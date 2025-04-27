@@ -1,9 +1,11 @@
 'use client';
 
 import { HTMLAttributes } from 'react';
+
 import { cn } from '@/lib/utils';
-import { LoadingSpinner } from './loading-spinner';
 import { Size } from '@/types/shared';
+
+import { LoadingSpinner } from './loading-spinner';
 
 interface LoadingOverlayProps extends HTMLAttributes<HTMLDivElement> {
   loading?: boolean;
@@ -38,12 +40,8 @@ export const LoadingOverlay = ({
         {...props}
       >
         <LoadingSpinner size={spinnerSize} />
-        {text && (
-          <p className="mt-4 text-sm font-medium text-gray-600">
-            {text}
-          </p>
-        )}
+        {text && <p className="mt-4 text-sm font-medium text-gray-600">{text}</p>}
       </div>
     </div>
   );
-}; 
+};

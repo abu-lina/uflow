@@ -1,7 +1,9 @@
 'use client';
 
 import { HTMLAttributes, forwardRef } from 'react';
+
 import Image from 'next/image';
+
 import { cn } from '@/lib/utils';
 
 interface LogoProps extends HTMLAttributes<HTMLDivElement> {
@@ -45,16 +47,10 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(
         style={{ width, height }}
         {...props}
       >
-        <Image
-          src="/logo.svg"
-          alt="Ummah Flow Logo"
-          fill
-          className="object-contain"
-          priority
-        />
+        <Image fill priority alt="Ummah Flow Logo" className="object-contain" src="/logo.svg" />
       </div>
     );
   }
 );
 
-Logo.displayName = 'Logo'; 
+Logo.displayName = 'Logo';

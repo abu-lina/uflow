@@ -1,18 +1,12 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from 'react';
 
-const FormItem = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn("space-y-2", className)}
-      {...props}
-    />
-  )
-})
-FormItem.displayName = "FormItem"
+import { cn } from '@/lib/utils';
 
-export { FormItem } 
+const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => {
+    return <div ref={ref} className={cn('space-y-2', className)} {...props} />;
+  }
+);
+FormItem.displayName = 'FormItem';
+
+export { FormItem };

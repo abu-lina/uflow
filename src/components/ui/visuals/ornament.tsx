@@ -1,6 +1,7 @@
 'use client';
 
 import { HTMLAttributes, forwardRef } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface OrnamentProps extends HTMLAttributes<HTMLDivElement> {
@@ -29,16 +30,14 @@ interface OrnamentProps extends HTMLAttributes<HTMLDivElement> {
  * ```
  */
 export const Ornament = forwardRef<HTMLDivElement, OrnamentProps>(
-  ({ 
-    className, 
-    size = 24, 
-    variant = 'default',
-    'aria-label': ariaLabel = 'Ornament',
-    ...props 
-  }, ref) => {
+  (
+    { className, size = 24, variant = 'default', 'aria-label': ariaLabel = 'Ornament', ...props },
+    ref
+  ) => {
     return (
       <div
         ref={ref}
+        aria-label={ariaLabel}
         className={cn(
           'relative',
           {
@@ -47,18 +46,17 @@ export const Ornament = forwardRef<HTMLDivElement, OrnamentProps>(
           },
           className
         )}
-        style={{ width: size, height: size }}
         role="img"
-        aria-label={ariaLabel}
+        style={{ width: size, height: size }}
         {...props}
       >
-        <svg 
-          width={size} 
-          height={size} 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          xmlns="http://www.w3.org/2000/svg"
+        <svg
           aria-hidden="true"
+          fill="none"
+          height={size}
+          viewBox="0 0 24 24"
+          width={size}
+          xmlns="http://www.w3.org/2000/svg"
         >
           <path
             d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
@@ -70,4 +68,4 @@ export const Ornament = forwardRef<HTMLDivElement, OrnamentProps>(
   }
 );
 
-Ornament.displayName = 'Ornament'; 
+Ornament.displayName = 'Ornament';

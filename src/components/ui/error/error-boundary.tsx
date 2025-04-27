@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { WhiteBox } from '../layout/white-box';
+
 import { FilledButton } from '../button';
+import { WhiteBox } from '../layout/white-box';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -35,7 +36,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       }
 
       return (
-        <WhiteBox className="p-6 space-y-4">
+        <WhiteBox className="space-y-4 p-6">
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-gray-900">Something went wrong</h2>
             <p className="text-sm text-gray-600">
@@ -69,4 +70,4 @@ export const withErrorBoundary = <P extends object>(
       </ErrorBoundary>
     );
   };
-}; 
+};

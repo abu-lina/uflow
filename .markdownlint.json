@@ -1,0 +1,165 @@
+{
+  "default": true,
+  "MD001": false,
+  "MD002": false,
+  "MD003": {
+    "style": "atx"
+  },
+  "MD004": {
+    "style": "dash"
+  },
+  "MD005": true,
+  "MD006": false,
+  "MD007": {
+    "indent": 2
+  },
+  "MD009": {
+    "br_spaces": 2
+  },
+  "MD010": {
+    "code_blocks": false
+  },
+  "MD011": true,
+  "MD012": {
+    "maximum": 1
+  },
+  "MD013": {
+    "line_length": 100,
+    "code_blocks": false,
+    "tables": false,
+    "headers": false
+  },
+  "MD014": false,
+  "MD018": true,
+  "MD019": true,
+  "MD020": true,
+  "MD021": true,
+  "MD022": true,
+  "MD023": true,
+  "MD024": {
+    "allow_different_nesting": true
+  },
+  "MD025": {
+    "level": 1
+  },
+  "MD026": {
+    "punctuation": ".,;:!。，；：！"
+  },
+  "MD027": true,
+  "MD028": true,
+  "MD029": {
+    "style": "ordered"
+  },
+  "MD030": {
+    "ul_single": 1,
+    "ol_single": 1,
+    "ul_multi": 1,
+    "ol_multi": 1
+  },
+  "MD031": true,
+  "MD032": true,
+  "MD033": {
+    "allowed_elements": ["br", "hr", "img", "input"]
+  },
+  "MD034": true,
+  "MD035": {
+    "style": "---"
+  },
+  "MD036": {
+    "punctuation": ".,;:!。，；：！"
+  },
+  "MD037": true,
+  "MD038": true,
+  "MD039": true,
+  "MD040": true,
+  "MD041": false,
+  "MD042": true,
+  "MD043": false,
+  "MD044": {
+    "names": [
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Next.js",
+      "Node.js",
+      "npm",
+      "yarn",
+      "pnpm",
+      "Git",
+      "GitHub",
+      "Vercel",
+      "Supabase",
+      "Tailwind CSS",
+      "ESLint",
+      "Prettier",
+      "Jest",
+      "Husky",
+      "lint-staged"
+    ],
+    "code_blocks": false
+  },
+  "MD045": true,
+  "MD046": {
+    "style": "fenced"
+  },
+  "MD047": true,
+  "MD048": {
+    "style": "backtick"
+  },
+  "MD049": {
+    "style": "underscore"
+  },
+  "MD050": {
+    "style": "asterisk"
+  },
+  "MD051": true,
+  "MD052": true,
+  "MD053": true,
+  "MD054": true,
+  "MD055": true,
+  "MD056": true,
+  "MD057": true,
+  "MD058": true,
+  "MD059": true,
+  "MD060": true,
+  "MD061": true,
+  "MD062": true,
+  "MD063": true,
+  "MD064": true,
+  "MD065": true,
+  "MD066": true,
+  "MD067": true,
+  "MD068": true,
+  "MD069": true,
+  "MD070": true,
+  "MD071": true,
+  "MD072": true,
+  "MD073": true,
+  "MD074": true,
+  "MD075": true,
+  "MD076": true,
+  "MD077": true,
+  "MD078": true,
+  "MD079": true,
+  "MD080": true,
+  "MD081": true,
+  "MD082": true,
+  "MD083": true,
+  "MD084": true,
+  "MD085": true,
+  "MD086": true,
+  "MD087": true,
+  "MD088": true,
+  "MD089": true,
+  "MD090": true,
+  "MD091": true,
+  "MD092": true,
+  "MD093": true,
+  "MD094": true,
+  "MD095": true,
+  "MD096": true,
+  "MD097": true,
+  "MD098": true,
+  "MD099": true,
+  "MD100": true
+}

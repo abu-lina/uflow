@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface FormMessageProps {
@@ -20,26 +21,22 @@ export const FormMessage: React.FC<FormMessageProps> = ({
   children,
   className,
   id,
-  type = 'info'
+  type = 'info',
 }) => {
   const typeStyles = {
     error: 'text-red-500 bg-red-50 border-red-200',
     success: 'text-green-500 bg-green-50 border-green-200',
     warning: 'text-yellow-500 bg-yellow-50 border-yellow-200',
-    info: 'text-blue-500 bg-blue-50 border-blue-200'
+    info: 'text-blue-500 bg-blue-50 border-blue-200',
   };
 
   return (
     <p
+      className={cn('rounded border p-2 text-sm', typeStyles[type], className)}
       id={id}
-      className={cn(
-        'text-sm p-2 rounded border',
-        typeStyles[type],
-        className
-      )}
       role={type === 'error' ? 'alert' : 'status'}
     >
       {children}
     </p>
   );
-}; 
+};

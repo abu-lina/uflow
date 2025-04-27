@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
-import { cacheConfig, runtimeCaching } from '../cache';
-import { securityConfig } from '../security';
+import { runtimeCaching } from '../cache';
+import { SECURITY_CONFIG } from '../security';
 import { monitoringConfig } from '../monitoring';
 import { resourceConfig } from '../resources';
 
@@ -30,12 +30,12 @@ interface PWAConfig {
   healthCheck: typeof monitoringConfig.healthCheck;
 }
 
-export const createPWAConfig = (env: string): PWAConfig => ({
+export const createPWAConfig = (_env: string): PWAConfig => ({
   dest: 'public',
-  disable: env === 'development',
+  disable: _env === 'development',
   register: true,
   skipWaiting: true,
-  buildExcludes: env === 'development' ? [/app-build-manifest.json$/, /_buildManifest.js$/] : [],
+  buildExcludes: _env === 'development' ? [/app-build-manifest.json$/, /_buildManifest.js$/] : [],
   runtimeCaching,
   events: true,
   scope: '/',
@@ -49,20 +49,86 @@ export const createPWAConfig = (env: string): PWAConfig => ({
   },
   features: {
     offlineMode: true,
-    pushNotifications: env === 'production',
-    backgroundSync: env === 'production',
+    pushNotifications: _env === 'production',
+    backgroundSync: _env === 'production',
   },
   version: process.env.APP_VERSION || '1.0.0',
   healthCheck: monitoringConfig.healthCheck,
 });
 
 // Export the base Next.js configuration
-export const createNextConfig = (env: string): NextConfig => ({
+export const createNextConfig = (_env: string): NextConfig => ({
   ...resourceConfig,
-  headers: securityConfig.headers,
+  headers: SECURITY_CONFIG.headers,
   experimental: {
     ...resourceConfig.experimental,
     // Add any additional experimental features here
   },
   // Add any additional Next.js configuration here
-}); 
+});
+
+export const manifest = {
+  name: 'Ummah Flow',
+  short_name: 'UFlow',
+  description: 'A marketplace for Islamic products',
+  start_url: '/',
+  display: 'standalone',
+  background_color: '#ffffff',
+  theme_color: '#000000',
+  icons: [
+    {
+      src: '/icons/icon-192x192.png',
+      sizes: '192x192',
+      type: 'image/png',
+    },
+    {
+      src: '/icons/icon-512x512.png',
+      sizes: '512x512',
+      type: 'image/png',
+    },
+  ],
+};
+
+export const workboxConfig = {
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/fonts\.googleapis\.com/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-fonts-stylesheets',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 60 * 60 * 24 * 365,
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/fonts\.gstatic\.com/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-fonts-webfonts',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 60 * 60 * 24 * 365,
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+  ],
+};
+
+export const register = async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('/sw.js');
+      console.log('ServiceWorker registration successful');
+    } catch (error) {
+      console.error('ServiceWorker registration failed:', error);
+    }
+  }
+};

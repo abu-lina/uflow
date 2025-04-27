@@ -1,6 +1,7 @@
 'use client';
 
 import { HTMLAttributes, forwardRef } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface PageSwitcherProps extends HTMLAttributes<HTMLDivElement> {
@@ -24,32 +25,25 @@ export const PageSwitcher = forwardRef<HTMLDivElement, PageSwitcherProps>(
     };
 
     return (
-      <div
-        ref={ref}
-        className={cn(
-          'flex items-center justify-center gap-2',
-          className
-        )}
-        {...props}
-      >
+      <div ref={ref} className={cn('flex items-center justify-center gap-2', className)} {...props}>
         <button
-          onClick={handlePreviousPage}
-          disabled={currentPage === 1}
-          className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Previous page"
+          className="rounded-full p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={currentPage === 1}
+          onClick={handlePreviousPage}
         >
           <svg
-            className="w-5 h-5"
+            aria-hidden="true"
+            className="h-5 w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
-            aria-hidden="true"
           >
             <path
+              d="M15 19l-7-7 7-7"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M15 19l-7-7 7-7"
             />
           </svg>
         </button>
@@ -59,24 +53,19 @@ export const PageSwitcher = forwardRef<HTMLDivElement, PageSwitcherProps>(
           <span className="text-sm text-gray-500">{totalPages}</span>
         </div>
         <button
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Next page"
+          className="rounded-full p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={currentPage === totalPages}
+          onClick={handleNextPage}
         >
           <svg
-            className="w-5 h-5"
+            aria-hidden="true"
+            className="h-5 w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
-            aria-hidden="true"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
+            <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
           </svg>
         </button>
       </div>
@@ -84,4 +73,4 @@ export const PageSwitcher = forwardRef<HTMLDivElement, PageSwitcherProps>(
   }
 );
 
-PageSwitcher.displayName = 'PageSwitcher'; 
+PageSwitcher.displayName = 'PageSwitcher';

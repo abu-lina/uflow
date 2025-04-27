@@ -1,89 +1,60 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { env } from '@/config/environment';
 
-export async function GET(request: Request) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  
-  // Check if user is authenticated and has reviewer role
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+export async function GET() {
+  const cookieStore = cookies();
+  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+    global: {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    },
+  });
 
-  if (!session) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', session.user.id)
-    .single()
-
-  if (profile?.role !== 'reviewer') {
-    return new NextResponse('Forbidden', { status: 403 })
-  }
-
-  // Get pending souks
-  const { data: souks, error } = await supabase
+  const { data, error } = await supabase
     .from('souks')
-    .select(`
-      *,
-      owner:profiles(full_name, email)
-    `)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
+    .select('*')
+    .order('created_at', { ascending: false });
 
   if (error) {
-    return new NextResponse('Error fetching souks', { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(souks)
+  return NextResponse.json(data);
 }
 
 export async function POST(request: Request) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  
-  // Check if user is authenticated and has reviewer role
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const cookieStore = cookies();
+  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+    global: {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    },
+  });
 
-  if (!session) {
-    return new NextResponse('Unauthorized', { status: 401 })
+  try {
+    const body = await request.json();
+    const { data, error } = await supabase.from('souks').insert([body]);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', session.user.id)
-    .single()
-
-  if (profile?.role !== 'reviewer') {
-    return new NextResponse('Forbidden', { status: 403 })
-  }
-
-  const { soukId, status, comment } = await request.json()
-
-  // Update souk status
-  const { error } = await supabase
-    .from('souks')
-    .update({ 
-      status,
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: session.user.id,
-      review_comment: comment
-    })
-    .eq('id', soukId)
-
-  if (error) {
-    return new NextResponse('Error updating souk status', { status: 500 })
-  }
-
-  return NextResponse.json({ success: true })
-} 
+}

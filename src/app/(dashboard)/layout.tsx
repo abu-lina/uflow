@@ -1,26 +1,19 @@
-'use client'
+'use client';
 
-import { redirect } from 'next/navigation'
-import { useAuthContext } from '@/providers/auth-provider'
+import { redirect } from 'next/navigation';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { user, loading } = useAuthContext()
+import { useAuthContext } from '@/providers/auth-provider';
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuthContext();
 
   if (loading) {
-    return null
+    return null;
   }
 
   if (!user) {
-    redirect('/login')
+    redirect('/login');
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {children}
-    </div>
-  )
-} 
+  return <div className="min-h-screen bg-background">{children}</div>;
+}

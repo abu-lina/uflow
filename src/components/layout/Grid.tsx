@@ -1,11 +1,12 @@
 /**
  * Grid Layout Components
- * 
+ *
  * A flexible grid system for creating responsive layouts.
  * Supports different column counts and gap sizes.
  */
 
 import { ReactNode } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface GridProps {
@@ -25,20 +26,15 @@ const gapClasses = {
   xl: 'gap-12',
 };
 
-export function Grid({ 
-  children, 
-  className, 
-  cols = 1, 
+export function Grid({
+  children,
+  className,
+  cols = 1,
   gap = 'md',
-  as: Component = 'div'
+  as: Component = 'div',
 }: GridProps) {
   return (
-    <Component className={cn(
-      'grid',
-      `grid-cols-${cols}`,
-      gapClasses[gap],
-      className
-    )}>
+    <Component className={cn('grid', `grid-cols-${cols}`, gapClasses[gap], className)}>
       {children}
     </Component>
   );
@@ -51,18 +47,6 @@ interface GridItemProps {
   as?: 'div' | 'section' | 'article';
 }
 
-export function GridItem({ 
-  children, 
-  className, 
-  span = 1,
-  as: Component = 'div'
-}: GridItemProps) {
-  return (
-    <Component className={cn(
-      `col-span-${span}`,
-      className
-    )}>
-      {children}
-    </Component>
-  );
-} 
+export function GridItem({ children, className, span = 1, as: Component = 'div' }: GridItemProps) {
+  return <Component className={cn(`col-span-${span}`, className)}>{children}</Component>;
+}

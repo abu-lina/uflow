@@ -5,62 +5,66 @@
 
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/types/database';
-import type { PostgrestError } from '@supabase/supabase-js';
 
-type Bookmark = Database['public']['Tables']['souks']['Row'];
+type Bookmark = Database['public']['Tables']['bookmarks']['Row'];
 
 /**
  * Fetches all bookmarks for a user
  * @param userId - User ID
  * @returns Promise<Bookmark[]> List of bookmarked souks
  */
-export const getBookmarks = async (userId: string): Promise<Bookmark[]> => {
-  const { data, error } = await supabase
-    .from('souks')
-    .select('*')
-    .eq('bookmarks_id', userId);
+export async function getBookmarks(userId: string): Promise<Bookmark[]> {
+  const { data, error } = await supabase.from('bookmarks').select('*').eq('user_id', userId);
 
   if (error) {
-    throw error;
+    console.error('Error fetching bookmarks:', error);
+    return [];
   }
 
   return data || [];
-};
+}
 
 /**
  * Adds a souk to user's bookmarks
  * @param userId - User ID
  * @param soukId - Souk ID
- * @returns Promise<void>
+ * @returns Promise<Bookmark | null>
  */
-export const addBookmark = async (userId: string, soukId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('souks')
-    .update({ bookmarks_id: userId })
-    .eq('id', soukId);
+export async function addBookmark(userId: string, soukId: string): Promise<Bookmark | null> {
+  const { data, error } = await supabase
+    .from('bookmarks')
+    .insert([{ user_id: userId, souk_id: soukId }])
+    .select()
+    .single();
 
   if (error) {
-    throw error;
+    console.error('Error adding bookmark:', error);
+    return null;
   }
-};
+
+  return data;
+}
 
 /**
  * Removes a souk from user's bookmarks
  * @param userId - User ID
  * @param soukId - Souk ID
- * @returns Promise<void>
+ * @returns Promise<boolean>
  */
-export const removeBookmark = async (userId: string, soukId: string): Promise<void> => {
+export async function removeBookmark(userId: string, soukId: string): Promise<boolean> {
   const { error } = await supabase
-    .from('souks')
-    .update({ bookmarks_id: null })
-    .eq('id', soukId)
-    .eq('bookmarks_id', userId);
+    .from('bookmarks')
+    .delete()
+    .eq('user_id', userId)
+    .eq('souk_id', soukId);
 
   if (error) {
-    throw error;
+    console.error('Error removing bookmark:', error);
+    return false;
   }
-};
+
+  return true;
+}
 
 /**
  * Checks if a souk is bookmarked by a user
@@ -80,4 +84,4 @@ export const isBookmarked = async (soukId: string, userId: string): Promise<bool
   }
 
   return data?.bookmarks_id === userId;
-}; 
+};

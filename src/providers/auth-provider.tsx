@@ -1,61 +1,35 @@
-/**
- * @fileoverview Authentication provider for the application
- * @module providers/auth
- */
+'use client';
 
-'use client'
+import { useEffect } from 'react';
 
-import { createContext, useContext, useMemo } from 'react'
-import { User } from '@supabase/supabase-js'
-import { useAuth } from '@/hooks/auth/useAuth'
+import { useRouter } from 'next/navigation';
 
-interface AuthContextType {
-  user: User | null
-  loading: boolean
+import { createClient } from '@supabase/supabase-js';
+
+import { env } from '@/config/environment';
+import { AuthProvider as AuthContextProvider } from '@/features/auth/context/AuthContext';
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      router.refresh();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router, supabase.auth]);
+
+  return <AuthContextProvider>{children}</AuthContextProvider>;
 }
-
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-})
-
-/**
- * Hook to access the auth context
- * @returns AuthContextType
- * @throws Error if used outside of AuthProvider
- */
-export const useAuthContext = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuthContext must be used within an AuthProvider')
-  }
-  return context
-}
-
-interface AuthProviderProps {
-  children: React.ReactNode
-}
-
-/**
- * Provider component that wraps the application with auth context
- * @param children - React children
- * @returns JSX.Element
- */
-export function AuthProvider({ children }: AuthProviderProps) {
-  const { user, loading } = useAuth()
-
-  // Memoize the context value to prevent unnecessary re-renders
-  const value = useMemo(
-    () => ({
-      user,
-      loading,
-    }),
-    [user, loading]
-  )
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
-} 

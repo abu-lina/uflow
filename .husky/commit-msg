@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Get the commit message
+COMMIT_MSG=$(cat "$1")
+
+# Define the commit message pattern
+PATTERN="^(feat|fix|docs|style|refactor|test|chore|perf|build|ci|revert)(\(.+\))?: .{1,100}"
+
+# Check if the commit message matches the pattern
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+  echo "❌ Invalid commit message format!"
+  echo "Please follow the format: type(scope): description"
+  echo "Types: feat, fix, docs, style, refactor, test, chore, perf, build, ci, revert"
+  echo "Example: feat(auth): add login functionality"
+  exit 1
+fi
+
+echo "✅ Commit message format is valid!" 

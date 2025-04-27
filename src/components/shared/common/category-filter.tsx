@@ -19,35 +19,35 @@ export default function CategoryFilter({ categories, selectedCategory }: Categor
   const handleCategoryChange = (categoryId: string) => {
     // Create new URL search params using current URL
     const params = new URLSearchParams(window.location.search);
-    
+
     // Update category parameter
     if (categoryId !== 'all') {
       params.set('category', categoryId);
     } else {
       params.delete('category');
     }
-    
+
     // Reset to page 1 when category changes
     params.set('page', '1');
-    
+
     // Update the URL
     router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-      <h2 className="font-medium text-lg mb-4">Categories</h2>
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <h2 className="mb-4 text-lg font-medium">Categories</h2>
       <div className="space-y-2">
         {categories.map((category) => (
           <button
             key={category.id}
-            onClick={() => handleCategoryChange(category.id)}
-            className={`block w-full text-left px-3 py-2 rounded-md transition ${
+            aria-current={selectedCategory === category.id ? 'true' : 'false'}
+            className={`block w-full rounded-md px-3 py-2 text-left transition ${
               selectedCategory === category.id
-                ? 'bg-primary text-white font-medium'
+                ? 'bg-primary font-medium text-white'
                 : 'hover:bg-gray-100'
             }`}
-            aria-current={selectedCategory === category.id ? 'true' : 'false'}
+            onClick={() => handleCategoryChange(category.id)}
           >
             {category.name}
           </button>
@@ -55,4 +55,4 @@ export default function CategoryFilter({ categories, selectedCategory }: Categor
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import { useAuthContext } from '@/providers/auth-provider';
 
 export default function ForceLoginPage() {
@@ -36,16 +38,16 @@ export default function ForceLoginPage() {
   }, [user, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Authentication Check</h1>
+        <h1 className="mb-4 text-2xl font-bold">Authentication Check</h1>
         <p className="text-muted-foreground">{status}</p>
         {working && (
           <div className="mt-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
           </div>
         )}
       </div>
     </div>
   );
-} 
+}

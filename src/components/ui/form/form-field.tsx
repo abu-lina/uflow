@@ -1,73 +1,56 @@
 'use client';
 
 import React from 'react';
+
+import { Slot } from '@radix-ui/react-slot';
+
 import { cn } from '@/lib/utils';
 
-interface FormFieldProps {
-  children: React.ReactNode;
-  className?: string;
-  /**
-   * The field's id for accessibility
-   */
-  id?: string;
-  /**
-   * The field's label for accessibility
-   */
-  label?: string;
-  /**
-   * The field's description for accessibility
-   */
+interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {
   description?: string;
-  /**
-   * The field's error message for accessibility
-   */
   error?: string;
+  label?: string;
+  required?: boolean;
 }
 
-export const FormField: React.FC<FormFieldProps> = ({
-  children,
-  className,
-  id,
-  label,
-  description,
-  error
-}) => {
+export const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>((props, ref) => {
+  const { children, className, description, error, label, required, ...rest } = props;
+  const id = React.useId();
+  const descriptionId = `${id}-description`;
+  const errorId = `${id}-error`;
+
   return (
     <div
-      id={id}
+      ref={ref}
+      {...rest}
+      aria-describedby={error ? errorId : description ? descriptionId : undefined}
+      aria-labelledby={label ? id : undefined}
       className={cn('space-y-2', className)}
       role="group"
-      aria-labelledby={label ? `${id}-label` : undefined}
-      aria-describedby={description ? `${id}-description` : undefined}
-      aria-errormessage={error ? `${id}-error` : undefined}
-      aria-invalid={!!error}
     >
       {label && (
         <label
-          id={`${id}-label`}
-          className="block text-sm font-medium text-gray-700"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          htmlFor={id}
+          id={id}
         >
           {label}
+          {required && <span className="ml-1 text-destructive">*</span>}
         </label>
       )}
       {description && (
-        <p
-          id={`${id}-description`}
-          className="text-sm text-gray-500"
-        >
+        <p className="text-sm text-muted-foreground" id={descriptionId}>
           {description}
         </p>
       )}
-      {children}
+      <Slot>{children}</Slot>
       {error && (
-        <p
-          id={`${id}-error`}
-          className="text-sm text-red-500"
-          role="alert"
-        >
+        <p className="text-sm text-destructive" id={errorId} role="alert">
           {error}
         </p>
       )}
     </div>
   );
-}; 
+});
+
+FormField.displayName = 'FormField';

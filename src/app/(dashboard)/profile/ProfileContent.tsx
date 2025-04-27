@@ -1,17 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/features/auth/context/AuthContext';
-import { createServerClient } from '@/lib/database/supabase-server';
+
+import Image from 'next/image';
 import Link from 'next/link';
+
+import { User, LogOut, Loader2 } from 'lucide-react';
+
 import { FilledButton } from '@/components/ui/button/filled';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card/card';
 import { Input } from '@/components/ui/input/input';
 import { Label } from '@/components/ui/label/label';
-import { User, LogOut, Loader2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { createServerClient } from '@/lib/database/supabase-server';
 import { Database } from '@/types/database';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Image from 'next/image';
 
 type ProfileData = {
   id: string;
@@ -33,10 +48,13 @@ export default function ProfileContent() {
   const { user, isLoading } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [updateMessage, setUpdateMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [updateMessage, setUpdateMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
   const [formData, setFormData] = useState<FormData>({
     full_name: '',
-    about: ''
+    about: '',
   });
   const [isActionLoading, setIsActionLoading] = useState(false);
 
@@ -71,12 +89,12 @@ export default function ProfileContent() {
               updated_at: newProfile.updated_at || new Date().toISOString(),
               created_at: newProfile.created_at || new Date().toISOString(),
               role: newProfile.role || 'customer',
-              about: newProfile.about || ''
+              about: newProfile.about || '',
             } as ProfileData;
             setProfileData(sanitizedProfile);
             setFormData({
               full_name: sanitizedProfile.full_name || '',
-              about: sanitizedProfile.about || ''
+              about: sanitizedProfile.about || '',
             });
           } else {
             throw error;
@@ -90,19 +108,19 @@ export default function ProfileContent() {
             updated_at: data.updated_at || new Date().toISOString(),
             created_at: data.created_at || new Date().toISOString(),
             role: data.role || 'customer',
-            about: data.about || ''
+            about: data.about || '',
           } as ProfileData;
           setProfileData(sanitizedProfile);
           setFormData({
             full_name: sanitizedProfile.full_name || '',
-            about: sanitizedProfile.about || ''
+            about: sanitizedProfile.about || '',
           });
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
         setUpdateMessage({
           text: 'Failed to load profile data. Please try again.',
-          type: 'error'
+          type: 'error',
         });
       }
     };
@@ -112,7 +130,7 @@ export default function ProfileContent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,7 +146,7 @@ export default function ProfileContent() {
         .update({
           full_name: formData.full_name || null,
           about: formData.about || null,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', user.id)
         .select()
@@ -145,12 +163,12 @@ export default function ProfileContent() {
         updated_at: data.updated_at || null,
         created_at: data.created_at || null,
         role: data.role,
-        about: data.about || null
+        about: data.about || null,
       };
 
       setUpdateMessage({
         text: 'Profile updated successfully!',
-        type: 'success'
+        type: 'success',
       });
 
       // Refresh profile data
@@ -159,7 +177,7 @@ export default function ProfileContent() {
       console.error('Error updating profile:', error);
       setUpdateMessage({
         text: 'Error updating profile. Please try again.',
-        type: 'error'
+        type: 'error',
       });
     } finally {
       setIsUpdating(false);
@@ -175,10 +193,7 @@ export default function ProfileContent() {
     if (!profileData) return;
     setIsActionLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', profileData.id);
+      const { error } = await supabase.from('profiles').update({ role }).eq('id', profileData.id);
       if (error) throw error;
       setProfileData({ ...profileData, role });
     } catch (error) {
@@ -216,21 +231,21 @@ export default function ProfileContent() {
 
   return (
     <div className="container mx-auto p-4 py-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="mx-auto max-w-2xl">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
                 {profileData?.avatar_url ? (
-                  <Image 
-                    src={profileData.avatar_url} 
-                    alt="Profile" 
-                    className="w-full h-full rounded-full object-cover"
-                    width={64}
+                  <Image
+                    alt="Profile"
+                    className="h-full w-full rounded-full object-cover"
                     height={64}
+                    src={profileData.avatar_url}
+                    width={64}
                   />
                 ) : (
-                  <User className="w-8 h-8 text-gray-400" />
+                  <User className="h-8 w-8 text-gray-400" />
                 )}
               </div>
               <div>
@@ -241,42 +256,46 @@ export default function ProfileContent() {
           </CardHeader>
           <CardContent>
             {updateMessage && (
-              <div className={`mb-4 p-3 rounded-md ${
-                updateMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}>
+              <div
+                className={`mb-4 rounded-md p-3 ${
+                  updateMessage.type === 'success'
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-red-50 text-red-700'
+                }`}
+              >
                 {updateMessage.text}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="full_name">Full Name</Label>
                 <Input
                   id="full_name"
                   name="full_name"
+                  placeholder="Enter your full name"
                   value={formData.full_name}
                   onChange={handleInputChange}
-                  placeholder="Enter your full name"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="about">About</Label>
                 <textarea
+                  className="min-h-[100px] w-full rounded-md border p-2"
                   id="about"
                   name="about"
+                  placeholder="Tell us about yourself"
                   value={formData.about}
                   onChange={handleInputChange}
-                  placeholder="Tell us about yourself"
-                  className="w-full min-h-[100px] p-2 border rounded-md"
                 />
               </div>
 
               <div className="flex justify-between pt-4">
                 <FilledButton
-                  type="submit"
-                  disabled={isUpdating}
                   className="flex items-center gap-2"
+                  disabled={isUpdating}
+                  type="submit"
                 >
                   {isUpdating ? (
                     <>
@@ -289,10 +308,10 @@ export default function ProfileContent() {
                 </FilledButton>
 
                 <FilledButton
+                  className="flex items-center gap-2"
                   type="button"
                   variant="outline"
                   onClick={handleSignOut}
-                  className="flex items-center gap-2"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign Out
@@ -300,25 +319,37 @@ export default function ProfileContent() {
               </div>
             </form>
 
-            <div className="mt-8 pt-4 border-t">
-              <h3 className="font-medium mb-2">Account Information</h3>
+            <div className="mt-8 border-t pt-4">
+              <h3 className="mb-2 font-medium">Account Information</h3>
               <div className="space-y-2 text-sm text-gray-600">
-                <p><span className="font-medium">Role:</span> {profileData?.role || 'Not set'}</p>
-                <p><span className="font-medium">Member since:</span> {new Date(profileData?.created_at || '').toLocaleDateString()}</p>
-                <p><span className="font-medium">Last updated:</span> {profileData?.updated_at ? new Date(profileData.updated_at).toLocaleString() : 'Never'}</p>
+                <p>
+                  <span className="font-medium">Role:</span> {profileData?.role || 'Not set'}
+                </p>
+                <p>
+                  <span className="font-medium">Member since:</span>{' '}
+                  {new Date(profileData?.created_at || '').toLocaleDateString()}
+                </p>
+                <p>
+                  <span className="font-medium">Last updated:</span>{' '}
+                  {profileData?.updated_at
+                    ? new Date(profileData.updated_at).toLocaleString()
+                    : 'Never'}
+                </p>
               </div>
             </div>
 
             <div>
               <Label>Email</Label>
-              <Input value={user.email || ''} readOnly />
+              <Input readOnly value={user.email || ''} />
             </div>
             <div>
               <Label>Role</Label>
               <Select
-                value={profileData?.role}
-                onValueChange={(value: Database['public']['Enums']['user_role']) => updateRole(value)}
                 disabled={isActionLoading}
+                value={profileData?.role}
+                onValueChange={(value: Database['public']['Enums']['user_role']) =>
+                  updateRole(value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
@@ -333,15 +364,15 @@ export default function ProfileContent() {
             </div>
             <div>
               <Label>Created At</Label>
-              <Input value={profileData?.created_at || ''} readOnly />
+              <Input readOnly value={profileData?.created_at || ''} />
             </div>
             <div>
               <Label>Updated At</Label>
-              <Input value={profileData?.updated_at || ''} readOnly />
+              <Input readOnly value={profileData?.updated_at || ''} />
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
   );
-} 
+}

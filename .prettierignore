@@ -1,19 +1,75 @@
-# Ignore build artifacts
+# Build output
 .next/
 out/
 build/
 dist/
+storybook-static/
+coverage/
 
-# Ignore dependencies
+# Dependencies
 node_modules/
+.pnp/
+.pnp.js
+.yarn/
 
-# Ignore package lock files
+# Package files
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+.pnpm-debug.log*
 
-# Ignore miscellaneous files
+# Cache and logs
+.cache/
+.eslintcache
+.stylelintcache
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment and config
+.env*
+.env.local
+.env.development
+.env.test
+.env.production
+.vercel
+next-env.d.ts
+
+# TypeScript
+*.tsbuildinfo
+
+# PWA / Service Worker
+public/sw.js
+public/workbox-*.js
+public/worker-*.js
+public/sw.js.map
+public/workbox-*.js.map
+public/worker-*.js.map
+
+# Generated files
+*.generated.*
+*.min.*
+*.chunk.*
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# VCS
 .git/
 .gitignore
+.gitattributes
+
+# OS
 .DS_Store
-*.log 
+Thumbs.db
+
+# Project specific
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+*.mdx 

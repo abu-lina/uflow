@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface FormLabelProps {
@@ -30,30 +31,27 @@ export const FormLabel: React.FC<FormLabelProps> = ({
   id,
   htmlFor,
   required,
-  description
+  description,
 }) => {
   return (
     <div className="space-y-1">
       <label
-        id={id}
-        htmlFor={htmlFor}
         className={cn(
-          'block text-sm font-medium text-gray-700 mb-1',
-          required && 'after:content-["*"] after:ml-0.5 after:text-red-500',
+          'mb-1 block text-sm font-medium text-gray-700',
+          required && 'after:ml-0.5 after:text-red-500 after:content-["*"]',
           className
         )}
+        htmlFor={htmlFor}
+        id={id}
       >
         {children}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="ml-1 text-red-500">*</span>}
       </label>
       {description && (
-        <p 
-          className="text-sm text-gray-500"
-          id={`${htmlFor}-description`}
-        >
+        <p className="text-sm text-gray-500" id={`${htmlFor}-description`}>
           {description}
         </p>
       )}
     </div>
   );
-}; 
+};

@@ -1,6 +1,7 @@
 'use client';
 
 import { HTMLAttributes, forwardRef } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface WhiteBoxProps extends HTMLAttributes<HTMLDivElement> {
@@ -18,7 +19,7 @@ const shadowClasses = {
   none: '',
   sm: 'shadow-sm',
   md: 'shadow-md',
-  lg: 'shadow-lg'
+  lg: 'shadow-lg',
 };
 
 const roundedClasses = {
@@ -26,7 +27,7 @@ const roundedClasses = {
   sm: 'rounded-sm',
   md: 'rounded-md',
   lg: 'rounded-lg',
-  full: 'rounded-full'
+  full: 'rounded-full',
 };
 
 /**
@@ -39,7 +40,10 @@ const roundedClasses = {
  * ```
  */
 export const WhiteBox = forwardRef<HTMLDivElement, WhiteBoxProps>(
-  ({ className, padded = true, children, shadow = 'md', rounded = 'md', border = true, ...props }, ref) => {
+  (
+    { className, padded = true, children, shadow = 'md', rounded = 'md', border = true, ...props },
+    ref
+  ) => {
     return (
       <div
         ref={ref}
@@ -61,4 +65,4 @@ export const WhiteBox = forwardRef<HTMLDivElement, WhiteBoxProps>(
   }
 );
 
-WhiteBox.displayName = 'WhiteBox'; 
+WhiteBox.displayName = 'WhiteBox';

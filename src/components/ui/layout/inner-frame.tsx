@@ -1,6 +1,7 @@
 'use client';
 
 import { HTMLAttributes, forwardRef } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface InnerFrameProps extends HTMLAttributes<HTMLDivElement> {
@@ -14,14 +15,14 @@ const maxWidthClasses = {
   lg: 'max-w-screen-lg',
   xl: 'max-w-screen-xl',
   '2xl': 'max-w-screen-2xl',
-  full: 'max-w-full'
+  full: 'max-w-full',
 };
 
 const paddingClasses = {
   none: 'p-0',
   sm: 'p-4',
   md: 'p-6',
-  lg: 'p-8'
+  lg: 'p-8',
 };
 
 export const InnerFrame = forwardRef<HTMLDivElement, InnerFrameProps>(
@@ -41,4 +42,4 @@ export const InnerFrame = forwardRef<HTMLDivElement, InnerFrameProps>(
   }
 );
 
-InnerFrame.displayName = 'InnerFrame'; 
+InnerFrame.displayName = 'InnerFrame';

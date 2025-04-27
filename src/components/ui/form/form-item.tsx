@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
+
+import { Slot } from '@radix-ui/react-slot';
+
 import { cn } from '@/lib/utils';
 
-interface FormItemProps {
-  children: React.ReactNode;
-  className?: string;
+interface FormItemProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * The item's id for accessibility
    */
@@ -24,50 +25,15 @@ interface FormItemProps {
   error?: string;
 }
 
-export const FormItem: React.FC<FormItemProps> = ({
-  children,
-  className,
-  id,
-  label,
-  description,
-  error
-}) => {
+export function FormItem({ className, error, ...props }: FormItemProps) {
   return (
-    <div
-      id={id}
-      className={cn('space-y-2', className)}
-      role="group"
-      aria-labelledby={label ? `${id}-label` : undefined}
-      aria-describedby={description ? `${id}-description` : undefined}
-      aria-errormessage={error ? `${id}-error` : undefined}
-      aria-invalid={!!error}
-    >
-      {label && (
-        <label
-          id={`${id}-label`}
-          className="block text-sm font-medium text-gray-700"
-        >
-          {label}
-        </label>
-      )}
-      {description && (
-        <p
-          id={`${id}-description`}
-          className="text-sm text-gray-500"
-        >
-          {description}
-        </p>
-      )}
-      {children}
+    <div className={cn('space-y-2', className)} role="group" {...props}>
+      <Slot />
       {error && (
-        <p
-          id={`${id}-error`}
-          className="text-sm text-red-500"
-          role="alert"
-        >
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
       )}
     </div>
   );
-}; 
+}

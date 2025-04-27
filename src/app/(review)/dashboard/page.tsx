@@ -1,34 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+
 import Link from 'next/link';
-import { Service as ServiceType } from '@/types/service';
-import { Button } from "@/components/ui/button"
-import { supabase } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useRouter } from 'next/navigation';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card/card';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import type { Service } from '@/features/auth/types/service';
+import { supabase } from '@/lib/supabase/client';
 
 interface DashboardStats {
-  pending: number
-  approved: number
-  rejected: number
-  total: number
+  totalSouks: number;
+  pendingReviews: number;
+  approvedSouks: number;
+  rejectedSouks: number;
 }
 
 export default function ReviewerDashboardPage() {
   const { user, supabase: authSupabase, isLoading: authLoading, userRole } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [pendingServices, setPendingServices] = useState<ServiceType[]>([]);
+  const [pendingServices, setPendingServices] = useState<Service[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    total: 0
+    totalSouks: 0,
+    pendingReviews: 0,
+    approvedSouks: 0,
+    rejectedSouks: 0,
   });
 
   // Check if user has the halal_reviewer role
@@ -38,14 +40,15 @@ export default function ReviewerDashboardPage() {
   useEffect(() => {
     const fetchPendingServices = async () => {
       if (!user || !isHalalReviewer) return;
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const { data, error } = await authSupabase
           .from('services')
-          .select(`
+          .select(
+            `
             service_id,
             service_owner_id,
             service_name,
@@ -61,19 +64,36 @@ export default function ReviewerDashboardPage() {
             ),
             categories (
               category_id,
-              name_en
+              name
             )
-          `)
+          `
+          )
           .eq('is_verified', false)
-          .in('service_status', ['draft', 'published']);
-          
+          .in('service_status', ['draft', 'pending']);
+
         if (error) {
           console.error('Error fetching pending services:', error);
           setError('Failed to load pending services. Please try again.');
           return;
         }
-        
-        setPendingServices(data || []);
+
+        const services: Service[] = (data || []).map((service) => ({
+          id: service.service_id,
+          service_id: service.service_id,
+          service_owner_id: service.service_owner_id,
+          service_name: service.service_name,
+          service_description: service.service_description,
+          is_verified: service.is_verified,
+          service_status: service.service_status,
+          created_at: service.created_at,
+          updated_at: new Date().toISOString(),
+          contact_email: service.contact_email,
+          category_id: service.category_id,
+          users: service.users,
+          categories: service.categories,
+        }));
+
+        setPendingServices(services);
       } catch (err) {
         console.error('Unexpected error:', err);
         setError('An unexpected error occurred. Please try again.');
@@ -81,7 +101,7 @@ export default function ReviewerDashboardPage() {
         setIsLoading(false);
       }
     };
-    
+
     if (!authLoading) {
       fetchPendingServices();
     }
@@ -90,31 +110,30 @@ export default function ReviewerDashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data, error } = await supabase
-          .from('souks')
-          .select('status')
+        const { data, error } = await supabase.from('souks').select('status');
 
-        if (error) throw error
+        if (error) throw error;
 
-        const counts = data.reduce((acc, souk) => {
-          acc[souk.status] = (acc[souk.status] || 0) + 1
-          acc.total += 1
-          return acc
-        }, { pending: 0, approved: 0, rejected: 0, total: 0 })
+        const counts: DashboardStats = {
+          totalSouks: data.length,
+          pendingReviews: data.filter((souk) => souk.status === 'pending').length,
+          approvedSouks: data.filter((souk) => souk.status === 'approved').length,
+          rejectedSouks: data.filter((souk) => souk.status === 'rejected').length,
+        };
 
-        setStats(counts)
+        setStats(counts);
       } catch (error) {
-        console.error('Error fetching stats:', error)
+        console.error('Error fetching stats:', error);
       }
-    }
+    };
 
-    fetchStats()
-  }, [])
+    fetchStats();
+  }, []);
 
   if (authLoading || isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
         <p className="ml-2">Loading pending services...</p>
       </div>
     );
@@ -122,11 +141,11 @@ export default function ReviewerDashboardPage() {
 
   if (!user) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 mb-4">You must be logged in to access the reviewer dashboard</p>
+      <div className="py-8 text-center">
+        <p className="mb-4 text-gray-600">You must be logged in to access the reviewer dashboard</p>
         <button
+          className="rounded bg-primary px-4 py-2 text-white hover:bg-primary-dark"
           onClick={() => router.push('/auth/login?redirectTo=/reviewer/dashboard')}
-          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark"
         >
           Sign In
         </button>
@@ -136,13 +155,17 @@ export default function ReviewerDashboardPage() {
 
   if (!isHalalReviewer) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 mb-4">You need Halal Reviewer permissions to access this page</p>
+      <div className="py-8 text-center">
+        <p className="mb-4 text-gray-600">
+          You need Halal Reviewer permissions to access this page
+        </p>
         <p className="text-sm text-gray-500">Your current role: {userRole || 'none'}</p>
-        <p className="text-sm text-gray-500 mt-2">Please contact an administrator if you believe this is an error.</p>
+        <p className="mt-2 text-sm text-gray-500">
+          Please contact an administrator if you believe this is an error.
+        </p>
         <button
+          className="mt-4 rounded bg-primary px-4 py-2 text-white hover:bg-primary-dark"
           onClick={() => router.push('/')}
-          className="mt-4 bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark"
         >
           Go to Homepage
         </button>
@@ -150,7 +173,7 @@ export default function ReviewerDashboardPage() {
     );
   }
 
-  const handleReviewClick = (service: ServiceType) => {
+  const handleReviewClick = (service: Service) => {
     setSelectedService(service);
     setSelectedStatus(service.service_status);
   };
@@ -161,18 +184,14 @@ export default function ReviewerDashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Halal Reviewer Dashboard</h1>
-      
-      {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">
-          {error}
-        </div>
-      )}
-      
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">Halal Reviewer Dashboard</h1>
+
+      {error && <div className="mb-6 rounded-md bg-red-50 p-4 text-red-600">{error}</div>}
+
+      <div className="overflow-hidden rounded-lg bg-white shadow-md">
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Services Pending Review</h2>
-          
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Services Pending Review</h2>
+
           {pendingServices.length === 0 ? (
             <p className="text-gray-500">No services are pending review at this time.</p>
           ) : (
@@ -180,66 +199,86 @@ export default function ReviewerDashboardPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                      scope="col"
+                    >
                       Service Name
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                      scope="col"
+                    >
                       Category
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                      scope="col"
+                    >
                       Status
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                      scope="col"
+                    >
                       Submitted By
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                      scope="col"
+                    >
                       Date Submitted
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500"
+                      scope="col"
+                    >
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 bg-white">
                   {pendingServices.map((service) => {
-                    // Handle cases where users might be an array or single object 
+                    // Handle cases where users might be an array or single object
                     const users = Array.isArray(service.users) ? service.users[0] : service.users;
-                    const categories = Array.isArray(service.categories) ? service.categories[0] : service.categories;
-                    
+                    const categories = Array.isArray(service.categories)
+                      ? service.categories[0]
+                      : service.categories;
+
                     const ownerEmail = users?.email || 'Unknown';
-                    const categoryName = categories?.name_en || 'Unknown';
+                    const categoryName = categories?.name || 'Unknown';
                     return (
                       <tr key={service.service_id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="whitespace-nowrap px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">
                             {service.service_name}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="whitespace-nowrap px-6 py-4">
                           <div className="text-sm text-gray-500">{categoryName}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            service.service_status === 'published' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
+                        <td className="whitespace-nowrap px-6 py-4">
+                          <span
+                            className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                              service.service_status === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
                             {service.service_status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="whitespace-nowrap px-6 py-4">
                           <div className="text-sm text-gray-500">{ownerEmail}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="whitespace-nowrap px-6 py-4">
                           <div className="text-sm text-gray-500">
                             {new Date(service.created_at || '').toLocaleDateString()}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Button
-                            onClick={() => handleReviewClick(service)}
-                            variant="default"
-                            size="default"
-                          >
-                            Review Service
+                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                          <Button variant="primary" onClick={() => handleReviewClick(service)}>
+                            Review
                           </Button>
                         </td>
                       </tr>
@@ -253,24 +292,19 @@ export default function ReviewerDashboardPage() {
       </div>
 
       {selectedService && (
-        <div className="mt-6 p-6 bg-white rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Review Service</h2>
-          
+        <div className="mt-6 rounded-lg bg-white p-6 shadow-md">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Review Service</h2>
+
           {/* Review service form content */}
 
-          <div className="flex justify-end space-x-3 mt-6">
-            <Button
-              onClick={() => setSelectedService(null)}
-              variant="outline"
-              size="default"
-            >
+          <div className="mt-6 flex justify-end space-x-3">
+            <Button variant="outline" onClick={() => setSelectedService(null)}>
               Cancel
             </Button>
             <Button
-              onClick={handleStatusUpdate}
-              disabled={!selectedStatus}
-              variant="default"
-              size="default"
+              disabled={!selectedStatus || selectedStatus === selectedService.service_status}
+              variant="primary"
+              onClick={() => handleStatusUpdate()}
             >
               Update Status
             </Button>
@@ -278,11 +312,11 @@ export default function ReviewerDashboardPage() {
         </div>
       )}
 
-      <div className="space-y-6 mt-6">
-        <div className="flex justify-between items-center">
+      <div className="mt-6 space-y-6">
+        <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Review Dashboard</h1>
-          <Button asChild>
-            <Link href="/review/souks">Review Souks</Link>
+          <Button variant="outline">
+            <Link href="/review/souks">View All Services</Link>
           </Button>
         </div>
 
@@ -292,7 +326,7 @@ export default function ReviewerDashboardPage() {
               <CardTitle>Pending Reviews</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{stats.pending}</p>
+              <p className="text-3xl font-bold">{stats.pendingReviews}</p>
             </CardContent>
           </Card>
 
@@ -301,7 +335,7 @@ export default function ReviewerDashboardPage() {
               <CardTitle>Approved</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{stats.approved}</p>
+              <p className="text-3xl font-bold">{stats.approvedSouks}</p>
             </CardContent>
           </Card>
 
@@ -310,7 +344,7 @@ export default function ReviewerDashboardPage() {
               <CardTitle>Rejected</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{stats.rejected}</p>
+              <p className="text-3xl font-bold">{stats.rejectedSouks}</p>
             </CardContent>
           </Card>
 
@@ -319,11 +353,11 @@ export default function ReviewerDashboardPage() {
               <CardTitle>Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{stats.total}</p>
+              <p className="text-3xl font-bold">{stats.totalSouks}</p>
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
   );
-} 
+}

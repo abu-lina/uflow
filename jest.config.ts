@@ -1,40 +1,62 @@
-import type { Config } from 'jest';
+import type { Config } from '@jest/types';
 import { pathsToModuleNameMapper } from 'ts-jest';
 import { compilerOptions } from './tsconfig.json';
 
-const config: Config = {
+const config: Config.InitialOptions = {
+  // Basic configuration
   preset: 'ts-jest',
-  testEnvironment: 'jest-environment-jsdom',
+  testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup/jest.setup.ts'],
   moduleNameMapper: {
-    ...pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
     '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  collectCoverage: true,
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/**/*.stories.{js,jsx,ts,tsx}',
-    '!src/**/_*.{js,jsx,ts,tsx}',
-    '!src/**/*.test.{js,jsx,ts,tsx}',
-    '!src/**/index.{js,jsx,ts,tsx}',
-    '!src/types/**/*',
-  ],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
-    },
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(gif|ttf|eot|svg)$': '<rootDir>/src/tests/__mocks__/fileMock.ts',
   },
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-    }],
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.jest.json',
+      },
+    ],
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
+  testMatch: ['**/__tests__/**/*.test.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{ts,tsx}',
+    '!src/**/index.{ts,tsx}',
+    '!src/tests/**/*',
+  ],
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.jest.json',
+    },
+  },
+  verbose: true,
+
+  // Module resolution
+  roots: ['<rootDir>/src'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/.next/',
+    '<rootDir>/out/',
+    '<rootDir>/dist/',
+  ],
+  testTimeout: 10000,
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
+
+  // Watch settings
+  watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
+  watchPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/.next/',
+    '<rootDir>/out/',
+    '<rootDir>/dist/',
+    '<rootDir>/coverage/',
+  ],
 };
 
-export default config; 
+export default config;

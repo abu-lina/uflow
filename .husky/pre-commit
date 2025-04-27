@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# First, fix imports for staged files
+echo "📦 Fixing imports..."
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$'); do
+  if [ -f "$file" ]; then
+    ./fix-imports.sh "$file"
+  fi
+done
+
+# Then run lint-staged for other checks
+echo "🔧 Running lint-staged..."
+npx lint-staged
+
+# Get the exit code from lint-staged
+LINT_STAGED_EXIT_CODE=$?
+
+# If lint-staged failed, exit with its exit code
+if [ $LINT_STAGED_EXIT_CODE -ne 0 ]; then
+  echo "❌ Pre-commit checks failed. Please fix the issues and try again."
+  exit $LINT_STAGED_EXIT_CODE
+fi
+
+echo "✅ Pre-commit checks passed!"

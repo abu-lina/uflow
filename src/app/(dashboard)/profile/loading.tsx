@@ -1,10 +1,10 @@
-import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Card, CardContent, CardHeader } from '@/components/ui/card/card';
+import { Skeleton } from '@/components/ui/feedback/skeleton';
 
 export default function ProfileLoading() {
   return (
     <div className="container mx-auto p-4">
-      <Card className="max-w-2xl mx-auto">
+      <Card className="mx-auto max-w-2xl">
         <CardHeader>
           <Skeleton className="h-8 w-48" />
         </CardHeader>
@@ -31,4 +31,4 @@ export default function ProfileLoading() {
       </Card>
     </div>
   );
-} 
+}
