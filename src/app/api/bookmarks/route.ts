@@ -1,21 +1,46 @@
 import { NextResponse } from 'next/server';
-import { fetchUserBookmarks } from '@/services/souks/bookmarks';
-import { withApiErrorHandler } from '@/lib/api/utils';
-import { createServerClient } from '@/lib/database/supabase-server';
+import { createServerSideClient } from '@/lib/supabase/server';
 
 // NOTE: This endpoint relies on Supabase RLS for access control.
 // Only the authenticated user can access their own bookmarks.
 
 export async function GET() {
-  return withApiErrorHandler(async () => {
-    const supabase = createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const supabase = createServerSideClient();
+
+    const { data: bookmarks, error } = await supabase.from('bookmarks').select('*');
+
+    if (error) {
+      console.error('Database error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const bookmarks = await fetchUserBookmarks(session.user.id);
     return NextResponse.json(bookmarks);
-  });
-} 
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const supabase = createServerSideClient();
+
+    const { data: bookmark, error } = await supabase
+      .from('bookmarks')
+      .insert(body)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Database error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(bookmark);
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

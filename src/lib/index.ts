@@ -1,6 +1,6 @@
 /**
  * Library Modules
- * 
+ *
  * This module provides core functionality and utilities for the application:
  * - constants: Application-wide constants and configuration
  * - services: Business logic services
@@ -8,35 +8,23 @@
  * - utils: Helper functions and utilities
  */
 
-// Constants
+// Core modules
 export * from './constants';
-
-// Services
-export * from './services';
+export * from './utils';
 
 // Supabase
 export * from './supabase';
+export type { Database } from '@/types/supabase';
 
-// Utilities
-export * from './utils';
+// Auth
+export * from './auth';
 
 // Re-export hooks
 export * from './hooks/useSupabaseQuery';
 
-// Re-export database utilities
-export { createServerClient, createAdminClient } from './database/supabase-server';
-export type { Database } from '@/types/database';
-
-// Re-export auth utilities
-export * from './auth';
-
-// Supabase exports
-export * from './supabase/queries'
-export * from './supabase/types'
-
 // Services exports
-export * from './services/api'
+export * from './services/api';
 
 // Utils exports
-export * from './utils/validation'
-export * from './utils/helpers' 
+export * from './utils/validation';
+export * from './utils/helpers';
