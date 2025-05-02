@@ -13,23 +13,25 @@ Ummah Flow is a modern marketplace platform for Islamic products and services, b
 - **Seller Dashboard**: Tools for sellers to manage their products and services
 - **Cart & Checkout**: Seamless shopping experience
 
-
 ---
 
 ## 🛠️ Getting Started
 
 ### 1. **Clone the repo**
+
 ```sh
 git clone https://github.com/your-org/uflow.git
 cd uflow
 ```
 
 ### 2. **Install dependencies**
+
 ```sh
 npm install
 ```
 
 ### 3. **Set up environment variables**
+
 - Copy `.env.example` to `.env.local` and fill in the values:
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -37,6 +39,7 @@ npm install
   - (Add any other required env vars)
 
 ### 4. **Connect to Supabase**
+
 - [Create a Supabase project](https://app.supabase.com/).
 - Get your project ref and API keys from the Supabase dashboard.
 - Generate types:
@@ -45,9 +48,11 @@ npm install
   ```
 
 ### 5. **Run the development server**
+
 ```sh
 npm run dev
 ```
+
 - App will be available at [http://localhost:3000](http://localhost:3000)
 
 ---
@@ -71,7 +76,7 @@ npm run dev
 
 ## 🚀 Deployment
 
-- **Vercel:**  
+- **Vercel:**
   - Push to `main` or your production branch.
   - Set environment variables in the Vercel dashboard.
   - [Vercel Docs](https://vercel.com/docs/concepts/projects/environment-variables)

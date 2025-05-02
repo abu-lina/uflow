@@ -11,12 +11,7 @@
   "jsxSingleQuote": false,
   "jsxBracketSameLine": false,
   "bracketSameLine": false,
-  "importOrder": [
-    "^react$",
-    "^next",
-    "^@/(.*)$",
-    "^[./]"
-  ],
+  "importOrder": ["^react$", "^next", "^@/(.*)$", "^[./]"],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
   "proseWrap": "preserve",
@@ -24,7 +19,5 @@
   "endOfLine": "lf",
   "embeddedLanguageFormatting": "auto",
   "tailwindConfig": "./tailwind.config.js",
-  "plugins": [
-    "prettier-plugin-tailwindcss"
-  ]
-} 
+  "plugins": ["prettier-plugin-tailwindcss"]
+}

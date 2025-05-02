@@ -1,5 +1,7 @@
-import '@/styles/globals.css';
+import { Toaster } from 'sonner';
+
 import { AuthProvider } from '@/providers/auth-provider';
+import '@/styles/globals.css';
 
 export default function RootLayout({
   children,
@@ -11,6 +13,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           {children}
+          <Toaster richColors position="top-right" />
         </AuthProvider>
       </body>
     </html>

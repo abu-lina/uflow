@@ -44,7 +44,6 @@ const nextConfig = {
 
   // Experimental features (enable only what you need)
   experimental: {
-    serverActions: true,
     optimizeCss: true,
     scrollRestoration: true,
   },
@@ -113,9 +112,8 @@ const nextConfig = {
 
   // Internationalization (if needed)
   i18n: {
-    locales: ['en', 'de', 'ar'],
+    locales: ['en'],
     defaultLocale: 'en',
-    localeDetection: true,
   },
 
   // Output configuration

@@ -3,6 +3,7 @@
 ## Pre-deployment Setup
 
 1. **Environment Variables**
+
    - [ ] Add the following environment variables in Vercel project settings:
      - `NEXT_PUBLIC_SUPABASE_URL`
      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -10,6 +11,7 @@
      - `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`
 
 2. **Supabase Configuration**
+
    - [ ] Verify Supabase project is set up
    - [ ] Check database migrations are applied
    - [ ] Verify storage buckets are configured
@@ -29,6 +31,7 @@
 ## Deployment Steps
 
 1. **Initial Deployment**
+
    - [ ] Push code to GitHub
    - [ ] Import project in Vercel
    - [ ] Configure environment variables
@@ -36,6 +39,7 @@
    - [ ] Verify client-side Supabase initialization
 
 2. **Post-deployment Checks**
+
    - [ ] Verify domain configuration
    - [ ] Test Supabase JS authentication
    - [ ] Check image optimization
@@ -54,6 +58,7 @@
 ## Monitoring
 
 1. **Logs and Analytics**
+
    - [ ] Set up Vercel Analytics
    - [ ] Configure error tracking
    - [ ] Monitor performance metrics
@@ -68,6 +73,7 @@
 ## Security
 
 1. **SSL/TLS**
+
    - [ ] Verify SSL certificate
    - [ ] Check security headers
    - [ ] Test CORS configuration
@@ -82,6 +88,7 @@
 ## Backup and Recovery
 
 1. **Data Backup**
+
    - [ ] Set up Supabase backups
    - [ ] Configure database snapshots
    - [ ] Test restore procedures
@@ -96,6 +103,7 @@
 ## Maintenance
 
 1. **Regular Checks**
+
    - [ ] Monitor error rates
    - [ ] Check performance metrics
    - [ ] Review security logs
@@ -105,4 +113,4 @@
    - [ ] Schedule dependency updates
    - [ ] Plan for breaking changes
    - [ ] Test updates in staging
-   - [ ] Verify Supabase JS compatibility 
+   - [ ] Verify Supabase JS compatibility
