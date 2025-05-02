@@ -1,3 +1,5 @@
+[![Coverage Status](https://img.shields.io/badge/coverage-vitest-brightgreen?style=flat-square&logo=vitest)](https://vitest.dev/)
+
 # Ummah Flow - Islamic Marketplace
 
 Ummah Flow is a modern marketplace platform for Islamic products and services, built with Next.js 14, TypeScript, and TailwindCSS.
@@ -11,91 +13,94 @@ Ummah Flow is a modern marketplace platform for Islamic products and services, b
 - **Seller Dashboard**: Tools for sellers to manage their products and services
 - **Cart & Checkout**: Seamless shopping experience
 
-## Getting Started
 
-### Prerequisites
+---
 
-- Node.js 18.17.0 or later
-- npm or yarn
+## 🛠️ Getting Started
 
-### Installation
-
-1. Clone the repository
-```bash
-git clone https://github.com/yourusername/ummah-flow.git
-cd ummah-flow
+### 1. **Clone the repo**
+```sh
+git clone https://github.com/your-org/uflow.git
+cd uflow
 ```
 
-2. Install dependencies
-```bash
+### 2. **Install dependencies**
+```sh
 npm install
-# or
-yarn install
 ```
 
-3. Set up environment variables
-```bash
-cp .env.example .env.local
-```
+### 3. **Set up environment variables**
+- Copy `.env.example` to `.env.local` and fill in the values:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - (Add any other required env vars)
 
-4. Start the development server
-```bash
+### 4. **Connect to Supabase**
+- [Create a Supabase project](https://app.supabase.com/).
+- Get your project ref and API keys from the Supabase dashboard.
+- Generate types:
+  ```sh
+  supabase gen types typescript --project-id <project-ref> --schema public > src/types/supabase.ts
+  ```
+
+### 5. **Run the development server**
+```sh
 npm run dev
-# or
-yarn dev
 ```
+- App will be available at [http://localhost:3000](http://localhost:3000)
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
+---
 
-## Project Structure
+## 🧩 Adding New Features
 
-- `src/app/` - App Router pages and layouts
-- `src/components/` - Reusable UI components
-- `src/lib/` - Utility functions and shared code
-- `public/` - Static assets
-- `src/styles/` - Global styles and TailwindCSS config
+- Add new features in `src/features/feature-name/`.
+- Use the modular structure: UI, hooks, and services per feature.
+- Reuse components from `src/components/` when possible.
+- Add tests in `src/__tests__/` or alongside features.
 
-## Environment Variables
+---
 
-The following environment variables need to be set in your `.env.local` file:
+## 🔑 Managing Environment Variables
 
-```
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+- **Public keys:** Prefix with `NEXT_PUBLIC_` (safe for client).
+- **Server-only keys:** Never expose to client code.
+- **.env.example:** Always update when adding new env vars.
 
-# Authentication (replace with your preferred auth provider details)
-NEXT_PUBLIC_AUTH_URL=
-AUTH_SECRET=
+---
 
-# Database (replace with your database connection details)
-DATABASE_URL=
+## 🚀 Deployment
 
-# API Keys (add any external service API keys here)
-NEXT_PUBLIC_API_URL=
-```
+- **Vercel:**  
+  - Push to `main` or your production branch.
+  - Set environment variables in the Vercel dashboard.
+  - [Vercel Docs](https://vercel.com/docs/concepts/projects/environment-variables)
 
-## Scripts
+---
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint to check code quality
-- `npm run test` - Run tests
+## 🧪 Testing
 
-## Next Steps
+- Place tests in `src/__tests__/` or alongside features.
+- Recommended: [Vitest](https://vitest.dev/) or [Jest](https://jestjs.io/).
 
-- Implement authentication with NextAuth.js
-- Create database models and API routes
-- Add product and service listing functionality
-- Implement search and filtering
-- Create user profiles and seller dashboards
-- Set up cart and checkout functionality
-- Add payment gateway integration
+---
 
-## Contributing
+## 🧑‍💻 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- Follow the established folder structure and code style.
+- Use path aliases for imports (see `tsconfig.json`).
+- Run `npm run lint` and `npm run format` before committing.
 
-## License
+---
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 📚 Resources
+
+- [Next.js Docs](https://nextjs.org/docs)
+- [Supabase Docs](https://supabase.com/docs)
+- [Tailwind CSS Docs](https://tailwindcss.com/docs)
+
+---
+
+## 📝 License
+
+MIT

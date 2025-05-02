@@ -19,16 +19,19 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/lib/*": ["./src/lib/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/config/*": ["./src/config/*"],
-      "@/features/*": ["./src/features/*"],
-      "@/constants/*": ["./src/constants/*"],
-      "@/hooks/*": ["./src/hooks/*"],
-      "@/providers/*": ["./src/providers/*"],
-      "@/utils/*": ["./src/utils/*"]
+      "@/*": ["src/*"],
+      "@/app/*": ["src/app/*"],
+      "@/components/*": ["src/components/*"],
+      "@/features/*": ["src/features/*"],
+      "@/hooks/*": ["src/hooks/*"],
+      "@/lib/*": ["src/lib/*"],
+      "@/providers/*": ["src/providers/*"],
+      "@/services/*": ["src/services/*"],
+      "@/types/*": ["src/types/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@/config/*": ["src/config/*"],
+      "@/constants/*": ["src/constants/*"],
+      "@/styles/*": ["src/styles/*"]
     },
     "baseUrl": "."
   },
