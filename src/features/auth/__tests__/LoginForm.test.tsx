@@ -1,8 +1,11 @@
+import React from 'react';
+
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { supabase } from '@/lib/supabase/client';
+import { AuthProvider } from '@/providers/auth-provider';
 
 import { LoginForm } from '../ui/LoginForm';
 
@@ -17,7 +20,11 @@ vi.mock('@/lib/supabase/client', () => ({
 
 describe('LoginForm', () => {
   beforeEach(() => {
-    render(<LoginForm />);
+    render(
+      <AuthProvider>
+        <LoginForm />
+      </AuthProvider>
+    );
   });
 
   it('renders email and password inputs', () => {
