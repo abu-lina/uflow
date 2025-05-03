@@ -1,15 +1,14 @@
 import { vi } from 'vitest';
 
-export const useRouter = vi.fn().mockReturnValue({
-  push: vi.fn(),
-  replace: vi.fn(),
-  prefetch: vi.fn(),
-  back: vi.fn(),
-  pathname: '/',
-  query: {},
-  asPath: '/',
-});
+const router = {
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+};
 
-export default {
-  useRouter,
-}; 
+export default router;

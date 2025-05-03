@@ -1,7 +1,3 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-export const FormSkeleton = () => React.createElement('div', null, 'Loading...');
-
-export default {
-  FormSkeleton,
-}; 
+export const Skeleton = ({ children }: { children: ReactNode }) => children;

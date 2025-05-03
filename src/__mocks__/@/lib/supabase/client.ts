@@ -1,12 +1,30 @@
-import { createClient } from '@supabase/supabase-js';
+import { vi } from 'vitest';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
+}
 
-export { supabase }; 
+const mockAuth = {
+  getSession: vi.fn().mockResolvedValue({
+    data: { session: null },
+    error: null,
+  }),
+  onAuthStateChange: vi.fn().mockReturnValue({
+    data: { subscription: { unsubscribe: vi.fn() } },
+  }),
+  signInWithPassword: vi.fn(),
+  signOut: vi.fn(),
+  signUp: vi.fn(),
+};
+
+export const createClient = () => ({
+  auth: mockAuth,
+});
+
+export const supabase = {
+  auth: mockAuth,
+};

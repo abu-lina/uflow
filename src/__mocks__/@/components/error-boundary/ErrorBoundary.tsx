@@ -1,7 +1,3 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-export const ErrorBoundary = ({ children }: { children: React.ReactNode }) => children;
-
-export default {
-  ErrorBoundary,
-}; 
+export const ErrorBoundary = ({ children }: { children: ReactNode }) => children;

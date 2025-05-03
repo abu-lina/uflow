@@ -10,17 +10,10 @@ interface TestWrapperProps {
 }
 
 export function TestWrapper({ children }: TestWrapperProps) {
-  return (
-    <AuthProvider>
-      {children}
-    </AuthProvider>
-  );
+  return <AuthProvider>{children}</AuthProvider>;
 }
 
-export async function renderWithProviders(
-  ui: React.ReactElement,
-  options = {}
-) {
+export async function renderWithProviders(ui: React.ReactElement, options = {}) {
   const rendered = render(ui, {
     wrapper: TestWrapper,
     ...options,
@@ -31,4 +24,4 @@ export async function renderWithProviders(
   });
 
   return rendered;
-} 
+}

@@ -1,10 +1,9 @@
 import { vi } from 'vitest';
 
-export const toast = {
-  success: vi.fn(),
-  error: vi.fn(),
+export const toast = vi.fn();
+
+const sonner = {
+  toast,
 };
 
-export default {
-  toast,
-}; 
+export default sonner;
