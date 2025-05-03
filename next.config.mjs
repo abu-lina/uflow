@@ -1,3 +1,5 @@
+import withPWA from 'next-pwa';
+
 /**
  * Next.js Configuration
  * @type {import('next').NextConfig}
@@ -120,4 +122,10 @@ const nextConfig = {
   output: 'standalone', // For better deployment optimization
 };
 
-export default nextConfig;
+// Enable PWA in production only
+export default withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+})(nextConfig);
