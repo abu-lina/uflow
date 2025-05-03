@@ -65,6 +65,7 @@
     "@types/node": "^20.17.32",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
+    "@vitejs/plugin-react": "^4.4.1",
     "@vitest/coverage-v8": "^3.1.2",
     "autoprefixer": "^10.4.18",
     "critters": "^0.0.23",
@@ -93,6 +94,7 @@
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.1.2",
     "typescript": "5.5.4",
+    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.1.2"
   },
   "overrides": {

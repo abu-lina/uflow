@@ -1,28 +1,12 @@
 import React from 'react';
 
-import { NextRouter } from 'next/router';
-
-import { render } from '@testing-library/react';
-import { vi } from 'vitest';
+import { render, waitFor } from '@testing-library/react';
+import { expect } from 'vitest';
 
 import { AuthProvider } from '@/providers/auth-provider';
 
-// Mock next/router
-vi.mock('next/router', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    prefetch: vi.fn(),
-    back: vi.fn(),
-    pathname: '/',
-    query: {},
-    asPath: '/',
-  }),
-}));
-
 interface TestWrapperProps {
   children: React.ReactNode;
-  router?: Partial<NextRouter>;
 }
 
 export function TestWrapper({ children }: TestWrapperProps) {
@@ -33,16 +17,18 @@ export function TestWrapper({ children }: TestWrapperProps) {
   );
 }
 
-export function renderWithProviders(
+export async function renderWithProviders(
   ui: React.ReactElement,
-  { router = {}, ...options } = {}
+  options = {}
 ) {
-  return render(ui, {
-    wrapper: ({ children }) => (
-      <TestWrapper router={router}>
-        {children}
-      </TestWrapper>
-    ),
+  const rendered = render(ui, {
+    wrapper: TestWrapper,
     ...options,
   });
+
+  await waitFor(() => {
+    expect(rendered.container).toBeTruthy();
+  });
+
+  return rendered;
 } 
