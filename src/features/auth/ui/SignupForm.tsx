@@ -1,54 +1,154 @@
 'use client';
 
 import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { toast } from 'sonner';
+import * as z from 'zod';
+
 import { supabase } from '@/lib/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { type SignupFormData, signupSchema } from '@/lib/validations/auth';
 
 export function SignupForm() {
-  const { loading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [formData, setFormData] = useState<SignupFormData>({
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState<Partial<SignupFormData>>({});
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const validateForm = () => {
+    try {
+      signupSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Partial<SignupFormData> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as keyof SignupFormData] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    validateForm();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) setError(error.message);
-    else setSuccess('Check your email for a confirmation link!');
+    setLoading(true);
+
+    try {
+      const validData = signupSchema.parse(formData);
+      const { error } = await supabase.auth.signUp({
+        email: validData.email,
+        password: validData.password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Successfully signed up!');
+      router.push('/dashboard');
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Partial<SignupFormData> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as keyof SignupFormData] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      } else if (error instanceof Error) {
+        toast.error(`Authentication failed: ${error.message}`);
+      } else {
+        toast.error('An unknown error occurred during sign up');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSignup} className="space-y-4">
-      <input
-        id="email"
-        type="email"
-        required
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        placeholder="Email"
-        className="w-full border rounded px-3 py-2"
-      />
-      <input
-        id="password"
-        type="password"
-        required
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        placeholder="Password"
-        className="w-full border rounded px-3 py-2"
-      />
-      {error && <div className="text-red-600">{error}</div>}
-      {success && <div className="text-green-600">{success}</div>}
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="email">
+          Email
+        </label>
+        <input
+          aria-invalid={!!errors.email}
+          className={`mt-1 block w-full rounded-md border ${
+            errors.email ? 'border-red-500' : 'border-gray-300'
+          } px-3 py-2 shadow-sm focus:border-primary focus:outline-none 
+            focus:ring-1 focus:ring-primary`}
+          id="email"
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+        {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="password">
+          Password
+        </label>
+        <input
+          aria-invalid={!!errors.password}
+          className={`mt-1 block w-full rounded-md border ${
+            errors.password ? 'border-red-500' : 'border-gray-300'
+          } px-3 py-2 shadow-sm focus:border-primary focus:outline-none 
+            focus:ring-1 focus:ring-primary`}
+          id="password"
+          name="password"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+        />
+        {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="confirmPassword">
+          Confirm Password
+        </label>
+        <input
+          aria-invalid={!!errors.confirmPassword}
+          className={`mt-1 block w-full rounded-md border ${
+            errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+          } px-3 py-2 shadow-sm focus:border-primary focus:outline-none 
+            focus:ring-1 focus:ring-primary`}
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+        />
+        {errors.confirmPassword && (
+          <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+        )}
+      </div>
+
       <button
+        className="flex w-full justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-[#4a8c85] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        disabled={loading || Object.keys(errors).length > 0}
         type="submit"
-        disabled={loading}
-        className="w-full bg-green-600 text-white py-2 rounded"
       >
         {loading ? 'Signing up...' : 'Sign up'}
       </button>
     </form>
   );
-} 
+}

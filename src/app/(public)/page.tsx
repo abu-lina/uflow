@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 
@@ -10,28 +10,24 @@ export default function HomePage() {
   const [showSignIn, setShowSignIn] = useState(false);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
       <h1 className="mb-8 text-3xl font-bold">Welcome to Ummah Flow</h1>
       <div className="flex gap-4">
         <button
-          className="px-6 py-3 bg-[#589D96] text-white rounded-lg font-semibold"
+          className="rounded-lg bg-primary px-6 py-3 font-semibold text-white"
           onClick={() => setShowSignup(true)}
         >
           Sign Up
         </button>
         <button
-          className="px-6 py-3 bg-white text-[#589D96] border border-[#589D96] rounded-lg font-semibold"
+          className="rounded-lg border border-primary bg-white px-6 py-3 font-semibold text-primary"
           onClick={() => setShowSignIn(true)}
         >
           Sign In
         </button>
       </div>
-      {showSignup && (
-        <SignupPopup onClose={() => setShowSignup(false)} />
-      )}
-      {showSignIn && (
-        <SignInPopup onClose={() => setShowSignIn(false)} />
-      )}
+      {showSignup && <SignupPopup onClose={() => setShowSignup(false)} />}
+      {showSignIn && <SignInPopup onClose={() => setShowSignIn(false)} />}
     </main>
   );
-} 
+}

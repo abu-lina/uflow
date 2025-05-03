@@ -1,10 +1,10 @@
 'use client';
 
-import { createContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useEffect, useState, type ReactNode } from 'react';
+
+import { type Session, type User } from '@supabase/supabase-js';
 
 import { supabase } from '@/lib/supabase/client';
-
-import type { Session, User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   session: Session | null;
@@ -12,35 +12,48 @@ interface AuthContextType {
   loading: boolean;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthContext = createContext<AuthContextType>({
+  session: null,
+  user: null,
+  loading: true,
+});
+
+export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    void (async () => {
+      try {
+        const {
+          data: { session: initialSession },
+        } = await supabase.auth.getSession();
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        setLoading(false);
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    });
+        const {
+          data: { subscription },
+        } = await supabase.auth.onAuthStateChange((_event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        });
 
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Error in auth state management:', error);
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ session, user, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-} 
+  return <AuthContext.Provider value={{ session, user, loading }}>{children}</AuthContext.Provider>;
+}

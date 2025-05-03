@@ -120,4 +120,4 @@ const nextConfig = {
   output: 'standalone', // For better deployment optimization
 };
 
-export default nextConfig; 
+export default nextConfig;

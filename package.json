@@ -73,8 +73,10 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.2.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-tailwindcss": "^3.18.0",
     "globals": "^16.0.0",
     "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
@@ -89,7 +91,7 @@
     "rimraf": "^5.0.5",
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.1.2",
-    "typescript": "^5.5.4",
+    "typescript": "5.5.4",
     "vitest": "^3.1.2"
   },
   "overrides": {

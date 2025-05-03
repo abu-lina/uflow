@@ -1,26 +1,48 @@
 'use client';
 
-import { supabase } from '@/lib/supabase/client';
+import { useState } from 'react';
+
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase/client';
 
 export function AccountMenu() {
   const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="flex items-center gap-4">
-      <span className="text-gray-700">{user.email}</span>
+    <div className="relative">
       <button
-        onClick={handleSignOut}
-        className="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+        className="flex items-center space-x-2 rounded-full bg-gray-100 p-2 hover:bg-gray-200"
+        onClick={() => setIsOpen(!isOpen)}
       >
-        Sign out
+        <span className="text-sm font-medium">{user.email}</span>
       </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5">
+          <button
+            className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+            onClick={handleSignOut}
+          >
+            Sign out
+          </button>
+        </div>
+      )}
     </div>
   );
-} 
+}

@@ -16,7 +16,7 @@ module.exports = {
     // Run tests if any test files are changed
     (files) => {
       const testFiles = files.filter(
-        (file) => file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__')
+        (file) => file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__'),
       );
       if (testFiles.length > 0) {
         return 'npm test -- --findRelatedTests ' + testFiles.join(' ');
