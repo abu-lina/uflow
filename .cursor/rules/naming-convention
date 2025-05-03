@@ -1,0 +1,12 @@
+Best Practices Analysis:
+Next.js/React Convention:
+Components: PascalCase (e.g., AuthProvider.tsx)
+Hooks: camelCase (e.g., useAuth.ts)
+Utilities: camelCase (e.g., formatDate.ts)
+Constants: UPPER_SNAKE_CASE (e.g., API_ROUTES.ts)
+File System Convention:
+Directories: kebab-case (e.g., auth-provider/)
+Files: kebab-case (e.g., auth-provider.tsx)
+Our Project Structure:
+We're following a modular, clean structure
+We should be consistent with Next.js ecosystem standards

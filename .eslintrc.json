@@ -9,14 +9,7 @@
     "plugin:tailwindcss/recommended",
     "plugin:prettier/recommended"
   ],
-  "plugins": [
-    "@typescript-eslint", 
-    "react", 
-    "import", 
-    "jsx-a11y", 
-    "tailwindcss", 
-    "prettier"
-  ],
+  "plugins": ["@typescript-eslint", "react", "import", "jsx-a11y", "tailwindcss", "prettier"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": "./tsconfig.json",

@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 import { ErrorBoundary } from '@/components/error-boundary/ErrorBoundary';
 import { FormSkeleton } from '@/components/ui/skeleton/Skeleton';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase/client';
 import { type LoginFormData, loginSchema } from '@/lib/validations/auth';
 

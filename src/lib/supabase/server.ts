@@ -1,13 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
-import { type Database } from '@/types/supabase';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 
-// Only use this on the server! Never expose the service role key to the client.
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+import type { Database } from '@/types/supabase';
 
-if (!url || !serviceRoleKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-export const createServerSideClient = () => createClient<Database>(url, serviceRoleKey);
+export const createServerClient = () => {
+  const cookieStore = cookies();
+  return createServerComponentClient<Database>({ cookies: () => cookieStore });
+};

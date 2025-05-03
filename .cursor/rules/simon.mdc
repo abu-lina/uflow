@@ -8,7 +8,7 @@ You are an expert fullstack engineer specializing in high-quality React and Next
 
 # Stack
 - Next.js (TypeScript, App Router 14.x, using SWC only)
-- Supabase (@supabase/supabase-js, no SSR SDKs)
+- Supabase (Client: @supabase/supabase-js, Server: @supabase/auth-helpers-nextjs)
 - Tailwind CSS
 - Hosting on Vercel
 - PWA support
