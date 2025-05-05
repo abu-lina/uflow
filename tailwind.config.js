@@ -9,83 +9,68 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'inter-tight': ['Inter Tight', 'sans-serif'],
+        sans: ['Inter Tight', 'sans-serif'],
+        heading: ['Montserrat', 'sans-serif'],
+      },
+      fontSize: {
+        xs: '0.75rem',
+        sm: '0.875rem',
+        base: '1rem',
+        lg: '1.25rem',
+        xl: '1.563rem',
+        '2xl': '1.953rem',
+        '3xl': '2.441rem',
+        '4xl': '3.052rem',
+      },
+      fontWeight: {
+        normal: 400,
+        medium: 500,
+        semibold: 600,
+        bold: 700,
       },
       colors: {
-        // Brand colors
-        brand: {
-          primary: '#589D96',
-          secondary: '#BFDBD8',
-        },
-        // Background gradient colors
-        gradient: {
-          start: '#F5F5F5',
-          end: '#FBFBFB',
-        },
-        // Semantic colors
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
         primary: '#589D96',
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
+        'primary-light': '#BFDBD8',
+        text: '#232323',
+        'neutral-light': '#EEEEEE',
+        neutral: '#CDCDCD',
+        border: '#D4D4D4',
+        success: '#10b981',
+        danger: '#ef4444',
+        warning: '#f59e42',
+        info: '#3b82f6',
+        muted: '#f5f5f5',
+      },
+      backgroundImage: {
+        'background': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
+        'accent-gold-gradient': 'linear-gradient(90deg, #D2B581 4.35%, #E5D1A0 52.17%, #AF8650 100%)',
+        'accent-gold-gradient-light': 'linear-gradient(90deg, #F3E7D0 4.35%, #E5D1A0 52.17%, #EEE3D6 100%)',
+        'accent-gold-radial': 'radial-gradient(47.83% 95.65% at 52.17% 47.83%, #D2B581 0%, #E5D1A0 50%, #D2B581 100%)',
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        sm: '4px',
+        md: '8px',
+        lg: '16px',
+        full: '9999px',
       },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
-      typography: {
-        DEFAULT: {
-          css: {
-            maxWidth: '65ch',
-            color: 'hsl(var(--foreground))',
-            a: {
-              color: '#589D96',
-              '&:hover': {
-                color: '#589D96',
-              },
-            },
-          },
-        },
+      spacing: {
+        1: '4px',
+        2: '8px',
+        3: '12px',
+        4: '16px',
+        5: '20px',
+        6: '24px',
+        8: '32px',
+        10: '40px',
+        12: '48px',
+        16: '64px',
+        20: '80px',
+        24: '96px',
+        32: '128px',
+        40: '160px',
+        48: '192px',
+        56: '224px',
+        64: '256px',
       },
     },
   },

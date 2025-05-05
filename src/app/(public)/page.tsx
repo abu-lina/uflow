@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { Logo } from '@/components/ui/Logo';
 import { SignInPopup } from '@/features/auth/ui/SignInPopup';
 import { SignupPopup } from '@/features/auth/ui/SignupPopup';
 
@@ -10,7 +11,8 @@ export default function HomePage() {
   const [showSignIn, setShowSignIn] = useState(false);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
+    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+      <Logo className="size-16" />
       <h1 className="mb-8 text-3xl font-bold">Welcome to Ummah Flow</h1>
       <div className="flex gap-4">
         <button

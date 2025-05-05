@@ -1,5 +1,32 @@
+/*
+  Global Styles for Ummah Flow
+  - Applies base typography, color, and layout tokens
+  - Ensures accessibility and design consistency
+  - Follows project and design system best practices
+*/
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  @apply bg-background text-text font-sans antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-heading;
+}
+
+a {
+  @apply text-primary underline transition-colors duration-200;
+}
+
+a:hover, a:focus {
+  @apply text-primary-light;
+}
+
+:focus {
+  @apply outline-none ring-2 ring-primary;
+}
 
 /* Add any global styles below */

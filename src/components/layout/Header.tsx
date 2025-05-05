@@ -1,14 +1,13 @@
 import Link from 'next/link';
 
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/providers/auth-provider';
-
-import { Button } from '../common/Button';
 
 export function Header() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-white backdrop-blur">
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link className="mr-6 flex items-center space-x-2" href="/">
@@ -20,7 +19,7 @@ export function Header() {
           <nav className="flex items-center space-x-6">
             {user ? (
               <>
-                <Link className="hover:text-foreground/80" href="/dashboard">
+                <Link className="hover:text-primary" href="/dashboard">
                   Dashboard
                 </Link>
                 <Button variant="outline" onClick={() => signOut()}>
@@ -29,7 +28,7 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link className="hover:text-foreground/80" href="/login">
+                <Link className="hover:text-primary" href="/login">
                   Login
                 </Link>
                 <Link href="/register">

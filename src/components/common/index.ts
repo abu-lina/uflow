@@ -1,4 +1,4 @@
 // Export common components here
-export * from './Button';
-export * from './Input';
-export * from './Card';
+export * from '@/components/ui/Button';
+export * from '@/components/ui/Input';
+export * from '@/components/ui/Card';
