@@ -1,5 +1,5 @@
 // External dependencies
-import { Inter } from 'next/font/google';
+import { Inter, Inter_Tight } from 'next/font/google';
 
 import { Toaster } from 'sonner';
 
@@ -11,6 +11,10 @@ import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
+const interTight = Inter_Tight({ 
+  subsets: ['latin'],
+  variable: '--font-inter-tight',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -21,7 +25,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'Ummah Flow',
-  description: 'A platform for the Muslim community',
+  description: 'Der erste halal-konforme Marktplatz',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -37,8 +41,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="de">
+      <body className={`${inter.className} ${interTight.variable} min-h-screen bg-uflow-light`}>
         <AuthProvider>
           {children}
           <Toaster />
