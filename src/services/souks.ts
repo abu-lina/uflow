@@ -4,7 +4,7 @@ import type { Database } from '@/types/supabase';
 export async function searchSouks(
   query: string,
   category: string,
-  location: string
+  location: string,
 ): Promise<Database['public']['Tables']['souks']['Row'][]> {
   let req = supabase.from('souks').select('*');
 
@@ -19,6 +19,8 @@ export async function searchSouks(
   }
 
   const { data, error } = await req;
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
   return data ?? [];
-} 
+}

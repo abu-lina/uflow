@@ -5,7 +5,7 @@ async function main() {
     await transformSvgToComponent({
       inputPath: 'src/components/ui/basma-transformed.svg',
       outputPath: 'src/components/ui/BasmaLogo.tsx',
-      componentName: 'BasmaLogo'
+      componentName: 'BasmaLogo',
     });
   } catch (error) {
     console.error('Failed to transform SVG:', error);
@@ -13,4 +13,7 @@ async function main() {
   }
 }
 
-main(); 
+void main().catch((error) => {
+  console.error('Unhandled error in main:', error);
+  process.exit(1);
+});

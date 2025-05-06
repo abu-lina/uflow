@@ -21,14 +21,14 @@ async function svgToReact({ inputPath, outputPath, componentName }: SVGToReactOp
   // Parse SVG attributes
   const attrs = attributes
     .match(/(\w+)=["']([^"']*)["']/g)
-    ?.map(attr => {
+    ?.map((attr) => {
       const [key, value] = attr.split('=');
       return {
         key: key.trim(),
         value: value.replace(/["']/g, ''),
       };
     })
-    .filter(attr => !['xmlns', 'xmlns:xlink'].includes(attr.key));
+    .filter((attr) => !['xmlns', 'xmlns:xlink'].includes(attr.key));
 
   // Generate React component
   const componentContent = `
@@ -44,7 +44,7 @@ export function ${componentName}({ className = '', height = 200, width = 200 }: 
       className={className}
       fill="none"
       height={height}
-      viewBox="${attrs?.find(attr => attr.key === 'viewBox')?.value || '0 0 200 200'}"
+      viewBox="${attrs?.find((attr) => attr.key === 'viewBox')?.value || '0 0 200 200'}"
       width={width}
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -80,4 +80,4 @@ export function ${componentName}({ className = '', height = 200, width = 200 }: 
 //   componentName: 'MyComponent',
 // });
 
-export { svgToReact }; 
+export { svgToReact };

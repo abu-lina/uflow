@@ -11,21 +11,13 @@ interface DropdownProps {
   value: string;
 }
 
-export function Dropdown({
-  className,
-  items,
-  onChange,
-  value,
-}: DropdownProps) {
+export function Dropdown({ className, items, onChange, value }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -41,14 +33,12 @@ export function Dropdown({
         aria-haspopup="listbox"
         className={cn(
           'flex flex-row items-center gap-2 rounded-md px-2 py-1 hover:bg-muted',
-          className
+          className,
         )}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="text-base font-normal leading-[19px] text-foreground">
-          {value}
-        </span>
+        <span className="text-base font-normal leading-[19px] text-gray-900">{value}</span>
         <ChevronDown
           className={cn('h-6 w-6 -rotate-90 transition-transform', {
             'rotate-0': isOpen,
@@ -68,7 +58,7 @@ export function Dropdown({
                 'w-full px-4 py-2 text-left text-base font-normal leading-[19px] hover:bg-muted',
                 {
                   'bg-muted': item === value,
-                }
+                },
               )}
               role="option"
               type="button"
@@ -84,4 +74,4 @@ export function Dropdown({
       )}
     </div>
   );
-} 
+}

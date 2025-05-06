@@ -60,11 +60,16 @@ export function OrnamentIcon({
           <feComposite in2="hardAlpha" operator="out" />
           <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
           <feBlend in2="BackgroundImageFix" mode="normal" result="effect1_dropShadow_3488_610" />
-          <feBlend in="SourceGraphic" in2="effect1_dropShadow_3488_610" mode="normal" result="shape" />
+          <feBlend
+            in="SourceGraphic"
+            in2="effect1_dropShadow_3488_610"
+            mode="normal"
+            result="shape"
+          />
         </filter>
       </defs>
     </svg>
   );
 }
 
-OrnamentIcon.displayName = 'OrnamentIcon'; 
+OrnamentIcon.displayName = 'OrnamentIcon';

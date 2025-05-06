@@ -42,10 +42,13 @@ module.exports = {
         muted: '#f5f5f5',
       },
       backgroundImage: {
-        'background': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
-        'accent-gold-gradient': 'linear-gradient(90deg, #D2B581 4.35%, #E5D1A0 52.17%, #AF8650 100%)',
-        'accent-gold-gradient-light': 'linear-gradient(90deg, #F3E7D0 4.35%, #E5D1A0 52.17%, #EEE3D6 100%)',
-        'accent-gold-radial': 'radial-gradient(47.83% 95.65% at 52.17% 47.83%, #D2B581 0%, #E5D1A0 50%, #D2B581 100%)',
+        background: 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
+        'accent-gold-gradient':
+          'linear-gradient(90deg, #D2B581 4.35%, #E5D1A0 52.17%, #AF8650 100%)',
+        'accent-gold-gradient-light':
+          'linear-gradient(90deg, #F3E7D0 4.35%, #E5D1A0 52.17%, #EEE3D6 100%)',
+        'accent-gold-radial':
+          'radial-gradient(47.83% 95.65% at 52.17% 47.83%, #D2B581 0%, #E5D1A0 50%, #D2B581 100%)',
       },
       borderRadius: {
         sm: '4px',

@@ -46,7 +46,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
   };
 
   return (
-    <div 
+    <div
       aria-label="Suche in der Ummah"
       className={`flex h-10 flex-row items-center gap-4 rounded-lg bg-white px-2 ${className}`}
       role="search"
@@ -54,14 +54,9 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
       <div className="flex w-full flex-row items-center justify-between">
         {/* Search Section */}
         <div className="flex flex-1 flex-row items-center gap-4">
-          <Search
-            aria-hidden="true"
-            className="h-6 w-6 shrink-0 text-text-primary"
-          />
+          <Search aria-hidden="true" className="size-6 shrink-0 text-primary" />
           <input
-            className={`w-full appearance-none border-none bg-transparent font-inter-tight text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-text-muted focus:outline-none focus:ring-0 ${
-              isTyping ? 'text-text-primary' : 'text-text-muted'
-            }`}
+            className={`w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-primary' : 'text-gray-400'}`}
             placeholder="In deiner Ummah suchen"
             type="text"
             value={searchQuery}
@@ -78,7 +73,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
         {/* Filters Section */}
         <div className="flex flex-row items-center gap-4">
           {/* Divider */}
-          <div className="h-6 border-l border-text-primary" />
+          <div className="h-6 border-l border-primary" />
 
           {/* Categories */}
           <div className="relative flex flex-row items-center">
@@ -89,18 +84,16 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
               type="button"
               onClick={() => setIsCategoryOpen(!isCategoryOpen)}
             >
-              <span className="w-[25px] font-inter-tight text-base font-normal leading-[19px] text-text-primary">
-                {selectedCategory}
-              </span>
+              <span className="text-xs font-normal text-gray-600">{selectedCategory}</span>
               <ChevronDown
                 aria-hidden="true"
-                className={`h-6 w-6 text-text-primary transition-transform duration-200 ${
+                className={`size-6 text-primary transition-transform duration-200 ${
                   isCategoryOpen ? 'rotate-180' : ''
                 }`}
               />
             </button>
             {isCategoryOpen && (
-              <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
+              <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
                 {categories.map((category) => (
                   <button
                     key={category}
@@ -120,7 +113,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
           </div>
 
           {/* Divider */}
-          <div className="h-6 border-l border-text-primary" />
+          <div className="h-6 border-l border-primary" />
 
           {/* Location */}
           <div className="relative flex flex-row items-center">
@@ -131,18 +124,16 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
               type="button"
               onClick={() => setIsLocationOpen(!isLocationOpen)}
             >
-              <span className="w-[49px] font-inter-tight text-base font-normal leading-[19px] text-text-primary">
-                {selectedLocation}
-              </span>
+              <span className="text-xs font-normal text-gray-600">{selectedLocation}</span>
               <ChevronDown
                 aria-hidden="true"
-                className={`h-6 w-6 text-text-primary transition-transform duration-200 ${
+                className={`size-6 text-primary transition-transform duration-200 ${
                   isLocationOpen ? 'rotate-180' : ''
                 }`}
               />
             </button>
             {isLocationOpen && (
-              <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
+              <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
                 {locations.map((location) => (
                   <button
                     key={location}
@@ -166,4 +157,4 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
   );
 }
 
-SearchBar.displayName = 'SearchBar'; 
+SearchBar.displayName = 'SearchBar';

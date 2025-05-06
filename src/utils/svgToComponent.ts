@@ -54,8 +54,9 @@ export function ${componentName}({ className, ...props }: ${componentName}Props)
     // Write the component file
     await fs.promises.writeFile(outputPath, componentContent, 'utf-8');
 
-    console.log(`Successfully created ${componentName} component at ${outputPath}`);
+    // Successfully created component
   } catch (error) {
+    // Error transforming SVG to component
     console.error('Error transforming SVG to component:', error);
     throw error;
   }
@@ -66,4 +67,4 @@ export function ${componentName}({ className, ...props }: ${componentName}Props)
 //   inputPath: 'path/to/input.svg',
 //   outputPath: 'src/components/ui/MyLogo.tsx',
 //   componentName: 'MyLogo'
-// }); 
+// });

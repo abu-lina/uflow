@@ -11,7 +11,7 @@ import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
-const interTight = Inter_Tight({ 
+const interTight = Inter_Tight({
   subsets: ['latin'],
   variable: '--font-inter-tight',
 });
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
-      <body className={`${inter.className} ${interTight.variable} min-h-screen bg-uflow-light`}>
+      <body className={`min-h-screen bg-gray-50 ${inter.className} ${interTight.variable}`}>
         <AuthProvider>
           {children}
           <Toaster />

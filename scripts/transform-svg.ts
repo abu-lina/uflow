@@ -1,4 +1,4 @@
-import { svgToReact } from './svg-to-react.ts'
+import { svgToReact } from './svg-to-react';
 
 async function transformSVGs() {
   // Transform Bismillah SVG
@@ -9,4 +9,4 @@ async function transformSVGs() {
   });
 }
 
-transformSVGs().catch(console.error); 
+transformSVGs().catch(console.error);

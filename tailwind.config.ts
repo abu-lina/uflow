@@ -13,19 +13,20 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-inter-tight)'],
         'inter-tight': ['Inter Tight', 'sans-serif'],
-        'inter': ['Inter', 'sans-serif'],
-        'baskerville': ['Baskerville', 'serif'],
+        inter: ['Inter', 'sans-serif'],
+        baskerville: ['Baskerville', 'serif'],
+        'font-inter': ['Inter', 'sans-serif'],
       },
       fontSize: {
         // Following modular scale (1.25x)
-        'xs': ['0.75rem', { lineHeight: '1rem' }],        // 12px
-        'sm': ['0.875rem', { lineHeight: '1.25rem' }],    // 14px
-        'base': ['1rem', { lineHeight: '1.5rem' }],       // 16px
-        'lg': ['1.25rem', { lineHeight: '1.75rem' }],     // 20px
-        'xl': ['1.5625rem', { lineHeight: '2rem' }],      // 25px
-        '2xl': ['1.953rem', { lineHeight: '2.5rem' }],    // 31.25px
-        '3xl': ['2.441rem', { lineHeight: '3rem' }],      // 39.06px
-        '4xl': ['3.052rem', { lineHeight: '3.5rem' }],    // 48.83px
+        xs: ['0.75rem', { lineHeight: '1rem' }], // 12px
+        sm: ['0.875rem', { lineHeight: '1.25rem' }], // 14px
+        base: ['1rem', { lineHeight: '1.5rem' }], // 16px
+        lg: ['1.25rem', { lineHeight: '1.75rem' }], // 20px
+        xl: ['1.5625rem', { lineHeight: '2rem' }], // 25px
+        '2xl': ['1.953rem', { lineHeight: '2.5rem' }], // 31.25px
+        '3xl': ['2.441rem', { lineHeight: '3rem' }], // 39.06px
+        '4xl': ['3.052rem', { lineHeight: '3.5rem' }], // 48.83px
       },
       spacing: {
         // Following Rule of 8
@@ -91,12 +92,37 @@ const config: Config = {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        'text-primary': '#232323',
+        'text-secondary': '#7A7A7A',
+        'text-muted': '#7C7C7C',
+        'text-foreground': 'hsl(var(--foreground))',
+        'text-primary-foreground': 'hsl(var(--primary-foreground))',
+        'text-destructive-foreground': 'hsl(var(--destructive-foreground))',
+        'text-surface-foreground': 'hsl(var(--surface-foreground))',
+        'bg-brand-primary': '#589D96',
+        'bg-surface': 'hsl(var(--surface))',
+        'bg-destructive': 'hsl(var(--destructive))',
+        'bg-secondary': 'hsl(var(--secondary))',
+        'bg-background': 'hsl(var(--background))',
+        'bg-gradient-start': '#F5F5F5',
+        'bg-gradient-end': '#FBFBFB',
+        'border-border-light': '#CDCDCD',
+        'border-input': 'hsl(var(--input))',
+        'ring-primary': 'hsl(var(--ring))',
+        'ring-ring': 'hsl(var(--ring))',
+        'surface': 'hsl(var(--surface))',
+        'surface-foreground': 'hsl(var(--surface-foreground))',
+        'primary-foreground': 'hsl(var(--primary-foreground))',
+        'secondary-foreground': 'hsl(var(--secondary-foreground))',
+        'accent-foreground': 'hsl(var(--accent-foreground))',
+        'muted-foreground': 'hsl(var(--muted-foreground))',
+        'destructive-foreground': 'hsl(var(--destructive-foreground))',
       },
       borderRadius: {
-        'xs': '8px',
-        'sm': '12px',
-        'md': '14px',
-        'lg': '16.8px',
+        xs: '8px',
+        sm: '12px',
+        md: '14px',
+        lg: '16.8px',
       },
       keyframes: {
         'accordion-down': {
