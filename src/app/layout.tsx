@@ -20,7 +20,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#000000',
+  themeColor: 'hsl(0, 0%, 0%)',
 };
 
 export const metadata: Metadata = {
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
-      <body className={`min-h-screen bg-gray-50 ${inter.className} ${interTight.variable}`}>
+      <body className={`min-h-screen bg-background ${inter.className} ${interTight.variable}`}>
         <AuthProvider>
           {children}
           <Toaster />

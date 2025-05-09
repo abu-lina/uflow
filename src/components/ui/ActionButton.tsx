@@ -16,7 +16,7 @@ export function ActionButton({
   // Size variants following Rule of 8
   const sizeClasses = {
     lg: {
-      button: 'h-14 px-5 gap-2 rounded-[16.8px] text-xl',
+      button: 'h-14 px-4 gap-2 rounded-[16.8px] text-xl',
       icon: 'size-6',
     },
     md: {
@@ -27,20 +27,22 @@ export function ActionButton({
 
   return (
     <button
+      aria-label={label}
       className={`
-        flex flex-row items-center justify-center
-        bg-[#589D96] text-white
-        font-medium
+        inline-flex items-center justify-center
+        bg-primary font-medium
+        text-white
         transition-colors duration-200
-        hover:bg-[#4A8A84]
-        disabled:opacity-50 disabled:cursor-not-allowed
+        hover:bg-primary-dark
+        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+        disabled:cursor-not-allowed disabled:opacity-50
         ${sizeClasses[size].button}
         ${className}
       `.trim()}
       type={type}
       {...props}
     >
-      <span className="flex-1 text-center">{label}</span>
+      <span>{label}</span>
       <OrnamentIcon aria-hidden="true" className={`text-white ${sizeClasses[size].icon}`} />
     </button>
   );

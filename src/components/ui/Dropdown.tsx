@@ -32,7 +32,7 @@ export function Dropdown({ className, items, onChange, value }: DropdownProps) {
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         className={cn(
-          'flex flex-row items-center gap-2 rounded-md px-2 py-1 hover:bg-muted',
+          'hover:bg-muted flex flex-row items-center gap-2 rounded-md px-2 py-1',
           className,
         )}
         type="button"
@@ -55,7 +55,7 @@ export function Dropdown({ className, items, onChange, value }: DropdownProps) {
               key={item}
               aria-selected={item === value}
               className={cn(
-                'w-full px-4 py-2 text-left text-base font-normal leading-[19px] hover:bg-muted',
+                'hover:bg-muted w-full px-4 py-2 text-left text-base font-normal leading-[19px]',
                 {
                   'bg-muted': item === value,
                 },

@@ -11,61 +11,61 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 173 24% 45%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 173 24% 45%;
-    --radius: 0.5rem;
-    --surface: 0 0% 98%;
-    --surface-foreground: 240 10% 10%;
-    --brand-primary: 173 24% 45%;
-    --gradient-start: 0 0% 96%;
-    --gradient-end: 0 0% 98%;
-    --text-primary: 220 13% 18%;
-    --text-secondary: 220 13% 38%;
-    --text-muted: 220 13% 58%;
+    --background: 180 24% 48%; /* mint */
+    --background-light: 180 24% 88%; /* mint-light */
+    --text: 0 0% 14%; /* text color */
+    --grey: 0 0% 80%; /* grey */
+    --grey-light: 0 0% 93%; /* grey-light */
+    --border: 0 0% 83%; /* border */
   }
 }
 
-body {
-  @apply bg-background text-text font-sans antialiased;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-uflow-light text-text;
+  }
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  @apply font-heading;
+@layer components {
+  .container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
 }
 
-a {
-  @apply text-primary underline transition-colors duration-200;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }
 
-a:hover,
-a:focus {
-  @apply text-primary-light;
-}
+/* Custom styles */
+@layer base {
+  html {
+    @apply antialiased;
+  }
 
-:focus {
-  @apply outline-none ring-2 ring-primary;
-}
+  body {
+    @apply min-h-screen bg-uflow-light font-inter-tight text-text;
+  }
 
-/* Add any global styles below */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
+  }
+
+  a {
+    @apply text-mint transition-colors duration-200;
+  }
+
+  a:hover,
+  a:focus {
+    @apply text-mint-light;
+  }
+}

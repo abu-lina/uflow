@@ -84,7 +84,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
               type="button"
               onClick={() => setIsCategoryOpen(!isCategoryOpen)}
             >
-              <span className="text-xs font-normal text-gray-600">{selectedCategory}</span>
+              <span className="text-base font-normal text-gray-600">{selectedCategory}</span>
               <ChevronDown
                 aria-hidden="true"
                 className={`size-6 text-primary transition-transform duration-200 ${
@@ -97,7 +97,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
                 {categories.map((category) => (
                   <button
                     key={category}
-                    className={`block w-full px-4 py-2 text-left text-sm hover:bg-gray-50 ${
+                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
                       category === selectedCategory ? 'bg-gray-50' : ''
                     }`}
                     onClick={() => {
@@ -124,7 +124,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
               type="button"
               onClick={() => setIsLocationOpen(!isLocationOpen)}
             >
-              <span className="text-xs font-normal text-gray-600">{selectedLocation}</span>
+              <span className="text-base font-normal text-gray-600">{selectedLocation}</span>
               <ChevronDown
                 aria-hidden="true"
                 className={`size-6 text-primary transition-transform duration-200 ${
@@ -137,7 +137,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
                 {locations.map((location) => (
                   <button
                     key={location}
-                    className={`block w-full px-4 py-2 text-left text-sm hover:bg-gray-50 ${
+                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
                       location === selectedLocation ? 'bg-gray-50' : ''
                     }`}
                     onClick={() => {

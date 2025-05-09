@@ -7,29 +7,58 @@ const config: Config = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/features/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  safelist: [
+    // uFlow colors
+    'text-mint',
+    'text-mint-light',
+    'bg-mint',
+    'bg-mint-light',
+    'border-mint',
+    'ring-mint',
+    'hover:text-mint',
+    'hover:bg-mint',
+    'focus:ring-mint',
+    'focus:border-mint',
+    'text-text',
+    'text-grey',
+    'text-grey-light',
+    'bg-grey',
+    'bg-grey-light',
+    'border-border',
+    'bg-uflow-light',
+    'bg-gold-gradient',
+    'bg-gold-gradient-light',
+    'bg-gold-gradient-radial',
+    // Font families
+    'font-inter-tight',
+    // Hover and focus states
+    'hover:bg-mint/90',
+    'focus-visible:ring-mint',
   ],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter-tight)'],
         'inter-tight': ['Inter Tight', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
         baskerville: ['Baskerville', 'serif'],
-        'font-inter': ['Inter', 'sans-serif'],
+        heading: ['Montserrat', 'sans-serif'],
       },
       fontSize: {
-        // Following modular scale (1.25x)
-        xs: ['0.75rem', { lineHeight: '1rem' }], // 12px
-        sm: ['0.875rem', { lineHeight: '1.25rem' }], // 14px
-        base: ['1rem', { lineHeight: '1.5rem' }], // 16px
-        lg: ['1.25rem', { lineHeight: '1.75rem' }], // 20px
-        xl: ['1.5625rem', { lineHeight: '2rem' }], // 25px
-        '2xl': ['1.953rem', { lineHeight: '2.5rem' }], // 31.25px
-        '3xl': ['2.441rem', { lineHeight: '3rem' }], // 39.06px
-        '4xl': ['3.052rem', { lineHeight: '3.5rem' }], // 48.83px
+        // Modular scale (1.25)
+        xs: ['0.75rem', { lineHeight: '1rem' }],
+        sm: ['0.875rem', { lineHeight: '1.25rem' }],
+        base: ['1rem', { lineHeight: '1.5rem' }],
+        lg: ['1.125rem', { lineHeight: '1.75rem' }],
+        xl: ['1.25rem', { lineHeight: '1.75rem' }],
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+        '5xl': ['3rem', { lineHeight: '1' }],
       },
       spacing: {
-        // Following Rule of 8
+        // Following the Rule of 8
         '2': '8px',
         '4': '16px',
         '6': '24px',
@@ -42,87 +71,49 @@ const config: Config = {
         '32': '128px',
       },
       colors: {
-        // Brand colors
-        brand: {
-          primary: '#589D96',
-          secondary: '#BFDBD8',
+        primary: {
+          DEFAULT: '#589D96',
+          light: '#BFDBD8',
+          dark: '#4A8A84',
         },
-        // Background gradient colors
-        gradient: {
-          start: '#F5F5F5',
-          end: '#FBFBFB',
+        background: {
+          DEFAULT: '#FFFFFF',
+          dark: '#1F2937',
         },
-        // Semantic colors for text and UI
-        text: {
-          primary: '#232323',
-          secondary: '#7A7A7A',
-          muted: '#7C7C7C',
+        text: '#232323', // uflow-text
+        border: '#D4D4D4', // uflow-light-boarder
+        danger: {
+          DEFAULT: '#DC2626',
+          light: '#EF4444',
         },
-        border: {
-          light: '#CDCDCD',
-          DEFAULT: '#E5E7EB',
+        success: 'hsl(160, 84%, 39%)', // #10b981
+        warning: 'hsl(35, 92%, 60%)', // #f59e42
+        info: 'hsl(217, 91%, 60%)', // #3b82f6
+        // uFlow brand colors
+        mint: {
+          DEFAULT: '#589D96', // uflow-mint
+          light: '#BFDBD8', // uflow-light-mint
         },
-        // Semantic colors
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: '#589D96',
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+        grey: {
+          DEFAULT: '#CDCDCD', // uflow-grey
+          light: '#EEEEEE', // uflow-light-grey
         },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        'text-primary': '#232323',
-        'text-secondary': '#7A7A7A',
-        'text-muted': '#7C7C7C',
-        'text-foreground': 'hsl(var(--foreground))',
-        'text-primary-foreground': 'hsl(var(--primary-foreground))',
-        'text-destructive-foreground': 'hsl(var(--destructive-foreground))',
-        'text-surface-foreground': 'hsl(var(--surface-foreground))',
-        'bg-brand-primary': '#589D96',
-        'bg-surface': 'hsl(var(--surface))',
-        'bg-destructive': 'hsl(var(--destructive))',
-        'bg-secondary': 'hsl(var(--secondary))',
-        'bg-background': 'hsl(var(--background))',
-        'bg-gradient-start': '#F5F5F5',
-        'bg-gradient-end': '#FBFBFB',
-        'border-border-light': '#CDCDCD',
-        'border-input': 'hsl(var(--input))',
-        'ring-primary': 'hsl(var(--ring))',
-        'ring-ring': 'hsl(var(--ring))',
-        'surface': 'hsl(var(--surface))',
-        'surface-foreground': 'hsl(var(--surface-foreground))',
-        'primary-foreground': 'hsl(var(--primary-foreground))',
-        'secondary-foreground': 'hsl(var(--secondary-foreground))',
-        'accent-foreground': 'hsl(var(--accent-foreground))',
-        'muted-foreground': 'hsl(var(--muted-foreground))',
-        'destructive-foreground': 'hsl(var(--destructive-foreground))',
+        // Add any other semantic colors used in your codebase here
       },
       borderRadius: {
         xs: '8px',
         sm: '12px',
         md: '14px',
         lg: '16.8px',
+        full: '9999px',
+      },
+      backgroundImage: {
+        'uflow-light': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
+        'gold-gradient': 'linear-gradient(90deg, #D2B581 4.35%, #E5D1A0 52.17%, #AF8650 100%)',
+        'gold-gradient-light':
+          'linear-gradient(90deg, #F3E7D0 4.35%, #E5D1A0 52.17%, #EEE3D6 100%)',
+        'gold-gradient-radial':
+          'radial-gradient(47.83% 95.65% at 52.17% 47.83%, #D2B581 0%, #E5D1A0 50%, #D2B581 100%)',
       },
       keyframes: {
         'accordion-down': {
@@ -133,10 +124,15 @@ const config: Config = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        pulse: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '.5' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       typography: {
         DEFAULT: {
@@ -151,9 +147,6 @@ const config: Config = {
             },
           },
         },
-      },
-      backgroundImage: {
-        'uflow-light': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
       },
     },
   },

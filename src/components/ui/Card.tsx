@@ -12,7 +12,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          'rounded-lg bg-card text-card-foreground shadow-sm',
+          'bg-card text-card-foreground rounded-lg shadow-sm',
           variant === 'bordered' && 'border border-border',
           className,
         )}

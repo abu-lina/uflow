@@ -9,7 +9,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Welcome back</h1>
-          <p className="mt-2 text-sm text-neutral">Enter your credentials to sign in</p>
+          <p className="text-text-neutral mt-2 text-sm">Enter your credentials to sign in</p>
         </div>
         <form className="mt-8 space-y-6">
           <div className="space-y-4">

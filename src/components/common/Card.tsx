@@ -9,7 +9,7 @@ type CardProps = HTMLAttributes<HTMLDivElement>;
 const Card = ({ className, ...props }: CardProps) => {
   return (
     <div
-      className={cn('rounded-lg border bg-card text-card-foreground shadow-sm', className)}
+      className={cn('bg-card text-card-foreground rounded-lg border shadow-sm', className)}
       {...props}
     />
   );
@@ -28,7 +28,7 @@ const CardTitle = ({ className, children, ...props }: HTMLAttributes<HTMLHeading
 };
 
 const CardDescription = ({ className, ...props }: CardProps) => {
-  return <p className={cn('text-sm text-muted-foreground', className)} {...props} />;
+  return <p className={cn('text-muted-foreground text-sm', className)} {...props} />;
 };
 
 const CardContent = ({ className, ...props }: CardProps) => {
