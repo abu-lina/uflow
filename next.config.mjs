@@ -27,9 +27,16 @@ const nextConfig = {
         hostname: 'localhost',
         port: '3000',
       },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
   // Environment variables (only expose what's needed)

@@ -158,6 +158,12 @@
   },
   "overrides": [
     {
+      "files": ["src/hooks/**/*.ts"],
+      "rules": {
+        "import/order": "off"
+      }
+    },
+    {
       "files": ["*.test.ts", "*.test.tsx", "*.spec.ts", "*.spec.tsx"],
       "rules": {
         "@typescript-eslint/no-unsafe-assignment": "off",

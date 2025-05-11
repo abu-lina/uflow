@@ -1,11 +1,34 @@
 import { supabase } from '@/lib/supabase/client';
-import type { Database } from '@/types/supabase';
+
+export interface Souk {
+  id: string;
+  name: string;
+  description?: string;
+  category_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getSouks(): Promise<Souk[]> {
+  const response = await supabase.from('souks').select('*').order('name');
+  return isSoukArray(response.data) ? response.data : [];
+}
+
+export async function getSoukById(id: string): Promise<Souk | null> {
+  const response = await supabase.from('souks').select('*').eq('id', id).single();
+  const error = response.error;
+
+  if (error) {
+    throw error;
+  }
+  return isSouk(response.data) ? response.data : null;
+}
 
 export async function searchSouks(
   query: string,
   category: string,
   location: string,
-): Promise<Database['public']['Tables']['souks']['Row'][]> {
+): Promise<Souk[]> {
   let req = supabase.from('souks').select('*');
 
   if (query) {
@@ -18,9 +41,30 @@ export async function searchSouks(
     req = req.eq('location', location);
   }
 
-  const { data, error } = await req;
-  if (error) {
-    throw error;
-  }
-  return data ?? [];
+  const response = await req;
+  return isSoukArray(response.data) ? response.data : [];
+}
+
+function isSoukArray(arr: unknown): arr is Souk[] {
+  return (
+    Array.isArray(arr) &&
+    arr.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as Souk).id === 'string' &&
+        typeof (item as Souk).name === 'string',
+      // Add more field checks as needed
+    )
+  );
+}
+
+function isSouk(obj: unknown): obj is Souk {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof (obj as Souk).id === 'string' &&
+    typeof (obj as Souk).name === 'string'
+    // Add more field checks as needed
+  );
 }

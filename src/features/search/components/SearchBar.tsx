@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 
 // Local imports
-import { fetchUsedCategories } from '@/services/categories';
+import { fetchUsedCategories, type Category } from '@/services/categories';
 
 interface SearchBarProps {
   className?: string;
@@ -18,9 +18,9 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('Alle');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Alle');
   const [selectedLocation, setSelectedLocation] = useState('Überall');
-  const [categories, setCategories] = useState<string[]>(['Alle']);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Available options
   const locations = ['Überall', 'Berlin', 'Hamburg', 'München', 'Köln'];
@@ -28,9 +28,11 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
   useEffect(() => {
     fetchUsedCategories()
       .then((data) => {
-        setCategories(['Alle', ...data.map((cat) => cat.name_de ?? cat.name_en)]);
+        setCategories(data);
       })
-      .catch(() => setCategories(['Alle']));
+      .catch(() => {
+        setCategories([]);
+      });
   }, []);
 
   // Handle search submission
@@ -44,6 +46,18 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
       handleSearch();
     }
   };
+
+  // Helper to get the label for the selected category
+  const getCategoryLabel = (catId: string) => {
+    if (catId === 'Alle') {
+      return 'Alle';
+    }
+    const cat = categories.find((c) => c.category_id === catId);
+    return cat?.name_de || cat?.category_id || 'Unbenannt';
+  };
+
+  // Debug: log categories before rendering (removed for production)
+  // console.log('Categories in state:', categories);
 
   return (
     <div
@@ -84,7 +98,9 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
               type="button"
               onClick={() => setIsCategoryOpen(!isCategoryOpen)}
             >
-              <span className="text-base font-normal text-gray-600">{selectedCategory}</span>
+              <span className="text-base font-normal text-gray-600">
+                {getCategoryLabel(selectedCategory)}
+              </span>
               <ChevronDown
                 aria-hidden="true"
                 className={`size-6 text-primary transition-transform duration-200 ${
@@ -94,18 +110,30 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
             </button>
             {isCategoryOpen && (
               <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
-                {categories.map((category) => (
+                <button
+                  key="Alle"
+                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                    selectedCategory === 'Alle' ? 'bg-gray-50' : ''
+                  }`}
+                  onClick={() => {
+                    setSelectedCategory('Alle');
+                    setIsCategoryOpen(false);
+                  }}
+                >
+                  Alle
+                </button>
+                {categories.map((cat, idx) => (
                   <button
-                    key={category}
+                    key={cat.category_id || idx}
                     className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                      category === selectedCategory ? 'bg-gray-50' : ''
+                      selectedCategory === cat.category_id ? 'bg-gray-50' : ''
                     }`}
                     onClick={() => {
-                      setSelectedCategory(category);
+                      setSelectedCategory(cat.category_id ?? '');
                       setIsCategoryOpen(false);
                     }}
                   >
-                    {category}
+                    {cat.name_de || cat.category_id || 'Unbenannt'}
                   </button>
                 ))}
               </div>
