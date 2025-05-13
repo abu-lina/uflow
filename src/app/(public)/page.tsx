@@ -1,6 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+import Link from 'next/link';
 
 import { Header } from '@/components/layout/Header';
 import { ExploreCard } from '@/components/shared/ExploreCard';
@@ -8,9 +10,10 @@ import { QuoteCard } from '@/components/shared/QuoteCard';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { Bismillah } from '@/components/ui/Bismillah';
 import { PageSliderIndicator } from '@/components/ui/PageSliderIndicator';
-import { exploreCards } from '@/constants/explore';
 import { quotes } from '@/constants/quotes';
 import { usePinterestTicker } from '@/hooks/usePinterestTicker';
+import { useFilter } from '@/providers/filter-provider';
+import { getSouks, type Souk } from '@/services/souks';
 
 const CARD_WIDTH = 288; // px
 const CARD_GAP = 32; // px (mr-8)
@@ -45,7 +48,9 @@ function LandingSection() {
 
             {/* Action Button */}
             <div className="mb-16">
-              <ActionButton label="Entdecke deine Ummah" size="lg" />
+              <Link href="/souks">
+                <ActionButton label="Entdecke deine Ummah" size="lg" />
+              </Link>
             </div>
           </div>
         </div>
@@ -91,13 +96,55 @@ function AboutSection() {
 }
 
 function ExploreSection() {
+  const [souks, setSouks] = useState<Souk[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { selectedCategory } = useFilter();
+
+  useEffect(() => {
+    async function fetchSouks() {
+      try {
+        const data = await getSouks();
+        setSouks(data);
+      } catch (err) {
+        setError('Failed to load souks');
+        console.error('Error loading souks:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void fetchSouks();
+  }, []);
+
+  // Filter souks based on selected category
+  const filteredSouks = selectedCategory
+    ? souks.filter((souk) => souk.category_id === selectedCategory)
+    : souks;
+
   const { scrollPx } = usePinterestTicker({
-    numCards: exploreCards.length,
+    numCards: filteredSouks.length,
     cardWidth: CARD_WIDTH,
     cardGap: CARD_GAP,
     animationSpeed: ANIMATION_SPEED,
   });
   const carouselContainerRef = useRef<HTMLDivElement>(null);
+
+  if (loading) {
+    return (
+      <section className="flex min-h-[50vh] w-full items-center justify-center bg-[#F9F9F9]">
+        <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="flex min-h-[50vh] w-full items-center justify-center bg-[#F9F9F9]">
+        <div className="text-uFlowText font-inter-tight text-xl text-red-500">{error}</div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -117,7 +164,9 @@ function ExploreSection() {
         <p className="w-full max-w-2xl text-center font-inter-tight text-lg font-normal text-neutral-600 md:text-2xl">
           Jedes Zakat (Spenden) Projekt wird anhand unseres Halal-Review Konzept ausgewählt.
         </p>
-        <ActionButton label="Entdecke deine Ummah" size="lg" />
+        <Link href="/souks">
+          <ActionButton label="Entdecke deine Ummah" size="lg" />
+        </Link>
       </div>
 
       {/* Pinterest-style Infinite Carousel */}
@@ -132,11 +181,15 @@ function ExploreSection() {
           style={{
             transform: `translateX(-${scrollPx}px)`,
             transition: 'transform 0.016s linear',
-            width: `${(CARD_WIDTH + CARD_GAP) * exploreCards.length * 3}px`,
+            width: `${(CARD_WIDTH + CARD_GAP) * filteredSouks.length * 3}px`,
           }}
         >
-          {[...exploreCards, ...exploreCards, ...exploreCards].map((card, idx) => (
-            <ExploreCard key={idx} {...card} className="mr-8 w-[288px] shrink-0" />
+          {[...filteredSouks, ...filteredSouks, ...filteredSouks].map((souk, idx) => (
+            <ExploreCard
+              key={`${souk.souk_id}-${idx}`}
+              {...souk}
+              className="mr-8 w-[288px] shrink-0"
+            />
           ))}
         </div>
       </div>

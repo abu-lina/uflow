@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 
 // Local imports
+import { useSearch } from '@/providers/search-provider';
 import { fetchUsedCategories, type Category } from '@/services/categories';
 
 interface SearchBarProps {
@@ -14,12 +15,17 @@ interface SearchBarProps {
 
 export function SearchBar({ className = '', onSearch }: SearchBarProps) {
   // State for input and dropdowns
-  const [searchQuery, setSearchQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('Alle');
-  const [selectedLocation, setSelectedLocation] = useState('Überall');
+  const {
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    selectedLocation,
+    setSelectedLocation,
+  } = useSearch();
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Available options
@@ -37,7 +43,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
 
   // Handle search submission
   const handleSearch = () => {
-    onSearch?.(searchQuery, selectedCategory, selectedLocation);
+    onSearch?.(searchQuery, selectedCategory ?? 'Alle', selectedLocation);
   };
 
   // Handle key press for search
@@ -48,8 +54,8 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
   };
 
   // Helper to get the label for the selected category
-  const getCategoryLabel = (catId: string) => {
-    if (catId === 'Alle') {
+  const getCategoryLabel = (catId: string | null) => {
+    if (!catId || catId === 'Alle') {
       return 'Alle';
     }
     const cat = categories.find((c) => c.category_id === catId);
@@ -113,10 +119,10 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
                 <button
                   key="Alle"
                   className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                    selectedCategory === 'Alle' ? 'bg-gray-50' : ''
+                    !selectedCategory ? 'bg-gray-50' : ''
                   }`}
                   onClick={() => {
-                    setSelectedCategory('Alle');
+                    setSelectedCategory(null);
                     setIsCategoryOpen(false);
                   }}
                 >
@@ -129,7 +135,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
                       selectedCategory === cat.category_id ? 'bg-gray-50' : ''
                     }`}
                     onClick={() => {
-                      setSelectedCategory(cat.category_id ?? '');
+                      setSelectedCategory(cat.category_id ?? null);
                       setIsCategoryOpen(false);
                     }}
                   >

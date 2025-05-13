@@ -1,27 +1,69 @@
 import { supabase } from '@/lib/supabase/client';
 
 export interface Souk {
-  id: string;
-  name: string;
-  description?: string;
+  souk_id: string;
+  souk_name: string;
+  souk_images: string[];
   category_id: string;
-  created_at: string;
-  updated_at: string;
+  address_street: string;
+  address_zip: string;
+  address_city: string;
+  barakah_effects: string[];
+  category?: {
+    name_de: string;
+  };
 }
 
 export async function getSouks(): Promise<Souk[]> {
-  const response = await supabase.from('souks').select('*').order('name');
-  return isSoukArray(response.data) ? response.data : [];
+  const response = await supabase
+    .from('souks')
+    .select(
+      `
+      *,
+      category:categories(name_de)
+    `,
+    )
+    .order('created_at', { ascending: false });
+
+  const data: unknown = response.data;
+  const error: unknown = response.error;
+
+  if (error) {
+    console.error('Error fetching souks:', error);
+    throw error;
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  return isSoukArray(data) ? data : [];
 }
 
 export async function getSoukById(id: string): Promise<Souk | null> {
-  const response = await supabase.from('souks').select('*').eq('id', id).single();
-  const error = response.error;
+  const response = await supabase
+    .from('souks')
+    .select(
+      `
+      *,
+      category:categories(name_de)
+    `,
+    )
+    .eq('id', id)
+    .single();
+
+  const data: unknown = response.data;
+  const error: unknown = response.error;
 
   if (error) {
+    console.error('Error fetching souk:', error);
     throw error;
   }
-  return isSouk(response.data) ? response.data : null;
+
+  if (typeof data === 'object' && data !== null && 'souk_id' in data && 'souk_name' in data) {
+    return data as Souk;
+  }
+  return null;
 }
 
 export async function searchSouks(
@@ -32,13 +74,13 @@ export async function searchSouks(
   let req = supabase.from('souks').select('*');
 
   if (query) {
-    req = req.ilike('name', `%${query}%`);
+    req = req.ilike('souk_name', `%${query}%`);
   }
   if (category && category !== 'Alle') {
-    req = req.eq('category', category);
+    req = req.eq('category_id', category);
   }
   if (location && location !== 'Überall') {
-    req = req.eq('location', location);
+    req = req.eq('address_city', location);
   }
 
   const response = await req;
@@ -48,23 +90,17 @@ export async function searchSouks(
 function isSoukArray(arr: unknown): arr is Souk[] {
   return (
     Array.isArray(arr) &&
-    arr.every(
-      (item) =>
-        typeof item === 'object' &&
-        item !== null &&
-        typeof (item as Souk).id === 'string' &&
-        typeof (item as Souk).name === 'string',
-      // Add more field checks as needed
-    )
-  );
-}
-
-function isSouk(obj: unknown): obj is Souk {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    typeof (obj as Souk).id === 'string' &&
-    typeof (obj as Souk).name === 'string'
-    // Add more field checks as needed
+    arr.every((item) => {
+      if (typeof item !== 'object' || item === null) {
+        return false;
+      }
+      // Only check for required fields
+      return (
+        'souk_id' in item &&
+        typeof (item as { souk_id: unknown }).souk_id === 'string' &&
+        'souk_name' in item &&
+        typeof (item as { souk_name: unknown }).souk_name === 'string'
+      );
+    })
   );
 }

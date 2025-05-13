@@ -23,9 +23,9 @@ export function Header() {
           <nav className="flex h-10 w-full flex-row items-center justify-between">
             {/* Left */}
             <div className="flex flex-row items-center gap-16">
-              <div className="relative">
+              <Link aria-label="Zur Startseite" className="relative" href="/">
                 <Logo className="size-8 text-white" />
-              </div>
+              </Link>
               <Link
                 className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-text hover:bg-grey-light focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 href="#about"

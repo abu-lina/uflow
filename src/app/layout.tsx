@@ -6,6 +6,8 @@ import { Toaster } from 'sonner';
 // Internal imports
 import { AuthProvider } from '@/providers/auth-provider';
 import '@/styles/globals.css';
+import { FilterProvider } from '@/providers/filter-provider';
+import { SearchProvider } from '@/providers/search-provider';
 
 // Type imports
 import type { Metadata, Viewport } from 'next';
@@ -44,7 +46,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="de">
       <body className={`min-h-screen bg-background ${inter.className} ${interTight.variable}`}>
         <AuthProvider>
-          {children}
+          <SearchProvider>
+            <FilterProvider>{children}</FilterProvider>
+          </SearchProvider>
           <Toaster />
         </AuthProvider>
       </body>

@@ -2,8 +2,6 @@ import { useState } from 'react';
 
 import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/ui/Logo';
 import { supabase } from '@/lib/supabase/client';
 
@@ -59,64 +57,59 @@ export function SignupModal({ onClose }: SignupModalProps) {
           </div>
         </div>
         {/* Right Section */}
-        <div className="relative z-10 flex h-full w-[571px] flex-col items-start justify-center gap-[39px] rounded-r-3xl bg-white p-[80px_48px]">
-          <form className="flex w-full flex-col gap-[39px]" onSubmit={handleSubmit}>
-            {/* Header */}
-            <div className="flex w-[475px] flex-col gap-8">
-              <h1 className="w-full font-inter-tight text-[32px] font-semibold leading-[39px] text-text">
-                Willkommen bei Ummah Flow
-              </h1>
-              <p className="w-full font-inter text-base text-grey">
-                Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
-              </p>
-            </div>
-            {/* Form Fields */}
-            <div className="flex w-[475px] flex-col gap-8">
-              <Input
-                required
-                disabled={isLoading}
-                id="email"
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-              <div className="flex w-full gap-[39px]">
-                <Input
-                  required
-                  className="w-[218px]"
-                  disabled={isLoading}
-                  id="password"
-                  label="Passwort"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-                <Input
-                  required
-                  className="w-[218px]"
-                  disabled={isLoading}
-                  id="confirmPassword"
-                  label="Passwort wiederholen"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                />
-              </div>
-            </div>
-            {/* Submit Button */}
-            <Button
-              className="flex h-14 w-[475px] items-center justify-center rounded-[16.8px] bg-mint px-5 font-inter-tight text-lg font-medium leading-[24px] text-white"
+        <div className="flex h-full w-[571px] flex-col justify-center rounded-tr-[48px] bg-white p-16">
+          <div className="mb-8">
+            <h1 className="font-inter-tight text-[40px] font-semibold leading-[1.1] text-[#232323]">
+              Willkommen bei
+              <br />
+              Ummah Flow
+            </h1>
+            <p className="mt-4 font-inter text-xl text-[#8C8C8C]">
+              Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
+            </p>
+          </div>
+          <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
+            <input
+              required
+              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
+              disabled={isLoading}
+              id="email"
+              placeholder="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            <input
+              required
+              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
+              disabled={isLoading}
+              id="password"
+              placeholder="Passwort"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+            <input
+              required
+              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
+              disabled={isLoading}
+              id="confirmPassword"
+              placeholder="Passwort wiederholen"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            />
+            <button
+              className="mt-4 w-full rounded-2xl bg-mint py-4 text-xl font-medium text-white"
               disabled={isLoading}
               type="submit"
             >
               {isLoading ? 'Wird registriert...' : 'Registrieren'}
-            </Button>
-            {/* Privacy Notice */}
-            <p className="w-[475px] text-center font-inter text-[8px] font-light text-grey">
-              Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.
-            </p>
+            </button>
           </form>
+          <p className="mt-8 w-full text-center font-inter text-xs font-light text-grey">
+            Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.
+          </p>
         </div>
         {/* Close Button */}
         <button

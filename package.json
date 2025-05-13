@@ -33,8 +33,12 @@
     "fix:all": "npm run fix:tailwind && npm run format"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.0.1",
+    "@mui/icons-material": "^7.1.0",
+    "@mui/material": "^7.1.0",
     "@radix-ui/react-dropdown-menu": "^2.1.12",
     "@radix-ui/react-select": "^2.2.2",
     "@radix-ui/react-slot": "^1.2.0",

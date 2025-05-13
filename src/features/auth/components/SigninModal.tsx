@@ -7,7 +7,6 @@ import { supabase } from '@/lib/supabase/client';
 
 interface SigninModalProps {
   onClose: () => void;
-  isAuthenticated?: boolean;
 }
 
 interface FormData {
@@ -20,7 +19,7 @@ interface FormErrors {
   password?: string;
 }
 
-export function SigninModal({ onClose, isAuthenticated = false }: SigninModalProps) {
+export function SigninModal({ onClose }: SigninModalProps) {
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -117,168 +116,68 @@ export function SigninModal({ onClose, isAuthenticated = false }: SigninModalPro
           </div>
 
           {/* Right Section */}
-          <div className="flex h-[694px] w-1/2 flex-col items-start justify-center gap-10 self-stretch rounded-r-[48px] bg-white px-12 py-20">
-            {isAuthenticated ? (
-              <div className="flex w-full flex-col items-start justify-start gap-8">
-                <div className="flex w-full flex-col items-center justify-center gap-2.5">
-                  <div className="text-uFlowText w-full text-left font-['Inter_Tight'] text-3xl font-semibold">
-                    Willkommen zurück bei Ummah Flow
-                  </div>
-                  <div className="text-uFlowText2 w-full text-left font-['Inter'] text-base font-normal">
-                    Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
-                  </div>
-                </div>
-
-                {/* Icons for authenticated users */}
-                <div className="flex w-full items-center justify-end gap-4">
-                  <button
-                    aria-label="Favoriten"
-                    className="focus:ring-uFlowAccent flex size-10 items-center justify-center rounded-full bg-neutral-100 transition-colors hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    type="button"
-                  >
-                    <svg
-                      className="text-uFlowText size-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    aria-label="Profil"
-                    className="focus:ring-uFlowAccent flex size-10 items-center justify-center rounded-full bg-neutral-100 transition-colors hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    type="button"
-                  >
-                    <svg
-                      className="text-uFlowText size-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex w-full flex-col items-start justify-start gap-8">
-                  <div className="flex w-full flex-col items-center justify-center gap-2.5">
-                    <div className="text-uFlowText w-full text-left font-['Inter_Tight'] text-3xl font-semibold">
-                      Willkommen zurück bei Ummah Flow
-                    </div>
-                    <div className="text-uFlowText2 w-full text-left font-['Inter'] text-base font-normal">
-                      Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
-                    </div>
-                  </div>
-                </div>
-
-                <form noValidate className="flex w-full flex-col gap-10" onSubmit={handleSubmit}>
-                  {/* Email Field */}
-                  <div className="flex w-full flex-col items-start justify-start gap-2">
-                    <div className="text-uFlowDarkGrey w-full text-left font-['Inter'] text-base font-normal">
-                      Email
-                    </div>
-                    <div className="relative w-full">
-                      <input
-                        required
-                        aria-describedby={errors.email ? 'email-error' : undefined}
-                        aria-invalid={!!errors.email}
-                        className="outline-uFlowDarkGrey h-0 w-full bg-transparent outline outline-[0.5px] outline-offset-[-0.25px]"
-                        disabled={isLoading}
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => {
-                          setFormData({ ...formData, email: e.target.value });
-                          if (errors.email) {
-                            setErrors({ ...errors, email: undefined });
-                          }
-                        }}
-                      />
-                      {errors.email && (
-                        <span
-                          className="absolute -bottom-6 left-0 text-sm text-red-500"
-                          id="email-error"
-                          role="alert"
-                        >
-                          {errors.email}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Password Field */}
-                  <div className="inline-flex w-full items-start justify-start gap-10">
-                    <div className="inline-flex flex-1 flex-col items-start justify-start gap-2">
-                      <div className="text-uFlowDarkGrey w-full text-left font-['Inter'] text-base font-normal">
-                        Passwort
-                      </div>
-                      <div className="relative w-full">
-                        <input
-                          required
-                          aria-describedby={errors.password ? 'password-error' : undefined}
-                          aria-invalid={!!errors.password}
-                          className="outline-uFlowDarkGrey h-0 w-full bg-transparent outline outline-[0.5px] outline-offset-[-0.25px]"
-                          disabled={isLoading}
-                          id="password"
-                          type="password"
-                          value={formData.password}
-                          onChange={(e) => {
-                            setFormData({ ...formData, password: e.target.value });
-                            if (errors.password) {
-                              setErrors({ ...errors, password: undefined });
-                            }
-                          }}
-                        />
-                        {errors.password && (
-                          <span
-                            className="absolute -bottom-6 left-0 text-sm text-red-500"
-                            id="password-error"
-                            role="alert"
-                          >
-                            {errors.password}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="bg-uFlowAccent flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl px-5">
-                    <button
-                      aria-busy={isLoading}
-                      className="text-uFlowWhite w-full text-center font-['Inter_Tight'] text-xl font-medium"
-                      disabled={isLoading}
-                      type="submit"
-                    >
-                      {isLoading ? 'Wird angemeldet...' : 'Anmelden'}
-                    </button>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="w-full text-right">
-                    <a
-                      className="font-['Inter_Tight'] text-base font-light text-black underline"
-                      href="/forgot-password"
-                    >
-                      Passwort vergessen?
-                    </a>
-                  </div>
-                </form>
-              </>
-            )}
+          <div className="flex h-[694px] w-1/2 flex-col justify-center rounded-tr-[48px] bg-white p-16">
+            <div className="mb-8">
+              <h1 className="font-inter-tight text-[40px] font-semibold leading-[1.1] text-[#232323]">
+                Willkommen zurück bei
+                <br />
+                Ummah Flow
+              </h1>
+              <p className="mt-4 font-inter text-xl text-[#8C8C8C]">
+                Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
+              </p>
+            </div>
+            <form noValidate className="flex flex-col gap-8" onSubmit={handleSubmit}>
+              <input
+                required
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                aria-invalid={!!errors.email}
+                className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
+                disabled={isLoading}
+                id="email"
+                placeholder="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  if (errors.email) {
+                    setErrors({ ...errors, email: undefined });
+                  }
+                }}
+              />
+              <input
+                required
+                aria-describedby={errors.password ? 'password-error' : undefined}
+                aria-invalid={!!errors.password}
+                className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
+                disabled={isLoading}
+                id="password"
+                placeholder="Passwort"
+                type="password"
+                value={formData.password}
+                onChange={(e) => {
+                  setFormData({ ...formData, password: e.target.value });
+                  if (errors.password) {
+                    setErrors({ ...errors, password: undefined });
+                  }
+                }}
+              />
+              <button
+                className="mt-4 w-full rounded-2xl bg-mint py-4 text-xl font-medium text-white"
+                disabled={isLoading}
+                type="submit"
+              >
+                {isLoading ? 'Wird angemeldet...' : 'Anmelden'}
+              </button>
+            </form>
+            <div className="mt-8 w-full text-right">
+              <a
+                className="font-inter-tight text-base font-light text-black underline"
+                href="/forgot-password"
+              >
+                Passwort vergessen?
+              </a>
+            </div>
           </div>
 
           {/* Close Button */}
