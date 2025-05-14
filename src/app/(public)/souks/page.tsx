@@ -2,21 +2,30 @@
 
 import { useEffect, useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
+
 import { Header } from '@/components/layout/Header';
 import { ExploreCard } from '@/components/shared/ExploreCard';
-import { useSearch } from '@/providers/search-provider';
-import { getSouks, type Souk } from '@/services/souks';
+import { searchSouks, type Souk } from '@/services/souks';
 
 export default function SouksPage() {
   const [souks, setSouks] = useState<Souk[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { selectedCategory, searchQuery } = useSearch();
+  const searchParams = useSearchParams();
+  const [paramVersion, setParamVersion] = useState(0);
+  const location = searchParams.get('location') || 'Überall';
+  const category = searchParams.get('category') || 'Alle';
+  const query = searchParams.get('q') || '';
+
+  useEffect(() => {
+    setParamVersion((v) => v + 1);
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchSouks() {
       try {
-        const data = await getSouks();
+        const data = await searchSouks(query, category, location);
         setSouks(data);
       } catch (err) {
         setError('Failed to load souks');
@@ -27,16 +36,7 @@ export default function SouksPage() {
     }
 
     void fetchSouks();
-  }, []);
-
-  // Filter souks based on selected category and search query
-  const filteredSouks = souks.filter((souk) => {
-    const matchesCategory = selectedCategory ? souk.category_id === selectedCategory : true;
-    const matchesQuery = searchQuery
-      ? souk.souk_name.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
-    return matchesCategory && matchesQuery;
-  });
+  }, [query, category, location, paramVersion]);
 
   if (loading) {
     return (
@@ -71,7 +71,7 @@ export default function SouksPage() {
         <div className="container mx-auto px-4 py-8">
           {/* Souks Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredSouks.map((souk) => (
+            {souks.map((souk) => (
               <ExploreCard key={souk.souk_id} {...souk} />
             ))}
           </div>

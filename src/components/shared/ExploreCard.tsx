@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 
 import Image from 'next/image';
 
+import { Icon } from '@iconify/react';
 import ShareIcon from '@mui/icons-material/Share';
 
 import { Button } from '@/components/ui/Button';
@@ -45,7 +46,7 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
     const getImageUrl = () => {
       try {
         if (!souk_images) {
-          return 'https://placehold.co/296x269';
+          return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
         }
 
         let imagesData: { urls?: string[] } = {};
@@ -65,10 +66,10 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
           return imagesData.urls[0];
         }
 
-        return 'https://placehold.co/296x269';
+        return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
       } catch (error) {
         console.error('Error parsing image data:', error);
-        return 'https://placehold.co/296x269';
+        return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
       }
     };
 
@@ -103,19 +104,10 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
             </div>
           </div>
           <div className="flex flex-col items-start justify-end self-stretch p-3">
-            <div
-              className={`outline-uFlowDarkGrey flex h-6 items-center rounded-lg px-2 
-              outline outline-[0.6px] outline-offset-[-0.3px] backdrop-blur-sm ${
-                gradient
-                  ? 'bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500'
-                  : 'bg-white/70'
-              }`}
-            >
-              <span
-                className={`font-inter-tight text-sm font-medium ${gradient ? 'text-white' : 'text-black'}`}
-              >
+            <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[0.45rem] bg-white/70 px-2 backdrop-blur-[1.50px]">
+              <div className="justify-center text-center font-['Inter_Tight'] text-sm font-medium text-black">
                 {categoryName}
-              </span>
+              </div>
             </div>
           </div>
         </div>
@@ -125,7 +117,10 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
         >
           <div className="flex w-full flex-col items-start gap-3.5">
             <div className="flex flex-col items-start gap-0.5">
-              <span className="text-uFlowText font-inter-tight text-xl font-semibold">
+              <span
+                className="text-uFlowText truncate font-inter-tight text-xl font-semibold"
+                title={souk_name}
+              >
                 {souk_name}
               </span>
               <span className="text-uFlowText2 font-inter text-sm font-normal">{address}</span>
@@ -162,8 +157,12 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
               </Button>
               <Button
                 aria-label="Website"
-                className="flex-1"
-                icon={<span className="block size-4 rounded bg-white" />}
+                className="flex-1 items-center justify-center gap-1.5"
+                icon={
+                  <div className="flex items-center">
+                    <Icon height={16} icon="mdi:web" width={16} />
+                  </div>
+                }
                 variant={gradient ? 'gradient' : 'default'}
               >
                 Website

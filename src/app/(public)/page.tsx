@@ -36,11 +36,11 @@ function LandingSection() {
 
             {/* Heading + Paragraph Section */}
             <section className="mb-16 flex flex-col items-center gap-4">
-              <h1 className="w-full text-center font-inter-tight text-[72px] font-medium leading-[87px] text-text">
+              <h1 className="w-full text-center font-inter-tight text-[72px] font-medium leading-[87px] text-content-title">
                 Von <span className="text-primary">Muslimen</span> für{' '}
                 <span className="text-primary">Muslime</span>
               </h1>
-              <p className="w-full max-w-xl text-center font-inter text-2xl font-normal leading-[29px] text-text">
+              <p className="w-full max-w-xl text-center font-inter text-2xl font-normal leading-[29px] text-content">
                 Der erste halal-konforme Marktplatz der sicherstellt, das Jeder die Zakat entrichtet
                 insha&apos;Allah.
               </p>

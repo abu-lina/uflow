@@ -1,5 +1,7 @@
 // React imports
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 // Third-party imports
 import { ChevronDown, Search } from 'lucide-react';
@@ -7,6 +9,7 @@ import { ChevronDown, Search } from 'lucide-react';
 // Local imports
 import { useSearch } from '@/providers/search-provider';
 import { fetchUsedCategories, type Category } from '@/services/categories';
+import { fetchSoukCities } from '@/services/souks';
 
 interface SearchBarProps {
   className?: string;
@@ -14,6 +17,9 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ className = '', onSearch }: SearchBarProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   // State for input and dropdowns
   const [isTyping, setIsTyping] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -27,9 +33,8 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
     setSelectedLocation,
   } = useSearch();
   const [categories, setCategories] = useState<Category[]>([]);
-
-  // Available options
-  const locations = ['Überall', 'Berlin', 'Hamburg', 'München', 'Köln'];
+  const [locations, setLocations] = useState<string[]>(['Überall']);
+  const hasSyncedFromUrl = useRef(false);
 
   useEffect(() => {
     fetchUsedCategories()
@@ -41,9 +46,41 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
       });
   }, []);
 
+  useEffect(() => {
+    fetchSoukCities()
+      .then((cities) => {
+        setLocations(['Überall', ...cities]);
+      })
+      .catch(() => {
+        setLocations(['Überall']);
+      });
+  }, []);
+
+  // Sync state with URL params only on initial mount or when the page changes
+  useEffect(() => {
+    if (!hasSyncedFromUrl.current) {
+      const q = searchParams.get('q') || '';
+      const category = searchParams.get('category') || null;
+      const location = searchParams.get('location') || 'Überall';
+      setSearchQuery(q);
+      setSelectedCategory(category === 'Alle' ? null : category);
+      setSelectedLocation(location);
+      hasSyncedFromUrl.current = true;
+    }
+  }, [pathname, searchParams, setSearchQuery, setSelectedCategory, setSelectedLocation]);
+
   // Handle search submission
   const handleSearch = () => {
     onSearch?.(searchQuery, selectedCategory ?? 'Alle', selectedLocation);
+    // Navigate to souks page with search parameters
+    const searchParams = new URLSearchParams();
+    if (searchQuery) {
+      searchParams.set('q', searchQuery);
+    }
+    if (selectedLocation) {
+      searchParams.set('location', selectedLocation);
+    }
+    router.push(`/souks?${searchParams.toString()}`);
   };
 
   // Handle key press for search
@@ -74,9 +111,9 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
       <div className="flex w-full flex-row items-center justify-between">
         {/* Search Section */}
         <div className="flex flex-1 flex-row items-center gap-4">
-          <Search aria-hidden="true" className="size-6 shrink-0 text-primary" />
+          <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
           <input
-            className={`w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-primary' : 'text-gray-400'}`}
+            className={`w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
             placeholder="In deiner Ummah suchen"
             type="text"
             value={searchQuery}
@@ -93,7 +130,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
         {/* Filters Section */}
         <div className="flex flex-row items-center gap-4">
           {/* Divider */}
-          <div className="h-6 border-l border-primary" />
+          <div className="h-6·border-l·border-content" />
 
           {/* Categories */}
           <div className="relative flex flex-row items-center">
@@ -104,12 +141,12 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
               type="button"
               onClick={() => setIsCategoryOpen(!isCategoryOpen)}
             >
-              <span className="text-base font-normal text-gray-600">
+              <span className="base·font-normal·text-content">
                 {getCategoryLabel(selectedCategory)}
               </span>
               <ChevronDown
                 aria-hidden="true"
-                className={`size-6 text-primary transition-transform duration-200 ${
+                className={`size-6·text-content transition-transform duration-200 ${
                   isCategoryOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -124,6 +161,14 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
                   onClick={() => {
                     setSelectedCategory(null);
                     setIsCategoryOpen(false);
+                    const params = new URLSearchParams();
+                    if (searchQuery) {
+                      params.set('q', searchQuery);
+                    }
+                    if (selectedLocation) {
+                      params.set('location', selectedLocation);
+                    }
+                    router.push(`/souks?${params.toString()}`);
                   }}
                 >
                   Alle
@@ -131,12 +176,25 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
                 {categories.map((cat, idx) => (
                   <button
                     key={cat.category_id || idx}
-                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                      selectedCategory === cat.category_id ? 'bg-gray-50' : ''
-                    }`}
+                    className={`$ {selectedCategory === cat.category_id ? 'bg-gray-50' : ''}
+                      block w-full px-4
+                        py-2 text-left
+                        text-base hover:bg-gray-50
+                    `}
                     onClick={() => {
                       setSelectedCategory(cat.category_id ?? null);
                       setIsCategoryOpen(false);
+                      const params = new URLSearchParams();
+                      if (searchQuery) {
+                        params.set('q', searchQuery);
+                      }
+                      if (cat.category_id) {
+                        params.set('category', cat.category_id);
+                      }
+                      if (selectedLocation) {
+                        params.set('location', selectedLocation);
+                      }
+                      router.push(`/souks?${params.toString()}`);
                     }}
                   >
                     {cat.name_de || cat.category_id || 'Unbenannt'}
@@ -147,7 +205,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
           </div>
 
           {/* Divider */}
-          <div className="h-6 border-l border-primary" />
+          <div className="h-6·border-l·border-content" />
 
           {/* Location */}
           <div className="relative flex flex-row items-center">
@@ -158,10 +216,10 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
               type="button"
               onClick={() => setIsLocationOpen(!isLocationOpen)}
             >
-              <span className="text-base font-normal text-gray-600">{selectedLocation}</span>
+              <span className="text-base·font-normal·text-content">{selectedLocation}</span>
               <ChevronDown
                 aria-hidden="true"
-                className={`size-6 text-primary transition-transform duration-200 ${
+                className={`size-6·text-content transition-transform duration-200 ${
                   isLocationOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -171,12 +229,25 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
                 {locations.map((location) => (
                   <button
                     key={location}
-                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                      location === selectedLocation ? 'bg-gray-50' : ''
-                    }`}
+                    className={`$ {location === selectedLocation ? 'bg-gray-50' : ''}
+                      block w-full px-4
+                        py-2 text-left
+                        text-base hover:bg-gray-50
+                    `}
                     onClick={() => {
                       setSelectedLocation(location);
                       setIsLocationOpen(false);
+                      const params = new URLSearchParams();
+                      if (searchQuery) {
+                        params.set('q', searchQuery);
+                      }
+                      if (selectedCategory) {
+                        params.set('category', selectedCategory);
+                      }
+                      if (location) {
+                        params.set('location', location);
+                      }
+                      router.push(`/souks?${params.toString()}`);
                     }}
                   >
                     {location}

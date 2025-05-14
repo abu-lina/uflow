@@ -25,7 +25,15 @@
     @apply border-border;
   }
   body {
-    @apply bg-uflow-light text-text;
+    @apply text-content bg-uflow-light;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-content-title font-heading;
   }
 }
 
@@ -49,7 +57,7 @@
   }
 
   body {
-    @apply min-h-screen bg-uflow-light font-inter-tight text-text;
+    @apply text-content min-h-screen bg-uflow-light font-inter-tight;
   }
 
   h1,

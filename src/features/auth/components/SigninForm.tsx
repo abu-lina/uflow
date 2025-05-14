@@ -22,7 +22,9 @@ export function SigninForm() {
     <form className="flex w-[475px] flex-col gap-10" onSubmit={handleSubmit}>
       {/* Header */}
       <div className="flex flex-col gap-8">
-        <h1 className="font-inter-tight text-3xl font-semibold text-text">Willkommen zurück</h1>
+        <h2 className="font-inter-tight text-3xl font-semibold text-content-title">
+          Willkommen zurück
+        </h2>
         <p className="font-inter text-base text-grey">
           Melde dich an, um deine Angebote zu verwalten.
         </p>

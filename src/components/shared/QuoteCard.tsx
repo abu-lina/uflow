@@ -34,8 +34,8 @@ export function QuoteCard({
             {heading}
           </h2>
         )}
-        <blockquote className="mb-6 w-full break-words text-justify font-serif text-base leading-relaxed text-text sm:text-lg md:text-2xl">
-          “{quote}”
+        <blockquote className="mb-6 w-full break-words text-justify font-serif text-base leading-relaxed text-content">
+          &ldquo;{quote}&rdquo;
         </blockquote>
         {author && (
           <figcaption className="w-full break-words text-right text-xs font-medium text-grey sm:text-base md:text-lg">

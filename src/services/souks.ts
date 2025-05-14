@@ -104,3 +104,23 @@ function isSoukArray(arr: unknown): arr is Souk[] {
     })
   );
 }
+
+// Fetch unique cities from souks
+export async function fetchSoukCities(): Promise<string[]> {
+  const response = await supabase.from('souks').select('address_city');
+  const error = response.error;
+  if (error) {
+    throw error;
+  }
+  const allCities = Array.isArray(response.data)
+    ? response.data.map((s: { address_city: string | null }) => s.address_city)
+    : [];
+  const uniqueCities = Array.from(
+    new Set(
+      allCities.filter(
+        (city): city is string => typeof city === 'string' && city.trim() !== '' && city !== 'null',
+      ),
+    ),
+  );
+  return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
+}

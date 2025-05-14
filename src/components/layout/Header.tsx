@@ -9,11 +9,13 @@ import { SigninModal } from '@/features/auth/components/SigninModal';
 import { SignupModal } from '@/features/auth/components/SignupModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
+import { useSectionInView } from '@/hooks/useSectionInView';
 
 export function Header() {
   const [showSigninModal, setShowSigninModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const { user } = useAuth();
+  const aboutInView = useSectionInView('about');
 
   return (
     <>
@@ -27,7 +29,7 @@ export function Header() {
                 <Logo className="size-8 text-white" />
               </Link>
               <Link
-                className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-text hover:bg-grey-light focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className={`flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium !text-[#232323] hover:bg-grey-light hover:!text-[#232323] focus:!text-[#232323] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary active:!text-[#232323]${aboutInView ? ' underline' : ''}`}
                 href="#about"
                 scroll={true}
               >
@@ -84,7 +86,7 @@ export function Header() {
               ) : (
                 <>
                   <button
-                    className="flex h-10 items-center rounded-xl border border-grey px-3.5 text-base font-medium text-text hover:bg-grey-light"
+                    className="flex h-10 items-center rounded-xl border border-grey px-3.5 text-base font-medium text-content"
                     onClick={() => setShowSigninModal(true)}
                   >
                     Anmelden
