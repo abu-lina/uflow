@@ -45,19 +45,15 @@ export function Header() {
             <div className="flex flex-row items-center gap-3">
               {user ? (
                 <>
-                  <button
-                    aria-label="Profil"
-                    className="focus:ring-uFlowAccent flex size-10 items-center justify-center rounded-full bg-neutral-100 transition-colors hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    type="button"
-                  >
+                  <Link aria-label="Profil" href="/profile">
                     <Image
                       alt="Profil"
                       className="rounded-full"
-                      height={32}
+                      height={24}
                       src="/icons/icon-muslim.png"
-                      width={32}
+                      width={24}
                     />
-                  </button>
+                  </Link>
                 </>
               ) : (
                 <>

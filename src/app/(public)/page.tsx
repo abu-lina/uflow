@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 
-import { Header } from '@/components/layout/Header';
 import { QuoteCard } from '@/components/shared/QuoteCard';
 import { SoukCard } from '@/components/shared/SoukCard';
 import { ActionButton } from '@/components/ui/ActionButton';
@@ -22,7 +21,6 @@ const ANIMATION_SPEED = 0.7; // px per frame
 function LandingSection() {
   return (
     <section className="flex min-h-screen flex-col items-center justify-center">
-      <Header />
       <div className="flex w-full flex-1 items-center justify-center">
         <div className="mx-auto flex w-full max-w-[960px] flex-col items-center">
           <div className="flex flex-col items-center justify-center">

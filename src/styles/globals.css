@@ -35,7 +35,7 @@
   h6,
   label,
   button {
-    @apply font-inter-tight;
+    @apply font-inter-tight text-content-title;
   }
 }
 
@@ -70,7 +70,7 @@
   h6,
   label,
   button {
-    @apply font-inter-tight;
+    @apply font-inter-tight text-content-title;
   }
 
   a {

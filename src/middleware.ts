@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+
   try {
-    const res = NextResponse.next();
     const supabase = createMiddlewareClient({ req, res });
 
     const {
@@ -14,48 +15,23 @@ export async function middleware(req: NextRequest) {
 
     if (sessionError) {
       console.error('Error getting session:', sessionError);
-      // Only redirect if not a public route
-      const currentPath = req.nextUrl.pathname;
-      const isPublicRoute =
-        currentPath === '/' || // Home page
-        currentPath.startsWith('/souks') || // Souks page
-        currentPath.startsWith('/(public)') || // Public route group
-        currentPath.includes('/_next') || // Next.js internal routes
-        currentPath.includes('/api'); // API routes
-      if (!isPublicRoute) {
-        return NextResponse.redirect(new URL('/login', req.url));
-      }
-      // For public routes, just continue
       return res;
     }
 
     const currentPath = req.nextUrl.pathname;
-    const isAuthPage = ['/login', '/register'].includes(currentPath);
 
-    // Check if the route is in the public group or is a public route
-    const isPublicRoute =
-      currentPath === '/' || // Home page
-      currentPath.startsWith('/souks') || // Souks page
-      currentPath.startsWith('/(public)') || // Public route group
-      currentPath.includes('/_next') || // Next.js internal routes
-      currentPath.includes('/api'); // API routes
+    // Only protect admin routes
+    const isAdminRoute = currentPath.startsWith('/(admin)');
 
-    // If user is not signed in and trying to access a protected route,
-    // redirect to login
-    if (!session && !isAuthPage && !isPublicRoute) {
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
-
-    // If user is signed in and trying to access auth pages,
-    // redirect to dashboard
-    if (session && isAuthPage) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+    // If trying to access admin routes without session, redirect to home
+    if (isAdminRoute && !session) {
+      return NextResponse.redirect(new URL('/', req.url));
     }
 
     return res;
   } catch (error) {
     console.error('Middleware error:', error);
-    return NextResponse.redirect(new URL('/login', req.url));
+    return res;
   }
 }
 

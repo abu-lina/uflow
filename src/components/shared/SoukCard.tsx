@@ -1,11 +1,14 @@
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 
 import Image from 'next/image';
 
 import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/Button';
 import { OrnamentIcon } from '@/components/ui/OrnamentIcon';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase/client';
 import type { Souk } from '@/services/souks';
 
 interface SoukCardProps extends Omit<Souk, 'id' | 'category_id'> {
@@ -13,6 +16,8 @@ interface SoukCardProps extends Omit<Souk, 'id' | 'category_id'> {
   gradient?: boolean;
   hideActions?: boolean;
   hideWebsiteButton?: boolean;
+  isBookmarked?: boolean;
+  onBookmarkChange?: (isBookmarked: boolean) => void;
 }
 
 export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
@@ -26,14 +31,69 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
       souk_images,
       barakah_effects = [],
       souk_name,
+      souk_id,
       className,
       hideActions = false,
       hideWebsiteButton = false,
+      isBookmarked = false,
+      onBookmarkChange,
     },
     ref,
   ) => {
+    const { user } = useAuth();
+    const [isLoading, setIsLoading] = useState(false);
+    const [bookmarked, setBookmarked] = useState(isBookmarked);
     const address = `${address_street}, ${address_zip} ${address_city}`;
     const categoryName = category?.name_de || '';
+
+    const handleBookmark = async () => {
+      if (!user) {
+        toast.error('Bitte melde dich an, um Souks zu speichern');
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        // First check if the bookmark exists
+        const { data: existingBookmark } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .eq('bookmarkable_id', souk_id)
+          .eq('bookmarkable_type', 'souk')
+          .eq('user_id', user.id)
+          .single();
+
+        let newBookmarkState: boolean;
+        if (existingBookmark) {
+          // If it exists, remove it
+          const { error } = await supabase.from('bookmarks').delete().eq('id', existingBookmark.id);
+          if (error) {
+            throw error;
+          }
+          newBookmarkState = false;
+        } else {
+          // If it doesn't exist, add it
+          const { error } = await supabase.from('bookmarks').insert({
+            bookmarkable_id: souk_id,
+            bookmarkable_type: 'souk',
+            user_id: user.id,
+          });
+          if (error) {
+            throw error;
+          }
+          newBookmarkState = true;
+        }
+
+        setBookmarked(newBookmarkState);
+        onBookmarkChange?.(newBookmarkState);
+        toast.success(newBookmarkState ? 'Souk gespeichert' : 'Souk entfernt');
+      } catch (error) {
+        console.error('Error toggling bookmark:', error);
+        toast.error('Fehler beim Speichern des Souks');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     function hasUrls(obj: unknown): obj is { urls: string[] } {
       return (
@@ -138,13 +198,18 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
                 <Button
                   aria-label="Speichern"
                   className="flex-1 gap-1"
+                  disabled={isLoading}
                   icon={
                     <div className="relative size-4">
-                      <OrnamentIcon className="absolute left-0 top-0" size={16} />
+                      <OrnamentIcon
+                        className={`absolute left-0 top-0 ${bookmarked ? 'text-mint' : ''}`}
+                        size={16}
+                      />
                     </div>
                   }
+                  onClick={handleBookmark}
                 >
-                  Speichern
+                  {isLoading ? '...' : bookmarked ? 'Gespeichert' : 'Speichern'}
                 </Button>
                 {!hideWebsiteButton && (
                   <Button

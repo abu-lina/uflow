@@ -4,6 +4,7 @@ import { Inter, Inter_Tight } from 'next/font/google';
 import { Toaster } from 'sonner';
 
 // Internal imports
+import { Header } from '@/components/layout/Header';
 import { AuthProvider } from '@/providers/auth-provider';
 import '@/styles/globals.css';
 import { FilterProvider } from '@/providers/filter-provider';
@@ -50,7 +51,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`min-h-screen bg-background ${inter.className} ${interTight.variable}`}>
         <AuthProvider>
           <SearchProvider>
-            <FilterProvider>{children}</FilterProvider>
+            <FilterProvider>
+              <div className="relative flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">
+                  <div className="container py-6">{children}</div>
+                </main>
+              </div>
+            </FilterProvider>
           </SearchProvider>
           <Toaster />
         </AuthProvider>

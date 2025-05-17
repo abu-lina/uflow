@@ -108,20 +108,59 @@ function isSoukArray(arr: unknown): arr is Souk[] {
 
 // Fetch unique cities from souks
 export async function fetchSoukCities(): Promise<string[]> {
-  const response = await supabase.from('souks').select('address_city');
-  const error = response.error;
+  const { data, error } = await supabase
+    .from('souks')
+    .select('address_city')
+    .returns<{ address_city: string | null }[]>();
+
   if (error) {
     throw error;
   }
-  const allCities = Array.isArray(response.data)
-    ? response.data.map((s: { address_city: string | null }) => s.address_city)
-    : [];
+
+  const allCities = data?.map((s) => s.address_city) ?? [];
   const uniqueCities = Array.from(
     new Set(
-      allCities.filter(
-        (city): city is string => typeof city === 'string' && city.trim() !== '' && city !== 'null',
-      ),
+      allCities.filter((city): city is string => {
+        return typeof city === 'string' && city.trim() !== '' && city !== 'null';
+      }),
     ),
   );
   return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
+}
+
+/**
+ * Fetch all souks bookmarked by a user
+ */
+export async function getBookmarkedSouks(userId: string): Promise<Souk[]> {
+  // Get all bookmarkable_ids for souks bookmarked by this user
+  const { data: bookmarks, error: bookmarksError } = await supabase
+    .from('bookmarks')
+    .select('bookmarkable_id')
+    .eq('user_id', userId)
+    .eq('bookmarkable_type', 'souk')
+    .returns<{ bookmarkable_id: string }[]>();
+
+  if (bookmarksError) {
+    throw bookmarksError;
+  }
+  if (!bookmarks || bookmarks.length === 0) {
+    return [];
+  }
+
+  const soukIds = bookmarks.map((b) => b.bookmarkable_id);
+
+  // Fetch all souks with those IDs
+  const { data: souks, error: souksError } = await supabase
+    .from('souks')
+    .select('*, category:categories(name_de)')
+    .in('souk_id', soukIds)
+    .returns<Souk[]>();
+
+  if (souksError) {
+    throw souksError;
+  }
+  if (!souks) {
+    return [];
+  }
+  return souks;
 }

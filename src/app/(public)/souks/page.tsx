@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import { Header } from '@/components/layout/Header';
 import { SoukCard } from '@/components/shared/SoukCard';
 import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
 import { searchSouks, type Souk } from '@/services/souks';
 
-export default function SouksPage() {
+function SouksContent() {
   const [souks, setSouks] = useState<Souk[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,60 +41,59 @@ export default function SouksPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1">
-          <div className="container mx-auto px-4 py-8">
-            <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
-          </div>
-        </main>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1">
-          <div className="container mx-auto px-4 py-8">
-            <div className="text-uFlowText font-inter-tight text-xl text-red-500">{error}</div>
-          </div>
-        </main>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-uFlowText font-inter-tight text-xl text-red-500">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1">
-        <div className="container mx-auto px-4 py-8">
-          {/* Souks Grid */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {souks.map((souk) => (
-              <div
-                key={souk.souk_id}
-                aria-label="Souk Details anzeigen"
-                className="cursor-pointer"
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedSouk(souk)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    setSelectedSouk(souk);
-                  }
-                }}
-              >
-                <SoukCard {...souk} hideWebsiteButton={true} />
-              </div>
-            ))}
+    <div className="container mx-auto px-4 py-8">
+      {/* Souks Grid */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {souks.map((souk) => (
+          <div
+            key={souk.souk_id}
+            aria-label="Souk Details anzeigen"
+            className="cursor-pointer"
+            role="button"
+            tabIndex={0}
+            onClick={() => setSelectedSouk(souk)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setSelectedSouk(souk);
+              }
+            }}
+          >
+            <SoukCard {...souk} hideWebsiteButton={true} />
           </div>
-          {selectedSouk && (
-            <SoukDetailModal souk={selectedSouk} onClose={() => setSelectedSouk(null)} />
-          )}
-        </div>
-      </main>
+        ))}
+      </div>
+      {selectedSouk && (
+        <SoukDetailModal souk={selectedSouk} onClose={() => setSelectedSouk(null)} />
+      )}
     </div>
+  );
+}
+
+export default function SouksPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
+        </div>
+      }
+    >
+      <SouksContent />
+    </Suspense>
   );
 }

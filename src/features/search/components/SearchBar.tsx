@@ -1,5 +1,5 @@
 // React imports
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
@@ -17,7 +17,7 @@ interface SearchBarProps {
   onSearch?: (query: string, category: string, location: string) => void;
 }
 
-export function SearchBar({ className = '', onSearch }: SearchBarProps) {
+function SearchBarContent({ className = '', onSearch }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -100,9 +100,6 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
     const cat = categories.find((c) => c.category_id === catId);
     return cat?.name_de || cat?.category_id || 'Unbenannt';
   };
-
-  // Debug: log categories before rendering (removed for production)
-  // console.log('Categories in state:', categories);
 
   return (
     <div
@@ -285,6 +282,35 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+export function SearchBar(props: SearchBarProps) {
+  return (
+    <Suspense
+      fallback={
+        <div
+          className={`
+            flex h-10 flex-row items-center gap-4 rounded-lg bg-white px-2
+            ${props.className}
+          `}
+        >
+          <div className="flex w-full flex-row items-center justify-between">
+            <div className="relative flex flex-1 flex-row items-center gap-4">
+              <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
+              <input
+                disabled
+                className="w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] text-gray-400 outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+                placeholder="In deiner Ummah suchen"
+                type="text"
+              />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <SearchBarContent {...props} />
+    </Suspense>
   );
 }
 
