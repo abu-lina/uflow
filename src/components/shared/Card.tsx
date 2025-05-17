@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/Button';
 import { OrnamentIcon } from '@/components/ui/OrnamentIcon';
 import type { Souk } from '@/services/souks';
 
-interface ExploreCardProps extends Omit<Souk, 'id' | 'category_id'> {
+interface SoukCardProps extends Omit<Souk, 'id' | 'category_id'> {
   className?: string;
   gradient?: boolean;
 }
 
-export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
+export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
   (
     {
       address_street,
@@ -32,7 +32,6 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
     const address = `${address_street}, ${address_zip} ${address_city}`;
     const categoryName = category?.name_de || '';
 
-    // Type guard for object with urls
     function hasUrls(obj: unknown): obj is { urls: string[] } {
       return (
         typeof obj === 'object' &&
@@ -42,7 +41,6 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
       );
     }
 
-    // Handle image URL
     const getImageUrl = () => {
       try {
         if (!souk_images) {
@@ -78,7 +76,7 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
         <div className="relative flex h-64 w-72 flex-col items-center justify-between">
           {gradient ? (
             <div
-              className="absolute left-0 top-0 flex h-64 w-72 flex-col items-center justify-between 
+              className="\ absolute left-0 top-0 flex h-64 w-72 flex-col items-center justify-between
               rounded-t-3xl bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500"
             />
           ) : (
@@ -105,14 +103,14 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
           </div>
           <div className="flex flex-col items-start justify-end self-stretch p-3">
             <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[0.45rem] bg-white/70 px-2 backdrop-blur-[1.50px]">
-              <div className="justify-center text-center font-['Inter_Tight'] text-sm font-medium text-black">
+              <div className="justify-center text-center font-inter-tight text-sm font-medium text-black">
                 {categoryName}
               </div>
             </div>
           </div>
         </div>
         <div
-          className="bg-uFlowWhite flex w-72 flex-col items-center rounded-b-3xl p-3.5 
+          className="bg-uFlowWhite \ flex w-72 flex-col items-center rounded-b-3xl p-3.5
         outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300"
         >
           <div className="flex w-full flex-col items-start gap-3.5">
@@ -129,14 +127,14 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
               {(barakah_effects || []).map((effect, index) => (
                 <span
                   key={index}
-                  className="outline-uFlowDarkGrey text-uFlowText flex items-center rounded px-1 py-0.5 
+                  className="outline-uFlowDarkGrey text-uFlowText \ flex items-center rounded px-1 py-0.5
                   font-inter-tight text-sm font-medium leading-none outline outline-1 outline-offset-[-0.93px]"
                 >
                   {effect}
                 </span>
               ))}
               <span
-                className="outline-uFlowDarkGrey text-uFlowText flex size-5 items-center justify-center rounded px-2 py-1 
+                className="outline-uFlowDarkGrey text-uFlowText \ flex size-5 items-center justify-center rounded px-2 py-1
               font-inter-tight text-sm font-medium leading-none outline outline-1 outline-offset-[-0.93px]"
               >
                 +
@@ -175,4 +173,4 @@ export const ExploreCard = forwardRef<HTMLDivElement, ExploreCardProps>(
   },
 );
 
-ExploreCard.displayName = 'ExploreCard';
+SoukCard.displayName = 'SoukCard';

@@ -25,15 +25,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-uflow-light text-content;
+    @apply bg-uflow-light font-inter text-content;
   }
   h1,
   h2,
   h3,
   h4,
   h5,
-  h6 {
-    @apply font-heading text-content-title;
+  h6,
+  label,
+  button {
+    @apply font-inter-tight;
   }
 }
 
@@ -57,7 +59,7 @@
   }
 
   body {
-    @apply min-h-screen bg-uflow-light font-inter-tight text-content;
+    @apply min-h-screen bg-uflow-light font-inter text-content;
   }
 
   h1,
@@ -65,8 +67,10 @@
   h3,
   h4,
   h5,
-  h6 {
-    @apply font-heading;
+  h6,
+  label,
+  button {
+    @apply font-inter-tight;
   }
 
   a {

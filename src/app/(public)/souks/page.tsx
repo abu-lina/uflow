@@ -1,18 +1,19 @@
 'use client';
-console.log('Rendering /souks page');
 
 import { useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
 import { Header } from '@/components/layout/Header';
-import { ExploreCard } from '@/components/shared/ExploreCard';
+import { SoukCard } from '@/components/shared/SoukCard';
+import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
 import { searchSouks, type Souk } from '@/services/souks';
 
 export default function SouksPage() {
   const [souks, setSouks] = useState<Souk[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSouk, setSelectedSouk] = useState<Souk | null>(null);
   const searchParams = useSearchParams();
   const [paramVersion, setParamVersion] = useState(0);
   const location = searchParams.get('location') || 'Überall';
@@ -73,9 +74,26 @@ export default function SouksPage() {
           {/* Souks Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {souks.map((souk) => (
-              <ExploreCard key={souk.souk_id} {...souk} />
+              <div
+                key={souk.souk_id}
+                aria-label="Souk Details anzeigen"
+                className="cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedSouk(souk)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setSelectedSouk(souk);
+                  }
+                }}
+              >
+                <SoukCard {...souk} hideWebsiteButton={true} />
+              </div>
             ))}
           </div>
+          {selectedSouk && (
+            <SoukDetailModal souk={selectedSouk} onClose={() => setSelectedSouk(null)} />
+          )}
         </div>
       </main>
     </div>

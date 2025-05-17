@@ -12,6 +12,7 @@ export interface Souk {
   category?: {
     name_de: string;
   };
+  souk_description?: string | null;
 }
 
 export async function getSouks(): Promise<Souk[]> {
@@ -71,7 +72,7 @@ export async function searchSouks(
   category: string,
   location: string,
 ): Promise<Souk[]> {
-  let req = supabase.from('souks').select('*');
+  let req = supabase.from('souks').select('*, category:categories(name_de)');
 
   if (query) {
     req = req.ilike('souk_name', `%${query}%`);

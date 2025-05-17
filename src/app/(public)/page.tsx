@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 import { Header } from '@/components/layout/Header';
-import { ExploreCard } from '@/components/shared/ExploreCard';
 import { QuoteCard } from '@/components/shared/QuoteCard';
+import { SoukCard } from '@/components/shared/SoukCard';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { Bismillah } from '@/components/ui/Bismillah';
 import { PageSliderIndicator } from '@/components/ui/PageSliderIndicator';
@@ -185,11 +185,15 @@ function ExploreSection() {
           }}
         >
           {[...filteredSouks, ...filteredSouks, ...filteredSouks].map((souk, idx) => (
-            <ExploreCard
+            <Link
               key={`${souk.souk_id}-${idx}`}
-              {...souk}
+              aria-label="Zu den Souks"
               className="mr-8 w-[288px] shrink-0"
-            />
+              href="/souks"
+              tabIndex={0}
+            >
+              <SoukCard {...souk} className="w-full text-content" hideActions={true} />
+            </Link>
           ))}
         </div>
       </div>
