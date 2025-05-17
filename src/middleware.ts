@@ -14,7 +14,19 @@ export async function middleware(req: NextRequest) {
 
     if (sessionError) {
       console.error('Error getting session:', sessionError);
-      return NextResponse.redirect(new URL('/login', req.url));
+      // Only redirect if not a public route
+      const currentPath = req.nextUrl.pathname;
+      const isPublicRoute =
+        currentPath === '/' || // Home page
+        currentPath.startsWith('/souks') || // Souks page
+        currentPath.startsWith('/(public)') || // Public route group
+        currentPath.includes('/_next') || // Next.js internal routes
+        currentPath.includes('/api'); // API routes
+      if (!isPublicRoute) {
+        return NextResponse.redirect(new URL('/login', req.url));
+      }
+      // For public routes, just continue
+      return res;
     }
 
     const currentPath = req.nextUrl.pathname;

@@ -81,6 +81,7 @@ export function SignupModal({ onClose }: SignupModalProps) {
             />
             <input
               required
+              autoComplete="new-password"
               className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
               disabled={isLoading}
               id="password"
@@ -91,6 +92,7 @@ export function SignupModal({ onClose }: SignupModalProps) {
             />
             <input
               required
+              autoComplete="new-password"
               className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
               disabled={isLoading}
               id="confirmPassword"

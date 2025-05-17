@@ -43,6 +43,7 @@ export function SignupForm() {
         <div className="flex gap-10">
           <Input
             required
+            autoComplete="new-password"
             id="password"
             label="Passwort"
             type="password"
@@ -51,6 +52,7 @@ export function SignupForm() {
           />
           <Input
             required
+            autoComplete="new-password"
             id="confirmPassword"
             label="Passwort wiederholen"
             type="password"

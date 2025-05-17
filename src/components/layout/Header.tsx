@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { Logo } from '@/components/ui/Logo';
@@ -29,7 +30,7 @@ export function Header() {
                 <Logo className="size-8 text-white" />
               </Link>
               <Link
-                className={`flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium !text-[#232323] hover:bg-grey-light hover:!text-[#232323] focus:!text-[#232323] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary active:!text-[#232323]${aboutInView ? ' underline' : ''}`}
+                className={`flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-title hover:bg-grey-light focus:outline-none focus-visible:ring-2 focus-visible:ring-primary${aboutInView ? ' underline' : ''}`}
                 href="#about"
                 scroll={true}
               >
@@ -45,42 +46,17 @@ export function Header() {
               {user ? (
                 <>
                   <button
-                    aria-label="Favoriten"
-                    className="focus:ring-uFlowAccent flex size-10 items-center justify-center rounded-full bg-neutral-100 transition-colors hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    type="button"
-                  >
-                    <svg
-                      className="text-uFlowText size-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                      />
-                    </svg>
-                  </button>
-                  <button
                     aria-label="Profil"
                     className="focus:ring-uFlowAccent flex size-10 items-center justify-center rounded-full bg-neutral-100 transition-colors hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
                     type="button"
                   >
-                    <svg
-                      className="text-uFlowText size-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                      />
-                    </svg>
+                    <Image
+                      alt="Profil"
+                      className="rounded-full"
+                      height={32}
+                      src="/icons/icon-muslim.png"
+                      width={32}
+                    />
                   </button>
                 </>
               ) : (

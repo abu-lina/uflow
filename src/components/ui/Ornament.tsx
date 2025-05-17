@@ -12,7 +12,7 @@ export const Ornament: React.FC<React.SVGProps<SVGSVGElement>> = ({ className, .
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
-    <rect fill="#BFDBD8" height="25.2433" width="43" />
+    <rect fill="#589D96" height="26" width="43" />
     <mask fill="white" id="path-1-inside-1_3_616">
       <path
         clipRule="evenodd"
@@ -26,7 +26,7 @@ export const Ornament: React.FC<React.SVGProps<SVGSVGElement>> = ({ className, .
       fill="white"
       fillRule="evenodd"
       mask="url(#path-1-inside-1_3_616)"
-      stroke="#BFDBD8"
+      stroke="#mint"
       strokeWidth="0.0436557"
     />
   </svg>

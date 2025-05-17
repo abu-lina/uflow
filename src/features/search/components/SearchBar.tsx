@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 // Third-party imports
+import { Icon } from '@iconify/react';
 import { ChevronDown, Search } from 'lucide-react';
 
 // Local imports
@@ -35,6 +36,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<string[]>(['Überall']);
   const hasSyncedFromUrl = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchUsedCategories()
@@ -110,9 +112,10 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
     >
       <div className="flex w-full flex-row items-center justify-between">
         {/* Search Section */}
-        <div className="flex flex-1 flex-row items-center gap-4">
+        <div className="relative flex flex-1 flex-row items-center gap-4">
           <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
           <input
+            ref={inputRef}
             className={`w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
             placeholder="In deiner Ummah suchen"
             type="text"
@@ -125,12 +128,35 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
             onFocus={() => setIsTyping(true)}
             onKeyDown={handleKeyPress}
           />
+          {searchQuery && (
+            <button
+              aria-label="Eingabe löschen"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-gray-100 focus:outline-none"
+              type="button"
+              onClick={() => {
+                // Remove 'q' from the URL but keep other filters
+                const params = new URLSearchParams(window.location.search);
+                params.delete('q');
+                if (selectedCategory) {
+                  params.set('category', selectedCategory);
+                }
+                if (selectedLocation) {
+                  params.set('location', selectedLocation);
+                }
+                router.push(`/souks?${params.toString()}`);
+                setSearchQuery('');
+                inputRef.current?.focus();
+              }}
+            >
+              <Icon className="text-gray-400" height={16} icon="mdi:close" width={16} />
+            </button>
+          )}
         </div>
 
         {/* Filters Section */}
         <div className="flex flex-row items-center gap-4">
           {/* Divider */}
-          <div className="h-6·border-l·border-content" />
+          <div className="h-6 border-l border-[#999999]" />
 
           {/* Categories */}
           <div className="relative flex flex-row items-center">
@@ -205,7 +231,7 @@ export function SearchBar({ className = '', onSearch }: SearchBarProps) {
           </div>
 
           {/* Divider */}
-          <div className="h-6·border-l·border-content" />
+          <div className="h-6 border-l border-[#999999]" />
 
           {/* Location */}
           <div className="relative flex flex-row items-center">

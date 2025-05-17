@@ -88,6 +88,7 @@ export function SignInPopup({ onClose }: SignInPopupProps) {
             </label>
             <input
               required
+              autoComplete="current-password"
               className="w-full rounded-lg border border-gray-300 p-2 focus:border-primary focus:ring-0"
               id="password"
               name="password"

@@ -44,6 +44,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
+      <head>
+        <meta content="yes" name="mobile-web-app-capable" />
+      </head>
       <body className={`min-h-screen bg-background ${inter.className} ${interTight.variable}`}>
         <AuthProvider>
           <SearchProvider>

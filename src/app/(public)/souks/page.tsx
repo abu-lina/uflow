@@ -1,4 +1,5 @@
 'use client';
+console.log('Rendering /souks page');
 
 import { useEffect, useState } from 'react';
 

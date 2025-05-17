@@ -1,25 +1,24 @@
 export interface Quote {
   heading: string;
   quote: string;
-  author: string;
+  author?: string;
 }
 
 export const quotes: Quote[] = [
   {
-    heading: 'Warum Zusammenhalt?',
+    heading: 'Viele Muslime aber wenig Gemeinschaft?',
     quote:
       'Es wird eine Zeit kommen, in der die Muslime viele sein werden, doch ihr Zusammenhalt wird so schwach sein wie der Schaum des Meeres.',
     author: 'Der Prophet Mohammed ﷺ, Sahih Muslim',
   },
   {
-    heading: 'Gemeinschaft und Stärke',
-    quote: 'Die Gläubigen sind wie ein Körper: Wenn ein Teil leidet, leiden alle anderen mit.',
-    author: 'Der Prophet Mohammed ﷺ, Sahih Bukhari',
+    heading: 'Supporte Deine Ummah',
+    quote:
+      'Ummah Flow ist mehr als nur ein Marktplatz für Muslime: Es ist ein Ort, an dem wir unsere Gemeinschaft stärken können, indem wir jeden einzelnen Muslim ermutigen muslimische Unternehmen und Läden zu unterstützen.',
   },
   {
-    heading: 'Verantwortung füreinander',
+    heading: 'Ein Marktplatz für Muslime',
     quote:
-      'Keiner von euch glaubt wirklich, solange er nicht für seinen Bruder wünscht, was er für sich selbst wünscht.',
-    author: 'Der Prophet Mohammed ﷺ, Sahih Muslim',
+      'Inmitten des Leids der Palästinenser und den zahlreichen Herausforderungen, denen unsere Ummah gegenübersteht, wird deutlich, wie wichtig es ist, dass wir als Ummah enger zusammenkommen.',
   },
 ];

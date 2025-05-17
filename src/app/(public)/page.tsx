@@ -76,7 +76,7 @@ function AboutSection() {
           >
             Warum braucht es einen <span className="text-mint">muslimischen Marktplatz</span>?
           </h2>
-          <p className="w-full max-w-2xl text-center font-inter text-lg leading-snug text-[#565656] sm:text-2xl">
+          <p className="w-full max-w-2xl text-center font-inter text-lg leading-snug text-content sm:text-2xl">
             Mit Ummah Flow möchten wir – mit der Erlaubnis Allahs ﷲ – unsere Ummah wieder stark
             machen.
           </p>

@@ -93,6 +93,7 @@ export function SignupPopup({ onClose }: SignupPopupProps) {
             </label>
             <input
               required
+              autoComplete="new-password"
               className="w-full rounded-lg border border-gray-300 p-2 focus:border-primary focus:ring-0"
               id="password"
               name="password"
@@ -111,6 +112,7 @@ export function SignupPopup({ onClose }: SignupPopupProps) {
             </label>
             <input
               required
+              autoComplete="new-password"
               className="w-full rounded-lg border border-gray-300 p-2 focus:border-primary focus:ring-0"
               id="confirmPassword"
               name="confirmPassword"
