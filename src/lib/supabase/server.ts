@@ -1,10 +1,17 @@
-import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookieAdapter } from './cookieAdapter';
 
-import type { Database } from '@/types/supabase';
-
-export const createServerClient = () => {
-  const cookieStore = cookies();
-  return createServerComponentClient<Database>({ cookies: () => cookieStore });
-};
+export function createSupabaseServerClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error('Missing Supabase environment variables');
+  }
+  return createServerClient(url, key, {
+    cookies: cookieAdapter,
+    cookieOptions: {
+      name: 'sb',
+    },
+  });
+}

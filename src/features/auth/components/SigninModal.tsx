@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 import { toast } from 'sonner';
@@ -55,12 +57,23 @@ export function SigninModal({ onClose }: SigninModalProps) {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
       if (error) {
         throw error;
+      }
+      // SSR session sync: set cookies
+      if (data.session) {
+        await fetch('/api/auth/set', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          }),
+        });
       }
       toast.success('Erfolgreich angemeldet');
       onClose();
@@ -95,7 +108,7 @@ export function SigninModal({ onClose }: SigninModalProps) {
           }
         }}
         onKeyDown={(e) => {
-          if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+          if (e.key === 'Escape') {
             onClose();
           }
         }}

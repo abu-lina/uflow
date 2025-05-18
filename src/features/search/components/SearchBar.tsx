@@ -1,3 +1,4 @@
+'use client';
 // React imports
 import { Suspense, useEffect, useState, useRef } from 'react';
 
