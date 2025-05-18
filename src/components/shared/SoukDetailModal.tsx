@@ -1,6 +1,10 @@
-import React from 'react';
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
+import React, { useState, useEffect } from 'react';
 
 import Image from 'next/image';
+
+import { X } from 'lucide-react';
 
 import type { Souk } from '@/services/souks';
 
@@ -34,45 +38,12 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
     }
   }
 
-  const getImageUrl = () => {
-    try {
-      if (!souk.souk_images) {
-        return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
-      }
-
-      let imagesData: { urls?: string[] } = {};
-      if (typeof souk.souk_images === 'string') {
-        try {
-          imagesData = JSON.parse(souk.souk_images) as { urls?: string[] };
-        } catch {
-          imagesData = {};
-        }
-      } else if (Array.isArray(souk.souk_images)) {
-        imagesData.urls = souk.souk_images;
-      } else if (hasUrls(souk.souk_images)) {
-        imagesData = souk.souk_images;
-      }
-
-      if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
-        const firstTrusted = imagesData.urls.find(isTrustedUrl);
-        if (firstTrusted) {
-          return firstTrusted;
-        }
-      }
-
-      return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
-    } catch (error) {
-      console.error('Error parsing image data:', error);
-      return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
-    }
-  };
-
-  const getThumbnailUrls = () => {
+  // Collect all image URLs
+  const allImageUrls = (() => {
     try {
       if (!souk.souk_images) {
         return [];
       }
-
       let imagesData: { urls?: string[] } = {};
       if (typeof souk.souk_images === 'string') {
         try {
@@ -85,21 +56,55 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
       } else if (hasUrls(souk.souk_images)) {
         imagesData = souk.souk_images;
       }
-
       if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
-        return imagesData.urls.slice(1, 4).filter(isTrustedUrl);
+        return imagesData.urls.filter(isTrustedUrl);
       }
-
       return [];
-    } catch (error) {
-      console.error('Error parsing thumbnail data:', error);
+    } catch {
       return [];
     }
-  };
+  })();
+
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  const mainImageUrl =
+    allImageUrls[selectedImageIdx] ||
+    'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="relative flex h-[900px] w-[1200px] bg-transparent">
+    <button
+      aria-label="Close modal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      style={{ all: 'unset', cursor: 'pointer' }}
+      tabIndex={0}
+      type="button"
+      onClick={onClose}
+    >
+      <section
+        aria-modal="true"
+        className="relative flex h-[900px] w-[1200px] bg-transparent"
+        role="dialog"
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Icon Top Right */}
+        <button
+          aria-label="Schließen"
+          className="absolute right-6 top-6 z-50 flex size-10 items-center justify-center rounded-full bg-white/80 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-mint"
+          type="button"
+          onClick={onClose}
+        >
+          <X className="text-uFlowText" size={28} />
+        </button>
         {/* Left Section */}
         <div className="absolute left-0 top-0 inline-flex h-[900px] w-[704px] flex-col items-start justify-start gap-8 rounded-l-[48px] bg-white py-10 pl-12 pr-4">
           {/* Title & Subtitle */}
@@ -120,7 +125,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
                 fill
                 alt={souk.souk_name}
                 className="rounded-[32px] object-cover"
-                src={getImageUrl()}
+                src={mainImageUrl}
               />
               {/* Category label on image */}
               <div className="absolute bottom-3 left-3 inline-flex items-center justify-center rounded-lg bg-zinc-100/70 px-2 py-1 bg-blend-hard-light backdrop-blur-[1.67px]">
@@ -130,21 +135,27 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
               </div>
             </div>
             {/* Thumbnails */}
-            <div className="inline-flex items-start justify-start gap-4">
-              {getThumbnailUrls().map((img, i) => (
-                <div
-                  key={i}
-                  className="bg-uFlowAccent relative h-14 w-20 overflow-hidden rounded-lg"
-                >
-                  <Image
-                    fill
-                    alt={`${souk.souk_name} thumbnail`}
-                    className="rounded-lg object-cover"
-                    src={img}
-                  />
-                </div>
-              ))}
-            </div>
+            {allImageUrls.length > 1 && (
+              <div className="flex items-start gap-4" style={{ gap: '16px' }}>
+                {allImageUrls.map((img, i) => (
+                  <button
+                    key={i}
+                    aria-label={`Bild ${i + 1} auswählen`}
+                    className={`relative overflow-hidden rounded-[8px] border-2 ${selectedImageIdx === i ? 'border-mint' : 'border-transparent'}`}
+                    style={{ width: 80, height: 60 }}
+                    type="button"
+                    onClick={() => setSelectedImageIdx(i)}
+                  >
+                    <Image
+                      fill
+                      alt={`${souk.souk_name} thumbnail ${i + 1}`}
+                      className="rounded-[8px] object-cover"
+                      src={img}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         {/* Right Section */}
@@ -224,14 +235,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
             </div>
           </div>
         </div>
-      </div>
-      {/* Modal backdrop click to close */}
-      <button
-        aria-label="Close modal"
-        className="fixed inset-0 z-40 cursor-default"
-        tabIndex={-1}
-        onClick={onClose}
-      />
-    </div>
+      </section>
+    </button>
   );
 };

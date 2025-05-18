@@ -6,9 +6,8 @@ import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/Button';
-import { OrnamentIcon } from '@/components/ui/OrnamentIcon';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/providers/auth-provider';
 import type { Souk } from '@/services/souks';
 
 interface SoukCardProps extends Omit<Souk, 'id' | 'category_id'> {
@@ -46,7 +45,8 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
     const address = `${address_street}, ${address_zip} ${address_city}`;
     const categoryName = category?.name_de || '';
 
-    const handleBookmark = async () => {
+    const handleBookmark = async (e: React.MouseEvent) => {
+      e.stopPropagation();
       if (!user) {
         toast.error('Bitte melde dich an, um Souks zu speichern');
         return;
@@ -176,14 +176,13 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
               <span className="text-uFlowText2 font-inter text-sm font-normal">{address}</span>
             </div>
             <div className="flex gap-2">
-              {(barakah_effects || []).map((effect, index) => (
-                <span
+              {(barakah_effects || []).map((effect: string, index: number) => (
+                <div
                   key={index}
-                  className="outline-uFlowDarkGrey text-uFlowText \ flex items-center rounded px-1 py-0.5
-                  font-inter-tight text-sm font-medium leading-none outline outline-1 outline-offset-[-0.93px]"
+                  className="flex items-center gap-1 rounded-lg bg-mint/10 px-2 py-1 text-xs font-medium text-mint"
                 >
                   {effect}
-                </span>
+                </div>
               ))}
               <span
                 className="outline-uFlowDarkGrey text-uFlowText \ flex size-5 items-center justify-center rounded px-2 py-1
@@ -196,14 +195,16 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
             {!hideActions && (
               <div className="flex w-full gap-3.5">
                 <Button
-                  aria-label="Speichern"
+                  aria-label={bookmarked ? 'Gespeichert entfernen' : 'Souk speichern'}
                   className="flex-1 gap-1"
                   disabled={isLoading}
                   icon={
                     <div className="relative size-4">
-                      <OrnamentIcon
-                        className={`absolute left-0 top-0 ${bookmarked ? 'text-mint' : ''}`}
-                        size={16}
+                      <Icon
+                        className="text-white"
+                        height={16}
+                        icon={bookmarked ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
+                        width={16}
                       />
                     </div>
                   }

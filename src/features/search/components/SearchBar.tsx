@@ -38,6 +38,7 @@ function SearchBarContent({ className = '', onSearch }: SearchBarProps) {
   const [locations, setLocations] = useState<string[]>(['Überall']);
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
     fetchUsedCategories()
@@ -71,6 +72,10 @@ function SearchBarContent({ className = '', onSearch }: SearchBarProps) {
       hasSyncedFromUrl.current = true;
     }
   }, [pathname, searchParams, setSearchQuery, setSelectedCategory, setSelectedLocation]);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Handle search submission
   const handleSearch = () => {
@@ -126,7 +131,7 @@ function SearchBarContent({ className = '', onSearch }: SearchBarProps) {
             onFocus={() => setIsTyping(true)}
             onKeyDown={handleKeyPress}
           />
-          {searchQuery && (
+          {hasMounted && searchQuery && (
             <button
               aria-label="Eingabe löschen"
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-gray-100 focus:outline-none"

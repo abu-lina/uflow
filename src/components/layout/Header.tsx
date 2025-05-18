@@ -78,9 +78,9 @@ export function Header() {
                     <Image
                       alt="Profil"
                       className="rounded-full"
-                      height={24}
+                      height={32}
                       src="/icons/icon-muslim.png"
-                      width={24}
+                      width={32}
                     />
                     <ChevronDown
                       aria-hidden="true"
