@@ -97,7 +97,15 @@ function SouksContent() {
         ))}
       </div>
       {selectedSouk && (
-        <SoukDetailModal souk={selectedSouk} onClose={() => setSelectedSouk(null)} />
+        <SoukDetailModal
+          souk={selectedSouk}
+          onBookmarkChange={(soukId, isBookmarked) => {
+            setBookmarkedSoukIds((prev) =>
+              isBookmarked ? [...prev, soukId] : prev.filter((id) => id !== soukId),
+            );
+          }}
+          onClose={() => setSelectedSouk(null)}
+        />
       )}
     </div>
   );

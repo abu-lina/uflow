@@ -4,16 +4,25 @@ import React, { useState, useEffect } from 'react';
 
 import Image from 'next/image';
 
+import { Icon } from '@iconify/react';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/providers/auth-provider';
 import type { Souk } from '@/services/souks';
 
 interface SoukDetailModalProps {
   souk: Souk;
   onClose: () => void;
+  onBookmarkChange?: (soukId: string, isBookmarked: boolean) => void;
 }
 
-export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose }) => {
+export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
+  souk,
+  onClose,
+  onBookmarkChange,
+}) => {
   function hasUrls(obj: unknown): obj is { urls: string[] } {
     return (
       typeof obj === 'object' &&
@@ -70,6 +79,96 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
     allImageUrls[selectedImageIdx] ||
     'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
 
+  const [expandedAction, setExpandedAction] = useState<'save' | 'share' | 'call' | 'website'>(
+    'save',
+  );
+
+  const { user } = useAuth();
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    const fetchBookmark = async () => {
+      if (!user) {
+        return;
+      }
+      const { data: existingBookmark } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('bookmarkable_id', souk.souk_id)
+        .eq('bookmarkable_type', 'souk')
+        .eq('user_id', user.id)
+        .single();
+      setIsSaved(!!existingBookmark);
+    };
+    void fetchBookmark();
+  }, [user, souk.souk_id]);
+
+  const handleBookmark = async () => {
+    if (!user) {
+      toast.error('Bitte melde dich an, um Souks zu speichern');
+      return;
+    }
+    try {
+      const { data: existingBookmark } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('bookmarkable_id', souk.souk_id)
+        .eq('bookmarkable_type', 'souk')
+        .eq('user_id', user.id)
+        .single();
+      if (existingBookmark) {
+        const { error } = await supabase.from('bookmarks').delete().eq('id', existingBookmark.id);
+        if (error) {
+          throw error;
+        }
+        setIsSaved(false);
+        toast.success('Souk entfernt');
+        if (typeof onBookmarkChange === 'function') {
+          onBookmarkChange(souk.souk_id, false);
+        }
+      } else {
+        const { error } = await supabase.from('bookmarks').insert({
+          bookmarkable_id: souk.souk_id,
+          bookmarkable_type: 'souk',
+          user_id: user.id,
+        });
+        if (error) {
+          throw error;
+        }
+        setIsSaved(true);
+        toast.success('Souk gespeichert');
+        if (typeof onBookmarkChange === 'function') {
+          onBookmarkChange(souk.souk_id, true);
+        }
+      }
+    } catch (error) {
+      toast.error('Fehler beim Speichern des Souks');
+    }
+  };
+
+  // Action handlers
+  const handleExpand = (action: 'save' | 'share' | 'call' | 'website') => {
+    setExpandedAction(action);
+    if (action === 'save') {
+      void handleBookmark();
+    }
+    if (action === 'share') {
+      if (navigator.share) {
+        void navigator.share({
+          title: souk.souk_name,
+          text: souk.souk_description || '',
+          url: window.location.href,
+        });
+      } else {
+        void navigator.clipboard.writeText(window.location.href);
+      }
+    } else if (action === 'call' && souk.contact_phone) {
+      window.open(`tel:${souk.contact_phone}`);
+    } else if (action === 'website' && souk.social_website) {
+      window.open(souk.social_website, '_blank');
+    }
+  };
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
@@ -95,7 +194,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
     >
       <section
         aria-modal="true"
-        className="relative flex h-[900px] w-[1200px] bg-transparent"
+        className="relative flex h-[900px] w-[1200px] cursor-default bg-transparent"
         role="dialog"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
@@ -107,7 +206,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
           type="button"
           onClick={onClose}
         >
-          <X className="text-uFlowText" size={28} />
+          <X className="text-uFlowText size-5" size={28} />
         </button>
         {/* Left Section */}
         <div className="absolute left-0 top-0 inline-flex h-[900px] w-[704px] flex-col items-start justify-start gap-8 rounded-l-[48px] bg-white py-10 pl-12 pr-4">
@@ -131,12 +230,6 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
                 className="rounded-[32px] object-cover"
                 src={mainImageUrl}
               />
-              {/* Category label on image */}
-              <div className="absolute bottom-3 left-3 inline-flex items-center justify-center rounded-lg bg-zinc-100/70 px-2 py-1 bg-blend-hard-light backdrop-blur-[1.67px]">
-                <div className="text-uFlowText justify-start font-inter-tight text-sm font-medium leading-none">
-                  {souk.category?.name_de || ''}
-                </div>
-              </div>
             </div>
             {/* Thumbnails */}
             {allImageUrls.length > 1 && (
@@ -190,9 +283,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
                 <div className="inline-flex items-start justify-between self-stretch">
                   {/* Example Barakah Effekt content here */}
                   <div className="inline-flex flex-col items-start justify-start gap-[4.92px]">
-                    <div className="relative h-28 w-40 overflow-hidden rounded-2xl bg-zinc-100">
-                      {/* Placeholder for effect image */}
-                    </div>
+                    <div className="relative h-28 w-40 overflow-hidden rounded-2xl bg-zinc-100" />
                     <div className="flex flex-col items-start justify-start">
                       <div className="text-uFlowText justify-start self-stretch font-inter-tight text-lg font-semibold">
                         {souk.souk_name}
@@ -226,18 +317,133 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
               <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
                 <div className="inline-flex items-start justify-between self-stretch">
                   <div className="inline-flex flex-1 flex-col items-start justify-start gap-2">
-                    <div className="text-uFlowText h-10 w-48 justify-start font-inter-tight text-2xl font-semibold">
+                    <div className="text-uFlowText h-10 w-48 justify-start font-['Inter_Tight'] text-2xl font-semibold">
                       Adresse:
                     </div>
-                    <div className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800">
-                      {souk.address_street},<br />
+                    <div className="justify-start self-stretch font-['Inter_Tight'] text-base font-normal leading-tight text-neutral-800">
+                      {souk.address_street}, <br />
                       {souk.address_zip} {souk.address_city}
+                    </div>
+                  </div>
+                  <div className="relative w-0 self-stretch">
+                    <div className="absolute left-0 top-0 h-0 w-40 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-zinc-100" />
+                  </div>
+                  <div className="inline-flex flex-1 flex-col items-end justify-start gap-4 overflow-hidden">
+                    <div className="text-uFlowText justify-start font-['Inter_Tight'] text-2xl font-semibold">
+                      Öffnungszeiten:
+                    </div>
+                    <div className="inline-flex w-40 items-start justify-end gap-2">
+                      <div className="w-14 justify-start font-['Inter_Tight'] text-base font-normal text-neutral-800">
+                        Mo - Fr:
+                      </div>
+                      <div className="w-24 justify-start text-right font-['Inter_Tight'] text-base font-normal text-neutral-800">
+                        Fajr bis Isha
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+        {/* Actions Bar - moved outside left/right panels for true modal centering */}
+        <div className="absolute bottom-10 left-1/2 flex h-[56px] w-auto -translate-x-1/2 items-center gap-0 rounded-[16.8px] border border-[#EEEEEE] bg-white px-2">
+          {/* Save Button */}
+          <button
+            aria-expanded={expandedAction === 'save'}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-[#589D96] px-3' : 'w-11 bg-transparent px-3'}`}
+            type="button"
+            onClick={() => handleExpand('save')}
+          >
+            <Icon
+              className={
+                expandedAction === 'save'
+                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                  : isSaved
+                    ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-black'
+                    : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#333333]'
+              }
+              height={20}
+              icon={
+                expandedAction === 'save'
+                  ? isSaved
+                    ? 'iconamoon:heart-fill'
+                    : 'iconamoon:heart'
+                  : isSaved
+                    ? 'iconamoon:heart-fill'
+                    : 'iconamoon:heart'
+              }
+              width={20}
+            />
+            {expandedAction === 'save' && (
+              <span className="font-inter-tight text-base font-medium text-white">
+                {isSaved ? 'Gespeichert' : 'Speichern'}
+              </span>
+            )}
+          </button>
+          {/* Share Button */}
+          <button
+            aria-expanded={expandedAction === 'share'}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-[#589D96] px-3' : 'w-11 bg-transparent px-3'}`}
+            type="button"
+            onClick={() => handleExpand('share')}
+          >
+            <Icon
+              className={
+                expandedAction === 'share'
+                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                  : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#333333]'
+              }
+              height={20}
+              icon="material-symbols:share"
+              width={20}
+            />
+            {expandedAction === 'share' && (
+              <span className="font-inter-tight text-base font-medium text-white">Teilen</span>
+            )}
+          </button>
+          {/* Phone Button */}
+          <button
+            aria-expanded={expandedAction === 'call'}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-[#589D96] px-3' : 'w-11 bg-transparent px-3'}`}
+            type="button"
+            onClick={() => handleExpand('call')}
+          >
+            <Icon
+              className={
+                expandedAction === 'call'
+                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                  : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
+              }
+              height={20}
+              icon="entypo:old-phone"
+              width={20}
+            />
+            {expandedAction === 'call' && (
+              <span className="font-inter-tight text-base font-medium text-white">Anrufen</span>
+            )}
+          </button>
+          {/* Website Button */}
+          <button
+            aria-expanded={expandedAction === 'website'}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-[#589D96] px-3' : 'w-11 bg-transparent px-3'}`}
+            type="button"
+            onClick={() => handleExpand('website')}
+          >
+            <Icon
+              className={
+                expandedAction === 'website'
+                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                  : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
+              }
+              height={20}
+              icon="mdi:internet"
+              width={20}
+            />
+            {expandedAction === 'website' && (
+              <span className="font-inter-tight text-base font-medium text-white">Website</span>
+            )}
+          </button>
         </div>
       </section>
     </div>

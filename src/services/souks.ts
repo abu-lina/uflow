@@ -13,6 +13,8 @@ export interface Souk {
     name_de: string;
   };
   souk_description?: string | null;
+  contact_phone?: string | null;
+  social_website?: string | null;
 }
 
 export async function getSouks(): Promise<Souk[]> {
@@ -158,6 +160,26 @@ export async function getBookmarkedSouks(userId: string): Promise<Souk[]> {
 
   if (souksError) {
     throw souksError;
+  }
+  if (!souks) {
+    return [];
+  }
+  return souks;
+}
+
+/**
+ * Fetch all souks created by a user
+ */
+export async function getCreatedSouks(userId: string): Promise<Souk[]> {
+  const { data: souks, error } = await supabase
+    .from('souks')
+    .select('*, category:categories(name_de)')
+    .eq('created_by', userId)
+    .order('created_at', { ascending: false })
+    .returns<Souk[]>();
+
+  if (error) {
+    throw error;
   }
   if (!souks) {
     return [];
