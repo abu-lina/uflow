@@ -81,13 +81,17 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
   }, [onClose]);
 
   return (
-    <button
+    <div
       aria-label="Close modal"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      style={{ all: 'unset', cursor: 'pointer' }}
+      role="button"
       tabIndex={0}
-      type="button"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onClose();
+        }
+      }}
     >
       <section
         aria-modal="true"
@@ -236,6 +240,6 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({ souk, onClose 
           </div>
         </div>
       </section>
-    </button>
+    </div>
   );
 };
