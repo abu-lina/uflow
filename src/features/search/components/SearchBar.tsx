@@ -5,8 +5,7 @@ import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 // Third-party imports
-import { Icon } from '@iconify/react';
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 
 // Local imports
 import { useSearch } from '@/providers/search-provider';
@@ -151,7 +150,7 @@ function SearchBarContent({ className = '', onSearch }: SearchBarProps) {
                 inputRef.current?.focus();
               }}
             >
-              <Icon className="text-gray-400" height={16} icon="mdi:close" width={16} />
+              <X className="text-gray-400" size={16} />
             </button>
           )}
         </div>
