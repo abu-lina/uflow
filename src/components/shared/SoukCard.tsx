@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, useEffect } from 'react';
 
 import Image from 'next/image';
 
@@ -42,6 +42,9 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [bookmarked, setBookmarked] = useState(isBookmarked);
+    useEffect(() => {
+      setBookmarked(isBookmarked);
+    }, [isBookmarked]);
     const address = `${address_street}, ${address_zip} ${address_city}`;
     const categoryName = category?.name_de || '';
 

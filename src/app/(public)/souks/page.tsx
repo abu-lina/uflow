@@ -6,10 +6,13 @@ import { useSearchParams } from 'next/navigation';
 
 import { SoukCard } from '@/components/shared/SoukCard';
 import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
-import { searchSouks, type Souk } from '@/services/souks';
+import { useAuth } from '@/hooks/useAuth';
+import { searchSouks, getBookmarkedSouks, type Souk } from '@/services/souks';
 
 function SouksContent() {
+  const { user, loading: userLoading } = useAuth();
   const [souks, setSouks] = useState<Souk[]>([]);
+  const [bookmarkedSoukIds, setBookmarkedSoukIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSouk, setSelectedSouk] = useState<Souk | null>(null);
@@ -39,9 +42,21 @@ function SouksContent() {
     void fetchSouks();
   }, [query, category, location, paramVersion]);
 
+  useEffect(() => {
+    if (user && !userLoading) {
+      getBookmarkedSouks(user.id)
+        .then((bookmarkedSouks) => {
+          setBookmarkedSoukIds(bookmarkedSouks.map((s) => s.souk_id));
+        })
+        .catch(() => setBookmarkedSoukIds([]));
+    } else if (!userLoading) {
+      setBookmarkedSoukIds([]);
+    }
+  }, [user, userLoading]);
+
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="mx-auto w-full max-w-screen-xl py-8">
         <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
       </div>
     );
@@ -49,16 +64,16 @@ function SouksContent() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="mx-auto w-full max-w-screen-xl py-8">
         <div className="text-uFlowText font-inter-tight text-xl text-red-500">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="mx-auto w-full max-w-screen-xl py-8">
       {/* Souks Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {souks.map((souk) => (
           <div
             key={souk.souk_id}
@@ -73,7 +88,11 @@ function SouksContent() {
               }
             }}
           >
-            <SoukCard {...souk} hideWebsiteButton={true} />
+            <SoukCard
+              {...souk}
+              hideWebsiteButton={true}
+              isBookmarked={bookmarkedSoukIds.includes(souk.souk_id)}
+            />
           </div>
         ))}
       </div>
@@ -88,7 +107,7 @@ export default function SouksPage() {
   return (
     <Suspense
       fallback={
-        <div className="container mx-auto px-4 py-8">
+        <div className="mx-auto w-full max-w-screen-xl py-8">
           <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
         </div>
       }

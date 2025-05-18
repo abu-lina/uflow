@@ -55,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="relative flex min-h-screen flex-col">
                 <Header />
                 <main className="flex-1">
-                  <div className="container py-6">{children}</div>
+                  <div className="mx-auto w-full max-w-screen-xl py-6">{children}</div>
                 </main>
               </div>
             </FilterProvider>
