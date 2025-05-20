@@ -1,6 +1,6 @@
 'use client';
 
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from '@iconify/react';
 
 // Types
 export type UserTab = 'saved' | 'created';
