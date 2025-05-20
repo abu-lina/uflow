@@ -35,13 +35,21 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'api.iconify.design',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.unisvg.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.simplesvg.com',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy:
-      "default-src 'self' https://api.iconify.design https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.iconify.design https://*.supabase.co; frame-src 'self' https://api.iconify.design;",
+      "default-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co; frame-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com;",
   },
 
   // Environment variables (only expose what's needed)
@@ -102,7 +110,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self' https://api.iconify.design https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.iconify.design https://*.supabase.co; frame-src 'self' https://api.iconify.design;",
+              "default-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co; frame-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com;",
           },
           // Allow CORS for local development
           {
