@@ -124,9 +124,6 @@ const nextConfig = {
     locales: ['en'],
     defaultLocale: 'en',
   },
-
-  // Output configuration
-  output: 'standalone', // For better deployment optimization
 };
 
 // Enable PWA in production only

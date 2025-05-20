@@ -41,7 +41,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "src/scripts/bundle-icons.mts"
   ],
   "exclude": ["node_modules"]
 }

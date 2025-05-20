@@ -4,7 +4,7 @@ import { Inter, Inter_Tight } from 'next/font/google';
 import { Toaster } from 'sonner';
 
 // Internal imports
-import { Header } from '@/components/layout/Header';
+import { ClientHeader } from '@/components/layout/ClientHeader';
 import { AuthProvider } from '@/providers/auth-provider';
 import '@/styles/globals.css';
 import { FilterProvider } from '@/providers/filter-provider';
@@ -28,18 +28,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'Ummah Flow',
-  description: 'Der erste halal-konforme Marktplatz',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Ummah Flow',
-  },
-  icons: {
-    icon: '/icons/icon-192x192.png',
-    shortcut: '/icons/icon-192x192.png',
-    apple: '/icons/icon-192x192.png',
-  },
+  description:
+    "Der erste halal-konforme Marktplatz der sicherstellt, das Jeder die Zakat entrichtet insha'Allah.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -53,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SearchProvider>
             <FilterProvider>
               <div className="relative flex min-h-screen flex-col">
-                <Header />
+                <ClientHeader />
                 <main className="flex-1">
                   <div className="mx-auto w-full max-w-screen-xl py-6">{children}</div>
                 </main>
