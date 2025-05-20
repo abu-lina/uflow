@@ -1,6 +1,7 @@
 'use client';
 
-import { Icon } from '@iconify/react';
+import dynamic from 'next/dynamic';
+const Icon = dynamic(() => import('@iconify/react').then((mod) => mod.Icon), { ssr: false });
 
 // Types
 export type UserTab = 'saved' | 'created' | 'create';
