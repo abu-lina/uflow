@@ -40,7 +40,8 @@ const nextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    contentSecurityPolicy:
+      "default-src 'self' https://api.iconify.design https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://api.iconify.design https://*.supabase.co;",
   },
 
   // Environment variables (only expose what's needed)
@@ -96,6 +97,18 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+          // Allow necessary resources
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "default-src 'self' https://api.iconify.design https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://api.iconify.design https://*.supabase.co;",
+          },
+          // Allow CORS for local development
+          {
+            key: 'Access-Control-Allow-Origin',
+            value:
+              process.env.NODE_ENV === 'development' ? '*' : 'https://your-production-domain.com',
           },
         ],
       },

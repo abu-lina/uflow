@@ -9,7 +9,16 @@ interface IconProps extends React.ComponentProps<typeof IconifyIcon> {
 }
 
 export const Icon = forwardRef<SVGSVGElement, IconProps>(({ className = '', ...props }, ref) => {
-  return <IconifyIcon ref={ref} className={className} {...props} />;
+  return (
+    <IconifyIcon
+      ref={ref}
+      className={className}
+      {...props}
+      onError={(error) => {
+        console.error('Icon loading error:', error);
+      }}
+    />
+  );
 });
 
 Icon.displayName = 'Icon';
