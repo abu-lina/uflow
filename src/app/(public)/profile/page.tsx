@@ -10,5 +10,9 @@ export default async function ProfilePage() {
   if (!user) {
     redirect('/?auth=required');
   }
-  return <ProfileContent user={user} />;
+  return (
+    <div className="flex w-full flex-col items-center">
+      <ProfileContent user={user} />
+    </div>
+  );
 }

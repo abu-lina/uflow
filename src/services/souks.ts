@@ -174,7 +174,7 @@ export async function getCreatedSouks(userId: string): Promise<Souk[]> {
   const { data: souks, error } = await supabase
     .from('souks')
     .select('*, category:categories(name_de)')
-    .eq('created_by', userId)
+    .eq('souk_owner_id', userId)
     .order('created_at', { ascending: false })
     .returns<Souk[]>();
 

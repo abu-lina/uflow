@@ -43,7 +43,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full py-4 backdrop-blur">
+      <header className="sticky top-0 z-50 w-full py-6 backdrop-blur">
         <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center gap-20">
           {/* NavBar */}
           <nav className="flex h-10 w-full flex-row items-center justify-between">
