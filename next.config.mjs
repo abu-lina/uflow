@@ -41,7 +41,7 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy:
-      "default-src 'self' https://api.iconify.design https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://api.iconify.design https://*.supabase.co;",
+      "default-src 'self' https://api.iconify.design https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.iconify.design https://*.supabase.co; frame-src 'self' https://api.iconify.design;",
   },
 
   // Environment variables (only expose what's needed)
@@ -102,13 +102,22 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self' https://api.iconify.design https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://api.iconify.design https://*.supabase.co;",
+              "default-src 'self' https://api.iconify.design https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.iconify.design https://*.supabase.co; frame-src 'self' https://api.iconify.design;",
           },
           // Allow CORS for local development
           {
             key: 'Access-Control-Allow-Origin',
             value:
               process.env.NODE_ENV === 'development' ? '*' : 'https://your-production-domain.com',
+          },
+          // Additional headers for Iconify
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'require-corp',
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin',
           },
         ],
       },
