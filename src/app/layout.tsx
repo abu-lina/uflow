@@ -1,23 +1,19 @@
 // External dependencies
-import { Inter, Inter_Tight } from 'next/font/google';
+import { Inter } from 'next/font/google';
 
 import { Toaster } from 'sonner';
 
 // Internal imports
-import { ClientHeader } from '@/components/layout/ClientHeader';
+import { MobileLayoutWrapper } from '@/components/layout/MobileLayoutWrapper';
 import { AuthProvider } from '@/providers/auth-provider';
-import '@/styles/globals.css';
 import { FilterProvider } from '@/providers/filter-provider';
 import { SearchProvider } from '@/providers/search-provider';
+import '@/styles/globals.css';
 
 // Type imports
 import type { Metadata, Viewport } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
-const interTight = Inter_Tight({
-  subsets: ['latin'],
-  variable: '--font-inter-tight',
-});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -36,21 +32,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="de">
       <head>
-        <meta content="yes" name="mobile-web-app-capable" />
+        <meta
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+          name="viewport"
+        />
+        <meta content="#000000" name="theme-color" />
+        <link href="/manifest.json" rel="manifest" />
+        <link href="/icons/icon-192x192.png" rel="apple-touch-icon" />
       </head>
-      <body className={`min-h-screen bg-background ${inter.className} ${interTight.variable}`}>
+      <body className={`relative min-h-screen ${inter.className}`}>
         <AuthProvider>
           <SearchProvider>
             <FilterProvider>
-              <div className="relative flex min-h-screen flex-col">
-                <ClientHeader />
-                <main className="flex-1">
-                  <div className="mx-auto w-full max-w-screen-xl py-6">{children}</div>
-                </main>
-              </div>
+              <MobileLayoutWrapper>{children}</MobileLayoutWrapper>
+              <Toaster position="top-center" />
             </FilterProvider>
           </SearchProvider>
-          <Toaster />
         </AuthProvider>
       </body>
     </html>

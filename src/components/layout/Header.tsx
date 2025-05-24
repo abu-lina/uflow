@@ -43,7 +43,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full py-6 backdrop-blur">
+      <header className="sticky top-0 z-40 w-full py-6 backdrop-blur" style={{ isolation: 'auto' }}>
         <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center gap-20">
           {/* NavBar */}
           <nav className="flex h-10 w-full flex-row items-center justify-between">
@@ -88,7 +88,7 @@ export function Header() {
                     />
                   </button>
                   {dropdownOpen && (
-                    <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
+                    <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
                       <button
                         className="block w-full px-4 py-2 text-left text-base hover:bg-gray-50"
                         onClick={() => {

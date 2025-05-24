@@ -6,9 +6,10 @@ import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/Button';
-import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
+import { toggleBookmarkForSouk } from '@/services/bookmarks';
 import type { Souk } from '@/services/souks';
+import { safeJsonParse } from '@/utils/json';
 
 interface SoukCardProps extends Omit<Souk, 'id' | 'category_id'> {
   className?: string;
@@ -54,39 +55,9 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
         toast.error('Bitte melde dich an, um Souks zu speichern');
         return;
       }
-
       try {
         setIsLoading(true);
-        // First check if the bookmark exists
-        const { data: existingBookmark } = await supabase
-          .from('bookmarks')
-          .select('id')
-          .eq('bookmarkable_id', souk_id)
-          .eq('bookmarkable_type', 'souk')
-          .eq('user_id', user.id)
-          .single();
-
-        let newBookmarkState: boolean;
-        if (existingBookmark) {
-          // If it exists, remove it
-          const { error } = await supabase.from('bookmarks').delete().eq('id', existingBookmark.id);
-          if (error) {
-            throw error;
-          }
-          newBookmarkState = false;
-        } else {
-          // If it doesn't exist, add it
-          const { error } = await supabase.from('bookmarks').insert({
-            bookmarkable_id: souk_id,
-            bookmarkable_type: 'souk',
-            user_id: user.id,
-          });
-          if (error) {
-            throw error;
-          }
-          newBookmarkState = true;
-        }
-
+        const newBookmarkState = await toggleBookmarkForSouk(souk_id, user.id);
         setBookmarked(newBookmarkState);
         onBookmarkChange?.(newBookmarkState);
         toast.success(newBookmarkState ? 'Souk gespeichert' : 'Souk entfernt');
@@ -110,15 +81,24 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
     const getImageUrl = () => {
       try {
         if (!souk_images) {
-          return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+          return '/images/placeholder.jpg';
         }
 
         let imagesData: { urls?: string[] } = {};
         if (typeof souk_images === 'string') {
-          try {
-            imagesData = JSON.parse(souk_images) as { urls?: string[] };
-          } catch {
-            imagesData = {};
+          const parsed = safeJsonParse<{ urls?: string[] }>(
+            souk_images,
+            (parsed): parsed is { urls?: string[] } => {
+              return (
+                typeof parsed === 'object' &&
+                parsed !== null &&
+                'urls' in parsed &&
+                Array.isArray(parsed.urls)
+              );
+            },
+          );
+          if (parsed) {
+            imagesData = parsed;
           }
         } else if (Array.isArray(souk_images)) {
           imagesData.urls = souk_images;
@@ -130,10 +110,10 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
           return imagesData.urls[0];
         }
 
-        return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+        return '/images/placeholder.jpg';
       } catch (error) {
         console.error('Error parsing image data:', error);
-        return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+        return '/images/placeholder.jpg';
       }
     };
 

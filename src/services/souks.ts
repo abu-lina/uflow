@@ -3,70 +3,47 @@ import { supabase } from '@/lib/supabase/client';
 export interface Souk {
   souk_id: string;
   souk_name: string;
-  souk_images: string[];
-  category_id: string;
-  address_street: string;
-  address_zip: string;
-  address_city: string;
+  souk_description: string | null;
+  souk_images: string | null;
+  category_id: string | null;
+  address_city: string | null;
+  social_website: string | null;
+  social_instagram: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  address_street: string | null;
+  address_country: string | null;
+  address_zip: string | null;
+  location_latitude: number | null;
+  location_longitude: number | null;
+  created_at: string | null;
+  updated_at: string | null;
   barakah_effects: string[];
   category?: {
     name_de: string;
   };
-  souk_description?: string | null;
-  contact_phone?: string | null;
-  social_website?: string | null;
+  zakat_id?: string | null;
 }
 
 export async function getSouks(): Promise<Souk[]> {
-  const response = await supabase
+  const { data, error } = await supabase
     .from('souks')
-    .select(
-      `
-      *,
-      category:categories(name_de)
-    `,
-    )
-    .order('created_at', { ascending: false });
-
-  const data: unknown = response.data;
-  const error: unknown = response.error;
+    .select('*, category:categories(name_de)')
+    .order('created_at', { ascending: false })
+    .returns<Souk[]>();
 
   if (error) {
     console.error('Error fetching souks:', error);
     throw error;
   }
 
-  if (!data) {
-    return [];
-  }
-
-  return isSoukArray(data) ? data : [];
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getSoukById(id: string): Promise<Souk | null> {
-  const response = await supabase
-    .from('souks')
-    .select(
-      `
-      *,
-      category:categories(name_de)
-    `,
-    )
-    .eq('id', id)
-    .single();
-
-  const data: unknown = response.data;
-  const error: unknown = response.error;
-
-  if (error) {
-    console.error('Error fetching souk:', error);
-    throw error;
-  }
-
-  if (typeof data === 'object' && data !== null && 'souk_id' in data && 'souk_name' in data) {
-    return data as Souk;
-  }
-  return null;
+  const { data, error } = await supabase.from('souks').select('*').eq('souk_id', id).single<Souk>();
+  if (error) throw error;
+  return data ?? null;
 }
 
 export async function searchSouks(
@@ -86,29 +63,11 @@ export async function searchSouks(
     req = req.eq('address_city', location);
   }
 
-  const response = await req;
-  return isSoukArray(response.data) ? response.data : [];
+  const { data, error } = await req.returns<Souk[]>();
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
 }
 
-function isSoukArray(arr: unknown): arr is Souk[] {
-  return (
-    Array.isArray(arr) &&
-    arr.every((item) => {
-      if (typeof item !== 'object' || item === null) {
-        return false;
-      }
-      // Only check for required fields
-      return (
-        'souk_id' in item &&
-        typeof (item as { souk_id: unknown }).souk_id === 'string' &&
-        'souk_name' in item &&
-        typeof (item as { souk_name: unknown }).souk_name === 'string'
-      );
-    })
-  );
-}
-
-// Fetch unique cities from souks
 export async function fetchSoukCities(): Promise<string[]> {
   const { data, error } = await supabase
     .from('souks')
@@ -134,7 +93,6 @@ export async function fetchSoukCities(): Promise<string[]> {
  * Fetch all souks bookmarked by a user
  */
 export async function getBookmarkedSouks(userId: string): Promise<Souk[]> {
-  // Get all bookmarkable_ids for souks bookmarked by this user
   const { data: bookmarks, error: bookmarksError } = await supabase
     .from('bookmarks')
     .select('bookmarkable_id')
@@ -151,7 +109,6 @@ export async function getBookmarkedSouks(userId: string): Promise<Souk[]> {
 
   const soukIds = bookmarks.map((b) => b.bookmarkable_id);
 
-  // Fetch all souks with those IDs
   const { data: souks, error: souksError } = await supabase
     .from('souks')
     .select('*, category:categories(name_de)')
@@ -161,10 +118,7 @@ export async function getBookmarkedSouks(userId: string): Promise<Souk[]> {
   if (souksError) {
     throw souksError;
   }
-  if (!souks) {
-    return [];
-  }
-  return souks;
+  return Array.isArray(souks) ? souks : [];
 }
 
 /**
@@ -181,8 +135,5 @@ export async function getCreatedSouks(userId: string): Promise<Souk[]> {
   if (error) {
     throw error;
   }
-  if (!souks) {
-    return [];
-  }
-  return souks;
+  return Array.isArray(souks) ? souks : [];
 }

@@ -44,7 +44,7 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
     const getImageUrl = () => {
       try {
         if (!souk_images) {
-          return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+          return '/images/placeholder.jpg';
         }
 
         let imagesData: { urls?: string[] } = {};
@@ -64,10 +64,10 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
           return imagesData.urls[0];
         }
 
-        return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+        return '/images/placeholder.jpg';
       } catch (error) {
         console.error('Error parsing image data:', error);
-        return 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+        return '/images/placeholder.jpg';
       }
     };
 

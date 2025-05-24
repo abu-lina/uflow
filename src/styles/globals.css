@@ -18,48 +18,43 @@
     --grey-light: 0 0% 93%; /* grey-light */
     --border: 0 0% 83%; /* border */
   }
-}
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-uflow-light font-inter text-content;
-  }
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  label,
-  button {
-    @apply font-inter-tight text-content-title;
-  }
-}
-
-@layer components {
-  .container {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
-  }
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-/* Custom styles */
-@layer base {
   html {
     @apply antialiased;
     scroll-behavior: smooth;
   }
 
   body {
-    @apply min-h-screen bg-uflow-light font-inter text-content;
+    @apply min-h-screen font-inter text-content;
+    background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%);
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('/images/pattern.svg');
+    background-repeat: repeat;
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ensure the background covers the entire viewport */
+  #__next {
+    @apply min-h-screen;
+    background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%);
+  }
+
+  #__next::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('/images/pattern.svg');
+    background-repeat: repeat;
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 0;
   }
 
   h1,
@@ -80,5 +75,17 @@
   a:hover,
   a:focus {
     @apply text-mint-light;
+  }
+}
+
+@layer components {
+  .container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
 }

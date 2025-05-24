@@ -1,8 +1,10 @@
 import { Suspense } from 'react';
 
+import { LandingLayout } from '@/components/layout/LandingLayout';
+import { AboutSection } from '@/components/shared/AboutSection';
+import { ExploreSection } from '@/components/shared/ExploreSection';
+import { LandingHero } from '@/components/shared/LandingHero';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-
-import { LandingContent } from './LandingContent';
 
 // Server Component for initial auth check
 async function AuthCheck() {
@@ -14,22 +16,18 @@ async function AuthCheck() {
   return session;
 }
 
-export default async function LandingPage({ searchParams }: { searchParams: { auth?: string } }) {
-  const session = await AuthCheck();
-
-  // If auth is required and user is not logged in, show sign-in modal
-  if (searchParams.auth === 'required' && !session) {
-    // The client component will handle showing the modal
-    return (
-      <Suspense fallback={<div className="flex h-64 items-center justify-center">Loading...</div>}>
-        <LandingContent showSignInModal={true} />
-      </Suspense>
-    );
-  }
+export default async function LandingPage() {
+  await AuthCheck(); // We still need to check auth for the header
 
   return (
     <Suspense fallback={<div className="flex h-64 items-center justify-center">Loading...</div>}>
-      <LandingContent showSignInModal={false} />
+      <LandingLayout>
+        <div className="relative z-10">
+          <LandingHero />
+          <AboutSection />
+          <ExploreSection />
+        </div>
+      </LandingLayout>
     </Suspense>
   );
 }

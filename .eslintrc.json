@@ -7,9 +7,18 @@
     "plugin:import/typescript",
     "plugin:jsx-a11y/recommended",
     "plugin:tailwindcss/recommended",
-    "plugin:prettier/recommended"
+    "plugin:prettier/recommended",
+    "plugin:security/recommended"
   ],
-  "plugins": ["@typescript-eslint", "react", "import", "jsx-a11y", "tailwindcss", "prettier"],
+  "plugins": [
+    "@typescript-eslint",
+    "react",
+    "import",
+    "jsx-a11y",
+    "tailwindcss",
+    "prettier",
+    "security"
+  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": "./tsconfig.json",
@@ -67,6 +76,10 @@
         "fixStyle": "inline-type-imports"
       }
     ],
+    "@typescript-eslint/strict-boolean-expressions": "error",
+    "@typescript-eslint/no-unnecessary-condition": "error",
+    "@typescript-eslint/no-throw-literal": "error",
+    "@typescript-eslint/no-misused-new": "error",
     "@typescript-eslint/no-empty-interface": "error",
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-floating-promises": "warn",
@@ -98,6 +111,8 @@
     "react/react-in-jsx-scope": "off",
     "react/jsx-uses-react": "off",
     "react/self-closing-comp": "error",
+    "react/jsx-no-constructed-context-values": "error",
+    "react/no-array-index-key": "error",
     "react/jsx-sort-props": [
       "error",
       {
@@ -127,7 +142,6 @@
     "max-len": ["error", { "code": 100, "ignoreUrls": true, "ignoreStrings": true }],
     "no-console": ["warn", { "allow": ["warn", "error"] }],
     "no-debugger": "warn",
-    "no-duplicate-imports": "error",
     "no-unused-expressions": "error",
     "no-unused-labels": "error",
     "no-var": "error",
@@ -138,7 +152,11 @@
     "semi": ["error", "always"],
 
     // Prettier rules
-    "prettier/prettier": "error"
+    "prettier/prettier": "error",
+
+    // Accessibility rules
+    "jsx-a11y/click-events-have-key-events": "error",
+    "jsx-a11y/no-static-element-interactions": "error"
   },
   "settings": {
     "react": {

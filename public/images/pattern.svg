@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="islamic-pattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+      <!-- Diamond shape -->
+      <path d="M25 0 L50 25 L25 50 L0 25 Z" fill="none" stroke="#589D96" stroke-width="0.5" opacity="0.1"/>
+      <!-- Circle -->
+      <circle cx="25" cy="25" r="10" fill="none" stroke="#589D96" stroke-width="0.5" opacity="0.1"/>
+      <!-- Small decorative elements -->
+      <path d="M25 15 L25 35 M15 25 L35 25" stroke="#589D96" stroke-width="0.5" opacity="0.1"/>
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#islamic-pattern)"/>
+</svg> 

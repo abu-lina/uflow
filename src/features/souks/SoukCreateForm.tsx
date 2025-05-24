@@ -101,6 +101,32 @@ export function SoukCreateForm() {
       setIsSubmitting(false);
       return;
     }
+
+    // 1. Upload images to Supabase Storage and collect trusted URLs
+    const uploadedUrls: string[] = [];
+    for (const file of formData.images) {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `souks/${Date.now()}-${Math.random()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('images').upload(filePath, file);
+      if (uploadError) {
+        // Optionally show a toast or error message
+        continue;
+      }
+      const { data: publicUrlData } = supabase.storage.from('images').getPublicUrl(filePath);
+      if (publicUrlData?.publicUrl) {
+        // Only allow trusted domain
+        try {
+          const { hostname } = new URL(publicUrlData.publicUrl);
+          if (hostname === 'pmbatjlosstytdmmqkky.supabase.co') {
+            uploadedUrls.push(publicUrlData.publicUrl);
+          }
+        } catch (e) {
+          // Ignore invalid URLs
+        }
+      }
+    }
+
+    // 2. Save souk with trusted Supabase image URLs
     const insertData = {
       souk_name: formData.title,
       souk_description: formData.description,
@@ -115,6 +141,7 @@ export function SoukCreateForm() {
       barakah_effects: formData.tags,
       souk_owner_id: user.id,
       address_country: 'DE',
+      souk_images: JSON.stringify({ urls: uploadedUrls }),
     };
     const { error } = await supabase.from('souks').insert([insertData]);
     setIsSubmitting(false);
