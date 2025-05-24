@@ -6,6 +6,7 @@ import { Toaster } from 'sonner';
 // Internal imports
 import { MobileLayoutWrapper } from '@/components/layout/MobileLayoutWrapper';
 import { AuthProvider } from '@/providers/auth-provider';
+import { AuthSyncer } from '@/providers/AuthSyncer';
 import { FilterProvider } from '@/providers/filter-provider';
 import { SearchProvider } from '@/providers/search-provider';
 import '@/styles/globals.css';
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`relative min-h-screen ${inter.className}`}>
         <AuthProvider>
+          <AuthSyncer />
           <SearchProvider>
             <FilterProvider>
               <MobileLayoutWrapper>{children}</MobileLayoutWrapper>

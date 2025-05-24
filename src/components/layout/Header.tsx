@@ -20,7 +20,7 @@ export function Header() {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const aboutInView = useSectionInView('about');
   const router = useRouter();
 
@@ -68,7 +68,9 @@ export function Header() {
 
             {/* Right */}
             <div className="flex flex-row items-center gap-3">
-              {user ? (
+              {loading ? (
+                <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-gray-100" />
+              ) : user ? (
                 <div ref={dropdownRef} className="relative">
                   <button
                     aria-label="Profil Dropdown öffnen"
