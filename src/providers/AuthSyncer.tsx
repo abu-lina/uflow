@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+
 import { usePathname, useRouter } from 'next/navigation';
+
 import { useAuth } from '@/hooks/useAuth';
 
 export function AuthSyncer() {

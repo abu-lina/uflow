@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import React, { useState, useEffect } from 'react';
 
 import Image from 'next/image';
@@ -8,11 +6,11 @@ import { Icon } from '@iconify/react';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Modal } from '@/components/ui/Modal';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Souk } from '@/services/souks';
 import { getZakatProjectsForSouk, type ZakatData } from '@/services/zakat_projects';
-import { Modal } from '@/components/ui/Modal';
 
 interface SoukDetailModalProps {
   souk: Souk;
@@ -198,7 +196,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
   }, [onClose]);
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={zakatProjects[0]?.zakat_name || souk.souk_name}>
+    <Modal isOpen={true} title={zakatProjects[0]?.zakat_name || souk.souk_name} onClose={onClose}>
       <section
         aria-modal="true"
         className="relative flex h-[900px] w-[1200px] cursor-default bg-transparent"
@@ -292,14 +290,14 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                   <div className="flex w-[160px] flex-shrink-0 flex-col items-start">
                     <div className="relative mb-2 h-[120px] w-[160px] overflow-hidden rounded-[18px]">
                       <Image
+                        fill
+                        alt={zakatProjects[0]?.zakat_name || 'Zakat Projekt'}
+                        className="rounded-[18px] object-cover"
                         src={
                           zakatProjects[0]?.zakat_images && zakatProjects[0].zakat_images.length > 0
                             ? zakatProjects[0].zakat_images[0]
                             : PLACEHOLDER_IMAGE
                         }
-                        alt={zakatProjects[0]?.zakat_name || 'Zakat Projekt'}
-                        fill
-                        className="rounded-[18px] object-cover"
                       />
                     </div>
                     <div className="text-uFlowText mb-0.5 font-inter-tight text-lg font-semibold">

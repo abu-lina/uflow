@@ -1,17 +1,13 @@
 // External dependencies
 import { Inter } from 'next/font/google';
-
 import { Toaster } from 'sonner';
-
-// Internal imports
-import { MobileLayoutWrapper } from '@/components/layout/MobileLayoutWrapper';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
 import { FilterProvider } from '@/providers/filter-provider';
 import { SearchProvider } from '@/providers/search-provider';
+import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import '@/styles/globals.css';
 
-// Type imports
 import type { Metadata, Viewport } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -46,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthSyncer />
           <SearchProvider>
             <FilterProvider>
-              <MobileLayoutWrapper>{children}</MobileLayoutWrapper>
+              <RootClientLayout>{children}</RootClientLayout>
               <Toaster position="top-center" />
             </FilterProvider>
           </SearchProvider>

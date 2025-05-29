@@ -9,9 +9,10 @@ import { supabase } from '@/lib/supabase/client';
 
 interface SignupModalProps {
   onClose: () => void;
+  onSwitchMode?: () => void;
 }
 
-export function SignupModal({ onClose }: SignupModalProps) {
+export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -111,9 +112,20 @@ export function SignupModal({ onClose }: SignupModalProps) {
               {isLoading ? 'Wird registriert...' : 'Registrieren'}
             </button>
           </form>
-          <p className="mt-8 w-full text-center font-inter text-xs font-light text-grey">
-            Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.
-          </p>
+          <div className="mt-8 flex w-full items-center justify-between">
+            <p className="font-inter text-xs font-light text-grey">
+              Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.
+            </p>
+            {onSwitchMode && (
+              <button
+                className="font-inter-tight text-base font-light text-black underline"
+                onClick={onSwitchMode}
+                type="button"
+              >
+                Bereits registriert? Anmelden
+              </button>
+            )}
+          </div>
         </div>
         {/* Close Button */}
         <button
