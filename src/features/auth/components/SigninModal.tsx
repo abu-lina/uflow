@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase/client';
 
 interface SigninModalProps {
   onClose: () => void;
+  onSwitchMode?: () => void;
 }
 
 interface FormData {
@@ -21,7 +22,7 @@ interface FormErrors {
   password?: string;
 }
 
-export function SigninModal({ onClose }: SigninModalProps) {
+export function SigninModal({ onClose, onSwitchMode }: SigninModalProps) {
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -184,13 +185,22 @@ export function SigninModal({ onClose }: SigninModalProps) {
                 {isLoading ? 'Wird angemeldet...' : 'Anmelden'}
               </button>
             </form>
-            <div className="mt-8 w-full text-right">
+            <div className="mt-8 flex w-full items-center justify-between">
               <a
                 className="font-inter-tight text-base font-light text-black underline"
                 href="/forgot-password"
               >
                 Passwort vergessen?
               </a>
+              {onSwitchMode && (
+                <button
+                  className="font-inter-tight text-base font-light text-black underline"
+                  onClick={onSwitchMode}
+                  type="button"
+                >
+                  Noch kein Konto? Registrieren
+                </button>
+              )}
             </div>
           </div>
 
