@@ -65,7 +65,7 @@ export function SoukCardModal({
   function handleTouchMove(e: React.TouchEvent) {
     if (touchStartY.current === null) return;
     const deltaY = e.touches[0].clientY - touchStartY.current;
-    if (deltaY > 60) {
+    if (deltaY > 150) {
       onClose();
       touchStartY.current = null;
     }
