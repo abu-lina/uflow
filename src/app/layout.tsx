@@ -6,6 +6,7 @@ import { Toaster } from 'sonner';
 import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import { MobileFooterBar } from '@/components/shared/MobileFooterBar';
+import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
 import { FilterProvider } from '@/providers/filter-provider';
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <RootClientLayout>{children}</RootClientLayout>
               <Toaster position="top-center" />
+              <PWAInstallPrompt />
             </FilterProvider>
           </SearchProvider>
         </AuthProvider>
