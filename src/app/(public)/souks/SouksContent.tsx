@@ -5,9 +5,21 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { SoukCard } from '@/components/shared/SoukCard';
+import { SoukCardModal } from '@/components/shared/SoukCardModal';
 import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
 import { useAuth } from '@/hooks/useAuth';
 import { searchSouks, getBookmarkedSouks, type Souk } from '@/services/souks';
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
 
 export function SouksContent() {
   const { user, loading: userLoading } = useAuth();
@@ -21,6 +33,7 @@ export function SouksContent() {
   const location = searchParams.get('location') || 'Überall';
   const category = searchParams.get('category') || 'Alle';
   const query = searchParams.get('q') || '';
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setParamVersion((v) => v + 1);
@@ -96,7 +109,47 @@ export function SouksContent() {
           </div>
         ))}
       </div>
-      {selectedSouk && (
+      {/* Mobile Modal */}
+      {selectedSouk && isMobile && (
+        <SoukCardModal
+          address_city={selectedSouk.address_city || ''}
+          address_street={selectedSouk.address_street || ''}
+          address_zip={selectedSouk.address_zip || ''}
+          category={selectedSouk.category?.name_de || ''}
+          description={selectedSouk.souk_description || ''}
+          imageUrl={(() => {
+            // Get first image URL or placeholder
+            try {
+              if (!selectedSouk.souk_images) return '/images/placeholder.jpg';
+              let imagesData: { urls?: string[] } = {};
+              if (typeof selectedSouk.souk_images === 'string') {
+                imagesData = JSON.parse(selectedSouk.souk_images);
+              } else if (Array.isArray(selectedSouk.souk_images)) {
+                imagesData.urls = selectedSouk.souk_images;
+              } else if (
+                typeof selectedSouk.souk_images === 'object' &&
+                selectedSouk.souk_images !== null &&
+                'urls' in selectedSouk.souk_images &&
+                Array.isArray((selectedSouk.souk_images as { urls?: unknown }).urls)
+              ) {
+                imagesData = selectedSouk.souk_images as { urls?: string[] };
+              }
+              if (imagesData.urls && imagesData.urls.length > 0) {
+                return imagesData.urls[0];
+              }
+              return '/images/placeholder.jpg';
+            } catch {
+              return '/images/placeholder.jpg';
+            }
+          })()}
+          open={!!selectedSouk}
+          souk_id={selectedSouk.souk_id}
+          title={selectedSouk.souk_name}
+          onClose={() => setSelectedSouk(null)}
+        />
+      )}
+      {/* Desktop Modal */}
+      {selectedSouk && !isMobile && (
         <SoukDetailModal
           souk={selectedSouk}
           onBookmarkChange={(soukId, isBookmarked) => {
