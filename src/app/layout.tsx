@@ -42,7 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="/manifest.json" rel="manifest" />
         <link href="/icons/icon-192x192.png" rel="apple-touch-icon" />
       </head>
-      <body className={`relative min-h-screen ${inter.className}`}>
+      <body
+        className={`relative min-h-screen bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
+      >
         <AuthProvider>
           <AuthSyncer />
           <SearchProvider>

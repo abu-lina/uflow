@@ -15,9 +15,10 @@ import { fetchSoukCities } from '@/services/souks';
 interface SearchBarProps {
   className?: string;
   onSearch?: (query: string, category: string, location: string) => void;
+  hideCategoryFilter?: boolean;
 }
 
-function SearchBarContent({ className = '', onSearch }: SearchBarProps) {
+function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -161,79 +162,82 @@ function SearchBarContent({ className = '', onSearch }: SearchBarProps) {
           <div className="h-6 border-l border-[#999999]" />
 
           {/* Categories */}
-          <div className="relative flex flex-row items-center">
-            <button
-              aria-expanded={isCategoryOpen}
-              aria-haspopup="listbox"
-              className="flex items-center gap-1"
-              type="button"
-              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-            >
-              <span className="base·font-normal·text-content">
-                {getCategoryLabel(selectedCategory)}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className={`size-6·text-content transition-transform duration-200 ${
-                  isCategoryOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {isCategoryOpen && (
-              <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
+          {!hideCategoryFilter ? (
+            <>
+              <div className="relative flex flex-row items-center">
                 <button
-                  key="Alle"
-                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                    !selectedCategory ? 'bg-gray-50' : ''
-                  }`}
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setIsCategoryOpen(false);
-                    const params = new URLSearchParams();
-                    if (searchQuery) {
-                      params.set('q', searchQuery);
-                    }
-                    if (selectedLocation) {
-                      params.set('location', selectedLocation);
-                    }
-                    router.push(`/souks?${params.toString()}`);
-                  }}
+                  aria-expanded={isCategoryOpen}
+                  aria-haspopup="listbox"
+                  className="flex items-center gap-1"
+                  type="button"
+                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                 >
-                  Alle
+                  <span className="base·font-normal·text-content">
+                    {getCategoryLabel(selectedCategory)}
+                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`size-6·text-content transition-transform duration-200 ${
+                      isCategoryOpen ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
-                {categories.map((cat, idx) => (
-                  <button
-                    key={cat.category_id || idx}
-                    className={`$ {selectedCategory === cat.category_id ? 'bg-gray-50' : ''}
+                {isCategoryOpen && (
+                  <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
+                    <button
+                      key="Alle"
+                      className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                        !selectedCategory ? 'bg-gray-50' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setIsCategoryOpen(false);
+                        const params = new URLSearchParams();
+                        if (searchQuery) {
+                          params.set('q', searchQuery);
+                        }
+                        if (selectedLocation) {
+                          params.set('location', selectedLocation);
+                        }
+                        router.push(`/souks?${params.toString()}`);
+                      }}
+                    >
+                      Alle
+                    </button>
+                    {categories.map((cat, idx) => (
+                      <button
+                        key={cat.category_id || idx}
+                        className={`$ {selectedCategory === cat.category_id ? 'bg-gray-50' : ''}
                       block w-full px-4
                         py-2 text-left
                         text-base hover:bg-gray-50
                     `}
-                    onClick={() => {
-                      setSelectedCategory(cat.category_id ?? null);
-                      setIsCategoryOpen(false);
-                      const params = new URLSearchParams();
-                      if (searchQuery) {
-                        params.set('q', searchQuery);
-                      }
-                      if (cat.category_id) {
-                        params.set('category', cat.category_id);
-                      }
-                      if (selectedLocation) {
-                        params.set('location', selectedLocation);
-                      }
-                      router.push(`/souks?${params.toString()}`);
-                    }}
-                  >
-                    {cat.name_de || cat.category_id || 'Unbenannt'}
-                  </button>
-                ))}
+                        onClick={() => {
+                          setSelectedCategory(cat.category_id ?? null);
+                          setIsCategoryOpen(false);
+                          const params = new URLSearchParams();
+                          if (searchQuery) {
+                            params.set('q', searchQuery);
+                          }
+                          if (cat.category_id) {
+                            params.set('category', cat.category_id);
+                          }
+                          if (selectedLocation) {
+                            params.set('location', selectedLocation);
+                          }
+                          router.push(`/souks?${params.toString()}`);
+                        }}
+                      >
+                        {cat.name_de || cat.category_id || 'Unbenannt'}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="h-6 border-l border-[#999999]" />
+              {/* Divider */}
+              <div className="h-6 border-l border-[#999999]" />
+            </>
+          ) : null}
 
           {/* Location */}
           <div className="relative flex flex-row items-center">

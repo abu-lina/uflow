@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { SoukCard } from '@/components/shared/SoukCard';
 import { SoukCardModal } from '@/components/shared/SoukCardModal';
 import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
+import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
 import { searchSouks, getBookmarkedSouks, type Souk } from '@/services/souks';
 
@@ -84,83 +85,90 @@ export function SouksContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-screen-xl py-8">
-      {/* Souks Grid */}
-      <div className="grid grid-cols-1 justify-items-center gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {souks.map((souk) => (
-          <div
-            key={souk.souk_id}
-            aria-label="Souk Details anzeigen"
-            className="cursor-pointer"
-            role="button"
-            tabIndex={0}
-            onClick={() => setSelectedSouk(souk)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setSelectedSouk(souk);
-              }
-            }}
-          >
-            <SoukCard
-              {...souk}
-              hideWebsiteButton={true}
-              isBookmarked={bookmarkedSoukIds.includes(souk.souk_id)}
-            />
-          </div>
-        ))}
+    <>
+      {/* Mobile Search Bar - Moved outside main container */}
+      <div className="fixed left-0 right-0 top-0 z-50 border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur-sm sm:hidden">
+        <SearchBar hideCategoryFilter className="rounded-lg border border-gray-200 shadow-sm" />
       </div>
-      {/* Mobile Modal */}
-      {selectedSouk && isMobile && (
-        <SoukCardModal
-          address_city={selectedSouk.address_city || ''}
-          address_street={selectedSouk.address_street || ''}
-          address_zip={selectedSouk.address_zip || ''}
-          barakah_effects={selectedSouk.barakah_effects || []}
-          category={selectedSouk.category?.name_de || ''}
-          description={selectedSouk.souk_description || ''}
-          imageUrl={(() => {
-            // Get first image URL or placeholder
-            try {
-              if (!selectedSouk.souk_images) return '/images/placeholder.jpg';
-              let imagesData: { urls?: string[] } = {};
-              if (typeof selectedSouk.souk_images === 'string') {
-                imagesData = JSON.parse(selectedSouk.souk_images);
-              } else if (Array.isArray(selectedSouk.souk_images)) {
-                imagesData.urls = selectedSouk.souk_images;
-              } else if (
-                typeof selectedSouk.souk_images === 'object' &&
-                selectedSouk.souk_images !== null &&
-                'urls' in selectedSouk.souk_images &&
-                Array.isArray((selectedSouk.souk_images as { urls?: unknown }).urls)
-              ) {
-                imagesData = selectedSouk.souk_images as { urls?: string[] };
+      {/* Add padding to main container to account for fixed search bar */}
+      <div className="mx-auto w-full max-w-screen-xl py-8 pt-24 sm:pt-8">
+        {/* Souks Grid */}
+        <div className="grid grid-cols-1 justify-items-center gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {souks.map((souk) => (
+            <div
+              key={souk.souk_id}
+              aria-label="Souk Details anzeigen"
+              className="cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedSouk(souk)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setSelectedSouk(souk);
+                }
+              }}
+            >
+              <SoukCard
+                {...souk}
+                hideWebsiteButton={true}
+                isBookmarked={bookmarkedSoukIds.includes(souk.souk_id)}
+              />
+            </div>
+          ))}
+        </div>
+        {/* Mobile Modal */}
+        {selectedSouk && isMobile && (
+          <SoukCardModal
+            address_city={selectedSouk.address_city || ''}
+            address_street={selectedSouk.address_street || ''}
+            address_zip={selectedSouk.address_zip || ''}
+            barakah_effects={selectedSouk.barakah_effects || []}
+            category={selectedSouk.category?.name_de || ''}
+            description={selectedSouk.souk_description || ''}
+            imageUrl={(() => {
+              // Get first image URL or placeholder
+              try {
+                if (!selectedSouk.souk_images) return '/images/placeholder.jpg';
+                let imagesData: { urls?: string[] } = {};
+                if (typeof selectedSouk.souk_images === 'string') {
+                  imagesData = JSON.parse(selectedSouk.souk_images);
+                } else if (Array.isArray(selectedSouk.souk_images)) {
+                  imagesData.urls = selectedSouk.souk_images;
+                } else if (
+                  typeof selectedSouk.souk_images === 'object' &&
+                  selectedSouk.souk_images !== null &&
+                  'urls' in selectedSouk.souk_images &&
+                  Array.isArray((selectedSouk.souk_images as { urls?: unknown }).urls)
+                ) {
+                  imagesData = selectedSouk.souk_images as { urls?: string[] };
+                }
+                if (imagesData.urls && imagesData.urls.length > 0) {
+                  return imagesData.urls[0];
+                }
+                return '/images/placeholder.jpg';
+              } catch {
+                return '/images/placeholder.jpg';
               }
-              if (imagesData.urls && imagesData.urls.length > 0) {
-                return imagesData.urls[0];
-              }
-              return '/images/placeholder.jpg';
-            } catch {
-              return '/images/placeholder.jpg';
-            }
-          })()}
-          open={!!selectedSouk}
-          souk_id={selectedSouk.souk_id}
-          title={selectedSouk.souk_name}
-          onClose={() => setSelectedSouk(null)}
-        />
-      )}
-      {/* Desktop Modal */}
-      {selectedSouk && !isMobile && (
-        <SoukDetailModal
-          souk={selectedSouk}
-          onBookmarkChange={(soukId, isBookmarked) => {
-            setBookmarkedSoukIds((prev) =>
-              isBookmarked ? [...prev, soukId] : prev.filter((id) => id !== soukId),
-            );
-          }}
-          onClose={() => setSelectedSouk(null)}
-        />
-      )}
-    </div>
+            })()}
+            open={!!selectedSouk}
+            souk_id={selectedSouk.souk_id}
+            title={selectedSouk.souk_name}
+            onClose={() => setSelectedSouk(null)}
+          />
+        )}
+        {/* Desktop Modal */}
+        {selectedSouk && !isMobile && (
+          <SoukDetailModal
+            souk={selectedSouk}
+            onBookmarkChange={(soukId, isBookmarked) => {
+              setBookmarkedSoukIds((prev) =>
+                isBookmarked ? [...prev, soukId] : prev.filter((id) => id !== soukId),
+              );
+            }}
+            onClose={() => setSelectedSouk(null)}
+          />
+        )}
+      </div>
+    </>
   );
 }
