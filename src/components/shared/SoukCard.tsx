@@ -174,7 +174,6 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
                 +
               </span>
             </div>
-            <div className="my-2 h-px w-full bg-zinc-100" />
             {!hideActions && (
               <div className="flex w-full gap-3.5">
                 <Button

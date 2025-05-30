@@ -59,7 +59,7 @@ export function MobileFooterBar() {
             ) : (
               <Icon
                 className={pathname === item.href ? 'text-[#589D96]' : 'text-[#7A7A7A]'}
-                height={32}
+                height={28}
                 icon={item.icon}
                 style={
                   item.noFrame
@@ -71,7 +71,7 @@ export function MobileFooterBar() {
                         borderRadius: 8,
                       }
                 }
-                width={32}
+                width={28}
               />
             )}
           </Link>

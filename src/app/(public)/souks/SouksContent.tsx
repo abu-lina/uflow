@@ -73,7 +73,7 @@ export function SouksContent() {
   return (
     <div className="mx-auto w-full max-w-screen-xl py-8">
       {/* Souks Grid */}
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 justify-items-center gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {souks.map((souk) => (
           <div
             key={souk.souk_id}
