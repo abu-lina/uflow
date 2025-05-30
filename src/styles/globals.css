@@ -82,6 +82,9 @@
   .container {
     @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
+  .header-gradient {
+    background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%);
+  }
 }
 
 @layer utilities {

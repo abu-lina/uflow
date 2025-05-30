@@ -1,11 +1,15 @@
 // External dependencies
 import { Inter } from 'next/font/google';
+
 import { Toaster } from 'sonner';
+
+import { Header } from '@/components/layout/Header';
+import { RootClientLayout } from '@/components/layout/RootClientLayout';
+import { MobileFooterBar } from '@/components/shared/MobileFooterBar';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
 import { FilterProvider } from '@/providers/filter-provider';
 import { SearchProvider } from '@/providers/search-provider';
-import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import '@/styles/globals.css';
 
 import type { Metadata, Viewport } from 'next';
@@ -42,6 +46,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthSyncer />
           <SearchProvider>
             <FilterProvider>
+              {/* Desktop header only */}
+              <div className="hidden md:block">
+                <Header />
+              </div>
+              {/* Mobile footer bar only */}
+              <div className="block md:hidden">
+                <MobileFooterBar />
+              </div>
               <RootClientLayout>{children}</RootClientLayout>
               <Toaster position="top-center" />
             </FilterProvider>

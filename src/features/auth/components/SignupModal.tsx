@@ -119,8 +119,8 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
             {onSwitchMode && (
               <button
                 className="font-inter-tight text-base font-light text-black underline"
-                onClick={onSwitchMode}
                 type="button"
+                onClick={onSwitchMode}
               >
                 Bereits registriert? Anmelden
               </button>

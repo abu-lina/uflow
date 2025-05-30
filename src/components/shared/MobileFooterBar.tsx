@@ -16,7 +16,7 @@ const navItems = [
   },
   {
     label: 'Explore',
-    href: '/explore',
+    href: '/souks',
     icon: 'mingcute:search-line',
     noFrame: true,
   },

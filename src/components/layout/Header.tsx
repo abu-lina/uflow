@@ -13,6 +13,7 @@ import { SigninModal } from '@/features/auth/components/SigninModal';
 import { SignupModal } from '@/features/auth/components/SignupModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useSectionInView } from '@/hooks/useSectionInView';
 
 export function Header() {
@@ -23,6 +24,7 @@ export function Header() {
   const { user, signOut, loading } = useAuth();
   const aboutInView = useSectionInView('about');
   const router = useRouter();
+  const { isVisible } = useScrollDirection();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -43,10 +45,13 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full py-6 backdrop-blur" style={{ isolation: 'auto' }}>
-        <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center gap-20">
-          {/* NavBar */}
-          <nav className="flex h-10 w-full flex-row items-center justify-between">
+      <header
+        className={`header-gradient fixed left-0 right-0 top-0 z-50 w-full shadow-sm transition-all duration-300 ${
+          isVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div className="mx-auto w-full max-w-7xl px-4">
+          <nav className="flex h-20 w-full items-center justify-between">
             {/* Left */}
             <div className="flex flex-row items-center gap-16">
               <Link aria-label="Zur Startseite" className="relative" href="/">
