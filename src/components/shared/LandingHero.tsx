@@ -35,7 +35,11 @@ export function LandingHero() {
             {/* Action Button */}
             <div className="mb-8 sm:mb-16">
               <Link href="/souks">
-                <ActionButton label="Entdecke deine Ummah" size="lg" />
+                <ActionButton
+                  className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
+                  label="Entdecke deine Ummah"
+                  size="md"
+                />
               </Link>
             </div>
           </div>

@@ -72,9 +72,9 @@ export function ExploreSection() {
       id="explore"
     >
       <div className="flex w-full max-w-screen-xl flex-col items-center gap-6">
-        <div className="flex w-full justify-center">
+        <div className="flex w-full justify-center px-6 sm:px-8">
           <h2
-            className="text-uFlowText inline-block whitespace-nowrap text-center font-inter-tight text-2xl font-medium sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl"
+            className="text-uFlowText inline-block break-words text-center font-inter-tight text-2xl font-medium sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl"
             id="explore-heading"
           >
             Entdecke Angebote aus <span className="text-mint">deiner Ummah</span>
@@ -84,7 +84,11 @@ export function ExploreSection() {
           Jedes Zakat (Spenden) Projekt wird anhand unseres Halal-Review Konzept ausgewählt.
         </p>
         <Link href="/souks">
-          <ActionButton label="Entdecke deine Ummah" size="lg" />
+          <ActionButton
+            className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
+            label="Entdecke deine Ummah"
+            size="md"
+          />
         </Link>
       </div>
 
