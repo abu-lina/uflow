@@ -115,6 +115,7 @@ export function SouksContent() {
           address_city={selectedSouk.address_city || ''}
           address_street={selectedSouk.address_street || ''}
           address_zip={selectedSouk.address_zip || ''}
+          barakah_effects={selectedSouk.barakah_effects || []}
           category={selectedSouk.category?.name_de || ''}
           description={selectedSouk.souk_description || ''}
           imageUrl={(() => {

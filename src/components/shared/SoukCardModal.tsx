@@ -19,6 +19,7 @@ interface SoukCardModalProps {
   address_zip?: string;
   address_city?: string;
   souk_id: string;
+  barakah_effects?: string[];
   // Add more props as needed
 }
 
@@ -33,6 +34,7 @@ export function SoukCardModal({
   address_zip,
   address_city,
   souk_id,
+  barakah_effects = [],
 }: SoukCardModalProps) {
   // Prevent background scroll when modal is open
   useEffect(() => {
@@ -177,28 +179,20 @@ export function SoukCardModal({
                   </div>
                 </div>
                 {/* Barakah Badges */}
-                <div className="mt-2 flex w-full flex-row flex-wrap gap-[9.8px]">
-                  <div className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]">
-                    <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
-                      ✨ Iman
-                    </span>
+                {Array.isArray(barakah_effects) && barakah_effects.length > 0 && (
+                  <div className="mt-2 flex w-full flex-row flex-wrap gap-[9.8px]">
+                    {barakah_effects.map((effect, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]"
+                      >
+                        <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
+                          {effect}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]">
-                    <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
-                      🪙 Zakat
-                    </span>
-                  </div>
-                  <div className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]">
-                    <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
-                      🕋 Sunnah
-                    </span>
-                  </div>
-                  <div className="flex flex-row items-center rounded-[4.9px] border border-[#CDCDCD] px-[9.8px] py-[4.9px]">
-                    <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
-                      +
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
             )}
             {/* Description Section */}
