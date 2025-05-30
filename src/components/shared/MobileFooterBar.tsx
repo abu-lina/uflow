@@ -45,9 +45,9 @@ export function MobileFooterBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="isolation-isolate fixed bottom-0 left-0 right-0 z-50 flex h-[72px] items-center bg-white px-4 drop-shadow-[1px_-1px_1px_#EEEEEE]">
+    <nav className="isolation-isolate fixed bottom-0 left-0 right-0 z-50 flex h-[72px] items-center bg-white px-6 drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8">
       <div
-        className="flex w-full flex-row items-center justify-center gap-10"
+        className="flex w-full flex-row items-center justify-center gap-8"
         style={{ height: 40 }}
       >
         {navItems.map((item) => (
