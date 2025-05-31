@@ -21,6 +21,8 @@ interface SoukCardModalProps {
   address_city?: string;
   souk_id: string;
   barakah_effects?: string[];
+  contact_phone?: string;
+  social_website?: string;
   // Add more props as needed
 }
 
@@ -36,6 +38,8 @@ export function SoukCardModal({
   address_city,
   souk_id,
   barakah_effects = [],
+  contact_phone,
+  social_website,
 }: SoukCardModalProps) {
   // Prevent background scroll when modal is open
   useEffect(() => {
@@ -246,8 +250,8 @@ export function SoukCardModal({
           <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-4 pb-4 sm:hidden">
             <SoukActionBar
               isSaved={false}
-              phoneNumber={undefined}
-              websiteUrl={undefined}
+              phoneNumber={contact_phone}
+              websiteUrl={social_website}
               onCall={() => {}}
               onSave={() => {}}
               onShare={() => {}}

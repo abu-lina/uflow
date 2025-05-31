@@ -124,6 +124,7 @@ export function SouksContent() {
             address_zip={selectedSouk.address_zip || ''}
             barakah_effects={selectedSouk.barakah_effects || []}
             category={selectedSouk.category?.name_de || ''}
+            contact_phone={selectedSouk.contact_phone || undefined}
             description={selectedSouk.souk_description || ''}
             imageUrl={(() => {
               // Get first image URL or placeholder
@@ -151,6 +152,7 @@ export function SouksContent() {
               }
             })()}
             open={!!selectedSouk}
+            social_website={selectedSouk.social_website || undefined}
             souk_id={selectedSouk.souk_id}
             title={selectedSouk.souk_name}
             onClose={() => setSelectedSouk(null)}
