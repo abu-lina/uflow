@@ -6,6 +6,7 @@ import Image from 'next/image';
 
 import { X } from 'lucide-react';
 
+import { SoukActionBar } from '@/components/shared/SoukActionBar';
 import { getZakatProjectsForSouk, type ZakatData } from '@/services/zakat_projects';
 
 interface SoukCardModalProps {
@@ -112,7 +113,7 @@ export function SoukCardModal({
             />
             <div className="flex flex-col items-start justify-end self-stretch p-4">
               <div className="outline-uFlowDarkGrey inline-flex h-8 items-center justify-center overflow-hidden rounded-[9.54px] bg-white/70 px-2.5 outline outline-[0.79px] outline-offset-[-0.40px] backdrop-blur-[1.99px]">
-                <div className="justify-center text-center font-['Inter_Tight'] text-lg font-medium text-black">
+                <div className="justify-center text-center font-['Inter_Tight'] text-sm font-medium text-black">
                   {category}
                 </div>
               </div>
@@ -142,7 +143,7 @@ export function SoukCardModal({
             </div>
           </div>
           {/* Modal Content (Mobile Only) */}
-          <div className="mx-auto flex w-[353px] flex-col items-start gap-5 overflow-x-hidden px-3 sm:hidden">
+          <div className="mx-auto flex w-[353px] flex-col items-start gap-5 overflow-x-hidden px-3 pb-24 sm:hidden sm:pb-6">
             {/* Title */}
             <div className="flex w-full flex-col items-start gap-1">
               <div className="w-full font-inter-tight text-[24px] font-semibold leading-[29px] text-[#232323]">
@@ -195,6 +196,28 @@ export function SoukCardModal({
                 )}
               </div>
             )}
+            {/* Barakah Effects Section (when no zakat project but has effects) */}
+            {zakatProjects.length === 0 &&
+              Array.isArray(barakah_effects) &&
+              barakah_effects.length > 0 && (
+                <div className="flex w-full flex-col items-start gap-2">
+                  <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
+                    Unser Barakah Effekt:
+                  </div>
+                  <div className="flex w-full flex-row flex-wrap gap-[9.8px]">
+                    {barakah_effects.map((effect, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]"
+                      >
+                        <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
+                          {effect}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             {/* Description Section */}
             {description && (
               <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
@@ -219,30 +242,17 @@ export function SoukCardModal({
               </div>
             </div>
           </div>
-          {/* Details Section */}
-          <div className="px-4 pt-4">
-            <div className="mt-2 flex gap-4">
-              <button className="h-12 flex-1 rounded-lg bg-mint text-base font-medium text-white shadow transition hover:bg-mint/90">
-                Kontaktieren
-              </button>
-              <button className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm">
-                <svg
-                  className="text-gray-700"
-                  fill="none"
-                  height="20"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  width="20"
-                >
-                  <path
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                  />
-                </svg>
-              </button>
-            </div>
+          {/* Sticky SoukActionBar at the bottom on mobile */}
+          <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-4 pb-4 sm:hidden">
+            <SoukActionBar
+              isSaved={false}
+              phoneNumber={undefined}
+              websiteUrl={undefined}
+              onCall={() => {}}
+              onSave={() => {}}
+              onShare={() => {}}
+              onWebsite={() => {}}
+            />
           </div>
         </div>
       </div>

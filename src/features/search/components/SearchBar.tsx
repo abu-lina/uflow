@@ -115,11 +115,11 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
     >
       <div className="flex w-full flex-row items-center justify-between">
         {/* Search Section */}
-        <div className="relative flex flex-1 flex-row items-center gap-4">
+        <div className="relative flex flex-1 flex-row items-center gap-0 sm:gap-4">
           <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
           <input
             ref={inputRef}
-            className={`w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
+            className={`w-full appearance-none truncate border-none bg-transparent px-1 text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
             placeholder="In deiner Ummah suchen"
             type="text"
             value={searchQuery}
@@ -172,7 +172,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                   type="button"
                   onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                 >
-                  <span className="base·font-normal·text-content">
+                  <span className="base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
                     {getCategoryLabel(selectedCategory)}
                   </span>
                   <ChevronDown
@@ -248,7 +248,9 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
               type="button"
               onClick={() => setIsLocationOpen(!isLocationOpen)}
             >
-              <span className="text-base·font-normal·text-content">{selectedLocation}</span>
+              <span className="text-base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
+                {selectedLocation}
+              </span>
               <ChevronDown
                 aria-hidden="true"
                 className={`size-6·text-content transition-transform duration-200 ${

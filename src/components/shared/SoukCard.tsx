@@ -46,7 +46,16 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
     useEffect(() => {
       setBookmarked(isBookmarked);
     }, [isBookmarked]);
-    const address = `${address_street}, ${address_zip} ${address_city}`;
+    let address = '';
+    if (address_street && address_zip && address_city) {
+      address = `${address_street}, ${address_zip} ${address_city}`;
+    } else if (address_street && address_city) {
+      address = `${address_street}, ${address_city}`;
+    } else if (address_zip && address_city) {
+      address = `${address_zip} ${address_city}`;
+    } else if (address_city) {
+      address = address_city;
+    }
     const categoryName = category?.name_de || '';
 
     const handleBookmark = async (e: React.MouseEvent) => {
@@ -137,8 +146,8 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
             </div>
           )}
           <div className="absolute bottom-3 left-3">
-            <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[0.45rem] bg-white/70 px-2 backdrop-blur-[1.50px]">
-              <div className="justify-center text-center font-inter-tight text-sm font-medium text-black">
+            <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-[#CDCDCD] bg-white/70 px-2 backdrop-blur-[1.50px]">
+              <div className="justify-center text-center font-inter-tight text-sm font-medium text-[#333333]">
                 {categoryName}
               </div>
             </div>
@@ -151,29 +160,36 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
           <div className="flex w-full flex-col items-start gap-3.5">
             <div className="flex flex-col items-start gap-0.5">
               <span
-                className="text-uFlowText truncate font-inter-tight text-xl font-semibold"
+                className="truncate font-inter-tight text-xl font-semibold text-[#333333]"
                 title={souk_name}
               >
                 {souk_name}
               </span>
               <span className="text-uFlowText2 font-inter text-sm font-normal">{address}</span>
             </div>
-            <div className="flex gap-2">
-              {(barakah_effects || []).map((effect: string, index: number) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-1 rounded-lg bg-mint/10 px-2 py-1 text-xs font-medium text-mint"
-                >
-                  {effect}
+            {barakah_effects && barakah_effects.length > 0 && (
+              <div className="flex h-7 w-full items-center gap-2 overflow-hidden">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  {(barakah_effects || []).slice(0, 2).map((effect: string, index: number) => (
+                    <div
+                      key={index}
+                      className="flex shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-white/80 px-1 py-0.5 backdrop-blur-sm"
+                    >
+                      <span className="font-inter-tight text-sm font-medium text-[#232323]">
+                        {effect}
+                      </span>
+                    </div>
+                  ))}
+                  {barakah_effects && barakah_effects.length > 2 && (
+                    <div className="flex shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-white/80 px-1 py-0.5 backdrop-blur-sm">
+                      <span className="font-inter-tight text-sm font-medium text-[#232323]">
+                        +{barakah_effects.length - 2}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              ))}
-              <span
-                className="outline-uFlowDarkGrey text-uFlowText \ flex size-5 items-center justify-center rounded px-2 py-1
-              font-inter-tight text-sm font-medium leading-none outline outline-1 outline-offset-[-0.93px]"
-              >
-                +
-              </span>
-            </div>
+              </div>
+            )}
             {!hideActions && (
               <div className="flex w-full gap-3.5">
                 <Button

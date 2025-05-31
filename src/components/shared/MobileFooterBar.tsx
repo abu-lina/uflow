@@ -58,7 +58,7 @@ export function MobileFooterBar() {
               item.icon(pathname === item.href)
             ) : (
               <Icon
-                className={pathname === item.href ? 'text-[#589D96]' : 'text-[#7A7A7A]'}
+                className={pathname === item.href ? 'text-[#589D96]' : 'text-[#555555]'}
                 height={28}
                 icon={item.icon}
                 style={

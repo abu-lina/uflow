@@ -157,7 +157,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
           onBookmarkChange(souk.souk_id, true);
         }
       }
-    } catch (error) {
+    } catch {
       toast.error('Fehler beim Speichern des Souks');
     }
   };
