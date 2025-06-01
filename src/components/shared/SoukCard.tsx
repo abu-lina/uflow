@@ -6,8 +6,8 @@ import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/Button';
+import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import { toggleBookmarkForSouk } from '@/services/bookmarks';
 import type { Souk } from '@/services/souks';
 import { safeJsonParse } from '@/utils/json';
 
@@ -66,10 +66,36 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
       }
       try {
         setIsLoading(true);
-        const newBookmarkState = await toggleBookmarkForSouk(souk_id, user.id);
-        setBookmarked(newBookmarkState);
-        onBookmarkChange?.(newBookmarkState);
-        toast.success(newBookmarkState ? 'Souk gespeichert' : 'Souk entfernt');
+        const { data: existingBookmark, error: fetchError } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .eq('bookmarkable_id', souk_id)
+          .eq('bookmarkable_type', 'souk')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (fetchError) throw fetchError;
+
+        if (existingBookmark) {
+          const { error: deleteError } = await supabase
+            .from('bookmarks')
+            .delete()
+            .eq('id', existingBookmark.id);
+          if (deleteError) throw deleteError;
+          setBookmarked(false);
+          onBookmarkChange?.(false);
+          toast.success('Souk entfernt');
+        } else {
+          const { error: insertError } = await supabase.from('bookmarks').insert({
+            bookmarkable_id: souk_id,
+            bookmarkable_type: 'souk',
+            user_id: user.id,
+          });
+          if (insertError) throw insertError;
+          setBookmarked(true);
+          onBookmarkChange?.(true);
+          toast.success('Souk gespeichert');
+        }
       } catch (error) {
         console.error('Error toggling bookmark:', error);
         toast.error('Fehler beim Speichern des Souks');

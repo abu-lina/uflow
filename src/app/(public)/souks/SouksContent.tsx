@@ -68,6 +68,25 @@ export function SouksContent() {
     }
   }, [user, userLoading]);
 
+  const handleBookmarkChange = (soukId: string, isBookmarked: boolean) => {
+    setBookmarkedSoukIds((prev) =>
+      isBookmarked ? [...prev, soukId] : prev.filter((id) => id !== soukId),
+    );
+  };
+
+  const handleCloseModal = async () => {
+    setSelectedSouk(null);
+    // Refresh bookmarked souks after closing modal
+    if (user) {
+      try {
+        const bookmarkedSouks = await getBookmarkedSouks(user.id);
+        setBookmarkedSoukIds(bookmarkedSouks.map((s) => s.souk_id));
+      } catch (error) {
+        console.error('Error refreshing bookmarked souks:', error);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-screen-xl py-8">
@@ -112,6 +131,9 @@ export function SouksContent() {
                 {...souk}
                 hideWebsiteButton={true}
                 isBookmarked={bookmarkedSoukIds.includes(souk.souk_id)}
+                onBookmarkChange={(isBookmarked) =>
+                  handleBookmarkChange(souk.souk_id, isBookmarked)
+                }
               />
             </div>
           ))}
@@ -155,19 +177,15 @@ export function SouksContent() {
             social_website={selectedSouk.social_website || undefined}
             souk_id={selectedSouk.souk_id}
             title={selectedSouk.souk_name}
-            onClose={() => setSelectedSouk(null)}
+            onClose={handleCloseModal}
           />
         )}
         {/* Desktop Modal */}
         {selectedSouk && !isMobile && (
           <SoukDetailModal
             souk={selectedSouk}
-            onBookmarkChange={(soukId, isBookmarked) => {
-              setBookmarkedSoukIds((prev) =>
-                isBookmarked ? [...prev, soukId] : prev.filter((id) => id !== soukId),
-              );
-            }}
-            onClose={() => setSelectedSouk(null)}
+            onBookmarkChange={handleBookmarkChange}
+            onClose={handleCloseModal}
           />
         )}
       </div>

@@ -5,8 +5,11 @@ import React, { useEffect } from 'react';
 import Image from 'next/image';
 
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { SoukActionBar } from '@/components/shared/SoukActionBar';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/providers/auth-provider';
 import { getZakatProjectsForSouk, type ZakatData } from '@/services/zakat_projects';
 
 interface SoukCardModalProps {
@@ -62,24 +65,113 @@ export function SoukCardModal({
     fetchZakat();
   }, [open, souk_id]);
 
-  // Swipe down to close (mobile)
+  // Swipe down to close (mobile) with visual feedback
+  const [dragY, setDragY] = React.useState(0);
   const touchStartY = React.useRef<number | null>(null);
   function handleTouchStart(e: React.TouchEvent) {
-    // Only allow swipe-to-close if at the top of the modal scroll
     if ((e.currentTarget as HTMLElement).scrollTop > 0) return;
     touchStartY.current = e.touches[0].clientY;
+    setDragY(0);
   }
   function handleTouchMove(e: React.TouchEvent) {
     if (touchStartY.current === null) return;
     const deltaY = e.touches[0].clientY - touchStartY.current;
+    if (deltaY > 0) {
+      setDragY(deltaY);
+    }
     if (deltaY > 150) {
       onClose();
       touchStartY.current = null;
+      setDragY(0);
     }
   }
   function handleTouchEnd() {
+    setDragY(0);
     touchStartY.current = null;
   }
+
+  const { user } = useAuth();
+  const [isSaved, setIsSaved] = React.useState(false);
+  // Fetch bookmark status on open or user change
+  React.useEffect(() => {
+    async function fetchBookmark() {
+      if (!open || !user) return setIsSaved(false);
+      const { data: existingBookmark } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('bookmarkable_id', souk_id)
+        .eq('bookmarkable_type', 'souk')
+        .eq('user_id', user.id)
+        .single();
+      setIsSaved(!!existingBookmark);
+    }
+    fetchBookmark();
+  }, [open, user, souk_id]);
+
+  // Save/Unsave handler
+  const handleSave = async () => {
+    if (!user) {
+      toast.error('Bitte melde dich an, um Souks zu speichern');
+      return;
+    }
+    const { data: existingBookmark } = await supabase
+      .from('bookmarks')
+      .select('id')
+      .eq('bookmarkable_id', souk_id)
+      .eq('bookmarkable_type', 'souk')
+      .eq('user_id', user.id)
+      .single();
+    if (existingBookmark) {
+      const { error } = await supabase.from('bookmarks').delete().eq('id', existingBookmark.id);
+      if (error) {
+        toast.error('Fehler beim Entfernen des Souks');
+        return;
+      }
+      setIsSaved(false);
+      toast.success('Souk entfernt');
+    } else {
+      const { error } = await supabase.from('bookmarks').insert({
+        bookmarkable_id: souk_id,
+        bookmarkable_type: 'souk',
+        user_id: user.id,
+      });
+      if (error) {
+        toast.error('Fehler beim Speichern des Souks');
+        return;
+      }
+      setIsSaved(true);
+      toast.success('Souk gespeichert');
+    }
+  };
+
+  // Share handler
+  const handleShare = () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    if (navigator.share) {
+      navigator.share({
+        title,
+        text: description || '',
+        url: shareUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast.success('Link kopiert!');
+    }
+  };
+
+  // Call handler
+  const handleCall = () => {
+    if (contact_phone) {
+      window.open(`tel:${contact_phone}`);
+    }
+  };
+
+  // Website handler
+  const handleWebsite = () => {
+    if (social_website) {
+      window.open(social_website, '_blank');
+    }
+  };
 
   if (!open) return null;
 
@@ -90,6 +182,10 @@ export function SoukCardModal({
       {/* Modal container */}
       <div
         className="fixed inset-x-0 bottom-0 top-6 z-[100] flex items-start justify-center"
+        style={{
+          transform: dragY ? `translateY(${dragY}px)` : undefined,
+          transition: dragY === 0 ? 'transform 0.2s cubic-bezier(0.4,0,0.2,1)' : undefined,
+        }}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
@@ -249,13 +345,13 @@ export function SoukCardModal({
           {/* Sticky SoukActionBar at the bottom on mobile */}
           <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-4 pb-4 sm:hidden">
             <SoukActionBar
-              isSaved={false}
+              isSaved={isSaved}
               phoneNumber={contact_phone}
               websiteUrl={social_website}
-              onCall={() => {}}
-              onSave={() => {}}
-              onShare={() => {}}
-              onWebsite={() => {}}
+              onCall={handleCall}
+              onSave={handleSave}
+              onShare={handleShare}
+              onWebsite={handleWebsite}
             />
           </div>
         </div>

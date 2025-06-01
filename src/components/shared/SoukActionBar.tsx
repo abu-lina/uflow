@@ -58,7 +58,7 @@ export const SoukActionBar: React.FC<SoukActionBarProps> = ({
         href={`tel:${phoneNumber}`}
         onClick={onCall}
       >
-        <Icon className="text-gray-700" height={20} icon="lucide:phone" width={20} />
+        <Icon className="text-gray-700" height={20} icon="entypo:old-phone" width={20} />
       </a>
     )}
 

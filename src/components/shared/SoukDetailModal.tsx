@@ -94,13 +94,18 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
       if (!user) {
         return;
       }
-      const { data: existingBookmark } = await supabase
+      const { data: existingBookmark, error: fetchError } = await supabase
         .from('bookmarks')
         .select('id')
         .eq('bookmarkable_id', souk.souk_id)
         .eq('bookmarkable_type', 'souk')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching bookmark:', fetchError);
+        return;
+      }
       setIsSaved(!!existingBookmark);
     };
     void fetchBookmark();
@@ -125,39 +130,42 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
       return;
     }
     try {
-      const { data: existingBookmark } = await supabase
+      const { data: existingBookmark, error: fetchError } = await supabase
         .from('bookmarks')
         .select('id')
         .eq('bookmarkable_id', souk.souk_id)
         .eq('bookmarkable_type', 'souk')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
       if (existingBookmark) {
-        const { error } = await supabase.from('bookmarks').delete().eq('id', existingBookmark.id);
-        if (error) {
-          throw error;
-        }
+        const { error: deleteError } = await supabase
+          .from('bookmarks')
+          .delete()
+          .eq('id', existingBookmark.id);
+        if (deleteError) throw deleteError;
         setIsSaved(false);
         toast.success('Souk entfernt');
         if (typeof onBookmarkChange === 'function') {
           onBookmarkChange(souk.souk_id, false);
         }
       } else {
-        const { error } = await supabase.from('bookmarks').insert({
+        const { error: insertError } = await supabase.from('bookmarks').insert({
           bookmarkable_id: souk.souk_id,
           bookmarkable_type: 'souk',
           user_id: user.id,
         });
-        if (error) {
-          throw error;
-        }
+        if (insertError) throw insertError;
         setIsSaved(true);
         toast.success('Souk gespeichert');
         if (typeof onBookmarkChange === 'function') {
           onBookmarkChange(souk.souk_id, true);
         }
       }
-    } catch {
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
       toast.error('Fehler beim Speichern des Souks');
     }
   };
