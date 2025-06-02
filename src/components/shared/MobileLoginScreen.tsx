@@ -39,19 +39,41 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
     setIsLoading(true);
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
         });
         if (error) throw error;
+        // Set cookies for SSR/CSR sync if session is present
+        if (data.session) {
+          await fetch('/api/auth/set', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            }),
+          });
+        }
         toast.success('Registrierung erfolgreich. Bitte bestätige deine Email-Adresse.');
         onClose();
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
         if (error) throw error;
+        // Set cookies for SSR/CSR sync if session is present
+        if (data.session) {
+          await fetch('/api/auth/set', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            }),
+          });
+        }
         toast.success('Erfolgreich angemeldet.');
         onClose();
       }

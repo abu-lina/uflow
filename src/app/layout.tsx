@@ -7,6 +7,7 @@ import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import { MobileFooterBar } from '@/components/shared/MobileFooterBar';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
 import { FilterProvider } from '@/providers/filter-provider';
@@ -30,7 +31,12 @@ export const metadata: Metadata = {
     "Der erste halal-konforme Marktplatz der sicherstellt, das Jeder die Zakat entrichtet insha'Allah.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const supabase = createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
   return (
     <html lang="de">
       <head>
@@ -45,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`relative min-h-screen bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
       >
-        <AuthProvider>
+        <AuthProvider initialUser={user}>
           <AuthSyncer />
           <SearchProvider>
             <FilterProvider>

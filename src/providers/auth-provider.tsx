@@ -17,39 +17,41 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+interface AuthProviderProps {
+  children: React.ReactNode;
+  initialUser?: User | null;
+}
+
+export function AuthProvider({ children, initialUser = null }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialUser);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(initialUser === null);
 
   useEffect(() => {
     let mounted = true;
+    if (initialUser === null) {
+      const initializeAuth = async () => {
+        try {
+          const {
+            data: { session: initialSession },
+          } = await supabase.auth.getSession();
 
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session: initialSession },
-          error,
-        } = await supabase.auth.getSession();
-
-        if (error) {
-          throw error;
+          if (mounted) {
+            setSession(initialSession);
+            setUser(initialSession?.user ?? null);
+          }
+        } catch {
+          // Error handled silently - user will be null
+        } finally {
+          if (mounted) {
+            setIsLoading(false);
+          }
         }
-
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-        }
-      } catch (error) {
-        // Error handled silently - user will be null
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void initializeAuth();
+      };
+      void initializeAuth();
+    } else {
+      setIsLoading(false);
+    }
 
     const {
       data: { subscription },
@@ -65,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialUser]);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();

@@ -7,12 +7,10 @@ import { usePathname } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
-import { Portal } from '@/components/common/Portal';
 import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import { useAuth } from '@/providers/auth-provider';
 
 import { MobileLoginScreen } from './MobileLoginScreen';
-import { MobileProfileScreen } from './MobileProfileScreen';
 
 // Height is set to 72px for modern, touch-friendly, and visually balanced mobile nav bar.
 const navItems = [
@@ -49,28 +47,32 @@ const navItems = [
 ];
 
 export function MobileFooterBar() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const pathname = usePathname();
   const [showLoginScreen, setShowLoginScreen] = useState(false);
-  const [showProfileScreen, setShowProfileScreen] = useState(false);
+
+  // Debug log
+  console.log('MobileFooterBar debug:', { user, isLoading });
 
   useEffect(() => {
     if (user && showLoginScreen) {
       setShowLoginScreen(false);
-      setShowProfileScreen(true);
     }
   }, [user, showLoginScreen]);
 
   const handleProfileClick = useCallback(
     (e: React.MouseEvent) => {
-      e.preventDefault();
-      if (user) {
-        setShowProfileScreen(true);
-      } else {
+      if (isLoading) {
+        e.preventDefault();
+        return;
+      }
+      if (!user) {
+        e.preventDefault();
         setShowLoginScreen(true);
       }
+      // If logged in, let Link handle navigation to /profile
     },
-    [user],
+    [user, isLoading],
   );
 
   return (
@@ -83,12 +85,8 @@ export function MobileFooterBar() {
               className="flex flex-row items-center justify-center gap-2.5 p-1"
               style={{ width: 40, height: 40 }}
             >
-              {item.label === 'Profile' && user ? (
-                <button
-                  className="flex flex-row items-center justify-center gap-2.5 p-1"
-                  style={{ width: 40, height: 40 }}
-                  onClick={handleProfileClick}
-                >
+              {item.label === 'Profile' ? (
+                <Link href={item.href} onClick={handleProfileClick}>
                   {typeof item.icon === 'function' ? (
                     item.icon(pathname === item.href)
                   ) : (
@@ -111,12 +109,9 @@ export function MobileFooterBar() {
                       width={28}
                     />
                   )}
-                </button>
+                </Link>
               ) : (
-                <Link
-                  href={item.href}
-                  onClick={item.label === 'Profile' ? handleProfileClick : undefined}
-                >
+                <Link href={item.href}>
                   {typeof item.icon === 'function' ? (
                     item.icon(pathname === item.href)
                   ) : (
@@ -145,16 +140,7 @@ export function MobileFooterBar() {
           ))}
         </div>
       </nav>
-      {showLoginScreen && (
-        <Portal>
-          <MobileLoginScreen onClose={() => setShowLoginScreen(false)} />
-        </Portal>
-      )}
-      {showProfileScreen && user && (
-        <Portal>
-          <MobileProfileScreen onClose={() => setShowProfileScreen(false)} />
-        </Portal>
-      )}
+      {showLoginScreen && <MobileLoginScreen onClose={() => setShowLoginScreen(false)} />}
     </>
   );
 }

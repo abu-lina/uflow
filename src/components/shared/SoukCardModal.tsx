@@ -29,6 +29,8 @@ interface SoukCardModalProps {
   // Add more props as needed
 }
 
+const SWIPE_AREA_HEIGHT = 48; // px
+
 export function SoukCardModal({
   open,
   onClose,
@@ -68,13 +70,27 @@ export function SoukCardModal({
   // Swipe down to close (mobile) with visual feedback
   const [dragY, setDragY] = React.useState(0);
   const touchStartY = React.useRef<number | null>(null);
+  const allowSwipe = React.useRef(false);
+  const modalRef = React.useRef<HTMLDivElement>(null);
+
   function handleTouchStart(e: React.TouchEvent) {
     if ((e.currentTarget as HTMLElement).scrollTop > 0) return;
-    touchStartY.current = e.touches[0].clientY;
-    setDragY(0);
+    const modal = modalRef.current;
+    if (modal) {
+      const rect = modal.getBoundingClientRect();
+      const touchY = e.touches[0].clientY - rect.top;
+      if (touchY < SWIPE_AREA_HEIGHT) {
+        allowSwipe.current = true;
+        touchStartY.current = e.touches[0].clientY;
+        setDragY(0);
+      } else {
+        allowSwipe.current = false;
+        touchStartY.current = null;
+      }
+    }
   }
   function handleTouchMove(e: React.TouchEvent) {
-    if (touchStartY.current === null) return;
+    if (!allowSwipe.current || touchStartY.current === null) return;
     const deltaY = e.touches[0].clientY - touchStartY.current;
     if (deltaY > 0) {
       setDragY(deltaY);
@@ -83,11 +99,13 @@ export function SoukCardModal({
       onClose();
       touchStartY.current = null;
       setDragY(0);
+      allowSwipe.current = false;
     }
   }
   function handleTouchEnd() {
     setDragY(0);
     touchStartY.current = null;
+    allowSwipe.current = false;
   }
 
   const { user } = useAuth();
@@ -181,6 +199,7 @@ export function SoukCardModal({
       <div className="fixed inset-0 z-[99] bg-black/40" />
       {/* Modal container */}
       <div
+        ref={modalRef}
         className="fixed inset-x-0 bottom-0 top-6 z-[100] flex items-start justify-center"
         style={{
           transform: dragY ? `translateY(${dragY}px)` : undefined,

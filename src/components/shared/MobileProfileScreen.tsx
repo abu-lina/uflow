@@ -9,6 +9,8 @@ interface MobileProfileScreenProps {
   onClose: () => void;
 }
 
+const SWIPE_AREA_HEIGHT = 48; // px
+
 export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClose }) => {
   const { user } = useAuth();
   const firstName = user?.user_metadata?.first_name || '';
@@ -19,13 +21,28 @@ export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClos
   // Swipe-to-close logic (mobile UX)
   const [dragY, setDragY] = useState(0);
   const touchStartY = useRef<number | null>(null);
+  const allowSwipe = useRef(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
   function handleTouchStart(e: React.TouchEvent) {
     if ((e.currentTarget as HTMLElement).scrollTop > 0) return;
-    touchStartY.current = e.touches[0].clientY;
-    setDragY(0);
+    const modal = modalRef.current;
+    if (modal) {
+      const rect = modal.getBoundingClientRect();
+      const touchY = e.touches[0].clientY - rect.top;
+      if (touchY < SWIPE_AREA_HEIGHT) {
+        // Only allow swipe-to-close if touch starts in top SWIPE_AREA_HEIGHT px
+        allowSwipe.current = true;
+        touchStartY.current = e.touches[0].clientY;
+        setDragY(0);
+      } else {
+        allowSwipe.current = false;
+        touchStartY.current = null;
+      }
+    }
   }
   function handleTouchMove(e: React.TouchEvent) {
-    if (touchStartY.current === null) return;
+    if (!allowSwipe.current || touchStartY.current === null) return;
     const deltaY = e.touches[0].clientY - touchStartY.current;
     if (deltaY > 0) {
       setDragY(deltaY);
@@ -34,11 +51,13 @@ export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClos
       onClose();
       touchStartY.current = null;
       setDragY(0);
+      allowSwipe.current = false;
     }
   }
   function handleTouchEnd() {
     setDragY(0);
     touchStartY.current = null;
+    allowSwipe.current = false;
   }
 
   return (
@@ -47,6 +66,7 @@ export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClos
       <div className="fixed inset-0 z-[99] bg-black/40" onClick={onClose} />
       {/* Modal container */}
       <div
+        ref={modalRef}
         className="fixed inset-x-0 bottom-0 top-6 z-[100] flex items-start justify-center"
         style={{
           transform: dragY ? `translateY(${dragY}px)` : undefined,
