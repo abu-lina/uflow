@@ -20,7 +20,8 @@ interface FormData {
 type AuthMode = 'login' | 'signup';
 
 export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
-  const [mode, setMode] = useState<AuthMode>('signup');
+  // Default to login mode!
+  const [mode, setMode] = useState<AuthMode>('login');
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -44,7 +45,6 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
           password: formData.password,
         });
         if (error) throw error;
-        // Set cookies for SSR/CSR sync if session is present
         if (data.session) {
           await fetch('/api/auth/set', {
             method: 'POST',
@@ -63,7 +63,6 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
           password: formData.password,
         });
         if (error) throw error;
-        // Set cookies for SSR/CSR sync if session is present
         if (data.session) {
           await fetch('/api/auth/set', {
             method: 'POST',
@@ -95,86 +94,88 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      {/* Header - Fixed */}
-      <div className="flex w-full flex-row items-center justify-between px-4 py-2">
-        <Logo className="size-[50px]" height={50} width={50} />
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      style={{
+        background: 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
+      }}
+    >
+      {/* Modal */}
+      <div
+        className="absolute inset-x-0 bottom-0 mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-[393px] flex-col rounded-t-[25px] border border-white bg-white shadow-lg sm:rounded-[25px]"
+        style={{ top: 'max(env(safe-area-inset-top), 2rem)' }}
+      >
+        {/* Logo and Close */}
+        <div className="absolute left-[19px] top-[15px] z-10 flex items-center">
+          <Logo height={33} width={33} />
+        </div>
         <button
           aria-label="Schließen"
-          className="flex size-[50px] items-center justify-center"
+          className="absolute right-[18px] top-[15px] z-10 flex h-6 w-6 items-center justify-center"
           onClick={onClose}
         >
-          <Icon className="size-6 text-[#232323]" icon="material-symbols:close-rounded" />
+          <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:close-rounded" />
         </button>
-      </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col items-center px-4 pb-8">
-          {/* Title Section */}
-          <div className="mt-8 flex w-[262px] flex-col items-center gap-2.5">
+        {/* Content */}
+        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-8 pt-[92px]">
+          {/* Header */}
+          <div className="flex w-full max-w-[262px] flex-col items-center gap-[10px]">
             <h1 className="text-center font-inter text-[32px] font-bold leading-[39px] text-[#232323]">
-              {mode === 'signup' ? 'Willkommen bei Ummah Flow' : 'Anmelden'}
+              Willkommen bei Ummah Flow
             </h1>
             <div className="flex h-[17.24px] w-[35px] items-center justify-center">
-              <div className="h-[17.24px] w-[35px] rotate-180 rounded-[0.3px] border border-[#BFDBD8] bg-[#BFDBD8]" />
+              <div className="h-[17.24px] w-[35px] rotate-180 rounded-[0.3px] border border-[#589D96] bg-[#589D96]" />
             </div>
             <p className="text-center font-inter text-sm leading-[17px] text-[#7A7A7A]">
-              {mode === 'signup'
-                ? 'Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.'
-                : 'Melde dich an, um fortzufahren.'}
+              Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
             </p>
           </div>
 
           {/* Form Section */}
-          <div className="mt-[51px] flex w-[263px] flex-col items-start gap-7">
+          <form
+            autoComplete="off"
+            className="mt-[51px] flex w-full max-w-[263px] flex-col items-center gap-7"
+            onSubmit={handleSubmit}
+          >
             {/* Email Input */}
-            <div className="flex w-full flex-col items-center gap-1.5">
-              <div className="flex w-[238px] flex-row items-center gap-5">
-                <Icon
-                  className="size-6 text-[#232323]"
-                  icon="material-symbols-light:mail-outline"
-                />
-                <input
-                  className="w-[194px] border-0 border-b border-[#5B5B5B] bg-transparent px-0 py-1 text-sm text-[#232323] placeholder:text-[#232323] focus:border-[#589D96] focus:ring-0"
-                  placeholder="Email-Adresse"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div className="h-[0.5px] w-full border border-[#5B5B5B]" />
+            <div className="flex w-full flex-row items-center gap-5 border-b border-[#5B5B5B] pb-1">
+              <Icon className="size-6 text-[#232323]" icon="material-symbols-light:mail-outline" />
+              <input
+                required
+                className="w-[194px] border-0 bg-transparent px-0 py-1 text-sm text-[#232323] placeholder:text-[#232323] focus:ring-0"
+                placeholder="Email-Adresse"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
             </div>
 
             {/* Password Input */}
-            <div className="flex w-full flex-col items-center gap-1.5">
-              <div className="flex w-[238px] flex-row items-center gap-5">
-                <Icon className="size-6 text-[#232323]" icon="si:lock-muted-line" />
-                <input
-                  className="w-[194px] border-0 border-b border-[#5B5B5B] bg-transparent px-0 py-1 text-sm text-[#232323] placeholder:text-[#232323] focus:border-[#589D96] focus:ring-0"
-                  placeholder="Passwort"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-              </div>
-              <div className="h-[0.5px] w-full border border-[#5B5B5B]" />
+            <div className="flex w-full flex-row items-center gap-5 border-b border-[#5B5B5B] pb-1">
+              <Icon className="size-6 text-[#232323]" icon="si:lock-muted-line" />
+              <input
+                required
+                className="w-[194px] border-0 bg-transparent px-0 py-1 text-sm text-[#232323] placeholder:text-[#232323] focus:ring-0"
+                placeholder="Passwort"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
             </div>
 
             {/* Confirm Password Input - Only shown in signup mode */}
             {mode === 'signup' && (
-              <div className="flex w-full flex-col items-center gap-1.5">
-                <div className="flex w-[238px] flex-row items-center gap-5">
-                  <Icon className="size-6 text-[#232323]" icon="si:lock-muted-line" />
-                  <input
-                    className="w-[194px] border-0 border-b border-[#5B5B5B] bg-transparent px-0 py-1 text-sm text-[#232323] placeholder:text-[#232323] focus:border-[#589D96] focus:ring-0"
-                    placeholder="Passwort wiederholen"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  />
-                </div>
-                <div className="h-[0.5px] w-full border border-[#5B5B5B]" />
+              <div className="flex w-full flex-row items-center gap-5 border-b border-[#5B5B5B] pb-1">
+                <Icon className="size-6 text-[#232323]" icon="si:lock-muted-line" />
+                <input
+                  required
+                  className="w-[194px] border-0 bg-transparent px-0 py-1 text-sm text-[#232323] placeholder:text-[#232323] focus:ring-0"
+                  placeholder="Passwort wiederholen"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                />
               </div>
             )}
 
@@ -184,7 +185,7 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
               <button
                 className="flex h-10 w-full items-center justify-center rounded-[15px] bg-[#589D96] text-[17.54px] font-medium text-white shadow-[0px_6.15px_12.31px_4.62px_rgba(0,0,0,0.15),0px_1.54px_4.62px_rgba(0,0,0,0.3)]"
                 disabled={isLoading}
-                onClick={handleSubmit}
+                type="submit"
               >
                 {isLoading
                   ? mode === 'signup'
@@ -198,22 +199,23 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
               {/* Toggle Mode */}
               <button
                 className="w-full text-center font-inter text-sm text-[#589D96]"
+                type="button"
                 onClick={toggleMode}
               >
                 {mode === 'signup'
                   ? 'Bereits registriert? Hier anmelden'
-                  : 'Noch kein Konto? Hier registrieren'}
+                  : 'Noch kein Konto? Jetzt registrieren.'}
               </button>
 
               {/* Or Divider */}
-              <div className="w-full text-center font-inter text-[10px] font-light leading-[12px] text-[#232323]">
+              {/* <div className="w-full text-center font-inter text-[10px] font-light leading-[12px] text-[#232323]">
                 oder
-              </div>
+              </div> */}
 
-              {/* SSO Buttons */}
+              {/* SSO Buttons (hidden for now) */}
+              {/*
               <div className="flex w-full flex-col gap-4">
-                {/* Apple Button */}
-                <button className="relative flex h-10 w-full items-center justify-center rounded-[15px] border border-[#D4D4D4]">
+                <button type="button" className="relative flex h-10 w-full items-center justify-center rounded-[15px] border border-[#D4D4D4]">
                   <Icon
                     className="absolute left-[21px] size-6 text-[#232323]"
                     icon="ic:baseline-apple"
@@ -222,9 +224,7 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
                     Mit Apple fortfahren
                   </span>
                 </button>
-
-                {/* Google Button */}
-                <button className="relative flex h-10 w-full items-center justify-center rounded-[15px] border border-[#D4D4D4]">
+                <button type="button" className="relative flex h-10 w-full items-center justify-center rounded-[15px] border border-[#D4D4D4]">
                   <Icon
                     className="absolute left-[21px] size-6 text-[#232323]"
                     icon="flowbite:google-solid"
@@ -234,6 +234,7 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
                   </span>
                 </button>
               </div>
+              */}
 
               {/* Terms - Only shown in signup mode */}
               {mode === 'signup' && (
@@ -242,7 +243,7 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
                 </p>
               )}
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
