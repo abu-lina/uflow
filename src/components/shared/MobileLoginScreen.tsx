@@ -5,6 +5,7 @@ import { PostgrestError } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 import { Logo } from '@/components/ui/Logo';
+import { Ornament } from '@/components/ui/Ornament';
 import { supabase } from '@/lib/supabase/client';
 
 interface MobileLoginScreenProps {
@@ -122,11 +123,9 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
           {/* Header */}
           <div className="flex w-full max-w-[262px] flex-col items-center gap-[10px]">
             <h1 className="text-center font-inter text-[32px] font-bold leading-[39px] text-[#232323]">
-              Willkommen bei Ummah Flow
+              {mode === 'signup' ? 'Registriere Dich bei Ummah Flow' : 'Willkommen bei Ummah Flow'}
             </h1>
-            <div className="flex h-[17.24px] w-[35px] items-center justify-center">
-              <div className="h-[17.24px] w-[35px] rotate-180 rounded-[0.3px] border border-[#589D96] bg-[#589D96]" />
-            </div>
+            <Ornament className="h-[17.24px] w-[35px]" variant="vector" />
             <p className="text-center font-inter text-sm leading-[17px] text-[#7A7A7A]">
               Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
             </p>
