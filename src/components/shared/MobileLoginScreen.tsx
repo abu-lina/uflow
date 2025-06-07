@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 import { Icon } from '@iconify/react';
 import { PostgrestError } from '@supabase/supabase-js';
@@ -29,6 +29,36 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [currentDragY, setCurrentDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setDragStartY(e.touches[0].clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - dragStartY;
+
+    // Only allow dragging down
+    if (deltaY > 0) {
+      setCurrentDragY(deltaY);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    // If dragged more than 150px down, close the modal
+    if (currentDragY > 150) {
+      onClose();
+    }
+    // Reset drag state
+    setCurrentDragY(0);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,9 +133,21 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
     >
       {/* Modal */}
       <div
-        className="absolute inset-x-0 bottom-0 mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-[393px] flex-col rounded-t-[25px] border border-white bg-white shadow-lg sm:rounded-[25px]"
-        style={{ top: 'max(env(safe-area-inset-top), 2rem)' }}
+        ref={modalRef}
+        className="absolute inset-x-0 bottom-0 mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-[393px] flex-col rounded-t-[25px] border border-white bg-white shadow-lg transition-transform duration-200 ease-out sm:rounded-[25px]"
+        style={{
+          top: 'max(env(safe-area-inset-top), 2rem)',
+          transform: `translateY(${currentDragY}px)`,
+        }}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+        onTouchStart={handleTouchStart}
       >
+        {/* Drag Indicator */}
+        <div className="absolute left-1/2 top-3 -translate-x-1/2">
+          <div className="h-1 w-12 rounded-full bg-gray-300" />
+        </div>
+
         {/* Logo and Close */}
         <div className="absolute left-[19px] top-[15px] z-10 flex items-center">
           <Logo height={33} width={33} />
