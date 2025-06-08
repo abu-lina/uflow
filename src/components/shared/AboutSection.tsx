@@ -8,6 +8,35 @@ import { quotes } from '@/constants/quotes';
 
 export function AboutSection() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      setActiveIndex((prev) => (prev + 1) % quotes.length);
+    }
+    if (isRightSwipe) {
+      setActiveIndex((prev) => (prev - 1 + quotes.length) % quotes.length);
+    }
+  };
 
   return (
     <section
@@ -28,14 +57,21 @@ export function AboutSection() {
             machen.
           </p>
         </div>
-        <div className="flex w-full flex-col items-center gap-1">
+        <div
+          className="flex w-full flex-col items-center gap-1"
+          onTouchEnd={onTouchEnd}
+          onTouchMove={onTouchMove}
+          onTouchStart={onTouchStart}
+        >
           <QuoteCard {...quotes[activeIndex]} />
-          <PageSliderIndicator
-            activeIndex={activeIndex}
-            className="mt-4"
-            count={quotes.length}
-            onChange={setActiveIndex}
-          />
+          <div className="hidden sm:block">
+            <PageSliderIndicator
+              activeIndex={activeIndex}
+              className="mt-4"
+              count={quotes.length}
+              onChange={setActiveIndex}
+            />
+          </div>
         </div>
       </div>
     </section>
