@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { MobileLoginScreen } from '@/components/shared/MobileLoginScreen';
 import { SoukCreateForm } from '@/features/souks/SoukCreateForm';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -13,6 +13,7 @@ export default function CreateSoukPage() {
   const [checked, setChecked] = useState(false);
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const check = () => {
@@ -51,9 +52,13 @@ export default function CreateSoukPage() {
         <span className="text-center text-lg text-gray-500">
           Du musst angemeldet sein, um einen Souk zu erstellen.
         </span>
-        <Link className="rounded bg-mint px-4 py-2 font-semibold text-white" href="/?auth=required">
+        <button
+          className="rounded-xl bg-mint px-4 py-2 font-semibold text-white"
+          onClick={() => setShowLoginModal(true)}
+        >
           Zur Anmeldung
-        </Link>
+        </button>
+        {showLoginModal && <MobileLoginScreen onClose={() => setShowLoginModal(false)} />}
       </div>
     );
   }
