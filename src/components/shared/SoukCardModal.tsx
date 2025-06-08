@@ -164,7 +164,7 @@ export function SoukCardModal({
 
   // Share handler
   const handleShare = () => {
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareUrl = `${window.location.origin}/souks/${souk_id}`;
     if (navigator.share) {
       navigator.share({
         title,

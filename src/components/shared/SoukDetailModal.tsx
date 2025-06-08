@@ -177,14 +177,15 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
       void handleBookmark();
     }
     if (action === 'share') {
+      const shareUrl = `${window.location.origin}/souks/${souk.souk_id}`;
       if (navigator.share) {
         void navigator.share({
           title: souk.souk_name,
           text: souk.souk_description || '',
-          url: window.location.href,
+          url: shareUrl,
         });
       } else {
-        void navigator.clipboard.writeText(window.location.href);
+        void navigator.clipboard.writeText(shareUrl);
       }
     } else if (action === 'call' && souk.contact_phone) {
       window.open(`tel:${souk.contact_phone}`);

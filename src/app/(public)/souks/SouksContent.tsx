@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { SoukCard } from '@/components/shared/SoukCard';
 import { SoukCardModal } from '@/components/shared/SoukCardModal';
@@ -23,6 +23,7 @@ function useIsMobile() {
 }
 
 export function SouksContent() {
+  const router = useRouter();
   const { user, loading: userLoading } = useAuth();
   const [souks, setSouks] = useState<Souk[]>([]);
   const [bookmarkedSoukIds, setBookmarkedSoukIds] = useState<string[]>([]);
@@ -74,8 +75,14 @@ export function SouksContent() {
     );
   };
 
+  const handleSoukClick = (souk: Souk) => {
+    setSelectedSouk(souk);
+    router.push(`/souks/${souk.souk_id}`);
+  };
+
   const handleCloseModal = async () => {
     setSelectedSouk(null);
+    router.push('/souks');
     // Refresh bookmarked souks after closing modal
     if (user) {
       try {
@@ -116,14 +123,15 @@ export function SouksContent() {
           {souks.map((souk) => (
             <div
               key={souk.souk_id}
-              aria-label="Souk Details anzeigen"
-              className="cursor-pointer"
+              aria-label={`Details für ${souk.souk_name} anzeigen`}
+              className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
               role="button"
               tabIndex={0}
-              onClick={() => setSelectedSouk(souk)}
+              onClick={() => handleSoukClick(souk)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  setSelectedSouk(souk);
+                  e.preventDefault();
+                  handleSoukClick(souk);
                 }
               }}
             >
