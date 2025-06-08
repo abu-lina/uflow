@@ -196,7 +196,6 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
                       : '✨ Halal'
                   }
                   title={souk.souk_name}
-                  onEdit={undefined}
                 />
               ) : (
                 <SoukCard {...souk} hideWebsiteButton={true} />
