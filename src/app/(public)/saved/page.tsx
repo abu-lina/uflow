@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { CreatedSoukCard } from '@/components/shared/CreatedSoukCard';
+import { MobileLoginScreen } from '@/components/shared/MobileLoginScreen';
 import { SoukCardModal } from '@/components/shared/SoukCardModal';
 import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
 import { useAuth } from '@/providers/auth-provider';
@@ -14,6 +15,7 @@ export default function SavedSouksPage() {
   const [souks, setSouks] = useState<Souk[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSouk, setSelectedSouk] = useState<Souk | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -53,6 +55,23 @@ export default function SavedSouksPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <span className="text-lg text-gray-500">Diese Seite ist nur auf dem Handy verfügbar.</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 px-4">
+        <span className="text-center text-lg text-gray-500">
+          Du musst angemeldet sein, um gespeicherte Souks zu sehen.
+        </span>
+        <button
+          className="rounded-xl bg-mint px-4 py-2 font-semibold text-white"
+          onClick={() => setShowLoginModal(true)}
+        >
+          Zur Anmeldung
+        </button>
+        {showLoginModal && <MobileLoginScreen onClose={() => setShowLoginModal(false)} />}
       </div>
     );
   }

@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from 'react';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { SoukCreateForm } from '@/features/souks/SoukCreateForm';
+import { useAuth } from '@/providers/auth-provider';
 
 export default function CreateSoukPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [checked, setChecked] = useState(false);
   const router = useRouter();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     const check = () => {
@@ -28,7 +31,7 @@ export default function CreateSoukPage() {
     }
   }, [isMobile, checked, router]);
 
-  if (!checked) {
+  if (!checked || isLoading) {
     return <div className="p-8 text-center">Lädt...</div>;
   }
 
@@ -38,6 +41,19 @@ export default function CreateSoukPage() {
         <span className="text-lg text-gray-500">
           Bitte nutze die Desktop-Ansicht für die Erstellung.
         </span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 px-4">
+        <span className="text-center text-lg text-gray-500">
+          Du musst angemeldet sein, um einen Souk zu erstellen.
+        </span>
+        <Link className="rounded bg-mint px-4 py-2 font-semibold text-white" href="/?auth=required">
+          Zur Anmeldung
+        </Link>
       </div>
     );
   }
