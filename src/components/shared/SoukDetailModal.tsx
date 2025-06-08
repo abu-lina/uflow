@@ -94,19 +94,25 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
       if (!user) {
         return;
       }
-      const { data: existingBookmark, error: fetchError } = await supabase
-        .from('bookmarks')
-        .select('id')
-        .eq('bookmarkable_id', souk.souk_id)
-        .eq('bookmarkable_type', 'souk')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      try {
+        const { data: existingBookmark, error: fetchError } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .match({
+            bookmarkable_id: souk.souk_id,
+            bookmarkable_type: 'souk',
+            user_id: user.id,
+          })
+          .maybeSingle();
 
-      if (fetchError) {
-        console.error('Error fetching bookmark:', fetchError);
-        return;
+        if (fetchError) {
+          console.error('Error fetching bookmark:', fetchError);
+          return;
+        }
+        setIsSaved(!!existingBookmark);
+      } catch (error) {
+        console.error('Error in fetchBookmark:', error);
       }
-      setIsSaved(!!existingBookmark);
     };
     void fetchBookmark();
   }, [user, souk.souk_id]);
@@ -133,9 +139,11 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
       const { data: existingBookmark, error: fetchError } = await supabase
         .from('bookmarks')
         .select('id')
-        .eq('bookmarkable_id', souk.souk_id)
-        .eq('bookmarkable_type', 'souk')
-        .eq('user_id', user.id)
+        .match({
+          bookmarkable_id: souk.souk_id,
+          bookmarkable_type: 'souk',
+          user_id: user.id,
+        })
         .maybeSingle();
 
       if (fetchError) throw fetchError;

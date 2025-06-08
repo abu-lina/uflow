@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -109,56 +109,75 @@ export function SoukCardModal({
   }
 
   const { user } = useAuth();
-  const [isSaved, setIsSaved] = React.useState(false);
-  // Fetch bookmark status on open or user change
-  React.useEffect(() => {
-    async function fetchBookmark() {
-      if (!open || !user) return setIsSaved(false);
-      const { data: existingBookmark } = await supabase
-        .from('bookmarks')
-        .select('id')
-        .eq('bookmarkable_id', souk_id)
-        .eq('bookmarkable_type', 'souk')
-        .eq('user_id', user.id)
-        .single();
-      setIsSaved(!!existingBookmark);
-    }
-    fetchBookmark();
-  }, [open, user, souk_id]);
+  const [isSaved, setIsSaved] = useState(false);
 
-  // Save/Unsave handler
+  useEffect(() => {
+    const fetchBookmark = async () => {
+      if (!user) {
+        return;
+      }
+      try {
+        const { data: existingBookmark, error: fetchError } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .match({
+            bookmarkable_id: souk_id,
+            bookmarkable_type: 'souk',
+            user_id: user.id,
+          })
+          .maybeSingle();
+
+        if (fetchError) {
+          console.error('Error fetching bookmark:', fetchError);
+          return;
+        }
+        setIsSaved(!!existingBookmark);
+      } catch (error) {
+        console.error('Error in fetchBookmark:', error);
+      }
+    };
+    void fetchBookmark();
+  }, [user, souk_id]);
+
   const handleSave = async () => {
     if (!user) {
       toast.error('Bitte melde dich an, um Souks zu speichern');
       return;
     }
-    const { data: existingBookmark } = await supabase
-      .from('bookmarks')
-      .select('id')
-      .eq('bookmarkable_id', souk_id)
-      .eq('bookmarkable_type', 'souk')
-      .eq('user_id', user.id)
-      .single();
-    if (existingBookmark) {
-      const { error } = await supabase.from('bookmarks').delete().eq('id', existingBookmark.id);
-      if (error) {
-        toast.error('Fehler beim Entfernen des Souks');
-        return;
+    try {
+      const { data: existingBookmark, error: fetchError } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .match({
+          bookmarkable_id: souk_id,
+          bookmarkable_type: 'souk',
+          user_id: user.id,
+        })
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (existingBookmark) {
+        const { error: deleteError } = await supabase
+          .from('bookmarks')
+          .delete()
+          .eq('id', existingBookmark.id);
+        if (deleteError) throw deleteError;
+        setIsSaved(false);
+        toast.success('Souk entfernt');
+      } else {
+        const { error: insertError } = await supabase.from('bookmarks').insert({
+          bookmarkable_id: souk_id,
+          bookmarkable_type: 'souk',
+          user_id: user.id,
+        });
+        if (insertError) throw insertError;
+        setIsSaved(true);
+        toast.success('Souk gespeichert');
       }
-      setIsSaved(false);
-      toast.success('Souk entfernt');
-    } else {
-      const { error } = await supabase.from('bookmarks').insert({
-        bookmarkable_id: souk_id,
-        bookmarkable_type: 'souk',
-        user_id: user.id,
-      });
-      if (error) {
-        toast.error('Fehler beim Speichern des Souks');
-        return;
-      }
-      setIsSaved(true);
-      toast.success('Souk gespeichert');
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast.error('Fehler beim Speichern des Souks');
     }
   };
 
