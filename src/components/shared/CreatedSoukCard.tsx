@@ -7,13 +7,25 @@ interface CreatedSoukCardProps {
   title: string;
   category: string;
   tag: string;
-  onEdit?: () => void;
+  onUnsave?: () => void;
+  onClick?: () => void;
 }
 
-export function CreatedSoukCard({ imageUrl, title, category, tag, onEdit }: CreatedSoukCardProps) {
+export function CreatedSoukCard({
+  imageUrl,
+  title,
+  category,
+  tag,
+  onUnsave,
+  onClick,
+}: CreatedSoukCardProps) {
   return (
-    <div className="relative flex flex-col items-start p-0" style={{ width: 161, height: 211.63 }}>
-      {/* Image + Edit Button */}
+    <div
+      className="relative flex cursor-pointer flex-col items-start p-0"
+      style={{ width: 161, height: 211.63 }}
+      onClick={onClick}
+    >
+      {/* Image + Unsave Button */}
       <div className="relative h-[146.56px] w-[161px]">
         <Image
           alt={title}
@@ -23,17 +35,15 @@ export function CreatedSoukCard({ imageUrl, title, category, tag, onEdit }: Crea
           style={{ height: 146.56 }}
           width={161}
         />
-        {/* Edit Button */}
+        {/* Unsave Button */}
         <button
           className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#CDCDCD] bg-white/70 backdrop-blur-[1.25px]"
-          onClick={onEdit}
+          onClick={(e) => {
+            e.stopPropagation();
+            onUnsave?.();
+          }}
         >
-          <Icon
-            color="#232323"
-            height={16}
-            icon="material-symbols:edit-outline-rounded"
-            width={16}
-          />
+          <Icon color="#333333" height={20} icon="iconamoon:heart-fill" width={20} />
         </button>
       </div>
       {/* Category Badge */}
