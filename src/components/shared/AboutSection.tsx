@@ -41,7 +41,7 @@ export function AboutSection() {
   return (
     <section
       aria-labelledby="about-heading"
-      className="flex min-h-screen w-full flex-col items-center justify-center gap-8 px-4 sm:px-6 lg:px-8"
+      className="mt-4 flex min-h-screen w-full flex-col items-center justify-center gap-8 px-4 sm:mt-24 sm:px-6 lg:px-8"
       id="about"
     >
       <div className="flex w-full max-w-screen-xl flex-col items-center gap-8 sm:gap-16">
