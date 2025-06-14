@@ -51,26 +51,39 @@ export function LandingHero() {
   const typewriter = useTypewriter(translationText, 40);
   const [showHeading, setShowHeading] = useState(false);
   const [showButton, setShowButton] = useState(false);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
 
-  // Show heading after typewriter is done
+  // Check if this is the first visit
   useEffect(() => {
-    if (typewriter.length === translationText.length) {
+    const hasVisited = localStorage.getItem('hasVisitedLanding');
+    if (hasVisited) {
+      setIsFirstVisit(false);
+      setShowHeading(true);
+      setShowButton(true);
+    } else {
+      localStorage.setItem('hasVisitedLanding', 'true');
+    }
+  }, []);
+
+  // Show heading after typewriter is done (only on first visit)
+  useEffect(() => {
+    if (isFirstVisit && typewriter.length === translationText.length) {
       const timer = setTimeout(() => {
         setShowHeading(true);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [typewriter, translationText]);
+  }, [typewriter, translationText, isFirstVisit]);
 
-  // Show button after heading animation
+  // Show button after heading animation (only on first visit)
   useEffect(() => {
-    if (showHeading) {
+    if (isFirstVisit && showHeading) {
       const timer = setTimeout(() => {
         setShowButton(true);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [showHeading]);
+  }, [showHeading, isFirstVisit]);
 
   return (
     <section className="flex h-screen w-full flex-col px-6 sm:px-8">
@@ -78,25 +91,36 @@ export function LandingHero() {
         <div className="mx-auto flex w-full max-w-[960px] flex-col">
           {/* Bismillah Section - Upper third of screen */}
           <div className="mt-[20vh] flex w-full flex-col items-center gap-2 px-8">
-            <motion.div
-              animate={{ opacity: 1 }}
-              initial={{ opacity: 0 }}
-              transition={{ duration: 0.8, ease: smoothEase }}
-            >
-              <Bismillah className="h-auto w-full text-mint" />
-            </motion.div>
-            <motion.span
-              animate={{ opacity: 1 }}
-              className="bg-gold-gradient bg-clip-text px-2 text-center font-baskerville text-base font-normal leading-[18px] text-transparent"
-              initial={{ opacity: 0 }}
-              transition={{
-                duration: 0.8,
-                delay: 0.6,
-                ease: smoothEase,
-              }}
-            >
-              {typewriter}
-            </motion.span>
+            {isFirstVisit ? (
+              <>
+                <motion.div
+                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: smoothEase }}
+                >
+                  <Bismillah className="h-auto w-full text-mint" />
+                </motion.div>
+                <motion.span
+                  animate={{ opacity: 1 }}
+                  className="bg-gold-gradient bg-clip-text px-2 text-center font-baskerville text-base font-normal leading-[18px] text-transparent"
+                  initial={{ opacity: 0 }}
+                  transition={{
+                    duration: 0.8,
+                    delay: 0.6,
+                    ease: smoothEase,
+                  }}
+                >
+                  {typewriter}
+                </motion.span>
+              </>
+            ) : (
+              <>
+                <Bismillah className="h-auto w-full text-mint" />
+                <span className="bg-gold-gradient bg-clip-text px-2 text-center font-baskerville text-base font-normal leading-[18px] text-transparent">
+                  {translationText}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Heading + Paragraph Section */}
@@ -105,7 +129,7 @@ export function LandingHero() {
               <motion.div
                 animate="visible"
                 className="mt-12 flex flex-col items-center gap-2"
-                initial="hidden"
+                initial={isFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >
                 <h1 className="w-full text-center font-inter-tight text-4xl font-medium leading-tight text-content-title sm:text-5xl sm:leading-[87px] md:text-6xl lg:text-[72px]">
@@ -126,7 +150,7 @@ export function LandingHero() {
               <motion.div
                 animate="visible"
                 className="mt-12 flex justify-center"
-                initial="hidden"
+                initial={isFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >
                 <ActionButton

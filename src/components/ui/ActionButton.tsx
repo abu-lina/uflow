@@ -76,11 +76,12 @@ export function ActionButton({
         aria-live="polite"
         className={`
           inline-flex items-center justify-center
-          bg-primary font-medium
-          text-white
+          ${active ? 'border border-[#D2B581] bg-white' : 'bg-primary'}
+          font-medium
+          ${active ? 'bg-gold-gradient bg-clip-text text-transparent' : 'text-white'}
           transition-colors duration-200
           hover:bg-primary-dark
-          focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+          focus:outline-none focus:ring-2 ${active ? 'focus:ring-[#D2B581]' : 'focus:ring-primary'} focus:ring-offset-2
           disabled:cursor-not-allowed disabled:opacity-50
           ${sizeClasses[size].button}
           ${className}
@@ -103,7 +104,10 @@ export function ActionButton({
               transition={{ duration: 0.2 }}
             >
               Entdecke deine Ummah
-              <OrnamentIcon aria-hidden="true" className={`text-white ${sizeClasses[size].icon}`} />
+              <OrnamentIcon
+                aria-hidden="true"
+                className={`${active ? 'text-[#D2B581]' : 'text-white'} ${sizeClasses[size].icon}`}
+              />
             </motion.span>
           ) : (
             <motion.span
@@ -114,8 +118,13 @@ export function ActionButton({
               initial={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
             >
-              <span className="font-inter-tight text-xl">Bismillah</span>
-              <OrnamentIcon aria-hidden="true" className={`text-white ${sizeClasses[size].icon}`} />
+              <span className="bg-gold-gradient bg-clip-text font-inter-tight text-xl text-transparent">
+                Bismillah
+              </span>
+              <OrnamentIcon
+                aria-hidden="true"
+                className={`text-[#D2B581] ${sizeClasses[size].icon}`}
+              />
             </motion.span>
           )}
         </AnimatePresence>

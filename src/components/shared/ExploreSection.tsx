@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { motion } from 'framer-motion';
 
@@ -21,6 +22,7 @@ export function ExploreSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { selectedCategory } = useFilter();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchSouks() {
@@ -91,13 +93,12 @@ export function ExploreSection() {
         <p className="w-full max-w-2xl text-center font-inter-tight text-base font-normal text-neutral-600 sm:text-lg md:text-xl lg:text-2xl">
           Jedes Zakat (Spenden) Projekt wird anhand unseres Halal-Review Konzept ausgewählt.
         </p>
-        <Link href="/souks">
-          <ActionButton
-            className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
-            label="Entdecke deine Ummah"
-            size="md"
-          />
-        </Link>
+        <ActionButton
+          className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
+          label="Entdecke deine Ummah"
+          size="md"
+          onAnimationComplete={() => router.push('/souks')}
+        />
       </motion.div>
 
       {/* Pinterest-style Infinite Carousel */}
