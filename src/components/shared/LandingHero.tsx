@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -52,6 +52,9 @@ export function LandingHero() {
   const [showHeading, setShowHeading] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const bismillahRef = useRef<SVGSVGElement>(null);
+  const translationRef = useRef<HTMLSpanElement>(null);
 
   // Check if this is the first visit
   useEffect(() => {
@@ -85,50 +88,89 @@ export function LandingHero() {
     }
   }, [showHeading, isFirstVisit]);
 
-  return (
-    <section className="flex h-screen w-full flex-col px-6 sm:px-8">
-      <div className="flex w-full flex-1 flex-col">
-        <div className="mx-auto flex w-full max-w-[960px] flex-col">
-          {/* Bismillah Section - Upper third of screen */}
-          <div className="mt-[20vh] flex w-full flex-col items-center gap-2 px-8">
-            {isFirstVisit ? (
-              <>
-                <motion.div
-                  animate={{ opacity: 1 }}
-                  initial={{ opacity: 0 }}
-                  transition={{ duration: 0.8, ease: smoothEase }}
-                >
-                  <Bismillah className="h-auto w-full text-mint" />
-                </motion.div>
-                <motion.span
-                  animate={{ opacity: 1 }}
-                  className="bg-gold-gradient bg-clip-text px-2 text-center font-baskerville text-base font-normal leading-[18px] text-transparent"
-                  initial={{ opacity: 0 }}
-                  transition={{
-                    duration: 0.8,
-                    delay: 0.6,
-                    ease: smoothEase,
-                  }}
-                >
-                  {typewriter}
-                </motion.span>
-              </>
-            ) : (
-              <>
-                <Bismillah className="h-auto w-full text-mint" />
-                <span className="bg-gold-gradient bg-clip-text px-2 text-center font-baskerville text-base font-normal leading-[18px] text-transparent">
-                  {translationText}
-                </span>
-              </>
-            )}
-          </div>
+  useEffect(() => {
+    function logWidths() {
+      const container = containerRef.current;
+      const bismillah = bismillahRef.current;
+      const translation = translationRef.current;
+      if (container && bismillah && translation) {
+        console.group('LandingHero Width Debug');
+        console.log('Container width:', container.offsetWidth, container.clientWidth);
+        console.log('Bismillah SVG width:', bismillah.getBoundingClientRect().width);
+        console.log('Translation span width:', translation.offsetWidth, translation.clientWidth);
+        console.groupEnd();
+      }
+    }
+    logWidths();
+    window.addEventListener('resize', logWidths);
+    return () => window.removeEventListener('resize', logWidths);
+  }, []);
 
-          {/* Heading + Paragraph Section */}
+  // For translation text with a mobile-only line break after the comma
+  const translationParts = translationText.split(',');
+
+  return (
+    <section className="w-full px-6">
+      <div className="flex min-h-[calc(100dvh-64px-env(safe-area-inset-bottom))] flex-col items-stretch justify-center gap-10 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+        {/* 1. Top: Calligraphy + roman text */}
+        <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2">
+          {isFirstVisit ? (
+            <>
+              <motion.div
+                animate={{ opacity: 1 }}
+                className="w-full"
+                initial={{ opacity: 0 }}
+                transition={{ duration: 0.8, ease: smoothEase }}
+              >
+                <Bismillah ref={bismillahRef} className="h-auto w-full" />
+              </motion.div>
+              <motion.span
+                ref={translationRef}
+                animate={{ opacity: 1 }}
+                className="block w-full bg-gold-gradient bg-clip-text text-center font-baskerville text-base font-normal leading-[18px] text-transparent"
+                initial={{ opacity: 0 }}
+                transition={{
+                  duration: 0.8,
+                  delay: 0.6,
+                  ease: smoothEase,
+                }}
+              >
+                {typewriter.includes(',') ? (
+                  <>
+                    {typewriter.split(',')[0]}
+                    {','}
+                    <br className="block sm:hidden" />
+                    {typewriter.split(',')[1]}
+                  </>
+                ) : (
+                  typewriter
+                )}
+              </motion.span>
+            </>
+          ) : (
+            <>
+              <div className="w-full">
+                <Bismillah ref={bismillahRef} className="h-auto w-full" />
+              </div>
+              <span
+                ref={translationRef}
+                className="block w-full bg-gold-gradient bg-clip-text text-center font-baskerville text-base font-normal leading-[18px] text-transparent"
+              >
+                {translationParts[0]}
+                {','}
+                <br className="block sm:hidden" />
+                {translationParts[1]}
+              </span>
+            </>
+          )}
+        </div>
+        {/* 2. Middle: Heading + Subtitle (centered) */}
+        <div className="flex flex-col items-center justify-center">
           <AnimatePresence>
             {showHeading && (
               <motion.div
                 animate="visible"
-                className="mt-12 flex flex-col items-center gap-2"
+                className="flex flex-col items-center gap-2"
                 initial={isFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >
@@ -143,13 +185,14 @@ export function LandingHero() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Action Button */}
+        </div>
+        {/* 3. Bottom: Action Button */}
+        <div className="flex flex-col items-center">
           <AnimatePresence>
             {showButton && (
               <motion.div
                 animate="visible"
-                className="mt-12 flex justify-center"
+                className="flex justify-center"
                 initial={isFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 import { motion } from 'framer-motion';
 
-import { SoukCard } from '@/components/shared/SoukCard';
+import { SoukCard } from '@/components/souks/SoukCard';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { usePinterestTicker } from '@/hooks/usePinterestTicker';
 import { useFilter } from '@/providers/filter-provider';

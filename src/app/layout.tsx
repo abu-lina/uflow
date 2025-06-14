@@ -5,7 +5,6 @@ import { Toaster } from 'sonner';
 
 import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
-import { MobileFooterBar } from '@/components/shared/MobileFooterBar';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthProvider } from '@/providers/auth-provider';
@@ -49,7 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link href="/icons/icon-192x192.png" rel="apple-touch-icon" />
       </head>
       <body
-        className={`relative min-h-screen bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
+        className={`relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
       >
         <AuthProvider initialUser={user}>
           <AuthSyncer />
@@ -58,10 +57,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {/* Desktop header only */}
               <div className="hidden md:block">
                 <Header />
-              </div>
-              {/* Mobile footer bar only */}
-              <div className="block md:hidden">
-                <MobileFooterBar />
               </div>
               <RootClientLayout>{children}</RootClientLayout>
               <Toaster position="top-center" />

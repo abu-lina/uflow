@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { SoukActionBar } from '@/components/shared/SoukActionBar';
+import { SoukActionBar } from '@/components/souks/SoukActionBar';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { getZakatProjectsForSouk, type ZakatData } from '@/services/zakat_projects';

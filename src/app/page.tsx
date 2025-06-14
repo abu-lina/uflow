@@ -7,7 +7,7 @@ import { LandingHero } from '@/components/shared/LandingHero';
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="flex h-64 items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="flex h-64 items-center justify-center">Sabr...</div>}>
       <LandingLayout>
         <div className="relative z-10">
           <LandingHero />

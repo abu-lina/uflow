@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { MobileLoginScreen } from '@/components/shared/MobileLoginScreen';
+import { MobileLoginScreen } from '@/components/common/MobileLoginScreen';
 import { SoukCreateForm } from '@/features/souks/SoukCreateForm';
 import { useAuth } from '@/providers/auth-provider';
 

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
-import { TagsMultiSelect } from '@/components/shared/TagsMultiSelect';
+import { TagsMultiSelect } from '@/components/souks/TagsMultiSelect';
 import { FormField } from '@/components/ui/FormField';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';

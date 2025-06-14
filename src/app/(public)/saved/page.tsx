@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
+import { MobileLoginScreen } from '@/components/common/MobileLoginScreen';
 import { CreatedSoukCard } from '@/components/shared/CreatedSoukCard';
-import { MobileLoginScreen } from '@/components/shared/MobileLoginScreen';
-import { SoukCardModal } from '@/components/shared/SoukCardModal';
-import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
+import { SoukCardModal } from '@/components/souks/SoukCardModal';
+import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
 import { useAuth } from '@/providers/auth-provider';
 import { getBookmarkForSouk, deleteBookmark } from '@/services/bookmarks';
 import { getBookmarkedSouks, type Souk } from '@/services/souks';

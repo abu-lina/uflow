@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { SoukCardModal } from '@/components/shared/SoukCardModal';
-import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
+import { SoukCardModal } from '@/components/souks/SoukCardModal';
+import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
 import type { Souk } from '@/services/souks';
 
 interface SoukModalWrapperProps {

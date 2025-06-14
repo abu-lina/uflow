@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { SoukCard } from '@/components/shared/SoukCard';
-import { SoukCardModal } from '@/components/shared/SoukCardModal';
-import { SoukDetailModal } from '@/components/shared/SoukDetailModal';
+import { motion } from 'framer-motion';
+
+import { SoukCard } from '@/components/souks/SoukCard';
+import { SoukCardModal } from '@/components/souks/SoukCardModal';
+import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
+import { sharedTransition } from '@/components/ui/PageTransition';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
+import { useLoading } from '@/providers/LoadingProvider';
 import { searchSouks, getBookmarkedSouks, type Souk } from '@/services/souks';
 
 function useIsMobile() {
@@ -27,9 +31,10 @@ export function SouksContent() {
   const { user, loading: userLoading } = useAuth();
   const [souks, setSouks] = useState<Souk[]>([]);
   const [bookmarkedSoukIds, setBookmarkedSoukIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSouk, setSelectedSouk] = useState<Souk | null>(null);
+  const [isInitialRender, setIsInitialRender] = useState(true);
   const searchParams = useSearchParams();
   const [paramVersion, setParamVersion] = useState(0);
   const location = searchParams.get('location') || 'Überall';
@@ -37,37 +42,86 @@ export function SouksContent() {
   const query = searchParams.get('q') || '';
   const isMobile = useIsMobile();
 
+  // Cache for souks data
+  const [souksCache, setSouksCache] = useState<Record<string, Souk[]>>({});
+
+  const { isPreloading } = useLoading();
+
   useEffect(() => {
     setParamVersion((v) => v + 1);
   }, [searchParams]);
 
   useEffect(() => {
     async function fetchSouks() {
+      const cacheKey = `${query}-${category}-${location}`;
+
+      // If we have cached data, use it immediately
+      if (souksCache[cacheKey]) {
+        setSouks(souksCache[cacheKey]);
+        setIsInitialRender(false);
+        return;
+      }
+
       try {
+        // Only show loading if it takes more than 100ms and it's not the initial render
+        const loadingTimeout = setTimeout(() => {
+          if (!isInitialRender) {
+            setLoading(true);
+          }
+        }, 100);
+
         const data = await searchSouks(query, category, location);
         setSouks(data);
+
+        // Cache the results
+        setSouksCache((prev) => ({
+          ...prev,
+          [cacheKey]: data,
+        }));
+
+        clearTimeout(loadingTimeout);
+        setLoading(false);
+        setIsInitialRender(false);
       } catch (err) {
         setError('Failed to load souks');
         console.error('Error loading souks:', err);
-      } finally {
         setLoading(false);
+        setIsInitialRender(false);
       }
     }
 
     void fetchSouks();
-  }, [query, category, location, paramVersion]);
+  }, [query, category, location, paramVersion, souksCache, isInitialRender]);
 
+  // Optimize bookmark fetching
   useEffect(() => {
     if (user && !userLoading) {
+      const loadingTimeout = setTimeout(() => {
+        if (!isInitialRender) {
+          setLoading(true);
+        }
+      }, 100);
+
       getBookmarkedSouks(user.id)
         .then((bookmarkedSouks) => {
           setBookmarkedSoukIds(bookmarkedSouks.map((s) => s.souk_id));
+          clearTimeout(loadingTimeout);
+          setLoading(false);
         })
-        .catch(() => setBookmarkedSoukIds([]));
+        .catch(() => {
+          setBookmarkedSoukIds([]);
+          clearTimeout(loadingTimeout);
+          setLoading(false);
+        });
     } else if (!userLoading) {
       setBookmarkedSoukIds([]);
     }
-  }, [user, userLoading]);
+  }, [user, userLoading, isInitialRender]);
+
+  // During preloading, we want to keep the content hidden
+  if (isPreloading) {
+    return null;
+  }
 
   const handleBookmarkChange = (soukId: string, isBookmarked: boolean) => {
     setBookmarkedSoukIds((prev) =>
@@ -111,22 +165,37 @@ export function SouksContent() {
   }
 
   return (
-    <>
-      {/* Mobile Search Bar - Moved outside main container */}
-      <div className="fixed left-0 right-0 top-0 z-50 border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur-sm sm:hidden">
+    <div className="relative">
+      {/* Mobile Search Bar */}
+      <motion.div
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed left-0 right-0 top-0 z-50 border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur-sm sm:hidden"
+        initial={{ opacity: 0, y: -1 }}
+        transition={sharedTransition}
+      >
         <SearchBar hideCategoryFilter className="rounded-lg border border-gray-200 shadow-sm" />
-      </div>
-      {/* Add padding to main container to account for fixed search bar */}
+      </motion.div>
+
+      {/* Main Content */}
       <div className="mx-auto w-full max-w-screen-xl overflow-x-hidden py-8 pt-24 sm:pt-8 md:pt-20">
-        {/* Souks Grid */}
-        <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
-          {souks.map((souk) => (
-            <div
+        <motion.div
+          animate={{ opacity: 1 }}
+          className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4"
+          initial={{ opacity: 0 }}
+          transition={sharedTransition}
+        >
+          {souks.map((souk, index) => (
+            <motion.div
               key={souk.souk_id}
-              aria-label={`Details für ${souk.souk_name} anzeigen`}
-              className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+              initial={{ opacity: 0, y: 5, scale: 0.98 }}
               role="button"
               tabIndex={0}
+              transition={{
+                ...sharedTransition,
+                delay: index * 0.02,
+              }}
               onClick={() => handleSoukClick(souk)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -139,13 +208,13 @@ export function SouksContent() {
                 {...souk}
                 hideWebsiteButton={true}
                 isBookmarked={bookmarkedSoukIds.includes(souk.souk_id)}
-                onBookmarkChange={(isBookmarked) =>
+                onBookmarkChange={(isBookmarked: boolean) =>
                   handleBookmarkChange(souk.souk_id, isBookmarked)
                 }
               />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
         {/* Mobile Modal */}
         {selectedSouk && isMobile && (
           <SoukCardModal
@@ -197,6 +266,6 @@ export function SouksContent() {
           />
         )}
       </div>
-    </>
+    </div>
   );
 }

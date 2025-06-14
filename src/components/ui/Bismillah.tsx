@@ -76,11 +76,9 @@ const Bismillah = forwardRef<SVGSVGElement, BismillahProps>(
       <div className={cn('flex flex-col items-center', className)}>
         <svg
           ref={ref}
-          className={cn('text-foreground', pulse && 'animate-pulse')}
+          className={cn('text-foreground h-auto w-full', pulse && 'animate-pulse')}
           fill="none"
-          height={props.height || 40}
           viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-          width={props.width || 220}
           xmlns="http://www.w3.org/2000/svg"
           {...props}
         >
