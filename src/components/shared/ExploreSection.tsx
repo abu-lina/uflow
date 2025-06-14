@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 
+import { motion } from 'framer-motion';
+
 import { SoukCard } from '@/components/shared/SoukCard';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { usePinterestTicker } from '@/hooks/usePinterestTicker';
@@ -68,10 +70,16 @@ export function ExploreSection() {
   return (
     <section
       aria-labelledby="explore-heading"
-      className="relative flex w-full flex-col items-center justify-center gap-12 px-4 py-8 sm:gap-20 sm:px-6 sm:py-12 md:py-24 lg:px-8"
+      className="flex h-screen w-full flex-col items-center justify-center gap-12 px-4 py-8 sm:gap-20 sm:px-6 sm:py-12 md:py-24 lg:px-8"
       id="explore"
     >
-      <div className="flex w-full max-w-screen-xl flex-col items-center gap-6">
+      <motion.div
+        className="flex w-full max-w-screen-xl flex-col items-center gap-6"
+        initial={{ opacity: 0, y: 20 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        viewport={{ once: true }}
+        whileInView={{ opacity: 1, y: 0 }}
+      >
         <div className="flex w-full justify-center px-6 sm:px-8">
           <h2
             className="text-uFlowText inline-block break-words text-center font-inter-tight text-2xl font-medium sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl"
@@ -90,14 +98,18 @@ export function ExploreSection() {
             size="md"
           />
         </Link>
-      </div>
+      </motion.div>
 
       {/* Pinterest-style Infinite Carousel */}
-      <div
+      <motion.div
         ref={carouselContainerRef}
         aria-label="Entdecke Angebote"
         className="w-screen overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
         role="region"
+        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+        viewport={{ once: true }}
+        whileInView={{ opacity: 1, y: 0 }}
       >
         <div
           className="flex"
@@ -119,7 +131,7 @@ export function ExploreSection() {
             </Link>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Floating Arrow Button */}
       <button

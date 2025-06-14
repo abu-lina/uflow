@@ -19,7 +19,7 @@ export function PageSliderIndicator({
         <button
           key={idx}
           aria-label={`Seite ${idx + 1}`}
-          className="focus:outline-none"
+          className="h-3 w-3 focus:outline-none"
           type="button"
           onClick={() => onChange?.(idx)}
         >

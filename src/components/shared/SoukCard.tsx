@@ -43,6 +43,7 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [bookmarked, setBookmarked] = useState(isBookmarked);
+    const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
     useEffect(() => {
       setBookmarked(isBookmarked);
     }, [isBookmarked]);
@@ -63,6 +64,12 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
       if (!user) {
         toast.error('Bitte melde dich an, um Souks zu speichern');
         return;
+      }
+      if (!bookmarked) {
+        setShowAllahumaBarik(true);
+        setTimeout(() => {
+          setShowAllahumaBarik(false);
+        }, 900);
       }
       try {
         setIsLoading(true);
@@ -234,7 +241,13 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
                   }
                   onClick={handleBookmark}
                 >
-                  {isLoading ? '...' : bookmarked ? 'Gespeichert' : 'Speichern'}
+                  {isLoading
+                    ? '...'
+                    : showAllahumaBarik
+                      ? 'Allahuma Barik'
+                      : bookmarked
+                        ? 'Gespeichert'
+                        : 'Speichern'}
                 </Button>
                 {!hideWebsiteButton && (
                   <Button
