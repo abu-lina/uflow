@@ -111,14 +111,14 @@ export function LandingHero() {
 
   return (
     <section className="w-full px-6">
-      <div className="flex min-h-[calc(100dvh-64px-env(safe-area-inset-bottom))] flex-col items-stretch justify-center gap-10 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+      <div className="flex min-h-[calc(100dvh-64px-env(safe-area-inset-bottom))] flex-col items-stretch justify-center gap-8 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
         {/* 1. Top: Calligraphy + roman text */}
-        <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2 px-4">
+        <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2 px-5">
           {isFirstVisit ? (
             <>
               <motion.div
                 animate={{ opacity: 1 }}
-                className="w-full px-4"
+                className="w-full"
                 initial={{ opacity: 0 }}
                 transition={{ duration: 0.8, ease: smoothEase }}
               >
@@ -150,7 +150,7 @@ export function LandingHero() {
           ) : (
             <>
               <div className="w-full">
-                <Bismillah ref={bismillahRef} className="h-auto w-full px-4" />
+                <Bismillah ref={bismillahRef} className="h-auto w-full" />
               </div>
               <span
                 ref={translationRef}
