@@ -119,7 +119,7 @@ export function ActionButton({
               transition={{ duration: 0.5, ease: 'easeOut' }}
             >
               <span className="bg-gold-gradient bg-clip-text font-inter-tight text-xl text-transparent">
-                Bismillah
+                Allahuma Barik
               </span>
               <OrnamentIcon
                 aria-hidden="true"

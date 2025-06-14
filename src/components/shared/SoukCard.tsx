@@ -227,12 +227,12 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
               <div className="flex w-full gap-3.5">
                 <Button
                   aria-label={bookmarked ? 'Gespeichert entfernen' : 'Souk speichern'}
-                  className="flex-1 gap-1"
+                  className={`flex-1 gap-1 ${showAllahumaBarik ? 'border border-[#D2B581] bg-white' : ''}`}
                   disabled={isLoading}
                   icon={
                     <div className="relative size-4">
                       <Icon
-                        className="text-white"
+                        className={showAllahumaBarik ? 'text-[#D2B581]' : 'text-white'}
                         height={16}
                         icon={bookmarked ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
                         width={16}
@@ -241,13 +241,17 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
                   }
                   onClick={handleBookmark}
                 >
-                  {isLoading
-                    ? '...'
-                    : showAllahumaBarik
-                      ? 'Allahuma Barik'
-                      : bookmarked
-                        ? 'Gespeichert'
-                        : 'Speichern'}
+                  {isLoading ? (
+                    '...'
+                  ) : showAllahumaBarik ? (
+                    <span className="bg-gold-gradient bg-clip-text text-transparent">
+                      Allahuma Barik
+                    </span>
+                  ) : bookmarked ? (
+                    'Gespeichert'
+                  ) : (
+                    'Speichern'
+                  )}
                 </Button>
                 {!hideWebsiteButton && (
                   <Button
