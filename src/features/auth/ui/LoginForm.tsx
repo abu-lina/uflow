@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { ErrorBoundary } from '@/components/error-boundary/ErrorBoundary';
+import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { FormSkeleton } from '@/components/ui/skeleton/Skeleton';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase/client';
