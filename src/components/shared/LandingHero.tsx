@@ -10,9 +10,11 @@ import { ActionButton } from '@/components/ui/ActionButton';
 import { Bismillah } from '@/components/ui/Bismillah';
 
 // Typewriter effect hook
-function useTypewriter(text: string, speed = 40) {
-  const [displayed, setDisplayed] = useState('');
+function useTypewriter(text: string, speed = 40, shouldAnimate = true) {
+  const [displayed, setDisplayed] = useState(shouldAnimate ? '' : text);
   useEffect(() => {
+    if (!shouldAnimate) return;
+
     let i = 0;
     let cancelled = false;
     function type() {
@@ -27,7 +29,7 @@ function useTypewriter(text: string, speed = 40) {
     return () => {
       cancelled = true;
     };
-  }, [text, speed]);
+  }, [text, speed, shouldAnimate]);
   return displayed;
 }
 
@@ -48,30 +50,68 @@ const fadeInVariants = {
 export function LandingHero() {
   const router = useRouter();
   const translationText = 'Im Namen Allahs des Allerbarmers, des Allbarmherzigen';
-  const typewriter = useTypewriter(translationText, 40);
+  const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const typewriter = useTypewriter(translationText, 40, isFirstVisit === true && isReady);
   const [showHeading, setShowHeading] = useState(false);
   const [showButton, setShowButton] = useState(false);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const bismillahRef = useRef<SVGSVGElement>(null);
   const translationRef = useRef<HTMLSpanElement>(null);
 
   // Check if this is the first visit
   useEffect(() => {
-    const hasVisited = localStorage.getItem('hasVisitedLanding');
-    if (hasVisited) {
+    console.group('LandingHero First Visit Debug');
+    const hasVisitedLanding = localStorage.getItem('hasVisitedLanding');
+    const hasSeenBismillahAnimation = localStorage.getItem('hasSeenBismillahAnimation');
+    const hasSeenBismillahCalligraphy = localStorage.getItem('hasSeenBismillahCalligraphy');
+    const hasVisitedBismillah = localStorage.getItem('hasVisitedBismillah');
+
+    console.log('localStorage values:', {
+      hasVisitedLanding,
+      hasSeenBismillahAnimation,
+      hasSeenBismillahCalligraphy,
+      hasVisitedBismillah,
+    });
+
+    // If any of these flags are set, we consider it not a first visit
+    const hasSeenBefore =
+      hasVisitedLanding === 'true' ||
+      hasSeenBismillahAnimation === 'true' ||
+      hasSeenBismillahCalligraphy === 'true' ||
+      hasVisitedBismillah === 'true';
+
+    console.log('Current isFirstVisit state:', isFirstVisit);
+    console.log('Has seen before:', hasSeenBefore);
+
+    if (hasSeenBefore) {
+      console.log('Setting isFirstVisit to false - user has visited before');
       setIsFirstVisit(false);
       setShowHeading(true);
       setShowButton(true);
     } else {
+      console.log('Setting all Bismillah-related flags in localStorage - first visit');
       localStorage.setItem('hasVisitedLanding', 'true');
+      localStorage.setItem('hasSeenBismillahAnimation', 'true');
+      localStorage.setItem('hasSeenBismillahCalligraphy', 'true');
+      localStorage.setItem('hasVisitedBismillah', 'true');
+      setIsFirstVisit(true);
     }
+    console.groupEnd();
+    setIsReady(true);
   }, []);
 
   // Show heading after typewriter is done (only on first visit)
   useEffect(() => {
-    if (isFirstVisit && typewriter.length === translationText.length) {
+    console.log(
+      'Typewriter effect - isFirstVisit:',
+      isFirstVisit,
+      'typewriter length:',
+      typewriter.length,
+    );
+    if (isFirstVisit === true && typewriter.length === translationText.length) {
       const timer = setTimeout(() => {
+        console.log('Setting showHeading to true after typewriter');
         setShowHeading(true);
       }, 800);
       return () => clearTimeout(timer);
@@ -80,7 +120,7 @@ export function LandingHero() {
 
   // Show button after heading animation (only on first visit)
   useEffect(() => {
-    if (isFirstVisit && showHeading) {
+    if (isFirstVisit === true && showHeading) {
       const timer = setTimeout(() => {
         setShowButton(true);
       }, 800);
@@ -109,20 +149,25 @@ export function LandingHero() {
   // For translation text with a mobile-only line break after the comma
   const translationParts = translationText.split(',');
 
+  // Don't render anything until we know if it's first visit
+  if (isFirstVisit === null) {
+    return null;
+  }
+
   return (
     <section className="w-full px-6">
       <div className="flex min-h-[calc(100dvh-64px-env(safe-area-inset-bottom))] flex-col items-stretch justify-center gap-8 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
         {/* 1. Top: Calligraphy + roman text */}
-        <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2 px-5">
+        <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2 px-4">
           {isFirstVisit ? (
             <>
               <motion.div
-                animate={{ opacity: 1 }}
+                animate={{ opacity: 1, x: 0 }}
                 className="w-full"
-                initial={{ opacity: 0 }}
+                initial={{ opacity: 0, x: 100 }}
                 transition={{ duration: 0.8, ease: smoothEase }}
               >
-                <Bismillah ref={bismillahRef} className="h-auto w-full" />
+                <Bismillah ref={bismillahRef} className="h-auto w-full" shouldAnimate={true} />
               </motion.div>
               <motion.span
                 ref={translationRef}
@@ -150,7 +195,7 @@ export function LandingHero() {
           ) : (
             <>
               <div className="w-full">
-                <Bismillah ref={bismillahRef} className="h-auto w-full" />
+                <Bismillah ref={bismillahRef} className="h-auto w-full" shouldAnimate={false} />
               </div>
               <span
                 ref={translationRef}
