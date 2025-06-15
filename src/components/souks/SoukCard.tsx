@@ -187,7 +187,7 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
           </div>
         </div>
         <div
-          className="bg-uFlowWhite \ flex w-72 flex-col items-center rounded-b-3xl p-3.5
+          className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5
         outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300"
         >
           <div className="flex w-full flex-col items-start gap-3.5">
