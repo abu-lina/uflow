@@ -9,15 +9,10 @@ import { TagsMultiSelect } from '@/components/souks/TagsMultiSelect';
 import { FormField } from '@/components/ui/FormField';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
-import type { Database } from '@/types/supabase';
+import type { SoukFormData } from '@/types/souk';
+import type { Category } from '@/types/supabase';
 
-interface FormData {
-  title: string;
-  category: string;
-  description: string;
-  street: string;
-  zip: string;
-  city: string;
+interface ExtendedFormData extends SoukFormData {
   website: string;
   instagram: string;
   phone: string;
@@ -48,7 +43,7 @@ const STEPS = [
 export function SoukCreateForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<ExtendedFormData>({
     title: '',
     category: '',
     description: '',
@@ -62,9 +57,7 @@ export function SoukCreateForm() {
     images: [],
     tags: [],
   });
-  const [categories, setCategories] = useState<Database['public']['Tables']['categories']['Row'][]>(
-    [],
-  );
+  const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const { user } = useAuth();
 
@@ -83,7 +76,7 @@ export function SoukCreateForm() {
     void fetchCategories();
   }, []);
 
-  const handleInputChange = (field: keyof FormData, value: string | string[] | File[]) => {
+  const handleInputChange = (field: keyof ExtendedFormData, value: string | string[] | File[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -120,7 +113,7 @@ export function SoukCreateForm() {
           if (hostname === 'pmbatjlosstytdmmqkky.supabase.co') {
             uploadedUrls.push(publicUrlData.publicUrl);
           }
-        } catch (e) {
+        } catch {
           // Ignore invalid URLs
         }
       }
@@ -164,7 +157,7 @@ export function SoukCreateForm() {
     }
   };
 
-  function isStepValid(step: number, data: FormData) {
+  function isStepValid(step: number, data: ExtendedFormData) {
     switch (step) {
       case 0:
         return !!data.title && !!data.category && !!data.description;

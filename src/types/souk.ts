@@ -3,6 +3,6 @@ export interface SoukFormData {
   category: string;
   description: string;
   street: string;
-  zipCode: string;
+  zip: string;
   city: string;
 }

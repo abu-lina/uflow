@@ -14,7 +14,7 @@ export function SoukCreationForm({ onSubmit }: SoukCreationFormProps) {
     category: '',
     description: '',
     street: '',
-    zipCode: '',
+    zip: '',
     city: '',
   });
 
