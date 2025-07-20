@@ -30,7 +30,7 @@ export function CategoryGallerySection() {
 
   if (isLoading) {
     return (
-      <section className="w-full px-6 py-8">
+      <section className="w-full px-6 py-8 lg:hidden">
         <div className="flex flex-col gap-8">
           <div className="bg-muted h-6 w-40 animate-pulse rounded" />
           <div className="bg-muted h-[150px] w-[358px] animate-pulse rounded-[29px]" />
@@ -41,7 +41,7 @@ export function CategoryGallerySection() {
 
   if (error) {
     return (
-      <section className="w-full px-6 py-8 text-center text-red-500">
+      <section className="w-full px-6 py-8 text-center text-red-500 lg:hidden">
         <p>{error}</p>
       </section>
     );
@@ -52,7 +52,7 @@ export function CategoryGallerySection() {
   }
 
   return (
-    <section className="w-full px-6 py-8">
+    <section className="w-full px-6 py-8 lg:hidden">
       <div className="flex flex-col gap-8">
         {categories.map((category) => {
           const categoryName = (category.name_de || '') as string;
