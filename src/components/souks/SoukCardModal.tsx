@@ -98,10 +98,15 @@ export function SoukCardModal({
     // Only allow downward swipes (positive deltaY)
     if (deltaY > 0) {
       // Reduce sensitivity - only move modal after significant drag
-      const dragThreshold = 40; // Start moving after 40px
+      const dragThreshold = 60; // Best balance of safety and responsiveness
       if (deltaY > dragThreshold) {
         setDragY(deltaY - dragThreshold);
       }
+    } else if (deltaY < 0) {
+      // Reset everything on upward movement to prevent accidental closing
+      setDragY(0);
+      allowSwipe.current = false;
+      touchStartY.current = null;
     }
     // Completely ignore upward scrolls (negative deltaY) - let browser handle them
   }
@@ -115,7 +120,7 @@ export function SoukCardModal({
     // Only close on downward swipes (positive deltaY)
     if (deltaY > 0) {
       // Increase threshold for closing - requires longer swipe
-      if (deltaY > 200) {
+      if (deltaY > 300) {
         handleClose();
         touchStartY.current = null;
         setDragY(0);
@@ -123,7 +128,7 @@ export function SoukCardModal({
       }
 
       // If not enough to close, snap back
-      if (dragY > 100) {
+      if (dragY > 150) {
         handleClose();
       }
     }
