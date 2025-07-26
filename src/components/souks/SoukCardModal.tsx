@@ -95,14 +95,15 @@ export function SoukCardModal({
     const currentY = e.touches[0].clientY;
     const deltaY = currentY - touchStartY.current;
 
-    // Only allow downward swipes
+    // Only allow downward swipes (positive deltaY)
     if (deltaY > 0) {
       // Reduce sensitivity - only move modal after significant drag
-      const dragThreshold = 40; // Start moving after 20px
+      const dragThreshold = 40; // Start moving after 40px
       if (deltaY > dragThreshold) {
         setDragY(deltaY - dragThreshold);
       }
     }
+    // Completely ignore upward scrolls (negative deltaY) - let browser handle them
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
@@ -111,18 +112,22 @@ export function SoukCardModal({
     const currentY = e.changedTouches[0].clientY;
     const deltaY = currentY - touchStartY.current;
 
-    // Increase threshold for closing - requires longer swipe
-    if (deltaY > 200) {
-      handleClose();
-      touchStartY.current = null;
-      setDragY(0);
-      return;
+    // Only close on downward swipes (positive deltaY)
+    if (deltaY > 0) {
+      // Increase threshold for closing - requires longer swipe
+      if (deltaY > 200) {
+        handleClose();
+        touchStartY.current = null;
+        setDragY(0);
+        return;
+      }
+
+      // If not enough to close, snap back
+      if (dragY > 100) {
+        handleClose();
+      }
     }
 
-    // If not enough to close, snap back
-    if (dragY > 100) {
-      handleClose();
-    }
     setDragY(0);
     touchStartY.current = null;
     allowSwipe.current = false;
