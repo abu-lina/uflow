@@ -223,70 +223,90 @@ export function SoukCardModal({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-[99] bg-black/40 transition-opacity duration-300"
-        style={{
-          opacity: dragY ? Math.max(0, 1 - dragY / 200) : 1,
-        }}
-      />
-
-      {/* Modal Container - Revolut Style */}
+      {/* Fullscreen overlay */}
+      <div className="fixed inset-0 z-[99] bg-black/40" />
+      {/* Modal container */}
       <div
         ref={modalRef}
-        className="fixed inset-x-0 bottom-0 z-[100] flex justify-center"
+        className="fixed inset-x-0 bottom-0 top-6 z-[100] flex items-start justify-center"
         style={{
           transform: dragY ? `translateY(${dragY}px)` : undefined,
-          transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+          transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
         }}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
       >
-        {/* Modal Content */}
-        <div className="relative w-full max-w-[392px] rounded-t-[24px] bg-white shadow-2xl">
-          {/* Drag Handle - Revolut Style */}
-          <div className="flex justify-center pb-2 pt-3">
-            <div className="h-1 w-12 rounded-full bg-gray-300" />
-          </div>
-
-          {/* Close Button */}
-          <button
-            aria-label="Schließen"
-            className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm"
-            onClick={onClose}
-          >
-            <X className="h-4 w-4 text-gray-700" />
-          </button>
-
-          {/* Image Section */}
-          <div className="relative h-80 w-full overflow-hidden rounded-t-[24px]">
-            <Image fill priority alt="Souk Visual" className="object-cover" src={imageUrl} />
-            {/* Category Badge */}
-            <div className="absolute bottom-4 left-4">
-              <div className="rounded-lg bg-white/90 px-3 py-1.5 backdrop-blur-sm">
-                <span className="text-sm font-medium text-gray-900">{category}</span>
+        <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
+          {/* Visual Section - Mobile Only */}
+          <div className="relative h-96 w-full sm:hidden">
+            <Image
+              fill
+              priority
+              alt="Souk Visual"
+              className="border-uFlowWhite absolute left-0 top-0 h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
+              src={imageUrl}
+            />
+            {/* Drag handle for swipe-to-close - positioned on top of image */}
+            <div className="absolute left-1/2 top-2 z-10 h-2 w-16 -translate-x-1/2 rounded-full bg-gray-500 opacity-90 shadow-lg" />
+            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-start justify-end p-4">
+              <div className="outline-uFlowDarkGrey inline-flex h-8 items-center justify-center overflow-hidden rounded-[9.54px] bg-white/70 px-2.5 outline outline-[0.79px] outline-offset-[-0.40px] backdrop-blur-[1.99px]">
+                <div className="justify-center text-center font-['Inter_Tight'] text-sm font-medium text-black">
+                  {category}
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Content Section */}
-          <div className="px-4 py-6">
-            {/* Title and Address */}
-            <div className="mb-4">
-              <h2 className="mb-1 text-xl font-semibold text-gray-900">{title}</h2>
-              {address_street && address_zip && address_city && (
-                <p className="text-sm text-gray-600">
-                  {address_street}, {address_zip} {address_city}
-                </p>
-              )}
+          {/* Close Button */}
+          <button
+            aria-label="Schließen"
+            className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/80 shadow"
+            onClick={onClose}
+          >
+            <X className="h-5 w-5 text-gray-700" />
+          </button>
+          {/* Visual Section - Desktop (unchanged) */}
+          <div className="relative isolation-auto flex hidden h-[356px] w-full flex-col items-start justify-end gap-[12.25px] p-0 sm:block sm:w-[392px]">
+            <div className="absolute left-0 top-0 z-0 h-full w-full">
+              <Image
+                fill
+                priority
+                alt="Souk Visual"
+                className="rounded-t-[29.4px] border border-white object-cover"
+                src={imageUrl}
+                style={{ boxSizing: 'border-box' }}
+              />
             </div>
-
-            {/* Barakah Section */}
+            {/* LikeFrame and FABs would go here if needed, currently display: none */}
+            <div className="z-10 flex h-[63.57px] w-full flex-col items-start justify-end px-[15.89px] sm:w-[392px]">
+              <div className="flex h-[31.78px] w-[97.19px] flex-row items-center justify-center rounded-[9.54px] border border-[#CDCDCD] bg-white/70 px-[10.6px] backdrop-blur-[2px]">
+                <span className="flex h-[22px] w-[76px] items-center text-center font-inter-tight text-[18.54px] font-medium leading-[22px] text-black">
+                  {category}
+                </span>
+              </div>
+            </div>
+          </div>
+          {/* Modal Content (Mobile Only) */}
+          <div className="mx-auto flex w-[353px] flex-col items-start gap-5 overflow-x-hidden px-3 pb-24 sm:hidden sm:pb-6">
+            {/* Title */}
+            <div className="flex w-full flex-col items-start gap-1">
+              <div className="w-full font-inter-tight text-[24px] font-semibold leading-[29px] text-[#232323]">
+                {title}
+              </div>
+              <div className="w-full font-inter text-[16px] leading-[19px] text-[#7A7A7A]">
+                {address_street && address_zip && address_city
+                  ? `${address_street}, ${address_zip} ${address_city}`
+                  : ''}
+              </div>
+            </div>
+            {/* Barakah Section (only if zakat project exists) */}
             {zakatProjects.length > 0 && (
-              <div className="mb-4">
-                <h3 className="mb-3 text-lg font-semibold text-gray-900">Unser Barakah Effekt:</h3>
-                <div className="relative h-48 w-full overflow-hidden rounded-xl">
+              <div className="flex w-full flex-col items-start gap-2">
+                <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
+                  Unser Barakah Effekt:
+                </div>
+                {/* Barakah Image */}
+                <div className="relative h-[198px] w-full overflow-hidden rounded-[16px] border border-[#959595]">
                   <img
                     alt={zakatProjects[0].zakat_name}
                     className="h-full w-full object-cover"
@@ -296,45 +316,78 @@ export function SoukCardModal({
                         : '/images/placeholder.jpg'
                     }
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <span className="font-medium text-white">{zakatProjects[0].zakat_name}</span>
+                  {/* Barakah Title Overlay */}
+                  <div className="absolute bottom-0 left-0 flex h-[41px] w-full items-center rounded-b-[16px] bg-white/10 px-2 backdrop-blur-[14px]">
+                    <span className="font-inter-tight text-[17.2px] font-semibold leading-[21px] text-white">
+                      {zakatProjects[0].zakat_name}
+                    </span>
                   </div>
                 </div>
-                {barakah_effects && barakah_effects.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
+                {/* Barakah Badges */}
+                {Array.isArray(barakah_effects) && barakah_effects.length > 0 && (
+                  <div className="mt-2 flex w-full flex-row flex-wrap gap-[9.8px]">
                     {barakah_effects.map((effect, idx) => (
-                      <span
+                      <div
                         key={idx}
-                        className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                        className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]"
                       >
-                        {effect}
-                      </span>
+                        <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
+                          {effect}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
             )}
-
-            {/* Description */}
+            {/* Barakah Effects Section (when no zakat project but has effects) */}
+            {zakatProjects.length === 0 &&
+              Array.isArray(barakah_effects) &&
+              barakah_effects.length > 0 && (
+                <div className="flex w-full flex-col items-start gap-2">
+                  <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
+                    Unser Barakah Effekt:
+                  </div>
+                  <div className="flex w-full flex-row flex-wrap gap-[9.8px]">
+                    {barakah_effects.map((effect, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]"
+                      >
+                        <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
+                          {effect}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            {/* Description Section */}
             {description && (
-              <div className="mb-4">
-                <h3 className="mb-2 text-lg font-semibold text-gray-900">Beschreibung:</h3>
-                <p className="leading-relaxed text-gray-700">{description}</p>
+              <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
+                <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
+                  Beschreibung:
+                </div>
+                <div className="font-inter-tight text-[16px] leading-[21px] text-[#272727]">
+                  {description}
+                </div>
               </div>
             )}
-
-            {/* Opening Hours */}
-            <div className="mb-6">
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">Öffnungszeiten:</h3>
-              <div className="flex items-center justify-between border-b border-gray-100 py-2">
-                <span className="text-gray-700">Mo - Fr:</span>
-                <span className="font-medium text-gray-900">Fajr bis Isha</span>
+            {/* Opening Hours Section */}
+            <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
+              <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
+                Öffnungszeiten:
+              </div>
+              <div className="flex w-full flex-row justify-between">
+                <span className="font-inter-tight text-[16px] text-[#272727]">Mo - Fr:</span>
+                <span className="text-right font-inter-tight text-[16px] text-[#272727]">
+                  Fajr bis Isha
+                </span>
               </div>
             </div>
           </div>
-
-          {/* Action Bar - Revolut Style */}
-          <div className="border-t border-gray-100 bg-white px-4 py-4">
+          {/* Sticky SoukActionBar at the bottom on mobile */}
+          <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-4 pb-4 sm:hidden">
             <SoukActionBar
               isSaved={isSaved}
               phoneNumber={contact_phone}
