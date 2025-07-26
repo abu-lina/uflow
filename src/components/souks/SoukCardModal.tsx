@@ -97,8 +97,8 @@ export function SoukCardModal({
 
     // Only allow downward swipes (positive deltaY)
     if (deltaY > 0) {
-      // Reduce sensitivity - only move modal after significant drag
-      const dragThreshold = 60; // Best balance of safety and responsiveness
+      // Much more conservative threshold for iPhone SE
+      const dragThreshold = 100; // Start moving after 100px
       if (deltaY > dragThreshold) {
         setDragY(deltaY - dragThreshold);
       }
@@ -119,8 +119,8 @@ export function SoukCardModal({
 
     // Only close on downward swipes (positive deltaY)
     if (deltaY > 0) {
-      // Increase threshold for closing - requires longer swipe
-      if (deltaY > 300) {
+      // Much higher threshold for closing on iPhone SE
+      if (deltaY > 400) {
         handleClose();
         touchStartY.current = null;
         setDragY(0);
@@ -128,7 +128,7 @@ export function SoukCardModal({
       }
 
       // If not enough to close, snap back
-      if (dragY > 150) {
+      if (dragY > 200) {
         handleClose();
       }
     }
