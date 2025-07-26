@@ -69,6 +69,7 @@ export function SoukCardModal({
   const [dragY, setDragY] = React.useState(0);
   const [isClosing, setIsClosing] = React.useState(false);
   const touchStartY = React.useRef<number | null>(null);
+  const touchStartTime = React.useRef<number | null>(null);
   const allowSwipe = React.useRef(false);
   const modalRef = React.useRef<HTMLDivElement>(null);
 
@@ -86,20 +87,28 @@ export function SoukCardModal({
   function handleTouchStart(e: React.TouchEvent) {
     // Don't prevent default - let the browser handle scrolling
     touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
     allowSwipe.current = true;
   }
 
   function handleTouchMove(e: React.TouchEvent) {
-    if (!touchStartY.current || !allowSwipe.current) return;
+    if (!touchStartY.current || !allowSwipe.current || !touchStartTime.current) return;
 
     const currentY = e.touches[0].clientY;
+    const currentTime = Date.now();
     const deltaY = currentY - touchStartY.current;
+    const deltaTime = currentTime - touchStartTime.current;
+
+    // Calculate velocity (pixels per millisecond)
+    const velocity = Math.abs(deltaY) / deltaTime;
 
     // Only allow downward swipes (positive deltaY)
     if (deltaY > 0) {
       // Much more conservative threshold for iPhone SE
       const dragThreshold = 100; // Start moving after 100px
-      if (deltaY > dragThreshold) {
+
+      // Only respond to slow, deliberate movements (velocity < 0.5 px/ms)
+      if (deltaY > dragThreshold && velocity < 0.5) {
         setDragY(deltaY - dragThreshold);
       }
     } else if (deltaY < 0) {
@@ -107,22 +116,29 @@ export function SoukCardModal({
       setDragY(0);
       allowSwipe.current = false;
       touchStartY.current = null;
+      touchStartTime.current = null;
     }
     // Completely ignore upward scrolls (negative deltaY) - let browser handle them
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
-    if (!touchStartY.current) return;
+    if (!touchStartY.current || !touchStartTime.current) return;
 
     const currentY = e.changedTouches[0].clientY;
+    const currentTime = Date.now();
     const deltaY = currentY - touchStartY.current;
+    const deltaTime = currentTime - touchStartTime.current;
 
-    // Only close on downward swipes (positive deltaY)
-    if (deltaY > 0) {
+    // Calculate velocity
+    const velocity = Math.abs(deltaY) / deltaTime;
+
+    // Only close on downward swipes (positive deltaY) with slow velocity
+    if (deltaY > 0 && velocity < 0.5) {
       // Much higher threshold for closing on iPhone SE
       if (deltaY > 400) {
         handleClose();
         touchStartY.current = null;
+        touchStartTime.current = null;
         setDragY(0);
         return;
       }
@@ -135,6 +151,7 @@ export function SoukCardModal({
 
     setDragY(0);
     touchStartY.current = null;
+    touchStartTime.current = null;
     allowSwipe.current = false;
   }
 
