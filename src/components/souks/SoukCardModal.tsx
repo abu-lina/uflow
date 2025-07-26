@@ -29,8 +29,6 @@ interface SoukCardModalProps {
   // Add more props as needed
 }
 
-const SWIPE_AREA_HEIGHT = 48; // px
-
 export function SoukCardModal({
   open,
   onClose,
@@ -86,48 +84,43 @@ export function SoukCardModal({
   };
 
   function handleTouchStart(e: React.TouchEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+    // Don't prevent default - let the browser handle scrolling
+    touchStartY.current = e.touches[0].clientY;
+    allowSwipe.current = true;
+  }
 
-    if ((e.currentTarget as HTMLElement).scrollTop > 0) return;
-    const modal = modalRef.current;
-    if (modal) {
-      const rect = modal.getBoundingClientRect();
-      const touchY = e.touches[0].clientY - rect.top;
-      if (touchY < SWIPE_AREA_HEIGHT) {
-        allowSwipe.current = true;
-        touchStartY.current = e.touches[0].clientY;
-        setDragY(0);
-      } else {
-        allowSwipe.current = false;
-        touchStartY.current = null;
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!touchStartY.current || !allowSwipe.current) return;
+
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
+
+    // Only allow downward swipes
+    if (deltaY > 0) {
+      // Reduce sensitivity - only move modal after significant drag
+      const dragThreshold = 20; // Start moving after 20px
+      if (deltaY > dragThreshold) {
+        setDragY(deltaY - dragThreshold);
       }
     }
   }
 
-  function handleTouchMove(e: React.TouchEvent) {
-    if (!allowSwipe.current || touchStartY.current === null) return;
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (!touchStartY.current) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+    const currentY = e.changedTouches[0].clientY;
+    const deltaY = currentY - touchStartY.current;
 
-    const deltaY = e.touches[0].clientY - touchStartY.current;
-    if (deltaY > 0) {
-      setDragY(deltaY);
-    }
-    if (deltaY > 120) {
+    // Increase threshold for closing - requires longer swipe
+    if (deltaY > 200) {
       handleClose();
       touchStartY.current = null;
       setDragY(0);
-      allowSwipe.current = false;
+      return;
     }
-  }
 
-  function handleTouchEnd(e: React.TouchEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (dragY > 60) {
+    // If not enough to close, snap back
+    if (dragY > 100) {
       handleClose();
     }
     setDragY(0);
@@ -246,7 +239,7 @@ export function SoukCardModal({
       {/* Modal container */}
       <div
         ref={modalRef}
-        className="fixed inset-x-0 bottom-0 top-6 z-[100] flex items-start justify-center"
+        className="fixed inset-x-0 bottom-0 top-6 z-[100] flex touch-pan-y items-start justify-center"
         style={{
           transform: isClosing ? 'translateY(100vh)' : dragY ? `translateY(${dragY}px)` : undefined,
           transition: isClosing
@@ -254,7 +247,6 @@ export function SoukCardModal({
             : dragY === 0
               ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)'
               : 'none',
-          touchAction: 'pan-y',
         }}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
