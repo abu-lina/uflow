@@ -69,9 +69,21 @@ export function SoukCardModal({
 
   // Swipe down to close (mobile) with visual feedback
   const [dragY, setDragY] = React.useState(0);
+  const [isClosing, setIsClosing] = React.useState(false);
   const touchStartY = React.useRef<number | null>(null);
   const allowSwipe = React.useRef(false);
   const modalRef = React.useRef<HTMLDivElement>(null);
+
+  // Handle closing animation
+  const handleClose = () => {
+    setIsClosing(true);
+    // Wait for animation to complete before actually closing
+    setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+      setDragY(0);
+    }, 800); // Match the transition duration
+  };
 
   function handleTouchStart(e: React.TouchEvent) {
     e.preventDefault();
@@ -104,7 +116,7 @@ export function SoukCardModal({
       setDragY(deltaY);
     }
     if (deltaY > 120) {
-      onClose();
+      handleClose();
       touchStartY.current = null;
       setDragY(0);
       allowSwipe.current = false;
@@ -116,7 +128,7 @@ export function SoukCardModal({
     e.stopPropagation();
 
     if (dragY > 60) {
-      onClose();
+      handleClose();
     }
     setDragY(0);
     touchStartY.current = null;
@@ -236,8 +248,12 @@ export function SoukCardModal({
         ref={modalRef}
         className="fixed inset-x-0 bottom-0 top-6 z-[100] flex items-start justify-center"
         style={{
-          transform: dragY ? `translateY(${dragY}px)` : undefined,
-          transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
+          transform: isClosing ? 'translateY(100vh)' : dragY ? `translateY(${dragY}px)` : undefined,
+          transition: isClosing
+            ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)'
+            : dragY === 0
+              ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)'
+              : 'none',
           touchAction: 'pan-y',
         }}
         onTouchEnd={handleTouchEnd}
@@ -270,7 +286,7 @@ export function SoukCardModal({
           <button
             aria-label="Schließen"
             className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/80 shadow"
-            onClick={onClose}
+            onClick={handleClose}
           >
             <X className="h-5 w-5 text-gray-700" />
           </button>
