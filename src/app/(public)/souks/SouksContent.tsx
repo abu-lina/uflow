@@ -177,7 +177,7 @@ export function SouksContent() {
       </motion.div>
 
       {/* Main Content */}
-      <div className="mx-auto w-full max-w-screen-xl overflow-x-hidden py-8 pt-24 sm:pt-8 md:pt-20">
+      <div className="mx-auto w-full max-w-screen-xl overflow-x-hidden py-8 pt-24 sm:pt-8 md:pt-28">
         <motion.div
           animate={{ opacity: 1 }}
           className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4"
