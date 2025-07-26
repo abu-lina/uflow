@@ -268,7 +268,7 @@ export function SoukCardModal({
             <div className="absolute left-1/2 top-2 z-10 h-2 w-16 -translate-x-1/2 rounded-full bg-gray-500 opacity-90 shadow-lg" />
             <div className="absolute bottom-0 left-0 right-0 flex flex-col items-start justify-end p-4">
               <div className="outline-uFlowDarkGrey inline-flex h-8 items-center justify-center overflow-hidden rounded-[9.54px] bg-white/70 px-2.5 outline outline-[0.79px] outline-offset-[-0.40px] backdrop-blur-[1.99px]">
-                <div className="justify-center text-center font-['Inter_Tight'] text-sm font-medium text-black">
+                <div className="justify-center text-center font-inter-tight text-sm font-medium text-black">
                   {category}
                 </div>
               </div>
