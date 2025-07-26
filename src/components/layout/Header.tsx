@@ -14,7 +14,6 @@ import { SignupModal } from '@/features/auth/components/SignupModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
-import { useSectionInView } from '@/hooks/useSectionInView';
 
 export function Header() {
   const [showSigninModal, setShowSigninModal] = useState(false);
@@ -22,7 +21,6 @@ export function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, signOut, loading } = useAuth();
-  const aboutInView = useSectionInView('about');
   const router = useRouter();
   const { isVisible } = useScrollDirection();
 
@@ -59,7 +57,7 @@ export function Header() {
               </Link>
               {!user && (
                 <Link
-                  className={`flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-title hover:bg-grey-light hover:text-[#333333] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary${aboutInView ? ' text-content-title underline' : ''}`}
+                  className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-title hover:bg-grey-light hover:text-[#333333] focus:text-content-title focus:outline-none active:text-content-title"
                   href="#about"
                   scroll={true}
                 >

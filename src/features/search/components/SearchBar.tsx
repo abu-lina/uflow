@@ -38,7 +38,36 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
   const [locations, setLocations] = useState<string[]>(['Überall']);
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
   const [hasMounted, setHasMounted] = useState(false);
+
+  // Handle clicks outside dropdowns
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryOpen(false);
+      }
+      if (
+        locationDropdownRef.current &&
+        !locationDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsLocationOpen(false);
+      }
+    }
+
+    // Add event listener if any dropdown is open
+    if (isCategoryOpen || isLocationOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCategoryOpen, isLocationOpen]);
 
   useEffect(() => {
     fetchUsedCategories()
@@ -183,7 +212,10 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                   />
                 </button>
                 {isCategoryOpen && (
-                  <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
+                  <div
+                    ref={categoryDropdownRef}
+                    className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                  >
                     <button
                       key="Alle"
                       className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
@@ -259,7 +291,10 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
               />
             </button>
             {isLocationOpen && (
-              <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
+              <div
+                ref={locationDropdownRef}
+                className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+              >
                 {locations.map((location) => (
                   <button
                     key={location}
