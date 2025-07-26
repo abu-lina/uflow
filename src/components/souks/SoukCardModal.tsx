@@ -239,12 +239,12 @@ export function SoukCardModal({
       >
         <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Visual Section - Mobile Only */}
-          <div className="relative inline-flex h-96 w-96 flex-col items-start justify-end gap-3 sm:hidden">
+          <div className="relative h-96 w-full sm:hidden">
             <Image
               fill
               priority
               alt="Souk Visual"
-              className="border-uFlowWhite absolute left-0 top-0 h-96 w-96 rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
+              className="border-uFlowWhite absolute left-0 top-0 h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
               src={imageUrl}
               style={{
                 boxSizing: 'border-box',
@@ -255,7 +255,7 @@ export function SoukCardModal({
             {/* Drag handle for swipe-to-close - positioned on top of image */}
             <div className="absolute left-1/2 top-2 z-10 h-2 w-16 -translate-x-1/2 rounded-full bg-gray-500 opacity-90 shadow-lg" />
             <div
-              className="flex flex-col items-start justify-end self-stretch p-4"
+              className="absolute bottom-0 left-0 right-0 flex flex-col items-start justify-end p-4"
               style={{
                 transform: dragY ? `translateY(${dragY}px)` : undefined,
                 transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
