@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import { motion } from 'framer-motion';
 
@@ -27,7 +27,6 @@ function useIsMobile() {
 }
 
 export function SouksContent() {
-  const router = useRouter();
   const { user, loading: userLoading } = useAuth();
   const [souks, setSouks] = useState<Souk[]>([]);
   const [bookmarkedSoukIds, setBookmarkedSoukIds] = useState<string[]>([]);
@@ -131,12 +130,15 @@ export function SouksContent() {
 
   const handleSoukClick = (souk: Souk) => {
     setSelectedSouk(souk);
-    router.push(`/souks/${souk.souk_id}`);
+    // Remove router.push to prevent navigation issues
+    // router.push(`/souks/${souk.souk_id}`);
   };
 
   const handleCloseModal = async () => {
     setSelectedSouk(null);
-    router.push('/souks');
+    // Remove router.push to prevent background reload
+    // router.push('/souks');
+
     // Refresh bookmarked souks after closing modal
     if (user) {
       try {
