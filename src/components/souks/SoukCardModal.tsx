@@ -74,6 +74,9 @@ export function SoukCardModal({
   const modalRef = React.useRef<HTMLDivElement>(null);
 
   function handleTouchStart(e: React.TouchEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+
     if ((e.currentTarget as HTMLElement).scrollTop > 0) return;
     const modal = modalRef.current;
     if (modal) {
@@ -83,7 +86,6 @@ export function SoukCardModal({
         allowSwipe.current = true;
         touchStartY.current = e.touches[0].clientY;
         setDragY(0);
-        e.preventDefault(); // Prevent default to avoid conflicts
       } else {
         allowSwipe.current = false;
         touchStartY.current = null;
@@ -93,13 +95,15 @@ export function SoukCardModal({
 
   function handleTouchMove(e: React.TouchEvent) {
     if (!allowSwipe.current || touchStartY.current === null) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
     const deltaY = e.touches[0].clientY - touchStartY.current;
     if (deltaY > 0) {
       setDragY(deltaY);
-      e.preventDefault(); // Prevent default scrolling during drag
     }
     if (deltaY > 120) {
-      // Reduced threshold for better responsiveness
       onClose();
       touchStartY.current = null;
       setDragY(0);
@@ -107,9 +111,11 @@ export function SoukCardModal({
     }
   }
 
-  function handleTouchEnd() {
+  function handleTouchEnd(e: React.TouchEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (dragY > 60) {
-      // If dragged more than 60px, close the modal
       onClose();
     }
     setDragY(0);
@@ -232,6 +238,7 @@ export function SoukCardModal({
         style={{
           transform: dragY ? `translateY(${dragY}px)` : undefined,
           transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
+          touchAction: 'pan-y',
         }}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
@@ -239,7 +246,7 @@ export function SoukCardModal({
       >
         <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Visual Section - Mobile Only */}
-          <div className="relative h-96 w-full sm:hidden">
+          <div className="relative h-96 w-full sm:hidden" style={{ touchAction: 'none' }}>
             <Image
               fill
               priority
@@ -247,6 +254,7 @@ export function SoukCardModal({
               className="border-uFlowWhite pointer-events-none absolute left-0 top-0 h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
               draggable="false"
               src={imageUrl}
+              unselectable="on"
             />
             {/* Drag handle for swipe-to-close - positioned on top of image */}
             <div className="absolute left-1/2 top-2 z-10 h-2 w-16 -translate-x-1/2 rounded-full bg-gray-500 opacity-90 shadow-lg" />
