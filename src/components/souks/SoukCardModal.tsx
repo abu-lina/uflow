@@ -107,8 +107,8 @@ export function SoukCardModal({
       // Much more conservative threshold for iPhone SE
       const dragThreshold = 100; // Start moving after 100px
 
-      // Only respond to slow, deliberate movements (velocity < 0.5 px/ms)
-      if (deltaY > dragThreshold && velocity < 0.5) {
+      // Only respond to moderate speed movements (velocity < 1.2 px/ms)
+      if (deltaY > dragThreshold && velocity < 1.2) {
         setDragY(deltaY - dragThreshold);
       }
     } else if (deltaY < 0) {
@@ -132,8 +132,8 @@ export function SoukCardModal({
     // Calculate velocity
     const velocity = Math.abs(deltaY) / deltaTime;
 
-    // Only close on downward swipes (positive deltaY) with slow velocity
-    if (deltaY > 0 && velocity < 0.5) {
+    // Only close on downward swipes (positive deltaY) with moderate velocity
+    if (deltaY > 0 && velocity < 1.2) {
       // Much higher threshold for closing on iPhone SE
       if (deltaY > 400) {
         handleClose();
