@@ -248,7 +248,7 @@ export function SoukCardModal({
               src={imageUrl}
               style={{
                 boxSizing: 'border-box',
-                transform: dragY ? `translateY(${dragY * 0.1}px)` : undefined,
+                transform: dragY ? `translateY(${dragY}px)` : undefined,
                 transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
               }}
             />
@@ -257,7 +257,7 @@ export function SoukCardModal({
             <div
               className="flex flex-col items-start justify-end self-stretch p-4"
               style={{
-                transform: dragY ? `translateY(${dragY * 0.1}px)` : undefined,
+                transform: dragY ? `translateY(${dragY}px)` : undefined,
                 transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
               }}
             >
