@@ -83,26 +83,35 @@ export function SoukCardModal({
         allowSwipe.current = true;
         touchStartY.current = e.touches[0].clientY;
         setDragY(0);
+        e.preventDefault(); // Prevent default to avoid conflicts
       } else {
         allowSwipe.current = false;
         touchStartY.current = null;
       }
     }
   }
+
   function handleTouchMove(e: React.TouchEvent) {
     if (!allowSwipe.current || touchStartY.current === null) return;
     const deltaY = e.touches[0].clientY - touchStartY.current;
     if (deltaY > 0) {
       setDragY(deltaY);
+      e.preventDefault(); // Prevent default scrolling during drag
     }
-    if (deltaY > 150) {
+    if (deltaY > 120) {
+      // Reduced threshold for better responsiveness
       onClose();
       touchStartY.current = null;
       setDragY(0);
       allowSwipe.current = false;
     }
   }
+
   function handleTouchEnd() {
+    if (dragY > 60) {
+      // If dragged more than 60px, close the modal
+      onClose();
+    }
     setDragY(0);
     touchStartY.current = null;
     allowSwipe.current = false;
@@ -222,23 +231,13 @@ export function SoukCardModal({
         className="fixed inset-x-0 bottom-0 top-6 z-[100] flex items-start justify-center"
         style={{
           transform: dragY ? `translateY(${dragY}px)` : undefined,
-          transition: dragY === 0 ? 'transform 0.2s cubic-bezier(0.4,0,0.2,1)' : undefined,
+          transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
         }}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
       >
         <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
-          {/* Drag handle for swipe-to-close */}
-          <div className="mx-auto mb-1 mt-2 h-1.5 w-12 rounded-full bg-zinc-300 opacity-70" />
-          {/* Close Button */}
-          <button
-            aria-label="Schließen"
-            className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/80 shadow"
-            onClick={onClose}
-          >
-            <X className="h-5 w-5 text-gray-700" />
-          </button>
           {/* Visual Section - Mobile Only */}
           <div className="relative inline-flex h-96 w-96 flex-col items-start justify-end gap-3 sm:hidden">
             <Image
@@ -247,9 +246,21 @@ export function SoukCardModal({
               alt="Souk Visual"
               className="border-uFlowWhite absolute left-0 top-0 h-96 w-96 rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
               src={imageUrl}
-              style={{ boxSizing: 'border-box' }}
+              style={{
+                boxSizing: 'border-box',
+                transform: dragY ? `translateY(${dragY * 0.1}px)` : undefined,
+                transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
+              }}
             />
-            <div className="flex flex-col items-start justify-end self-stretch p-4">
+            {/* Drag handle for swipe-to-close - positioned on top of image */}
+            <div className="absolute left-1/2 top-2 z-10 h-2 w-16 -translate-x-1/2 rounded-full bg-gray-500 opacity-90 shadow-lg" />
+            <div
+              className="flex flex-col items-start justify-end self-stretch p-4"
+              style={{
+                transform: dragY ? `translateY(${dragY * 0.1}px)` : undefined,
+                transition: dragY === 0 ? 'transform 0.3s cubic-bezier(0.4,0,0.2,1)' : 'none',
+              }}
+            >
               <div className="outline-uFlowDarkGrey inline-flex h-8 items-center justify-center overflow-hidden rounded-[9.54px] bg-white/70 px-2.5 outline outline-[0.79px] outline-offset-[-0.40px] backdrop-blur-[1.99px]">
                 <div className="justify-center text-center font-['Inter_Tight'] text-sm font-medium text-black">
                   {category}
@@ -257,8 +268,14 @@ export function SoukCardModal({
               </div>
             </div>
           </div>
-          {/* 12px gap below visual for mobile only */}
-          <div className="mt-3 sm:hidden" />
+          {/* Close Button */}
+          <button
+            aria-label="Schließen"
+            className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/80 shadow"
+            onClick={onClose}
+          >
+            <X className="h-5 w-5 text-gray-700" />
+          </button>
           {/* Visual Section - Desktop (unchanged) */}
           <div className="relative isolation-auto flex hidden h-[356px] w-full flex-col items-start justify-end gap-[12.25px] p-0 sm:block sm:w-[392px]">
             <div className="absolute left-0 top-0 z-0 h-full w-full">
