@@ -42,7 +42,7 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
   const mobileContent = (
     <div
       className={clsx(
-        'flex w-full flex-col items-center gap-8',
+        'flex min-h-full w-full flex-col items-center gap-8 bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]',
         'sm:max-w-screen-xl',
         isMobile && 'mx-auto w-[345px] px-6',
         isMobile && 'h-[calc(100vh-64px)] overflow-y-auto pb-4',
@@ -179,7 +179,7 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
 
   // Desktop: tabbed view
   const desktopContent = (
-    <div className="flex w-full flex-col items-center gap-8 sm:max-w-screen-xl md:pt-20">
+    <div className="flex min-h-full w-full flex-col items-center gap-8 bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] sm:max-w-screen-xl md:pt-20">
       {/* Profile header (greeting, avatar, etc.) */}
       <div className="flex w-full flex-col items-center">
         <div className="text-center font-baskerville text-base">As-Salamu-Aleikum</div>

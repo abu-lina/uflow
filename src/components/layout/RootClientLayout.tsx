@@ -63,13 +63,15 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
   return (
     <LoadingProvider>
-      <div className="relative flex min-h-[100dvh] flex-col overflow-hidden">
+      <div className="relative flex min-h-[100dvh] flex-col">
         <main ref={mainRef} className="flex-1 overflow-y-auto pb-[64px] md:pb-0">
           <PageTransition key={pathname}>
             {isLandingPage ? (
               children
             ) : (
-              <div className="bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">{children}</div>
+              <div className="min-h-full bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+                {children}
+              </div>
             )}
           </PageTransition>
         </main>

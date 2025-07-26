@@ -27,6 +27,7 @@
   body {
     @apply min-h-screen font-inter text-content;
     background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%);
+    background-attachment: fixed;
   }
 
   body::before {
@@ -35,6 +36,7 @@
     inset: 0;
     background-image: url('/images/pattern.svg');
     background-repeat: repeat;
+    background-attachment: fixed;
     opacity: 0.05;
     pointer-events: none;
     z-index: 0;
@@ -44,6 +46,7 @@
   #__next {
     @apply min-h-screen;
     background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%);
+    background-attachment: fixed;
   }
 
   #__next::before {
@@ -52,6 +55,7 @@
     inset: 0;
     background-image: url('/images/pattern.svg');
     background-repeat: repeat;
+    background-attachment: fixed;
     opacity: 0.05;
     pointer-events: none;
     z-index: 0;
