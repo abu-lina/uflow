@@ -286,7 +286,7 @@ export function SoukCardModal({
               fill
               priority
               alt="Souk Visual"
-              className="border-uFlowWhite absolute left-0 top-0 h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
+              className="border-uFlowWhite absolute left-0 top-0 h-full w-full border border-[1.1px] object-cover"
               draggable="false"
               src={imageUrl}
             />
