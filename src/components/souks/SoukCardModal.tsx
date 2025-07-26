@@ -354,7 +354,7 @@ export function SoukCardModal({
             </div>
           </div>
           {/* Modal Content (Mobile Only) */}
-          <div className="mx-auto flex w-[353px] flex-col items-start gap-5 overflow-x-hidden px-3 pb-24 sm:hidden sm:pb-6">
+          <div className="mx-auto flex w-[353px] flex-col items-start gap-5 overflow-x-hidden px-3 pb-20 pt-8 sm:hidden sm:pb-6">
             {/* Title */}
             <div className="flex w-full flex-col items-start gap-1">
               <div className="w-full font-inter-tight text-[24px] font-semibold leading-[29px] text-[#232323]">
