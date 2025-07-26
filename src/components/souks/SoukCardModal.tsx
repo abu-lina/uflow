@@ -279,9 +279,9 @@ export function SoukCardModal({
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
       >
-        <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
+        <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-hidden rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Visual Section - Mobile Only */}
-          <div className="relative h-96 w-full overflow-hidden rounded-t-[29.4px] sm:hidden">
+          <div className="relative h-full w-full overflow-hidden rounded-t-[29.4px] sm:hidden">
             <Image
               fill
               priority
