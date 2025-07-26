@@ -107,8 +107,8 @@ export function SoukCardModal({
       // Much more conservative threshold for iPhone SE
       const dragThreshold = 100; // Start moving after 100px
 
-      // Only respond to natural swipe speeds (velocity < 2.0 px/ms)
-      if (deltaY > dragThreshold && velocity < 2.0) {
+      // Only respond to natural swipe speeds (velocity < 2.5 px/ms)
+      if (deltaY > dragThreshold && velocity < 2.5) {
         setDragY(deltaY - dragThreshold);
       }
     } else if (deltaY < 0) {
@@ -133,7 +133,7 @@ export function SoukCardModal({
     const velocity = Math.abs(deltaY) / deltaTime;
 
     // Only close on downward swipes (positive deltaY) with natural velocity
-    if (deltaY > 0 && velocity < 2.0) {
+    if (deltaY > 0 && velocity < 2.5) {
       // Much higher threshold for closing on iPhone SE
       if (deltaY > 400) {
         handleClose();
@@ -279,20 +279,17 @@ export function SoukCardModal({
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
       >
-        <div
-          className={`animate-fadeInUp relative h-full w-full max-w-[392px] rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px] ${
-            isClosing ? 'overflow-hidden' : 'overflow-y-auto'
-          }`}
-        >
+        <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Visual Section - Mobile Only */}
-          <div className="relative h-96 w-full overflow-hidden rounded-t-[29.4px] sm:hidden">
+          <div className="relative h-96 w-full sm:hidden" style={{ touchAction: 'none' }}>
             <Image
               fill
               priority
               alt="Souk Visual"
-              className="border-uFlowWhite absolute left-0 top-0 h-full w-full rounded-t-[29.4px] border border-[1.1px] object-cover"
+              className="border-uFlowWhite pointer-events-none absolute left-0 top-0 h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
               draggable="false"
               src={imageUrl}
+              unselectable="on"
             />
             {/* Drag handle for swipe-to-close - positioned on top of image */}
             <div className="absolute left-1/2 top-2 z-10 h-2 w-16 -translate-x-1/2 rounded-full bg-gray-500 opacity-90 shadow-lg" />
