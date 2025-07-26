@@ -47,10 +47,33 @@ export function SoukCardModal({
   // Prevent background scroll when modal is open
   useEffect(() => {
     if (!open) return;
-    const original = document.body.style.overflow;
+
+    // Store original styles
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyPosition = document.body.style.position;
+    const originalBodyTop = document.body.style.top;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    // Prevent background scrolling
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${window.scrollY}px`;
+    document.body.style.width = '100%';
+    document.documentElement.style.overflow = 'hidden';
+
     return () => {
-      document.body.style.overflow = original;
+      // Restore original styles
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.position = originalBodyPosition;
+      document.body.style.top = originalBodyTop;
+      document.body.style.width = '';
+      document.documentElement.style.overflow = originalHtmlOverflow;
+
+      // Restore scroll position
+      if (originalBodyPosition === 'fixed') {
+        const scrollY = document.body.style.top;
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     };
   }, [open]);
 
