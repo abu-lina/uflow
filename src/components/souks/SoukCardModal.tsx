@@ -281,15 +281,14 @@ export function SoukCardModal({
       >
         <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Visual Section - Mobile Only */}
-          <div className="relative h-96 w-full sm:hidden" style={{ touchAction: 'none' }}>
+          <div className="relative h-96 w-full sm:hidden">
             <Image
               fill
               priority
               alt="Souk Visual"
-              className="border-uFlowWhite pointer-events-none absolute left-0 top-0 h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
+              className="border-uFlowWhite absolute left-0 top-0 h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
               draggable="false"
               src={imageUrl}
-              unselectable="on"
             />
             {/* Drag handle for swipe-to-close - positioned on top of image */}
             <div className="absolute left-1/2 top-2 z-10 h-2 w-16 -translate-x-1/2 rounded-full bg-gray-500 opacity-90 shadow-lg" />
