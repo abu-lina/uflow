@@ -98,7 +98,7 @@ export function SoukCardModal({
     // Only allow downward swipes
     if (deltaY > 0) {
       // Reduce sensitivity - only move modal after significant drag
-      const dragThreshold = 20; // Start moving after 20px
+      const dragThreshold = 40; // Start moving after 20px
       if (deltaY > dragThreshold) {
         setDragY(deltaY - dragThreshold);
       }
