@@ -13,6 +13,7 @@ import { sharedTransition } from '@/components/ui/PageTransition';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
 import { useLoading } from '@/providers/LoadingProvider';
+import { useSearch } from '@/providers/search-provider';
 import { searchSouks, getBookmarkedSouks, type Souk } from '@/services/souks';
 
 function useIsMobile() {
@@ -37,14 +38,30 @@ export function SouksContent() {
   const searchParams = useSearchParams();
   const [paramVersion, setParamVersion] = useState(0);
   const location = searchParams.get('location') || 'Überall';
-  const category = searchParams.get('category') || 'Alle';
+  const category = searchParams.get('category') || null;
   const query = searchParams.get('q') || '';
   const isMobile = useIsMobile();
+
+  // Get search context to sync with URL parameters
+  const { setSelectedCategory, setSearchQuery, setSelectedLocation } = useSearch();
 
   // Cache for souks data
   const [souksCache, setSouksCache] = useState<Record<string, Souk[]>>({});
 
   const { isPreloading } = useLoading();
+
+  // Sync URL parameters with search context
+  useEffect(() => {
+    if (category) {
+      setSelectedCategory(category);
+    }
+    if (query) {
+      setSearchQuery(query);
+    }
+    if (location) {
+      setSelectedLocation(location);
+    }
+  }, [category, query, location, setSelectedCategory, setSearchQuery, setSelectedLocation]);
 
   useEffect(() => {
     setParamVersion((v) => v + 1);
@@ -69,7 +86,7 @@ export function SouksContent() {
           }
         }, 100);
 
-        const data = await searchSouks(query, category, location);
+        const data = await searchSouks(query, category || 'Alle', location);
         setSouks(data);
 
         // Cache the results
@@ -175,7 +192,7 @@ export function SouksContent() {
         initial={{ opacity: 0, y: -1 }}
         transition={sharedTransition}
       >
-        <SearchBar hideCategoryFilter className="rounded-lg border border-gray-200 shadow-sm" />
+        <SearchBar className="rounded-lg border border-gray-200 shadow-sm" />
       </motion.div>
 
       {/* Main Content */}

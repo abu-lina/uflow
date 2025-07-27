@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { fetchUsedCategories, type Category } from '@/services/categories';
 
 import CategoryGallery from './CategoryGallery';
@@ -10,6 +12,7 @@ export function CategoryGallerySection() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     async function loadCategories() {
@@ -27,6 +30,11 @@ export function CategoryGallerySection() {
 
     loadCategories();
   }, []);
+
+  const handleCategoryClick = (categoryId: string) => {
+    // Navigate to search page with category filter
+    router.push(`/souks?category=${categoryId}`);
+  };
 
   if (isLoading) {
     return (
@@ -57,14 +65,27 @@ export function CategoryGallerySection() {
         {categories.map((category) => {
           const categoryName = (category.name_de || '') as string;
           return (
-            <div key={category.category_id} className="flex flex-col">
+            <div
+              key={category.category_id}
+              aria-label={`Alle Souks in der Kategorie ${categoryName} anzeigen`}
+              className="-m-2 flex cursor-pointer flex-col rounded-lg p-2 transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
+              role="button"
+              tabIndex={0}
+              onClick={() => handleCategoryClick(category.category_id as string)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleCategoryClick(category.category_id as string);
+                }
+              }}
+            >
               <div className="flex w-full flex-row items-start justify-between">
                 <div className="flex flex-col items-start justify-between gap-2.5 p-3">
                   <div className="flex flex-col items-start">
                     <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323]">
                       Lerne unsere Zakat Partner kennen
                     </div>
-                    <div className="w-full font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
+                    <div className="w-full truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
                       {categoryName}
                     </div>
                   </div>

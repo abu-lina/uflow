@@ -89,6 +89,40 @@ export async function fetchSoukCities(): Promise<string[]> {
   return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
 }
 
+// Fetch cities that have content based on current search filters
+export async function fetchFilteredCities(
+  selectedCategory?: string | null,
+  searchQuery?: string | null,
+): Promise<string[]> {
+  let req = supabase.from('souks').select('address_city');
+
+  // Apply category filter if specified
+  if (selectedCategory && selectedCategory !== 'Alle') {
+    req = req.eq('category_id', selectedCategory);
+  }
+
+  // Apply search query filter if specified
+  if (searchQuery && searchQuery.trim()) {
+    req = req.ilike('souk_name', `%${searchQuery.trim()}%`);
+  }
+
+  const { data, error } = await req.returns<{ address_city: string | null }[]>();
+
+  if (error) {
+    throw error;
+  }
+
+  const allCities = data?.map((s) => s.address_city) ?? [];
+  const uniqueCities = Array.from(
+    new Set(
+      allCities.filter((city): city is string => {
+        return typeof city === 'string' && city.trim() !== '' && city !== 'null';
+      }),
+    ),
+  );
+  return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
+}
+
 /**
  * Fetch all souks bookmarked by a user
  */

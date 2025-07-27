@@ -9,8 +9,8 @@ import { ChevronDown, Search, X } from 'lucide-react';
 
 // Local imports
 import { useSearch } from '@/providers/search-provider';
-import { fetchUsedCategories, type Category } from '@/services/categories';
-import { fetchSoukCities } from '@/services/souks';
+import { fetchUsedCategories, fetchFilteredCategories, type Category } from '@/services/categories';
+import { fetchSoukCities, fetchFilteredCities } from '@/services/souks';
 
 interface SearchBarProps {
   className?: string;
@@ -69,25 +69,49 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
     };
   }, [isCategoryOpen, isLocationOpen]);
 
+  // Fetch categories based on current filters
   useEffect(() => {
-    fetchUsedCategories()
-      .then((data) => {
-        setCategories(data);
-      })
-      .catch(() => {
+    async function fetchCategories() {
+      try {
+        // If we have location or search query filters, use filtered categories
+        if ((selectedLocation && selectedLocation !== 'Überall') || searchQuery.trim()) {
+          const filteredCategories = await fetchFilteredCategories(selectedLocation, searchQuery);
+          setCategories(filteredCategories);
+        } else {
+          // Otherwise, fetch all used categories
+          const allCategories = await fetchUsedCategories();
+          setCategories(allCategories);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
         setCategories([]);
-      });
-  }, []);
+      }
+    }
 
+    fetchCategories();
+  }, [selectedLocation, searchQuery]);
+
+  // Fetch cities based on current filters
   useEffect(() => {
-    fetchSoukCities()
-      .then((cities) => {
-        setLocations(['Überall', ...cities]);
-      })
-      .catch(() => {
+    async function fetchCities() {
+      try {
+        // If we have category or search query filters, use filtered cities
+        if (selectedCategory || searchQuery.trim()) {
+          const filteredCities = await fetchFilteredCities(selectedCategory, searchQuery);
+          setLocations(['Überall', ...filteredCities]);
+        } else {
+          // Otherwise, fetch all cities
+          const allCities = await fetchSoukCities();
+          setLocations(['Überall', ...allCities]);
+        }
+      } catch (error) {
+        console.error('Error fetching cities:', error);
         setLocations(['Überall']);
-      });
-  }, []);
+      }
+    }
+
+    fetchCities();
+  }, [selectedCategory, searchQuery]);
 
   // Sync state with URL params only on initial mount or when the page changes
   useEffect(() => {
