@@ -21,7 +21,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: 'hsl(0, 0%, 0%)',
+  themeColor: '#f5f5f5',
   viewportFit: 'cover',
 };
 
@@ -44,7 +44,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
           name="viewport"
         />
-        <meta content="#000000" name="theme-color" />
+        <meta content="#f5f5f5" name="theme-color" />
+        <meta content="#f5f5f5" name="apple-mobile-web-app-status-bar-style" />
+        <meta content="default" name="apple-mobile-web-app-status-bar-style" />
         <link href="/manifest.json" rel="manifest" />
         <link href="/icons/icon-192x192.png" rel="apple-touch-icon" />
       </head>
@@ -52,6 +54,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         className={`relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
         style={{
           minHeight: '100dvh',
+          margin: 0,
+          padding: 0,
+          background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
+          backgroundAttachment: 'fixed',
         }}
       >
         <AuthProvider initialUser={user}>
