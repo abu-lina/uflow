@@ -69,7 +69,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
-            className={`relative h-full w-1/4 animate-pulse border border-white bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 3 ? 'rounded-r-[29px]' : ''}`}
+            className={`relative h-full w-1/4 animate-pulse overflow-hidden border border-white bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 3 ? 'rounded-r-[29px]' : ''}`}
           />
         ))}
       </div>
@@ -85,7 +85,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
       {displayImages.slice(0, 4).map((imageUrl, index) => (
         <div
           key={index}
-          className={`relative h-full w-1/4 ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+          className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
         >
           <Image
             fill
@@ -94,7 +94,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
                 ? `Placeholder image ${index + 1}`
                 : `Souk image ${index + 1}`
             }
-            className="border border-white object-cover"
+            className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
             priority={index < 2}
             sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
             src={imageUrl}
