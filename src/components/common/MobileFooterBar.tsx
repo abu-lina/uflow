@@ -19,6 +19,7 @@ const navItems = [
     label: 'Home',
     href: '/',
     icon: (isActive: boolean) => <HomeIcon isActive={isActive} />,
+    noFrame: true,
   },
   {
     label: 'Explore',
