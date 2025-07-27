@@ -254,6 +254,82 @@
     }
   }
 
+  /* Ultra-aggressive scroll bar hiding for iOS */
+  @supports (-webkit-touch-callout: none) {
+    /* Target the specific right-side scroll indicator */
+    ::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      background: transparent !important;
+    }
+
+    ::-webkit-scrollbar-track {
+      display: none !important;
+      background: transparent !important;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      display: none !important;
+      background: transparent !important;
+    }
+
+    ::-webkit-scrollbar-corner {
+      display: none !important;
+      background: transparent !important;
+    }
+
+    /* Force hide on all possible scrollable elements */
+    html,
+    body,
+    #__next,
+    main,
+    div,
+    section,
+    article,
+    aside,
+    nav,
+    header,
+    footer {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+      overflow-x: hidden !important;
+    }
+
+    /* Hide scroll indicators on all elements */
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar,
+    #__next::-webkit-scrollbar,
+    main::-webkit-scrollbar,
+    div::-webkit-scrollbar,
+    section::-webkit-scrollbar,
+    article::-webkit-scrollbar,
+    aside::-webkit-scrollbar,
+    nav::-webkit-scrollbar,
+    header::-webkit-scrollbar,
+    footer::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      background: transparent !important;
+    }
+
+    /* Target iOS native scroll indicators */
+    * {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      background: transparent !important;
+    }
+  }
+
   /* Global gradient for all pages and areas */
   .page-background {
     background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%) !important;
@@ -268,6 +344,35 @@
   .page-content {
     background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%) !important;
     background-attachment: fixed !important;
+  }
+
+  /* Utility class to hide scroll bars */
+  .hide-scrollbar {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-track {
+    display: none !important;
+    background: transparent !important;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-thumb {
+    display: none !important;
+    background: transparent !important;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-corner {
+    display: none !important;
+    background: transparent !important;
   }
 
   h1,

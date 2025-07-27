@@ -15,7 +15,9 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
       style={{ minHeight: '100dvh' }}
     >
       {/* Main Content */}
-      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-20">{children}</main>
+      <main className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-20">
+        {children}
+      </main>
 
       {/* Bottom Navigation */}
       <MobileFooterBar />
