@@ -263,11 +263,9 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                     {categories.map((cat, idx) => (
                       <button
                         key={cat.category_id || idx}
-                        className={`$ {selectedCategory === cat.category_id ? 'bg-gray-50' : ''}
-                      block w-full px-4
-                        py-2 text-left
-                        text-base hover:bg-gray-50
-                    `}
+                        className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                          selectedCategory === cat.category_id ? 'bg-gray-50' : ''
+                        }`}
                         onClick={() => {
                           setSelectedCategory(cat.category_id ?? null);
                           setIsCategoryOpen(false);
@@ -322,11 +320,9 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                 {locations.map((location) => (
                   <button
                     key={location}
-                    className={`$ {location === selectedLocation ? 'bg-gray-50' : ''}
-                      block w-full px-4
-                        py-2 text-left
-                        text-base hover:bg-gray-50
-                    `}
+                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                      location === selectedLocation ? 'bg-gray-50' : ''
+                    }`}
                     onClick={() => {
                       setSelectedLocation(location);
                       setIsLocationOpen(false);
