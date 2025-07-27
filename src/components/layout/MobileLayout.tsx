@@ -10,7 +10,10 @@ interface MobileLayoutProps {
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   return (
-    <div className="flex min-h-[100dvh] w-full max-w-[100vw] flex-col bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+    <div
+      className="flex min-h-[100dvh] w-full max-w-[100vw] flex-col bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]"
+      style={{ minHeight: '100dvh' }}
+    >
       {/* Main Content */}
       <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-20">{children}</main>
 

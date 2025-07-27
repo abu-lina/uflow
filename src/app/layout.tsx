@@ -22,6 +22,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: 'hsl(0, 0%, 0%)',
+  viewportFit: 'cover',
 };
 
 export const metadata: Metadata = {
@@ -40,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="de">
       <head>
         <meta
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
           name="viewport"
         />
         <meta content="#000000" name="theme-color" />
@@ -49,6 +50,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body
         className={`relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
+        style={{
+          minHeight: '100dvh',
+        }}
       >
         <AuthProvider initialUser={user}>
           <AuthSyncer />
