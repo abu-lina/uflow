@@ -141,12 +141,12 @@
   }
 
   /* Hide scroll bars on all scrollable elements */
-  * {
+  *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox']) {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* Internet Explorer 10+ */
   }
 
-  *::-webkit-scrollbar {
+  *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox'])::-webkit-scrollbar {
     display: none; /* WebKit browsers */
   }
 
@@ -206,13 +206,13 @@
     }
 
     /* Force hide scroll bars on all elements */
-    * {
+    *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox']) {
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none !important;
       -ms-overflow-style: none !important;
     }
 
-    *::-webkit-scrollbar {
+    *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox'])::-webkit-scrollbar {
       display: none !important;
       width: 0 !important;
       height: 0 !important;
@@ -284,7 +284,7 @@
     body,
     #__next,
     main,
-    div,
+    div:not(.dropdown-container):not([class*='dropdown']):not([role='listbox']),
     section,
     article,
     aside,
