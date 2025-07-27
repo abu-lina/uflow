@@ -328,6 +328,21 @@
       height: 0 !important;
       background: transparent !important;
     }
+
+    /* Ensure dropdowns and popups can overflow properly on iOS */
+    [role='listbox'],
+    [aria-haspopup='listbox'],
+    .absolute,
+    .relative,
+    [class*='dropdown'],
+    [class*='popup'],
+    [class*='modal'],
+    .dropdown-container {
+      overflow: visible !important;
+      overflow-x: visible !important;
+      overflow-y: visible !important;
+      z-index: 9999 !important;
+    }
   }
 
   /* Global gradient for all pages and areas */
@@ -433,4 +448,64 @@
 
 .growth-effect:hover {
   transform: scale(1.05);
+}
+
+/* iOS Safari specific fixes for dropdown visibility */
+@supports (-webkit-touch-callout: none) {
+  [role='listbox'],
+  [aria-haspopup='listbox'],
+  .absolute,
+  .relative,
+  [class*='dropdown'],
+  [class*='popup'],
+  [class*='modal'],
+  .dropdown-container {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    z-index: 9999 !important;
+    position: relative !important;
+  }
+
+  /* Fix for iOS Safari viewport issues */
+  .absolute {
+    position: absolute !important;
+  }
+
+  /* Ensure dropdowns are above other content */
+  [class*='z-'] {
+    z-index: inherit !important;
+  }
+
+  /* Fix for iPhone SE and similar small devices */
+  @media screen and (max-width: 375px),
+    screen and (max-height: 667px),
+    screen and (max-width: 390px) and (max-height: 844px) {
+    [role='listbox'],
+    [aria-haspopup='listbox'],
+    .absolute,
+    .relative,
+    [class*='dropdown'],
+    [class*='popup'],
+    [class*='modal'],
+    .dropdown-container {
+      overflow: visible !important;
+      overflow-x: visible !important;
+      overflow-y: visible !important;
+      z-index: 9999 !important;
+      position: relative !important;
+      transform: none !important;
+    }
+
+    /* Additional fixes for iOS Safari dropdown positioning */
+    .dropdown-container.absolute {
+      position: absolute !important;
+      z-index: 9999 !important;
+    }
+
+    /* Ensure dropdowns are not clipped by parent containers */
+    .relative {
+      overflow: visible !important;
+    }
+  }
 }

@@ -163,7 +163,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
   return (
     <div
       aria-label="Suche in der Ummah"
-      className={`flex h-10 flex-row items-center gap-4 rounded-lg bg-white px-2 ${className}`}
+      className={`relative flex h-10 flex-row items-center gap-4 rounded-lg bg-white px-2 ${className}`}
       role="search"
     >
       <div className="flex w-full flex-row items-center justify-between">
@@ -238,7 +238,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                 {isCategoryOpen && (
                   <div
                     ref={categoryDropdownRef}
-                    className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                    className="dropdown-container absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
                   >
                     <button
                       key="Alle"
@@ -317,7 +317,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
             {isLocationOpen && (
               <div
                 ref={locationDropdownRef}
-                className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                className="dropdown-container absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
               >
                 {locations.map((location) => (
                   <button
