@@ -196,9 +196,7 @@ export function MobileGreeting() {
               >
                 {/* Location Bar */}
                 <div className="flex w-full flex-row items-start justify-end px-6">
-                  <div className="relative h-[30px] w-[30px]">
-                    <div className="absolute inset-0 border border-white"></div>
-                  </div>
+                  {/* Removed white bordered rectangle */}
                 </div>
 
                 {/* Main Header */}
