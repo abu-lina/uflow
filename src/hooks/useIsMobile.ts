@@ -4,23 +4,23 @@ import { useEffect, useState } from 'react';
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    const checkIsMobile = () => {
-      // Check if the device is mobile or if the viewport is narrow
-      const isMobileDevice = window.matchMedia('(max-width: 1024px)').matches;
-      setIsMobile(isMobileDevice);
+    const checkDevice = () => {
+      const mobile = window.innerWidth < 768;
+      const ios =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      setIsMobile(mobile);
+      setIsIOS(ios);
     };
 
-    // Initial check
-    checkIsMobile();
-
-    // Add event listener for window resize
-    window.addEventListener('resize', checkIsMobile);
-
-    // Cleanup
-    return () => window.removeEventListener('resize', checkIsMobile);
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  return isMobile;
+  return { isMobile, isIOS };
 }
