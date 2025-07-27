@@ -57,7 +57,7 @@ export function CategoryGallerySection() {
         {categories.map((category) => {
           const categoryName = (category.name_de || '') as string;
           return (
-            <div key={category.category_id} className="flex flex-col gap-4">
+            <div key={category.category_id} className="flex flex-col">
               <div className="flex w-full flex-row items-start justify-between">
                 <div className="flex flex-col items-start justify-between gap-2.5 p-3">
                   <div className="flex flex-col items-start">

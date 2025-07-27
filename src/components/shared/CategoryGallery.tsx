@@ -65,7 +65,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
 
   if (loading) {
     return (
-      <div className="flex aspect-[16/6] min-h-[141px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+      <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
@@ -81,7 +81,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
   }
 
   return (
-    <div className="flex aspect-[16/6] min-h-[141px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+    <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
       {displayImages.slice(0, 4).map((imageUrl, index) => (
         <div
           key={index}
