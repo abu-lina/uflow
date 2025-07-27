@@ -121,6 +121,22 @@
     }
   }
 
+  /* Global gradient for all pages and areas */
+  .page-background {
+    background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%) !important;
+    background-attachment: fixed !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+  }
+
+  /* Ensure all main content areas have the gradient */
+  main,
+  .main-content,
+  .page-content {
+    background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%) !important;
+    background-attachment: fixed !important;
+  }
+
   h1,
   h2,
   h3,

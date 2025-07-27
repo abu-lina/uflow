@@ -125,12 +125,7 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
-      style={{
-        background: 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
-      }}
-    >
+    <div className="page-background fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       {/* Modal */}
       <div
         ref={modalRef}

@@ -95,7 +95,7 @@ export function MobileGreeting() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-white">
+    <div className="page-background min-h-[100dvh]">
       <AnimatePresence mode="wait">
         {currentSection === 'greeting' && isFirstVisit && (
           <motion.div

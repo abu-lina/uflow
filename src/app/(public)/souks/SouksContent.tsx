@@ -167,7 +167,7 @@ export function SouksContent() {
   }
 
   return (
-    <div className="relative min-h-full bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+    <div className="relative min-h-full">
       {/* Mobile Search Bar */}
       <motion.div
         animate={{ opacity: 1, y: 0 }}

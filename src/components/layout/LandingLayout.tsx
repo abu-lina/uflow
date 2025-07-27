@@ -7,5 +7,5 @@ interface LandingLayoutProps {
 }
 
 export function LandingLayout({ children }: LandingLayoutProps) {
-  return <div className="relative min-h-screen">{children}</div>;
+  return <div className="page-background relative min-h-screen">{children}</div>;
 }
