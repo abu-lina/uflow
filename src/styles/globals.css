@@ -121,6 +121,55 @@
     }
   }
 
+  /* Hide scroll bars across the entire application */
+  html {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  html::-webkit-scrollbar {
+    display: none; /* WebKit browsers (Chrome, Safari, Edge) */
+  }
+
+  body {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  body::-webkit-scrollbar {
+    display: none; /* WebKit browsers */
+  }
+
+  /* Hide scroll bars on all scrollable elements */
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* WebKit browsers */
+  }
+
+  /* Specific elements that commonly have scroll bars */
+  main,
+  .main-content,
+  .page-content,
+  .overflow-y-auto,
+  .overflow-x-auto,
+  .overflow-auto {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  main::-webkit-scrollbar,
+  .main-content::-webkit-scrollbar,
+  .page-content::-webkit-scrollbar,
+  .overflow-y-auto::-webkit-scrollbar,
+  .overflow-x-auto::-webkit-scrollbar,
+  .overflow-auto::-webkit-scrollbar {
+    display: none; /* WebKit browsers */
+  }
+
   /* Global gradient for all pages and areas */
   .page-background {
     background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%) !important;
