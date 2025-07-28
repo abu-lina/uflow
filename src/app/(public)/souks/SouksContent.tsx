@@ -1,32 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
 import { motion } from 'framer-motion';
 
 import { CategoryFilter } from '@/components/souks/CategoryFilter';
-import { SoukCard } from '@/components/souks/SoukCard';
 import { SoukCardModal } from '@/components/souks/SoukCardModal';
 import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
+import { SouksList } from '@/components/souks/SouksList';
 import { sharedTransition } from '@/components/ui/PageTransition';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { useLoading } from '@/providers/LoadingProvider';
 import { useSearch } from '@/providers/search-provider';
 import { searchSouks, getBookmarkedSouks, type Souk } from '@/services/souks';
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-  return isMobile;
-}
+import { getSoukImageUrl } from '@/utils/imageUtils';
 
 export function SouksContent() {
   const { user, loading: userLoading } = useAuth();
@@ -53,6 +44,23 @@ export function SouksContent() {
   const [souksCache, setSouksCache] = useState<Record<string, Souk[]>>({});
 
   const { isPreloading } = useLoading();
+
+  // Memoized event handlers
+  const handleBookmarkChange = useCallback((soukId: string, isBookmarked: boolean) => {
+    if (isBookmarked) {
+      setBookmarkedSoukIds((prev) => [...prev, soukId]);
+    } else {
+      setBookmarkedSoukIds((prev) => prev.filter((id) => id !== soukId));
+    }
+  }, []);
+
+  const handleSoukClick = useCallback((souk: Souk) => {
+    setSelectedSouk(souk);
+  }, []);
+
+  const handleCloseModal = useCallback(async () => {
+    setSelectedSouk(null);
+  }, []);
 
   // Sync URL parameters with search context
   useEffect(() => {
@@ -143,42 +151,6 @@ export function SouksContent() {
     return null;
   }
 
-  const handleBookmarkChange = (soukId: string, isBookmarked: boolean) => {
-    setBookmarkedSoukIds((prev) =>
-      isBookmarked ? [...prev, soukId] : prev.filter((id) => id !== soukId),
-    );
-  };
-
-  const handleSoukClick = (souk: Souk) => {
-    setSelectedSouk(souk);
-    // Remove router.push to prevent navigation issues
-    // router.push(`/souks/${souk.souk_id}`);
-  };
-
-  const handleCloseModal = async () => {
-    setSelectedSouk(null);
-    // Remove router.push to prevent background reload
-    // router.push('/souks');
-
-    // Refresh bookmarked souks after closing modal
-    if (user) {
-      try {
-        const bookmarkedSouks = await getBookmarkedSouks(user.id);
-        setBookmarkedSoukIds(bookmarkedSouks.map((s) => s.souk_id));
-      } catch (error) {
-        console.error('Error refreshing bookmarked souks:', error);
-      }
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="mx-auto w-full max-w-screen-xl py-8">
-        <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="mx-auto w-full max-w-screen-xl py-8">
@@ -189,7 +161,7 @@ export function SouksContent() {
 
   return (
     <div className="relative min-h-full">
-      {/* Mobile Header Container */}
+      {/* Mobile Header Container - Stable, doesn't re-render */}
       <motion.div
         animate={{ opacity: 1, y: 0 }}
         className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden"
@@ -213,96 +185,49 @@ export function SouksContent() {
         </div>
       </motion.div>
 
-      {/* Main Content */}
+      {/* Main Content - Only this area updates */}
       <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
-        <motion.div
-          animate={{ opacity: 1 }}
-          className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4"
-          initial={{ opacity: 0 }}
-          transition={sharedTransition}
-        >
-          {souks.map((souk, index) => (
-            <motion.div
-              key={souk.souk_id}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
-              initial={{ opacity: 0, y: 5, scale: 0.98 }}
-              role="button"
-              tabIndex={0}
-              transition={{
-                ...sharedTransition,
-                delay: index * 0.02,
-              }}
-              onClick={() => handleSoukClick(souk)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleSoukClick(souk);
-                }
-              }}
-            >
-              <SoukCard
-                {...souk}
-                hideWebsiteButton={true}
-                isBookmarked={bookmarkedSoukIds.includes(souk.souk_id)}
-                onBookmarkChange={(isBookmarked: boolean) =>
-                  handleBookmarkChange(souk.souk_id, isBookmarked)
-                }
-              />
-            </motion.div>
-          ))}
-        </motion.div>
-        {/* Mobile Modal */}
-        {selectedSouk && isMobile && (
-          <SoukCardModal
-            address_city={selectedSouk.address_city || ''}
-            address_street={selectedSouk.address_street || ''}
-            address_zip={selectedSouk.address_zip || ''}
-            barakah_effects={selectedSouk.barakah_effects || []}
-            category={selectedSouk.category?.name_de || ''}
-            contact_phone={selectedSouk.contact_phone || undefined}
-            description={selectedSouk.souk_description || ''}
-            imageUrl={(() => {
-              // Get first image URL or placeholder
-              try {
-                if (!selectedSouk.souk_images) return '/images/placeholder.jpg';
-                let imagesData: { urls?: string[] } = {};
-                if (typeof selectedSouk.souk_images === 'string') {
-                  imagesData = JSON.parse(selectedSouk.souk_images);
-                } else if (Array.isArray(selectedSouk.souk_images)) {
-                  imagesData.urls = selectedSouk.souk_images;
-                } else if (
-                  typeof selectedSouk.souk_images === 'object' &&
-                  selectedSouk.souk_images !== null &&
-                  'urls' in selectedSouk.souk_images &&
-                  Array.isArray((selectedSouk.souk_images as { urls?: unknown }).urls)
-                ) {
-                  imagesData = selectedSouk.souk_images as { urls?: string[] };
-                }
-                if (imagesData.urls && imagesData.urls.length > 0) {
-                  return imagesData.urls[0];
-                }
-                return '/images/placeholder.jpg';
-              } catch {
-                return '/images/placeholder.jpg';
-              }
-            })()}
-            open={!!selectedSouk}
-            social_website={selectedSouk.social_website || undefined}
-            souk_id={selectedSouk.souk_id}
-            title={selectedSouk.souk_name}
-            onClose={handleCloseModal}
-          />
-        )}
-        {/* Desktop Modal */}
-        {selectedSouk && !isMobile && (
-          <SoukDetailModal
-            souk={selectedSouk}
+        {loading && !isInitialRender ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
+          </div>
+        ) : (
+          <SouksList
+            bookmarkedSoukIds={bookmarkedSoukIds}
+            souks={souks}
             onBookmarkChange={handleBookmarkChange}
-            onClose={handleCloseModal}
+            onSoukClick={handleSoukClick}
           />
         )}
       </div>
+
+      {/* Mobile Modal */}
+      {selectedSouk && isMobile && (
+        <SoukCardModal
+          address_city={selectedSouk.address_city || ''}
+          address_street={selectedSouk.address_street || ''}
+          address_zip={selectedSouk.address_zip || ''}
+          barakah_effects={selectedSouk.barakah_effects || []}
+          category={selectedSouk.category?.name_de || ''}
+          contact_phone={selectedSouk.contact_phone || undefined}
+          description={selectedSouk.souk_description || ''}
+          imageUrl={getSoukImageUrl(selectedSouk.souk_images)}
+          open={!!selectedSouk}
+          social_website={selectedSouk.social_website || undefined}
+          souk_id={selectedSouk.souk_id}
+          title={selectedSouk.souk_name}
+          onClose={handleCloseModal}
+        />
+      )}
+
+      {/* Desktop Modal */}
+      {selectedSouk && !isMobile && (
+        <SoukDetailModal
+          souk={selectedSouk}
+          onBookmarkChange={handleBookmarkChange}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 }
