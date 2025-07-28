@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 
 import { motion } from 'framer-motion';
 
+import { CategoryFilter } from '@/components/souks/CategoryFilter';
 import { SoukCard } from '@/components/souks/SoukCard';
 import { SoukCardModal } from '@/components/souks/SoukCardModal';
 import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
@@ -38,12 +39,15 @@ export function SouksContent() {
   const searchParams = useSearchParams();
   const [paramVersion, setParamVersion] = useState(0);
   const location = searchParams.get('location') || 'Überall';
-  const category = searchParams.get('category') || null;
   const query = searchParams.get('q') || '';
   const isMobile = useIsMobile();
 
   // Get search context to sync with URL parameters
-  const { setSelectedCategory, setSearchQuery, setSelectedLocation } = useSearch();
+  const { selectedCategory, setSelectedCategory, setSearchQuery, setSelectedLocation } =
+    useSearch();
+
+  // Use provider state for category, fallback to URL params
+  const category = selectedCategory ?? (searchParams.get('category') || null);
 
   // Cache for souks data
   const [souksCache, setSouksCache] = useState<Record<string, Souk[]>>({});
@@ -185,18 +189,32 @@ export function SouksContent() {
 
   return (
     <div className="relative min-h-full">
-      {/* Mobile Search Bar */}
+      {/* Mobile Header Container */}
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="fixed left-0 right-0 top-0 z-50 border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur-sm sm:hidden"
+        className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden"
         initial={{ opacity: 0, y: -1 }}
         transition={sharedTransition}
       >
-        <SearchBar className="rounded-lg border border-gray-200 shadow-sm" />
+        {/* Search Bar */}
+        <div className="px-6 pb-0 pt-4">
+          <SearchBar
+            className="rounded-lg border border-gray-200 shadow-sm"
+            hideCategoryFilter={true}
+          />
+        </div>
+
+        {/* Gap */}
+        <div className="h-3 px-6" />
+
+        {/* Category Filter */}
+        <div className="pb-1.5 pl-6 pr-0">
+          <CategoryFilter />
+        </div>
       </motion.div>
 
       {/* Main Content */}
-      <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-24 sm:pt-8 md:pt-28">
+      <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
         <motion.div
           animate={{ opacity: 1 }}
           className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4"
