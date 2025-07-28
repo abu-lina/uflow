@@ -458,12 +458,17 @@
 @supports (-webkit-touch-callout: none) {
   /* Simple fix: ensure dropdowns are visible and properly positioned */
   .dropdown-container {
-    position: absolute !important;
+    position: fixed !important;
     z-index: 9999 !important;
     overflow: visible !important;
     background: white !important;
     border: 1px solid #e5e7eb !important;
     border-radius: 8px !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: calc(100vw - 2rem) !important;
+    max-width: 300px !important;
   }
 }
