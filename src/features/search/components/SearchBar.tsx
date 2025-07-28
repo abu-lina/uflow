@@ -36,9 +36,6 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
   } = useSearch();
   const [categories, setCategories] = useState<Category[]>([]);
 
-  // Debug logging
-  console.log('SearchBar render - isCategoryOpen:', isCategoryOpen);
-  console.log('SearchBar render - categories count:', categories.length);
   const [locations, setLocations] = useState<string[]>(['Überall']);
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,25 +72,14 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
 
   // Fetch categories based on current filters
   useEffect(() => {
-    console.log(
-      'Categories useEffect triggered - selectedLocation:',
-      selectedLocation,
-      'searchQuery:',
-      searchQuery,
-    );
-
     async function fetchCategories() {
       try {
         // If we have location or search query filters, use filtered categories
         if ((selectedLocation && selectedLocation !== 'Überall') || searchQuery.trim()) {
-          console.log('Fetching filtered categories...');
           const filteredCategories = await fetchFilteredCategories(selectedLocation, searchQuery);
-          console.log('Filtered categories result:', filteredCategories.length);
           setCategories(filteredCategories);
         } else {
-          console.log('Fetching all used categories...');
           const allCategories = await fetchUsedCategories();
-          console.log('All categories result:', allCategories.length);
           setCategories(allCategories);
         }
       } catch (error) {
@@ -237,12 +223,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                   aria-haspopup="listbox"
                   className="flex items-center gap-1"
                   type="button"
-                  onClick={() => {
-                    console.log('Category button clicked!');
-                    console.log('Before toggle - isCategoryOpen:', isCategoryOpen);
-                    setIsCategoryOpen(!isCategoryOpen);
-                    console.log('After toggle - new value should be:', !isCategoryOpen);
-                  }}
+                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                 >
                   <span className="base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
                     {getCategoryLabel(selectedCategory)}
