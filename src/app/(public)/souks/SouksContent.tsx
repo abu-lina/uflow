@@ -10,6 +10,7 @@ import { CategoryFilter } from '@/components/souks/CategoryFilter';
 import { SoukCardModal } from '@/components/souks/SoukCardModal';
 import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
 import { SouksList } from '@/components/souks/SouksList';
+import { EmptyState, SkeletonGrid } from '@/components/ui';
 import { sharedTransition } from '@/components/ui/PageTransition';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
@@ -146,15 +147,76 @@ export function SouksContent() {
     }
   }, [user, userLoading, isInitialRender]);
 
-  // During preloading, we want to keep the content hidden
+  // During preloading, show skeleton loading
   if (isPreloading) {
-    return null;
+    return (
+      <div className="relative min-h-full">
+        {/* Mobile Header Container - Stable, doesn't re-render */}
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden"
+          initial={{ opacity: 0, y: -1 }}
+          transition={sharedTransition}
+        >
+          {/* Search Bar */}
+          <div className="px-6 pb-0 pt-4">
+            <SearchBar
+              className="rounded-lg border border-gray-200 shadow-sm"
+              hideCategoryFilter={true}
+            />
+          </div>
+
+          {/* Gap */}
+          <div className="h-3 px-6" />
+
+          {/* Category Filter */}
+          <div className="pb-1.5 pl-6 pr-0">
+            <CategoryFilter />
+          </div>
+        </motion.div>
+
+        {/* Main Content - Loading State */}
+        <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
+          <SkeletonGrid count={12} />
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="mx-auto w-full max-w-screen-xl py-8">
-        <div className="text-uFlowText font-inter-tight text-xl text-red-500">{error}</div>
+      <div className="relative min-h-full">
+        {/* Mobile Header Container - Stable, doesn't re-render */}
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden"
+          initial={{ opacity: 0, y: -1 }}
+          transition={sharedTransition}
+        >
+          {/* Search Bar */}
+          <div className="px-6 pb-0 pt-4">
+            <SearchBar
+              className="rounded-lg border border-gray-200 shadow-sm"
+              hideCategoryFilter={true}
+            />
+          </div>
+
+          {/* Gap */}
+          <div className="h-3 px-6" />
+
+          {/* Category Filter */}
+          <div className="pb-1.5 pl-6 pr-0">
+            <CategoryFilter />
+          </div>
+        </motion.div>
+
+        {/* Main Content - Error State */}
+        <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
+          <EmptyState
+            description="Es gab ein Problem beim Laden der Souks. Bitte versuche es erneut."
+            title="Fehler beim Laden"
+          />
+        </div>
       </div>
     );
   }
@@ -188,9 +250,12 @@ export function SouksContent() {
       {/* Main Content - Only this area updates */}
       <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
         {loading && !isInitialRender ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
-          </div>
+          <SkeletonGrid count={12} />
+        ) : souks.length === 0 && !loading ? (
+          <EmptyState
+            description="Versuche es mit anderen Suchkriterien oder Kategorien."
+            title="Keine Souks gefunden"
+          />
         ) : (
           <SouksList
             bookmarkedSoukIds={bookmarkedSoukIds}
