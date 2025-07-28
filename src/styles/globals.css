@@ -170,6 +170,65 @@
     display: none; /* WebKit browsers */
   }
 
+  /* More comprehensive scrollbar hiding for all elements */
+  [class*='overflow'],
+  [class*='scroll'],
+  [class*='hide-scrollbar'] {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* Internet Explorer 10+ */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [class*='overflow']::-webkit-scrollbar,
+  [class*='scroll']::-webkit-scrollbar,
+  [class*='hide-scrollbar']::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* Force hide scrollbars on main content areas */
+  main,
+  main *,
+  .main-content,
+  .main-content *,
+  .page-content,
+  .page-content * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  main::-webkit-scrollbar,
+  main *::-webkit-scrollbar,
+  .main-content::-webkit-scrollbar,
+  .main-content *::-webkit-scrollbar,
+  .page-content::-webkit-scrollbar,
+  .page-content *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* Specific rules for RootClientLayout and hide-scrollbar class */
+  main.hide-scrollbar,
+  main[class*='hide-scrollbar'],
+  .hide-scrollbar,
+  [class*='hide-scrollbar'] {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  main.hide-scrollbar::-webkit-scrollbar,
+  main[class*='hide-scrollbar']::-webkit-scrollbar,
+  .hide-scrollbar::-webkit-scrollbar,
+  [class*='hide-scrollbar']::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
   /* iOS-specific scroll bar hiding for PWA and Safari */
   @supports (-webkit-touch-callout: none) {
     /* iOS devices */

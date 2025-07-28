@@ -285,11 +285,11 @@ export function SoukCardModal({
   return (
     <>
       {/* Fullscreen overlay */}
-      <div className="fixed inset-0 z-[99] bg-black/40" />
+      <div className="fixed inset-0 z-[999] bg-black/40" />
       {/* Modal container */}
       <div
         ref={modalRef}
-        className="fixed inset-x-0 bottom-0 top-6 z-[100] flex touch-pan-y items-start justify-center"
+        className="fixed inset-x-0 bottom-0 top-6 z-[1000] flex touch-pan-y items-start justify-center"
         style={{
           transform: isClosing ? 'translateY(100vh)' : dragY ? `translateY(${dragY}px)` : undefined,
           transition: isClosing
