@@ -49,30 +49,18 @@ export function SoukCardModal({
   useEffect(() => {
     if (!open) return;
 
-    // Store original scroll position and styles
-    const originalScrollY = window.scrollY;
+    // Store original styles
     const originalBodyOverflow = document.body.style.overflow;
-    const originalBodyPosition = document.body.style.position;
-    const originalBodyTop = document.body.style.top;
     const originalHtmlOverflow = document.documentElement.style.overflow;
 
     // Prevent background scrolling
     document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${originalScrollY}px`;
-    document.body.style.width = '100%';
     document.documentElement.style.overflow = 'hidden';
 
     return () => {
       // Restore original styles
       document.body.style.overflow = originalBodyOverflow;
-      document.body.style.position = originalBodyPosition;
-      document.body.style.top = originalBodyTop;
-      document.body.style.width = '';
       document.documentElement.style.overflow = originalHtmlOverflow;
-
-      // Restore scroll position using the stored value
-      window.scrollTo(0, originalScrollY);
     };
   }, [open]);
 
@@ -103,7 +91,7 @@ export function SoukCardModal({
       onClose();
       setIsClosing(false);
       setDragY(0);
-    }, 800); // Match the transition duration
+    }, 300); // Reduced from 800ms to 300ms for faster response
   };
 
   function handleTouchStart(e: React.TouchEvent) {
