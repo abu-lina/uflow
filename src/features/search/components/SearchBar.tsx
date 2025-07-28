@@ -35,6 +35,10 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
     setSelectedLocation,
   } = useSearch();
   const [categories, setCategories] = useState<Category[]>([]);
+
+  // Debug logging
+  console.log('SearchBar render - isCategoryOpen:', isCategoryOpen);
+  console.log('SearchBar render - categories count:', categories.length);
   const [locations, setLocations] = useState<string[]>(['Überall']);
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,15 +75,25 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
 
   // Fetch categories based on current filters
   useEffect(() => {
+    console.log(
+      'Categories useEffect triggered - selectedLocation:',
+      selectedLocation,
+      'searchQuery:',
+      searchQuery,
+    );
+
     async function fetchCategories() {
       try {
         // If we have location or search query filters, use filtered categories
         if ((selectedLocation && selectedLocation !== 'Überall') || searchQuery.trim()) {
+          console.log('Fetching filtered categories...');
           const filteredCategories = await fetchFilteredCategories(selectedLocation, searchQuery);
+          console.log('Filtered categories result:', filteredCategories.length);
           setCategories(filteredCategories);
         } else {
-          // Otherwise, fetch all used categories
+          console.log('Fetching all used categories...');
           const allCategories = await fetchUsedCategories();
+          console.log('All categories result:', allCategories.length);
           setCategories(allCategories);
         }
       } catch (error) {
@@ -223,7 +237,12 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                   aria-haspopup="listbox"
                   className="flex items-center gap-1"
                   type="button"
-                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                  onClick={() => {
+                    console.log('Category button clicked!');
+                    console.log('Before toggle - isCategoryOpen:', isCategoryOpen);
+                    setIsCategoryOpen(!isCategoryOpen);
+                    console.log('After toggle - new value should be:', !isCategoryOpen);
+                  }}
                 >
                   <span className="base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
                     {getCategoryLabel(selectedCategory)}
@@ -239,6 +258,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                   <div
                     ref={categoryDropdownRef}
                     className="dropdown-container absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                    style={{ border: '2px solid red', backgroundColor: 'yellow' }}
                   >
                     <button
                       key="Alle"
