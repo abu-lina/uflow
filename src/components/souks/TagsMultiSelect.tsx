@@ -97,7 +97,7 @@ export function TagsMultiSelect({ selected, onChange, error, required }: TagsMul
         </button>
         {open && (
           <div
-            className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-[15px] border border-[#D4D4D4] bg-white shadow-lg"
+            className="hide-scrollbar absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-[15px] border border-[#D4D4D4] bg-white shadow-lg"
             role="listbox"
           >
             {TAGS.map((tag, index) => (

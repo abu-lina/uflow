@@ -76,7 +76,7 @@ export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClos
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
       >
-        <div className="animate-fadeInUp relative h-full w-full max-w-[393px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
+        <div className="hide-scrollbar animate-fadeInUp relative h-full w-full max-w-[393px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Drag handle for swipe-to-close */}
           <div className="mx-auto mb-1 mt-2 h-1.5 w-12 rounded-full bg-zinc-300 opacity-70" />
           {/* Close Button */}

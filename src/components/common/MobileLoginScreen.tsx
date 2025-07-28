@@ -156,7 +156,7 @@ export function MobileLoginScreen({ onClose }: MobileLoginScreenProps) {
         </button>
 
         {/* Content */}
-        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-8 pt-[92px]">
+        <div className="hide-scrollbar flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-8 pt-[92px]">
           {/* Header */}
           <div className="flex w-full max-w-[262px] flex-col items-center gap-[10px]">
             <h1 className="text-center font-inter text-[32px] font-bold leading-[39px] text-[#232323]">

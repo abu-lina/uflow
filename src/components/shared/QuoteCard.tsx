@@ -20,7 +20,7 @@ export function QuoteCard({
   return (
     <figure
       aria-label={ariaLabel}
-      className={`relative flex aspect-[3/4] w-full max-w-[800px] flex-col items-center justify-center overflow-x-auto overflow-y-hidden rounded-2xl bg-mint px-6 py-12 shadow-lg sm:aspect-auto sm:rounded-3xl sm:px-8 md:rounded-[2.5rem] md:px-16 md:py-12 ${className ?? ''}`}
+      className={`hide-scrollbar relative flex aspect-[3/4] w-full max-w-[800px] flex-col items-center justify-center overflow-x-auto overflow-y-hidden rounded-2xl bg-mint px-6 py-12 shadow-lg sm:aspect-auto sm:rounded-3xl sm:px-8 md:rounded-[2.5rem] md:px-16 md:py-12 ${className ?? ''}`}
     >
       {/* Top Ornament */}
       <div className="absolute left-1/2 top-[18px] z-20 flex -translate-x-1/2 -translate-y-1/2 sm:top-[26px] md:top-[34px]">

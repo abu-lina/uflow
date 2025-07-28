@@ -54,7 +54,7 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
       />
 
       {/* Modal Content */}
-      <div className="relative z-[999999] mx-auto max-h-[90vh] w-full max-w-[1200px] overflow-y-auto">
+      <div className="hide-scrollbar relative z-[999999] mx-auto max-h-[90vh] w-full max-w-[1200px] overflow-y-auto">
         {children}
       </div>
     </div>,

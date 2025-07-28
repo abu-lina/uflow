@@ -302,7 +302,7 @@ export function SoukCardModal({
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
       >
-        <div className="animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
+        <div className="hide-scrollbar animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Visual Section - Mobile Only */}
           <div className="relative h-96 w-full sm:hidden" style={{ touchAction: 'none' }}>
             <Image

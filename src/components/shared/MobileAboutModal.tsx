@@ -24,7 +24,7 @@ export function MobileAboutModal({ isOpen, onClose }: MobileAboutModalProps) {
         >
           <motion.div
             animate={{ scale: 1, opacity: 1 }}
-            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6"
+            className="hide-scrollbar max-h-[80vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6"
             exit={{ scale: 0.9, opacity: 0 }}
             initial={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}

@@ -25,7 +25,7 @@ export function SoukCreationForm({ onSubmit }: SoukCreationFormProps) {
 
   return (
     <form
-      className="flex h-[685px] w-[640px] flex-col items-end gap-4 overflow-y-auto"
+      className="hide-scrollbar flex h-[685px] w-[640px] flex-col items-end gap-4 overflow-y-auto"
       onSubmit={handleSubmit}
     >
       {/* Info Text */}

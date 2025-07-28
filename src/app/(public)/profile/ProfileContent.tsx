@@ -45,7 +45,7 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
         'flex min-h-full w-full flex-col items-center gap-8',
         'sm:max-w-screen-xl',
         isMobile && 'mx-auto w-[345px] px-6',
-        isMobile && 'h-[calc(100vh-64px)] overflow-y-auto pb-4',
+        isMobile && 'hide-scrollbar h-[calc(100vh-64px)] overflow-y-auto pb-4',
       )}
       style={isMobile ? { maxHeight: 'calc(100vh - 64px)' } : {}}
     >
