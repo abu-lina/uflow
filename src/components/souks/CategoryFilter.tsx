@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { motion } from 'framer-motion';
 
@@ -14,23 +14,14 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ className = '' }: CategoryFilterProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedCategory, setSelectedCategory } = useSearch();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [localCategory, setLocalCategory] = useState<string | null>(null);
 
-  // Get current selected category from local state, provider, or URL
-  const currentCategory = localCategory ?? selectedCategory ?? searchParams.get('category');
-
-  // Initialize provider state from URL on mount
-  useEffect(() => {
-    const urlCategory = searchParams.get('category');
-    if (urlCategory && !selectedCategory) {
-      setSelectedCategory(urlCategory);
-      setLocalCategory(urlCategory);
-    }
-  }, [searchParams, selectedCategory, setSelectedCategory]);
+  // Get current selected category from provider or URL
+  const currentCategory = selectedCategory ?? searchParams.get('category');
 
   // Fetch categories
   useEffect(() => {
@@ -57,8 +48,7 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
   }, []);
 
   const handleCategoryClick = (categoryId: string | null) => {
-    // Update local state immediately for instant UI feedback
-    setLocalCategory(categoryId);
+    // Update provider state immediately for instant UI feedback
     setSelectedCategory(categoryId);
 
     // Scroll to center the selected category immediately
@@ -80,25 +70,15 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
       }
     }, 50);
 
-    // Update URL params after a delay to avoid flash
-    setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (categoryId) {
-        params.set('category', categoryId);
-      } else {
-        params.delete('category');
-      }
+    // Update URL using Next.js router for proper navigation
+    const params = new URLSearchParams(searchParams.toString());
+    if (categoryId) {
+      params.set('category', categoryId);
+    } else {
+      params.delete('category');
+    }
 
-      const newUrl = `/souks?${params.toString()}`;
-      window.history.replaceState(null, '', newUrl);
-
-      // Force a re-render by dispatching a custom event
-      window.dispatchEvent(
-        new CustomEvent('categoryChanged', {
-          detail: { category: categoryId },
-        }),
-      );
-    }, 200);
+    router.replace(`/souks?${params.toString()}`, { scroll: false });
   };
 
   if (loading) {

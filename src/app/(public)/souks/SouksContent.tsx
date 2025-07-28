@@ -67,23 +67,6 @@ export function SouksContent() {
     }
   }, [category, query, location, setSelectedCategory, setSearchQuery, setSelectedLocation]);
 
-  // Listen for category changes from CategoryFilter
-  useEffect(() => {
-    const handleCategoryChange = (event: CustomEvent) => {
-      const { category } = event.detail;
-      setSelectedCategory(category);
-      // Force a re-fetch by updating paramVersion after a small delay
-      setTimeout(() => {
-        setParamVersion((v) => v + 1);
-      }, 50);
-    };
-
-    window.addEventListener('categoryChanged', handleCategoryChange as EventListener);
-    return () => {
-      window.removeEventListener('categoryChanged', handleCategoryChange as EventListener);
-    };
-  }, [setSelectedCategory]);
-
   useEffect(() => {
     setParamVersion((v) => v + 1);
   }, [searchParams]);
