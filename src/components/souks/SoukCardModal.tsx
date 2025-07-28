@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 
 import { SoukActionBar } from '@/components/souks/SoukActionBar';
@@ -282,7 +283,7 @@ export function SoukCardModal({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Fullscreen overlay */}
       <div className="fixed inset-0 z-[999999] bg-black/40" />
@@ -467,6 +468,7 @@ export function SoukCardModal({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
