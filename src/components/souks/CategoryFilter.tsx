@@ -18,15 +18,17 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
   const { selectedCategory, setSelectedCategory } = useSearch();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [localCategory, setLocalCategory] = useState<string | null>(null);
 
-  // Get current selected category from provider or URL
-  const currentCategory = selectedCategory ?? searchParams.get('category');
+  // Get current selected category from local state, provider, or URL
+  const currentCategory = localCategory ?? selectedCategory ?? searchParams.get('category');
 
   // Initialize provider state from URL on mount
   useEffect(() => {
     const urlCategory = searchParams.get('category');
     if (urlCategory && !selectedCategory) {
       setSelectedCategory(urlCategory);
+      setLocalCategory(urlCategory);
     }
   }, [searchParams, selectedCategory, setSelectedCategory]);
 
@@ -55,7 +57,8 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
   }, []);
 
   const handleCategoryClick = (categoryId: string | null) => {
-    // Update provider state immediately for instant UI feedback
+    // Update local state immediately for instant UI feedback
+    setLocalCategory(categoryId);
     setSelectedCategory(categoryId);
 
     // Scroll to center the selected category immediately
@@ -77,24 +80,25 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
       }
     }, 50);
 
-    // Update URL params - use router for PWA compatibility
-    const params = new URLSearchParams(searchParams.toString());
-    if (categoryId) {
-      params.set('category', categoryId);
-    } else {
-      params.delete('category');
-    }
+    // Update URL params after a delay to avoid flash
+    setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (categoryId) {
+        params.set('category', categoryId);
+      } else {
+        params.delete('category');
+      }
 
-    // Use router.replace for better PWA compatibility
-    const newUrl = `/souks?${params.toString()}`;
-    window.history.replaceState(null, '', newUrl);
+      const newUrl = `/souks?${params.toString()}`;
+      window.history.replaceState(null, '', newUrl);
 
-    // Force a re-render by dispatching a custom event
-    window.dispatchEvent(
-      new CustomEvent('categoryChanged', {
-        detail: { category: categoryId },
-      }),
-    );
+      // Force a re-render by dispatching a custom event
+      window.dispatchEvent(
+        new CustomEvent('categoryChanged', {
+          detail: { category: categoryId },
+        }),
+      );
+    }, 200);
   };
 
   if (loading) {
