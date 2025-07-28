@@ -77,7 +77,7 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
       }
     }, 50);
 
-    // Update URL params without causing re-renders
+    // Update URL params - use router for PWA compatibility
     const params = new URLSearchParams(searchParams.toString());
     if (categoryId) {
       params.set('category', categoryId);
@@ -85,15 +85,15 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
       params.delete('category');
     }
 
-    // Use pushState to update URL without triggering router events
-    window.history.replaceState(
-      {
-        ...window.history.state,
-        as: `/souks?${params.toString()}`,
-        url: `/souks?${params.toString()}`,
-      },
-      '',
-      `/souks?${params.toString()}`,
+    // Use router.replace for better PWA compatibility
+    const newUrl = `/souks?${params.toString()}`;
+    window.history.replaceState(null, '', newUrl);
+
+    // Force a re-render by dispatching a custom event
+    window.dispatchEvent(
+      new CustomEvent('categoryChanged', {
+        detail: { category: categoryId },
+      }),
     );
   };
 
