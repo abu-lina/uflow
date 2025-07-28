@@ -258,7 +258,6 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                   <div
                     ref={categoryDropdownRef}
                     className="dropdown-container absolute left-0 top-full z-50 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-                    style={{ border: '2px solid red', backgroundColor: 'yellow' }}
                   >
                     <button
                       key="Alle"
