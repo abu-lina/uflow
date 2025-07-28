@@ -49,7 +49,8 @@ export function SoukCardModal({
   useEffect(() => {
     if (!open) return;
 
-    // Store original styles
+    // Store original scroll position and styles
+    const originalScrollY = window.scrollY;
     const originalBodyOverflow = document.body.style.overflow;
     const originalBodyPosition = document.body.style.position;
     const originalBodyTop = document.body.style.top;
@@ -58,7 +59,7 @@ export function SoukCardModal({
     // Prevent background scrolling
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
-    document.body.style.top = `-${window.scrollY}px`;
+    document.body.style.top = `-${originalScrollY}px`;
     document.body.style.width = '100%';
     document.documentElement.style.overflow = 'hidden';
 
@@ -70,11 +71,8 @@ export function SoukCardModal({
       document.body.style.width = '';
       document.documentElement.style.overflow = originalHtmlOverflow;
 
-      // Restore scroll position
-      if (originalBodyPosition === 'fixed') {
-        const scrollY = document.body.style.top;
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
+      // Restore scroll position using the stored value
+      window.scrollTo(0, originalScrollY);
     };
   }, [open]);
 
