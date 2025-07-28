@@ -141,12 +141,12 @@
   }
 
   /* Hide scroll bars on all scrollable elements */
-  *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox']) {
+  * {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* Internet Explorer 10+ */
   }
 
-  *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox'])::-webkit-scrollbar {
+  *::-webkit-scrollbar {
     display: none; /* WebKit browsers */
   }
 
@@ -206,13 +206,13 @@
     }
 
     /* Force hide scroll bars on all elements */
-    *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox']) {
+    * {
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none !important;
       -ms-overflow-style: none !important;
     }
 
-    *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox'])::-webkit-scrollbar {
+    *::-webkit-scrollbar {
       display: none !important;
       width: 0 !important;
       height: 0 !important;
@@ -284,7 +284,7 @@
     body,
     #__next,
     main,
-    div:not(.dropdown-container):not([class*='dropdown']):not([role='listbox']),
+    div,
     section,
     article,
     aside,
@@ -315,33 +315,18 @@
       background: transparent !important;
     }
 
-    /* Target iOS native scroll indicators - EXCLUDING dropdowns */
-    *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox']) {
+    /* Target iOS native scroll indicators */
+    * {
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none !important;
       -ms-overflow-style: none !important;
     }
 
-    *:not(.dropdown-container):not([class*='dropdown']):not([role='listbox'])::-webkit-scrollbar {
+    *::-webkit-scrollbar {
       display: none !important;
       width: 0 !important;
       height: 0 !important;
       background: transparent !important;
-    }
-
-    /* Ensure dropdowns and popups can overflow properly on iOS */
-    [role='listbox'],
-    [aria-haspopup='listbox'],
-    .absolute,
-    .relative,
-    [class*='dropdown'],
-    [class*='popup'],
-    [class*='modal'],
-    .dropdown-container {
-      overflow: visible !important;
-      overflow-x: visible !important;
-      overflow-y: visible !important;
-      z-index: 9999 !important;
     }
   }
 
@@ -448,18 +433,4 @@
 
 .growth-effect:hover {
   transform: scale(1.05);
-}
-
-/* iOS Safari specific fixes for dropdown visibility */
-@supports (-webkit-touch-callout: none) {
-  /* Simple fix: ensure dropdowns are visible and properly positioned */
-  .dropdown-container {
-    position: absolute !important;
-    z-index: 9999 !important;
-    overflow: visible !important;
-    background: white !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 8px !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-  }
 }
