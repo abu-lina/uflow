@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/useAuth';
 
 import { AboutSection } from './AboutSection';
 import { CategoryGallerySection } from './CategoryGallerySection';
-import { ZakatProjectsGallery } from './ZakatProjectsGallery';
 
 // Typewriter effect hook
 function useTypewriter(text: string, speed = 40, shouldAnimate = true) {
@@ -212,11 +211,6 @@ export function MobileGreeting() {
               </motion.div>
 
               {/* Zakat Projects Gallery - Always at the top */}
-              <ZakatProjectsGallery />
-
-              {/* Gap between galleries */}
-              <div className="h-8" />
-
               <CategoryGallerySection />
             </div>
           </motion.div>
