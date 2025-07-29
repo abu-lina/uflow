@@ -1,0 +1,121 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+import Image from 'next/image';
+
+import { supabase } from '@/lib/supabase/client';
+
+export default function ZakatGallery() {
+  const [images, setImages] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('zakat_projects')
+          .select('zakat_images')
+          .limit(4);
+
+        if (error) throw error;
+
+        console.log('ZakatGallery - Raw data from supabase:', data);
+
+        const validImages = data
+          .map((item: { zakat_images: string | null | string[] }) => {
+            try {
+              if (!item.zakat_images) return null;
+              console.log('ZakatGallery - Raw zakat_images:', item.zakat_images);
+
+              // If it's already an array (from Supabase)
+              if (Array.isArray(item.zakat_images)) {
+                return item.zakat_images[0] || null;
+              }
+
+              // If it's a string, check if it's a direct URL
+              if (typeof item.zakat_images === 'string') {
+                if (item.zakat_images.startsWith('http')) {
+                  return item.zakat_images;
+                }
+
+                // Try to parse as JSON array
+                const parsed = JSON.parse(item.zakat_images) as string[];
+                console.log('ZakatGallery - Parsed images:', parsed);
+                return parsed[0] || null;
+              }
+
+              return null;
+            } catch (err) {
+              console.error('ZakatGallery - Error parsing zakat_images:', err);
+              return null;
+            }
+          })
+          .filter((url): url is string => url !== null);
+
+        console.log('ZakatGallery - Final valid images:', validImages);
+        setImages(validImages);
+      } catch (err) {
+        console.error('Error fetching zakat images:', err);
+        setError('Failed to load images');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchImages();
+  }, []);
+
+  // Always ensure we have exactly 4 images
+  const displayImages = [...images];
+  while (displayImages.length < 4) {
+    displayImages.push('/images/placeholder.jpg');
+  }
+
+  console.log('ZakatGallery - Display images:', displayImages);
+
+  if (loading) {
+    return (
+      <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            className={`relative h-full w-1/4 animate-pulse overflow-hidden border border-white bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 3 ? 'rounded-r-[29px]' : ''}`}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 md:hidden">{error}</div>;
+  }
+
+  return (
+    <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+      {displayImages.slice(0, 4).map((imageUrl, index) => {
+        console.log(`ZakatGallery - Rendering image ${index}:`, imageUrl);
+        return (
+          <div
+            key={index}
+            className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+          >
+            <Image
+              fill
+              alt={
+                imageUrl === '/images/placeholder.jpg'
+                  ? `Placeholder image ${index + 1}`
+                  : `Zakat project image ${index + 1}`
+              }
+              className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+              priority={index < 2}
+              sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
+              src={imageUrl}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}

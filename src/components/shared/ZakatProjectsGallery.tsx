@@ -4,36 +4,35 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { fetchUsedCategories, type Category } from '@/services/categories';
+import { getZakat, type Zakat } from '@/services/zakat_projects';
 
-import CategoryGallery from './CategoryGallery';
+import ZakatGallery from './ZakatGallery';
 
-export function CategoryGallerySection() {
-  const [categories, setCategories] = useState<Category[]>([]);
+export function ZakatProjectsGallery() {
+  const [zakatProjects, setZakatProjects] = useState<Zakat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    async function loadCategories() {
+    async function loadZakatProjects() {
       try {
-        const fetchedCategories = await fetchUsedCategories();
-        console.log('Fetched categories for CategoryGallerySection:', fetchedCategories);
-        setCategories(fetchedCategories);
+        const fetchedZakatProjects = await getZakat();
+        setZakatProjects(fetchedZakatProjects);
       } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to load categories.');
+        console.error('Error fetching zakat projects:', err);
+        setError('Failed to load zakat projects.');
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadCategories();
+    loadZakatProjects();
   }, []);
 
-  const handleCategoryClick = (categoryId: string) => {
-    // Navigate to search page with category filter
-    router.push(`/souks?category=${categoryId}`);
+  const handleZakatProjectClick = (zakatId: string) => {
+    // Navigate to zakat project detail page
+    router.push(`/zakat/${zakatId}`);
   };
 
   if (isLoading) {
@@ -55,27 +54,26 @@ export function CategoryGallerySection() {
     );
   }
 
-  if (categories.length === 0) {
-    return null; // Don't render section if no categories are found
+  if (zakatProjects.length === 0) {
+    return null; // Don't render section if no zakat projects are found
   }
 
   return (
-    <section className="w-full px-6 pb-8 lg:hidden">
+    <section className="w-full px-6 pt-8 lg:hidden">
       <div className="flex flex-col gap-8">
-        {categories.map((category) => {
-          const categoryName = (category.name_de || '') as string;
+        {zakatProjects.slice(0, 3).map((zakatProject) => {
           return (
             <div
-              key={category.category_id}
-              aria-label={`Alle Souks in der Kategorie ${categoryName} anzeigen`}
+              key={zakatProject.zakat_id}
+              aria-label={`Spenden-Projekte anzeigen`}
               className="-m-2 flex cursor-pointer flex-col rounded-lg p-2 transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
               role="button"
               tabIndex={0}
-              onClick={() => handleCategoryClick(category.category_id as string)}
+              onClick={() => handleZakatProjectClick(zakatProject.zakat_id)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  handleCategoryClick(category.category_id as string);
+                  handleZakatProjectClick(zakatProject.zakat_id);
                 }
               }}
             >
@@ -83,10 +81,10 @@ export function CategoryGallerySection() {
                 <div className="flex flex-col items-start justify-between gap-2.5 p-3">
                   <div className="flex flex-col items-start">
                     <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323]">
-                      Lerne unsere Zakat Partner kennen
+                      Unterstütze unsere Zakat Partner
                     </div>
                     <div className="w-full truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
-                      {categoryName}
+                      Spenden-Projekte
                     </div>
                   </div>
                 </div>
@@ -114,7 +112,7 @@ export function CategoryGallerySection() {
                 </div>
               </div>
 
-              <CategoryGallery categoryId={category.category_id as string} />
+              <ZakatGallery />
             </div>
           );
         })}
