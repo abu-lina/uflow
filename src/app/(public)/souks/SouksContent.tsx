@@ -265,10 +265,53 @@ export function SouksContent() {
         {loading && !isInitialRender ? (
           <SkeletonGrid count={12} />
         ) : searchResults.length === 0 && !loading ? (
-          <EmptyState
-            description="Versuche es mit anderen Suchkriterien oder Kategorien."
-            title="Keine Souks gefunden"
-          />
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-16 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Beautiful Islamic ornament */}
+            <motion.div
+              animate={{
+                scale: [1, 1.05, 1],
+                rotate: [0, 5, -5, 0],
+              }}
+              className="mb-6 text-6xl text-amber-500/60"
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            >
+              ✨
+            </motion.div>
+
+            {/* Main message with beautiful typography */}
+            <motion.h3
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              className="font-arabic mb-4 text-3xl font-light tracking-wide text-gray-800"
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              Ṣabr ist Licht
+            </motion.h3>
+
+            {/* Subtitle with elegant styling */}
+            <motion.p
+              animate={{ opacity: [0.5, 0.8, 0.5] }}
+              className="max-w-sm text-sm font-medium text-gray-500"
+              transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
+            >
+              Geduld bringt Erleuchtung
+            </motion.p>
+
+            {/* Decorative line */}
+            <motion.div
+              animate={{ scaleX: [0, 1, 0] }}
+              className="mt-6 h-px w-16 bg-gradient-to-r from-transparent via-amber-400 to-transparent"
+              transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+            />
+          </motion.div>
         ) : (
           <SearchResultsList
             bookmarkedSoukIds={bookmarkedSoukIds}

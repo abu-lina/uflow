@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { fetchUsedCategories, type Category } from '@/services/categories';
+import { formatAllahText } from '@/utils/textUtils';
 
 import CategoryGallery from './CategoryGallery';
 import ZakatGallery from './ZakatGallery';
@@ -91,7 +92,7 @@ export function CategoryGallerySection() {
 
   return (
     <section className="w-full px-6 pb-8 pt-4 lg:hidden">
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         {categories
           .sort((a, b) => {
             // Put Spenden-Projekte first
@@ -120,7 +121,7 @@ export function CategoryGallerySection() {
                   <div className="flex flex-col items-start justify-between gap-2.5 p-3">
                     <div className="flex flex-col items-start">
                       <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323]">
-                        {getCategorySubtitle(categoryName)}
+                        {formatAllahText(getCategorySubtitle(categoryName))}
                       </div>
                       <div className="w-full truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
                         {categoryName}
