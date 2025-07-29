@@ -47,6 +47,45 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
     fetchCategories();
   }, []);
 
+  // Auto-scroll to selected category when component mounts or category changes
+  useEffect(() => {
+    if (!loading && currentCategory && categories.length > 0) {
+      // Small delay to ensure DOM is ready and categories are rendered
+      setTimeout(() => {
+        const container = document.querySelector('[data-category-container]') as HTMLElement;
+        const selectedButton = document.querySelector(
+          `[data-category-id="${currentCategory}"]`,
+        ) as HTMLElement;
+
+        if (container && selectedButton) {
+          // Add a subtle scale effect to the selected button
+          selectedButton.style.transform = 'scale(1.05)';
+          selectedButton.style.transition = 'transform 0.2s ease-out';
+
+          // Get container and button dimensions
+          const containerRect = container.getBoundingClientRect();
+          const buttonRect = selectedButton.getBoundingClientRect();
+
+          // Calculate the center position
+          const containerCenter = containerRect.left + containerRect.width / 2;
+          const buttonCenter = buttonRect.left + buttonRect.width / 2;
+          const scrollOffset = buttonCenter - containerCenter;
+
+          // Smooth scroll with easing
+          container.scrollTo({
+            left: container.scrollLeft + scrollOffset,
+            behavior: 'smooth',
+          });
+
+          // Reset the scale effect after animation
+          setTimeout(() => {
+            selectedButton.style.transform = 'scale(1)';
+          }, 300);
+        }
+      }, 100); // Reduced delay for better responsiveness
+    }
+  }, [currentCategory, categories, loading]);
+
   const handleCategoryClick = (categoryId: string | null) => {
     // Update provider state immediately for instant UI feedback
     setSelectedCategory(categoryId);
