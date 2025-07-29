@@ -6,6 +6,10 @@ import Image from 'next/image';
 
 import { supabase } from '@/lib/supabase/client';
 
+interface ZakatImage {
+  zakat_images: string | null;
+}
+
 export default function ZakatGallery() {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,40 +25,41 @@ export default function ZakatGallery() {
 
         if (error) throw error;
 
-        console.log('ZakatGallery - Raw data from supabase:', data);
-
         const validImages = data
-          .map((item: { zakat_images: string | null | string[] }) => {
+          .map((item: ZakatImage) => {
             try {
               if (!item.zakat_images) return null;
-              console.log('ZakatGallery - Raw zakat_images:', item.zakat_images);
 
-              // If it's already an array (from Supabase)
+              // Handle different data formats
+              if (typeof item.zakat_images === 'string') {
+                // If it's a direct URL string
+                if (item.zakat_images.startsWith('http')) {
+                  return item.zakat_images;
+                }
+                // If it's a JSON string
+                const parsed = JSON.parse(item.zakat_images);
+                if (Array.isArray(parsed)) {
+                  return parsed[0] || null;
+                }
+                if (parsed.urls && Array.isArray(parsed.urls)) {
+                  return parsed.urls[0] || null;
+                }
+                return null;
+              }
+
+              // If it's already an array
               if (Array.isArray(item.zakat_images)) {
                 return item.zakat_images[0] || null;
               }
 
-              // If it's a string, check if it's a direct URL
-              if (typeof item.zakat_images === 'string') {
-                if (item.zakat_images.startsWith('http')) {
-                  return item.zakat_images;
-                }
-
-                // Try to parse as JSON array
-                const parsed = JSON.parse(item.zakat_images) as string[];
-                console.log('ZakatGallery - Parsed images:', parsed);
-                return parsed[0] || null;
-              }
-
               return null;
-            } catch (err) {
-              console.error('ZakatGallery - Error parsing zakat_images:', err);
+            } catch {
               return null;
             }
           })
           .filter((url): url is string => url !== null);
 
-        console.log('ZakatGallery - Final valid images:', validImages);
+        console.log('Fetched zakat images:', validImages); // Debug log
         setImages(validImages);
       } catch (err) {
         console.error('Error fetching zakat images:', err);
@@ -73,7 +78,7 @@ export default function ZakatGallery() {
     displayImages.push('/images/placeholder.jpg');
   }
 
-  console.log('ZakatGallery - Display images:', displayImages);
+  console.log('Display zakat images:', displayImages); // Debug log
 
   if (loading) {
     return (
@@ -94,28 +99,25 @@ export default function ZakatGallery() {
 
   return (
     <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-      {displayImages.slice(0, 4).map((imageUrl, index) => {
-        console.log(`ZakatGallery - Rendering image ${index}:`, imageUrl);
-        return (
-          <div
-            key={index}
-            className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
-          >
-            <Image
-              fill
-              alt={
-                imageUrl === '/images/placeholder.jpg'
-                  ? `Placeholder image ${index + 1}`
-                  : `Zakat project image ${index + 1}`
-              }
-              className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
-              priority={index < 2}
-              sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
-              src={imageUrl}
-            />
-          </div>
-        );
-      })}
+      {displayImages.slice(0, 4).map((imageUrl, index) => (
+        <div
+          key={index}
+          className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+        >
+          <Image
+            fill
+            alt={
+              imageUrl === '/images/placeholder.jpg'
+                ? `Placeholder image ${index + 1}`
+                : `Zakat project image ${index + 1}`
+            }
+            className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+            priority={index < 2}
+            sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
+            src={imageUrl}
+          />
+        </div>
+      ))}
     </div>
   );
 }

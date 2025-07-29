@@ -7,9 +7,9 @@ import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 import { CategoryFilter } from '@/components/souks/CategoryFilter';
+import { SearchResultsList } from '@/components/souks/SearchResultsList';
 import { SoukCardModal } from '@/components/souks/SoukCardModal';
 import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
-import { SouksList } from '@/components/souks/SouksList';
 import { EmptyState, SkeletonGrid } from '@/components/ui';
 import { sharedTransition } from '@/components/ui/PageTransition';
 import { SearchBar } from '@/features/search/components/SearchBar';
@@ -17,12 +17,17 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useLoading } from '@/providers/LoadingProvider';
 import { useSearch } from '@/providers/search-provider';
-import { searchSouks, getBookmarkedSouks, type Souk } from '@/services/souks';
+import {
+  searchSouksAndZakat,
+  getBookmarkedSouks,
+  type Souk,
+  type SearchResult,
+} from '@/services/souks';
 import { getSoukImageUrl } from '@/utils/imageUtils';
 
 export function SouksContent() {
   const { user, loading: userLoading } = useAuth();
-  const [souks, setSouks] = useState<Souk[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [bookmarkedSoukIds, setBookmarkedSoukIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,8 +52,8 @@ export function SouksContent() {
   // Use provider state for category, fallback to URL params
   const category = selectedCategory ?? (searchParams.get('category') || null);
 
-  // Cache for souks data
-  const [souksCache, setSouksCache] = useState<Record<string, Souk[]>>({});
+  // Cache for search results data
+  const [searchCache, setSearchCache] = useState<Record<string, SearchResult[]>>({});
 
   const { isPreloading } = useLoading();
 
@@ -93,8 +98,8 @@ export function SouksContent() {
       const cacheKey = `${query}-${category}-${location}`;
 
       // If we have cached data, use it immediately
-      if (souksCache[cacheKey]) {
-        setSouks(souksCache[cacheKey]);
+      if (searchCache[cacheKey]) {
+        setSearchResults(searchCache[cacheKey]);
         setIsInitialRender(false);
         return;
       }
@@ -107,11 +112,11 @@ export function SouksContent() {
           }
         }, 100);
 
-        const data = await searchSouks(query, category || 'Alle', location);
-        setSouks(data);
+        const data = await searchSouksAndZakat(query, category || 'Alle', location);
+        setSearchResults(data);
 
         // Cache the results
-        setSouksCache((prev) => ({
+        setSearchCache((prev) => ({
           ...prev,
           [cacheKey]: data,
         }));
@@ -128,7 +133,7 @@ export function SouksContent() {
     }
 
     void fetchSouks();
-  }, [query, category, location, paramVersion, souksCache, isInitialRender]);
+  }, [query, category, location, paramVersion, searchCache, isInitialRender]);
 
   // Optimize bookmark fetching
   useEffect(() => {
@@ -259,15 +264,15 @@ export function SouksContent() {
       <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
         {loading && !isInitialRender ? (
           <SkeletonGrid count={12} />
-        ) : souks.length === 0 && !loading ? (
+        ) : searchResults.length === 0 && !loading ? (
           <EmptyState
             description="Versuche es mit anderen Suchkriterien oder Kategorien."
             title="Keine Souks gefunden"
           />
         ) : (
-          <SouksList
+          <SearchResultsList
             bookmarkedSoukIds={bookmarkedSoukIds}
-            souks={souks}
+            searchResults={searchResults}
             onBookmarkChange={handleBookmarkChange}
             onSoukClick={handleSoukClick}
           />

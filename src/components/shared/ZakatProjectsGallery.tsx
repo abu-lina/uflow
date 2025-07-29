@@ -30,9 +30,9 @@ export function ZakatProjectsGallery() {
     loadZakatProjects();
   }, []);
 
-  const handleZakatProjectClick = (zakatId: string) => {
-    // Navigate to zakat project detail page
-    router.push(`/zakat/${zakatId}`);
+  const handleZakatProjectClick = (_zakatId: string) => {
+    // Navigate to search page with Spenden category filter
+    router.push('/souks?category=2335922b-76a9-4d79-b32a-b3f95941ba5c');
   };
 
   if (isLoading) {

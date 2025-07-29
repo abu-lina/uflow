@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { fetchUsedCategories, type Category } from '@/services/categories';
 
 import CategoryGallery from './CategoryGallery';
+import ZakatGallery from './ZakatGallery';
 
 export function CategoryGallerySection() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -114,7 +115,11 @@ export function CategoryGallerySection() {
                 </div>
               </div>
 
-              <CategoryGallery categoryId={category.category_id as string} />
+              {category.category_id === '2335922b-76a9-4d79-b32a-b3f95941ba5c' ? (
+                <ZakatGallery />
+              ) : (
+                <CategoryGallery categoryId={category.category_id as string} />
+              )}
             </div>
           );
         })}
