@@ -65,6 +65,7 @@ export async function searchSouks(
 
   const { data, error } = await req.returns<Souk[]>();
   if (error) throw error;
+
   return Array.isArray(data) ? data : [];
 }
 

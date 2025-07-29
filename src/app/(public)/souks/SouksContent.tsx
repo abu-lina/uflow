@@ -35,8 +35,14 @@ export function SouksContent() {
   const isMobile = useIsMobile();
 
   // Get search context to sync with URL parameters
-  const { selectedCategory, setSelectedCategory, setSearchQuery, setSelectedLocation } =
-    useSearch();
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    searchQuery,
+    setSearchQuery,
+    selectedLocation,
+    setSelectedLocation,
+  } = useSearch();
 
   // Use provider state for category, fallback to URL params
   const category = selectedCategory ?? (searchParams.get('category') || null);
@@ -63,18 +69,20 @@ export function SouksContent() {
     setSelectedSouk(null);
   }, []);
 
-  // Sync URL parameters with search context
+  // Sync URL parameters with search context - only when they actually change
   useEffect(() => {
-    if (category) {
+    // Use URL parameters as source of truth, but only update if they've changed
+    // This prevents unnecessary re-renders and state conflicts
+    if (category !== selectedCategory) {
       setSelectedCategory(category);
     }
-    if (query) {
+    if (query !== searchQuery) {
       setSearchQuery(query);
     }
-    if (location) {
+    if (location !== selectedLocation) {
       setSelectedLocation(location);
     }
-  }, [category, query, location, setSelectedCategory, setSearchQuery, setSelectedLocation]);
+  }, [category, query, location]); // Only depend on URL parameters, not provider state
 
   useEffect(() => {
     setParamVersion((v) => v + 1);
