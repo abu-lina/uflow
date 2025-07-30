@@ -106,11 +106,11 @@ export default function ZakatGallery() {
         padding: '1px',
       }}
     >
-      <div className="flex h-full w-full overflow-hidden rounded-[29px]">
+      <div className="flex h-full w-full overflow-hidden rounded-[28px]">
         {displayImages.slice(0, 4).map((imageUrl, index) => (
           <div
             key={index}
-            className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+            className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[28px]' : ''} ${index === 3 ? 'rounded-r-[28px]' : ''}`}
           >
             <Image
               fill
@@ -119,7 +119,7 @@ export default function ZakatGallery() {
                   ? `Placeholder image ${index + 1}`
                   : `Zakat project image ${index + 1}`
               }
-              className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+              className={`border border-white object-cover ${index === 0 ? 'rounded-l-[28px]' : ''} ${index === 3 ? 'rounded-r-[28px]' : ''}`}
               priority={index < 2}
               sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
               src={imageUrl}
