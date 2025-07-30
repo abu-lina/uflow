@@ -160,44 +160,7 @@ export function CategoryGallerySection() {
                 </div>
 
                 {category.category_id === '2335922b-76a9-4d79-b32a-b3f95941ba5c' ? (
-                  <motion.div
-                    className="relative"
-                    style={{
-                      background:
-                        'linear-gradient(180deg, #D2B581 -49.22%, #DCC391 -3.81%, #AF8650 88.33%, #E5D1A0 228.56%)',
-                      padding: '1px',
-                      borderRadius: '29px',
-                    }}
-                  >
-                    {/* Subtle animated light effect for Spenden-Projekte */}
-                    <motion.div
-                      animate={{
-                        backgroundPosition: [
-                          '100% 0%', // Start: top-right
-                          '100% 100%', // Move: bottom-right
-                          '0% 100%', // Move: bottom-left
-                          '0% 0%', // Move: top-left
-                          '100% 0%', // End: back to top-right
-                        ],
-                      }}
-                      className="absolute inset-0 rounded-[29px]"
-                      style={{
-                        background:
-                          'radial-gradient(circle at center, rgba(255, 215, 0, 0.3) 0%, rgba(255, 248, 220, 0.2) 40%, transparent 70%)',
-                        backgroundSize: '30px 30px',
-                        filter: 'blur(3px)',
-                        opacity: 0.6,
-                      }}
-                      transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: 'linear',
-                      }}
-                    />
-                    <div className="relative z-10">
-                      <ZakatGallery />
-                    </div>
-                  </motion.div>
+                  <ZakatGallery />
                 ) : (
                   <CategoryGallery categoryId={category.category_id as string} />
                 )}
