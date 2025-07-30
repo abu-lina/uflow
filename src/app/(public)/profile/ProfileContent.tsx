@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import clsx from 'clsx';
 
@@ -10,32 +11,96 @@ import { CreatedSoukCard } from '@/components/shared/CreatedSoukCard';
 import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
 import { SoukCreateForm } from '@/features/souks/SoukCreateForm';
+import { useAuth } from '@/hooks/useAuth';
 import { getCreatedSouks, type Souk, getBookmarkedSouks } from '@/services/souks';
 import type { SupabaseUser } from '@/types/supabase-user';
 
-export function ProfileContent({ user }: { user: SupabaseUser }) {
+interface ProfileContentProps {
+  user: SupabaseUser | null;
+}
+
+export function ProfileContent({ user }: ProfileContentProps) {
+  const { user: clientUser, loading } = useAuth();
+  const router = useRouter();
   const [createdSouks, setCreatedSouks] = useState<Souk[]>([]);
   const [savedSouks, setSavedSouks] = useState<Souk[]>([]);
   const [activeTab, setActiveTab] = useState<UserTab>('created');
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoadingSouks, setIsLoadingSouks] = useState(false);
 
   // Responsive: detect mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
-  useEffect(() => {
-    const fetchSouks = async () => {
-      const created = await getCreatedSouks(user.id);
-      setCreatedSouks(created ?? []);
-      const saved = await getBookmarkedSouks(user.id);
-      setSavedSouks(saved ?? []);
-    };
-    void fetchSouks();
-  }, [user.id]);
+  // Use client-side user if server-side user is null
+  const effectiveUser: SupabaseUser | null = user || (clientUser as SupabaseUser | null);
 
-  const fullName = user.user_metadata?.full_name ?? user.email ?? 'Unknown User';
+  // Handle authentication state
+  useEffect(() => {
+    if (!loading && !effectiveUser) {
+      // No user found on either server or client side
+      router.replace('/?auth=required');
+    }
+  }, [effectiveUser, loading, router]);
+
+  // Fetch souks with proper error handling
+  useEffect(() => {
+    if (!effectiveUser) return;
+
+    const fetchSouks = async () => {
+      setIsLoadingSouks(true);
+      setError(null);
+
+      try {
+        const [created, saved] = await Promise.all([
+          getCreatedSouks(effectiveUser.id),
+          getBookmarkedSouks(effectiveUser.id),
+        ]);
+
+        setCreatedSouks(created ?? []);
+        setSavedSouks(saved ?? []);
+      } catch (err) {
+        console.error('Error fetching souks:', err);
+        setError('Fehler beim Laden der Souks');
+        setCreatedSouks([]);
+        setSavedSouks([]);
+      } finally {
+        setIsLoadingSouks(false);
+      }
+    };
+
+    void fetchSouks();
+  }, [effectiveUser?.id]);
+
+  // Show loading while auth is being checked
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-2xl">🔄</div>
+          <p className="text-gray-600">Überprüfe Anmeldung...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication required if no user
+  if (!effectiveUser) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-2xl">🔐</div>
+          <p className="text-gray-600">Anmeldung erforderlich</p>
+        </div>
+      </div>
+    );
+  }
+
+  const fullName = effectiveUser.user_metadata?.full_name ?? effectiveUser.email ?? 'Unknown User';
   const avatarUrl =
-    typeof user.user_metadata?.avatar_url === 'string' && user.user_metadata.avatar_url
-      ? user.user_metadata.avatar_url
+    typeof effectiveUser.user_metadata?.avatar_url === 'string' &&
+    effectiveUser.user_metadata.avatar_url
+      ? effectiveUser.user_metadata.avatar_url
       : '/icons/icon-muslim.png';
 
   // Mobile content
@@ -103,7 +168,7 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
                   : 'text-text-secondary text-base',
               )}
             >
-              {user.email}
+              {effectiveUser.email}
             </div>
           </div>
         </div>
@@ -117,6 +182,19 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
           Über Ummah Flow
         </button>
       </div>
+      {/* Error State */}
+      {error && (
+        <div className="flex w-full flex-col items-center gap-4 rounded-lg bg-red-50 p-4">
+          <div className="text-2xl">⚠️</div>
+          <p className="text-center text-red-600">{error}</p>
+          <button
+            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+            onClick={() => window.location.reload()}
+          >
+            Erneut versuchen
+          </button>
+        </div>
+      )}
       {/* Souks/Services List */}
       <div
         className={clsx('flex w-full flex-col items-start gap-4')}
@@ -130,49 +208,58 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
         >
           Erstellten Souks / Services
         </div>
-        <div
-          className={clsx(
-            isMobile ? 'grid grid-cols-2 gap-4 px-0' : 'flex flex-wrap justify-center gap-8',
-          )}
-          style={isMobile ? { width: '100%', minHeight: 200 } : {}}
-        >
-          {(createdSouks.length > 0 ? createdSouks : []).map((souk) => (
-            <div key={souk.souk_id} className={isMobile ? 'w-[164px]' : ''}>
-              <CreatedSoukCard
-                category={souk.category?.name_de || ''}
-                imageUrl={(() => {
-                  if (!souk.souk_images) return '/images/placeholder.jpg';
-                  try {
-                    let imagesData: { urls?: string[] } = {};
-                    if (typeof souk.souk_images === 'string') {
-                      imagesData = JSON.parse(souk.souk_images);
-                    } else if (Array.isArray(souk.souk_images)) {
-                      imagesData.urls = souk.souk_images;
-                    } else if (
-                      typeof souk.souk_images === 'object' &&
-                      souk.souk_images !== null &&
-                      'urls' in souk.souk_images
-                    ) {
-                      imagesData = souk.souk_images;
-                    }
-                    if (imagesData.urls && imagesData.urls.length > 0) {
-                      return imagesData.urls[0];
-                    }
-                  } catch {
-                    return '/images/placeholder.jpg';
-                  }
-                  return '/images/placeholder.jpg';
-                })()}
-                tag={
-                  souk.barakah_effects && souk.barakah_effects.length > 0
-                    ? souk.barakah_effects[0]
-                    : '✨ Halal'
-                }
-                title={souk.souk_name}
-              />
+        {isLoadingSouks ? (
+          <div className="flex w-full items-center justify-center py-8">
+            <div className="text-center">
+              <div className="mb-2 text-2xl">🔄</div>
+              <p className="text-gray-600">Lade Souks...</p>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div
+            className={clsx(
+              isMobile ? 'grid grid-cols-2 gap-4 px-0' : 'flex flex-wrap justify-center gap-8',
+            )}
+            style={isMobile ? { width: '100%', minHeight: 200 } : {}}
+          >
+            {(createdSouks.length > 0 ? createdSouks : []).map((souk) => (
+              <div key={souk.souk_id} className={isMobile ? 'w-[164px]' : ''}>
+                <CreatedSoukCard
+                  category={souk.category?.name_de || ''}
+                  imageUrl={(() => {
+                    if (!souk.souk_images) return '/images/placeholder.jpg';
+                    try {
+                      let imagesData: { urls?: string[] } = {};
+                      if (typeof souk.souk_images === 'string') {
+                        imagesData = JSON.parse(souk.souk_images);
+                      } else if (Array.isArray(souk.souk_images)) {
+                        imagesData.urls = souk.souk_images;
+                      } else if (
+                        typeof souk.souk_images === 'object' &&
+                        souk.souk_images !== null &&
+                        'urls' in souk.souk_images
+                      ) {
+                        imagesData = souk.souk_images;
+                      }
+                      if (imagesData.urls && imagesData.urls.length > 0) {
+                        return imagesData.urls[0];
+                      }
+                    } catch {
+                      return '/images/placeholder.jpg';
+                    }
+                    return '/images/placeholder.jpg';
+                  })()}
+                  tag={
+                    souk.barakah_effects && souk.barakah_effects.length > 0
+                      ? souk.barakah_effects[0]
+                      : '✨ Halal'
+                  }
+                  title={souk.souk_name}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -197,15 +284,37 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
             <div className="text-text-primary font-inter-tight text-3xl font-semibold">
               {fullName}
             </div>
-            <div className="text-text-secondary font-inter text-base">{user.email}</div>
+            <div className="text-text-secondary font-inter text-base">{effectiveUser.email}</div>
           </div>
         </div>
       </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="flex w-full flex-col items-center gap-4 rounded-lg bg-red-50 p-4">
+          <div className="text-2xl">⚠️</div>
+          <p className="text-center text-red-600">{error}</p>
+          <button
+            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+            onClick={() => window.location.reload()}
+          >
+            Erneut versuchen
+          </button>
+        </div>
+      )}
+
       <UserNavigationTabs activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="mt-6 w-full">
         {activeTab === 'created' && (
           <div className="flex flex-wrap justify-center gap-8">
-            {createdSouks.length > 0 ? (
+            {isLoadingSouks ? (
+              <div className="flex w-full items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="mb-2 text-2xl">🔄</div>
+                  <p className="text-gray-600">Lade Souks...</p>
+                </div>
+              </div>
+            ) : createdSouks.length > 0 ? (
               createdSouks.map((souk) => (
                 <CreatedSoukCard
                   key={souk.souk_id}
@@ -248,7 +357,14 @@ export function ProfileContent({ user }: { user: SupabaseUser }) {
         )}
         {activeTab === 'saved' && (
           <div className="flex flex-wrap justify-center gap-8">
-            {savedSouks.length > 0 ? (
+            {isLoadingSouks ? (
+              <div className="flex w-full items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="mb-2 text-2xl">🔄</div>
+                  <p className="text-gray-600">Lade Souks...</p>
+                </div>
+              </div>
+            ) : savedSouks.length > 0 ? (
               savedSouks.map((souk) => (
                 <CreatedSoukCard
                   key={souk.souk_id}

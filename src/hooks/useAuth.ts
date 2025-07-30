@@ -7,36 +7,71 @@ import type { User } from '@supabase/supabase-js';
 export function useAuth(): AuthHook {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get initial session
-    void supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let mounted = true;
 
-    // Listen for auth changes
+    const initializeAuth = async () => {
+      try {
+        setError(null);
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          setError('Authentication error');
+        } else if (mounted) {
+          setUser(session?.user ?? null);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        setError('Failed to initialize authentication');
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void initializeAuth();
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) {
+        setUser(session?.user ?? null);
+        setLoading(false);
+        setError(null);
+      }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const signOut = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    await supabase.auth.signOut();
-    setUser(null);
+    try {
+      setError(null);
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+      setUser(null);
+    } catch (err) {
+      console.error('Error signing out:', err);
+      setError('Failed to sign out');
+    }
   };
 
   return {
     user,
     loading,
+    error,
     signOut,
   };
 }

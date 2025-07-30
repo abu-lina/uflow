@@ -1,6 +1,6 @@
 'use client';
 
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import React, { Component, type ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -13,38 +13,59 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-  };
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
-  public render() {
+  render() {
     if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
       return (
-        this.props.fallback || (
-          <div
-            aria-live="assertive"
-            className="flex min-h-[400px] flex-col items-center justify-center rounded-lg bg-background p-8"
-            role="alert"
-          >
-            <h2 className="mb-4 text-2xl font-bold text-danger">Something went wrong</h2>
-            <p className="text-text-secondary mb-4">{this.state.error?.message}</p>
-            <button
-              aria-label="Try again"
-              className="rounded-lg bg-danger px-4 py-2 text-white hover:bg-danger/90 focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2"
-              onClick={() => this.setState({ hasError: false })}
-            >
-              Try again
-            </button>
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
+            <div className="mb-4 text-6xl">⚠️</div>
+            <h2 className="mb-2 text-xl font-semibold text-gray-800">Etwas ist schiefgelaufen</h2>
+            <p className="mb-6 text-gray-600">
+              Es gab einen unerwarteten Fehler. Bitte versuche es erneut.
+            </p>
+            <div className="space-y-3">
+              <button
+                className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                onClick={() => window.location.reload()}
+              >
+                Seite neu laden
+              </button>
+              <button
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                onClick={() => this.setState({ hasError: false })}
+              >
+                Erneut versuchen
+              </button>
+            </div>
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="mt-4 text-left">
+                <summary className="cursor-pointer text-sm text-gray-500">
+                  Fehlerdetails (Entwicklung)
+                </summary>
+                <pre className="mt-2 overflow-auto rounded bg-gray-100 p-2 text-xs">
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
           </div>
-        )
+        </div>
       );
     }
 

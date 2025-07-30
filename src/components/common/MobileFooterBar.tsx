@@ -84,6 +84,14 @@ export function MobileFooterBar() {
           return;
         }
 
+        // For profile navigation, ensure we don't trigger unnecessary redirects
+        if (href === '/profile' && user) {
+          // If user is authenticated, navigate directly without additional checks
+          await router.prefetch(href);
+          router.push(href);
+          return;
+        }
+
         // Prefetch the next page
         await router.prefetch(href);
 

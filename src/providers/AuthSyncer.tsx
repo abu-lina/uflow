@@ -12,14 +12,19 @@ export function AuthSyncer() {
   const router = useRouter();
 
   useEffect(() => {
+    // Only handle auth=required if user is not authenticated
     if (typeof window !== 'undefined' && window.location.search.includes('auth=required')) {
-      if (user) {
-        signOut();
+      if (!user) {
+        // If no user is authenticated, redirect to home
+        router.replace('/');
+      } else {
+        // If user is authenticated but server-side auth failed,
+        // just remove the query param without signing out
+        // This prevents the logout issue when clicking profile menu
+        router.replace(pathname);
       }
-      // Optionally, remove the query param
-      router.replace('/');
     }
-  }, [pathname, user, signOut, router]);
+  }, [pathname, user, router]);
 
   return null;
 }
