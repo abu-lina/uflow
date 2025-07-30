@@ -98,14 +98,7 @@ export default function ZakatGallery() {
   }
 
   return (
-    <div
-      className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]"
-      style={{
-        background:
-          'linear-gradient(180deg, #D2B581 -49.22%, #DCC391 -3.81%, #AF8650 88.33%, #E5D1A0 228.56%)',
-        padding: '1px',
-      }}
-    >
+    <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] bg-gold-gradient p-[1px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
       <div className="flex h-full w-full overflow-hidden rounded-[28px]">
         {displayImages.slice(0, 4).map((imageUrl, index) => (
           <div
