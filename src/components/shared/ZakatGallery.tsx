@@ -82,13 +82,15 @@ export default function ZakatGallery() {
 
   if (loading) {
     return (
-      <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-        {[...Array(4)].map((_, i) => (
-          <div
-            key={i}
-            className={`relative h-full w-1/4 animate-pulse overflow-hidden border border-white bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 3 ? 'rounded-r-[29px]' : ''}`}
-          />
-        ))}
+      <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] bg-gold-gradient p-[1px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+        <div className="flex h-full w-full overflow-hidden rounded-[28px] bg-white">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className={`relative h-full w-1/4 animate-pulse overflow-hidden bg-gray-200 ${i === 0 ? 'rounded-l-[28px]' : ''} ${i === 3 ? 'rounded-r-[28px]' : ''}`}
+            />
+          ))}
+        </div>
       </div>
     );
   }
@@ -99,7 +101,7 @@ export default function ZakatGallery() {
 
   return (
     <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] bg-gold-gradient p-[1px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-      <div className="flex h-full w-full overflow-hidden rounded-[28px]">
+      <div className="flex h-full w-full overflow-hidden rounded-[28px] bg-white">
         {displayImages.slice(0, 4).map((imageUrl, index) => (
           <div
             key={index}
@@ -112,7 +114,7 @@ export default function ZakatGallery() {
                   ? `Placeholder image ${index + 1}`
                   : `Zakat project image ${index + 1}`
               }
-              className={`border border-white object-cover ${index === 0 ? 'rounded-l-[28px]' : ''} ${index === 3 ? 'rounded-r-[28px]' : ''}`}
+              className={`object-cover ${index === 0 ? 'rounded-l-[28px]' : ''} ${index === 3 ? 'rounded-r-[28px]' : ''}`}
               priority={index < 2}
               sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
               src={imageUrl}
