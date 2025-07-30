@@ -82,14 +82,20 @@ export default function ZakatGallery() {
 
   if (loading) {
     return (
-      <div className="relative flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-        {/* Golden gradient border using pseudo-element */}
-        <div className="absolute inset-0 rounded-[29px] bg-gold-gradient" />
-        <div className="relative z-10 m-[1px] flex h-full w-full overflow-hidden rounded-[28px] bg-white">
+      <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+        <div
+          className="flex h-full w-full overflow-hidden rounded-[29px]"
+          style={{
+            background:
+              'linear-gradient(white, white) padding-box, linear-gradient(180deg, #D2B581 -49.22%, #DCC391 -3.81%, #AF8650 88.33%, #E5D1A0 228.56%) border-box',
+            border: '1px solid transparent',
+            borderRadius: '29px',
+          }}
+        >
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className={`relative h-full w-1/4 animate-pulse overflow-hidden bg-gray-200 ${i === 0 ? 'rounded-l-[28px]' : ''} ${i === 3 ? 'rounded-r-[28px]' : ''}`}
+              className={`relative h-full w-1/4 animate-pulse overflow-hidden bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 3 ? 'rounded-r-[29px]' : ''}`}
             />
           ))}
         </div>
@@ -102,14 +108,20 @@ export default function ZakatGallery() {
   }
 
   return (
-    <div className="relative flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-      {/* Golden gradient border using pseudo-element */}
-      <div className="absolute inset-0 rounded-[29px] bg-gold-gradient" />
-      <div className="relative z-10 m-[1px] flex h-full w-full overflow-hidden rounded-[28px] bg-white">
+    <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+      <div
+        className="flex h-full w-full overflow-hidden rounded-[29px]"
+        style={{
+          background:
+            'linear-gradient(white, white) padding-box, linear-gradient(180deg, #D2B581 -49.22%, #DCC391 -3.81%, #AF8650 88.33%, #E5D1A0 228.56%) border-box',
+          border: '1px solid transparent',
+          borderRadius: '29px',
+        }}
+      >
         {displayImages.slice(0, 4).map((imageUrl, index) => (
           <div
             key={index}
-            className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[28px]' : ''} ${index === 3 ? 'rounded-r-[28px]' : ''}`}
+            className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
           >
             <Image
               fill
@@ -118,7 +130,7 @@ export default function ZakatGallery() {
                   ? `Placeholder image ${index + 1}`
                   : `Zakat project image ${index + 1}`
               }
-              className={`object-cover ${index === 0 ? 'rounded-l-[28px]' : ''} ${index === 3 ? 'rounded-r-[28px]' : ''}`}
+              className={`object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
               priority={index < 2}
               sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
               src={imageUrl}
