@@ -82,8 +82,10 @@ export default function ZakatGallery() {
 
   if (loading) {
     return (
-      <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] bg-gold-gradient p-[1px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-        <div className="flex h-full w-full overflow-hidden rounded-[28px] bg-white">
+      <div className="relative flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+        {/* Golden gradient border using pseudo-element */}
+        <div className="absolute inset-0 rounded-[29px] bg-gold-gradient" />
+        <div className="relative z-10 m-[1px] flex h-full w-full overflow-hidden rounded-[28px] bg-white">
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
@@ -100,8 +102,10 @@ export default function ZakatGallery() {
   }
 
   return (
-    <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] bg-gold-gradient p-[1px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-      <div className="flex h-full w-full overflow-hidden rounded-[28px] bg-white">
+    <div className="relative flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+      {/* Golden gradient border using pseudo-element */}
+      <div className="absolute inset-0 rounded-[29px] bg-gold-gradient" />
+      <div className="relative z-10 m-[1px] flex h-full w-full overflow-hidden rounded-[28px] bg-white">
         {displayImages.slice(0, 4).map((imageUrl, index) => (
           <div
             key={index}
