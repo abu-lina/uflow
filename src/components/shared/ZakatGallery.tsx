@@ -98,26 +98,35 @@ export default function ZakatGallery() {
   }
 
   return (
-    <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-      {displayImages.slice(0, 4).map((imageUrl, index) => (
-        <div
-          key={index}
-          className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
-        >
-          <Image
-            fill
-            alt={
-              imageUrl === '/images/placeholder.jpg'
-                ? `Placeholder image ${index + 1}`
-                : `Zakat project image ${index + 1}`
-            }
-            className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
-            priority={index < 2}
-            sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
-            src={imageUrl}
-          />
-        </div>
-      ))}
+    <div
+      className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]"
+      style={{
+        background:
+          'linear-gradient(180deg, #D2B581 -49.22%, #DCC391 -3.81%, #AF8650 88.33%, #E5D1A0 228.56%)',
+        padding: '1px',
+      }}
+    >
+      <div className="flex h-full w-full overflow-hidden rounded-[29px]">
+        {displayImages.slice(0, 4).map((imageUrl, index) => (
+          <div
+            key={index}
+            className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+          >
+            <Image
+              fill
+              alt={
+                imageUrl === '/images/placeholder.jpg'
+                  ? `Placeholder image ${index + 1}`
+                  : `Zakat project image ${index + 1}`
+              }
+              className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+              priority={index < 2}
+              sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
+              src={imageUrl}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -257,7 +257,7 @@ export function MobileGreeting() {
               {/* Fixed Header - Never moves */}
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
-                className="fixed left-0 right-0 top-0 z-40"
+                className="fixed left-0 right-0 top-0 z-40 bg-white/10 backdrop-blur-3xl"
                 initial={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               >

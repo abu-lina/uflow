@@ -46,6 +46,14 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
   // Handle clicks outside dropdowns
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Don't close if clicking on the button itself
+      const target = event.target as HTMLElement;
+      const isButtonClick = target.closest('button[aria-expanded]');
+
+      if (isButtonClick) {
+        return;
+      }
+
       if (
         categoryDropdownRef.current &&
         !categoryDropdownRef.current.contains(event.target as Node)
@@ -223,7 +231,10 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                   aria-haspopup="listbox"
                   className="flex items-center gap-1"
                   type="button"
-                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCategoryOpen(!isCategoryOpen);
+                  }}
                 >
                   <span className="base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
                     {getCategoryLabel(selectedCategory)}
@@ -300,7 +311,10 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
               aria-haspopup="listbox"
               className="flex items-center gap-1"
               type="button"
-              onClick={() => setIsLocationOpen(!isLocationOpen)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLocationOpen(!isLocationOpen);
+              }}
             >
               <span className="text-base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
                 {selectedLocation}
