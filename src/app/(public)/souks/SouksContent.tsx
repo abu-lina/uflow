@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { CategoryFilter } from '@/components/souks/CategoryFilter';
 import { SearchResultsList } from '@/components/souks/SearchResultsList';
@@ -33,6 +33,7 @@ export function SouksContent() {
   const [error, setError] = useState<string | null>(null);
   const [selectedSouk, setSelectedSouk] = useState<Souk | null>(null);
   const [isInitialRender, setIsInitialRender] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
   const searchParams = useSearchParams();
   const [paramVersion, setParamVersion] = useState(0);
   const location = searchParams.get('location') || 'Überall';
@@ -93,6 +94,13 @@ export function SouksContent() {
     setParamVersion((v) => v + 1);
   }, [searchParams]);
 
+  // Detect navigation changes to prevent flashy loads
+  useEffect(() => {
+    setIsNavigating(true);
+    const timer = setTimeout(() => setIsNavigating(false), 100);
+    return () => clearTimeout(timer);
+  }, [searchParams]);
+
   useEffect(() => {
     async function fetchSouks() {
       const cacheKey = `${query}-${category}-${location}`;
@@ -105,12 +113,12 @@ export function SouksContent() {
       }
 
       try {
-        // Only show loading if it takes more than 100ms and it's not the initial render
+        // Only show loading if it takes more than 200ms and it's not the initial render
         const loadingTimeout = setTimeout(() => {
-          if (!isInitialRender) {
+          if (!isInitialRender && !isNavigating) {
             setLoading(true);
           }
-        }, 100);
+        }, 200);
 
         const data = await searchSouksAndZakat(query, category || 'Alle', location);
         setSearchResults(data);
@@ -133,16 +141,16 @@ export function SouksContent() {
     }
 
     void fetchSouks();
-  }, [query, category, location, paramVersion, searchCache, isInitialRender]);
+  }, [query, category, location, paramVersion, searchCache, isInitialRender, isNavigating]);
 
   // Optimize bookmark fetching
   useEffect(() => {
     if (user && !userLoading) {
       const loadingTimeout = setTimeout(() => {
-        if (!isInitialRender) {
+        if (!isInitialRender && !isNavigating) {
           setLoading(true);
         }
-      }, 100);
+      }, 200);
 
       getBookmarkedSouks(user.id)
         .then((bookmarkedSouks) => {
@@ -158,7 +166,7 @@ export function SouksContent() {
     } else if (!userLoading) {
       setBookmarkedSoukIds([]);
     }
-  }, [user, userLoading, isInitialRender]);
+  }, [user, userLoading, isInitialRender, isNavigating]);
 
   // During preloading, show skeleton loading
   if (isPreloading) {
@@ -260,66 +268,86 @@ export function SouksContent() {
         </div>
       </motion.div>
 
-      {/* Main Content - Only this area updates */}
+      {/* Main Content - Only this area updates with smooth transitions */}
       <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
-        {loading && !isInitialRender ? (
-          <SkeletonGrid count={12} />
-        ) : searchResults.length === 0 && !loading ? (
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-16 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Beautiful Islamic ornament */}
+        <AnimatePresence mode="wait">
+          {loading && !isInitialRender && !isNavigating ? (
             <motion.div
-              animate={{
-                scale: [1, 1.05, 1],
-                rotate: [0, 5, -5, 0],
-              }}
-              className="mb-6 text-6xl text-amber-500/60"
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
+              key="loading"
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
-              ✨
+              <SkeletonGrid count={12} />
             </motion.div>
-
-            {/* Main message with beautiful typography */}
-            <motion.h3
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              className="font-arabic mb-4 text-3xl font-light tracking-wide text-gray-800"
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              Ṣabr ist Licht
-            </motion.h3>
-
-            {/* Subtitle with elegant styling */}
-            <motion.p
-              animate={{ opacity: [0.5, 0.8, 0.5] }}
-              className="max-w-sm text-sm font-medium text-gray-500"
-              transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-            >
-              Geduld bringt Erleuchtung
-            </motion.p>
-
-            {/* Decorative line */}
+          ) : searchResults.length === 0 && !loading ? (
             <motion.div
-              animate={{ scaleX: [0, 1, 0] }}
-              className="mt-6 h-px w-16 bg-gradient-to-r from-transparent via-amber-400 to-transparent"
-              transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-            />
-          </motion.div>
-        ) : (
-          <SearchResultsList
-            bookmarkedSoukIds={bookmarkedSoukIds}
-            searchResults={searchResults}
-            onBookmarkChange={handleBookmarkChange}
-            onSoukClick={handleSoukClick}
-          />
-        )}
+              key="empty"
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center justify-center py-16 text-center"
+              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Beautiful Islamic ornament */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.05, 1],
+                  rotate: [0, 5, -5, 0],
+                }}
+                className="mb-6 text-6xl text-amber-500/60"
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              >
+                ✨
+              </motion.div>
+
+              {/* Main message with beautiful typography */}
+              <motion.h3
+                animate={{ opacity: [0.7, 1, 0.7] }}
+                className="font-arabic mb-4 text-3xl font-light tracking-wide text-gray-800"
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                Ṣabr ist Licht
+              </motion.h3>
+
+              {/* Subtitle with elegant styling */}
+              <motion.p
+                animate={{ opacity: [0.5, 0.8, 0.5] }}
+                className="max-w-sm text-sm font-medium text-gray-500"
+                transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
+              >
+                Geduld bringt Erleuchtung
+              </motion.p>
+
+              {/* Decorative line */}
+              <motion.div
+                animate={{ scaleX: [0, 1, 0] }}
+                className="mt-6 h-px w-16 bg-gradient-to-r from-transparent via-amber-400 to-transparent"
+                transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="results"
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <SearchResultsList
+                bookmarkedSoukIds={bookmarkedSoukIds}
+                searchResults={searchResults}
+                onBookmarkChange={handleBookmarkChange}
+                onSoukClick={handleSoukClick}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Mobile Modal */}

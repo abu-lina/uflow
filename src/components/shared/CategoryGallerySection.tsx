@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { motion } from 'framer-motion';
+
 import { fetchUsedCategories, type Category } from '@/services/categories';
 import { formatAllahText } from '@/utils/textUtils';
 
@@ -91,7 +93,12 @@ export function CategoryGallerySection() {
   }
 
   return (
-    <section className="w-full px-6 pb-8 pt-4 lg:hidden">
+    <motion.section
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full px-6 pb-8 pt-4 lg:hidden"
+      initial={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    >
       <div className="flex flex-col gap-6">
         {categories
           .sort((a, b) => {
@@ -100,7 +107,7 @@ export function CategoryGallerySection() {
             if (b.name_de === 'Spenden-Projekte') return 1;
             return 0;
           })
-          .map((category) => {
+          .map((category, _index) => {
             const categoryName = (category.name_de || '') as string;
             return (
               <div
@@ -161,6 +168,6 @@ export function CategoryGallerySection() {
             );
           })}
       </div>
-    </section>
+    </motion.section>
   );
 }

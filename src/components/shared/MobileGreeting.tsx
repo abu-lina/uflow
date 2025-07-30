@@ -37,6 +37,51 @@ function useTypewriter(text: string, speed = 40, shouldAnimate = true) {
 
 const smoothEase = [0.16, 1, 0.3, 1];
 
+// Skeleton component for gallery loading
+function GallerySkeleton() {
+  return (
+    <section className="w-full px-6 pb-8 pt-4 lg:hidden">
+      <div className="flex flex-col gap-6">
+        {[...Array(3)].map((_, index) => (
+          <motion.div
+            key={index}
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            className="flex flex-col rounded-lg p-2"
+            transition={{ duration: 1.5, repeat: Infinity, delay: index * 0.2 }}
+          >
+            {/* Header skeleton */}
+            <div className="mb-3 flex w-full flex-row items-start justify-between">
+              <div className="flex flex-col items-start gap-2.5 p-3">
+                <div className="h-4 w-32 animate-pulse rounded bg-gray-200" />
+                <div className="h-6 w-24 animate-pulse rounded bg-gray-300" />
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center">
+                <div className="h-6 w-6 animate-pulse rounded bg-gray-200" />
+              </div>
+            </div>
+
+            {/* Gallery image skeleton */}
+            <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px]">
+              <div className="flex h-full w-full">
+                {[...Array(4)].map((_, imgIndex) => (
+                  <div
+                    key={imgIndex}
+                    className={`relative h-full w-1/4 overflow-hidden ${
+                      imgIndex === 0 ? 'rounded-l-[29px]' : ''
+                    } ${imgIndex === 3 ? 'rounded-r-[29px]' : ''}`}
+                  >
+                    <div className="absolute inset-0 animate-pulse bg-gray-200" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function MobileGreeting() {
   const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -44,6 +89,7 @@ export function MobileGreeting() {
   const [currentSection, setCurrentSection] = useState<'greeting' | 'about' | 'gallery'>(
     'greeting',
   );
+  const [isGalleryLoading, setIsGalleryLoading] = useState(true);
   const { user } = useAuth();
 
   const translationText = 'Im Namen Allahs des Allerbarmers, des Allbarmherzigen';
@@ -77,9 +123,30 @@ export function MobileGreeting() {
     }
   }, [typewriter, translationText, isFirstVisit]);
 
+  // Simulate gallery loading for better UX
+  useEffect(() => {
+    if (currentSection === 'gallery') {
+      const timer = setTimeout(() => {
+        setIsGalleryLoading(false);
+      }, 1200); // Show skeleton for 1.2s for smoother transition
+      return () => clearTimeout(timer);
+    }
+  }, [currentSection]);
+
   // Don't render anything until we know if it's first visit
   if (isFirstVisit === null) {
-    return null;
+    return (
+      <div className="page-background flex min-h-[100dvh] items-center justify-center">
+        <motion.div
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          className="text-center"
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <div className="mx-auto mb-4 h-8 w-8 animate-pulse rounded-full bg-gray-200" />
+          <div className="h-4 w-32 animate-pulse rounded bg-gray-200" />
+        </motion.div>
+      </div>
+    );
   }
 
   const handleContinue = () => {
@@ -187,31 +254,67 @@ export function MobileGreeting() {
             transition={{ duration: 0.5 }}
           >
             <div className="flex w-full max-w-screen-xl flex-col items-center">
-              {/* New Header Design */}
+              {/* Fixed Header - Never moves */}
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
-                className="flex w-full flex-col items-start gap-6"
+                className="fixed left-0 right-0 top-0 z-40"
                 initial={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               >
-                {/* Location Bar */}
-                <div className="flex w-full flex-row items-start justify-end px-6">
-                  {/* Removed white bordered rectangle */}
-                </div>
-
-                {/* Main Header */}
-                <div className="flex flex-col items-start gap-2 px-6">
-                  <div className="font-inter text-[14px] font-medium leading-[140%] text-[#60606F]">
-                    {user ? `As-Salamu-Aleikum ${firstName},` : 'As-Salamu-Aleikum,'}
+                <div className="mx-auto flex w-full max-w-screen-xl flex-col items-start gap-6">
+                  {/* Location Bar */}
+                  <div className="flex w-full flex-row items-start justify-end px-6">
+                    {/* Removed white bordered rectangle */}
                   </div>
-                  <div className="font-inter text-[24px] font-semibold leading-[140%] text-[#5B9DA0]">
-                    Unterstütze Deine Ummah.
+
+                  {/* Main Header with staggered animation */}
+                  <div className="flex flex-col items-start gap-2 px-6 pb-4">
+                    <motion.div
+                      animate={{ opacity: 1, x: 0 }}
+                      className="font-inter text-[14px] font-medium leading-[140%] text-[#60606F]"
+                      initial={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.4, delay: 0.1 }}
+                    >
+                      {user ? `As-Salamu-Aleikum ${firstName},` : 'As-Salamu-Aleikum,'}
+                    </motion.div>
+                    <motion.div
+                      animate={{ opacity: 1, x: 0 }}
+                      className="font-inter text-[24px] font-semibold leading-[140%] text-[#5B9DA0]"
+                      initial={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.4, delay: 0.2 }}
+                    >
+                      Unterstütze Deine Ummah.
+                    </motion.div>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Zakat Projects Gallery - Always at the top */}
-              <CategoryGallerySection />
+              {/* Gallery with loading state - Below fixed header */}
+              <div className="w-full pt-20">
+                <AnimatePresence mode="wait">
+                  {isGalleryLoading ? (
+                    <motion.div
+                      key="skeleton"
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      initial={{ opacity: 0 }}
+                      transition={{ duration: 0.5, ease: 'easeInOut' }}
+                    >
+                      <GallerySkeleton />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="content"
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                    >
+                      <CategoryGallerySection />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </motion.div>
         )}
