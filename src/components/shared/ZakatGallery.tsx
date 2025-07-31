@@ -21,7 +21,7 @@ export default function ZakatGallery() {
         const { data, error } = await supabase
           .from('zakat_projects')
           .select('zakat_images')
-          .limit(4);
+          .limit(3);
 
         if (error) throw error;
 
@@ -72,9 +72,9 @@ export default function ZakatGallery() {
     fetchImages();
   }, []);
 
-  // Always ensure we have exactly 4 images
+  // Always ensure we have exactly 3 images
   const displayImages = [...images];
-  while (displayImages.length < 4) {
+  while (displayImages.length < 3) {
     displayImages.push('/images/placeholder.jpg');
   }
 
@@ -92,10 +92,10 @@ export default function ZakatGallery() {
             borderRadius: '29px',
           }}
         >
-          {[...Array(4)].map((_, i) => (
+          {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className={`relative h-full w-1/4 animate-pulse overflow-hidden bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 3 ? 'rounded-r-[29px]' : ''}`}
+              className={`relative h-full w-1/3 animate-pulse overflow-hidden bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 2 ? 'rounded-r-[29px]' : ''}`}
             />
           ))}
         </div>
@@ -118,10 +118,10 @@ export default function ZakatGallery() {
           borderRadius: '29px',
         }}
       >
-        {displayImages.slice(0, 4).map((imageUrl, index) => (
+        {displayImages.slice(0, 3).map((imageUrl, index) => (
           <div
             key={index}
-            className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+            className={`relative h-full w-1/3 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
           >
             <Image
               fill
@@ -130,9 +130,9 @@ export default function ZakatGallery() {
                   ? `Placeholder image ${index + 1}`
                   : `Zakat project image ${index + 1}`
               }
-              className={`object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+              className={`object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
               priority={index < 2}
-              sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
+              sizes="(max-width: 640px) 33vw, (max-width: 768px) 33vw, 33vw"
               src={imageUrl}
             />
           </div>

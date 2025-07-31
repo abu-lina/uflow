@@ -26,7 +26,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
           .from('souks')
           .select('souk_images')
           .eq('category_id', categoryId)
-          .limit(4);
+          .limit(3);
 
         if (error) throw error;
 
@@ -55,9 +55,9 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
     fetchImages();
   }, [categoryId]);
 
-  // Always ensure we have exactly 4 images
+  // Always ensure we have exactly 3 images
   const displayImages = [...images];
-  while (displayImages.length < 4) {
+  while (displayImages.length < 3) {
     displayImages.push('/images/placeholder.jpg');
   }
 
@@ -66,10 +66,10 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
   if (loading) {
     return (
       <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-        {[...Array(4)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <div
             key={i}
-            className={`relative h-full w-1/4 animate-pulse overflow-hidden border border-white bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 3 ? 'rounded-r-[29px]' : ''}`}
+            className={`relative h-full w-1/3 animate-pulse overflow-hidden border border-white bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 2 ? 'rounded-r-[29px]' : ''}`}
           />
         ))}
       </div>
@@ -82,10 +82,10 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
 
   return (
     <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
-      {displayImages.slice(0, 4).map((imageUrl, index) => (
+      {displayImages.slice(0, 3).map((imageUrl, index) => (
         <div
           key={index}
-          className={`relative h-full w-1/4 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+          className={`relative h-full w-1/3 overflow-hidden ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
         >
           <Image
             fill
@@ -94,9 +94,9 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
                 ? `Placeholder image ${index + 1}`
                 : `Souk image ${index + 1}`
             }
-            className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 3 ? 'rounded-r-[29px]' : ''}`}
+            className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
             priority={index < 2}
-            sizes="(max-width: 640px) 25vw, (max-width: 768px) 33vw, 25vw"
+            sizes="(max-width: 640px) 33vw, (max-width: 768px) 33vw, 33vw"
             src={imageUrl}
           />
         </div>
