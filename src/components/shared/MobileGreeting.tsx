@@ -254,10 +254,10 @@ export function MobileGreeting() {
             transition={{ duration: 0.5 }}
           >
             <div className="flex w-full max-w-screen-xl flex-col items-center">
-              {/* Fixed Header - Never moves */}
+              {/* Header - Now scrolls with content */}
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
-                className="fixed left-0 right-0 top-0 z-40 bg-white/10 backdrop-blur-3xl"
+                className="relative z-40 bg-white/10 backdrop-blur-3xl"
                 initial={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               >
@@ -289,8 +289,8 @@ export function MobileGreeting() {
                 </div>
               </motion.div>
 
-              {/* Gallery with loading state - Below fixed header */}
-              <div className="w-full pt-20">
+              {/* Gallery with loading state - Now flows naturally with header */}
+              <div className="w-full pt-4">
                 <AnimatePresence mode="wait">
                   {isGalleryLoading ? (
                     <motion.div
