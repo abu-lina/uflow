@@ -39,7 +39,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
               {step.title}
             </span>
             {idx < steps.length - 1 && (
-              <div className="absolute left-1/2 top-5 z-0 h-0.5 w-full -translate-x-1/2 bg-gray-200" />
+              <div className="absolute left-1/2 top-5 z-0 hidden h-0.5 w-full -translate-x-1/2 bg-gray-200 md:block" />
             )}
           </div>
         );
