@@ -82,7 +82,7 @@ export default function ZakatGallery() {
 
   if (loading) {
     return (
-      <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+      <div className="flex aspect-[16/9] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/9] md:hidden md:aspect-[16/9]">
         <div
           className="flex h-full w-full overflow-hidden rounded-[29px]"
           style={{
@@ -108,7 +108,7 @@ export default function ZakatGallery() {
   }
 
   return (
-    <div className="flex aspect-[16/7] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/7] md:hidden md:aspect-[16/8]">
+    <div className="flex aspect-[16/9] min-h-[162px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/9] md:hidden md:aspect-[16/9]">
       <div
         className="flex h-full w-full overflow-hidden rounded-[29px]"
         style={{
