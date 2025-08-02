@@ -119,7 +119,7 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
         return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
       }
       return [PLACEHOLDER_IMAGE];
-    } catch (error) {
+    } catch {
       return [PLACEHOLDER_IMAGE];
     }
   })();
@@ -153,17 +153,17 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
-  const goToImage = (index: number) => {
-    if (isTransitioning) return;
-    console.log('Go to image clicked - index:', index);
-    setIsTransitioning(true);
-    setSelectedImageIdx(index);
-    setTimeout(() => setIsTransitioning(false), 300);
-  };
+  // const goToImage = (index: number) => {
+  //   if (isTransitioning) return;
+  //   console.log('Go to image clicked - index:', index);
+  //   setIsTransitioning(true);
+  //   setSelectedImageIdx(index);
+  //   setTimeout(() => setIsTransitioning(false), 300);
+  // };
 
   // Image carousel touch handlers
   // Feature flag to disable image swiping
-  const ENABLE_IMAGE_SWIPING = false;
+  const ENABLE_IMAGE_SWIPING = true;
 
   const handleImageTouchStart = (e: React.TouchEvent) => {
     if (!ENABLE_IMAGE_SWIPING || allImageUrls.length <= 1 || isTransitioning) return;
@@ -196,7 +196,7 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
     }
   };
 
-  const handleImageTouchEnd = (e: React.TouchEvent) => {
+  const handleImageTouchEnd = (_e: React.TouchEvent) => {
     if (!ENABLE_IMAGE_SWIPING || !isDragging || allImageUrls.length <= 1 || isTransitioning) {
       setIsDragging(false);
       setDragOffset(0);
@@ -668,8 +668,8 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
           <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-4 pb-4 sm:hidden">
             <SoukActionBar
               isSaved={isSaved}
-              phoneNumber={souk.contact_phone}
-              websiteUrl={souk.social_website}
+              phoneNumber={souk.contact_phone || undefined}
+              websiteUrl={souk.social_website || undefined}
               onCall={handleCall}
               onSave={handleSave}
               onShare={handleShare}
