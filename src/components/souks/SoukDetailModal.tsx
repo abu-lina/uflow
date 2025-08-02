@@ -381,7 +381,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                     {selectedImageIdx > 0 && (
                       <button
                         aria-label="Vorheriges Bild"
-                        className="absolute left-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                        className="absolute left-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -394,7 +394,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                     {selectedImageIdx < allImageUrls.length - 1 && (
                       <button
                         aria-label="Nächstes Bild"
-                        className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                        className="absolute right-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
