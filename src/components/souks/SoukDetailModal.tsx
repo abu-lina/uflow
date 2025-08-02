@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 
 import { Icon } from '@iconify/react';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Modal } from '@/components/ui/Modal';
@@ -77,6 +77,11 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
   })();
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
   const mainImageUrl =
     allImageUrls[selectedImageIdx] ||
     'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
@@ -88,6 +93,64 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [zakatProjects, setZakatProjects] = useState<ZakatData[]>([]);
+
+  // Navigation functions
+  const goToNext = () => {
+    setSelectedImageIdx((prev) => (prev + 1) % allImageUrls.length);
+  };
+
+  const goToPrevious = () => {
+    setSelectedImageIdx((prev) => (prev - 1 + allImageUrls.length) % allImageUrls.length);
+  };
+
+  const goToImage = (index: number) => {
+    setSelectedImageIdx(index);
+  };
+
+  // Touch/Swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    setDragStartX(e.touches[0].clientX);
+    setDragOffset(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const currentX = e.touches[0].clientX;
+    const offset = currentX - dragStartX;
+    setDragOffset(offset);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+
+    const threshold = 50; // minimum distance to trigger swipe
+    if (Math.abs(dragOffset) > threshold) {
+      if (dragOffset > 0) {
+        goToPrevious();
+      } else {
+        goToNext();
+      }
+    }
+
+    setIsDragging(false);
+    setDragOffset(0);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrevious();
+      } else if (e.key === 'ArrowRight') {
+        goToNext();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   useEffect(() => {
     const fetchBookmark = async () => {
@@ -202,16 +265,6 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
     }
   };
 
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
   return (
     <Modal isOpen={true} title={zakatProjects[0]?.zakat_name || souk.souk_name} onClose={onClose}>
       <section
@@ -243,27 +296,72 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
               {souk.category?.name_de || ''}
             </div>
           </div>
-          {/* Main Image & Thumbnails */}
+          {/* Enhanced Image Carousel */}
           <div className="flex h-[640px] flex-col items-start justify-start gap-4">
-            <div className="bg-uFlowAccent relative h-[480px] w-[640px] overflow-hidden rounded-[32px]">
-              <Image
-                fill
-                alt={souk.souk_name}
-                className="rounded-[32px] object-cover"
-                src={mainImageUrl}
-              />
+            <div className="relative">
+              {/* Main Image Container with Swipe Support */}
+              <div
+                ref={imageContainerRef}
+                className="bg-uFlowAccent relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                  transform: isDragging ? `translateX(${dragOffset}px)` : 'translateX(0)',
+                  transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+                }}
+              >
+                <Image
+                  fill
+                  alt={souk.souk_name}
+                  className="rounded-[32px] object-cover"
+                  src={mainImageUrl}
+                />
+
+                {/* Navigation Arrows (only show if multiple images) */}
+                {allImageUrls.length > 1 && (
+                  <>
+                    <button
+                      aria-label="Vorheriges Bild"
+                      className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                      onClick={goToPrevious}
+                      type="button"
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </button>
+                    <button
+                      aria-label="Nächstes Bild"
+                      className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                      onClick={goToNext}
+                      type="button"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </button>
+                  </>
+                )}
+
+                {/* Image Counter */}
+                {allImageUrls.length > 1 && (
+                  <div className="absolute bottom-4 right-4 rounded-full bg-black/50 px-3 py-1 text-sm text-white">
+                    {selectedImageIdx + 1} / {allImageUrls.length}
+                  </div>
+                )}
+              </div>
             </div>
-            {/* Thumbnails */}
+
+            {/* Enhanced Thumbnails */}
             {allImageUrls.length > 1 && (
               <div className="flex items-start gap-4" style={{ gap: '16px' }}>
                 {allImageUrls.map((img, i) => (
                   <button
                     key={i}
                     aria-label={`Bild ${i + 1} auswählen`}
-                    className={`relative overflow-hidden rounded-[8px] border-2 ${selectedImageIdx === i ? 'border-mint' : 'border-transparent'}`}
+                    className={`relative overflow-hidden rounded-[8px] border-2 transition-all hover:scale-105 ${
+                      selectedImageIdx === i ? 'scale-105 border-mint' : 'border-transparent'
+                    }`}
                     style={{ width: 80, height: 60 }}
                     type="button"
-                    onClick={() => setSelectedImageIdx(i)}
+                    onClick={() => goToImage(i)}
                   >
                     <Image
                       fill
