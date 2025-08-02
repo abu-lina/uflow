@@ -125,6 +125,7 @@
   html {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* Internet Explorer 10+ */
+    touch-action: pan-x pan-y; /* Ensure touch scrolling works */
   }
 
   html::-webkit-scrollbar {
@@ -134,6 +135,7 @@
   body {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* Internet Explorer 10+ */
+    touch-action: pan-x pan-y; /* Ensure touch scrolling works */
   }
 
   body::-webkit-scrollbar {
@@ -159,6 +161,7 @@
   .overflow-auto {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* Internet Explorer 10+ */
+    touch-action: pan-x pan-y; /* Ensure touch scrolling works */
   }
 
   main::-webkit-scrollbar,

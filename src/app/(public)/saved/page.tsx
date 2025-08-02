@@ -129,40 +129,8 @@ export default function SavedSouksPage() {
       {selectedSouk &&
         (isMobile ? (
           <SoukCardModal
-            address_city={selectedSouk.address_city || undefined}
-            address_street={selectedSouk.address_street || undefined}
-            address_zip={selectedSouk.address_zip || undefined}
-            barakah_effects={selectedSouk.barakah_effects}
-            category={selectedSouk.category?.name_de || ''}
-            contact_phone={selectedSouk.contact_phone || undefined}
-            description={selectedSouk.souk_description || ''}
-            imageUrl={(() => {
-              if (!selectedSouk.souk_images) return '/images/placeholder.jpg';
-              try {
-                let imagesData: { urls?: string[] } = {};
-                if (typeof selectedSouk.souk_images === 'string') {
-                  imagesData = JSON.parse(selectedSouk.souk_images);
-                } else if (Array.isArray(selectedSouk.souk_images)) {
-                  imagesData.urls = selectedSouk.souk_images;
-                } else if (
-                  typeof selectedSouk.souk_images === 'object' &&
-                  selectedSouk.souk_images !== null &&
-                  'urls' in selectedSouk.souk_images
-                ) {
-                  imagesData = selectedSouk.souk_images;
-                }
-                if (imagesData.urls && imagesData.urls.length > 0) {
-                  return imagesData.urls[0];
-                }
-              } catch {
-                return '/images/placeholder.jpg';
-              }
-              return '/images/placeholder.jpg';
-            })()}
             open={!!selectedSouk}
-            social_website={selectedSouk.social_website || undefined}
-            souk_id={selectedSouk.souk_id}
-            title={selectedSouk.souk_name}
+            souk={selectedSouk}
             onClose={() => setSelectedSouk(null)}
           />
         ) : (
