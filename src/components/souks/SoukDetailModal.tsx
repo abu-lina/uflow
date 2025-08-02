@@ -71,7 +71,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
         return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
       }
       return [PLACEHOLDER_IMAGE];
-    } catch {
+    } catch (error) {
       return [PLACEHOLDER_IMAGE];
     }
   })();
@@ -79,12 +79,23 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartY, setDragStartY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const mainImageUrl =
     allImageUrls[selectedImageIdx] ||
     'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+
+  // Debug selected image changes
+  useEffect(() => {
+    console.log(
+      'Selected image changed to:',
+      selectedImageIdx,
+      'URL:',
+      allImageUrls[selectedImageIdx],
+    );
+  }, [selectedImageIdx, allImageUrls]);
 
   const [expandedAction, setExpandedAction] = useState<'save' | 'share' | 'call' | 'website'>(
     'save',
@@ -96,43 +107,70 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
 
   // Navigation functions
   const goToNext = () => {
+    console.log('Next clicked - current:', selectedImageIdx, 'total:', allImageUrls.length);
     setSelectedImageIdx((prev) => (prev + 1) % allImageUrls.length);
   };
 
   const goToPrevious = () => {
+    console.log('Previous clicked - current:', selectedImageIdx, 'total:', allImageUrls.length);
     setSelectedImageIdx((prev) => (prev - 1 + allImageUrls.length) % allImageUrls.length);
   };
 
   const goToImage = (index: number) => {
+    console.log('Go to image clicked - index:', index);
     setSelectedImageIdx(index);
   };
 
   // Touch/Swipe handlers
+  // Feature flag to disable image swiping
+  const ENABLE_IMAGE_SWIPING = false;
+
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (!ENABLE_IMAGE_SWIPING || allImageUrls.length <= 1) return;
     setIsDragging(true);
     setDragStartX(e.touches[0].clientX);
+    setDragStartY(e.touches[0].clientY);
     setDragOffset(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
+    if (!ENABLE_IMAGE_SWIPING || !isDragging || allImageUrls.length <= 1) return;
+
     const currentX = e.touches[0].clientX;
-    const offset = currentX - dragStartX;
-    setDragOffset(offset);
+    const currentY = e.touches[0].clientY;
+    const offsetX = currentX - dragStartX;
+    const offsetY = Math.abs(currentY - dragStartY);
+
+    // Only handle horizontal swipes, let vertical scrolls pass through
+    if (Math.abs(offsetX) > offsetY) {
+      // Prevent swiping beyond boundaries
+      if (
+        (selectedImageIdx === 0 && offsetX > 0) ||
+        (selectedImageIdx === allImageUrls.length - 1 && offsetX < 0)
+      ) {
+        // Allow only small resistance movement
+        setDragOffset(offsetX * 0.1);
+      } else {
+        setDragOffset(offsetX);
+      }
+    }
   };
 
-  const handleTouchEnd = () => {
-    if (!isDragging) return;
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!ENABLE_IMAGE_SWIPING || !isDragging || allImageUrls.length <= 1) {
+      setIsDragging(false);
+      setDragOffset(0);
+      return;
+    }
 
-    const threshold = 50; // minimum distance to trigger swipe
+    const threshold = 80; // minimum distance to trigger swipe
     if (Math.abs(dragOffset) > threshold) {
-      if (dragOffset > 0) {
+      if (dragOffset > 0 && selectedImageIdx > 0) {
         goToPrevious();
-      } else {
+      } else if (dragOffset < 0 && selectedImageIdx < allImageUrls.length - 1) {
         goToNext();
       }
     }
-
     setIsDragging(false);
     setDragOffset(0);
   };
@@ -303,40 +341,69 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
               <div
                 ref={imageContainerRef}
                 className="bg-uFlowAccent relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
+                onClick={() => console.log('Image container clicked')}
                 onTouchEnd={handleTouchEnd}
-                style={{
-                  transform: isDragging ? `translateX(${dragOffset}px)` : 'translateX(0)',
-                  transition: isDragging ? 'none' : 'transform 0.3s ease-out',
-                }}
+                onTouchMove={handleTouchMove}
+                onTouchStart={handleTouchStart}
               >
-                <Image
-                  fill
-                  alt={souk.souk_name}
-                  className="rounded-[32px] object-cover"
-                  src={mainImageUrl}
-                />
+                {/* Image Carousel Container */}
+                <div
+                  className="flex h-full w-full"
+                  style={{
+                    transform:
+                      isDragging && Math.abs(dragOffset) > 10
+                        ? `translateX(calc(-${selectedImageIdx * 100}% + ${dragOffset}px))`
+                        : `translateX(-${selectedImageIdx * 100}%)`,
+                    transition: isDragging
+                      ? 'none'
+                      : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  }}
+                >
+                  {allImageUrls.map((imageUrl, index) => (
+                    <div
+                      key={index}
+                      className="relative h-full w-full flex-shrink-0"
+                      style={{ minWidth: '100%' }}
+                    >
+                      <Image
+                        fill
+                        alt={`${souk.souk_name} ${index + 1}`}
+                        className="rounded-[32px] object-cover"
+                        src={imageUrl}
+                      />
+                    </div>
+                  ))}
+                </div>
 
-                {/* Navigation Arrows (only show if multiple images) */}
+                {/* Navigation Arrows (only show if multiple images and not at boundaries) */}
                 {allImageUrls.length > 1 && (
                   <>
-                    <button
-                      aria-label="Vorheriges Bild"
-                      className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
-                      onClick={goToPrevious}
-                      type="button"
-                    >
-                      <ChevronLeft className="h-6 w-6" />
-                    </button>
-                    <button
-                      aria-label="Nächstes Bild"
-                      className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
-                      onClick={goToNext}
-                      type="button"
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </button>
+                    {selectedImageIdx > 0 && (
+                      <button
+                        aria-label="Vorheriges Bild"
+                        className="absolute left-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          goToPrevious();
+                        }}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                    )}
+                    {selectedImageIdx < allImageUrls.length - 1 && (
+                      <button
+                        aria-label="Nächstes Bild"
+                        className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          goToNext();
+                        }}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    )}
                   </>
                 )}
 

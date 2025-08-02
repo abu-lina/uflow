@@ -23,7 +23,6 @@ import {
   type Souk,
   type SearchResult,
 } from '@/services/souks';
-import { getSoukImageUrl } from '@/utils/imageUtils';
 
 export function SouksContent() {
   const { user, loading: userLoading } = useAuth();
@@ -352,21 +351,7 @@ export function SouksContent() {
 
       {/* Mobile Modal */}
       {selectedSouk && isMobile && (
-        <SoukCardModal
-          address_city={selectedSouk.address_city || ''}
-          address_street={selectedSouk.address_street || ''}
-          address_zip={selectedSouk.address_zip || ''}
-          barakah_effects={selectedSouk.barakah_effects || []}
-          category={selectedSouk.category?.name_de || ''}
-          contact_phone={selectedSouk.contact_phone || undefined}
-          description={selectedSouk.souk_description || ''}
-          imageUrl={getSoukImageUrl(selectedSouk.souk_images)}
-          open={!!selectedSouk}
-          social_website={selectedSouk.social_website || undefined}
-          souk_id={selectedSouk.souk_id}
-          title={selectedSouk.souk_name}
-          onClose={handleCloseModal}
-        />
+        <SoukCardModal open={true} souk={selectedSouk} onClose={handleCloseModal} />
       )}
 
       {/* Desktop Modal */}
