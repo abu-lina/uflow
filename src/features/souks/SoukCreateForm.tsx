@@ -23,7 +23,7 @@ interface ExtendedFormData extends SoukFormData {
 
 const STEPS = [
   {
-    title: 'Basic Info',
+    title: 'Basics',
     icon: 'mdi:information',
   },
   {
@@ -31,11 +31,11 @@ const STEPS = [
     icon: 'mdi:map-marker',
   },
   {
-    title: 'Contact & Social',
+    title: 'Contact',
     icon: 'mdi:account-group',
   },
   {
-    title: 'Media & Tags',
+    title: 'Media',
     icon: 'mdi:image-multiple',
   },
 ];
@@ -175,7 +175,7 @@ export function SoukCreateForm() {
   }
 
   return (
-    <form className="mx-auto w-full max-w-xl px-4" onSubmit={handleSubmit}>
+    <form className="mx-auto w-full max-w-xl" onSubmit={handleSubmit}>
       <StepIndicator currentStep={currentStep} steps={STEPS} />
 
       <div className="mt-8 space-y-6">
@@ -190,7 +190,7 @@ export function SoukCreateForm() {
               onChange={(e) => handleInputChange('title', e.target.value)}
             />
             <div className="flex w-full flex-col items-start gap-2">
-              <label className="font-inter text-base text-[#999999]" htmlFor="category">
+              <label className="px-3 font-inter text-base text-[#999999]" htmlFor="category">
                 KATEGORIE <span className="ml-1 text-red-500">*</span>
               </label>
               <select
@@ -291,7 +291,7 @@ export function SoukCreateForm() {
         {currentStep === 3 && (
           <>
             <div className="space-y-2">
-              <label className="font-inter text-base text-[#999999]" htmlFor="images-upload">
+              <label className="px-3 font-inter text-base text-[#999999]" htmlFor="images-upload">
                 BILDER
               </label>
               <input

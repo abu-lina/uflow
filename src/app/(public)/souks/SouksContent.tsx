@@ -180,7 +180,7 @@ export function SouksContent() {
           transition={sharedTransition}
         >
           {/* Search Bar */}
-          <div className="px-6 pb-0 pt-4">
+          <div className="px-4 pb-0 pt-4">
             <SearchBar
               className="rounded-lg border border-gray-200 shadow-sm"
               hideCategoryFilter={true}
@@ -252,7 +252,7 @@ export function SouksContent() {
         transition={sharedTransition}
       >
         {/* Search Bar */}
-        <div className="px-6 pb-0 pt-4">
+        <div className="px-4 pb-0 pt-6">
           <SearchBar
             className="rounded-lg border border-gray-200 shadow-sm"
             hideCategoryFilter={true}

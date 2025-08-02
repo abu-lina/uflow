@@ -9,7 +9,7 @@ export interface StepIndicatorProps {
 
 export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
   return (
-    <div className="flex w-full items-center justify-between px-4">
+    <div className="flex w-full items-center justify-between">
       {steps.map((step, idx) => {
         const isCompleted = idx < currentStep;
         const isCurrent = idx === currentStep;
@@ -32,7 +32,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
               )}
             </div>
             <span
-              className={`mt-2 text-xs font-medium ${
+              className={`mt-2 whitespace-nowrap text-xs font-medium ${
                 isCurrent ? 'text-mint' : isCompleted ? 'text-mint' : 'text-gray-400'
               }`}
             >

@@ -66,7 +66,7 @@ export function ZakatProjectsGallery() {
             <div
               key={zakatProject.zakat_id}
               aria-label={`Spenden-Projekte anzeigen`}
-              className="-m-2 flex cursor-pointer flex-col rounded-lg p-2 transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
+              className="flex cursor-pointer flex-col rounded-lg p-2 transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
               role="button"
               tabIndex={0}
               onClick={() => handleZakatProjectClick(zakatProject.zakat_id)}

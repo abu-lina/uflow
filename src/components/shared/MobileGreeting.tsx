@@ -40,7 +40,7 @@ const smoothEase = [0.16, 1, 0.3, 1];
 // Skeleton component for gallery loading
 function GallerySkeleton() {
   return (
-    <section className="w-full px-6 pb-8 pt-4 lg:hidden">
+    <section className="w-full lg:hidden">
       <div className="flex flex-col gap-6">
         {[...Array(3)].map((_, index) => (
           <motion.div
@@ -253,7 +253,7 @@ export function MobileGreeting() {
             initial={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="flex w-full max-w-screen-xl flex-col items-center">
+            <div className="flex w-full max-w-screen-xl flex-col items-start">
               {/* Header - Now scrolls with content */}
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
@@ -261,14 +261,14 @@ export function MobileGreeting() {
                 initial={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               >
-                <div className="mx-auto flex w-full max-w-screen-xl flex-col items-start gap-6">
+                <div className="mx-auto flex w-full max-w-screen-xl flex-col items-start">
                   {/* Location Bar */}
                   <div className="flex w-full flex-row items-start justify-end px-6">
                     {/* Removed white bordered rectangle */}
                   </div>
 
                   {/* Main Header with staggered animation */}
-                  <div className="flex flex-col items-start gap-2 px-6 pb-4">
+                  <div className="flex flex-col items-start gap-2">
                     <motion.div
                       animate={{ opacity: 1, x: 0 }}
                       className="font-inter text-[14px] font-medium leading-[140%] text-[#60606F]"
@@ -290,7 +290,7 @@ export function MobileGreeting() {
               </motion.div>
 
               {/* Gallery with loading state - Now flows naturally with header */}
-              <div className="w-full pt-4">
+              <div className="w-full">
                 <AnimatePresence mode="wait">
                   {isGalleryLoading ? (
                     <motion.div

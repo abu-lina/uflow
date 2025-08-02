@@ -78,7 +78,7 @@ export function TagsMultiSelect({ selected, onChange, error, required }: TagsMul
 
   return (
     <div ref={containerRef} className="w-full">
-      <label className="font-inter text-base text-[#999999]">
+      <label className="px-3 font-inter text-base text-[#999999]">
         TAGS
         {required && <span className="ml-1 text-red-500">*</span>}
       </label>

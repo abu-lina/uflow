@@ -65,8 +65,14 @@ export function CategoryGallerySection() {
   }, []);
 
   const handleCategoryClick = (categoryId: string) => {
-    // Navigate to search page with category filter
     router.push(`/souks?category=${categoryId}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, categoryId: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleCategoryClick(categoryId);
+    }
   };
 
   if (isLoading) {
@@ -89,84 +95,75 @@ export function CategoryGallerySection() {
   }
 
   if (categories.length === 0) {
-    return null; // Don't render section if no categories are found
+    return null;
   }
+
+  const sortedCategories = categories.sort((a, b) => {
+    if (a.name_de === 'Spenden-Projekte') return -1;
+    if (b.name_de === 'Spenden-Projekte') return 1;
+    return 0;
+  });
 
   return (
     <motion.section
       animate={{ opacity: 1, y: 0 }}
-      className="w-full px-6 pb-8 pt-4 lg:hidden"
+      className="w-full pb-8 pt-4 lg:hidden"
       initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
     >
       <div className="flex flex-col gap-6">
-        {categories
-          .sort((a, b) => {
-            // Put Spenden-Projekte first
-            if (a.name_de === 'Spenden-Projekte') return -1;
-            if (b.name_de === 'Spenden-Projekte') return 1;
-            return 0;
-          })
-          .map((category, _index) => {
-            const categoryName = (category.name_de || '') as string;
-            return (
-              <div
-                key={category.category_id}
-                aria-label={`Alle Souks in der Kategorie ${categoryName} anzeigen`}
-                className="-m-2 flex cursor-pointer flex-col rounded-lg p-2 transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
-                role="button"
-                tabIndex={0}
-                onClick={() => handleCategoryClick(category.category_id as string)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleCategoryClick(category.category_id as string);
-                  }
-                }}
-              >
-                <div className="flex w-full flex-row items-start justify-between">
-                  <div className="flex flex-col items-start justify-between gap-2.5 p-3">
-                    <div className="flex flex-col items-start">
-                      <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323]">
-                        {formatAllahText(getCategorySubtitle(categoryName))}
-                      </div>
-                      <div className="w-full truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
-                        {categoryName}
-                      </div>
-                    </div>
-                  </div>
+        {sortedCategories.map((category) => {
+          const categoryName = (category.name_de || '') as string;
+          const categoryId = category.category_id as string;
 
-                  {/* Right side - Chevron */}
-                  <div className="flex flex-row items-start justify-end gap-2.5 p-2.5">
-                    <div className="relative flex h-12 w-12 items-center justify-center">
-                      <svg
-                        className="text-[#232323]"
-                        fill="none"
-                        height="32"
-                        viewBox="0 0 24 24"
-                        width="32"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M9 18L15 12L9 6"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
+          return (
+            <div
+              key={categoryId}
+              aria-label={`Alle Souks in der Kategorie ${categoryName} anzeigen`}
+              className="flex cursor-pointer flex-col rounded-lg transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
+              role="button"
+              tabIndex={0}
+              onClick={() => handleCategoryClick(categoryId)}
+              onKeyDown={(e) => handleKeyDown(e, categoryId)}
+            >
+              <div className="flex w-full flex-row items-center justify-between p-3">
+                <div className="flex flex-col items-start justify-center gap-2.5">
+                  <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323]">
+                    {formatAllahText(getCategorySubtitle(categoryName))}
+                  </div>
+                  <div className="w-full truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
+                    {categoryName}
                   </div>
                 </div>
 
-                {category.category_id === '2335922b-76a9-4d79-b32a-b3f95941ba5c' ? (
-                  <ZakatGallery />
-                ) : (
-                  <CategoryGallery categoryId={category.category_id as string} />
-                )}
+                <div className="flex h-12 w-12 items-center justify-center">
+                  <svg
+                    className="text-[#232323]"
+                    fill="none"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    width="32"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M9 18L15 12L9 6"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                </div>
               </div>
-            );
-          })}
+
+              {categoryId === '2335922b-76a9-4d79-b32a-b3f95941ba5c' ? (
+                <ZakatGallery />
+              ) : (
+                <CategoryGallery categoryId={categoryId} />
+              )}
+            </div>
+          );
+        })}
       </div>
     </motion.section>
   );
