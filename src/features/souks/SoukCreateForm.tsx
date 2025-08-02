@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { Icon } from '@iconify/react';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
@@ -60,6 +62,7 @@ export function SoukCreateForm() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchCategories() {
@@ -90,6 +93,7 @@ export function SoukCreateForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
     if (!user) {
       setIsSubmitting(false);
       return;
@@ -141,7 +145,8 @@ export function SoukCreateForm() {
     if (error) {
       alert(`Fehler beim Erstellen des Souks: ${error.message}`);
     } else {
-      alert('Souk erfolgreich erstellt!');
+      // Redirect immediately without blocking alert
+      router.push('/profile');
     }
   };
 
@@ -322,26 +327,39 @@ export function SoukCreateForm() {
             Zurück
           </button>
         )}
-        <button
-          className={[
-            'ml-auto rounded-[9.6px] bg-primary px-6 py-2 font-inter text-[15px] text-white transition-colors',
-            currentStep === 0 ? 'w-full' : '',
-            isSubmitting || !isStepValid(currentStep, formData)
-              ? 'cursor-not-allowed opacity-50 hover:bg-primary'
-              : 'hover:bg-primary/90',
-          ].join(' ')}
-          disabled={isSubmitting || !isStepValid(currentStep, formData)}
-          type={currentStep === STEPS.length - 1 ? 'submit' : 'button'}
-          onClick={currentStep < STEPS.length - 1 ? nextStep : undefined}
-        >
-          {isSubmitting ? (
-            <Icon className="size-5 animate-spin" icon="mdi:loading" />
-          ) : currentStep === STEPS.length - 1 ? (
-            'Souk erstellen'
-          ) : (
-            'Weiter'
-          )}
-        </button>
+        {currentStep === STEPS.length - 1 ? (
+          <button
+            className={[
+              'ml-auto rounded-[9.6px] bg-primary px-6 py-2 font-inter text-[15px] text-white transition-colors',
+              isSubmitting || !isStepValid(currentStep, formData)
+                ? 'cursor-not-allowed opacity-50 hover:bg-primary'
+                : 'hover:bg-primary/90',
+            ].join(' ')}
+            disabled={isSubmitting || !isStepValid(currentStep, formData)}
+            type="submit"
+          >
+            {isSubmitting ? (
+              <Icon className="size-5 animate-spin" icon="mdi:loading" />
+            ) : (
+              'Souk erstellen'
+            )}
+          </button>
+        ) : (
+          <button
+            className={[
+              'ml-auto rounded-[9.6px] bg-primary px-6 py-2 font-inter text-[15px] text-white transition-colors',
+              currentStep === 0 ? 'w-full' : '',
+              isSubmitting || !isStepValid(currentStep, formData)
+                ? 'cursor-not-allowed opacity-50 hover:bg-primary'
+                : 'hover:bg-primary/90',
+            ].join(' ')}
+            disabled={isSubmitting || !isStepValid(currentStep, formData)}
+            type="button"
+            onClick={nextStep}
+          >
+            Weiter
+          </button>
+        )}
       </div>
     </form>
   );
