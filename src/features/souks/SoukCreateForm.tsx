@@ -86,7 +86,12 @@ export function SoukCreateForm() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setFormData((prev) => ({ ...prev, images: [...prev.images, ...files] }));
+      console.log(
+        'Selected files:',
+        files.length,
+        files.map((f) => f.name),
+      );
+      setFormData((prev) => ({ ...prev, images: files }));
     }
   };
 
@@ -101,14 +106,23 @@ export function SoukCreateForm() {
 
     // 1. Upload images to Supabase Storage and collect trusted URLs
     const uploadedUrls: string[] = [];
+    console.log(
+      'Images to upload:',
+      formData.images.length,
+      formData.images.map((f) => f.name),
+    );
+
     for (const file of formData.images) {
       const fileExt = file.name.split('.').pop();
       const filePath = `souks/${Date.now()}-${Math.random()}.${fileExt}`;
+      console.log('Uploading file:', file.name, 'to path:', filePath);
+
       const { error: uploadError } = await supabase.storage.from('images').upload(filePath, file);
       if (uploadError) {
-        // Optionally show a toast or error message
+        console.error('Upload error for', file.name, ':', uploadError);
         continue;
       }
+
       const { data: publicUrlData } = supabase.storage.from('images').getPublicUrl(filePath);
       if (publicUrlData?.publicUrl) {
         // Only allow trusted domain
@@ -116,12 +130,15 @@ export function SoukCreateForm() {
           const { hostname } = new URL(publicUrlData.publicUrl);
           if (hostname === 'pmbatjlosstytdmmqkky.supabase.co') {
             uploadedUrls.push(publicUrlData.publicUrl);
+            console.log('Successfully uploaded:', file.name, 'URL:', publicUrlData.publicUrl);
           }
         } catch {
-          // Ignore invalid URLs
+          console.error('Invalid URL for', file.name);
         }
       }
     }
+
+    console.log('Total uploaded URLs:', uploadedUrls.length);
 
     // 2. Save souk with trusted Supabase image URLs
     const insertData = {
