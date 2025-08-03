@@ -56,7 +56,9 @@ export function SearchResultsList({
           <motion.div
             key={result.id}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+            className={`cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99] ${
+              index === 0 ? 'pt-4' : ''
+            }`}
             initial={{ opacity: 0, y: 5, scale: 0.98 }}
             role="button"
             tabIndex={0}
