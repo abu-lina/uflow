@@ -87,7 +87,7 @@ jobs:
           args: --severity-threshold=high --fail-on=high
 
       - name: Upload Snyk report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snyk-security-report
           path: snyk-report.json
