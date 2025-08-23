@@ -37,7 +37,10 @@ jobs:
         run: npm run type-check
 
       - name: Check for unused dependencies
-        run: npx depcheck
+        run: |
+          echo "Checking for unused dependencies..."
+          echo "Note: Some dependencies are ignored in .depcheckrc as they're used by build tools"
+          npx depcheck
 
   # Unit and Integration Tests
   test:

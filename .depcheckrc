@@ -1,0 +1,15 @@
+{
+  "ignores": [
+    "@vitest/coverage-v8",
+    "autoprefixer", 
+    "postcss"
+  ],
+  "skip-missing": false,
+  "ignore-dirs": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist",
+    "coverage"
+  ]
+}
