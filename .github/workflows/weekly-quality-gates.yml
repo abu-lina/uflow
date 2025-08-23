@@ -1,0 +1,329 @@
+name: Weekly Quality Gates
+
+on:
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC for comprehensive quality checks
+    - cron: '0 2 * * 0'
+  workflow_dispatch: # Allow manual triggering
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Performance Monitoring with Lighthouse CI
+  performance-monitoring:
+    name: Performance & Accessibility Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: |
+          echo "Building application for performance testing..."
+          npx next build
+
+      - name: Start application
+        run: |
+          echo "Starting application..."
+          npx next start &
+        env:
+          NODE_ENV: test
+          PORT: 3000
+
+      - name: Wait for app to be ready
+        run: |
+          echo "Waiting for application to start..."
+          timeout=120
+          while ! curl -f http://localhost:3000 > /dev/null 2>&1; do
+            if [ $timeout -le 0 ]; then
+              echo "❌ Application failed to start within 120 seconds"
+              exit 1
+            fi
+            timeout=$((timeout - 1))
+            sleep 1
+            echo -n "."
+          done
+          echo "✅ Application is ready"
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+
+      - name: Run Lighthouse CI
+        run: |
+          # Create lighthouse config
+          cat > lighthouserc.json << EOF
+          {
+            "ci": {
+              "collect": {
+                "url": [
+                  "http://localhost:3000",
+                  "http://localhost:3000/souks",
+                  "http://localhost:3000/profile"
+                ],
+                "startServerCommand": "echo 'Server already running'",
+                "startServerReadyPattern": "ready",
+                "startServerReadyTimeout": 10000
+              },
+              "assert": {
+                "assertions": {
+                  "categories:performance": ["warn", {"minScore": 0.7}],
+                  "categories:accessibility": ["error", {"minScore": 0.9}],
+                  "categories:best-practices": ["warn", {"minScore": 0.8}],
+                  "categories:seo": ["warn", {"minScore": 0.8}]
+                }
+              },
+              "upload": {
+                "target": "temporary-public-storage"
+              }
+            }
+          }
+          EOF
+          
+          # Run Lighthouse CI
+          lhci autorun
+
+      - name: Stop application
+        if: always()
+        run: |
+          echo "Stopping application..."
+          pkill -f "next start" || true
+
+  # Comprehensive Security Scanning
+  security-scanning:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          echo "Running comprehensive npm security audit..."
+          npm audit --audit-level=moderate --json > audit-report.json || true
+          
+          # Check for high/critical vulnerabilities
+          if npm audit --audit-level=high; then
+            echo "✅ No high/critical vulnerabilities found"
+          else
+            echo "⚠️ High/critical vulnerabilities detected"
+            echo "Check the audit report for details"
+          fi
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --json-file-output=snyk-report.json
+
+      - name: Code security analysis
+        run: |
+          echo "## 🔒 Code Security Analysis" > code-security-report.md
+          echo "" >> code-security-report.md
+          echo "### Dependency Vulnerabilities:" >> code-security-report.md
+          echo "- npm audit: $(npm audit --audit-level=high --json | jq -r '.metadata.vulnerabilities.high // 0') high severity" >> code-security-report.md
+          echo "- npm audit: $(npm audit --audit-level=critical --json | jq -r '.metadata.vulnerabilities.critical // 0') critical severity" >> code-security-report.md
+          echo "" >> code-security-report.md
+          
+          echo "### Code Security Checks:" >> code-security-report.md
+          
+          # Check for hardcoded secrets
+          if grep -r "password.*=.*['\"].*['\"]" src/ --exclude-dir=node_modules --exclude-dir=.git; then
+            echo "❌ Potential hardcoded passwords found" >> code-security-report.md
+          else
+            echo "✅ No hardcoded passwords detected" >> code-security-report.md
+          fi
+          
+          # Check for dangerous eval usage
+          if grep -r "eval(" src/ --exclude-dir=node_modules --exclude-dir=.git; then
+            echo "❌ Dangerous eval() usage detected" >> code-security-report.md
+          else
+            echo "✅ No eval() usage detected" >> code-security-report.md
+          fi
+          
+          # Check for innerHTML usage
+          if grep -r "innerHTML" src/ --exclude-dir=node_modules --exclude-dir=.git; then
+            echo "⚠️ innerHTML usage detected (potential XSS risk)" >> code-security-report.md
+          else
+            echo "✅ No innerHTML usage detected" >> code-security-report.md
+          fi
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            audit-report.json
+            snyk-report.json
+            code-security-report.md
+          retention-days: 30
+
+  # Regression Testing
+  regression-tests:
+    name: Critical Path Regression Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: |
+          echo "Building application for regression testing..."
+          npx next build
+
+      - name: Start application
+        run: |
+          echo "Starting application..."
+          npx next start &
+        env:
+          NODE_ENV: test
+          PORT: 3000
+
+      - name: Wait for app to be ready
+        run: |
+          echo "Waiting for application to start..."
+          timeout=120
+          while ! curl -f http://localhost:3000 > /dev/null 2>&1; do
+            if [ $timeout -le 0 ]; then
+              echo "❌ Application failed to start within 120 seconds"
+              exit 1
+            fi
+            timeout=$((timeout - 1))
+            sleep 1
+            echo -n "."
+          done
+          echo "✅ Application is ready"
+
+      - name: Test critical user journeys
+        run: |
+          echo "Testing critical user journeys..."
+          
+          # Test homepage
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/)
+          if [ "$response" = "200" ]; then
+            echo "✅ Homepage loads successfully (HTTP $response)"
+          else
+            echo "❌ Homepage failed to load (HTTP $response)"
+            exit 1
+          fi
+          
+          # Test souks page
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/souks)
+          if [ "$response" = "200" ]; then
+            echo "✅ Souks page loads successfully (HTTP $response)"
+          else
+            echo "❌ Souks page failed to load (HTTP $response)"
+            exit 1
+          fi
+          
+          # Test search functionality
+          response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/souks?q=test")
+          if [ "$response" = "200" ]; then
+            echo "✅ Search functionality works (HTTP $response)"
+          else
+            echo "❌ Search functionality failed (HTTP $response)"
+            exit 1
+          fi
+          
+          # Test profile page (should redirect if not authenticated)
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/profile)
+          if [ "$response" = "200" ] || [ "$response" = "302" ]; then
+            echo "✅ Profile page accessible (HTTP $response)"
+          else
+            echo "❌ Profile page failed (HTTP $response)"
+            exit 1
+          fi
+          
+          echo "✅ All critical user journeys working"
+
+      - name: Stop application
+        if: always()
+        run: |
+          echo "Stopping application..."
+          pkill -f "next start" || true
+
+  # Quality Gates Summary
+  quality-summary:
+    name: Quality Gates Summary
+    runs-on: ubuntu-latest
+    needs: [performance-monitoring, security-scanning, regression-tests]
+    if: always()
+    timeout-minutes: 5
+    
+    steps:
+      - name: Generate quality report
+        run: |
+          echo "## 🎯 Weekly Quality Gates Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Performance & Accessibility:" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ needs.performance-monitoring.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Lighthouse CI scores for performance, accessibility, best practices, and SEO" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Security Scan Results:" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ needs.security-scanning.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- npm audit, Snyk scan, and code security analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Regression Tests:" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ needs.regression-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Critical user journeys: homepage, souks, search, profile" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.performance-monitoring.result }}" == "success" ] && \
+             [ "${{ needs.security-scanning.result }}" == "success" ] && \
+             [ "${{ needs.regression-tests.result }}" == "success" ]; then
+            echo "🎉 **All quality gates passed!** Your application is maintaining high standards." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Some quality gates failed.** Please review the logs above for details." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Check the artifacts above for detailed reports and metrics."
+          echo "🔄 This workflow runs weekly to ensure consistent quality standards."

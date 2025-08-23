@@ -1,4 +1,4 @@
-name: Comprehensive CI & Regression Testing
+name: Main CI Pipeline
 
 on:
   push:
@@ -11,11 +11,11 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # Linting and Type Checking
-  lint-and-typecheck:
-    name: Lint and Type Check
+  # Essential Quality Checks (Fast, runs first)
+  quality-checks:
+    name: Quality Checks
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     
     steps:
       - name: Checkout code
@@ -43,7 +43,7 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
     
     steps:
       - name: Checkout code
@@ -67,11 +67,12 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
-  # Build and Bundle Analysis
-  build:
-    name: Build Application
+  # Build and Basic Functionality Test
+  build-and-test:
+    name: Build & Basic Test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    needs: [quality-checks, test]
+    timeout-minutes: 15
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -117,27 +118,25 @@ jobs:
           done
           echo "✅ Application is ready"
 
-      - name: Test basic functionality
+      - name: Test critical endpoints
         run: |
-          echo "Testing basic functionality..."
+          echo "Testing critical endpoints..."
           
-          # Test homepage
-          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/)
-          if [ "$response" = "200" ]; then
-            echo "✅ Homepage loads successfully (HTTP $response)"
-          else
-            echo "❌ Homepage failed to load (HTTP $response)"
-            exit 1
-          fi
+          # Test essential pages
+          endpoints=("/" "/souks" "/profile" "/create" "/saved")
           
-          # Test souks page
-          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/souks)
-          if [ "$response" = "200" ]; then
-            echo "✅ Souks page loads successfully (HTTP $response)"
-          else
-            echo "❌ Souks page failed to load (HTTP $response)"
-            exit 1
-          fi
+          for endpoint in "${endpoints[@]}"; do
+            echo "Testing $endpoint..."
+            response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000$endpoint")
+            if [ "$response" = "200" ] || [ "$response" = "302" ]; then
+              echo "✅ $endpoint accessible (HTTP $response)"
+            else
+              echo "❌ $endpoint failed (HTTP $response)"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All critical endpoints working"
 
       - name: Stop application
         if: always()
@@ -163,169 +162,11 @@ jobs:
           name: bundle-analysis
           path: bundle-report.md
 
-  # End-to-End Tests
-  e2e-tests:
-    name: End-to-End Tests
+  # Security Check (Basic)
+  security-basic:
+    name: Basic Security Check
     runs-on: ubuntu-latest
-    needs: build
-    timeout-minutes: 25
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: |
-          echo "Building application for E2E tests..."
-          npx next build
-
-      - name: Start application
-        run: |
-          echo "Starting application for E2E tests..."
-          npx next start &
-        env:
-          NODE_ENV: test
-          PORT: 3000
-
-      - name: Wait for app to be ready
-        run: |
-          echo "Waiting for application to start..."
-          timeout=60
-          while ! curl -f http://localhost:3000 > /dev/null 2>&1; do
-            if [ $timeout -le 0 ]; then
-              echo "❌ Application failed to start within 60 seconds"
-              exit 1
-            fi
-            timeout=$((timeout - 1))
-            sleep 1
-            echo -n "."
-          done
-          echo "✅ Application is ready"
-
-      - name: Run health checks
-        run: |
-          echo "Running health checks..."
-          
-          # Test all critical endpoints
-          endpoints=("/" "/souks" "/profile" "/create" "/saved")
-          
-          for endpoint in "${endpoints[@]}"; do
-            echo "Testing $endpoint..."
-            response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000$endpoint")
-            if [ "$response" = "200" ] || [ "$response" = "302" ]; then
-              echo "✅ $endpoint accessible (HTTP $response)"
-            else
-              echo "❌ $endpoint failed (HTTP $response)"
-              exit 1
-            fi
-          done
-          
-          echo "✅ All health checks passed"
-
-      - name: Stop application
-        if: always()
-        run: |
-          echo "Stopping application..."
-          pkill -f "next start" || true
-
-  # Performance Testing
-  performance:
-    name: Performance Tests
-    runs-on: ubuntu-latest
-    needs: build
-    timeout-minutes: 20
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: |
-          echo "Building application for performance tests..."
-          npx next build
-
-      - name: Start application
-        run: |
-          echo "Starting application for performance tests..."
-          npx next start &
-        env:
-          NODE_ENV: test
-          PORT: 3000
-
-      - name: Wait for app to be ready
-        run: |
-          echo "Waiting for application to start..."
-          timeout=60
-          while ! curl -f http://localhost:3000 > /dev/null 2>&1; do
-            if [ $timeout -le 0 ]; then
-              echo "❌ Application failed to start within 60 seconds"
-              exit 1
-            fi
-            timeout=$((timeout - 1))
-            sleep 1
-            echo -n "."
-          done
-          echo "✅ Application is ready"
-
-      - name: Run performance tests
-        run: |
-          echo "Running performance tests..."
-          
-          # Test page load times
-          pages=("/" "/souks" "/profile")
-          
-          for page in "${pages[@]}"; do
-            echo "Testing $page performance..."
-            start_time=$(date +%s.%N)
-            curl -s "http://localhost:3000$page" > /dev/null
-            end_time=$(date +%s.%N)
-            
-            load_time=$(echo "$end_time - $start_time" | bc -l)
-            echo "Page load time for $page: ${load_time}s"
-            
-            # Check if load time is reasonable (less than 3 seconds)
-            if (( $(echo "$load_time < 3" | bc -l) )); then
-              echo "✅ $page load time is acceptable: ${load_time}s"
-            else
-              echo "⚠️ $page load time is slow: ${load_time}s"
-            fi
-          done
-
-      - name: Stop application
-        if: always()
-        run: |
-          echo "Stopping application..."
-          pkill -f "next start" || true
-
-  # Security Scanning
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     
     steps:
       - name: Checkout code
@@ -343,19 +184,13 @@ jobs:
       - name: Run npm audit
         run: npm audit --audit-level=moderate
 
-      - name: Run Snyk security scan
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-
-  # Status Check
-  status-check:
-    name: Status Check
+  # Final Status Report
+  status-report:
+    name: CI Status Report
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, test, build, e2e-tests, performance, security]
-    timeout-minutes: 5
+    needs: [quality-checks, test, build-and-test, security-basic]
+    if: always()
+    timeout-minutes: 2
     
     steps:
       - name: Generate status report
@@ -363,20 +198,16 @@ jobs:
           echo "## 🚀 CI Pipeline Status Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Job Results:" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Linting & Type Checking**: ${{ needs.lint-and-typecheck.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Unit Tests**: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Build**: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **E2E Tests**: ${{ needs.e2e-tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Performance**: ${{ needs.performance.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Security**: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Quality Checks**: ${{ needs.quality-checks.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Tests**: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Build & Test**: ${{ needs.build-and-test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Security**: ${{ needs.security-basic.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ needs.lint-and-typecheck.result }}" == "success" ] && \
+          if [ "${{ needs.quality-checks.result }}" == "success" ] && \
              [ "${{ needs.test.result }}" == "success" ] && \
-             [ "${{ needs.build.result }}" == "success" ] && \
-             [ "${{ needs.e2e-tests.result }}" == "success" ] && \
-             [ "${{ needs.performance.result }}" == "success" ] && \
-             [ "${{ needs.security.result }}" == "success" ]; then
+             [ "${{ needs.build-and-test.result }}" == "success" ] && \
+             [ "${{ needs.security-basic.result }}" == "success" ]; then
             echo "🎉 **All CI checks passed!** Your code is ready for deployment." >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **Some CI checks failed.** Please review the logs above." >> $GITHUB_STEP_SUMMARY
@@ -384,12 +215,10 @@ jobs:
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What was tested:" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Code quality (ESLint, TypeScript)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Unit and integration tests" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Application build and bundle analysis" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ End-to-end functionality" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Performance metrics" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Security vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Code quality (ESLint, TypeScript, dependency check)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Unit and integration tests with coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Application build and critical endpoint testing" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Basic security audit" >> $GITHUB_STEP_SUMMARY
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 Check the artifacts above for detailed reports and metrics."
