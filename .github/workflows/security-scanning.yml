@@ -1,0 +1,253 @@
+name: Security Scanning & Vulnerability Detection
+
+on:
+  schedule:
+    # Run daily at 4 AM UTC
+    - cron: '0 4 * * *'
+  workflow_dispatch: # Allow manual triggering
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/**'
+
+jobs:
+  # Dependency Security Audit
+  dependency-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          echo "Running npm security audit..."
+          npm audit --audit-level=moderate || {
+            echo "⚠️ Security vulnerabilities found. Check the audit report above."
+            echo "Run 'npm audit fix' to attempt automatic fixes."
+            exit 1
+          }
+          echo "✅ No critical security vulnerabilities found"
+
+      - name: Check for outdated packages
+        run: |
+          echo "Checking for outdated packages..."
+          outdated=$(npm outdated --json || echo "{}")
+          if [ "$outdated" != "{}" ]; then
+            echo "⚠️ Outdated packages detected:"
+            echo "$outdated"
+            echo "Consider updating packages for security patches."
+          else
+            echo "✅ All packages are up to date"
+          fi
+
+  # Snyk Security Scan
+  snyk-scan:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --fail-on=high
+
+      - name: Upload Snyk report
+        uses: actions/upload-artifact@v3
+        with:
+          name: snyk-security-report
+          path: snyk-report.json
+          retention-days: 30
+
+  # Code Security Analysis
+  code-security:
+    name: Code Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install security tools
+        run: |
+          npm install -g eslint-plugin-security
+          npm install -g @typescript-eslint/eslint-plugin
+
+      - name: Run security-focused linting
+        run: |
+          echo "Running security-focused code analysis..."
+          
+          # Check for common security issues in TypeScript files
+          echo "Checking for security issues in source code..."
+          
+          # Look for potential security vulnerabilities
+          if grep -r "eval(" src/ 2>/dev/null; then
+            echo "❌ Found eval() usage - security risk"
+            exit 1
+          fi
+          
+          if grep -r "innerHTML" src/ 2>/dev/null; then
+            echo "⚠️ Found innerHTML usage - potential XSS risk"
+          fi
+          
+          if grep -r "dangerouslySetInnerHTML" src/ 2>/dev/null; then
+            echo "⚠️ Found dangerouslySetInnerHTML usage - potential XSS risk"
+          fi
+          
+          echo "✅ Basic security code analysis completed"
+
+  # Environment Variable Security Check
+  env-security:
+    name: Environment Variable Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Checking for hardcoded secrets and sensitive data..."
+          
+          # Check for hardcoded API keys
+          if grep -r "sk_" src/ 2>/dev/null; then
+            echo "❌ Found potential hardcoded Stripe secret key"
+            exit 1
+          fi
+          
+          if grep -r "pk_" src/ 2>/dev/null; then
+            echo "⚠️ Found potential hardcoded Stripe public key"
+          fi
+          
+          # Check for hardcoded database credentials
+          if grep -r "postgresql://" src/ 2>/dev/null; then
+            echo "❌ Found hardcoded database connection string"
+            exit 1
+          fi
+          
+          # Check for hardcoded JWT secrets
+          if grep -r "jwt_secret" src/ 2>/dev/null; then
+            echo "❌ Found hardcoded JWT secret"
+            exit 1
+          fi
+          
+          echo "✅ No hardcoded secrets found in source code"
+
+  # Build Security Check
+  build-security:
+    name: Build Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Check build output for sensitive data
+        run: |
+          echo "Checking build output for sensitive data..."
+          
+          # Check if build contains any source maps (potential security risk in production)
+          if find .next -name "*.map" 2>/dev/null | grep -q .; then
+            echo "⚠️ Source maps found in build output"
+            echo "Consider removing source maps for production builds"
+          else
+            echo "✅ No source maps in build output"
+          fi
+          
+          # Check for environment variables in build
+          if grep -r "process.env" .next/ 2>/dev/null; then
+            echo "⚠️ Environment variables found in build output"
+            echo "Ensure no sensitive env vars are exposed"
+          else
+            echo "✅ No environment variables in build output"
+          fi
+
+  # Security Summary
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-audit, snyk-scan, code-security, env-security, build-security]
+    if: always()
+    
+    steps:
+      - name: Generate security report
+        run: |
+          echo "## 🔒 Security Scan Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security Test Results:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dependency Audit**: ${{ needs.dependency-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Snyk Scan**: ${{ needs.snyk-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Code Security**: ${{ needs.code-security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment Security**: ${{ needs.env-security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Security**: ${{ needs.build-security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.dependency-audit.result }}" == "success" ] && \
+             [ "${{ needs.snyk-scan.result }}" == "success" ] && \
+             [ "${{ needs.code-security.result }}" == "success" ] && \
+             [ "${{ needs.env-security.result }}" == "success" ] && \
+             [ "${{ needs.build-security.result }}" == "success" ]; then
+            echo "🎉 **All security checks passed!** No security vulnerabilities detected." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Some security checks failed.** Please review the logs above immediately." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What was scanned:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Dependency vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Code security issues" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Environment variable security" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build output security" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Third-party security scan (Snyk)" >> $GITHUB_STEP_SUMMARY
