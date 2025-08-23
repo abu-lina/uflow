@@ -207,7 +207,7 @@ jobs:
         run: npm ci
 
       - name: Build application
-        run: npm run build
+        run: npm run build:raw
 
       - name: Check build output for sensitive data
         run: |

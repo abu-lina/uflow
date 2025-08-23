@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
       - name: Build application
-        run: npm run build
+        run: npm run build:raw
 
       - name: Start application
         run: npm start &
@@ -206,7 +206,7 @@ jobs:
         run: npm ci
 
       - name: Build application
-        run: npm run build
+        run: npm run build:raw
 
       - name: Start application
         run: npm start &
@@ -278,7 +278,7 @@ jobs:
         run: npm ci
 
       - name: Build application
-        run: npm run build
+        run: npm run build:raw
 
       - name: Start application
         run: npm start &
@@ -343,12 +343,12 @@ jobs:
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What was tested:" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Critical user journeys" >> $GITHUB_SUMMARY
-          echo "- ✅ Page loading and responsiveness" >> $GITHUB_SUMMARY
-          echo "- ✅ Search functionality" >> $GITHUB_SUMMARY
-          echo "- ✅ API endpoint accessibility" >> $GITHUB_SUMMARY
-          echo "- ✅ Mobile responsiveness" >> $GITHUB_SUMMARY
-          echo "- ✅ Performance metrics" >> $GITHUB_SUMMARY
-          echo "- ✅ Error handling" >> $GITHUB_SUMMARY
-          echo "- ✅ Visual consistency" >> $GITHUB_SUMMARY
-          echo "- ✅ Accessibility compliance" >> $GITHUB_SUMMARY
+          echo "- ✅ Critical user journeys" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Page loading and responsiveness" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Search functionality" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ API endpoint accessibility" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Mobile responsiveness" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Performance metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Error handling" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Visual consistency" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Accessibility compliance" >> $GITHUB_STEP_SUMMARY
