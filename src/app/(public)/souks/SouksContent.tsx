@@ -74,20 +74,25 @@ export function SouksContent() {
     setSelectedSouk(null);
   }, []);
 
+  // Memoize setter functions to prevent infinite loops
+  const memoizedSetSelectedCategory = useCallback(setSelectedCategory, [setSelectedCategory]);
+  const memoizedSetSearchQuery = useCallback(setSearchQuery, [setSearchQuery]);
+  const memoizedSetSelectedLocation = useCallback(setSelectedLocation, [setSelectedLocation]);
+
   // Sync URL parameters with search context - only when they actually change
   useEffect(() => {
     // Use URL parameters as source of truth, but only update if they've changed
     // This prevents unnecessary re-renders and state conflicts
     if (category !== selectedCategory) {
-      setSelectedCategory(category);
+      memoizedSetSelectedCategory(category);
     }
     if (query !== searchQuery) {
-      setSearchQuery(query);
+      memoizedSetSearchQuery(query);
     }
     if (location !== selectedLocation) {
-      setSelectedLocation(location);
+      memoizedSetSelectedLocation(location);
     }
-  }, [category, query, location]); // Only depend on URL parameters, not provider state
+  }, [category, query, location, selectedCategory, searchQuery, selectedLocation, memoizedSetSelectedCategory, memoizedSetSearchQuery, memoizedSetSelectedLocation]);
 
   useEffect(() => {
     setParamVersion((v) => v + 1);

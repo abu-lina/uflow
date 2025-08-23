@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import Image from 'next/image';
 
@@ -106,15 +106,15 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
   const [zakatProjects, setZakatProjects] = useState<ZakatData[]>([]);
 
   // Navigation functions
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     console.log('Next clicked - current:', selectedImageIdx, 'total:', allImageUrls.length);
     setSelectedImageIdx((prev) => (prev + 1) % allImageUrls.length);
-  };
+  }, [allImageUrls.length, selectedImageIdx]);
 
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     console.log('Previous clicked - current:', selectedImageIdx, 'total:', allImageUrls.length);
     setSelectedImageIdx((prev) => (prev - 1 + allImageUrls.length) % allImageUrls.length);
-  };
+  }, [allImageUrls.length, selectedImageIdx]);
 
   const goToImage = (index: number) => {
     console.log('Go to image clicked - index:', index);
@@ -188,7 +188,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, goToNext, goToPrevious]);
 
   useEffect(() => {
     const fetchBookmark = async () => {

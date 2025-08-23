@@ -99,7 +99,7 @@ export function LandingHero() {
     }
     console.groupEnd();
     setIsReady(true);
-  }, []);
+  }, [isFirstVisit]);
 
   // Show heading after typewriter is done (only on first visit)
   useEffect(() => {
