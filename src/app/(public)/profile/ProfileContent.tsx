@@ -70,7 +70,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
     };
 
     void fetchSouks();
-  }, [effectiveUser?.id]);
+  }, [effectiveUser]);
 
   // Show loading while auth is being checked
   if (loading) {

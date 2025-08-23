@@ -71,7 +71,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
         return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
       }
       return [PLACEHOLDER_IMAGE];
-    } catch (error) {
+    } catch {
       return [PLACEHOLDER_IMAGE];
     }
   })();
@@ -83,9 +83,9 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
   const [dragOffset, setDragOffset] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  const mainImageUrl =
-    allImageUrls[selectedImageIdx] ||
-    'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+  // const mainImageUrl = // Commented out as it's not currently used
+  //   allImageUrls[selectedImageIdx] ||
+  //   'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
 
   // Debug selected image changes
   useEffect(() => {
@@ -156,7 +156,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = (_e: React.TouchEvent) => {
     if (!ENABLE_IMAGE_SWIPING || !isDragging || allImageUrls.length <= 1) {
       setIsDragging(false);
       setDragOffset(0);
@@ -211,8 +211,8 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
           return;
         }
         setIsSaved(!!existingBookmark);
-      } catch (error) {
-        console.error('Error in fetchBookmark:', error);
+      } catch {
+        console.error('Error in fetchBookmark');
       }
     };
     void fetchBookmark();
@@ -224,8 +224,8 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
         const data = await getZakatProjectsForSouk(souk.souk_id);
         console.log('DEBUG: souk_id', souk.souk_id, 'Fetched zakat projects:', data);
         setZakatProjects(data);
-      } catch (error) {
-        console.error('DEBUG: Error fetching zakat projects', error);
+      } catch {
+        console.error('DEBUG: Error fetching zakat projects');
       }
     }
     fetchZakat();
@@ -273,8 +273,8 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
           onBookmarkChange(souk.souk_id, true);
         }
       }
-    } catch (error) {
-      console.error('Error toggling bookmark:', error);
+    } catch {
+      console.error('Error toggling bookmark');
       toast.error('Fehler beim Speichern des Souks');
     }
   };

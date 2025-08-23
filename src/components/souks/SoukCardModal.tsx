@@ -585,9 +585,11 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
                 </div>
                 {/* Barakah Image */}
                 <div className="relative h-[198px] w-full overflow-hidden rounded-[16px] border border-[#959595]">
-                  <img
+                  <Image
+                    fill
                     alt={zakatProjects[0].zakat_name}
                     className="h-full w-full object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     src={
                       zakatProjects[0].zakat_images && zakatProjects[0].zakat_images.length > 0
                         ? zakatProjects[0].zakat_images[0]

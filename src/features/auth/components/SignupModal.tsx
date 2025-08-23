@@ -37,7 +37,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
       }
       toast.success('Registrierung erfolgreich. Bitte bestätige deine Email-Adresse.');
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('Registrierung fehlgeschlagen. Bitte überprüfe deine Eingaben.');
     } finally {
       setIsLoading(false);

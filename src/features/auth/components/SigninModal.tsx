@@ -78,7 +78,7 @@ export function SigninModal({ onClose, onSwitchMode }: SigninModalProps) {
       }
       toast.success('Erfolgreich angemeldet');
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('Anmeldung fehlgeschlagen. Bitte überprüfe deine Eingaben.');
     } finally {
       setIsLoading(false);
@@ -195,8 +195,8 @@ export function SigninModal({ onClose, onSwitchMode }: SigninModalProps) {
               {onSwitchMode && (
                 <button
                   className="font-inter-tight text-base font-light text-black underline"
-                  onClick={onSwitchMode}
                   type="button"
+                  onClick={onSwitchMode}
                 >
                   Noch kein Konto? Registrieren
                 </button>
