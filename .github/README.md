@@ -58,6 +58,12 @@ This directory contains comprehensive GitHub Actions workflows for testing, regr
 
 ### Required GitHub Secrets
 
+#### For Supabase Integration (Required):
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+```
+
 #### For Security Scanning:
 ```bash
 SNYK_TOKEN=your_snyk_token_here
@@ -172,6 +178,19 @@ Extend security scanning in `security-scanning.yml`:
 git add package-lock.json
 git commit -m "Update package-lock.json"
 git push
+```
+
+#### Workflow Fails Due to Missing Environment Variables
+```bash
+# Ensure these secrets are set in GitHub repository settings:
+# Settings > Secrets and variables > Actions
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# Or set them directly in the workflow if not sensitive:
+env:
+  NEXT_PUBLIC_SUPABASE_URL: "https://your-project.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "your_anon_key"
 ```
 
 #### Performance Tests Fail
