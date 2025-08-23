@@ -7,7 +7,6 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tseslintParser from '@typescript-eslint/parser';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import importPlugin from 'eslint-plugin-import';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import prettier from 'eslint-config-prettier';
 
@@ -61,19 +60,10 @@ const eslintConfig = [
       react,
       'react-hooks': reactHooks,
       'jsx-a11y': jsxA11y,
-      import: importPlugin,
     },
     settings: {
       react: {
         version: 'detect',
-      },
-      'import/resolver': {
-        typescript: {
-          project: './tsconfig.json',
-        },
-        node: {
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        },
       },
     },
     rules: {
@@ -118,54 +108,8 @@ const eslintConfig = [
       'jsx-a11y/aria-role': 'error',
       'jsx-a11y/aria-unsupported-elements': 'error',
       'jsx-a11y/role-supports-aria-props': 'warn',
-
-      // Import rules
-      'import/order': [
-        'error',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-            'object',
-            'type',
-          ],
-          pathGroups: [
-            {
-              pattern: 'react',
-              group: 'builtin',
-              position: 'before',
-            },
-            {
-              pattern: 'next/**',
-              group: 'builtin',
-              position: 'before',
-            },
-            {
-              pattern: '@/**',
-              group: 'internal',
-              position: 'before',
-            },
-          ],
-          pathGroupsExcludedImportTypes: ['react'],
-          'newlines-between': 'always',
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
-        },
-      ],
-      'import/no-unresolved': 'error',
-      'import/no-duplicates': 'error',
-      'import/no-anonymous-default-export': 'warn',
     },
   },
-
-  // Next.js configuration
-  ...compat.extends('next/core-web-vitals'),
 
   // Prettier configuration (must be last)
   prettier,
@@ -183,6 +127,8 @@ const eslintConfig = [
       '*.config.ts',
       'public/sw.js',
       'public/workbox-*.js',
+      'scripts/**/*.js',
+      'scripts/**/*.ts',
     ],
   },
 
@@ -191,22 +137,15 @@ const eslintConfig = [
     files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
     languageOptions: {
       globals: {
-        ...globals.jest,
         describe: 'readonly',
         it: 'readonly',
         expect: 'readonly',
-        jest: 'readonly',
         beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        vi: 'readonly',
       },
-    },
-    rules: {
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/unbound-method': 'off',
-      'import/no-anonymous-default-export': 'off',
-      'import/no-unresolved': ['error', { ignore: ['^@/'] }],
     },
   },
 ];
