@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "export $(cat .env.local | grep -v '^#' | xargs) && next build",
+    "build:raw": "next build",
     "start": "next start",
     "clean": "rm -rf .next",
     "build:clean": "npm run clean && npm run build",
@@ -32,7 +33,9 @@
     "analyze": "ANALYZE=true next build",
     "transform-svg": "ts-node scripts/transform-svg.ts",
     "fix:tailwind": "node scripts/fix-tailwind-classes.js",
-    "fix:all": "npm run fix:tailwind && npm run format"
+    "fix:all": "npm run fix:tailwind && npm run format",
+    "build:local": "export $(cat .env.local | xargs) && next build",
+    "build:vercel": "next build"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
