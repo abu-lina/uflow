@@ -74,25 +74,24 @@ export function SouksContent() {
     setSelectedSouk(null);
   }, []);
 
-  // Memoize setter functions to prevent infinite loops
-  const memoizedSetSelectedCategory = useCallback(setSelectedCategory, [setSelectedCategory]);
-  const memoizedSetSearchQuery = useCallback(setSearchQuery, [setSearchQuery]);
-  const memoizedSetSelectedLocation = useCallback(setSelectedLocation, [setSelectedLocation]);
-
   // Sync URL parameters with search context - only when they actually change
   useEffect(() => {
     // Use URL parameters as source of truth, but only update if they've changed
     // This prevents unnecessary re-renders and state conflicts
     if (category !== selectedCategory) {
-      memoizedSetSelectedCategory(category);
+      setSelectedCategory(category);
     }
     if (query !== searchQuery) {
-      memoizedSetSearchQuery(query);
+      setSearchQuery(query);
     }
     if (location !== selectedLocation) {
-      memoizedSetSelectedLocation(location);
+      setSelectedLocation(location);
     }
-  }, [category, query, location, selectedCategory, searchQuery, selectedLocation, memoizedSetSelectedCategory, memoizedSetSearchQuery, memoizedSetSelectedLocation]);
+    // ESLint warning is intentionally ignored here to prevent infinite loops
+    // The setter functions are stable and don't need to be in dependencies
+    // Including searchQuery, selectedCategory, selectedLocation would cause infinite re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, query, location]); // Only depend on URL parameters, not local state
 
   useEffect(() => {
     setParamVersion((v) => v + 1);
