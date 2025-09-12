@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../utils/test-utils';
 import { SearchBar } from '@/features/search/components/SearchBar';
-import { mockSearchContext } from '../mocks/soukData';
+// import { mockSearchContext } from '../mocks/soukData'; // Unused for now
 
 // Mock the search service
 vi.mock('@/services/souks', () => ({
@@ -365,7 +365,7 @@ describe('SearchBar Component', () => {
         }
       );
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
+      // const searchInput = screen.getByPlaceholderText(/suchen/i); // Not used in this test
       const searchButton = screen.getByRole('button', { name: /suchen/i });
       
       // Try to search with empty input

@@ -23,7 +23,7 @@ vi.mock('next/navigation', () => ({
 
 // Mock Next.js Image component
 vi.mock('next/image', () => ({
-  default: ({ src, alt, ...props }: any) => (
+  default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) => (
     <img src={src} alt={alt} {...props} />
   ),
 }));
@@ -31,11 +31,11 @@ vi.mock('next/image', () => ({
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    span: ({ children, ...props }: any) => <span {...props}>{children}</span>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+    div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+    span: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <span {...props}>{children}</span>,
+    button: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <button {...props}>{children}</button>,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock sonner toast
@@ -118,8 +118,8 @@ function customRender(
   options: CustomRenderOptions = {}
 ): ReturnType<typeof render> {
   const {
-    authContext = mockAuthContext,
-    searchContext = mockSearchContext,
+    // authContext = mockAuthContext, // Unused for now
+    // searchContext = mockSearchContext, // Unused for now
     withProviders = true,
     ...renderOptions
   } = options;
@@ -179,10 +179,14 @@ export const mockLocalStorage = () => {
         store[key] = value;
       }),
       removeItem: vi.fn((key: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete store[key];
       }),
       clear: vi.fn(() => {
-        Object.keys(store).forEach(key => delete store[key]);
+        Object.keys(store).forEach(key => {
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete store[key];
+        });
       }),
     },
   });

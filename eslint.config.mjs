@@ -129,10 +129,11 @@ const eslintConfig = [
       'public/workbox-*.js',
       'scripts/**/*.js',
       'scripts/**/*.ts',
+      'next-env.d.ts', // Next.js generated file
     ],
   },
 
-  // Test file overrides
+  // Test file overrides - more appropriate rules
   {
     files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
     languageOptions: {
@@ -148,23 +149,23 @@ const eslintConfig = [
       },
     },
     rules: {
-      // Relaxed rules for test files
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/no-unused-vars': 'warn',
-      '@typescript-eslint/no-require-imports': 'warn',
-      'react/jsx-sort-props': 'warn',
-      '@typescript-eslint/no-dynamic-delete': 'warn',
+      // Test-specific rules - allow some flexibility for testing
+      '@typescript-eslint/no-explicit-any': 'warn', // Tests often need 'any' for mocking
+      '@typescript-eslint/no-non-null-assertion': 'warn', // Tests use assertions
+      '@typescript-eslint/no-unused-vars': 'warn', // Test setup variables
+      '@typescript-eslint/no-require-imports': 'warn', // Test utilities
+      'react/jsx-sort-props': 'off', // Disable for tests - not critical
+      '@typescript-eslint/no-dynamic-delete': 'warn', // Test cleanup
     },
   },
 
-  // Test utilities overrides (even more relaxed)
+  // Test utilities overrides
   {
     files: ['**/test-utils.tsx', '**/test-utils.ts'],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'warn', // Test utilities need flexibility
       '@typescript-eslint/no-unused-vars': 'warn',
-      'react/jsx-sort-props': 'warn',
+      'react/jsx-sort-props': 'off', // Not critical for test utilities
       '@typescript-eslint/no-dynamic-delete': 'warn',
     },
   },

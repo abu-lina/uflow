@@ -3,6 +3,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../utils/test-utils';
 import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
 import { mockProviders } from '../mocks/providerData';
+import type { Provider } from '@/services/providers';
 
 describe('ProviderDetailModal Component', () => {
   const mockProvider = mockProviders[0]; // Bilal Moschee
@@ -18,8 +19,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -30,8 +31,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -42,8 +43,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -54,8 +55,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -69,8 +70,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -83,8 +84,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -100,8 +101,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -119,8 +120,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -143,8 +144,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -162,8 +163,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={providerWithSingleImage}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -182,8 +183,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -198,8 +199,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -213,8 +214,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -230,8 +231,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -245,8 +246,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -259,8 +260,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -277,8 +278,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -295,8 +296,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -313,8 +314,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -335,8 +336,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -352,8 +353,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -376,8 +377,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -395,8 +396,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -414,8 +415,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -433,8 +434,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -446,8 +447,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -467,8 +468,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -483,8 +484,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={providerWithoutBarakahEffects}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -497,8 +498,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -522,8 +523,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -541,8 +542,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -559,13 +560,13 @@ describe('ProviderDetailModal Component', () => {
         provider_id: 'incomplete-123',
         name: 'Incomplete Provider',
         // Missing other required fields
-      } as any;
+      } as Partial<Provider>;
       
       render(
         <ProviderDetailModal
           provider={incompleteProvider}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       
@@ -582,8 +583,8 @@ describe('ProviderDetailModal Component', () => {
       render(
         <ProviderDetailModal
           provider={providerWithMalformedImages}
-          onClose={mockOnClose}
           onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
         />
       );
       

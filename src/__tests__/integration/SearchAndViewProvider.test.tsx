@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../utils/test-utils';
 import { ProvidersContent } from '@/app/(public)/providers/ProvidersContent';
-import { mockProviders, mockBilalSearchResults } from '../mocks/providerData';
+import { mockBilalSearchResults } from '../mocks/providerData';
+import type { Provider } from '@/services/providers';
+// import { mockProviders } from '../mocks/providerData'; // Unused for now
 
 // Mock the search service to return specific results
 vi.mock('@/services/providers', () => ({
@@ -26,6 +28,12 @@ vi.mock('@/services/community_services', () => ({
 }));
 
 describe('Complete User Journey: Search and View Provider', () => {
+  // Helper function to safely click elements
+  const safeClick = (element: Element | null) => {
+    expect(element).toBeTruthy();
+    fireEvent.click(element as HTMLElement);
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -180,7 +188,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       // Click on the provider result
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Wait for modal to open
       await waitFor(() => {
@@ -204,7 +212,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Wait for modal and verify content
       await waitFor(() => {
@@ -238,7 +246,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Wait for modal and verify contact info
       await waitFor(() => {
@@ -270,7 +278,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Wait for modal and verify images
       await waitFor(() => {
@@ -304,7 +312,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Wait for modal and navigate images
       await waitFor(() => {
@@ -350,7 +358,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Wait for modal and navigate with keyboard
       await waitFor(() => {
@@ -390,7 +398,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Wait for modal
       await waitFor(() => {
@@ -422,7 +430,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Wait for modal
       await waitFor(() => {
@@ -467,8 +475,9 @@ describe('Complete User Journey: Search and View Provider', () => {
       const bilalMoschee = screen.getByText('Bilal Moschee');
       const providerCard = bilalMoschee.closest('[role="button"]');
       
-      fireEvent.touchStart(providerCard!);
-      fireEvent.touchEnd(providerCard!);
+      expect(providerCard).toBeTruthy();
+      fireEvent.touchStart(providerCard as HTMLElement);
+      fireEvent.touchEnd(providerCard as HTMLElement);
       
       // Wait for modal to open
       await waitFor(() => {
@@ -525,14 +534,15 @@ describe('Complete User Journey: Search and View Provider', () => {
 
     it('should handle malformed provider data gracefully', async () => {
       // Mock search service to return malformed data
-      vi.mocked(require('@/services/providers').searchProvidersAndZakat).mockResolvedValueOnce([
+      const { searchProvidersAndZakat } = await import('@/services/providers');
+      vi.mocked(searchProvidersAndZakat).mockResolvedValueOnce([
         {
           type: 'provider',
           data: {
             provider_id: 'malformed-123',
             name: 'Malformed Provider',
             // Missing other required fields
-          } as any,
+          } as Partial<Provider>,
           relevance_score: 0.5
         }
       ]);
@@ -554,7 +564,7 @@ describe('Complete User Journey: Search and View Provider', () => {
       // Should still be able to click on it
       const malformedProvider = screen.getByText('Malformed Provider');
       const providerCard = malformedProvider.closest('[role="button"]');
-      fireEvent.click(providerCard!);
+      safeClick(providerCard);
       
       // Should handle gracefully without crashing
       await waitFor(() => {
