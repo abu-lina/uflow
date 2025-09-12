@@ -2,14 +2,14 @@ import { useState } from 'react';
 
 import { Icon } from '@iconify/react';
 
-import type { SoukFormData } from '@/types/souk';
+import type { ProviderFormData } from '@/types/provider';
 
-interface SoukCreationFormProps {
-  onSubmit: (formData: SoukFormData) => void;
+interface ProviderCreationFormProps {
+  onSubmit: (formData: ProviderFormData) => void;
 }
 
-export function SoukCreationForm({ onSubmit }: SoukCreationFormProps) {
-  const [formData, setFormData] = useState<SoukFormData>({
+export function ProviderCreationForm({ onSubmit }: ProviderCreationFormProps) {
+  const [formData, setFormData] = useState<ProviderFormData>({
     title: '',
     category: '',
     description: '',
@@ -38,10 +38,10 @@ export function SoukCreationForm({ onSubmit }: SoukCreationFormProps) {
         <div className="flex w-full scroll-mt-8 flex-col items-start gap-2">
           <div className="font-inter text-base text-[#999]">TITEL</div>
           <input
-            aria-label="Titel des Souks oder Services"
+            aria-label="Titel des Providers oder Services"
             autoComplete="off"
             className="w-full rounded-[15px] border border-[#E5E5E5] bg-[#FAFAFA] px-4 py-2 font-inter-tight text-base text-content-title transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            id="souk-title"
+            id="provider-title"
             name="title"
             placeholder="Titel eingeben"
             type="text"

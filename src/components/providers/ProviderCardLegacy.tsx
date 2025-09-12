@@ -7,14 +7,14 @@ import ShareIcon from '@mui/icons-material/Share';
 
 import { Button } from '@/components/ui/Button';
 import { OrnamentIcon } from '@/components/ui/OrnamentIcon';
-import type { Souk } from '@/services/souks';
+import type { Provider } from '@/services/providers';
 
-interface SoukCardProps extends Omit<Souk, 'id' | 'category_id'> {
+interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   className?: string;
   gradient?: boolean;
 }
 
-export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
+export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
   (
     {
       address_street,
@@ -22,9 +22,9 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
       address_city,
       category,
       gradient = false,
-      souk_images,
+      provider_images,
       barakah_effects = [],
-      souk_name,
+      provider_name,
       className,
     },
     ref,
@@ -43,21 +43,21 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
 
     const getImageUrl = () => {
       try {
-        if (!souk_images) {
+        if (!provider_images) {
           return '/images/placeholder.jpg';
         }
 
         let imagesData: { urls?: string[] } = {};
-        if (typeof souk_images === 'string') {
+        if (typeof provider_images === 'string') {
           try {
-            imagesData = JSON.parse(souk_images) as { urls?: string[] };
+            imagesData = JSON.parse(provider_images) as { urls?: string[] };
           } catch {
             imagesData = {};
           }
-        } else if (Array.isArray(souk_images)) {
-          imagesData.urls = souk_images;
-        } else if (hasUrls(souk_images)) {
-          imagesData = souk_images;
+        } else if (Array.isArray(provider_images)) {
+          imagesData.urls = provider_images;
+        } else if (hasUrls(provider_images)) {
+          imagesData = provider_images;
         }
 
         if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
@@ -83,7 +83,7 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
             <div className="border-uFlowWhite absolute left-0 top-0 h-64 w-72 overflow-hidden rounded-t-3xl border">
               <Image
                 fill
-                alt={souk_name}
+                alt={provider_name}
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 288px"
                 src={getImageUrl()}
@@ -117,9 +117,9 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
             <div className="flex flex-col items-start gap-0.5">
               <span
                 className="text-uFlowText truncate font-inter-tight text-xl font-semibold"
-                title={souk_name}
+                title={provider_name}
               >
-                {souk_name}
+                {provider_name}
               </span>
               <span className="text-uFlowText2 font-inter text-sm font-normal">{address}</span>
             </div>
@@ -173,4 +173,4 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
   },
 );
 
-SoukCard.displayName = 'SoukCard';
+ProviderCard.displayName = 'ProviderCard';

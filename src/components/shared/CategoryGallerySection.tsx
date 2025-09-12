@@ -10,7 +10,7 @@ import { fetchUsedCategories, type Category } from '@/services/categories';
 import { formatAllahText } from '@/utils/textUtils';
 
 import CategoryGallery from './CategoryGallery';
-import ZakatGallery from './ZakatGallery';
+import CommunityServiceGallery from './CommunityServiceGallery';
 
 export function CategoryGallerySection() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -65,7 +65,7 @@ export function CategoryGallerySection() {
   }, []);
 
   const handleCategoryClick = (categoryId: string) => {
-    router.push(`/souks?category=${categoryId}`);
+    router.push(`/providers?category=${categoryId}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, categoryId: string) => {
@@ -119,7 +119,7 @@ export function CategoryGallerySection() {
           return (
             <div
               key={categoryId}
-              aria-label={`Alle Souks in der Kategorie ${categoryName} anzeigen`}
+              aria-label={`Alle Provider in der Kategorie ${categoryName} anzeigen`}
               className="flex cursor-pointer flex-col rounded-lg transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
               role="button"
               tabIndex={0}
@@ -157,7 +157,7 @@ export function CategoryGallerySection() {
               </div>
 
               {categoryId === '2335922b-76a9-4d79-b32a-b3f95941ba5c' ? (
-                <ZakatGallery />
+                <CommunityServiceGallery />
               ) : (
                 <CategoryGallery categoryId={categoryId} />
               )}

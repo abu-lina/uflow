@@ -8,10 +8,10 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import type { Souk } from '@/services/souks';
+import type { Provider } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
 
-interface SoukCardProps extends Omit<Souk, 'id' | 'category_id'> {
+interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   className?: string;
   gradient?: boolean;
   hideActions?: boolean;
@@ -20,7 +20,7 @@ interface SoukCardProps extends Omit<Souk, 'id' | 'category_id'> {
   onBookmarkChange?: (isBookmarked: boolean) => void;
 }
 
-export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
+export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
   (
     {
       address_street,
@@ -28,10 +28,10 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
       address_city,
       category,
       gradient = false,
-      souk_images,
+      provider_images,
       barakah_effects = [],
-      souk_name,
-      souk_id,
+      provider_name,
+      provider_id,
       className,
       hideActions = false,
       hideWebsiteButton = false,
@@ -62,7 +62,7 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
     const handleBookmark = async (e: React.MouseEvent) => {
       e.stopPropagation();
       if (!user) {
-        toast.error('Bitte melde dich an, um Souks zu speichern');
+        toast.error('Bitte melde dich an, um Provider zu speichern');
         return;
       }
       if (!bookmarked) {
@@ -76,8 +76,8 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
         const { data: existingBookmark, error: fetchError } = await supabase
           .from('bookmarks')
           .select('id')
-          .eq('bookmarkable_id', souk_id)
-          .eq('bookmarkable_type', 'souk')
+          .eq('bookmarkable_id', provider_id)
+          .eq('bookmarkable_type', 'provider')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -91,21 +91,21 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
           if (deleteError) throw deleteError;
           setBookmarked(false);
           onBookmarkChange?.(false);
-          toast.success('Souk entfernt');
+          toast.success('Provider entfernt');
         } else {
           const { error: insertError } = await supabase.from('bookmarks').insert({
-            bookmarkable_id: souk_id,
-            bookmarkable_type: 'souk',
+            bookmarkable_id: provider_id,
+            bookmarkable_type: 'provider',
             user_id: user.id,
           });
           if (insertError) throw insertError;
           setBookmarked(true);
           onBookmarkChange?.(true);
-          toast.success('Souk gespeichert');
+          toast.success('Provider gespeichert');
         }
       } catch (error) {
         console.error('Error toggling bookmark:', error);
-        toast.error('Fehler beim Speichern des Souks');
+        toast.error('Fehler beim Speichern des Providers');
       } finally {
         setIsLoading(false);
       }
@@ -122,14 +122,14 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
 
     const getImageUrl = () => {
       try {
-        if (!souk_images) {
+        if (!provider_images) {
           return '/images/placeholder.jpg';
         }
 
         let imagesData: { urls?: string[] } = {};
-        if (typeof souk_images === 'string') {
+        if (typeof provider_images === 'string') {
           const parsed = safeJsonParse<{ urls?: string[] }>(
-            souk_images,
+            provider_images,
             (parsed): parsed is { urls?: string[] } => {
               return (
                 typeof parsed === 'object' &&
@@ -142,10 +142,10 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
           if (parsed) {
             imagesData = parsed;
           }
-        } else if (Array.isArray(souk_images)) {
-          imagesData.urls = souk_images;
-        } else if (hasUrls(souk_images)) {
-          imagesData = souk_images;
+        } else if (Array.isArray(provider_images)) {
+          imagesData.urls = provider_images;
+        } else if (hasUrls(provider_images)) {
+          imagesData = provider_images;
         }
 
         if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
@@ -171,7 +171,7 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
             <div className="border-uFlowWhite absolute left-0 top-0 h-64 w-72 overflow-hidden rounded-t-3xl border">
               <Image
                 fill
-                alt={souk_name}
+                alt={provider_name}
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 288px"
                 src={getImageUrl()}
@@ -194,9 +194,9 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
             <div className="flex flex-col items-start gap-0.5">
               <span
                 className="truncate font-inter-tight text-xl font-semibold text-[#333333]"
-                title={souk_name}
+                title={provider_name}
               >
-                {souk_name}
+                {provider_name}
               </span>
               <span className="text-uFlowText2 font-inter text-sm font-normal">{address}</span>
             </div>
@@ -226,7 +226,7 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
             {!hideActions && (
               <div className="flex w-full gap-3.5">
                 <Button
-                  aria-label={bookmarked ? 'Gespeichert entfernen' : 'Souk speichern'}
+                  aria-label={bookmarked ? 'Gespeichert entfernen' : 'Provider speichern'}
                   className={`flex-1 gap-1 ${showAllahumaBarik ? 'border border-[#D2B581] bg-white' : ''}`}
                   disabled={isLoading}
                   icon={
@@ -276,4 +276,4 @@ export const SoukCard = forwardRef<HTMLDivElement, SoukCardProps>(
   },
 );
 
-SoukCard.displayName = 'SoukCard';
+ProviderCard.displayName = 'ProviderCard';

@@ -6,10 +6,10 @@ import { useSearchParams } from 'next/navigation';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { CategoryFilter } from '@/components/souks/CategoryFilter';
-import { SearchResultsList } from '@/components/souks/SearchResultsList';
-import { SoukCardModal } from '@/components/souks/SoukCardModal';
-import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
+import { CategoryFilter } from '@/components/providers/CategoryFilter';
+import { SearchResultsList } from '@/components/providers/SearchResultsList';
+import { ProviderCardModal } from '@/components/providers/ProviderCardModal';
+import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
 import { EmptyState, SkeletonGrid } from '@/components/ui';
 import { sharedTransition } from '@/components/ui/PageTransition';
 import { SearchBar } from '@/features/search/components/SearchBar';
@@ -18,19 +18,19 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useLoading } from '@/providers/LoadingProvider';
 import { useSearch } from '@/providers/search-provider';
 import {
-  searchSouksAndZakat,
-  getBookmarkedSouks,
-  type Souk,
+  searchProvidersAndCommunityServices,
+  getBookmarkedProviders,
+  type Provider,
   type SearchResult,
-} from '@/services/souks';
+} from '@/services/providers';
 
-export function SouksContent() {
+export function ProvidersContent() {
   const { user, loading: userLoading } = useAuth();
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [bookmarkedSoukIds, setBookmarkedSoukIds] = useState<string[]>([]);
+  const [bookmarkedProviderIds, setBookmarkedProviderIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSouk, setSelectedSouk] = useState<Souk | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
   const searchParams = useSearchParams();
@@ -58,20 +58,20 @@ export function SouksContent() {
   const { isPreloading } = useLoading();
 
   // Memoized event handlers
-  const handleBookmarkChange = useCallback((soukId: string, isBookmarked: boolean) => {
+  const handleBookmarkChange = useCallback((providerId: string, isBookmarked: boolean) => {
     if (isBookmarked) {
-      setBookmarkedSoukIds((prev) => [...prev, soukId]);
+      setBookmarkedProviderIds((prev) => [...prev, providerId]);
     } else {
-      setBookmarkedSoukIds((prev) => prev.filter((id) => id !== soukId));
+      setBookmarkedProviderIds((prev) => prev.filter((id) => id !== providerId));
     }
   }, []);
 
-  const handleSoukClick = useCallback((souk: Souk) => {
-    setSelectedSouk(souk);
+  const handleProviderClick = useCallback((provider: Provider) => {
+    setSelectedProvider(provider);
   }, []);
 
   const handleCloseModal = useCallback(async () => {
-    setSelectedSouk(null);
+    setSelectedProvider(null);
   }, []);
 
   // Sync URL parameters with search context - only when they actually change
@@ -105,7 +105,7 @@ export function SouksContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    async function fetchSouks() {
+    async function fetchProviders() {
       const cacheKey = `${query}-${category}-${location}`;
 
       // If we have cached data, use it immediately
@@ -123,7 +123,7 @@ export function SouksContent() {
           }
         }, 200);
 
-        const data = await searchSouksAndZakat(query, category || 'Alle', location);
+        const data = await searchProvidersAndCommunityServices(query, category || 'Alle', location);
         setSearchResults(data);
 
         // Cache the results
@@ -136,14 +136,14 @@ export function SouksContent() {
         setLoading(false);
         setIsInitialRender(false);
       } catch (err) {
-        setError('Failed to load souks');
-        console.error('Error loading souks:', err);
+        setError('Failed to load providers');
+        console.error('Error loading providers:', err);
         setLoading(false);
         setIsInitialRender(false);
       }
     }
 
-    void fetchSouks();
+    void fetchProviders();
   }, [query, category, location, paramVersion, searchCache, isInitialRender, isNavigating]);
 
   // Optimize bookmark fetching
@@ -155,19 +155,19 @@ export function SouksContent() {
         }
       }, 200);
 
-      getBookmarkedSouks(user.id)
-        .then((bookmarkedSouks) => {
-          setBookmarkedSoukIds(bookmarkedSouks.map((s) => s.souk_id));
+      getBookmarkedProviders(user.id)
+        .then((bookmarkedProviders) => {
+          setBookmarkedProviderIds(bookmarkedProviders.map((s) => s.provider_id));
           clearTimeout(loadingTimeout);
           setLoading(false);
         })
         .catch(() => {
-          setBookmarkedSoukIds([]);
+          setBookmarkedProviderIds([]);
           clearTimeout(loadingTimeout);
           setLoading(false);
         });
     } else if (!userLoading) {
-      setBookmarkedSoukIds([]);
+      setBookmarkedProviderIds([]);
     }
   }, [user, userLoading, isInitialRender, isNavigating]);
 
@@ -237,7 +237,7 @@ export function SouksContent() {
         {/* Main Content - Error State */}
         <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
           <EmptyState
-            description="Es gab ein Problem beim Laden der Souks. Bitte versuche es erneut."
+            description="Es gab ein Problem beim Laden der Providers. Bitte versuche es erneut."
             title="Fehler beim Laden"
           />
         </div>
@@ -343,10 +343,10 @@ export function SouksContent() {
               transition={{ duration: 0.2 }}
             >
               <SearchResultsList
-                bookmarkedSoukIds={bookmarkedSoukIds}
+                bookmarkedProviderIds={bookmarkedProviderIds}
                 searchResults={searchResults}
                 onBookmarkChange={handleBookmarkChange}
-                onSoukClick={handleSoukClick}
+                onProviderClick={handleProviderClick}
               />
             </motion.div>
           )}
@@ -354,14 +354,14 @@ export function SouksContent() {
       </div>
 
       {/* Mobile Modal */}
-      {selectedSouk && isMobile && (
-        <SoukCardModal open={true} souk={selectedSouk} onClose={handleCloseModal} />
+      {selectedProvider && isMobile && (
+        <ProviderCardModal open={true} provider={selectedProvider} onClose={handleCloseModal} />
       )}
 
       {/* Desktop Modal */}
-      {selectedSouk && !isMobile && (
-        <SoukDetailModal
-          souk={selectedSouk}
+      {selectedProvider && !isMobile && (
+        <ProviderDetailModal
+          provider={selectedProvider}
           onBookmarkChange={handleBookmarkChange}
           onClose={handleCloseModal}
         />

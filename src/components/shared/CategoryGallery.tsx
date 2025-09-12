@@ -10,8 +10,8 @@ interface CategoryGalleryProps {
   categoryId: string;
 }
 
-interface SoukImage {
-  souk_images: string | null;
+interface ProviderImage {
+  provider_images: string | null;
 }
 
 export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
@@ -23,18 +23,18 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
     const fetchImages = async () => {
       try {
         const { data, error } = await supabase
-          .from('souks')
-          .select('souk_images')
+          .from('providers')
+          .select('provider_images')
           .eq('category_id', categoryId)
           .limit(3);
 
         if (error) throw error;
 
         const validImages = data
-          .map((item: SoukImage) => {
+          .map((item: ProviderImage) => {
             try {
-              if (!item.souk_images) return null;
-              const parsed = JSON.parse(item.souk_images) as { urls?: string[] };
+              if (!item.provider_images) return null;
+              const parsed = JSON.parse(item.provider_images) as { urls?: string[] };
               return parsed.urls?.[0] || null;
             } catch {
               return null;
@@ -92,7 +92,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
             alt={
               imageUrl === '/images/placeholder.jpg'
                 ? `Placeholder image ${index + 1}`
-                : `Souk image ${index + 1}`
+                : `Provider image ${index + 1}`
             }
             className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
             priority={index < 2}

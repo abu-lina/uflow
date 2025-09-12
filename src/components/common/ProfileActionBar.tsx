@@ -10,8 +10,8 @@ export interface UserNavigationTabsProps {
   activeTab: UserTab;
   /** Callback when tab changes */
   onTabChange: (tab: UserTab) => void;
-  /** Optional callback for creating new souk */
-  onCreateSouk?: () => void;
+  /** Optional callback for creating new provider */
+  onCreateProvider?: () => void;
   /** Optional callback for editing profile */
   onEditProfile?: () => void;
 }
@@ -28,7 +28,7 @@ const BUTTON_STYLES = {
 export function UserNavigationTabs({
   activeTab,
   onTabChange,
-  onCreateSouk,
+  onCreateProvider,
   onEditProfile,
 }: UserNavigationTabsProps) {
   return (
@@ -39,7 +39,7 @@ export function UserNavigationTabs({
     >
       {/* Saved Tab */}
       <button
-        aria-label="Gespeicherte Souks anzeigen"
+        aria-label="Gespeicherte Provider anzeigen"
         aria-selected={activeTab === 'saved'}
         className={`${BUTTON_STYLES.base} w-[137px] gap-1.5 ${
           activeTab === 'saved' ? BUTTON_STYLES.active : BUTTON_STYLES.inactive
@@ -58,7 +58,7 @@ export function UserNavigationTabs({
 
       {/* Created Tab */}
       <button
-        aria-label="Erstellte Souks anzeigen"
+        aria-label="Erstellte Provider anzeigen"
         aria-selected={activeTab === 'created'}
         className={`${BUTTON_STYLES.base} w-11 ${
           activeTab === 'created' ? BUTTON_STYLES.active : BUTTON_STYLES.inactive
@@ -74,11 +74,11 @@ export function UserNavigationTabs({
         />
       </button>
 
-      {/* Create Souk Button */}
+      {/* Create Provider Button */}
       <button
-        aria-label="Neuen Souk erstellen"
+        aria-label="Neuen Provider erstellen"
         className={`${BUTTON_STYLES.base} w-11 ${BUTTON_STYLES.inactive}`}
-        onClick={onCreateSouk}
+        onClick={onCreateProvider}
       >
         <Icon className={`${BUTTON_STYLES.icon} text-text-secondary`} icon="ic:round-plus" />
       </button>

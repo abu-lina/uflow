@@ -54,7 +54,7 @@ export function UserNavigationTabs({
     >
       {/* Saved Tab */}
       <button
-        aria-label="Gespeicherte Souks anzeigen"
+        aria-label="Gespeicherte Provider anzeigen"
         aria-selected={activeTab === 'saved'}
         className={`${BUTTON_STYLES.base} ${activeTab === 'saved' ? 'w-auto px-3' : 'w-11'} ${
           activeTab === 'saved' ? BUTTON_STYLES.active : BUTTON_STYLES.inactive
@@ -75,7 +75,7 @@ export function UserNavigationTabs({
 
       {/* Created Tab */}
       <button
-        aria-label="Erstellte Souks anzeigen"
+        aria-label="Erstellte Provider anzeigen"
         aria-selected={activeTab === 'created'}
         className={`${BUTTON_STYLES.base} ${activeTab === 'created' ? 'w-auto px-3' : 'w-11'} ${
           activeTab === 'created' ? BUTTON_STYLES.active : BUTTON_STYLES.inactive
@@ -94,9 +94,9 @@ export function UserNavigationTabs({
         )}
       </button>
 
-      {/* Create Souk Button */}
+      {/* Create Provider Button */}
       <button
-        aria-label="Neuen Souk erstellen"
+        aria-label="Neuen Provider erstellen"
         aria-selected={activeTab === 'create'}
         className={`${BUTTON_STYLES.base} ${activeTab === 'create' ? 'w-auto px-3' : 'w-11'} ${
           activeTab === 'create' ? BUTTON_STYLES.active : BUTTON_STYLES.inactive

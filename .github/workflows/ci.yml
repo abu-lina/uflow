@@ -126,7 +126,7 @@ jobs:
           echo "Testing critical endpoints..."
           
           # Test essential pages
-          endpoints=("/" "/souks" "/profile" "/create" "/saved")
+          endpoints=("/" "/providers" "/profile" "/create" "/saved")
           
           for endpoint in "${endpoints[@]}"; do
             echo "Testing $endpoint..."

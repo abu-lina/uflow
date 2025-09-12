@@ -3,7 +3,8 @@ import { cookies as nextCookies } from 'next/headers';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 export async function getUserFromCookie(): Promise<SupabaseUser | null> {
-  const accessToken = nextCookies().get('sb-access-token')?.value;
+  const cookies = await nextCookies();
+  const accessToken = cookies.get('sb-access-token')?.value;
   if (!accessToken) {
     return null;
   }

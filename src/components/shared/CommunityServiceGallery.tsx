@@ -6,11 +6,11 @@ import Image from 'next/image';
 
 import { supabase } from '@/lib/supabase/client';
 
-interface ZakatImage {
-  zakat_images: string | null;
+interface CommunityServiceImage {
+  community_service_images: string | null;
 }
 
-export default function ZakatGallery() {
+export default function CommunityServiceGallery() {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,25 +19,25 @@ export default function ZakatGallery() {
     const fetchImages = async () => {
       try {
         const { data, error } = await supabase
-          .from('zakat_projects')
-          .select('zakat_images')
+          .from('community_services')
+          .select('community_service_images')
           .limit(3);
 
         if (error) throw error;
 
         const validImages = data
-          .map((item: ZakatImage) => {
+          .map((item: CommunityServiceImage) => {
             try {
-              if (!item.zakat_images) return null;
+              if (!item.community_service_images) return null;
 
               // Handle different data formats
-              if (typeof item.zakat_images === 'string') {
+              if (typeof item.community_service_images === 'string') {
                 // If it's a direct URL string
-                if (item.zakat_images.startsWith('http')) {
-                  return item.zakat_images;
+                if (item.community_service_images.startsWith('http')) {
+                  return item.community_service_images;
                 }
                 // If it's a JSON string
-                const parsed = JSON.parse(item.zakat_images);
+                const parsed = JSON.parse(item.community_service_images);
                 if (Array.isArray(parsed)) {
                   return parsed[0] || null;
                 }
@@ -48,8 +48,8 @@ export default function ZakatGallery() {
               }
 
               // If it's already an array
-              if (Array.isArray(item.zakat_images)) {
-                return item.zakat_images[0] || null;
+              if (Array.isArray(item.community_service_images)) {
+                return item.community_service_images[0] || null;
               }
 
               return null;
@@ -59,10 +59,10 @@ export default function ZakatGallery() {
           })
           .filter((url): url is string => url !== null);
 
-        console.log('Fetched zakat images:', validImages); // Debug log
+        console.log('Fetched community service images:', validImages); // Debug log
         setImages(validImages);
       } catch (err) {
-        console.error('Error fetching zakat images:', err);
+        console.error('Error fetching community service images:', err);
         setError('Failed to load images');
       } finally {
         setLoading(false);
@@ -78,7 +78,7 @@ export default function ZakatGallery() {
     displayImages.push('/images/placeholder.jpg');
   }
 
-  console.log('Display zakat images:', displayImages); // Debug log
+  console.log('Display community service images:', displayImages); // Debug log
 
   if (loading) {
     return (
@@ -128,7 +128,7 @@ export default function ZakatGallery() {
               alt={
                 imageUrl === '/images/placeholder.jpg'
                   ? `Placeholder image ${index + 1}`
-                  : `Zakat project image ${index + 1}`
+                  : `Community service image ${index + 1}`
               }
               className={`object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
               priority={index < 2}

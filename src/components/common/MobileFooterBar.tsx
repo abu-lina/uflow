@@ -23,7 +23,7 @@ const navItems = [
   },
   {
     label: 'Explore',
-    href: '/souks',
+    href: '/providers',
     icon: 'mingcute:search-line',
     noFrame: true,
   },

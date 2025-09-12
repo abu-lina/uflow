@@ -2,34 +2,34 @@
 
 import { motion } from 'framer-motion';
 
-import { SoukCard } from '@/components/souks/SoukCard';
+import { ProviderCard } from '@/components/providers/ProviderCard';
 import { sharedTransition } from '@/components/ui/PageTransition';
-import type { Souk } from '@/services/souks';
+import type { Provider } from '@/services/providers';
 
-interface SouksListProps {
-  souks: Souk[];
-  bookmarkedSoukIds: string[];
-  onSoukClick: (souk: Souk) => void;
-  onBookmarkChange: (soukId: string, isBookmarked: boolean) => void;
+interface ProvidersListProps {
+  providers: Provider[];
+  bookmarkedProviderIds: string[];
+  onProviderClick: (provider: Provider) => void;
+  onBookmarkChange: (providerId: string, isBookmarked: boolean) => void;
 }
 
-export function SouksList({
-  souks,
-  bookmarkedSoukIds,
-  onSoukClick,
+export function ProvidersList({
+  providers,
+  bookmarkedProviderIds,
+  onProviderClick,
   onBookmarkChange,
-}: SouksListProps) {
+}: ProvidersListProps) {
   return (
     <motion.div
-      key={`souks-${souks.length}-${souks[0]?.souk_id || 'empty'}`}
+      key={`providers-${providers.length}-${providers[0]?.provider_id || 'empty'}`}
       animate={{ opacity: 1 }}
       className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4"
       initial={{ opacity: 0 }}
       transition={sharedTransition}
     >
-      {souks.map((souk, index) => (
+      {providers.map((provider, index) => (
         <motion.div
-          key={souk.souk_id}
+          key={provider.provider_id}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
           initial={{ opacity: 0, y: 5, scale: 0.98 }}
@@ -39,20 +39,20 @@ export function SouksList({
             ...sharedTransition,
             delay: index * 0.02,
           }}
-          onClick={() => onSoukClick(souk)}
+          onClick={() => onProviderClick(provider)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              onSoukClick(souk);
+              onProviderClick(provider);
             }
           }}
         >
-          <SoukCard
-            {...souk}
+          <ProviderCard
+            {...provider}
             hideWebsiteButton={true}
-            isBookmarked={bookmarkedSoukIds.includes(souk.souk_id)}
+            isBookmarked={bookmarkedProviderIds.includes(provider.provider_id)}
             onBookmarkChange={(isBookmarked: boolean) =>
-              onBookmarkChange(souk.souk_id, isBookmarked)
+              onBookmarkChange(provider.provider_id, isBookmarked)
             }
           />
         </motion.div>

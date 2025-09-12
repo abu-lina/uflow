@@ -5,10 +5,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { MobileLoginScreen } from '@/components/common/MobileLoginScreen';
-import { SoukCreateForm } from '@/features/souks/SoukCreateForm';
+import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/providers/auth-provider';
 
-export default function CreateSoukPage() {
+export default function CreateProviderPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [checked, setChecked] = useState(false);
   const router = useRouter();
@@ -50,7 +50,7 @@ export default function CreateSoukPage() {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 px-4">
         <span className="text-center text-lg text-gray-500">
-          Du musst angemeldet sein, um einen Souk zu erstellen.
+          Du musst angemeldet sein, um einen Provider zu erstellen.
         </span>
         <button
           className="rounded-xl bg-mint px-4 py-2 font-semibold text-white"
@@ -65,8 +65,8 @@ export default function CreateSoukPage() {
 
   return (
     <div className="flex flex-col items-center gap-4 px-4 py-6">
-      <h1 className="mb-4 w-full text-left text-2xl font-bold">Souk erstellen</h1>
-      <SoukCreateForm />
+      <h1 className="mb-4 w-full text-left text-2xl font-bold">Provider erstellen</h1>
+      <ProviderCreateForm />
     </div>
   );
 }

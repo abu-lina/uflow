@@ -10,7 +10,7 @@ import { ChevronDown, Search, X } from 'lucide-react';
 // Local imports
 import { useSearch } from '@/providers/search-provider';
 import { fetchUsedCategories, fetchFilteredCategories, type Category } from '@/services/categories';
-import { fetchSoukCities, fetchFilteredCities } from '@/services/souks';
+import { fetchProviderCities, fetchFilteredCities } from '@/services/providers';
 
 interface SearchBarProps {
   className?: string;
@@ -109,7 +109,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
           setLocations(['Überall', ...filteredCities]);
         } else {
           // Otherwise, fetch all cities
-          const allCities = await fetchSoukCities();
+          const allCities = await fetchProviderCities();
           setLocations(['Überall', ...allCities]);
         }
       } catch (error) {
@@ -141,7 +141,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
   // Handle search submission
   const handleSearch = () => {
     onSearch?.(searchQuery, selectedCategory ?? 'Alle', selectedLocation);
-    // Navigate to souks page with search parameters
+    // Navigate to providers page with search parameters
     const searchParams = new URLSearchParams();
     if (searchQuery) {
       searchParams.set('q', searchQuery);
@@ -149,7 +149,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
     if (selectedLocation) {
       searchParams.set('location', selectedLocation);
     }
-    router.push(`/souks?${searchParams.toString()}`);
+    router.push(`/providers?${searchParams.toString()}`);
   };
 
   // Handle key press for search
@@ -174,7 +174,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
       className={`relative flex h-10 flex-row items-center gap-4 rounded-lg bg-white px-2 ${className}`}
       role="search"
     >
-      <div className="flex w-full flex-row items-center justify-between">
+      <div suppressHydrationWarning className="flex w-full flex-row items-center justify-between">
         {/* Search Section */}
         <div className="relative flex flex-1 flex-row items-center gap-0 sm:gap-4">
           <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
@@ -207,7 +207,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                 if (selectedLocation) {
                   params.set('location', selectedLocation);
                 }
-                router.push(`/souks?${params.toString()}`);
+                router.push(`/providers?${params.toString()}`);
                 setSearchQuery('');
                 inputRef.current?.focus();
               }}
@@ -266,7 +266,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                         if (selectedLocation) {
                           params.set('location', selectedLocation);
                         }
-                        router.push(`/souks?${params.toString()}`);
+                        router.push(`/providers?${params.toString()}`);
                       }}
                     >
                       Alle
@@ -290,7 +290,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                           if (selectedLocation) {
                             params.set('location', selectedLocation);
                           }
-                          router.push(`/souks?${params.toString()}`);
+                          router.push(`/providers?${params.toString()}`);
                         }}
                       >
                         {cat.name_de || cat.category_id || 'Unbenannt'}
@@ -350,7 +350,7 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                       if (location) {
                         params.set('location', location);
                       }
-                      router.push(`/souks?${params.toString()}`);
+                      router.push(`/providers?${params.toString()}`);
                     }}
                   >
                     {location}

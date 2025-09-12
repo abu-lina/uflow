@@ -16,7 +16,7 @@ const LoadingContext = createContext<LoadingContextType>({
   isPreloading: true,
 });
 
-const MAIN_ROUTES = ['/', '/souks', '/profile'];
+const MAIN_ROUTES = ['/', '/providers', '/profile'];
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [isInitialLoad, setIsInitialLoad] = useState(true);

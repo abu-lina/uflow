@@ -3,18 +3,18 @@
 import { useEffect, useState } from 'react';
 
 import { MobileLoginScreen } from '@/components/common/MobileLoginScreen';
-import { CreatedSoukCard } from '@/components/shared/CreatedSoukCard';
-import { SoukCardModal } from '@/components/souks/SoukCardModal';
-import { SoukDetailModal } from '@/components/souks/SoukDetailModal';
+import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
+import { ProviderCardModal } from '@/components/providers/ProviderCardModal';
+import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
 import { useAuth } from '@/providers/auth-provider';
-import { getBookmarkForSouk, deleteBookmark } from '@/services/bookmarks';
-import { getBookmarkedSouks, type Souk } from '@/services/souks';
+import { getBookmarkForProvider, deleteBookmark } from '@/services/bookmarks';
+import { getBookmarkedProviders, type Provider } from '@/services/providers';
 
-export default function SavedSouksPage() {
+export default function SavedProvidersPage() {
   const { user } = useAuth();
-  const [souks, setSouks] = useState<Souk[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSouk, setSelectedSouk] = useState<Souk | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Mobile detection
@@ -28,8 +28,8 @@ export default function SavedSouksPage() {
 
   useEffect(() => {
     if (user) {
-      getBookmarkedSouks(user.id).then((data) => {
-        setSouks(data);
+      getBookmarkedProviders(user.id).then((data) => {
+        setProviders(data);
         setLoading(false);
       });
     } else {
@@ -37,17 +37,17 @@ export default function SavedSouksPage() {
     }
   }, [user]);
 
-  const handleUnsave = async (soukId: string) => {
+  const handleUnsave = async (providerId: string) => {
     if (!user) return;
     try {
-      const bookmark = await getBookmarkForSouk(soukId, user.id);
+      const bookmark = await getBookmarkForProvider(providerId, user.id);
       if (bookmark) {
         await deleteBookmark(bookmark.id);
-        setSouks((prev) => prev.filter((s) => s.souk_id !== soukId));
+        setProviders((prev) => prev.filter((s) => s.provider_id !== providerId));
       }
     } catch (err) {
       // Optionally show a toast or error
-      console.error('Fehler beim Entfernen des Souks:', err);
+      console.error('Fehler beim Entfernen des Providers:', err);
     }
   };
 
@@ -63,7 +63,7 @@ export default function SavedSouksPage() {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 px-4">
         <span className="text-center text-lg text-gray-500">
-          Du musst angemeldet sein, um gespeicherte Souks zu sehen.
+          Du musst angemeldet sein, um gespeicherte Providers zu sehen.
         </span>
         <button
           className="rounded-xl bg-mint px-4 py-2 font-semibold text-white"
@@ -82,29 +82,29 @@ export default function SavedSouksPage() {
 
   return (
     <div className="flex flex-col items-center gap-4 px-4 py-6">
-      <h1 className="w-full text-left text-2xl font-bold">Gespeicherte Souks</h1>
+      <h1 className="w-full text-left text-2xl font-bold">Gespeicherte Providers</h1>
       <div className="grid w-full grid-cols-2 gap-4">
-        {souks.length === 0 ? (
-          <span className="col-span-2 text-center text-gray-400">Keine Souks gespeichert.</span>
+        {providers.length === 0 ? (
+          <span className="col-span-2 text-center text-gray-400">Keine Providers gespeichert.</span>
         ) : (
-          souks.map((souk) => (
-            <CreatedSoukCard
-              key={souk.souk_id}
-              category={souk.category?.name_de || ''}
+          providers.map((provider) => (
+            <CreatedProviderCard
+              key={provider.provider_id}
+              category={provider.category?.name_de || ''}
               imageUrl={(() => {
-                if (!souk.souk_images) return '/images/placeholder.jpg';
+                if (!provider.provider_images) return '/images/placeholder.jpg';
                 try {
                   let imagesData: { urls?: string[] } = {};
-                  if (typeof souk.souk_images === 'string') {
-                    imagesData = JSON.parse(souk.souk_images);
-                  } else if (Array.isArray(souk.souk_images)) {
-                    imagesData.urls = souk.souk_images;
+                  if (typeof provider.provider_images === 'string') {
+                    imagesData = JSON.parse(provider.provider_images);
+                  } else if (Array.isArray(provider.provider_images)) {
+                    imagesData.urls = provider.provider_images;
                   } else if (
-                    typeof souk.souk_images === 'object' &&
-                    souk.souk_images !== null &&
-                    'urls' in souk.souk_images
+                    typeof provider.provider_images === 'object' &&
+                    provider.provider_images !== null &&
+                    'urls' in provider.provider_images
                   ) {
-                    imagesData = souk.souk_images;
+                    imagesData = provider.provider_images;
                   }
                   if (imagesData.urls && imagesData.urls.length > 0) {
                     return imagesData.urls[0];
@@ -115,26 +115,26 @@ export default function SavedSouksPage() {
                 return '/images/placeholder.jpg';
               })()}
               tag={
-                souk.barakah_effects && souk.barakah_effects.length > 0
-                  ? souk.barakah_effects[0]
+                provider.barakah_effects && provider.barakah_effects.length > 0
+                  ? provider.barakah_effects[0]
                   : '✨ Halal'
               }
-              title={souk.souk_name}
-              onClick={() => setSelectedSouk(souk)}
-              onUnsave={() => handleUnsave(souk.souk_id)}
+              title={provider.provider_name}
+              onClick={() => setSelectedProvider(provider)}
+              onUnsave={() => handleUnsave(provider.provider_id)}
             />
           ))
         )}
       </div>
-      {selectedSouk &&
+      {selectedProvider &&
         (isMobile ? (
-          <SoukCardModal
-            open={!!selectedSouk}
-            souk={selectedSouk}
-            onClose={() => setSelectedSouk(null)}
+          <ProviderCardModal
+            open={!!selectedProvider}
+            provider={selectedProvider}
+            onClose={() => setSelectedProvider(null)}
           />
         ) : (
-          <SoukDetailModal souk={selectedSouk} onClose={() => setSelectedSouk(null)} />
+          <ProviderDetailModal provider={selectedProvider} onClose={() => setSelectedProvider(null)} />
         ))}
     </div>
   );

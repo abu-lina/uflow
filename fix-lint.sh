@@ -10,10 +10,10 @@ npx eslint --fix "src/components/shared/SoukDetailModal.tsx" "src/components/ui/
 
 # Fix type imports
 echo "Fixing type imports..."
-npx eslint --fix "src/services/zakat_projects.ts"
+npx eslint --fix "src/services/community_services.ts"
 
 # Remove console statements (this will require manual review)
 echo "Removing console statements..."
-npx eslint --fix "src/components/layout/MobileLayoutWrapper.tsx" "src/hooks/useIsMobile.ts" "src/services/zakat_projects.ts"
+npx eslint --fix "src/components/layout/MobileLayoutWrapper.tsx" "src/hooks/useIsMobile.ts" "src/services/community_services.ts"
 
 echo "Linting fixes applied. Please review the changes and fix any remaining issues manually." 

@@ -10,7 +10,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  title = 'Keine Souks gefunden',
+  title = 'Keine Provider gefunden',
   description = 'Versuche es mit anderen Suchkriterien oder Kategorien.',
   icon,
   className = '',

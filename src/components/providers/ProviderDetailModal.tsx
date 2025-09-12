@@ -9,17 +9,17 @@ import { toast } from 'sonner';
 import { Modal } from '@/components/ui/Modal';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import type { Souk } from '@/services/souks';
-import { getZakatProjectsForSouk, type ZakatData } from '@/services/zakat_projects';
+import type { Provider } from '@/services/providers';
+import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
 
-interface SoukDetailModalProps {
-  souk: Souk;
+interface ProviderDetailModalProps {
+  provider: Provider;
   onClose: () => void;
-  onBookmarkChange?: (soukId: string, isBookmarked: boolean) => void;
+  onBookmarkChange?: (providerId: string, isBookmarked: boolean) => void;
 }
 
-export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
-  souk,
+export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
+  provider,
   onClose,
   onBookmarkChange,
 }) => {
@@ -33,15 +33,11 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
   }
 
   // Only allow images from trusted domains
-  const TRUSTED_IMAGE_DOMAINS = [
-    'pmbatjlosstytdmmqkky.supabase.co',
-    // add more trusted domains here if needed
-  ];
-
   function isTrustedUrl(url: string) {
     try {
       const { hostname } = new URL(url);
-      return TRUSTED_IMAGE_DOMAINS.some((domain) => hostname.endsWith(domain));
+      const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
+      return hostname === supabaseUrl.hostname;
     } catch {
       return false;
     }
@@ -51,20 +47,20 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
 
   const allImageUrls = (() => {
     try {
-      if (!souk.souk_images) {
+      if (!provider.provider_images) {
         return [PLACEHOLDER_IMAGE];
       }
       let imagesData: { urls?: string[] } = {};
-      if (typeof souk.souk_images === 'string') {
+      if (typeof provider.provider_images === 'string') {
         try {
-          imagesData = JSON.parse(souk.souk_images) as { urls?: string[] };
+          imagesData = JSON.parse(provider.provider_images) as { urls?: string[] };
         } catch {
           imagesData = {};
         }
-      } else if (Array.isArray(souk.souk_images)) {
-        imagesData.urls = souk.souk_images;
-      } else if (hasUrls(souk.souk_images)) {
-        imagesData = souk.souk_images;
+      } else if (Array.isArray(provider.provider_images)) {
+        imagesData.urls = provider.provider_images;
+      } else if (hasUrls(provider.provider_images)) {
+        imagesData = provider.provider_images;
       }
       if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
         const trusted = imagesData.urls.filter(isTrustedUrl);
@@ -103,7 +99,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
 
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
-  const [zakatProjects, setZakatProjects] = useState<ZakatData[]>([]);
+  const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
 
   // Navigation functions
   const goToNext = useCallback(() => {
@@ -200,8 +196,8 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
           .from('bookmarks')
           .select('id')
           .match({
-            bookmarkable_id: souk.souk_id,
-            bookmarkable_type: 'souk',
+            bookmarkable_id: provider.provider_id,
+            bookmarkable_type: 'provider',
             user_id: user.id,
           })
           .maybeSingle();
@@ -216,24 +212,24 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
       }
     };
     void fetchBookmark();
-  }, [user, souk.souk_id]);
+  }, [user, provider.provider_id]);
 
   useEffect(() => {
-    async function fetchZakat() {
+    async function fetchCommunityServices() {
       try {
-        const data = await getZakatProjectsForSouk(souk.souk_id);
-        console.log('DEBUG: souk_id', souk.souk_id, 'Fetched zakat projects:', data);
-        setZakatProjects(data);
+        const data = await getCommunityServicesForProvider(provider.provider_id);
+        console.log('DEBUG: provider_id', provider.provider_id, 'Fetched community services:', data);
+        setCommunityServices(data);
       } catch {
-        console.error('DEBUG: Error fetching zakat projects');
+        console.error('DEBUG: Error fetching community services');
       }
     }
-    fetchZakat();
-  }, [souk.souk_id]);
+    fetchCommunityServices();
+  }, [provider.provider_id]);
 
   const handleBookmark = async () => {
     if (!user) {
-      toast.error('Bitte melde dich an, um Souks zu speichern');
+      toast.error('Bitte melde dich an, um Provider zu speichern');
       return;
     }
     try {
@@ -241,8 +237,8 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
         .from('bookmarks')
         .select('id')
         .match({
-          bookmarkable_id: souk.souk_id,
-          bookmarkable_type: 'souk',
+          bookmarkable_id: provider.provider_id,
+          bookmarkable_type: 'provider',
           user_id: user.id,
         })
         .maybeSingle();
@@ -256,26 +252,26 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
           .eq('id', existingBookmark.id);
         if (deleteError) throw deleteError;
         setIsSaved(false);
-        toast.success('Souk entfernt');
+        toast.success('Provider entfernt');
         if (typeof onBookmarkChange === 'function') {
-          onBookmarkChange(souk.souk_id, false);
+          onBookmarkChange(provider.provider_id, false);
         }
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
-          bookmarkable_id: souk.souk_id,
-          bookmarkable_type: 'souk',
+          bookmarkable_id: provider.provider_id,
+          bookmarkable_type: 'provider',
           user_id: user.id,
         });
         if (insertError) throw insertError;
         setIsSaved(true);
-        toast.success('Souk gespeichert');
+        toast.success('Provider gespeichert');
         if (typeof onBookmarkChange === 'function') {
-          onBookmarkChange(souk.souk_id, true);
+          onBookmarkChange(provider.provider_id, true);
         }
       }
     } catch {
       console.error('Error toggling bookmark');
-      toast.error('Fehler beim Speichern des Souks');
+      toast.error('Fehler beim Speichern des Providers');
     }
   };
 
@@ -286,25 +282,25 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
       void handleBookmark();
     }
     if (action === 'share') {
-      const shareUrl = `${window.location.origin}/souks/${souk.souk_id}`;
+      const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
       if (navigator.share) {
         void navigator.share({
-          title: souk.souk_name,
-          text: souk.souk_description || '',
+          title: provider.provider_name,
+          text: provider.provider_description || '',
           url: shareUrl,
         });
       } else {
         void navigator.clipboard.writeText(shareUrl);
       }
-    } else if (action === 'call' && souk.contact_phone) {
-      window.open(`tel:${souk.contact_phone}`);
-    } else if (action === 'website' && souk.social_website) {
-      window.open(souk.social_website, '_blank');
+    } else if (action === 'call' && provider.contact_phone) {
+      window.open(`tel:${provider.contact_phone}`);
+    } else if (action === 'website' && provider.social_website) {
+      window.open(provider.social_website, '_blank');
     }
   };
 
   return (
-    <Modal isOpen={true} title={zakatProjects[0]?.zakat_name || souk.souk_name} onClose={onClose}>
+    <Modal isOpen={true} title={communityServices[0]?.community_service_name || provider.provider_name} onClose={onClose}>
       <section
         aria-modal="true"
         className="relative flex h-[900px] w-[1200px] cursor-default bg-transparent"
@@ -327,11 +323,11 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
           <div className="flex flex-col items-start justify-start gap-2 self-stretch">
             <div className="inline-flex items-center justify-start gap-8 self-stretch">
               <div className="text-uFlowText justify-start font-inter-tight text-3xl font-bold">
-                {souk.souk_name}
+                {provider.provider_name}
               </div>
             </div>
             <div className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal">
-              {souk.category?.name_de || ''}
+              {provider.category?.name_de || ''}
             </div>
           </div>
           {/* Enhanced Image Carousel */}
@@ -341,6 +337,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
               <div
                 ref={imageContainerRef}
                 className="bg-uFlowAccent relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
+                data-testid="image-container"
                 onClick={() => console.log('Image container clicked')}
                 onTouchEnd={handleTouchEnd}
                 onTouchMove={handleTouchMove}
@@ -367,7 +364,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                     >
                       <Image
                         fill
-                        alt={`${souk.souk_name} ${index + 1}`}
+                        alt={`${provider.provider_name} ${index + 1}`}
                         className="rounded-[32px] object-cover"
                         src={imageUrl}
                       />
@@ -432,7 +429,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                   >
                     <Image
                       fill
-                      alt={`${souk.souk_name} thumbnail ${i + 1}`}
+                      alt={`${provider.provider_name} thumbnail ${i + 1}`}
                       className="rounded-[8px] object-cover"
                       src={img}
                     />
@@ -473,17 +470,17 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                     <div className="relative mb-2 h-[120px] w-[160px] overflow-hidden rounded-[18px]">
                       <Image
                         fill
-                        alt={zakatProjects[0]?.zakat_name || 'Zakat Projekt'}
+                        alt={communityServices[0]?.community_service_name || 'Community Service'}
                         className="rounded-[18px] object-cover"
                         src={
-                          zakatProjects[0]?.zakat_images && zakatProjects[0].zakat_images.length > 0
-                            ? zakatProjects[0].zakat_images[0]
+                          communityServices[0]?.community_service_images && communityServices[0].community_service_images.length > 0
+                            ? communityServices[0].community_service_images[0]
                             : PLACEHOLDER_IMAGE
                         }
                       />
                     </div>
                     <div className="text-uFlowText mb-0.5 font-inter-tight text-lg font-semibold">
-                      {zakatProjects[0]?.zakat_name}
+                      {communityServices[0]?.community_service_name}
                     </div>
                     <div className="text-uFlowText2 font-inter-tight text-base">Hatem Ipsum</div>
                   </div>
@@ -491,9 +488,9 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                   <div className="mx-4 h-[120px] w-px bg-zinc-200" />
                   {/* Right: Barakah labels */}
                   <div className="flex min-h-[120px] flex-col flex-wrap items-start gap-2">
-                    {Array.isArray(souk.barakah_effects) && souk.barakah_effects.length > 0 ? (
+                    {Array.isArray(provider.barakah_effects) && provider.barakah_effects.length > 0 ? (
                       <div className="flex flex-col gap-2">
-                        {souk.barakah_effects.map((effect, idx) => (
+                        {provider.barakah_effects.map((effect, idx) => (
                           <span
                             key={idx}
                             className="inline-flex items-center gap-2 rounded border border-[#CDCDCD] bg-white px-3 py-1 font-inter-tight text-[16px] font-medium text-[#232323] shadow-sm"
@@ -527,7 +524,7 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                       Beschreibung:
                     </div>
                     <div className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800">
-                      {souk.souk_description ?? ''}
+                      {provider.provider_description ?? ''}
                     </div>
                   </div>
                 </div>
@@ -542,8 +539,8 @@ export const SoukDetailModal: React.FC<SoukDetailModalProps> = ({
                       Adresse:
                     </div>
                     <div className="justify-start self-stretch font-['Inter_Tight'] text-base font-normal leading-tight text-neutral-800">
-                      {souk.address_street}, <br />
-                      {souk.address_zip} {souk.address_city}
+                      {provider.address_street}, <br />
+                      {provider.address_zip} {provider.address_city}
                     </div>
                   </div>
                   <div className="relative w-0 self-stretch">

@@ -7,14 +7,14 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
-import { TagsMultiSelect } from '@/components/souks/TagsMultiSelect';
+import { TagsMultiSelect } from '@/components/providers/TagsMultiSelect';
 import { FormField } from '@/components/ui/FormField';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
-import type { SoukFormData } from '@/types/souk';
+import type { ProviderFormData } from '@/types/provider';
 import type { Category } from '@/types/supabase';
 
-interface ExtendedFormData extends SoukFormData {
+interface ExtendedFormData extends ProviderFormData {
   website: string;
   instagram: string;
   phone: string;
@@ -42,7 +42,7 @@ const STEPS = [
   },
 ];
 
-export function SoukCreateForm() {
+export function ProviderCreateForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ExtendedFormData>({
@@ -114,21 +114,22 @@ export function SoukCreateForm() {
 
     for (const file of formData.images) {
       const fileExt = file.name.split('.').pop();
-      const filePath = `souks/${Date.now()}-${Math.random()}.${fileExt}`;
+      const filePath = `providers/${Date.now()}-${Math.random()}.${fileExt}`;
       console.log('Uploading file:', file.name, 'to path:', filePath);
 
-      const { error: uploadError } = await supabase.storage.from('images').upload(filePath, file);
+      const { error: uploadError } = await supabase.storage.from('provider-images').upload(filePath, file);
       if (uploadError) {
         console.error('Upload error for', file.name, ':', uploadError);
         continue;
       }
 
-      const { data: publicUrlData } = supabase.storage.from('images').getPublicUrl(filePath);
+      const { data: publicUrlData } = supabase.storage.from('provider-images').getPublicUrl(filePath);
       if (publicUrlData?.publicUrl) {
-        // Only allow trusted domain
+        // Only allow trusted domain (current Supabase project)
         try {
           const { hostname } = new URL(publicUrlData.publicUrl);
-          if (hostname === 'pmbatjlosstytdmmqkky.supabase.co') {
+          const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
+          if (hostname === supabaseUrl.hostname) {
             uploadedUrls.push(publicUrlData.publicUrl);
             console.log('Successfully uploaded:', file.name, 'URL:', publicUrlData.publicUrl);
           }
@@ -140,10 +141,10 @@ export function SoukCreateForm() {
 
     console.log('Total uploaded URLs:', uploadedUrls.length);
 
-    // 2. Save souk with trusted Supabase image URLs
+    // 2. Save provider with trusted Supabase image URLs
     const insertData = {
-      souk_name: formData.title,
-      souk_description: formData.description,
+      provider_name: formData.title,
+      provider_description: formData.description,
       address_street: formData.street,
       address_zip: formData.zip,
       address_city: formData.city,
@@ -153,14 +154,14 @@ export function SoukCreateForm() {
       social_website: formData.website || null,
       social_instagram: formData.instagram || null,
       barakah_effects: formData.tags,
-      souk_owner_id: user.id,
+      provider_owner_id: user.id,
       address_country: 'DE',
-      souk_images: JSON.stringify({ urls: uploadedUrls }),
+      provider_images: JSON.stringify({ urls: uploadedUrls }),
     };
-    const { error } = await supabase.from('souks').insert([insertData]);
+    const { error } = await supabase.from('providers').insert([insertData]);
     setIsSubmitting(false);
     if (error) {
-      alert(`Fehler beim Erstellen des Souks: ${error.message}`);
+      alert(`Fehler beim Erstellen des Providers: ${error.message}`);
     } else {
       // Redirect immediately without blocking alert
       router.push('/profile');
@@ -358,7 +359,7 @@ export function SoukCreateForm() {
             {isSubmitting ? (
               <Icon className="size-5 animate-spin" icon="mdi:loading" />
             ) : (
-              'Souk erstellen'
+              'Provider erstellen'
             )}
           </button>
         ) : (

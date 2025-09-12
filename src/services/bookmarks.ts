@@ -8,12 +8,12 @@ export interface Bookmark {
   created_at: string | null;
 }
 
-export async function getBookmarkForSouk(soukId: string, userId: string): Promise<Bookmark | null> {
+export async function getBookmarkForProvider(providerId: string, userId: string): Promise<Bookmark | null> {
   const { data, error } = await supabase
     .from('bookmarks')
     .select('*')
-    .eq('bookmarkable_id', soukId)
-    .eq('bookmarkable_type', 'souk')
+    .eq('bookmarkable_id', providerId)
+    .eq('bookmarkable_type', 'provider')
     .eq('user_id', userId)
     .single<Bookmark>();
   if (error) {
@@ -41,15 +41,15 @@ export async function deleteBookmark(id: string): Promise<void> {
   }
 }
 
-export async function toggleBookmarkForSouk(soukId: string, userId: string): Promise<boolean> {
-  const existing = await getBookmarkForSouk(soukId, userId);
+export async function toggleBookmarkForProvider(providerId: string, userId: string): Promise<boolean> {
+  const existing = await getBookmarkForProvider(providerId, userId);
   if (existing) {
     await deleteBookmark(existing.id);
     return false;
   } else {
     await createBookmark({
-      bookmarkable_id: soukId,
-      bookmarkable_type: 'souk',
+      bookmarkable_id: providerId,
+      bookmarkable_type: 'provider',
       user_id: userId,
     });
     return true;

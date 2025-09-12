@@ -1,4 +1,4 @@
-export interface SoukFormData {
+export interface ProviderFormData {
   title: string;
   category: string;
   description: string;

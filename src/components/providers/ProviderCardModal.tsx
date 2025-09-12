@@ -8,19 +8,19 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 
-import { SoukActionBar } from '@/components/souks/SoukActionBar';
+import { ProviderActionBar } from '@/components/providers/ProviderActionBar';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import { getZakatProjectsForSouk, type ZakatData } from '@/services/zakat_projects';
+import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
 
-interface SoukCardModalProps {
+interface ProviderCardModalProps {
   open: boolean;
   onClose: () => void;
-  souk: {
-    souk_id: string;
-    souk_name: string;
-    souk_description?: string | null;
-    souk_images?: string | string[] | { urls?: string[] } | null;
+  provider: {
+    provider_id: string;
+    provider_name: string;
+    provider_description?: string | null;
+    provider_images?: string | string[] | { urls?: string[] } | null;
     address_street?: string | null;
     address_zip?: string | null;
     address_city?: string | null;
@@ -31,7 +31,7 @@ interface SoukCardModalProps {
   };
 }
 
-export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
+export function ProviderCardModal({ open, onClose, provider }: ProviderCardModalProps) {
   // Prevent background scroll when modal is open
   useEffect(() => {
     if (!open) return;
@@ -51,16 +51,16 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
     };
   }, [open]);
 
-  // Fetch zakat projects for this souk
-  const [zakatProjects, setZakatProjects] = React.useState<ZakatData[]>([]);
+  // Fetch community services for this provider
+  const [communityServices, setCommunityServices] = React.useState<CommunityServiceData[]>([]);
   useEffect(() => {
-    async function fetchZakat() {
-      if (!open || !souk.souk_id) return;
-      const data = await getZakatProjectsForSouk(souk.souk_id);
-      setZakatProjects(data || []);
+    async function fetchCommunityServices() {
+      if (!open || !provider.provider_id) return;
+      const data = await getCommunityServicesForProvider(provider.provider_id);
+      setCommunityServices(data || []);
     }
-    fetchZakat();
-  }, [open, souk.souk_id]);
+    fetchCommunityServices();
+  }, [open, provider.provider_id]);
 
   // Swipe down to close (mobile) with visual feedback
   const [dragY, setDragY] = React.useState(0);
@@ -80,13 +80,13 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Process images
-  const TRUSTED_IMAGE_DOMAINS = ['pmbatjlosstytdmmqkky.supabase.co'];
   const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 
   function isTrustedUrl(url: string) {
     try {
       const { hostname } = new URL(url);
-      return TRUSTED_IMAGE_DOMAINS.some((domain) => hostname.endsWith(domain));
+      const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
+      return hostname === supabaseUrl.hostname;
     } catch {
       return false;
     }
@@ -94,25 +94,25 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
 
   const allImageUrls = (() => {
     try {
-      if (!souk.souk_images) {
+      if (!provider.provider_images) {
         return [PLACEHOLDER_IMAGE];
       }
       let imagesData: { urls?: string[] } = {};
-      if (typeof souk.souk_images === 'string') {
+      if (typeof provider.provider_images === 'string') {
         try {
-          imagesData = JSON.parse(souk.souk_images) as { urls?: string[] };
+          imagesData = JSON.parse(provider.provider_images) as { urls?: string[] };
         } catch {
           imagesData = {};
         }
-      } else if (Array.isArray(souk.souk_images)) {
-        imagesData.urls = souk.souk_images;
+      } else if (Array.isArray(provider.provider_images)) {
+        imagesData.urls = provider.provider_images;
       } else if (
-        typeof souk.souk_images === 'object' &&
-        souk.souk_images !== null &&
-        'urls' in souk.souk_images &&
-        Array.isArray((souk.souk_images as { urls?: unknown }).urls)
+        typeof provider.provider_images === 'object' &&
+        provider.provider_images !== null &&
+        'urls' in provider.provider_images &&
+        Array.isArray((provider.provider_images as { urls?: unknown }).urls)
       ) {
-        imagesData = souk.souk_images as { urls: string[] };
+        imagesData = provider.provider_images as { urls: string[] };
       }
       if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
         const trusted = imagesData.urls.filter(isTrustedUrl);
@@ -326,8 +326,8 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
           .from('bookmarks')
           .select('id')
           .match({
-            bookmarkable_id: souk.souk_id,
-            bookmarkable_type: 'souk',
+            bookmarkable_id: provider.provider_id,
+            bookmarkable_type: 'provider',
             user_id: user.id,
           })
           .maybeSingle();
@@ -342,11 +342,11 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
       }
     };
     void fetchBookmark();
-  }, [user, souk.souk_id]);
+  }, [user, provider.provider_id]);
 
   const handleSave = async () => {
     if (!user) {
-      toast.error('Bitte melde dich an, um Souks zu speichern');
+      toast.error('Bitte melde dich an, um Provider zu speichern');
       return;
     }
     try {
@@ -354,8 +354,8 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
         .from('bookmarks')
         .select('id')
         .match({
-          bookmarkable_id: souk.souk_id,
-          bookmarkable_type: 'souk',
+          bookmarkable_id: provider.provider_id,
+          bookmarkable_type: 'provider',
           user_id: user.id,
         })
         .maybeSingle();
@@ -369,30 +369,30 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
           .eq('id', existingBookmark.id);
         if (deleteError) throw deleteError;
         setIsSaved(false);
-        toast.success('Souk entfernt');
+        toast.success('Provider entfernt');
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
-          bookmarkable_id: souk.souk_id,
-          bookmarkable_type: 'souk',
+          bookmarkable_id: provider.provider_id,
+          bookmarkable_type: 'provider',
           user_id: user.id,
         });
         if (insertError) throw insertError;
         setIsSaved(true);
-        toast.success('Souk gespeichert');
+        toast.success('Provider gespeichert');
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
-      toast.error('Fehler beim Speichern des Souks');
+      toast.error('Fehler beim Speichern des Providers');
     }
   };
 
   // Share handler
   const handleShare = () => {
-    const shareUrl = `${window.location.origin}/souks/${souk.souk_id}`;
+    const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
     if (navigator.share) {
       navigator.share({
-        title: souk.souk_name,
-        text: souk.souk_description || '',
+        title: provider.provider_name,
+        text: provider.provider_description || '',
         url: shareUrl,
       });
     } else {
@@ -403,15 +403,15 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
 
   // Call handler
   const handleCall = () => {
-    if (souk.contact_phone) {
-      window.open(`tel:${souk.contact_phone}`);
+    if (provider.contact_phone) {
+      window.open(`tel:${provider.contact_phone}`);
     }
   };
 
   // Website handler
   const handleWebsite = () => {
-    if (souk.social_website) {
-      window.open(souk.social_website, '_blank');
+    if (provider.social_website) {
+      window.open(provider.social_website, '_blank');
     }
   };
 
@@ -475,7 +475,7 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
                     <Image
                       fill
                       priority
-                      alt={`Souk Visual ${index + 1}`}
+                      alt={`Provider Visual ${index + 1}`}
                       className="border-uFlowWhite h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
                       draggable="false"
                       src={imageUrl}
@@ -530,7 +530,7 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
             <div className="absolute bottom-0 left-0 right-0 flex flex-col items-start justify-end p-4">
               <div className="outline-uFlowDarkGrey inline-flex h-8 items-center justify-center overflow-hidden rounded-[9.54px] bg-white/70 px-2.5 outline outline-[0.79px] outline-offset-[-0.40px] backdrop-blur-[1.99px]">
                 <div className="justify-center text-center font-inter-tight text-sm font-medium text-black">
-                  {souk.category?.name_de || ''}
+                  {provider.category?.name_de || ''}
                 </div>
               </div>
             </div>
@@ -549,7 +549,7 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
               <Image
                 fill
                 priority
-                alt="Souk Visual"
+                alt="Provider Visual"
                 className="rounded-t-[29.4px] border border-white object-cover"
                 src={mainImageUrl}
                 style={{ boxSizing: 'border-box' }}
@@ -559,7 +559,7 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
             <div className="z-10 flex h-[63.57px] w-full flex-col items-start justify-end px-[15.89px] sm:w-[392px]">
               <div className="flex h-[31.78px] w-[97.19px] flex-row items-center justify-center rounded-[9.54px] border border-[#CDCDCD] bg-white/70 px-[10.6px] backdrop-blur-[2px]">
                 <span className="flex h-[22px] w-[76px] items-center text-center font-inter-tight text-[18.54px] font-medium leading-[22px] text-black">
-                  {souk.category?.name_de || ''}
+                  {provider.category?.name_de || ''}
                 </span>
               </div>
             </div>
@@ -569,16 +569,16 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
             {/* Title */}
             <div className="flex w-full flex-col items-start gap-1">
               <div className="w-full font-inter-tight text-[24px] font-semibold leading-[29px] text-[#232323]">
-                {souk.souk_name}
+                {provider.provider_name}
               </div>
               <div className="w-full font-inter text-[16px] leading-[19px] text-[#7A7A7A]">
-                {souk.address_street && souk.address_zip && souk.address_city
-                  ? `${souk.address_street}, ${souk.address_zip} ${souk.address_city}`
+                {provider.address_street && provider.address_zip && provider.address_city
+                  ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
                   : ''}
               </div>
             </div>
             {/* Barakah Section (only if zakat project exists) */}
-            {zakatProjects.length > 0 && (
+            {communityServices.length > 0 && (
               <div className="flex w-full flex-col items-start gap-2">
                 <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
                   Unser Barakah Effekt:
@@ -587,26 +587,26 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
                 <div className="relative h-[198px] w-full overflow-hidden rounded-[16px] border border-[#959595]">
                   <Image
                     fill
-                    alt={zakatProjects[0].zakat_name}
+                    alt={communityServices[0].community_service_name}
                     className="h-full w-full object-cover"
                     sizes="(max-width: 768px) 100vw, 50vw"
                     src={
-                      zakatProjects[0].zakat_images && zakatProjects[0].zakat_images.length > 0
-                        ? zakatProjects[0].zakat_images[0]
+                      communityServices[0].community_service_images && communityServices[0].community_service_images.length > 0
+                        ? communityServices[0].community_service_images[0]
                         : '/images/placeholder.jpg'
                     }
                   />
                   {/* Barakah Title Overlay */}
                   <div className="absolute bottom-0 left-0 flex h-[41px] w-full items-center rounded-b-[16px] bg-white/10 px-2 backdrop-blur-[14px]">
                     <span className="font-inter-tight text-[17.2px] font-semibold leading-[21px] text-white">
-                      {zakatProjects[0].zakat_name}
+                      {communityServices[0].community_service_name}
                     </span>
                   </div>
                 </div>
                 {/* Barakah Badges */}
-                {Array.isArray(souk.barakah_effects) && souk.barakah_effects.length > 0 && (
+                {Array.isArray(provider.barakah_effects) && provider.barakah_effects.length > 0 && (
                   <div className="mt-2 flex w-full flex-row flex-wrap gap-[9.8px]">
-                    {souk.barakah_effects.map((effect, idx) => (
+                    {provider.barakah_effects.map((effect, idx) => (
                       <div
                         key={idx}
                         className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]"
@@ -621,15 +621,15 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
               </div>
             )}
             {/* Barakah Effects Section (when no zakat project but has effects) */}
-            {zakatProjects.length === 0 &&
-              Array.isArray(souk.barakah_effects) &&
-              souk.barakah_effects.length > 0 && (
+            {communityServices.length === 0 &&
+              Array.isArray(provider.barakah_effects) &&
+              provider.barakah_effects.length > 0 && (
                 <div className="flex w-full flex-col items-start gap-2">
                   <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
                     Unser Barakah Effekt:
                   </div>
                   <div className="flex w-full flex-row flex-wrap gap-[9.8px]">
-                    {souk.barakah_effects.map((effect, idx) => (
+                    {provider.barakah_effects.map((effect, idx) => (
                       <div
                         key={idx}
                         className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]"
@@ -643,13 +643,13 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
                 </div>
               )}
             {/* Description Section */}
-            {souk.souk_description && (
+            {provider.provider_description && (
               <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
                 <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
                   Beschreibung:
                 </div>
                 <div className="font-inter-tight text-[16px] leading-[21px] text-[#272727]">
-                  {souk.souk_description}
+                  {provider.provider_description}
                 </div>
               </div>
             )}
@@ -666,12 +666,12 @@ export function SoukCardModal({ open, onClose, souk }: SoukCardModalProps) {
               </div>
             </div>
           </div>
-          {/* Sticky SoukActionBar at the bottom on mobile */}
+          {/* Sticky ProviderActionBar at the bottom on mobile */}
           <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-4 pb-4 sm:hidden">
-            <SoukActionBar
+            <ProviderActionBar
               isSaved={isSaved}
-              phoneNumber={souk.contact_phone || undefined}
-              websiteUrl={souk.social_website || undefined}
+              phoneNumber={provider.contact_phone || undefined}
+              websiteUrl={provider.social_website || undefined}
               onCall={handleCall}
               onSave={handleSave}
               onShare={handleShare}

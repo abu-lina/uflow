@@ -1,14 +1,16 @@
 import { cookies as nextCookies } from 'next/headers';
 
 export const cookieAdapter = {
-  get: (key: string) => {
-    return nextCookies().get(key)?.value;
+  get: async (key: string) => {
+    const cookies = await nextCookies();
+    return cookies.get(key)?.value;
   },
-  getAll: () => {
+  getAll: async () => {
     // Return all cookies as an array of { name, value }
-    return nextCookies()
+    const cookies = await nextCookies();
+    return cookies
       .getAll()
-      .map(({ name, value }) => ({ name, value }));
+      .map(({ name, value }: { name: string; value: string }) => ({ name, value }));
   },
   set: (_key: string, _value: string, _options?: unknown) => {
     // No-op in server components

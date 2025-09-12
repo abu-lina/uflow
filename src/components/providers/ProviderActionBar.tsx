@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Icon } from '@iconify/react';
 
-interface SoukActionBarProps {
+interface ProviderActionBarProps {
   onSave?: () => void;
   onShare?: () => void;
   onCall?: () => void;
@@ -13,7 +13,7 @@ interface SoukActionBarProps {
   className?: string;
 }
 
-export const SoukActionBar: React.FC<SoukActionBarProps> = ({
+export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
   onSave,
   onShare,
   onCall,
@@ -26,7 +26,7 @@ export const SoukActionBar: React.FC<SoukActionBarProps> = ({
   <div className={`flex w-full gap-3.5 ${className}`}>
     {/* Save Button */}
     <button
-      aria-label={isSaved ? 'Gespeichert entfernen' : 'Souk speichern'}
+      aria-label={isSaved ? 'Gespeichert entfernen' : 'Provider speichern'}
       className="flex h-12 flex-1 items-center justify-center gap-1 rounded-lg bg-mint text-base font-medium text-white shadow transition hover:bg-mint/90"
       type="button"
       onClick={onSave}
@@ -42,7 +42,7 @@ export const SoukActionBar: React.FC<SoukActionBarProps> = ({
 
     {/* Share Button */}
     <button
-      aria-label="Souk teilen"
+      aria-label="Provider teilen"
       className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm"
       type="button"
       onClick={onShare}

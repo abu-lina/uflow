@@ -1,22 +1,22 @@
-export function getSoukImageUrl(
-  soukImages: string | string[] | { urls?: string[] } | null,
+export function getProviderImageUrl(
+  providerImages: string | string[] | { urls?: string[] } | null,
 ): string {
   try {
-    if (!soukImages) return '/images/placeholder.jpg';
+    if (!providerImages) return '/images/placeholder.jpg';
 
     let imagesData: { urls?: string[] } = {};
 
-    if (typeof soukImages === 'string') {
-      imagesData = JSON.parse(soukImages);
-    } else if (Array.isArray(soukImages)) {
-      imagesData.urls = soukImages;
+    if (typeof providerImages === 'string') {
+      imagesData = JSON.parse(providerImages);
+    } else if (Array.isArray(providerImages)) {
+      imagesData.urls = providerImages;
     } else if (
-      typeof soukImages === 'object' &&
-      soukImages !== null &&
-      'urls' in soukImages &&
-      Array.isArray((soukImages as { urls?: unknown }).urls)
+      typeof providerImages === 'object' &&
+      providerImages !== null &&
+      'urls' in providerImages &&
+      Array.isArray((providerImages as { urls?: unknown }).urls)
     ) {
-      imagesData.urls = (soukImages as { urls: string[] }).urls;
+      imagesData.urls = (providerImages as { urls: string[] }).urls;
     }
 
     return imagesData.urls?.[0] || '/images/placeholder.jpg';

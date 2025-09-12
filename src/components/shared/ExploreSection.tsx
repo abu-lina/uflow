@@ -7,46 +7,46 @@ import { useRouter } from 'next/navigation';
 
 import { motion } from 'framer-motion';
 
-import { SoukCard } from '@/components/souks/SoukCard';
+import { ProviderCard } from '@/components/providers/ProviderCard';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { usePinterestTicker } from '@/hooks/usePinterestTicker';
 import { useFilter } from '@/providers/filter-provider';
-import { getSouks, type Souk } from '@/services/souks';
+import { getProviders, type Provider } from '@/services/providers';
 
 const CARD_WIDTH = 288; // px
 const CARD_GAP = 32; // px (mr-8)
 const ANIMATION_SPEED = 0.7; // px per frame
 
 export function ExploreSection() {
-  const [souks, setSouks] = useState<Souk[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { selectedCategory } = useFilter();
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchSouks() {
+    async function fetchProviders() {
       try {
-        const data = await getSouks();
-        setSouks(data);
+        const data = await getProviders();
+        setProviders(data);
       } catch (err) {
-        setError('Failed to load souks');
-        console.error('Error loading souks:', err);
+        setError('Failed to load providers');
+        console.error('Error loading providers:', err);
       } finally {
         setLoading(false);
       }
     }
 
-    void fetchSouks();
+    void fetchProviders();
   }, []);
 
-  // Filter souks based on selected category
-  const filteredSouks = selectedCategory
-    ? souks.filter((souk) => souk.category_id === selectedCategory)
-    : souks;
+  // Filter providers based on selected category
+  const filteredProviders = selectedCategory
+    ? providers.filter((provider) => provider.category_id === selectedCategory)
+    : providers;
 
   const { scrollPx } = usePinterestTicker({
-    numCards: filteredSouks.length,
+    numCards: filteredProviders.length,
     cardWidth: CARD_WIDTH,
     cardGap: CARD_GAP,
     animationSpeed: ANIMATION_SPEED,
@@ -97,7 +97,7 @@ export function ExploreSection() {
           className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
           label="Entdecke deine Ummah"
           size="md"
-          onAnimationComplete={() => router.push('/souks')}
+          onAnimationComplete={() => router.push('/providers')}
         />
       </motion.div>
 
@@ -117,18 +117,18 @@ export function ExploreSection() {
           style={{
             transform: `translateX(-${scrollPx}px)`,
             transition: 'transform 0.016s linear',
-            width: `${(CARD_WIDTH + CARD_GAP) * filteredSouks.length * 3}px`,
+            width: `${(CARD_WIDTH + CARD_GAP) * filteredProviders.length * 3}px`,
           }}
         >
-          {[...filteredSouks, ...filteredSouks, ...filteredSouks].map((souk, idx) => (
+          {[...filteredProviders, ...filteredProviders, ...filteredProviders].map((provider, idx) => (
             <Link
-              key={`${souk.souk_id}-${idx}`}
-              aria-label="Zu den Souks"
+              key={`${provider.provider_id}-${idx}`}
+              aria-label="Zu den Providers"
               className="mr-8 w-[288px] shrink-0"
-              href="/souks"
+              href="/providers"
               tabIndex={0}
             >
-              <SoukCard {...souk} className="w-full text-content" hideActions={true} />
+              <ProviderCard {...provider} className="w-full text-content" hideActions={true} />
             </Link>
           ))}
         </div>

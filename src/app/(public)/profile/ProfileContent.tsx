@@ -7,12 +7,12 @@ import { useRouter } from 'next/navigation';
 
 import clsx from 'clsx';
 
-import { CreatedSoukCard } from '@/components/shared/CreatedSoukCard';
+import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
 import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
-import { SoukCreateForm } from '@/features/souks/SoukCreateForm';
+import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/hooks/useAuth';
-import { getCreatedSouks, type Souk, getBookmarkedSouks } from '@/services/souks';
+import { getCreatedProviders, type Provider, getBookmarkedProviders } from '@/services/providers';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 interface ProfileContentProps {
@@ -22,12 +22,12 @@ interface ProfileContentProps {
 export function ProfileContent({ user }: ProfileContentProps) {
   const { user: clientUser, loading } = useAuth();
   const router = useRouter();
-  const [createdSouks, setCreatedSouks] = useState<Souk[]>([]);
-  const [savedSouks, setSavedSouks] = useState<Souk[]>([]);
+  const [createdProviders, setCreatedProviders] = useState<Provider[]>([]);
+  const [savedProviders, setSavedProviders] = useState<Provider[]>([]);
   const [activeTab, setActiveTab] = useState<UserTab>('created');
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoadingSouks, setIsLoadingSouks] = useState(false);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
 
   // Responsive: detect mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -43,33 +43,33 @@ export function ProfileContent({ user }: ProfileContentProps) {
     }
   }, [effectiveUser, loading, router]);
 
-  // Fetch souks with proper error handling
+  // Fetch providers with proper error handling
   useEffect(() => {
     if (!effectiveUser) return;
 
-    const fetchSouks = async () => {
-      setIsLoadingSouks(true);
+    const fetchProviders = async () => {
+      setIsLoadingProviders(true);
       setError(null);
 
       try {
         const [created, saved] = await Promise.all([
-          getCreatedSouks(effectiveUser.id),
-          getBookmarkedSouks(effectiveUser.id),
+          getCreatedProviders(effectiveUser.id),
+          getBookmarkedProviders(effectiveUser.id),
         ]);
 
-        setCreatedSouks(created ?? []);
-        setSavedSouks(saved ?? []);
+        setCreatedProviders(created ?? []);
+        setSavedProviders(saved ?? []);
       } catch (err) {
-        console.error('Error fetching souks:', err);
-        setError('Fehler beim Laden der Souks');
-        setCreatedSouks([]);
-        setSavedSouks([]);
+        console.error('Error fetching providers:', err);
+        setError('Fehler beim Laden der Providers');
+        setCreatedProviders([]);
+        setSavedProviders([]);
       } finally {
-        setIsLoadingSouks(false);
+        setIsLoadingProviders(false);
       }
     };
 
-    void fetchSouks();
+    void fetchProviders();
   }, [effectiveUser]);
 
   // Show loading while auth is being checked
@@ -195,7 +195,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
           </button>
         </div>
       )}
-      {/* Souks/Services List */}
+      {/* Providers/Services List */}
       <div
         className={clsx('flex w-full flex-col items-start gap-4')}
         style={isMobile ? { width: '100%' } : {}}
@@ -206,13 +206,13 @@ export function ProfileContent({ user }: ProfileContentProps) {
             isMobile ? 'text-[24px] leading-[29px] text-[#232323]' : 'text-2xl',
           )}
         >
-          Erstellten Souks / Services
+          Erstellten Providers / Services
         </div>
-        {isLoadingSouks ? (
+        {isLoadingProviders ? (
           <div className="flex w-full items-center justify-center py-8">
             <div className="text-center">
               <div className="mb-2 text-2xl">🔄</div>
-              <p className="text-gray-600">Lade Souks...</p>
+              <p className="text-gray-600">Lade Providers...</p>
             </div>
           </div>
         ) : (
@@ -222,24 +222,24 @@ export function ProfileContent({ user }: ProfileContentProps) {
             )}
             style={isMobile ? { width: '100%', minHeight: 200 } : {}}
           >
-            {(createdSouks.length > 0 ? createdSouks : []).map((souk) => (
-              <div key={souk.souk_id} className={isMobile ? 'w-[164px]' : ''}>
-                <CreatedSoukCard
-                  category={souk.category?.name_de || ''}
+            {(createdProviders.length > 0 ? createdProviders : []).map((provider) => (
+              <div key={provider.provider_id} className={isMobile ? 'w-[164px]' : ''}>
+                <CreatedProviderCard
+                  category={provider.category?.name_de || ''}
                   imageUrl={(() => {
-                    if (!souk.souk_images) return '/images/placeholder.jpg';
+                    if (!provider.provider_images) return '/images/placeholder.jpg';
                     try {
                       let imagesData: { urls?: string[] } = {};
-                      if (typeof souk.souk_images === 'string') {
-                        imagesData = JSON.parse(souk.souk_images);
-                      } else if (Array.isArray(souk.souk_images)) {
-                        imagesData.urls = souk.souk_images;
+                      if (typeof provider.provider_images === 'string') {
+                        imagesData = JSON.parse(provider.provider_images);
+                      } else if (Array.isArray(provider.provider_images)) {
+                        imagesData.urls = provider.provider_images;
                       } else if (
-                        typeof souk.souk_images === 'object' &&
-                        souk.souk_images !== null &&
-                        'urls' in souk.souk_images
+                        typeof provider.provider_images === 'object' &&
+                        provider.provider_images !== null &&
+                        'urls' in provider.provider_images
                       ) {
-                        imagesData = souk.souk_images;
+                        imagesData = provider.provider_images;
                       }
                       if (imagesData.urls && imagesData.urls.length > 0) {
                         return imagesData.urls[0];
@@ -250,11 +250,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     return '/images/placeholder.jpg';
                   })()}
                   tag={
-                    souk.barakah_effects && souk.barakah_effects.length > 0
-                      ? souk.barakah_effects[0]
+                    provider.barakah_effects && provider.barakah_effects.length > 0
+                      ? provider.barakah_effects[0]
                       : '✨ Halal'
                   }
-                  title={souk.souk_name}
+                  title={provider.provider_name}
                 />
               </div>
             ))}
@@ -307,32 +307,32 @@ export function ProfileContent({ user }: ProfileContentProps) {
       <div className="mt-6 w-full">
         {activeTab === 'created' && (
           <div className="flex flex-wrap justify-center gap-8">
-            {isLoadingSouks ? (
+            {isLoadingProviders ? (
               <div className="flex w-full items-center justify-center py-8">
                 <div className="text-center">
                   <div className="mb-2 text-2xl">🔄</div>
-                  <p className="text-gray-600">Lade Souks...</p>
+                  <p className="text-gray-600">Lade Providers...</p>
                 </div>
               </div>
-            ) : createdSouks.length > 0 ? (
-              createdSouks.map((souk) => (
-                <CreatedSoukCard
-                  key={souk.souk_id}
-                  category={souk.category?.name_de || ''}
+            ) : createdProviders.length > 0 ? (
+              createdProviders.map((provider) => (
+                <CreatedProviderCard
+                  key={provider.provider_id}
+                  category={provider.category?.name_de || ''}
                   imageUrl={(() => {
-                    if (!souk.souk_images) return '/images/placeholder.jpg';
+                    if (!provider.provider_images) return '/images/placeholder.jpg';
                     try {
                       let imagesData: { urls?: string[] } = {};
-                      if (typeof souk.souk_images === 'string') {
-                        imagesData = JSON.parse(souk.souk_images);
-                      } else if (Array.isArray(souk.souk_images)) {
-                        imagesData.urls = souk.souk_images;
+                      if (typeof provider.provider_images === 'string') {
+                        imagesData = JSON.parse(provider.provider_images);
+                      } else if (Array.isArray(provider.provider_images)) {
+                        imagesData.urls = provider.provider_images;
                       } else if (
-                        typeof souk.souk_images === 'object' &&
-                        souk.souk_images !== null &&
-                        'urls' in souk.souk_images
+                        typeof provider.provider_images === 'object' &&
+                        provider.provider_images !== null &&
+                        'urls' in provider.provider_images
                       ) {
-                        imagesData = souk.souk_images;
+                        imagesData = provider.provider_images;
                       }
                       if (imagesData.urls && imagesData.urls.length > 0) {
                         return imagesData.urls[0];
@@ -343,46 +343,46 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     return '/images/placeholder.jpg';
                   })()}
                   tag={
-                    souk.barakah_effects && souk.barakah_effects.length > 0
-                      ? souk.barakah_effects[0]
+                    provider.barakah_effects && provider.barakah_effects.length > 0
+                      ? provider.barakah_effects[0]
                       : '✨ Halal'
                   }
-                  title={souk.souk_name}
+                  title={provider.provider_name}
                 />
               ))
             ) : (
-              <div className="text-gray-400">Keine Souks erstellt.</div>
+              <div className="text-gray-400">Keine Providers erstellt.</div>
             )}
           </div>
         )}
         {activeTab === 'saved' && (
           <div className="flex flex-wrap justify-center gap-8">
-            {isLoadingSouks ? (
+            {isLoadingProviders ? (
               <div className="flex w-full items-center justify-center py-8">
                 <div className="text-center">
                   <div className="mb-2 text-2xl">🔄</div>
-                  <p className="text-gray-600">Lade Souks...</p>
+                  <p className="text-gray-600">Lade Providers...</p>
                 </div>
               </div>
-            ) : savedSouks.length > 0 ? (
-              savedSouks.map((souk) => (
-                <CreatedSoukCard
-                  key={souk.souk_id}
-                  category={souk.category?.name_de || ''}
+            ) : savedProviders.length > 0 ? (
+              savedProviders.map((provider) => (
+                <CreatedProviderCard
+                  key={provider.provider_id}
+                  category={provider.category?.name_de || ''}
                   imageUrl={(() => {
-                    if (!souk.souk_images) return '/images/placeholder.jpg';
+                    if (!provider.provider_images) return '/images/placeholder.jpg';
                     try {
                       let imagesData: { urls?: string[] } = {};
-                      if (typeof souk.souk_images === 'string') {
-                        imagesData = JSON.parse(souk.souk_images);
-                      } else if (Array.isArray(souk.souk_images)) {
-                        imagesData.urls = souk.souk_images;
+                      if (typeof provider.provider_images === 'string') {
+                        imagesData = JSON.parse(provider.provider_images);
+                      } else if (Array.isArray(provider.provider_images)) {
+                        imagesData.urls = provider.provider_images;
                       } else if (
-                        typeof souk.souk_images === 'object' &&
-                        souk.souk_images !== null &&
-                        'urls' in souk.souk_images
+                        typeof provider.provider_images === 'object' &&
+                        provider.provider_images !== null &&
+                        'urls' in provider.provider_images
                       ) {
-                        imagesData = souk.souk_images;
+                        imagesData = provider.provider_images;
                       }
                       if (imagesData.urls && imagesData.urls.length > 0) {
                         return imagesData.urls[0];
@@ -393,21 +393,21 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     return '/images/placeholder.jpg';
                   })()}
                   tag={
-                    souk.barakah_effects && souk.barakah_effects.length > 0
-                      ? souk.barakah_effects[0]
+                    provider.barakah_effects && provider.barakah_effects.length > 0
+                      ? provider.barakah_effects[0]
                       : '✨ Halal'
                   }
-                  title={souk.souk_name}
+                  title={provider.provider_name}
                 />
               ))
             ) : (
-              <div className="text-gray-400">Keine Souks gespeichert.</div>
+              <div className="text-gray-400">Keine Providers gespeichert.</div>
             )}
           </div>
         )}
         {activeTab === 'create' && (
           <div className="flex flex-col items-center">
-            <SoukCreateForm />
+            <ProviderCreateForm />
           </div>
         )}
       </div>

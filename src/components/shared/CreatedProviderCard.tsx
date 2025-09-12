@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 import { Icon } from '@iconify/react';
 
-interface CreatedSoukCardProps {
+interface CreatedProviderCardProps {
   imageUrl: string;
   title: string;
   category: string;
@@ -11,14 +11,14 @@ interface CreatedSoukCardProps {
   onClick?: () => void;
 }
 
-export function CreatedSoukCard({
+export function CreatedProviderCard({
   imageUrl,
   title,
   category,
   tag,
   onUnsave,
   onClick,
-}: CreatedSoukCardProps) {
+}: CreatedProviderCardProps) {
   return (
     <div
       className="relative flex h-[211.63px] w-[161px] cursor-pointer flex-col items-start p-0 md:h-[320px] md:w-[240px]"

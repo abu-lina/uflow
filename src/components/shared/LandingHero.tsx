@@ -245,7 +245,7 @@ export function LandingHero() {
                   className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
                   label="Entdecke deine Ummah"
                   size="md"
-                  onAnimationComplete={() => router.push('/souks')}
+                  onAnimationComplete={() => router.push('/providers')}
                 />
               </motion.div>
             )}

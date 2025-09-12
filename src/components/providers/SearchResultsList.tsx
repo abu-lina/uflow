@@ -2,21 +2,21 @@
 
 import { motion } from 'framer-motion';
 
-import { SoukCard } from '@/components/souks/SoukCard';
+import { ProviderCard } from '@/components/providers/ProviderCard';
 import { sharedTransition } from '@/components/ui/PageTransition';
-import type { SearchResult, Souk } from '@/services/souks';
+import type { SearchResult, Provider } from '@/services/providers';
 
 interface SearchResultsListProps {
   searchResults: SearchResult[];
-  bookmarkedSoukIds: string[];
-  onSoukClick: (souk: Souk) => void;
-  onBookmarkChange: (soukId: string, isBookmarked: boolean) => void;
+  bookmarkedProviderIds: string[];
+  onProviderClick: (provider: Provider) => void;
+  onBookmarkChange: (providerId: string, isBookmarked: boolean) => void;
 }
 
 export function SearchResultsList({
   searchResults,
-  bookmarkedSoukIds,
-  onSoukClick,
+  bookmarkedProviderIds,
+  onProviderClick,
   onBookmarkChange,
 }: SearchResultsListProps) {
   return (
@@ -28,12 +28,12 @@ export function SearchResultsList({
       transition={sharedTransition}
     >
       {searchResults.map((result, index) => {
-        // Convert SearchResult back to Souk format for compatibility
-        const souk: Souk = {
-          souk_id: result.id,
-          souk_name: result.name,
-          souk_description: result.description,
-          souk_images: result.images,
+        // Convert SearchResult back to Provider format for compatibility
+        const provider: Provider = {
+          provider_id: result.id,
+          provider_name: result.name,
+          provider_description: result.description,
+          provider_images: result.images,
           category_id: result.category_id,
           address_city: result.address_city,
           social_website: result.social_website,
@@ -49,7 +49,7 @@ export function SearchResultsList({
           updated_at: result.updated_at,
           barakah_effects: result.barakah_effects,
           category: result.category,
-          zakat_id: result.type === 'zakat' ? result.id : undefined,
+          community_service_id: result.type === 'community_service' ? result.id : undefined,
         };
 
         return (
@@ -64,18 +64,18 @@ export function SearchResultsList({
               ...sharedTransition,
               delay: index * 0.02,
             }}
-            onClick={() => onSoukClick(souk)}
+            onClick={() => onProviderClick(provider)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                onSoukClick(souk);
+                onProviderClick(provider);
               }
             }}
           >
-            <SoukCard
-              {...souk}
+            <ProviderCard
+              {...provider}
               hideWebsiteButton={true}
-              isBookmarked={bookmarkedSoukIds.includes(result.id)}
+              isBookmarked={bookmarkedProviderIds.includes(result.id)}
               onBookmarkChange={(isBookmarked: boolean) =>
                 onBookmarkChange(result.id, isBookmarked)
               }

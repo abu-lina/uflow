@@ -11,17 +11,17 @@ export interface Category {
   updated_at: string;
 }
 
-// Fetch only categories that are referenced by at least one souk
+// Fetch only categories that are referenced by at least one provider
 export async function fetchUsedCategories(): Promise<Category[]> {
-  // 1. Get all category_ids from souks
-  const { data: souks, error: souksError } = await supabase.from('souks').select('category_id');
-  if (souksError) {
-    throw souksError;
+  // 1. Get all category_ids from providers
+  const { data: providers, error: providersError } = await supabase.from('providers').select('category_id');
+  if (providersError) {
+    throw providersError;
   }
 
   // Only include valid, non-null, non-empty category_ids
-  const allCategoryIds = Array.isArray(souks)
-    ? souks.map((s: { category_id: string | null }) => s.category_id)
+  const allCategoryIds = Array.isArray(providers)
+    ? providers.map((p: { category_id: string | null }) => p.category_id)
     : [];
   const uniqueCategoryIds = Array.from(
     new Set(
@@ -43,30 +43,30 @@ export async function fetchUsedCategories(): Promise<Category[]> {
 
   const categoryResults = Array.isArray(categories) ? categories : [];
 
-  // 3. Check if there are any zakat projects and add the Spenden category if needed
-  const { data: zakatProjects, error: zakatError } = await supabase
-    .from('zakat_projects')
-    .select('zakat_id')
+  // 3. Check if there are any community services and add the Community Services category if needed
+  const { data: communityServices, error: communityServiceError } = await supabase
+    .from('community_services')
+    .select('community_service_id')
     .limit(1);
 
-  if (!zakatError && zakatProjects && zakatProjects.length > 0) {
-    // Check if the Spenden category already exists in the results
-    const spendenCategoryExists = categoryResults.some(
+  if (!communityServiceError && communityServices && communityServices.length > 0) {
+    // Check if the Community Services category already exists in the results
+    const communityServiceCategoryExists = categoryResults.some(
       (cat) => cat.category_id === '2335922b-76a9-4d79-b32a-b3f95941ba5c',
     );
 
-    if (!spendenCategoryExists) {
-      // Add the real Spenden category for zakat projects
-      const spendenCategory: Category = {
+    if (!communityServiceCategoryExists) {
+      // Add the real Community Services category for community services
+      const communityServiceCategory: Category = {
         category_id: '2335922b-76a9-4d79-b32a-b3f95941ba5c',
-        name: 'Spenden',
-        name_de: 'Spenden-Projekte',
-        name_en: 'Donations',
-        description: 'Zakat and donation projects',
+        name: 'Community Services',
+        name_de: 'Community Services',
+        name_en: 'Community Services',
+        description: 'Community service projects',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      categoryResults.push(spendenCategory);
+      categoryResults.push(communityServiceCategory);
     }
   }
 
@@ -78,7 +78,7 @@ export async function fetchFilteredCategories(
   selectedLocation?: string | null,
   searchQuery?: string | null,
 ): Promise<Category[]> {
-  let req = supabase.from('souks').select('category_id');
+  let req = supabase.from('providers').select('category_id');
 
   // Apply location filter if specified
   if (selectedLocation && selectedLocation !== 'Überall') {
@@ -87,17 +87,17 @@ export async function fetchFilteredCategories(
 
   // Apply search query filter if specified
   if (searchQuery && searchQuery.trim()) {
-    req = req.ilike('souk_name', `%${searchQuery.trim()}%`);
+    req = req.ilike('provider_name', `%${searchQuery.trim()}%`);
   }
 
-  const { data: souks, error: souksError } = await req;
-  if (souksError) {
-    throw souksError;
+  const { data: providers, error: providersError } = await req;
+  if (providersError) {
+    throw providersError;
   }
 
   // Only include valid, non-null, non-empty category_ids
-  const allCategoryIds = Array.isArray(souks)
-    ? souks.map((s: { category_id: string | null }) => s.category_id)
+  const allCategoryIds = Array.isArray(providers)
+    ? providers.map((p: { category_id: string | null }) => p.category_id)
     : [];
   const uniqueCategoryIds = Array.from(
     new Set(

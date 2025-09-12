@@ -117,7 +117,7 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
       params.delete('category');
     }
 
-    router.replace(`/souks?${params.toString()}`, { scroll: false });
+    router.replace(`/providers?${params.toString()}`, { scroll: false });
   };
 
   if (loading) {

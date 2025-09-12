@@ -88,6 +88,13 @@ CODECOV_TOKEN=your_codecov_token
 SNYK_TOKEN=your_snyk_token
 ```
 
+#### **Setting up Snyk Token**
+1. Sign up at [snyk.io](https://snyk.io)
+2. Go to Account Settings → API Token
+3. Generate a new token
+4. Add it as `SNYK_TOKEN` in GitHub repository secrets
+5. **Note**: Without this token, Snyk scans will be skipped (workflow continues)
+
 ## 📊 Monitoring & Reports
 
 ### **CI Pipeline Reports**
