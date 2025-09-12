@@ -147,6 +147,26 @@ const eslintConfig = [
         vi: 'readonly',
       },
     },
+    rules: {
+      // Relaxed rules for test files
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-require-imports': 'warn',
+      'react/jsx-sort-props': 'warn',
+      '@typescript-eslint/no-dynamic-delete': 'warn',
+    },
+  },
+
+  // Test utilities overrides (even more relaxed)
+  {
+    files: ['**/test-utils.tsx', '**/test-utils.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      'react/jsx-sort-props': 'warn',
+      '@typescript-eslint/no-dynamic-delete': 'warn',
+    },
   },
 ];
 
