@@ -8,6 +8,9 @@ import { Icon } from '@iconify/react';
 
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
+import { accountService } from '@/services/account';
+import { AccountDeletionModal } from '@/components/shared/AccountDeletionModal';
+import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 interface ProfileEditContentProps {
@@ -39,6 +42,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Initialize form data from user
   useEffect(() => {
@@ -117,17 +121,37 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     }
   };
 
-  const handleCloseAccount = async () => {
-    if (!confirm('Sind Sie sicher, dass Sie Ihr Konto schließen möchten? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-      return;
-    }
+  const handleCloseAccount = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleKeepAccount = () => {
+    setShowDeleteModal(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    setShowDeleteModal(false);
+    setIsSubmitting(true);
+    setError(null);
 
     try {
-      await authService.deleteUser();
+      if (!effectiveUser?.id) {
+        throw new Error('User ID not found');
+      }
+
+      // Perform hard deletion from database
+      await accountService.deleteAccount(effectiveUser.id);
+      
+      // Sign out the user
+      await authService.signOut();
+      
+      // Redirect to home page
       router.push('/?auth=required');
     } catch (err) {
-      console.error('Error closing account:', err);
-      setError('Fehler beim Schließen des Kontos');
+      console.error('Error deleting account:', err);
+      setError(err instanceof Error ? err.message : 'Fehler beim Löschen des Kontos');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -157,7 +181,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
 
   return (
-    <div className="px-4 pb-8 pt-6">
+    <div className="min-h-screen bg-gray-100 px-4 pb-8 pt-6">
       {/* Header */}
       <div className="mb-6 flex h-12 w-full items-center">
         {/* Left side: Chevron + Title */}
@@ -203,79 +227,70 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           
           <div className="space-y-4">
             {/* First Name */}
-            <div className="flex h-[54px] w-full min-w-[123.08px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3">
-              {/* Label and Value Container */}
-              <div className="flex flex-1 flex-col items-start justify-center gap-1">
-                <label className="font-inter-tight text-xs text-[#999999]">
-                  Vorname
-                </label>
-                <input
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  className="w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                  placeholder=""
-                  required
-                />
-              </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
+                required
+              />
+              <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
+                formData.firstName ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
+              }`}>
+                Vorname
+              </label>
             </div>
 
             {/* Last Name */}
-            <div className="flex h-[54px] w-full min-w-[123.08px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3">
-              {/* Label and Value Container */}
-              <div className="flex flex-1 flex-col items-start justify-center gap-1">
-                <label className="font-inter-tight text-xs text-[#999999]">
-                  Nachname
-                </label>
-                <input
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  className="w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                  placeholder=""
-                  required
-                />
-              </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
+                required
+              />
+              <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
+                formData.lastName ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
+              }`}>
+                Nachname
+              </label>
             </div>
 
             {/* Email */}
-            <div className="flex h-[54px] w-full min-w-[123.08px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3">
-              {/* Label and Value Container */}
-              <div className="flex flex-1 flex-col items-start justify-center gap-1">
-                <label className="font-inter-tight text-xs text-[#999999]">
-                  E-Mail
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                  placeholder=""
-                  required
-                />
-              </div>
+            <div className="relative">
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
+                required
+              />
+              <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
+                formData.email ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
+              }`}>
+                E-Mail
+              </label>
             </div>
 
             {/* Password */}
-            <div className="flex h-[54px] w-full min-w-[123.08px] items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white px-3">
-              {/* Label and Value Container */}
-              <div className="flex flex-1 flex-col items-start justify-center gap-1">
-                <label className="font-inter-tight text-xs text-[#999999]">
-                  Passwort
-                </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                  placeholder=""
-                />
-              </div>
-              {/* Password Toggle Button */}
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 pr-12 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
+              />
+              <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
+                formData.password ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
+              }`}>
+                Passwort
+              </label>
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-gray-500 hover:text-gray-700"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -308,16 +323,23 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         
         <button
           onClick={handleCloseAccount}
-          className="flex h-[54px] w-full flex-col items-start justify-center gap-4 rounded-xl border border-[#D4D4D4] bg-white p-4"
+          className="flex h-12 w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
         >
-          <div className="flex h-6 w-full items-center gap-3">
-            <Icon icon="iconamoon:heart-off" className="h-6 w-6 text-black" />
-            <span className="font-inter-tight text-base font-semibold text-[#232323]">
-              Konto schließen
-            </span>
-          </div>
+          <BrokenHeartIcon size={24} />
+          <span className="font-inter-tight text-base font-semibold text-[#232323]">
+            Konto schließen
+          </span>
         </button>
       </div>
+
+      {/* Account Deletion Modal */}
+      <AccountDeletionModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onKeepAccount={handleKeepAccount}
+        onDeleteAccount={handleDeleteAccount}
+        isDeleting={isSubmitting}
+      />
     </div>
   );
 }
