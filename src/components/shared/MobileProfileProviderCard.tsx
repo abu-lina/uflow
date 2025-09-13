@@ -32,9 +32,9 @@ export function MobileProfileProviderCard({
       </div>
       
       {/* Content */}
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         {/* Title */}
-        <div className="font-inter-tight text-base font-semibold text-[#232323]">
+        <div className="min-w-0 truncate font-inter-tight text-base font-semibold text-[#232323]" title={title}>
           {title}
         </div>
         

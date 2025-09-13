@@ -21,6 +21,9 @@ const eslintConfig = [
   // Base JavaScript rules
   js.configs.recommended,
 
+  // Next.js configuration
+  ...compat.extends('next/core-web-vitals'),
+
   // TypeScript configuration
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -108,6 +111,7 @@ const eslintConfig = [
       'jsx-a11y/aria-role': 'error',
       'jsx-a11y/aria-unsupported-elements': 'error',
       'jsx-a11y/role-supports-aria-props': 'warn',
+
     },
   },
 

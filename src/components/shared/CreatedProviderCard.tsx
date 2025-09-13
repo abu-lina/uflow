@@ -57,7 +57,7 @@ export function CreatedProviderCard({
       <div className="flex h-[65.31px] w-[161px] flex-col items-center rounded-b-[12.075px] border border-[#D4D4D4] bg-white px-0 pb-0 pt-2 md:h-[100px] md:w-[240px] md:rounded-b-[18px] md:pt-4">
         <div className="flex w-[144.9px] flex-col items-start gap-[8.05px] md:w-[210px] md:gap-3">
           {/* Title */}
-          <div className="w-full font-inter-tight text-[14px] font-semibold leading-[17px] text-[#232323] md:text-[20px] md:leading-[24px]">
+          <div className="w-full truncate font-inter-tight text-[14px] font-semibold leading-[17px] text-[#232323] md:text-[20px] md:leading-[24px]" title={title}>
             {title}
           </div>
           {/* Tag */}

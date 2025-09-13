@@ -568,10 +568,12 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
           <div className="mx-auto flex w-[353px] flex-col items-start gap-5 overflow-x-hidden px-3 pb-20 pt-8 sm:hidden sm:pb-6">
             {/* Title */}
             <div className="flex w-full flex-col items-start gap-1">
-              <div className="w-full font-inter-tight text-[24px] font-semibold leading-[29px] text-[#232323]">
+              <div className="w-full truncate font-inter-tight text-[24px] font-semibold leading-[29px] text-[#232323]" title={provider.provider_name}>
                 {provider.provider_name}
               </div>
-              <div className="w-full font-inter text-[16px] leading-[19px] text-[#7A7A7A]">
+              <div className="w-full truncate font-inter text-[16px] leading-[19px] text-[#7A7A7A]" title={provider.address_street && provider.address_zip && provider.address_city
+                  ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
+                  : ''}>
                 {provider.address_street && provider.address_zip && provider.address_city
                   ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
                   : ''}

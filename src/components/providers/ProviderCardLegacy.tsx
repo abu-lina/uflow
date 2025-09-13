@@ -114,14 +114,14 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
         outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300"
         >
           <div className="flex w-full flex-col items-start gap-3.5">
-            <div className="flex flex-col items-start gap-0.5">
+            <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
               <span
-                className="text-uFlowText truncate font-inter-tight text-xl font-semibold"
+                className="w-full min-w-0 text-uFlowText truncate font-inter-tight text-xl font-semibold"
                 title={provider_name}
               >
                 {provider_name}
               </span>
-              <span className="text-uFlowText2 font-inter text-sm font-normal">{address}</span>
+              <span className="w-full min-w-0 truncate text-uFlowText2 font-inter text-sm font-normal" title={address}>{address}</span>
             </div>
             <div className="flex gap-2">
               {(barakah_effects || []).map((effect, index) => (

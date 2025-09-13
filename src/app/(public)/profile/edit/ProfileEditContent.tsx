@@ -226,81 +226,85 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           
           <div className="space-y-4">
             {/* First Name */}
-            <div className="relative">
-              <input
-                required
-                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                type="text"
-                value={formData.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
-              />
-              <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
-                formData.firstName ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
-              }`}>
-                Vorname
-              </label>
+            <div className="flex h-[54px] w-full min-w-[123.08px] min-h-[23.4px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+              <div className="flex w-full flex-col gap-1">
+                <label className="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px] text-[#999999]">
+                  Vorname
+                </label>
+                <input
+                  required
+                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                />
+              </div>
             </div>
 
             {/* Last Name */}
-            <div className="relative">
-              <input
-                required
-                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                type="text"
-                value={formData.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
-              />
-              <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
-                formData.lastName ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
-              }`}>
-                Nachname
-              </label>
+            <div className="flex h-[54px] w-full min-w-[123.08px] min-h-[23.4px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+              <div className="flex w-full flex-col gap-1">
+                <label className="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px] text-[#999999]">
+                  Nachname
+                </label>
+                <input
+                  required
+                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                />
+              </div>
             </div>
 
             {/* Email */}
-            <div className="relative">
-              <input
-                required
-                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-              />
-              <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
-                formData.email ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
-              }`}>
-                E-Mail
-              </label>
+            <div className="flex h-[54px] w-full min-w-[123.08px] min-h-[23.4px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+              <div className="flex w-full flex-col gap-1">
+                <label className="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px] text-[#999999]">
+                  E-Mail
+                </label>
+                <input
+                  required
+                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                />
+              </div>
             </div>
 
-            {/* Password */}
-            <div className="relative">
-              <input
-                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 pr-12 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-              />
-              <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
-                formData.password ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
-              }`}>
-                Passwort
-              </label>
-              <button
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
+            {/* Password Field with Hint */}
+            <div className="space-y-1">
+              <div className="flex h-[54px] w-full min-w-[123.08px] min-h-[23.4px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                <div className="flex w-full flex-col gap-1">
+                  <label className="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px] text-[#999999]">
+                    Passwort
+                  </label>
+                  <input
+                    className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                  />
+                </div>
+                
+                {/* Eye Toggle Icon */}
+                <button
+                  className="flex h-[25px] w-[25px] items-center justify-center text-gray-500 hover:text-gray-700"
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              <p className="pl-2 text-xs text-gray-500">
+                Lass das Feld leer, um das Passwort nicht zu ändern.
+              </p>
             </div>
-            <p className="text-xs text-gray-500">
-              Lassen Sie das Feld leer, um das Passwort nicht zu ändern
-            </p>
           </div>
         </div>
 
@@ -321,7 +325,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           </h2>
         
         <button
-          className="flex h-12 w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
+          className="flex h-[54px] w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
           onClick={handleCloseAccount}
         >
           <BrokenHeartIcon size={24} />
