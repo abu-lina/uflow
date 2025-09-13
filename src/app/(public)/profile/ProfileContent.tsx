@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { CircleHelp, LogOut } from 'lucide-react';
+import { Icon } from '@iconify/react';
 
 // import clsx from 'clsx'; // Not used in mobile version
 
@@ -128,18 +129,15 @@ export function ProfileContent({ user }: ProfileContentProps) {
       <h1 className="mb-6 text-2xl font-bold text-[#232323]">Profil</h1>
 
       {/* User Info Card */}
-      <div className="mb-6 rounded-lg bg-white p-4">
+      <button
+        className="mb-6 w-full rounded-lg bg-white p-4 text-left transition-colors hover:bg-gray-50"
+        onClick={() => router.push('/profile/edit')}
+      >
         <div className="flex items-center gap-4">
           {/* Avatar */}
-          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-[#589D96] p-1">
-            <Image
-              alt="Profilbild"
-              className="h-full w-full rounded-full object-cover"
-              height={64}
-              src={avatarUrl}
-              width={64}
-            />
-          </div>
+            <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-full bg-[#589D96] p-1">
+              <Icon className="h-10 w-10 text-white" icon="lucide:user" />
+            </div>
           
           {/* User Info */}
           <div className="flex-1">
@@ -151,7 +149,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
             </div>
           </div>
         </div>
-      </div>
+      </button>
 
       {/* Dein Souks/Services Section */}
       <div className="mb-6">
@@ -282,15 +280,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
       <div className="flex w-full flex-col items-center">
         <div className="text-center font-baskerville text-base">As-Salamu-Aleikum</div>
         <div className="flex w-full flex-row items-center justify-center">
-          <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-primary p-4">
-            <Image
-              alt="Profilbild"
-              className="rounded-full object-cover"
-              height={80}
-              src={avatarUrl}
-              width={80}
-            />
-          </div>
+            <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-primary p-4">
+              <Icon className="h-10 w-10 text-white" icon="lucide:user" />
+            </div>
           <div className="ml-6 flex flex-col items-start justify-center">
             <div className="text-text-primary font-inter-tight text-3xl font-semibold">
               {fullName}
