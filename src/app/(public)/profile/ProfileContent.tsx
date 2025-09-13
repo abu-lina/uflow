@@ -116,11 +116,6 @@ export function ProfileContent({ user }: ProfileContentProps) {
   }
 
   const fullName = effectiveUser.user_metadata?.full_name ?? effectiveUser.email ?? 'Unknown User';
-  const avatarUrl =
-    typeof effectiveUser.user_metadata?.avatar_url === 'string' &&
-    effectiveUser.user_metadata.avatar_url
-      ? effectiveUser.user_metadata.avatar_url
-      : '/icons/icon-muslim.png';
 
   // Mobile content - matches the provided design
   const mobileContent = (

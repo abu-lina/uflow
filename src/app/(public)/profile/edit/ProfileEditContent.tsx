@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { Icon } from '@iconify/react';
@@ -187,10 +186,10 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         {/* Left side: Chevron + Title */}
         <div className="flex items-center">
           <button
-            onClick={() => router.back()}
             className="flex h-8 w-8 items-center justify-center"
+            onClick={() => router.back()}
           >
-            <Icon icon="material-symbols:chevron-left" className="h-8 w-8 text-[#272727]" />
+            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
           <h1 className="ml-2 font-inter-tight text-2xl font-bold text-[#232323]">
             Profil bearbeiten
@@ -199,7 +198,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
         {/* Profile Avatar */}
         <div className="ml-auto flex h-12 w-12 items-center justify-center rounded-[33.6px] bg-[#589D96] p-[9.6px]">
-          <Icon icon="lucide:user" className="h-[40.8px] w-[40.8px] text-white" />
+          <Icon className="h-[40.8px] w-[40.8px] text-white" icon="lucide:user" />
         </div>
       </div>
 
@@ -218,7 +217,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form className="space-y-6" onSubmit={handleSubmit}>
         {/* Persönliche Daten */}
         <div>
             <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]" style={{ fontSize: '20px' }}>
@@ -229,11 +228,11 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
             {/* First Name */}
             <div className="relative">
               <input
+                required
+                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
                 type="text"
                 value={formData.firstName}
                 onChange={(e) => handleInputChange('firstName', e.target.value)}
-                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                required
               />
               <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
                 formData.firstName ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
@@ -245,11 +244,11 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
             {/* Last Name */}
             <div className="relative">
               <input
+                required
+                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
                 type="text"
                 value={formData.lastName}
                 onChange={(e) => handleInputChange('lastName', e.target.value)}
-                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                required
               />
               <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
                 formData.lastName ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
@@ -261,11 +260,11 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
             {/* Email */}
             <div className="relative">
               <input
+                required
+                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
-                required
               />
               <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
                 formData.email ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
@@ -277,10 +276,10 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
             {/* Password */}
             <div className="relative">
               <input
+                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 pr-12 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                className="h-12 w-full rounded-xl border border-[#D4D4D4] bg-white px-4 pt-6 pb-2 pr-12 font-inter text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
               />
               <label className={`absolute left-4 font-inter text-sm transition-all duration-200 ${
                 formData.password ? 'top-2 text-[#999999]' : 'top-1/2 -translate-y-1/2 text-[#999999]'
@@ -288,9 +287,9 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
                 Passwort
               </label>
               <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -307,9 +306,9 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
         {/* Submit Button */}
         <button
-          type="submit"
-          disabled={isSubmitting}
           className="w-full rounded-xl bg-[#589D96] py-3 font-inter font-semibold text-white transition-colors hover:bg-[#4a8a84] disabled:opacity-50"
+          disabled={isSubmitting}
+          type="submit"
         >
           {isSubmitting ? 'Speichern...' : 'Änderungen speichern'}
         </button>
@@ -322,8 +321,8 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           </h2>
         
         <button
-          onClick={handleCloseAccount}
           className="flex h-12 w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
+          onClick={handleCloseAccount}
         >
           <BrokenHeartIcon size={24} />
           <span className="font-inter-tight text-base font-semibold text-[#232323]">
@@ -334,11 +333,11 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
       {/* Account Deletion Modal */}
       <AccountDeletionModal
+        isDeleting={isSubmitting}
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        onKeepAccount={handleKeepAccount}
         onDeleteAccount={handleDeleteAccount}
-        isDeleting={isSubmitting}
+        onKeepAccount={handleKeepAccount}
       />
     </div>
   );

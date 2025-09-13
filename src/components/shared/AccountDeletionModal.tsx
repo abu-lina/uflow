@@ -28,10 +28,10 @@ export function AccountDeletionModal({
         {/* Close Button */}
         <div className="flex w-[360px] h-8 justify-end">
           <button
-            onClick={onClose}
             className="flex h-8 w-8 items-center justify-center"
+            onClick={onClose}
           >
-            <Icon icon="material-symbols:close-rounded" className="h-8 w-8 text-[#232323]" />
+            <Icon className="h-8 w-8 text-[#232323]" icon="material-symbols:close-rounded" />
           </button>
         </div>
 
@@ -65,14 +65,14 @@ export function AccountDeletionModal({
             
             {/* Keep Account Button */}
             <button
-              onClick={onKeepAccount}
               className="flex h-10 w-[360px] min-w-[123.08px] min-h-[23.4px] items-center justify-center gap-2 rounded-[15px] bg-[#589D96] px-0"
               style={{
                 boxShadow: '0px 6.15385px 12.3077px 4.61538px rgba(0, 0, 0, 0.15), 0px 1.53846px 4.61538px rgba(0, 0, 0, 0.3)'
               }}
+              onClick={onKeepAccount}
             >
               <div className="relative h-6 w-[23px]">
-                <Icon icon="solar:heart-bold" className="h-6 w-[23px] text-white" />
+                <Icon className="h-6 w-[23px] text-white" icon="solar:heart-bold" />
               </div>
               <span 
                 className="w-[176px] h-[31px] font-roboto text-[17.54px] font-medium leading-[31px] tracking-[0.153846px] flex items-center text-center"
@@ -89,19 +89,19 @@ export function AccountDeletionModal({
 
             {/* Delete Account Button */}
             <button
-              onClick={onDeleteAccount}
-              disabled={isDeleting}
               className="flex h-10 w-[360px] min-w-[123.08px] min-h-[23.4px] items-center justify-center gap-2 rounded-[15px] bg-[#EEEEEE] px-0 disabled:opacity-50"
+              disabled={isDeleting}
               style={{
                 boxShadow: '0px 6.15385px 12.3077px 4.61538px rgba(0, 0, 0, 0.15), 0px 1.53846px 4.61538px rgba(0, 0, 0, 0.3)'
               }}
+              onClick={onDeleteAccount}
             >
               <div className="flex h-[31px] w-[360px] items-center justify-center gap-2">
                 <div className="relative h-6 w-6">
                   {isDeleting ? (
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#CDCDCD] border-t-transparent" />
                   ) : (
-                    <Icon icon="lucide:trash-2" className="h-6 w-6 text-[#CDCDCD]" />
+                    <Icon className="h-6 w-6 text-[#CDCDCD]" icon="lucide:trash-2" />
                   )}
                 </div>
                 <span className="w-[114px] h-[31px] font-roboto text-[17.54px] font-medium leading-[31px] text-[#CDCDCD] tracking-[0.153846px] flex items-center text-center">

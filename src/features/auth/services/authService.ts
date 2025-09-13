@@ -5,7 +5,7 @@ export const authService = {
     supabase.auth.signInWithPassword({ email, password }),
   signUp: (email: string, password: string) => supabase.auth.signUp({ email, password }),
   signOut: () => supabase.auth.signOut(),
-  updateUser: (updates: { email?: string; password?: string; data?: any }) =>
+  updateUser: (updates: { email?: string; password?: string; data?: Record<string, unknown> }) =>
     supabase.auth.updateUser(updates),
   deleteUser: () => {
     // Note: This requires admin privileges or special handling
