@@ -4,15 +4,18 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { CircleHelp, LogOut } from 'lucide-react';
 
-import clsx from 'clsx';
+// import clsx from 'clsx'; // Not used in mobile version
 
 import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
 import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
+import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProviderCard';
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/hooks/useAuth';
 import { getCreatedProviders, type Provider, getBookmarkedProviders } from '@/services/providers';
+import { authService } from '@/features/auth/services/authService';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 interface ProfileContentProps {
@@ -28,6 +31,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Responsive: detect mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -72,6 +76,20 @@ export function ProfileContent({ user }: ProfileContentProps) {
     void fetchProviders();
   }, [effectiveUser]);
 
+  // Handle logout
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await authService.signOut();
+      router.push('/?auth=required');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      setError('Fehler beim Abmelden');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   // Show loading while auth is being checked
   if (loading) {
     return (
@@ -103,164 +121,157 @@ export function ProfileContent({ user }: ProfileContentProps) {
       ? effectiveUser.user_metadata.avatar_url
       : '/icons/icon-muslim.png';
 
-  // Mobile content
+  // Mobile content - matches the provided design
   const mobileContent = (
-    <div
-      className={clsx(
-        'flex min-h-full w-full flex-col items-center gap-8',
-        'sm:max-w-screen-xl',
-        isMobile && 'mx-auto w-[345px] px-6',
-        isMobile && 'hide-scrollbar h-[calc(100vh-64px)] overflow-y-auto pb-4',
-      )}
-      style={isMobile ? { maxHeight: 'calc(100vh - 64px)' } : {}}
-    >
-      {/* Greeting/Profile Block - always visible */}
-      <div className={clsx('flex w-full flex-col items-center', isMobile && 'gap-6 pb-2 pt-6')}>
-        {/* Greeting */}
-        <div
-          className={clsx(
-            'text-center font-baskerville text-base',
-            isMobile &&
-              'bg-gradient-to-b from-[#D2B581] via-[#DCC391] to-[#AF8650] bg-clip-text text-[16px] leading-[18px] text-transparent',
-          )}
-        >
-          As-Salamu-Aleikum
-        </div>
-        {/* Profile Info Row */}
-        <div
-          className={clsx('flex w-full flex-row items-center justify-center', isMobile && 'gap-4')}
-        >
-          {/* Profile Image */}
-          <div
-            className={clsx(
-              'flex items-center justify-center rounded-full bg-primary',
-              isMobile ? 'h-[92px] w-[92px] bg-[#589D96] p-[18.4px]' : 'h-[80px] w-[80px] p-4',
-            )}
-          >
+    <div className="px-4 pt-6">
+      {/* Header */}
+      <h1 className="mb-6 text-2xl font-bold text-[#232323]">Profil</h1>
+
+      {/* User Info Card */}
+      <div className="mb-6 rounded-lg bg-white p-4">
+        <div className="flex items-center gap-4">
+          {/* Avatar */}
+          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-[#589D96] p-1">
             <Image
               alt="Profilbild"
-              className="rounded-full object-cover"
-              height={isMobile ? 78.2 : 80}
+              className="h-full w-full rounded-full object-cover"
+              height={64}
               src={avatarUrl}
-              width={isMobile ? 78.2 : 80}
+              width={64}
             />
           </div>
-          {/* Account Info */}
-          <div
-            className={clsx('flex flex-col items-start justify-center', isMobile && 'gap-1')}
-            style={isMobile ? { width: 237, height: 96 } : {}}
-          >
-            <div
-              className={clsx(
-                'font-inter-tight font-semibold',
-                isMobile
-                  ? 'text-[24px] leading-[29px] text-[#232323]'
-                  : 'text-text-primary text-3xl',
-              )}
-            >
+          
+          {/* User Info */}
+          <div className="flex-1">
+            <div className="font-inter-tight text-lg font-semibold text-[#232323]">
               {fullName}
             </div>
-            <div
-              className={clsx(
-                'font-inter',
-                isMobile
-                  ? 'text-[16px] leading-[19px] text-[#555]'
-                  : 'text-text-secondary text-base',
-              )}
-            >
+            <div className="font-inter text-sm text-[#555]">
               {effectiveUser.email}
             </div>
           </div>
         </div>
       </div>
-      {/* About Button for Mobile */}
-      <div className="flex w-full justify-center">
-        <button
-          className="rounded-lg bg-gray-100 px-6 py-3 font-inter text-base text-gray-700 transition-colors hover:bg-gray-200"
-          onClick={() => setShowAboutModal(true)}
-        >
-          Über Ummah Flow
-        </button>
-      </div>
-      {/* Error State */}
-      {error && (
-        <div className="flex w-full flex-col items-center gap-4 rounded-lg bg-red-50 p-4">
-          <div className="text-2xl">⚠️</div>
-          <p className="text-center text-red-600">{error}</p>
-          <button
-            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-            onClick={() => window.location.reload()}
-          >
-            Erneut versuchen
-          </button>
-        </div>
-      )}
-      {/* Providers/Services List */}
-      <div
-        className={clsx('flex w-full flex-col items-start gap-4')}
-        style={isMobile ? { width: '100%' } : {}}
-      >
-        <div
-          className={clsx(
-            'font-inter-tight font-semibold',
-            isMobile ? 'text-[24px] leading-[29px] text-[#232323]' : 'text-2xl',
-          )}
-        >
-          Erstellten Providers / Services
-        </div>
+
+      {/* Dein Souks/Services Section */}
+      <div className="mb-6">
+        <h2 className="mb-4 font-inter-tight text-lg font-semibold text-[#232323]">
+          Dein Souks/Services
+        </h2>
+        
         {isLoadingProviders ? (
-          <div className="flex w-full items-center justify-center py-8">
+          <div className="flex items-center justify-center py-8">
             <div className="text-center">
               <div className="mb-2 text-2xl">🔄</div>
               <p className="text-gray-600">Lade Providers...</p>
             </div>
           </div>
-        ) : (
-          <div
-            className={clsx(
-              isMobile ? 'grid grid-cols-2 gap-4 px-0' : 'flex flex-wrap justify-center gap-8',
-            )}
-            style={isMobile ? { width: '100%', minHeight: 200 } : {}}
-          >
-            {(createdProviders.length > 0 ? createdProviders : []).map((provider) => (
-              <div key={provider.provider_id} className={isMobile ? 'w-[164px]' : ''}>
-                <CreatedProviderCard
-                  category={provider.category?.name_de || ''}
-                  imageUrl={(() => {
-                    if (!provider.provider_images) return '/images/placeholder.jpg';
-                    try {
-                      let imagesData: { urls?: string[] } = {};
-                      if (typeof provider.provider_images === 'string') {
-                        imagesData = JSON.parse(provider.provider_images);
-                      } else if (Array.isArray(provider.provider_images)) {
-                        imagesData.urls = provider.provider_images;
-                      } else if (
-                        typeof provider.provider_images === 'object' &&
-                        provider.provider_images !== null &&
-                        'urls' in provider.provider_images
-                      ) {
-                        imagesData = provider.provider_images;
-                      }
-                      if (imagesData.urls && imagesData.urls.length > 0) {
-                        return imagesData.urls[0];
-                      }
-                    } catch {
-                      return '/images/placeholder.jpg';
+        ) : createdProviders.length > 0 ? (
+          <div className="space-y-3">
+            {createdProviders.map((provider) => (
+              <MobileProfileProviderCard
+                key={provider.provider_id}
+                category={provider.category?.name_de || 'Unbekannt'}
+                imageUrl={(() => {
+                  if (!provider.provider_images) return '/images/placeholder.jpg';
+                  try {
+                    let imagesData: { urls?: string[] } = {};
+                    if (typeof provider.provider_images === 'string') {
+                      imagesData = JSON.parse(provider.provider_images);
+                    } else if (Array.isArray(provider.provider_images)) {
+                      imagesData.urls = provider.provider_images;
+                    } else if (
+                      typeof provider.provider_images === 'object' &&
+                      provider.provider_images !== null &&
+                      'urls' in provider.provider_images
+                    ) {
+                      imagesData = provider.provider_images;
                     }
+                    if (imagesData.urls && imagesData.urls.length > 0) {
+                      return imagesData.urls[0];
+                    }
+                  } catch {
                     return '/images/placeholder.jpg';
-                  })()}
-                  tag={
-                    provider.barakah_effects && provider.barakah_effects.length > 0
-                      ? provider.barakah_effects[0]
-                      : '✨ Halal'
                   }
-                  title={provider.provider_name}
-                />
-              </div>
+                  return '/images/placeholder.jpg';
+                })()}
+                likes={provider.bookmark_count || 0}
+                title={provider.provider_name}
+              />
             ))}
+          </div>
+        ) : (
+          <div className="rounded-lg bg-white p-6 text-center">
+            <div className="text-gray-400">Keine Providers erstellt.</div>
           </div>
         )}
       </div>
+
+      {/* Action Items */}
+      <div className="rounded-lg bg-white">
+        {/* Über Uns */}
+        <button
+          className="flex w-full items-center gap-4 p-4 text-left"
+          onClick={() => setShowAboutModal(true)}
+        >
+          <Image
+            alt="UFlow Logo"
+            className="h-6 w-6 rounded-full"
+            height={24}
+            src="/icons/icon-192x192.png"
+            width={24}
+          />
+          <span className="font-inter-tight font-semibold text-[#232323]">Über Uns</span>
+        </button>
+        
+        {/* Divider */}
+        <div className="mx-4">
+          <svg fill="none" height="1" viewBox="0 0 329 1" width="100%" xmlns="http://www.w3.org/2000/svg">
+            <line stroke="#BEBEBE" strokeWidth="0.5" x2="329" y1="0.75" y2="0.75"/>
+          </svg>
+        </div>
+
+        {/* Support */}
+        <button className="flex w-full items-center gap-4 p-4 text-left">
+          <CircleHelp className="h-6 w-6 text-black" />
+          <span className="font-inter-tight font-semibold text-[#232323]">Support</span>
+        </button>
+        
+        {/* Divider */}
+        <div className="mx-4">
+          <svg fill="none" height="1" viewBox="0 0 329 1" width="100%" xmlns="http://www.w3.org/2000/svg">
+            <line stroke="#BEBEBE" strokeWidth="0.5" x2="329" y1="0.75" y2="0.75"/>
+          </svg>
+        </div>
+
+        {/* Abmelden */}
+        <button
+          className="flex w-full items-center gap-4 p-4 text-left disabled:opacity-50"
+          disabled={isLoggingOut}
+          onClick={handleLogout}
+        >
+          <LogOut className="h-6 w-6 text-black" />
+          <span className="font-inter-tight font-semibold text-[#232323]">
+            {isLoggingOut ? 'Melde ab...' : 'Abmelden'}
+          </span>
+        </button>
+      </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="mt-6 rounded-lg bg-red-50 p-4">
+          <div className="text-center">
+            <div className="mb-2 text-2xl">⚠️</div>
+            <p className="text-red-600">{error}</p>
+            <button
+              className="mt-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+              onClick={() => window.location.reload()}
+            >
+              Erneut versuchen
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 

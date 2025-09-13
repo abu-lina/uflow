@@ -13,18 +13,14 @@ export default async function ProfilePage() {
     // Return the profile content with null user, let client-side handle auth
     return (
       <ErrorBoundary>
-        <div className="flex w-full flex-col items-center">
-          <ProfileContent user={null} />
-        </div>
+        <ProfileContent user={null} />
       </ErrorBoundary>
     );
   }
 
   return (
     <ErrorBoundary>
-      <div className="flex w-full flex-col items-center">
-        <ProfileContent user={user} />
-      </div>
+      <ProfileContent user={user} />
     </ErrorBoundary>
   );
 }

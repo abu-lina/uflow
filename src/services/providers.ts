@@ -24,6 +24,7 @@ export interface Provider {
     name_de: string;
   };
   community_service_id?: string | null;
+  bookmark_count?: number;
 }
 
 // Combined search result type
@@ -296,5 +297,37 @@ export async function getCreatedProviders(userId: string): Promise<Provider[]> {
   if (error) {
     throw error;
   }
-  return Array.isArray(providers) ? providers : [];
+
+  if (!Array.isArray(providers) || providers.length === 0) {
+    return [];
+  }
+
+  // Get bookmark counts for each provider
+  const providerIds = providers.map(p => p.provider_id);
+  const { data: bookmarkCounts, error: bookmarkError } = await supabase
+    .from('bookmarks')
+    .select('bookmarkable_id')
+    .eq('bookmarkable_type', 'provider')
+    .in('bookmarkable_id', providerIds);
+
+  if (bookmarkError) {
+    console.error('Error fetching bookmark counts:', bookmarkError);
+    // Return providers without bookmark counts if there's an error
+    return providers;
+  }
+
+  // Count bookmarks for each provider
+  const bookmarkCountMap = new Map<string, number>();
+  if (bookmarkCounts) {
+    bookmarkCounts.forEach(bookmark => {
+      const count = bookmarkCountMap.get(bookmark.bookmarkable_id) || 0;
+      bookmarkCountMap.set(bookmark.bookmarkable_id, count + 1);
+    });
+  }
+
+  // Add bookmark counts to providers
+  return providers.map(provider => ({
+    ...provider,
+    bookmark_count: bookmarkCountMap.get(provider.provider_id) || 0
+  }));
 }
