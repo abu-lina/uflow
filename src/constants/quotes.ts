@@ -14,7 +14,7 @@ export const quotes: Quote[] = [
   {
     heading: 'Supporte Deine Ummah',
     quote:
-      'Ummah Flow ist mehr als nur ein Marktplatz für Muslime: Es ist ein Ort, an dem wir unsere Gemeinschaft stärken können, indem wir jeden einzelnen Muslim ermutigen muslimische Unternehmen und Läden zu unterstützen.',
+      ' ',
   },
   {
     heading: 'Ein Marktplatz für Muslime',
