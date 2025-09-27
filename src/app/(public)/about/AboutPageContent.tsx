@@ -65,10 +65,7 @@ export function AboutPageContent() {
       }}
     >
       {/* Header */}
-      <div className="flex flex-col items-center w-[361px] h-[88px] pt-10">
-        {/* Camera Notch Area */}
-        <div className="w-[361px] h-[40px]" />
-        
+      <div className="flex flex-col items-center w-[361px] pt-[calc(1rem+env(safe-area-inset-top))]">
         {/* Title */}
         <div className="flex flex-row justify-between items-center w-full h-[48px] gap-2 px-4">
           {/* Left Side - Back Button + Title */}
@@ -127,7 +124,7 @@ export function AboutPageContent() {
       </div>
 
       {/* Weiter Button - Sticky Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-row justify-center items-center w-full bg-white px-4 py-4 pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-row justify-center items-center w-full bg-white px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button 
           className="flex flex-row justify-center items-center w-[345px] h-12 bg-[#589D96] rounded-xl px-5 py-4 gap-2"
           onClick={() => {
