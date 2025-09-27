@@ -191,7 +191,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="ml-2 font-inter-tight text-2xl font-bold text-[#232323]">
+          <h1 className="ml-2 font-inter-tight text-xl font-bold text-[#232323]">
             Profil bearbeiten
           </h1>
         </div>
@@ -220,7 +220,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       <form className="space-y-6" onSubmit={handleSubmit}>
         {/* Persönliche Daten */}
         <div>
-            <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]" style={{ fontSize: '20px' }}>
+            <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]">
               Persönliche Daten
             </h2>
           
@@ -320,7 +320,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
         {/* Konto verwalten */}
         <div className="mt-8">
-          <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]" style={{ fontSize: '20px' }}>
+          <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]">
             Konto verwalten
           </h2>
         

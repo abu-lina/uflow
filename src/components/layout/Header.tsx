@@ -58,8 +58,7 @@ export function Header() {
               {!user && (
                 <Link
                   className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-title hover:bg-grey-light hover:text-[#333333] focus:text-content-title focus:outline-none active:text-content-title"
-                  href="#about"
-                  scroll={true}
+                  href="/about"
                 >
                   Über Uns
                 </Link>

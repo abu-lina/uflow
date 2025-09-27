@@ -121,7 +121,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const mobileContent = (
     <div className="px-4 pt-6">
       {/* Header */}
-      <h1 className="mb-6 text-2xl font-bold text-[#232323]">Profil</h1>
+      <h1 className="mb-6 text-xl font-bold text-[#232323]">Profil</h1>
 
       {/* User Info Card */}
       <button
@@ -205,7 +205,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         {/* Über Uns */}
         <button
           className="flex w-full items-center gap-4 p-4 text-left"
-          onClick={() => setShowAboutModal(true)}
+          onClick={() => router.push('/about')}
         >
           <Image
             alt="UFlow Logo"

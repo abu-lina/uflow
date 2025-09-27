@@ -15,6 +15,7 @@ interface RootClientLayoutProps {
 export function RootClientLayout({ children }: RootClientLayoutProps) {
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
+  const isAboutPage = pathname === '/about';
   const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -63,17 +64,19 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
   return (
     <LoadingProvider>
-      <div className="page-background relative flex min-h-[100dvh] flex-col">
-        <main ref={mainRef} className="hide-scrollbar flex-1 overflow-y-auto pb-[64px] md:pb-0">
+      <div className={`page-background relative flex ${isAboutPage ? 'h-[100dvh]' : 'min-h-[100dvh]'} flex-col`}>
+        <main ref={mainRef} className={`hide-scrollbar flex-1 ${isAboutPage ? 'overflow-hidden' : 'overflow-y-auto pb-[64px]'} md:pb-0`}>
           <PageTransition key={pathname}>
             <div className="min-h-full bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
               {children}
             </div>
           </PageTransition>
         </main>
-        <div className="block md:hidden">
-          <MobileFooterBar />
-        </div>
+        {!isAboutPage && (
+          <div className="block md:hidden">
+            <MobileFooterBar />
+          </div>
+        )}
       </div>
     </LoadingProvider>
   );
