@@ -1,44 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 
 import { motion } from 'framer-motion';
 
-import { QuoteCard } from '@/components/shared/QuoteCard';
-import { PageSliderIndicator } from '@/components/ui/PageSliderIndicator';
+import { AboutCard } from '@/components/shared/AboutCard';
 import { quotes } from '@/constants/quotes';
 
 export function AboutSection() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-  // Minimum swipe distance (in px)
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      setActiveIndex((prev) => (prev + 1) % quotes.length);
-    }
-    if (isRightSwipe) {
-      setActiveIndex((prev) => (prev - 1 + quotes.length) % quotes.length);
-    }
-  };
 
   return (
     <section
@@ -71,27 +39,8 @@ export function AboutSection() {
           transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
           viewport={{ once: true }}
           whileInView={{ opacity: 1, y: 0 }}
-          onTouchEnd={onTouchEnd}
-          onTouchMove={onTouchMove}
-          onTouchStart={onTouchStart}
         >
-          <QuoteCard {...quotes[activeIndex]} />
-          <div className="block sm:hidden">
-            <PageSliderIndicator
-              activeIndex={activeIndex}
-              className="h-3"
-              count={quotes.length}
-              onChange={setActiveIndex}
-            />
-          </div>
-          <div className="hidden sm:block">
-            <PageSliderIndicator
-              activeIndex={activeIndex}
-              className="mt-4"
-              count={quotes.length}
-              onChange={setActiveIndex}
-            />
-          </div>
+          <AboutCard quote={quotes[2]} />
         </motion.div>
       </div>
     </section>

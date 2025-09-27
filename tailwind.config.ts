@@ -46,16 +46,17 @@ const config: Config = {
         heading: ['Montserrat', 'sans-serif'],
       },
       fontSize: {
-        // Modular scale (1.25)
-        xs: ['0.75rem', { lineHeight: '1rem' }],
-        sm: ['0.875rem', { lineHeight: '1.25rem' }],
-        base: ['1rem', { lineHeight: '1.5rem' }],
-        lg: ['1.125rem', { lineHeight: '1.75rem' }],
-        xl: ['1.25rem', { lineHeight: '1.75rem' }],
-        '2xl': ['1.5rem', { lineHeight: '2rem' }],
-        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
-        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
-        '5xl': ['3rem', { lineHeight: '1' }],
+        // Minor Third scale (1.2 ratio) - base = 16px
+        // 11 → 13 → 16 → 19 → 23 → 27 → 33 → 40 → 48
+        xs: ['0.694rem', { lineHeight: '1rem' }],      // 11px
+        sm: ['0.833rem', { lineHeight: '1.25rem' }],  // 13px
+        base: ['1rem', { lineHeight: '1.5rem' }],     // 16px (base)
+        lg: ['1.2rem', { lineHeight: '1.625rem' }],   // 19px
+        xl: ['1.44rem', { lineHeight: '1.875rem' }],  // 23px
+        '2xl': ['1.728rem', { lineHeight: '2.125rem' }], // 27px
+        '3xl': ['2.074rem', { lineHeight: '2.375rem' }], // 33px
+        '4xl': ['2.488rem', { lineHeight: '2.75rem' }], // 40px
+        '5xl': ['2.986rem', { lineHeight: '3.25rem' }], // 48px
       },
       spacing: {
         // Following the Rule of 8

@@ -558,7 +558,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             {/* LikeFrame and FABs would go here if needed, currently display: none */}
             <div className="z-10 flex h-[63.57px] w-full flex-col items-start justify-end px-[15.89px] sm:w-[392px]">
               <div className="flex h-[31.78px] w-[97.19px] flex-row items-center justify-center rounded-[9.54px] border border-[#CDCDCD] bg-white/70 px-[10.6px] backdrop-blur-[2px]">
-                <span className="flex h-[22px] w-[76px] items-center text-center font-inter-tight text-[18.54px] font-medium leading-[22px] text-black">
+                <span className="flex h-[22px] w-[76px] items-center text-center font-inter-tight text-lg font-medium text-black">
                   {provider.category?.name_de || ''}
                 </span>
               </div>
@@ -568,10 +568,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
           <div className="mx-auto flex w-[353px] flex-col items-start gap-5 overflow-x-hidden px-3 pb-20 pt-8 sm:hidden sm:pb-6">
             {/* Title */}
             <div className="flex w-full flex-col items-start gap-1">
-              <div className="w-full truncate font-inter-tight text-[24px] font-semibold leading-[29px] text-[#232323]" title={provider.provider_name}>
+              <div className="w-full truncate font-inter-tight text-2xl font-semibold text-[#232323]" title={provider.provider_name}>
                 {provider.provider_name}
               </div>
-              <div className="w-full truncate font-inter text-[16px] leading-[19px] text-[#7A7A7A]" title={provider.address_street && provider.address_zip && provider.address_city
+              <div className="w-full truncate font-inter text-base text-[#7A7A7A]" title={provider.address_street && provider.address_zip && provider.address_city
                   ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
                   : ''}>
                 {provider.address_street && provider.address_zip && provider.address_city

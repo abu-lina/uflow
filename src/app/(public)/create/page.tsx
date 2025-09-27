@@ -65,7 +65,7 @@ export default function CreateProviderPage() {
 
   return (
     <div className="flex flex-col items-center gap-4 px-4 py-6">
-      <h1 className="mb-4 w-full text-left text-2xl font-bold">Provider erstellen</h1>
+      <h1 className="mb-4 w-full text-left text-xl font-bold">Provider erstellen</h1>
       <ProviderCreateForm />
     </div>
   );
