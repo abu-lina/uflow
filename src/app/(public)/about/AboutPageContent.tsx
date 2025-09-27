@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
@@ -11,6 +11,31 @@ import { quotes } from '@/constants/quotes';
 export function AboutPageContent() {
   const router = useRouter();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && currentCardIndex < quotes.length - 1) {
+      setCurrentCardIndex(currentCardIndex + 1);
+    }
+    if (isRightSwipe && currentCardIndex > 0) {
+      setCurrentCardIndex(currentCardIndex - 1);
+    }
+  };
 
   return (
     <div 
@@ -50,7 +75,14 @@ export function AboutPageContent() {
       <div className="flex flex-col items-center justify-center w-full flex-1 pb-20">
         {/* Card + Page Indicator Group */}
         <div className="flex flex-col items-center w-full px-6 gap-2">
-          <AboutCard quote={quotes[currentCardIndex]} />
+          <div
+            className="w-full"
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchMove}
+            onTouchStart={handleTouchStart}
+          >
+            <AboutCard cardIndex={currentCardIndex} quote={quotes[currentCardIndex]} />
+          </div>
           
           {/* Page Indicator */}
           <div className="flex flex-row justify-center items-center w-full h-4 gap-2">
@@ -71,10 +103,16 @@ export function AboutPageContent() {
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-row justify-center items-center w-full bg-white px-4 py-4 pb-safe">
         <button 
           className="flex flex-row justify-center items-center w-[345px] h-12 bg-[#589D96] rounded-xl px-5 py-4 gap-2"
-          onClick={() => router.push('/')}
+          onClick={() => {
+            if (currentCardIndex < quotes.length - 1) {
+              setCurrentCardIndex(currentCardIndex + 1);
+            } else {
+              router.push('/');
+            }
+          }}
         >
           <span className="font-inter-tight text-base font-medium text-white text-center">
-            Weiter
+            {currentCardIndex < quotes.length - 1 ? 'Weiter' : 'Entdecke deine Ummah'}
           </span>
           <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
         </button>

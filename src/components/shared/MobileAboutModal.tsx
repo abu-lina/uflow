@@ -29,7 +29,7 @@ export function MobileAboutModal({ isOpen, onClose }: MobileAboutModalProps) {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="relative">
-            <AboutCard quote={quotes[2]} />
+            <AboutCard cardIndex={2} quote={quotes[2]} />
             
             {/* Close Button */}
             <button
