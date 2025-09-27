@@ -33,7 +33,7 @@ export function AboutCard({ quote, cardIndex }: AboutCardProps) {
             alt="Home"
             className="h-[140px] w-auto object-contain sm:h-[176px]"
             height={176}
-            src="/images/home.png"
+            src="/images/Home.png"
             width={144}
           />
         ) : (
