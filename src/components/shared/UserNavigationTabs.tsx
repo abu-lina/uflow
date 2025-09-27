@@ -22,7 +22,7 @@ const BUTTON_STYLES = {
   base: 'flex h-10 items-center justify-center rounded-xl transition-colors',
   active: 'bg-primary text-white',
   inactive: 'hover:bg-gray-100 text-text-secondary',
-  icon: 'size-5',
+  icon: 'size-6',
   text: 'font-inter-tight text-base font-medium',
 } as const;
 

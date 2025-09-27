@@ -8,6 +8,8 @@ import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 
 import { HomeIcon } from '@/components/ui/icons/HomeIcon';
+import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
+import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { sharedTransition } from '@/components/ui/PageTransition';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -24,13 +26,13 @@ const navItems = [
   {
     label: 'Explore',
     href: '/providers',
-    icon: 'mingcute:search-line',
+    icon: (isActive: boolean) => <ExploreIcon isActive={isActive} />,
     noFrame: true,
   },
   {
     label: 'Create',
     href: '/create',
-    icon: 'iconamoon:sign-plus',
+    icon: (isActive: boolean) => <CreateIcon isActive={isActive} />,
     noFrame: true,
   },
   {
@@ -137,7 +139,7 @@ export function MobileFooterBar() {
                     transition={sharedTransition}
                   >
                     <Icon
-                      height={28}
+                      height={24}
                       icon={item.icon}
                       style={
                         item.noFrame
@@ -152,7 +154,7 @@ export function MobileFooterBar() {
                               transition: 'border-color 0.08s ease',
                             }
                       }
-                      width={28}
+                      width={24}
                     />
                   </motion.div>
                 )}
