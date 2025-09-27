@@ -6,7 +6,7 @@ export interface Quote {
 
 export const quotes: Quote[] = [
   {
-    heading: 'Viele Muslime aber wenig Gemeinschaft?',
+    heading: 'Viele Muslime\naber wenig\nGemeinschaft?',
     quote:
       'Es wird eine Zeit kommen, in der die Muslime viele sein werden, doch ihr Zusammenhalt wird so schwach sein wie der Schaum des Meeres.',
     author: 'Der Prophet Mohammed ﷺ, Sahih Muslim',

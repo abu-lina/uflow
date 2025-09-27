@@ -40,7 +40,7 @@ export function AboutSection() {
           viewport={{ once: true }}
           whileInView={{ opacity: 1, y: 0 }}
         >
-          <AboutCard quote={quotes[2]} />
+          <AboutCard cardIndex={2} quote={quotes[2]} />
         </motion.div>
       </div>
     </section>
