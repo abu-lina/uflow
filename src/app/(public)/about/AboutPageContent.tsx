@@ -65,9 +65,9 @@ export function AboutPageContent() {
       }}
     >
       {/* Header */}
-      <div className="flex flex-col items-center w-[361px] pt-[calc(1rem+env(safe-area-inset-top))]">
+      <div className="flex flex-col items-center w-full pt-[calc(1rem+env(safe-area-inset-top))]">
         {/* Title */}
-        <div className="flex flex-row justify-between items-center w-full h-[48px] gap-2 px-4">
+        <div className="flex flex-row justify-between items-center w-full h-[48px] gap-2">
           {/* Left Side - Back Button + Title */}
           <div className="flex flex-row items-center gap-2">
             <button
