@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
@@ -11,8 +11,10 @@ import { quotes } from '@/constants/quotes';
 export function AboutPageContent() {
   const router = useRouter();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -30,12 +32,30 @@ export function AboutPageContent() {
     const isRightSwipe = distance < -50;
 
     if (isLeftSwipe && currentCardIndex < quotes.length - 1) {
+      setIsTransitioning(true);
       setCurrentCardIndex(currentCardIndex + 1);
     }
     if (isRightSwipe && currentCardIndex > 0) {
+      setIsTransitioning(true);
       setCurrentCardIndex(currentCardIndex - 1);
     }
   };
+
+  const changeCard = (newIndex: number) => {
+    if (newIndex !== currentCardIndex && newIndex >= 0 && newIndex < quotes.length) {
+      setIsTransitioning(true);
+      setCurrentCardIndex(newIndex);
+    }
+  };
+
+  useEffect(() => {
+    if (isTransitioning) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300); // Match transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [isTransitioning]);
 
   return (
     <div 
@@ -76,12 +96,19 @@ export function AboutPageContent() {
         {/* Card + Page Indicator Group */}
         <div className="flex flex-col items-center w-full px-6 gap-2">
           <div
-            className="w-full"
+            ref={containerRef}
+            className="w-full transition-all duration-300 ease-in-out"
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             onTouchStart={handleTouchStart}
           >
-            <AboutCard cardIndex={currentCardIndex} quote={quotes[currentCardIndex]} />
+            <div 
+              className={`transform transition-all duration-300 ease-in-out ${
+                isTransitioning ? 'scale-95 opacity-80' : 'scale-100 opacity-100'
+              }`}
+            >
+              <AboutCard cardIndex={currentCardIndex} quote={quotes[currentCardIndex]} />
+            </div>
           </div>
           
           {/* Page Indicator */}
@@ -92,7 +119,7 @@ export function AboutPageContent() {
                 className={`w-2 h-2 rounded-full transition-colors ${
                   index === currentCardIndex ? 'bg-[#589D96]' : 'bg-[#D4D4D4]'
                 }`}
-                onClick={() => setCurrentCardIndex(index)}
+                onClick={() => changeCard(index)}
               />
             ))}
           </div>
@@ -105,7 +132,7 @@ export function AboutPageContent() {
           className="flex flex-row justify-center items-center w-[345px] h-12 bg-[#589D96] rounded-xl px-5 py-4 gap-2"
           onClick={() => {
             if (currentCardIndex < quotes.length - 1) {
-              setCurrentCardIndex(currentCardIndex + 1);
+              changeCard(currentCardIndex + 1);
             } else {
               router.push('/');
             }
