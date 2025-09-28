@@ -11,7 +11,7 @@ interface AboutCardProps {
 
 export function AboutCard({ quote, cardIndex }: AboutCardProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-[#D4D4D4] bg-white px-4 py-6 shadow-sm sm:gap-6 sm:px-6 sm:py-8 w-full">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-[#D4D4D4] bg-white px-4 py-4 shadow-sm sm:gap-4 sm:px-5 sm:py-6 w-full">
       {/* Icon - Different images for each card */}
       <div className={`relative flex items-center justify-center ${
         cardIndex === 0 
@@ -42,7 +42,7 @@ export function AboutCard({ quote, cardIndex }: AboutCardProps) {
       </div>
 
       {/* Text Content */}
-      <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
+      <div className="flex w-full flex-col items-center gap-2 sm:gap-3">
         {/* Title */}
         <h3 className="w-full text-center font-inter-tight text-2xl font-semibold text-[#232323] sm:text-3xl whitespace-pre-line">
           {quote.heading}

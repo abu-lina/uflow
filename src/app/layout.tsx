@@ -7,7 +7,6 @@ import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { SplashScreenDebug } from '@/components/debug/SplashScreenDebug';
-import { PWADetectionDebug } from '@/components/debug/PWADetectionDebug';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
@@ -73,10 +72,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <Header />
                 </div>
                 <RootClientLayout>{children}</RootClientLayout>
-                    <Toaster position="top-center" />
-                    <PWAInstallPrompt />
-                    <SplashScreenDebug />
-                    <PWADetectionDebug />
+                        <Toaster position="top-center" />
+                        <PWAInstallPrompt />
+                        <SplashScreenDebug />
               </FilterProvider>
             </SearchProvider>
           </SplashProvider>

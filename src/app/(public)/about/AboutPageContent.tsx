@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Icon } from '@iconify/react';
 
-import { Logo } from '@/components/ui/Logo';
+import { MobileHeader } from '@/components/layout/MobileHeader';
+import { MobileNavbar } from '@/components/layout/MobileNavbar';
 import { AboutCard } from '@/components/shared/AboutCard';
 import { quotes } from '@/constants/quotes';
 
@@ -63,56 +63,19 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
   }, [isTransitioning]);
 
   return (
-    <div 
-      className="fixed inset-0 flex flex-col items-center px-4 overflow-hidden safari-mobile-fix"
-      style={{ 
-        background: 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: 'calc(var(--vh, 1vh) * 100)',
-        minHeight: 'calc(var(--vh, 1vh) * 100)',
-        zIndex: 9999
-      }}
-    >
-      {/* Header */}
-      <div className="flex flex-col items-center w-full pt-8 pb-8">
-        {showSplashHeader ? (
-          /* Splash Header - Just Logo */
-          <div className="flex flex-row justify-center items-center w-full h-[48px]">
-            <div className="w-12 h-12">
-              <Logo className="w-12 h-12" height={48} width={48} />
-            </div>
-          </div>
-        ) : (
-          /* About Header - Back Button + Title + Logo */
-          <div className="flex flex-row justify-between items-center w-full h-[48px] gap-2">
-            {/* Left Side - Back Button + Title */}
-            <div className="flex flex-row items-center gap-2">
-              <button
-                className="flex h-8 w-8 items-center justify-center"
-                onClick={() => router.back()}
-              >
-                <Icon className="h-8 w-8 text-[#232323]" icon="material-symbols:chevron-left" />
-              </button>
-              <h1 className="font-inter-tight text-xl font-bold text-[#232323]">
-                Über Uns
-              </h1>
-            </div>
-            
-            {/* Right Side - Logo */}
-            <div className="relative w-12 h-12 flex-shrink-0">
-              <Logo className="w-12 h-12" height={48} width={48} />
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="min-h-screen-fix flex flex-col">
+      {/* HEADER SECTION - Fixed at top */}
+      <MobileHeader 
+        title={showSplashHeader ? undefined : 'Über Uns'}
+        variant={showSplashHeader ? 'splash' : 'about'}
+        onBack={showSplashHeader ? undefined : () => router.back()}
+      />
 
-      {/* Content */}
-      <div className="flex flex-col items-center justify-center w-full flex-1 pb-20 overflow-hidden">
-        <div className="flex flex-col items-center w-full px-6 gap-2 max-h-full overflow-hidden">
+      {/* CONTENT SECTION - Flexible middle area with top padding for fixed header and bottom padding for fixed navbar */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-20 min-h-0">
+        {/* Card + page switcher */}
+        <div className="flex flex-col items-center w-full max-w-sm gap-6">
+          {/* Card Container */}
           <div
             ref={containerRef}
             className="w-full transition-all duration-300 ease-in-out"
@@ -142,30 +105,23 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
             ))}
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* Weiter Button - Sticky Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-row justify-center items-center w-full bg-white px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-        <button 
-          className="flex flex-row justify-center items-center w-[345px] h-12 bg-[#589D96] rounded-xl px-5 py-4 gap-2"
-          onClick={() => {
-            if (currentCardIndex < quotes.length - 1) {
-              changeCard(currentCardIndex + 1);
+      {/* NAVBAR SECTION - Fixed at bottom */}
+      <MobileNavbar
+        text={currentCardIndex < quotes.length - 1 ? 'Weiter' : 'Entdecke deine Ummah'}
+        onClick={() => {
+          if (currentCardIndex < quotes.length - 1) {
+            changeCard(currentCardIndex + 1);
+          } else {
+            if (onComplete) {
+              onComplete();
             } else {
-              if (onComplete) {
-                onComplete();
-              } else {
-                router.push('/');
-              }
+              router.push('/');
             }
-          }}
-        >
-          <span className="font-inter-tight text-base font-medium text-white text-center">
-            {currentCardIndex < quotes.length - 1 ? 'Weiter' : 'Entdecke deine Ummah'}
-          </span>
-          <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
-        </button>
-      </div>
+          }
+        }}
+      />
     </div>
   );
 }

@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Icon } from '@iconify/react';
 
-import { Logo } from '@/components/ui/Logo';
+import { MobileHeader } from '@/components/layout/MobileHeader';
+import { MobileNavbar } from '@/components/layout/MobileNavbar';
 import { Bismillah } from '@/components/ui/Bismillah';
 import { hasSeenSplashScreen, markSplashScreenAsSeen } from '@/utils/splashUtils';
 import { useSplash } from '@/providers/splash-provider';
@@ -35,54 +35,6 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
     setSplashVisible(true);
   }, [setSplashVisible]);
 
-  // Disable body scrolling when splash is visible and fix Safari mobile viewport
-  useEffect(() => {
-    if (isSplashVisible) {
-      // Disable scrolling on body and html
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.height = '100%';
-      document.body.style.top = '0';
-      document.body.style.left = '0';
-      
-      // Safari mobile viewport fix
-      const setSafariViewport = () => {
-        const vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-      };
-      
-      setSafariViewport();
-      window.addEventListener('resize', setSafariViewport);
-      window.addEventListener('orientationchange', setSafariViewport);
-      
-      return () => {
-        window.removeEventListener('resize', setSafariViewport);
-        window.removeEventListener('orientationchange', setSafariViewport);
-      };
-    } else {
-      // Re-enable scrolling
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-    }
-
-    // Cleanup on unmount
-    return () => {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-    };
-  }, [isSplashVisible]);
 
   const handleContinue = () => {
     setShowAboutCards(true);
@@ -113,47 +65,18 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
   }
 
   return (
-    <div 
-      className="fixed inset-0 flex flex-col items-center px-4 overflow-hidden safari-mobile-fix"
-      style={{ 
-        background: 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: 'calc(var(--vh, 1vh) * 100)',
-        minHeight: 'calc(var(--vh, 1vh) * 100)',
-        zIndex: 9999
-      }}
-    >
-      {/* Header */}
-      <div className="flex flex-col items-center w-full pt-8 pb-8">
-        {/* Logo */}
-        <div className="flex flex-row justify-center items-center w-full h-[48px]">
-          <motion.div 
-            animate={{ opacity: 1, y: 0 }}
-            className="w-12 h-12"
-            initial={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-          >
-            <Logo className="w-12 h-12" height={48} width={48} />
-          </motion.div>
-        </div>
-      </div>
+    <div className="min-h-screen-fix flex flex-col">
+      {/* HEADER SECTION - Fixed at top */}
+      <MobileHeader variant="splash" />
 
-      {/* Content */}
-      <div className="flex flex-col items-center justify-center w-full flex-1 pb-20">
-        <motion.div 
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center w-full px-6 gap-8"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
-        >
-          {/* Calligraphy + Translation Group */}
+      {/* CONTENT SECTION - Flexible middle area with top padding for fixed header and bottom padding for fixed navbar */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-20 min-h-0">
+        {/* Content Container - All content grouped together */}
+        <div className="flex flex-col items-center w-full max-w-md gap-8">
+          {/* Calligraphy + Translation */}
           <motion.div 
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center w-full gap-2"
+            className="flex flex-col items-center w-full gap-1"
             initial={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
           >
@@ -190,10 +113,10 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
             </motion.div>
           </motion.div>
 
-          {/* Heading + Text Group */}
+          {/* Title + Subtitle */}
           <motion.div 
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center w-full gap-2"
+            className="flex flex-col items-center w-full gap-1"
             initial={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.8, delay: 1.7, ease: 'easeOut' }}
           >
@@ -211,26 +134,15 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
               Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet - <span className="text-[#C2A274]">insha&apos;Allah.</span>
             </p>
           </motion.div>
-        </motion.div>
-      </div>
+        </div>
+      </main>
 
-      {/* Weiter Button - Sticky Bottom */}
-      <motion.div 
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-0 left-0 right-0 z-50 flex flex-row justify-center items-center w-full bg-white px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
-        initial={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.6, delay: 2.0 }}
-      >
-        <button 
-          className="flex flex-row justify-center items-center w-[345px] h-12 bg-[#589D96] rounded-xl px-5 py-4 gap-2"
-          onClick={handleContinue}
-        >
-          <span className="font-inter-tight text-base font-medium text-white text-center">
-            Weiter
-          </span>
-          <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
-        </button>
-      </motion.div>
+      {/* NAVBAR SECTION - Fixed at bottom */}
+      <MobileNavbar
+        animationDelay={2.0}
+        text="Weiter"
+        onClick={handleContinue}
+      />
     </div>
   );
 }
