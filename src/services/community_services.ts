@@ -170,44 +170,11 @@ export async function getCommunityServiceByProviderId(providerId: string): Promi
 }
 
 export async function getCommunityServicesForProvider(providerId: string): Promise<CommunityServiceData[]> {
-  console.log(`[DB DEBUG] Provider ID: ${providerId}`);
-  console.log(`[DB DEBUG] Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
-  
-  // Check if provider exists first
-  const { data: providerCheck, error: providerError } = await supabase
-    .from('providers')
-    .select('provider_id, provider_name')
-    .eq('provider_id', providerId)
-    .single();
-  
-  console.log(`[DB DEBUG] Provider check:`, providerCheck, 'Error:', providerError);
-  
-  // Check all community services (to see if any exist at all)
-  const { data: allServices, error: allServicesError } = await supabase
-    .from('community_services')
-    .select('provider_id, community_service_name, is_verified')
-    .limit(5);
-  
-  console.log(`[DB DEBUG] Sample community services:`, allServices, 'Error:', allServicesError);
-  
-  // Now check for this specific provider (only verified services in production)
   const { data, error } = await supabase
     .from('community_services')
-    .select('community_service_id, community_service_name, community_service_description, community_service_images, is_verified')
+    .select('community_service_id, community_service_name, community_service_description, community_service_images')
     .eq('provider_id', providerId)
-    .eq('is_verified', true) // Only show verified community services
     .returns<CommunityServiceData[]>();
-  
-  console.log(`[DB DEBUG] Query result for provider ${providerId} (verified only):`, data, 'Error:', error);
-  
-  // Also check unverified services for this provider
-  const { data: unverifiedData, error: unverifiedError } = await supabase
-    .from('community_services')
-    .select('community_service_id, community_service_name, is_verified')
-    .eq('provider_id', providerId)
-    .eq('is_verified', false);
-  
-  console.log(`[DB DEBUG] Unverified services for provider ${providerId}:`, unverifiedData, 'Error:', unverifiedError);
   
   if (error) throw error;
   return data || [];

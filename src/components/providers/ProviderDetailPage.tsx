@@ -81,8 +81,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
   const [isSaved, setIsSaved] = useState(false);
   const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
-  const [expandedOffers, setExpandedOffers] = useState(true);
-  const [expandedNeeds, setExpandedNeeds] = useState(true);
+  const [expandedOffers, setExpandedOffers] = useState(false);
+  const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
 
 
@@ -178,10 +178,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   useEffect(() => {
     async function fetchCommunityServices() {
       try {
-        console.log(`[AUTH DEBUG] User context:`, user ? 'authenticated' : 'not authenticated');
-        console.log(`[AUTH DEBUG] User ID:`, user?.id);
-        console.log(`[PROVIDER DEBUG] Provider details:`, provider);
-        
         const data = await getCommunityServicesForProvider(provider.provider_id);
         setCommunityServices(data || []);
       } catch (error) {
@@ -190,7 +186,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
       }
     }
     fetchCommunityServices();
-  }, [provider.provider_id, user]);
+  }, [provider.provider_id]);
 
   const handleBookmark = async () => {
     if (!user) {
