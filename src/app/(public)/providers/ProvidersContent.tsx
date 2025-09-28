@@ -194,7 +194,7 @@ export function ProvidersContent() {
         </motion.div>
 
         {/* Main Content - Loading State */}
-        <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
+        <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-32 sm:pt-8 md:pt-28">
           <SkeletonGrid count={12} />
         </div>
       </div>
@@ -229,7 +229,7 @@ export function ProvidersContent() {
         </motion.div>
 
         {/* Main Content - Error State */}
-        <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
+        <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-32 sm:pt-8 md:pt-28">
           <EmptyState
             description="Es gab ein Problem beim Laden der Providers. Bitte versuche es erneut."
             title="Fehler beim Laden"
@@ -266,7 +266,7 @@ export function ProvidersContent() {
       </motion.div>
 
       {/* Main Content - Only this area updates with smooth transitions */}
-      <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden pb-20 pt-8 sm:pt-8 md:pt-28">
+      <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden pb-20 pt-32 sm:pt-8 md:pt-28">
         {loading && !isInitialRender && !isNavigating ? (
             <motion.div
               key="loading"
