@@ -127,11 +127,11 @@ export function CategoryGallerySection() {
               onKeyDown={(e) => handleKeyDown(e, categoryId)}
             >
               <div className="flex w-full flex-row items-center justify-between p-3">
-                <div className="flex flex-col items-start justify-center gap-2.5">
-                  <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323]">
+                <div className="flex flex-col items-start justify-center">
+                  <div className="w-full font-inter text-sm font-normal leading-[140%] text-[#232323]">
                     {formatAllahText(getCategorySubtitle(categoryName))}
                   </div>
-                  <div className="w-full truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
+                  <div className="w-full truncate font-inter text-xl font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
                     {categoryName}
                   </div>
                 </div>
