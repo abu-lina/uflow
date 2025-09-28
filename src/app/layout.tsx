@@ -6,11 +6,13 @@ import { Toaster } from 'sonner';
 import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
+import { SplashScreenDebug } from '@/components/debug/SplashScreenDebug';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
 import { FilterProvider } from '@/providers/filter-provider';
 import { SearchProvider } from '@/providers/search-provider';
+import { SplashProvider } from '@/providers/splash-provider';
 import '@/styles/globals.css';
 
 import type { Metadata, Viewport } from 'next';
@@ -62,17 +64,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       >
         <AuthProvider initialUser={user}>
           <AuthSyncer />
-          <SearchProvider>
-            <FilterProvider>
-              {/* Desktop header only */}
-              <div className="hidden md:block">
-                <Header />
-              </div>
-              <RootClientLayout>{children}</RootClientLayout>
-              <Toaster position="top-center" />
-              <PWAInstallPrompt />
-            </FilterProvider>
-          </SearchProvider>
+          <SplashProvider>
+            <SearchProvider>
+              <FilterProvider>
+                {/* Desktop header only */}
+                <div className="hidden md:block">
+                  <Header />
+                </div>
+                <RootClientLayout>{children}</RootClientLayout>
+                <Toaster position="top-center" />
+                <PWAInstallPrompt />
+                <SplashScreenDebug />
+              </FilterProvider>
+            </SearchProvider>
+          </SplashProvider>
         </AuthProvider>
       </body>
     </html>

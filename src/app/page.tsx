@@ -5,15 +5,15 @@ import { AboutSection } from '@/components/shared/AboutSection';
 import { CategoryGallerySection } from '@/components/shared/CategoryGallerySection';
 import { ExploreSection } from '@/components/shared/ExploreSection';
 import { LandingHero } from '@/components/shared/LandingHero';
-import { MobileGreeting } from '@/components/shared/MobileGreeting';
+import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
 
 export default function Home() {
   return (
     <Suspense fallback={<div className="flex h-64 items-center justify-center">Sabr...</div>}>
       <LandingLayout>
-        {/* Mobile Greeting for first-time users */}
+        {/* Mobile Content */}
         <div className="md:hidden">
-          <MobileGreeting />
+          <MobileSplashScreen />
         </div>
 
         {/* Desktop Landing Content */}

@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { LoadingProvider } from '@/providers/LoadingProvider';
+import { useSplash } from '@/providers/splash-provider';
 
 interface RootClientLayoutProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
   const isAboutPage = pathname === '/about';
+  const { isSplashVisible } = useSplash();
   const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             </div>
           </PageTransition>
         </main>
-        {!isAboutPage && (
+        {!isAboutPage && !isSplashVisible && (
           <div className="block md:hidden">
             <MobileFooterBar />
           </div>

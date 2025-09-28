@@ -6,6 +6,11 @@ export interface Quote {
 
 export const quotes: Quote[] = [
   {
+    heading: 'Ein Marktplatz für Muslime',
+    quote:
+      'Inmitten des Leids der Palästinenser und den zahlreichen Herausforderungen, denen unsere Ummah gegenübersteht, wird deutlich, wie wichtig es ist, dass wir als Ummah enger zusammenkommen.',
+  },
+  {
     heading: 'Viele Muslime\naber wenig\nGemeinschaft?',
     quote:
       'Es wird eine Zeit kommen, in der die Muslime viele sein werden, doch ihr Zusammenhalt wird so schwach sein wie der Schaum des Meeres.',
@@ -14,11 +19,6 @@ export const quotes: Quote[] = [
   {
     heading: 'Supporte Deine Ummah',
     quote:
-      'Ummah Flow ist mehr als nur ein Marktplatz für Muslime: Es ist ein Ort, an dem wir unsere Gemeinschaft stärken können, indem wir  muslimische Unternehmen und Läden  unterstützen.',
-  },
-  {
-    heading: 'Ein Marktplatz für Muslime',
-    quote:
-      'Inmitten des Leids der Palästinenser und den zahlreichen Herausforderungen, denen unsere Ummah gegenübersteht, wird deutlich, wie wichtig es ist, dass wir als Ummah enger zusammenkommen.',
+      'Ummah Flow ist mehr als nur ein Marktplatz für Muslime: Es ist ein Ort, an dem wir unsere Gemeinschaft stärken können, indem wir muslimische Unternehmen und Läden unterstützen.',
   },
 ];

@@ -8,7 +8,12 @@ import { Logo } from '@/components/ui/Logo';
 import { AboutCard } from '@/components/shared/AboutCard';
 import { quotes } from '@/constants/quotes';
 
-export function AboutPageContent() {
+interface AboutPageContentProps {
+  onComplete?: () => void;
+  showSplashHeader?: boolean;
+}
+
+export function AboutPageContent({ onComplete, showSplashHeader = false }: AboutPageContentProps) {
   const router = useRouter();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -59,39 +64,53 @@ export function AboutPageContent() {
 
   return (
     <div 
-      className="flex flex-col items-center px-4 h-screen overflow-hidden"
+      className="fixed inset-0 flex flex-col items-center px-4 h-screen overflow-hidden"
       style={{ 
-        background: 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)'
+        background: 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999
       }}
     >
       {/* Header */}
-      <div className="flex flex-col items-center w-full pt-[calc(1rem+env(safe-area-inset-top))]">
-        {/* Title */}
-        <div className="flex flex-row justify-between items-center w-full h-[48px] gap-2">
-          {/* Left Side - Back Button + Title */}
-          <div className="flex flex-row items-center gap-2">
-            <button
-              className="flex h-8 w-8 items-center justify-center"
-              onClick={() => router.back()}
-            >
-              <Icon className="h-8 w-8 text-[#232323]" icon="material-symbols:chevron-left" />
-            </button>
-            <h1 className="font-inter-tight text-xl font-bold text-[#232323]">
-              Über Uns
-            </h1>
+      <div className="flex flex-col items-center w-full pt-8 pb-8">
+        {showSplashHeader ? (
+          /* Splash Header - Just Logo */
+          <div className="flex flex-row justify-center items-center w-full h-[48px]">
+            <div className="w-12 h-12">
+              <Logo className="w-12 h-12" height={48} width={48} />
+            </div>
           </div>
-          
-          {/* Right Side - Logo */}
-          <div className="relative w-12 h-12 flex-shrink-0">
-            <Logo className="w-12 h-12" height={48} width={48} />
+        ) : (
+          /* About Header - Back Button + Title + Logo */
+          <div className="flex flex-row justify-between items-center w-full h-[48px] gap-2">
+            {/* Left Side - Back Button + Title */}
+            <div className="flex flex-row items-center gap-2">
+              <button
+                className="flex h-8 w-8 items-center justify-center"
+                onClick={() => router.back()}
+              >
+                <Icon className="h-8 w-8 text-[#232323]" icon="material-symbols:chevron-left" />
+              </button>
+              <h1 className="font-inter-tight text-xl font-bold text-[#232323]">
+                Über Uns
+              </h1>
+            </div>
+            
+            {/* Right Side - Logo */}
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <Logo className="w-12 h-12" height={48} width={48} />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Content */}
-      <div className="flex flex-col items-center justify-center w-full flex-1 pb-20">
-        {/* Card + Page Indicator Group */}
-        <div className="flex flex-col items-center w-full px-6 gap-2">
+      <div className="flex flex-col items-center justify-center w-full flex-1 pb-20 overflow-hidden">
+        <div className="flex flex-col items-center w-full px-6 gap-2 max-h-full overflow-hidden">
           <div
             ref={containerRef}
             className="w-full transition-all duration-300 ease-in-out"
@@ -131,7 +150,11 @@ export function AboutPageContent() {
             if (currentCardIndex < quotes.length - 1) {
               changeCard(currentCardIndex + 1);
             } else {
-              router.push('/');
+              if (onComplete) {
+                onComplete();
+              } else {
+                router.push('/');
+              }
             }
           }}
         >
