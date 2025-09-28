@@ -35,7 +35,7 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
     setSplashVisible(true);
   }, [setSplashVisible]);
 
-  // Disable body scrolling when splash is visible
+  // Disable body scrolling when splash is visible and fix Safari mobile viewport
   useEffect(() => {
     if (isSplashVisible) {
       // Disable scrolling on body and html
@@ -46,6 +46,21 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
       document.body.style.height = '100%';
       document.body.style.top = '0';
       document.body.style.left = '0';
+      
+      // Safari mobile viewport fix
+      const setSafariViewport = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      };
+      
+      setSafariViewport();
+      window.addEventListener('resize', setSafariViewport);
+      window.addEventListener('orientationchange', setSafariViewport);
+      
+      return () => {
+        window.removeEventListener('resize', setSafariViewport);
+        window.removeEventListener('orientationchange', setSafariViewport);
+      };
     } else {
       // Re-enable scrolling
       document.documentElement.style.overflow = '';
@@ -107,6 +122,8 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
         left: 0,
         right: 0,
         bottom: 0,
+        height: 'calc(var(--vh, 1vh) * 100)',
+        minHeight: 'calc(var(--vh, 1vh) * 100)',
         zIndex: 9999
       }}
     >

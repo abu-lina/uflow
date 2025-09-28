@@ -72,6 +72,8 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
         left: 0,
         right: 0,
         bottom: 0,
+        height: 'calc(var(--vh, 1vh) * 100)',
+        minHeight: 'calc(var(--vh, 1vh) * 100)',
         zIndex: 9999
       }}
     >

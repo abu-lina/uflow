@@ -375,18 +375,54 @@
     min-height: 100dvh;
     /* Fallback for older Safari versions */
     height: -webkit-fill-available;
+    /* Force proper positioning */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
   }
   
   /* iOS Safari specific fixes */
   @supports (-webkit-touch-callout: none) {
     .safari-mobile-fix {
-      height: 100vh;
-      height: 100dvh;
-      min-height: 100vh;
-      min-height: 100dvh;
-      /* Force proper height calculation on iOS Safari */
-      height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-      min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      height: 100vh !important;
+      height: 100dvh !important;
+      min-height: 100vh !important;
+      min-height: 100dvh !important;
+      /* Use viewport units that work better on iOS Safari */
+      height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+      min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+      /* Force proper positioning */
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+    }
+  }
+  
+  /* Additional Safari mobile fixes */
+  @media screen and (max-width: 768px) and (-webkit-touch-callout: none) {
+    .safari-mobile-fix {
+      height: 100vh !important;
+      height: 100dvh !important;
+      min-height: 100vh !important;
+      min-height: 100dvh !important;
+      /* Use custom viewport height for Safari mobile */
+      height: calc(var(--vh, 1vh) * 100) !important;
+      min-height: calc(var(--vh, 1vh) * 100) !important;
+      /* Ensure it covers the full screen */
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      /* Force proper flex centering */
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
   }
 }
