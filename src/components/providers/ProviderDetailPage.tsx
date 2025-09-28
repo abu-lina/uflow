@@ -179,9 +179,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     async function fetchCommunityServices() {
       try {
         const data = await getCommunityServicesForProvider(provider.provider_id);
+        console.log(`[BARAKAH DEBUG] Provider ${provider.provider_id}: Fetched ${data?.length || 0} community services:`, data);
         setCommunityServices(data || []);
       } catch (error) {
-        console.error('Error fetching community services:', error);
+        console.error(`[BARAKAH DEBUG] Provider ${provider.provider_id}: Error fetching community services:`, error);
         setCommunityServices([]);
       }
     }
@@ -293,7 +294,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           </div>
 
           {/* Barakah Effect Section */}
-          {communityServices && communityServices.length > 0 && (
+          {(() => {
+            console.log(`[BARAKAH DEBUG] Mobile rendering check - communityServices:`, communityServices, 'length:', communityServices?.length);
+            return communityServices && communityServices.length > 0;
+          })() && (
             <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
               <button
                 className="flex w-full items-center justify-between"
@@ -554,7 +558,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             </div>
 
             {/* Barakah Effect */}
-            {communityServices && communityServices.length > 0 && (
+            {(() => {
+              console.log(`[BARAKAH DEBUG] Desktop rendering check - communityServices:`, communityServices, 'length:', communityServices?.length);
+              return communityServices && communityServices.length > 0;
+            })() && (
               <div className="rounded-2xl bg-white p-6 shadow-sm">
                 <button
                   className="flex w-full items-center justify-between"

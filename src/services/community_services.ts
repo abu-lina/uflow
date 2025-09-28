@@ -170,12 +170,21 @@ export async function getCommunityServiceByProviderId(providerId: string): Promi
 }
 
 export async function getCommunityServicesForProvider(providerId: string): Promise<CommunityServiceData[]> {
+  console.log(`[BARAKAH DEBUG] Service: Fetching community services for provider: ${providerId}`);
   const { data, error } = await supabase
     .from('community_services')
     .select('community_service_id, community_service_name, community_service_description, community_service_images')
     .eq('provider_id', providerId)
     .returns<CommunityServiceData[]>();
-  if (error) throw error;
+  
+  console.log(`[BARAKAH DEBUG] Service: Query result - data:`, data, 'error:', error);
+  
+  if (error) {
+    console.error(`[BARAKAH DEBUG] Service: Database error:`, error);
+    throw error;
+  }
+  
+  console.log(`[BARAKAH DEBUG] Service: Returning ${data?.length || 0} services`);
   return data || [];
 }
 
