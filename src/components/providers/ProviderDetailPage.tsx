@@ -253,7 +253,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     return (
       <div className="h-screen bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] overflow-y-auto">
         {/* Mobile Content */}
-        <div className="pb-20">
+        <div className="pb-24">
           <MobileProviderDetail provider={provider} />
           
           {/* Provider Info Card */}
@@ -401,6 +401,37 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             </div>
           )}
 
+        </div>
+
+        {/* Mobile Action Buttons - Fixed at bottom */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
+          <div className="flex w-full gap-3.5">
+            {/* Save Button */}
+            <button
+              aria-label={isSaved ? 'Gespeichert entfernen' : 'Provider speichern'}
+              className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-base font-medium shadow transition ${
+                isSaved
+                  ? 'bg-[#589D96] text-white'
+                  : 'bg-mint text-white hover:bg-mint/90'
+              }`}
+              onClick={handleBookmarkAction}
+            >
+              <Icon
+                className="h-5 w-5"
+                icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
+              />
+              {isSaved ? 'Gespeichert' : 'Speichern'}
+            </button>
+
+            {/* Share Button */}
+            <button
+              aria-label="Provider teilen"
+              className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm"
+              onClick={handleShareAction}
+            >
+              <Icon className="h-5 w-5 text-gray-700" icon="lucide:share-2" />
+            </button>
+          </div>
         </div>
 
       </div>

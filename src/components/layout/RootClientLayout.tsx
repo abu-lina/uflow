@@ -17,6 +17,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
   const isAboutPage = pathname === '/about';
+  const isProviderDetailPage = pathname.startsWith('/providers/') && pathname !== '/providers';
   const { isSplashVisible } = useSplash();
   const mainRef = useRef<HTMLElement>(null);
 
@@ -81,7 +82,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             </div>
           </PageTransition>
         </main>
-        {!isAboutPage && !isSplashVisible && (
+        {!isAboutPage && !isProviderDetailPage && !isSplashVisible && (
           <div className="block md:hidden">
             <MobileFooterBar />
           </div>
