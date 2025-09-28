@@ -63,7 +63,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
   }, [isTransitioning]);
 
   return (
-    <div className="min-h-screen-fix flex flex-col">
+    <div className="h-screen-fix flex flex-col">
       {/* HEADER SECTION - Fixed at top */}
       <MobileHeader 
         title={showSplashHeader ? undefined : 'Über Uns'}
@@ -71,14 +71,14 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
         onBack={showSplashHeader ? undefined : () => router.back()}
       />
 
-      {/* CONTENT SECTION - Flexible middle area with top padding for fixed header and bottom padding for fixed navbar */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-20 min-h-0">
+      {/* CONTENT SECTION - Flexible middle area with proper centering */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-20 overflow-y-auto">
         {/* Card + page switcher */}
-        <div className="flex flex-col items-center w-full max-w-sm gap-6">
+        <div className="flex flex-col items-center justify-center w-full max-w-sm gap-4">
           {/* Card Container */}
           <div
             ref={containerRef}
-            className="w-full transition-all duration-300 ease-in-out"
+            className="w-full flex justify-center transition-all duration-300 ease-in-out"
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             onTouchStart={handleTouchStart}
@@ -93,7 +93,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
           </div>
           
           {/* Page Indicator */}
-          <div className="flex flex-row justify-center items-center w-full h-4 gap-2">
+          <div className="flex flex-row justify-center items-center w-full gap-2">
             {quotes.map((_, index) => (
               <button
                 key={index}

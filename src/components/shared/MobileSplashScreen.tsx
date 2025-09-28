@@ -65,12 +65,12 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
   }
 
   return (
-    <div className="min-h-screen-fix flex flex-col">
+    <div className="h-screen-fix flex flex-col">
       {/* HEADER SECTION - Fixed at top */}
       <MobileHeader variant="splash" />
 
-      {/* CONTENT SECTION - Flexible middle area with top padding for fixed header and bottom padding for fixed navbar */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-20 min-h-0">
+      {/* CONTENT SECTION - Flexible middle area with proper centering */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-20 overflow-y-auto">
         {/* Content Container - All content grouped together */}
         <div className="flex flex-col items-center w-full max-w-md gap-8">
           {/* Calligraphy + Translation */}

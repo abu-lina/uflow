@@ -66,7 +66,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
   return (
     <LoadingProvider>
-      <div className={`page-background relative flex min-h-[100dvh] flex-col`}>
+      <div className="page-background relative flex h-screen-fix flex-col">
         {/* Mobile Header - Above all content, edge-to-edge */}
         {isLandingPage && (
           <div className="block md:hidden">
@@ -74,9 +74,9 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
           </div>
         )}
         
-        <main ref={mainRef} className={`flex-1 overflow-y-auto pb-[64px] md:pb-0`}>
+        <main ref={mainRef} className="flex-1 flex flex-col overflow-hidden">
           <PageTransition key={pathname}>
-            <div className="min-h-full bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+            <div className="h-full bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
               {children}
             </div>
           </PageTransition>
