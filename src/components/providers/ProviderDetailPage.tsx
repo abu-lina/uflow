@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -81,6 +81,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
   const [isSaved, setIsSaved] = useState(false);
   const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
+  const [expandedOffers, setExpandedOffers] = useState(true);
+  const [expandedNeeds, setExpandedNeeds] = useState(true);
+  const [expandedBarakah, setExpandedBarakah] = useState(true);
 
   // Navigation functions
   const goToNext = useCallback(() => {
@@ -290,63 +293,109 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           {/* Barakah Effect Section */}
           {communityServices.length > 0 && (
             <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2">
-                <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
-                  Unser Barakah Effekt
-                </h3>
-                <Icon className="h-4 w-4 text-gray-500" icon="material-symbols:info-outline" />
-              </div>
+              <button
+                className="flex w-full items-center justify-between"
+                onClick={() => setExpandedBarakah(!expandedBarakah)}
+              >
+                <div className="flex items-center gap-2">
+                  <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
+                    Unser Barakah Effekt
+                  </h3>
+                  <Icon className="h-4 w-4 text-gray-500" icon="material-symbols:info-outline" />
+                </div>
+                <ChevronDown 
+                  className={`h-6 w-6 text-gray-600 transition-transform ${
+                    expandedBarakah ? 'rotate-180' : ''
+                  }`} 
+                />
+              </button>
               
-              <div className="mt-4 space-y-3">
-                {communityServices.map((service, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="relative h-12 w-12 overflow-hidden rounded-lg">
-                      <Image
-                        fill
-                        alt={service.community_service_name}
-                        className="object-cover"
-                        src={
-                          service.community_service_images && service.community_service_images.length > 0
-                            ? service.community_service_images[0]
-                            : PLACEHOLDER_IMAGE
-                        }
-                      />
+              {expandedBarakah && (
+                <div className="mt-4 space-y-3">
+                  {communityServices.map((service, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="relative h-12 w-12 overflow-hidden rounded-sm">
+                        <Image
+                          fill
+                          alt={service.community_service_name}
+                          className="object-cover"
+                          src={
+                            service.community_service_images && service.community_service_images.length > 0
+                              ? service.community_service_images[0]
+                              : PLACEHOLDER_IMAGE
+                          }
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-inter-tight font-medium text-gray-900">
+                          {service.community_service_name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Initiativen unterstützt
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-inter-tight font-medium text-gray-900">
-                        {service.community_service_name}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Initiativen unterstützt
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Offers Section */}
-          {provider.provider_offers && (
-            <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
-              <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
-                Wir bieten
-              </h3>
-              <p className="mt-2 text-gray-700 leading-relaxed">
-                {provider.provider_offers}
-              </p>
-            </div>
-          )}
+          {/* Combined Offers & Needs Section */}
+          {(provider.provider_offers || provider.provider_needs) && (
+            <div className="mx-6 mt-4 rounded-2xl bg-white shadow-sm">
+              {/* Offers Section */}
+              {provider.provider_offers && (
+                <div className="p-4">
+                  <button
+                    className="flex w-full items-center justify-between"
+                    onClick={() => setExpandedOffers(!expandedOffers)}
+                  >
+                    <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
+                      Wir bieten
+                    </h3>
+                    <ChevronDown 
+                      className={`h-6 w-6 text-gray-600 transition-transform ${
+                        expandedOffers ? 'rotate-180' : ''
+                      }`} 
+                    />
+                  </button>
+                  {expandedOffers && (
+                    <div className="mt-2 text-gray-700 leading-relaxed">
+                      {provider.provider_offers}
+                    </div>
+                  )}
+                </div>
+              )}
 
-          {/* Needs Section */}
-          {provider.provider_needs && (
-            <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
-              <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
-                Wir suchen
-              </h3>
-              <p className="mt-2 text-gray-700 leading-relaxed">
-                {provider.provider_needs}
-              </p>
+              {/* Divider */}
+              {provider.provider_offers && provider.provider_needs && (
+                <hr className="mx-4 border-gray-200" />
+              )}
+
+              {/* Needs Section */}
+              {provider.provider_needs && (
+                <div className="p-4">
+                  <button
+                    className="flex w-full items-center justify-between"
+                    onClick={() => setExpandedNeeds(!expandedNeeds)}
+                  >
+                    <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
+                      Wir suchen
+                    </h3>
+                    <ChevronDown 
+                      className={`h-6 w-6 text-gray-600 transition-transform ${
+                        expandedNeeds ? 'rotate-180' : ''
+                      }`} 
+                    />
+                  </button>
+                  {expandedNeeds && (
+                    <div className="mt-2 text-gray-700 leading-relaxed">
+                      {provider.provider_needs}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -505,59 +554,105 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             {/* Barakah Effect */}
             {communityServices.length > 0 && (
               <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
-                  Unser Barakah Effekt
-                </h3>
-                <div className="mt-4 space-y-4">
-                  {communityServices.map((service, index) => (
-                    <div key={index} className="flex items-center gap-4">
-                      <div className="relative h-16 w-16 overflow-hidden rounded-lg">
-                        <Image
-                          fill
-                          alt={service.community_service_name}
-                          className="object-cover"
-                          src={
-                            service.community_service_images && service.community_service_images.length > 0
-                              ? service.community_service_images[0]
-                              : PLACEHOLDER_IMAGE
-                          }
-                        />
+                <button
+                  className="flex w-full items-center justify-between"
+                  onClick={() => setExpandedBarakah(!expandedBarakah)}
+                >
+                  <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                    Unser Barakah Effekt
+                  </h3>
+                  <ChevronDown 
+                    className={`h-7 w-7 text-gray-600 transition-transform ${
+                      expandedBarakah ? 'rotate-180' : ''
+                    }`} 
+                  />
+                </button>
+                {expandedBarakah && (
+                  <div className="mt-4 space-y-4">
+                    {communityServices.map((service, index) => (
+                      <div key={index} className="flex items-center gap-4">
+                        <div className="relative h-16 w-16 overflow-hidden rounded-sm">
+                          <Image
+                            fill
+                            alt={service.community_service_name}
+                            className="object-cover"
+                            src={
+                              service.community_service_images && service.community_service_images.length > 0
+                                ? service.community_service_images[0]
+                                : PLACEHOLDER_IMAGE
+                            }
+                          />
+                        </div>
+                        <div>
+                          <p className="font-inter-tight font-semibold text-gray-900">
+                            {service.community_service_name}
+                          </p>
+                          <p className="text-gray-600">
+                            Initiativen unterstützt
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-inter-tight font-semibold text-gray-900">
-                          {service.community_service_name}
-                        </p>
-                        <p className="text-gray-600">
-                          Initiativen unterstützt
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Offers */}
-            {provider.provider_offers && (
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
-                  Wir bieten
-                </h3>
-                <p className="mt-3 text-gray-700 leading-relaxed">
-                  {provider.provider_offers}
-                </p>
-              </div>
-            )}
+            {/* Combined Offers & Needs Section */}
+            {(provider.provider_offers || provider.provider_needs) && (
+              <div className="rounded-2xl bg-white shadow-sm">
+                {/* Offers Section */}
+                {provider.provider_offers && (
+                  <div className="p-6">
+                    <button
+                      className="flex w-full items-center justify-between"
+                      onClick={() => setExpandedOffers(!expandedOffers)}
+                    >
+                      <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                        Wir bieten
+                      </h3>
+                      <ChevronDown 
+                        className={`h-7 w-7 text-gray-600 transition-transform ${
+                          expandedOffers ? 'rotate-180' : ''
+                        }`} 
+                      />
+                    </button>
+                    {expandedOffers && (
+                      <div className="mt-3 text-gray-700 leading-relaxed">
+                        {provider.provider_offers}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-            {/* Needs */}
-            {provider.provider_needs && (
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
-                  Wir suchen
-                </h3>
-                <p className="mt-3 text-gray-700 leading-relaxed">
-                  {provider.provider_needs}
-                </p>
+                {/* Divider */}
+                {provider.provider_offers && provider.provider_needs && (
+                  <hr className="mx-4 border-gray-200" />
+                )}
+
+                {/* Needs Section */}
+                {provider.provider_needs && (
+                  <div className="p-6">
+                    <button
+                      className="flex w-full items-center justify-between"
+                      onClick={() => setExpandedNeeds(!expandedNeeds)}
+                    >
+                      <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                        Wir suchen
+                      </h3>
+                      <ChevronDown 
+                        className={`h-7 w-7 text-gray-600 transition-transform ${
+                          expandedNeeds ? 'rotate-180' : ''
+                        }`} 
+                      />
+                    </button>
+                    {expandedNeeds && (
+                      <div className="mt-3 text-gray-700 leading-relaxed">
+                        {provider.provider_needs}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
