@@ -366,6 +366,29 @@
   .text-balance {
     text-wrap: balance;
   }
+  
+  /* Safari mobile viewport fix for splash screens */
+  .safari-mobile-fix {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Fallback for older Safari versions */
+    height: -webkit-fill-available;
+  }
+  
+  /* iOS Safari specific fixes */
+  @supports (-webkit-touch-callout: none) {
+    .safari-mobile-fix {
+      height: 100vh;
+      height: 100dvh;
+      min-height: 100vh;
+      min-height: 100dvh;
+      /* Force proper height calculation on iOS Safari */
+      height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+  }
 }
 
 @keyframes fadeIn {

@@ -99,7 +99,7 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
 
   return (
     <div 
-      className="fixed inset-0 flex flex-col items-center px-4 h-screen overflow-hidden"
+      className="fixed inset-0 flex flex-col items-center px-4 overflow-hidden safari-mobile-fix"
       style={{ 
         background: 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
         position: 'fixed',
