@@ -4,7 +4,8 @@ import { searchCommunityServices, type CommunityService } from './community_serv
 export interface Provider {
   provider_id: string;
   provider_name: string;
-  provider_description: string | null;
+  provider_offers: string | null;
+  provider_needs: string | null;
   provider_images: string | null;
   category_id: string | null;
   address_city: string | null;
@@ -71,7 +72,11 @@ export async function getProviders(): Promise<Provider[]> {
 }
 
 export async function getProviderById(id: string): Promise<Provider | null> {
-  const { data, error } = await supabase.from('providers').select('*').eq('provider_id', id).single<Provider>();
+  const { data, error } = await supabase
+    .from('providers')
+    .select('*, category:categories(name_de)')
+    .eq('provider_id', id)
+    .single<Provider>();
   if (error) throw error;
   return data ?? null;
 }
@@ -88,7 +93,8 @@ export async function searchProviders(
     return communityServices.map((communityService) => ({
       provider_id: communityService.community_service_id,
       provider_name: communityService.community_service_name,
-      provider_description: communityService.community_service_description,
+      provider_offers: communityService.community_service_description,
+      provider_needs: null, // Community services don't have needs field
       provider_images: communityService.community_service_images ? JSON.stringify(communityService.community_service_images) : null,
       category_id: communityService.category_id,
       address_city: communityService.address_city,
@@ -139,7 +145,7 @@ export async function searchProvidersAndCommunityServices(
   const providerResults: SearchResult[] = providers.map((provider) => ({
     id: provider.provider_id,
     name: provider.provider_name,
-    description: provider.provider_description,
+    description: provider.provider_offers,
     images: provider.provider_images,
     category_id: provider.category_id,
     address_city: provider.address_city,

@@ -19,7 +19,8 @@ interface ProviderCardModalProps {
   provider: {
     provider_id: string;
     provider_name: string;
-    provider_description?: string | null;
+    provider_offers?: string | null;
+    provider_needs?: string | null;
     provider_images?: string | string[] | { urls?: string[] } | null;
     address_street?: string | null;
     address_zip?: string | null;
@@ -392,7 +393,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
     if (navigator.share) {
       navigator.share({
         title: provider.provider_name,
-        text: provider.provider_description || '',
+        text: provider.provider_offers || '',
         url: shareUrl,
       });
     } else {
@@ -644,14 +645,26 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                   </div>
                 </div>
               )}
-            {/* Description Section */}
-            {provider.provider_description && (
+            {/* Offers Section */}
+            {provider.provider_offers && (
               <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
                 <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
-                  Beschreibung:
+                  Wir bieten:
                 </div>
                 <div className="font-inter-tight text-[16px] leading-[21px] text-[#272727]">
-                  {provider.provider_description}
+                  {provider.provider_offers}
+                </div>
+              </div>
+            )}
+
+            {/* Needs Section */}
+            {provider.provider_needs && (
+              <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
+                <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
+                  Wir suchen:
+                </div>
+                <div className="font-inter-tight text-[16px] leading-[21px] text-[#272727]">
+                  {provider.provider_needs}
                 </div>
               </div>
             )}

@@ -2,19 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 import { CategoryFilter } from '@/components/providers/CategoryFilter';
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
-import { ProviderCardModal } from '@/components/providers/ProviderCardModal';
-import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
 import { EmptyState, SkeletonGrid } from '@/components/ui';
 import { sharedTransition } from '@/components/ui/PageTransition';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { useLoading } from '@/providers/LoadingProvider';
 import { useSearch } from '@/providers/search-provider';
 import {
@@ -25,19 +22,18 @@ import {
 } from '@/services/providers';
 
 export function ProvidersContent() {
+  const router = useRouter();
   const { user, loading: userLoading } = useAuth();
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [bookmarkedProviderIds, setBookmarkedProviderIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
   const searchParams = useSearchParams();
   const [paramVersion, setParamVersion] = useState(0);
   const location = searchParams.get('location') || 'Überall';
   const query = searchParams.get('q') || '';
-  const isMobile = useIsMobile();
 
   // Get search context to sync with URL parameters
   const {
@@ -67,12 +63,10 @@ export function ProvidersContent() {
   }, []);
 
   const handleProviderClick = useCallback((provider: Provider) => {
-    setSelectedProvider(provider);
-  }, []);
+    // Navigate to provider detail page instead of opening modal
+    router.push(`/providers/${provider.provider_id}`);
+  }, [router]);
 
-  const handleCloseModal = useCallback(async () => {
-    setSelectedProvider(null);
-  }, []);
 
   // Sync URL parameters with search context - only when they actually change
   useEffect(() => {
@@ -273,8 +267,7 @@ export function ProvidersContent() {
 
       {/* Main Content - Only this area updates with smooth transitions */}
       <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-28 sm:pt-8 md:pt-28">
-        <AnimatePresence mode="wait">
-          {loading && !isInitialRender && !isNavigating ? (
+        {loading && !isInitialRender && !isNavigating ? (
             <motion.div
               key="loading"
               animate={{ opacity: 1 }}
@@ -350,22 +343,8 @@ export function ProvidersContent() {
               />
             </motion.div>
           )}
-        </AnimatePresence>
       </div>
 
-      {/* Mobile Modal */}
-      {selectedProvider && isMobile && (
-        <ProviderCardModal open={true} provider={selectedProvider} onClose={handleCloseModal} />
-      )}
-
-      {/* Desktop Modal */}
-      {selectedProvider && !isMobile && (
-        <ProviderDetailModal
-          provider={selectedProvider}
-          onBookmarkChange={handleBookmarkChange}
-          onClose={handleCloseModal}
-        />
-      )}
     </div>
   );
 }

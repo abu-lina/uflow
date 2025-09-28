@@ -144,7 +144,8 @@ export function ProviderCreateForm() {
     // 2. Save provider with trusted Supabase image URLs
     const insertData = {
       provider_name: formData.title,
-      provider_description: formData.description,
+      provider_offers: formData.description,
+      provider_needs: null, // Form doesn't collect needs yet
       address_street: formData.street,
       address_zip: formData.zip,
       address_city: formData.city,

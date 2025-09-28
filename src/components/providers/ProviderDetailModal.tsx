@@ -7,6 +7,8 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Modal } from '@/components/ui/Modal';
+import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
@@ -23,6 +25,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   onClose,
   onBookmarkChange,
 }) => {
+  const isMobile = useIsMobile();
   function hasUrls(obj: unknown): obj is { urls: string[] } {
     return (
       typeof obj === 'object' &&
@@ -286,7 +289,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       if (navigator.share) {
         void navigator.share({
           title: provider.provider_name,
-          text: provider.provider_description || '',
+          text: provider.provider_offers || '',
           url: shareUrl,
         });
       } else {
@@ -298,6 +301,17 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       window.open(provider.social_website, '_blank');
     }
   };
+
+  // Render mobile version for mobile devices
+  if (isMobile) {
+    return (
+      <Modal isOpen={true} title={provider.provider_name} onClose={onClose}>
+        <div className="w-full max-w-sm">
+          <MobileProviderDetail provider={provider} />
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal isOpen={true} title={communityServices[0]?.community_service_name || provider.provider_name} onClose={onClose}>
@@ -521,10 +535,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 <div className="inline-flex items-start justify-between self-stretch">
                   <div className="inline-flex flex-1 flex-col items-start justify-start gap-2">
                     <div className="text-uFlowText h-10 w-48 justify-start font-inter-tight text-2xl font-semibold">
-                      Beschreibung:
+                      Wir bieten:
                     </div>
                     <div className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800">
-                      {provider.provider_description ?? ''}
+                      {provider.provider_offers ?? ''}
                     </div>
                   </div>
                 </div>

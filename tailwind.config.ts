@@ -48,15 +48,15 @@ const config: Config = {
       fontSize: {
         // Minor Third scale (1.2 ratio) - base = 16px
         // 11 → 13 → 16 → 19 → 23 → 27 → 33 → 40 → 48
-        xs: ['0.694rem', { lineHeight: '1rem' }],      // 11px
-        sm: ['0.833rem', { lineHeight: '1.25rem' }],  // 13px
-        base: ['1rem', { lineHeight: '1.5rem' }],     // 16px (base)
-        lg: ['1.2rem', { lineHeight: '1.625rem' }],   // 19px
-        xl: ['1.44rem', { lineHeight: '1.875rem' }],  // 23px
-        '2xl': ['1.728rem', { lineHeight: '2.125rem' }], // 27px
-        '3xl': ['2.074rem', { lineHeight: '2.375rem' }], // 33px
-        '4xl': ['2.488rem', { lineHeight: '2.75rem' }], // 40px
-        '5xl': ['2.986rem', { lineHeight: '3.25rem' }], // 48px
+        xs: ['0.694rem', { lineHeight: '1rem' }],      // 11px / 16px
+        sm: ['0.833rem', { lineHeight: '1.25rem' }],  // 13px / 20px
+        base: ['1rem', { lineHeight: '1.5rem' }],     // 16px / 24px (base)
+        lg: ['1.2rem', { lineHeight: '1.625rem' }],   // 19px / 26px
+        xl: ['1.44rem', { lineHeight: '1.875rem' }],  // 23px / 30px
+        '2xl': ['1.728rem', { lineHeight: '2.125rem' }], // 27px / 34px
+        '3xl': ['2.074rem', { lineHeight: '2.25rem' }],  // 33px / 36px (tighter)
+        '4xl': ['2.488rem', { lineHeight: '2.625rem' }], // 40px / 42px (tighter)
+        '5xl': ['2.986rem', { lineHeight: '3.125rem' }], // 48px / 50px (tighter)
       },
       spacing: {
         // Following the Rule of 8
