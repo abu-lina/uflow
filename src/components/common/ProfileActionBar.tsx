@@ -2,6 +2,8 @@
 
 import { Icon } from '@iconify/react';
 
+import { HeartIcon } from '@/components/ui/icons/HeartIcon';
+
 // Types
 export type UserTab = 'saved' | 'created';
 
@@ -47,11 +49,11 @@ export function UserNavigationTabs({
         role="tab"
         onClick={() => onTabChange('saved')}
       >
-        <Icon
+        <HeartIcon
           className={`${BUTTON_STYLES.icon} ${
             activeTab === 'saved' ? 'text-white' : 'text-text-secondary'
           }`}
-          icon="iconamoon:heart"
+          isActive={activeTab === 'saved'}
         />
         <span className={BUTTON_STYLES.text}>Merken</span>
       </button>

@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 const Icon = dynamic(() => import('@iconify/react').then((mod) => mod.Icon), { ssr: false });
 
+import { HeartIcon } from '@/components/ui/icons/HeartIcon';
+
 // Types
 export type UserTab = 'saved' | 'created' | 'create';
 
@@ -62,11 +64,11 @@ export function UserNavigationTabs({
         role="tab"
         onClick={() => onTabChange('saved')}
       >
-        <ClientOnlyIcon
+        <HeartIcon
           className={`${BUTTON_STYLES.icon} ${
             activeTab === 'saved' ? 'text-white' : 'text-text-secondary'
           }`}
-          icon="iconamoon:heart"
+          isActive={activeTab === 'saved'}
         />
         {activeTab === 'saved' && (
           <span className={`${BUTTON_STYLES.text} ml-1.5`}>Gespeichert</span>

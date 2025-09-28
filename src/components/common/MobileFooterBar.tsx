@@ -10,6 +10,8 @@ import { motion } from 'framer-motion';
 import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
 import { CreateIcon } from '@/components/ui/icons/CreateIcon';
+import { SavedIcon } from '@/components/ui/icons/SavedIcon';
+import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { sharedTransition } from '@/components/ui/PageTransition';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -38,14 +40,14 @@ const navItems = [
   {
     label: 'Saved',
     href: '/saved',
-    icon: 'iconamoon:heart',
+    icon: (isActive: boolean) => <SavedIcon isActive={isActive} />,
     noFrame: true,
     // framed by default
   },
   {
     label: 'Profile',
     href: '/profile',
-    icon: 'lucide:user',
+    icon: (isActive: boolean) => <ProfileIcon isActive={isActive} />,
     noFrame: true,
   },
 ];
