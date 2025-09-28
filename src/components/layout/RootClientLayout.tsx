@@ -74,7 +74,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
           </div>
         )}
         
-        <main ref={mainRef} className="flex-1 flex flex-col overflow-hidden">
+        <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto">
           <PageTransition key={pathname}>
             <div className="h-full bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
               {children}

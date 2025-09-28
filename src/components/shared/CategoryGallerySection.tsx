@@ -107,7 +107,7 @@ export function CategoryGallerySection() {
   return (
     <motion.section
       animate={{ opacity: 1, y: 0 }}
-      className="w-full pb-8 pt-4 lg:hidden"
+      className="w-full pb-20 pt-4 lg:hidden"
       initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
     >
