@@ -176,7 +176,7 @@ export async function getCommunityServicesForProvider(providerId: string): Promi
     .eq('provider_id', providerId)
     .returns<CommunityServiceData[]>();
   if (error) throw error;
-  return data;
+  return data || [];
 }
 
 // Legacy aliases for backward compatibility during transition

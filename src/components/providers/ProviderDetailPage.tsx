@@ -85,6 +85,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const [expandedNeeds, setExpandedNeeds] = useState(true);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
 
+
   // Navigation functions
   const goToNext = useCallback(() => {
     setSelectedImageIdx((prev) => (prev + 1) % allImageUrls.length);
@@ -178,9 +179,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     async function fetchCommunityServices() {
       try {
         const data = await getCommunityServicesForProvider(provider.provider_id);
-        setCommunityServices(data);
-      } catch {
-        console.error('Error fetching community services');
+        setCommunityServices(data || []);
+      } catch (error) {
+        console.error('Error fetching community services:', error);
+        setCommunityServices([]);
       }
     }
     fetchCommunityServices();
@@ -291,7 +293,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           </div>
 
           {/* Barakah Effect Section */}
-          {communityServices.length > 0 && (
+          {communityServices && communityServices.length > 0 && (
             <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
               <button
                 className="flex w-full items-center justify-between"
@@ -552,7 +554,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             </div>
 
             {/* Barakah Effect */}
-            {communityServices.length > 0 && (
+            {communityServices && communityServices.length > 0 && (
               <div className="rounded-2xl bg-white p-6 shadow-sm">
                 <button
                   className="flex w-full items-center justify-between"
