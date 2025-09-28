@@ -15,7 +15,9 @@ export function SplashScreenDebug() {
   }
 
   const handleResetSplash = () => {
+    // Clear splash screen state
     resetSplashScreen();
+    
     // Force a small delay to ensure localStorage is updated
     setTimeout(() => {
       setSplashVisible(true);
