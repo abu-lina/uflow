@@ -27,8 +27,8 @@ export function SplashScreenDebug() {
   return (
     <div className="fixed top-4 right-4 z-50 bg-red-500 text-white p-2 rounded shadow-lg">
       <button
-        onClick={handleResetSplash}
         className="text-xs font-mono"
+        onClick={handleResetSplash}
       >
         Reset Splash Screen
       </button>
