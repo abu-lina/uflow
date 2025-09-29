@@ -61,6 +61,8 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
     optimizePackageImports: ['@mui/material', '@mui/icons-material', 'framer-motion'],
+    // Preload critical chunks
+    webpackBuildWorker: true,
   },
 
   // Image optimization
@@ -115,21 +117,21 @@ const nextConfig = {
     if (!isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
-        maxSize: 200000, // 200KB max chunk size for Cloudflare Pages
-        minSize: 10000, // 10KB min chunk size
+        maxSize: 300000, // 300KB max chunk size (better balance)
+        minSize: 20000, // 20KB min chunk size (fewer small chunks)
         cacheGroups: {
           default: {
             minChunks: 2,
             priority: -20,
             reuseExistingChunk: true,
-            maxSize: 200000,
+            maxSize: 300000,
           },
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             priority: -10,
             chunks: 'all',
-            maxSize: 200000,
+            maxSize: 300000,
             minSize: 10000,
           },
           // Split large libraries into separate chunks
@@ -137,14 +139,14 @@ const nextConfig = {
             test: /[\\/]node_modules[\\/]@mui[\\/]/,
             name: 'mui',
             chunks: 'all',
-            maxSize: 200000,
+            maxSize: 300000,
             priority: 10,
           },
           framer: {
             test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
             name: 'framer',
             chunks: 'all',
-            maxSize: 200000,
+            maxSize: 300000,
             priority: 10,
           },
         },
@@ -162,6 +164,11 @@ const nextConfig = {
           {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',
+          },
+          // Preload critical resources
+          {
+            key: 'Link',
+            value: '</_next/static/css/app/layout.css>; rel=preload; as=style',
           },
           {
             key: 'Strict-Transport-Security',
