@@ -1,0 +1,22 @@
+# Cloudflare Pages configuration for Next.js
+name = "uflow"
+compatibility_date = "2024-09-29"
+
+[env.production]
+# Production environment settings
+
+[env.preview]
+# Preview environment settings
+
+# Pages configuration
+[pages]
+# Build output directory for Next.js
+pages_build_output_dir = ".next"
+
+# Build command (optional - can be set in Cloudflare dashboard)
+# build_command = "npm run build:production"
+
+# Environment variables (set these in Cloudflare Pages dashboard)
+# NEXT_PUBLIC_SUPABASE_URL = "your-supabase-url"
+# NEXT_PUBLIC_SUPABASE_ANON_KEY = "your-supabase-anon-key"
+# NODE_ENV = "production"

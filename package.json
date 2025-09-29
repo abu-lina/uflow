@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "export $(cat .env.local | grep -v '^#' | xargs) && next build",
     "build:raw": "next build",
-    "build:production": "npm ci --include=dev && next build",
+    "build:production": "npm ci --include=dev && next build && rm -rf .next/cache",
     "start": "next start",
     "clean": "rm -rf .next",
     "build:clean": "npm run clean && npm run build",
