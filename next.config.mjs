@@ -58,9 +58,27 @@ const nextConfig = {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
 
-  // Webpack configuration (only if needed)
-  webpack: (config) => {
-    // Add custom webpack configuration here if needed
+  // Webpack configuration for Cloudflare Pages optimization
+  webpack: (config, { isServer }) => {
+    // Optimize for Cloudflare Pages file size limits
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: -10,
+            chunks: 'all',
+          },
+        },
+      };
+    }
     return config;
   },
 
@@ -68,6 +86,8 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
+    // Optimize for Cloudflare Pages
+    optimizePackageImports: ['@mui/material', '@mui/icons-material', 'framer-motion'],
   },
 
   // Security headers (comprehensive set)
