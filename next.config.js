@@ -47,7 +47,6 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   // Core Next.js settings
   reactStrictMode: true,
-  swcMinify: true,
   poweredByHeader: false,
   compress: true,
 
@@ -55,10 +54,11 @@ const nextConfig = {
   output: 'standalone',
   
   // Optimize file tracing for Cloudflare Pages
+  outputFileTracingIncludes: {
+    '/': ['./src/**/*'],
+  },
+  
   experimental: {
-    outputFileTracingIncludes: {
-      '/': ['./src/**/*'],
-    },
     optimizeCss: true,
     scrollRestoration: true,
     optimizePackageImports: ['@mui/material', '@mui/icons-material', 'framer-motion'],
