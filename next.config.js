@@ -50,7 +50,8 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
 
-  // Cloudflare Pages optimization - use standard output for SSR
+  // Cloudflare Pages optimization - use standalone output
+  output: 'standalone',
   
   // Optimize file tracing for Cloudflare Pages
   outputFileTracingIncludes: {

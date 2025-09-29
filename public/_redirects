@@ -1,0 +1,9 @@
+# Cloudflare Pages redirects for Next.js
+# Handle client-side routing
+/*    /index.html   200
+
+# API routes
+/api/*    /api/:splat    200
+
+# Static files
+/_next/static/*    /_next/static/:splat    200
