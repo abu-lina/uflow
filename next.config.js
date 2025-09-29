@@ -50,8 +50,7 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
 
-  // Cloudflare Pages optimization
-  output: 'standalone',
+  // Cloudflare Pages optimization - use default output for better compatibility
   
   // Optimize file tracing for Cloudflare Pages
   outputFileTracingIncludes: {
