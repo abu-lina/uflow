@@ -4,7 +4,7 @@ compatibility_date = "2024-09-29"
 
 # Pages configuration
 [pages]
-# Build output directory for Next.js
+# Build output directory for Next.js SSR
 pages_build_output_dir = ".next"
 
 # Build command (optional - can be set in Cloudflare dashboard)

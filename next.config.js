@@ -50,7 +50,7 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
 
-  // Cloudflare Pages optimization - use default output for better compatibility
+  // Cloudflare Pages optimization - use standard output for SSR
   
   // Optimize file tracing for Cloudflare Pages
   outputFileTracingIncludes: {
@@ -115,19 +115,37 @@ const nextConfig = {
     if (!isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
-        maxSize: 244000, // 244KB max chunk size for Cloudflare Pages
+        maxSize: 200000, // 200KB max chunk size for Cloudflare Pages
+        minSize: 10000, // 10KB min chunk size
         cacheGroups: {
           default: {
             minChunks: 2,
             priority: -20,
             reuseExistingChunk: true,
+            maxSize: 200000,
           },
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             priority: -10,
             chunks: 'all',
-            maxSize: 244000,
+            maxSize: 200000,
+            minSize: 10000,
+          },
+          // Split large libraries into separate chunks
+          mui: {
+            test: /[\\/]node_modules[\\/]@mui[\\/]/,
+            name: 'mui',
+            chunks: 'all',
+            maxSize: 200000,
+            priority: 10,
+          },
+          framer: {
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            name: 'framer',
+            chunks: 'all',
+            maxSize: 200000,
+            priority: 10,
           },
         },
       };
