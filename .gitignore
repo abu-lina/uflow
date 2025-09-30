@@ -92,3 +92,6 @@ storybook-static
 .env.test.local
 .env.production.local
 .DS_Store
+
+# OpenNext build output
+.open-next
