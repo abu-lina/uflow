@@ -38,6 +38,7 @@
     "fix:all": "npm run fix:tailwind && npm run format",
     "build:local": "export $(cat .env.local | xargs) && next build",
     "build:vercel": "next build",
+    "build:cloudflare": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare build && wrangler dev",
     "deploy": "opennextjs-cloudflare build && wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
