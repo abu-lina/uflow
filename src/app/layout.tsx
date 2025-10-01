@@ -33,9 +33,6 @@ export const metadata: Metadata = {
     "Der erste halal-konforme Marktplatz der sicherstellt, das Jeder die Zakat entrichtet insha'Allah.",
 };
 
-// Force dynamic rendering to ensure environment variables are available
-export const dynamic = 'force-dynamic';
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = createSupabaseServerClient();
   const {
