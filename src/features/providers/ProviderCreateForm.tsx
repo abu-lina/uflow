@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
+import type { ReadonlyURLSearchParams } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { TagsMultiSelect } from '@/components/providers/TagsMultiSelect';
-import { FormField } from '@/components/ui/FormField';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import type { ProviderFormData } from '@/types/provider';
@@ -42,7 +42,11 @@ const STEPS = [
   },
 ];
 
-export function ProviderCreateForm() {
+interface ProviderCreateFormProps {
+  searchParams?: ReadonlyURLSearchParams | null;
+}
+
+export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ExtendedFormData>({
@@ -60,13 +64,11 @@ export function ProviderCreateForm() {
     tags: [],
   });
   const [categories, setCategories] = useState<Category[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     async function fetchCategories() {
-      setCategoriesLoading(true);
       const { data, error } = await supabase
         .from('categories')
         .select('*')
@@ -74,10 +76,19 @@ export function ProviderCreateForm() {
       if (!error && data) {
         setCategories(data);
       }
-      setCategoriesLoading(false);
     }
     void fetchCategories();
   }, []);
+
+  // Handle category selection from URL params
+  useEffect(() => {
+    if (searchParams?.get('categoryId')) {
+      setFormData(prev => ({
+        ...prev,
+        category: searchParams.get('categoryId') || ''
+      }));
+    }
+  }, [searchParams]);
 
   const handleInputChange = (field: keyof ExtendedFormData, value: string | string[] | File[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -175,11 +186,6 @@ export function ProviderCreateForm() {
     }
   };
 
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
 
   function isStepValid(step: number, data: ExtendedFormData) {
     switch (step) {
@@ -199,187 +205,266 @@ export function ProviderCreateForm() {
   }
 
   return (
-    <form className="mx-auto w-full max-w-xl" onSubmit={handleSubmit}>
-      <StepIndicator currentStep={currentStep} steps={STEPS} />
-
-      <div className="mt-8 space-y-6">
-        {currentStep === 0 && (
-          <>
-            <FormField.Input
-              required
-              label="TITEL"
-              name="title"
-              placeholder="Titel eingeben"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-            />
-            <div className="flex w-full flex-col items-start gap-2">
-              <label className="px-3 font-inter text-base text-[#999999]" htmlFor="category">
-                KATEGORIE <span className="ml-1 text-red-500">*</span>
-              </label>
-              <select
-                required
-                className="h-10 w-full rounded-[15px] border border-[#D4D4D4] bg-white px-4 font-inter text-[15px] text-[#272727] outline-none transition-colors focus:border-[#BFDBD8] focus:ring-1 focus:ring-[#BFDBD8]"
-                disabled={categoriesLoading}
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={(e) => handleInputChange('category', e.target.value)}
-              >
-                <option disabled value="">
-                  {categoriesLoading ? 'Lade Kategorien...' : 'Kategorie auswählen'}
-                </option>
-                {categories.map((cat) => (
-                  <option key={cat.category_id} value={cat.category_id}>
-                    {cat.name_de || cat.name_en}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <FormField.Textarea
-              required
-              label="BESCHREIBUNG"
-              name="description"
-              placeholder="Beschreibung eingeben"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-            />
-          </>
-        )}
-
-        {currentStep === 1 && (
-          <>
-            <FormField.Input
-              required
-              label="STRASSE"
-              name="street"
-              placeholder="Straße eingeben"
-              value={formData.street}
-              onChange={(e) => handleInputChange('street', e.target.value)}
-            />
-            <FormField.Input
-              required
-              label="PLZ"
-              name="zip"
-              placeholder="PLZ eingeben"
-              value={formData.zip}
-              onChange={(e) => handleInputChange('zip', e.target.value)}
-            />
-            <FormField.Input
-              required
-              label="STADT"
-              name="city"
-              placeholder="Stadt eingeben"
-              value={formData.city}
-              onChange={(e) => handleInputChange('city', e.target.value)}
-            />
-          </>
-        )}
-
-        {currentStep === 2 && (
-          <>
-            <FormField.Input
-              label="WEBSITE"
-              name="website"
-              placeholder="Website eingeben"
-              type="url"
-              value={formData.website}
-              onChange={(e) => handleInputChange('website', e.target.value)}
-            />
-            <FormField.Input
-              label="INSTAGRAM"
-              name="instagram"
-              placeholder="Instagram eingeben"
-              value={formData.instagram}
-              onChange={(e) => handleInputChange('instagram', e.target.value)}
-            />
-            <FormField.Input
-              label="TELEFON"
-              name="phone"
-              placeholder="Telefon eingeben"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-            />
-            <FormField.Input
-              label="EMAIL"
-              name="email"
-              placeholder="Email eingeben"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-            />
-          </>
-        )}
-
-        {currentStep === 3 && (
-          <>
-            <div className="space-y-2">
-              <label className="px-3 font-inter text-base text-[#999999]" htmlFor="images-upload">
-                BILDER
-              </label>
-              <input
-                multiple
-                accept="image/*"
-                className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary/90"
-                id="images-upload"
-                type="file"
-                onChange={handleImageUpload}
-              />
-            </div>
-            <TagsMultiSelect
-              required
-              selected={formData.tags}
-              onChange={(tags) => handleInputChange('tags', tags)}
-            />
-          </>
-        )}
+    <div className="flex w-full max-w-[361px] flex-1 flex-col">
+      {/* Step Indicator */}
+      <div className="mb-12">
+        <StepIndicator currentStep={currentStep} steps={STEPS} />
       </div>
 
-      <div className="mt-8 flex justify-between">
-        {currentStep > 0 && (
-          <button
-            className="rounded-[9.6px] bg-gray-100 px-6 py-2 font-inter text-[15px] text-[#272727] transition-colors hover:bg-gray-200"
-            type="button"
-            onClick={prevStep}
-          >
-            Zurück
-          </button>
-        )}
-        {currentStep === STEPS.length - 1 ? (
-          <button
-            className={[
-              'ml-auto rounded-[9.6px] bg-primary px-6 py-2 font-inter text-[15px] text-white transition-colors',
-              isSubmitting || !isStepValid(currentStep, formData)
-                ? 'cursor-not-allowed opacity-50 hover:bg-primary'
-                : 'hover:bg-primary/90',
-            ].join(' ')}
-            disabled={isSubmitting || !isStepValid(currentStep, formData)}
-            type="submit"
-          >
-            {isSubmitting ? (
-              <Icon className="size-5 animate-spin" icon="mdi:loading" />
-            ) : (
-              'Provider erstellen'
+      {/* Form Content */}
+      <div className="flex flex-1 flex-col">
+        <form className="flex flex-1 flex-col" onSubmit={handleSubmit}>
+          {/* Form Fields */}
+          <div className="flex flex-1 flex-col gap-8 pb-24">
+            {currentStep === 0 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-medium text-[#232323] px-3">Basics</h2>
+                
+                <div className="space-y-3">
+                  {/* First Name Field */}
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Titel *</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Titel eingeben"
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => handleInputChange('title', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Category Field */}
+                  <button
+                    className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+                    type="button"
+                    onClick={() => router.push(`/create/category?categoryId=${formData.category}`)}
+                  >
+                    <div className="flex flex-1 flex-col gap-1 items-start">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Kategorie *</span>
+                      <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left">
+                        {formData.category 
+                          ? categories.find(cat => cat.category_id === formData.category)?.name_de || 
+                            categories.find(cat => cat.category_id === formData.category)?.name_en || 
+                            'Kategorie auswählen'
+                          : 'Kategorie auswählen'
+                        }
+                      </div>
+                    </div>
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </button>
+
+                  {/* What I Offer Field */}
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Was biete ich? *</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Was biete ich?"
+                        type="text"
+                        value={formData.description}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+
+                  {/* What I'm Looking For Field */}
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Was suche ich?</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Was suche ich?"
+                        type="text"
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+                </div>
+              </div>
             )}
-          </button>
-        ) : (
-          <button
-            className={[
-              'ml-auto rounded-[9.6px] bg-primary px-6 py-2 font-inter text-[15px] text-white transition-colors',
-              currentStep === 0 ? 'w-full' : '',
-              isSubmitting || !isStepValid(currentStep, formData)
-                ? 'cursor-not-allowed opacity-50 hover:bg-primary'
-                : 'hover:bg-primary/90',
-            ].join(' ')}
-            disabled={isSubmitting || !isStepValid(currentStep, formData)}
-            type="button"
-            onClick={nextStep}
-          >
-            Weiter
-          </button>
-        )}
+
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-medium text-[#232323] px-3">Location</h2>
+                
+                <div className="space-y-3">
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Straße *</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Straße eingeben"
+                        type="text"
+                        value={formData.street}
+                        onChange={(e) => handleInputChange('street', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">PLZ *</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="PLZ eingeben"
+                        type="text"
+                        value={formData.zip}
+                        onChange={(e) => handleInputChange('zip', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Stadt *</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Stadt eingeben"
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-medium text-[#232323] px-3">Contact</h2>
+                
+                <div className="space-y-3">
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Website</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Website eingeben"
+                        type="url"
+                        value={formData.website}
+                        onChange={(e) => handleInputChange('website', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Instagram</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Instagram eingeben"
+                        type="text"
+                        value={formData.instagram}
+                        onChange={(e) => handleInputChange('instagram', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Telefon</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Telefon eingeben"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Email</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Email eingeben"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-medium text-[#232323] px-3">Media</h2>
+                
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-xs text-[#999999]" htmlFor="images-upload">
+                      Bilder
+                    </label>
+                    <input
+                      multiple
+                      accept="image/*"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary/90"
+                      id="images-upload"
+                      type="file"
+                      onChange={handleImageUpload}
+                    />
+                  </div>
+                  <TagsMultiSelect
+                    required
+                    selected={formData.tags}
+                    onChange={(tags) => handleInputChange('tags', tags)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sticky Weiter Button */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]">
+            <div className="flex h-[80px] w-full items-center justify-center px-4">
+              <button
+                className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
+                  isSubmitting || !isStepValid(currentStep, formData)
+                    ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
+                    : 'bg-[#589D96] opacity-100'
+                }`}
+                disabled={isSubmitting || !isStepValid(currentStep, formData)}
+                type={currentStep === STEPS.length - 1 ? 'submit' : 'button'}
+                onClick={currentStep === STEPS.length - 1 ? undefined : nextStep}
+              >
+                {isSubmitting ? (
+                  <Icon className="h-5 w-5 animate-spin text-white" icon="mdi:loading" />
+                ) : (
+                  <>
+                    <span className="text-base font-medium text-white leading-[19px]">
+                      Weiter
+                    </span>
+                    <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }

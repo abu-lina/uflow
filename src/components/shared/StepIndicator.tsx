@@ -1,7 +1,5 @@
 'use client';
 
-import { Icon } from '@iconify/react';
-
 export interface StepIndicatorProps {
   currentStep: number;
   steps: { title: string; icon: string }[];
@@ -9,41 +7,62 @@ export interface StepIndicatorProps {
 
 export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
   return (
-    <div className="flex w-full items-center justify-between gap-6">
-      {steps.map((step, idx) => {
-        const isCompleted = idx < currentStep;
-        const isCurrent = idx === currentStep;
-        return (
-          <div key={step.title} className="flex flex-1 flex-col items-center">
-            <div
-              className={[
-                'flex size-10 items-center justify-center rounded-full border-2',
-                isCompleted
-                  ? 'border-mint bg-mint text-white'
-                  : isCurrent
-                    ? 'border-mint bg-white text-mint'
-                    : 'border-gray-300 bg-white text-gray-400',
-              ].join(' ')}
-            >
-              {isCompleted ? (
-                <Icon className="size-6" icon="mdi:check" />
-              ) : (
-                <Icon className="size-6" icon={step.icon} />
+    <div className="flex w-full flex-col items-center gap-2">
+      {/* Step circles with connecting lines */}
+      <div className="flex w-full items-center justify-center">
+        {steps.map((step, idx) => {
+          const isCompleted = idx < currentStep;
+          const isCurrent = idx === currentStep;
+          const isActive = isCompleted || isCurrent;
+          
+          return (
+            <div key={step.title} className="flex items-center">
+              {/* Step circle */}
+              <div
+                className={[
+                  'flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold',
+                  isActive
+                    ? 'border-[#589D96] bg-white text-[#589D96]'
+                    : 'border-[#999999] bg-[#D7D7D7] text-[#999999]',
+                ].join(' ')}
+              >
+                {idx + 1}
+              </div>
+              
+              {/* Connecting line */}
+              {idx < steps.length - 1 && (
+                <div 
+                  className={[
+                    'h-px w-[61px]',
+                    isCompleted ? 'bg-[#589D96]' : 'bg-[#999999]'
+                  ].join(' ')}
+                />
               )}
             </div>
+          );
+        })}
+      </div>
+      
+      {/* Step labels */}
+      <div className="flex w-full justify-between px-3">
+        {steps.map((step, idx) => {
+          const isCompleted = idx < currentStep;
+          const isCurrent = idx === currentStep;
+          const isActive = isCompleted || isCurrent;
+          
+          return (
             <span
-              className={`mt-2 whitespace-nowrap text-xs font-medium ${
-                isCurrent ? 'text-mint' : isCompleted ? 'text-mint' : 'text-gray-400'
-              }`}
+              key={step.title}
+              className={[
+                'text-xs font-semibold',
+                isActive ? 'text-[#589D96]' : 'text-[#999999]'
+              ].join(' ')}
             >
               {step.title}
             </span>
-            {idx < steps.length - 1 && (
-              <div className="absolute left-1/2 top-5 z-0 hidden h-0.5 w-full -translate-x-1/2 bg-gray-200 md:block" />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

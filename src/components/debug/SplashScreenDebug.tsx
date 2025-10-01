@@ -1,16 +1,21 @@
 'use client';
 
+import { getFeatureFlag } from '@/config/feature-flags';
 import { resetSplashScreen } from '@/utils/splashUtils';
 import { useSplash } from '@/providers/splash-provider';
 
 /**
  * Debug component for testing splash screen
- * Only shows in development mode
+ * Only shows when feature flag is enabled and in development mode
  */
 export function SplashScreenDebug() {
   const { setSplashVisible } = useSplash();
   
-  if (process.env.NODE_ENV !== 'development') {
+  // Check feature flag and development mode
+  const isDebugEnabled = getFeatureFlag('splashScreenDebug');
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  if (!isDebugEnabled || !isDevelopment) {
     return null;
   }
 
