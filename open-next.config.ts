@@ -1,8 +1,4 @@
 import { defineCloudflareConfig } from "@opennextjs/cloudflare";
 
-export default defineCloudflareConfig({
-  // Explicitly configure for Cloudflare Pages
-  cloudflare: {
-    pages: true,
-  },
-});
+// Configuration for Cloudflare Pages deployment
+export default defineCloudflareConfig({});
