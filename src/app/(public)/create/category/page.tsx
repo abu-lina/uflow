@@ -151,7 +151,22 @@ export default function SelectCategoryPage() {
           {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
-            onClick={() => router.push('/create')}
+            onClick={() => {
+              const params = new URLSearchParams();
+              // Preserve all existing form data
+              const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'offersIds', 'needsIds'];
+              formParams.forEach(param => {
+                const value = searchParams.get(param);
+                if (value) params.set(param, value);
+              });
+              // Preserve the currently selected category
+              if (selectedCategory) {
+                params.set('categoryId', selectedCategory);
+              }
+              // Add current images count
+              params.set('images', searchParams.get('images') || '0');
+              router.push(`/create?${params.toString()}`);
+            }}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>

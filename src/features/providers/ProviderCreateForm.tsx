@@ -8,7 +8,6 @@ import type { ReadonlyURLSearchParams } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
-import { TagsMultiSelect } from '@/components/providers/TagsMultiSelect';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
@@ -53,24 +52,24 @@ interface ProviderCreateFormProps {
 export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-      const [formData, setFormData] = useState<ExtendedFormData>({
-        title: '',
-        category: '',
-        description: '',
-        street: '',
-        zip: '',
-        city: '',
+  const [formData, setFormData] = useState<ExtendedFormData>({
+    title: '',
+    category: '',
+    description: '',
+    street: '',
+    zip: '',
+    city: '',
         country: '',
         showAddress: true,
-        website: '',
-        instagram: '',
-        phone: '',
-        email: '',
-        images: [],
-        tags: [],
+    website: '',
+    instagram: '',
+    phone: '',
+    email: '',
+    images: [],
+    tags: [],
         offers_ids: [],
         needs_ids: [],
-      });
+  });
   const [categories, setCategories] = useState<Category[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [needs, setNeeds] = useState<Need[]>([]);
@@ -119,26 +118,88 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
 
   // Load all form data from URL params on mount
   useEffect(() => {
+    console.log('useEffect triggered with searchParams:', searchParams);
     if (searchParams) {
-      setFormData(prev => ({
-        ...prev,
-        title: searchParams.get('title') || prev.title,
-        category: searchParams.get('categoryId') || prev.category,
-        description: searchParams.get('description') || prev.description,
-        street: searchParams.get('street') || prev.street,
-        zip: searchParams.get('zip') || prev.zip,
-        city: searchParams.get('city') || prev.city,
-        country: searchParams.get('country') || prev.country,
-        showAddress: searchParams.get('showAddress') === 'true' ? true : searchParams.get('showAddress') === 'false' ? false : prev.showAddress,
-        website: searchParams.get('website') || prev.website,
-        instagram: searchParams.get('instagram') || prev.instagram,
-        phone: searchParams.get('phone') || prev.phone,
-        email: searchParams.get('email') || prev.email,
-        offers_ids: searchParams.get('offersIds') ? JSON.parse(searchParams.get('offersIds') || '[]') : prev.offers_ids,
-        needs_ids: searchParams.get('needsIds') ? JSON.parse(searchParams.get('needsIds') || '[]') : prev.needs_ids,
-      }));
+      console.log('Loading form data from URL params:', {
+        title: searchParams.get('title'),
+        category: searchParams.get('categoryId'),
+        description: searchParams.get('description'),
+        street: searchParams.get('street'),
+        zip: searchParams.get('zip'),
+        city: searchParams.get('city'),
+        country: searchParams.get('country'),
+        showAddress: searchParams.get('showAddress'),
+        website: searchParams.get('website'),
+        instagram: searchParams.get('instagram'),
+        phone: searchParams.get('phone'),
+        email: searchParams.get('email'),
+        offersIds: searchParams.get('offersIds'),
+        needsIds: searchParams.get('needsIds'),
+        step: searchParams.get('step')
+      });
+      
+      setFormData(prev => {
+        console.log('Previous form data before URL loading:', prev);
+        
+        const newData = {
+          ...prev,
+          title: searchParams.get('title') || prev.title,
+          category: searchParams.get('categoryId') || prev.category,
+          description: searchParams.get('description') || prev.description,
+          street: searchParams.get('street') || prev.street,
+          zip: searchParams.get('zip') || prev.zip,
+          city: searchParams.get('city') || prev.city,
+          country: searchParams.get('country') || prev.country,
+          showAddress: searchParams.get('showAddress') === 'true' ? true : searchParams.get('showAddress') === 'false' ? false : prev.showAddress,
+          website: searchParams.get('website') || prev.website,
+          instagram: searchParams.get('instagram') || prev.instagram,
+          phone: searchParams.get('phone') || prev.phone,
+          email: searchParams.get('email') || prev.email,
+          offers_ids: searchParams.get('offersIds') ? JSON.parse(searchParams.get('offersIds') || '[]') : prev.offers_ids,
+          needs_ids: searchParams.get('needsIds') ? JSON.parse(searchParams.get('needsIds') || '[]') : prev.needs_ids,
+          // Note: images are handled differently since File objects can't be serialized
+          // The images count is tracked but actual File objects need to be managed separately
+        };
+        
+        console.log('Form data after URL loading:', newData);
+        return newData;
+      });
+
+      // Handle step parameter from URL (only when explicitly set)
+      const stepParam = searchParams.get('step');
+      if (stepParam) {
+        const stepNumber = parseInt(stepParam, 10);
+        if (stepNumber >= 0 && stepNumber < STEPS.length) {
+          console.log('Setting step from URL parameter:', stepNumber);
+          setCurrentStep(stepNumber);
+          // Don't modify URL to avoid triggering form data reload
+        }
+      }
     }
   }, [searchParams]);
+
+  // Load images from localStorage
+  useEffect(() => {
+    const savedImages = localStorage.getItem('providerImages');
+    if (savedImages) {
+      try {
+        const imageData = JSON.parse(savedImages);
+        // Convert base64 strings back to File objects
+        const files = imageData.map((img: { name: string; data: string; type: string }) => {
+          const byteCharacters = atob(img.data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          return new File([byteArray], img.name, { type: img.type });
+        });
+        setFormData(prev => ({ ...prev, images: files }));
+      } catch (error) {
+        console.error('Error loading images from localStorage:', error);
+      }
+    }
+  }, []);
 
   const handleInputChange = (field: keyof ExtendedFormData, value: string | string[] | File[] | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -163,6 +224,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     if (formData.email) params.set('email', formData.email);
     if (formData.offers_ids.length > 0) params.set('offersIds', JSON.stringify(formData.offers_ids));
     if (formData.needs_ids.length > 0) params.set('needsIds', JSON.stringify(formData.needs_ids));
+    if (formData.images.length > 0) params.set('images', formData.images.length.toString());
     
     // Add any additional parameters
     Object.entries(additionalParams).forEach(([key, value]) => {
@@ -172,20 +234,17 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     return `${baseUrl}?${params.toString()}`;
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      console.log(
-        'Selected files:',
-        files.length,
-        files.map((f) => f.name),
-      );
-      setFormData((prev) => ({ ...prev, images: files }));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Only allow submission on the last step
+    if (currentStep !== STEPS.length - 1) {
+      console.log('Form submission prevented - not on last step. Current step:', currentStep, 'Last step:', STEPS.length - 1);
+      return;
+    }
+    
+    console.log('Form submission allowed - on last step:', currentStep);
     setIsSubmitting(true);
 
     if (!user) {
@@ -229,6 +288,12 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     }
 
     console.log('Total uploaded URLs:', uploadedUrls.length);
+    console.log('Form data before insert:', {
+      category: formData.category,
+      offers_ids: formData.offers_ids,
+      needs_ids: formData.needs_ids,
+      user_id: user.id
+    });
 
     // 2. Save provider with trusted Supabase image URLs
     const insertData = {
@@ -240,7 +305,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
       address_city: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.city : null) : formData.city,
       address_country: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.country : null) : formData.country,
       show_address: getFeatureFlag('enableAddressVisibilityToggle') ? formData.showAddress : true,
-      category_id: formData.category,
+      category_id: formData.category && formData.category.trim() !== '' ? formData.category : null,
       contact_email: formData.email || null,
       contact_phone: formData.phone || null,
       social_website: formData.website || null,
@@ -248,9 +313,11 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
       barakah_effects: formData.tags,
       provider_owner_id: user.id,
       provider_images: JSON.stringify({ urls: uploadedUrls }),
-          offers_ids: formData.offers_ids.length > 0 ? formData.offers_ids : null,
-          needs_ids: formData.needs_ids.length > 0 ? formData.needs_ids : null,
+      offers_ids: formData.offers_ids.length > 0 ? formData.offers_ids : null,
+      needs_ids: formData.needs_ids.length > 0 ? formData.needs_ids : null,
     };
+    
+    console.log('Insert data:', insertData);
     
     const { error: providerError } = await supabase
       .from('providers')
@@ -263,13 +330,17 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     }
 
     setIsSubmitting(false);
-    // Redirect immediately without blocking alert
-    router.push('/profile');
+      // Redirect immediately without blocking alert
+      router.push('/profile');
   };
 
   const nextStep = () => {
+    console.log('nextStep called - currentStep:', currentStep, 'STEPS.length:', STEPS.length);
     if (currentStep < STEPS.length - 1) {
+      console.log('Advancing to step:', currentStep + 1);
       setCurrentStep((prev) => prev + 1);
+    } else {
+      console.log('Already on last step, not advancing');
     }
   };
 
@@ -295,8 +366,8 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
         // All optional, so always valid
         return true;
       case 3:
-        // At least one tag required
-        return data.tags.length > 0;
+        // All optional, so always valid
+        return true;
       default:
         return false;
     }
@@ -306,36 +377,46 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     <div className="flex w-full max-w-[361px] flex-1 flex-col">
       {/* Step Indicator */}
       <div className="mb-12">
-        <StepIndicator currentStep={currentStep} steps={STEPS} />
+      <StepIndicator currentStep={currentStep} steps={STEPS} />
       </div>
 
       {/* Form Content */}
       <div className="flex flex-1 flex-col">
-        <form className="flex flex-1 flex-col" onSubmit={handleSubmit}>
+        <form 
+          className="flex flex-1 flex-col" 
+          onKeyDown={(e) => {
+            // Prevent Enter key from submitting form on non-last steps
+            if (e.key === 'Enter' && currentStep !== STEPS.length - 1) {
+              e.preventDefault();
+              console.log('Enter key prevented - not on last step');
+            }
+          }}
+          onSubmit={handleSubmit}
+        >
           {/* Form Fields */}
           <div className="flex flex-1 flex-col gap-8 pb-8">
-            {currentStep === 0 && (
+        {currentStep === 0 && (
               <div className="space-y-6">
                 <h2 className="text-lg font-medium text-[#232323] px-3">Basics</h2>
                 
                 <div className="space-y-3">
                   {/* First Name Field */}
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Titel *</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Titel eingeben"
+              placeholder="Titel eingeben"
                         type="text"
-                        value={formData.title}
-                        onChange={(e) => handleInputChange('title', e.target.value)}
-                      />
+              value={formData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+            />
                     </div>
                   </div>
 
                   {/* Category Field */}
                   <button
-                    className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+                    className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
                     type="button"
                     onClick={() => router.push(buildUrlWithFormData('/create/category'))}
                   >
@@ -355,7 +436,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
 
                   {/* What I Offer Field */}
                   <button
-                    className="flex w-[345px] min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+                    className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
                     type="button"
                     onClick={() => router.push(buildUrlWithFormData('/create/offers'))}
                   >
@@ -375,7 +456,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
 
                   {/* What I'm Looking For Field */}
                   <button
-                    className="flex w-[345px] min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+                    className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
                     type="button"
                     onClick={() => router.push(buildUrlWithFormData('/create/needs'))}
                   >
@@ -393,54 +474,54 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                     </div>
                   </button>
                 </div>
-              </div>
-            )}
+            </div>
+        )}
 
-            {currentStep === 1 && (
+        {currentStep === 1 && (
               <div className="space-y-6">
                 <h2 className="text-xl font-medium text-[#232323] px-3">Location</h2>
                 
                 <div className="space-y-3">
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Straße</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Straße eingeben"
+              placeholder="Straße eingeben"
                         type="text"
-                        value={formData.street}
-                        onChange={(e) => handleInputChange('street', e.target.value)}
-                      />
+              value={formData.street}
+              onChange={(e) => handleInputChange('street', e.target.value)}
+            />
                     </div>
                   </div>
 
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">PLZ</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="PLZ eingeben"
+              placeholder="PLZ eingeben"
                         type="text"
-                        value={formData.zip}
-                        onChange={(e) => handleInputChange('zip', e.target.value)}
-                      />
+              value={formData.zip}
+              onChange={(e) => handleInputChange('zip', e.target.value)}
+            />
                     </div>
                   </div>
 
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Stadt *</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Stadt eingeben"
+              placeholder="Stadt eingeben"
                         type="text"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                      />
+              value={formData.city}
+              onChange={(e) => handleInputChange('city', e.target.value)}
+            />
                     </div>
                   </div>
 
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Land *</span>
                       <input
@@ -455,7 +536,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
 
                   {/* Address Visibility Checkbox - Feature Flagged */}
                   {getFeatureFlag('enableAddressVisibilityToggle') && (
-                    <div className="flex w-[345px] items-center gap-3 px-3 py-3">
+                    <div className="flex w-full items-center gap-3 px-3 py-3">
                       <input
                         checked={formData.showAddress}
                         className="h-5 w-5 rounded border-2 border-[#E5E5E5] bg-white text-[#589D96] focus:ring-2 focus:ring-[#589D96] focus:ring-offset-0"
@@ -470,134 +551,161 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                   )}
                 </div>
               </div>
-            )}
+        )}
 
-            {currentStep === 2 && (
+        {currentStep === 2 && (
               <div className="space-y-6">
                 <h2 className="text-xl font-medium text-[#232323] px-3">Contact</h2>
                 
                 <div className="space-y-3">
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Website</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Website eingeben"
-                        type="url"
-                        value={formData.website}
-                        onChange={(e) => handleInputChange('website', e.target.value)}
-                      />
+              placeholder="Website eingeben"
+              type="url"
+              value={formData.website}
+              onChange={(e) => handleInputChange('website', e.target.value)}
+            />
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                   </div>
 
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Instagram</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Instagram eingeben"
+              placeholder="Instagram eingeben"
                         type="text"
-                        value={formData.instagram}
-                        onChange={(e) => handleInputChange('instagram', e.target.value)}
-                      />
+              value={formData.instagram}
+              onChange={(e) => handleInputChange('instagram', e.target.value)}
+            />
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                   </div>
 
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Telefon</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Telefon eingeben"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                      />
+              placeholder="Telefon eingeben"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+            />
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                   </div>
 
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Email</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Email eingeben"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                      />
+              placeholder="Email eingeben"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+            />
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                   </div>
                 </div>
               </div>
-            )}
+        )}
 
-            {currentStep === 3 && (
+        {currentStep === 3 && (
               <div className="space-y-6">
                 <h2 className="text-xl font-medium text-[#232323] px-3">Media</h2>
                 
                 <div className="space-y-3">
-                  <div className="space-y-2">
-                    <label className="text-xs text-[#999999]" htmlFor="images-upload">
-                      Bilder
-                    </label>
-                    <input
-                      multiple
-                      accept="image/*"
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary/90"
-                      id="images-upload"
-                      type="file"
-                      onChange={handleImageUpload}
-                    />
+            <div className="space-y-2">
+                    <label className="text-xs text-[#999999]">
+                      Bilder hochladen
+              </label>
+                    <button
+                      className="flex w-full h-[54px] flex-col justify-center items-start p-4 gap-4 bg-white border border-[#D4D4D4] rounded-[12px] hover:bg-gray-50"
+                      type="button"
+                      onClick={() => {
+                        const params = new URLSearchParams();
+                        
+                        // Preserve all existing form data
+                        const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'categoryId', 'offersIds', 'needsIds'];
+                        formParams.forEach(param => {
+                          const value = formData[param as keyof typeof formData];
+                          if (value !== undefined && value !== null && value !== '') {
+                            if (Array.isArray(value)) {
+                              params.set(param, JSON.stringify(value));
+                            } else {
+                              params.set(param, value.toString());
+                            }
+                          }
+                        });
+                        
+                        // Add current images count
+                        params.set('images', formData.images.length.toString());
+                        
+                        router.push(`/create/media?${params.toString()}`);
+                      }}
+                    >
+                      <div className="flex flex-row items-center p-0 gap-3 w-full h-6">
+                        <Icon 
+                          className="w-6 h-6 text-[#232323] flex-shrink-0" 
+                          icon="lucide:image-up" 
+                        />
+                        <span className="font-['Inter_Tight'] font-normal font-semibold text-base leading-[19px] flex items-center text-[#232323] whitespace-nowrap">
+                          Bilder hochladen{formData.images.length > 0 ? ` (${formData.images.length})` : ''}
+                        </span>
+                      </div>
+                    </button>
                   </div>
-                  <TagsMultiSelect
-                    required
-                    selected={formData.tags}
-                    onChange={(tags) => handleInputChange('tags', tags)}
-                  />
                 </div>
-              </div>
-            )}
-          </div>
+            </div>
+        )}
+      </div>
 
           {/* Sticky Navigation Buttons */}
           <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]">
             <div className="flex h-[80px] w-full items-center justify-center px-4">
-              <div className="flex w-full max-w-[345px] items-center gap-3">
-                {/* Back Button - Only show on steps 1, 2, 3 */}
-                {currentStep > 0 && currentStep < STEPS.length - 1 && (
-                  <button
+              <div className="flex w-full max-w-full items-center gap-3">
+                  {/* Back Button - Show on steps 1, 2, 3, 4 (Location, Contact, Media) */}
+        {currentStep > 0 && (
+          <button
                     className="flex h-[48px] flex-1 items-center justify-center gap-0 rounded-xl border border-[#589D96] bg-white px-5 transition-opacity hover:bg-gray-50"
-                    type="button"
-                    onClick={prevStep}
-                  >
+            type="button"
+            onClick={prevStep}
+          >
                     <Icon className="h-6 w-6 text-[#589D96]" icon="material-symbols:chevron-left" />
                     <span className="text-base font-medium text-[#589D96] leading-[19px]">
-                      Zurück
+            Zurück
                     </span>
-                  </button>
-                )}
+          </button>
+        )}
                 
                 {/* Weiter Button */}
-                <button
-                  className={`flex h-[48px] ${currentStep > 0 && currentStep < STEPS.length - 1 ? 'flex-1' : 'w-full'} items-center justify-center gap-0 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-                    isSubmitting || !isStepValid(currentStep, formData)
+          <button
+                  className={`flex h-[48px] ${currentStep > 0 ? 'flex-1' : 'w-full'} items-center justify-center gap-0 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
+              isSubmitting || !isStepValid(currentStep, formData)
                       ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
                       : 'bg-[#589D96] opacity-100'
                   }`}
-                  disabled={isSubmitting || !isStepValid(currentStep, formData)}
+            disabled={isSubmitting || !isStepValid(currentStep, formData)}
                   type={currentStep === STEPS.length - 1 ? 'submit' : 'button'}
-                  onClick={currentStep === STEPS.length - 1 ? undefined : nextStep}
-                >
-                  {isSubmitting ? (
+                  onClick={(e) => {
+                    console.log('Weiter button clicked - currentStep:', currentStep, 'isLastStep:', currentStep === STEPS.length - 1);
+                    console.log('Button type:', currentStep === STEPS.length - 1 ? 'submit' : 'button');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (currentStep === STEPS.length - 1) {
+                      console.log('Last step - should trigger form submission');
+                      // Let the form submission happen naturally
+                    } else {
+                      console.log('Not last step - calling nextStep');
+                      nextStep();
+                    }
+                  }}
+          >
+            {isSubmitting ? (
                     <Icon className="h-5 w-5 animate-spin text-white" icon="mdi:loading" />
                   ) : (
                     <>
@@ -606,8 +714,8 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                       </span>
                       <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
                     </>
-                  )}
-                </button>
+            )}
+          </button>
               </div>
             </div>
           </div>

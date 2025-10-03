@@ -30,6 +30,15 @@ export default function CreateProviderPage() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  // Clear localStorage when starting a fresh provider creation (no URL params)
+  useEffect(() => {
+    const hasUrlParams = searchParams && Array.from(searchParams.keys()).length > 0;
+    if (!hasUrlParams) {
+      // Clear any previous provider images when starting fresh
+      localStorage.removeItem('providerImages');
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (checked && !isMobile) {
       // Optionally redirect to profile creation tab on desktop
