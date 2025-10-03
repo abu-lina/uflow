@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import type { ProviderFormData } from '@/types/provider';
 import type { Category } from '@/types/supabase';
+import type { Offer, Need } from '@/types/offer';
 
 interface ExtendedFormData extends ProviderFormData {
   website: string;
@@ -21,6 +22,8 @@ interface ExtendedFormData extends ProviderFormData {
   email: string;
   images: File[];
   tags: string[];
+  offers_ids: string[];
+  needs_ids: string[];
 }
 
 const STEPS = [
@@ -49,21 +52,25 @@ interface ProviderCreateFormProps {
 export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<ExtendedFormData>({
-    title: '',
-    category: '',
-    description: '',
-    street: '',
-    zip: '',
-    city: '',
-    website: '',
-    instagram: '',
-    phone: '',
-    email: '',
-    images: [],
-    tags: [],
-  });
+      const [formData, setFormData] = useState<ExtendedFormData>({
+        title: '',
+        category: '',
+        description: '',
+        street: '',
+        zip: '',
+        city: '',
+        website: '',
+        instagram: '',
+        phone: '',
+        email: '',
+        images: [],
+        tags: [],
+        offers_ids: [],
+        needs_ids: [],
+      });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [needs, setNeeds] = useState<Need[]>([]);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -80,18 +87,82 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     void fetchCategories();
   }, []);
 
-  // Handle category selection from URL params
   useEffect(() => {
-    if (searchParams?.get('categoryId')) {
+    async function fetchOffers() {
+      const { data, error } = await supabase
+        .from('offers')
+        .select('*')
+        .order('name_de', { ascending: true });
+      if (!error && data) {
+        setOffers(data);
+      }
+    }
+    void fetchOffers();
+  }, []);
+
+  useEffect(() => {
+    async function fetchNeeds() {
+      const { data, error } = await supabase
+        .from('needs')
+        .select('*')
+        .order('name_de', { ascending: true });
+      if (!error && data) {
+        setNeeds(data);
+      }
+    }
+    void fetchNeeds();
+  }, []);
+
+
+  // Load all form data from URL params on mount
+  useEffect(() => {
+    if (searchParams) {
       setFormData(prev => ({
         ...prev,
-        category: searchParams.get('categoryId') || ''
+        title: searchParams.get('title') || prev.title,
+        category: searchParams.get('categoryId') || prev.category,
+        description: searchParams.get('description') || prev.description,
+        street: searchParams.get('street') || prev.street,
+        zip: searchParams.get('zip') || prev.zip,
+        city: searchParams.get('city') || prev.city,
+        website: searchParams.get('website') || prev.website,
+        instagram: searchParams.get('instagram') || prev.instagram,
+        phone: searchParams.get('phone') || prev.phone,
+        email: searchParams.get('email') || prev.email,
+        offers_ids: searchParams.get('offersIds') ? JSON.parse(searchParams.get('offersIds') || '[]') : prev.offers_ids,
+        needs_ids: searchParams.get('needsIds') ? JSON.parse(searchParams.get('needsIds') || '[]') : prev.needs_ids,
       }));
     }
   }, [searchParams]);
 
   const handleInputChange = (field: keyof ExtendedFormData, value: string | string[] | File[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Helper function to build URL with current form data
+  const buildUrlWithFormData = (baseUrl: string, additionalParams: Record<string, string> = {}) => {
+    const params = new URLSearchParams();
+    
+    // Add current form data to URL params
+    if (formData.title) params.set('title', formData.title);
+    if (formData.category) params.set('categoryId', formData.category);
+    if (formData.description) params.set('description', formData.description);
+    if (formData.street) params.set('street', formData.street);
+    if (formData.zip) params.set('zip', formData.zip);
+    if (formData.city) params.set('city', formData.city);
+    if (formData.website) params.set('website', formData.website);
+    if (formData.instagram) params.set('instagram', formData.instagram);
+    if (formData.phone) params.set('phone', formData.phone);
+    if (formData.email) params.set('email', formData.email);
+    if (formData.offers_ids.length > 0) params.set('offersIds', JSON.stringify(formData.offers_ids));
+    if (formData.needs_ids.length > 0) params.set('needsIds', JSON.stringify(formData.needs_ids));
+    
+    // Add any additional parameters
+    Object.entries(additionalParams).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    
+    return `${baseUrl}?${params.toString()}`;
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,7 +227,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     const insertData = {
       provider_name: formData.title,
       provider_offers: formData.description,
-      provider_needs: null, // Form doesn't collect needs yet
+      provider_needs: null, // Keep for backward compatibility
       address_street: formData.street,
       address_zip: formData.zip,
       address_city: formData.city,
@@ -169,15 +240,23 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
       provider_owner_id: user.id,
       address_country: 'DE',
       provider_images: JSON.stringify({ urls: uploadedUrls }),
+          offers_ids: formData.offers_ids.length > 0 ? formData.offers_ids : null,
+          needs_ids: formData.needs_ids.length > 0 ? formData.needs_ids : null,
     };
-    const { error } = await supabase.from('providers').insert([insertData]);
-    setIsSubmitting(false);
-    if (error) {
-      alert(`Fehler beim Erstellen des Providers: ${error.message}`);
-    } else {
-      // Redirect immediately without blocking alert
-      router.push('/profile');
+    
+    const { error: providerError } = await supabase
+      .from('providers')
+      .insert([insertData]);
+    
+    if (providerError) {
+      setIsSubmitting(false);
+      alert(`Fehler beim Erstellen des Providers: ${providerError.message}`);
+      return;
     }
+
+    setIsSubmitting(false);
+    // Redirect immediately without blocking alert
+    router.push('/profile');
   };
 
   const nextStep = () => {
@@ -190,7 +269,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
   function isStepValid(step: number, data: ExtendedFormData) {
     switch (step) {
       case 0:
-        return !!data.title && !!data.category && !!data.description;
+        return !!data.title && !!data.category && data.offers_ids.length > 0;
       case 1:
         return !!data.street && !!data.zip && !!data.city;
       case 2:
@@ -218,7 +297,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
           <div className="flex flex-1 flex-col gap-8 pb-24">
             {currentStep === 0 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-medium text-[#232323] px-3">Basics</h2>
+                <h2 className="text-lg font-medium text-[#232323] px-3">Basics</h2>
                 
                 <div className="space-y-3">
                   {/* First Name Field */}
@@ -239,7 +318,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                   <button
                     className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
                     type="button"
-                    onClick={() => router.push(`/create/category?categoryId=${formData.category}`)}
+                    onClick={() => router.push(buildUrlWithFormData('/create/category'))}
                   >
                     <div className="flex flex-1 flex-col gap-1 items-start">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Kategorie *</span>
@@ -256,34 +335,44 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                   </button>
 
                   {/* What I Offer Field */}
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-                    <div className="flex flex-1 flex-col gap-1">
+                  <button
+                    className="flex w-[345px] min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+                    type="button"
+                    onClick={() => router.push(buildUrlWithFormData('/create/offers'))}
+                  >
+                    <div className="flex flex-1 flex-col gap-1 items-start">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Was biete ich? *</span>
-                      <input
-                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Was biete ich?"
-                        type="text"
-                        value={formData.description}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
-                      />
+                      <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+                        {formData.offers_ids.length > 0 
+                          ? formData.offers_ids.map(id => offers.find(offer => offer.offer_id === id)?.name_de).filter(Boolean).join(', ')
+                          : 'Angebote auswählen'
+                        }
+                      </div>
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
-                  </div>
+                    <div className="flex items-center justify-center ml-2 flex-shrink-0">
+                      <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                    </div>
+                  </button>
 
                   {/* What I'm Looking For Field */}
-                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-                    <div className="flex flex-1 flex-col gap-1">
+                  <button
+                    className="flex w-[345px] min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+                    type="button"
+                    onClick={() => router.push(buildUrlWithFormData('/create/needs'))}
+                  >
+                    <div className="flex flex-1 flex-col gap-1 items-start">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Was suche ich?</span>
-                      <input
-                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Was suche ich?"
-                        type="text"
-                      />
+                      <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+                        {formData.needs_ids.length > 0 
+                          ? formData.needs_ids.map(id => needs.find(need => need.need_id === id)?.name_de).filter(Boolean).join(', ')
+                          : 'Bedürfnisse auswählen'
+                        }
+                      </div>
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
-                  </div>
+                    <div className="flex items-center justify-center ml-2 flex-shrink-0">
+                      <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                    </div>
+                  </button>
                 </div>
               </div>
             )}

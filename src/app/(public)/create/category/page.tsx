@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -17,6 +17,8 @@ export default function SelectCategoryPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [isHeaderSticky, setIsHeaderSticky] = useState(true);
+  const lastScrollY = useRef(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
@@ -53,6 +55,32 @@ export default function SelectCategoryPage() {
       setSelectedCategory(categoryId);
     }
   }, [searchParams]);
+
+  // Scroll detection for sticky header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDifference = currentScrollY - lastScrollY.current;
+      
+      // Always show if at top
+      if (currentScrollY <= 100) {
+        setIsHeaderSticky(true);
+      }
+      // Show when scrolling up past 100px
+      else if (currentScrollY > 100 && scrollDifference < 0) {
+        setIsHeaderSticky(true);
+      }
+      // Hide when scrolling down past 100px
+      else if (currentScrollY > 100 && scrollDifference > 0) {
+        setIsHeaderSticky(false);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isHeaderSticky]);
 
   if (!checked || isLoading) {
     return <div className="p-8 text-center">Lädt...</div>;
@@ -91,35 +119,53 @@ export default function SelectCategoryPage() {
 
   const handleSave = () => {
     if (selectedCategory) {
-      // Navigate back to create page with selected category
-      router.push(`/create?categoryId=${selectedCategory}`);
+      const params = new URLSearchParams();
+      
+      // Preserve all existing form data from URL
+      const existingParams = ['title', 'description', 'street', 'zip', 'city', 'website', 'instagram', 'phone', 'email', 'offersId', 'needsId'];
+      existingParams.forEach(param => {
+        const value = searchParams?.get(param);
+        if (value) params.set(param, value);
+      });
+      
+      // Add the selected category
+      params.set('categoryId', selectedCategory);
+      
+      router.push(`/create?${params.toString()}`);
     }
   };
 
   return (
     <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      {/* Header */}
-      <div className="flex w-full flex-col items-center px-4 pt-4">
-        <div className="flex w-full max-w-[361px] items-center gap-2">
-          {/* Back button */}
+      {/* Single Sticky Header */}
+      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-transform duration-300 ${
+        isHeaderSticky ? 'translate-y-0' : '-translate-y-full'
+      }`}>
+        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
+          {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
-            onClick={() => router.back()}
+            onClick={() => router.push('/create')}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
           
           {/* Title */}
           <div className="flex flex-1 items-center justify-start">
-            <h1 className="text-xl font-bold text-[#232323] leading-[29px]">
+            <h1 className="text-xl font-semibold text-[#232323] leading-[29px]">
               Kategorie auswählen
             </h1>
           </div>
         </div>
       </div>
 
+      {/* Spacer to prevent content jump */}
+      <div className={`transition-all duration-300 ${
+        isHeaderSticky ? 'h-16' : 'h-0'
+      }`} />
+
       {/* Content */}
-      <div className="flex flex-1 flex-col items-center px-4 py-10">
+      <div className="flex flex-1 flex-col items-center px-4 pt-16 pb-10">
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
           {/* Search Bar + Subtitle */}
           <div className="flex w-full flex-col gap-2">

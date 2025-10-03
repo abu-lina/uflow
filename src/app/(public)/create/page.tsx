@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -13,6 +13,8 @@ import { useAuth } from '@/providers/auth-provider';
 export default function CreateProviderPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [isHeaderSticky, setIsHeaderSticky] = useState(true);
+  const lastScrollY = useRef(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
@@ -34,6 +36,32 @@ export default function CreateProviderPage() {
       router.replace('/profile');
     }
   }, [isMobile, checked, router]);
+
+  // Scroll detection for sticky header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDifference = currentScrollY - lastScrollY.current;
+      
+      // Always show if at top
+      if (currentScrollY <= 100) {
+        setIsHeaderSticky(true);
+      }
+      // Show when scrolling up past 100px
+      else if (currentScrollY > 100 && scrollDifference < 0) {
+        setIsHeaderSticky(true);
+      }
+      // Hide when scrolling down past 100px
+      else if (currentScrollY > 100 && scrollDifference > 0) {
+        setIsHeaderSticky(false);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isHeaderSticky]);
 
   if (!checked || isLoading) {
     return <div className="p-8 text-center">Lädt...</div>;
@@ -68,21 +96,30 @@ export default function CreateProviderPage() {
 
   return (
     <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      {/* Header */}
-      <div className="mb-6 flex h-12 w-full items-center px-4 pt-4">
-        {/* Left side: Chevron + Title */}
-        <div className="flex items-center">
-          <button
-            className="flex h-8 w-8 items-center justify-center"
-            onClick={() => router.back()}
-          >
-            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          <h1 className="ml-2 font-inter-tight text-xl font-bold text-[#232323]">
-            CreateSouk
-          </h1>
+      {/* Single Sticky Header */}
+      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-transform duration-300 ${
+        isHeaderSticky ? 'translate-y-0' : '-translate-y-full'
+      }`}>
+        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
+          {/* Left side: Chevron + Title */}
+          <div className="flex items-center">
+            <button
+              className="flex h-8 w-8 items-center justify-center"
+              onClick={() => router.push('/providers')}
+            >
+              <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
+            </button>
+            <h1 className="ml-2 font-inter-tight text-xl font-semibold text-[#232323]">
+              Anbieter erstellen
+            </h1>
+          </div>
         </div>
       </div>
+
+      {/* Spacer to prevent content jump */}
+      <div className={`transition-all duration-300 ${
+        isHeaderSticky ? 'h-16' : 'h-0'
+      }`} />
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col items-center justify-between px-4 py-12">
