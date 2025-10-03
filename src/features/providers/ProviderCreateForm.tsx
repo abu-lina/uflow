@@ -349,7 +349,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                         }
                       </div>
                     </div>
-                    <div className="flex items-center justify-center ml-2 flex-shrink-0">
+                    <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
                       <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                     </div>
                   </button>
@@ -369,7 +369,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                         }
                       </div>
                     </div>
-                    <div className="flex items-center justify-center ml-2 flex-shrink-0">
+                    <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
                       <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                     </div>
                   </button>
