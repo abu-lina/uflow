@@ -177,16 +177,16 @@ export default function SelectNeedsPage() {
       }`} />
 
       {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-16 pb-10 overflow-y-auto">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-8 overflow-y-auto">
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8 pb-24">
           {/* Search Bar + Subtitle */}
           <div className="flex w-full flex-col gap-2">
             {/* Search Bar */}
-            <div className="flex h-[40px] w-full items-center rounded-[15px] bg-white px-[10px] py-[5px] border-0">
-              <div className="flex items-center gap-[15px]">
-                <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:search" />
+            <div className="flex h-[40px] w-full items-center rounded-2xl bg-white px-[10px] py-[5px] border-0">
+              <div className="flex items-center gap-3">
+                <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
                 <input
-                  className="text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent"
+                  className="text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
                   placeholder="Bedürfnisse durchsuchen"
                   type="text"
                   value={searchQuery}

@@ -59,7 +59,10 @@ export default function SelectCategoryPage() {
   // Scroll detection for sticky header
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      const scrollContainer = document.querySelector('.content-scroll-container');
+      if (!scrollContainer) return;
+      
+      const currentScrollY = scrollContainer.scrollTop;
       const scrollDifference = currentScrollY - lastScrollY.current;
       
       // Always show if at top
@@ -77,9 +80,12 @@ export default function SelectCategoryPage() {
       
       lastScrollY.current = currentScrollY;
     };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    const scrollContainer = document.querySelector('.content-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
   }, [isHeaderSticky]);
 
   if (!checked || isLoading) {
@@ -165,16 +171,16 @@ export default function SelectCategoryPage() {
       }`} />
 
       {/* Content */}
-      <div className="flex flex-1 flex-col items-center px-4 pt-16 pb-10">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-8 overflow-y-auto">
+        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8 pb-24">
           {/* Search Bar + Subtitle */}
           <div className="flex w-full flex-col gap-2">
             {/* Search Bar */}
-            <div className="flex h-[40px] w-full items-center rounded-[15px] bg-white px-[10px] py-[5px] border-0">
-              <div className="flex items-center gap-[15px]">
-                <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:search" />
+            <div className="flex h-[40px] w-full items-center rounded-2xl bg-white px-[10px] py-[5px] border-0">
+              <div className="flex items-center gap-3">
+                <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
                 <input
-                  className="text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent"
+                  className="text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
                   placeholder="Kategorien durchsuchen"
                   type="text"
                   value={searchQuery}
@@ -201,7 +207,7 @@ export default function SelectCategoryPage() {
               filteredCategories.map((category) => (
                 <button
                   key={category.category_id}
-                  className={`w-full rounded-full px-4 py-2 text-left transition-all duration-200 ${
+                  className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 ${
                     selectedCategory === category.category_id
                       ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
                       : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
