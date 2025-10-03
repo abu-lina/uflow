@@ -165,7 +165,7 @@ export default function SelectNeedsPage() {
           {/* Title */}
           <div className="flex flex-1 items-center justify-start">
             <h1 className="text-xl font-semibold text-[#232323] leading-[29px]">
-              Bedürfnisse auswählen
+              Gesuche auswählen
             </h1>
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function SelectNeedsPage() {
             {/* Subtitle */}
             <div className="w-full">
               <p className="text-sm font-normal leading-[17px] text-[#7A7A7A]">
-                Wähle deine Bedürfnisse aus oder erstelle neue, um dein Profil zu vervollständigen.
+                Wähle deine Gesuche aus oder erstelle neue, um passende Angebote zu erhalten - inshaAllah.
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function SelectNeedsPage() {
           {/* Needs List */}
           <div className="flex-1 w-full">
             <h3 className="mb-4 text-sm font-medium text-[#232323]">Verfügbare Bedürfnisse</h3>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
               {isLoading ? (
                 <div className="flex h-32 items-center justify-center">
                   <span className="text-gray-500">Lade Bedürfnisse...</span>
@@ -237,7 +237,7 @@ export default function SelectNeedsPage() {
                 filteredNeeds.map((need) => (
                   <button
                     key={need.need_id}
-                    className={`w-full rounded-full px-4 py-2 text-left transition-all duration-200 ${
+                    className={`inline-flex rounded-xl px-4 py-2 text-left transition-all duration-200 ${
                       selectedNeeds.includes(need.need_id)
                         ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
                         : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'

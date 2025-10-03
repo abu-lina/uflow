@@ -198,7 +198,7 @@ export default function SelectOffersPage() {
             {/* Subtitle */}
             <div className="w-full">
               <p className="text-sm font-normal leading-[17px] text-[#7A7A7A]">
-                Wähle deine Angebote aus oder erstelle neue, um dein Profil zu vervollständigen.
+                Wähle deine Angebote aus oder erstelle neue, um passende Gesuche zu erhalten - inshaAllah.
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function SelectOffersPage() {
           {/* Offers List */}
           <div className="flex-1 w-full">
             <h3 className="mb-4 text-sm font-medium text-[#232323]">Verfügbare Angebote</h3>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
               {isLoading ? (
                 <div className="flex h-32 items-center justify-center">
                   <span className="text-gray-500">Lade Angebote...</span>
@@ -237,7 +237,7 @@ export default function SelectOffersPage() {
                 filteredOffers.map((offer) => (
                   <button
                     key={offer.offer_id}
-                    className={`w-full rounded-full px-4 py-2 text-left transition-all duration-200 ${
+                    className={`inline-flex rounded-xl px-4 py-2 text-left transition-all duration-200 ${
                       selectedOffers.includes(offer.offer_id)
                         ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
                         : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'

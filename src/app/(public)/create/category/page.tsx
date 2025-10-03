@@ -192,7 +192,7 @@ export default function SelectCategoryPage() {
             {/* Subtitle */}
             <div className="w-full">
               <p className="text-sm font-normal text-[#7A7A7A] leading-[17px]">
-                Suche nach relevante Kategorien und wähle sie aus, um dein Angebot erfolgreicher zu machen - inshaAllah.
+                Suche eine passende Kategorie aus, um leichter gefunden zu werden - inshaAllah.
               </p>
             </div>
           </div>
