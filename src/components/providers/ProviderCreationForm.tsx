@@ -16,6 +16,8 @@ export function ProviderCreationForm({ onSubmit }: ProviderCreationFormProps) {
     street: '',
     zip: '',
     city: '',
+    country: '',
+    showAddress: true,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

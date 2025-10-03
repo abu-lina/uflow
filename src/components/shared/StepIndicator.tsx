@@ -1,5 +1,7 @@
 'use client';
 
+import { Icon } from '@iconify/react';
+
 export interface StepIndicatorProps {
   currentStep: number;
   steps: { title: string; icon: string }[];
@@ -13,20 +15,28 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
         {steps.map((step, idx) => {
           const isCompleted = idx < currentStep;
           const isCurrent = idx === currentStep;
-          const isActive = isCompleted || isCurrent;
           
           return (
             <div key={step.title} className="flex items-center">
               {/* Step circle */}
               <div
                 className={[
-                  'flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold',
-                  isActive
+                  'relative flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold',
+                  isCompleted
+                    ? 'border-[#589D96] bg-[#589D96]'
+                    : isCurrent
                     ? 'border-[#589D96] bg-white text-[#589D96]'
                     : 'border-[#999999] bg-[#D7D7D7] text-[#999999]',
                 ].join(' ')}
               >
-                {idx + 1}
+                {isCompleted ? (
+                  <Icon 
+                    className="h-4 w-4 text-white" 
+                    icon="lucide:check" 
+                  />
+                ) : (
+                  idx + 1
+                )}
               </div>
               
               {/* Connecting line */}
@@ -48,14 +58,13 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
         {steps.map((step, idx) => {
           const isCompleted = idx < currentStep;
           const isCurrent = idx === currentStep;
-          const isActive = isCompleted || isCurrent;
           
           return (
             <span
               key={step.title}
               className={[
                 'text-xs font-semibold',
-                isActive ? 'text-[#589D96]' : 'text-[#999999]'
+                (isCompleted || isCurrent) ? 'text-[#589D96]' : 'text-[#999999]'
               ].join(' ')}
             >
               {step.title}

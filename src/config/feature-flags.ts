@@ -9,6 +9,7 @@ export interface FeatureFlags {
   
   // UI features
   enablePWAInstallPrompt: boolean;
+  enableAddressVisibilityToggle: boolean;
   
   // Development features
   enableDebugMode: boolean;
@@ -24,6 +25,7 @@ export const defaultFeatureFlags: FeatureFlags = {
   
   // UI features - enabled by default
   enablePWAInstallPrompt: true,
+  enableAddressVisibilityToggle: false, // Disabled by default
   
   // Development features - disabled by default
   enableDebugMode: false,
@@ -60,6 +62,7 @@ export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFl
   return {
     splashScreenDebug: getFeatureFlag('splashScreenDebug', overrides),
     enablePWAInstallPrompt: getFeatureFlag('enablePWAInstallPrompt', overrides),
+    enableAddressVisibilityToggle: getFeatureFlag('enableAddressVisibilityToggle', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),
   };
 }

@@ -9,6 +9,7 @@ import { Icon } from '@iconify/react';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { TagsMultiSelect } from '@/components/providers/TagsMultiSelect';
+import { getFeatureFlag } from '@/config/feature-flags';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import type { ProviderFormData } from '@/types/provider';
@@ -59,6 +60,8 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
         street: '',
         zip: '',
         city: '',
+        country: '',
+        showAddress: true,
         website: '',
         instagram: '',
         phone: '',
@@ -125,6 +128,8 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
         street: searchParams.get('street') || prev.street,
         zip: searchParams.get('zip') || prev.zip,
         city: searchParams.get('city') || prev.city,
+        country: searchParams.get('country') || prev.country,
+        showAddress: searchParams.get('showAddress') === 'true' ? true : searchParams.get('showAddress') === 'false' ? false : prev.showAddress,
         website: searchParams.get('website') || prev.website,
         instagram: searchParams.get('instagram') || prev.instagram,
         phone: searchParams.get('phone') || prev.phone,
@@ -135,7 +140,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     }
   }, [searchParams]);
 
-  const handleInputChange = (field: keyof ExtendedFormData, value: string | string[] | File[]) => {
+  const handleInputChange = (field: keyof ExtendedFormData, value: string | string[] | File[] | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -150,6 +155,8 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     if (formData.street) params.set('street', formData.street);
     if (formData.zip) params.set('zip', formData.zip);
     if (formData.city) params.set('city', formData.city);
+    if (formData.country) params.set('country', formData.country);
+    params.set('showAddress', formData.showAddress.toString());
     if (formData.website) params.set('website', formData.website);
     if (formData.instagram) params.set('instagram', formData.instagram);
     if (formData.phone) params.set('phone', formData.phone);
@@ -228,9 +235,11 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
       provider_name: formData.title,
       provider_offers: formData.description,
       provider_needs: null, // Keep for backward compatibility
-      address_street: formData.street,
-      address_zip: formData.zip,
-      address_city: formData.city,
+      address_street: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.street : null) : formData.street,
+      address_zip: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.zip : null) : formData.zip,
+      address_city: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.city : null) : formData.city,
+      address_country: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.country : null) : formData.country,
+      show_address: getFeatureFlag('enableAddressVisibilityToggle') ? formData.showAddress : true,
       category_id: formData.category,
       contact_email: formData.email || null,
       contact_phone: formData.phone || null,
@@ -238,7 +247,6 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
       social_instagram: formData.instagram || null,
       barakah_effects: formData.tags,
       provider_owner_id: user.id,
-      address_country: 'DE',
       provider_images: JSON.stringify({ urls: uploadedUrls }),
           offers_ids: formData.offers_ids.length > 0 ? formData.offers_ids : null,
           needs_ids: formData.needs_ids.length > 0 ? formData.needs_ids : null,
@@ -265,13 +273,24 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     }
   };
 
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  };
+
 
   function isStepValid(step: number, data: ExtendedFormData) {
     switch (step) {
       case 0:
         return !!data.title && !!data.category && data.offers_ids.length > 0;
       case 1:
-        return !!data.street && !!data.zip && !!data.city;
+        // If address visibility toggle is enabled, check based on showAddress. Otherwise, always require city and country.
+        if (getFeatureFlag('enableAddressVisibilityToggle')) {
+          return !data.showAddress || (!!data.city && !!data.country);
+        } else {
+          return !!data.city && !!data.country;
+        }
       case 2:
         // All optional, so always valid
         return true;
@@ -384,7 +403,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                 <div className="space-y-3">
                   <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Straße *</span>
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Straße</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
                         placeholder="Straße eingeben"
@@ -393,13 +412,11 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                         onChange={(e) => handleInputChange('street', e.target.value)}
                       />
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                   </div>
 
                   <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">PLZ *</span>
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">PLZ</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
                         placeholder="PLZ eingeben"
@@ -408,8 +425,6 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                         onChange={(e) => handleInputChange('zip', e.target.value)}
                       />
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                   </div>
 
                   <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
@@ -423,9 +438,36 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                         onChange={(e) => handleInputChange('city', e.target.value)}
                       />
                     </div>
-                    <div className="flex-1" />
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
                   </div>
+
+                  <div className="flex h-[54px] w-[345px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Land *</span>
+                      <input
+                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                        placeholder="Land eingeben"
+                        type="text"
+                        value={formData.country}
+                        onChange={(e) => handleInputChange('country', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Address Visibility Checkbox - Feature Flagged */}
+                  {getFeatureFlag('enableAddressVisibilityToggle') && (
+                    <div className="flex w-[345px] items-center gap-3 px-3 py-3">
+                      <input
+                        checked={formData.showAddress}
+                        className="h-5 w-5 rounded border-2 border-[#E5E5E5] bg-white text-[#589D96] focus:ring-2 focus:ring-[#589D96] focus:ring-offset-0"
+                        id="showAddress"
+                        type="checkbox"
+                        onChange={(e) => handleInputChange('showAddress', e.target.checked)}
+                      />
+                      <label className="text-sm font-medium text-[#272727] leading-[18px] cursor-pointer" htmlFor="showAddress">
+                        Adresse anzeigen
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -526,30 +568,47 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
             )}
           </div>
 
-          {/* Sticky Weiter Button */}
+          {/* Sticky Navigation Buttons */}
           <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]">
             <div className="flex h-[80px] w-full items-center justify-center px-4">
-              <button
-                className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-                  isSubmitting || !isStepValid(currentStep, formData)
-                    ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
-                    : 'bg-[#589D96] opacity-100'
-                }`}
-                disabled={isSubmitting || !isStepValid(currentStep, formData)}
-                type={currentStep === STEPS.length - 1 ? 'submit' : 'button'}
-                onClick={currentStep === STEPS.length - 1 ? undefined : nextStep}
-              >
-                {isSubmitting ? (
-                  <Icon className="h-5 w-5 animate-spin text-white" icon="mdi:loading" />
-                ) : (
-                  <>
-                    <span className="text-base font-medium text-white leading-[19px]">
-                      Weiter
+              <div className="flex w-full max-w-[345px] items-center gap-3">
+                {/* Back Button - Only show on steps 1, 2, 3 */}
+                {currentStep > 0 && currentStep < STEPS.length - 1 && (
+                  <button
+                    className="flex h-[48px] flex-1 items-center justify-center gap-0 rounded-xl border border-[#589D96] bg-white px-5 transition-opacity hover:bg-gray-50"
+                    type="button"
+                    onClick={prevStep}
+                  >
+                    <Icon className="h-6 w-6 text-[#589D96]" icon="material-symbols:chevron-left" />
+                    <span className="text-base font-medium text-[#589D96] leading-[19px]">
+                      Zurück
                     </span>
-                    <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
-                  </>
+                  </button>
                 )}
-              </button>
+                
+                {/* Weiter Button */}
+                <button
+                  className={`flex h-[48px] ${currentStep > 0 && currentStep < STEPS.length - 1 ? 'flex-1' : 'w-full'} items-center justify-center gap-0 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
+                    isSubmitting || !isStepValid(currentStep, formData)
+                      ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
+                      : 'bg-[#589D96] opacity-100'
+                  }`}
+                  disabled={isSubmitting || !isStepValid(currentStep, formData)}
+                  type={currentStep === STEPS.length - 1 ? 'submit' : 'button'}
+                  onClick={currentStep === STEPS.length - 1 ? undefined : nextStep}
+                >
+                  {isSubmitting ? (
+                    <Icon className="h-5 w-5 animate-spin text-white" icon="mdi:loading" />
+                  ) : (
+                    <>
+                      <span className="text-base font-medium text-white leading-[19px]">
+                        Weiter
+                      </span>
+                      <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </form>

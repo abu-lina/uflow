@@ -5,4 +5,6 @@ export interface ProviderFormData {
   street: string;
   zip: string;
   city: string;
+  country: string;
+  showAddress: boolean;
 }
