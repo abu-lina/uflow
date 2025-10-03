@@ -365,7 +365,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                       <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
                         {formData.needs_ids.length > 0 
                           ? formData.needs_ids.map(id => needs.find(need => need.need_id === id)?.name_de).filter(Boolean).join(', ')
-                          : 'Bedürfnisse auswählen'
+                          : 'Gesuche auswählen'
                         }
                       </div>
                     </div>

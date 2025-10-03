@@ -187,7 +187,7 @@ export default function SelectNeedsPage() {
                 <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
                 <input
                   className="text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
-                  placeholder="Bedürfnisse durchsuchen"
+                  placeholder="Gesuche durchsuchen"
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -231,7 +231,7 @@ export default function SelectNeedsPage() {
             <div className="flex flex-wrap gap-2">
               {isLoading ? (
                 <div className="flex h-32 items-center justify-center">
-                  <span className="text-gray-500">Lade Bedürfnisse...</span>
+                  <span className="text-gray-500">Lade Gesuche...</span>
                 </div>
               ) : (
                 filteredNeeds.map((need) => (
