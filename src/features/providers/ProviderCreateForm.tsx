@@ -294,7 +294,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
       <div className="flex flex-1 flex-col">
         <form className="flex flex-1 flex-col" onSubmit={handleSubmit}>
           {/* Form Fields */}
-          <div className="flex flex-1 flex-col gap-8 pb-24">
+          <div className="flex flex-1 flex-col gap-8 pb-8">
             {currentStep === 0 && (
               <div className="space-y-6">
                 <h2 className="text-lg font-medium text-[#232323] px-3">Basics</h2>

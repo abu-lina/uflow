@@ -116,13 +116,8 @@ export default function CreateProviderPage() {
         </div>
       </div>
 
-      {/* Spacer to prevent content jump */}
-      <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-16' : 'h-0'
-      }`} />
-
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col items-center justify-between px-4 py-12">
+      {/* Main Content - Always starts below header */}
+      <div className="flex flex-1 flex-col items-center px-4 pt-20 pb-24 overflow-y-auto">
         <ProviderCreateForm searchParams={searchParams} />
       </div>
     </div>
