@@ -6,12 +6,12 @@ import Image from 'next/image';
 
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { toast } from 'sonner';
 
 import { ProviderActionBar } from '@/components/providers/ProviderActionBar';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
+import { openNavigation, formatAddress, isAddressNavigable } from '@/utils/navigationUtils';
 
 interface ProviderCardModalProps {
   open: boolean;
@@ -345,7 +345,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
 
   const handleSave = async () => {
     if (!user) {
-      toast.error('Bitte melde dich an, um Provider zu speichern');
       return;
     }
     try {
@@ -368,7 +367,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
           .eq('id', existingBookmark.id);
         if (deleteError) throw deleteError;
         setIsSaved(false);
-        toast.success('Provider entfernt');
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
           bookmarkable_id: provider.provider_id,
@@ -377,11 +375,9 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
         });
         if (insertError) throw insertError;
         setIsSaved(true);
-        toast.success('Provider gespeichert');
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
-      toast.error('Fehler beim Speichern des Providers');
     }
   };
 
@@ -396,7 +392,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
       });
     } else {
       navigator.clipboard.writeText(shareUrl);
-      toast.success('Link kopiert!');
     }
   };
 
@@ -570,13 +565,23 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               <div className="w-full truncate font-inter-tight text-2xl font-semibold text-[#232323]" title={provider.provider_name}>
                 {provider.provider_name}
               </div>
-              <div className="w-full truncate font-inter text-base text-[#7A7A7A]" title={provider.address_street && provider.address_zip && provider.address_city
-                  ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
-                  : ''}>
+              <button
+                className="w-full truncate font-inter text-base text-[#7A7A7A] hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-[#7A7A7A] disabled:hover:no-underline text-left"
+                disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                title={provider.address_street && provider.address_zip && provider.address_city
+                  ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city} - Adresse antippen zum Navigieren`
+                  : ''}
+                onClick={() => {
+                  const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
+                  if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                    openNavigation(address);
+                  }
+                }}
+              >
                 {provider.address_street && provider.address_zip && provider.address_city
                   ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
                   : ''}
-              </div>
+              </button>
             </div>
             {/* Barakah Section (only if zakat project exists) */}
             {communityServices.length > 0 && (

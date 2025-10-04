@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import { toast } from 'sonner';
 
 import { Logo } from '@/components/ui/Logo';
 import { supabase } from '@/lib/supabase/client';
@@ -23,7 +22,6 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Die Passwörter stimmen nicht überein.');
       return;
     }
     setIsLoading(true);
@@ -35,10 +33,9 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
       if (error) {
         throw error;
       }
-      toast.success('Registrierung erfolgreich. Bitte bestätige deine Email-Adresse.');
       onClose();
-    } catch {
-      toast.error('Registrierung fehlgeschlagen. Bitte überprüfe deine Eingaben.');
+    } catch (error) {
+      console.error('Signup error:', error);
     } finally {
       setIsLoading(false);
     }

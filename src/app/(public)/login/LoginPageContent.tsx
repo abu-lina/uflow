@@ -7,7 +7,6 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
-import { toast } from 'sonner';
 
 interface FormData {
   email: string;
@@ -50,11 +49,9 @@ export function LoginPageContent() {
     try {
       await authService.signIn(formData.email, formData.password);
       
-      toast.success('Erfolgreich angemeldet');
       router.push('/profile');
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('Anmeldung fehlgeschlagen. Bitte überprüfe deine Eingaben.');
     } finally {
       setIsLoading(false);
     }

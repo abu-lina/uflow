@@ -7,7 +7,6 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
-import { toast } from 'sonner';
 
 interface FormData {
   email: string;
@@ -42,15 +41,12 @@ export function SignupPageContent() {
 
   const validateForm = () => {
     if (!formData.email) {
-      toast.error('Bitte gib eine E-Mail-Adresse ein');
       return false;
     }
     if (formData.password.length < 6) {
-      toast.error('Passwort muss mindestens 6 Zeichen lang sein');
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwörter stimmen nicht überein');
       return false;
     }
     return true;
@@ -68,11 +64,9 @@ export function SignupPageContent() {
     try {
       await authService.signUp(formData.email, formData.password);
       
-      toast.success('Registrierung erfolgreich! Bitte überprüfe deine E-Mails.');
       router.push('/login');
     } catch (error) {
       console.error('Signup error:', error);
-      toast.error('Registrierung fehlgeschlagen. Bitte versuche es erneut.');
     } finally {
       setIsLoading(false);
     }

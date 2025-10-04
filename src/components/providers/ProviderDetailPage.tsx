@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -13,6 +12,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
+import { openNavigation, formatAddress, isAddressNavigable } from '@/utils/navigationUtils';
 
 interface ProviderDetailPageProps {
   provider: Provider;
@@ -190,7 +190,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
   const handleBookmark = async () => {
     if (!user) {
-      toast.error('Bitte melde dich an, um Provider zu speichern');
       return;
     }
     try {
@@ -213,7 +212,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           .eq('id', existingBookmark.id);
         if (deleteError) throw deleteError;
         setIsSaved(false);
-        toast.success('Provider entfernt');
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
           bookmarkable_id: provider.provider_id,
@@ -222,11 +220,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
         });
         if (insertError) throw insertError;
         setIsSaved(true);
-        toast.success('Provider gespeichert');
       }
     } catch {
       console.error('Error toggling bookmark');
-      toast.error('Fehler beim Speichern des Providers');
     }
   };
 
@@ -261,9 +257,19 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             <h2 className="font-inter-tight text-xl font-semibold text-gray-900">
               {provider.provider_name}
             </h2>
-            <p className="mt-1 text-gray-600">
+            <button
+              className="mt-1 text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline text-left"
+              disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+              title="Adresse antippen zum Navigieren"
+              onClick={() => {
+                const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
+                if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                  openNavigation(address);
+                }
+              }}
+            >
               {provider.address_street}, {provider.address_zip} {provider.address_city}
-            </p>
+            </button>
             
             {/* Contact Icons */}
             <div className="mt-4 flex items-center gap-4">

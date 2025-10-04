@@ -3,13 +3,13 @@ import { forwardRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 
 import { Icon } from '@iconify/react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
+import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
 
 interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   className?: string;
@@ -62,7 +62,6 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     const handleBookmark = async (e: React.MouseEvent) => {
       e.stopPropagation();
       if (!user) {
-        toast.error('Bitte melde dich an, um Provider zu speichern');
         return;
       }
       if (!bookmarked) {
@@ -91,7 +90,6 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
           if (deleteError) throw deleteError;
           setBookmarked(false);
           onBookmarkChange?.(false);
-          toast.success('Provider entfernt');
         } else {
           const { error: insertError } = await supabase.from('bookmarks').insert({
             bookmarkable_id: provider_id,
@@ -101,11 +99,9 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
           if (insertError) throw insertError;
           setBookmarked(true);
           onBookmarkChange?.(true);
-          toast.success('Provider gespeichert');
         }
       } catch (error) {
         console.error('Error toggling bookmark:', error);
-        toast.error('Fehler beim Speichern des Providers');
       } finally {
         setIsLoading(false);
       }
@@ -198,7 +194,18 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
               >
                 {provider_name}
               </span>
-              <span className="w-full min-w-0 truncate text-uFlowText2 font-inter text-sm font-normal" title={address}>{address}</span>
+              <button
+                className="w-full min-w-0 truncate text-uFlowText2 font-inter text-sm font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left"
+                disabled={!isAddressNavigable(address_street ?? undefined, address_zip ?? undefined, address_city ?? undefined)}
+                title={address ? `${address} - Adresse antippen zum Navigieren` : ''}
+                onClick={() => {
+                  if (isAddressNavigable(address_street ?? undefined, address_zip ?? undefined, address_city ?? undefined)) {
+                    openNavigation(address);
+                  }
+                }}
+              >
+                {address}
+              </button>
             </div>
             {barakah_effects && barakah_effects.length > 0 && (
               <div className="flex h-7 w-full items-center gap-2 overflow-hidden">

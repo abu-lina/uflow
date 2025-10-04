@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { supabase } from '@/lib/supabase/client';
@@ -60,7 +59,6 @@ export function SignupForm() {
         throw error;
       }
 
-      toast.success('Successfully signed up!');
       router.push('/dashboard');
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -72,9 +70,9 @@ export function SignupForm() {
         });
         setErrors(newErrors);
       } else if (error instanceof Error) {
-        toast.error(`Authentication failed: ${error.message}`);
+        console.error('Signup error:', error);
       } else {
-        toast.error('An unknown error occurred during sign up');
+        console.error('Unknown signup error:', error);
       }
     } finally {
       setLoading(false);

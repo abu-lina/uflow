@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
@@ -57,7 +56,6 @@ export function LoginForm() {
         throw error;
       }
 
-      toast.success('Successfully signed in!');
       router.push('/dashboard');
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -67,9 +65,9 @@ export function LoginForm() {
           }
         });
       } else if (error instanceof Error) {
-        toast.error(`Authentication failed: ${error.message}`);
+        console.error('Login error:', error);
       } else {
-        toast.error('An unknown error occurred during sign in');
+        console.error('Unknown login error:', error);
       }
     } finally {
       setLoading(false);

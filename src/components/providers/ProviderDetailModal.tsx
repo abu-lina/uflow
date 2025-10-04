@@ -4,7 +4,6 @@ import Image from 'next/image';
 
 import { Icon } from '@iconify/react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -13,6 +12,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
+import { openNavigation, formatAddress, isAddressNavigable } from '@/utils/navigationUtils';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -232,7 +232,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
 
   const handleBookmark = async () => {
     if (!user) {
-      toast.error('Bitte melde dich an, um Provider zu speichern');
       return;
     }
     try {
@@ -255,7 +254,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           .eq('id', existingBookmark.id);
         if (deleteError) throw deleteError;
         setIsSaved(false);
-        toast.success('Provider entfernt');
         if (typeof onBookmarkChange === 'function') {
           onBookmarkChange(provider.provider_id, false);
         }
@@ -267,14 +265,12 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         });
         if (insertError) throw insertError;
         setIsSaved(true);
-        toast.success('Provider gespeichert');
         if (typeof onBookmarkChange === 'function') {
           onBookmarkChange(provider.provider_id, true);
         }
       }
     } catch {
       console.error('Error toggling bookmark');
-      toast.error('Fehler beim Speichern des Providers');
     }
   };
 
@@ -537,10 +533,20 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     <div className="text-uFlowText h-10 w-48 justify-start font-inter-tight text-2xl font-semibold">
                       Adresse:
                     </div>
-                    <div className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800">
+                    <button
+                      className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-neutral-800 disabled:hover:no-underline text-left"
+                      disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                      title="Adresse antippen zum Navigieren"
+                      onClick={() => {
+                        const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
+                        if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                          openNavigation(address);
+                        }
+                      }}
+                    >
                       {provider.address_street}, <br />
                       {provider.address_zip} {provider.address_city}
-                    </div>
+                    </button>
                   </div>
                   <div className="relative w-0 self-stretch">
                     <div className="absolute left-0 top-0 h-0 w-40 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-zinc-100" />

@@ -17,7 +17,7 @@ export function MobileGreetingHeader({ className = '' }: MobileGreetingHeaderPro
   return (
     <div className={`w-full ${className}`}>
       {/* Main Header with staggered animation */}
-      <div className="flex flex-col items-start">
+      <div className="flex flex-col items-start pl-3">
         <motion.div
           animate={{ opacity: 1, x: 0 }}
           className="font-inter text-sm font-medium leading-[140%] text-[#60606F]"
