@@ -99,7 +99,7 @@ export function SignupPageContent() {
         {/* Title Section */}
         <div className="flex flex-col items-center gap-8">
           {/* Welcome Title */}
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col items-start pl-3">
             <h2 className="text-left text-lg font-semibold leading-[39px] text-content-title">
               Willkommen bei Ummah Flow
             </h2>
