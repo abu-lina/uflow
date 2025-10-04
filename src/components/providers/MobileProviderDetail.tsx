@@ -97,12 +97,6 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
             </button>
           </div>
 
-          {/* Image Counter */}
-          {allImageUrls.length > 1 && (
-            <div className="absolute top-4 right-4 z-10 rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-sm">
-              {selectedImageIdx + 1} / {allImageUrls.length}
-            </div>
-          )}
 
           {/* Category Frame - positioned at bottom */}
           <div className="absolute bottom-0 left-0 flex h-full w-full items-end justify-start p-4">

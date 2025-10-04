@@ -346,12 +346,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   </>
                 )}
 
-                {/* Image Counter */}
-                {allImageUrls.length > 1 && (
-                  <div className="absolute bottom-4 right-4 rounded-full bg-black/50 px-3 py-1 text-sm text-white">
-                    {selectedImageIdx + 1} / {allImageUrls.length}
-                  </div>
-                )}
               </div>
             </div>
 

@@ -51,8 +51,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     minSwipeDistance: 30,
   });
 
-  // Add visual indicator for multiple images
-  const showSwipeIndicator = allImageUrls.length > 1;
 
   const [isSaved, setIsSaved] = useState(false);
   const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
@@ -420,16 +418,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               onTouchMove={handleTouchMove}
               onTouchStart={handleTouchStart}
             >
-              {/* Swipe indicator */}
-              {showSwipeIndicator ? (
-                <div className="absolute top-4 right-4 z-10 rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-sm">
-                  {selectedImageIdx + 1} / {allImageUrls.length}
-                </div>
-              ) : (
-                <div className="absolute top-4 right-4 z-10 rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-sm">
-                  Single image
-                </div>
-              )}
               <div
                 ref={imageContainerRef}
                 className="flex h-full w-full"
@@ -473,12 +461,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 </>
               )}
 
-              {/* Image Counter */}
-              {allImageUrls.length > 1 && (
-                <div className="absolute bottom-4 right-4 rounded-full bg-black/50 px-3 py-1 text-sm text-white">
-                  {selectedImageIdx + 1} / {allImageUrls.length}
-                </div>
-              )}
             </div>
 
             {/* Thumbnails */}
