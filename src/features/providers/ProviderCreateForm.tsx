@@ -643,7 +643,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                           className="w-6 h-6 text-[#232323] flex-shrink-0" 
                           icon="lucide:image-up" 
                         />
-                        <span className="font-['Inter_Tight'] font-normal font-semibold text-base leading-[19px] flex items-center text-[#232323] whitespace-nowrap">
+                        <span className="font-inter-tight font-normal font-semibold text-base leading-[19px] flex items-center text-[#232323] whitespace-nowrap">
                           Bilder hochladen{formData.images.length > 0 ? ` (${formData.images.length})` : ''}
                         </span>
                       </div>

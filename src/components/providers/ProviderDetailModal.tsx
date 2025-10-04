@@ -534,10 +534,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
                 <div className="inline-flex items-start justify-between self-stretch">
                   <div className="inline-flex flex-1 flex-col items-start justify-start gap-2">
-                    <div className="text-uFlowText h-10 w-48 justify-start font-['Inter_Tight'] text-2xl font-semibold">
+                    <div className="text-uFlowText h-10 w-48 justify-start font-inter-tight text-2xl font-semibold">
                       Adresse:
                     </div>
-                    <div className="justify-start self-stretch font-['Inter_Tight'] text-base font-normal leading-tight text-neutral-800">
+                    <div className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800">
                       {provider.address_street}, <br />
                       {provider.address_zip} {provider.address_city}
                     </div>
@@ -546,14 +546,14 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     <div className="absolute left-0 top-0 h-0 w-40 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-zinc-100" />
                   </div>
                   <div className="inline-flex flex-1 flex-col items-end justify-start gap-4 overflow-hidden">
-                    <div className="text-uFlowText justify-start font-['Inter_Tight'] text-2xl font-semibold">
+                    <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
                       Öffnungszeiten:
                     </div>
                     <div className="inline-flex w-40 items-start justify-end gap-2">
-                      <div className="w-14 justify-start font-['Inter_Tight'] text-base font-normal text-neutral-800">
+                      <div className="w-14 justify-start font-inter-tight text-base font-normal text-neutral-800">
                         Mo - Fr:
                       </div>
-                      <div className="w-24 justify-start text-right font-['Inter_Tight'] text-base font-normal text-neutral-800">
+                      <div className="w-24 justify-start text-right font-inter-tight text-base font-normal text-neutral-800">
                         Fajr bis Isha
                       </div>
                     </div>

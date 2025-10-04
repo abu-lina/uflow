@@ -209,7 +209,7 @@ export default function MediaUploadPage() {
                     className="w-6 h-6 text-[#232323]" 
                     icon="lucide:image-up" 
                   />
-                  <span className="w-[121px] h-[19px] font-['Inter_Tight'] font-normal font-semibold text-base leading-[19px] flex items-center text-[#232323]">
+                  <span className="w-[121px] h-[19px] font-inter-tight font-normal font-semibold text-base leading-[19px] flex items-center text-[#232323]">
                     Bilder hochladen
                   </span>
                 </div>
