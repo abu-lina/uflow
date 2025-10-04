@@ -283,12 +283,14 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                   <Icon className="h-5 w-5 text-gray-600" icon="entypo:old-phone" />
                 </button>
               )}
-              <button
-                className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
-                onClick={() => window.open('https://instagram.com', '_blank')}
-              >
-                <Icon className="h-5 w-5 text-gray-600" icon="mdi:instagram" />
-              </button>
+              {provider.social_instagram && (
+                <button
+                  className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
+                  onClick={() => window.open(provider.social_instagram, '_blank')}
+                >
+                  <Icon className="h-5 w-5 text-gray-600" icon="mdi:instagram" />
+                </button>
+              )}
             </div>
           </div>
 
