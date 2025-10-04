@@ -6,6 +6,7 @@
 export interface FeatureFlags {
   // Debug features
   splashScreenDebug: boolean;
+  pwaPromptDebug: boolean;
   
   // UI features
   enablePWAInstallPrompt: boolean;
@@ -21,7 +22,8 @@ export interface FeatureFlags {
  */
 export const defaultFeatureFlags: FeatureFlags = {
   // Debug features - disabled by default
-  splashScreenDebug: false,
+  splashScreenDebug: true,
+  pwaPromptDebug: true,
   
   // UI features - enabled by default
   enablePWAInstallPrompt: true,
@@ -61,6 +63,7 @@ export function getFeatureFlag<K extends keyof FeatureFlags>(
 export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFlags {
   return {
     splashScreenDebug: getFeatureFlag('splashScreenDebug', overrides),
+    pwaPromptDebug: getFeatureFlag('pwaPromptDebug', overrides),
     enablePWAInstallPrompt: getFeatureFlag('enablePWAInstallPrompt', overrides),
     enableAddressVisibilityToggle: getFeatureFlag('enableAddressVisibilityToggle', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),

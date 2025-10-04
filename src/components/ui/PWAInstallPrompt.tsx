@@ -7,12 +7,20 @@ import Image from 'next/image';
 import { X } from 'lucide-react';
 
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { getFeatureFlag } from '@/config/feature-flags';
 
 export function PWAInstallPrompt() {
   const { isInstallable, isIOS, install } = usePWAInstall();
   const [isVisible, setIsVisible] = useState(false);
+  const isDebugEnabled = getFeatureFlag('pwaPromptDebug');
 
   useEffect(() => {
+    // If debug mode is enabled, show immediately
+    if (isDebugEnabled) {
+      setIsVisible(true);
+      return;
+    }
+
     // Only show if not dismissed in the last 3 days
     const lastDismissed = localStorage.getItem('pwaPromptDismissed');
     if (lastDismissed && Date.now() - Number(lastDismissed) < 3 * 24 * 60 * 60 * 1000) {
@@ -22,7 +30,7 @@ export function PWAInstallPrompt() {
       if (isInstallable || isIOS) setIsVisible(true);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [isInstallable, isIOS]);
+  }, [isInstallable, isIOS, isDebugEnabled]);
 
   if (!isVisible) return null;
 
@@ -41,19 +49,22 @@ export function PWAInstallPrompt() {
   const handleClose = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setIsVisible(false);
-    localStorage.setItem('pwaPromptDismissed', Date.now().toString());
+    // Only save dismissal if not in debug mode
+    if (!isDebugEnabled) {
+      localStorage.setItem('pwaPromptDismissed', Date.now().toString());
+    }
   };
 
   return (
     <>
       <div
         aria-hidden="true"
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity"
       />
       <div
         aria-label={isIOS ? 'Installationsanleitung öffnen' : 'App installieren'}
         aria-modal="true"
-        className="animate-fadeIn fixed bottom-20 left-4 right-4 z-50 mx-auto max-w-md cursor-pointer rounded-2xl bg-white p-4 shadow-lg transition-transform hover:scale-105 active:scale-95 sm:left-8 sm:right-8"
+        className="animate-fadeIn fixed bottom-4 left-4 right-4 z-[70] mx-auto max-w-md cursor-pointer rounded-2xl bg-white p-4 shadow-lg transition-transform hover:scale-105 active:scale-95 sm:left-8 sm:right-8"
         role="dialog"
         tabIndex={0}
         onClick={handlePromptClick}
@@ -63,11 +74,12 @@ export function PWAInstallPrompt() {
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-[7.2px] bg-[#589D96]">
               <Image
-                priority
                 alt="U-Flow App Icon"
                 className="rounded-[7.2px]"
                 height={32}
-                src="/icons/icon-32x32.png"
+                priority={true}
+                quality={95}
+                src="/icons/icon-512x512.png"
                 width={32}
               />
             </div>
