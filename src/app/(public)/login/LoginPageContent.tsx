@@ -75,11 +75,11 @@ export function LoginPageContent() {
         {/* Title Section */}
         <div className="flex flex-col items-center gap-8">
           {/* Welcome Title */}
-          <div className="flex flex-col items-center gap-2">
-            <h2 className="text-center text-[32px] font-bold leading-[39px] text-[#232323]">
+          <div className="flex flex-col items-start">
+            <h2 className="text-left text-xl font-bold leading-[39px] text-[#232323]">
               Willkommen bei Ummah Flow
             </h2>
-            <p className="text-center text-base leading-[19px] text-[#7A7A7A]">
+            <p className="text-left text-sm leading-[19px] text-[#7A7A7A]">
               Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
             </p>
           </div>
@@ -115,7 +115,7 @@ export function LoginPageContent() {
               <input
                 required
                 className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                placeholder="************"
+                placeholder="Passwort eingeben"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}

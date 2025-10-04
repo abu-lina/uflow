@@ -99,11 +99,11 @@ export function SignupPageContent() {
         {/* Title Section */}
         <div className="flex flex-col items-center gap-8">
           {/* Welcome Title */}
-          <div className="flex flex-col items-center gap-2">
-            <h2 className="text-center text-[32px] font-bold leading-[39px] text-[#232323]">
+          <div className="flex flex-col items-start">
+            <h2 className="text-left text-xl font-bold leading-[39px] text-[#232323]">
               Willkommen bei Ummah Flow
             </h2>
-            <p className="text-center text-base leading-[19px] text-[#7A7A7A]">
+            <p className="text-left text-sm leading-[19px] text-[#7A7A7A]">
               Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
             </p>
           </div>
