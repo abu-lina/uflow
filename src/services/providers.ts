@@ -5,7 +5,6 @@ export interface Provider {
   provider_id: string;
   provider_name: string;
   provider_offers: string | null;
-  provider_needs: string | null;
   provider_images: string | null;
   category_id: string | null;
   address_city: string | null;
@@ -167,7 +166,6 @@ export async function searchProviders(
       provider_id: communityService.community_service_id,
       provider_name: communityService.community_service_name,
       provider_offers: communityService.community_service_description,
-      provider_needs: null, // Community services don't have needs field
       provider_images: communityService.community_service_images ? JSON.stringify(communityService.community_service_images) : null,
       category_id: communityService.category_id,
       address_city: communityService.address_city,

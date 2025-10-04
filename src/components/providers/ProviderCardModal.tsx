@@ -20,7 +20,6 @@ interface ProviderCardModalProps {
     provider_id: string;
     provider_name: string;
     provider_offers?: string | null;
-    provider_needs?: string | null;
     provider_images?: string | string[] | { urls?: string[] } | null;
     address_street?: string | null;
     address_zip?: string | null;
@@ -657,17 +656,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               </div>
             )}
 
-            {/* Needs Section */}
-            {provider.provider_needs && (
-              <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
-                <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
-                  Wir suchen:
-                </div>
-                <div className="font-inter-tight text-[16px] leading-[21px] text-[#272727]">
-                  {provider.provider_needs}
-                </div>
-              </div>
-            )}
             {/* Opening Hours Section */}
             <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
               <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
