@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase/client';
 import { searchCommunityServices, type CommunityService } from './community_services';
+import { searchOffers } from './offers';
+import { searchNeeds } from './needs';
 
 export interface Provider {
   provider_id: string;
@@ -51,6 +53,8 @@ export interface SearchResult {
   barakah_effects: string[];
   offers_ids: string[];
   needs_ids: string[];
+  offers?: Array<{ name_de: string }>;
+  needs?: Array<{ name_de: string }>;
   category?: {
     name_de: string;
   };
@@ -188,8 +192,32 @@ export async function searchProviders(
   let req = supabase.from('providers').select('*, category:categories(name_de)');
 
   if (query) {
-    req = req.ilike('provider_name', `%${query}%`);
+    // First, search for matching offers and needs to get their IDs
+    const [matchingOffers, matchingNeeds] = await Promise.all([
+      searchOffers(query),
+      searchNeeds(query)
+    ]);
+
+    const matchingOfferIds = matchingOffers.map(offer => offer.offer_id);
+    const matchingNeedIds = matchingNeeds.map(need => need.need_id);
+
+    // Build the search condition to include:
+    // 1. Provider name matches
+    // 2. Provider offers any of the matching offers
+    // 3. Provider fulfills any of the matching needs
+    const searchConditions = [`provider_name.ilike.%${query}%`];
+    
+    if (matchingOfferIds.length > 0) {
+      searchConditions.push(`offers_ids.cs.{${matchingOfferIds.join(',')}}`);
+    }
+    
+    if (matchingNeedIds.length > 0) {
+      searchConditions.push(`needs_ids.cs.{${matchingNeedIds.join(',')}}`);
+    }
+
+    req = req.or(searchConditions.join(','));
   }
+  
   if (category && category !== 'Alle') {
     req = req.eq('category_id', category);
   }
@@ -200,7 +228,50 @@ export async function searchProviders(
   const { data, error } = await req.returns<Provider[]>();
   if (error) throw error;
 
-  return Array.isArray(data) ? data : [];
+  if (!Array.isArray(data) || data.length === 0) {
+    return [];
+  }
+
+  // Fetch offers and needs for each provider
+  const providersWithOffersAndNeeds = await Promise.all(
+    data.map(async (provider) => {
+      let offers: Array<{ name_de: string }> = [];
+      let needs: Array<{ name_de: string }> = [];
+
+      if (provider.offers_ids && provider.offers_ids.length > 0) {
+        const { data: offersData, error: offersError } = await supabase
+          .from('offers')
+          .select('name_de')
+          .in('offer_id', provider.offers_ids);
+        
+        if (!offersError && offersData) {
+          offers = offersData;
+        }
+      }
+
+      if (provider.needs_ids && provider.needs_ids.length > 0) {
+        const { data: needsData, error: needsError } = await supabase
+          .from('needs')
+          .select('name_de')
+          .in('need_id', provider.needs_ids);
+        
+        if (!needsError && needsData) {
+          needs = needsData;
+        }
+      }
+
+      return {
+        ...provider,
+        offers_ids: provider.offers_ids || [],
+        needs_ids: provider.needs_ids || [],
+        barakah_effects: provider.barakah_effects || [],
+        offers,
+        needs,
+      };
+    })
+  );
+
+  return providersWithOffersAndNeeds;
 }
 
 export async function searchProvidersAndCommunityServices(
@@ -232,6 +303,8 @@ export async function searchProvidersAndCommunityServices(
     barakah_effects: provider.barakah_effects,
     offers_ids: provider.offers_ids,
     needs_ids: provider.needs_ids,
+    offers: provider.offers,
+    needs: provider.needs,
     category: provider.category,
     type: 'provider' as const,
     originalProvider: provider,
@@ -258,6 +331,8 @@ export async function searchProvidersAndCommunityServices(
     barakah_effects: communityService.barakah_effects || [],
     offers_ids: [],
     needs_ids: [],
+    offers: [],
+    needs: [],
     type: 'community_service' as const,
     originalCommunityService: communityService,
   }));
