@@ -273,9 +273,9 @@ export default function MediaUploadPage() {
             className="flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity bg-[#589D96] opacity-100"
             onClick={handleSave}
           >
-            <Icon className="h-6 w-6 text-white" icon="lucide:user-plus" />
+            <Icon className="h-6 w-6 text-white" icon="lucide:save" />
             <span className="text-base font-medium text-white leading-[19px]">
-              Anbieter registrieren ({selectedImages.length})
+              Speichern ({selectedImages.length})
             </span>
           </button>
         </div>

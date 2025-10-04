@@ -21,6 +21,10 @@ export interface Provider {
   created_at: string | null;
   updated_at: string | null;
   barakah_effects: string[];
+  offers_ids: string[];
+  needs_ids: string[];
+  offers?: Array<{ name_de: string }>;
+  needs?: Array<{ name_de: string }>;
   category?: {
     name_de: string;
   };
@@ -72,13 +76,80 @@ export async function getProviders(): Promise<Provider[]> {
 }
 
 export async function getProviderById(id: string): Promise<Provider | null> {
-  const { data, error } = await supabase
-    .from('providers')
-    .select('*, category:categories(name_de)')
-    .eq('provider_id', id)
-    .single<Provider>();
-  if (error) throw error;
-  return data ?? null;
+  try {
+    console.log('Fetching provider with ID:', id);
+    
+    const { data, error } = await supabase
+      .from('providers')
+      .select(`
+        *,
+        category:categories(name_de)
+      `)
+      .eq('provider_id', id)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching provider:', error);
+      throw error;
+    }
+    
+    if (!data) {
+      console.log('No provider found with ID:', id);
+      return null;
+    }
+
+    console.log('Provider data:', data);
+
+    // Fetch offers and needs separately
+    let offers: Array<{ name_de: string }> = [];
+    let needs: Array<{ name_de: string }> = [];
+
+    if (data.offers_ids && data.offers_ids.length > 0) {
+      console.log('Fetching offers for IDs:', data.offers_ids);
+      const { data: offersData, error: offersError } = await supabase
+        .from('offers')
+        .select('name_de')
+        .in('offer_id', data.offers_ids);
+      
+      if (offersError) {
+        console.error('Error fetching offers:', offersError);
+      } else {
+        offers = offersData || [];
+        console.log('Fetched offers:', offers);
+      }
+    }
+
+    if (data.needs_ids && data.needs_ids.length > 0) {
+      console.log('Fetching needs for IDs:', data.needs_ids);
+      const { data: needsData, error: needsError } = await supabase
+        .from('needs')
+        .select('name_de')
+        .in('need_id', data.needs_ids);
+      
+      if (needsError) {
+        console.error('Error fetching needs:', needsError);
+      } else {
+        needs = needsData || [];
+        console.log('Fetched needs:', needs);
+      }
+    }
+
+    // Transform the data to match our Provider interface
+    const provider: Provider = {
+      ...data,
+      offers_ids: data.offers_ids || [],
+      needs_ids: data.needs_ids || [],
+      barakah_effects: data.barakah_effects || [],
+      offers,
+      needs,
+    };
+
+    console.log('Final provider object:', provider);
+    return provider;
+  } catch (error) {
+    console.error('Error in getProviderById:', error);
+    throw error;
+  }
 }
 
 export async function searchProviders(

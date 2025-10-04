@@ -344,10 +344,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           )}
 
           {/* Combined Offers & Needs Section */}
-          {(provider.provider_offers || provider.provider_needs) && (
+          {((provider.offers && provider.offers.length > 0) || (provider.needs && provider.needs.length > 0)) && (
             <div className="mx-6 mt-4 rounded-2xl bg-white shadow-sm">
               {/* Offers Section */}
-              {provider.provider_offers && (
+              {provider.offers && provider.offers.length > 0 && (
                 <div className="p-4">
                   <button
                     className="flex w-full items-center justify-between"
@@ -363,20 +363,29 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     />
                   </button>
                   {expandedOffers && (
-                    <div className="mt-2 text-gray-700 leading-relaxed">
-                      {provider.provider_offers}
+                    <div className="mt-2">
+                      <div className="flex flex-wrap gap-2">
+                        {provider.offers.map((offer, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                          >
+                            {offer.name_de}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
               )}
 
               {/* Divider */}
-              {provider.provider_offers && provider.provider_needs && (
+              {provider.offers && provider.offers.length > 0 && provider.needs && provider.needs.length > 0 && (
                 <hr className="mx-4 border-gray-200" />
               )}
 
               {/* Needs Section */}
-              {provider.provider_needs && (
+              {provider.needs && provider.needs.length > 0 && (
                 <div className="p-4">
                   <button
                     className="flex w-full items-center justify-between"
@@ -392,8 +401,17 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     />
                   </button>
                   {expandedNeeds && (
-                    <div className="mt-2 text-gray-700 leading-relaxed">
-                      {provider.provider_needs}
+                    <div className="mt-2">
+                      <div className="flex flex-wrap gap-2">
+                        {provider.needs.map((need, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                          >
+                            {need.name_de}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -632,10 +650,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             )}
 
             {/* Combined Offers & Needs Section */}
-            {(provider.provider_offers || provider.provider_needs) && (
+            {((provider.offers && provider.offers.length > 0) || (provider.needs && provider.needs.length > 0)) && (
               <div className="rounded-2xl bg-white shadow-sm">
                 {/* Offers Section */}
-                {provider.provider_offers && (
+                {provider.offers && provider.offers.length > 0 && (
                   <div className="p-6">
                     <button
                       className="flex w-full items-center justify-between"
@@ -651,20 +669,29 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       />
                     </button>
                     {expandedOffers && (
-                      <div className="mt-3 text-gray-700 leading-relaxed">
-                        {provider.provider_offers}
+                      <div className="mt-3">
+                        <div className="flex flex-wrap gap-2">
+                          {provider.offers.map((offer, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                            >
+                              {offer.name_de}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
 
                 {/* Divider */}
-                {provider.provider_offers && provider.provider_needs && (
+                {provider.offers && provider.offers.length > 0 && provider.needs && provider.needs.length > 0 && (
                   <hr className="mx-4 border-gray-200" />
                 )}
 
                 {/* Needs Section */}
-                {provider.provider_needs && (
+                {provider.needs && provider.needs.length > 0 && (
                   <div className="p-6">
                     <button
                       className="flex w-full items-center justify-between"
@@ -680,8 +707,17 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       />
                     </button>
                     {expandedNeeds && (
-                      <div className="mt-3 text-gray-700 leading-relaxed">
-                        {provider.provider_needs}
+                      <div className="mt-3">
+                        <div className="flex flex-wrap gap-2">
+                          {provider.needs.map((need, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                            >
+                              {need.name_de}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

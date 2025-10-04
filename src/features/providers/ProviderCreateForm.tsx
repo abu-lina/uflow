@@ -59,16 +59,16 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     street: '',
     zip: '',
     city: '',
-        country: '',
-        showAddress: true,
+    country: '',
+    showAddress: true,
     website: '',
     instagram: '',
     phone: '',
     email: '',
     images: [],
     tags: [],
-        offers_ids: [],
-        needs_ids: [],
+    offers_ids: [],
+    needs_ids: [],
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -118,61 +118,31 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
 
   // Load all form data from URL params on mount
   useEffect(() => {
-    console.log('useEffect triggered with searchParams:', searchParams);
     if (searchParams && searchParams.size > 0) {
-      console.log('Loading form data from URL params:', {
-        title: searchParams.get('title'),
-        category: searchParams.get('categoryId'),
-        description: searchParams.get('description'),
-        street: searchParams.get('street'),
-        zip: searchParams.get('zip'),
-        city: searchParams.get('city'),
-        country: searchParams.get('country'),
-        showAddress: searchParams.get('showAddress'),
-        website: searchParams.get('website'),
-        instagram: searchParams.get('instagram'),
-        phone: searchParams.get('phone'),
-        email: searchParams.get('email'),
-        offersIds: searchParams.get('offersIds'),
-        needsIds: searchParams.get('needsIds'),
-        step: searchParams.get('step')
-      });
-      
-      setFormData(prev => {
-        console.log('Previous form data before URL loading:', prev);
-        
-        const newData = {
-          ...prev,
-          title: searchParams.get('title') || prev.title,
-          category: searchParams.get('categoryId') || prev.category,
-          description: searchParams.get('description') || prev.description,
-          street: searchParams.get('street') || prev.street,
-          zip: searchParams.get('zip') || prev.zip,
-          city: searchParams.get('city') || prev.city,
-          country: searchParams.get('country') || prev.country,
-          showAddress: searchParams.get('showAddress') === 'true' ? true : searchParams.get('showAddress') === 'false' ? false : prev.showAddress,
-          website: searchParams.get('website') || prev.website,
-          instagram: searchParams.get('instagram') || prev.instagram,
-          phone: searchParams.get('phone') || prev.phone,
-          email: searchParams.get('email') || prev.email,
-          offers_ids: searchParams.get('offersIds') ? JSON.parse(searchParams.get('offersIds') || '[]') : prev.offers_ids,
-          needs_ids: searchParams.get('needsIds') ? JSON.parse(searchParams.get('needsIds') || '[]') : prev.needs_ids,
-          // Note: images are handled differently since File objects can't be serialized
-          // The images count is tracked but actual File objects need to be managed separately
-        };
-        
-        console.log('Form data after URL loading:', newData);
-        return newData;
-      });
+      setFormData(prev => ({
+        ...prev,
+        title: searchParams.get('title') || prev.title,
+        category: searchParams.get('categoryId') || prev.category,
+        description: searchParams.get('description') || prev.description,
+        street: searchParams.get('street') || prev.street,
+        zip: searchParams.get('zip') || prev.zip,
+        city: searchParams.get('city') || prev.city,
+        country: searchParams.get('country') || prev.country,
+        showAddress: searchParams.get('showAddress') === 'true' ? true : searchParams.get('showAddress') === 'false' ? false : prev.showAddress,
+        website: searchParams.get('website') || prev.website,
+        instagram: searchParams.get('instagram') || prev.instagram,
+        phone: searchParams.get('phone') || prev.phone,
+        email: searchParams.get('email') || prev.email,
+        offers_ids: searchParams.get('offersIds') ? JSON.parse(searchParams.get('offersIds') || '[]') : prev.offers_ids,
+        needs_ids: searchParams.get('needsIds') ? JSON.parse(searchParams.get('needsIds') || '[]') : prev.needs_ids,
+      }));
 
       // Handle step parameter from URL (only when explicitly set)
       const stepParam = searchParams.get('step');
       if (stepParam) {
         const stepNumber = parseInt(stepParam, 10);
         if (stepNumber >= 0 && stepNumber < STEPS.length) {
-          console.log('Setting step from URL parameter:', stepNumber);
           setCurrentStep(stepNumber);
-          // Don't modify URL to avoid triggering form data reload
         }
       }
     }
@@ -237,6 +207,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit called - currentStep:', currentStep, 'STEPS.length:', STEPS.length);
     
     // Only allow submission on the last step
     if (currentStep !== STEPS.length - 1) {
@@ -347,6 +318,10 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     
     console.log('Insert data:', insertData);
     console.log('Category ID in insert data:', insertData.category_id);
+    console.log('Offers IDs in insert data:', insertData.offers_ids);
+    console.log('Needs IDs in insert data:', insertData.needs_ids);
+    console.log('Form data offers_ids:', formData.offers_ids);
+    console.log('Form data needs_ids:', formData.needs_ids);
     
     const { error: providerError } = await supabase
       .from('providers')
@@ -367,8 +342,9 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     }
 
     setIsSubmitting(false);
-      // Redirect immediately without blocking alert
-      router.push('/profile');
+    console.log('Provider created successfully, redirecting to profile...');
+    // Force a page refresh to ensure the redirect works
+    window.location.href = '/profile';
   };
 
   const nextStep = () => {
@@ -662,32 +638,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                     <button
                       className="flex w-full h-[54px] flex-col justify-center items-start p-4 gap-4 bg-white border border-[#D4D4D4] rounded-[12px] hover:bg-gray-50"
                       type="button"
-                      onClick={() => {
-                        const params = new URLSearchParams();
-                        
-                        // Preserve all existing form data
-                        const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'offersIds', 'needsIds'];
-                        formParams.forEach(param => {
-                          const value = formData[param as keyof typeof formData];
-                          if (value !== undefined && value !== null && value !== '') {
-                            if (Array.isArray(value)) {
-                              params.set(param, JSON.stringify(value));
-                            } else {
-                              params.set(param, value.toString());
-                            }
-                          }
-                        });
-                        
-                        // Handle category separately since it's stored as 'category' but needs to be 'categoryId' in URL
-                        if (formData.category) {
-                          params.set('categoryId', formData.category);
-                        }
-                        
-                        // Add current images count
-                        params.set('images', formData.images.length.toString());
-                        
-                        router.push(`/create/media?${params.toString()}`);
-                      }}
+                      onClick={() => router.push(buildUrlWithFormData('/create/media'))}
                     >
                       <div className="flex flex-row items-center p-0 gap-3 w-full h-6">
                         <Icon 
