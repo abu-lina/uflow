@@ -115,7 +115,7 @@ export default function CreateProviderPage() {
             >
               <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
             </button>
-            <h1 className="ml-2 font-inter-tight text-xl font-semibold text-[#232323]">
+            <h1 className="ml-2 text-xl font-semibold text-content-title">
               Anbieter erstellen
             </h1>
           </div>

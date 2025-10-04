@@ -191,7 +191,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="ml-2 font-inter-tight text-xl font-bold text-[#232323]">
+          <h1 className="ml-2 text-xl font-semibold text-content-title">
             Profil bearbeiten
           </h1>
         </div>
@@ -310,7 +310,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
         {/* Submit Button */}
         <button
-          className="w-full rounded-xl bg-[#589D96] py-3 font-inter font-semibold text-white transition-colors hover:bg-[#4a8a84] disabled:opacity-50"
+          className="w-full rounded-xl bg-[#589D96] py-3 font-inter font-semibold text-base text-white transition-colors hover:bg-[#4a8a84] disabled:opacity-50"
           disabled={isSubmitting}
           type="submit"
         >

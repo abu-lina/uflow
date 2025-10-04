@@ -22,11 +22,11 @@ export function ActionButton({
   // Size variants following Rule of 8
   const sizeClasses = {
     lg: {
-      button: 'h-14 px-4 gap-2 rounded-[16.8px] text-xl',
+      button: 'h-14 px-4 gap-2 rounded-[16.8px] text-base',
       icon: 'size-6',
     },
     md: {
-      button: 'h-12 px-4 gap-2 rounded-[14px] text-lg',
+      button: 'h-12 px-4 gap-2 rounded-[14px] text-base',
       icon: 'size-5',
     },
   };

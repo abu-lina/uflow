@@ -174,7 +174,7 @@ export default function MediaUploadPage() {
           
           {/* Title */}
           <div className="flex flex-1 items-center justify-start">
-            <h1 className="text-xl font-semibold text-[#232323] leading-[29px]">
+            <h1 className="text-xl font-semibold text-content-title leading-[29px]">
               Bilder hochladen
             </h1>
           </div>

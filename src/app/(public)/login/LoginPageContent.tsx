@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -25,8 +25,14 @@ export function LoginPageContent() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      router.replace('/profile');
+    }
+  }, [user, router]);
+
+  // Don't render if already logged in (to prevent flash)
   if (user) {
-    router.replace('/profile');
     return null;
   }
 
@@ -63,7 +69,7 @@ export function LoginPageContent() {
       {/* Header */}
       <div className="flex w-full max-w-[361px] flex-col items-center py-6">
         <div className="flex w-full items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#232323]">Login</h1>
+          <h1 className="text-xl font-semibold text-content-title">Login</h1>
           <div className="h-12 w-12">
             <Logo className="h-12 w-12" height={48} width={48} />
           </div>
@@ -76,7 +82,7 @@ export function LoginPageContent() {
         <div className="flex flex-col items-center gap-8">
           {/* Welcome Title */}
           <div className="flex flex-col items-start">
-            <h2 className="text-left text-xl font-bold leading-[39px] text-[#232323]">
+            <h2 className="text-left text-lg font-semibold leading-[39px] text-content-title">
               Willkommen bei Ummah Flow
             </h2>
             <p className="text-left text-sm leading-[19px] text-[#7A7A7A]">
@@ -142,7 +148,7 @@ export function LoginPageContent() {
           <div className="flex flex-col gap-4 pt-8">
             {/* Login Button */}
             <button
-              className="flex h-[56px] w-full items-center justify-center rounded-[16.8px] bg-[#589D96] text-[20px] font-medium leading-[24px] text-white transition-colors hover:bg-[#4a8a84] disabled:opacity-50"
+              className="flex h-[56px] w-full items-center justify-center rounded-[16.8px] bg-[#589D96] text-base font-medium leading-[24px] text-white transition-colors hover:bg-[#4a8a84] disabled:opacity-50"
               disabled={isLoading}
               type="submit"
             >
