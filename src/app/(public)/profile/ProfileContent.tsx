@@ -146,10 +146,10 @@ export function ProfileContent({ user }: ProfileContentProps) {
         </div>
       </button>
 
-      {/* Dein Souks/Services Section */}
+      {/* Deine Inhalte Section */}
       <div className="mb-6">
-        <h2 className="mb-4 font-inter-tight text-lg font-semibold text-[#232323]">
-          Dein Souks/Services
+        <h2 className="mb-4 px-3 font-inter-tight text-lg font-semibold text-[#232323]">
+          Deine Inhalte
         </h2>
         
         {isLoadingProviders ? (
