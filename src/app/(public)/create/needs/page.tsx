@@ -193,7 +193,7 @@ export default function SelectNeedsPage() {
 
       {/* Content */}
       <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-8 overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8 pb-24">
+        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8 pb-mobile-nav-md">
           {/* Search Bar + Subtitle */}
           <div className="flex w-full flex-col gap-2">
             {/* Search Bar */}

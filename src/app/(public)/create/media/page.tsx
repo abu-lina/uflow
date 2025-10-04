@@ -188,7 +188,7 @@ export default function MediaUploadPage() {
 
       {/* Content */}
       <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-8 overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8 pb-24">
+        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8 pb-mobile-nav-md">
           {/* Upload Section */}
           <div className="flex w-full flex-col gap-2">
             <h3 className="text-sm font-medium text-[#232323]">Bilder auswählen</h3>

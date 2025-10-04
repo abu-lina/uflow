@@ -17,6 +17,11 @@
     --grey: 0 0% 80%; /* grey */
     --grey-light: 0 0% 93%; /* grey-light */
     --border: 0 0% 83%; /* border */
+    
+    /* Mobile navigation spacing */
+    --mobile-nav-height: 64px; /* MobileFooterBar height */
+    --mobile-nav-spacing: 32px; /* Desired gap between content and nav */
+    --mobile-nav-total: calc(var(--mobile-nav-height) + var(--mobile-nav-spacing)); /* 96px */
   }
 
   html {
@@ -377,6 +382,26 @@
     height: 100vh;
     /* Fallback 3: WebKit fill available for older Safari */
     height: -webkit-fill-available;
+  }
+
+  /* Mobile navigation spacing utilities */
+  .pb-mobile-nav {
+    padding-bottom: var(--mobile-nav-total); /* 96px total */
+  }
+  
+  .mb-mobile-nav {
+    margin-bottom: var(--mobile-nav-total); /* 96px total */
+  }
+  
+  /* Responsive mobile nav spacing - only applies on mobile */
+  @media (max-width: 768px) {
+    .pb-mobile-nav-md {
+      padding-bottom: var(--mobile-nav-total);
+    }
+    
+    .mb-mobile-nav-md {
+      margin-bottom: var(--mobile-nav-total);
+    }
   }
 }
 

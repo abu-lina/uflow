@@ -126,7 +126,7 @@ export default function CreateProviderPage() {
       </div>
 
       {/* Main Content - Always starts below header */}
-      <div className="flex flex-1 flex-col items-center px-4 pt-20 pb-24 overflow-y-auto">
+      <div className="flex flex-1 flex-col items-center px-4 pt-20 pb-mobile-nav-md overflow-y-auto">
         <ProviderCreateForm searchParams={searchParams} />
       </div>
     </div>

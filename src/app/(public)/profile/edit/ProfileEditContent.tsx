@@ -180,7 +180,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 pb-20 pt-4 md:pb-8 overflow-y-auto">
+    <div className="min-h-screen bg-gray-100 px-4 pb-mobile-nav-md pt-4 overflow-y-auto">
       {/* Header */}
       <div className="mb-6 flex h-12 w-full items-center">
         {/* Left side: Chevron + Title */}

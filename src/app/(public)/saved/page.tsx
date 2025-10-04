@@ -81,7 +81,7 @@ export default function SavedProvidersPage() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 px-4 py-6">
+    <div className="flex flex-col items-center gap-4 px-4 py-6 pb-mobile-nav-md">
       <h1 className="w-full text-left text-xl font-bold">Gespeicherte Providers</h1>
       <div className="grid w-full grid-cols-2 gap-4">
         {providers.length === 0 ? (
