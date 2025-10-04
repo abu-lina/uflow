@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { MobileLoginScreen } from '@/components/common/MobileLoginScreen';
 import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
 import { ProviderCardModal } from '@/components/providers/ProviderCardModal';
 import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
@@ -12,10 +12,10 @@ import { getBookmarkedProviders, type Provider } from '@/services/providers';
 
 export default function SavedProvidersPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -67,11 +67,10 @@ export default function SavedProvidersPage() {
         </span>
         <button
           className="rounded-xl bg-mint px-4 py-2 font-semibold text-white"
-          onClick={() => setShowLoginModal(true)}
+          onClick={() => router.push('/login')}
         >
           Zur Anmeldung
         </button>
-        {showLoginModal && <MobileLoginScreen onClose={() => setShowLoginModal(false)} />}
       </div>
     );
   }

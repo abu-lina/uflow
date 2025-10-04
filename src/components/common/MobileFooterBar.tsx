@@ -15,7 +15,6 @@ import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { sharedTransition } from '@/components/ui/PageTransition';
 import { useAuth } from '@/providers/auth-provider';
 
-import { MobileLoginScreen } from './MobileLoginScreen';
 
 // Height is set to 72px for modern, touch-friendly, and visually balanced mobile nav bar.
 const navItems = [
@@ -56,15 +55,9 @@ export function MobileFooterBar() {
   const { user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const [showLoginScreen, setShowLoginScreen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    if (user && showLoginScreen) {
-      setShowLoginScreen(false);
-    }
-  }, [user, showLoginScreen]);
 
   useEffect(() => {
     // No logging
@@ -84,7 +77,7 @@ export function MobileFooterBar() {
 
       try {
         if (href === '/profile' && !user) {
-          setShowLoginScreen(true);
+          router.push('/login');
           return;
         }
 
@@ -131,12 +124,20 @@ export function MobileFooterBar() {
                 onClick={handleNavigation(item.href)}
               >
                 {typeof item.icon === 'function' ? (
-                  item.icon(pathname === item.href)
+                  item.icon(
+                    item.href === '/profile' 
+                      ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
+                      : pathname === item.href
+                  )
                 ) : (
                   <motion.div
                     animate={{
-                      scale: pathname === item.href ? 1.01 : 1,
-                      color: pathname === item.href ? '#589D96' : '#555555',
+                      scale: (item.href === '/profile' 
+                        ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
+                        : pathname === item.href) ? 1.01 : 1,
+                      color: (item.href === '/profile' 
+                        ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
+                        : pathname === item.href) ? '#589D96' : '#555555',
                     }}
                     transition={sharedTransition}
                   >
@@ -149,7 +150,9 @@ export function MobileFooterBar() {
                           : {
                               background: '#FFFFFF',
                               border:
-                                pathname === item.href
+                                (item.href === '/profile' 
+                                  ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
+                                  : pathname === item.href)
                                   ? '1.6px solid #589D96'
                                   : '0.5px solid #777777',
                               borderRadius: 8,
@@ -165,7 +168,6 @@ export function MobileFooterBar() {
           ))}
         </div>
       </nav>
-      {showLoginScreen && <MobileLoginScreen onClose={() => setShowLoginScreen(false)} />}
     </>
   );
 }

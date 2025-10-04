@@ -9,14 +9,12 @@ import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
-import { SigninModal } from '@/features/auth/components/SigninModal';
 import { SignupModal } from '@/features/auth/components/SignupModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 
 export function Header() {
-  const [showSigninModal, setShowSigninModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -119,7 +117,7 @@ export function Header() {
                 <>
                   <button
                     className="flex h-10 items-center rounded-xl border border-grey px-3.5 text-base font-medium text-content"
-                    onClick={() => setShowSigninModal(true)}
+                    onClick={() => router.push('/login')}
                   >
                     Anmelden
                   </button>
@@ -136,7 +134,6 @@ export function Header() {
         </div>
       </header>
 
-      {showSigninModal && <SigninModal onClose={() => setShowSigninModal(false)} />}
       {showSignupModal && <SignupModal onClose={() => setShowSignupModal(false)} />}
     </>
   );

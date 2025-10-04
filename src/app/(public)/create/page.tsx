@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
-import { MobileLoginScreen } from '@/components/common/MobileLoginScreen';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -18,7 +17,6 @@ export default function CreateProviderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const check = () => {
@@ -94,11 +92,10 @@ export default function CreateProviderPage() {
         </span>
         <button
           className="rounded-xl bg-mint px-4 py-2 font-semibold text-white"
-          onClick={() => setShowLoginModal(true)}
+          onClick={() => router.push('/login')}
         >
           Zur Anmeldung
         </button>
-        {showLoginModal && <MobileLoginScreen onClose={() => setShowLoginModal(false)} />}
       </div>
     );
   }

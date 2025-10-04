@@ -44,7 +44,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   useEffect(() => {
     if (!loading && !effectiveUser) {
       // No user found on either server or client side
-      router.replace('/?auth=required');
+      router.replace('/login');
     }
   }, [effectiveUser, loading, router]);
 

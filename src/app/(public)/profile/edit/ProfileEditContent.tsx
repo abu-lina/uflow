@@ -61,7 +61,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
   // Handle authentication state
   useEffect(() => {
     if (!loading && !effectiveUser) {
-      router.replace('/?auth=required');
+      router.replace('/login');
     }
   }, [effectiveUser, loading, router]);
 
