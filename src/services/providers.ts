@@ -52,6 +52,8 @@ export interface SearchResult {
   created_at: string | null;
   updated_at: string | null;
   barakah_effects: string[];
+  offers_ids: string[];
+  needs_ids: string[];
   category?: {
     name_de: string;
   };
@@ -181,6 +183,8 @@ export async function searchProviders(
       created_at: communityService.created_at,
       updated_at: communityService.updated_at,
       barakah_effects: communityService.barakah_effects || [],
+      offers_ids: [],
+      needs_ids: [],
       category: { name_de: 'Community Services' },
       community_service_id: communityService.community_service_id,
     }));
@@ -232,6 +236,8 @@ export async function searchProvidersAndCommunityServices(
     created_at: provider.created_at,
     updated_at: provider.updated_at,
     barakah_effects: provider.barakah_effects,
+    offers_ids: provider.offers_ids,
+    needs_ids: provider.needs_ids,
     category: provider.category,
     type: 'provider' as const,
     originalProvider: provider,
@@ -257,6 +263,8 @@ export async function searchProvidersAndCommunityServices(
     created_at: communityService.created_at,
     updated_at: communityService.updated_at,
     barakah_effects: communityService.barakah_effects || [],
+    offers_ids: [],
+    needs_ids: [],
     type: 'community_service' as const,
     originalCommunityService: communityService,
   }));
