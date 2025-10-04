@@ -119,7 +119,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
   // Load all form data from URL params on mount
   useEffect(() => {
     console.log('useEffect triggered with searchParams:', searchParams);
-    if (searchParams) {
+    if (searchParams && searchParams.size > 0) {
       console.log('Loading form data from URL params:', {
         title: searchParams.get('title'),
         category: searchParams.get('categoryId'),
@@ -245,10 +245,38 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     }
     
     console.log('Form submission allowed - on last step:', currentStep);
+    console.log('Form data at submission:', formData);
+    console.log('Category value:', formData.category);
     setIsSubmitting(true);
 
     if (!user) {
       setIsSubmitting(false);
+      alert('Sie müssen angemeldet sein, um einen Anbieter zu erstellen. Bitte melden Sie sich erneut an.');
+      router.push('/signin');
+      return;
+    }
+
+    // Try to refresh the session before proceeding
+    try {
+      const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Session refresh failed:', refreshError);
+        setIsSubmitting(false);
+        alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+        router.push('/signin');
+        return;
+      }
+      if (!refreshedSession?.user) {
+        setIsSubmitting(false);
+        alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+        router.push('/signin');
+        return;
+      }
+    } catch (error) {
+      console.error('Session refresh error:', error);
+      setIsSubmitting(false);
+      alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+      router.push('/signin');
       return;
     }
 
@@ -318,6 +346,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     };
     
     console.log('Insert data:', insertData);
+    console.log('Category ID in insert data:', insertData.category_id);
     
     const { error: providerError } = await supabase
       .from('providers')
@@ -325,7 +354,15 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     
     if (providerError) {
       setIsSubmitting(false);
-      alert(`Fehler beim Erstellen des Providers: ${providerError.message}`);
+      console.error('Provider creation error:', providerError);
+      
+      // Check if it's an authentication error
+      if (providerError.message.includes('JWT') || providerError.message.includes('auth') || providerError.code === 'PGRST301') {
+        alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+        router.push('/signin');
+      } else {
+        alert(`Fehler beim Erstellen des Providers: ${providerError.message}`);
+      }
       return;
     }
 
@@ -629,7 +666,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                         const params = new URLSearchParams();
                         
                         // Preserve all existing form data
-                        const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'categoryId', 'offersIds', 'needsIds'];
+                        const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'offersIds', 'needsIds'];
                         formParams.forEach(param => {
                           const value = formData[param as keyof typeof formData];
                           if (value !== undefined && value !== null && value !== '') {
@@ -640,6 +677,11 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                             }
                           }
                         });
+                        
+                        // Handle category separately since it's stored as 'category' but needs to be 'categoryId' in URL
+                        if (formData.category) {
+                          params.set('categoryId', formData.category);
+                        }
                         
                         // Add current images count
                         params.set('images', formData.images.length.toString());
@@ -693,20 +735,27 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                   onClick={(e) => {
                     console.log('Weiter button clicked - currentStep:', currentStep, 'isLastStep:', currentStep === STEPS.length - 1);
                     console.log('Button type:', currentStep === STEPS.length - 1 ? 'submit' : 'button');
-                    e.preventDefault();
-                    e.stopPropagation();
                     
                     if (currentStep === STEPS.length - 1) {
                       console.log('Last step - should trigger form submission');
-                      // Let the form submission happen naturally
+                      // Don't prevent default - let form submission happen naturally
                     } else {
                       console.log('Not last step - calling nextStep');
+                      e.preventDefault();
+                      e.stopPropagation();
                       nextStep();
                     }
                   }}
           >
             {isSubmitting ? (
                     <Icon className="h-5 w-5 animate-spin text-white" icon="mdi:loading" />
+                  ) : currentStep === STEPS.length - 1 ? (
+                    <>
+                      <Icon className="h-6 w-6 text-white" icon="lucide:user-plus" />
+                      <span className="text-base font-medium text-white leading-[19px]">
+                        Anbieter registrieren
+                      </span>
+                    </>
                   ) : (
                     <>
                       <span className="text-base font-medium text-white leading-[19px]">

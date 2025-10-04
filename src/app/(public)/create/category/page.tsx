@@ -159,9 +159,15 @@ export default function SelectCategoryPage() {
                 const value = searchParams.get(param);
                 if (value) params.set(param, value);
               });
-              // Preserve the currently selected category
+              // Preserve the currently selected category or the original category
               if (selectedCategory) {
                 params.set('categoryId', selectedCategory);
+              } else {
+                // Preserve original category from URL if no new selection
+                const originalCategory = searchParams.get('categoryId');
+                if (originalCategory) {
+                  params.set('categoryId', originalCategory);
+                }
               }
               // Add current images count
               params.set('images', searchParams.get('images') || '0');
