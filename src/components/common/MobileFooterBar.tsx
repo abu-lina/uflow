@@ -127,17 +127,23 @@ export function MobileFooterBar() {
                   item.icon(
                     item.href === '/profile' 
                       ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
-                      : pathname === item.href
+                      : item.href === '/create'
+                        ? pathname.startsWith('/create')
+                        : pathname === item.href
                   )
                 ) : (
                   <motion.div
                     animate={{
                       scale: (item.href === '/profile' 
                         ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
-                        : pathname === item.href) ? 1.01 : 1,
+                        : item.href === '/create'
+                          ? pathname.startsWith('/create')
+                          : pathname === item.href) ? 1.01 : 1,
                       color: (item.href === '/profile' 
                         ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
-                        : pathname === item.href) ? '#589D96' : '#555555',
+                        : item.href === '/create'
+                          ? pathname.startsWith('/create')
+                          : pathname === item.href) ? '#589D96' : '#555555',
                     }}
                     transition={sharedTransition}
                   >
@@ -152,7 +158,9 @@ export function MobileFooterBar() {
                               border:
                                 (item.href === '/profile' 
                                   ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
-                                  : pathname === item.href)
+                                  : item.href === '/create'
+                                    ? pathname.startsWith('/create')
+                                    : pathname === item.href)
                                   ? '1.6px solid #589D96'
                                   : '0.5px solid #777777',
                               borderRadius: 8,

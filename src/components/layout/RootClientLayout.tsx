@@ -18,7 +18,6 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const isLandingPage = pathname === '/';
   const isAboutPage = pathname === '/about';
   const isProviderDetailPage = pathname.startsWith('/providers/') && pathname !== '/providers';
-  const isCreatePage = pathname === '/create';
   const isCategoryPage = pathname === '/create/category';
   const isOffersPage = pathname === '/create/offers';
   const isNeedsPage = pathname === '/create/needs';
@@ -87,7 +86,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             </div>
           </PageTransition>
         </main>
-        {!isAboutPage && !isProviderDetailPage && !isCreatePage && !isCategoryPage && !isOffersPage && !isNeedsPage && !isMediaPage && !isSplashVisible && (
+        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isOffersPage && !isNeedsPage && !isMediaPage && !isSplashVisible && (
           <div className="block md:hidden">
             <MobileFooterBar />
           </div>

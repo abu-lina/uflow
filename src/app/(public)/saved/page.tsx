@@ -44,16 +44,29 @@ export default function SavedProvidersPage() {
 
   if (!user) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 px-4">
-        <span className="text-center text-lg text-gray-500">
-          Du musst angemeldet sein, um gespeicherte Providers zu sehen.
-        </span>
-        <button
-          className="rounded-xl bg-mint px-4 py-2 font-semibold text-white"
-          onClick={() => router.push('/login')}
-        >
-          Zur Anmeldung
-        </button>
+      <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+        {/* Sticky Header */}
+        <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl">
+          <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
+            {/* Left-aligned Title */}
+            <h1 className="text-xl font-semibold text-content-title">
+              Gespeichert
+            </h1>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 pb-mobile-nav-md">
+          <span className="text-center text-lg text-content-title mb-6">
+            Du musst angemeldet sein, um gespeicherte Inhalte zu sehen.
+          </span>
+          <button
+            className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 font-semibold text-base text-white transition-colors hover:bg-primary-dark"
+            onClick={() => router.push('/login')}
+          >
+            Zur Anmeldung
+          </button>
+        </div>
       </div>
     );
   }
