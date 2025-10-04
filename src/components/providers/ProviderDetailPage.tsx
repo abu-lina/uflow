@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
@@ -8,6 +8,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useImageSwipe } from '@/hooks/useImageSwipe';
+import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
@@ -23,129 +25,40 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const isMobile = useIsMobile();
   const { user } = useAuth();
   
-  // Image handling
-  const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
-  
-  function hasUrls(obj: unknown): obj is { urls: string[] } {
-    return (
-      typeof obj === 'object' &&
-      obj !== null &&
-      Array.isArray((obj as { urls?: unknown }).urls) &&
-      (obj as { urls: unknown[] }).urls.every((u) => typeof u === 'string')
-    );
-  }
+  // Process images using shared utility
+  const allImageUrls = getAllTrustedImageUrls(provider.provider_images);
 
-  function isTrustedUrl(url: string) {
-    try {
-      const { hostname } = new URL(url);
-      const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
-      return hostname === supabaseUrl.hostname;
-    } catch {
-      return false;
-    }
-  }
+  // Use the centralized image swipe hook
+  const {
+    selectedImageIdx,
+    imageContainerRef,
+    goToNext,
+    goToPrevious,
+    goToImage,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    getTransformStyle,
+  } = useImageSwipe({
+    totalImages: allImageUrls.length,
+    enableSwipe: true,
+    swipeThreshold: 60,
+    boundaryResistance: 0.15,
+    velocityThreshold: 0.3,
+    minSwipeDistance: 30,
+  });
 
-  const allImageUrls = (() => {
-    try {
-      if (!provider.provider_images) {
-        return [PLACEHOLDER_IMAGE];
-      }
-      let imagesData: { urls?: string[] } = {};
-      if (typeof provider.provider_images === 'string') {
-        try {
-          imagesData = JSON.parse(provider.provider_images) as { urls?: string[] };
-        } catch {
-          imagesData = {};
-        }
-      } else if (Array.isArray(provider.provider_images)) {
-        imagesData.urls = provider.provider_images;
-      } else if (hasUrls(provider.provider_images)) {
-        imagesData = provider.provider_images;
-      }
-      if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
-        const trusted = imagesData.urls.filter(isTrustedUrl);
-        return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
-      }
-      return [PLACEHOLDER_IMAGE];
-    } catch {
-      return [PLACEHOLDER_IMAGE];
-    }
-  })();
-
-  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
+  // Add visual indicator for multiple images
+  const showSwipeIndicator = allImageUrls.length > 1;
 
   const [isSaved, setIsSaved] = useState(false);
   const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
-
-
-  // Navigation functions
-  const goToNext = useCallback(() => {
-    setSelectedImageIdx((prev) => (prev + 1) % allImageUrls.length);
-  }, [allImageUrls.length]);
-
-  const goToPrevious = useCallback(() => {
-    setSelectedImageIdx((prev) => (prev - 1 + allImageUrls.length) % allImageUrls.length);
-  }, [allImageUrls.length]);
-
-  const goToImage = (index: number) => {
-    setSelectedImageIdx(index);
-  };
-
-  // Touch/Swipe handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (allImageUrls.length <= 1) return;
-    setIsDragging(true);
-    setDragStartX(e.touches[0].clientX);
-    setDragStartY(e.touches[0].clientY);
-    setDragOffset(0);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || allImageUrls.length <= 1) return;
-
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const offsetX = currentX - dragStartX;
-    const offsetY = Math.abs(currentY - dragStartY);
-
-    if (Math.abs(offsetX) > offsetY) {
-      if (
-        (selectedImageIdx === 0 && offsetX > 0) ||
-        (selectedImageIdx === allImageUrls.length - 1 && offsetX < 0)
-      ) {
-        setDragOffset(offsetX * 0.1);
-      } else {
-        setDragOffset(offsetX);
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDragging || allImageUrls.length <= 1) {
-      setIsDragging(false);
-      setDragOffset(0);
-      return;
-    }
-
-    const threshold = 80;
-    if (Math.abs(dragOffset) > threshold) {
-      if (dragOffset > 0 && selectedImageIdx > 0) {
-        goToPrevious();
-      } else if (dragOffset < 0 && selectedImageIdx < allImageUrls.length - 1) {
-        goToNext();
-      }
-    }
-    setIsDragging(false);
-    setDragOffset(0);
-  };
 
   // Fetch bookmark status
   useEffect(() => {
@@ -496,19 +409,31 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           {/* Left Column - Images */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative h-[480px] w-full overflow-hidden rounded-3xl bg-gray-200">
+            <div 
+              className="relative h-[480px] w-full overflow-hidden rounded-3xl bg-gray-200 touch-pan-x cursor-grab active:cursor-grabbing"
+              style={{ touchAction: 'pan-x', userSelect: 'none' }}
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={handleTouchMove}
+              onTouchStart={handleTouchStart}
+            >
+              {/* Swipe indicator */}
+              {showSwipeIndicator ? (
+                <div className="absolute top-4 right-4 z-10 rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-sm">
+                  {selectedImageIdx + 1} / {allImageUrls.length}
+                </div>
+              ) : (
+                <div className="absolute top-4 right-4 z-10 rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-sm">
+                  Single image
+                </div>
+              )}
               <div
                 ref={imageContainerRef}
                 className="flex h-full w-full"
-                style={{
-                  transform: isDragging && Math.abs(dragOffset) > 10
-                    ? `translateX(calc(-${selectedImageIdx * 100}% + ${dragOffset}px))`
-                    : `translateX(-${selectedImageIdx * 100}%)`,
-                  transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                }}
-                onTouchEnd={handleTouchEnd}
-                onTouchMove={handleTouchMove}
-                onTouchStart={handleTouchStart}
+                style={getTransformStyle()}
               >
                 {allImageUrls.map((imageUrl, index) => (
                   <div

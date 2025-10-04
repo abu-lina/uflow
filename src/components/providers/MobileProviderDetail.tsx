@@ -1,7 +1,9 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
+import { useImageSwipe } from '@/hooks/useImageSwipe';
+import { getAllTrustedImageUrls } from '@/utils/imageUtils';
 import type { Provider } from '@/services/providers';
 
 interface MobileProviderDetailProps {
@@ -11,102 +13,56 @@ interface MobileProviderDetailProps {
 export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ provider }) => {
   const router = useRouter();
   
-  // Image handling
-  const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
-  
-  const allImageUrls = (() => {
-    try {
-      if (!provider.provider_images) {
-        return [PLACEHOLDER_IMAGE];
-      }
-      let imagesData: { urls?: string[] } = {};
-      if (typeof provider.provider_images === 'string') {
-        try {
-          imagesData = JSON.parse(provider.provider_images) as { urls?: string[] };
-        } catch {
-          imagesData = {};
-        }
-      } else if (Array.isArray(provider.provider_images)) {
-        imagesData.urls = provider.provider_images;
-      }
-      if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
-        return imagesData.urls;
-      }
-      return [PLACEHOLDER_IMAGE];
-    } catch {
-      return [PLACEHOLDER_IMAGE];
-    }
-  })();
+  // Process images using shared utility
+  const allImageUrls = getAllTrustedImageUrls(provider.provider_images);
 
-  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-
-  // Navigation functions
-  const goToPrevious = useCallback(() => {
-    setSelectedImageIdx((prev) => (prev - 1 + allImageUrls.length) % allImageUrls.length);
-  }, [allImageUrls.length]);
-
-  const goToImage = (index: number) => {
-    setSelectedImageIdx(index);
-  };
-
-  // Touch/Swipe handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (allImageUrls.length <= 1) return;
-    setIsDragging(true);
-    setDragStartX(e.touches[0].clientX);
-    setDragOffset(0);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || allImageUrls.length <= 1) return;
-    
-    const currentX = e.touches[0].clientX;
-    const offsetX = currentX - dragStartX;
-    setDragOffset(offsetX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDragging || allImageUrls.length <= 1) {
-      setIsDragging(false);
-      setDragOffset(0);
-      return;
-    }
-
-    const threshold = 80;
-    if (Math.abs(dragOffset) > threshold) {
-      if (dragOffset > 0 && selectedImageIdx > 0) {
-        goToPrevious();
-      } else if (dragOffset < 0 && selectedImageIdx < allImageUrls.length - 1) {
-        setSelectedImageIdx((prev) => (prev + 1) % allImageUrls.length);
-      }
-    }
-    setIsDragging(false);
-    setDragOffset(0);
-  };
+  // Use the centralized image swipe hook
+  const {
+    selectedImageIdx,
+    imageContainerRef,
+    goToNext,
+    goToPrevious,
+    goToImage,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    getTransformStyle,
+  } = useImageSwipe({
+    totalImages: allImageUrls.length,
+    enableSwipe: true,
+    swipeThreshold: 60,
+    boundaryResistance: 0.15,
+    velocityThreshold: 0.3,
+    minSwipeDistance: 30,
+  });
 
   return (
     <div className="flex w-full max-w-[393px] flex-col items-start px-6 pt-6">
       {/* Image + Page Indicator Section */}
       <div className="flex w-full flex-col items-start gap-2">
         {/* Image Container */}
-        <div className="relative h-[312.52px] w-full overflow-hidden rounded-3xl">
+        <div 
+          aria-label={`${provider.provider_name} image gallery with ${allImageUrls.length} images`}
+          className="relative h-[312.52px] w-full overflow-hidden rounded-3xl touch-pan-x"
+          role="img"
+          style={{ touchAction: 'pan-x' }}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowLeft' && selectedImageIdx > 0) {
+              goToPrevious();
+            } else if (e.key === 'ArrowRight' && selectedImageIdx < allImageUrls.length - 1) {
+              goToNext();
+            }
+          }}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
+          onTouchStart={handleTouchStart}
+        >
           {/* Image Carousel */}
           <div
             ref={imageContainerRef}
             className="flex h-full w-full"
-            style={{
-              transform: isDragging && Math.abs(dragOffset) > 10
-                ? `translateX(calc(-${selectedImageIdx * 100}% + ${dragOffset}px))`
-                : `translateX(-${selectedImageIdx * 100}%)`,
-              transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            }}
-            onTouchEnd={handleTouchEnd}
-            onTouchMove={handleTouchMove}
-            onTouchStart={handleTouchStart}
+            style={getTransformStyle()}
           >
             {allImageUrls.map((imageUrl, index) => (
               <div
@@ -116,9 +72,15 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
               >
                 <Image
                   fill
-                  alt={`${provider.provider_name} ${index + 1}`}
+                  alt={`${provider.provider_name} image ${index + 1}`}
                   className="object-cover"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  sizes="(max-width: 768px) 100vw, 393px"
                   src={imageUrl}
+                  onError={(_e) => {
+                    console.warn(`Failed to load image ${index + 1}:`, imageUrl);
+                    // Could set a fallback image here
+                  }}
                 />
               </div>
             ))}
@@ -134,6 +96,13 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
               <ChevronLeft className="h-5 w-5 text-[#232323]" />
             </button>
           </div>
+
+          {/* Image Counter */}
+          {allImageUrls.length > 1 && (
+            <div className="absolute top-4 right-4 z-10 rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-sm">
+              {selectedImageIdx + 1} / {allImageUrls.length}
+            </div>
+          )}
 
           {/* Category Frame - positioned at bottom */}
           <div className="absolute bottom-0 left-0 flex h-full w-full items-end justify-start p-4">
@@ -151,6 +120,8 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
             {allImageUrls.map((_, index) => (
               <button
                 key={index}
+                aria-current={selectedImageIdx === index ? 'true' : 'false'}
+                aria-label={`Go to image ${index + 1} of ${allImageUrls.length}`}
                 className={`flex items-end justify-center focus:outline-none ${
                   selectedImageIdx === index ? 'h-[16px] w-[16px]' : 'h-[12px] w-[12px]'
                 }`}

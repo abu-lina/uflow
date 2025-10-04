@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Image from 'next/image';
 
@@ -8,6 +8,7 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
@@ -75,16 +76,25 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     }
   })();
 
-  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-
-  // const mainImageUrl = // Commented out as it's not currently used
-  //   allImageUrls[selectedImageIdx] ||
-  //   'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images//Islamic%20New%20Year%20Background.jpg';
+  // Use the centralized image swipe hook
+  const {
+    selectedImageIdx,
+    imageContainerRef,
+    goToNext,
+    goToPrevious,
+    goToImage,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    getTransformStyle,
+  } = useImageSwipe({
+    totalImages: allImageUrls.length,
+    enableSwipe: true,
+    swipeThreshold: 60,
+    boundaryResistance: 0.15,
+    velocityThreshold: 0.3,
+    minSwipeDistance: 30,
+  });
 
   // Debug selected image changes
   useEffect(() => {
@@ -103,76 +113,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
-
-  // Navigation functions
-  const goToNext = useCallback(() => {
-    console.log('Next clicked - current:', selectedImageIdx, 'total:', allImageUrls.length);
-    setSelectedImageIdx((prev) => (prev + 1) % allImageUrls.length);
-  }, [allImageUrls.length, selectedImageIdx]);
-
-  const goToPrevious = useCallback(() => {
-    console.log('Previous clicked - current:', selectedImageIdx, 'total:', allImageUrls.length);
-    setSelectedImageIdx((prev) => (prev - 1 + allImageUrls.length) % allImageUrls.length);
-  }, [allImageUrls.length, selectedImageIdx]);
-
-  const goToImage = (index: number) => {
-    console.log('Go to image clicked - index:', index);
-    setSelectedImageIdx(index);
-  };
-
-  // Touch/Swipe handlers
-  // Feature flag to disable image swiping
-  const ENABLE_IMAGE_SWIPING = false;
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!ENABLE_IMAGE_SWIPING || allImageUrls.length <= 1) return;
-    setIsDragging(true);
-    setDragStartX(e.touches[0].clientX);
-    setDragStartY(e.touches[0].clientY);
-    setDragOffset(0);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!ENABLE_IMAGE_SWIPING || !isDragging || allImageUrls.length <= 1) return;
-
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const offsetX = currentX - dragStartX;
-    const offsetY = Math.abs(currentY - dragStartY);
-
-    // Only handle horizontal swipes, let vertical scrolls pass through
-    if (Math.abs(offsetX) > offsetY) {
-      // Prevent swiping beyond boundaries
-      if (
-        (selectedImageIdx === 0 && offsetX > 0) ||
-        (selectedImageIdx === allImageUrls.length - 1 && offsetX < 0)
-      ) {
-        // Allow only small resistance movement
-        setDragOffset(offsetX * 0.1);
-      } else {
-        setDragOffset(offsetX);
-      }
-    }
-  };
-
-  const handleTouchEnd = (_e: React.TouchEvent) => {
-    if (!ENABLE_IMAGE_SWIPING || !isDragging || allImageUrls.length <= 1) {
-      setIsDragging(false);
-      setDragOffset(0);
-      return;
-    }
-
-    const threshold = 80; // minimum distance to trigger swipe
-    if (Math.abs(dragOffset) > threshold) {
-      if (dragOffset > 0 && selectedImageIdx > 0) {
-        goToPrevious();
-      } else if (dragOffset < 0 && selectedImageIdx < allImageUrls.length - 1) {
-        goToNext();
-      }
-    }
-    setIsDragging(false);
-    setDragOffset(0);
-  };
 
   // Keyboard navigation
   useEffect(() => {
@@ -356,15 +296,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 {/* Image Carousel Container */}
                 <div
                   className="flex h-full w-full"
-                  style={{
-                    transform:
-                      isDragging && Math.abs(dragOffset) > 10
-                        ? `translateX(calc(-${selectedImageIdx * 100}% + ${dragOffset}px))`
-                        : `translateX(-${selectedImageIdx * 100}%)`,
-                    transition: isDragging
-                      ? 'none'
-                      : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                  }}
+                  style={getTransformStyle()}
                 >
                   {allImageUrls.map((imageUrl, index) => (
                     <div
