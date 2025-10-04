@@ -83,7 +83,7 @@ const config: Config = {
         },
         content: {
           DEFAULT: '#555555', // Main content text
-          title: '#333333', // Title/heading text
+          title: '#232323', // Title/heading text
         },
         border: '#D4D4D4', // uflow-light-boarder
         danger: {

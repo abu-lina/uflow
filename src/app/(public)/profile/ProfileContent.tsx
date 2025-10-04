@@ -316,6 +316,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
               createdProviders.map((provider) => (
                 <CreatedProviderCard
                   key={provider.provider_id}
+                  address={
+                    provider.address_street && provider.address_city
+                      ? `${provider.address_street}, ${provider.address_city}`
+                      : provider.address_street || provider.address_city || undefined
+                  }
                   category={provider.category?.name_de || ''}
                   imageUrl={(() => {
                     if (!provider.provider_images) return '/images/placeholder.jpg';
@@ -340,11 +345,6 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     }
                     return '/images/placeholder.jpg';
                   })()}
-                  tag={
-                    provider.barakah_effects && provider.barakah_effects.length > 0
-                      ? provider.barakah_effects[0]
-                      : '✨ Halal'
-                  }
                   title={provider.provider_name}
                 />
               ))
@@ -366,6 +366,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
               savedProviders.map((provider) => (
                 <CreatedProviderCard
                   key={provider.provider_id}
+                  address={
+                    provider.address_street && provider.address_city
+                      ? `${provider.address_street}, ${provider.address_city}`
+                      : provider.address_street || provider.address_city || undefined
+                  }
                   category={provider.category?.name_de || ''}
                   imageUrl={(() => {
                     if (!provider.provider_images) return '/images/placeholder.jpg';
@@ -390,11 +395,6 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     }
                     return '/images/placeholder.jpg';
                   })()}
-                  tag={
-                    provider.barakah_effects && provider.barakah_effects.length > 0
-                      ? provider.barakah_effects[0]
-                      : '✨ Halal'
-                  }
                   title={provider.provider_name}
                 />
               ))

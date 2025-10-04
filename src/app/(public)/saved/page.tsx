@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
-import { ProviderCardModal } from '@/components/providers/ProviderCardModal';
-import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
+import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/providers/auth-provider';
 import { getBookmarkForProvider, deleteBookmark } from '@/services/bookmarks';
 import { getBookmarkedProviders, type Provider } from '@/services/providers';
@@ -15,16 +14,7 @@ export default function SavedProvidersPage() {
   const router = useRouter();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
 
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -51,13 +41,6 @@ export default function SavedProvidersPage() {
     }
   };
 
-  if (!isMobile) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <span className="text-lg text-gray-500">Diese Seite ist nur auf dem Handy verfügbar.</span>
-      </div>
-    );
-  }
 
   if (!user) {
     return (
@@ -80,15 +63,36 @@ export default function SavedProvidersPage() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 px-4 py-6 pb-mobile-nav-md">
-      <h1 className="w-full text-left text-xl font-bold">Gespeicherte Providers</h1>
-      <div className="grid w-full grid-cols-2 gap-4">
+    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+      {/* Sticky Header */}
+      <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl">
+        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
+          {/* Left-aligned Title */}
+          <h1 className="text-xl font-semibold text-content-title">
+            Gespeichert
+          </h1>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col items-center px-4 pt-20 pb-mobile-nav-md overflow-y-auto">
+        {/* Search Bar */}
+        <div className="w-full mb-6">
+          <SearchBar hideCategoryFilter={true} />
+        </div>
+        
+        <div className="grid w-full grid-cols-2 gap-4">
         {providers.length === 0 ? (
           <span className="col-span-2 text-center text-gray-400">Keine Providers gespeichert.</span>
         ) : (
           providers.map((provider) => (
             <CreatedProviderCard
               key={provider.provider_id}
+              address={
+                provider.address_street && provider.address_city
+                  ? `${provider.address_street}, ${provider.address_city}`
+                  : provider.address_street || provider.address_city || undefined
+              }
               category={provider.category?.name_de || ''}
               imageUrl={(() => {
                 if (!provider.provider_images) return '/images/placeholder.jpg';
@@ -113,28 +117,14 @@ export default function SavedProvidersPage() {
                 }
                 return '/images/placeholder.jpg';
               })()}
-              tag={
-                provider.barakah_effects && provider.barakah_effects.length > 0
-                  ? provider.barakah_effects[0]
-                  : '✨ Halal'
-              }
               title={provider.provider_name}
-              onClick={() => setSelectedProvider(provider)}
+              onClick={() => router.push(`/providers/${provider.provider_id}`)}
               onUnsave={() => handleUnsave(provider.provider_id)}
             />
           ))
         )}
+        </div>
       </div>
-      {selectedProvider &&
-        (isMobile ? (
-          <ProviderCardModal
-            open={!!selectedProvider}
-            provider={selectedProvider}
-            onClose={() => setSelectedProvider(null)}
-          />
-        ) : (
-          <ProviderDetailModal provider={selectedProvider} onClose={() => setSelectedProvider(null)} />
-        ))}
     </div>
   );
 }
