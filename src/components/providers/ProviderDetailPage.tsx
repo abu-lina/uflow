@@ -240,7 +240,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     if (navigator.share) {
       void navigator.share({
         title: provider.provider_name,
-        text: provider.provider_offers || '',
+        text: '',
         url: shareUrl,
       });
     } else {

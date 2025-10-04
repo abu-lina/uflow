@@ -297,7 +297,6 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     // 2. Save provider with trusted Supabase image URLs
     const insertData = {
       provider_name: formData.title,
-      provider_offers: formData.description,
       address_street: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.street : null) : formData.street,
       address_zip: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.zip : null) : formData.zip,
       address_city: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.city : null) : formData.city,

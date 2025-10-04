@@ -289,7 +289,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       if (navigator.share) {
         void navigator.share({
           title: provider.provider_name,
-          text: provider.provider_offers || '',
+          text: '',
           url: shareUrl,
         });
       } else {
@@ -525,21 +525,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                         Keine Barakah Effekte
                       </span>
                     )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Beschreibung Section */}
-            <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
-              <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                <div className="inline-flex items-start justify-between self-stretch">
-                  <div className="inline-flex flex-1 flex-col items-start justify-start gap-2">
-                    <div className="text-uFlowText h-10 w-48 justify-start font-inter-tight text-2xl font-semibold">
-                      Wir bieten:
-                    </div>
-                    <div className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800">
-                      {provider.provider_offers ?? ''}
-                    </div>
                   </div>
                 </div>
               </div>

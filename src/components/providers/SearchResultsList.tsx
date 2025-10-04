@@ -32,7 +32,6 @@ export function SearchResultsList({
         const provider: Provider = {
           provider_id: result.id,
           provider_name: result.name,
-          provider_offers: result.description,
           provider_images: result.images,
           category_id: result.category_id,
           address_city: result.address_city,
