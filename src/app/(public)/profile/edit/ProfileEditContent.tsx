@@ -180,7 +180,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 pb-8 pt-4">
+    <div className="min-h-screen bg-gray-100 px-4 pb-20 pt-4 md:pb-8 overflow-y-auto">
       {/* Header */}
       <div className="mb-6 flex h-12 w-full items-center">
         {/* Left side: Chevron + Title */}
@@ -319,7 +319,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       </form>
 
         {/* Konto verwalten */}
-        <div className="mt-8">
+        <div className="mt-8 mb-6">
           <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]">
             Konto verwalten
           </h2>
