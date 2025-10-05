@@ -1,41 +1,43 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
+import { StepIndicator } from '@/components/shared/StepIndicator';
+import { useFormData } from '@/providers/form-provider';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase/client';
+
+const STEPS = [
+  {
+    title: 'Basics',
+    icon: 'mdi:information',
+  },
+  {
+    title: 'Location',
+    icon: 'mdi:map-marker',
+  },
+  {
+    title: 'Contact',
+    icon: 'mdi:account-group',
+  },
+  {
+    title: 'Media',
+    icon: 'mdi:image-multiple',
+  },
+];
+
 export default function MediaUploadPage() {
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const lastScrollY = useRef(0);
   
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { formData, updateFormData } = useFormData();
+  const { user } = useAuth();
 
-  // Load selected images from localStorage
-  useEffect(() => {
-    const savedImages = localStorage.getItem('providerImages');
-    if (savedImages) {
-      try {
-        const imageData = JSON.parse(savedImages);
-        // Convert base64 strings back to File objects
-        const files = imageData.map((img: { name: string; data: string; type: string }) => {
-          const byteCharacters = atob(img.data);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          return new File([byteArray], img.name, { type: img.type });
-        });
-        setSelectedImages(files);
-      } catch (error) {
-        console.error('Error loading images from localStorage:', error);
-      }
-    }
-  }, []);
 
   // Scroll detection for sticky header
   useEffect(() => {
@@ -67,75 +69,88 @@ export default function MediaUploadPage() {
     }
   }, [isHeaderSticky]);
 
-  // Handle image upload
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
-      const newImages = Array.from(files);
-      setSelectedImages(prev => {
-        const updatedImages = [...prev, ...newImages];
-        // Save to localStorage
-        saveImagesToLocalStorage(updatedImages);
-        return updatedImages;
-      });
+
+  // Submit the complete provider creation
+  const handleSave = async () => {
+    if (!user) {
+      console.error('User not authenticated');
+      return;
     }
-  };
 
-  // Save images to localStorage
-  const saveImagesToLocalStorage = (images: File[]) => {
-    const imageData = images.map(file => ({
-      name: file.name,
-      type: file.type,
-      data: '' // Will be filled by converting to base64
-    }));
+    try {
+      setIsSubmitting(true);
+      console.log('Creating provider with form data:', formData);
 
-    // Convert files to base64 and save
-    Promise.all(images.map(file => {
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          resolve(base64);
-        };
-        reader.readAsDataURL(file);
-      });
-    })).then(base64Data => {
-      const imageDataWithBase64 = imageData.map((img, index) => ({
-        ...img,
-        data: base64Data[index]
-      }));
-      localStorage.setItem('providerImages', JSON.stringify(imageDataWithBase64));
-    });
-  };
+      // Upload images if any
+      let uploadedUrls: string[] = [];
+      if (formData.images && formData.images.length > 0) {
+        console.log('Uploading images...');
+        for (const imageFile of formData.images) {
+          const fileExt = imageFile.name.split('.').pop();
+          const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+          const filePath = `providers/${fileName}`;
 
-  // Remove image
-  const removeImage = (index: number) => {
-    setSelectedImages(prev => {
-      const updatedImages = prev.filter((_, i) => i !== index);
-      // Save to localStorage
-      saveImagesToLocalStorage(updatedImages);
-      return updatedImages;
-    });
-  };
+          const { error: uploadError } = await supabase.storage
+            .from('provider-images')
+            .upload(filePath, imageFile);
 
-  // Save selected images and return to create page with all form data preserved
-  const handleSave = () => {
-    const params = new URLSearchParams();
-    
-    // Preserve all existing form data from URL
-    const existingParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'categoryId', 'offersIds', 'needsIds'];
-    existingParams.forEach(param => {
-      const value = searchParams?.get(param);
-      if (value) params.set(param, value);
-    });
-    
-    // Add the selected images count
-    params.set('images', selectedImages.length.toString());
-    
-    // Set step to 3 (Media step) so user returns to the correct step
-    params.set('step', '3');
-    
-    router.push(`/create?${params.toString()}`);
+          if (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            throw uploadError;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('provider-images')
+            .getPublicUrl(filePath);
+
+          uploadedUrls.push(publicUrl);
+        }
+      }
+
+      // Create provider data
+      const insertData = {
+        provider_name: formData.title,
+        address_street: formData.street || null,
+        address_zip: formData.zip || null,
+        address_city: formData.city || null,
+        address_country: formData.country || null,
+        category_id: formData.category || null,
+        contact_email: formData.email || null,
+        contact_phone: formData.phone || null,
+        social_website: formData.website || null,
+        social_instagram: formData.instagram || null,
+        barakah_effects: formData.tags || [],
+        provider_owner_id: user.id,
+        provider_images: uploadedUrls.length > 0 ? JSON.stringify({ urls: uploadedUrls }) : null,
+        offers_ids: formData.offers_ids || [],
+        needs_ids: formData.needs_ids || [],
+      };
+      
+      console.log('Inserting provider with data:', insertData);
+      
+      const { error: providerError } = await supabase
+        .from('providers')
+        .insert([insertData]);
+      
+      if (providerError) {
+        console.error('Error creating provider:', providerError);
+        throw providerError;
+      }
+
+      console.log('Provider created successfully!');
+      
+      // Clear form data
+      updateFormData({});
+      
+      // Redirect to profile page
+      router.push('/profile');
+      
+    } catch (error) {
+      console.error('Error in provider creation:', error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -148,26 +163,7 @@ export default function MediaUploadPage() {
           {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
-            onClick={() => {
-              const params = new URLSearchParams();
-              // Preserve all existing form data
-              const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'categoryId', 'offersIds', 'needsIds'];
-              formParams.forEach(param => {
-                const value = searchParams.get(param);
-                if (value) params.set(param, value);
-              });
-              // Add current images count
-              params.set('images', selectedImages.length.toString());
-              // Set step to 3 (Media step) so user returns to the correct step
-              params.set('step', '3');
-              
-              console.log('Media page back button - preserving params:', {
-                originalParams: Object.fromEntries(searchParams.entries()),
-                newParams: Object.fromEntries(params.entries())
-              });
-              
-              router.push(`/create?${params.toString()}`);
-            }}
+            onClick={() => router.push('/create/contact')}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
@@ -175,7 +171,7 @@ export default function MediaUploadPage() {
           {/* Title */}
           <div className="flex flex-1 items-center justify-start">
             <h1 className="text-xl font-semibold text-content-title leading-[29px]">
-              Bilder hochladen
+              Media
             </h1>
           </div>
         </div>
@@ -189,80 +185,57 @@ export default function MediaUploadPage() {
       {/* Content */}
       <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-8 overflow-y-auto">
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8 pb-mobile-nav-md">
-          {/* Upload Section */}
-          <div className="flex w-full flex-col gap-2">
-            <h3 className="text-sm font-medium text-[#232323]">Bilder auswählen</h3>
-            <div className="relative">
-              <input
-                multiple
-                accept="image/*"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                type="file"
-                onChange={handleImageUpload}
-              />
-              <button
-                className="flex w-full h-[54px] flex-col justify-center items-start p-4 gap-4 bg-white border border-[#D4D4D4] rounded-[12px]"
-                type="button"
-              >
-                <div className="flex flex-row items-center p-0 gap-3 w-full h-6">
-                  <Icon 
-                    className="w-6 h-6 text-[#232323]" 
-                    icon="lucide:image-up" 
-                  />
-                  <span className="w-[121px] h-[19px] font-inter-tight font-normal font-semibold text-base leading-[19px] flex items-center text-[#232323]">
-                    Bilder hochladen
-                  </span>
-                </div>
-              </button>
+          {/* Step Indicator */}
+          <div className="mb-6">
+            <StepIndicator currentStep={3} steps={STEPS} />
+          </div>
+
+          {/* Body */}
+          <div className="flex flex-col items-start p-0 gap-8 w-[345px] h-[160px] flex-none order-1 flex-grow-0">
+            {/* personalData */}
+            <div className="flex flex-col items-start p-0 gap-4 w-[345px] h-[160px] flex-none order-0 self-stretch flex-grow-0">
+              {/* Media */}
+              <div className="w-[345px] h-6 font-inter-tight font-medium text-xl leading-6 text-[#232323] flex-none order-0 self-stretch flex-grow-0">
+                Media
+              </div>
+              
+              {/* input */}
+              <div className="flex flex-col items-start p-0 gap-3 w-[345px] h-[120px] flex-none order-1 self-stretch flex-grow-0">
+                {/* Account - Navigate to Images */}
+                <button
+                  className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+                  onClick={() => router.push('/create/media/images')}
+                >
+                  <div className="flex flex-1 flex-col gap-1 items-start">
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Bilder</span>
+                    <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+                      {formData.images.length > 0 ? `${formData.images.length} Bilder ausgewählt` : 'Bilder hochladen'}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+                </button>
+
+                {/* Spenden-Projekt - Navigate to Social */}
+                <button
+                  className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+                  onClick={() => router.push('/create/media/social')}
+                >
+                  <div className="flex flex-1 flex-col gap-1 items-start">
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Spenden-Projekt</span>
+                    <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+                      {formData.donationProject || 'Spenden-Projekt auswählen'}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
+                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Selected Images */}
-          {selectedImages.length > 0 && (
-            <div className="flex-1 w-full">
-              <h3 className="mb-4 text-sm font-medium text-[#232323]">
-                Ausgewählte Bilder ({selectedImages.length})
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {selectedImages.map((file, index) => (
-                  <div key={index} className="relative w-[160px] h-[160px] rounded-[11.0585px]">
-                    <Image
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-full rounded-[11.0585px] object-cover"
-                      height={160}
-                      src={URL.createObjectURL(file)}
-                      width={160}
-                    />
-                    <button
-                      className="absolute top-2 right-2 flex items-center justify-center w-[27px] h-[27px] bg-white/70 border border-[#CDCDCD] backdrop-blur-[2.25078px] rounded-[6.75px] hover:bg-white/80 transition-colors"
-                      type="button"
-                      onClick={() => removeImage(index)}
-                    >
-                      <Icon 
-                        className="w-[18px] h-[18px] text-[#232323]" 
-                        icon="material-symbols:close-rounded" 
-                      />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Empty State */}
-          {selectedImages.length === 0 && (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <Icon className="mx-auto mb-4 h-16 w-16 text-gray-300" icon="lucide:image" />
-                <p className="text-sm text-gray-500">
-                  Noch keine Bilder ausgewählt
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Klicke auf &quot;Bilder hochladen&quot; um zu beginnen
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -270,12 +243,15 @@ export default function MediaUploadPage() {
       <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]">
         <div className="flex h-[80px] w-full items-center justify-center px-4">
           <button
-            className="flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity bg-[#589D96] opacity-100"
+            className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
+              isSubmitting ? 'bg-[#589D96] opacity-50 cursor-not-allowed' : 'bg-[#589D96] opacity-100'
+            }`}
+            disabled={isSubmitting}
             onClick={handleSave}
           >
-            <Icon className="h-6 w-6 text-white" icon="lucide:save" />
+            <Icon className="h-6 w-6 text-white" icon={isSubmitting ? "lucide:loader-2" : "lucide:save"} />
             <span className="text-base font-medium text-white leading-[19px]">
-              Speichern ({selectedImages.length})
+              {isSubmitting ? 'Erstelle...' : 'Angebot registrieren'}
             </span>
           </button>
         </div>

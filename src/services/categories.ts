@@ -2,11 +2,12 @@ import { supabase } from '@/lib/supabase/client';
 
 export interface Category {
   id?: string;
-  category_id?: string;
+  category_id: string;
   name: string;
-  name_de?: string;
+  name_de: string;
   name_en?: string;
   description?: string;
+  applicable_to?: string[]; // Array of entity types: 'provider', 'community_service'
   created_at: string;
   updated_at: string;
 }
@@ -146,4 +147,29 @@ export async function getCategoryById(id: string): Promise<Category | null> {
     throw error;
   }
   return data ?? null;
+}
+
+// Fetch categories filtered by entity type (provider or community_service)
+export async function getCategoriesForEntity(entityType: 'provider' | 'community_service'): Promise<Category[]> {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .or(`applicable_to.is.null,applicable_to.cs.{${entityType}}`)
+    .order('name')
+    .returns<Category[]>();
+  
+  if (error) {
+    throw error;
+  }
+  return Array.isArray(data) ? data : [];
+}
+
+// Fetch categories for provider creation
+export async function getProviderCategories(): Promise<Category[]> {
+  return getCategoriesForEntity('provider');
+}
+
+// Fetch categories for social project creation
+export async function getSocialProjectCategories(): Promise<Category[]> {
+  return getCategoriesForEntity('community_service');
 }

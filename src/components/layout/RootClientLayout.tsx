@@ -18,9 +18,12 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const isLandingPage = pathname === '/';
   const isAboutPage = pathname === '/about';
   const isProviderDetailPage = pathname.startsWith('/providers/') && pathname !== '/providers';
-  const isCategoryPage = pathname === '/create/category';
-  const isOffersPage = pathname === '/create/offers';
-  const isNeedsPage = pathname === '/create/needs';
+  const isCategoryPage = pathname === '/create/basics/category';
+  const isBasicsPage = pathname === '/create/basics';
+  const isLocationPage = pathname === '/create/location';
+  const isContactPage = pathname === '/create/contact';
+  const isOffersPage = pathname === '/create/basics/offers';
+  const isNeedsPage = pathname === '/create/basics/needs';
   const isMediaPage = pathname === '/create/media';
   const { isSplashVisible } = useSplash();
   const mainRef = useRef<HTMLElement>(null);
@@ -86,7 +89,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             </div>
           </PageTransition>
         </main>
-        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isOffersPage && !isNeedsPage && !isMediaPage && !isSplashVisible && (
+        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isBasicsPage && !isLocationPage && !isContactPage && !isOffersPage && !isNeedsPage && !isMediaPage && !isSplashVisible && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && (
           <div className="block md:hidden">
             <MobileFooterBar />
           </div>

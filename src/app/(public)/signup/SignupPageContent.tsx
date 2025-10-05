@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
@@ -16,6 +16,7 @@ interface FormData {
 
 export function SignupPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -28,7 +29,12 @@ export function SignupPageContent() {
 
   // Redirect if already logged in
   if (user) {
-    router.replace('/profile');
+    const returnUrl = searchParams.get('returnUrl');
+    if (returnUrl) {
+      router.replace(decodeURIComponent(returnUrl));
+    } else {
+      router.replace('/profile');
+    }
     return null;
   }
 
@@ -64,7 +70,12 @@ export function SignupPageContent() {
     try {
       await authService.signUp(formData.email, formData.password);
       
-      router.push('/login');
+      const returnUrl = searchParams.get('returnUrl');
+      if (returnUrl) {
+        router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+      } else {
+        router.push('/login');
+      }
     } catch (error) {
       console.error('Signup error:', error);
     } finally {
@@ -73,7 +84,12 @@ export function SignupPageContent() {
   };
 
   const handleLoginClick = () => {
-    router.push('/login');
+    const returnUrl = searchParams.get('returnUrl');
+    if (returnUrl) {
+      router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+    } else {
+      router.push('/login');
+    }
   };
 
   return (

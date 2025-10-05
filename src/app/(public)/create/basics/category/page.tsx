@@ -2,26 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
-import { useAuth } from '@/providers/auth-provider';
 import type { Category } from '@/types/supabase';
 import { supabase } from '@/lib/supabase/client';
+import { useFormData } from '@/providers/form-provider';
+import { getProviderCategories } from '@/services/categories';
 
 export default function SelectCategoryPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [checked, setChecked] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const lastScrollY = useRef(0);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user, isLoading } = useAuth();
+  const { formData, updateFormData } = useFormData();
 
   useEffect(() => {
     const check = () => {
@@ -36,25 +35,26 @@ export default function SelectCategoryPage() {
   useEffect(() => {
     async function fetchCategories() {
       setCategoriesLoading(true);
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name_de', { ascending: true });
-      if (!error && data) {
-        setCategories(data);
+      try {
+        // Use the filtered categories service for providers
+        const categoriesData = await getProviderCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        // Fallback to all categories if filtered fetch fails
+        const { data, error: fallbackError } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name_de', { ascending: true });
+        if (!fallbackError && data) {
+          setCategories(data);
+        }
       }
       setCategoriesLoading(false);
     }
     void fetchCategories();
   }, []);
 
-  // Get initial selected category from URL params
-  useEffect(() => {
-    const categoryId = searchParams.get('categoryId');
-    if (categoryId) {
-      setSelectedCategory(categoryId);
-    }
-  }, [searchParams]);
 
   // Scroll detection for sticky header
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function SelectCategoryPage() {
     }
   }, [isHeaderSticky]);
 
-  if (!checked || isLoading) {
+  if (!checked) {
     return <div className="p-8 text-center">Lädt...</div>;
   }
 
@@ -102,21 +102,6 @@ export default function SelectCategoryPage() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 px-4">
-        <span className="text-center text-lg text-gray-500">
-          Du musst angemeldet sein, um eine Kategorie auszuwählen.
-        </span>
-        <button
-          className="rounded-xl bg-mint px-4 py-2 font-semibold text-white"
-          onClick={() => router.push('/signin')}
-        >
-          Zur Anmeldung
-        </button>
-      </div>
-    );
-  }
 
   const filteredCategories = categories.filter(category =>
     category.name_de?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -124,20 +109,8 @@ export default function SelectCategoryPage() {
   );
 
   const handleSave = () => {
-    if (selectedCategory) {
-      const params = new URLSearchParams();
-      
-      // Preserve all existing form data from URL
-      const existingParams = ['title', 'description', 'street', 'zip', 'city', 'website', 'instagram', 'phone', 'email', 'offersId', 'needsId'];
-      existingParams.forEach(param => {
-        const value = searchParams?.get(param);
-        if (value) params.set(param, value);
-      });
-      
-      // Add the selected category
-      params.set('categoryId', selectedCategory);
-      
-      router.push(`/create?${params.toString()}`);
+    if (formData.category) {
+      router.push('/create/basics');
     }
   };
 
@@ -151,35 +124,14 @@ export default function SelectCategoryPage() {
           {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
-            onClick={() => {
-              const params = new URLSearchParams();
-              // Preserve all existing form data
-              const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'offersIds', 'needsIds'];
-              formParams.forEach(param => {
-                const value = searchParams.get(param);
-                if (value) params.set(param, value);
-              });
-              // Preserve the currently selected category or the original category
-              if (selectedCategory) {
-                params.set('categoryId', selectedCategory);
-              } else {
-                // Preserve original category from URL if no new selection
-                const originalCategory = searchParams.get('categoryId');
-                if (originalCategory) {
-                  params.set('categoryId', originalCategory);
-                }
-              }
-              // Add current images count
-              params.set('images', searchParams.get('images') || '0');
-              router.push(`/create?${params.toString()}`);
-            }}
+            onClick={() => router.push('/create/basics')}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
           
           {/* Title */}
-          <div className="flex flex-1 items-center justify-start">
-            <h1 className="text-xl font-semibold text-content-title leading-[29px]">
+          <div className="flex flex-1 items-start">
+            <h1 className="text-xl font-semibold text-title leading-[29px]">
               Kategorie auswählen
             </h1>
           </div>
@@ -229,11 +181,11 @@ export default function SelectCategoryPage() {
                 <button
                   key={category.category_id}
                   className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 ${
-                    selectedCategory === category.category_id
+                    formData.category === category.category_id
                       ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
                       : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }`}
-                  onClick={() => setSelectedCategory(category.category_id)}
+                  onClick={() => updateFormData({ category: category.category_id })}
                 >
                   <span className="text-sm font-medium">
                     {category.name_de || category.name_en}
@@ -250,11 +202,11 @@ export default function SelectCategoryPage() {
         <div className="flex h-[80px] w-full items-center justify-center px-4">
           <button
             className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-1 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              !selectedCategory 
+              !formData.category 
                 ? 'bg-[#589D96] opacity-30 cursor-not-allowed' 
                 : 'bg-[#589D96] opacity-100'
             }`}
-            disabled={!selectedCategory}
+            disabled={!formData.category}
             onClick={handleSave}
           >
             <Icon className="h-6 w-6 text-white" icon="lucide:save" />

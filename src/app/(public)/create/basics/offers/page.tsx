@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
 import { supabase } from '@/lib/supabase/client';
 import type { Offer } from '@/types/offer';
+import { useFormData } from '@/providers/form-provider';
 
 export default function SelectOffersPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [selectedOffers, setSelectedOffers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [newOffer, setNewOffer] = useState('');
@@ -19,7 +19,7 @@ export default function SelectOffersPage() {
   const lastScrollY = useRef(0);
   
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { formData, updateFormData } = useFormData();
 
   // Load offers from database
   useEffect(() => {
@@ -46,17 +46,6 @@ export default function SelectOffersPage() {
     void fetchOffers();
   }, []);
 
-  // Load selected offers from URL params
-  useEffect(() => {
-    const selected = searchParams.get('offersIds');
-    if (selected) {
-      try {
-        setSelectedOffers(JSON.parse(selected));
-      } catch (error) {
-        console.error('Error parsing selected offers:', error);
-      }
-    }
-  }, [searchParams]);
 
   // Scroll detection for sticky header
   useEffect(() => {
@@ -95,11 +84,10 @@ export default function SelectOffersPage() {
 
   // Toggle offer selection (multi-selection)
   const toggleOffer = (offerId: string) => {
-    setSelectedOffers(prev => 
-      prev.includes(offerId)
-        ? prev.filter(id => id !== offerId)
-        : [...prev, offerId]
-    );
+    const newOffers = formData.offers_ids.includes(offerId)
+      ? formData.offers_ids.filter(id => id !== offerId)
+      : [...formData.offers_ids, offerId];
+    updateFormData({ offers_ids: newOffers });
   };
 
   // Create new offer
@@ -118,7 +106,7 @@ export default function SelectOffersPage() {
         console.error('Error creating offer:', error);
       } else if (data) {
         setOffers(prev => [...prev, data]);
-        setSelectedOffers(prev => [...prev, data.offer_id]);
+        updateFormData({ offers_ids: [...formData.offers_ids, data.offer_id] });
         setNewOffer('');
       }
     } catch (error) {
@@ -128,22 +116,10 @@ export default function SelectOffersPage() {
     }
   };
 
-  // Save selected offers and return to create page with all form data preserved
+  // Save selected offers and return to create page
   const handleSave = () => {
-    if (selectedOffers.length > 0) {
-      const params = new URLSearchParams();
-      
-      // Preserve all existing form data from URL
-      const existingParams = ['title', 'description', 'street', 'zip', 'city', 'website', 'instagram', 'phone', 'email', 'categoryId', 'needsIds'];
-      existingParams.forEach(param => {
-        const value = searchParams?.get(param);
-        if (value) params.set(param, value);
-      });
-      
-      // Add the selected offers
-      params.set('offersIds', JSON.stringify(selectedOffers));
-      
-      router.push(`/create?${params.toString()}`);
+    if (formData.offers_ids.length > 0) {
+      router.push('/create/basics');
     }
   };
 
@@ -157,22 +133,7 @@ export default function SelectOffersPage() {
           {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
-            onClick={() => {
-              const params = new URLSearchParams();
-              // Preserve all existing form data
-              const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'categoryId', 'needsIds'];
-              formParams.forEach(param => {
-                const value = searchParams.get(param);
-                if (value) params.set(param, value);
-              });
-              // Preserve the currently selected offers
-              if (selectedOffers.length > 0) {
-                params.set('offersIds', JSON.stringify(selectedOffers));
-              }
-              // Add current images count
-              params.set('images', searchParams.get('images') || '0');
-              router.push(`/create?${params.toString()}`);
-            }}
+            onClick={() => router.push('/create/basics')}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
@@ -253,7 +214,7 @@ export default function SelectOffersPage() {
                   <button
                     key={offer.offer_id}
                     className={`inline-flex rounded-xl px-4 py-2 text-left transition-all duration-200 ${
-                      selectedOffers.includes(offer.offer_id)
+                      formData.offers_ids.includes(offer.offer_id)
                         ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
                         : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                     }`}
@@ -275,16 +236,16 @@ export default function SelectOffersPage() {
         <div className="flex h-[80px] w-full items-center justify-center px-4">
           <button
             className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              selectedOffers.length === 0
+              formData.offers_ids.length === 0
                 ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
                 : 'bg-[#589D96] opacity-100'
             }`}
-            disabled={selectedOffers.length === 0}
+            disabled={formData.offers_ids.length === 0}
             onClick={handleSave}
           >
             <Icon className="h-6 w-6 text-white" icon="lucide:save" />
             <span className="text-base font-medium text-white leading-[19px]">
-              Speichern ({selectedOffers.length})
+              Speichern ({formData.offers_ids.length})
             </span>
           </button>
         </div>

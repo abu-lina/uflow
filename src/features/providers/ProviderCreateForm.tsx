@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
-import type { ReadonlyURLSearchParams } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
@@ -11,20 +10,10 @@ import { StepIndicator } from '@/components/shared/StepIndicator';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
-import type { ProviderFormData } from '@/types/provider';
+import { useFormData, type ProviderFormData } from '@/providers/form-provider';
 import type { Category } from '@/types/supabase';
 import type { Offer, Need } from '@/types/offer';
 
-interface ExtendedFormData extends ProviderFormData {
-  website: string;
-  instagram: string;
-  phone: string;
-  email: string;
-  images: File[];
-  tags: string[];
-  offers_ids: string[];
-  needs_ids: string[];
-}
 
 const STEPS = [
   {
@@ -46,35 +35,18 @@ const STEPS = [
 ];
 
 interface ProviderCreateFormProps {
-  searchParams?: ReadonlyURLSearchParams | null;
+  onNextStep?: () => void;
 }
 
-export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
+export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<ExtendedFormData>({
-    title: '',
-    category: '',
-    description: '',
-    street: '',
-    zip: '',
-    city: '',
-    country: '',
-    showAddress: true,
-    website: '',
-    instagram: '',
-    phone: '',
-    email: '',
-    images: [],
-    tags: [],
-    offers_ids: [],
-    needs_ids: [],
-  });
   const [categories, setCategories] = useState<Category[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [needs, setNeeds] = useState<Need[]>([]);
   const { user } = useAuth();
   const router = useRouter();
+  const { formData, updateFormData } = useFormData();
 
   useEffect(() => {
     async function fetchCategories() {
@@ -116,93 +88,11 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
   }, []);
 
 
-  // Load all form data from URL params on mount
-  useEffect(() => {
-    if (searchParams && searchParams.size > 0) {
-      setFormData(prev => ({
-        ...prev,
-        title: searchParams.get('title') || prev.title,
-        category: searchParams.get('categoryId') || prev.category,
-        description: searchParams.get('description') || prev.description,
-        street: searchParams.get('street') || prev.street,
-        zip: searchParams.get('zip') || prev.zip,
-        city: searchParams.get('city') || prev.city,
-        country: searchParams.get('country') || prev.country,
-        showAddress: searchParams.get('showAddress') === 'true' ? true : searchParams.get('showAddress') === 'false' ? false : prev.showAddress,
-        website: searchParams.get('website') || prev.website,
-        instagram: searchParams.get('instagram') || prev.instagram,
-        phone: searchParams.get('phone') || prev.phone,
-        email: searchParams.get('email') || prev.email,
-        offers_ids: searchParams.get('offersIds') ? JSON.parse(searchParams.get('offersIds') || '[]') : prev.offers_ids,
-        needs_ids: searchParams.get('needsIds') ? JSON.parse(searchParams.get('needsIds') || '[]') : prev.needs_ids,
-      }));
 
-      // Handle step parameter from URL (only when explicitly set)
-      const stepParam = searchParams.get('step');
-      if (stepParam) {
-        const stepNumber = parseInt(stepParam, 10);
-        if (stepNumber >= 0 && stepNumber < STEPS.length) {
-          setCurrentStep(stepNumber);
-        }
-      }
-    }
-  }, [searchParams]);
-
-  // Load images from localStorage
-  useEffect(() => {
-    const savedImages = localStorage.getItem('providerImages');
-    if (savedImages) {
-      try {
-        const imageData = JSON.parse(savedImages);
-        // Convert base64 strings back to File objects
-        const files = imageData.map((img: { name: string; data: string; type: string }) => {
-          const byteCharacters = atob(img.data);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          return new File([byteArray], img.name, { type: img.type });
-        });
-        setFormData(prev => ({ ...prev, images: files }));
-      } catch (error) {
-        console.error('Error loading images from localStorage:', error);
-      }
-    }
-  }, []);
-
-  const handleInputChange = (field: keyof ExtendedFormData, value: string | string[] | File[] | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof ProviderFormData, value: string | string[] | File[] | boolean) => {
+    updateFormData({ [field]: value });
   };
 
-  // Helper function to build URL with current form data
-  const buildUrlWithFormData = (baseUrl: string, additionalParams: Record<string, string> = {}) => {
-    const params = new URLSearchParams();
-    
-    // Add current form data to URL params
-    if (formData.title) params.set('title', formData.title);
-    if (formData.category) params.set('categoryId', formData.category);
-    if (formData.description) params.set('description', formData.description);
-    if (formData.street) params.set('street', formData.street);
-    if (formData.zip) params.set('zip', formData.zip);
-    if (formData.city) params.set('city', formData.city);
-    if (formData.country) params.set('country', formData.country);
-    params.set('showAddress', formData.showAddress.toString());
-    if (formData.website) params.set('website', formData.website);
-    if (formData.instagram) params.set('instagram', formData.instagram);
-    if (formData.phone) params.set('phone', formData.phone);
-    if (formData.email) params.set('email', formData.email);
-    if (formData.offers_ids.length > 0) params.set('offersIds', JSON.stringify(formData.offers_ids));
-    if (formData.needs_ids.length > 0) params.set('needsIds', JSON.stringify(formData.needs_ids));
-    if (formData.images.length > 0) params.set('images', formData.images.length.toString());
-    
-    // Add any additional parameters
-    Object.entries(additionalParams).forEach(([key, value]) => {
-      if (value) params.set(key, value);
-    });
-    
-    return `${baseUrl}?${params.toString()}`;
-  };
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -349,6 +239,14 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
     console.log('nextStep called - currentStep:', currentStep, 'STEPS.length:', STEPS.length);
     if (currentStep < STEPS.length - 1) {
       console.log('Advancing to step:', currentStep + 1);
+      
+      // Call the onNextStep callback if provided (for external navigation)
+      // Call it when advancing from step 0 (Basics) to trigger external navigation to location page
+      if (onNextStep && currentStep === 0) {
+        onNextStep();
+        return; // Don't advance internal step when using external navigation
+      }
+      
       setCurrentStep((prev) => prev + 1);
     } else {
       console.log('Already on last step, not advancing');
@@ -362,7 +260,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
   };
 
 
-  function isStepValid(step: number, data: ExtendedFormData) {
+  function isStepValid(step: number, data: ProviderFormData) {
     switch (step) {
       case 0:
         return !!data.title && !!data.category && data.offers_ids.length > 0;
@@ -429,7 +327,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                   <button
                     className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
                     type="button"
-                    onClick={() => router.push(buildUrlWithFormData('/create/category'))}
+                    onClick={() => router.push('/create/basics/category')}
                   >
                     <div className="flex flex-1 flex-col gap-1 items-start">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Kategorie *</span>
@@ -449,7 +347,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                   <button
                     className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
                     type="button"
-                    onClick={() => router.push(buildUrlWithFormData('/create/offers'))}
+                    onClick={() => router.push('/create/basics/offers')}
                   >
                     <div className="flex flex-1 flex-col gap-1 items-start">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Was biete ich? *</span>
@@ -469,7 +367,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                   <button
                     className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
                     type="button"
-                    onClick={() => router.push(buildUrlWithFormData('/create/needs'))}
+                    onClick={() => router.push('/create/basics/needs')}
                   >
                     <div className="flex flex-1 flex-col gap-1 items-start">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Was suche ich?</span>
@@ -636,7 +534,7 @@ export function ProviderCreateForm({ searchParams }: ProviderCreateFormProps) {
                     <button
                       className="flex w-full h-[54px] flex-col justify-center items-start p-4 gap-4 bg-white border border-[#D4D4D4] rounded-[12px] hover:bg-gray-50"
                       type="button"
-                      onClick={() => router.push(buildUrlWithFormData('/create/media'))}
+                      onClick={() => router.push('/create/media')}
                     >
                       <div className="flex flex-row items-center p-0 gap-3 w-full h-6">
                         <Icon 

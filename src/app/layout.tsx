@@ -11,6 +11,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
 import { FilterProvider } from '@/providers/filter-provider';
+import { FormProvider } from '@/providers/form-provider';
 import { SearchProvider } from '@/providers/search-provider';
 import { SplashProvider } from '@/providers/splash-provider';
 import '@/styles/globals.css';
@@ -64,9 +65,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       >
         <AuthProvider initialUser={user}>
           <AuthSyncer />
-          <SplashProvider>
-            <SearchProvider>
-              <FilterProvider>
+          <FormProvider>
+            <SplashProvider>
+              <SearchProvider>
+                <FilterProvider>
                 {/* Desktop header only */}
                 <div className="hidden md:block">
                   <Header />
@@ -75,9 +77,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                         <Toaster position="top-center" />
                         <PWAInstallPrompt />
                         <SplashScreenDebug />
-              </FilterProvider>
-            </SearchProvider>
-          </SplashProvider>
+                </FilterProvider>
+              </SearchProvider>
+            </SplashProvider>
+          </FormProvider>
         </AuthProvider>
       </body>
     </html>

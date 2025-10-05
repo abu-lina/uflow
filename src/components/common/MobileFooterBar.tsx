@@ -128,7 +128,7 @@ export function MobileFooterBar() {
                     item.href === '/profile' 
                       ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
                       : item.href === '/create'
-                        ? pathname.startsWith('/create')
+                        ? pathname.startsWith('/create') || pathname === '/create'
                         : pathname === item.href
                   )
                 ) : (
@@ -137,12 +137,12 @@ export function MobileFooterBar() {
                       scale: (item.href === '/profile' 
                         ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
                         : item.href === '/create'
-                          ? pathname.startsWith('/create')
+                          ? pathname.startsWith('/create') || pathname === '/create'
                           : pathname === item.href) ? 1.01 : 1,
                       color: (item.href === '/profile' 
                         ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
                         : item.href === '/create'
-                          ? pathname.startsWith('/create')
+                          ? pathname.startsWith('/create') || pathname === '/create'
                           : pathname === item.href) ? '#589D96' : '#555555',
                     }}
                     transition={sharedTransition}
@@ -159,7 +159,7 @@ export function MobileFooterBar() {
                                 (item.href === '/profile' 
                                   ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
                                   : item.href === '/create'
-                                    ? pathname.startsWith('/create')
+                                    ? pathname.startsWith('/create') || pathname === '/create'
                                     : pathname === item.href)
                                   ? '1.6px solid #589D96'
                                   : '0.5px solid #777777',

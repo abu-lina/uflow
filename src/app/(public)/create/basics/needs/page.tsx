@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
 import { supabase } from '@/lib/supabase/client';
 import type { Need } from '@/types/offer';
+import { useFormData } from '@/providers/form-provider';
 
 export default function SelectNeedsPage() {
   const [needs, setNeeds] = useState<Need[]>([]);
-  const [selectedNeeds, setSelectedNeeds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [newNeed, setNewNeed] = useState('');
@@ -19,7 +19,7 @@ export default function SelectNeedsPage() {
   const lastScrollY = useRef(0);
   
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { formData, updateFormData } = useFormData();
 
   // Load needs from database
   useEffect(() => {
@@ -46,17 +46,6 @@ export default function SelectNeedsPage() {
     void fetchNeeds();
   }, []);
 
-  // Load selected needs from URL params
-  useEffect(() => {
-    const selected = searchParams.get('needsIds');
-    if (selected) {
-      try {
-        setSelectedNeeds(JSON.parse(selected));
-      } catch (error) {
-        console.error('Error parsing selected needs:', error);
-      }
-    }
-  }, [searchParams]);
 
   // Scroll detection for sticky header
   useEffect(() => {
@@ -95,11 +84,10 @@ export default function SelectNeedsPage() {
 
   // Toggle need selection (multi-selection)
   const toggleNeed = (needId: string) => {
-    setSelectedNeeds(prev => 
-      prev.includes(needId)
-        ? prev.filter(id => id !== needId)
-        : [...prev, needId]
-    );
+    const newNeeds = formData.needs_ids.includes(needId)
+      ? formData.needs_ids.filter(id => id !== needId)
+      : [...formData.needs_ids, needId];
+    updateFormData({ needs_ids: newNeeds });
   };
 
   // Create new need
@@ -118,7 +106,7 @@ export default function SelectNeedsPage() {
         console.error('Error creating need:', error);
       } else if (data) {
         setNeeds(prev => [...prev, data]);
-        setSelectedNeeds(prev => [...prev, data.need_id]);
+        updateFormData({ needs_ids: [...formData.needs_ids, data.need_id] });
         setNewNeed('');
       }
     } catch (error) {
@@ -128,22 +116,10 @@ export default function SelectNeedsPage() {
     }
   };
 
-  // Save selected needs and return to create page with all form data preserved
+  // Save selected needs and return to create page
   const handleSave = () => {
-    if (selectedNeeds.length > 0) {
-      const params = new URLSearchParams();
-      
-      // Preserve all existing form data from URL
-      const existingParams = ['title', 'description', 'street', 'zip', 'city', 'website', 'instagram', 'phone', 'email', 'categoryId', 'offersIds'];
-      existingParams.forEach(param => {
-        const value = searchParams?.get(param);
-        if (value) params.set(param, value);
-      });
-      
-      // Add the selected needs
-      params.set('needsIds', JSON.stringify(selectedNeeds));
-      
-      router.push(`/create?${params.toString()}`);
+    if (formData.needs_ids.length > 0) {
+      router.push('/create/basics');
     }
   };
 
@@ -157,22 +133,7 @@ export default function SelectNeedsPage() {
           {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
-            onClick={() => {
-              const params = new URLSearchParams();
-              // Preserve all existing form data
-              const formParams = ['title', 'description', 'street', 'zip', 'city', 'country', 'showAddress', 'website', 'instagram', 'phone', 'email', 'categoryId', 'offersIds'];
-              formParams.forEach(param => {
-                const value = searchParams.get(param);
-                if (value) params.set(param, value);
-              });
-              // Preserve the currently selected needs
-              if (selectedNeeds.length > 0) {
-                params.set('needsIds', JSON.stringify(selectedNeeds));
-              }
-              // Add current images count
-              params.set('images', searchParams.get('images') || '0');
-              router.push(`/create?${params.toString()}`);
-            }}
+            onClick={() => router.push('/create/basics')}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
@@ -253,7 +214,7 @@ export default function SelectNeedsPage() {
                   <button
                     key={need.need_id}
                     className={`inline-flex rounded-xl px-4 py-2 text-left transition-all duration-200 ${
-                      selectedNeeds.includes(need.need_id)
+                      formData.needs_ids.includes(need.need_id)
                         ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
                         : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                     }`}
@@ -275,16 +236,16 @@ export default function SelectNeedsPage() {
         <div className="flex h-[80px] w-full items-center justify-center px-4">
           <button
             className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              selectedNeeds.length === 0
+              formData.needs_ids.length === 0
                 ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
                 : 'bg-[#589D96] opacity-100'
             }`}
-            disabled={selectedNeeds.length === 0}
+            disabled={formData.needs_ids.length === 0}
             onClick={handleSave}
           >
             <Icon className="h-6 w-6 text-white" icon="lucide:save" />
             <span className="text-base font-medium text-white leading-[19px]">
-              Speichern ({selectedNeeds.length})
+              Speichern ({formData.needs_ids.length})
             </span>
           </button>
         </div>
