@@ -88,16 +88,17 @@ export default function CreateProviderPage() {
               </div>
             </div>
             {/* Button Below */}
-            <button className="flex justify-center items-center px-5 py-0 space-x-2 h-[40px] bg-[#589D96] rounded-[16.8px] text-white font-medium text-base leading-[19px] text-center hover:bg-teal-600 transition-colors duration-300 w-full">
+            <button 
+              className="flex justify-center items-center px-5 py-0 space-x-2 h-[40px] min-h-[40px] max-h-[40px] bg-[#589D96] rounded-[16.8px] text-white font-medium text-base leading-[19px] text-center hover:bg-teal-600 transition-colors duration-300 w-full"
+              style={{ height: '40px' }}
+              onClick={handleOwnProvider}
+            >
               Eigenes Angebot erstellen
             </button>
           </div>
 
           {/* Card 2: Ich kenne einen Anbieter (Body / firstName) */}
-          <div
-            className="flex flex-col justify-center items-center p-6 space-y-6 w-full h-[200px] bg-white border border-[#D4D4D4] rounded-2xl shadow-sm hover:shadow-lg hover:border-teal-500 transition-all duration-300 cursor-pointer"
-            onClick={handleRecommendProvider}
-          >
+          <div className="flex flex-col justify-center items-center p-6 space-y-6 w-full h-[200px] bg-white border border-[#D4D4D4] rounded-2xl shadow-sm hover:shadow-lg hover:border-teal-500 transition-all duration-300">
             {/* Content: Icon + Title + Text */}
             <div className="flex flex-row items-center space-x-6 w-full">
               {/* Custom store with heart icon */}
@@ -119,7 +120,11 @@ export default function CreateProviderPage() {
               </div>
             </div>
             {/* Button Below */}
-            <button className="flex justify-center items-center px-5 py-0 space-x-2 h-[40px] bg-[#589D96] rounded-[16.8px] text-white font-medium text-base leading-[19px] text-center hover:bg-teal-600 transition-colors duration-300 w-full">
+            <button 
+              className="flex justify-center items-center px-5 py-0 space-x-2 h-[40px] min-h-[40px] max-h-[40px] bg-[#589D96] rounded-[16.8px] text-white font-medium text-base leading-[19px] text-center hover:bg-teal-600 transition-colors duration-300 w-full"
+              style={{ height: '40px' }}
+              onClick={handleRecommendProvider}
+            >
               Anbieter empfehlen
             </button>
           </div>

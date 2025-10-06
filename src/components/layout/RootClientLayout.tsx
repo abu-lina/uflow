@@ -8,6 +8,7 @@ import { MobileFooterBar } from '@/components/common/MobileFooterBar';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { LoadingProvider } from '@/providers/LoadingProvider';
 import { useSplash } from '@/providers/splash-provider';
+import { useAuth } from '@/hooks/useAuth';
 
 interface RootClientLayoutProps {
   children: ReactNode;
@@ -15,16 +16,11 @@ interface RootClientLayoutProps {
 
 export function RootClientLayout({ children }: RootClientLayoutProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
   const isLandingPage = pathname === '/';
   const isAboutPage = pathname === '/about';
   const isProviderDetailPage = pathname.startsWith('/providers/') && pathname !== '/providers';
   const isCategoryPage = pathname === '/create/basics/category';
-  const isBasicsPage = pathname === '/create/basics';
-  const isLocationPage = pathname === '/create/location';
-  const isContactPage = pathname === '/create/contact';
-  const isOffersPage = pathname === '/create/basics/offers';
-  const isNeedsPage = pathname === '/create/basics/needs';
-  const isMediaPage = pathname === '/create/media';
   const { isSplashVisible } = useSplash();
   const mainRef = useRef<HTMLElement>(null);
 
@@ -89,7 +85,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             </div>
           </PageTransition>
         </main>
-        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isBasicsPage && !isLocationPage && !isContactPage && !isOffersPage && !isNeedsPage && !isMediaPage && !isSplashVisible && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && (
+        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isSplashVisible && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && !(user && pathname.startsWith('/create') && pathname !== '/create') && (
           <div className="block md:hidden">
             <MobileFooterBar />
           </div>
