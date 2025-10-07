@@ -140,7 +140,7 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
       <div className="flex gap-3">
         {/* "Alle" (All) category */}
         <motion.button
-          className={`relative whitespace-nowrap px-4 py-1 text-sm transition-colors ${
+          className={`relative whitespace-nowrap px-4 py-1 text-base transition-colors ${
             !currentCategory
               ? 'font-semibold text-gray-900'
               : 'font-medium text-gray-600 hover:text-gray-800'
@@ -166,7 +166,7 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
         {categories.map((category, index) => (
           <div key={category.category_id} className="flex">
             <motion.button
-              className={`relative whitespace-nowrap px-4 py-1 text-sm transition-colors ${
+              className={`relative whitespace-nowrap px-4 py-1 text-base transition-colors ${
                 currentCategory === category.category_id
                   ? 'font-semibold text-gray-900'
                   : 'font-medium text-gray-600 hover:text-gray-800'
