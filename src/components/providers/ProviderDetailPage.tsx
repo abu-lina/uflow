@@ -250,7 +250,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 <div className="mt-4 space-y-3">
                   {communityServices.map((service, index) => (
                     <div key={index} className="flex items-center gap-3">
-                      <div className="relative h-12 w-12 overflow-hidden rounded-sm">
+                      <div className="relative h-16 w-16 overflow-hidden rounded-sm">
                         <Image
                           fill
                           alt={service.community_service_name}
