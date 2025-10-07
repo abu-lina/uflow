@@ -13,6 +13,17 @@ import CategoryGallery from './CategoryGallery';
 import CommunityServiceGallery from './CommunityServiceGallery';
 
 export function CategoryGallerySection() {
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    // Check if we've already animated this session
+    const animated = sessionStorage.getItem('home-categories-animated');
+    if (animated) {
+      setHasAnimated(true);
+    } else {
+      sessionStorage.setItem('home-categories-animated', 'true');
+    }
+  }, []);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,12 +115,16 @@ export function CategoryGallerySection() {
     return 0;
   });
 
+  const SectionComponent = hasAnimated ? 'section' : motion.section;
+
   return (
-    <motion.section
-      animate={{ opacity: 1, y: 0 }}
+    <SectionComponent
+      {...(!hasAnimated && {
+        animate: { opacity: 1, y: 0 },
+        initial: { opacity: 0, y: 20 },
+        transition: { duration: 0.8, ease: 'easeOut' },
+      })}
       className="w-full pb-20 pt-4 lg:hidden"
-      initial={{ opacity: 0, y: 20 }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
     >
       <div className="flex flex-col gap-6">
         {sortedCategories.map((category) => {
@@ -165,6 +180,6 @@ export function CategoryGallerySection() {
           );
         })}
       </div>
-    </motion.section>
+    </SectionComponent>
   );
 }

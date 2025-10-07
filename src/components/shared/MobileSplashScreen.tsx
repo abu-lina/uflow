@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MobileNavbar } from '@/components/layout/MobileNavbar';
@@ -76,29 +75,14 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
         {/* Content Container - All content grouped together */}
         <div className="flex flex-col items-center w-full max-w-md gap-8">
           {/* Calligraphy + Translation */}
-          <motion.div 
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center w-full gap-1"
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
-          >
+          <div className="flex flex-col items-center w-full gap-1">
             {/* Arabic Calligraphy */}
-            <motion.div
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-full"
-              initial={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-            >
-              <Bismillah className="h-auto w-full" shouldAnimate={true} />
-            </motion.div>
+            <div className="w-full">
+              <Bismillah className="h-auto w-full" shouldAnimate={false} />
+            </div>
 
             {/* German Translation */}
-            <motion.div
-              animate={{ opacity: 1 }}
-              className="w-full text-center"
-              initial={{ opacity: 0 }}
-              transition={{ duration: 0.6, delay: 1.4 }}
-            >
+            <div className="w-full text-center">
               <p 
                 className="font-baskerville text-base text-center"
                 style={{
@@ -112,16 +96,11 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
                 Im Namen Allahs des Allerbarmers,<br />
                 des Allbarmherzigen
               </p>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Title + Subtitle */}
-          <motion.div 
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center w-full gap-1"
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.8, delay: 1.7, ease: 'easeOut' }}
-          >
+          <div className="flex flex-col items-center w-full gap-1">
             {/* Main Title */}
             <h1 className="font-inter-tight text-4xl font-medium text-center text-[#232323]">
               <span className="text-[#232323]">Von </span>
@@ -135,13 +114,13 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
             <p className="font-inter text-base leading-6 text-center text-[#555555]">
               Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet - <span className="text-[#C2A274]">insha&apos;Allah.</span>
             </p>
-          </motion.div>
+          </div>
         </div>
       </main>
 
       {/* NAVBAR SECTION - Fixed at bottom */}
       <MobileNavbar
-        animationDelay={2.0}
+        animationDelay={0}
         text="Weiter"
         onClick={handleContinue}
       />
