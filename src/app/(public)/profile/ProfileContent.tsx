@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { CircleHelp, LogOut } from 'lucide-react';
 import { Icon } from '@iconify/react';
+import { useQuery } from '@tanstack/react-query';
 
 // import clsx from 'clsx'; // Not used in mobile version
 
@@ -15,7 +16,7 @@ import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProv
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/hooks/useAuth';
-import { getCreatedProviders, type Provider, getBookmarkedProviders } from '@/services/providers';
+import { getCreatedProviders, getBookmarkedProviders } from '@/services/providers';
 import { authService } from '@/features/auth/services/authService';
 import type { SupabaseUser } from '@/types/supabase-user';
 
@@ -26,12 +27,8 @@ interface ProfileContentProps {
 export function ProfileContent({ user }: ProfileContentProps) {
   const { user: clientUser, loading } = useAuth();
   const router = useRouter();
-  const [createdProviders, setCreatedProviders] = useState<Provider[]>([]);
-  const [savedProviders, setSavedProviders] = useState<Provider[]>([]);
   const [activeTab, setActiveTab] = useState<UserTab>('created');
   const [showAboutModal, setShowAboutModal] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Responsive: detect mobile
@@ -48,34 +45,32 @@ export function ProfileContent({ user }: ProfileContentProps) {
     }
   }, [effectiveUser, loading, router]);
 
-  // Fetch providers with proper error handling
-  useEffect(() => {
-    if (!effectiveUser) return;
+  // Use React Query for created providers with caching
+  const { data: createdProviders = [], isLoading: isLoadingCreated, error: createdError } = useQuery({
+    queryKey: ['created-providers', effectiveUser?.id],
+    queryFn: async () => {
+      if (!effectiveUser) return [];
+      const data = await getCreatedProviders(effectiveUser.id);
+      return data ?? [];
+    },
+    enabled: !!effectiveUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-    const fetchProviders = async () => {
-      setIsLoadingProviders(true);
-      setError(null);
+  // Use React Query for saved providers with caching
+  const { data: savedProviders = [], isLoading: isLoadingSaved, error: savedError } = useQuery({
+    queryKey: ['saved-providers', effectiveUser?.id],
+    queryFn: async () => {
+      if (!effectiveUser) return [];
+      const data = await getBookmarkedProviders(effectiveUser.id);
+      return data ?? [];
+    },
+    enabled: !!effectiveUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-      try {
-        const [created, saved] = await Promise.all([
-          getCreatedProviders(effectiveUser.id),
-          getBookmarkedProviders(effectiveUser.id),
-        ]);
-
-        setCreatedProviders(created ?? []);
-        setSavedProviders(saved ?? []);
-      } catch (err) {
-        console.error('Error fetching providers:', err);
-        setError('Fehler beim Laden der Providers');
-        setCreatedProviders([]);
-        setSavedProviders([]);
-      } finally {
-        setIsLoadingProviders(false);
-      }
-    };
-
-    void fetchProviders();
-  }, [effectiveUser]);
+  const isLoadingProviders = isLoadingCreated || isLoadingSaved;
+  const error = createdError || savedError ? 'Fehler beim Laden der Providers' : null;
 
   // Handle logout
   const handleLogout = async () => {
@@ -85,7 +80,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
       router.push('/?auth=required');
     } catch (error) {
       console.error('Error during logout:', error);
-      setError('Fehler beim Abmelden');
+      // Logout error is already logged to console
     } finally {
       setIsLoggingOut(false);
     }

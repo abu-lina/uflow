@@ -64,7 +64,7 @@ export function MobileFooterBar() {
   }, [pathname, isNavigating]);
 
   const handleNavigation = useCallback(
-    (href: string) => async (e: React.MouseEvent) => {
+    (href: string) => (e: React.MouseEvent) => {
       e.preventDefault();
 
       // Don't navigate if already on the page
@@ -81,21 +81,10 @@ export function MobileFooterBar() {
           return;
         }
 
-        // For profile navigation, ensure we don't trigger unnecessary redirects
-        if (href === '/profile' && user) {
-          // If user is authenticated, navigate directly without additional checks
-          await router.prefetch(href);
-          router.push(href);
-          return;
-        }
-
-        // Prefetch the next page
-        await router.prefetch(href);
-
-        // Use push instead of replace to maintain scroll position and layout
+        // Navigate immediately - Next.js handles prefetching automatically
         router.push(href);
       } finally {
-        setIsNavigating(false);
+        setTimeout(() => setIsNavigating(false), 150);
       }
     },
     [user, router, pathname, isNavigating],
@@ -105,9 +94,9 @@ export function MobileFooterBar() {
     <>
       <nav
         ref={navRef}
-        className="mobile-nav-height fixed bottom-0 left-0 right-0 z-50 flex flex-col justify-end bg-white px-6 drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
+        className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] items-center justify-center bg-white px-6 pt-2 pb-safe drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
       >
-        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6 py-3 pb-safe">
+        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
           {navItems.map((item) => (
             <motion.div
               key={item.href}

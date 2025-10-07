@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 
 import { useSearch } from '@/providers/search-provider';
-import { fetchUsedCategories, type Category } from '@/services/categories';
+import { fetchUsedCategories } from '@/services/categories';
 
 interface CategoryFilterProps {
   className?: string;
@@ -17,35 +18,24 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedCategory, setSelectedCategory } = useSearch();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Get current selected category from provider or URL
   const currentCategory = selectedCategory ?? searchParams.get('category');
 
-  // Fetch categories
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        setLoading(true);
-        const allCategories = await fetchUsedCategories();
-        // Sort categories alphabetically by name_de
-        const sortedCategories = allCategories.sort((a, b) => {
-          const nameA = (a.name_de || a.category_id || '').toLowerCase();
-          const nameB = (b.name_de || b.category_id || '').toLowerCase();
-          return nameA.localeCompare(nameB);
-        });
-        setCategories(sortedCategories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        setCategories([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchCategories();
-  }, []);
+  // Use React Query for categories with caching
+  const { data: categories = [], isLoading: loading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const allCategories = await fetchUsedCategories();
+      // Sort categories alphabetically by name_de
+      return allCategories.sort((a, b) => {
+        const nameA = (a.name_de || a.category_id || '').toLowerCase();
+        const nameB = (b.name_de || b.category_id || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes - categories don't change often
+  });
 
   // Auto-scroll to selected category when component mounts or category changes
   useEffect(() => {

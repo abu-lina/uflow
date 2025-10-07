@@ -9,7 +9,7 @@ import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="flex h-64 items-center justify-center">Sabr...</div>}>
+    <Suspense fallback={<div className="flex h-64 items-center justify-center"></div>}>
       <LandingLayout>
         {/* Mobile Content */}
         <div className="md:hidden">

@@ -28,14 +28,14 @@ export function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="popLayout">
       <motion.div
         key={pathname}
         animate={{ opacity: 1 }}
         className="w-full"
         exit={{ opacity: 0 }}
-        initial={{ opacity: 0 }}
-        transition={sharedTransition}
+        initial={{ opacity: 1 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
       >
         <Suspense fallback={<LoadingPlaceholder />}>
           {isPreloading ? <LoadingPlaceholder /> : children}

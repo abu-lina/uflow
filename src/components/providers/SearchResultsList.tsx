@@ -1,9 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
 import { ProviderCard } from '@/components/providers/ProviderCard';
-import { sharedTransition } from '@/components/ui/PageTransition';
 import type { SearchResult, Provider } from '@/services/providers';
 
 interface SearchResultsListProps {
@@ -20,14 +17,8 @@ export function SearchResultsList({
   onBookmarkChange,
 }: SearchResultsListProps) {
   return (
-    <motion.div
-      key={`search-results-${searchResults.length}-${searchResults[0]?.id || 'empty'}`}
-      animate={{ opacity: 1 }}
-      className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4"
-      initial={{ opacity: 0 }}
-      transition={sharedTransition}
-    >
-      {searchResults.map((result, index) => {
+    <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
+      {searchResults.map((result) => {
         // Convert SearchResult back to Provider format for compatibility
         const provider: Provider = {
           provider_id: result.id,
@@ -54,17 +45,11 @@ export function SearchResultsList({
         };
 
         return (
-          <motion.div
+          <div
             key={result.id}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
             className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            initial={{ opacity: 0, y: 5, scale: 0.98 }}
             role="button"
             tabIndex={0}
-            transition={{
-              ...sharedTransition,
-              delay: index * 0.02,
-            }}
             onClick={() => onProviderClick(provider)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -81,9 +66,9 @@ export function SearchResultsList({
                 onBookmarkChange(result.id, isBookmarked)
               }
             />
-          </motion.div>
+          </div>
         );
       })}
-    </motion.div>
+    </div>
   );
 }

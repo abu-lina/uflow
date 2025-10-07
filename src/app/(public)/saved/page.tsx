@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
@@ -12,20 +12,18 @@ import { getBookmarkedProviders, type Provider } from '@/services/providers';
 export default function SavedProvidersPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-
-  useEffect(() => {
-    if (user) {
-      getBookmarkedProviders(user.id).then((data) => {
-        setProviders(data);
-        setLoading(false);
-      });
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+  // Use React Query for bookmarked providers with caching
+  const { data: providers = [], isLoading: loading } = useQuery({
+    queryKey: ['saved-providers', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      return await getBookmarkedProviders(user.id);
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   const handleUnsave = async (providerId: string) => {
     if (!user) return;
@@ -33,7 +31,16 @@ export default function SavedProvidersPage() {
       const bookmark = await getBookmarkForProvider(providerId, user.id);
       if (bookmark) {
         await deleteBookmark(bookmark.id);
-        setProviders((prev) => prev.filter((s) => s.provider_id !== providerId));
+        
+        // Optimistically update the cache
+        queryClient.setQueryData(['saved-providers', user.id], (old: Provider[] = []) => 
+          old.filter((s) => s.provider_id !== providerId)
+        );
+        
+        // Also update the bookmarks list cache used by other components
+        queryClient.setQueryData(['bookmarks', user.id], (old: string[] = []) =>
+          old.filter((id) => id !== providerId)
+        );
       }
     } catch (err) {
       // Optionally show a toast or error
