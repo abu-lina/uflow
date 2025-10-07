@@ -140,7 +140,7 @@ export default function LocationPage() {
   if (!user) {
     const returnUrl = encodeURIComponent('/create/location');
     return (
-      <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+      <div className="relative flex w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
         {/* Sticky Header */}
         <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl">
           <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
@@ -152,7 +152,7 @@ export default function LocationPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 pb-mobile-nav-md">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 pb-[180px]">
           <span className="text-center text-lg text-content-title mb-6">
             Du musst angemeldet sein, um einen Standort anzugeben.
           </span>
@@ -176,7 +176,7 @@ export default function LocationPage() {
   };
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       {/* Single Sticky Header */}
       <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-all duration-500 ease-in-out ${
         isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
@@ -205,8 +205,8 @@ export default function LocationPage() {
       }`} />
 
       {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-8 overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-6 pb-mobile-nav-md">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 overflow-y-auto">
+        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-6">
           {/* Step Indicator */}
           <div className="mb-6">
             <StepIndicator currentStep={1} steps={STEPS} />
@@ -315,8 +315,11 @@ export default function LocationPage() {
       </div>
 
       {/* Navbar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]">
-        <div className="flex h-[80px] w-full items-center justify-center px-4">
+      <div 
+        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
           <button
             className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
               !isFormValid() 

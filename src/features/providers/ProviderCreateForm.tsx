@@ -303,7 +303,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
           onSubmit={handleSubmit}
         >
           {/* Form Fields */}
-          <div className="flex flex-1 flex-col gap-8 pb-8">
+          <div className="flex flex-1 flex-col gap-8 pb-[180px]">
         {currentStep === 0 && (
               <div className="space-y-6">
                 <h2 className="text-lg font-medium text-[#232323] px-3">Basics</h2>
@@ -553,8 +553,11 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       </div>
 
           {/* Sticky Navigation Buttons */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]">
-            <div className="flex h-[80px] w-full items-center justify-center px-4">
+          <div 
+            className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
               <div className="flex w-full max-w-full items-center gap-3">
                   {/* Back Button - Show on steps 1, 2, 3, 4 (Location, Contact, Media) */}
         {currentStep > 0 && (

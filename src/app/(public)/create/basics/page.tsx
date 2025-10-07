@@ -144,7 +144,7 @@ export default function CreateBasicsPage() {
   }
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB] ">
       {/* Single Sticky Header */}
       <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-all duration-500 ease-in-out ${
         isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
@@ -173,7 +173,7 @@ export default function CreateBasicsPage() {
       }`} />
 
       {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-8 overflow-y-auto">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 overflow-y-auto">
         <div className="flex w-full max-w-[361px] flex-1 flex-col">
           <ProviderCreateForm 
             onNextStep={() => {

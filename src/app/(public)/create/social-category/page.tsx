@@ -150,7 +150,7 @@ export default function SelectSocialCategoryPage() {
   }
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       {/* Single Sticky Header */}
       <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-all duration-500 ease-in-out ${
         isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
@@ -179,8 +179,8 @@ export default function SelectSocialCategoryPage() {
       }`} />
 
       {/* Content */}
-      <div className="flex flex-1 flex-col items-center px-4 pt-8 pb-8 overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8 pb-mobile-nav-md">
+      <div className="flex flex-1 flex-col items-center px-4 pt-8 overflow-y-auto">
+        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
           
           {/* Search Input */}
           <div className="flex w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
@@ -237,8 +237,11 @@ export default function SelectSocialCategoryPage() {
       </div>
 
       {/* Navbar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]">
-        <div className="flex h-[80px] w-full items-center justify-center px-4">
+      <div 
+        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
           <button
             className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
               formData.socialCategory
