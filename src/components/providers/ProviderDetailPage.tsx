@@ -13,7 +13,7 @@ import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
-import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
+import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
 import { openNavigation, formatAddress, isAddressNavigable } from '@/utils/navigationUtils';
 
 interface ProviderDetailPageProps {
@@ -53,10 +53,15 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
 
   const [isSaved, setIsSaved] = useState(false);
-  const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
+
+  // Use React Query for caching community services
+  const { 
+    data: communityServices = [], 
+    isLoading: isLoadingCommunityServices
+  } = useCommunityServicesForProvider(provider.provider_id);
 
   // Fetch bookmark status
   useEffect(() => {
@@ -85,19 +90,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     void fetchBookmark();
   }, [user, provider.provider_id]);
 
-  // Fetch community services
-  useEffect(() => {
-    async function fetchCommunityServices() {
-      try {
-        const data = await getCommunityServicesForProvider(provider.provider_id);
-        setCommunityServices(data || []);
-      } catch (error) {
-        console.error('Error fetching community services:', error);
-        setCommunityServices([]);
-      }
-    }
-    fetchCommunityServices();
-  }, [provider.provider_id]);
+  // Community services are now fetched via React Query hook above
 
   const handleBookmark = async () => {
     if (!user) {
@@ -216,7 +209,25 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           </div>
 
           {/* Barakah Effect Section */}
-          {communityServices && communityServices.length > 0 && (
+          {isLoadingCommunityServices ? (
+            <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
+              <div className="animate-pulse">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-5 bg-gray-200 rounded w-40"></div>
+                  <div className="h-5 w-5 bg-gray-200 rounded"></div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 bg-gray-200 rounded"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-28 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (communityServices && communityServices.length > 0) && (
             <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
               <button
                 className="flex w-full items-center justify-between"
@@ -256,7 +267,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           {service.community_service_name}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Initiativen unterstützt
+                          {service.category?.name_de || 'Spenden'}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? 'Initiativen unterstützt' : 'Spenden'}
                         </p>
                       </div>
                     </div>
@@ -521,16 +535,37 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               </div>
             </div>
 
-            {/* Barakah Effect */}
-            {communityServices && communityServices.length > 0 && (
+            {/* Barakah Effect - Show loading state or content */}
+            {isLoadingCommunityServices ? (
+              <div className="rounded-2xl bg-white p-6 shadow-sm">
+                <div className="animate-pulse">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-6 bg-gray-200 rounded w-48"></div>
+                    <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <div className="h-16 w-16 bg-gray-200 rounded"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (communityServices && communityServices.length > 0) && (
               <div className="rounded-2xl bg-white p-6 shadow-sm">
                 <button
                   className="flex w-full items-center justify-between"
                   onClick={() => setExpandedBarakah(!expandedBarakah)}
                 >
-                  <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
-                    Unser Barakah Effekt
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                      Unser Barakah Effekt
+                    </h3>
+                    <Icon className="h-5 w-5 text-gray-500" icon="material-symbols:info-outline" />
+                  </div>
                   <ChevronDown 
                     className={`h-7 w-7 text-gray-600 transition-transform ${
                       expandedBarakah ? 'rotate-180' : ''
@@ -538,7 +573,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                   />
                 </button>
                 {expandedBarakah && (
-                  <div className="mt-4 space-y-4">
+                  <div className="mt-4 space-y-3">
                     {communityServices.map((service, index) => (
                       <div key={index} className="flex items-center gap-4">
                         <div className="relative h-16 w-16 overflow-hidden rounded-sm">
@@ -553,12 +588,15 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                             }
                           />
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <p className="font-inter-tight font-semibold text-gray-900">
                             {service.community_service_name}
                           </p>
-                          <p className="text-gray-600">
-                            Initiativen unterstützt
+                          <p className="text-sm text-gray-600">
+                            {service.category?.name_de || 'Spenden'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? 'Initiativen unterstützt' : 'Spenden'}
                           </p>
                         </div>
                       </div>
