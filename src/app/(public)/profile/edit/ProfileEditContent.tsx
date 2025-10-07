@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { Icon } from '@iconify/react';
@@ -39,9 +39,13 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
   
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [originalData, setOriginalData] = useState<FormData | null>(null);
+  const [isHeaderSticky, setIsHeaderSticky] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollContainerRef = useRef<Element | null>(null);
 
   // Initialize form data from user
   useEffect(() => {
@@ -49,12 +53,15 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       const fullName = effectiveUser.user_metadata?.full_name ?? '';
       const nameParts = fullName.split(' ');
       
-      setFormData({
+      const initialData = {
         firstName: nameParts[0] || '',
         lastName: nameParts.slice(1).join(' ') || '',
         email: effectiveUser.email || '',
         password: '',
-      });
+      };
+      
+      setFormData(initialData);
+      setOriginalData(initialData);
     }
   }, [effectiveUser]);
 
@@ -65,6 +72,76 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     }
   }, [effectiveUser, loading, router]);
 
+  // Scroll detection for sticky header with iOS boundary handling
+  useEffect(() => {
+    // Use setTimeout to ensure DOM is ready (fixes iOS initial scroll issue)
+    const timer = setTimeout(() => {
+      scrollContainerRef.current = document.querySelector('.content-scroll-container');
+      const contentContainer = scrollContainerRef.current;
+      
+      if (!contentContainer) return;
+      
+      const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
+      const MIN_SCROLL_DELTA = 8; // Increased for iOS sensitivity
+      const BOUNDARY_BUFFER = 50; // Buffer zone for bottom boundary (iOS rubber band)
+      
+      let ticking = false; // Throttle using requestAnimationFrame
+      
+      const handleScroll = () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            const currentScrollY = contentContainer?.scrollTop || 0;
+            const scrollDifference = currentScrollY - lastScrollY.current;
+            
+            // Calculate if we're near the bottom (iOS rubber band protection)
+            const scrollHeight = contentContainer.scrollHeight;
+            const clientHeight = contentContainer.clientHeight;
+            const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
+            const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
+            
+            // Ignore tiny scroll movements to prevent jitter
+            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+              ticking = false;
+              return;
+            }
+            
+            // Ignore scroll changes when near bottom (iOS rubber band effect)
+            if (isNearBottom) {
+              ticking = false;
+              return;
+            }
+            
+            // Always show header when at the top
+            if (currentScrollY <= SCROLL_THRESHOLD) {
+              setIsHeaderSticky(true);
+            }
+            // Hide when scrolling down (past threshold)
+            else if (scrollDifference > 0) {
+              setIsHeaderSticky(false);
+            }
+            // Show when scrolling up (past threshold)
+            else if (scrollDifference < 0) {
+              setIsHeaderSticky(true);
+            }
+            
+            lastScrollY.current = currentScrollY;
+            ticking = false;
+          });
+          
+          ticking = true;
+        }
+      };
+
+      contentContainer.addEventListener('scroll', handleScroll, { passive: true });
+      
+      return () => {
+        contentContainer.removeEventListener('scroll', handleScroll);
+      };
+    }, 100); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -72,11 +149,23 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     }));
   };
 
+  // Check if form has changes
+  const hasChanges = () => {
+    if (!originalData) return false;
+    
+    return (
+      formData.firstName !== originalData.firstName ||
+      formData.lastName !== originalData.lastName ||
+      formData.email !== originalData.email ||
+      formData.password.trim() !== ''
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-    setSuccess(null);
+    setIsSaved(false);
 
     try {
       // Update user metadata if name changed
@@ -105,12 +194,24 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         });
       }
 
-      setSuccess('Profil erfolgreich aktualisiert');
+      // Show success state on button
+      setIsSaved(true);
       
-      // Redirect back to profile after a short delay
+      // Update original data to current form data (excluding password)
+      setOriginalData({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: '',
+      });
+      
+      // Clear password field after successful save
+      setFormData(prev => ({ ...prev, password: '' }));
+      
+      // Reset success state after 3 seconds
       setTimeout(() => {
-        router.push('/profile');
-      }, 1500);
+        setIsSaved(false);
+      }, 3000);
       
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -180,44 +281,46 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 pb-mobile-nav-md pt-4 overflow-y-auto">
-      {/* Header */}
-      <div className="mb-6 flex h-12 w-full items-center">
-        {/* Left side: Chevron + Title */}
-        <div className="flex items-center">
+    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
+      {/* Single Sticky Header */}
+      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-all duration-500 ease-in-out ${
+        isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+      }`}>
+        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
+          {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
             onClick={() => router.back()}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="ml-2 text-xl font-semibold text-content-title">
-            Profil bearbeiten
-          </h1>
-        </div>
-
-        {/* Profile Avatar */}
-        <div className="ml-auto flex h-12 w-12 items-center justify-center rounded-[33.6px] bg-[#589D96] p-[9.6px]">
-          <Icon className="h-[40.8px] w-[40.8px] text-white" icon="lucide:user" />
+          
+          {/* Title */}
+          <div className="flex flex-1 items-center justify-start">
+            <h1 className="text-xl font-semibold text-content-title leading-[29px]">
+              Profil bearbeiten
+            </h1>
+          </div>
         </div>
       </div>
 
-      {/* Success Message */}
-      {success && (
-        <div className="mb-4 rounded-lg bg-green-50 p-4">
-          <p className="text-center text-green-600">{success}</p>
-        </div>
-      )}
+      {/* Spacer to prevent content jump */}
+      <div className={`transition-all duration-300 ${
+        isHeaderSticky ? 'h-16' : 'h-0'
+      }`} />
 
-      {/* Error Message */}
-      {error && (
-        <div className="mb-4 rounded-lg bg-red-50 p-4">
-          <p className="text-center text-red-600">{error}</p>
-        </div>
-      )}
+      {/* Content */}
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-20 overflow-y-auto">
+        <div className="flex w-full max-w-[361px] flex-1 flex-col">
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-50 p-4">
+              <p className="text-center text-red-600">{error}</p>
+            </div>
+          )}
 
-      {/* Form */}
-      <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Form */}
+          <form className="space-y-6" onSubmit={handleSubmit}>
         {/* Persönliche Daten */}
         <div>
             <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]">
@@ -308,31 +411,56 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           </div>
         </div>
 
-        {/* Submit Button */}
-        <button
-          className="w-full rounded-xl bg-[#589D96] py-3 font-inter font-semibold text-base text-white transition-colors hover:bg-[#4a8a84] disabled:opacity-50"
-          disabled={isSubmitting}
-          type="submit"
-        >
-          {isSubmitting ? 'Speichern...' : 'Änderungen speichern'}
-        </button>
-      </form>
+          </form>
 
-        {/* Konto verwalten */}
-        <div className="mt-8 mb-6">
-          <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]">
-            Konto verwalten
-          </h2>
-        
-        <button
-          className="flex h-[54px] w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
-          onClick={handleCloseAccount}
-        >
-          <BrokenHeartIcon size={24} />
-          <span className="font-inter-tight text-base font-semibold text-[#232323]">
-            Konto schließen
-          </span>
-        </button>
+          {/* Konto verwalten */}
+          <div className="mt-8 mb-6">
+            <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]">
+              Konto verwalten
+            </h2>
+          
+            <button
+              className="flex h-[54px] w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
+              onClick={handleCloseAccount}
+            >
+              <BrokenHeartIcon size={24} />
+              <span className="font-inter-tight text-base font-semibold text-[#232323]">
+                Konto schließen
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Custom Footer - replaces mobile navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/10 backdrop-blur-3xl border-t border-white/20">
+        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4">
+          <button
+            className={`w-full rounded-xl py-3 font-inter font-semibold text-base text-white transition-all duration-300 disabled:opacity-50 ${
+              isSaved 
+                ? 'bg-[#4a8a84] hover:bg-[#4a8a84]' 
+                : hasChanges()
+                  ? 'bg-[#589D96] hover:bg-[#4a8a84]'
+                  : 'bg-[#589D96] hover:bg-[#4a8a84] opacity-50'
+            }`}
+            disabled={isSubmitting || (!hasChanges() && !isSaved)}
+            type="button"
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? (
+              'Speichern...'
+            ) : isSaved ? (
+              <div className="flex items-center justify-center gap-2">
+                <Icon className="h-5 w-5" icon="lucide:check" />
+                Gespeichert
+              </div>
+            ) : hasChanges() ? (
+              'Änderungen speichern'
+            ) : (
+              'Keine Änderungen'
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Account Deletion Modal */}
