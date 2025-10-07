@@ -197,7 +197,7 @@ export default function MediaUploadPage() {
   return (
     <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       {/* Single Sticky Header */}
-      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-all duration-300 ease-out ${
+      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-all duration-500 ease-in-out ${
         isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}>
         <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
