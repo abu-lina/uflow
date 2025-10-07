@@ -19,6 +19,7 @@ export default function SelectSocialCategoryPage() {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const lastScrollY = useRef(0);
+  const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
 
@@ -55,21 +56,55 @@ export default function SelectSocialCategoryPage() {
     void fetchCategories();
   }, []);
 
-  // Scroll detection for sticky header
+  // Scroll detection for sticky header with best practices
   useEffect(() => {
+    // Cache the container reference
+    scrollContainerRef.current = document.querySelector('.content-scroll-container');
+    const scrollContainer = scrollContainerRef.current;
+    
+    if (!scrollContainer) return;
+    
+    const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
+    const MIN_SCROLL_DELTA = 5; // Min px movement to trigger change (prevents jitter)
+    
+    let ticking = false; // Throttle using requestAnimationFrame
+    
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY < lastScrollY.current && currentScrollY > 100) {
-        setIsHeaderSticky(true);
-      } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
-        setIsHeaderSticky(false);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = scrollContainer?.scrollTop || 0;
+          const scrollDifference = currentScrollY - lastScrollY.current;
+          
+          // Ignore tiny scroll movements to prevent jitter
+          if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+            ticking = false;
+            return;
+          }
+          
+          // Always show header when at the top
+          if (currentScrollY <= SCROLL_THRESHOLD) {
+            setIsHeaderSticky(true);
+          }
+          // Hide when scrolling down (past threshold)
+          else if (scrollDifference > 0) {
+            setIsHeaderSticky(false);
+          }
+          // Show when scrolling up (past threshold)
+          else if (scrollDifference < 0) {
+            setIsHeaderSticky(true);
+          }
+          
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        
+        ticking = true;
       }
-      lastScrollY.current = currentScrollY;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isHeaderSticky]);
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Filter categories based on search query
   const filteredCategories = categories.filter(category =>

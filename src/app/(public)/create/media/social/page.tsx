@@ -35,6 +35,7 @@ export default function SocialProjectPage() {
   const [communityServices, setCommunityServices] = useState<CommunityService[]>([]);
   const [servicesLoading, setServicesLoading] = useState(false);
   const lastScrollY = useRef(0);
+  const scrollContainerRef = useRef<Element | null>(null);
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
@@ -57,30 +58,55 @@ export default function SocialProjectPage() {
     void fetchCommunityServices();
   }, []);
 
-  // Scroll detection for sticky header
+  // Scroll detection for sticky header with best practices
   useEffect(() => {
-    const contentContainer = document.querySelector('.content-scroll-container');
+    // Cache the container reference
+    scrollContainerRef.current = document.querySelector('.content-scroll-container');
+    const contentContainer = scrollContainerRef.current;
+    
+    if (!contentContainer) return;
+    
+    const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
+    const MIN_SCROLL_DELTA = 5; // Min px movement to trigger change (prevents jitter)
+    
+    let ticking = false; // Throttle using requestAnimationFrame
     
     const handleScroll = () => {
-      if (!contentContainer) return;
-      
-      const scrollY = contentContainer.scrollTop;
-      const isScrollingUp = scrollY < lastScrollY.current;
-      
-      if (isScrollingUp && scrollY > 100) {
-        setIsHeaderSticky(true);
-      } else if (!isScrollingUp && scrollY > 100) {
-        setIsHeaderSticky(false);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = contentContainer?.scrollTop || 0;
+          const scrollDifference = currentScrollY - lastScrollY.current;
+          
+          // Ignore tiny scroll movements to prevent jitter
+          if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+            ticking = false;
+            return;
+          }
+          
+          // Always show header when at the top
+          if (currentScrollY <= SCROLL_THRESHOLD) {
+            setIsHeaderSticky(true);
+          }
+          // Hide when scrolling down (past threshold)
+          else if (scrollDifference > 0) {
+            setIsHeaderSticky(false);
+          }
+          // Show when scrolling up (past threshold)
+          else if (scrollDifference < 0) {
+            setIsHeaderSticky(true);
+          }
+          
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        
+        ticking = true;
       }
-      
-      lastScrollY.current = scrollY;
     };
 
-    if (contentContainer) {
-      contentContainer.addEventListener('scroll', handleScroll, { passive: true });
-      return () => contentContainer.removeEventListener('scroll', handleScroll);
-    }
-  }, [isHeaderSticky]);
+    contentContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => contentContainer.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Filter projects based on search
   const filteredProjects = communityServices.filter(service =>

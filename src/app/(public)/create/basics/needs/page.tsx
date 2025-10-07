@@ -17,6 +17,7 @@ export default function SelectNeedsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const lastScrollY = useRef(0);
+  const scrollContainerRef = useRef<Element | null>(null);
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
@@ -47,35 +48,55 @@ export default function SelectNeedsPage() {
   }, []);
 
 
-  // Scroll detection for sticky header
+  // Scroll detection for sticky header with best practices
   useEffect(() => {
-    const contentContainer = document.querySelector('.content-scroll-container');
+    // Cache the container reference
+    scrollContainerRef.current = document.querySelector('.content-scroll-container');
+    const contentContainer = scrollContainerRef.current;
+    
+    if (!contentContainer) return;
+    
+    const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
+    const MIN_SCROLL_DELTA = 5; // Min px movement to trigger change (prevents jitter)
+    
+    let ticking = false; // Throttle using requestAnimationFrame
     
     const handleScroll = () => {
-      const currentScrollY = contentContainer?.scrollTop || 0;
-      const scrollDifference = currentScrollY - lastScrollY.current;
-      
-      // Always show if at top
-      if (currentScrollY <= 100) {
-        setIsHeaderSticky(true);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = contentContainer?.scrollTop || 0;
+          const scrollDifference = currentScrollY - lastScrollY.current;
+          
+          // Ignore tiny scroll movements to prevent jitter
+          if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+            ticking = false;
+            return;
+          }
+          
+          // Always show header when at the top
+          if (currentScrollY <= SCROLL_THRESHOLD) {
+            setIsHeaderSticky(true);
+          }
+          // Hide when scrolling down (past threshold)
+          else if (scrollDifference > 0) {
+            setIsHeaderSticky(false);
+          }
+          // Show when scrolling up (past threshold)
+          else if (scrollDifference < 0) {
+            setIsHeaderSticky(true);
+          }
+          
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        
+        ticking = true;
       }
-      // Show when scrolling up past 100px
-      else if (currentScrollY > 100 && scrollDifference < 0) {
-        setIsHeaderSticky(true);
-      }
-      // Hide when scrolling down past 100px
-      else if (currentScrollY > 100 && scrollDifference > 0) {
-        setIsHeaderSticky(false);
-      }
-      
-      lastScrollY.current = currentScrollY;
     };
 
-    if (contentContainer) {
-      contentContainer.addEventListener('scroll', handleScroll, { passive: true });
-      return () => contentContainer.removeEventListener('scroll', handleScroll);
-    }
-  }, [isHeaderSticky]);
+    contentContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => contentContainer.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Filter needs based on search query
   const filteredNeeds = needs.filter(need =>
@@ -181,11 +202,11 @@ export default function SelectNeedsPage() {
 
           {/* Create New Need */}
           <div className="flex w-full flex-col gap-2">
-            <h3 className="text-sm font-medium text-[#232323]">Neues Bedürfnis erstellen</h3>
+            <h3 className="text-sm font-medium text-[#232323]">Neues Gesuch erstellen</h3>
             <div className="flex gap-2">
               <input
                 className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#589D96] focus:outline-none"
-                placeholder="Bedürfnis eingeben..."
+                placeholder="Gesuch eingeben"
                 type="text"
                 value={newNeed}
                 onChange={(e) => setNewNeed(e.target.value)}
@@ -203,7 +224,7 @@ export default function SelectNeedsPage() {
 
           {/* Needs List */}
           <div className="flex-1 w-full">
-            <h3 className="mb-4 text-sm font-medium text-[#232323]">Verfügbare Bedürfnisse</h3>
+            <h3 className="mb-4 text-sm font-medium text-[#232323]">Verfügbare Gesuche</h3>
             <div className="flex flex-wrap gap-2">
               {isLoading ? (
                 <div className="flex h-32 items-center justify-center">

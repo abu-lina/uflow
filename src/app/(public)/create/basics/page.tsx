@@ -11,6 +11,7 @@ export default function CreateBasicsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [checked, setChecked] = useState(false);
   const lastScrollY = useRef(0);
+  const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
@@ -25,37 +26,55 @@ export default function CreateBasicsPage() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Scroll detection for sticky header
+  // Scroll detection for sticky header with best practices
   useEffect(() => {
-    const handleScroll = () => {
-      const contentContainer = document.querySelector('.content-scroll-container');
-      if (!contentContainer) return;
-      
-      const currentScrollY = contentContainer.scrollTop || 0;
-      const scrollDifference = currentScrollY - lastScrollY.current;
-      
-      // Always show if at top
-      if (currentScrollY <= 100) {
-        setIsHeaderSticky(true);
-      }
-      // Show when scrolling up past 100px
-      else if (currentScrollY > 100 && scrollDifference < 0) {
-        setIsHeaderSticky(true);
-      }
-      // Hide when scrolling down past 100px
-      else if (currentScrollY > 100 && scrollDifference > 0) {
-        setIsHeaderSticky(false);
-      }
-      
-      lastScrollY.current = currentScrollY;
-    };
+    // Cache the container reference
+    scrollContainerRef.current = document.querySelector('.content-scroll-container');
+    const contentContainer = scrollContainerRef.current;
     
-    const contentContainer = document.querySelector('.content-scroll-container');
-    if (contentContainer) {
-      contentContainer.addEventListener('scroll', handleScroll, { passive: true });
-      return () => contentContainer.removeEventListener('scroll', handleScroll);
-    }
-  }, [isHeaderSticky]);
+    if (!contentContainer) return;
+    
+    const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
+    const MIN_SCROLL_DELTA = 5; // Min px movement to trigger change (prevents jitter)
+    
+    let ticking = false; // Throttle using requestAnimationFrame
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = contentContainer?.scrollTop || 0;
+          const scrollDifference = currentScrollY - lastScrollY.current;
+          
+          // Ignore tiny scroll movements to prevent jitter
+          if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+            ticking = false;
+            return;
+          }
+          
+          // Always show header when at the top
+          if (currentScrollY <= SCROLL_THRESHOLD) {
+            setIsHeaderSticky(true);
+          }
+          // Hide when scrolling down (past threshold)
+          else if (scrollDifference > 0) {
+            setIsHeaderSticky(false);
+          }
+          // Show when scrolling up (past threshold)
+          else if (scrollDifference < 0) {
+            setIsHeaderSticky(true);
+          }
+          
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        
+        ticking = true;
+      }
+    };
+
+    contentContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => contentContainer.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Loading state
   if (!checked || isLoading) {
