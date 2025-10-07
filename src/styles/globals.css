@@ -441,6 +441,23 @@
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 
+  /* Navigation bar content positioning */
+  .mobile-nav-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+  }
+  
+  .mobile-nav-icons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
   /* Top safe area utilities for camera notch handling */
   .mobile-header-height {
     height: calc(64px + env(safe-area-inset-top));

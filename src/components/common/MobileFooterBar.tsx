@@ -105,9 +105,9 @@ export function MobileFooterBar() {
     <>
       <nav
         ref={navRef}
-        className="mobile-nav-height pb-safe-bottom fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center bg-white px-6 pt-0 drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
+        className="mobile-nav-height mobile-nav-content fixed bottom-0 left-0 right-0 z-50 bg-white px-6 drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
       >
-        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
+        <div className="mobile-nav-icons w-full max-w-[400px] gap-6">
           {navItems.map((item) => (
             <motion.div
               key={item.href}
