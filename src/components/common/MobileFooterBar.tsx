@@ -105,9 +105,9 @@ export function MobileFooterBar() {
     <>
       <nav
         ref={navRef}
-        className="pb-safe fixed bottom-0 left-0 right-0 z-50 flex h-[64px] items-center justify-center bg-white px-6 pt-0 drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
+        className="mobile-nav-height fixed bottom-0 left-0 right-0 z-50 flex flex-col justify-end bg-white px-6 drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
       >
-        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
+        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6 py-3 pb-safe">
           {navItems.map((item) => (
             <motion.div
               key={item.href}
