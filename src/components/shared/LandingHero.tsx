@@ -243,10 +243,11 @@ export function LandingHero() {
               >
                 <ActionButton
                   className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
-                  label="Entdecke deine Ummah"
-                  size="md"
-                  onAnimationComplete={() => router.push('/providers')}
-                />
+                  variant="primary"
+                  onClick={() => router.push('/providers')}
+                >
+                  Entdecke deine Ummah
+                </ActionButton>
               </motion.div>
             )}
           </AnimatePresence>

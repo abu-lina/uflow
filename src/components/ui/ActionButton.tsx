@@ -5,7 +5,7 @@ import { Icon } from '@iconify/react';
 interface ActionButtonProps {
   variant: 'primary' | 'secondary' | 'success';
   icon?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   disabled?: boolean;
   loading?: boolean;
   onClick?: () => void;
@@ -47,7 +47,7 @@ export function ActionButton({
           {children}
         </>
       ) : (
-        children
+        children || null
       )}
     </button>
   );

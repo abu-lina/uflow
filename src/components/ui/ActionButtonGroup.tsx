@@ -34,36 +34,38 @@ export function ActionButtonGroup({
           /* Two Button Layout */
           <div className="flex w-full gap-2">
             <ActionButton
-              variant={primaryButton.variant || 'primary'}
-              icon={primaryButton.icon}
-              disabled={primaryButton.disabled}
-              loading={primaryButton.loading}
-              onClick={primaryButton.onClick}
               aria-label={primaryButton['aria-label']}
               className="flex-1"
+              disabled={primaryButton.disabled}
+              icon={primaryButton.icon}
+              loading={primaryButton.loading}
+              variant={primaryButton.variant || 'primary'}
+              onClick={primaryButton.onClick}
             >
               {primaryButton.label}
             </ActionButton>
 
             <ActionButton
-              variant="secondary"
-              icon={secondaryButton.icon}
-              disabled={secondaryButton.disabled}
-              loading={secondaryButton.loading}
-              onClick={secondaryButton.onClick}
               aria-label={secondaryButton['aria-label']}
               className="w-16"
-            />
+              disabled={secondaryButton.disabled}
+              icon={secondaryButton.icon}
+              loading={secondaryButton.loading}
+              variant="secondary"
+              onClick={secondaryButton.onClick}
+            >
+              {/* Icon-only button, no text */}
+            </ActionButton>
           </div>
         ) : (
           /* Single Button Layout */
           <ActionButton
-            variant={primaryButton.variant || 'primary'}
-            icon={primaryButton.icon}
-            disabled={primaryButton.disabled}
-            loading={primaryButton.loading}
-            onClick={primaryButton.onClick}
             aria-label={primaryButton['aria-label']}
+            disabled={primaryButton.disabled}
+            icon={primaryButton.icon}
+            loading={primaryButton.loading}
+            variant={primaryButton.variant || 'primary'}
+            onClick={primaryButton.onClick}
           >
             {primaryButton.label}
           </ActionButton>
