@@ -40,54 +40,74 @@ export default function MediaUploadPage() {
   const { user } = useAuth();
 
 
-  // Scroll detection for sticky header
+  // Scroll detection for sticky header with iOS boundary handling
   useEffect(() => {
-    // Cache the container reference
-    scrollContainerRef.current = document.querySelector('.content-scroll-container');
-    const contentContainer = scrollContainerRef.current;
-    
-    if (!contentContainer) return;
-    
-    const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
-    const MIN_SCROLL_DELTA = 5; // Min px movement to trigger change (prevents jitter)
-    
-    let ticking = false; // Throttle using requestAnimationFrame
-    
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = contentContainer?.scrollTop || 0;
-          const scrollDifference = currentScrollY - lastScrollY.current;
-          
-          // Ignore tiny scroll movements to prevent jitter
-          if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+    // Use setTimeout to ensure DOM is ready (fixes iOS initial scroll issue)
+    const timer = setTimeout(() => {
+      scrollContainerRef.current = document.querySelector('.content-scroll-container');
+      const contentContainer = scrollContainerRef.current;
+      
+      if (!contentContainer) return;
+      
+      const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
+      const MIN_SCROLL_DELTA = 8; // Increased for iOS sensitivity
+      const BOUNDARY_BUFFER = 50; // Buffer zone for bottom boundary (iOS rubber band)
+      
+      let ticking = false; // Throttle using requestAnimationFrame
+      
+      const handleScroll = () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            const currentScrollY = contentContainer?.scrollTop || 0;
+            const scrollDifference = currentScrollY - lastScrollY.current;
+            
+            // Calculate if we're near the bottom (iOS rubber band protection)
+            const scrollHeight = contentContainer.scrollHeight;
+            const clientHeight = contentContainer.clientHeight;
+            const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
+            const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
+            
+            // Ignore tiny scroll movements to prevent jitter
+            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+              ticking = false;
+              return;
+            }
+            
+            // Ignore scroll changes when near bottom (iOS rubber band effect)
+            if (isNearBottom) {
+              ticking = false;
+              return;
+            }
+            
+            // Always show header when at the top
+            if (currentScrollY <= SCROLL_THRESHOLD) {
+              setIsHeaderSticky(true);
+            }
+            // Hide when scrolling down (past threshold)
+            else if (scrollDifference > 0) {
+              setIsHeaderSticky(false);
+            }
+            // Show when scrolling up (past threshold)
+            else if (scrollDifference < 0) {
+              setIsHeaderSticky(true);
+            }
+            
+            lastScrollY.current = currentScrollY;
             ticking = false;
-            return;
-          }
+          });
           
-          // Always show header when at the top
-          if (currentScrollY <= SCROLL_THRESHOLD) {
-            setIsHeaderSticky(true);
-          }
-          // Hide when scrolling down (past threshold)
-          else if (scrollDifference > 0) {
-            setIsHeaderSticky(false);
-          }
-          // Show when scrolling up (past threshold)
-          else if (scrollDifference < 0) {
-            setIsHeaderSticky(true);
-          }
-          
-          lastScrollY.current = currentScrollY;
-          ticking = false;
-        });
-        
-        ticking = true;
-      }
-    };
+          ticking = true;
+        }
+      };
 
-    contentContainer.addEventListener('scroll', handleScroll, { passive: true });
-    return () => contentContainer.removeEventListener('scroll', handleScroll);
+      contentContainer.addEventListener('scroll', handleScroll, { passive: true });
+      
+      return () => {
+        contentContainer.removeEventListener('scroll', handleScroll);
+      };
+    }, 100); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timer);
   }, []);
 
 
@@ -177,8 +197,8 @@ export default function MediaUploadPage() {
   return (
     <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       {/* Single Sticky Header */}
-      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-transform duration-300 ${
-        isHeaderSticky ? 'translate-y-0' : '-translate-y-full'
+      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl transition-all duration-300 ease-out ${
+        isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}>
         <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
           {/* Back Button */}
