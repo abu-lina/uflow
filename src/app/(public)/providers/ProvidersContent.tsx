@@ -172,7 +172,7 @@ export function ProvidersContent() {
         {/* Mobile Header Container - Stable, doesn't re-render */}
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden"
+          className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top"
           initial={{ opacity: 0, y: -1 }}
           transition={sharedTransition}
         >
@@ -207,7 +207,7 @@ export function ProvidersContent() {
         {/* Mobile Header Container - Stable, doesn't re-render */}
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden"
+          className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top"
           initial={{ opacity: 0, y: -1 }}
           transition={sharedTransition}
         >
@@ -244,7 +244,7 @@ export function ProvidersContent() {
       {/* Mobile Header Container - Stable, doesn't re-render */}
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden"
+        className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top"
         initial={{ opacity: 0, y: -1 }}
         transition={sharedTransition}
       >
