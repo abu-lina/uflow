@@ -53,7 +53,7 @@ export function MobileSplashScreen({ onContinue }: MobileSplashScreenProps) {
   if (!isSplashVisible) {
     return (
       <div className="flex flex-col w-full min-h-screen">
-        <MobileGreetingHeader className="pt-[calc(1rem+env(safe-area-inset-top))] pb-4" />
+        <MobileGreetingHeader className="pt-safe-top-spacing pb-4" />
         <div className="flex-1 overflow-y-auto pb-16">
           <CategoryGallerySection />
         </div>

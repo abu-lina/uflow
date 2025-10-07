@@ -29,7 +29,7 @@ export function MobileHeader({
   };
 
   return (
-        <header className={`fixed top-0 left-0 right-0 z-50 w-full bg-white/34 backdrop-blur-sm border-b border-gray-200/30 ${className}`}>
+        <header className={`mobile-header-height pt-safe-top fixed top-0 left-0 right-0 z-50 w-full bg-white/34 backdrop-blur-sm border-b border-gray-200/30 ${className}`}>
       <div className="flex items-center justify-center w-full h-16 px-6 sm:px-8">
         <div className="flex w-full max-w-[400px] items-center justify-center">
           {variant === 'splash' ? (

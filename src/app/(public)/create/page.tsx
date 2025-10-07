@@ -37,7 +37,7 @@ export default function CreateProviderPage() {
   return (
     <div className="relative flex h-screen w-full max-w-[393px] mx-auto flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl">
+      <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top">
         <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
           {/* Left-aligned Title */}
           <h1 className="text-xl font-semibold text-content-title">

@@ -440,6 +440,33 @@
   .mobile-nav-spacing {
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
+
+  /* Top safe area utilities for camera notch handling */
+  .mobile-header-height {
+    height: calc(64px + env(safe-area-inset-top));
+  }
+  
+  .mobile-header-spacing {
+    padding-top: calc(64px + env(safe-area-inset-top));
+  }
+  
+  .pt-safe-top-spacing {
+    padding-top: calc(1rem + env(safe-area-inset-top));
+  }
+  
+  .mt-safe-top-spacing {
+    margin-top: calc(1rem + env(safe-area-inset-top));
+  }
+  
+  /* Full safe area utilities for complete coverage */
+  .safe-area-height {
+    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-spacing {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 @keyframes fadeIn {
