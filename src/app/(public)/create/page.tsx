@@ -47,7 +47,7 @@ export default function CreateProviderPage() {
       </div>
 
       {/* Main Content (Frame 350) */}
-      <div className="flex flex-1 flex-col items-start p-0 space-y-6 w-full pt-16 pb-mobile-nav-md overflow-y-auto px-4">
+      <div className="flex flex-1 flex-col items-start p-0 space-y-6 w-full pt-16 mobile-nav-spacing overflow-y-auto px-4">
         {/* Indicators wrapper for content inside Frame 350 */}
         <div className="flex flex-col items-center pt-8 pb-8 space-y-8 w-full">
           {/* Subtitle (Frame 345) */}

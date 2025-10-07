@@ -128,7 +128,7 @@ export default function CreateBasicsPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 pb-mobile-nav-md">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 mobile-nav-spacing">
           <span className="text-center text-lg text-content-title mb-6">
             Du musst angemeldet sein, um ein Angebot zu erstellen.
           </span>

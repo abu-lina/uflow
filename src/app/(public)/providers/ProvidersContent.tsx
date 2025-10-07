@@ -266,7 +266,7 @@ export function ProvidersContent() {
       </motion.div>
 
       {/* Main Content - Only this area updates with smooth transitions */}
-      <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden pb-mobile-nav-md pt-32 sm:pt-8 md:pt-28">
+      <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden mobile-nav-spacing pt-32 sm:pt-8 md:pt-28">
         {loading && !isInitialRender && !isNavigating ? (
             <motion.div
               key="loading"

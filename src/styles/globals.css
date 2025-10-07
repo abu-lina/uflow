@@ -403,6 +403,43 @@
       margin-bottom: var(--mobile-nav-total);
     }
   }
+
+  /* Safe area utilities for consistent cross-device support */
+  .pb-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pt-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .pl-safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .pr-safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .p-safe {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Mobile navigation with safe area support */
+  .mobile-nav-height {
+    height: calc(64px + env(safe-area-inset-bottom));
+  }
+  
+  .mobile-nav-spacing {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
 }
 
 @keyframes fadeIn {

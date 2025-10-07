@@ -119,7 +119,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Mobile content - matches the provided design
   const mobileContent = (
-    <div className="px-4 pt-6 pb-mobile-nav-md">
+    <div className="px-4 pt-6 mobile-nav-spacing">
       {/* Header */}
       <h1 className="mb-6 text-xl font-semibold text-content-title">Profil</h1>
 

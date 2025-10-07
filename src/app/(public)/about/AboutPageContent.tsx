@@ -72,7 +72,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
       />
 
       {/* CONTENT SECTION - Flexible middle area with proper centering */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-mobile-nav-md overflow-y-auto">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 mobile-nav-spacing overflow-y-auto">
         {/* Card + page switcher */}
         <div className="flex flex-col items-center justify-center w-full max-w-sm gap-4">
           {/* Card Container */}
