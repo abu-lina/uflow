@@ -85,7 +85,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             </div>
           </PageTransition>
         </main>
-        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isSplashVisible && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && !(user && pathname.startsWith('/create') && pathname !== '/create') && !pathname.includes('/profile/edit') && (
+        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isSplashVisible && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && !(user && pathname.startsWith('/create') && pathname !== '/create') && !pathname.includes('/profile/edit') && !pathname.includes('/profile/delete') && (
           <div className="block md:hidden">
             <MobileFooterBar />
           </div>

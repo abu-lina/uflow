@@ -7,8 +7,6 @@ import { Icon } from '@iconify/react';
 
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
-import { accountService } from '@/services/account';
-import { AccountDeletionModal } from '@/components/shared/AccountDeletionModal';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
 import type { SupabaseUser } from '@/types/supabase-user';
 
@@ -41,7 +39,6 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [originalData, setOriginalData] = useState<FormData | null>(null);
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const lastScrollY = useRef(0);
@@ -222,37 +219,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
   };
 
   const handleCloseAccount = () => {
-    setShowDeleteModal(true);
-  };
-
-  const handleKeepAccount = () => {
-    setShowDeleteModal(false);
-  };
-
-  const handleDeleteAccount = async () => {
-    setShowDeleteModal(false);
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      if (!effectiveUser?.id) {
-        throw new Error('User ID not found');
-      }
-
-      // Perform hard deletion from database
-      await accountService.deleteAccount(effectiveUser.id);
-      
-      // Sign out the user
-      await authService.signOut();
-      
-      // Redirect to home page
-      router.push('/?auth=required');
-    } catch (err) {
-      console.error('Error deleting account:', err);
-      setError(err instanceof Error ? err.message : 'Fehler beim Löschen des Kontos');
-    } finally {
-      setIsSubmitting(false);
-    }
+    router.push('/profile/delete');
   };
 
   // Show loading while auth is being checked
@@ -463,14 +430,6 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         </div>
       </div>
 
-      {/* Account Deletion Modal */}
-      <AccountDeletionModal
-        isDeleting={isSubmitting}
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onDeleteAccount={handleDeleteAccount}
-        onKeepAccount={handleKeepAccount}
-      />
     </div>
   );
 }
