@@ -406,11 +406,13 @@
 
   /* Safe area utilities for consistent cross-device support */
   .pb-safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Minimum 12px padding even on devices without safe area (like iPhone SE) */
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   
   .pt-safe-top {
-    padding-top: env(safe-area-inset-top);
+    /* Minimum 12px padding for consistent top spacing */
+    padding-top: max(12px, env(safe-area-inset-top));
   }
   
   .pl-safe-left {
@@ -422,23 +424,26 @@
   }
   
   .p-safe {
-    padding-top: env(safe-area-inset-top);
+    padding-top: max(12px, env(safe-area-inset-top));
     padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
     padding-left: env(safe-area-inset-left);
   }
   
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Minimum 12px padding even on devices without safe area (like iPhone SE) */
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   
   /* Mobile navigation with safe area support */
   .mobile-nav-height {
-    height: calc(64px + env(safe-area-inset-bottom));
+    /* Ensures minimum 12px padding on all devices */
+    height: calc(64px + max(12px, env(safe-area-inset-bottom)));
   }
   
   .mobile-nav-spacing {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    /* Ensures minimum 12px padding on all devices */
+    padding-bottom: calc(64px + max(12px, env(safe-area-inset-bottom)));
   }
 
   /* Navigation bar content positioning */
@@ -455,7 +460,8 @@
     align-items: center;
     justify-content: center;
     padding: 1rem 0;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    /* Ensures minimum 12px + 1rem padding on all devices */
+    padding-bottom: calc(1rem + max(12px, env(safe-area-inset-bottom)));
   }
 
   /* Top safe area utilities for camera notch handling */
@@ -477,12 +483,14 @@
   
   /* Full safe area utilities for complete coverage */
   .safe-area-height {
-    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    /* Accounts for minimum padding on devices without safe areas */
+    height: calc(100vh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)));
   }
   
   .safe-area-spacing {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Ensures minimum 12px padding on all devices */
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 }
 

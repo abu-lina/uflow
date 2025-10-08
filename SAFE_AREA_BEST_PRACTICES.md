@@ -3,9 +3,15 @@
 ## Current Implementation Status
 
 ### ✅ **Working Well:**
-- **Bottom Navigation**: Uses `pb-safe` class consistently
+- **Bottom Navigation**: Uses `pb-safe` class consistently with minimum 12px padding
 - **Content Spacing**: Uses `mobile-nav-spacing` for proper bottom spacing
-- **CSS Utilities**: Comprehensive safe area utilities defined
+- **CSS Utilities**: Comprehensive safe area utilities with fallback minimum padding
+- **iPhone SE Support**: All safe area utilities now include minimum 12px padding for devices without safe area insets
+
+### ✅ **Recently Improved:**
+- **Minimum Padding**: All safe area utilities now use `max(12px, env(safe-area-inset-*))` to ensure proper spacing on all devices
+- **Consistent UX**: iPhone SE and other devices without safe areas now have proper edge spacing
+- **Best Practice Compliance**: Follows Apple HIG for minimum touch target edge spacing
 
 ### ❌ **Needs Improvement:**
 - **Top Safe Area**: Headers don't consistently handle camera notch/Dynamic Island
@@ -100,6 +106,25 @@
 
 ### **Issue: Inconsistent Behavior**
 **Solution**: Use standardized utility classes consistently across components
+
+### **Issue: Navbar Too Close to Bottom on iPhone SE** ✅ **FIXED**
+**Problem**: On devices without safe area insets (like iPhone SE), the navbar sits directly at the screen edge, violating Apple HIG guidelines for minimum edge spacing.
+
+**Solution**: All safe area utilities now use `max(12px, env(safe-area-inset-*))` to ensure:
+- Minimum 12px padding on devices without safe areas (iPhone SE, older models)
+- Native safe area inset on devices with home indicators (iPhone X and newer)
+- Consistent, comfortable touch targets across all devices
+
+**Implementation**:
+```css
+.pb-safe {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.mobile-nav-spacing {
+  padding-bottom: calc(64px + max(12px, env(safe-area-inset-bottom)));
+}
+```
 
 ## Next Steps
 

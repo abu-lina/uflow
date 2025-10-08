@@ -25,7 +25,7 @@ export function MobileNavbar({
 }: MobileNavbarProps) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 w-full bg-white/34 backdrop-blur-sm border-t border-gray-200/30">
-      <div className="flex flex-row justify-center items-center w-full px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="flex flex-row justify-center items-center w-full px-4 py-4 pb-[calc(1rem+max(12px,env(safe-area-inset-bottom)))]">
         <MobileActionButton
           animationDelay={animationDelay}
           className={className}
