@@ -10,12 +10,14 @@ import { useQuery } from '@tanstack/react-query';
 
 // import clsx from 'clsx'; // Not used in mobile version
 
+import { ScrollablePageHeader } from '@/components/layout/ScrollablePageHeader';
 import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
 import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
 import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProviderCard';
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/hooks/useAuth';
+import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { getCreatedProviders, getBookmarkedProviders } from '@/services/providers';
 import { authService } from '@/features/auth/services/authService';
 import type { SupabaseUser } from '@/types/supabase-user';
@@ -30,6 +32,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<UserTab>('created');
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { isHeaderVisible } = useContainerScroll();
 
   // Responsive: detect mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -114,9 +117,20 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Mobile content - matches the provided design
   const mobileContent = (
-    <div className="px-4 pt-6 mobile-nav-spacing">
-      {/* Header */}
-      <h1 className="mb-6 text-xl font-semibold text-content-title">Profil</h1>
+    <div className="relative flex h-screen w-full flex-col">
+      {/* Scrollable Header */}
+      <ScrollablePageHeader 
+        isVisible={isHeaderVisible}
+        title="Profil"
+      />
+
+      {/* Spacer to prevent content jump */}
+      <div className={`transition-all duration-300 ${
+        isHeaderVisible ? 'h-16' : 'h-0'
+      }`} />
+
+      {/* Main scrollable content */}
+      <div className="content-scroll-container flex-1 overflow-y-auto px-4 pt-6 mobile-nav-spacing">
 
       {/* User Info Card */}
       <button
@@ -260,6 +274,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 

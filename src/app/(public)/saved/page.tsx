@@ -4,8 +4,10 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { ScrollablePageHeader } from '@/components/layout/ScrollablePageHeader';
 import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
+import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
 import { getBookmarkForProvider, deleteBookmark } from '@/services/bookmarks';
@@ -16,6 +18,7 @@ export default function SavedProvidersPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { searchQuery, selectedLocation } = useSearch();
+  const { isHeaderVisible } = useContainerScroll();
 
   // Use React Query for bookmarked providers with caching
   const { data: providers = [], isLoading: loading } = useQuery({
@@ -100,15 +103,11 @@ export default function SavedProvidersPage() {
   if (!user) {
     return (
       <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-        {/* Sticky Header */}
-        <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top">
-          <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
-            {/* Left-aligned Title */}
-            <h1 className="text-xl font-semibold text-content-title">
-              Gespeichert
-            </h1>
-          </div>
-        </div>
+        {/* Header */}
+        <ScrollablePageHeader 
+          isVisible={true}
+          title="Gespeichert"
+        />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 mobile-nav-spacing">
@@ -132,18 +131,19 @@ export default function SavedProvidersPage() {
 
   return (
     <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      {/* Sticky Header */}
-      <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top">
-        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
-          {/* Left-aligned Title */}
-          <h1 className="text-xl font-semibold text-content-title">
-            Gespeichert
-          </h1>
-        </div>
-      </div>
+      {/* Scrollable Header */}
+      <ScrollablePageHeader 
+        isVisible={isHeaderVisible}
+        title="Gespeichert"
+      />
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col items-center px-4 pt-20 mobile-nav-spacing overflow-y-auto">
+      {/* Spacer to prevent content jump */}
+      <div className={`transition-all duration-300 ${
+        isHeaderVisible ? 'h-16' : 'h-0'
+      }`} />
+
+      {/* Main Content with scroll container */}
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
         {/* Search Bar */}
         <div className="w-full mb-6">
           <SearchBar 
