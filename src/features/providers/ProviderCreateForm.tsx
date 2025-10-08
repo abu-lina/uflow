@@ -427,11 +427,11 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Stadt *</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-              placeholder="Stadt eingeben"
+                        placeholder="Stadt eingeben"
                         type="text"
-              value={formData.city}
-              onChange={(e) => handleInputChange('city', e.target.value)}
-            />
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                      />
                     </div>
                   </div>
 
