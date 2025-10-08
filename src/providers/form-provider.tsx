@@ -1,8 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+
+export type ProviderCreationMode = 'owner' | 'recommendation';
 
 export interface ProviderFormData {
+  // Creation mode
+  creationMode: ProviderCreationMode;
+  
   // Basics
   title: string;
   category: string;
@@ -42,6 +47,7 @@ export interface ProviderFormData {
 }
 
 const initialFormData: ProviderFormData = {
+  creationMode: 'owner', // Default to owner mode
   title: '',
   category: '',
   description: '',
@@ -69,6 +75,7 @@ interface FormContextType {
   formData: ProviderFormData;
   updateFormData: (data: Partial<ProviderFormData>) => void;
   clearFormData: () => void;
+  setCreationMode: (mode: ProviderCreationMode) => void;
   isLoading: boolean;
 }
 
@@ -163,17 +170,22 @@ export function FormProvider({ children }: FormProviderProps) {
     }
   }, [formData, isLoading]);
 
-  const updateFormData = (data: Partial<ProviderFormData>) => {
+  const updateFormData = useCallback((data: Partial<ProviderFormData>) => {
     setFormData(prev => ({ ...prev, ...data }));
-  };
+  }, []);
 
-  const clearFormData = () => {
+  const setCreationMode = useCallback((mode: ProviderCreationMode) => {
+    setFormData(prev => ({ ...prev, creationMode: mode }));
+  }, []);
+
+  const clearFormData = useCallback(() => {
     setFormData(initialFormData);
     localStorage.removeItem('providerFormData');
-  };
+    localStorage.removeItem('providerCreationMode');
+  }, []);
 
   return (
-    <FormContext.Provider value={{ formData, updateFormData, clearFormData, isLoading }}>
+    <FormContext.Provider value={{ formData, updateFormData, clearFormData, setCreationMode, isLoading }}>
       {children}
     </FormContext.Provider>
   );

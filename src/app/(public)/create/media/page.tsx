@@ -149,6 +149,8 @@ export default function MediaUploadPage() {
       }
 
       // Create provider data
+      // Determine which ID field to set based on creation mode
+      const isOwner = formData.creationMode === 'owner';
       const insertData = {
         provider_name: formData.title,
         address_street: formData.street || null,
@@ -161,7 +163,10 @@ export default function MediaUploadPage() {
         social_website: formData.website || null,
         social_instagram: formData.instagram || null,
         barakah_effects: formData.tags || [],
-        provider_owner_id: user.id,
+        // user_created_id: ALWAYS set to track who created this database entry
+        // provider_owner_id: Only set in owner mode (when user is the actual business owner)
+        user_created_id: user.id,
+        provider_owner_id: isOwner ? user.id : null,
         provider_images: uploadedUrls.length > 0 ? JSON.stringify({ urls: uploadedUrls }) : null,
         offers_ids: formData.offers_ids || [],
         needs_ids: formData.needs_ids || [],

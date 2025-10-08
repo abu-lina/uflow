@@ -69,7 +69,8 @@ CREATE TABLE public.providers (
   social_website TEXT,
   social_instagram TEXT,
   barakah_effects TEXT[] DEFAULT '{}', -- Array of tags
-  provider_owner_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider_owner_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- The actual owner of the provider business
+  user_created_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- The user who recommended/created this entry (when not the owner)
   review_status review_status DEFAULT 'pending',
   review_feedback TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,

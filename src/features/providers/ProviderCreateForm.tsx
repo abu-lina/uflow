@@ -185,6 +185,8 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
     });
 
     // 2. Save provider with trusted Supabase image URLs
+    // Determine which ID field to set based on creation mode
+    const isOwner = formData.creationMode === 'owner';
     const insertData = {
       provider_name: formData.title,
       address_street: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.street : null) : formData.street,
@@ -198,7 +200,10 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       social_website: formData.website || null,
       social_instagram: formData.instagram || null,
       barakah_effects: formData.tags,
-      provider_owner_id: user.id,
+      // user_created_id: ALWAYS set to track who created this database entry
+      // provider_owner_id: Only set in owner mode (when user is the actual business owner)
+      user_created_id: user.id,
+      provider_owner_id: isOwner ? user.id : null,
       provider_images: JSON.stringify({ urls: uploadedUrls }),
       offers_ids: formData.offers_ids.length > 0 ? formData.offers_ids : null,
       needs_ids: formData.needs_ids.length > 0 ? formData.needs_ids : null,

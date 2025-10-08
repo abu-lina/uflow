@@ -9,8 +9,10 @@ export const accountService = {
     try {
       // Delete user-related data from all tables
       const deletionPromises = [
-        // Delete user's providers (providers table uses provider_owner_id)
-        supabase.from('providers').delete().eq('provider_owner_id', userId),
+        // Delete all providers created by the user
+        // This includes both owned providers and recommendations
+        // (user_created_id is always set, so this covers all their entries)
+        supabase.from('providers').delete().eq('user_created_id', userId),
         
         // Delete user's bookmarks
         supabase.from('bookmarks').delete().eq('user_id', userId),

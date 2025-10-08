@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/providers/auth-provider';
+import { useFormData } from '@/providers/form-provider';
 
 export default function CreateBasicsPage() {
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
@@ -14,6 +15,7 @@ export default function CreateBasicsPage() {
   const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { formData, setCreationMode } = useFormData();
 
   // Mobile detection
   useEffect(() => {
@@ -25,6 +27,17 @@ export default function CreateBasicsPage() {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  // Set creation mode once on mount if not already set to recommendation
+  useEffect(() => {
+    // Only set to 'owner' if it's not already 'recommendation'
+    // (which would have been set by the /recommend-provider route)
+    if (formData.creationMode !== 'recommendation') {
+      setCreationMode('owner');
+    }
+    // Only run once on mount - don't include formData.creationMode in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setCreationMode]);
 
   // Scroll detection for sticky header with iOS boundary handling
   useEffect(() => {

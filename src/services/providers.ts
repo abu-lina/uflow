@@ -30,6 +30,8 @@ export interface Provider {
   };
   community_service_id?: string | null;
   bookmark_count?: number;
+  provider_owner_id?: string | null;
+  user_created_id?: string | null;
 }
 
 // Combined search result type
@@ -437,13 +439,62 @@ export async function getBookmarkedProviders(userId: string): Promise<Provider[]
 }
 
 /**
- * Fetch all providers created by a user
+ * Fetch all providers created by a user (as owner)
  */
 export async function getCreatedProviders(userId: string): Promise<Provider[]> {
   const { data: providers, error } = await supabase
     .from('providers')
     .select('*, category:categories(name_de)')
     .eq('provider_owner_id', userId)
+    .order('created_at', { ascending: false })
+    .returns<Provider[]>();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!Array.isArray(providers) || providers.length === 0) {
+    return [];
+  }
+
+  // Get bookmark counts for each provider
+  const providerIds = providers.map(p => p.provider_id);
+  const { data: bookmarkCounts, error: bookmarkError } = await supabase
+    .from('bookmarks')
+    .select('bookmarkable_id')
+    .eq('bookmarkable_type', 'provider')
+    .in('bookmarkable_id', providerIds);
+
+  if (bookmarkError) {
+    console.error('Error fetching bookmark counts:', bookmarkError);
+    // Return providers without bookmark counts if there's an error
+    return providers;
+  }
+
+  // Count bookmarks for each provider
+  const bookmarkCountMap = new Map<string, number>();
+  if (bookmarkCounts) {
+    bookmarkCounts.forEach(bookmark => {
+      const count = bookmarkCountMap.get(bookmark.bookmarkable_id) || 0;
+      bookmarkCountMap.set(bookmark.bookmarkable_id, count + 1);
+    });
+  }
+
+  // Add bookmark counts to providers
+  return providers.map(provider => ({
+    ...provider,
+    bookmark_count: bookmarkCountMap.get(provider.provider_id) || 0
+  }));
+}
+
+/**
+ * Fetch all providers recommended by a user (not as owner)
+ */
+export async function getRecommendedProviders(userId: string): Promise<Provider[]> {
+  const { data: providers, error } = await supabase
+    .from('providers')
+    .select('*, category:categories(name_de)')
+    .eq('user_created_id', userId)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
 
