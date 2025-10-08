@@ -2,7 +2,7 @@
 // React imports
 import { Suspense, useEffect, useState, useRef } from 'react';
 
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 
 // Third-party imports
 import { ChevronDown, Search, X } from 'lucide-react';
@@ -14,12 +14,22 @@ import { fetchProviderCities, fetchFilteredCities } from '@/services/providers';
 
 interface SearchBarProps {
   className?: string;
-  onSearch?: (query: string, category: string, location: string) => void;
   hideCategoryFilter?: boolean;
+  // Callbacks for parent to handle behavior
+  onSearchSubmit?: (query: string, category: string | null, location: string) => void;
+  onClearSearch?: () => void;
+  onCategoryChange?: (category: string | null) => void;
+  onLocationChange?: (location: string) => void;
 }
 
-function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: SearchBarProps) {
-  const router = useRouter();
+function SearchBarContent({ 
+  className = '', 
+  hideCategoryFilter, 
+  onSearchSubmit,
+  onClearSearch,
+  onCategoryChange,
+  onLocationChange 
+}: SearchBarProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   // State for input and dropdowns
@@ -140,16 +150,8 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
 
   // Handle search submission
   const handleSearch = () => {
-    onSearch?.(searchQuery, selectedCategory ?? 'Alle', selectedLocation);
-    // Navigate to providers page with search parameters
-    const searchParams = new URLSearchParams();
-    if (searchQuery) {
-      searchParams.set('q', searchQuery);
-    }
-    if (selectedLocation) {
-      searchParams.set('location', selectedLocation);
-    }
-    router.push(`/providers?${searchParams.toString()}`);
+    // Call parent callback to handle the search
+    onSearchSubmit?.(searchQuery, selectedCategory, selectedLocation);
   };
 
   // Handle key press for search
@@ -198,18 +200,10 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-gray-100 focus:outline-none"
               type="button"
               onClick={() => {
-                // Remove 'q' from the URL but keep other filters
-                const params = new URLSearchParams(window.location.search);
-                params.delete('q');
-                if (selectedCategory) {
-                  params.set('category', selectedCategory);
-                }
-                if (selectedLocation) {
-                  params.set('location', selectedLocation);
-                }
-                router.push(`/providers?${params.toString()}`);
                 setSearchQuery('');
                 inputRef.current?.focus();
+                // Call parent callback to handle clear
+                onClearSearch?.();
               }}
             >
               <X className="text-gray-400" size={16} />
@@ -259,14 +253,8 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                       onClick={() => {
                         setSelectedCategory(null);
                         setIsCategoryOpen(false);
-                        const params = new URLSearchParams();
-                        if (searchQuery) {
-                          params.set('q', searchQuery);
-                        }
-                        if (selectedLocation) {
-                          params.set('location', selectedLocation);
-                        }
-                        router.push(`/providers?${params.toString()}`);
+                        // Call parent callback to handle category change
+                        onCategoryChange?.(null);
                       }}
                     >
                       Alle
@@ -278,19 +266,11 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                           selectedCategory === cat.category_id ? 'bg-gray-50' : ''
                         }`}
                         onClick={() => {
-                          setSelectedCategory(cat.category_id ?? null);
+                          const newCategory = cat.category_id ?? null;
+                          setSelectedCategory(newCategory);
                           setIsCategoryOpen(false);
-                          const params = new URLSearchParams();
-                          if (searchQuery) {
-                            params.set('q', searchQuery);
-                          }
-                          if (cat.category_id) {
-                            params.set('category', cat.category_id);
-                          }
-                          if (selectedLocation) {
-                            params.set('location', selectedLocation);
-                          }
-                          router.push(`/providers?${params.toString()}`);
+                          // Call parent callback to handle category change
+                          onCategoryChange?.(newCategory);
                         }}
                       >
                         {cat.name_de || cat.category_id || 'Unbenannt'}
@@ -340,17 +320,8 @@ function SearchBarContent({ className = '', onSearch, hideCategoryFilter }: Sear
                     onClick={() => {
                       setSelectedLocation(location);
                       setIsLocationOpen(false);
-                      const params = new URLSearchParams();
-                      if (searchQuery) {
-                        params.set('q', searchQuery);
-                      }
-                      if (selectedCategory) {
-                        params.set('category', selectedCategory);
-                      }
-                      if (location) {
-                        params.set('location', location);
-                      }
-                      router.push(`/providers?${params.toString()}`);
+                      // Call parent callback to handle location change
+                      onLocationChange?.(location);
                     }}
                   >
                     {location}

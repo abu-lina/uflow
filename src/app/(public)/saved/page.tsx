@@ -1,11 +1,13 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/providers/auth-provider';
+import { useSearch } from '@/providers/search-provider';
 import { getBookmarkForProvider, deleteBookmark } from '@/services/bookmarks';
 import { getBookmarkedProviders, type Provider } from '@/services/providers';
 
@@ -13,6 +15,7 @@ export default function SavedProvidersPage() {
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { searchQuery, selectedLocation } = useSearch();
 
   // Use React Query for bookmarked providers with caching
   const { data: providers = [], isLoading: loading } = useQuery({
@@ -24,6 +27,33 @@ export default function SavedProvidersPage() {
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Filter providers based on search query and location
+  const filteredProviders = useMemo(() => {
+    let filtered = providers;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((provider) => {
+        const nameMatch = provider.provider_name?.toLowerCase().includes(query);
+        const addressMatch = 
+          provider.address_street?.toLowerCase().includes(query) ||
+          provider.address_city?.toLowerCase().includes(query);
+        const categoryMatch = provider.category?.name_de?.toLowerCase().includes(query);
+        return nameMatch || addressMatch || categoryMatch;
+      });
+    }
+
+    // Filter by location
+    if (selectedLocation && selectedLocation !== 'Überall') {
+      filtered = filtered.filter((provider) => 
+        provider.address_city?.toLowerCase() === selectedLocation.toLowerCase()
+      );
+    }
+
+    return filtered;
+  }, [providers, searchQuery, selectedLocation]);
 
   const handleUnsave = async (providerId: string) => {
     if (!user) return;
@@ -46,6 +76,24 @@ export default function SavedProvidersPage() {
       // Optionally show a toast or error
       console.error('Fehler beim Entfernen des Providers:', err);
     }
+  };
+
+  // SearchBar callbacks - no-ops since we handle filtering locally via context
+  // The search context state is already being used in filteredProviders
+  const handleSearchSubmit = () => {
+    // No navigation needed - filtering happens automatically via useMemo
+  };
+
+  const handleClearSearch = () => {
+    // No action needed - clearing is handled by SearchBar updating context
+  };
+
+  const handleCategoryChange = () => {
+    // No action needed - category changes handled by SearchBar updating context
+  };
+
+  const handleLocationChange = () => {
+    // No action needed - location changes handled by SearchBar updating context
   };
 
 
@@ -98,14 +146,22 @@ export default function SavedProvidersPage() {
       <div className="flex flex-1 flex-col items-center px-4 pt-20 mobile-nav-spacing overflow-y-auto">
         {/* Search Bar */}
         <div className="w-full mb-6">
-          <SearchBar hideCategoryFilter={true} />
+          <SearchBar 
+            hideCategoryFilter={true}
+            onCategoryChange={handleCategoryChange}
+            onClearSearch={handleClearSearch}
+            onLocationChange={handleLocationChange}
+            onSearchSubmit={handleSearchSubmit}
+          />
         </div>
         
         <div className="grid w-full grid-cols-2 gap-4">
         {providers.length === 0 ? (
           <span className="col-span-2 text-center text-gray-400">Keine Providers gespeichert.</span>
+        ) : filteredProviders.length === 0 ? (
+          <span className="col-span-2 text-center text-gray-400">Keine Providers gefunden.</span>
         ) : (
-          providers.map((provider) => (
+          filteredProviders.map((provider) => (
             <CreatedProviderCard
               key={provider.provider_id}
               address={

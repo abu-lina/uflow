@@ -78,6 +78,45 @@ export function ProvidersContent() {
     router.push(`/providers/${provider.provider_id}`);
   }, [router]);
 
+  // Handle search submission - update URL with new parameters
+  const handleSearchSubmit = useCallback((query: string, category: string | null, location: string) => {
+    const params = new URLSearchParams();
+    if (query) {
+      params.set('q', query);
+    }
+    if (category) {
+      params.set('category', category);
+    }
+    if (location) {
+      params.set('location', location);
+    }
+    router.replace(`/providers?${params.toString()}`, { scroll: false });
+  }, [router]);
+
+  // Handle clear search - remove query from URL
+  const handleClearSearch = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete('q');
+    router.replace(`/providers?${params.toString()}`, { scroll: false });
+  }, [router]);
+
+  // Handle category change - update URL with new category
+  const handleCategoryChange = useCallback((category: string | null) => {
+    const params = new URLSearchParams(window.location.search);
+    if (category) {
+      params.set('category', category);
+    } else {
+      params.delete('category');
+    }
+    router.replace(`/providers?${params.toString()}`, { scroll: false });
+  }, [router]);
+
+  // Handle location change - update URL with new location
+  const handleLocationChange = useCallback((location: string) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('location', location);
+    router.replace(`/providers?${params.toString()}`, { scroll: false });
+  }, [router]);
 
   // Sync URL parameters with search context - only when they actually change
   useEffect(() => {
@@ -104,13 +143,17 @@ export function ProvidersContent() {
       <div className="relative min-h-full">
         {/* Mobile Header Container - Stable, doesn't re-render */}
         <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top">
-          {/* Search Bar */}
-          <div className="px-4 pb-0 pt-4">
-            <SearchBar
-              className="rounded-lg border border-gray-200 shadow-sm"
-              hideCategoryFilter={true}
-            />
-          </div>
+        {/* Search Bar */}
+        <div className="px-4 pb-0 pt-4">
+          <SearchBar
+            className="rounded-lg border border-gray-200 shadow-sm"
+            hideCategoryFilter={true}
+            onCategoryChange={handleCategoryChange}
+            onClearSearch={handleClearSearch}
+            onLocationChange={handleLocationChange}
+            onSearchSubmit={handleSearchSubmit}
+          />
+        </div>
 
           {/* Gap */}
           <div className="h-3 px-6" />
@@ -134,13 +177,17 @@ export function ProvidersContent() {
       <div className="relative min-h-full">
         {/* Mobile Header Container - Stable, doesn't re-render */}
         <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top">
-          {/* Search Bar */}
-          <div className="px-6 pb-0 pt-4">
-            <SearchBar
-              className="rounded-lg border border-gray-200 shadow-sm"
-              hideCategoryFilter={true}
-            />
-          </div>
+        {/* Search Bar */}
+        <div className="px-6 pb-0 pt-4">
+          <SearchBar
+            className="rounded-lg border border-gray-200 shadow-sm"
+            hideCategoryFilter={true}
+            onCategoryChange={handleCategoryChange}
+            onClearSearch={handleClearSearch}
+            onLocationChange={handleLocationChange}
+            onSearchSubmit={handleSearchSubmit}
+          />
+        </div>
 
           {/* Gap */}
           <div className="h-3 px-6" />
@@ -166,13 +213,17 @@ export function ProvidersContent() {
     <div className="relative min-h-full">
       {/* Mobile Header Container - Stable, doesn't re-render */}
       <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top">
-        {/* Search Bar */}
-        <div className="px-4 pb-0 pt-6">
-          <SearchBar
-            className="rounded-lg border border-gray-200 shadow-sm"
-            hideCategoryFilter={true}
-          />
-        </div>
+      {/* Search Bar */}
+      <div className="px-4 pb-0 pt-6">
+        <SearchBar
+          className="rounded-lg border border-gray-200 shadow-sm"
+          hideCategoryFilter={true}
+          onCategoryChange={handleCategoryChange}
+          onClearSearch={handleClearSearch}
+          onLocationChange={handleLocationChange}
+          onSearchSubmit={handleSearchSubmit}
+        />
+      </div>
 
         {/* Gap */}
         <div className="h-3 px-6" />

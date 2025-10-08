@@ -22,6 +22,46 @@ export function Header() {
   const router = useRouter();
   const { isVisible } = useScrollDirection();
 
+  // Handle search submission - navigate to providers page
+  const handleSearchSubmit = (query: string, category: string | null, location: string) => {
+    const params = new URLSearchParams();
+    if (query) {
+      params.set('q', query);
+    }
+    if (category) {
+      params.set('category', category);
+    }
+    if (location) {
+      params.set('location', location);
+    }
+    router.push(`/providers?${params.toString()}`);
+  };
+
+  // Handle clear search - navigate to providers without query
+  const handleClearSearch = () => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete('q');
+    router.push(`/providers?${params.toString()}`);
+  };
+
+  // Handle category change - navigate to providers with new category
+  const handleCategoryChange = (category: string | null) => {
+    const params = new URLSearchParams(window.location.search);
+    if (category) {
+      params.set('category', category);
+    } else {
+      params.delete('category');
+    }
+    router.push(`/providers?${params.toString()}`);
+  };
+
+  // Handle location change - navigate to providers with new location
+  const handleLocationChange = (location: string) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('location', location);
+    router.push(`/providers?${params.toString()}`);
+  };
+
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -64,7 +104,13 @@ export function Header() {
             </div>
 
             {/* Search Bar */}
-            <SearchBar className="!w-[640px] !shadow-none" />
+            <SearchBar 
+              className="!w-[640px] !shadow-none"
+              onCategoryChange={handleCategoryChange}
+              onClearSearch={handleClearSearch}
+              onLocationChange={handleLocationChange}
+              onSearchSubmit={handleSearchSubmit}
+            />
 
             {/* Right */}
             <div className="flex flex-row items-center gap-3">
