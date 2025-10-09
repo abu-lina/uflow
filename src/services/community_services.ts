@@ -73,7 +73,7 @@ export async function searchCommunityServices(
 ): Promise<CommunityService[]> {
   let req = supabase
     .from('community_services')
-    .select('*')
+    .select('*, category:categories(name_de, name_en)')
     .eq('review_status', 'approved'); // Only show approved services
 
   // Apply search query filter if specified

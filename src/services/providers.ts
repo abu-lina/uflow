@@ -84,6 +84,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
   try {
     console.log('Fetching provider with ID:', id);
     
+    // First, try to fetch as a provider
     const { data, error } = await supabase
       .from('providers')
       .select(`
@@ -91,65 +92,108 @@ export async function getProviderById(id: string): Promise<Provider | null> {
         category:categories(name_de)
       `)
       .eq('provider_id', id)
-      .single();
+      .maybeSingle();
     
-    if (error) {
-      console.error('Error fetching provider:', error);
-      throw error;
+    // If found in providers table, process and return
+    if (data) {
+      console.log('Provider data:', data);
+
+      // Fetch offers and needs separately
+      let offers: Array<{ name_de: string }> = [];
+      let needs: Array<{ name_de: string }> = [];
+
+      if (data.offers_ids && data.offers_ids.length > 0) {
+        console.log('Fetching offers for IDs:', data.offers_ids);
+        const { data: offersData, error: offersError } = await supabase
+          .from('offers')
+          .select('name_de')
+          .in('offer_id', data.offers_ids);
+        
+        if (offersError) {
+          console.error('Error fetching offers:', offersError);
+        } else {
+          offers = offersData || [];
+          console.log('Fetched offers:', offers);
+        }
+      }
+
+      if (data.needs_ids && data.needs_ids.length > 0) {
+        console.log('Fetching needs for IDs:', data.needs_ids);
+        const { data: needsData, error: needsError } = await supabase
+          .from('needs')
+          .select('name_de')
+          .in('need_id', data.needs_ids);
+        
+        if (needsError) {
+          console.error('Error fetching needs:', needsError);
+        } else {
+          needs = needsData || [];
+          console.log('Fetched needs:', needs);
+        }
+      }
+
+      // Transform the data to match our Provider interface
+      const provider: Provider = {
+        ...data,
+        offers_ids: data.offers_ids || [],
+        needs_ids: data.needs_ids || [],
+        barakah_effects: data.barakah_effects || [],
+        offers,
+        needs,
+      };
+
+      console.log('Final provider object:', provider);
+      return provider;
     }
-    
-    if (!data) {
-      console.log('No provider found with ID:', id);
+
+    // If not found in providers, try community_services table
+    console.log('Not found in providers table, trying community_services...');
+    const { data: communityServiceData, error: csError } = await supabase
+      .from('community_services')
+      .select('*, category:categories(name_de)')
+      .eq('community_service_id', id)
+      .maybeSingle();
+
+    if (csError) {
+      console.error('Error fetching community service:', csError);
+      throw csError;
+    }
+
+    if (!communityServiceData) {
+      console.log('No provider or community service found with ID:', id);
       return null;
     }
 
-    console.log('Provider data:', data);
+    console.log('Community service data found:', communityServiceData);
 
-    // Fetch offers and needs separately
-    let offers: Array<{ name_de: string }> = [];
-    let needs: Array<{ name_de: string }> = [];
-
-    if (data.offers_ids && data.offers_ids.length > 0) {
-      console.log('Fetching offers for IDs:', data.offers_ids);
-      const { data: offersData, error: offersError } = await supabase
-        .from('offers')
-        .select('name_de')
-        .in('offer_id', data.offers_ids);
-      
-      if (offersError) {
-        console.error('Error fetching offers:', offersError);
-      } else {
-        offers = offersData || [];
-        console.log('Fetched offers:', offers);
-      }
-    }
-
-    if (data.needs_ids && data.needs_ids.length > 0) {
-      console.log('Fetching needs for IDs:', data.needs_ids);
-      const { data: needsData, error: needsError } = await supabase
-        .from('needs')
-        .select('name_de')
-        .in('need_id', data.needs_ids);
-      
-      if (needsError) {
-        console.error('Error fetching needs:', needsError);
-      } else {
-        needs = needsData || [];
-        console.log('Fetched needs:', needs);
-      }
-    }
-
-    // Transform the data to match our Provider interface
+    // Transform community service to Provider format for compatibility
     const provider: Provider = {
-      ...data,
-      offers_ids: data.offers_ids || [],
-      needs_ids: data.needs_ids || [],
-      barakah_effects: data.barakah_effects || [],
-      offers,
-      needs,
+      provider_id: communityServiceData.community_service_id,
+      provider_name: communityServiceData.community_service_name,
+      provider_images: communityServiceData.community_service_images ? JSON.stringify(communityServiceData.community_service_images) : null,
+      category_id: communityServiceData.category_id || null,
+      address_city: communityServiceData.address_city || null,
+      social_website: communityServiceData.social_website || null,
+      social_instagram: communityServiceData.social_instagram || null,
+      contact_email: communityServiceData.contact_email || null,
+      contact_phone: communityServiceData.contact_phone || null,
+      address_street: communityServiceData.address_street || null,
+      address_country: communityServiceData.address_country || null,
+      address_zip: communityServiceData.address_zip || null,
+      location_latitude: communityServiceData.location_latitude || null,
+      location_longitude: communityServiceData.location_longitude || null,
+      created_at: communityServiceData.created_at,
+      updated_at: communityServiceData.updated_at,
+      barakah_effects: communityServiceData.barakah_effects || [],
+      offers_ids: [],
+      needs_ids: [],
+      offers: [],
+      needs: [],
+      category: communityServiceData.category,
+      community_service_id: communityServiceData.community_service_id,
     };
 
-    console.log('Final provider object:', provider);
+    console.log('Transformed community service to provider format:', provider);
     return provider;
   } catch (error) {
     console.error('Error in getProviderById:', error);
@@ -335,6 +379,7 @@ export async function searchProvidersAndCommunityServices(
     needs_ids: [],
     offers: [],
     needs: [],
+    category: communityService.category ? { name_de: communityService.category.name_de || '' } : undefined,
     type: 'community_service' as const,
     originalCommunityService: communityService,
   }));
