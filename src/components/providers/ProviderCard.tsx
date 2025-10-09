@@ -56,6 +56,9 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       address = `${address_zip} ${address_city}`;
     } else if (address_city) {
       address = address_city;
+    } else {
+      // No address means online business
+      address = 'Online';
     }
     const categoryName = category?.name_de || '';
 

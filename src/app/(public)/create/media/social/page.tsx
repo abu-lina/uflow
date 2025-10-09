@@ -200,7 +200,7 @@ export default function SocialProjectPage() {
       }`} />
 
       {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 overflow-y-auto">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
           {/* Step Indicator */}
           <div className="mb-6">

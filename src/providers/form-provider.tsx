@@ -14,6 +14,7 @@ export interface ProviderFormData {
   description: string;
   
   // Location
+  isOnlineBusiness: boolean;
   street: string;
   zip: string;
   city: string;
@@ -51,6 +52,7 @@ const initialFormData: ProviderFormData = {
   title: '',
   category: '',
   description: '',
+  isOnlineBusiness: false,
   street: '',
   zip: '',
   city: '',

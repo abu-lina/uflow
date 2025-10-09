@@ -457,22 +457,28 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 <div className="inline-flex items-start justify-between self-stretch">
                   <div className="inline-flex flex-1 flex-col items-start justify-start gap-2">
                     <div className="text-uFlowText h-10 w-48 justify-start font-inter-tight text-2xl font-semibold">
-                      Adresse:
+                      {provider.address_city ? 'Adresse:' : 'Standort:'}
                     </div>
-                    <button
-                      className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-neutral-800 disabled:hover:no-underline text-left"
-                      disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
-                      title="Adresse antippen zum Navigieren"
-                      onClick={() => {
-                        const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
-                        if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
-                          openNavigation(address);
-                        }
-                      }}
-                    >
-                      {provider.address_street}, <br />
-                      {provider.address_zip} {provider.address_city}
-                    </button>
+                    {provider.address_city ? (
+                      <button
+                        className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-neutral-800 disabled:hover:no-underline text-left"
+                        disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                        title="Adresse antippen zum Navigieren"
+                        onClick={() => {
+                          const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
+                          if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                            openNavigation(address);
+                          }
+                        }}
+                      >
+                        {provider.address_street}, <br />
+                        {provider.address_zip} {provider.address_city}
+                      </button>
+                    ) : (
+                      <div className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800">
+                        Online
+                      </div>
+                    )}
                   </div>
                   <div className="relative w-0 self-stretch">
                     <div className="absolute left-0 top-0 h-0 w-40 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-zinc-100" />

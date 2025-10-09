@@ -161,19 +161,27 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             <h2 className="font-inter-tight text-xl font-semibold text-gray-900">
               {provider.provider_name}
             </h2>
-            <button
-              className="mt-1 text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline text-left"
-              disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
-              title="Adresse antippen zum Navigieren"
-              onClick={() => {
-                const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
-                if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
-                  openNavigation(address);
-                }
-              }}
-            >
-              {provider.address_street}, {provider.address_zip} {provider.address_city}
-            </button>
+            {provider.address_city ? (
+              <button
+                className="mt-1 text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline text-left"
+                disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                title="Adresse antippen zum Navigieren"
+                onClick={() => {
+                  const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
+                  if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                    openNavigation(address);
+                  }
+                }}
+              >
+                {provider.address_street && provider.address_zip 
+                  ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
+                  : provider.address_city}
+              </button>
+            ) : (
+              <div className="mt-1 text-gray-600">
+                Online
+              </div>
+            )}
             
             {/* Contact Icons */}
             <div className="mt-4 flex items-center gap-4">

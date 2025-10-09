@@ -189,11 +189,12 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
     const isOwner = formData.creationMode === 'owner';
     const insertData = {
       provider_name: formData.title,
-      address_street: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.street : null) : formData.street,
-      address_zip: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.zip : null) : formData.zip,
-      address_city: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.city : null) : formData.city,
-      address_country: getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.country : null) : formData.country,
-      show_address: getFeatureFlag('enableAddressVisibilityToggle') ? formData.showAddress : true,
+      // If online business, all address fields are null
+      address_street: formData.isOnlineBusiness ? null : (getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.street : null) : formData.street),
+      address_zip: formData.isOnlineBusiness ? null : (getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.zip : null) : formData.zip),
+      address_city: formData.isOnlineBusiness ? null : (getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.city : null) : formData.city),
+      address_country: formData.isOnlineBusiness ? null : (getFeatureFlag('enableAddressVisibilityToggle') ? (formData.showAddress ? formData.country : null) : formData.country),
+      show_address: formData.isOnlineBusiness ? false : (getFeatureFlag('enableAddressVisibilityToggle') ? formData.showAddress : true),
       category_id: formData.category && formData.category.trim() !== '' ? formData.category : null,
       contact_email: formData.email || null,
       contact_phone: formData.phone || null,
@@ -270,6 +271,10 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       case 0:
         return !!data.title && !!data.category && data.offers_ids.length > 0;
       case 1:
+        // If it's an online business, no location is required
+        if (data.isOnlineBusiness) {
+          return true;
+        }
         // If address visibility toggle is enabled, check based on showAddress. Otherwise, always require city and country.
         if (getFeatureFlag('enableAddressVisibilityToggle')) {
           return !data.showAddress || (!!data.city && !!data.country);
@@ -396,71 +401,121 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                 <h2 className="text-xl font-medium text-[#232323] px-3">Location</h2>
                 
                 <div className="space-y-3">
-                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-                    <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Straße</span>
-                      <input
-                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-              placeholder="Straße eingeben"
-                        type="text"
-              value={formData.street}
-              onChange={(e) => handleInputChange('street', e.target.value)}
-            />
+                  {/* Online Business Toggle */}
+                  <div className="flex items-center justify-between w-full rounded-2xl border border-[#E5E5E5] bg-white px-4 py-3 shadow-sm">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-[#272727]">
+                        Online-Geschäft
+                      </span>
+                      <span className="text-xs text-[#7A7A7A]">
+                        Kein physischer Standort
+                      </span>
                     </div>
-                  </div>
-
-                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-                    <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">PLZ</span>
-                      <input
-                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-              placeholder="PLZ eingeben"
-                        type="text"
-              value={formData.zip}
-              onChange={(e) => handleInputChange('zip', e.target.value)}
-            />
-                    </div>
-                  </div>
-
-                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-                    <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Stadt *</span>
-                      <input
-                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Stadt eingeben"
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
+                    <button
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
+                        formData.isOnlineBusiness ? 'bg-[#589D96]' : 'bg-gray-200'
+                      }`}
+                      type="button"
+                      onClick={() => {
+                        const newIsOnline = !formData.isOnlineBusiness;
+                        handleInputChange('isOnlineBusiness', newIsOnline);
+                        // If switching to online, clear address fields
+                        if (newIsOnline) {
+                          handleInputChange('street', '');
+                          handleInputChange('zip', '');
+                          handleInputChange('city', '');
+                          handleInputChange('country', '');
+                          handleInputChange('showAddress', false);
+                        }
+                      }}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          formData.isOnlineBusiness ? 'translate-x-6' : 'translate-x-1'
+                        }`}
                       />
-                    </div>
+                    </button>
                   </div>
 
-                  <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-                    <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Land *</span>
-                      <input
-                        className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                        placeholder="Land eingeben"
-                        type="text"
-                        value={formData.country}
-                        onChange={(e) => handleInputChange('country', e.target.value)}
-                      />
-                    </div>
-                  </div>
+                  {!formData.isOnlineBusiness ? (
+                    <>
+                      <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                        <div className="flex flex-1 flex-col gap-1">
+                          <span className="text-xs font-normal text-[#999999] leading-[15px]">Straße</span>
+                          <input
+                            className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                  placeholder="Straße eingeben"
+                            type="text"
+                  value={formData.street}
+                  onChange={(e) => handleInputChange('street', e.target.value)}
+                />
+                        </div>
+                      </div>
 
-                  {/* Address Visibility Checkbox - Feature Flagged */}
-                  {getFeatureFlag('enableAddressVisibilityToggle') && (
-                    <div className="flex w-full items-center gap-3 px-3 py-3">
-                      <input
-                        checked={formData.showAddress}
-                        className="h-5 w-5 rounded border-2 border-[#E5E5E5] bg-white text-[#589D96] focus:ring-2 focus:ring-[#589D96] focus:ring-offset-0"
-                        id="showAddress"
-                        type="checkbox"
-                        onChange={(e) => handleInputChange('showAddress', e.target.checked)}
-                      />
-                      <label className="text-sm font-medium text-[#272727] leading-[18px] cursor-pointer" htmlFor="showAddress">
-                        Adresse anzeigen
-                      </label>
+                      <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                        <div className="flex flex-1 flex-col gap-1">
+                          <span className="text-xs font-normal text-[#999999] leading-[15px]">PLZ</span>
+                          <input
+                            className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                  placeholder="PLZ eingeben"
+                            type="text"
+                  value={formData.zip}
+                  onChange={(e) => handleInputChange('zip', e.target.value)}
+                />
+                        </div>
+                      </div>
+
+                      <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                        <div className="flex flex-1 flex-col gap-1">
+                          <span className="text-xs font-normal text-[#999999] leading-[15px]">Stadt *</span>
+                          <input
+                            className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                            placeholder="Stadt eingeben"
+                            type="text"
+                            value={formData.city}
+                            onChange={(e) => handleInputChange('city', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                        <div className="flex flex-1 flex-col gap-1">
+                          <span className="text-xs font-normal text-[#999999] leading-[15px]">Land *</span>
+                          <input
+                            className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
+                            placeholder="Land eingeben"
+                            type="text"
+                            value={formData.country}
+                            onChange={(e) => handleInputChange('country', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Address Visibility Checkbox - Feature Flagged */}
+                      {getFeatureFlag('enableAddressVisibilityToggle') && (
+                        <div className="flex w-full items-center gap-3 px-3 py-3">
+                          <input
+                            checked={formData.showAddress}
+                            className="h-5 w-5 rounded border-2 border-[#E5E5E5] bg-white text-[#589D96] focus:ring-2 focus:ring-[#589D96] focus:ring-offset-0"
+                            id="showAddress"
+                            type="checkbox"
+                            onChange={(e) => handleInputChange('showAddress', e.target.checked)}
+                          />
+                          <label className="text-sm font-medium text-[#272727] leading-[18px] cursor-pointer" htmlFor="showAddress">
+                            Adresse anzeigen
+                          </label>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#E5E5E5] bg-white">
+                      <Icon className="h-12 w-12 text-[#589D96] mb-3" icon="mdi:web" />
+                      <p className="text-sm font-medium text-[#272727] text-center mb-1">
+                        Online-Geschäft
+                      </p>
+                      <p className="text-xs text-[#7A7A7A] text-center">
+                        Dein Geschäft wird als &ldquo;Online&rdquo; angezeigt
+                      </p>
                     </div>
                   )}
                 </div>

@@ -559,23 +559,29 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               <div className="w-full truncate font-inter-tight text-2xl font-semibold text-[#232323]" title={provider.provider_name}>
                 {provider.provider_name}
               </div>
-              <button
-                className="w-full truncate font-inter text-base text-[#7A7A7A] hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-[#7A7A7A] disabled:hover:no-underline text-left"
-                disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
-                title={provider.address_street && provider.address_zip && provider.address_city
-                  ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city} - Adresse antippen zum Navigieren`
-                  : ''}
-                onClick={() => {
-                  const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
-                  if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
-                    openNavigation(address);
-                  }
-                }}
-              >
-                {provider.address_street && provider.address_zip && provider.address_city
-                  ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
-                  : ''}
-              </button>
+              {provider.address_city ? (
+                <button
+                  className="w-full truncate font-inter text-base text-[#7A7A7A] hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-[#7A7A7A] disabled:hover:no-underline text-left"
+                  disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                  title={provider.address_street && provider.address_zip && provider.address_city
+                    ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city} - Adresse antippen zum Navigieren`
+                    : ''}
+                  onClick={() => {
+                    const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
+                    if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                      openNavigation(address);
+                    }
+                  }}
+                >
+                  {provider.address_street && provider.address_zip && provider.address_city
+                    ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
+                    : provider.address_city}
+                </button>
+              ) : (
+                <div className="w-full truncate font-inter text-base text-[#7A7A7A]">
+                  Online
+                </div>
+              )}
             </div>
             {/* Barakah Section (only if zakat project exists) */}
             {communityServices.length > 0 && (

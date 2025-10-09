@@ -153,10 +153,12 @@ export default function MediaUploadPage() {
       const isOwner = formData.creationMode === 'owner';
       const insertData = {
         provider_name: formData.title,
-        address_street: formData.street || null,
-        address_zip: formData.zip || null,
-        address_city: formData.city || null,
-        address_country: formData.country || null,
+        // If online business, all address fields are null
+        address_street: formData.isOnlineBusiness ? null : (formData.street || null),
+        address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
+        address_city: formData.isOnlineBusiness ? null : (formData.city || null),
+        address_country: formData.isOnlineBusiness ? null : (formData.country || null),
+        show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
         category_id: formData.category || null,
         contact_email: formData.email || null,
         contact_phone: formData.phone || null,
@@ -229,7 +231,7 @@ export default function MediaUploadPage() {
       }`} />
 
       {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 overflow-y-auto">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
           {/* Step Indicator */}
           <div className="mb-6">

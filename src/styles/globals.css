@@ -19,9 +19,9 @@
     --border: 0 0% 83%; /* border */
     
     /* Mobile navigation spacing */
-    --mobile-nav-height: 64px; /* MobileFooterBar height */
+    --mobile-nav-height: 96px; /* Actual navbar: 80px container + 16px (pb-4) */
     --mobile-nav-spacing: 32px; /* Desired gap between content and nav */
-    --mobile-nav-total: calc(var(--mobile-nav-height) + var(--mobile-nav-spacing)); /* 96px */
+    --mobile-nav-total: calc(var(--mobile-nav-height) + var(--mobile-nav-spacing)); /* 128px */
   }
 
   html {
@@ -438,12 +438,13 @@
   /* Mobile navigation with safe area support */
   .mobile-nav-height {
     /* Ensures minimum 12px padding on all devices */
-    height: calc(64px + max(12px, env(safe-area-inset-bottom)));
+    height: calc(var(--mobile-nav-height) + max(12px, env(safe-area-inset-bottom)));
   }
   
   .mobile-nav-spacing {
     /* Ensures minimum 12px padding on all devices */
-    padding-bottom: calc(64px + max(12px, env(safe-area-inset-bottom)));
+    /* 96px navbar (80px + 16px pb-4) + 32px gap + safe area */
+    padding-bottom: calc(var(--mobile-nav-total) + max(12px, env(safe-area-inset-bottom)));
   }
 
   /* Navigation bar content positioning */

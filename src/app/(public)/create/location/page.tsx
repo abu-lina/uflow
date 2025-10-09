@@ -152,7 +152,7 @@ export default function LocationPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 pb-[180px]">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 mobile-nav-spacing">
           <span className="text-center text-lg text-content-title mb-6">
             Du musst angemeldet sein, um einen Standort anzugeben.
           </span>
@@ -172,6 +172,11 @@ export default function LocationPage() {
   };
 
   const isFormValid = () => {
+    // If it's an online business, no location is required
+    if (formData.isOnlineBusiness) {
+      return true;
+    }
+    // Otherwise, city and country are required
     return formData.city && formData.country;
   };
 
@@ -205,7 +210,7 @@ export default function LocationPage() {
       }`} />
 
       {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 overflow-y-auto">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-6">
           {/* Step Indicator */}
           <div className="mb-6">
@@ -219,98 +224,147 @@ export default function LocationPage() {
             </p>
           </div>
 
-          {/* Form Fields */}
-          <div className="flex flex-col gap-4 w-full">
-            {/* Street */}
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-[#999999]">
-                  Straße
-                </label>
-                <input
-                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder="Straße eingeben"
-                  type="text"
-                  value={formData.street}
-                  onChange={(e) => updateFormData({ street: e.target.value })}
-                />
-              </div>
+          {/* Online Business Toggle */}
+          <div className="flex items-center justify-between w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-[#272727]">
+                Online-Geschäft
+              </span>
+              <span className="text-xs text-[#7A7A7A]">
+                Kein physischer Standort
+              </span>
             </div>
-
-            {/* ZIP */}
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-[#999999]">
-                  PLZ
-                </label>
-                <input
-                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder="PLZ eingeben"
-                  type="text"
-                  value={formData.zip}
-                  onChange={(e) => updateFormData({ zip: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* City */}
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-[#999999]">
-                  Stadt *
-                </label>
-                <input
-                  required
-                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder="Stadt eingeben"
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => updateFormData({ city: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* Country */}
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-[#999999]">
-                  Land *
-                </label>
-                <input
-                  required
-                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder="Land eingeben"
-                  type="text"
-                  value={formData.country}
-                  onChange={(e) => updateFormData({ country: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* Show Address Toggle */}
-            <div className="flex items-center justify-between w-full py-2">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-[#272727]">
-                  Adresse anzeigen
-                </span>
-                <span className="text-xs text-[#7A7A7A]">
-                  Andere können deine Adresse sehen
-                </span>
-              </div>
-              <button
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
-                  formData.showAddress ? 'bg-[#589D96]' : 'bg-gray-200'
+            <button
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
+                formData.isOnlineBusiness ? 'bg-[#589D96]' : 'bg-gray-200'
+              }`}
+              onClick={() => {
+                const newIsOnline = !formData.isOnlineBusiness;
+                updateFormData({ 
+                  isOnlineBusiness: newIsOnline,
+                  // If switching to online, clear address fields and set showAddress to false
+                  ...(newIsOnline && {
+                    street: '',
+                    zip: '',
+                    city: '',
+                    country: '',
+                    showAddress: false
+                  })
+                });
+              }}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  formData.isOnlineBusiness ? 'translate-x-6' : 'translate-x-1'
                 }`}
-                onClick={() => updateFormData({ showAddress: !formData.showAddress })}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    formData.showAddress ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
+              />
+            </button>
           </div>
+
+          {/* Form Fields */}
+          {!formData.isOnlineBusiness ? (
+            <div className="flex flex-col gap-4 w-full">
+              {/* Street */}
+              <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                <div className="flex w-full flex-col gap-1">
+                  <label className="text-xs leading-[15px] text-[#999999]">
+                    Straße
+                  </label>
+                  <input
+                    className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                    placeholder="Straße eingeben"
+                    type="text"
+                    value={formData.street}
+                    onChange={(e) => updateFormData({ street: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* ZIP */}
+              <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                <div className="flex w-full flex-col gap-1">
+                  <label className="text-xs leading-[15px] text-[#999999]">
+                    PLZ
+                  </label>
+                  <input
+                    className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                    placeholder="PLZ eingeben"
+                    type="text"
+                    value={formData.zip}
+                    onChange={(e) => updateFormData({ zip: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* City */}
+              <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                <div className="flex w-full flex-col gap-1">
+                  <label className="text-xs leading-[15px] text-[#999999]">
+                    Stadt *
+                  </label>
+                  <input
+                    required
+                    className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                    placeholder="Stadt eingeben"
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => updateFormData({ city: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Country */}
+              <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                <div className="flex w-full flex-col gap-1">
+                  <label className="text-xs leading-[15px] text-[#999999]">
+                    Land *
+                  </label>
+                  <input
+                    required
+                    className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                    placeholder="Land eingeben"
+                    type="text"
+                    value={formData.country}
+                    onChange={(e) => updateFormData({ country: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Show Address Toggle */}
+              <div className="flex items-center justify-between w-full py-2">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-[#272727]">
+                    Adresse anzeigen
+                  </span>
+                  <span className="text-xs text-[#7A7A7A]">
+                    Andere können deine Adresse sehen
+                  </span>
+                </div>
+                <button
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
+                    formData.showAddress ? 'bg-[#589D96]' : 'bg-gray-200'
+                  }`}
+                  onClick={() => updateFormData({ showAddress: !formData.showAddress })}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      formData.showAddress ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#D4D4D4] bg-white">
+              <Icon className="h-12 w-12 text-[#589D96] mb-3" icon="mdi:web" />
+              <p className="text-sm font-medium text-[#272727] text-center mb-1">
+                Online-Geschäft
+              </p>
+              <p className="text-xs text-[#7A7A7A] text-center">
+                Dein Geschäft wird als &ldquo;Online&rdquo; angezeigt
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

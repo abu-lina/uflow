@@ -152,7 +152,7 @@ export default function ContactPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 pb-[180px]">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 mobile-nav-spacing">
           <span className="text-center text-lg text-content-title mb-6">
             Du musst angemeldet sein, um Kontaktinformationen anzugeben.
           </span>
@@ -201,7 +201,7 @@ export default function ContactPage() {
       }`} />
 
       {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 overflow-y-auto">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-6">
           {/* Step Indicator */}
           <div className="mb-6">

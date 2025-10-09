@@ -199,7 +199,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
       }`} />
 
       {/* Main Content */}
-      <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 pb-20 overflow-y-auto">
+      <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
         <div className="flex w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl flex-1 flex-col">
           {/* Error Message */}
           {error && (
