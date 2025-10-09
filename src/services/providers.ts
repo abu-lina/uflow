@@ -85,7 +85,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
     console.log('Fetching provider with ID:', id);
     
     // First, try to fetch as a provider
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('providers')
       .select(`
         *,
