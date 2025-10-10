@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
-import { CommunityServiceCard } from '@/components/shared/CommunityServiceCard';
+import { SelectableCard } from '@/components/shared/SelectableCard';
 import { useFormData } from '@/providers/form-provider';
 import { getCommunityServices, type CommunityService } from '@/services/community_services';
 
@@ -257,15 +257,21 @@ export default function SocialProjectPage() {
                     return '/images/placeholder.jpg';
                   };
 
+                  const isSelected = formData.selectedCommunityServiceId === service.community_service_id;
+                  const donationText = service.donation_count && service.donation_count > 0 
+                    ? `${service.donation_count}x Gesponsort` 
+                    : undefined;
+
                   return (
-                    <CommunityServiceCard
+                    <SelectableCard
                       key={service.community_service_id}
+                      actionType="select"
+                      bottomText={donationText}
                       category={service.category?.name_de || service.category?.name_en}
-                      description={service.community_service_description}
-                      donationCount={service.donation_count}
                       imageUrl={getImageUrl()}
-                      isSelected={formData.selectedCommunityServiceId === service.community_service_id}
+                      isSelected={isSelected}
                       title={service.community_service_name}
+                      onAction={() => selectProject(service.community_service_id)}
                       onClick={() => selectProject(service.community_service_id)}
                     />
                   );

@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 // import clsx from 'clsx'; // Not used in mobile version
 
 import { ScrollablePageHeader } from '@/components/layout/ScrollablePageHeader';
-import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
+import { SelectableCard } from '@/components/shared/SelectableCard';
 import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
 import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProviderCard';
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
@@ -323,41 +323,45 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 </div>
               </div>
             ) : createdProviders.length > 0 ? (
-              createdProviders.map((provider) => (
-                <CreatedProviderCard
-                  key={provider.provider_id}
-                  address={
-                    provider.address_street && provider.address_city
-                      ? `${provider.address_street}, ${provider.address_city}`
-                      : provider.address_street || provider.address_city || undefined
-                  }
-                  category={provider.category?.name_de || ''}
-                  imageUrl={(() => {
-                    if (!provider.provider_images) return '/images/placeholder.jpg';
-                    try {
-                      let imagesData: { urls?: string[] } = {};
-                      if (typeof provider.provider_images === 'string') {
-                        imagesData = JSON.parse(provider.provider_images);
-                      } else if (Array.isArray(provider.provider_images)) {
-                        imagesData.urls = provider.provider_images;
-                      } else if (
-                        typeof provider.provider_images === 'object' &&
-                        provider.provider_images !== null &&
-                        'urls' in provider.provider_images
-                      ) {
-                        imagesData = provider.provider_images;
-                      }
-                      if (imagesData.urls && imagesData.urls.length > 0) {
-                        return imagesData.urls[0];
-                      }
-                    } catch {
-                      return '/images/placeholder.jpg';
+              createdProviders.map((provider) => {
+                const address = provider.address_street && provider.address_city
+                  ? `${provider.address_street}, ${provider.address_city}`
+                  : provider.address_street || provider.address_city || undefined;
+                
+                const getImageUrl = () => {
+                  if (!provider.provider_images) return '/images/placeholder.jpg';
+                  try {
+                    let imagesData: { urls?: string[] } = {};
+                    if (typeof provider.provider_images === 'string') {
+                      imagesData = JSON.parse(provider.provider_images);
+                    } else if (Array.isArray(provider.provider_images)) {
+                      imagesData.urls = provider.provider_images;
+                    } else if (
+                      typeof provider.provider_images === 'object' &&
+                      provider.provider_images !== null &&
+                      'urls' in provider.provider_images
+                    ) {
+                      imagesData = provider.provider_images;
                     }
+                    if (imagesData.urls && imagesData.urls.length > 0) {
+                      return imagesData.urls[0];
+                    }
+                  } catch {
                     return '/images/placeholder.jpg';
-                  })()}
-                  title={provider.provider_name}
-                />
-              ))
+                  }
+                  return '/images/placeholder.jpg';
+                };
+                
+                return (
+                  <SelectableCard
+                    key={provider.provider_id}
+                    bottomText={address}
+                    category={provider.category?.name_de || ''}
+                    imageUrl={getImageUrl()}
+                    title={provider.provider_name}
+                  />
+                );
+              })
             ) : (
               <div className="text-gray-400">Keine Providers erstellt.</div>
             )}
@@ -373,41 +377,45 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 </div>
               </div>
             ) : savedProviders.length > 0 ? (
-              savedProviders.map((provider) => (
-                <CreatedProviderCard
-                  key={provider.provider_id}
-                  address={
-                    provider.address_street && provider.address_city
-                      ? `${provider.address_street}, ${provider.address_city}`
-                      : provider.address_street || provider.address_city || undefined
-                  }
-                  category={provider.category?.name_de || ''}
-                  imageUrl={(() => {
-                    if (!provider.provider_images) return '/images/placeholder.jpg';
-                    try {
-                      let imagesData: { urls?: string[] } = {};
-                      if (typeof provider.provider_images === 'string') {
-                        imagesData = JSON.parse(provider.provider_images);
-                      } else if (Array.isArray(provider.provider_images)) {
-                        imagesData.urls = provider.provider_images;
-                      } else if (
-                        typeof provider.provider_images === 'object' &&
-                        provider.provider_images !== null &&
-                        'urls' in provider.provider_images
-                      ) {
-                        imagesData = provider.provider_images;
-                      }
-                      if (imagesData.urls && imagesData.urls.length > 0) {
-                        return imagesData.urls[0];
-                      }
-                    } catch {
-                      return '/images/placeholder.jpg';
+              savedProviders.map((provider) => {
+                const address = provider.address_street && provider.address_city
+                  ? `${provider.address_street}, ${provider.address_city}`
+                  : provider.address_street || provider.address_city || undefined;
+                
+                const getImageUrl = () => {
+                  if (!provider.provider_images) return '/images/placeholder.jpg';
+                  try {
+                    let imagesData: { urls?: string[] } = {};
+                    if (typeof provider.provider_images === 'string') {
+                      imagesData = JSON.parse(provider.provider_images);
+                    } else if (Array.isArray(provider.provider_images)) {
+                      imagesData.urls = provider.provider_images;
+                    } else if (
+                      typeof provider.provider_images === 'object' &&
+                      provider.provider_images !== null &&
+                      'urls' in provider.provider_images
+                    ) {
+                      imagesData = provider.provider_images;
                     }
+                    if (imagesData.urls && imagesData.urls.length > 0) {
+                      return imagesData.urls[0];
+                    }
+                  } catch {
                     return '/images/placeholder.jpg';
-                  })()}
-                  title={provider.provider_name}
-                />
-              ))
+                  }
+                  return '/images/placeholder.jpg';
+                };
+                
+                return (
+                  <SelectableCard
+                    key={provider.provider_id}
+                    bottomText={address}
+                    category={provider.category?.name_de || ''}
+                    imageUrl={getImageUrl()}
+                    title={provider.provider_name}
+                  />
+                );
+              })
             ) : (
               <div className="text-gray-400">Keine Providers gespeichert.</div>
             )}

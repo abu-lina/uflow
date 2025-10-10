@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ScrollablePageHeader } from '@/components/layout/ScrollablePageHeader';
-import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
+import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { supabase } from '@/lib/supabase/client';
@@ -184,41 +184,46 @@ export default function SavedProvidersPage() {
               ? `/community-services/${provider.community_service_id}`
               : `/providers/${provider.provider_id}`;
             
-            return (
-              <CreatedProviderCard
-                key={provider.provider_id}
-                address={
-                  provider.address_street && provider.address_city
-                    ? `${provider.address_street}, ${provider.address_city}`
-                    : provider.address_street || provider.address_city || undefined
+            // Get address for bottom text
+            const address = provider.address_street && provider.address_city
+              ? `${provider.address_street}, ${provider.address_city}`
+              : provider.address_street || provider.address_city || undefined;
+            
+            // Get image URL
+            const getImageUrl = () => {
+              if (!provider.provider_images) return '/images/placeholder.jpg';
+              try {
+                let imagesData: { urls?: string[] } = {};
+                if (typeof provider.provider_images === 'string') {
+                  imagesData = JSON.parse(provider.provider_images);
+                } else if (Array.isArray(provider.provider_images)) {
+                  imagesData.urls = provider.provider_images;
+                } else if (
+                  typeof provider.provider_images === 'object' &&
+                  provider.provider_images !== null &&
+                  'urls' in provider.provider_images
+                ) {
+                  imagesData = provider.provider_images;
                 }
+                if (imagesData.urls && imagesData.urls.length > 0) {
+                  return imagesData.urls[0];
+                }
+              } catch {
+                return '/images/placeholder.jpg';
+              }
+              return '/images/placeholder.jpg';
+            };
+            
+            return (
+              <SelectableCard
+                key={provider.provider_id}
+                actionType="unsave"
+                bottomText={address}
                 category={provider.category?.name_de || ''}
-                imageUrl={(() => {
-                  if (!provider.provider_images) return '/images/placeholder.jpg';
-                  try {
-                    let imagesData: { urls?: string[] } = {};
-                    if (typeof provider.provider_images === 'string') {
-                      imagesData = JSON.parse(provider.provider_images);
-                    } else if (Array.isArray(provider.provider_images)) {
-                      imagesData.urls = provider.provider_images;
-                    } else if (
-                      typeof provider.provider_images === 'object' &&
-                      provider.provider_images !== null &&
-                      'urls' in provider.provider_images
-                    ) {
-                      imagesData = provider.provider_images;
-                    }
-                    if (imagesData.urls && imagesData.urls.length > 0) {
-                      return imagesData.urls[0];
-                    }
-                  } catch {
-                    return '/images/placeholder.jpg';
-                  }
-                  return '/images/placeholder.jpg';
-                })()}
+                imageUrl={getImageUrl()}
                 title={provider.provider_name}
+                onAction={() => handleUnsave(provider.provider_id, isCommunityService)}
                 onClick={() => router.push(detailPath)}
-                onUnsave={() => handleUnsave(provider.provider_id, isCommunityService)}
               />
             );
           })
