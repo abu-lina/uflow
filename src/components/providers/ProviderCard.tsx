@@ -18,6 +18,7 @@ interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   hideWebsiteButton?: boolean;
   isBookmarked?: boolean;
   onBookmarkChange?: (isBookmarked: boolean) => void;
+  bookmarkableType?: 'provider' | 'community_service';
 }
 
 export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
@@ -37,6 +38,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       hideWebsiteButton = false,
       isBookmarked = false,
       onBookmarkChange,
+      bookmarkableType = 'provider',
     },
     ref,
   ) => {
@@ -79,7 +81,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
           .from('bookmarks')
           .select('id')
           .eq('bookmarkable_id', provider_id)
-          .eq('bookmarkable_type', 'provider')
+          .eq('bookmarkable_type', bookmarkableType)
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -96,7 +98,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
         } else {
           const { error: insertError } = await supabase.from('bookmarks').insert({
             bookmarkable_id: provider_id,
-            bookmarkable_type: 'provider',
+            bookmarkable_type: bookmarkableType,
             user_id: user.id,
           });
           if (insertError) throw insertError;

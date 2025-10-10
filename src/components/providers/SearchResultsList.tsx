@@ -60,6 +60,7 @@ export function SearchResultsList({
           >
             <ProviderCard
               {...provider}
+              bookmarkableType={result.type}
               hideWebsiteButton={true}
               isBookmarked={bookmarkedProviderIds.includes(result.id)}
               onBookmarkChange={(isBookmarked: boolean) =>

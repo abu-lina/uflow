@@ -58,6 +58,11 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
 
+  // Determine if this is a community service or provider
+  const isCommunityService = !!provider.community_service_id;
+  const bookmarkableType = isCommunityService ? 'community_service' : 'provider';
+  const bookmarkableId = isCommunityService ? provider.community_service_id : provider.provider_id;
+
   // Use React Query for caching community services
   const { 
     data: communityServices = [], 
@@ -73,8 +78,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           .from('bookmarks')
           .select('id')
           .match({
-            bookmarkable_id: provider.provider_id,
-            bookmarkable_type: 'provider',
+            bookmarkable_id: bookmarkableId,
+            bookmarkable_type: bookmarkableType,
             user_id: user.id,
           })
           .maybeSingle();
@@ -89,7 +94,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
       }
     };
     void fetchBookmark();
-  }, [user, provider.provider_id]);
+  }, [user, bookmarkableId, bookmarkableType]);
 
   // Community services are now fetched via React Query hook above
 
@@ -111,8 +116,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
         .from('bookmarks')
         .select('id')
         .match({
-          bookmarkable_id: provider.provider_id,
-          bookmarkable_type: 'provider',
+          bookmarkable_id: bookmarkableId,
+          bookmarkable_type: bookmarkableType,
           user_id: user.id,
         })
         .maybeSingle();
@@ -128,8 +133,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
         setIsSaved(false);
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
-          bookmarkable_id: provider.provider_id,
-          bookmarkable_type: 'provider',
+          bookmarkable_id: bookmarkableId,
+          bookmarkable_type: bookmarkableType,
           user_id: user.id,
         });
         if (insertError) throw insertError;
@@ -146,7 +151,12 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   };
 
   const handleShareAction = () => {
-    const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
+    // Generate the correct URL based on type
+    const path = isCommunityService 
+      ? `/community-services/${provider.community_service_id}`
+      : `/providers/${provider.provider_id}`;
+    const shareUrl = `${window.location.origin}${path}`;
+    
     if (navigator.share) {
       void navigator.share({
         title: provider.provider_name,

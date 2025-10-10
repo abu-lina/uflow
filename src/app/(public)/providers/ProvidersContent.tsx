@@ -11,11 +11,11 @@ import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState, SkeletonGrid } from '@/components/ui';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase/client';
 import { useLoading } from '@/providers/LoadingProvider';
 import { useSearch } from '@/providers/search-provider';
 import {
   searchProvidersAndCommunityServices,
-  getBookmarkedProviders,
   type Provider,
 } from '@/services/providers';
 
@@ -49,13 +49,25 @@ export function ProvidersContent() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Use React Query for bookmarks
+  // Use React Query for bookmarks - includes both providers and community services
   const { data: bookmarkedProviderIds = [] } = useQuery({
     queryKey: ['bookmarks', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const bookmarks = await getBookmarkedProviders(user.id);
-      return bookmarks.map((s) => s.provider_id);
+      
+      // Fetch all bookmarks (providers and community services)
+      const { data: bookmarks, error } = await supabase
+        .from('bookmarks')
+        .select('bookmarkable_id, bookmarkable_type')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching bookmarks:', error);
+        return [];
+      }
+      
+      // Return all bookmarkable IDs (both providers and community services)
+      return bookmarks?.map((b) => b.bookmarkable_id) || [];
     },
     enabled: !!user && !userLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -74,8 +86,14 @@ export function ProvidersContent() {
   }, [queryClient, user?.id]);
 
   const handleProviderClick = useCallback((provider: Provider) => {
-    // Navigate to provider detail page instead of opening modal
-    router.push(`/providers/${provider.provider_id}`);
+    // Navigate to appropriate detail page based on type
+    if (provider.community_service_id) {
+      // This is a community service
+      router.push(`/community-services/${provider.community_service_id}`);
+    } else {
+      // This is a provider
+      router.push(`/providers/${provider.provider_id}`);
+    }
   }, [router]);
 
   // Handle search submission - update URL with new parameters
