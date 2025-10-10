@@ -48,7 +48,7 @@ export function CreatedProviderCard({
       {/* Category Badge */}
       <div className="absolute left-0 top-[120px] z-20 flex w-[160px] flex-col items-start px-[6.5px] md:top-[180px] md:w-[240px] md:px-3">
         <div className="flex h-5 flex-row items-center rounded-[6px] border border-[#CDCDCD] bg-white/70 px-[6.7px] md:h-7 md:rounded-[9px] md:px-4">
-          <span className="font-inter-tight text-[10px] font-medium text-[#232323] md:text-[14px]">
+          <span className="font-inter-tight text-xs font-medium text-[#232323]">
             {category}
           </span>
         </div>
@@ -57,7 +57,7 @@ export function CreatedProviderCard({
       <div className="flex h-[65.31px] w-[160px] flex-col items-center rounded-b-[12.075px] border border-[#D4D4D4] bg-white px-0 pb-0 pt-2 md:h-[100px] md:w-[240px] md:rounded-b-[18px] md:pt-4">
         <div className="flex w-[144.9px] flex-col items-start gap-[8.05px] md:w-[210px] md:gap-3">
           {/* Title */}
-          <div className="w-full truncate font-inter-tight text-[14px] font-semibold leading-[17px] text-[#232323] md:text-[20px] md:leading-[24px]" title={title}>
+          <div className="w-full truncate font-inter-tight text-base font-semibold text-[#232323]" title={title}>
             {title}
           </div>
           {/* Address */}

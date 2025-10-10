@@ -452,7 +452,7 @@ export async function fetchFilteredCities(
 }
 
 /**
- * Fetch all providers bookmarked by a user
+ * Fetch all providers bookmarked by a user (only providers, not community services)
  */
 export async function getBookmarkedProviders(userId: string): Promise<Provider[]> {
   const { data: bookmarks, error: bookmarksError } = await supabase
@@ -481,6 +481,92 @@ export async function getBookmarkedProviders(userId: string): Promise<Provider[]
     throw providersError;
   }
   return Array.isArray(providers) ? providers : [];
+}
+
+/**
+ * Fetch all bookmarked items (both providers and community services)
+ */
+export async function getAllBookmarkedItems(userId: string): Promise<Provider[]> {
+  // Fetch all bookmarks for this user
+  const { data: bookmarks, error: bookmarksError } = await supabase
+    .from('bookmarks')
+    .select('bookmarkable_id, bookmarkable_type')
+    .eq('user_id', userId)
+    .returns<{ bookmarkable_id: string; bookmarkable_type: string }[]>();
+
+  if (bookmarksError) {
+    throw bookmarksError;
+  }
+  if (!bookmarks || bookmarks.length === 0) {
+    return [];
+  }
+
+  // Separate provider and community service IDs
+  const providerIds = bookmarks
+    .filter((b) => b.bookmarkable_type === 'provider')
+    .map((b) => b.bookmarkable_id);
+  const communityServiceIds = bookmarks
+    .filter((b) => b.bookmarkable_type === 'community_service')
+    .map((b) => b.bookmarkable_id);
+
+  const results: Provider[] = [];
+
+  // Fetch providers if any
+  if (providerIds.length > 0) {
+    const { data: providers, error: providersError } = await supabase
+      .from('providers')
+      .select('*, category:categories(name_de)')
+      .in('provider_id', providerIds)
+      .returns<Provider[]>();
+
+    if (providersError) {
+      console.error('Error fetching bookmarked providers:', providersError);
+    } else if (providers) {
+      results.push(...providers);
+    }
+  }
+
+  // Fetch community services if any
+  if (communityServiceIds.length > 0) {
+    const { data: communityServices, error: csError } = await supabase
+      .from('community_services')
+      .select('*, category:categories(name_de)')
+      .in('community_service_id', communityServiceIds);
+
+    if (csError) {
+      console.error('Error fetching bookmarked community services:', csError);
+    } else if (communityServices) {
+      // Transform community services to Provider format
+      const transformedServices = communityServices.map((cs) => ({
+        provider_id: cs.community_service_id,
+        provider_name: cs.community_service_name,
+        provider_images: cs.community_service_images ? JSON.stringify(cs.community_service_images) : null,
+        category_id: cs.category_id || null,
+        address_city: cs.address_city || null,
+        social_website: cs.social_website || null,
+        social_instagram: cs.social_instagram || null,
+        contact_email: cs.contact_email || null,
+        contact_phone: cs.contact_phone || null,
+        address_street: cs.address_street || null,
+        address_country: cs.address_country || null,
+        address_zip: cs.address_zip || null,
+        location_latitude: cs.location_latitude || null,
+        location_longitude: cs.location_longitude || null,
+        created_at: cs.created_at,
+        updated_at: cs.updated_at,
+        barakah_effects: cs.barakah_effects || [],
+        offers_ids: [],
+        needs_ids: [],
+        offers: [],
+        needs: [],
+        category: cs.category ? { name_de: cs.category.name_de || '' } : undefined,
+        community_service_id: cs.community_service_id,
+      }));
+      results.push(...transformedServices);
+    }
+  }
+
+  return results;
 }
 
 /**

@@ -8,10 +8,11 @@ import { ScrollablePageHeader } from '@/components/layout/ScrollablePageHeader';
 import { CreatedProviderCard } from '@/components/shared/CreatedProviderCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useContainerScroll } from '@/hooks/useContainerScroll';
+import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
-import { getBookmarkForProvider, deleteBookmark } from '@/services/bookmarks';
-import { getBookmarkedProviders, type Provider } from '@/services/providers';
+import { deleteBookmark } from '@/services/bookmarks';
+import { getAllBookmarkedItems, type Provider } from '@/services/providers';
 
 export default function SavedProvidersPage() {
   const { user } = useAuth();
@@ -20,12 +21,12 @@ export default function SavedProvidersPage() {
   const { searchQuery, selectedLocation } = useSearch();
   const { isHeaderVisible } = useContainerScroll();
 
-  // Use React Query for bookmarked providers with caching
+  // Use React Query for all bookmarked items (providers + community services)
   const { data: providers = [], isLoading: loading } = useQuery({
     queryKey: ['saved-providers', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      return await getBookmarkedProviders(user.id);
+      return await getAllBookmarkedItems(user.id);
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -58,10 +59,26 @@ export default function SavedProvidersPage() {
     return filtered;
   }, [providers, searchQuery, selectedLocation]);
 
-  const handleUnsave = async (providerId: string) => {
+  const handleUnsave = async (providerId: string, isCommunityService: boolean) => {
     if (!user) return;
     try {
-      const bookmark = await getBookmarkForProvider(providerId, user.id);
+      // Determine the correct bookmarkable_type
+      const bookmarkableType = isCommunityService ? 'community_service' : 'provider';
+      
+      // Find the bookmark
+      const { data: bookmark, error: fetchError } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('bookmarkable_id', providerId)
+        .eq('bookmarkable_type', bookmarkableType)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.error('Error fetching bookmark:', fetchError);
+        return;
+      }
+      
       if (bookmark) {
         await deleteBookmark(bookmark.id);
         
@@ -77,7 +94,7 @@ export default function SavedProvidersPage() {
       }
     } catch (err) {
       // Optionally show a toast or error
-      console.error('Fehler beim Entfernen des Providers:', err);
+      console.error('Fehler beim Entfernen des Items:', err);
     }
   };
 
@@ -161,43 +178,50 @@ export default function SavedProvidersPage() {
         ) : filteredProviders.length === 0 ? (
           <span className="col-span-2 text-center text-gray-400">Keine Providers gefunden.</span>
         ) : (
-          filteredProviders.map((provider) => (
-            <CreatedProviderCard
-              key={provider.provider_id}
-              address={
-                provider.address_street && provider.address_city
-                  ? `${provider.address_street}, ${provider.address_city}`
-                  : provider.address_street || provider.address_city || undefined
-              }
-              category={provider.category?.name_de || ''}
-              imageUrl={(() => {
-                if (!provider.provider_images) return '/images/placeholder.jpg';
-                try {
-                  let imagesData: { urls?: string[] } = {};
-                  if (typeof provider.provider_images === 'string') {
-                    imagesData = JSON.parse(provider.provider_images);
-                  } else if (Array.isArray(provider.provider_images)) {
-                    imagesData.urls = provider.provider_images;
-                  } else if (
-                    typeof provider.provider_images === 'object' &&
-                    provider.provider_images !== null &&
-                    'urls' in provider.provider_images
-                  ) {
-                    imagesData = provider.provider_images;
-                  }
-                  if (imagesData.urls && imagesData.urls.length > 0) {
-                    return imagesData.urls[0];
-                  }
-                } catch {
-                  return '/images/placeholder.jpg';
+          filteredProviders.map((provider) => {
+            const isCommunityService = !!provider.community_service_id;
+            const detailPath = isCommunityService 
+              ? `/community-services/${provider.community_service_id}`
+              : `/providers/${provider.provider_id}`;
+            
+            return (
+              <CreatedProviderCard
+                key={provider.provider_id}
+                address={
+                  provider.address_street && provider.address_city
+                    ? `${provider.address_street}, ${provider.address_city}`
+                    : provider.address_street || provider.address_city || undefined
                 }
-                return '/images/placeholder.jpg';
-              })()}
-              title={provider.provider_name}
-              onClick={() => router.push(`/providers/${provider.provider_id}`)}
-              onUnsave={() => handleUnsave(provider.provider_id)}
-            />
-          ))
+                category={provider.category?.name_de || ''}
+                imageUrl={(() => {
+                  if (!provider.provider_images) return '/images/placeholder.jpg';
+                  try {
+                    let imagesData: { urls?: string[] } = {};
+                    if (typeof provider.provider_images === 'string') {
+                      imagesData = JSON.parse(provider.provider_images);
+                    } else if (Array.isArray(provider.provider_images)) {
+                      imagesData.urls = provider.provider_images;
+                    } else if (
+                      typeof provider.provider_images === 'object' &&
+                      provider.provider_images !== null &&
+                      'urls' in provider.provider_images
+                    ) {
+                      imagesData = provider.provider_images;
+                    }
+                    if (imagesData.urls && imagesData.urls.length > 0) {
+                      return imagesData.urls[0];
+                    }
+                  } catch {
+                    return '/images/placeholder.jpg';
+                  }
+                  return '/images/placeholder.jpg';
+                })()}
+                title={provider.provider_name}
+                onClick={() => router.push(detailPath)}
+                onUnsave={() => handleUnsave(provider.provider_id, isCommunityService)}
+              />
+            );
+          })
         )}
         </div>
       </div>
