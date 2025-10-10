@@ -72,9 +72,9 @@ export function SelectableCard({
         
         {/* Category Badge - Bottom Left */}
         {category && (
-          <div className="absolute left-0 bottom-0 flex flex-col justify-end items-start p-[6.49px] w-[160px] h-[32.85px]">
-            <div className="flex items-center justify-center px-2 py-1 w-[113px] h-[22px] bg-white/70 border border-[#CDCDCD] backdrop-blur-[1.24px] rounded-[5.96px]">
-              <span className="font-inter-tight text-xs font-medium text-[#232323] leading-[13px] h-[14px] flex items-center text-center whitespace-nowrap">
+          <div className="absolute left-0 bottom-0 flex flex-col justify-end items-start p-[6.49px]">
+            <div className="flex items-center justify-center px-2 py-1 h-[22px] bg-white/70 border border-[#CDCDCD] backdrop-blur-[1.24px] rounded-[5.96px]">
+              <span className="font-inter-tight text-xs font-medium text-[#232323] whitespace-nowrap">
                 {category}
               </span>
             </div>
