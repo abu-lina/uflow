@@ -53,6 +53,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
 
   const [isSaved, setIsSaved] = useState(false);
+  const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
@@ -96,6 +97,15 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     if (!user) {
       return;
     }
+    
+    // Show animation if bookmarking (not unbookmarking)
+    if (!isSaved) {
+      setShowAllahumaBarik(true);
+      setTimeout(() => {
+        setShowAllahumaBarik(false);
+      }, 900);
+    }
+    
     try {
       const { data: existingBookmark, error: fetchError } = await supabase
         .from('bookmarks')
@@ -373,17 +383,27 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             <button
               aria-label={isSaved ? 'Gespeichert entfernen' : 'Provider speichern'}
               className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-base font-medium shadow transition ${
-                isSaved
+                showAllahumaBarik
+                  ? 'border border-[#D2B581] bg-white'
+                  : isSaved
                   ? 'bg-[#589D96] text-white'
                   : 'bg-mint text-white hover:bg-mint/90'
               }`}
               onClick={handleBookmarkAction}
             >
               <Icon
-                className="h-5 w-5"
+                className={`h-5 w-5 ${showAllahumaBarik ? 'text-[#D2B581]' : ''}`}
                 icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
               />
-              {isSaved ? 'Gespeichert' : 'Speichern'}
+              {showAllahumaBarik ? (
+                <span className="bg-gold-gradient bg-clip-text text-transparent">
+                  Allahuma Barik
+                </span>
+              ) : isSaved ? (
+                'Gespeichert'
+              ) : (
+                'Speichern'
+              )}
             </button>
 
             {/* Share Button */}
@@ -695,17 +715,27 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             <div className="flex gap-4">
               <button
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 px-6 font-inter-tight font-medium transition-colors ${
-                  isSaved
+                  showAllahumaBarik
+                    ? 'border border-[#D2B581] bg-white'
+                    : isSaved
                     ? 'bg-[#589D96] text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 onClick={handleBookmarkAction}
               >
                 <Icon
-                  className="h-5 w-5"
+                  className={`h-5 w-5 ${showAllahumaBarik ? 'text-[#D2B581]' : ''}`}
                   icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
                 />
-                {isSaved ? 'Gespeichert' : 'Speichern'}
+                {showAllahumaBarik ? (
+                  <span className="bg-gold-gradient bg-clip-text text-transparent">
+                    Allahuma Barik
+                  </span>
+                ) : isSaved ? (
+                  'Gespeichert'
+                ) : (
+                  'Speichern'
+                )}
               </button>
               <button
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 px-6 font-inter-tight font-medium text-gray-700 hover:bg-gray-50"
