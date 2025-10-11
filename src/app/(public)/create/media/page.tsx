@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
@@ -36,7 +37,7 @@ export default function MediaUploadPage() {
   const scrollContainerRef = useRef<Element | null>(null);
   
   const router = useRouter();
-  const { formData, updateFormData } = useFormData();
+  const { formData, clearFormData } = useFormData();
   const { user } = useAuth();
 
 
@@ -115,6 +116,7 @@ export default function MediaUploadPage() {
   const handleSave = async () => {
     if (!user) {
       console.error('User not authenticated');
+      toast.error('Sie müssen angemeldet sein, um einen Anbieter zu erstellen.');
       return;
     }
 
@@ -187,15 +189,27 @@ export default function MediaUploadPage() {
 
       console.log('Provider created successfully!');
       
-      // Clear form data
-      updateFormData({});
+      // Show success message
+      toast.success('Anbieter erfolgreich registriert!');
       
-      // Redirect to profile page
-      router.push('/profile');
+      // Clear form data
+      clearFormData();
+      
+      // Redirect to create page
+      router.push('/create');
       
     } catch (error) {
       console.error('Error in provider creation:', error);
-      // You might want to show an error message to the user here
+      
+      // Show user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten';
+      
+      if (errorMessage.includes('JWT') || errorMessage.includes('auth') || errorMessage.includes('PGRST301')) {
+        toast.error('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+        setTimeout(() => router.push('/signin'), 2000);
+      } else {
+        toast.error(`Fehler beim Erstellen: ${errorMessage}`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -257,7 +271,7 @@ export default function MediaUploadPage() {
                   <div className="flex flex-1 flex-col gap-1 items-start">
                     <span className="text-xs font-normal text-[#999999] leading-[15px]">Bilder</span>
                     <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
-                      {formData.images.length > 0 ? `${formData.images.length} Bilder ausgewählt` : 'Bilder hochladen'}
+                      {formData.images && formData.images.length > 0 ? `${formData.images.length} Bilder ausgewählt` : 'Bilder hochladen'}
                     </div>
                   </div>
                   <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">

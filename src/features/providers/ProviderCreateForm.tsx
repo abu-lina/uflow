@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { getFeatureFlag } from '@/config/feature-flags';
@@ -112,8 +113,8 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
 
     if (!user) {
       setIsSubmitting(false);
-      alert('Sie müssen angemeldet sein, um einen Anbieter zu erstellen. Bitte melden Sie sich erneut an.');
-      router.push('/signin');
+      toast.error('Sie müssen angemeldet sein, um einen Anbieter zu erstellen. Bitte melden Sie sich erneut an.');
+      setTimeout(() => router.push('/signin'), 2000);
       return;
     }
 
@@ -123,21 +124,21 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       if (refreshError) {
         console.error('Session refresh failed:', refreshError);
         setIsSubmitting(false);
-        alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
-        router.push('/signin');
+        toast.error('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+        setTimeout(() => router.push('/signin'), 2000);
         return;
       }
       if (!refreshedSession?.user) {
         setIsSubmitting(false);
-        alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
-        router.push('/signin');
+        toast.error('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+        setTimeout(() => router.push('/signin'), 2000);
         return;
       }
     } catch (error) {
       console.error('Session refresh error:', error);
       setIsSubmitting(false);
-      alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
-      router.push('/signin');
+      toast.error('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+      setTimeout(() => router.push('/signin'), 2000);
       return;
     }
 
@@ -227,18 +228,21 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       
       // Check if it's an authentication error
       if (providerError.message.includes('JWT') || providerError.message.includes('auth') || providerError.code === 'PGRST301') {
-        alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
-        router.push('/signin');
+        toast.error('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+        setTimeout(() => router.push('/signin'), 2000);
       } else {
-        alert(`Fehler beim Erstellen des Providers: ${providerError.message}`);
+        toast.error(`Fehler beim Erstellen: ${providerError.message}`);
       }
       return;
     }
 
     setIsSubmitting(false);
-    console.log('Provider created successfully, redirecting to profile...');
+    console.log('Provider created successfully, redirecting to create page...');
+    toast.success('Anbieter erfolgreich registriert!');
     // Force a page refresh to ensure the redirect works
-    window.location.href = '/profile';
+    setTimeout(() => {
+      window.location.href = '/create';
+    }, 1000);
   };
 
   const nextStep = () => {
