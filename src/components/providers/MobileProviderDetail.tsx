@@ -8,10 +8,19 @@ import type { Provider } from '@/services/providers';
 
 interface MobileProviderDetailProps {
   provider: Provider;
+  onBack?: () => void;
 }
 
-export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ provider }) => {
+export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ provider, onBack }) => {
   const router = useRouter();
+  
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
   
   // Process images using shared utility
   const allImageUrls = getAllTrustedImageUrls(provider.provider_images);
@@ -91,7 +100,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
             <button
               className="flex h-8 w-8 items-center justify-center rounded-[9.53514px] border-[0.794595px] border-[#CDCDCD] bg-white/70 backdrop-blur-[1.98649px]"
               type="button"
-              onClick={() => router.back()}
+              onClick={handleBack}
             >
               <ChevronLeft className="h-5 w-5 text-[#232323]" />
             </button>

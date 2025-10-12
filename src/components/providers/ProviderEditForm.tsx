@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/types/supabase';
 import type { Provider } from '@/services/providers';
+import { createProviderCommunityServiceRelationship } from '@/services/community_services';
 
 interface ProviderEditFormProps {
   provider: Provider;
@@ -87,6 +88,30 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider.provider_id]);
 
+  // Load selected community services from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(`edit_social_${provider.provider_id}`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (JSON.stringify(parsed) !== JSON.stringify(formData.selectedCommunityServiceIds)) {
+        handleInputChange('selectedCommunityServiceIds', parsed);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider.provider_id]);
+
+  // Load updated images from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(`edit_images_${provider.provider_id}`);
+    if (stored) {
+      const storedImages = JSON.stringify(stored);
+      if (storedImages !== formData.images) {
+        handleInputChange('images', stored);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider.provider_id]);
+
   useEffect(() => {
     // Load categories
     const loadCategories = async () => {
@@ -103,8 +128,26 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
       }
     };
 
+    // Load current community service relationships
+    const loadCommunityServices = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('provider_community_services')
+          .select('community_service_id')
+          .eq('provider_id', provider.provider_id);
+        
+        if (!error && data) {
+          const serviceIds = data.map(rel => rel.community_service_id);
+          handleInputChange('selectedCommunityServiceIds', serviceIds);
+        }
+      } catch (error) {
+        console.error('Error loading community services:', error);
+      }
+    };
+
     loadCategories();
-  }, []);
+    loadCommunityServices();
+  }, [provider.provider_id]);
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({
@@ -148,6 +191,28 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
         .eq('provider_id', provider.provider_id);
 
       if (error) throw error;
+
+      // Update community service relationships if changed
+      if (formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0) {
+        // First, delete existing relationships
+        await supabase
+          .from('provider_community_services')
+          .delete()
+          .eq('provider_id', provider.provider_id);
+
+        // Then create new relationships
+        const relationshipPromises = formData.selectedCommunityServiceIds.map(serviceId =>
+          createProviderCommunityServiceRelationship(provider.provider_id, serviceId)
+        );
+        
+        await Promise.allSettled(relationshipPromises);
+      } else {
+        // If no services selected, delete all existing relationships
+        await supabase
+          .from('provider_community_services')
+          .delete()
+          .eq('provider_id', provider.provider_id);
+      }
 
       toast.success('Provider erfolgreich aktualisiert!');
       
@@ -502,44 +567,50 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
           
           {expandedSections.media && (
             <div className="space-y-3">
-            {/* Image Upload Field */}
-            <div 
-              className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
+            {/* Bilder Field */}
+            <button
+              className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+              type="button"
               onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/images`)}
             >
-              <div className="flex flex-1 items-center gap-3">
-                <Icon className="h-6 w-6 text-[#232323]" icon="lucide:image-up" />
-                <span className="text-base font-semibold text-[#232323]">Bilder hochladen</span>
+              <div className="flex flex-1 flex-col gap-1 items-start">
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">Bilder</span>
+                <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+                  {(() => {
+                    try {
+                      const images = formData.images ? JSON.parse(formData.images) : { urls: [] };
+                      const imageCount = images.urls?.length || 0;
+                      return imageCount > 0 ? `${imageCount} Bilder ausgewählt` : 'Bilder hochladen';
+                    } catch {
+                      return 'Bilder hochladen';
+                    }
+                  })()}
+                </div>
               </div>
-            </div>
-
-            {/* Tags/Offers Field */}
-            <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-              <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Tags</span>
-                <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
-                  {(formData.selectedOfferIds || []).length > 0 
-                    ? `${(formData.selectedOfferIds || []).length} Angebote ausgewählt`
-                    : 'Keine Tags ausgewählt'
-                  }
-                </span>
+              <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
+                <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
               </div>
-              <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:expand-more" />
-            </div>
+            </button>
 
-            {/* Social Projects Field */}
-            <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-              <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Spenden-Projekt</span>
-                <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
+            {/* Soziale Initiativen Field */}
+            <button
+              className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+              type="button"
+              onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/social`)}
+            >
+              <div className="flex flex-1 flex-col gap-1 items-start">
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">Soziale Initiativen</span>
+                <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
                   {(formData.selectedCommunityServiceIds || []).length > 0 
                     ? `${(formData.selectedCommunityServiceIds || []).length} Initiativen ausgewählt`
-                    : 'Keine Initiativen ausgewählt'
+                    : 'Initiativen auswählen'
                   }
-                </span>
+                </div>
               </div>
-              <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:expand-more" />
-            </div>
+              <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
+                <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+              </div>
+            </button>
           </div>
           )}
         </div>

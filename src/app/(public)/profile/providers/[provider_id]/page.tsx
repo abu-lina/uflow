@@ -11,6 +11,7 @@ export default async function ProfileProviderDetailPage({ params }: { params: Pr
 
   return (
     <ProviderDetailPage 
+      backPath="/profile"
       customActionButtons={<ProfileProviderDetailButtons providerId={provider_id} />}
       provider={provider}
     />

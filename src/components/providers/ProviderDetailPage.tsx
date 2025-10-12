@@ -19,10 +19,19 @@ import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUr
 interface ProviderDetailPageProps {
   provider: Provider;
   customActionButtons?: React.ReactNode;
+  backPath?: string;
 }
 
-export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider, customActionButtons }) => {
+export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider, customActionButtons, backPath }) => {
   const router = useRouter();
+  
+  const handleBack = () => {
+    if (backPath) {
+      router.push(backPath);
+    } else {
+      router.back();
+    }
+  };
   const isMobile = useIsMobile();
   const { user } = useAuth();
   
@@ -175,7 +184,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
       <div className="h-screen bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] overflow-y-auto">
         {/* Mobile Content */}
         <div className="pb-24">
-          <MobileProviderDetail provider={provider} />
+          <MobileProviderDetail provider={provider} onBack={handleBack} />
           
           {/* Provider Info Card */}
           <div className="mx-6 mt-6 rounded-2xl bg-white p-4 shadow-sm">
@@ -451,7 +460,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           <div className="flex items-center justify-between">
             <button
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-              onClick={() => router.back()}
+              onClick={handleBack}
             >
               <ArrowLeft className="h-5 w-5" />
               <span className="font-inter-tight">Zurück</span>
