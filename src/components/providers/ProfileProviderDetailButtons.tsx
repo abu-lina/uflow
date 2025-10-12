@@ -23,19 +23,40 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
   const [dragY, setDragY] = useState(0);
   const [startY, setStartY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Cleanup function to clear any pending animations on unmount
+    return () => {
+      setIsClosing(false);
+      setIsDragging(false);
+    };
   }, []);
 
+  const closeActionsMenu = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setShowActionsMenu(false);
+      setIsClosing(false);
+      setDragY(0);
+    }, 300); // Match transition duration
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    setStartY(e.touches[0].clientY);
+    const touch = e.touches[0];
+    if (!touch) return;
+    setStartY(touch.clientY);
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    const currentY = e.touches[0].clientY;
+    const touch = e.touches[0];
+    if (!touch) return;
+    
+    const currentY = touch.clientY;
     const diff = currentY - startY;
     
     // Only allow dragging down
@@ -50,11 +71,12 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
     
     // If dragged down more than 100px, close the menu
     if (dragY > 100) {
-      setShowActionsMenu(false);
+      closeActionsMenu();
+    } else {
+      // Snap back to position
+      setDragY(0);
     }
     
-    // Reset drag position
-    setDragY(0);
     setStartY(0);
   };
 
@@ -63,7 +85,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
   };
 
   const handleShareAction = async () => {
-    setShowActionsMenu(false);
+    closeActionsMenu();
     
     const shareUrl = `${window.location.origin}/providers/${providerId}`;
     
@@ -90,8 +112,10 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
   };
 
   const handleDeleteAction = () => {
-    setShowActionsMenu(false);
-    setShowDeleteConfirm(true);
+    closeActionsMenu();
+    setTimeout(() => {
+      setShowDeleteConfirm(true);
+    }, 300); // Wait for menu to close before showing confirmation
   };
 
   const confirmDelete = async () => {
@@ -145,13 +169,20 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
         {/* Actions Menu Modal - Rendered via Portal */}
         {mounted && showActionsMenu && createPortal(
           <div 
-            className="fixed inset-0 z-[9999] bg-black/40 flex items-end"
-            onClick={() => setShowActionsMenu(false)}
+            className={`fixed inset-0 z-[9999] bg-black/40 flex items-end transition-opacity duration-300 ${
+              isClosing ? 'opacity-0' : 'opacity-100'
+            }`}
+            onClick={closeActionsMenu}
           >
             <div 
-              className="w-full bg-white rounded-t-2xl pb-safe-bottom relative z-[10000] transition-transform"
+              className="w-full bg-white rounded-t-2xl pb-safe-bottom relative z-[10000]"
               style={{
-                transform: dragY > 0 ? `translateY(${dragY}px)` : 'translateY(0)',
+                transform: isClosing 
+                  ? 'translateY(100%)' 
+                  : dragY > 0 
+                    ? `translateY(${dragY}px)` 
+                    : 'translateY(0)',
+                transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
               onClick={(e) => e.stopPropagation()}
               onTouchEnd={handleTouchEnd}
