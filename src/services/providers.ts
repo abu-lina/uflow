@@ -23,6 +23,8 @@ export interface Provider {
   barakah_effects: string[];
   offers_ids: string[];
   needs_ids: string[];
+  show_address?: boolean;
+  description?: string | null;
   offers?: Array<{ name_de: string }>;
   needs?: Array<{ name_de: string }>;
   category?: {

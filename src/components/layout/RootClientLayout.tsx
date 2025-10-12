@@ -19,7 +19,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const { user } = useAuth();
   const isLandingPage = pathname === '/';
   const isAboutPage = pathname === '/about';
-  const isProviderDetailPage = pathname.startsWith('/providers/') && pathname !== '/providers';
+  const isProviderDetailPage = (pathname.startsWith('/providers/') && pathname !== '/providers') || pathname.startsWith('/profile/providers/');
   const isCategoryPage = pathname === '/create/basics/category';
   const { isSplashVisible } = useSplash();
   const mainRef = useRef<HTMLElement>(null);
@@ -85,7 +85,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             </div>
           </PageTransition>
         </main>
-        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isSplashVisible && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && !(user && pathname.startsWith('/create') && pathname !== '/create') && !pathname.includes('/profile/edit') && !pathname.includes('/profile/delete') && (
+        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isSplashVisible && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && !(user && pathname.startsWith('/create') && pathname !== '/create') && !pathname.includes('/profile/edit') && !pathname.includes('/profile/delete') && !pathname.includes('/profile/providers/') && (
           <div className="block md:hidden">
             <MobileFooterBar />
           </div>

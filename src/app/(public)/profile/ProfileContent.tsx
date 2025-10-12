@@ -196,6 +196,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 })()}
                 likes={provider.bookmark_count || 0}
                 title={provider.provider_name}
+                onClick={() => router.push(`/profile/providers/${provider.provider_id}`)}
               />
             ))}
           </div>

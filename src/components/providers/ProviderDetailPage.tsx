@@ -18,9 +18,10 @@ import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUr
 
 interface ProviderDetailPageProps {
   provider: Provider;
+  customActionButtons?: React.ReactNode;
 }
 
-export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider }) => {
+export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider, customActionButtons }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { user } = useAuth();
@@ -389,45 +390,53 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
         </div>
 
         {/* Mobile Action Buttons - Fixed at bottom */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
-          <div className="flex w-full gap-3.5">
-            {/* Save Button */}
-            <button
-              aria-label={isSaved ? 'Gespeichert entfernen' : 'Provider speichern'}
-              className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-base font-medium shadow transition ${
-                showAllahumaBarik
-                  ? 'border border-[#D2B581] bg-white'
-                  : isSaved
-                  ? 'bg-[#589D96] text-white'
-                  : 'bg-mint text-white hover:bg-mint/90'
-              }`}
-              onClick={handleBookmarkAction}
-            >
-              <Icon
-                className={`h-5 w-5 ${showAllahumaBarik ? 'text-[#D2B581]' : ''}`}
-                icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
-              />
-              {showAllahumaBarik ? (
-                <span className="bg-gold-gradient bg-clip-text text-transparent">
-                  Allahuma Barik
-                </span>
-              ) : isSaved ? (
-                'Gespeichert'
-              ) : (
-                'Speichern'
-              )}
-            </button>
-
-            {/* Share Button */}
-            <button
-              aria-label="Provider teilen"
-              className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm"
-              onClick={handleShareAction}
-            >
-              <Icon className="h-5 w-5 text-gray-700" icon="lucide:share-2" />
-            </button>
+        {customActionButtons ? (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
+            <div className="flex w-full gap-3.5">
+              {customActionButtons}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
+            <div className="flex w-full gap-3.5">
+              {/* Save Button */}
+              <button
+                aria-label={isSaved ? 'Gespeichert entfernen' : 'Provider speichern'}
+                className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-base font-medium shadow transition ${
+                  showAllahumaBarik
+                    ? 'border border-[#D2B581] bg-white'
+                    : isSaved
+                    ? 'bg-[#589D96] text-white'
+                    : 'bg-mint text-white hover:bg-mint/90'
+                }`}
+                onClick={handleBookmarkAction}
+              >
+                <Icon
+                  className={`h-5 w-5 ${showAllahumaBarik ? 'text-[#D2B581]' : ''}`}
+                  icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
+                />
+                {showAllahumaBarik ? (
+                  <span className="bg-gold-gradient bg-clip-text text-transparent">
+                    Allahuma Barik
+                  </span>
+                ) : isSaved ? (
+                  'Gespeichert'
+                ) : (
+                  'Speichern'
+                )}
+              </button>
+
+              {/* Share Button */}
+              <button
+                aria-label="Provider teilen"
+                className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm"
+                onClick={handleShareAction}
+              >
+                <Icon className="h-5 w-5 text-gray-700" icon="lucide:share-2" />
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     );
@@ -724,39 +733,45 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
 
             {/* Action Buttons */}
-            <div className="flex gap-4">
-              <button
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 px-6 font-inter-tight font-medium transition-colors ${
-                  showAllahumaBarik
-                    ? 'border border-[#D2B581] bg-white'
-                    : isSaved
-                    ? 'bg-[#589D96] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                onClick={handleBookmarkAction}
-              >
-                <Icon
-                  className={`h-5 w-5 ${showAllahumaBarik ? 'text-[#D2B581]' : ''}`}
-                  icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
-                />
-                {showAllahumaBarik ? (
-                  <span className="bg-gold-gradient bg-clip-text text-transparent">
-                    Allahuma Barik
-                  </span>
-                ) : isSaved ? (
-                  'Gespeichert'
-                ) : (
-                  'Speichern'
-                )}
-              </button>
-              <button
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 px-6 font-inter-tight font-medium text-gray-700 hover:bg-gray-50"
-                onClick={handleShareAction}
-              >
-                <Icon className="h-5 w-5" icon="material-symbols:share" />
-                Teilen
-              </button>
-            </div>
+            {customActionButtons ? (
+              <div className="flex gap-4">
+                {customActionButtons}
+              </div>
+            ) : (
+              <div className="flex gap-4">
+                <button
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 px-6 font-inter-tight font-medium transition-colors ${
+                    showAllahumaBarik
+                      ? 'border border-[#D2B581] bg-white'
+                      : isSaved
+                      ? 'bg-[#589D96] text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={handleBookmarkAction}
+                >
+                  <Icon
+                    className={`h-5 w-5 ${showAllahumaBarik ? 'text-[#D2B581]' : ''}`}
+                    icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
+                  />
+                  {showAllahumaBarik ? (
+                    <span className="bg-gold-gradient bg-clip-text text-transparent">
+                      Allahuma Barik
+                    </span>
+                  ) : isSaved ? (
+                    'Gespeichert'
+                  ) : (
+                    'Speichern'
+                  )}
+                </button>
+                <button
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 px-6 font-inter-tight font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={handleShareAction}
+                >
+                  <Icon className="h-5 w-5" icon="material-symbols:share" />
+                  Teilen
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
