@@ -6,7 +6,7 @@ export interface Quote {
 
 export const quotes: Quote[] = [
   {
-    heading: 'Ein Marktplatz für Muslime',
+    heading: 'Ein Marktplatz\nfür Muslime',
     quote:
       'Inmitten des Leids der Palästinenser und den zahlreichen Herausforderungen, denen unsere Ummah gegenübersteht, wird deutlich, wie wichtig es ist, dass wir als Ummah enger zusammenkommen.',
   },

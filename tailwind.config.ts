@@ -38,6 +38,14 @@ const config: Config = {
     'focus-visible:ring-mint',
   ],
   theme: {
+    screens: {
+      'xs': '376px',  // Custom breakpoint for devices larger than iPhone SE
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       fontFamily: {
         'inter-tight': ['Inter Tight', 'sans-serif'],

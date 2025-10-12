@@ -77,20 +77,20 @@ export function CommunityServicesGallery() {
                 }
               }}
             >
-              <div className="flex w-full flex-row items-start justify-between">
-                <div className="flex flex-col items-start justify-between gap-2.5 p-3">
+              <div className="flex w-full flex-row items-start">
+                <div className="flex flex-1 min-w-0 flex-col items-start justify-between gap-2.5 p-3 pr-3">
                   <div className="flex flex-col items-start">
-                    <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323]">
+                    <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323] break-words">
                       Unterstütze unsere Community Service Partner
                     </div>
-                    <div className="w-full truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
+                    <div className="w-full min-w-0 truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
                       Community Services
                     </div>
                   </div>
                 </div>
 
                 {/* Right side - Chevron */}
-                <div className="flex flex-row items-start justify-end gap-2.5 p-2.5">
+                <div className="flex flex-row items-start justify-end shrink-0 ml-auto">
                   <div className="relative flex h-12 w-12 items-center justify-center">
                     <svg
                       className="text-[#232323]"

@@ -141,17 +141,17 @@ export function CategoryGallerySection() {
               onClick={() => handleCategoryClick(categoryId)}
               onKeyDown={(e) => handleKeyDown(e, categoryId)}
             >
-              <div className="flex w-full flex-row items-center justify-between p-3">
-                <div className="flex flex-col items-start justify-center">
-                  <div className="w-full font-inter text-sm font-normal leading-[140%] text-[#232323]">
+              <div className="flex w-full flex-row items-center pl-3 pt-3 pb-3">
+                <div className="flex flex-1 min-w-0 flex-col items-start justify-center pr-3">
+                  <div className="w-full font-inter text-sm font-normal leading-[140%] text-[#232323] break-words">
                     {formatAllahText(getCategorySubtitle(categoryName))}
                   </div>
-                  <div className="w-full truncate font-inter text-xl font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
+                  <div className="w-full min-w-0 truncate font-inter text-xl font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
                     {categoryName}
                   </div>
                 </div>
 
-                <div className="flex h-12 w-12 items-center justify-center">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center ml-auto">
                   <svg
                     className="text-[#232323]"
                     fill="none"
