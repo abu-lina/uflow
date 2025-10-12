@@ -352,7 +352,12 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
           <div className="flex flex-1 flex-col gap-8 pb-[180px]">
         {currentStep === 0 && (
               <div className="space-y-6">
-                <h2 className="text-lg font-medium text-[#232323] px-3">Basics</h2>
+                {/* Explanatory Text */}
+                <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
+                  <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
+                    Gib die grundlegenden Informationen zu deinem Angebot ein.
+                  </p>
+                </div>
                 
                 <div className="space-y-3">
                   {/* First Name Field */}
