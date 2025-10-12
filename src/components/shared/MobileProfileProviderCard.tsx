@@ -21,7 +21,7 @@ export function MobileProfileProviderCard({
       onClick={onClick}
     >
       {/* Image */}
-      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
+      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
         <Image
           alt={title}
           className="h-full w-full object-cover"

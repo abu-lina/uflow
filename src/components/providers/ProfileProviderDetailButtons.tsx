@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { supabase } from '@/lib/supabase/client';
@@ -16,6 +17,7 @@ interface ProfileProviderDetailButtonsProps {
 export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDetailButtonsProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -145,6 +147,10 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
         .eq('provider_id', providerId);
 
       if (error) throw error;
+
+      // Invalidate React Query cache to refresh provider list
+      await queryClient.invalidateQueries({ queryKey: ['created-providers'] });
+      await queryClient.invalidateQueries({ queryKey: ['saved-providers'] });
 
       toast.success('Provider erfolgreich gelöscht!');
       router.push('/profile');
