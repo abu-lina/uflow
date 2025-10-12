@@ -23,7 +23,7 @@ export interface FeatureFlags {
 export const defaultFeatureFlags: FeatureFlags = {
   // Debug features - disabled by default
   splashScreenDebug: true,
-  pwaPromptDebug: true,
+  pwaPromptDebug: false,
   
   // UI features - enabled by default
   enablePWAInstallPrompt: true,
