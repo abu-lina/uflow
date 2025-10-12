@@ -10,6 +10,7 @@ import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
+import { createProviderCommunityServiceRelationship } from '@/services/community_services';
 
 const STEPS = [
   {
@@ -178,16 +179,39 @@ export default function MediaUploadPage() {
       
       console.log('Inserting provider with data:', insertData);
       
-      const { error: providerError } = await supabase
+      const { data: createdProvider, error: providerError } = await supabase
         .from('providers')
-        .insert([insertData]);
+        .insert([insertData])
+        .select('provider_id')
+        .single();
       
       if (providerError) {
         console.error('Error creating provider:', providerError);
         throw providerError;
       }
 
-      console.log('Provider created successfully!');
+      if (!createdProvider) {
+        throw new Error('Provider created but no data returned');
+      }
+
+      console.log('Provider created successfully with ID:', createdProvider.provider_id);
+
+      // Create provider-community service relationship if a community service was selected
+      if (formData.selectedCommunityServiceId && createdProvider.provider_id) {
+        console.log('Creating relationship with community service:', formData.selectedCommunityServiceId);
+        const relationshipResult = await createProviderCommunityServiceRelationship(
+          createdProvider.provider_id,
+          formData.selectedCommunityServiceId
+        );
+        
+        if (!relationshipResult.success) {
+          console.error('Failed to create community service relationship:', relationshipResult.error);
+          // Don't throw - provider is created, just log the error
+          toast.error('Anbieter erstellt, aber Spenden-Projekt konnte nicht verknüpft werden.');
+        } else {
+          console.log('Community service relationship created successfully');
+        }
+      }
       
       // Show success message
       toast.success('Anbieter erfolgreich registriert!');

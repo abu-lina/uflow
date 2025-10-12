@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useFormData, type ProviderFormData } from '@/providers/form-provider';
 import type { Category } from '@/types/supabase';
 import type { Offer, Need } from '@/types/offer';
+import { createProviderCommunityServiceRelationship } from '@/services/community_services';
 
 
 const STEPS = [
@@ -218,9 +219,11 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
     console.log('Form data offers_ids:', formData.offers_ids);
     console.log('Form data needs_ids:', formData.needs_ids);
     
-    const { error: providerError } = await supabase
+    const { data: createdProvider, error: providerError } = await supabase
       .from('providers')
-      .insert([insertData]);
+      .insert([insertData])
+      .select('provider_id')
+      .single();
     
     if (providerError) {
       setIsSubmitting(false);
@@ -234,6 +237,31 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
         toast.error(`Fehler beim Erstellen: ${providerError.message}`);
       }
       return;
+    }
+
+    if (!createdProvider) {
+      setIsSubmitting(false);
+      toast.error('Provider wurde erstellt, aber keine Daten zurückgegeben.');
+      return;
+    }
+
+    console.log('Provider created successfully with ID:', createdProvider.provider_id);
+
+    // Create provider-community service relationship if a community service was selected
+    if (formData.selectedCommunityServiceId && createdProvider.provider_id) {
+      console.log('Creating relationship with community service:', formData.selectedCommunityServiceId);
+      const relationshipResult = await createProviderCommunityServiceRelationship(
+        createdProvider.provider_id,
+        formData.selectedCommunityServiceId
+      );
+      
+      if (!relationshipResult.success) {
+        console.error('Failed to create community service relationship:', relationshipResult.error);
+        // Don't block - provider is created, just log the error
+        toast.error('Anbieter erstellt, aber Spenden-Projekt konnte nicht verknüpft werden.');
+      } else {
+        console.log('Community service relationship created successfully');
+      }
     }
 
     setIsSubmitting(false);
