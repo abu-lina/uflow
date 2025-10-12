@@ -36,7 +36,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const { user } = useAuth();
   
   // Process images using shared utility
-  const allImageUrls = getAllTrustedImageUrls(provider.provider_images);
+  const imageUrls = getAllTrustedImageUrls(provider.provider_images);
+  const allImageUrls = imageUrls.length > 0 ? imageUrls : [PLACEHOLDER_IMAGE];
 
   // Use the centralized image swipe hook
   const {
