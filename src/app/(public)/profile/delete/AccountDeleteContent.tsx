@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
 import { accountService } from '@/services/account';
@@ -166,39 +167,17 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
 
   return (
     <div className="relative flex h-screen w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-      {/* Single Sticky Header */}
-      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top transition-all duration-500 ease-in-out ${
-        isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      }`}>
-        <div className="flex h-16 w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto items-center px-4 pt-2">
-          {/* Back Button */}
-          <button
-            className="flex h-8 w-8 items-center justify-center"
-            onClick={() => router.back()}
-          >
-            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          
-          {/* Title */}
-          <div className="flex flex-1 items-center justify-start">
-            <h1 className="text-xl font-semibold text-content-title leading-[29px]">
-              Konto schließen
-            </h1>
-          </div>
+      <PageHeader 
+        isVisible={isHeaderSticky}
+        rightContent={<BrokenHeartIcon size={24} />}
+        title="Konto schließen"
+        onBack={() => router.back()}
+      />
 
-          {/* Broken Heart Icon */}
-          <div className="flex h-8 w-8 items-center justify-center">
-            <BrokenHeartIcon size={24} />
-          </div>
-        </div>
-      </div>
-
-      {/* Spacer to prevent content jump */}
       <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-16' : 'h-0'
+        isHeaderSticky ? 'h-[calc(env(safe-area-inset-top)+24px+40px)]' : 'h-0'
       }`} />
 
-      {/* Main Content */}
       <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
         <div className="flex w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl flex-1 flex-col">
           {/* Error Message */}

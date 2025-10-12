@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 
 // import clsx from 'clsx'; // Not used in mobile version
 
-import { ScrollablePageHeader } from '@/components/layout/ScrollablePageHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
 import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProviderCard';
@@ -118,19 +118,16 @@ export function ProfileContent({ user }: ProfileContentProps) {
   // Mobile content - matches the provided design
   const mobileContent = (
     <div className="relative flex h-screen w-full flex-col">
-      {/* Scrollable Header */}
-      <ScrollablePageHeader 
+      <PageHeader 
         isVisible={isHeaderVisible}
         title="Profil"
       />
 
-      {/* Spacer to prevent content jump */}
       <div className={`transition-all duration-300 ${
-        isHeaderVisible ? 'h-16' : 'h-0'
+        isHeaderVisible ? 'h-[calc(env(safe-area-inset-top)+24px+40px)]' : 'h-0'
       }`} />
 
-      {/* Main scrollable content */}
-      <div className="content-scroll-container flex-1 overflow-y-auto px-4 pt-6 mobile-nav-spacing">
+      <main className="content-scroll-container flex-1 overflow-y-auto px-4 pt-6 mobile-nav-spacing">
 
       {/* User Info Card */}
       <button
@@ -274,7 +271,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
           </div>
         </div>
       )}
-      </div>
+      </main>
     </div>
   );
 

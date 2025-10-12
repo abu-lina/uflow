@@ -1,18 +1,20 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { ScrollablePageHeader } from '@/components/layout/ScrollablePageHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
+import { EmptyState } from '@/components/ui';
 import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
 import { getAllBookmarkedItems, type Provider } from '@/services/providers';
+import { getFirstImageUrl, formatProviderAddress } from '@/utils/imageUtils';
 
 export default function SavedProvidersPage() {
   const { user } = useAuth();
@@ -59,13 +61,12 @@ export default function SavedProvidersPage() {
     return filtered;
   }, [providers, searchQuery, selectedLocation]);
 
-  const handleUnsave = async (providerId: string, isCommunityService: boolean) => {
+  const handleUnsave = useCallback(async (providerId: string, isCommunityService: boolean) => {
     if (!user) return;
+    
     try {
-      // Determine the correct bookmarkable_type
       const bookmarkableType = isCommunityService ? 'community_service' : 'provider';
       
-      // Find the bookmark
       const { data: bookmark, error: fetchError } = await supabase
         .from('bookmarks')
         .select('id')
@@ -82,87 +83,117 @@ export default function SavedProvidersPage() {
       if (bookmark) {
         await deleteBookmark(bookmark.id);
         
-        // Optimistically update the cache
+        // Optimistically update both caches
         queryClient.setQueryData(['saved-providers', user.id], (old: Provider[] = []) => 
           old.filter((s) => s.provider_id !== providerId)
         );
         
-        // Also update the bookmarks list cache used by other components
         queryClient.setQueryData(['bookmarks', user.id], (old: string[] = []) =>
           old.filter((id) => id !== providerId)
         );
       }
     } catch (err) {
-      // Optionally show a toast or error
       console.error('Fehler beim Entfernen des Items:', err);
     }
-  };
+  }, [user, queryClient]);
 
-  // SearchBar callbacks - no-ops since we handle filtering locally via context
-  // The search context state is already being used in filteredProviders
-  const handleSearchSubmit = () => {
-    // No navigation needed - filtering happens automatically via useMemo
-  };
+  // SearchBar callbacks - no-ops since filtering is handled by context
+  const handleSearchSubmit = useCallback(() => {
+    // Filtering happens automatically via useMemo
+  }, []);
 
-  const handleClearSearch = () => {
-    // No action needed - clearing is handled by SearchBar updating context
-  };
+  const handleClearSearch = useCallback(() => {
+    // Clearing is handled by SearchBar updating context
+  }, []);
 
-  const handleCategoryChange = () => {
-    // No action needed - category changes handled by SearchBar updating context
-  };
+  const handleCategoryChange = useCallback(() => {
+    // Category changes handled by SearchBar updating context
+  }, []);
 
-  const handleLocationChange = () => {
-    // No action needed - location changes handled by SearchBar updating context
-  };
+  const handleLocationChange = useCallback(() => {
+    // Location changes handled by SearchBar updating context
+  }, []);
 
+  const handleProviderClick = useCallback((providerId: string, isCommunityService: boolean) => {
+    const detailPath = isCommunityService 
+      ? `/community-services/${providerId}`
+      : `/providers/${providerId}`;
+    router.push(detailPath);
+  }, [router]);
 
-  if (!user) {
-    return (
-      <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-        {/* Header */}
-        <ScrollablePageHeader 
-          isVisible={true}
-          title="Gespeichert"
-        />
-
-        {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 mobile-nav-spacing">
-          <span className="text-center text-lg text-content-title mb-6">
-            Du musst angemeldet sein, um gespeicherte Inhalte zu sehen.
-          </span>
+  // Render helpers
+  const renderEmptyState = () => {
+    if (!user) {
+      return (
+        <div className="flex flex-col items-center gap-6">
+          <EmptyState
+            description="Du musst angemeldet sein, um gespeicherte Inhalte zu sehen."
+            title="Anmeldung erforderlich"
+          />
           <button
             className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 font-semibold text-base text-white transition-colors hover:bg-primary-dark"
+            type="button"
             onClick={() => router.push('/login')}
           >
             Zur Anmeldung
           </button>
         </div>
+      );
+    }
+
+    if (providers.length === 0) {
+      return (
+        <EmptyState
+          description="Du hast noch keine Anbieter gespeichert. Speichere Anbieter, um sie hier zu sehen."
+          title="Keine gespeicherten Anbieter"
+        />
+      );
+    }
+
+    if (filteredProviders.length === 0) {
+      return (
+        <EmptyState
+          description="Keine Anbieter entsprechen deinen Suchkriterien."
+          title="Keine Ergebnisse"
+        />
+      );
+    }
+
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-lg text-gray-500">Lädt...</p>
       </div>
     );
   }
 
-  if (loading) {
-    return <div className="p-8 text-center">Lädt...</div>;
+  const emptyState = renderEmptyState();
+  
+  if (emptyState) {
+    return (
+      <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+        <PageHeader title="Gespeichert" />
+        <main className="flex flex-1 flex-col items-center justify-center px-4 mobile-nav-spacing">
+          {emptyState}
+        </main>
+      </div>
+    );
   }
 
   return (
     <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      {/* Scrollable Header */}
-      <ScrollablePageHeader 
+      <PageHeader 
         isVisible={isHeaderVisible}
         title="Gespeichert"
       />
 
-      {/* Spacer to prevent content jump */}
-      <div className={`transition-all duration-300 ${
-        isHeaderVisible ? 'h-16' : 'h-0'
-      }`} />
+      <div className={`transition-all duration-300 ${isHeaderVisible ? 'h-[calc(env(safe-area-inset-top)+24px+40px)]' : 'h-0'}`} />
 
-      {/* Main Content with scroll container */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
-        {/* Search Bar */}
-        <div className="w-full mb-6">
+      <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
+        <section className="w-full mb-6">
           <SearchBar 
             hideCategoryFilter={true}
             onCategoryChange={handleCategoryChange}
@@ -170,49 +201,13 @@ export default function SavedProvidersPage() {
             onLocationChange={handleLocationChange}
             onSearchSubmit={handleSearchSubmit}
           />
-        </div>
+        </section>
         
-        <div className="grid w-full grid-cols-2 gap-4">
-        {providers.length === 0 ? (
-          <span className="col-span-2 text-center text-gray-400">Keine Providers gespeichert.</span>
-        ) : filteredProviders.length === 0 ? (
-          <span className="col-span-2 text-center text-gray-400">Keine Providers gefunden.</span>
-        ) : (
-          filteredProviders.map((provider) => {
+        <section className="grid w-full grid-cols-2 gap-4">
+          {filteredProviders.map((provider) => {
             const isCommunityService = !!provider.community_service_id;
-            const detailPath = isCommunityService 
-              ? `/community-services/${provider.community_service_id}`
-              : `/providers/${provider.provider_id}`;
-            
-            // Get address for bottom text
-            const address = provider.address_street && provider.address_city
-              ? `${provider.address_street}, ${provider.address_city}`
-              : provider.address_street || provider.address_city || undefined;
-            
-            // Get image URL
-            const getImageUrl = () => {
-              if (!provider.provider_images) return '/images/placeholder.jpg';
-              try {
-                let imagesData: { urls?: string[] } = {};
-                if (typeof provider.provider_images === 'string') {
-                  imagesData = JSON.parse(provider.provider_images);
-                } else if (Array.isArray(provider.provider_images)) {
-                  imagesData.urls = provider.provider_images;
-                } else if (
-                  typeof provider.provider_images === 'object' &&
-                  provider.provider_images !== null &&
-                  'urls' in provider.provider_images
-                ) {
-                  imagesData = provider.provider_images;
-                }
-                if (imagesData.urls && imagesData.urls.length > 0) {
-                  return imagesData.urls[0];
-                }
-              } catch {
-                return '/images/placeholder.jpg';
-              }
-              return '/images/placeholder.jpg';
-            };
+            const imageUrl = getFirstImageUrl(provider.provider_images);
+            const address = formatProviderAddress(provider.address_street, provider.address_city);
             
             return (
               <SelectableCard
@@ -220,16 +215,15 @@ export default function SavedProvidersPage() {
                 actionType="unsave"
                 bottomText={address}
                 category={provider.category?.name_de || ''}
-                imageUrl={getImageUrl()}
+                imageUrl={imageUrl}
                 title={provider.provider_name}
                 onAction={() => handleUnsave(provider.provider_id, isCommunityService)}
-                onClick={() => router.push(detailPath)}
+                onClick={() => handleProviderClick(provider.provider_id, isCommunityService)}
               />
             );
-          })
-        )}
-        </div>
-      </div>
+          })}
+        </section>
+      </main>
     </div>
   );
 }

@@ -4,23 +4,22 @@ import { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
-interface ScrollablePageHeaderProps {
+interface PageHeaderProps {
   /**
    * The title text to display in the header
    */
   title: string;
   /**
-   * Whether the header should be visible
-   * Use with useContainerScroll hook
+   * Whether the header should be visible (for scroll-based hiding)
+   * @default true
    */
-  isVisible: boolean;
+  isVisible?: boolean;
   /**
-   * Optional back button navigation path
-   * If provided, shows a back button
+   * Optional back button navigation path or callback
    */
   onBack?: string | (() => void);
   /**
-   * Optional right-side action buttons or content
+   * Optional right-side content (buttons, icons, etc.)
    */
   rightContent?: ReactNode;
   /**
@@ -28,46 +27,50 @@ interface ScrollablePageHeaderProps {
    */
   className?: string;
   /**
-   * Whether to show the title (some pages might want custom content)
-   * @default true
-   */
-  showTitle?: boolean;
-  /**
    * Custom content to replace the default title
    */
   customContent?: ReactNode;
 }
 
 /**
- * Reusable scrollable page header component
+ * Unified reusable page header component
  * 
  * Features:
- * - Consistent styling across all pages
- * - Smooth show/hide animation based on scroll
+ * - Consistent 24px spacing from safe area
+ * - 40px header height
  * - Optional back button
+ * - Optional scroll-based show/hide animation
  * - Flexible right-side content
- * - Safe area support for mobile devices
+ * - Semantic HTML with <header> tag
  * 
  * @example
  * ```tsx
- * const { isHeaderVisible } = useContainerScroll();
+ * // Simple fixed header
+ * <PageHeader title="My Page" />
  * 
- * <ScrollablePageHeader
+ * // With back button
+ * <PageHeader 
+ *   title="My Page"
+ *   onBack="/previous-page"
+ * />
+ * 
+ * // With scroll animation
+ * const { isHeaderVisible } = useContainerScroll();
+ * <PageHeader 
  *   title="My Page"
  *   isVisible={isHeaderVisible}
  *   onBack="/previous-page"
  * />
  * ```
  */
-export function ScrollablePageHeader({
+export function PageHeader({
   title,
-  isVisible,
+  isVisible = true,
   onBack,
   rightContent,
   className = '',
-  showTitle = true,
   customContent,
-}: ScrollablePageHeaderProps) {
+}: PageHeaderProps) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -84,7 +87,7 @@ export function ScrollablePageHeader({
         isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       } ${className}`}
     >
-      <div className="flex items-start w-full max-w-[393px] mx-auto px-4 h-10">
+      <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">
         {/* Back Button */}
         {onBack && (
           <button
@@ -99,11 +102,11 @@ export function ScrollablePageHeader({
         {/* Title or Custom Content */}
         {customContent ? (
           customContent
-        ) : showTitle ? (
+        ) : (
           <h1 className="text-xl font-semibold text-content-title">
             {title}
           </h1>
-        ) : null}
+        )}
 
         {/* Right Content */}
         {rightContent && (
@@ -115,3 +118,4 @@ export function ScrollablePageHeader({
     </header>
   );
 }
+

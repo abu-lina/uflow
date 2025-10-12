@@ -6,10 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { CategoryFilter } from '@/components/providers/CategoryFilter';
+import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState, SkeletonGrid } from '@/components/ui';
-import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { useLoading } from '@/providers/LoadingProvider';
@@ -155,131 +154,52 @@ export function ProvidersContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, query, location]); // Only depend on URL parameters, not local state
 
-  // During preloading, show skeleton loading
-  if (isPreloading) {
+  // Render content based on state
+  const renderContent = () => {
+    if (isPreloading || (loading && searchResults.length === 0)) {
+      return <SkeletonGrid count={12} />;
+    }
+
+    if (error) {
+      return (
+        <EmptyState
+          description="Es gab ein Problem beim Laden der Providers. Bitte versuche es erneut."
+          title="Fehler beim Laden"
+        />
+      );
+    }
+
+    if (searchResults.length === 0 && !loading && !isFetching) {
+      return (
+        <EmptyState
+          description="Versuche einen anderen Suchbegriff oder Filter"
+          title="Keine Ergebnisse gefunden"
+        />
+      );
+    }
+
     return (
-      <div className="relative min-h-full">
-        {/* Mobile Header Container - Stable, doesn't re-render */}
-        <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top">
-        {/* Search Bar */}
-        <div className="px-4 pb-0 pt-4">
-          <SearchBar
-            className="rounded-lg border border-gray-200 shadow-sm"
-            hideCategoryFilter={true}
-            onCategoryChange={handleCategoryChange}
-            onClearSearch={handleClearSearch}
-            onLocationChange={handleLocationChange}
-            onSearchSubmit={handleSearchSubmit}
-          />
-        </div>
-
-          {/* Gap */}
-          <div className="h-3 px-6" />
-
-          {/* Category Filter */}
-          <div className="pb-1.5 pl-6 pr-0">
-            <CategoryFilter />
-          </div>
-        </div>
-
-        {/* Main Content - Loading State */}
-        <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-32 sm:pt-8 md:pt-28">
-          <SkeletonGrid count={12} />
-        </div>
-      </div>
+      <SearchResultsList
+        bookmarkedProviderIds={bookmarkedProviderIds}
+        searchResults={searchResults}
+        onBookmarkChange={handleBookmarkChange}
+        onProviderClick={handleProviderClick}
+      />
     );
-  }
-
-  if (error) {
-    return (
-      <div className="relative min-h-full">
-        {/* Mobile Header Container - Stable, doesn't re-render */}
-        <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top">
-        {/* Search Bar */}
-        <div className="px-6 pb-0 pt-4">
-          <SearchBar
-            className="rounded-lg border border-gray-200 shadow-sm"
-            hideCategoryFilter={true}
-            onCategoryChange={handleCategoryChange}
-            onClearSearch={handleClearSearch}
-            onLocationChange={handleLocationChange}
-            onSearchSubmit={handleSearchSubmit}
-          />
-        </div>
-
-          {/* Gap */}
-          <div className="h-3 px-6" />
-
-          {/* Category Filter */}
-          <div className="pb-1.5 pl-6 pr-0">
-            <CategoryFilter />
-          </div>
-        </div>
-
-        {/* Main Content - Error State */}
-        <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden py-8 pt-32 sm:pt-8 md:pt-28">
-          <EmptyState
-            description="Es gab ein Problem beim Laden der Providers. Bitte versuche es erneut."
-            title="Fehler beim Laden"
-          />
-        </div>
-      </div>
-    );
-  }
+  };
 
   return (
     <div className="relative min-h-full">
-      {/* Mobile Header Container - Stable, doesn't re-render */}
-      <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl sm:hidden pt-safe-top">
-      {/* Search Bar */}
-      <div className="px-4 pb-0 pt-6">
-        <SearchBar
-          className="rounded-lg border border-gray-200 shadow-sm"
-          hideCategoryFilter={true}
-          onCategoryChange={handleCategoryChange}
-          onClearSearch={handleClearSearch}
-          onLocationChange={handleLocationChange}
-          onSearchSubmit={handleSearchSubmit}
-        />
-      </div>
+      <ProvidersPageHeader
+        onCategoryChange={handleCategoryChange}
+        onClearSearch={handleClearSearch}
+        onLocationChange={handleLocationChange}
+        onSearchSubmit={handleSearchSubmit}
+      />
 
-        {/* Gap */}
-        <div className="h-3 px-6" />
-
-        {/* Category Filter */}
-        <div className="pb-1.5 pl-6 pr-0">
-          <CategoryFilter />
-        </div>
-      </div>
-
-      {/* Main Content - Only this area updates with smooth transitions */}
-      <div className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden mobile-nav-spacing pt-32 sm:pt-8 md:pt-28">
-        {loading && searchResults.length === 0 ? (
-            <div>
-              <SkeletonGrid count={12} />
-            </div>
-          ) : searchResults.length === 0 && !loading && !isFetching ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="mb-4 text-5xl text-amber-500/60">
-                🔍
-              </div>
-              <h3 className="mb-2 text-xl font-medium text-gray-800">
-                Keine Ergebnisse gefunden
-              </h3>
-              <p className="max-w-sm text-sm text-gray-500">
-                Versuche einen anderen Suchbegriff oder Filter
-              </p>
-            </div>
-          ) : (
-            <SearchResultsList
-              bookmarkedProviderIds={bookmarkedProviderIds}
-              searchResults={searchResults}
-              onBookmarkChange={handleBookmarkChange}
-              onProviderClick={handleProviderClick}
-            />
-          )}
-      </div>
-
+      <main className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden mobile-nav-spacing pt-32 sm:pt-8 md:pt-28">
+        {renderContent()}
+      </main>
     </div>
   );
 }

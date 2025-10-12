@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { useFormData } from '@/providers/form-provider';
 import { getCommunityServices, type CommunityService } from '@/services/community_services';
+import { getFirstImageUrl } from '@/utils/imageUtils';
 
 const STEPS = [
   {
@@ -169,66 +171,40 @@ export default function SocialProjectPage() {
 
   return (
     <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-      {/* Single Sticky Header */}
-      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top transition-all duration-500 ease-in-out ${
-        isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      }`}>
-        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
-          {/* Back Button */}
-          <button
-            className="flex h-8 w-8 items-center justify-center"
-            onClick={handleBack}
-          >
-            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          
-          {/* Title */}
-          <div className="flex flex-1 items-start">
-            <h1 className="text-xl font-semibold text-title">
-              Soziale Initiativen
-            </h1>
-          </div>
-        </div>
-      </div>
+      <PageHeader 
+        isVisible={isHeaderSticky}
+        title="Soziale Initiativen"
+        onBack={handleBack}
+      />
 
-      {/* Spacer for fixed header */}
       <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-16' : 'h-0'
+        isHeaderSticky ? 'h-[calc(env(safe-area-inset-top)+24px+40px)]' : 'h-0'
       }`} />
 
-      {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
-          {/* Step Indicator */}
-          <div className="mb-6">
-            <StepIndicator currentStep={3} steps={STEPS} />
-          </div>
+      <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
+        <div className="flex w-full max-w-[361px] flex-col gap-8">
+          <StepIndicator currentStep={3} steps={STEPS} />
 
-          {/* Subtitle */}
-          <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
-            <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
+          <section className="w-full">
+            <p className="font-normal text-base text-[#7A7A7A] px-3">
               Wähle soziale Initiativen aus, die du unterstützt. Sobald die Verantwortlichen der Initiativen dies verifiziert haben, wird dein Angebot mit der Initiativen verknüpft.
             </p>
-          </div>
+          </section>
 
-          {/* Search Section */}
-          <div className="flex w-full flex-col gap-4">
-            
-            {/* Search Input */}
-            <div className="flex w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 focus-within:border-[#D4D4D4] focus-within:ring-0">
+          <section className="w-full">
+            <div className="flex items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 focus-within:border-[#D4D4D4] focus-within:ring-0">
               <Icon className="h-5 w-5 text-[#999999]" icon="lucide:search" />
               <input
-                className="flex-1 border-none bg-transparent text-[15px] font-medium leading-[18px] text-[#272727] focus:outline-none focus:ring-0 focus:border-none"
+                className="flex-1 border-none bg-transparent text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0"
                 placeholder="Initiativen durchsuchen"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-          </div>
+          </section>
 
-          {/* Projects Grid */}
-          <div className="w-full">
+          <section className="w-full">
             {servicesLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Icon className="h-8 w-8 text-gray-400 animate-spin" icon="lucide:loader-2" />
@@ -236,32 +212,8 @@ export default function SocialProjectPage() {
             ) : filteredProjects.length > 0 ? (
               <div className="grid w-full grid-cols-2 gap-4">
                 {filteredProjects.map((service) => {
-                  // Get image URL
-                  const getImageUrl = () => {
-                    if (!service.community_service_images) return '/images/placeholder.jpg';
-                    try {
-                      let imagesData: { urls?: string[] } = {};
-                      if (typeof service.community_service_images === 'string') {
-                        imagesData = JSON.parse(service.community_service_images);
-                      } else if (Array.isArray(service.community_service_images)) {
-                        imagesData.urls = service.community_service_images;
-                      } else if (
-                        typeof service.community_service_images === 'object' &&
-                        service.community_service_images !== null &&
-                        'urls' in service.community_service_images
-                      ) {
-                        imagesData = service.community_service_images;
-                      }
-                      if (imagesData.urls && imagesData.urls.length > 0) {
-                        return imagesData.urls[0];
-                      }
-                    } catch {
-                      return '/images/placeholder.jpg';
-                    }
-                    return '/images/placeholder.jpg';
-                  };
-
                   const isSelected = (formData.selectedCommunityServiceIds || []).includes(service.community_service_id);
+                  const imageUrl = getFirstImageUrl(service.community_service_images);
                   const donationText = service.donation_count && service.donation_count > 0 
                     ? `${service.donation_count}x Gesponsort` 
                     : undefined;
@@ -272,7 +224,7 @@ export default function SocialProjectPage() {
                       actionType="select"
                       bottomText={donationText}
                       category={service.category?.name_de || service.category?.name_en}
-                      imageUrl={getImageUrl()}
+                      imageUrl={imageUrl}
                       isSelected={isSelected}
                       title={service.community_service_name}
                       onAction={() => toggleProject(service.community_service_id)}
@@ -294,10 +246,9 @@ export default function SocialProjectPage() {
                 )}
               </div>
             )}
-          </div>
-
+          </section>
         </div>
-      </div>
+      </main>
 
       {/* Navbar */}
       <div 

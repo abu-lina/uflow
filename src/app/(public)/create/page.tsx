@@ -2,18 +2,20 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
 
 export default function CreateProviderPage() {
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const check = () => {
+    const checkMobile = () => {
       setIsMobile(window.innerWidth < 640);
     };
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handleOwnProvider = () => {
@@ -27,110 +29,44 @@ export default function CreateProviderPage() {
   if (!isMobile) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <span className="text-lg text-gray-500">
+        <p className="text-lg text-gray-500">
           Bitte nutze die Mobile-Ansicht für diese Seite.
-        </span>
+        </p>
       </div>
     );
   }
 
   return (
     <div className="relative flex h-screen w-full max-w-[393px] mx-auto flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top">
-        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
-          {/* Left-aligned Title */}
-          <h1 className="text-xl font-semibold text-content-title">
-            Anbieter hinzufügen
-          </h1>
-        </div>
-      </div>
+      <PageHeader title="Anbieter hinzufügen" />
 
-      {/* Main Content (Frame 350) */}
-      <div className="flex flex-1 flex-col items-start p-0 space-y-6 w-full pt-16 mobile-nav-spacing overflow-y-auto px-4">
-        {/* Indicators wrapper for content inside Frame 350 */}
-        <div className="flex flex-col items-center pt-8 pb-8 space-y-8 w-full">
-          {/* Subtitle (Frame 345) */}
-          <div className="flex flex-col items-start p-0 space-y-8 w-full">
-            {/* Subtitle Text Container (Frame 344) */}
-            <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
-              {/* Subtitle Text */}
-              <p className="font-normal text-base leading-[19px] text-[#7A7A7A]">
-                Füge einen neuen Anbieter hinzu oder empfehle jemanden, den du kennst.
-              </p>
-            </div>
-          </div>
+      <main className="flex flex-1 flex-col w-full pt-[calc(env(safe-area-inset-top)+24px+40px)] mobile-nav-spacing overflow-y-auto px-4">
+        <div className="flex flex-col items-center pt-8 pb-8 gap-8 w-full">
+          <section className="flex flex-col items-start px-3 w-full">
+            <p className="font-normal text-base leading-[19px] text-[#7A7A7A]">
+              Füge einen neuen Anbieter hinzu oder empfehle jemanden, den du kennst.
+            </p>
+          </section>
 
-          {/* Option Cards Container (Frame 349) */}
-          <div className="flex flex-col items-start p-0 space-y-3 w-full h-[412px]">
-          {/* Card 1: Ich bin der Anbieter (Body / firstName) */}
-          <div
-            className="flex flex-col justify-center items-center p-6 space-y-6 w-full h-[200px] bg-white border border-[#D4D4D4] rounded-2xl shadow-sm hover:shadow-lg hover:border-teal-500 transition-all duration-300 cursor-pointer"
-            onClick={handleOwnProvider}
-          >
-            {/* Content: Icon + Title + Text */}
-            <div className="flex flex-row items-center space-x-6 w-full">
-              {/* Custom store icon */}
-              <svg className="w-12 h-12 text-content-title" fill="none" height="48" viewBox="0 0 48 48" width="48" xmlns="http://www.w3.org/2000/svg">
-                <path d="M29.9999 42V32C29.9999 31.4696 29.7892 30.9609 29.4141 30.5858C29.039 30.2107 28.5303 30 27.9999 30H19.9999C19.4695 30 18.9608 30.2107 18.5857 30.5858C18.2106 30.9609 17.9999 31.4696 17.9999 32V42M35.5479 20.62C35.131 20.2209 34.5761 19.9981 33.9989 19.9981C33.4217 19.9981 32.8668 20.2209 32.4499 20.62C31.5199 21.507 30.2841 22.0019 28.9989 22.0019C27.7137 22.0019 26.4779 21.507 25.5479 20.62C25.1311 20.2215 24.5766 19.999 23.9999 19.999C23.4232 19.999 22.8687 20.2215 22.4519 20.62C21.5218 21.5076 20.2856 22.0029 18.9999 22.0029C17.7142 22.0029 16.478 21.5076 15.5479 20.62C15.131 20.2209 14.5761 19.9981 13.9989 19.9981C13.4217 19.9981 12.8668 20.2209 12.4499 20.62C11.5516 21.4772 10.3665 21.9695 9.12516 22.0011C7.88386 22.0327 6.67523 21.6012 5.73452 20.7908C4.7938 19.9803 4.1883 18.8488 4.03587 17.6165C3.88345 16.3842 4.19501 15.1392 4.9099 14.124L10.6879 5.756C11.0545 5.21502 11.5481 4.77211 12.1255 4.46599C12.7028 4.15987 13.3464 3.99988 13.9999 4H33.9999C34.6515 3.99975 35.2933 4.15868 35.8694 4.46298C36.4456 4.76727 36.9387 5.20771 37.3059 5.746L43.0959 14.13C43.811 15.1461 44.1221 16.3919 43.9688 17.6249C43.8154 18.8578 43.2084 19.9895 42.2662 20.7994C41.324 21.6093 40.114 22.0394 38.8721 22.0058C37.6301 21.9723 36.445 21.4775 35.5479 20.618" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4"/>
-                <path d="M8 21.9004V38.0004C8 39.0613 8.42143 40.0787 9.17157 40.8288C9.92172 41.579 10.9391 42.0004 12 42.0004H36C37.0609 42.0004 38.0783 41.579 38.8284 40.8288C39.5786 40.0787 40 39.0613 40 38.0004V21.9004" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4"/>
-              </svg>
-              {/* Text Content */}
-              <div className="flex flex-col items-start space-y-2 flex-1">
-                {/* Ich bin der Anbieter */}
-                <h2 className="font-medium text-lg leading-6 text-[#232323]">
-                  Ich bin der Anbieter
-                </h2>
-                {/* Description */}
-                <p className="font-normal text-sm leading-4 tracking-[0.15px] text-[#272727]">
-                  Erstelle dein eigenes Profil, um dein Angebot sichtbar zu machen.
-                </p>
-              </div>
-            </div>
-            {/* Button Below */}
-            <button 
-              className="flex justify-center items-center px-5 py-0 space-x-2 h-[40px] min-h-[40px] max-h-[40px] bg-[#589D96] rounded-[16.8px] text-white font-medium text-base leading-[19px] text-center hover:bg-teal-600 transition-colors duration-300 w-full"
-              style={{ height: '40px' }}
+          <div className="flex flex-col gap-3 w-full">
+            <ProviderOptionCard
+              buttonText="Eigenes Angebot erstellen"
+              description="Erstelle dein eigenes Profil, um dein Angebot sichtbar zu machen."
+              title="Ich bin der Anbieter"
+              variant="store"
               onClick={handleOwnProvider}
-            >
-              Eigenes Angebot erstellen
-            </button>
-          </div>
+            />
 
-          {/* Card 2: Ich kenne einen Anbieter (Body / firstName) */}
-          <div className="flex flex-col justify-center items-center p-6 space-y-6 w-full h-[200px] bg-white border border-[#D4D4D4] rounded-2xl shadow-sm hover:shadow-lg hover:border-teal-500 transition-all duration-300">
-            {/* Content: Icon + Title + Text */}
-            <div className="flex flex-row items-center space-x-6 w-full">
-              {/* Custom store with heart icon */}
-              <svg className="w-12 h-12 text-content-title" fill="none" height="52" viewBox="0 0 53 52" width="53" xmlns="http://www.w3.org/2000/svg">
-                <path d="M29.9999 42V32C29.9999 31.4696 29.7892 30.9609 29.4141 30.5858C29.039 30.2107 28.5303 30 27.9999 30H19.9999C19.4695 30 18.9608 30.2107 18.5857 30.5858C18.2106 30.9609 17.9999 31.4696 17.9999 32V42M35.5479 20.62C35.131 20.2209 34.5761 19.9981 33.9989 19.9981C33.4217 19.9981 32.8668 20.2209 32.4499 20.62C31.5199 21.507 30.2841 22.0019 28.9989 22.0019C27.7137 22.0019 26.4779 21.507 25.5479 20.62C25.1311 20.2215 24.5766 19.999 23.9999 19.999C23.4232 19.999 22.8687 20.2215 22.4519 20.62C21.5218 21.5076 20.2856 22.0029 18.9999 22.0029C17.7142 22.0029 16.478 21.5076 15.5479 20.62C15.131 20.2209 14.5761 19.9981 13.9989 19.9981C13.4217 19.9981 12.8668 20.2209 12.4499 20.62C11.5516 21.4772 10.3665 21.9695 9.12516 22.0011C7.88386 22.0327 6.67523 21.6012 5.73452 20.7908C4.7938 19.9803 4.1883 18.8488 4.03587 17.6165C3.88345 16.3842 4.19501 15.1392 4.9099 14.124L10.6879 5.756C11.0545 5.21502 11.5481 4.77211 12.1255 4.46599C12.7028 4.15987 13.3464 3.99988 13.9999 4H33.9999C34.6515 3.99975 35.2933 4.15868 35.8694 4.46298C36.4456 4.76727 36.9387 5.20771 37.3059 5.746L43.0959 14.13C43.811 15.1461 44.1221 16.3919 43.9688 17.6249C43.8154 18.8578 43.2084 19.9895 42.2662 20.7994C41.324 21.6093 40.114 22.0394 38.8721 22.0058C37.6301 21.9723 36.445 21.4775 35.5479 20.618" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4"/>
-                <path d="M8 21.9004V38.0004C8 39.0613 8.42143 40.0787 9.17157 40.8288C9.92172 41.579 10.9391 42.0004 12 42.0004H36C37.0609 42.0004 38.0783 41.579 38.8284 40.8288C39.5786 40.0787 40 39.0613 40 38.0004V21.9004" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4"/>
-                <path d="M49.6514 41.8893L41.811 49.7571C41.2912 50.2785 40.5863 50.5714 39.8513 50.5714C39.1163 50.5714 38.4114 50.2785 37.8916 49.7571L30.0512 41.8907C29.4031 41.2461 28.8882 40.4794 28.5362 39.6347C28.1842 38.7899 28.002 37.8837 28 36.9681C27.998 36.0524 28.1763 35.1454 28.5246 34.2991C28.8729 33.4528 29.3844 32.6839 30.0297 32.0364C30.675 31.389 31.4414 30.8758 32.2849 30.5263C33.1284 30.1769 34.0324 29.998 34.945 30C35.8575 30.002 36.7607 30.1849 37.6027 30.538C38.4447 30.8912 39.2088 31.4077 39.8513 32.058C41.1563 30.7813 42.91 30.0718 44.7327 30.0833C46.5553 30.0947 48.3001 30.8262 49.589 32.1192C50.8779 33.4123 51.6072 35.1627 51.6189 36.9914C51.6306 38.8201 50.9237 40.5798 49.6514 41.8893Z" fill="currentColor" stroke="white" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {/* Text Content */}
-              <div className="flex flex-col items-start space-y-2 flex-1">
-                {/* Ich kenne einen Anbieter */}
-                <h2 className="font-medium text-lg leading-6 text-[#232323]">
-                  Ich kenne einen Anbieter
-                </h2>
-                {/* Description */}
-                <p className="font-normal text-sm leading-4 tracking-[0.15px] text-[#272727]">
-                  Empfiehl jemanden, den du kennst, damit andere ihn finden können.
-                </p>
-              </div>
-            </div>
-            {/* Button Below */}
-            <button 
-              className="flex justify-center items-center px-5 py-0 space-x-2 h-[40px] min-h-[40px] max-h-[40px] bg-[#589D96] rounded-[16.8px] text-white font-medium text-base leading-[19px] text-center hover:bg-teal-600 transition-colors duration-300 w-full"
-              style={{ height: '40px' }}
+            <ProviderOptionCard
+              buttonText="Anbieter empfehlen"
+              description="Empfiehl jemanden, den du kennst, damit andere ihn finden können."
+              title="Ich kenne einen Anbieter"
+              variant="recommend"
               onClick={handleRecommendProvider}
-            >
-              Anbieter empfehlen
-            </button>
+            />
           </div>
         </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
