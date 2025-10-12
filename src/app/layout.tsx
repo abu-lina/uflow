@@ -62,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           margin: 0,
           padding: 0,
           background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
-          backgroundAttachment: 'fixed',
+          backgroundAttachment: 'scroll',
         }}
       >
         <QueryProvider>
