@@ -207,6 +207,13 @@ export default function SocialProjectPage() {
             <StepIndicator currentStep={3} steps={STEPS} />
           </div>
 
+          {/* Subtitle */}
+          <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
+            <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
+              Wähle soziale Initiativen aus, die du unterstützt. Sobald die Verantwortlichen der Initiativen dies verifiziert haben, wird dein Angebot mit der Initiativen verknüpft.
+            </p>
+          </div>
+
           {/* Search Section */}
           <div className="flex w-full flex-col gap-4">
             
