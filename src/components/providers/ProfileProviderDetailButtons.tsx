@@ -35,6 +35,19 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
     };
   }, []);
 
+  // Lock body scroll when menu is open
+  useEffect(() => {
+    if (showActionsMenu) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showActionsMenu]);
+
   const closeActionsMenu = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -53,6 +66,10 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
+    
+    // Prevent default to stop background scrolling
+    e.preventDefault();
+    
     const touch = e.touches[0];
     if (!touch) return;
     
