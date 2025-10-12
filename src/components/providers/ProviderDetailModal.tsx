@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
-import { openNavigation, formatAddress, isAddressNavigable } from '@/utils/navigationUtils';
+import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -234,7 +234,8 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     } else if (action === 'call' && provider.contact_phone) {
       window.open(`tel:${provider.contact_phone}`);
     } else if (action === 'website' && provider.social_website) {
-      window.open(provider.social_website, '_blank');
+      const url = normalizeWebsiteUrl(provider.social_website);
+      if (url) window.open(url, '_blank');
     }
   };
 

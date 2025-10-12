@@ -14,7 +14,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
-import { openNavigation, formatAddress, isAddressNavigable } from '@/utils/navigationUtils';
+import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUrl, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 interface ProviderDetailPageProps {
   provider: Provider;
@@ -208,7 +208,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               {provider.social_website && (
                 <button
                   className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
-                  onClick={() => provider.social_website && window.open(provider.social_website, '_blank')}
+                  onClick={() => {
+                    const url = normalizeWebsiteUrl(provider.social_website);
+                    if (url) window.open(url, '_blank');
+                  }}
                 >
                   <Icon className="h-5 w-5 text-gray-600" icon="mdi:internet" />
                 </button>
@@ -225,9 +228,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 <button
                   className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
                   onClick={() => {
-                    if (provider.social_instagram) {
-                      window.open(provider.social_instagram, '_blank');
-                    }
+                    const url = normalizeInstagramUrl(provider.social_instagram);
+                    if (url) window.open(url, '_blank');
                   }}
                 >
                   <Icon className="h-5 w-5 text-gray-600" icon="mdi:instagram" />

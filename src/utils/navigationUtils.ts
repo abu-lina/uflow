@@ -70,3 +70,57 @@ export const formatAddress = (street?: string, zip?: string, city?: string): str
 export const isAddressNavigable = (street?: string, zip?: string, city?: string): boolean => {
   return !!(street || (zip && city) || city);
 };
+
+/**
+ * Normalizes Instagram URL/username to a valid Instagram URL
+ * @param instagram - Instagram username or URL
+ * @returns Properly formatted Instagram URL or null if invalid
+ */
+export const normalizeInstagramUrl = (instagram: string | null | undefined): string | null => {
+  if (!instagram || !instagram.trim()) return null;
+  
+  const trimmed = instagram.trim();
+  
+  // If it's already a full URL
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    // Ensure it's an instagram.com URL
+    if (trimmed.includes('instagram.com/')) {
+      return trimmed;
+    }
+    // If it's a URL but not Instagram, return null
+    return null;
+  }
+  
+  // Remove @ symbol if present
+  const username = trimmed.replace(/^@/, '');
+  
+  // Remove any trailing or leading slashes
+  const cleanUsername = username.replace(/^\/+|\/+$/g, '');
+  
+  // Validate username format (alphanumeric, dots, underscores only)
+  if (!/^[a-zA-Z0-9._]+$/.test(cleanUsername)) {
+    return null;
+  }
+  
+  // Return properly formatted Instagram URL
+  return `https://www.instagram.com/${cleanUsername}`;
+};
+
+/**
+ * Normalizes website URL to ensure it has a proper protocol
+ * @param website - Website URL
+ * @returns Properly formatted website URL or null if invalid
+ */
+export const normalizeWebsiteUrl = (website: string | null | undefined): string | null => {
+  if (!website || !website.trim()) return null;
+  
+  const trimmed = website.trim();
+  
+  // If it already has a protocol, return as is
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  
+  // Add https:// if no protocol is present
+  return `https://${trimmed}`;
+};

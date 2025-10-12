@@ -11,7 +11,7 @@ import { ProviderActionBar } from '@/components/providers/ProviderActionBar';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
-import { openNavigation, formatAddress, isAddressNavigable } from '@/utils/navigationUtils';
+import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 interface ProviderCardModalProps {
   open: boolean;
@@ -405,7 +405,8 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
   // Website handler
   const handleWebsite = () => {
     if (provider.social_website) {
-      window.open(provider.social_website, '_blank');
+      const url = normalizeWebsiteUrl(provider.social_website);
+      if (url) window.open(url, '_blank');
     }
   };
 
@@ -667,7 +668,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             <ProviderActionBar
               isSaved={isSaved}
               phoneNumber={provider.contact_phone || undefined}
-              websiteUrl={provider.social_website || undefined}
+              websiteUrl={provider.social_website ? normalizeWebsiteUrl(provider.social_website) || undefined : undefined}
               onCall={handleCall}
               onSave={handleSave}
               onShare={handleShare}
