@@ -196,20 +196,24 @@ export default function MediaUploadPage() {
 
       console.log('Provider created successfully with ID:', createdProvider.provider_id);
 
-      // Create provider-community service relationship if a community service was selected
-      if (formData.selectedCommunityServiceId && createdProvider.provider_id) {
-        console.log('Creating relationship with community service:', formData.selectedCommunityServiceId);
-        const relationshipResult = await createProviderCommunityServiceRelationship(
-          createdProvider.provider_id,
-          formData.selectedCommunityServiceId
+      // Create provider-community service relationships for all selected services
+      const selectedServiceIds = formData.selectedCommunityServiceIds || [];
+      if (selectedServiceIds.length > 0 && createdProvider.provider_id) {
+        console.log('Creating relationships with community services:', selectedServiceIds);
+        
+        const results = await Promise.allSettled(
+          selectedServiceIds.map(serviceId => 
+            createProviderCommunityServiceRelationship(createdProvider.provider_id, serviceId)
+          )
         );
         
-        if (!relationshipResult.success) {
-          console.error('Failed to create community service relationship:', relationshipResult.error);
-          // Don't throw - provider is created, just log the error
-          toast.error('Anbieter erstellt, aber Spenden-Projekt konnte nicht verknüpft werden.');
+        const failedCount = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).length;
+        
+        if (failedCount > 0) {
+          console.error(`Failed to create ${failedCount} community service relationship(s)`);
+          toast.error(`Anbieter erstellt, aber ${failedCount} Initiative(n) konnten nicht verknüpft werden.`);
         } else {
-          console.log('Community service relationship created successfully');
+          console.log(`Successfully created ${selectedServiceIds.length} community service relationship(s)`);
         }
       }
       
@@ -309,9 +313,11 @@ export default function MediaUploadPage() {
                   onClick={() => router.push('/create/media/social')}
                 >
                   <div className="flex flex-1 flex-col gap-1 items-start">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Spenden-Projekt</span>
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Soziale Initiativen</span>
                     <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
-                      {formData.donationProject || 'Spenden-Projekt auswählen'}
+                      {(formData.selectedCommunityServiceIds || []).length > 0 
+                        ? `${(formData.selectedCommunityServiceIds || []).length} Initiativen ausgewählt` 
+                        : 'Initiativen auswählen'}
                     </div>
                   </div>
                   <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">

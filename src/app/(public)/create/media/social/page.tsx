@@ -139,23 +139,20 @@ export default function SocialProjectPage() {
   console.log('Search query:', searchQuery);
   console.log('Filtered projects:', filteredProjects);
 
-  // Handle project selection/deselection
-  const selectProject = (serviceId: string) => {
-    const service = communityServices.find(s => s.community_service_id === serviceId);
-    if (service) {
-      // If this service is already selected, deselect it
-      if (formData.selectedCommunityServiceId === serviceId) {
-        updateFormData({ 
-          donationProject: null,
-          selectedCommunityServiceId: null
-        });
-      } else {
-        // Otherwise, select it
-        updateFormData({ 
-          donationProject: service.community_service_name,
-          selectedCommunityServiceId: service.community_service_id
-        });
-      }
+  // Handle project selection/deselection (multi-select)
+  const toggleProject = (serviceId: string) => {
+    const currentIds = formData.selectedCommunityServiceIds || [];
+    
+    if (currentIds.includes(serviceId)) {
+      // Remove from selection
+      updateFormData({ 
+        selectedCommunityServiceIds: currentIds.filter(id => id !== serviceId)
+      });
+    } else {
+      // Add to selection
+      updateFormData({ 
+        selectedCommunityServiceIds: [...currentIds, serviceId]
+      });
     }
   };
 
@@ -264,7 +261,7 @@ export default function SocialProjectPage() {
                     return '/images/placeholder.jpg';
                   };
 
-                  const isSelected = formData.selectedCommunityServiceId === service.community_service_id;
+                  const isSelected = (formData.selectedCommunityServiceIds || []).includes(service.community_service_id);
                   const donationText = service.donation_count && service.donation_count > 0 
                     ? `${service.donation_count}x Gesponsort` 
                     : undefined;
@@ -278,8 +275,8 @@ export default function SocialProjectPage() {
                       imageUrl={getImageUrl()}
                       isSelected={isSelected}
                       title={service.community_service_name}
-                      onAction={() => selectProject(service.community_service_id)}
-                      onClick={() => selectProject(service.community_service_id)}
+                      onAction={() => toggleProject(service.community_service_id)}
+                      onClick={() => toggleProject(service.community_service_id)}
                     />
                   );
                 })}
@@ -310,16 +307,18 @@ export default function SocialProjectPage() {
         <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
           <button
             className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              formData.selectedCommunityServiceId
+              (formData.selectedCommunityServiceIds || []).length > 0
                 ? 'bg-[#589D96] opacity-100'
                 : 'bg-[#589D96] opacity-30 cursor-not-allowed'
             }`}
-            disabled={!formData.selectedCommunityServiceId}
+            disabled={(formData.selectedCommunityServiceIds || []).length === 0}
             onClick={handleSave}
           >
             <Icon className="h-6 w-6 text-white" icon="lucide:save" />
             <span className="text-base font-medium text-white leading-[19px]">
-              Speichern
+              {(formData.selectedCommunityServiceIds || []).length > 0 
+                ? `${(formData.selectedCommunityServiceIds || []).length} ausgewählt` 
+                : 'Speichern'}
             </span>
           </button>
         </div>

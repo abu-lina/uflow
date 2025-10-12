@@ -34,9 +34,8 @@ export interface ProviderFormData {
   // Media
   images: File[];
   
-  // Donation Project
-  donationProject: string | null;
-  selectedCommunityServiceId: string | null;
+  // Community Services (multiple selection)
+  selectedCommunityServiceIds: string[];
   
   // Tags
   tags: string[];
@@ -65,8 +64,7 @@ const initialFormData: ProviderFormData = {
   offers_ids: [],
   needs_ids: [],
   images: [],
-  donationProject: null,
-  selectedCommunityServiceId: null,
+  selectedCommunityServiceIds: [],
   tags: [],
   socialCategory: '',
   socialTitle: '',
