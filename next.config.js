@@ -50,6 +50,9 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
 
+  // Docker/Standalone output for Hetzner deployment
+  output: 'standalone',
+  
   // Cloudflare Pages optimization - use standard output for SSR
   
   // Optimize file tracing for Cloudflare Pages
