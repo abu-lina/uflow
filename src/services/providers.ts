@@ -572,6 +572,108 @@ export async function getAllBookmarkedItems(userId: string): Promise<Provider[]>
 }
 
 /**
+ * Fetch cities from all bookmarked items for a user
+ */
+export async function fetchBookmarkedCities(userId: string): Promise<string[]> {
+  // Fetch all bookmarks for this user
+  const { data: bookmarks, error: bookmarksError } = await supabase
+    .from('bookmarks')
+    .select('bookmarkable_id, bookmarkable_type')
+    .eq('user_id', userId)
+    .returns<{ bookmarkable_id: string; bookmarkable_type: string }[]>();
+
+  if (bookmarksError) {
+    throw bookmarksError;
+  }
+  if (!bookmarks || bookmarks.length === 0) {
+    return [];
+  }
+
+  // Separate provider and community service IDs
+  const providerIds = bookmarks
+    .filter((b) => b.bookmarkable_type === 'provider')
+    .map((b) => b.bookmarkable_id);
+  const communityServiceIds = bookmarks
+    .filter((b) => b.bookmarkable_type === 'community_service')
+    .map((b) => b.bookmarkable_id);
+
+  const allCities: string[] = [];
+
+  // Fetch cities from providers if any
+  if (providerIds.length > 0) {
+    const { data: providers, error: providersError } = await supabase
+      .from('providers')
+      .select('address_city')
+      .in('provider_id', providerIds)
+      .returns<{ address_city: string | null }[]>();
+
+    if (providersError) {
+      console.error('Error fetching bookmarked provider cities:', providersError);
+    } else if (providers) {
+      allCities.push(...providers.map(p => p.address_city).filter((city): city is string => 
+        typeof city === 'string' && city.trim() !== '' && city !== 'null'
+      ));
+    }
+  }
+
+  // Fetch cities from community services if any
+  if (communityServiceIds.length > 0) {
+    const { data: communityServices, error: csError } = await supabase
+      .from('community_services')
+      .select('address_city')
+      .in('community_service_id', communityServiceIds)
+      .returns<{ address_city: string | null }[]>();
+
+    if (csError) {
+      console.error('Error fetching bookmarked community service cities:', csError);
+    } else if (communityServices) {
+      allCities.push(...communityServices.map(cs => cs.address_city).filter((city): city is string => 
+        typeof city === 'string' && city.trim() !== '' && city !== 'null'
+      ));
+    }
+  }
+
+  // Return unique cities, sorted alphabetically
+  const uniqueCities = Array.from(new Set(allCities));
+  
+  // Check if we have any bookmarked items without cities (online businesses)
+  let hasOnlineBusinesses = false;
+  
+  // Check providers
+  if (providerIds.length > 0) {
+    const { data: providers } = await supabase
+      .from('providers')
+      .select('address_city')
+      .in('provider_id', providerIds)
+      .returns<{ address_city: string | null }[]>();
+    
+    if (providers) {
+      hasOnlineBusinesses = providers.some(p => !p.address_city || p.address_city.trim() === '');
+    }
+  }
+  
+  // Check community services
+  if (communityServiceIds.length > 0) {
+    const { data: communityServices } = await supabase
+      .from('community_services')
+      .select('address_city')
+      .in('community_service_id', communityServiceIds)
+      .returns<{ address_city: string | null }[]>();
+    
+    if (communityServices) {
+      hasOnlineBusinesses = hasOnlineBusinesses || communityServices.some(cs => !cs.address_city || cs.address_city.trim() === '');
+    }
+  }
+  
+  // Add "Online" if we have online businesses
+  if (hasOnlineBusinesses) {
+    uniqueCities.push('Online');
+  }
+  
+  return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
+}
+
+/**
  * Fetch all providers created by a user (as owner)
  */
 export async function getCreatedProviders(userId: string): Promise<Provider[]> {

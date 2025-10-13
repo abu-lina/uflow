@@ -73,11 +73,19 @@ export function getAllTrustedImageUrls(providerImages: string | string[] | { url
  * Formats address components into a single display string
  * @param street - Street address
  * @param city - City name
- * @returns Formatted address string or undefined if both are empty
+ * @returns Formatted address string or "Online" if no location data
  */
-export function formatProviderAddress(street?: string | null, city?: string | null): string | undefined {
+export function formatProviderAddress(street?: string | null, city?: string | null): string {
+  // If no city, it's an online business
+  if (!city) {
+    return 'Online';
+  }
+  
+  // If we have both street and city, show both
   if (street && city) {
     return `${street}, ${city}`;
   }
-  return street || city || undefined;
+  
+  // If only city, show just the city
+  return city;
 }

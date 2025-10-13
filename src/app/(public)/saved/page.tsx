@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
-import { getAllBookmarkedItems, type Provider } from '@/services/providers';
+import { getAllBookmarkedItems, fetchBookmarkedCities, type Provider } from '@/services/providers';
 import { getFirstImageUrl, formatProviderAddress } from '@/utils/imageUtils';
 
 export default function SavedProvidersPage() {
@@ -29,6 +29,17 @@ export default function SavedProvidersPage() {
     queryFn: async () => {
       if (!user) return [];
       return await getAllBookmarkedItems(user.id);
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch cities from bookmarked items
+  const { data: bookmarkedCities = [] } = useQuery({
+    queryKey: ['bookmarked-cities', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      return await fetchBookmarkedCities(user.id);
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -53,9 +64,17 @@ export default function SavedProvidersPage() {
 
     // Filter by location
     if (selectedLocation && selectedLocation !== 'Überall') {
-      filtered = filtered.filter((provider) => 
-        provider.address_city?.toLowerCase() === selectedLocation.toLowerCase()
-      );
+      if (selectedLocation === 'Online') {
+        // Filter for online businesses (no city)
+        filtered = filtered.filter((provider) => 
+          !provider.address_city || provider.address_city.trim() === ''
+        );
+      } else {
+        // Filter for specific city
+        filtered = filtered.filter((provider) => 
+          provider.address_city?.toLowerCase() === selectedLocation.toLowerCase()
+        );
+      }
     }
 
     return filtered;
@@ -195,6 +214,7 @@ export default function SavedProvidersPage() {
       <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
         <section className="w-full mb-6">
           <SearchBar 
+            customCities={bookmarkedCities}
             hideCategoryFilter={true}
             onCategoryChange={handleCategoryChange}
             onClearSearch={handleClearSearch}

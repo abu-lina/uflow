@@ -15,6 +15,8 @@ import { fetchProviderCities, fetchFilteredCities } from '@/services/providers';
 interface SearchBarProps {
   className?: string;
   hideCategoryFilter?: boolean;
+  // Custom cities to use instead of fetching from database
+  customCities?: string[];
   // Callbacks for parent to handle behavior
   onSearchSubmit?: (query: string, category: string | null, location: string) => void;
   onClearSearch?: () => void;
@@ -25,6 +27,7 @@ interface SearchBarProps {
 function SearchBarContent({ 
   className = '', 
   hideCategoryFilter, 
+  customCities,
   onSearchSubmit,
   onClearSearch,
   onCategoryChange,
@@ -113,6 +116,12 @@ function SearchBarContent({
   useEffect(() => {
     async function fetchCities() {
       try {
+        // If custom cities are provided, use them instead of fetching from database
+        if (customCities) {
+          setLocations(['Überall', ...customCities]);
+          return;
+        }
+
         // If we have category or search query filters, use filtered cities
         if (selectedCategory || searchQuery.trim()) {
           const filteredCities = await fetchFilteredCities(selectedCategory, searchQuery);
@@ -129,7 +138,7 @@ function SearchBarContent({
     }
 
     fetchCities();
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, customCities]);
 
   // Sync state with URL params only on initial mount or when the page changes
   useEffect(() => {
@@ -309,7 +318,7 @@ function SearchBarContent({
             {isLocationOpen && (
               <div
                 ref={locationDropdownRef}
-                className="dropdown-container absolute right-0 top-full z-10 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
               >
                 {locations.map((location) => (
                   <button
