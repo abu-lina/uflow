@@ -95,3 +95,6 @@ storybook-static
 
 # OpenNext build output
 .open-next
+
+# Local Netlify folder
+.netlify

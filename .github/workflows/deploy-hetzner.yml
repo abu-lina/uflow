@@ -1,0 +1,44 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      run: |
+        docker build -t uflow:latest \
+          --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+          --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+          --platform linux/amd64 .
+    
+    - name: Save Docker image
+      run: |
+        docker save uflow:latest | gzip > uflow.tar.gz
+    
+    - name: Deploy to Hetzner
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HETZNER_HOST }}
+        username: root
+        key: ${{ secrets.HETZNER_SSH_KEY }}
+        script: |
+          cd /tmp
+          docker stop uflow-app || true
+          docker rm uflow-app || true
+          docker load < uflow.tar.gz
+          docker run -d -p 3000:3000 --name uflow-app uflow:latest
+          systemctl reload nginx
+          rm -f uflow.tar.gz
+          echo "✅ Deployment complete!"

@@ -1,0 +1,13 @@
+# Copy these to your Hetzner server's .env.local file
+
+NEXT_PUBLIC_SUPABASE_URL=https://rdtdtcfntopcxcigkqoq.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_uBW3lxrnOmqPI047jBmxtg_YFVDsr1q
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_zz-UfIBWCufSI2rJ90edlw_ZFgj6it7
+
+# Optional (if you're using Sentry for error tracking)
+# NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn-if-using
+
+# Optional (if you're using Upstash for rate limiting)
+# UPSTASH_REDIS_REST_URL=your-upstash-url-if-using
+# UPSTASH_REDIS_REST_TOKEN=your-upstash-token-if-using
+
