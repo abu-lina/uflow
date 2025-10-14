@@ -7,7 +7,7 @@ A Next.js application for connecting community service providers with users.
 This application is deployed on **Hetzner Cloud** with automatic deployment via GitHub Actions.
 
 ### Production URL
-- **Live App:** http://91.98.207.106
+- **Live App:** https://ummahflow.com
 
 ### Local Development
 ```bash
