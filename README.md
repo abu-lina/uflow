@@ -19,8 +19,10 @@ npm run dev
 ```
 
 ### Deployment
-- **Automatic:** Push to `main` branch triggers deployment
-- **Manual:** Run `./deploy.sh` for manual deployment
+- **Automatic:** Push to `main` branch triggers deployment with health checks
+- **Manual:** Run `./deploy-with-monitoring.sh` for manual deployment with monitoring
+- **Health Check:** https://ummahflow.com/api/health
+- **Monitoring:** Run `./monitor-app.sh` to check app status
 
 ## 🛠️ Tech Stack
 - **Frontend:** Next.js 15, TypeScript, Tailwind CSS

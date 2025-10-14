@@ -34,71 +34,78 @@ jobs:
         username: root
         key: ${{ secrets.HETZNER_SSH_KEY }}
         script: |
+          set -e
           cd /tmp
+          
+          # Stop and remove old container
+          echo "🛑 Stopping existing container..."
           docker stop uflow-app || true
           docker rm uflow-app || true
+          
+          # Load new image
+          echo "📦 Loading new image..."
           docker load < uflow.tar.gz
+          
+          # Start new container
+          echo "🚀 Starting new container..."
           docker run -d -p 3000:3000 --name uflow-app uflow:latest
           
-          # Fix Nginx configuration for CSS MIME types
-          cat > /etc/nginx/sites-available/ummahflow << 'NGINX_CONFIG'
-          server {
-              listen 443 ssl http2;
-              server_name ummahflow.com www.ummahflow.com;
-
-              # SSL configuration
-              ssl_certificate /etc/letsencrypt/live/ummahflow.com/fullchain.pem;
-              ssl_certificate_key /etc/letsencrypt/live/ummahflow.com/privkey.pem;
-              ssl_protocols TLSv1.2 TLSv1.3;
-              ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
-              ssl_prefer_server_ciphers off;
-
-              # Security headers (removed X-Content-Type-Options to fix CSS MIME issue)
-              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
-              add_header X-Frame-Options "SAMEORIGIN" always;
-              add_header X-XSS-Protection "1; mode=block" always;
-              add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-              add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co;" always;
-
-              # Hide server version
-              server_tokens off;
-
-              # Serve static files directly with proper MIME types
-              location /_next/static/ {
-                  proxy_pass http://localhost:3000;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-                  expires 1y;
-                  add_header Cache-Control "public, immutable";
-              }
-
-              location / {
-                  proxy_pass http://localhost:3000;
-                  proxy_http_version 1.1;
-                  proxy_set_header Upgrade $http_upgrade;
-                  proxy_set_header Connection 'upgrade';
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-                  proxy_cache_bypass $http_upgrade;
-              }
-          }
-
-          # Redirect HTTP to HTTPS
-          server {
-              listen 80;
-              server_name ummahflow.com www.ummahflow.com;
-              return 301 https://$server_name$request_uri;
-          }
-          NGINX_CONFIG
+          # Wait for container to start
+          echo "⏳ Waiting for container to start..."
+          sleep 10
           
-          # Test and reload nginx
-          nginx -t && systemctl reload nginx
+          # Health check
+          echo "🏥 Performing health check..."
+          for i in {1..30}; do
+              if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
+                  echo "✅ Health check passed"
+                  break
+              fi
+              if [ $i -eq 30 ]; then
+                  echo "❌ Health check failed after 30 attempts"
+                  docker logs uflow-app
+                  exit 1
+              fi
+              echo "Health check attempt $i/30..."
+              sleep 2
+          done
           
-          # Verify nginx configuration
-          echo "✅ Nginx configuration updated successfully"
+          # Update Nginx configuration using template
+          echo "🔧 Updating Nginx configuration..."
+          DOMAIN="ummahflow.com"
+          sed "s/{{DOMAIN}}/$DOMAIN/g" /tmp/nginx-template.conf > /etc/nginx/sites-available/ummahflow
+          
+          # Test Nginx configuration
+          echo "🧪 Testing Nginx configuration..."
+          nginx -t
+          
+          if [ $? -eq 0 ]; then
+              echo "✅ Nginx configuration is valid"
+              systemctl reload nginx
+              echo "✅ Nginx reloaded successfully"
+          else
+              echo "❌ Nginx configuration test failed"
+              exit 1
+          fi
+          
+          # Test static file serving
+          echo "📁 Testing static file serving..."
+          STATIC_TEST=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/_next/static/css/app/layout.css")
+          if [ "$STATIC_TEST" = "200" ]; then
+              echo "✅ Static files serving correctly"
+          else
+              echo "❌ Static files serving failed (HTTP $STATIC_TEST)"
+          fi
+          
+          # Test health endpoint through Nginx
+          echo "🌐 Testing health endpoint through Nginx..."
+          HEALTH_TEST=$(curl -s -o /dev/null -w "%{http_code}" "https://ummahflow.com/api/health")
+          if [ "$HEALTH_TEST" = "200" ]; then
+              echo "✅ Health endpoint accessible through Nginx"
+          else
+              echo "❌ Health endpoint failed through Nginx (HTTP $HEALTH_TEST)"
+          fi
+          
+          # Cleanup
           rm -f uflow.tar.gz
-          echo "✅ Deployment complete!"
+          echo "🎉 Deployment complete with monitoring!"
