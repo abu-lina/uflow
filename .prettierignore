@@ -28,7 +28,7 @@ yarn-error.log*
 # Local files
 *.local
 
-# Vercel (deprecated - now using Hetzner)
+# Vercel (removed - now using Hetzner)
 .vercel
 
 # TypeScript

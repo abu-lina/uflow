@@ -76,10 +76,6 @@ const nextConfig = {
         hostname: '**.supabase.co',
       },
       {
-        protocol: 'https',
-        hostname: '**.public.blob.vercel-storage.com',
-      },
-      {
         protocol: 'http',
         hostname: 'localhost',
         port: '3000',

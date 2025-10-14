@@ -37,7 +37,6 @@
     "fix:tailwind": "node scripts/fix-tailwind-classes.js",
     "fix:all": "npm run fix:tailwind && npm run format",
     "build:local": "export $(cat .env.local | xargs) && next build",
-    "build:vercel": "next build",
   },
   "dependencies": {
     "@iconify/react": "^6.0.0",
