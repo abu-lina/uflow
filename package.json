@@ -36,7 +36,7 @@
     "transform-svg": "ts-node scripts/transform-svg.ts",
     "fix:tailwind": "node scripts/fix-tailwind-classes.js",
     "fix:all": "npm run fix:tailwind && npm run format",
-    "build:local": "export $(cat .env.local | xargs) && next build",
+    "build:local": "export $(cat .env.local | xargs) && next build"
   },
   "dependencies": {
     "@iconify/react": "^6.0.0",
