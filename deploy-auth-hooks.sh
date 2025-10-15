@@ -57,7 +57,13 @@ echo "Setting SITE_URL..."
 supabase secrets set SITE_URL=https://ummahflow.com --project-ref rdtdtcfntopcxcigkqoq
 
 echo ""
-echo "✅ Secrets set successfully"
+echo "⚠️  IMPORTANT: After creating the auth hook in the dashboard:"
+echo "1. Copy the generated webhook secret (starts with v1,whsec_)"
+echo "2. Run this command to set it:"
+echo "   supabase secrets set WEBHOOK_SECRET=YOUR_SECRET_HERE --project-ref rdtdtcfntopcxcigkqoq"
+echo ""
+
+echo "✅ Basic secrets set successfully"
 echo ""
 
 # List secrets to verify
