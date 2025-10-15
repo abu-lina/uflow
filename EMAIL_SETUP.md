@@ -2,18 +2,22 @@
 
 This guide will help you set up professional email for your domain using Resend (transactional) and Cloudflare Email Routing (receiving).
 
+**✨ No Gmail or Google services required! Privacy-focused alternatives included.**
+
 ## 🎯 **Overview**
 
 **Setup:**
 - **Resend** - Sending transactional emails (auth, notifications)
 - **Cloudflare Email Routing** - Receiving emails (forwarding to your personal email)
+- **Proton Mail / Tutanota** - (Optional) For receiving if you want privacy-focused email
 
 **Benefits:**
 - ✅ Free tier covers most needs
 - ✅ Professional email addresses
 - ✅ Excellent deliverability
 - ✅ Easy Supabase integration
-- ✅ No email server management
+- ✅ No Gmail or Google services needed
+- ✅ Privacy-focused options available
 
 ---
 
@@ -100,9 +104,15 @@ TTL: Auto
 
 1. Click **"Destination addresses"**
 2. Click **"Add destination address"**
-3. Enter your personal email (e.g., `your-email@gmail.com`)
+3. Enter your personal email (e.g., `your-email@protonmail.com`, `your-email@tutanota.com`, or any email provider)
 4. Click **"Send verification email"**
 5. Check your email and click the verification link
+
+**Privacy-Focused Email Providers (No Google):**
+- **Proton Mail** - https://proton.me (Free, encrypted, Swiss-based)
+- **Tutanota** - https://tutanota.com (Free, encrypted, German-based)
+- **Mailfence** - https://mailfence.com (Free tier, Belgian-based)
+- **Posteo** - https://posteo.de (€1/month, German-based, sustainable)
 
 ### **Step 3: Create Custom Email Addresses**
 
@@ -114,18 +124,20 @@ Create forwarding rules for professional addresses:
 **Recommended addresses:**
 
 ```
-noreply@ummahflow.com → your-email@gmail.com
+noreply@ummahflow.com → your-email@protonmail.com
 (For auth emails, no-reply notifications)
 
-support@ummahflow.com → your-email@gmail.com
+support@ummahflow.com → your-email@protonmail.com
 (For user support inquiries)
 
-hello@ummahflow.com → your-email@gmail.com
+hello@ummahflow.com → your-email@protonmail.com
 (For general inquiries)
 
-admin@ummahflow.com → your-email@gmail.com
+admin@ummahflow.com → your-email@protonmail.com
 (For admin notifications)
 ```
+
+**Note:** Replace `your-email@protonmail.com` with your actual email from any provider (Proton Mail, Tutanota, etc.)
 
 3. For each address:
    - Custom address: `noreply@ummahflow.com`
@@ -266,11 +278,13 @@ curl -X POST 'https://api.resend.com/emails' \
   -H 'Content-Type: application/json' \
   -d '{
     "from": "noreply@ummahflow.com",
-    "to": "your-email@gmail.com",
+    "to": "your-email@protonmail.com",
     "subject": "Test Email from UmmahFlow",
     "html": "<p>This is a test email!</p>"
   }'
 ```
+
+**Note:** Replace `your-email@protonmail.com` with your actual email address.
 
 ### **Test 2: Receive Email**
 
@@ -353,7 +367,8 @@ Send an email to `support@ummahflow.com` from your personal email and verify it 
 
 **If you need more:**
 - Resend Pro: $20/month (50,000 emails)
-- Google Workspace: $6/user/month (full Gmail)
+- Proton Mail: €3.99/month (custom domain, encrypted)
+- Tutanota: €3/month (custom domain, encrypted)
 
 ---
 
