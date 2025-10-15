@@ -1,5 +1,4 @@
 import { supabase } from './supabase/client';
-import { sendAuthEmail } from '../services/emailService';
 
 export const signUpWithLanguage = async (
   email: string,
@@ -20,16 +19,26 @@ export const signUpWithLanguage = async (
   });
   
   if (data.user && !error) {
-    // Send custom email with language
+    // Send custom email via API route (keeps Resend key server-side)
     const confirmationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?token=${data.user.id}&type=signup`;
     
     try {
-      await sendAuthEmail(
-        email,
-        'confirmSignup',
-        language,
-        confirmationUrl
-      );
+      const response = await fetch('/api/send-auth-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: email,
+          type: 'confirmSignup',
+          language,
+          confirmationUrl,
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to send confirmation email:', await response.text());
+      }
     } catch (emailError) {
       console.error('Failed to send confirmation email:', emailError);
     }
@@ -48,18 +57,26 @@ export const resetPasswordWithLanguage = async (
   });
   
   if (!error) {
-    // Send custom email with language
-    // Note: Supabase will send its own email with the reset link
-    // This is a backup/notification email
+    // Send custom email via API route (keeps Resend key server-side)
     const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`;
     
     try {
-      await sendAuthEmail(
-        email,
-        'resetPassword',
-        language,
-        resetUrl
-      );
+      const response = await fetch('/api/send-auth-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: email,
+          type: 'resetPassword',
+          language,
+          confirmationUrl: resetUrl,
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to send reset email:', await response.text());
+      }
     } catch (emailError) {
       console.error('Failed to send reset email:', emailError);
     }

@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/hooks/useAuth';
-import { authService } from '@/features/auth/services/authService';
+import { useLanguage } from '@/hooks/useLanguage';
+import { signUpWithLanguage } from '@/lib/auth';
 
 interface FormData {
   email: string;
@@ -18,6 +20,7 @@ export function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -62,22 +65,47 @@ export function SignupPageContent() {
     e.preventDefault();
     
     if (!validateForm()) {
+      toast.error(
+        language === 'de' 
+          ? 'Bitte überprüfen Sie Ihre Eingaben' 
+          : 'Please check your inputs'
+      );
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await authService.signUp(formData.email, formData.password);
+      const { error } = await signUpWithLanguage(formData.email, formData.password, language);
       
-      const returnUrl = searchParams.get('returnUrl');
-      if (returnUrl) {
-        router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
-      } else {
-        router.push('/login');
+      if (error) {
+        toast.error(error.message);
+        return;
       }
+      
+      // Show success message
+      toast.success(
+        language === 'de' 
+          ? 'Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail.' 
+          : 'Signup successful! Please check your email.'
+      );
+      
+      // Wait a bit before redirecting so user sees the message
+      setTimeout(() => {
+        const returnUrl = searchParams.get('returnUrl');
+        if (returnUrl) {
+          router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+        } else {
+          router.push('/login');
+        }
+      }, 2000);
     } catch (error) {
       console.error('Signup error:', error);
+      toast.error(
+        language === 'de' 
+          ? 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.' 
+          : 'An error occurred. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
