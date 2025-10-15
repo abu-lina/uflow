@@ -75,14 +75,14 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
         if (event === 'TOKEN_REFRESHED') {
           setSession(session);
           setUser(session?.user ?? null);
-        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        } else if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
         } else if (event === 'SIGNED_IN') {
           setSession(session);
           setUser(session?.user ?? null);
         } else {
-          // Handle other events (INITIAL_SESSION, etc.)
+          // Handle other events (INITIAL_SESSION, PASSWORD_RECOVERY, etc.)
           setSession(session);
           setUser(session?.user ?? null);
         }

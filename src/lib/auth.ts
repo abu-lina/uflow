@@ -1,14 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from './supabase/client';
 import { sendAuthEmail } from '../services/emailService';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const signUpWithLanguage = async (
   email: string,
@@ -51,14 +42,16 @@ export const resetPasswordWithLanguage = async (
   email: string,
   language: 'en' | 'de' = 'en'
 ) => {
-  // Reset password (without email)
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+  // Request password reset from Supabase
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`
   });
   
   if (!error) {
     // Send custom email with language
-    const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password?token=${data.user?.id}`;
+    // Note: Supabase will send its own email with the reset link
+    // This is a backup/notification email
+    const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`;
     
     try {
       await sendAuthEmail(
@@ -72,5 +65,5 @@ export const resetPasswordWithLanguage = async (
     }
   }
   
-  return { data, error };
+  return { error };
 };
