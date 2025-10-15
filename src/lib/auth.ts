@@ -5,12 +5,14 @@ export const signUpWithLanguage = async (
   password: string,
   language: 'en' | 'de' = 'en'
 ) => {
-  // Sign up user (without email confirmation)
+  // Sign up user - Supabase will send its default email
+  // We need to disable email confirmation in Supabase dashboard
+  // OR use a custom SMTP in Supabase that points to a non-existent server
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      // Don't set emailRedirectTo to prevent Supabase from sending email
       data: {
         language,
         preferred_language: language
