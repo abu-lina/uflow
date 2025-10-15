@@ -7,11 +7,13 @@ export const signUpWithLanguage = async (
 ) => {
   // Sign up user with email confirmation enabled
   // Supabase creates user but marks as unconfirmed
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
+  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      emailRedirectTo: `${siteUrl}/auth/callback`,
       data: {
         language,
         preferred_language: language
@@ -23,7 +25,7 @@ export const signUpWithLanguage = async (
     // Get the confirmation token from the session
     // Supabase generates this but won't send email (invalid SMTP)
     const token = data.session.access_token;
-    const confirmationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?token=${token}&type=signup&email=${encodeURIComponent(email)}`;
+    const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&type=signup&email=${encodeURIComponent(email)}`;
     
     try {
       // Send our custom multilingual email via API route
@@ -56,13 +58,15 @@ export const resetPasswordWithLanguage = async (
   language: 'en' | 'de' = 'en'
 ) => {
   // Request password reset from Supabase
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
+  
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`
+    redirectTo: `${siteUrl}/auth/reset-password`
   });
   
   if (!error) {
     // Send custom email via API route (keeps Resend key server-side)
-    const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`;
+    const resetUrl = `${siteUrl}/auth/reset-password`;
     
     try {
       const response = await fetch('/api/send-auth-email', {
