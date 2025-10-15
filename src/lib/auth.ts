@@ -5,14 +5,13 @@ export const signUpWithLanguage = async (
   password: string,
   language: 'en' | 'de' = 'en'
 ) => {
-  // Sign up user - Supabase will send its default email
-  // We need to disable email confirmation in Supabase dashboard
-  // OR use a custom SMTP in Supabase that points to a non-existent server
+  // Sign up user with email confirmation enabled
+  // Supabase creates user but marks as unconfirmed
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      // Don't set emailRedirectTo to prevent Supabase from sending email
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
       data: {
         language,
         preferred_language: language
@@ -20,11 +19,14 @@ export const signUpWithLanguage = async (
     }
   });
   
-  if (data.user && !error) {
-    // Send custom email via API route (keeps Resend key server-side)
-    const confirmationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?token=${data.user.id}&type=signup`;
+  if (data.user && data.session && !error) {
+    // Get the confirmation token from the session
+    // Supabase generates this but won't send email (invalid SMTP)
+    const token = data.session.access_token;
+    const confirmationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?token=${token}&type=signup&email=${encodeURIComponent(email)}`;
     
     try {
+      // Send our custom multilingual email via API route
       const response = await fetch('/api/send-auth-email', {
         method: 'POST',
         headers: {
