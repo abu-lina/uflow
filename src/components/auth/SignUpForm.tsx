@@ -43,10 +43,10 @@ export const SignUpForm = () => {
             {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
           </label>
           <input
+            required
             className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
             id="email"
             placeholder={language === 'de' ? 'ihre@email.com' : 'your@email.com'}
-            required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -58,10 +58,10 @@ export const SignUpForm = () => {
             {language === 'de' ? 'Passwort' : 'Password'}
           </label>
           <input
+            required
             className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
             id="password"
             placeholder={language === 'de' ? 'Ihr Passwort' : 'Your password'}
-            required
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

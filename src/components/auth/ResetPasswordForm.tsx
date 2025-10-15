@@ -42,10 +42,10 @@ export const ResetPasswordForm = () => {
             {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
           </label>
           <input
+            required
             className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
             id="email"
             placeholder={language === 'de' ? 'ihre@email.com' : 'your@email.com'}
-            required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
