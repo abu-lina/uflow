@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import { supabase } from '@/lib/supabase/client';
+import { clearInvalidSession } from '@/lib/supabase/clearInvalidSession';
 
 import type { Session, User } from '@supabase/supabase-js';
 
@@ -34,14 +35,27 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
         try {
           const {
             data: { session: initialSession },
+            error
           } = await supabase.auth.getSession();
+
+          if (error) {
+            console.warn('Auth session error:', error.message);
+            // Clear any invalid session data
+            clearInvalidSession();
+            await supabase.auth.signOut();
+          }
 
           if (mounted) {
             setSession(initialSession);
             setUser(initialSession?.user ?? null);
           }
-        } catch {
+        } catch (err) {
           // Error handled silently - user will be null
+          console.warn('Auth initialization error:', err);
+          if (mounted) {
+            setSession(null);
+            setUser(null);
+          }
         } finally {
           if (mounted) {
             setIsLoading(false);
@@ -57,8 +71,21 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (mounted) {
-        setSession(session);
-        setUser(session?.user ?? null);
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED') {
+          setSession(session);
+          setUser(session?.user ?? null);
+        } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          setSession(null);
+          setUser(null);
+        } else if (event === 'SIGNED_IN') {
+          setSession(session);
+          setUser(session?.user ?? null);
+        } else {
+          // Handle other events (INITIAL_SESSION, etc.)
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
         setIsLoading(false);
       }
     });
