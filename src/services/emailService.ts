@@ -1,6 +1,18 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-load Resend client to avoid build-time initialization
+let resendClient: Resend | null = null;
+
+const getResendClient = () => {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY environment variable is not set');
+    }
+    resendClient = new Resend(apiKey);
+  }
+  return resendClient;
+};
 
 // Email templates
 const templates = {
@@ -239,6 +251,7 @@ export const sendAuthEmail = async (
   confirmationUrl: string
 ) => {
   const template = templates[type][language];
+  const resend = getResendClient();
   
   return await resend.emails.send({
     from: 'noreply@ummahflow.com',

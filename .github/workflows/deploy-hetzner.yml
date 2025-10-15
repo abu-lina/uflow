@@ -58,7 +58,13 @@ jobs:
             docker load < uflow.tar.gz
             
             echo "🚀 Starting new container..."
-            docker run -d -p 3000:3000 --name uflow-app uflow:latest
+            docker run -d -p 3000:3000 \
+              -e NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+              -e NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+              -e SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
+              -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
+              --name uflow-app uflow:latest
             
             echo "⏳ Waiting for app to start..."
             sleep 10
