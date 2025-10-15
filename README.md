@@ -24,6 +24,12 @@ npm run dev
 - **Health Check:** https://ummahflow.com/api/health
 - **Monitoring:** Run `./monitor-app.sh` to check app status
 
+### CI/CD Pipeline
+- **CI:** Runs on PRs and feature branches (lint, test, build, security)
+- **Deploy:** Automated deployment to Hetzner on main branch
+- **Quality Gates:** Weekly deep analysis (performance, security, dependencies)
+- **Documentation:** See [WORKFLOWS.md](WORKFLOWS.md) for detailed information
+
 ## 🛠️ Tech Stack
 - **Frontend:** Next.js 15, TypeScript, Tailwind CSS
 - **Backend:** Supabase

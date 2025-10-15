@@ -5,116 +5,103 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  NODE_VERSION: '20'
+
 jobs:
   deploy:
+    name: Build & Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-    - name: Build Docker image
-      run: |
-        docker build -t uflow:latest \
-          --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
-          --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
-          --platform linux/amd64 .
-    
-    - name: Save Docker image
-      run: |
-        docker save uflow:latest | gzip > uflow.tar.gz
-    
-    - name: Upload files to Hetzner
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HETZNER_HOST }}
-        username: root
-        key: ${{ secrets.HETZNER_SSH_KEY }}
-        source: "uflow.tar.gz,nginx-template.conf"
-        target: "/tmp/"
-    
-    - name: Deploy to Hetzner
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.HETZNER_HOST }}
-        username: root
-        key: ${{ secrets.HETZNER_SSH_KEY }}
-        script: |
-          set -e
-          cd /tmp
-          
-          # Stop and remove old container
-          echo "🛑 Stopping existing container..."
-          docker stop uflow-app || true
-          docker rm uflow-app || true
-          
-          # Load new image
-          echo "📦 Loading new image..."
-          docker load < uflow.tar.gz
-          
-          # Start new container
-          echo "🚀 Starting new container..."
-          docker run -d -p 3000:3000 --name uflow-app uflow:latest
-          
-          # Wait for container to start
-          echo "⏳ Waiting for container to start..."
-          sleep 10
-          
-          # Health check
-          echo "🏥 Performing health check..."
-          for i in {1..30}; do
-              if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
-                  echo "✅ Health check passed"
-                  break
-              fi
-              if [ $i -eq 30 ]; then
-                  echo "❌ Health check failed after 30 attempts"
-                  docker logs uflow-app
-                  exit 1
-              fi
-              echo "Health check attempt $i/30..."
-              sleep 2
-          done
-          
-          # Update Nginx configuration using template
-          echo "🔧 Updating Nginx configuration..."
-          DOMAIN="ummahflow.com"
-          sed "s/{{DOMAIN}}/$DOMAIN/g" /tmp/nginx-template.conf > /etc/nginx/sites-available/ummahflow
-          
-          # Test Nginx configuration
-          echo "🧪 Testing Nginx configuration..."
-          nginx -t
-          
-          if [ $? -eq 0 ]; then
-              echo "✅ Nginx configuration is valid"
-              systemctl reload nginx
-              echo "✅ Nginx reloaded successfully"
-          else
-              echo "❌ Nginx configuration test failed"
-              exit 1
-          fi
-          
-          # Test static file serving
-          echo "📁 Testing static file serving..."
-          STATIC_TEST=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/_next/static/css/app/layout.css")
-          if [ "$STATIC_TEST" = "200" ]; then
-              echo "✅ Static files serving correctly"
-          else
-              echo "❌ Static files serving failed (HTTP $STATIC_TEST)"
-          fi
-          
-          # Test health endpoint through Nginx
-          echo "🌐 Testing health endpoint through Nginx..."
-          HEALTH_TEST=$(curl -s -o /dev/null -w "%{http_code}" "https://ummahflow.com/api/health")
-          if [ "$HEALTH_TEST" = "200" ]; then
-              echo "✅ Health endpoint accessible through Nginx"
-          else
-              echo "❌ Health endpoint failed through Nginx (HTTP $HEALTH_TEST)"
-          fi
-          
-          # Cleanup
-          rm -f uflow.tar.gz
-          echo "🎉 Deployment complete with monitoring!"
+      - name: Build Docker image
+        run: |
+          docker build -t uflow:latest \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            --platform linux/amd64 .
+      
+      - name: Save Docker image
+        run: docker save uflow:latest | gzip > uflow.tar.gz
+      
+      - name: Upload files to Hetzner
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          source: "uflow.tar.gz,nginx-template.conf"
+          target: "/tmp/"
+      
+      - name: Deploy to Hetzner
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            set -e
+            cd /tmp
+            
+            echo "🛑 Stopping old container..."
+            docker stop uflow-app || true
+            docker rm uflow-app || true
+            
+            echo "📦 Loading new image..."
+            docker load < uflow.tar.gz
+            
+            echo "🚀 Starting new container..."
+            docker run -d -p 3000:3000 --name uflow-app uflow:latest
+            
+            echo "⏳ Waiting for app to start..."
+            sleep 10
+            
+            echo "🏥 Health check..."
+            for i in {1..30}; do
+                if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
+                    echo "✅ App is healthy"
+                    break
+                fi
+                [ $i -eq 30 ] && echo "❌ Health check failed" && docker logs --tail 50 uflow-app && exit 1
+                sleep 2
+            done
+            
+            echo "🔧 Updating Nginx..."
+            sed "s/{{DOMAIN}}/ummahflow.com/g" /tmp/nginx-template.conf > /etc/nginx/sites-available/ummahflow
+            
+            echo "🧪 Testing Nginx config..."
+            if nginx -t; then
+                systemctl reload nginx
+                echo "✅ Nginx reloaded"
+            else
+                echo "❌ Nginx config invalid"
+                exit 1
+            fi
+            
+            echo "🌐 Verifying deployment..."
+            sleep 3
+            if curl -f https://ummahflow.com/api/health > /dev/null 2>&1; then
+                echo "✅ Deployment successful!"
+            else
+                echo "⚠️ Health check through domain failed (may need DNS propagation)"
+            fi
+            
+            rm -f /tmp/uflow.tar.gz
+            echo "🎉 Deployment complete!"
+      
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "## ✅ Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Live URL:** https://ummahflow.com" >> $GITHUB_STEP_SUMMARY
+          echo "**Health Check:** https://ummahflow.com/api/health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 Your app is now live!" >> $GITHUB_STEP_SUMMARY
