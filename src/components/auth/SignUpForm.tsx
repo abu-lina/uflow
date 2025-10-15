@@ -17,7 +17,7 @@ export const SignUpForm = () => {
     setMessage('');
     
     try {
-      const { data, error } = await signUpWithLanguage(email, password, language);
+      const { error } = await signUpWithLanguage(email, password, language);
       
       if (error) {
         setMessage(error.message);
@@ -28,7 +28,7 @@ export const SignUpForm = () => {
             : 'Signup successful! Please check your email.'
         );
       }
-    } catch (error) {
+    } catch {
       setMessage('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -37,41 +37,41 @@ export const SignUpForm = () => {
 
   return (
     <div className="max-w-md mx-auto">
-      <form onSubmit={handleSignUp} className="space-y-6">
+      <form className="space-y-6" onSubmit={handleSignUp}>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-content-title mb-2">
+          <label className="block text-sm font-medium text-content-title mb-2" htmlFor="email">
             {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
           </label>
           <input
+            className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
             id="email"
+            placeholder={language === 'de' ? 'ihre@email.com' : 'your@email.com'}
+            required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
-            placeholder={language === 'de' ? 'ihre@email.com' : 'your@email.com'}
-            required
           />
         </div>
         
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-content-title mb-2">
+          <label className="block text-sm font-medium text-content-title mb-2" htmlFor="password">
             {language === 'de' ? 'Passwort' : 'Password'}
           </label>
           <input
+            className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
             id="password"
+            placeholder={language === 'de' ? 'Ihr Passwort' : 'Your password'}
+            required
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
-            placeholder={language === 'de' ? 'Ihr Passwort' : 'Your password'}
-            required
           />
         </div>
         
         <button
-          type="submit"
-          disabled={loading}
           className="w-full bg-mint text-white py-3 px-4 rounded-lg font-medium hover:bg-mint/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          disabled={loading}
+          type="submit"
         >
           {loading 
             ? (language === 'de' ? 'Registrierung läuft...' : 'Signing up...')

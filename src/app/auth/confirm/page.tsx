@@ -4,10 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function ConfirmEmail() {
   const router = useRouter();
@@ -67,8 +71,8 @@ export default function ConfirmEmail() {
           <h1 className="text-2xl font-bold text-content-title mb-4">Error confirming email</h1>
           <p className="text-content mb-6">Please try again or contact support if the problem persists.</p>
           <button 
-            onClick={() => router.push('/auth/signup')}
             className="bg-mint text-white px-6 py-3 rounded-lg hover:bg-mint/90 transition-colors"
+            onClick={() => router.push('/auth/signup')}
           >
             Try Again
           </button>
