@@ -27,6 +27,15 @@ jobs:
       run: |
         docker save uflow:latest | gzip > uflow.tar.gz
     
+    - name: Upload files to Hetzner
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HETZNER_HOST }}
+        username: root
+        key: ${{ secrets.HETZNER_SSH_KEY }}
+        source: "uflow.tar.gz,nginx-template.conf"
+        target: "/tmp/"
+    
     - name: Deploy to Hetzner
       uses: appleboy/ssh-action@v1.0.3
       with:
