@@ -10,13 +10,15 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Accept build arguments for Supabase
+# Accept build arguments for public variables only
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_SITE_URL
 
 # Set as environment variables for the build
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 # Disable telemetry and set production mode
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -25,7 +27,7 @@ ENV NODE_ENV=production
 # Fix SSL issues for Google Fonts
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-# Build the application
+# Build the application (secrets not needed at build time)
 RUN npm run build:raw
 
 # Production stage

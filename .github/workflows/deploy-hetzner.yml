@@ -26,6 +26,7 @@ jobs:
           docker build -t uflow:latest \
             --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
             --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            --build-arg NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
             --platform linux/amd64 .
       
       - name: Save Docker image
