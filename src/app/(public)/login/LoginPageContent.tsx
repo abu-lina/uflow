@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Logo } from '@/components/ui/Logo';
+import EmailVerificationAlert from '@/components/ui/EmailVerificationAlert';
 import { useAuth } from '@/hooks/useAuth';
-import { authService } from '@/features/auth/services/authService';
+import { signInWithEmailConfirmation } from '@/lib/auth';
 
 interface FormData {
   email: string;
@@ -23,6 +25,8 @@ export function LoginPageContent() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isEmailConfirmationError, setIsEmailConfirmationError] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -51,10 +55,47 @@ export function LoginPageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
-      await authService.signIn(formData.email, formData.password);
+      const { error } = await signInWithEmailConfirmation(formData.email, formData.password);
       
+      if (error) {
+        // Handle specific error cases
+        if (error.message === 'EMAIL_NOT_CONFIRMED') {
+          // User exists but email is not confirmed
+          setError('Bitte überprüfe deine E-Mail und bestätige deine Registrierung vor der Anmeldung.');
+          setIsEmailConfirmationError(true);
+          // Toast removed - inline EmailVerificationAlert provides clear feedback
+        } else if (error.message === 'EMAIL_NOT_FOUND') {
+          // Email doesn't exist in database
+          setError('Diese E-Mail-Adresse ist nicht registriert. Bitte erstelle zuerst ein Konto.');
+          setIsEmailConfirmationError(false);
+          
+          // Show registration prompt toast
+          toast.error('Konto nicht gefunden', {
+            description: 'Diese E-Mail-Adresse ist nicht registriert. Bitte registriere dich zuerst.',
+            duration: 5000,
+            action: {
+              label: 'Registrieren',
+              onClick: () => handleSignupClick()
+            }
+          });
+        } else {
+          // Invalid credentials or other errors
+          setError('Ungültige E-Mail oder Passwort. Bitte versuche es erneut.');
+          setIsEmailConfirmationError(false);
+          
+          // Show generic error toast
+          toast.error('Anmeldung fehlgeschlagen', {
+            description: 'Bitte überprüfe deine Anmeldedaten und versuche es erneut.',
+            duration: 4000,
+          });
+        }
+        return;
+      }
+
+      // Success - redirect
       const returnUrl = searchParams.get('returnUrl');
       if (returnUrl) {
         router.push(decodeURIComponent(returnUrl));
@@ -63,6 +104,8 @@ export function LoginPageContent() {
       }
     } catch (error) {
       console.error('Login error:', error);
+      setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.');
+      setIsEmailConfirmationError(false);
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +117,62 @@ export function LoginPageContent() {
       router.push(`/signup?returnUrl=${encodeURIComponent(returnUrl)}`);
     } else {
       router.push('/signup');
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!formData.email) {
+      setError('Bitte gib zuerst deine E-Mail-Adresse ein.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Send resend confirmation email
+      const response = await fetch('/api/send-auth-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: formData.email,
+          type: 'confirmSignup',
+          language: 'en', // You can detect this from browser language
+          confirmationUrl: `${window.location.origin}/auth/confirm?token=${formData.email}&type=signup&email=${encodeURIComponent(formData.email)}`,
+        }),
+      });
+
+      if (response.ok) {
+        setError('Bestätigungs-E-Mail gesendet! Bitte überprüfe deinen Posteingang.');
+        setIsEmailConfirmationError(false);
+        
+        // Show success toast
+        toast.success('E-Mail gesendet', {
+          description: 'Eine neue Bestätigungs-E-Mail wurde an deine E-Mail-Adresse gesendet.',
+          duration: 4000,
+        });
+      } else {
+        setError('Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.');
+        
+        // Show error toast
+        toast.error('E-Mail konnte nicht gesendet werden', {
+          description: 'Bitte versuche es erneut oder kontaktiere den Support.',
+          duration: 4000,
+        });
+      }
+    } catch (error) {
+      console.error('Resend confirmation error:', error);
+      setError('Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.');
+      
+      // Show error toast
+      toast.error('Fehler aufgetreten', {
+        description: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.',
+        duration: 4000,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -156,6 +255,33 @@ export function LoginPageContent() {
           </div>
 
           </div>
+
+          {/* Error Messages */}
+          {error && isEmailConfirmationError && (
+            <div className="mt-4">
+              <EmailVerificationAlert
+                message={error}
+                onResend={handleResendConfirmation}
+              />
+            </div>
+          )}
+          
+          {error && !isEmailConfirmationError && (
+            <div className="mt-4 rounded-2xl border border-border bg-red-50 p-4 shadow-sm">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-danger" fill="currentColor" viewBox="0 0 20 20">
+                    <path clipRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" fillRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className="font-inter-tight text-sm leading-[19px] text-danger">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Buttons */}
           <div className="flex flex-col gap-4 pt-8">

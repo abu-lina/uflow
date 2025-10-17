@@ -31,6 +31,10 @@ const config: Config = {
     'bg-gold-gradient',
     'bg-gold-gradient-light',
     'bg-gold-gradient-radial',
+    // Warning colors
+    'bg-warning-soft',
+    'border-warning/20',
+    'text-warning/90',
     // Font families
     'font-inter-tight',
     // Hover and focus states
@@ -104,7 +108,10 @@ const config: Config = {
           light: '#EF4444',
         },
         success: 'hsl(160, 84%, 39%)', // #10b981
-        warning: 'hsl(35, 92%, 60%)', // #f59e42
+        warning: {
+          DEFAULT: 'hsl(35, 92%, 60%)', // #f59e42
+          soft: 'hsl(35, 100%, 95%)', // Soft amber background
+        },
         info: 'hsl(217, 91%, 60%)', // #3b82f6
         // uFlow brand colors
         mint: {

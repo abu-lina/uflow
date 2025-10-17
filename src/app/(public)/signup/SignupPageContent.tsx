@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,15 +29,22 @@ export function SignupPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Redirect if already logged in
-  if (user) {
-    const returnUrl = searchParams.get('returnUrl');
-    if (returnUrl) {
-      router.replace(decodeURIComponent(returnUrl));
-    } else {
-      router.replace('/profile');
+  useEffect(() => {
+    if (user) {
+      const returnUrl = searchParams.get('returnUrl');
+      if (returnUrl) {
+        router.replace(decodeURIComponent(returnUrl));
+      } else {
+        router.replace('/profile');
+      }
     }
+  }, [user, router, searchParams]);
+
+  // Don't render if already logged in or redirecting (to prevent flash)
+  if (user || isRedirecting) {
     return null;
   }
 
@@ -80,25 +87,23 @@ export function SignupPageContent() {
       
       if (error) {
         toast.error(error.message);
+        setIsLoading(false);
         return;
       }
+      
+      // Set redirecting state immediately to hide content BEFORE showing toast
+      setIsRedirecting(true);
       
       // Show success message
       toast.success(
         language === 'de' 
-          ? 'Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail.' 
+          ? 'Registrierung erfolgreich! Bitte überprüfe deine E-Mail.' 
           : 'Signup successful! Please check your email.'
       );
       
-      // Wait a bit before redirecting so user sees the message
-      setTimeout(() => {
-        const returnUrl = searchParams.get('returnUrl');
-        if (returnUrl) {
-          router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
-        } else {
-          router.push('/login');
-        }
-      }, 2000);
+      // Use window.location for instant, guaranteed redirect without Next.js router complexity
+      window.location.href = '/auth/check-email';
+      // Don't reset isLoading here - we're redirecting
     } catch (error) {
       console.error('Signup error:', error);
       toast.error(
@@ -106,7 +111,6 @@ export function SignupPageContent() {
           ? 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.' 
           : 'An error occurred. Please try again.'
       );
-    } finally {
       setIsLoading(false);
     }
   };
@@ -121,7 +125,17 @@ export function SignupPageContent() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB] px-4">
+    <div className="relative flex min-h-screen flex-col items-center justify-between bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB] px-4">
+      {/* Loading Overlay - Prevents flash during redirect */}
+      {isRedirecting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[#589D96]"></div>
+            <p className="text-sm text-[#7A7A7A]">Weiterleitung...</p>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex w-full max-w-[361px] flex-col items-center py-6">
         <div className="flex w-full items-center justify-between">

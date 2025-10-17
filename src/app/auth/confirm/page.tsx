@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
 
 export default function ConfirmEmail() {
   const router = useRouter();
@@ -12,30 +11,57 @@ export default function ConfirmEmail() {
   useEffect(() => {
     const confirmEmail = async () => {
       const token = searchParams.get('token');
+      const email = searchParams.get('email');
       
-      if (!token) {
+      if (!token || !email) {
         setStatus('error');
         return;
       }
 
       try {
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: 'signup'
+        console.log('[CONFIRM PAGE] Confirming email:', { 
+          email, 
+          tokenLength: token.length,
+          tokenPreview: token.substring(0, 20) + '...'
+        });
+        
+        // Call our API to confirm the email
+        const response = await fetch('/api/confirm-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token,
+            email
+          }),
         });
 
-        if (error) {
-          console.error('Email confirmation error:', error);
+        if (!response.ok) {
+          const errorData = await response.json().catch((e) => {
+            console.error('[CONFIRM PAGE] Failed to parse error response:', e);
+            return {};
+          });
+          console.error('[CONFIRM PAGE] Email confirmation failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorMessage: errorData.error,
+            errorDetails: errorData.details,
+            fullError: errorData,
+            responseHeaders: Object.fromEntries(response.headers.entries())
+          });
           setStatus('error');
         } else {
+          const successData = await response.json();
+          console.log('[CONFIRM PAGE] ✅ Email confirmation successful:', successData);
           setStatus('success');
-          // Redirect to dashboard after 3 seconds
+          // Redirect to login after 3 seconds
           setTimeout(() => {
-            router.push('/dashboard');
+            router.push('/login');
           }, 3000);
         }
       } catch (error) {
-        console.error('Email confirmation error:', error);
+        console.error('[CONFIRM PAGE] Exception during confirmation:', error);
         setStatus('error');
       }
     };
