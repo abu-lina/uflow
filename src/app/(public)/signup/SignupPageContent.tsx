@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { AuthTitleSection } from '@/components/layout/AuthTitleSection';
 import { AuthFormSection } from '@/components/layout/AuthFormSection';
+import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { signUpWithLanguage } from '@/lib/auth';
@@ -36,6 +37,14 @@ export function SignupPageContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleInputChange = useCallback((field: keyof FormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -54,23 +63,20 @@ export function SignupPageContent() {
     return null;
   }
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
   const validateForm = () => {
     if (!formData.email) {
+      setError('Bitte gib deine E-Mail-Adresse ein.');
       return false;
     }
     if (formData.password.length < 6) {
+      setError('Das Passwort muss mindestens 6 Zeichen lang sein.');
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
+      setError('Passwörter stimmen nicht überein.');
       return false;
     }
+    setError(null);
     return true;
   };
 
@@ -78,45 +84,35 @@ export function SignupPageContent() {
     e.preventDefault();
     
     if (!validateForm()) {
-      toast.error(
-        language === 'de' 
-          ? 'Bitte überprüfen Sie Ihre Eingaben' 
-          : 'Please check your inputs'
-      );
       return;
     }
 
     setIsLoading(true);
+    setError(null);
 
     try {
-      const { error } = await signUpWithLanguage(formData.email, formData.password, language);
+      const { data, error } = await signUpWithLanguage(formData.email, formData.password, language);
       
       if (error) {
-        toast.error(error.message);
+        setError(error.message || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
         setIsLoading(false);
         return;
       }
       
-      // Set redirecting state immediately to hide content BEFORE showing toast
-      setIsRedirecting(true);
-      
-      // Show success message
-      toast.success(
-        language === 'de' 
-          ? 'Registrierung erfolgreich! Bitte überprüfe deine E-Mail.' 
-          : 'Signup successful! Please check your email.'
-      );
-      
-      // Use window.location for instant, guaranteed redirect without Next.js router complexity
-      window.location.href = '/auth/check-email';
-      // Don't reset isLoading here - we're redirecting
+      // Success - redirect only if we have valid data
+      if (data) {
+        // Set redirecting state immediately to hide content
+        setIsRedirecting(true);
+        
+        // Show success message
+        toast.success('Registrierung erfolgreich! Bitte bestätige deine E-Mail.');
+        
+        // Redirect to check email page
+        window.location.href = '/auth/check-email';
+      }
     } catch (error) {
       console.error('Signup error:', error);
-      toast.error(
-        language === 'de' 
-          ? 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.' 
-          : 'An error occurred. Please try again.'
-      );
+      setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.');
       setIsLoading(false);
     }
   };
@@ -150,130 +146,103 @@ export function SignupPageContent() {
 
       <HeaderSpacer />
 
-      <PageContentWrapper>
-        <AuthTitleSection maxWidth="max-w-[361px]">
-          <h2 className="text-left text-lg font-semibold leading-[39px] text-content-title">
-            Willkommen bei Ummah Flow
-          </h2>
-          <p className="text-left text-sm leading-[19px] text-[#7A7A7A]">
-            Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
-          </p>
-        </AuthTitleSection>
+      <PageContentWrapper centerVertically contentClassName="gap-0 flex-1 justify-center items-center h-full">
+        <div className="flex w-full flex-col">
+          {/* Title + Paragraph with proper spacing */}
+          <AuthTitleSection className="mb-8">
+            <TitleAndText
+              description="Entdecke muslimische Angebote in deiner Nähe insha'Allah."
+              title="Willkommen bei Ummah Flow"
+            />
+          </AuthTitleSection>
 
-        <AuthFormSection>
-          <form className="flex w-full flex-col" onSubmit={handleSubmit}>
-          {/* Form Fields */}
-          <div className="flex w-full flex-col gap-3">
-            {/* Email Field */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white py-2">
-            <div className="flex w-full flex-col gap-1 px-3">
-              <label className="text-xs leading-[15px] text-[#999999]">
-                E-Mail
-              </label>
-              <input
-                required
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                placeholder="Email eingeben"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-              />
-            </div>
-          </div>
+          {/* Form Content with exact spacing structure */}
+          <AuthFormSection>
+            <form className="flex w-full flex-col" onSubmit={handleSubmit}>
+              {/* Form Input Fields */}
+              <FormInputGroup gap="gap-3">
+                <FormInput
+                  required
+                  label="E-Mail"
+                  placeholder="Email eingeben"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                />
+                <FormInput
+                  required
+                  label="Passwort"
+                  placeholder="Mindestens 6 Zeichen"
+                  rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  variant="with-icon"
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onRightIconClick={() => setShowPassword(!showPassword)}
+                />
+                <FormInput
+                  required
+                  label="Passwort bestätigen"
+                  placeholder="Passwort wiederholen"
+                  rightIcon={showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  variant="with-icon"
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  onRightIconClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                />
+              </FormInputGroup>
 
-          {/* Password Field */}
-          <div className="flex h-[56px] w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white py-2">
-            <div className="flex w-full flex-col gap-1 px-3">
-              <label className="text-xs leading-[15px] text-[#999999]">
-                Passwort
-              </label>
-              <input
-                required
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                placeholder="Mindestens 6 Zeichen"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-              />
-            </div>
-            
-            {/* Eye Toggle Icon */}
-            <div className="px-3">
-              <button
-                className="flex h-6 w-6 items-center justify-center text-[#232323] hover:text-gray-700"
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-          </div>
+              {/* Error Messages */}
+              {error && (
+                <div className="mt-4">
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-danger" fill="currentColor" viewBox="0 0 20 20">
+                          <path clipRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" fillRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <p className="font-inter-tight text-sm leading-[19px] text-danger">
+                          {error}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-          {/* Confirm Password Field */}
-          <div className="flex h-[56px] w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white py-2">
-            <div className="flex w-full flex-col gap-1 px-3">
-              <label className="text-xs leading-[15px] text-[#999999]">
-                Passwort bestätigen
-              </label>
-              <input
-                required
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                placeholder="Passwort wiederholen"
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-              />
-            </div>
-            
-            {/* Eye Toggle Icon */}
-            <div className="px-3">
-              <button
-                className="flex h-6 w-6 items-center justify-center text-[#232323] hover:text-gray-700"
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-          </div>
+              {/* Button and links with proper spacing (24px gap from form fields) */}
+              <div className="mt-6 flex flex-col space-y-3">
+                {/* Main Button */}
+                <Button
+                  fullWidth
+                  loading={isLoading}
+                  loadingText="Registrieren..."
+                  size="auth"
+                  type="submit"
+                  variant="auth"
+                >
+                  Registrieren
+                </Button>
 
-          </div>
+                {/* Link Button (12px gap from main button via space-y-3) */}
+                <LinkButton
+                  type="button"
+                  onClick={handleLoginClick}
+                >
+                  Bereits ein Konto? Jetzt anmelden.
+                </LinkButton>
 
-          {/* Buttons */}
-          <div className="flex flex-col gap-4 pt-8">
-            {/* Register Button */}
-            <button
-              className="flex h-[56px] w-full items-center justify-center rounded-[16.8px] bg-[#589D96] text-base font-medium leading-[24px] text-white transition-colors hover:bg-[#4a8a84] disabled:opacity-50"
-              disabled={isLoading}
-              type="submit"
-            >
-              {isLoading ? 'Registrieren...' : 'Registrieren'}
-            </button>
-
-            {/* Login Link */}
-            <button
-              className="text-center text-base font-medium leading-[19px] text-[#589D96] hover:text-[#4a8a84]"
-              type="button"
-              onClick={handleLoginClick}
-            >
-              Bereits ein Konto? Jetzt anmelden.
-            </button>
-
-            {/* Terms */}
-            <p className="text-center text-[11px] leading-[13px] text-[#7A7A7A]">
-              Wenn du fortfährst, erstellst du ein Konto und stimmst den Allgemeinen Geschäftsbedingungen und Datenschutzrichtlinien zu.
-            </p>
-          </div>
-          </form>
-        </AuthFormSection>
+                {/* AGB Text (12px gap from link button via space-y-3) */}
+                <p className="text-center text-[11px] leading-[13px] text-[#7A7A7A]">
+                  Wenn du fortfährst, erstellst du ein Konto und stimmst den Allgemeinen Geschäftsbedingungen und Datenschutzrichtlinien zu.
+                </p>
+              </div>
+            </form>
+          </AuthFormSection>
+        </div>
       </PageContentWrapper>
     </PageLayout>
   );

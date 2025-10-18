@@ -9,17 +9,20 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-mint text-white',
+        default: 'bg-mint text-white hover:bg-[#4a8a84]',
+        primary: 'bg-[#589D96] text-white hover:bg-[#4a8a84] transition-colors disabled:opacity-50',
         gradient: 'bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500 text-white',
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
+        auth: 'bg-[#589D96] text-white hover:bg-[#4a8a84] transition-colors disabled:opacity-50', // Auth button variant
       },
       size: {
-        default: 'h-8 px-4 rounded-[9.60px]',
-        sm: 'h-7 px-3',
-        lg: 'h-9 px-6',
+        default: 'h-12 px-4 rounded-xl', // 48px height with base text
+        sm: 'h-7 px-3 rounded-lg',
+        lg: 'h-14 px-6 rounded-xl',
         icon: 'size-8',
+        auth: 'h-12 px-4 rounded-[16.8px]', // Specific for auth buttons like Anmelden
       },
       fullWidth: {
         true: 'w-full',
@@ -38,18 +41,25 @@ export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   icon?: React.ReactNode;
+  loading?: boolean;
+  loadingText?: string;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, icon, children, ...props }, ref) => {
+  ({ className, variant, size, fullWidth, icon, loading = false, loadingText, children, disabled, ...props }, ref) => {
+    const isDisabled = disabled || loading;
+    
     return (
       <button
         ref={ref}
         className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+        disabled={isDisabled}
         {...props}
       >
-        {icon && <div className="relative size-4">{icon}</div>}
-        {children && <span className="text-center">{children}</span>}
+        {icon && !loading && <div className="relative size-4">{icon}</div>}
+        <span className="text-center">
+          {loading ? (loadingText || children) : children}
+        </span>
       </button>
     );
   },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { AuthTitleSection } from '@/components/layout/AuthTitleSection';
 import { AuthFormSection } from '@/components/layout/AuthFormSection';
+import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { signInWithEmailConfirmation } from '@/lib/auth';
@@ -34,6 +35,13 @@ export function LoginPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [isEmailConfirmationError, setIsEmailConfirmationError] = useState(false);
 
+  const handleInputChange = useCallback((field: keyof FormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
@@ -51,20 +59,13 @@ export function LoginPageContent() {
     return null;
   }
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      const { error } = await signInWithEmailConfirmation(formData.email, formData.password);
+      const { data, error } = await signInWithEmailConfirmation(formData.email, formData.password);
       
       if (error) {
         // Handle specific error cases
@@ -101,12 +102,14 @@ export function LoginPageContent() {
         return;
       }
 
-      // Success - redirect
-      const returnUrl = searchParams.get('returnUrl');
-      if (returnUrl) {
-        router.push(decodeURIComponent(returnUrl));
-      } else {
-        router.push('/profile');
+      // Success - redirect only if we have valid data
+      if (data) {
+        const returnUrl = searchParams.get('returnUrl');
+        if (returnUrl) {
+          router.push(decodeURIComponent(returnUrl));
+        } else {
+          router.push('/profile');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -192,125 +195,99 @@ export function LoginPageContent() {
 
       <HeaderSpacer />
 
-      <PageContentWrapper>
-        <AuthTitleSection>
-          <h2 className="text-left text-lg font-semibold leading-[39px] text-content-title">
-            Willkommen bei Ummah Flow
-          </h2>
-          <p className="text-left text-sm leading-[19px] text-[#7A7A7A]">
-            Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
-          </p>
-        </AuthTitleSection>
+      <PageContentWrapper centerVertically contentClassName="gap-0 flex-1 justify-center items-center h-full">
+        <div className="flex w-full flex-col">
+          {/* Title + Paragraph with proper spacing */}
+          <AuthTitleSection className="mb-8">
+            <TitleAndText
+              description="Entdecke muslimische Angebote in deiner Nähe insha'Allah."
+              title="Willkommen bei Ummah Flow"
+            />
+          </AuthTitleSection>
 
-        <AuthFormSection>
+          {/* Form Content with exact spacing structure */}
+          <AuthFormSection>
           <form className="flex w-full flex-col" onSubmit={handleSubmit}>
-          {/* Form Fields */}
-          <div className="flex w-full flex-col gap-3">
-            {/* Email Field */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white py-2">
-            <div className="flex w-full flex-col gap-1 px-3">
-              <label className="text-xs leading-[15px] text-[#999999]">
-                E-Mail
-              </label>
-              <input
+            {/* Form Input Fields */}
+            <FormInputGroup gap="gap-3">
+              <FormInput
                 required
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                label="E-Mail"
                 placeholder="Email eingeben"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
               />
-            </div>
-          </div>
-
-          {/* Password Field */}
-          <div className="flex h-[56px] w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white py-2">
-            <div className="flex w-full flex-col gap-1 px-3">
-              <label className="text-xs leading-[15px] text-[#999999]">
-                Passwort
-              </label>
-              <input
+              <FormInput
                 required
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                label="Passwort"
                 placeholder="Passwort eingeben"
+                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
+                variant="with-icon"
                 onChange={(e) => handleInputChange('password', e.target.value)}
+                onRightIconClick={() => setShowPassword(!showPassword)}
               />
-            </div>
-            
-            {/* Eye Toggle Icon */}
-            <div className="px-3">
-              <button
-                className="flex h-6 w-6 items-center justify-center text-[#232323] hover:text-gray-700"
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
+            </FormInputGroup>
+
+            {/* Error Messages */}
+            {error && (
+              <div className="mt-4">
+                {isEmailConfirmationError ? (
+                  <EmailVerificationAlert
+                    message={error}
+                    onResend={handleResendConfirmation}
+                  />
                 ) : (
-                  <Eye className="h-5 w-5" />
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-danger" fill="currentColor" viewBox="0 0 20 20">
+                          <path clipRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" fillRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <p className="font-inter-tight text-sm leading-[19px] text-danger">
+                          {error}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </button>
-            </div>
-          </div>
-
-          </div>
-
-          {/* Error Messages */}
-          {error && isEmailConfirmationError && (
-            <div className="mt-4">
-              <EmailVerificationAlert
-                message={error}
-                onResend={handleResendConfirmation}
-              />
-            </div>
-          )}
-          
-          {error && !isEmailConfirmationError && (
-            <div className="mt-4 rounded-2xl border border-border bg-red-50 p-4 shadow-sm">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-danger" fill="currentColor" viewBox="0 0 20 20">
-                    <path clipRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" fillRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3 flex-1">
-                  <p className="font-inter-tight text-sm leading-[19px] text-danger">
-                    {error}
-                  </p>
-                </div>
               </div>
+            )}
+
+            {/* Button and links with proper spacing (24px gap from form fields) */}
+            <div className="mt-6 flex flex-col space-y-3">
+              {/* Main Button */}
+              <Button
+                fullWidth
+                loading={isLoading}
+                loadingText="Anmelden..."
+                size="auth"
+                type="submit"
+                variant="auth"
+              >
+                Anmelden
+              </Button>
+
+              {/* Link Button (12px gap from main button via space-y-3) */}
+              <LinkButton
+                type="button"
+                onClick={handleSignupClick}
+              >
+                Noch kein Konto? Jetzt registrieren.
+              </LinkButton>
+
+              {/* AGB Text (12px gap from link button via space-y-3) */}
+              <p className="text-center text-[11px] leading-[13px] text-[#7A7A7A]">
+                Wenn du fortfährst, erstellst du ein Konto und stimmst den Allgemeinen Geschäftsbedingungen und Datenschutzrichtlinien zu.
+              </p>
             </div>
-          )}
-
-          {/* Buttons */}
-          <div className="flex flex-col gap-4 pt-8">
-            {/* Login Button */}
-            <button
-              className="flex h-[56px] w-full items-center justify-center rounded-[16.8px] bg-[#589D96] text-base font-medium leading-[24px] text-white transition-colors hover:bg-[#4a8a84] disabled:opacity-50"
-              disabled={isLoading}
-              type="submit"
-            >
-              {isLoading ? 'Anmelden...' : 'Anmelden'}
-            </button>
-
-            {/* Register Link */}
-            <button
-              className="text-center text-base font-medium leading-[19px] text-[#589D96] hover:text-[#4a8a84]"
-              type="button"
-              onClick={handleSignupClick}
-            >
-              Noch kein Konto? Jetzt registrieren.
-            </button>
-
-            {/* Terms */}
-            <p className="text-center text-[11px] leading-[13px] text-[#7A7A7A]">
-              Wenn du fortfährst, erstellst du ein Konto und stimmst den Allgemeinen Geschäftsbedingungen und Datenschutzrichtlinien zu.
-            </p>
-          </div>
           </form>
         </AuthFormSection>
+        </div>
       </PageContentWrapper>
     </PageLayout>
   );

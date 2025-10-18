@@ -17,18 +17,19 @@ interface AuthTitleSectionProps {
 }
 
 /**
- * Standardized title section for auth pages that handles the specific 
- * padding requirements: 28px left padding, 16px right padding.
+ * Standardized title section for auth pages with centered content.
  * 
- * This component is designed to work within PageContentWrapper which provides
- * the base 16px padding from device edges.
+ * This component is designed to work within PageContentWrapper and centers
+ * the content (typically TitleAndText) with proper spacing and max-width constraints.
  * 
  * @example
  * ```tsx
  * <PageContentWrapper>
  *   <AuthTitleSection>
- *     <h2>Welcome Title</h2>
- *     <p>Description text</p>
+ *     <TitleAndText 
+ *       title="Welcome Title"
+ *       description="Description text"
+ *     />
  *   </AuthTitleSection>
  *   <AuthFormSection>
  *     // Form content
@@ -44,7 +45,7 @@ export function AuthTitleSection({
   return (
     <div className={cn('flex flex-col items-center gap-8 w-full', className)}>
       <div className={cn(
-        'flex flex-col items-start pl-[12px] w-full mx-auto',
+        'flex flex-col items-center w-full mx-auto px-4',
         maxWidth
       )}>
         {children}
