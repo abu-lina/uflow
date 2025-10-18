@@ -1,0 +1,41 @@
+╔═══════════════════════════════════════════════════════════════╗
+║            ICON STANDARDIZATION - BEFORE & AFTER              ║
+╠═══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║  CHECK EMAIL PAGE                                             ║
+║  ────────────────                                             ║
+║  Before:  📧 (emoji, 64px, text-success)                     ║
+║  After:   📨 (Mail Lucide icon, 96px, text-info)            ║
+║                                                               ║
+║  EMAIL CONFIRMED SUCCESS                                      ║
+║  ───────────────────────                                      ║
+║  Before:  ✅ (emoji, 64px, text-success)                     ║
+║  After:   ✓  (CheckCircle Lucide, 96px, text-success)       ║
+║                                                               ║
+║  EMAIL CONFIRMED ERROR                                        ║
+║  ─────────────────────                                        ║
+║  Before:  ❌ (emoji, 64px, text-danger)                      ║
+║  After:   ✗  (XCircle Lucide, 96px, text-danger)            ║
+║                                                               ║
+║  LOADING SPINNER                                              ║
+║  ───────────────                                              ║
+║  Before:  ⭕ (custom CSS spinner, 48px, border-mint)         ║
+║  After:   ↻  (Loader2 Lucide, 48px, text-mint, animate)     ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+📏 SIZE REFERENCE:
+   icon-xs  = 16px  (inline text)
+   icon-sm  = 20px  (buttons)
+   icon-md  = 24px  (default)
+   icon-lg  = 32px  (headers)
+   icon-xl  = 48px  (features)
+   icon-2xl = 64px  (success states)
+   icon-3xl = 96px  (major states) ← Used in signup flow
+
+🎨 COLOR REFERENCE:
+   text-success = Green (#10b981)
+   text-info    = Blue (#3b82f6)
+   text-warning = Orange (#f59e42)
+   text-danger  = Red (#DC2626)
+   text-mint    = Mint Green (#589D96)

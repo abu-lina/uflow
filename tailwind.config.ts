@@ -40,6 +40,30 @@ const config: Config = {
     // Hover and focus states
     'hover:bg-mint/90',
     'focus-visible:ring-mint',
+    // Icon sizes (Lucide standardized)
+    'w-icon-xs',
+    'h-icon-xs',
+    'w-icon-sm',
+    'h-icon-sm',
+    'w-icon-md',
+    'h-icon-md',
+    'w-icon-lg',
+    'h-icon-lg',
+    'w-icon-xl',
+    'h-icon-xl',
+    'w-icon-2xl',
+    'h-icon-2xl',
+    'w-icon-3xl',
+    'h-icon-3xl',
+    // Icon colors
+    'text-success',
+    'text-info',
+    'text-warning',
+    'text-danger',
+    // Header spacing utilities
+    'h-header-spacing',
+    'h-header-spacing-sm',
+    'h-header-spacing-md',
   ],
   theme: {
     screens: {
@@ -71,7 +95,7 @@ const config: Config = {
         '5xl': ['2.986rem', { lineHeight: '3.125rem' }], // 48px / 50px (tighter)
       },
       spacing: {
-        // Following the Rule of 8
+        // Following the Rule of 8 - Design System Spacing Scale
         '2': '8px',
         '4': '16px',
         '6': '24px',
@@ -87,10 +111,38 @@ const config: Config = {
         'safe-bottom': 'env(safe-area-inset-bottom)',
         'safe-left': 'env(safe-area-inset-left)',
         'safe-right': 'env(safe-area-inset-right)',
+        // Header system design tokens - direct values for Tailwind compatibility
+        'header-padding-mobile': '16px',
+        'header-padding-desktop': '24px',
+        'header-height-mobile': '40px',
+        'header-height-tablet': '48px',
+        'header-height-desktop': '56px',
+        'content-gap': '32px', // Standard gap between header and content
+        
+        // Content padding design tokens for consistency
+        'content-padding-mobile': '16px',    // Mobile horizontal padding (px-4)
+        'content-padding-tablet': '20px',    // Tablet horizontal padding
+        'content-padding-desktop': '24px',   // Desktop horizontal padding
+        
+        // Auth page specific padding tokens
+        'auth-title-padding-left': '28px',   // Title section left padding (pl-7)
+        'auth-title-padding-right': '16px',  // Title section right padding (pr-4)
+        // Calculated header spacing - uses design tokens above for consistent spacing
+        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 32px)', // mobile: safe-area + padding + height + gap
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 32px)', // tablet: safe-area + padding + height + gap  
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 32px)', // desktop: safe-area + padding + height + gap
+        // Icon sizes (for Lucide icons - standardized)
+        'icon-xs': '16px',   // Extra small icons (inline with text)
+        'icon-sm': '20px',   // Small icons (buttons, inputs)
+        'icon-md': '24px',   // Medium icons (default)
+        'icon-lg': '32px',   // Large icons (headers)
+        'icon-xl': '48px',   // Extra large icons (feature highlights)
+        'icon-2xl': '64px',  // 2X large icons (success states, hero)
+        'icon-3xl': '96px',  // 3X large icons (major success/error states)
       },
       colors: {
         primary: {
-          DEFAULT: '#589D96',
+          DEFAULT: '#589D96', // Brand mint green
           light: '#BFDBD8',
           dark: '#4A8A84',
         },
@@ -103,19 +155,31 @@ const config: Config = {
           title: '#232323', // Title/heading text
         },
         border: '#D4D4D4', // uflow-light-boarder
-        danger: {
-          DEFAULT: '#DC2626',
-          light: '#EF4444',
+        // Semantic colors (updated color palette)
+        success: {
+          DEFAULT: '#4CA987', // Updated success green
+          light: '#7BC4A9',
+          dark: '#3D8A6D',
         },
-        success: 'hsl(160, 84%, 39%)', // #10b981
         warning: {
-          DEFAULT: 'hsl(35, 92%, 60%)', // #f59e42
-          soft: 'hsl(35, 100%, 95%)', // Soft amber background
+          DEFAULT: '#E6A94C', // Updated warning orange
+          soft: '#FDF5E6', // Soft amber background
+          light: '#EFBC73',
+          dark: '#C48A3A',
         },
-        info: 'hsl(217, 91%, 60%)', // #3b82f6
-        // uFlow brand colors
+        danger: {
+          DEFAULT: '#D86363', // Updated error red
+          light: '#E58989',
+          dark: '#B84F4F',
+        },
+        info: {
+          DEFAULT: '#4F9BAE', // Updated info blue
+          light: '#7AB5C5',
+          dark: '#3F7C8B',
+        },
+        // uFlow brand colors (aliases for consistency)
         mint: {
-          DEFAULT: '#589D96', // uflow-mint
+          DEFAULT: '#589D96', // uflow-mint (same as primary)
           light: '#BFDBD8', // uflow-light-mint
         },
         grey: {
@@ -130,6 +194,16 @@ const config: Config = {
         md: '14px',
         lg: '16.8px',
         full: '9999px',
+      },
+      height: {
+        'header-height-mobile': '40px',
+        'header-height-tablet': '48px', 
+        'header-height-desktop': '56px',
+        // Header spacing utilities for proper content positioning
+        // Must match PageHeader: pt-[calc(env(safe-area-inset-top)+16px)] + h-40 + gap
+        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 16px)', // mobile: safe-area + padding + height + gap
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 16px)', // tablet: safe-area + padding + height + gap  
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 16px)', // desktop: safe-area + padding + height + gap
       },
       backgroundImage: {
         'uflow-light': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',

@@ -6,8 +6,6 @@ import { Toaster } from 'sonner';
 import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
-import { SplashScreenDebug } from '@/components/debug/SplashScreenDebug';
-import { SafeAreaTester } from '@/components/debug/SafeAreaTester';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
@@ -79,11 +77,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <RootClientLayout>{children}</RootClientLayout>
                         <Toaster position="top-center" />
                         <PWAInstallPrompt />
-                        <SplashScreenDebug />
-                        {/* Safe Area Tester - Remove in production */}
-                        {process.env.NODE_ENV === 'development' && (
-                          <SafeAreaTester />
-                        )}
                   </FilterProvider>
                 </SearchProvider>
               </SplashProvider>

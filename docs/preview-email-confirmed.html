@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Email Confirmed - Mobile Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(to bottom, #F5F5F5, #FBFBFB);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Mobile-first: Simulate iPhone viewport */
+            max-width: 430px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Mobile device frame */
+        body::before {
+            content: '📱 Mobile View (375px)';
+            position: fixed;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            z-index: 1000;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 24px 16px;
+            width: 100%;
+            /* Mobile viewport */
+            max-width: 375px;
+        }
+
+        /* Success Icon */
+        .success-icon {
+            font-size: 96px;
+            margin-bottom: 16px;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Title */
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #272727;
+            margin-bottom: 16px;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        /* Description */
+        .description {
+            font-size: 16px;
+            color: #7A7A7A;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Spinner */
+        .spinner {
+            height: 32px;
+            width: 32px;
+            border-radius: 50%;
+            border: 2px solid #E5E5E5;
+            border-top-color: #589D96;
+            animation: spin 1s linear infinite, fadeInUp 0.6s ease-out 0.6s both;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Note Section */
+        .note {
+            position: fixed;
+            top: 40px;
+            right: 16px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 11px;
+            color: #666;
+            max-width: 200px;
+            z-index: 100;
+        }
+
+        .note strong {
+            display: block;
+            color: #272727;
+            margin-bottom: 4px;
+        }
+
+        .note code {
+            background: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        /* Demo Controls */
+        .controls {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 320px;
+        }
+
+        .control-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #272727;
+            text-align: center;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-button {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #D4D4D4;
+            background: white;
+            color: #272727;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-button:hover {
+            background: #f8f9fa;
+            border-color: #589D96;
+        }
+
+        .control-button.active {
+            background: #589D96;
+            color: white;
+            border-color: #589D96;
+        }
+
+        /* Viewport size indicator */
+        .viewport-info {
+            position: fixed;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 99;
+            display: flex;
+            gap: 12px;
+        }
+
+        .viewport-info span {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 430px) {
+            body::before {
+                content: '📱 Mobile View (' attr(data-width) 'px)';
+            }
+        }
+        
+        @media (min-width: 431px) {
+            body::before {
+                content: '🖥️ Desktop Preview (showing mobile layout)';
+                background: rgba(88, 157, 150, 0.9);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Design Preview Note -->
+    <div class="note">
+        <strong>✅ Mobile Success Page</strong>
+        After user clicks email link.
+        <br>
+        Auto-redirects after 3s.
+    </div>
+
+    <!-- Viewport Info -->
+    <div class="viewport-info">
+        <span id="viewportWidth">375px</span>
+        <span>×</span>
+        <span id="viewportHeight">667px</span>
+    </div>
+
+    <!-- Success Content -->
+    <div class="container">
+        <div class="success-icon" id="successIcon">✅</div>
+        <h1 class="title" id="title">Email confirmed successfully!</h1>
+        <p class="description" id="description">Redirecting to your dashboard...</p>
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="controls">
+        <div class="control-title">🎛️ Try Different Variations</div>
+        
+        <div style="font-size: 11px; color: #666; text-align: center; margin-bottom: 8px;">
+            Icon Style:
+        </div>
+        <div class="control-buttons">
+            <button class="control-button active" onclick="changeIcon('check')">
+                ✅ Check
+            </button>
+            <button class="control-button" onclick="changeIcon('party')">
+                🎉 Party
+            </button>
+            <button class="control-button" onclick="changeIcon('success')">
+                🎊 Success
+            </button>
+            <button class="control-button" onclick="changeIcon('mail')">
+                ✉️ Mail
+            </button>
+        </div>
+        
+        <div style="font-size: 11px; color: #666; text-align: center; margin-bottom: 8px;">
+            Text Style:
+        </div>
+        <div class="control-buttons">
+            <button class="control-button" onclick="changeText('default')">
+                English
+            </button>
+            <button class="control-button" onclick="changeText('german')">
+                Deutsch
+            </button>
+            <button class="control-button" onclick="changeText('casual')">
+                Casual
+            </button>
+        </div>
+        
+        <button class="control-button" onclick="replay()" style="background: #589D96; color: white; border-color: #589D96;">
+            🔄 Replay Animation
+        </button>
+    </div>
+
+    <script>
+        const successIcon = document.getElementById('successIcon');
+        const title = document.getElementById('title');
+        const description = document.getElementById('description');
+
+        function changeIcon(type) {
+            // Remove active state
+            document.querySelectorAll('.control-button').forEach(btn => {
+                if (btn.onclick && btn.onclick.toString().includes('changeIcon')) {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Add active state
+            event.target.classList.add('active');
+            
+            const icons = {
+                'check': '✅',
+                'party': '🎉',
+                'success': '🎊',
+                'mail': '✉️'
+            };
+            
+            successIcon.textContent = icons[type] || '✅';
+        }
+
+        function changeText(style) {
+            // Remove active state
+            document.querySelectorAll('.control-button').forEach(btn => {
+                if (btn.onclick && btn.onclick.toString().includes('changeText')) {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Add active state
+            event.target.classList.add('active');
+            
+            switch(style) {
+                case 'default':
+                    title.textContent = 'Email confirmed successfully!';
+                    description.textContent = 'Redirecting to your dashboard...';
+                    break;
+                case 'german':
+                    title.textContent = 'E-Mail erfolgreich bestätigt!';
+                    description.textContent = 'Weiterleitung zu deinem Dashboard...';
+                    break;
+                case 'casual':
+                    title.textContent = 'Awesome! You\'re all set!';
+                    description.textContent = 'Taking you to your dashboard now...';
+                    break;
+            }
+        }
+
+        function replay() {
+            // Remove animations
+            successIcon.style.animation = 'none';
+            title.style.animation = 'none';
+            description.style.animation = 'none';
+            
+            // Trigger reflow
+            void successIcon.offsetWidth;
+            
+            // Re-add animations
+            successIcon.style.animation = 'scaleIn 0.5s ease-out';
+            title.style.animation = 'fadeInUp 0.6s ease-out 0.2s both';
+            description.style.animation = 'fadeInUp 0.6s ease-out 0.4s both';
+        }
+
+        // Update viewport dimensions
+        function updateViewportInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            document.getElementById('viewportWidth').textContent = width + 'px';
+            document.getElementById('viewportHeight').textContent = height + 'px';
+        }
+
+        updateViewportInfo();
+        window.addEventListener('resize', updateViewportInfo);
+
+        console.log('✅ Mobile Email Confirmation Success Page Preview');
+        console.log('📱 Optimized for mobile (375px - 430px width)');
+        console.log('👉 Try the variations below!');
+        
+        // Log current viewport
+        console.log(`Current viewport: ${window.innerWidth}px × ${window.innerHeight}px`);
+    </script>
+</body>
+</html>
+

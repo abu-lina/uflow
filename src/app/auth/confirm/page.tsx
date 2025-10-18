@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { MailCheck, XCircle, Loader2 } from 'lucide-react';
 
 export default function ConfirmEmail() {
   const router = useRouter();
@@ -73,7 +74,7 @@ export default function ConfirmEmail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint mx-auto mb-4"></div>
+          <Loader2 className="w-icon-xl h-icon-xl text-mint animate-spin mx-auto mb-4" />
           <p className="text-content">Confirming your email...</p>
         </div>
       </div>
@@ -84,7 +85,7 @@ export default function ConfirmEmail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-danger text-6xl mb-4">❌</div>
+          <XCircle className="w-icon-3xl h-icon-3xl text-danger mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-content-title mb-4">Error confirming email</h1>
           <p className="text-content mb-6">Please try again or contact support if the problem persists.</p>
           <button 
@@ -101,10 +102,10 @@ export default function ConfirmEmail() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <div className="text-success text-6xl mb-4">✅</div>
+        <MailCheck className="w-icon-3xl h-icon-3xl text-success mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-content-title mb-4">Email confirmed successfully!</h1>
         <p className="text-content mb-6">Redirecting to your dashboard...</p>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint mx-auto"></div>
+        <Loader2 className="w-icon-lg h-icon-lg text-mint animate-spin mx-auto" />
       </div>
     </div>
   );

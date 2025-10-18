@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
@@ -157,28 +160,24 @@ export default function CreateBasicsPage() {
   }
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB] ">
+    <PageLayout maxWidth="xs">
       <PageHeader 
         isVisible={isHeaderSticky}
         title="Angebot erstellen"
+        variant="back-and-title"
         onBack={() => router.push('/create')}
       />
 
-      <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-[calc(env(safe-area-inset-top)+24px+40px)]' : 'h-0'
-      }`} />
+      <HeaderSpacer isVisible={isHeaderSticky} />
 
-      <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col">
-          <ProviderCreateForm 
-            onNextStep={() => {
-              // Navigate to location page
-              router.push('/create/location');
-            }}
-          />
-        </div>
-      </main>
-
-    </div>
+      <PageContentWrapper maxWidth="xs">
+        <ProviderCreateForm 
+          onNextStep={() => {
+            // Navigate to location page
+            router.push('/create/location');
+          }}
+        />
+      </PageContentWrapper>
+    </PageLayout>
   );
 }

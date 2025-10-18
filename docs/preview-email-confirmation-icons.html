@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Email Confirmation Icon Options</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mint: '#589D96',
+                        content: { DEFAULT: '#555555', title: '#232323' },
+                        success: '#10b981',
+                    },
+                    spacing: {
+                        'icon-3xl': '96px',
+                        'icon-lg': '32px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes scaleIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-scale-in { animation: scaleIn 0.5s ease-out; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB] min-h-screen p-4">
+    
+    <div class="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-mint text-white px-4 py-1 rounded-full text-xs font-semibold">
+        📱 Pick Your Favorite Icon
+    </div>
+
+    <div class="max-w-[375px] mx-auto pt-16 pb-24">
+        <h1 class="text-xl font-bold text-content-title text-center mb-8">
+            Email Confirmation Icons
+        </h1>
+
+        <!-- Option 1: MailCheck - RECOMMENDED -->
+        <div class="bg-white rounded-2xl p-6 mb-4 shadow-sm border border-gray-200 hover:border-mint transition-all cursor-pointer" onclick="selectIcon(1)">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0">
+                    <!-- MailCheck Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success">
+                        <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"></path>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                        <path d="m16 19 2 2 4-4"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-semibold text-content-title mb-1 flex items-center gap-2">
+                        MailCheck 
+                        <span class="text-xs bg-mint/10 text-mint px-2 py-0.5 rounded-full font-medium">RECOMMENDED</span>
+                    </div>
+                    <div class="text-sm text-content">Mail with checkmark - perfect for email confirmation!</div>
+                    <div class="text-xs text-gray-400 mt-1">
+                        <code class="bg-gray-100 px-1 rounded">import {'{ MailCheck }'} from 'lucide-react'</code>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <div id="preview1" class="inline-block"></div>
+            </div>
+        </div>
+
+        <!-- Option 2: BadgeCheck -->
+        <div class="bg-white rounded-2xl p-6 mb-4 shadow-sm border border-gray-200 hover:border-mint transition-all cursor-pointer" onclick="selectIcon(2)">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0">
+                    <!-- BadgeCheck Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success">
+                        <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path>
+                        <path d="m9 12 2 2 4-4"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-semibold text-content-title mb-1">BadgeCheck</div>
+                    <div class="text-sm text-content">Badge/seal with checkmark - verified/authenticated feel</div>
+                    <div class="text-xs text-gray-400 mt-1">
+                        <code class="bg-gray-100 px-1 rounded">import {'{ BadgeCheck }'} from 'lucide-react'</code>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <div id="preview2" class="inline-block"></div>
+            </div>
+        </div>
+
+        <!-- Option 3: ShieldCheck -->
+        <div class="bg-white rounded-2xl p-6 mb-4 shadow-sm border border-gray-200 hover:border-mint transition-all cursor-pointer" onclick="selectIcon(3)">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0">
+                    <!-- ShieldCheck Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+                        <path d="m9 12 2 2 4-4"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-semibold text-content-title mb-1">ShieldCheck</div>
+                    <div class="text-sm text-content">Shield with checkmark - secure/protected email</div>
+                    <div class="text-xs text-gray-400 mt-1">
+                        <code class="bg-gray-100 px-1 rounded">import {'{ ShieldCheck }'} from 'lucide-react'</code>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <div id="preview3" class="inline-block"></div>
+            </div>
+        </div>
+
+        <!-- Option 4: CircleCheckBig -->
+        <div class="bg-white rounded-2xl p-6 mb-4 shadow-sm border border-gray-200 hover:border-mint transition-all cursor-pointer" onclick="selectIcon(4)">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0">
+                    <!-- CircleCheckBig Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <path d="m9 11 3 3L22 4"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-semibold text-content-title mb-1">CircleCheckBig</div>
+                    <div class="text-sm text-content">Large circle checkmark - bold and clear</div>
+                    <div class="text-xs text-gray-400 mt-1">
+                        <code class="bg-gray-100 px-1 rounded">import {'{ CircleCheckBig }'} from 'lucide-react'</code>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <div id="preview4" class="inline-block"></div>
+            </div>
+        </div>
+
+        <!-- Option 5: CheckCircle (Current) -->
+        <div class="bg-white rounded-2xl p-6 mb-4 shadow-sm border border-gray-200 hover:border-mint transition-all cursor-pointer" onclick="selectIcon(5)">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0">
+                    <!-- CheckCircle Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-semibold text-content-title mb-1 flex items-center gap-2">
+                        CheckCircle 
+                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">CURRENT</span>
+                    </div>
+                    <div class="text-sm text-content">Classic circle with check - currently used</div>
+                    <div class="text-xs text-gray-400 mt-1">
+                        <code class="bg-gray-100 px-1 rounded">import {'{ CheckCircle }'} from 'lucide-react'</code>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <div id="preview5" class="inline-block"></div>
+            </div>
+        </div>
+
+        <!-- Option 6: MailOpen -->
+        <div class="bg-white rounded-2xl p-6 mb-4 shadow-sm border border-gray-200 hover:border-mint transition-all cursor-pointer" onclick="selectIcon(6)">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0">
+                    <!-- MailOpen Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success">
+                        <path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"></path>
+                        <path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="font-semibold text-content-title mb-1">MailOpen</div>
+                    <div class="text-sm text-content">Opened mail envelope - email was read/confirmed</div>
+                    <div class="text-xs text-gray-400 mt-1">
+                        <code class="bg-gray-100 px-1 rounded">import {'{ MailOpen }'} from 'lucide-react'</code>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <div id="preview6" class="inline-block"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Full Preview Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB] rounded-2xl max-w-[375px] w-full mx-4 p-8 relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="text-center" id="modalContent">
+                <!-- Full preview will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const icons = {
+            1: {
+                name: 'MailCheck',
+                svg: `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success mx-auto mb-4 animate-scale-in">
+                    <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"></path>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    <path d="m16 19 2 2 4-4"></path>
+                </svg>`,
+                import: 'MailCheck',
+                description: 'Email + Checkmark'
+            },
+            2: {
+                name: 'BadgeCheck',
+                svg: `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success mx-auto mb-4 animate-scale-in">
+                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path>
+                    <path d="m9 12 2 2 4-4"></path>
+                </svg>`,
+                import: 'BadgeCheck',
+                description: 'Badge/Seal'
+            },
+            3: {
+                name: 'ShieldCheck',
+                svg: `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success mx-auto mb-4 animate-scale-in">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+                    <path d="m9 12 2 2 4-4"></path>
+                </svg>`,
+                import: 'ShieldCheck',
+                description: 'Secure/Protected'
+            },
+            4: {
+                name: 'CircleCheckBig',
+                svg: `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success mx-auto mb-4 animate-scale-in">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <path d="m9 11 3 3L22 4"></path>
+                </svg>`,
+                import: 'CircleCheckBig',
+                description: 'Bold Checkmark'
+            },
+            5: {
+                name: 'CheckCircle',
+                svg: `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success mx-auto mb-4 animate-scale-in">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>`,
+                import: 'CheckCircle',
+                description: 'Classic (Current)'
+            },
+            6: {
+                name: 'MailOpen',
+                svg: `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success mx-auto mb-4 animate-scale-in">
+                    <path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"></path>
+                    <path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"></path>
+                </svg>`,
+                import: 'MailOpen',
+                description: 'Opened Envelope'
+            }
+        };
+
+        function selectIcon(num) {
+            const icon = icons[num];
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                ${icon.svg}
+                <h1 class="text-2xl font-bold text-content-title mb-4">E-Mail erfolgreich bestätigt!</h1>
+                <p class="text-content mb-6">Weiterleitung zu deinem Dashboard...</p>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-mint mx-auto animate-spin">
+                    <line x1="12" x2="12" y1="2" y2="6"></line>
+                    <line x1="12" x2="12" y1="18" y2="22"></line>
+                    <line x1="4.93" x2="7.76" y1="4.93" y2="7.76"></line>
+                    <line x1="16.24" x2="19.07" y1="16.24" y2="19.07"></line>
+                    <line x1="2" x2="6" y1="12" y2="12"></line>
+                    <line x1="18" x2="22" y1="12" y2="12"></line>
+                    <line x1="4.93" x2="7.76" y1="19.07" y2="16.24"></line>
+                    <line x1="16.24" x2="19.07" y1="7.76" y2="4.93"></line>
+                </svg>
+                <div class="mt-6 text-xs text-gray-500 bg-white/50 p-3 rounded-lg">
+                    <strong class="block text-mint mb-1">${icon.name}</strong>
+                    <code class="text-[10px]">import { ${icon.import} } from 'lucide-react'</code>
+                    <div class="mt-2 text-[10px]">
+                        className="w-icon-3xl h-icon-3xl text-success"
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Show previews on load
+        window.addEventListener('load', () => {
+            Object.keys(icons).forEach(num => {
+                const icon = icons[num];
+                const preview = document.getElementById(`preview${num}`);
+                if (preview) {
+                    preview.innerHTML = `
+                        <div class="text-xs text-gray-500 mb-2">Click to preview full screen ↑</div>
+                    `;
+                }
+            });
+        });
+
+        console.log('🎨 Email Confirmation Icon Options');
+        console.log('👆 Click any option to see full-screen preview');
+        console.log('💡 Recommendation: MailCheck (combines email + confirmation)');
+    </script>
+</body>
+</html>
+
+

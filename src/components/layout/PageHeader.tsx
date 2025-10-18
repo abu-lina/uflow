@@ -4,11 +4,18 @@ import { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
+type HeaderVariant = 'title-only' | 'back-and-title' | 'back-title-icon' | 'title-and-icon';
+
 interface PageHeaderProps {
   /**
    * The title text to display in the header
    */
   title: string;
+  /**
+   * Header variant determining the layout
+   * @default 'title-only'
+   */
+  variant?: HeaderVariant;
   /**
    * Whether the header should be visible (for scroll-based hiding)
    * @default true
@@ -23,6 +30,10 @@ interface PageHeaderProps {
    */
   rightContent?: ReactNode;
   /**
+   * Right icon for variants 3 and 4 (48px size expected)
+   */
+  rightIcon?: ReactNode;
+  /**
    * Additional CSS classes
    */
   className?: string;
@@ -33,41 +44,57 @@ interface PageHeaderProps {
 }
 
 /**
- * Unified reusable page header component
+ * Unified reusable page header component with four variants
+ * 
+ * Variants:
+ * - title-only: Title only (no chevron, no icon)
+ * - back-and-title: Back chevron + title  
+ * - back-title-icon: Back chevron + title + right icon (48px)
+ * - title-and-icon: Title + right icon (48px)
  * 
  * Features:
- * - Consistent 24px spacing from safe area
- * - 40px header height
- * - Optional back button
+ * - Consistent spacing from safe area
+ * - Responsive header height
+ * - Optional back button navigation
  * - Optional scroll-based show/hide animation
- * - Flexible right-side content
+ * - Flexible right-side content and icons
  * - Semantic HTML with <header> tag
  * 
  * @example
  * ```tsx
- * // Simple fixed header
- * <PageHeader title="My Page" />
+ * // Variant 1: Title only
+ * <PageHeader title="My Page" variant="title-only" />
  * 
- * // With back button
+ * // Variant 2: Back button and title
  * <PageHeader 
  *   title="My Page"
+ *   variant="back-and-title"
  *   onBack="/previous-page"
  * />
  * 
- * // With scroll animation
- * const { isHeaderVisible } = useContainerScroll();
+ * // Variant 3: Back, title, and right icon
  * <PageHeader 
  *   title="My Page"
- *   isVisible={isHeaderVisible}
+ *   variant="back-title-icon"
  *   onBack="/previous-page"
+ *   rightIcon={<Logo className="h-12 w-12" />}
+ * />
+ * 
+ * // Variant 4: Title and right icon (48px)
+ * <PageHeader 
+ *   title="Login"
+ *   variant="title-and-icon"
+ *   rightIcon={<Logo className="h-12 w-12" height={48} width={48} />}
  * />
  * ```
  */
 export function PageHeader({
   title,
+  variant = 'title-only',
   isVisible = true,
   onBack,
   rightContent,
+  rightIcon,
   className = '',
   customContent,
 }: PageHeaderProps) {
@@ -81,15 +108,22 @@ export function PageHeader({
     }
   };
 
+  // Determine which elements to show based on variant
+  const shouldShowBackButton = variant === 'back-and-title' || variant === 'back-title-icon';
+  const shouldShowRightIcon = variant === 'back-title-icon' || variant === 'title-and-icon';
+  
+  // Priority: rightIcon > rightContent
+  const actualRightContent = shouldShowRightIcon && rightIcon ? rightIcon : rightContent;
+
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out ${
+      className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out ${
         isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       } ${className}`}
     >
-      <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">
+      <div className="flex items-center w-full max-w-[393px] mx-auto pl-7 pr-4 h-header-height-mobile sm:h-header-height-tablet md:h-header-height-desktop">
         {/* Back Button */}
-        {onBack && (
+        {shouldShowBackButton && onBack && (
           <button
             aria-label="Zurück"
             className="flex items-center justify-center w-8 h-8 -ml-1"
@@ -103,15 +137,15 @@ export function PageHeader({
         {customContent ? (
           customContent
         ) : (
-          <h1 className="text-xl font-semibold text-content-title">
+          <h1 className="text-xl font-semibold text-content-title flex-1">
             {title}
           </h1>
         )}
 
         {/* Right Content */}
-        {rightContent && (
+        {actualRightContent && (
           <div className="ml-auto flex items-center">
-            {rightContent}
+            {actualRightContent}
           </div>
         )}
       </div>

@@ -22,6 +22,19 @@
     --mobile-nav-height: 96px; /* Actual navbar: 80px container + 16px (pb-4) */
     --mobile-nav-spacing: 32px; /* Desired gap between content and nav */
     --mobile-nav-total: calc(var(--mobile-nav-height) + var(--mobile-nav-spacing)); /* 128px */
+    
+    /* Header system design tokens */
+    --header-padding-mobile: 16px;
+    --header-padding-desktop: 24px;
+    --header-height-mobile: 40px;
+    --header-height-tablet: 48px;
+    --header-height-desktop: 56px;
+    --content-gap: 32px; /* Standard gap between header and content */
+    
+    /* Header total height calculations for spacer */
+    --header-total-mobile: calc(var(--header-padding-mobile) + var(--header-height-mobile) + var(--content-gap));
+    --header-total-tablet: calc(var(--header-padding-desktop) + var(--header-height-tablet) + var(--content-gap));
+    --header-total-desktop: calc(var(--header-padding-desktop) + var(--header-height-desktop) + var(--content-gap));
   }
 
   html {
@@ -404,6 +417,17 @@
     }
   }
 
+  /* Scrollable content best practices */
+  .scrollable-container {
+    /* Ensure proper scrolling behavior */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Enable momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent horizontal scrollbars */
+    overscroll-behavior-y: contain;
+  }
+
   /* Safe area utilities for consistent cross-device support */
   .pb-safe-bottom {
     /* Minimum 12px padding even on devices without safe area (like iPhone SE) */
@@ -445,6 +469,35 @@
     /* Ensures minimum 12px padding on all devices */
     /* 96px navbar (80px + 16px pb-4) + 32px gap + safe area */
     padding-bottom: calc(var(--mobile-nav-total) + max(12px, env(safe-area-inset-bottom)));
+  }
+
+  /* Header spacing utilities - uses design tokens for consistency */
+  .header-spacer {
+    /* Mobile: safe-area + header-padding + header-height + content-gap */
+    /* Total: env(safe-area-inset-top) + 16px + 40px + 32px = env(safe-area-inset-top) + 88px */
+    height: calc(env(safe-area-inset-top) + var(--header-total-mobile));
+    min-height: var(--header-total-mobile); /* 88px fallback */
+    width: 100%;
+    flex-shrink: 0; /* Prevent flex shrinking */
+    display: block; /* Ensure it's a block element */
+  }
+  
+  @media (min-width: 640px) {
+    .header-spacer {
+      /* Tablet: safe-area + header-padding + header-height + content-gap */
+      /* Total: env(safe-area-inset-top) + 24px + 48px + 32px = env(safe-area-inset-top) + 104px */
+      height: calc(env(safe-area-inset-top) + var(--header-total-tablet));
+      min-height: var(--header-total-tablet); /* 104px fallback */
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .header-spacer {
+      /* Desktop: safe-area + header-padding + header-height + content-gap */
+      /* Total: env(safe-area-inset-top) + 24px + 56px + 32px = env(safe-area-inset-top) + 112px */
+      height: calc(env(safe-area-inset-top) + var(--header-total-desktop));
+      min-height: var(--header-total-desktop); /* 112px fallback */
+    }
   }
 
   /* Navigation bar content positioning */

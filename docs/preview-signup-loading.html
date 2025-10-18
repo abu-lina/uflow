@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Loading State - Design Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        .loading-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Spinner */
+        .spinner {
+            height: 48px;
+            width: 48px;
+            border-radius: 50%;
+            border: 4px solid #E5E5E5;
+            border-top-color: #589D96;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Loading Text */
+        .loading-text {
+            font-size: 14px;
+            color: #7A7A7A;
+        }
+
+        /* Note Section */
+        .note {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 12px;
+            color: #666;
+            max-width: 200px;
+            z-index: 100;
+        }
+
+        .note strong {
+            display: block;
+            color: #272727;
+            margin-bottom: 4px;
+        }
+
+        .note code {
+            background: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        /* Demo Controls */
+        .controls {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 300px;
+        }
+
+        .control-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #272727;
+            text-align: center;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-button {
+            flex: 1;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #D4D4D4;
+            background: white;
+            color: #272727;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-button:hover {
+            background: #f8f9fa;
+            border-color: #589D96;
+        }
+
+        .control-button.active {
+            background: #589D96;
+            color: white;
+            border-color: #589D96;
+        }
+
+        /* Variations */
+        .spinner.large {
+            height: 64px;
+            width: 64px;
+            border-width: 5px;
+        }
+
+        .spinner.success {
+            border-top-color: #10b981;
+        }
+
+        .spinner.fast {
+            animation-duration: 0.6s;
+        }
+
+        @media (max-width: 400px) {
+            .note {
+                position: static;
+                margin: 16px;
+                max-width: none;
+            }
+            
+            .controls {
+                position: static;
+                transform: none;
+                margin: 16px;
+                width: calc(100% - 32px);
+                min-width: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Design Preview Note -->
+    <div class="note">
+        <strong>🎨 Loading State Preview</strong>
+        This shows after clicking "Registrieren" and before redirecting to check-email page.
+        <br><br>
+        Duration: <code>~1-2 seconds</code>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner" id="spinner"></div>
+            <p class="loading-text" id="loadingText">Weiterleitung...</p>
+        </div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="controls">
+        <div class="control-title">🎛️ Try Different Variations</div>
+        <div class="control-buttons">
+            <button class="control-button active" onclick="setVariation('default')">
+                Default
+            </button>
+            <button class="control-button" onclick="setVariation('large')">
+                Larger
+            </button>
+            <button class="control-button" onclick="setVariation('fast')">
+                Faster
+            </button>
+            <button class="control-button" onclick="setVariation('success')">
+                Success
+            </button>
+        </div>
+        <div class="control-buttons">
+            <button class="control-button" onclick="changeText('en')">
+                English
+            </button>
+            <button class="control-button" onclick="changeText('de')">
+                Deutsch
+            </button>
+            <button class="control-button" onclick="changeText('emoji')">
+                With Emoji
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const spinner = document.getElementById('spinner');
+        const loadingText = document.getElementById('loadingText');
+        let currentVariation = 'default';
+
+        function setVariation(type) {
+            // Reset all classes
+            spinner.className = 'spinner';
+            
+            // Remove active state from all buttons
+            document.querySelectorAll('.control-button').forEach(btn => {
+                if (!btn.onclick.toString().includes('changeText')) {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Add active state to clicked button
+            event.target.classList.add('active');
+            
+            // Apply variation
+            switch(type) {
+                case 'large':
+                    spinner.classList.add('large');
+                    break;
+                case 'fast':
+                    spinner.classList.add('fast');
+                    break;
+                case 'success':
+                    spinner.classList.add('success');
+                    break;
+            }
+            
+            currentVariation = type;
+        }
+
+        function changeText(lang) {
+            // Remove active state
+            document.querySelectorAll('.control-button').forEach(btn => {
+                if (btn.onclick.toString().includes('changeText')) {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Add active state
+            event.target.classList.add('active');
+            
+            switch(lang) {
+                case 'en':
+                    loadingText.textContent = 'Redirecting...';
+                    break;
+                case 'de':
+                    loadingText.textContent = 'Weiterleitung...';
+                    break;
+                case 'emoji':
+                    loadingText.textContent = '✨ Einen Moment bitte...';
+                    break;
+            }
+        }
+
+        console.log('🎨 Signup Loading State Preview');
+        console.log('👉 Try the buttons below to see variations!');
+    </script>
+</body>
+</html>
+
+

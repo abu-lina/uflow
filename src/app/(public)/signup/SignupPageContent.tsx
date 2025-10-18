@@ -6,6 +6,12 @@ import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Logo } from '@/components/ui/Logo';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { AuthTitleSection } from '@/components/layout/AuthTitleSection';
+import { AuthFormSection } from '@/components/layout/AuthFormSection';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { signUpWithLanguage } from '@/lib/auth';
@@ -125,7 +131,7 @@ export function SignupPageContent() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-between bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB] px-4">
+    <PageLayout>
       {/* Loading Overlay - Prevents flash during redirect */}
       {isRedirecting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
@@ -136,38 +142,31 @@ export function SignupPageContent() {
         </div>
       )}
       
-      {/* Header */}
-      <div className="flex w-full max-w-[361px] flex-col items-center py-6">
-        <div className="flex w-full items-center justify-between">
-          <h1 className="text-xl font-semibold text-content-title">Registrieren</h1>
-          <div className="h-12 w-12">
-            <Logo className="h-12 w-12" height={48} width={48} />
-          </div>
-        </div>
-      </div>
+      <PageHeader 
+        rightIcon={<Logo className="h-12 w-12" height={48} width={48} />}
+        title="Registrieren"
+        variant="title-and-icon"
+      />
 
-      {/* Content */}
-      <div className="flex w-full max-w-[361px] flex-1 flex-col items-center gap-6 overflow-y-auto mobile-nav-spacing">
-        {/* Title Section */}
-        <div className="flex flex-col items-center gap-8">
-          {/* Welcome Title */}
-          <div className="flex flex-col items-start pl-3">
-            <h2 className="text-left text-lg font-semibold leading-[39px] text-content-title">
-              Willkommen bei Ummah Flow
-            </h2>
-            <p className="text-left text-sm leading-[19px] text-[#7A7A7A]">
-              Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
-            </p>
-          </div>
-        </div>
+      <HeaderSpacer />
 
-        {/* Form */}
-        <form className="flex w-full flex-col" onSubmit={handleSubmit}>
+      <PageContentWrapper>
+        <AuthTitleSection maxWidth="max-w-[361px]">
+          <h2 className="text-left text-lg font-semibold leading-[39px] text-content-title">
+            Willkommen bei Ummah Flow
+          </h2>
+          <p className="text-left text-sm leading-[19px] text-[#7A7A7A]">
+            Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
+          </p>
+        </AuthTitleSection>
+
+        <AuthFormSection>
+          <form className="flex w-full flex-col" onSubmit={handleSubmit}>
           {/* Form Fields */}
           <div className="flex w-full flex-col gap-3">
             {/* Email Field */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
+          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white py-2">
+            <div className="flex w-full flex-col gap-1 px-3">
               <label className="text-xs leading-[15px] text-[#999999]">
                 E-Mail
               </label>
@@ -183,8 +182,8 @@ export function SignupPageContent() {
           </div>
 
           {/* Password Field */}
-          <div className="flex h-[56px] w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
+          <div className="flex h-[56px] w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white py-2">
+            <div className="flex w-full flex-col gap-1 px-3">
               <label className="text-xs leading-[15px] text-[#999999]">
                 Passwort
               </label>
@@ -199,22 +198,24 @@ export function SignupPageContent() {
             </div>
             
             {/* Eye Toggle Icon */}
-            <button
-              className="flex h-6 w-6 items-center justify-center text-[#232323] hover:text-gray-700"
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
+            <div className="px-3">
+              <button
+                className="flex h-6 w-6 items-center justify-center text-[#232323] hover:text-gray-700"
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Confirm Password Field */}
-          <div className="flex h-[56px] w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
+          <div className="flex h-[56px] w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white py-2">
+            <div className="flex w-full flex-col gap-1 px-3">
               <label className="text-xs leading-[15px] text-[#999999]">
                 Passwort bestätigen
               </label>
@@ -229,17 +230,19 @@ export function SignupPageContent() {
             </div>
             
             {/* Eye Toggle Icon */}
-            <button
-              className="flex h-6 w-6 items-center justify-center text-[#232323] hover:text-gray-700"
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
+            <div className="px-3">
+              <button
+                className="flex h-6 w-6 items-center justify-center text-[#232323] hover:text-gray-700"
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
 
           </div>
@@ -269,8 +272,9 @@ export function SignupPageContent() {
               Wenn du fortfährst, erstellst du ein Konto und stimmst den Allgemeinen Geschäftsbedingungen und Datenschutzrichtlinien zu.
             </p>
           </div>
-        </form>
-      </div>
-    </div>
+          </form>
+        </AuthFormSection>
+      </PageContentWrapper>
+    </PageLayout>
   );
 }

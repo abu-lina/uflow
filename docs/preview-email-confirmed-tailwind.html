@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Email Confirmed - Mobile Preview (Tailwind)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mint: {
+                            DEFAULT: '#589D96',
+                            light: '#BFDBD8',
+                        },
+                        content: {
+                            DEFAULT: '#555555',
+                            title: '#232323',
+                        },
+                        success: '#10b981',
+                        danger: '#DC2626',
+                        info: '#3b82f6',
+                        warning: '#f59e42',
+                    },
+                    spacing: {
+                        'icon-xs': '16px',
+                        'icon-sm': '20px',
+                        'icon-md': '24px',
+                        'icon-lg': '32px',
+                        'icon-xl': '48px',
+                        'icon-2xl': '64px',
+                        'icon-3xl': '96px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-scale-in {
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .animate-fade-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .animate-fade-up-delay-1 {
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .animate-fade-up-delay-2 {
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+        }
+
+        .animate-fade-up-delay-3 {
+            animation: fadeInUp 0.6s ease-out 0.6s both;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <!-- Mobile Device Frame Indicator -->
+    <div class="fixed top-2 left-1/2 -translate-x-1/2 z-[1000] bg-mint/90 text-white px-4 py-1 rounded-full text-xs font-semibold">
+        📱 Mobile View (375px) - Tailwind Classes
+    </div>
+
+    <!-- Main Container -->
+    <div class="min-h-screen flex items-center justify-center px-4 max-w-[375px] mx-auto">
+        <div class="text-center w-full" id="container">
+            <!-- Content will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] bg-white p-4 rounded-xl shadow-lg max-w-[340px] w-[90%]">
+        <div class="text-center text-sm font-semibold text-content-title mb-3">
+            🎨 Try Different States
+        </div>
+        
+        <div class="flex gap-2 mb-2">
+            <button onclick="showState('success')" class="state-btn active flex-1 px-3 py-2 rounded-lg border border-gray-300 text-xs transition-all hover:border-mint">
+                ✓ Success
+            </button>
+            <button onclick="showState('error')" class="state-btn flex-1 px-3 py-2 rounded-lg border border-gray-300 text-xs transition-all hover:border-mint">
+                ✗ Error
+            </button>
+            <button onclick="showState('loading')" class="state-btn flex-1 px-3 py-2 rounded-lg border border-gray-300 text-xs transition-all hover:border-mint">
+                ↻ Loading
+            </button>
+        </div>
+        
+        <div class="text-center text-[10px] text-gray-500 my-2">Icon Library: Lucide React</div>
+        
+        <div class="flex gap-2">
+            <button onclick="changeLanguage('en')" class="lang-btn flex-1 px-3 py-2 rounded-lg border border-gray-300 text-xs transition-all hover:border-mint">
+                English
+            </button>
+            <button onclick="changeLanguage('de')" class="lang-btn flex-1 px-3 py-2 rounded-lg border border-gray-300 text-xs transition-all hover:border-mint">
+                Deutsch
+            </button>
+        </div>
+        
+        <div class="text-center text-[10px] text-gray-400 mt-3 pt-3 border-t border-gray-200" id="sizeInfo">
+            Current: CheckCircle • Size: w-icon-3xl (96px)
+        </div>
+    </div>
+
+    <script>
+        let currentState = 'success';
+        let currentLang = 'en';
+
+        const states = {
+            success: {
+                iconSVG: `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-icon-3xl h-icon-3xl text-success mx-auto mb-4 animate-scale-in"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+                title: {
+                    en: 'Email confirmed successfully!',
+                    de: 'E-Mail erfolgreich bestätigt!'
+                },
+                description: {
+                    en: 'Redirecting to your dashboard...',
+                    de: 'Weiterleitung zu deinem Dashboard...'
+                },
+                showSpinner: true,
+                iconName: 'CheckCircle',
+                classes: 'w-icon-3xl h-icon-3xl text-success'
+            },
+            error: {
+                iconSVG: `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-icon-3xl h-icon-3xl text-danger mx-auto mb-4 animate-scale-in"><circle cx="12" cy="12" r="10"></circle><line x1="15" x2="9" y1="9" y2="15"></line><line x1="9" x2="15" y1="9" y2="15"></line></svg>`,
+                title: {
+                    en: 'Error confirming email',
+                    de: 'Fehler beim Bestätigen'
+                },
+                description: {
+                    en: 'Please try again or contact support if the problem persists.',
+                    de: 'Bitte versuche es erneut oder kontaktiere den Support.'
+                },
+                showSpinner: false,
+                iconName: 'XCircle',
+                classes: 'w-icon-3xl h-icon-3xl text-danger'
+            },
+            loading: {
+                iconSVG: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-icon-xl h-icon-xl text-mint mx-auto mb-4 animate-spin"><line x1="12" x2="12" y1="2" y2="6"></line><line x1="12" x2="12" y1="18" y2="22"></line><line x1="4.93" x2="7.76" y1="4.93" y2="7.76"></line><line x1="16.24" x2="19.07" y1="16.24" y2="19.07"></line><line x1="2" x2="6" y1="12" y2="12"></line><line x1="18" x2="22" y1="12" y2="12"></line><line x1="4.93" x2="7.76" y1="19.07" y2="16.24"></line><line x1="16.24" x2="19.07" y1="7.76" y2="4.93"></line></svg>`,
+                title: {
+                    en: 'Confirming your email...',
+                    de: 'E-Mail wird bestätigt...'
+                },
+                description: {
+                    en: 'Please wait a moment',
+                    de: 'Bitte warten Sie einen Moment'
+                },
+                showSpinner: false,
+                iconName: 'Loader2',
+                classes: 'w-icon-xl h-icon-xl text-mint'
+            }
+        };
+
+        function showState(state) {
+            currentState = state;
+            
+            // Update active button
+            document.querySelectorAll('.state-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-mint', 'text-white', 'border-mint');
+                btn.classList.add('bg-white', 'text-gray-700');
+            });
+            event.target.classList.remove('bg-white', 'text-gray-700');
+            event.target.classList.add('active', 'bg-mint', 'text-white', 'border-mint');
+            
+            render();
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-mint', 'text-white', 'border-mint');
+                btn.classList.add('bg-white', 'text-gray-700');
+            });
+            event.target.classList.remove('bg-white', 'text-gray-700');
+            event.target.classList.add('active', 'bg-mint', 'text-white', 'border-mint');
+            
+            render();
+        }
+
+        function render() {
+            const state = states[currentState];
+            const container = document.getElementById('container');
+            
+            let html = state.iconSVG;
+            html += `<h1 class="text-2xl font-bold text-content-title mb-4 animate-fade-up-delay-1">${state.title[currentLang]}</h1>`;
+            html += `<p class="text-content mb-6 animate-fade-up-delay-2">${state.description[currentLang]}</p>`;
+            
+            if (state.showSpinner) {
+                html += `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-icon-lg h-icon-lg text-mint animate-spin mx-auto animate-fade-up-delay-3"><line x1="12" x2="12" y1="2" y2="6"></line><line x1="12" x2="12" y1="18" y2="22"></line><line x1="4.93" x2="7.76" y1="4.93" y2="7.76"></line><line x1="16.24" x2="19.07" y1="16.24" y2="19.07"></line><line x1="2" x2="6" y1="12" y2="12"></line><line x1="18" x2="22" y1="12" y2="12"></line><line x1="4.93" x2="7.76" y1="19.07" y2="16.24"></line><line x1="16.24" x2="19.07" y1="7.76" y2="4.93"></line></svg>`;
+            }
+            
+            if (currentState === 'error') {
+                html += `<button class="bg-mint text-white px-6 py-3 rounded-lg hover:bg-mint/90 transition-colors mt-4" onclick="alert('Would redirect to /auth/signup')">Try Again</button>`;
+            }
+            
+            container.innerHTML = html;
+            
+            // Update size info
+            document.getElementById('sizeInfo').textContent = 
+                `Current: ${state.iconName} • Tailwind: ${state.classes}`;
+        }
+
+        // Initial render
+        render();
+
+        console.log('✅ Mobile Preview - Using Real Tailwind Classes');
+        console.log('📱 Classes: w-icon-3xl h-icon-3xl text-success');
+        console.log('👉 Try different states and languages!');
+    </script>
+</body>
+</html>
+
+

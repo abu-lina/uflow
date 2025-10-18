@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { EmptyState } from '@/components/ui';
@@ -193,25 +196,31 @@ export default function SavedProvidersPage() {
   
   if (emptyState) {
     return (
-      <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-        <PageHeader title="Gespeichert" />
-        <main className="flex flex-1 flex-col items-center justify-center px-4 mobile-nav-spacing">
-          {emptyState}
-        </main>
-      </div>
+      <PageLayout>
+        <PageHeader title="Gespeichert" variant="title-only" />
+        
+        <HeaderSpacer />
+        
+        <PageContentWrapper>
+          <div className="flex flex-1 flex-col items-center justify-center">
+            {emptyState}
+          </div>
+        </PageContentWrapper>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <PageLayout>
       <PageHeader 
         isVisible={isHeaderVisible}
         title="Gespeichert"
+        variant="title-only"
       />
 
-      <div className={`transition-all duration-300 ${isHeaderVisible ? 'h-[calc(env(safe-area-inset-top)+24px+40px)]' : 'h-0'}`} />
+      <HeaderSpacer isVisible={isHeaderVisible} />
 
-      <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
+      <PageContentWrapper>
         <section className="w-full mb-6">
           <SearchBar 
             customCities={bookmarkedCities}
@@ -243,7 +252,7 @@ export default function SavedProvidersPage() {
             );
           })}
         </section>
-      </main>
-    </div>
+      </PageContentWrapper>
+    </PageLayout>
   );
 }

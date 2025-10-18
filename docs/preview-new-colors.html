@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>New Color Palette Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#589D96',
+                        mint: '#589D96',
+                        success: { DEFAULT: '#4CA987', light: '#7BC4A9', dark: '#3D8A6D' },
+                        warning: { DEFAULT: '#E6A94C', soft: '#FDF5E6', light: '#EFBC73', dark: '#C48A3A' },
+                        danger: { DEFAULT: '#D86363', light: '#E58989', dark: '#B84F4F' },
+                        info: { DEFAULT: '#4F9BAE', light: '#7AB5C5', dark: '#3F7C8B' },
+                        content: { DEFAULT: '#555555', title: '#232323' },
+                    },
+                    spacing: {
+                        'icon-xs': '16px', 'icon-sm': '20px', 'icon-md': '24px',
+                        'icon-lg': '32px', 'icon-xl': '48px', 'icon-2xl': '64px', 'icon-3xl': '96px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes scaleIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-scale-in { animation: scaleIn 0.5s ease-out; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB] min-h-screen">
+    
+    <!-- Header -->
+    <div class="fixed top-0 left-0 right-0 bg-white shadow-sm z-50 py-3">
+        <div class="text-center">
+            <h1 class="text-lg font-bold text-content-title">🎨 New Color Palette</h1>
+            <p class="text-xs text-content">Updated semantic colors with MailCheck icon</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="pt-20 pb-24 px-4">
+        
+        <!-- Color Swatches -->
+        <div class="max-w-md mx-auto mb-8">
+            <h2 class="text-sm font-semibold text-content-title mb-3">Color Reference:</h2>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Primary -->
+                <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                    <div class="w-full h-12 rounded mb-2" style="background: #589D96"></div>
+                    <div class="text-xs font-medium text-content-title">Primary</div>
+                    <div class="text-[10px] text-content">#589D96</div>
+                </div>
+                
+                <!-- Success -->
+                <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                    <div class="w-full h-12 rounded mb-2" style="background: #4CA987"></div>
+                    <div class="text-xs font-medium text-content-title">Success</div>
+                    <div class="text-[10px] text-content">#4CA987</div>
+                </div>
+                
+                <!-- Warning -->
+                <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                    <div class="w-full h-12 rounded mb-2" style="background: #E6A94C"></div>
+                    <div class="text-xs font-medium text-content-title">Warning</div>
+                    <div class="text-[10px] text-content">#E6A94C</div>
+                </div>
+                
+                <!-- Error -->
+                <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                    <div class="w-full h-12 rounded mb-2" style="background: #D86363"></div>
+                    <div class="text-xs font-medium text-content-title">Error</div>
+                    <div class="text-[10px] text-content">#D86363</div>
+                </div>
+                
+                <!-- Info -->
+                <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200 col-span-2">
+                    <div class="w-full h-12 rounded mb-2" style="background: #4F9BAE"></div>
+                    <div class="text-xs font-medium text-content-title">Info</div>
+                    <div class="text-[10px] text-content">#4F9BAE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Examples -->
+        <div class="max-w-md mx-auto space-y-4">
+            <h2 class="text-sm font-semibold text-content-title mb-3">Live Examples:</h2>
+            
+            <!-- Success Example -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div class="text-center">
+                    <!-- MailCheck Icon with new success color -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-icon-3xl h-icon-3xl text-success mx-auto mb-3 animate-scale-in">
+                        <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"></path>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                        <path d="m16 19 2 2 4-4"></path>
+                    </svg>
+                    <div class="text-sm font-semibold text-content-title mb-1">✅ Success State</div>
+                    <div class="text-xs text-success font-medium">MailCheck icon • #4CA987</div>
+                    <div class="text-[10px] text-content mt-1">
+                        <code class="bg-gray-100 px-2 py-0.5 rounded">text-success</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Example -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div class="text-center">
+                    <!-- XCircle Icon with new danger color -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-icon-2xl h-icon-2xl text-danger mx-auto mb-3">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" x2="9" y1="9" y2="15"></line>
+                        <line x1="9" x2="15" y1="9" y2="15"></line>
+                    </svg>
+                    <div class="text-sm font-semibold text-content-title mb-1">❌ Error State</div>
+                    <div class="text-xs text-danger font-medium">XCircle icon • #D86363</div>
+                    <div class="text-[10px] text-content mt-1">
+                        <code class="bg-gray-100 px-2 py-0.5 rounded">text-danger</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Example -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div class="flex items-start gap-3 bg-warning-soft border border-warning/20 rounded-lg p-3">
+                    <!-- AlertTriangle Icon with new warning color -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-icon-sm h-icon-sm text-warning flex-shrink-0 mt-0.5">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                        <line x1="12" x2="12" y1="9" y2="13"></line>
+                        <line x1="12" x2="12.01" y1="17" y2="17"></line>
+                    </svg>
+                    <div class="flex-1">
+                        <div class="text-xs font-medium text-warning mb-1">⚠️ Warning Alert</div>
+                        <div class="text-[10px] text-content">AlertTriangle • #E6A94C</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Example -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <div class="text-center">
+                    <!-- Mail Icon with new info color -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-icon-2xl h-icon-2xl text-info mx-auto mb-3">
+                        <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                    <div class="text-sm font-semibold text-content-title mb-1">ℹ️ Info State</div>
+                    <div class="text-xs text-info font-medium">Mail icon • #4F9BAE</div>
+                    <div class="text-[10px] text-content mt-1">
+                        <code class="bg-gray-100 px-2 py-0.5 rounded">text-info</code>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        console.log('🎨 New Color Palette Preview');
+        console.log('');
+        console.log('Primary:  #589D96 (Mint - Brand)');
+        console.log('Success:  #4CA987 (New Green)');
+        console.log('Warning:  #E6A94C (New Orange)');
+        console.log('Error:    #D86363 (New Red)');
+        console.log('Info:     #4F9BAE (New Blue)');
+        console.log('');
+        console.log('✅ All colors updated in tailwind.config.ts');
+    </script>
+</body>
+</html>
+
+
