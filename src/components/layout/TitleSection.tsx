@@ -34,9 +34,9 @@ interface TitleSectionProps {
  *       description="Description text"
  *     />
  *   </TitleSection>
- *   <AuthFormSection>
+ *   <ContentSection>
  *     // Form content
- *   </AuthFormSection>
+ *   </ContentSection>
  * </PageContentWrapper>
  * ```
  */

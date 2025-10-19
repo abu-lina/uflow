@@ -4,11 +4,13 @@ import { useRouter } from 'next/navigation';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
-import { AuthFormSection } from '@/components/layout/AuthFormSection';
+import { ContentSection } from '@/components/layout/ContentSection';
 import { IconWithTitle, LinkButton, SecondaryButton, Icon } from '@/components/ui';
+import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
 
 export default function CheckEmailPage() {
   const router = useRouter();
@@ -25,7 +27,6 @@ export default function CheckEmailPage() {
 
       <PageContentWrapper centerVertically={true}>
         <div className="flex w-full flex-col">
-          {/* Title + Description with icon */}
           <TitleSection className="mb-10">
             <IconWithTitle
               icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:mail-outline" />}
@@ -38,8 +39,7 @@ export default function CheckEmailPage() {
             </IconWithTitle>
           </TitleSection>
 
-          {/* Actions */}
-          <AuthFormSection>
+          <ContentSection>
             <div className="flex flex-col space-y-3">
               {/* Resend Button */}
               <SecondaryButton
@@ -62,9 +62,21 @@ export default function CheckEmailPage() {
                 Andere E‑Mail verwenden
               </LinkButton>
             </div>
-          </AuthFormSection>
+          </ContentSection>
         </div>
       </PageContentWrapper>
+
+      <BottomSpacer height="h-16" />
+
+      <BottomActionNavbar
+        height="h-16"
+        primaryButton={{
+          label: 'Nach Bestätigung anmelden',
+          icon: <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />,
+          onClick: () => router.push('/login'),
+          'aria-label': 'Nach E-Mail Bestätigung zur Anmeldung',
+        }}
+      />
     </PageLayout>
   );
 }

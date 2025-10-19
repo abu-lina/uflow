@@ -55,6 +55,8 @@ const config: Config = {
     'h-icon-2xl',
     'w-icon-3xl',
     'h-icon-3xl',
+    'w-icon-4xl',
+    'h-icon-4xl',
     // Icon colors
     'text-success',
     'text-info',
@@ -64,6 +66,10 @@ const config: Config = {
     'h-header-spacing',
     'h-header-spacing-sm',
     'h-header-spacing-md',
+    // Bottom spacing utilities
+    'h-bottom-spacing-12',
+    'h-bottom-spacing-16',
+    'h-bottom-spacing-subpage',
   ],
   theme: {
     screens: {
@@ -132,6 +138,11 @@ const config: Config = {
         'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 32px)', // mobile: safe-area + padding + height + gap
         'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 32px)', // tablet: safe-area + padding + height + gap  
         'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 32px)', // desktop: safe-area + padding + height + gap
+        
+        // Bottom action bar spacing - accounts for fixed bottom nav
+        'bottom-spacing-12': 'calc(48px + 1rem + max(12px, env(safe-area-inset-bottom)))', // h-12 + padding + safe area
+        'bottom-spacing-16': 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))', // h-16 + padding + safe area
+        'bottom-spacing-subpage': 'calc(80px + 1rem + max(12px, env(safe-area-inset-bottom)))', // subpage button (80px + 16px padding + safe area)
         // Icon sizes (for Material Symbols - standardized)
         'icon-xs': '16px',   // Extra small icons (inline with text)
         'icon-sm': '20px',   // Small icons (buttons, inputs)
@@ -140,6 +151,7 @@ const config: Config = {
         'icon-xl': '48px',   // Extra large icons (feature highlights)
         'icon-2xl': '64px',  // 2X large icons (success states, hero)
         'icon-3xl': '96px',  // 3X large icons (major success/error states)
+        'icon-4xl': '144px', // 4X large icons (modal states, critical actions)
       },
       colors: {
         primary: {

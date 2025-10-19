@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { ContentSection } from '@/components/layout/ContentSection';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
@@ -263,81 +266,81 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         onBack={() => router.back()}
       />
 
-      <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-[calc(env(safe-area-inset-top)+24px+40px)]' : 'h-0'
-      }`} />
+      <HeaderSpacer isVisible={isHeaderSticky} />
 
-      <main className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col">
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 rounded-lg bg-red-50 p-4">
-              <p className="text-center text-red-600">{error}</p>
-            </div>
-          )}
-
-          {/* Form */}
-          <form className="space-y-6" onSubmit={handleSubmit}>
-        {/* Persönliche Daten */}
-        <div>
-            <SectionHeading>
-              Persönliche Daten
-            </SectionHeading>
-          
-          <div className="space-y-3">
-            {/* First Name */}
-            <FormInput
-              required
-              label="Vorname"
-              labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
-              type="text"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-            />
-
-            {/* Last Name */}
-            <FormInput
-              required
-              label="Nachname"
-              labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
-              type="text"
-              value={formData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-            />
-
-            {/* Email */}
-            <FormInput
-              required
-              label="E-Mail"
-              labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-            />
-
-            {/* Password Field with Hint */}
-            <div className="space-y-1">
-              <FormInput
-                label="Passwort"
-                labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
-                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                variant="with-icon"
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                onRightIconClick={() => setShowPassword(!showPassword)}
-              />
-              <p className="pl-2 text-xs text-gray-500">
-                Lass das Feld leer, um das Passwort nicht zu ändern.
-              </p>
-            </div>
+      <PageContentWrapper 
+        className="content-scroll-container flex-1 mobile-nav-spacing overflow-y-auto"
+      >
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 p-4">
+            <p className="text-center text-red-600">{error}</p>
           </div>
-        </div>
+        )}
 
+        {/* Persönliche Daten Section */}
+        <ContentSection>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <SectionHeading>
+                Persönliche Daten
+              </SectionHeading>
+            
+              <div className="space-y-3">
+                {/* First Name */}
+                <FormInput
+                  required
+                  label="Vorname"
+                  labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                />
+
+                {/* Last Name */}
+                <FormInput
+                  required
+                  label="Nachname"
+                  labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                />
+
+                {/* Email */}
+                <FormInput
+                  required
+                  label="E-Mail"
+                  labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                />
+
+                {/* Password Field with Hint */}
+                <div className="space-y-1">
+                  <FormInput
+                    label="Passwort"
+                    labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                    rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    variant="with-icon"
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    onRightIconClick={() => setShowPassword(!showPassword)}
+                  />
+                  <p className="pl-2 text-xs text-gray-500">
+                    Lass das Feld leer, um das Passwort nicht zu ändern.
+                  </p>
+                </div>
+              </div>
+            </div>
           </form>
+        </ContentSection>
 
-          {/* Konto verwalten */}
-          <div className="mt-8 mb-6">
+        {/* Konto verwalten Section */}
+        <ContentSection className="mt-8 mb-6">
+          <div>
             <SectionHeading>
               Konto verwalten
             </SectionHeading>
@@ -352,8 +355,8 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
               </span>
             </button>
           </div>
-        </div>
-      </main>
+        </ContentSection>
+      </PageContentWrapper>
 
       {/* Bottom Action Navbar */}
       <BottomActionNavbar

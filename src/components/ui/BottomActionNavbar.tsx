@@ -1,6 +1,8 @@
 'use client';
 
+import React from 'react';
 import { Button } from './Button';
+import { IconButton } from './IconButton';
 
 /**
  * Bottom action navbar component for action buttons
@@ -16,7 +18,7 @@ import { Button } from './Button';
 interface BottomActionNavbarProps {
   primaryButton: {
     label: string;
-    icon?: string;
+    icon?: React.ReactNode | string;
     onClick: () => void;
     disabled?: boolean;
     loading?: boolean;
@@ -25,11 +27,11 @@ interface BottomActionNavbarProps {
     'aria-label'?: string;
   };
   secondaryButton?: {
-    icon: string;
+    icon: React.ReactNode | string;
     onClick: () => void;
     disabled?: boolean;
     loading?: boolean;
-    'aria-label'?: string;
+    'aria-label': string;
   };
   className?: string;
   height?: 'h-12' | 'h-16';
@@ -43,7 +45,7 @@ export function BottomActionNavbar({
 }: BottomActionNavbarProps) {
   return (
     <nav className={`fixed bottom-0 left-0 right-0 z-50 w-full bg-white/10 backdrop-blur-3xl border-t border-white/20 ${className}`}>
-      <div className={`flex ${height} w-full max-w-[393px] mx-auto items-center px-4 pb-[calc(1rem+max(12px,env(safe-area-inset-bottom)))]`}>
+      <div className={`flex ${height} w-full max-w-[400px] mx-auto items-center px-4 pb-safe`}>
         {secondaryButton ? (
           /* Two Button Layout */
           <div className="flex w-full gap-2">
@@ -61,18 +63,15 @@ export function BottomActionNavbar({
               {primaryButton.label}
             </Button>
 
-            <Button
-              fullWidth
+            <IconButton
               aria-label={secondaryButton['aria-label']}
-              className="w-16"
               disabled={secondaryButton.disabled}
               icon={secondaryButton.icon}
               loading={secondaryButton.loading}
+              size="lg"
               variant="secondary"
               onClick={secondaryButton.onClick}
-            >
-              {/* Icon-only button, no text */}
-            </Button>
+            />
           </div>
         ) : (
           /* Single Button Layout */

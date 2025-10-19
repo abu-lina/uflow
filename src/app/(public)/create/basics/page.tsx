@@ -8,7 +8,7 @@ import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
-import { AuthFormSection } from '@/components/layout/AuthFormSection';
+import { ContentSection } from '@/components/layout/ContentSection';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { Button, IconWithTitle, Icon } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
@@ -159,7 +159,7 @@ export default function CreateBasicsPage() {
               </IconWithTitle>
             </TitleSection>
 
-            <AuthFormSection>
+            <ContentSection>
               <div className="flex flex-col space-y-3">
                 <Button
                   fullWidth
@@ -170,7 +170,7 @@ export default function CreateBasicsPage() {
                   Zur Anmeldung
                 </Button>
               </div>
-            </AuthFormSection>
+            </ContentSection>
           </div>
         </PageContentWrapper>
       </PageLayout>

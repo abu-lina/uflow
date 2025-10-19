@@ -3,6 +3,7 @@ export { EmptyState } from './EmptyState';
 export { FormInput } from './FormInput';
 export { FormInputGroup } from './FormInputGroup';
 export { Icon } from './Icon';
+export { IconButton } from './IconButton';
 export { IconWithTitle } from './IconWithTitle';
 export { LinkButton } from './LinkButton';
 export { LoadingSpinner } from './LoadingSpinner';

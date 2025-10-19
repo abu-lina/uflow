@@ -1,13 +1,13 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-interface AuthFormSectionProps {
+interface ContentSectionProps {
   /**
-   * The form content
+   * The content (forms, buttons, actions, etc.)
    */
   children: ReactNode;
   /**
-   * Additional CSS classes for the form container
+   * Additional CSS classes for the container
    */
   className?: string;
   /**
@@ -18,16 +18,14 @@ interface AuthFormSectionProps {
 }
 
 /**
- * Standardized form section for auth pages.
+ * Standardized content section for pages.
  * 
  * This component is designed to work within PageContentWrapper which provides
  * the base 16px padding from device edges and handles mobile navigation spacing.
- * Form fields within this section should extend to fill the available space 
+ * Content within this section should extend to fill the available space 
  * with proper internal padding.
  * 
- * Note: 
- * - Mobile navigation spacing is handled by PageContentWrapper
- * - No overflow styles to avoid conflicting scroll areas with parent containers
+ * Used for forms, action buttons, or any other content sections.
  * 
  * @example
  * ```tsx
@@ -35,19 +33,20 @@ interface AuthFormSectionProps {
  *   <TitleSection>
  *     <h2>Welcome Title</h2>
  *   </TitleSection>
- *   <AuthFormSection>
- *     <form>
- *       // Form fields extend to 16px from device edges
- *     </form>
- *   </AuthFormSection>
+ *   <ContentSection>
+ *     <div className="flex flex-col space-y-3">
+ *       <Button>Action Button</Button>
+ *       <LinkButton>Link</LinkButton>
+ *     </div>
+ *   </ContentSection>
  * </PageContentWrapper>
  * ```
  */
-export function AuthFormSection({ 
+export function ContentSection({ 
   children, 
   className = '',
   includeMobileSpacing = false // Default to false since PageContentWrapper handles this
-}: AuthFormSectionProps) {
+}: ContentSectionProps) {
   return (
     <div className={cn(
       'flex w-full flex-col gap-6',

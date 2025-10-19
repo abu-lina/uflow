@@ -51,6 +51,8 @@ export interface ButtonProps
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, fullWidth, icon, loading = false, loadingText, children, disabled, ...props }, ref) => {
     const isDisabled = disabled || loading;
+    const hasText = loading ? (loadingText || children) : children;
+    const isIconOnly = icon && !hasText;
     
     // Render icon - support both ReactNode and Iconify string
     const renderIcon = () => {
@@ -60,20 +62,26 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         return <Icon aria-hidden="true" className="h-5 w-5" icon={icon} />;
       }
       
-      return <div className="relative size-4">{icon}</div>;
+      // For React components, don't constrain the size - let the component control its own size
+      return icon;
     };
     
     return (
       <button
         ref={ref}
-        className={cn(buttonVariants({ variant, size, fullWidth, className }), 'gap-2')}
+        className={cn(
+          buttonVariants({ variant, size, fullWidth, className }), 
+          isIconOnly ? 'gap-0' : 'gap-2'
+        )}
         disabled={isDisabled}
         {...props}
       >
         {renderIcon()}
-        <span className="text-center">
-          {loading ? (loadingText || children) : children}
-        </span>
+        {(hasText || loading) && (
+          <span className="text-center">
+            {loading ? (loadingText || children) : children}
+          </span>
+        )}
       </button>
     );
   },

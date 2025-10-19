@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-// Material Symbols icon imports removed - using @iconify/react Icon component instead
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import EmailVerificationAlert from '@/components/ui/EmailVerificationAlert';
@@ -11,8 +11,8 @@ import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
-import { AuthFormSection } from '@/components/layout/AuthFormSection';
-import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton, Icon } from '@/components/ui';
+import { ContentSection } from '@/components/layout/ContentSection';
+import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { signInWithEmailConfirmation } from '@/lib/auth';
@@ -198,7 +198,7 @@ export function LoginPageContent() {
 
         {/* Form Content with exact spacing structure */}
         <div className="flex w-full flex-col">
-          <AuthFormSection>
+          <ContentSection>
           <form className="flex w-full flex-col" onSubmit={handleSubmit}>
             {/* Form Input Fields */}
             <FormInputGroup gap="gap-3">
@@ -214,7 +214,7 @@ export function LoginPageContent() {
                 required
                 label="Passwort"
                 placeholder="Passwort eingeben"
-                rightIcon={showPassword ? <Icon className="h-5 w-5" icon="material-symbols:visibility-off" /> : <Icon className="h-5 w-5" icon="material-symbols:visibility" />}
+                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 variant="with-icon"
@@ -235,7 +235,7 @@ export function LoginPageContent() {
                   <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
-                        <Icon className="h-5 w-5 text-danger" icon="material-symbols:error-outline" />
+                        <AlertCircle className="h-5 w-5 text-danger" />
                       </div>
                       <div className="ml-3 flex-1">
                         <p className="font-inter-tight text-sm leading-[19px] text-danger">
@@ -270,7 +270,7 @@ export function LoginPageContent() {
               </LinkButton>
             </div>
           </form>
-          </AuthFormSection>
+          </ContentSection>
         </div>
       </PageContentWrapper>
     </PageLayout>

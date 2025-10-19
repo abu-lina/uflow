@@ -28,11 +28,10 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const mainRef = useRef<HTMLElement>(null);
 
   // Check if this is a subpage that should show an action button instead of navbar
-  const isSubpage = pathname === '/signup/check-email' || 
-                   pathname.includes('/signup/') && pathname !== '/signup' ||
+  const isSubpage = (pathname.includes('/signup/') && pathname !== '/signup' && pathname !== '/signup/check-email') ||
                    pathname.includes('/login/') && pathname !== '/login' ||
                    (pathname.includes('/profile/') && pathname !== '/profile' && 
-                    !pathname.includes('/profile/edit') && !pathname.includes('/profile/delete')); // Extended pattern for subpages, excluding edit and delete
+                    !pathname.includes('/profile/edit') && !pathname.includes('/profile/delete')); // Extended pattern for subpages, excluding edit, delete, and check-email
 
   useEffect(() => {
     const logLayoutState = () => {
@@ -93,7 +92,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             {children}
           </PageTransition>
         </main>
-        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isSplashVisible && !isSubpage && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && !(user && pathname.startsWith('/create') && pathname !== '/create') && !pathname.includes('/profile/edit') && !pathname.includes('/profile/delete') && !pathname.includes('/profile/providers/') && (
+        {!isAboutPage && !isProviderDetailPage && !isCategoryPage && !isSplashVisible && !isSubpage && !pathname.includes('/create/media/images') && !pathname.includes('/create/media/social') && !(user && pathname.startsWith('/create') && pathname !== '/create') && !pathname.includes('/profile/edit') && !pathname.includes('/profile/delete') && !pathname.includes('/profile/providers/') && pathname !== '/signup/check-email' && (
           <div className="block md:hidden">
             <MobileFooterBar />
           </div>

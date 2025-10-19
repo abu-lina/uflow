@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-// Material Symbols icon imports removed - using @iconify/react Icon component instead
-// Toast import removed - no longer used after removing success toast
+import { Eye, EyeOff } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -11,8 +10,8 @@ import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
-import { AuthFormSection } from '@/components/layout/AuthFormSection';
-import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton, Icon } from '@/components/ui';
+import { ContentSection } from '@/components/layout/ContentSection';
+import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { signUpWithLanguage } from '@/lib/auth';
@@ -156,7 +155,7 @@ export function SignupPageContent() {
           </TitleSection>
 
           {/* Form Content with exact spacing structure */}
-          <AuthFormSection>
+          <ContentSection>
             <form className="flex w-full flex-col" onSubmit={handleSubmit}>
               {/* Form Input Fields */}
               <FormInputGroup gap="gap-3">
@@ -172,7 +171,7 @@ export function SignupPageContent() {
                   required
                   label="Passwort"
                   placeholder="Mindestens 6 Zeichen"
-                  rightIcon={showPassword ? <Icon className="h-5 w-5" icon="material-symbols:visibility-off" /> : <Icon className="h-5 w-5" icon="material-symbols:visibility" />}
+                  rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   variant="with-icon"
@@ -183,7 +182,7 @@ export function SignupPageContent() {
                   required
                   label="Passwort bestätigen"
                   placeholder="Passwort wiederholen"
-                  rightIcon={showConfirmPassword ? <Icon className="h-5 w-5" icon="material-symbols:visibility-off" /> : <Icon className="h-5 w-5" icon="material-symbols:visibility" />}
+                  rightIcon={showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   variant="with-icon"
@@ -239,7 +238,7 @@ export function SignupPageContent() {
                 </p>
               </div>
             </form>
-          </AuthFormSection>
+          </ContentSection>
         </div>
       </PageContentWrapper>
     </PageLayout>

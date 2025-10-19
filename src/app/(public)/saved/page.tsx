@@ -10,7 +10,7 @@ import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
-import { AuthFormSection } from '@/components/layout/AuthFormSection';
+import { ContentSection } from '@/components/layout/ContentSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { EmptyState, Button, IconWithTitle, Icon } from '@/components/ui';
@@ -163,7 +163,7 @@ export default function SavedProvidersPage() {
             </IconWithTitle>
           </TitleSection>
 
-          <AuthFormSection>
+          <ContentSection>
             <div className="flex flex-col space-y-3">
               <Button
                 fullWidth
@@ -174,7 +174,7 @@ export default function SavedProvidersPage() {
                 Zur Anmeldung
               </Button>
             </div>
-          </AuthFormSection>
+          </ContentSection>
         </div>
       );
     }

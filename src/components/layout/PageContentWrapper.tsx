@@ -36,6 +36,11 @@ interface PageContentWrapperProps {
    * @default false - renders as div to avoid nested main elements
    */
   asMain?: boolean;
+  /**
+   * Whether to include mobile navigation spacing
+   * @default false - should be true only for pages with regular mobile navbar
+   */
+  includeMobileNavSpacing?: boolean;
 }
 
 // Max-width mapping for type safety and consistency
@@ -93,6 +98,7 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
     centerVertically = false,
     padding = 'default',
     asMain = false,
+    includeMobileNavSpacing = false,
     ...props
   }, ref) => {
     // Handle both predefined variants and custom strings
@@ -117,7 +123,8 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
 
     const contentDiv = (
       <div className={cn(
-        'flex w-full items-center gap-6 mobile-nav-spacing',
+        'flex w-full items-center gap-6',
+        includeMobileNavSpacing && 'mobile-nav-spacing',
         centerVertically ? 'flex-1 flex-col justify-center min-h-full' : 'flex-col flex-shrink-0',
         maxWidthClass,
         contentClassName

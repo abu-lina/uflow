@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { CircleHelp, LogOut } from 'lucide-react';
-import { Icon } from '@iconify/react';
+import { CircleHelp, LogOut, User } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 // import clsx from 'clsx'; // Not used in mobile version
@@ -138,7 +137,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         <div className="flex items-center gap-4">
           {/* Avatar */}
             <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-full bg-[#589D96] p-1">
-              <Icon className="h-10 w-10 text-white" icon="lucide:user" />
+              <User className="h-10 w-10 text-white" />
             </div>
           
           {/* User Info */}
@@ -285,7 +284,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         <div className="text-center font-baskerville text-base">As-Salamu-Aleikum</div>
         <div className="flex w-full flex-row items-center justify-center">
             <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-primary p-4">
-              <Icon className="h-10 w-10 text-white" icon="lucide:user" />
+              <User className="h-10 w-10 text-white" />
             </div>
           <div className="ml-6 flex flex-col items-start justify-center">
             <div className="text-text-primary font-inter-tight text-3xl font-semibold">

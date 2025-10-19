@@ -8,9 +8,9 @@ interface IconWithTitleProps {
    */
   icon?: ReactNode;
   /**
-   * The title text
+   * The title text - can be a string or ReactNode for multiline titles
    */
-  title: string;
+  title: string | ReactNode;
   /**
    * Additional content (description text) to be grouped with the title
    */
@@ -35,8 +35,9 @@ interface IconWithTitleProps {
    * Size variant for the icon container
    * - 'responsive': 48px -> 64px -> 96px (default, good for most cases)
    * - 'large': Always 96px (good when there's plenty of vertical space)
+   * - 'xl': Always 144px (good for modal states and critical actions)
    */
-  size?: 'responsive' | 'large';
+  size?: 'responsive' | 'large' | 'xl';
 }
 
 /**
@@ -79,6 +80,13 @@ interface IconWithTitleProps {
  *   size="large"
  * />
  * 
+ * // Extra large icon for modal states and critical actions
+ * <IconWithTitle
+ *   icon={<Icon icon="material-symbols:delete-outline" className="w-full h-full text-content-title" />}
+ *   title="Konto löschen"
+ *   size="xl"
+ * />
+ * 
  * // No icon (title only - good when icon is in header)
  * <IconWithTitle
  *   title="Willkommen bei Ummah Flow"
@@ -95,9 +103,12 @@ export function IconWithTitle({
   titleClassName = '',
   size = 'responsive',
 }: IconWithTitleProps) {
-  const iconSizeClasses = size === 'large' 
-    ? 'w-icon-3xl h-icon-3xl' 
-    : 'w-icon-xl h-icon-xl sm:w-icon-2xl sm:h-icon-2xl lg:w-icon-3xl lg:h-icon-3xl';
+  const iconSizeClasses = 
+    size === 'xl' 
+      ? 'w-icon-4xl h-icon-4xl'
+      : size === 'large' 
+      ? 'w-icon-3xl h-icon-3xl' 
+      : 'w-icon-xl h-icon-xl sm:w-icon-2xl sm:h-icon-2xl lg:w-icon-3xl lg:h-icon-3xl';
 
   return (
     <div className={cn('flex flex-col items-center gap-10', className)}>
@@ -109,7 +120,7 @@ export function IconWithTitle({
       )}
       
       {/* Title and text container */}
-      <div className={cn('flex flex-col items-center', titleTextClassName)}>
+      <div className={cn('flex flex-col items-center gap-2', titleTextClassName)}>
         {/* Title */}
         <h2 className={cn(
           'text-center text-3xl font-semibold leading-tight text-content-title',
