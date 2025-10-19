@@ -59,7 +59,7 @@ export const LinkButton = forwardRef<HTMLButtonElement, LinkButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'text-center text-base font-medium leading-[19px] transition-colors',
+          'h-6 text-center text-base font-medium leading-[19px] transition-colors',
           variantClasses[variant],
           className
         )}

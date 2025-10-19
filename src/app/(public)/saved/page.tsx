@@ -3,14 +3,17 @@
 import { useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+// Material Symbols icon imports removed - using @iconify/react Icon component instead
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { TitleSection } from '@/components/layout/TitleSection';
+import { AuthFormSection } from '@/components/layout/AuthFormSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
-import { EmptyState } from '@/components/ui';
+import { EmptyState, Button, IconWithTitle, Icon } from '@/components/ui';
 import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
@@ -147,18 +150,31 @@ export default function SavedProvidersPage() {
   const renderEmptyState = () => {
     if (!user) {
       return (
-        <div className="flex flex-col items-center gap-6">
-          <EmptyState
-            description="Du musst angemeldet sein, um gespeicherte Inhalte zu sehen."
-            title="Anmeldung erforderlich"
-          />
-          <button
-            className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 font-semibold text-base text-white transition-colors hover:bg-primary-dark"
-            type="button"
-            onClick={() => router.push('/login')}
-          >
-            Zur Anmeldung
-          </button>
+        <div className="flex w-full flex-col">
+          <TitleSection className="mb-10">
+            <IconWithTitle
+              icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
+              size="large"
+              title="Anmeldung erforderlich"
+            >
+              <p className="text-center text-base leading-normal text-content mt-2">
+                Du musst angemeldet sein, um gespeicherte Inhalte zu sehen.
+              </p>
+            </IconWithTitle>
+          </TitleSection>
+
+          <AuthFormSection>
+            <div className="flex flex-col space-y-3">
+              <Button
+                fullWidth
+                type="button"
+                variant="auth"
+                onClick={() => router.push('/login')}
+              >
+                Zur Anmeldung
+              </Button>
+            </div>
+          </AuthFormSection>
         </div>
       );
     }
@@ -196,22 +212,20 @@ export default function SavedProvidersPage() {
   
   if (emptyState) {
     return (
-      <PageLayout>
+      <PageLayout hasBackground={false}>
         <PageHeader title="Gespeichert" variant="title-only" />
         
         <HeaderSpacer />
         
-        <PageContentWrapper>
-          <div className="flex flex-1 flex-col items-center justify-center">
-            {emptyState}
-          </div>
+        <PageContentWrapper centerVertically={true}>
+          {emptyState}
         </PageContentWrapper>
       </PageLayout>
     );
   }
 
   return (
-    <PageLayout>
+    <PageLayout hasBackground={false}>
       <PageHeader 
         isVisible={isHeaderVisible}
         title="Gespeichert"

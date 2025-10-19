@@ -2,11 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+// Material Symbols icon imports removed - using @iconify/react Icon component instead
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { TitleSection } from '@/components/layout/TitleSection';
+import { AuthFormSection } from '@/components/layout/AuthFormSection';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
+import { Button, IconWithTitle, Icon } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 
@@ -131,36 +135,50 @@ export default function CreateBasicsPage() {
   // Authentication check - redirect to login with return URL
   if (!user) {
     const returnUrl = encodeURIComponent('/create/basics');
+    
     return (
-      <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-        {/* Sticky Header */}
-        <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top">
-          <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
-            {/* Left-aligned Title */}
-            <h1 className="text-xl font-semibold text-content-title">
-              Angebot erstellen
-            </h1>
-          </div>
-        </div>
+      <PageLayout hasBackground={false} maxWidth="xs">
+        <PageHeader 
+          title="Angebot erstellen"
+          variant="title-only"
+        />
 
-        {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-20 mobile-nav-spacing">
-          <span className="text-center text-lg text-content-title mb-6">
-            Du musst angemeldet sein, um ein Angebot zu erstellen.
-          </span>
-          <button
-            className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 font-semibold text-base text-white transition-colors hover:bg-primary-dark"
-            onClick={() => router.push(`/login?returnUrl=${returnUrl}`)}
-          >
-            Zur Anmeldung
-          </button>
-        </div>
-      </div>
+        <HeaderSpacer />
+
+        <PageContentWrapper centerVertically={true} maxWidth="xs">
+          <div className="flex w-full flex-col">
+            <TitleSection className="mb-10">
+              <IconWithTitle
+                icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
+                size="large"
+                title="Anmeldung erforderlich"
+              >
+                <p className="text-center text-base leading-normal text-content mt-2">
+                  Du musst angemeldet sein, um ein Angebot zu erstellen.
+                </p>
+              </IconWithTitle>
+            </TitleSection>
+
+            <AuthFormSection>
+              <div className="flex flex-col space-y-3">
+                <Button
+                  fullWidth
+                  type="button"
+                  variant="auth"
+                  onClick={() => router.push(`/login?returnUrl=${returnUrl}`)}
+                >
+                  Zur Anmeldung
+                </Button>
+              </div>
+            </AuthFormSection>
+          </div>
+        </PageContentWrapper>
+      </PageLayout>
     );
   }
 
   return (
-    <PageLayout maxWidth="xs">
+    <PageLayout hasBackground={false} maxWidth="xs">
       <PageHeader 
         isVisible={isHeaderSticky}
         title="Angebot erstellen"

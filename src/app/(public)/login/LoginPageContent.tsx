@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
-import { AuthTitleSection } from '@/components/layout/AuthTitleSection';
+import { TitleSection } from '@/components/layout/TitleSection';
 import { AuthFormSection } from '@/components/layout/AuthFormSection';
 import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
 import { Logo } from '@/components/ui/Logo';
@@ -186,7 +186,7 @@ export function LoginPageContent() {
   };
 
   return (
-    <PageLayout>
+    <PageLayout hasBackground={false}>
       <PageHeader 
         rightIcon={<Logo className="h-12 w-12" height={48} width={48} />}
         title="Login"
@@ -195,15 +195,15 @@ export function LoginPageContent() {
 
       <HeaderSpacer />
 
-      <PageContentWrapper centerVertically contentClassName="gap-0 flex-1 justify-center items-center h-full">
+      <PageContentWrapper centerVertically={true}>
         <div className="flex w-full flex-col">
           {/* Title + Paragraph with proper spacing */}
-          <AuthTitleSection className="mb-8">
+          <TitleSection className="mb-6 sm:mb-8">
             <TitleAndText
               description="Entdecke muslimische Angebote in deiner Nähe insha'Allah."
               title="Willkommen bei Ummah Flow"
             />
-          </AuthTitleSection>
+          </TitleSection>
 
           {/* Form Content with exact spacing structure */}
           <AuthFormSection>
@@ -265,7 +265,6 @@ export function LoginPageContent() {
                 fullWidth
                 loading={isLoading}
                 loadingText="Anmelden..."
-                size="auth"
                 type="submit"
                 variant="auth"
               >

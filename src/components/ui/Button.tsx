@@ -21,8 +21,8 @@ const buttonVariants = cva(
         default: 'h-12 px-4 rounded-xl', // 48px height with base text
         sm: 'h-7 px-3 rounded-lg',
         lg: 'h-14 px-6 rounded-xl',
+        footer: 'h-14 px-5 rounded-xl', // 56px height for footer buttons
         icon: 'size-8',
-        auth: 'h-12 px-4 rounded-[16.8px]', // Specific for auth buttons like Anmelden
       },
       fullWidth: {
         true: 'w-full',

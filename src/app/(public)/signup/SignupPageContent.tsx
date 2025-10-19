@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
-import { AuthTitleSection } from '@/components/layout/AuthTitleSection';
+import { TitleSection } from '@/components/layout/TitleSection';
 import { AuthFormSection } from '@/components/layout/AuthFormSection';
 import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
@@ -108,7 +108,7 @@ export function SignupPageContent() {
         toast.success('Registrierung erfolgreich! Bitte bestätige deine E-Mail.');
         
         // Redirect to check email page
-        window.location.href = '/auth/check-email';
+        window.location.href = '/signup/check-email';
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -127,7 +127,7 @@ export function SignupPageContent() {
   };
 
   return (
-    <PageLayout>
+    <PageLayout hasBackground={false}>
       {/* Loading Overlay - Prevents flash during redirect */}
       {isRedirecting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
@@ -146,15 +146,15 @@ export function SignupPageContent() {
 
       <HeaderSpacer />
 
-      <PageContentWrapper centerVertically contentClassName="gap-0 flex-1 justify-center items-center h-full">
+      <PageContentWrapper centerVertically={true}>
         <div className="flex w-full flex-col">
           {/* Title + Paragraph with proper spacing */}
-          <AuthTitleSection className="mb-8">
+          <TitleSection className="mb-6 sm:mb-8">
             <TitleAndText
               description="Entdecke muslimische Angebote in deiner Nähe insha'Allah."
               title="Willkommen bei Ummah Flow"
             />
-          </AuthTitleSection>
+          </TitleSection>
 
           {/* Form Content with exact spacing structure */}
           <AuthFormSection>
@@ -220,7 +220,6 @@ export function SignupPageContent() {
                   fullWidth
                   loading={isLoading}
                   loadingText="Registrieren..."
-                  size="auth"
                   type="submit"
                   variant="auth"
                 >

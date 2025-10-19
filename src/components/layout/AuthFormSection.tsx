@@ -32,9 +32,9 @@ interface AuthFormSectionProps {
  * @example
  * ```tsx
  * <PageContentWrapper>
- *   <AuthTitleSection>
+ *   <TitleSection>
  *     <h2>Welcome Title</h2>
- *   </AuthTitleSection>
+ *   </TitleSection>
  *   <AuthFormSection>
  *     <form>
  *       // Form fields extend to 16px from device edges

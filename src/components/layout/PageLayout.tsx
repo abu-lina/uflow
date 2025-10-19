@@ -73,23 +73,24 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
  * 
  * **Benefits:**
  * - Reduces DOM nesting depth by 2-3 levels
- * - Eliminates duplicate background gradient declarations
+ * - Background gradient handled centrally by RootClientLayout (no duplicates)
  * - Provides consistent responsive max-width patterns
  * - Type-safe max-width variants prevent styling errors
  * - Single source of truth for layout structure
  * - Easier to maintain and update globally
+ * - Clean separation between layout and background concerns
  * 
  * @example
  * ```tsx
- * // Basic usage with default responsive max-width
- * <PageLayout>
+ * // Recommended usage - background is handled by RootClientLayout
+ * <PageLayout hasBackground={false}>
  *   <PageHeader title="Login" variant="title-and-icon" />
  *   <PageContentWrapper>
  *     <LoginForm />
  *   </PageContentWrapper>
  * </PageLayout>
  * 
- * // Custom max-width and no background
+ * // Custom max-width (background still handled by RootClientLayout)
  * <PageLayout maxWidth="lg" hasBackground={false}>
  *   <PageHeader title="Dashboard" />
  *   <PageContentWrapper>
@@ -119,7 +120,7 @@ export const PageLayout = forwardRef<HTMLDivElement, PageLayoutProps>(
           // Base layout classes
           'relative w-full mx-auto flex-col',
           // Height handling
-          fullHeight ? 'flex h-screen' : 'flex min-h-screen',
+          fullHeight ? 'flex flex-1' : 'flex min-h-screen',
           // Max-width handling
           maxWidthClass,
           // Background handling

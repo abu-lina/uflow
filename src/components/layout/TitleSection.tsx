@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-interface AuthTitleSectionProps {
+interface TitleSectionProps {
   /**
    * The title and description content
    */
@@ -17,35 +17,38 @@ interface AuthTitleSectionProps {
 }
 
 /**
- * Standardized title section for auth pages with centered content.
+ * Standardized title section with centered content.
  * 
  * This component is designed to work within PageContentWrapper and centers
- * the content (typically TitleAndText) with proper spacing and max-width constraints.
+ * the content (typically TitleAndText or IconWithTitle) with responsive spacing 
+ * (24px mobile, 32px tablet+) and max-width constraints for optimal small screen display.
+ * 
+ * Note: No padding is applied here since PageContentWrapper handles the container padding.
  * 
  * @example
  * ```tsx
  * <PageContentWrapper>
- *   <AuthTitleSection>
+ *   <TitleSection>
  *     <TitleAndText 
  *       title="Welcome Title"
  *       description="Description text"
  *     />
- *   </AuthTitleSection>
+ *   </TitleSection>
  *   <AuthFormSection>
  *     // Form content
  *   </AuthFormSection>
  * </PageContentWrapper>
  * ```
  */
-export function AuthTitleSection({ 
+export function TitleSection({ 
   children, 
   className = '',
   maxWidth = 'max-w-xs sm:max-w-md md:max-w-lg'
-}: AuthTitleSectionProps) {
+}: TitleSectionProps) {
   return (
-    <div className={cn('flex flex-col items-center gap-8 w-full', className)}>
+    <div className={cn('flex flex-col items-center gap-6 sm:gap-8 w-full', className)}>
       <div className={cn(
-        'flex flex-col items-center w-full mx-auto px-4',
+        'flex flex-col items-center w-full mx-auto',
         maxWidth
       )}>
         {children}

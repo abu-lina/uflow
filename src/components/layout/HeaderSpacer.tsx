@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+
 interface HeaderSpacerProps {
   /**
    * Whether the header is visible (for scroll-based hiding)
@@ -20,7 +22,10 @@ interface HeaderSpacerProps {
  * - Safe area inset top
  * - Header padding (16px mobile, 24px tablet+)
  * - Header height (40px mobile, 48px tablet, 56px desktop)
- * - Additional gap (16px)
+ * - Additional 32px gap for proper content spacing
+ * Content is then vertically centered within the remaining space below this spacer
+ * 
+ * Uses Tailwind utilities for responsive spacing that matches the PageHeader height.
  * 
  * @example
  * ```tsx
@@ -30,15 +35,22 @@ interface HeaderSpacerProps {
  * // With scroll-based visibility
  * const { isHeaderVisible } = useContainerScroll();
  * <HeaderSpacer isVisible={isHeaderVisible} />
+ * 
+ * // With custom classes
+ * <HeaderSpacer className="border-t" />
  * ```
  */
-export function HeaderSpacer({ isVisible = true, className = '' }: HeaderSpacerProps) {
+export function HeaderSpacer({ isVisible = true, className }: HeaderSpacerProps) {
   return (
     <div 
       aria-hidden="true"
-      className={`transition-all duration-300 ${
-        isVisible ? 'header-spacer' : 'h-0 opacity-0'
-      } ${className}`}
+      className={cn(
+        'w-full flex-shrink-0 transition-all duration-300',
+        isVisible
+          ? 'h-header-spacing sm:h-header-spacing-sm md:h-header-spacing-md'
+          : 'h-0 opacity-0',
+        className
+      )}
       role="presentation"
     />
   );

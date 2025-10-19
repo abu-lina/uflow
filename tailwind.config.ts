@@ -40,7 +40,7 @@ const config: Config = {
     // Hover and focus states
     'hover:bg-mint/90',
     'focus-visible:ring-mint',
-    // Icon sizes (Lucide standardized)
+    // Icon sizes (Material Symbols - standardized)
     'w-icon-xs',
     'h-icon-xs',
     'w-icon-sm',
@@ -132,7 +132,7 @@ const config: Config = {
         'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 32px)', // mobile: safe-area + padding + height + gap
         'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 32px)', // tablet: safe-area + padding + height + gap  
         'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 32px)', // desktop: safe-area + padding + height + gap
-        // Icon sizes (for Lucide icons - standardized)
+        // Icon sizes (for Material Symbols - standardized)
         'icon-xs': '16px',   // Extra small icons (inline with text)
         'icon-sm': '20px',   // Small icons (buttons, inputs)
         'icon-md': '24px',   // Medium icons (default)
@@ -201,10 +201,10 @@ const config: Config = {
         'header-height-tablet': '48px', 
         'header-height-desktop': '56px',
         // Header spacing utilities for proper content positioning
-        // Must match PageHeader: pt-[calc(env(safe-area-inset-top)+16px)] + h-40 + gap
-        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 16px)', // mobile: safe-area + padding + height + gap
-        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 16px)', // tablet: safe-area + padding + height + gap  
-        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 16px)', // desktop: safe-area + padding + height + gap
+        // Must match PageHeader: pt-[calc(env(safe-area-inset-top)+16px)] + h-40 + 32px gap
+        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 32px)', // mobile: safe-area + padding + height + gap
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 32px)', // tablet: safe-area + padding + height + gap  
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 32px)', // desktop: safe-area + padding + height + gap
       },
       backgroundImage: {
         'uflow-light': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
