@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 // import clsx from 'clsx'; // Not used in mobile version
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
 import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProviderCard';
@@ -154,9 +155,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
       {/* Deine Inhalte Section */}
       <div className="mb-6">
-        <h2 className="mb-4 px-3 font-inter-tight text-lg font-semibold text-[#232323]">
+        <SectionHeading>
           Deine Inhalte
-        </h2>
+        </SectionHeading>
         
         {isLoadingProviders ? (
           <div className="flex items-center justify-center py-8">

@@ -117,11 +117,11 @@ export function PageHeader({
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out ${
+      className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out md:hidden ${
         isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       } ${className}`}
     >
-      <div className="flex items-center w-full max-w-[393px] mx-auto pl-7 pr-4 h-header-height-mobile sm:h-header-height-tablet md:h-header-height-desktop">
+      <div className="flex items-center w-full pl-7 pr-4 h-header-height-mobile sm:h-header-height-tablet">
         {/* Back Button */}
         {shouldShowBackButton && onBack && (
           <button

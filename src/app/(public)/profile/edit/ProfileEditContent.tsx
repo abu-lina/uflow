@@ -9,6 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
 import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
+import { FormInput } from '@/components/ui/FormInput';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 interface ProfileEditContentProps {
@@ -278,87 +280,53 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           <form className="space-y-6" onSubmit={handleSubmit}>
         {/* Persönliche Daten */}
         <div>
-            <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]">
+            <SectionHeading>
               Persönliche Daten
-            </h2>
+            </SectionHeading>
           
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* First Name */}
-            <div className="flex h-[54px] w-full min-w-[123.08px] min-h-[23.4px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px] text-[#999999]">
-                  Vorname
-                </label>
-                <input
-                  required
-                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                />
-              </div>
-            </div>
+            <FormInput
+              required
+              label="Vorname"
+              labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+              type="text"
+              value={formData.firstName}
+              onChange={(e) => handleInputChange('firstName', e.target.value)}
+            />
 
             {/* Last Name */}
-            <div className="flex h-[54px] w-full min-w-[123.08px] min-h-[23.4px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px] text-[#999999]">
-                  Nachname
-                </label>
-                <input
-                  required
-                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                />
-              </div>
-            </div>
+            <FormInput
+              required
+              label="Nachname"
+              labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+              type="text"
+              value={formData.lastName}
+              onChange={(e) => handleInputChange('lastName', e.target.value)}
+            />
 
             {/* Email */}
-            <div className="flex h-[54px] w-full min-w-[123.08px] min-h-[23.4px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px] text-[#999999]">
-                  E-Mail
-                </label>
-                <input
-                  required
-                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                />
-              </div>
-            </div>
+            <FormInput
+              required
+              label="E-Mail"
+              labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+            />
 
             {/* Password Field with Hint */}
             <div className="space-y-1">
-              <div className="flex h-[54px] w-full min-w-[123.08px] min-h-[23.4px] items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-                <div className="flex w-full flex-col gap-1">
-                  <label className="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px] text-[#999999]">
-                    Passwort
-                  </label>
-                  <input
-                    className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                  />
-                </div>
-                
-                {/* Eye Toggle Icon */}
-                <button
-                  className="flex h-[25px] w-[25px] items-center justify-center text-gray-500 hover:text-gray-700"
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
+              <FormInput
+                label="Passwort"
+                labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                variant="with-icon"
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                onRightIconClick={() => setShowPassword(!showPassword)}
+              />
               <p className="pl-2 text-xs text-gray-500">
                 Lass das Feld leer, um das Passwort nicht zu ändern.
               </p>
@@ -370,9 +338,9 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
           {/* Konto verwalten */}
           <div className="mt-8 mb-6">
-            <h2 className="mb-4 text-left font-inter-tight text-xl font-medium text-[#232323]">
+            <SectionHeading>
               Konto verwalten
-            </h2>
+            </SectionHeading>
           
             <button
               className="flex h-[54px] w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"

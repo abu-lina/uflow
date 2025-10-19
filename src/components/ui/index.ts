@@ -9,4 +9,5 @@ export { LoadingSpinner } from './LoadingSpinner';
 export { SecondaryButton } from './SecondaryButton';
 export { SkeletonCard } from './SkeletonCard';
 export { SkeletonGrid } from './SkeletonGrid';
+export { SectionHeading } from './SectionHeading';
 export { TitleAndText } from './TitleAndText';
