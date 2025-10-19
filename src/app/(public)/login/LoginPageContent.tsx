@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
+// Material Symbols icon imports removed - using @iconify/react Icon component instead
 import { toast } from 'sonner';
 
 import EmailVerificationAlert from '@/components/ui/EmailVerificationAlert';
@@ -12,7 +12,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { AuthFormSection } from '@/components/layout/AuthFormSection';
-import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
+import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton, Icon } from '@/components/ui';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { signInWithEmailConfirmation } from '@/lib/auth';
@@ -195,17 +195,17 @@ export function LoginPageContent() {
 
       <HeaderSpacer />
 
-      <PageContentWrapper centerVertically={true}>
-        <div className="flex w-full flex-col">
-          {/* Title + Paragraph with proper spacing */}
-          <TitleSection className="mb-6 sm:mb-8">
-            <TitleAndText
-              description="Entdecke muslimische Angebote in deiner Nähe insha'Allah."
-              title="Willkommen bei Ummah Flow"
-            />
-          </TitleSection>
+      <PageContentWrapper centerVertically={true} contentClassName="gap-10">
+        {/* Title + Paragraph with proper spacing */}
+        <TitleSection>
+          <TitleAndText
+            description="Entdecke muslimische Angebote in deiner Nähe insha'Allah."
+            title="Willkommen bei Ummah Flow"
+          />
+        </TitleSection>
 
-          {/* Form Content with exact spacing structure */}
+        {/* Form Content with exact spacing structure */}
+        <div className="flex w-full flex-col">
           <AuthFormSection>
           <form className="flex w-full flex-col" onSubmit={handleSubmit}>
             {/* Form Input Fields */}
@@ -222,7 +222,7 @@ export function LoginPageContent() {
                 required
                 label="Passwort"
                 placeholder="Passwort eingeben"
-                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                rightIcon={showPassword ? <Icon className="h-5 w-5" icon="material-symbols:visibility-off" /> : <Icon className="h-5 w-5" icon="material-symbols:visibility" />}
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 variant="with-icon"
@@ -243,9 +243,7 @@ export function LoginPageContent() {
                   <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-danger" fill="currentColor" viewBox="0 0 20 20">
-                          <path clipRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" fillRule="evenodd" />
-                        </svg>
+                        <Icon className="h-5 w-5 text-danger" icon="material-symbols:error-outline" />
                       </div>
                       <div className="ml-3 flex-1">
                         <p className="font-inter-tight text-sm leading-[19px] text-danger">
@@ -278,14 +276,9 @@ export function LoginPageContent() {
               >
                 Noch kein Konto? Jetzt registrieren.
               </LinkButton>
-
-              {/* AGB Text (12px gap from link button via space-y-3) */}
-              <p className="text-center text-[11px] leading-[13px] text-[#7A7A7A]">
-                Wenn du fortfährst, erstellst du ein Konto und stimmst den Allgemeinen Geschäftsbedingungen und Datenschutzrichtlinien zu.
-              </p>
             </div>
           </form>
-        </AuthFormSection>
+          </AuthFormSection>
         </div>
       </PageContentWrapper>
     </PageLayout>

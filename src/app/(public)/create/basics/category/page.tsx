@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import type { Category } from '@/types/supabase';
+import { FormInput } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
 import { getProviderCategories } from '@/services/categories';
@@ -188,18 +189,18 @@ export default function SelectCategoryPage() {
           {/* Search Bar + Subtitle */}
           <div className="flex w-full flex-col gap-2">
             {/* Search Bar */}
-            <div className="flex h-[40px] w-full items-center rounded-2xl bg-white px-[10px] py-[5px] border-0">
-              <div className="flex items-center gap-3">
-                <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
-                <input
-                  className="text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
-                  placeholder="Kategorien durchsuchen"
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
+            <FormInput
+              containerClassName="h-[40px] py-0"
+              inputClassName="text-xs font-normal text-[#7C7C7C] leading-[15px] placeholder:text-[#7C7C7C] h-full"
+              label=""
+              labelClassName="hidden"
+              placeholder="Kategorien durchsuchen"
+              rightIcon={<Icon className="h-6 w-6 text-[#1B1D1D]" icon="material-symbols:search" />}
+              type="text"
+              value={searchQuery}
+              variant="with-icon"
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
 
             {/* Subtitle */}
             <div className="w-full">
