@@ -1,6 +1,7 @@
 import React, { forwardRef, type ButtonHTMLAttributes } from 'react';
 
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Icon } from '@iconify/react';
 
 import { cn } from '@/lib/utils';
 
@@ -11,6 +12,8 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-mint text-white hover:bg-[#4a8a84]',
         primary: 'bg-[#589D96] text-white hover:bg-[#4a8a84] transition-colors disabled:opacity-50',
+        secondary: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#CDCDCD] transition-colors disabled:opacity-50',
+        success: 'bg-[#4a8a84] hover:bg-[#4a8a84] text-white transition-colors disabled:opacity-50',
         gradient: 'bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500 text-white',
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
@@ -40,7 +43,7 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  icon?: React.ReactNode;
+  icon?: React.ReactNode | string; // Support both ReactNode and Iconify string
   loading?: boolean;
   loadingText?: string;
 }
@@ -49,14 +52,25 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, fullWidth, icon, loading = false, loadingText, children, disabled, ...props }, ref) => {
     const isDisabled = disabled || loading;
     
+    // Render icon - support both ReactNode and Iconify string
+    const renderIcon = () => {
+      if (!icon || loading) return null;
+      
+      if (typeof icon === 'string') {
+        return <Icon aria-hidden="true" className="h-5 w-5" icon={icon} />;
+      }
+      
+      return <div className="relative size-4">{icon}</div>;
+    };
+    
     return (
       <button
         ref={ref}
-        className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+        className={cn(buttonVariants({ variant, size, fullWidth, className }), 'gap-2')}
         disabled={isDisabled}
         {...props}
       >
-        {icon && !loading && <div className="relative size-4">{icon}</div>}
+        {renderIcon()}
         <span className="text-center">
           {loading ? (loadingText || children) : children}
         </span>

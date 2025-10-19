@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
-import { toast } from 'sonner';
+// Toast import removed - no longer used after removing success toast
 
 import { Logo } from '@/components/ui/Logo';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -104,8 +104,7 @@ export function SignupPageContent() {
         // Set redirecting state immediately to hide content
         setIsRedirecting(true);
         
-        // Show success message
-        toast.success('Registrierung erfolgreich! Bitte bestätige deine E-Mail.');
+        // Toast removed - user will see the check-email page with proper messaging
         
         // Redirect to check email page
         window.location.href = '/signup/check-email';

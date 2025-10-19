@@ -3,12 +3,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
-import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
+import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 interface ProfileEditContentProps {
@@ -159,8 +159,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitForm = async () => {
     setIsSubmitting(true);
     setError(null);
     setIsSaved(false);
@@ -192,7 +191,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         });
       }
 
-      // Show success state on button
+      // Show success state on button briefly, then redirect
       setIsSaved(true);
       
       // Update original data to current form data (excluding password)
@@ -206,10 +205,10 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       // Clear password field after successful save
       setFormData(prev => ({ ...prev, password: '' }));
       
-      // Reset success state after 3 seconds
+      // Redirect to profile page after a brief success state
       setTimeout(() => {
-        setIsSaved(false);
-      }, 3000);
+        router.push('/profile');
+      }, 1500);
       
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -217,6 +216,11 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitForm();
   };
 
   const handleCloseAccount = () => {
@@ -253,6 +257,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       <PageHeader 
         isVisible={isHeaderSticky}
         title="Profil bearbeiten"
+        variant="back-and-title"
         onBack={() => router.back()}
       />
 
@@ -382,36 +387,20 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         </div>
       </main>
 
-      {/* Custom Footer - replaces mobile navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/10 backdrop-blur-3xl border-t border-white/20">
-        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4">
-          <button
-            className={`w-full rounded-xl py-3 font-inter font-semibold text-base text-white transition-all duration-300 disabled:opacity-50 ${
-              isSaved 
-                ? 'bg-[#4a8a84] hover:bg-[#4a8a84]' 
-                : hasChanges()
-                  ? 'bg-[#589D96] hover:bg-[#4a8a84]'
-                  : 'bg-[#589D96] hover:bg-[#4a8a84] opacity-50'
-            }`}
-            disabled={isSubmitting || (!hasChanges() && !isSaved)}
-            type="button"
-            onClick={handleSubmit}
-          >
-            {isSubmitting ? (
-              'Speichern...'
-            ) : isSaved ? (
-              <div className="flex items-center justify-center gap-2">
-                <Icon className="h-5 w-5" icon="lucide:check" />
-                Gespeichert
-              </div>
-            ) : hasChanges() ? (
-              'Änderungen speichern'
-            ) : (
-              'Keine Änderungen'
-            )}
-          </button>
-        </div>
-      </div>
+      {/* Bottom Action Navbar */}
+      <BottomActionNavbar
+        height="h-16"
+        primaryButton={{
+          label: isSaved ? 'Gespeichert' : hasChanges() ? 'Änderungen speichern' : 'Keine Änderungen',
+          icon: isSaved ? 'lucide:check' : 'lucide:save',
+          onClick: submitForm,
+          disabled: isSaved || isSubmitting || !hasChanges(),
+          loading: isSubmitting,
+          loadingText: 'Speichern...',
+          variant: isSaved ? 'success' : 'primary',
+          'aria-label': isSaved ? 'Gespeichert' : 'Änderungen speichern',
+        }}
+      />
 
     </div>
   );

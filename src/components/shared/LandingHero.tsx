@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { ActionButton } from '@/components/ui/ActionButton';
+import { Button } from '@/components/ui/Button';
 import { Bismillah } from '@/components/ui/Bismillah';
 
 // Typewriter effect hook
@@ -241,13 +241,13 @@ export function LandingHero() {
                 initial={isFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >
-                <ActionButton
+                <Button
                   className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
                   variant="primary"
                   onClick={() => router.push('/providers')}
                 >
                   Entdecke deine Ummah
-                </ActionButton>
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>

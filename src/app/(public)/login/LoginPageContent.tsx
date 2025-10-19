@@ -79,15 +79,7 @@ export function LoginPageContent() {
           setError('Diese E-Mail-Adresse ist nicht registriert. Bitte erstelle zuerst ein Konto.');
           setIsEmailConfirmationError(false);
           
-          // Show registration prompt toast
-          toast.error('Konto nicht gefunden', {
-            description: 'Diese E-Mail-Adresse ist nicht registriert. Bitte registriere dich zuerst.',
-            duration: 5000,
-            action: {
-              label: 'Registrieren',
-              onClick: () => handleSignupClick()
-            }
-          });
+          // Toast removed - inline error message provides clear feedback
         } else {
           // Invalid credentials or other errors
           setError('Ungültige E-Mail oder Passwort. Bitte versuche es erneut.');

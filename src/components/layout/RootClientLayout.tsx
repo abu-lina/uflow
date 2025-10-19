@@ -31,7 +31,8 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const isSubpage = pathname === '/signup/check-email' || 
                    pathname.includes('/signup/') && pathname !== '/signup' ||
                    pathname.includes('/login/') && pathname !== '/login' ||
-                   pathname.includes('/profile/') && pathname !== '/profile'; // Extended pattern for subpages
+                   (pathname.includes('/profile/') && pathname !== '/profile' && 
+                    !pathname.includes('/profile/edit') && !pathname.includes('/profile/delete')); // Extended pattern for subpages, excluding edit and delete
 
   useEffect(() => {
     const logLayoutState = () => {

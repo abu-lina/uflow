@@ -141,11 +141,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
             </div>
           
           {/* User Info */}
-          <div className="flex-1">
-            <div className="font-inter-tight text-lg font-semibold text-[#232323]">
+          <div className="flex-1 min-w-0">
+            <div className="font-inter-tight text-lg font-semibold text-[#232323] truncate" title={fullName}>
               {fullName}
             </div>
-            <div className="font-inter text-sm text-[#555]">
+            <div className="font-inter text-sm text-[#555] truncate" title={effectiveUser.email}>
               {effectiveUser.email}
             </div>
           </div>

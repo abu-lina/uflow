@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 import { ProviderCard } from '@/components/providers/ProviderCard';
-import { ActionButton } from '@/components/ui/ActionButton';
+import { Button } from '@/components/ui/Button';
 import { usePinterestTicker } from '@/hooks/usePinterestTicker';
 import { useFilter } from '@/providers/filter-provider';
 import { getProviders, type Provider } from '@/services/providers';
@@ -93,13 +93,13 @@ export function ExploreSection() {
         <p className="w-full max-w-2xl text-center font-inter-tight text-base font-normal text-neutral-600 sm:text-lg md:text-xl lg:text-2xl">
           Jedes Zakat (Spenden) Projekt wird anhand unseres Halal-Review Konzept ausgewählt.
         </p>
-        <ActionButton
+        <Button
           className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
           variant="primary"
           onClick={() => router.push('/providers')}
         >
           Entdecke deine Ummah
-        </ActionButton>
+        </Button>
       </motion.div>
 
       {/* Pinterest-style Infinite Carousel */}
