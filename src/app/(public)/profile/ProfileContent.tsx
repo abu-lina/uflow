@@ -25,6 +25,7 @@ import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationT
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/hooks/useAuth';
 import { useContainerScroll } from '@/hooks/useContainerScroll';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { getCreatedProviders, getBookmarkedProviders } from '@/services/providers';
 import { authService } from '@/features/auth/services/authService';
 import type { SupabaseUser } from '@/types/supabase-user';
@@ -41,8 +42,8 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { isHeaderVisible } = useContainerScroll();
 
-  // Responsive: detect mobile
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  // Responsive: detect mobile using the centralized hook
+  const isMobile = useIsSmallMobile();
 
   // Use client-side user if server-side user is null
   const effectiveUser: SupabaseUser | null = user || (clientUser as SupabaseUser | null);

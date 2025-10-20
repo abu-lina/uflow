@@ -8,6 +8,7 @@ import { Icon } from '@iconify/react';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
 
 const STEPS = [
   {
@@ -29,8 +30,6 @@ const STEPS = [
 ];
 
 export default function ContactPage() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [checked, setChecked] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const lastScrollY = useRef(0);
   const scrollContainerRef = useRef<Element | null>(null);
@@ -38,16 +37,8 @@ export default function ContactPage() {
   const { user, isLoading } = useAuth();
   const { formData, updateFormData } = useFormData();
 
-  // Mobile detection
-  useEffect(() => {
-    const check = () => {
-      setIsMobile(window.innerWidth < 640);
-      setChecked(true);
-    };
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  // Use centralized mobile detection
+  const isMobile = useIsSmallMobile();
 
 
   // Scroll detection for sticky header with iOS boundary handling
@@ -121,7 +112,7 @@ export default function ContactPage() {
   }, []);
 
   // Loading state
-  if (!checked || isLoading) {
+  if (isLoading) {
     return <div className="p-8 text-center">Lädt...</div>;
   }
 

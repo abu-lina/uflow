@@ -13,27 +13,18 @@ import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { Button, IconWithTitle, Icon } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
 
 export default function CreateBasicsPage() {
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const [checked, setChecked] = useState(false);
   const lastScrollY = useRef(0);
   const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { formData, setCreationMode } = useFormData();
 
-  // Mobile detection
-  useEffect(() => {
-    const check = () => {
-      setIsMobile(window.innerWidth < 640);
-      setChecked(true);
-    };
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  // Use centralized mobile detection
+  const isMobile = useIsSmallMobile();
 
   // Set creation mode once on mount if not already set to recommendation
   useEffect(() => {
@@ -117,7 +108,7 @@ export default function CreateBasicsPage() {
   }, []);
 
   // Loading state
-  if (!checked || isLoading) {
+  if (isLoading) {
     return <div className="p-8 text-center">Lädt...</div>;
   }
 

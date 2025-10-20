@@ -1,26 +1,17 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
 
 export default function CreateProviderPage() {
   const router = useRouter();
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const isMobile = useIsSmallMobile();
 
   const handleOwnProvider = () => {
     router.push('/create/basics');

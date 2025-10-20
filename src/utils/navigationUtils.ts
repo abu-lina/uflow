@@ -124,3 +124,120 @@ export const normalizeWebsiteUrl = (website: string | null | undefined): string 
   // Add https:// if no protocol is present
   return `https://${trimmed}`;
 };
+
+/**
+ * Navigation utilities for layout and routing logic
+ */
+
+/**
+ * Determines if the current pathname should show the mobile footer bar
+ * @param pathname - Current pathname
+ * @param isSplashVisible - Whether splash screen is visible
+ * @param user - Current user object (can be null)
+ * @returns True if mobile footer should be shown
+ */
+export const shouldShowMobileFooter = (
+  pathname: string,
+  isSplashVisible: boolean,
+  user: unknown
+): boolean => {
+  // Pages that should never show the footer
+  const footerExcludedPages = [
+    '/about',
+    '/signup/check-email',
+  ];
+
+  // Page patterns that should not show the footer
+  const footerExcludedPatterns = [
+    '/providers/', // Provider detail pages
+    '/profile/providers/', // Profile provider detail pages
+    '/create/media/images',
+    '/create/media/social',
+    '/profile/edit',
+    '/profile/delete',
+  ];
+
+  // Check if current path is in excluded pages
+  if (footerExcludedPages.includes(pathname)) {
+    return false;
+  }
+
+  // Check if current path matches excluded patterns
+  const matchesExcludedPattern = footerExcludedPatterns.some(pattern => 
+    pathname.includes(pattern)
+  );
+
+  if (matchesExcludedPattern) {
+    return false;
+  }
+
+  // Don't show footer when splash is visible
+  if (isSplashVisible) {
+    return false;
+  }
+
+  // Special case: Don't show footer for create pages when user is logged in
+  if (user && pathname.startsWith('/create') && pathname !== '/create') {
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Determines if the current pathname is a subpage that should show action button
+ * @param pathname - Current pathname
+ * @returns True if subpage action button should be shown
+ */
+export const shouldShowSubpageAction = (pathname: string): boolean => {
+  // Signup subpages (except main signup and check-email)
+  if (pathname.includes('/signup/') && pathname !== '/signup' && pathname !== '/signup/check-email') {
+    return true;
+  }
+
+  // Login subpages (except main login)
+  if (pathname.includes('/login/') && pathname !== '/login') {
+    return true;
+  }
+
+  // Profile subpages (except main profile, edit, delete)
+  if (pathname.includes('/profile/') && 
+      pathname !== '/profile' && 
+      !pathname.includes('/profile/edit') && 
+      !pathname.includes('/profile/delete')) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * Determines if the current pathname is a provider detail page
+ * @param pathname - Current pathname
+ * @returns True if it's a provider detail page
+ */
+export const isProviderDetailPage = (pathname: string): boolean => {
+  return (pathname.startsWith('/providers/') && pathname !== '/providers') || 
+         pathname.startsWith('/profile/providers/');
+};
+
+/**
+ * Determines various page type classifications for layout logic
+ * @param pathname - Current pathname
+ * @returns Object with page type flags
+ */
+export const getPageType = (pathname: string) => {
+  const isLandingPage = pathname === '/';
+  const isAboutPage = pathname === '/about';
+  const isProviderDetail = isProviderDetailPage(pathname);
+  const isCategoryPage = pathname === '/create/basics/category';
+  const isSubpage = shouldShowSubpageAction(pathname);
+
+  return {
+    isLandingPage,
+    isAboutPage,
+    isProviderDetail,
+    isCategoryPage,
+    isSubpage,
+  };
+};
