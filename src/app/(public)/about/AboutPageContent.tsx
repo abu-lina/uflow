@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MobileNavbar } from '@/components/layout/MobileNavbar';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { AboutCard } from '@/components/shared/AboutCard';
 import { quotes } from '@/constants/quotes';
 
@@ -63,7 +67,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
   }, [isTransitioning]);
 
   return (
-    <div className="h-screen-fix flex flex-col">
+    <PageLayout hasBackground={false}>
       {/* HEADER SECTION - Fixed at top */}
       <MobileHeader 
         title={showSplashHeader ? undefined : 'Über Uns'}
@@ -71,41 +75,47 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
         onBack={showSplashHeader ? undefined : () => router.back()}
       />
 
+      <HeaderSpacer />
+
       {/* CONTENT SECTION - Flexible middle area with proper centering */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 mobile-nav-spacing overflow-y-auto">
-        {/* Card + page switcher */}
-        <div className="flex flex-col items-center justify-center w-full max-w-sm gap-4">
-          {/* Card Container */}
-          <div
-            ref={containerRef}
-            className="w-full flex justify-center transition-all duration-300 ease-in-out"
-            onTouchEnd={handleTouchEnd}
-            onTouchMove={handleTouchMove}
-            onTouchStart={handleTouchStart}
+      <PageContentWrapper 
+        centerVertically={true}
+        contentClassName="flex flex-col items-center gap-4"
+        includeMobileNavSpacing={false}
+        maxWidth="xs"
+      >
+        {/* Card Container */}
+        <div
+          ref={containerRef}
+          className="w-full flex justify-center transition-all duration-300 ease-in-out"
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
+          onTouchStart={handleTouchStart}
+        >
+          <div 
+            className={`transform transition-all duration-300 ease-in-out ${
+              isTransitioning ? 'scale-95 opacity-80' : 'scale-100 opacity-100'
+            }`}
           >
-            <div 
-              className={`transform transition-all duration-300 ease-in-out ${
-                isTransitioning ? 'scale-95 opacity-80' : 'scale-100 opacity-100'
-              }`}
-            >
-              <AboutCard cardIndex={currentCardIndex} quote={quotes[currentCardIndex]} />
-            </div>
-          </div>
-          
-          {/* Page Indicator */}
-          <div className="flex flex-row justify-center items-center w-full gap-2">
-            {quotes.map((_, index) => (
-              <button
-                key={index}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentCardIndex ? 'bg-[#589D96]' : 'bg-[#D4D4D4]'
-                }`}
-                onClick={() => changeCard(index)}
-              />
-            ))}
+            <AboutCard cardIndex={currentCardIndex} quote={quotes[currentCardIndex]} />
           </div>
         </div>
-      </main>
+        
+        {/* Page Indicator */}
+        <div className="flex flex-row justify-center items-center w-full gap-2">
+          {quotes.map((_, index) => (
+            <button
+              key={index}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                index === currentCardIndex ? 'bg-[#589D96]' : 'bg-[#D4D4D4]'
+              }`}
+              onClick={() => changeCard(index)}
+            />
+          ))}
+        </div>
+      </PageContentWrapper>
+
+      <BottomSpacer />
 
       {/* NAVBAR SECTION - Fixed at bottom */}
       <MobileNavbar
@@ -122,7 +132,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
           }
         }}
       />
-    </div>
+    </PageLayout>
   );
 }
 

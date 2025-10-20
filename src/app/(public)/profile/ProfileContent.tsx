@@ -10,6 +10,10 @@ import { useQuery } from '@tanstack/react-query';
 // import clsx from 'clsx'; // Not used in mobile version
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { ContentSection } from '@/components/layout/ContentSection';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
@@ -115,165 +119,168 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   const fullName = effectiveUser.user_metadata?.full_name ?? effectiveUser.email ?? 'Unknown User';
 
-  // Mobile content - matches the provided design
+  // Mobile content - using proper layout components
   const mobileContent = (
-    <div className="relative flex h-screen w-full flex-col">
+    <PageLayout hasBackground={false}>
       <PageHeader 
         isVisible={isHeaderVisible}
         title="Profil"
       />
 
-      <div className={`transition-all duration-300 ${
-        isHeaderVisible ? 'h-[calc(env(safe-area-inset-top)+24px+40px)]' : 'h-0'
-      }`} />
+      <HeaderSpacer isVisible={isHeaderVisible} />
 
-      <main className="content-scroll-container flex-1 overflow-y-auto px-4 pt-6 mobile-nav-spacing">
-
-      {/* User Info Card */}
-      <button
-        className="mb-6 w-full rounded-lg bg-white p-4 text-left transition-colors hover:bg-gray-50"
-        onClick={() => router.push('/profile/edit')}
-      >
-        <div className="flex items-center gap-4">
-          {/* Avatar */}
-            <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-full bg-[#589D96] p-1">
-              <User className="h-10 w-10 text-white" />
+      <PageContentWrapper includeMobileNavSpacing={true}>
+        {/* User Info Card */}
+        <ContentSection className="mb-6">
+          <button
+            className="w-full rounded-lg bg-white p-4 text-left transition-colors hover:bg-gray-50"
+            onClick={() => router.push('/profile/edit')}
+          >
+            <div className="flex items-center gap-4">
+              {/* Avatar */}
+              <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-full bg-[#589D96] p-1">
+                <User className="h-10 w-10 text-white" />
+              </div>
+              
+              {/* User Info */}
+              <div className="flex-1 min-w-0">
+                <div className="font-inter-tight text-lg font-semibold text-[#232323] truncate" title={fullName}>
+                  {fullName}
+                </div>
+                <div className="font-inter text-sm text-[#555] truncate" title={effectiveUser.email}>
+                  {effectiveUser.email}
+                </div>
+              </div>
             </div>
+          </button>
+        </ContentSection>
+
+        {/* Deine Inhalte Section */}
+        <ContentSection className="mb-6">
+          <SectionHeading>
+            Deine Inhalte
+          </SectionHeading>
           
-          {/* User Info */}
-          <div className="flex-1 min-w-0">
-            <div className="font-inter-tight text-lg font-semibold text-[#232323] truncate" title={fullName}>
-              {fullName}
+          {isLoadingProviders ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="mb-2 text-2xl">🔄</div>
+                <p className="text-gray-600">Lade Providers...</p>
+              </div>
             </div>
-            <div className="font-inter text-sm text-[#555] truncate" title={effectiveUser.email}>
-              {effectiveUser.email}
-            </div>
-          </div>
-        </div>
-      </button>
-
-      {/* Deine Inhalte Section */}
-      <div className="mb-6">
-        <SectionHeading>
-          Deine Inhalte
-        </SectionHeading>
-        
-        {isLoadingProviders ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <div className="mb-2 text-2xl">🔄</div>
-              <p className="text-gray-600">Lade Providers...</p>
-            </div>
-          </div>
-        ) : createdProviders.length > 0 ? (
-          <div className="space-y-3">
-            {createdProviders.map((provider) => (
-              <MobileProfileProviderCard
-                key={provider.provider_id}
-                category={provider.category?.name_de || 'Unbekannt'}
-                imageUrl={(() => {
-                  if (!provider.provider_images) return '/images/placeholder.jpg';
-                  try {
-                    let imagesData: { urls?: string[] } = {};
-                    if (typeof provider.provider_images === 'string') {
-                      imagesData = JSON.parse(provider.provider_images);
-                    } else if (Array.isArray(provider.provider_images)) {
-                      imagesData.urls = provider.provider_images;
-                    } else if (
-                      typeof provider.provider_images === 'object' &&
-                      provider.provider_images !== null &&
-                      'urls' in provider.provider_images
-                    ) {
-                      imagesData = provider.provider_images;
+          ) : createdProviders.length > 0 ? (
+            <div className="space-y-3">
+              {createdProviders.map((provider) => (
+                <MobileProfileProviderCard
+                  key={provider.provider_id}
+                  category={provider.category?.name_de || 'Unbekannt'}
+                  imageUrl={(() => {
+                    if (!provider.provider_images) return '/images/placeholder.jpg';
+                    try {
+                      let imagesData: { urls?: string[] } = {};
+                      if (typeof provider.provider_images === 'string') {
+                        imagesData = JSON.parse(provider.provider_images);
+                      } else if (Array.isArray(provider.provider_images)) {
+                        imagesData.urls = provider.provider_images;
+                      } else if (
+                        typeof provider.provider_images === 'object' &&
+                        provider.provider_images !== null &&
+                        'urls' in provider.provider_images
+                      ) {
+                        imagesData = provider.provider_images;
+                      }
+                      if (imagesData.urls && imagesData.urls.length > 0) {
+                        return imagesData.urls[0];
+                      }
+                    } catch {
+                      return '/images/placeholder.jpg';
                     }
-                    if (imagesData.urls && imagesData.urls.length > 0) {
-                      return imagesData.urls[0];
-                    }
-                  } catch {
                     return '/images/placeholder.jpg';
-                  }
-                  return '/images/placeholder.jpg';
-                })()}
-                likes={provider.bookmark_count || 0}
-                title={provider.provider_name}
-                onClick={() => router.push(`/profile/providers/${provider.provider_id}`)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg bg-white p-6 text-center">
-            <div className="text-gray-400">Keine Providers erstellt.</div>
-          </div>
-        )}
-      </div>
+                  })()}
+                  likes={provider.bookmark_count || 0}
+                  title={provider.provider_name}
+                  onClick={() => router.push(`/profile/providers/${provider.provider_id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg bg-white p-6 text-center">
+              <div className="text-gray-400">Keine Providers erstellt.</div>
+            </div>
+          )}
+        </ContentSection>
 
-      {/* Action Items */}
-      <div className="rounded-lg bg-white">
-        {/* Über Uns */}
-        <button
-          className="flex w-full items-center gap-4 p-4 text-left"
-          onClick={() => router.push('/about')}
-        >
-          <Image
-            alt="UFlow Logo"
-            className="h-6 w-6 rounded-full"
-            height={24}
-            src="/icons/icon-192x192.png"
-            width={24}
-          />
-          <span className="font-inter-tight font-semibold text-[#232323]">Über Uns</span>
-        </button>
-        
-        {/* Divider */}
-        <div className="mx-4">
-          <svg fill="none" height="1" viewBox="0 0 329 1" width="100%" xmlns="http://www.w3.org/2000/svg">
-            <line stroke="#BEBEBE" strokeWidth="0.5" x2="329" y1="0.75" y2="0.75"/>
-          </svg>
-        </div>
-
-        {/* Support */}
-        <button className="flex w-full items-center gap-4 p-4 text-left">
-          <CircleHelp className="h-6 w-6 text-black" />
-          <span className="font-inter-tight font-semibold text-[#232323]">Support</span>
-        </button>
-        
-        {/* Divider */}
-        <div className="mx-4">
-          <svg fill="none" height="1" viewBox="0 0 329 1" width="100%" xmlns="http://www.w3.org/2000/svg">
-            <line stroke="#BEBEBE" strokeWidth="0.5" x2="329" y1="0.75" y2="0.75"/>
-          </svg>
-        </div>
-
-        {/* Abmelden */}
-        <button
-          className="flex w-full items-center gap-4 p-4 text-left disabled:opacity-50"
-          disabled={isLoggingOut}
-          onClick={handleLogout}
-        >
-          <LogOut className="h-6 w-6 text-black" />
-          <span className="font-inter-tight font-semibold text-[#232323]">
-            {isLoggingOut ? 'Melde ab...' : 'Abmelden'}
-          </span>
-        </button>
-      </div>
-
-      {/* Error State */}
-      {error && (
-        <div className="mt-6 rounded-lg bg-red-50 p-4">
-          <div className="text-center">
-            <div className="mb-2 text-2xl">⚠️</div>
-            <p className="text-red-600">{error}</p>
+        {/* Action Items */}
+        <ContentSection>
+          <div className="rounded-lg bg-white">
+            {/* Über Uns */}
             <button
-              className="mt-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-              onClick={() => window.location.reload()}
+              className="flex w-full items-center gap-4 p-4 text-left"
+              onClick={() => router.push('/about')}
             >
-              Erneut versuchen
+              <Image
+                alt="UFlow Logo"
+                className="h-6 w-6 rounded-full"
+                height={24}
+                src="/icons/icon-192x192.png"
+                width={24}
+              />
+              <span className="font-inter-tight font-semibold text-[#232323]">Über Uns</span>
+            </button>
+            
+            {/* Divider */}
+            <div className="mx-4">
+              <svg fill="none" height="1" viewBox="0 0 329 1" width="100%" xmlns="http://www.w3.org/2000/svg">
+                <line stroke="#BEBEBE" strokeWidth="0.5" x2="329" y1="0.75" y2="0.75"/>
+              </svg>
+            </div>
+
+            {/* Support */}
+            <button className="flex w-full items-center gap-4 p-4 text-left">
+              <CircleHelp className="h-6 w-6 text-black" />
+              <span className="font-inter-tight font-semibold text-[#232323]">Support</span>
+            </button>
+            
+            {/* Divider */}
+            <div className="mx-4">
+              <svg fill="none" height="1" viewBox="0 0 329 1" width="100%" xmlns="http://www.w3.org/2000/svg">
+                <line stroke="#BEBEBE" strokeWidth="0.5" x2="329" y1="0.75" y2="0.75"/>
+              </svg>
+            </div>
+
+            {/* Abmelden */}
+            <button
+              className="flex w-full items-center gap-4 p-4 text-left disabled:opacity-50"
+              disabled={isLoggingOut}
+              onClick={handleLogout}
+            >
+              <LogOut className="h-6 w-6 text-black" />
+              <span className="font-inter-tight font-semibold text-[#232323]">
+                {isLoggingOut ? 'Melde ab...' : 'Abmelden'}
+              </span>
             </button>
           </div>
-        </div>
-      )}
-      </main>
-    </div>
+        </ContentSection>
+
+        {/* Error State */}
+        {error && (
+          <ContentSection className="mt-6">
+            <div className="rounded-lg bg-red-50 p-4">
+              <div className="text-center">
+                <div className="mb-2 text-2xl">⚠️</div>
+                <p className="text-red-600">{error}</p>
+                <button
+                  className="mt-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                  onClick={() => window.location.reload()}
+                >
+                  Erneut versuchen
+                </button>
+              </div>
+            </div>
+          </ContentSection>
+        )}
+      </PageContentWrapper>
+    </PageLayout>
   );
 
   // Desktop: tabbed view

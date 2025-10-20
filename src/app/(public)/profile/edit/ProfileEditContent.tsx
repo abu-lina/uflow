@@ -6,8 +6,10 @@ import { Eye, EyeOff } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { ContentSection } from '@/components/layout/ContentSection';
+import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
@@ -258,7 +260,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
+    <PageLayout hasBackground={false}>
       <PageHeader 
         isVisible={isHeaderSticky}
         title="Profil bearbeiten"
@@ -268,9 +270,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
       <HeaderSpacer isVisible={isHeaderSticky} />
 
-      <PageContentWrapper 
-        className="content-scroll-container flex-1 mobile-nav-spacing overflow-y-auto"
-      >
+      <PageContentWrapper includeMobileNavSpacing={false}>
         {/* Error Message */}
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-4">
@@ -358,6 +358,8 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         </ContentSection>
       </PageContentWrapper>
 
+      <BottomSpacer />
+
       {/* Bottom Action Navbar */}
       <BottomActionNavbar
         height="h-16"
@@ -372,7 +374,6 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           'aria-label': isSaved ? 'Gespeichert' : 'Änderungen speichern',
         }}
       />
-
-    </div>
+    </PageLayout>
   );
 }
