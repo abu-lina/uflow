@@ -161,7 +161,7 @@ export async function POST(request: Request) {
       // Don't fail signup if email fails
     }
     
-    console.log('[SIGNUP API] 🎉 Signup complete for:', email);
+    console.log('[SIGNUP API] Signup complete for:', email);
     
     return NextResponse.json({ 
       success: true,

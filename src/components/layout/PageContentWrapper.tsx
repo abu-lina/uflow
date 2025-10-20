@@ -123,9 +123,9 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
 
     const contentDiv = (
       <div className={cn(
-        'flex w-full items-center gap-6',
+        'flex w-full gap-6',
         includeMobileNavSpacing && 'mobile-nav-spacing',
-        centerVertically ? 'flex-1 flex-col justify-center min-h-full' : 'flex-col flex-shrink-0',
+        centerVertically ? 'flex-1 flex-col justify-center items-center min-h-full' : 'flex-col flex-shrink-0',
         maxWidthClass,
         contentClassName
       )}>

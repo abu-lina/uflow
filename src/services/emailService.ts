@@ -36,7 +36,7 @@ const templates = {
     
     <!-- Content -->
     <div style="padding: 40px 32px;">
-      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Welcome to UmmahFlow! 🎉</h2>
+      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Welcome to UmmahFlow!</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
         Thank you for joining our community! We're excited to help you connect with local services and providers.
@@ -91,7 +91,7 @@ const templates = {
     
     <!-- Content -->
     <div style="padding: 40px 32px;">
-      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Willkommen bei UmmahFlow! 🎉</h2>
+      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Willkommen bei UmmahFlow!</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
         Vielen Dank, dass Sie unserer Community beigetreten sind! Wir freuen uns, Ihnen dabei zu helfen, sich mit lokalen Dienstleistern und Anbietern zu vernetzen.

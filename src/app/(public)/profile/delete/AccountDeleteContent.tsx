@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2, AlertTriangle } from 'lucide-react';
+import { Trash2, AlertTriangle, Loader2, Lock } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
@@ -152,7 +152,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mb-4 text-2xl">🔄</div>
+          <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-600 mx-auto" />
           <p className="text-gray-600">Überprüfe Anmeldung...</p>
         </div>
       </div>
@@ -164,7 +164,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mb-4 text-2xl">🔐</div>
+          <Lock className="mb-4 h-8 w-8 text-gray-600 mx-auto" />
           <p className="text-gray-600">Anmeldung erforderlich</p>
         </div>
       </div>

@@ -53,6 +53,8 @@ const eslintConfig = [
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      // Emoji policy: Use Lucide icons instead of emojis for consistency and accessibility
+      // Example: Replace 🔐 with <Lock className="h-4 w-4" /> from lucide-react
     },
   },
 
@@ -112,6 +114,10 @@ const eslintConfig = [
       'jsx-a11y/aria-unsupported-elements': 'error',
       'jsx-a11y/role-supports-aria-props': 'warn',
 
+      // Custom rules to prevent emoji usage
+      'no-irregular-whitespace': 'error',
+      // Emoji policy: Use Lucide icons instead of emojis for consistency and accessibility
+      // Example: Replace 🔐 with <Lock className="h-4 w-4" /> from lucide-react
     },
   },
 

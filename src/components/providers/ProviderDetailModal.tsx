@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 import { Icon } from '@iconify/react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -433,11 +433,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                             className="inline-flex items-center gap-2 rounded border border-[#CDCDCD] bg-white px-3 py-1 font-inter-tight text-[16px] font-medium text-[#232323] shadow-sm"
                           >
                             {/* Icon mapping for known effects */}
-                            {effect === 'Iman' && <span className="text-lg">✨</span>}
-                            {effect === 'Zakat' && <span className="text-lg">🌑</span>}
-                            {effect === 'Sunnah' && <span className="text-lg">🕋</span>}
+                            {effect === 'Iman' && <Sparkles className="h-4 w-4 text-gray-600" />}
+                            {effect === 'Zakat' && <Moon className="h-4 w-4 text-gray-600" />}
+                            {effect === 'Sunnah' && <Building2 className="h-4 w-4 text-gray-600" />}
                             {!(effect === 'Iman' || effect === 'Zakat' || effect === 'Sunnah') && (
-                              <span className="text-lg">🏷️</span>
+                              <Tag className="h-4 w-4 text-gray-600" />
                             )}
                             {effect}
                           </span>

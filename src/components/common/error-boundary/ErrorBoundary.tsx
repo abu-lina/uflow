@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Component, type ReactNode } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -35,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
           <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
-            <div className="mb-4 text-6xl">⚠️</div>
+            <AlertTriangle className="mb-4 h-16 w-16 text-red-500 mx-auto" />
             <h2 className="mb-2 text-xl font-semibold text-gray-800">Etwas ist schiefgelaufen</h2>
             <p className="mb-6 text-gray-600">
               Es gab einen unerwarteten Fehler. Bitte versuche es erneut.

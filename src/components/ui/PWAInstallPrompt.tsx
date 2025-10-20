@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { X } from 'lucide-react';
+import { X, Rocket } from 'lucide-react';
 
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { getFeatureFlag } from '@/config/feature-flags';
@@ -108,8 +108,9 @@ export function PWAInstallPrompt() {
         </div>
 
         {/* Benefit */}
-        <div className="mb-2 mt-2 px-1 font-inter-tight text-[16px] font-bold text-[#111]">
-          🚀 Kein App Store. Kein Download. Einfach öffnen.
+        <div className="mb-2 mt-2 px-1 font-inter-tight text-[16px] font-bold text-[#111] flex items-center gap-2">
+          <Rocket className="h-4 w-4" />
+          Kein App Store. Kein Download. Einfach öffnen.
         </div>
 
         {/* Steps */}
