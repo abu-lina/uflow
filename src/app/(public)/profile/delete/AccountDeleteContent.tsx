@@ -175,9 +175,8 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
     <div className="relative flex h-screen w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader 
         isVisible={isHeaderSticky}
-        rightIcon={<BrokenHeartIcon size={24} />}
         title="Konto schließen"
-        variant="back-title-icon"
+        variant="back-and-title"
         onBack={() => router.back()}
       />
 
@@ -249,7 +248,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-4 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
+                <AlertTriangle className="h-8 w-8 text-[#D86363]" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">
                 Konto wirklich löschen?
@@ -263,7 +262,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
               <Button
                 fullWidth
                 className="flex-1"
-                variant="secondary"
+                variant="cancel"
                 onClick={handleCancelDelete}
               >
                 Abbrechen
@@ -271,7 +270,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
               <Button
                 fullWidth
                 className="flex-1"
-                variant="primary"
+                variant="danger"
                 onClick={handleConfirmDelete}
               >
                 Ja, löschen

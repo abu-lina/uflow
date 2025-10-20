@@ -14,6 +14,8 @@ const buttonVariants = cva(
         primary: 'bg-[#589D96] text-white hover:bg-[#4a8a84] transition-colors disabled:opacity-50',
         secondary: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#CDCDCD] transition-colors disabled:opacity-50',
         success: 'bg-[#4a8a84] hover:bg-[#4a8a84] text-white transition-colors disabled:opacity-50',
+        danger: 'bg-[#D86363] text-white hover:bg-[#B84F4F] transition-colors disabled:opacity-50',
+        cancel: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#232323] transition-colors disabled:opacity-50',
         gradient: 'bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500 text-white',
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
@@ -70,8 +72,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          buttonVariants({ variant, size, fullWidth, className }), 
-          isIconOnly ? 'gap-0' : 'gap-2'
+          buttonVariants({ variant, size, fullWidth }), 
+          isIconOnly ? 'gap-0' : 'gap-2',
+          className
         )}
         disabled={isDisabled}
         {...props}
