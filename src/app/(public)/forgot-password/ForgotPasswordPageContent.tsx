@@ -138,7 +138,7 @@ export function ForgotPasswordPageContent() {
       
       <HeaderSpacer />
       
-      <PageContentWrapper centerVertically={true} contentClassName="gap-10">
+      <PageContentWrapper centerVertically={true} contentClassName="gap-10" includeMobileNavSpacing={true}>
         {/* Title + Paragraph with proper spacing */}
         <TitleSection>
           <TitleAndText

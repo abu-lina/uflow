@@ -125,7 +125,9 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
       <div className={cn(
         'flex w-full gap-6',
         includeMobileNavSpacing && 'mobile-nav-spacing',
-        centerVertically ? 'flex-1 flex-col justify-center items-center min-h-full' : 'flex-col flex-shrink-0',
+        centerVertically ? 'flex-1 flex-col justify-center items-center' : 'flex-col flex-shrink-0',
+        // Use min-h-0 instead of min-h-full to prevent overlap with fixed elements
+        centerVertically && !includeMobileNavSpacing ? 'min-h-0' : '',
         maxWidthClass,
         contentClassName
       )}>

@@ -11,10 +11,18 @@ export default function ConfirmEmail() {
 
   useEffect(() => {
     const confirmEmail = async () => {
-      const token = searchParams.get('token');
+      // Handle both 'token' (custom system) and 'token_hash' (Supabase system) parameters
+      const token = searchParams.get('token') || searchParams.get('token_hash');
       const email = searchParams.get('email');
       
       if (!token || !email) {
+        setStatus('error');
+        return;
+      }
+
+      // Check if token looks like an email address (common issue)
+      if (token.includes('@') && token.includes('.')) {
+        console.error('[CONFIRM PAGE] Token appears to be an email address instead of a proper token:', token);
         setStatus('error');
         return;
       }
@@ -23,7 +31,9 @@ export default function ConfirmEmail() {
         console.log('[CONFIRM PAGE] Confirming email:', { 
           email, 
           tokenLength: token.length,
-          tokenPreview: token.substring(0, 20) + '...'
+          tokenPreview: token.substring(0, 20) + '...',
+          fullToken: token,
+          urlParams: Object.fromEntries(searchParams.entries())
         });
         
         // Call our API to confirm the email
@@ -87,13 +97,28 @@ export default function ConfirmEmail() {
         <div className="text-center">
           <XCircle className="w-icon-3xl h-icon-3xl text-danger mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-content-title mb-4">Error confirming email</h1>
-          <p className="text-content mb-6">Please try again or contact support if the problem persists.</p>
-          <button 
-            className="bg-mint text-white px-6 py-3 rounded-lg hover:bg-mint/90 transition-colors"
-            onClick={() => router.push('/auth/signup')}
-          >
-            Try Again
-          </button>
+          <p className="text-content mb-6">
+            The confirmation link appears to be invalid or expired. This can happen if:
+          </p>
+          <ul className="text-content text-left mb-6 max-w-md mx-auto">
+            <li>• The link has already been used</li>
+            <li>• The link has expired (links expire after 24 hours)</li>
+            <li>• The link was corrupted during email transmission</li>
+          </ul>
+          <div className="space-y-3">
+            <button 
+              className="bg-mint text-white px-6 py-3 rounded-lg hover:bg-mint/90 transition-colors block mx-auto"
+              onClick={() => router.push('/login')}
+            >
+              Go to Login
+            </button>
+            <button 
+              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors block mx-auto"
+              onClick={() => router.push('/auth/signup')}
+            >
+              Sign Up Again
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -186,7 +186,7 @@ serve(async (req) => {
     // Build confirmation URL
     // Supabase provides token_hash in email_data for confirmation emails
     const confirmationUrl = email_data.token_hash
-      ? `${SITE_URL}/auth/confirm?token_hash=${email_data.token_hash}&type=signup`
+      ? `${SITE_URL}/auth/confirm?token_hash=${email_data.token_hash}&type=signup&email=${encodeURIComponent(user.email)}`
       : `${SITE_URL}/auth/confirm`;
 
     console.log('Sending email in language:', language);

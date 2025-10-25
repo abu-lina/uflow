@@ -82,13 +82,64 @@ export async function POST(request: Request) {
     console.log(`[CONFIRM] Validating token for email: ${email}`);
     
     const supabaseAdmin = getSupabaseAdmin();
-    const { data: tokenData, error: tokenError } = await supabaseAdmin
+    
+    // First try to find token in our custom email_confirmation_tokens table
+    let { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .select('*')
       .eq('token', token)
       .eq('email', email)
       .eq('used', false)
       .maybeSingle();
+    
+    // If not found in custom table, try Supabase auth system
+    if (!tokenData && !tokenError) {
+      console.log(`[CONFIRM] Token not found in custom table, checking Supabase auth system`);
+      
+      // For Supabase auth system, we need to verify the token_hash with Supabase
+      try {
+        // Use the correct Supabase method to verify the token
+        const { data: authData, error: authError } = await supabaseAdmin.auth.verifyOtp({
+          token_hash: token,
+          type: 'signup'
+        });
+        
+        if (authError || !authData.user) {
+          console.log(`[CONFIRM] Supabase auth verification failed:`, authError);
+          // Convert AuthError to a format that matches our error handling
+          tokenError = {
+            name: 'AuthError',
+            message: authError?.message || 'Authentication failed',
+            details: authError?.message || 'Token verification failed',
+            hint: authError?.message || 'Token verification failed',
+            code: authError?.status?.toString() || '400'
+          };
+        } else {
+          console.log(`[CONFIRM] Supabase auth verification successful for user:`, authData.user.email);
+          // Create a mock tokenData object for the Supabase flow
+          tokenData = {
+            id: 'supabase-auth',
+            user_id: authData.user.id,
+            email: authData.user.email,
+            token: token,
+            type: 'signup',
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+            used: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+        }
+      } catch (authVerifyError) {
+        console.error(`[CONFIRM] Error verifying Supabase auth token:`, authVerifyError);
+        tokenError = {
+          name: 'AuthVerifyError',
+          message: authVerifyError instanceof Error ? authVerifyError.message : 'Token verification failed',
+          details: authVerifyError instanceof Error ? authVerifyError.message : 'Token verification failed',
+          hint: authVerifyError instanceof Error ? authVerifyError.message : 'Token verification failed',
+          code: '500'
+        };
+      }
+    }
 
     if (tokenError || !tokenData) {
       console.error(`[CONFIRM] Token validation failed:`, {
@@ -130,18 +181,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // Mark token as used
-    const { error: updateTokenError } = await supabaseAdmin
-      .from('email_confirmation_tokens')
-      .update({ used: true, updated_at: new Date().toISOString() })
-      .eq('id', tokenData.id);
+    // Mark token as used (only for custom tokens, not Supabase auth tokens)
+    if (tokenData.id !== 'supabase-auth') {
+      const { error: updateTokenError } = await supabaseAdmin
+        .from('email_confirmation_tokens')
+        .update({ used: true, updated_at: new Date().toISOString() })
+        .eq('id', tokenData.id);
 
-    if (updateTokenError) {
-      console.error('Error updating token:', updateTokenError);
-      return NextResponse.json(
-        { error: 'Failed to process confirmation' },
-        { status: 500 }
-      );
+      if (updateTokenError) {
+        console.error('Error updating token:', updateTokenError);
+        return NextResponse.json(
+          { error: 'Failed to process confirmation' },
+          { status: 500 }
+        );
+      }
     }
 
     // Confirm email in Supabase auth system
