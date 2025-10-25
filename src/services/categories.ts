@@ -1,12 +1,11 @@
 import { supabase } from '@/lib/supabase/client';
 
 export interface Category {
-  id?: string;
+  id: string;
   category_id: string;
-  name: string;
   name_de: string;
   name_en?: string;
-  description?: string;
+  description_de?: string;
   applicable_to?: string[]; // Array of entity types: 'provider', 'community_service'
   created_at: string;
   updated_at: string;
@@ -44,32 +43,7 @@ export async function fetchUsedCategories(): Promise<Category[]> {
 
   const categoryResults = Array.isArray(categories) ? categories : [];
 
-  // 3. Check if there are any community services and add the Community Services category if needed
-  const { data: communityServices, error: communityServiceError } = await supabase
-    .from('community_services')
-    .select('community_service_id')
-    .limit(1);
-
-  if (!communityServiceError && communityServices && communityServices.length > 0) {
-    // Check if the Community Services category already exists in the results
-    const communityServiceCategoryExists = categoryResults.some(
-      (cat) => cat.category_id === '2335922b-76a9-4d79-b32a-b3f95941ba5c',
-    );
-
-    if (!communityServiceCategoryExists) {
-      // Add the real Community Services category for community services
-      const communityServiceCategory: Category = {
-        category_id: '2335922b-76a9-4d79-b32a-b3f95941ba5c',
-        name: 'Community Services',
-        name_de: 'Community Services',
-        name_en: 'Community Services',
-        description: 'Community service projects',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      categoryResults.push(communityServiceCategory);
-    }
-  }
+  // Community Services category removed - only show actual provider categories
 
   return categoryResults;
 }
