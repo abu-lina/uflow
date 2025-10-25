@@ -214,7 +214,6 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
           .eq('provider_id', provider.provider_id);
       }
 
-      toast.success('Provider erfolgreich aktualisiert!');
       
       if (onSave) {
         onSave();

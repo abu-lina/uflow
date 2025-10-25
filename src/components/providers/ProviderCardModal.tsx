@@ -36,7 +36,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
   const router = useRouter();
   
   // Use the new bookmark hook with authentication
-  const { handleBookmarkAction: checkAuthBeforeBookmark, showBookmarkSuccess, showBookmarkRemoved } = useBookmarkWithAuth({
+  const { handleBookmarkAction: checkAuthBeforeBookmark } = useBookmarkWithAuth({
     bookmarkableId: provider.provider_id,
     bookmarkableType: 'provider',
   });
@@ -380,7 +380,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
           .eq('id', existingBookmark.id);
         if (deleteError) throw deleteError;
         setIsSaved(false);
-        showBookmarkRemoved();
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
           bookmarkable_id: provider.provider_id,
@@ -389,7 +388,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
         });
         if (insertError) throw insertError;
         setIsSaved(true);
-        showBookmarkSuccess();
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);

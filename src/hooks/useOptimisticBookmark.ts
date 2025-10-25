@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import { useBookmarkWithAuth } from './useBookmarkWithAuth';
 import { getAllBookmarkedItems } from '@/services/providers';
 
 interface UseOptimisticBookmarkOptions {
@@ -18,10 +17,7 @@ export function useOptimisticBookmark({
 }: UseOptimisticBookmarkOptions) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { showBookmarkSuccess, showBookmarkRemoved } = useBookmarkWithAuth({
-    bookmarkableId,
-    bookmarkableType,
-  });
+  // Toast notifications removed - no longer needed
 
   const handleBookmark = useCallback(async () => {
     if (!user) return;
@@ -54,12 +50,7 @@ export function useOptimisticBookmark({
     // 3. Call the callback for immediate UI feedback
     onBookmarkChange?.(newBookmarkState);
 
-    // 4. Show appropriate toast
-    if (newBookmarkState) {
-      showBookmarkSuccess();
-    } else {
-      showBookmarkRemoved();
-    }
+    // 4. Toast notifications removed
 
     try {
       // 5. Server sync
@@ -119,7 +110,7 @@ export function useOptimisticBookmark({
       // Revert callback
       onBookmarkChange?.(!newBookmarkState);
     }
-  }, [bookmarkableId, bookmarkableType, user, queryClient, onBookmarkChange, showBookmarkSuccess, showBookmarkRemoved]);
+  }, [bookmarkableId, bookmarkableType, user, queryClient, onBookmarkChange]);
 
   return { handleBookmark };
 }
