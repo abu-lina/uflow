@@ -1,19 +1,10 @@
 // External dependencies
 import { Inter } from 'next/font/google';
 
-import { Toaster } from 'sonner';
-
 import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
-import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
+import { ClientProviders } from '@/components/layout/ClientProviders';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { AuthProvider } from '@/providers/auth-provider';
-import { AuthSyncer } from '@/providers/AuthSyncer';
-import { FilterProvider } from '@/providers/filter-provider';
-import { FormProvider } from '@/providers/form-provider';
-import { QueryProvider } from '@/providers/query-provider';
-import { SearchProvider } from '@/providers/search-provider';
-import { SplashProvider } from '@/providers/splash-provider';
 import '@/styles/globals.css';
 import '@/styles/toast-custom.css';
 
@@ -64,26 +55,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           backgroundAttachment: 'scroll',
         }}
       >
-        <QueryProvider>
-          <AuthProvider initialUser={user}>
-            <AuthSyncer />
-            <FormProvider>
-              <SplashProvider>
-                <SearchProvider>
-                  <FilterProvider>
-                {/* Desktop header only */}
-                <div className="hidden md:block">
-                  <Header />
-                </div>
-                <RootClientLayout>{children}</RootClientLayout>
-                        <Toaster position="top-center" />
-                        <PWAInstallPrompt />
-                  </FilterProvider>
-                </SearchProvider>
-              </SplashProvider>
-            </FormProvider>
-          </AuthProvider>
-        </QueryProvider>
+        <ClientProviders initialUser={user}>
+          {/* Desktop header only */}
+          <div className="hidden md:block">
+            <Header />
+          </div>
+          <RootClientLayout>{children}</RootClientLayout>
+        </ClientProviders>
       </body>
     </html>
   );

@@ -8,16 +8,24 @@ import { X, Rocket } from 'lucide-react';
 
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { getFeatureFlag } from '@/config/feature-flags';
+import { useSplash } from '@/providers/splash-provider';
 
 export function PWAInstallPrompt() {
   const { isInstallable, isIOS, install } = usePWAInstall();
+  const { isSplashVisible } = useSplash();
   const [isVisible, setIsVisible] = useState(false);
   const isDebugEnabled = getFeatureFlag('pwaPromptDebug');
 
   useEffect(() => {
-    // If debug mode is enabled, show immediately
-    if (isDebugEnabled) {
+    // If debug mode is enabled, show immediately (but still respect splash screen)
+    if (isDebugEnabled && !isSplashVisible) {
       setIsVisible(true);
+      return;
+    }
+
+    // Don't show if splash screen is visible
+    if (isSplashVisible) {
+      setIsVisible(false);
       return;
     }
 
@@ -26,11 +34,13 @@ export function PWAInstallPrompt() {
     if (lastDismissed && Date.now() - Number(lastDismissed) < 3 * 24 * 60 * 60 * 1000) {
       return;
     }
+    
+    // Show PWA prompt after a delay (3 seconds after splash is dismissed)
     const timer = setTimeout(() => {
       if (isInstallable || isIOS) setIsVisible(true);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [isInstallable, isIOS, isDebugEnabled]);
+  }, [isInstallable, isIOS, isDebugEnabled, isSplashVisible]);
 
   if (!isVisible) return null;
 
