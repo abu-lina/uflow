@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -10,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { ProviderActionBar } from '@/components/providers/ProviderActionBar';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
+import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
@@ -31,6 +33,14 @@ interface ProviderCardModalProps {
 }
 
 export function ProviderCardModal({ open, onClose, provider }: ProviderCardModalProps) {
+  const router = useRouter();
+  
+  // Use the new bookmark hook with authentication
+  const { handleBookmarkAction: checkAuthBeforeBookmark, showBookmarkSuccess, showBookmarkRemoved } = useBookmarkWithAuth({
+    bookmarkableId: provider.provider_id,
+    bookmarkableType: 'provider',
+  });
+
   // Prevent background scroll when modal is open
   useEffect(() => {
     if (!open) return;
@@ -344,9 +354,12 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
   }, [user, provider.provider_id]);
 
   const handleSave = async () => {
-    if (!user) {
+    // Check authentication first - this will show toast if not logged in
+    const canProceed = await checkAuthBeforeBookmark();
+    if (!canProceed) {
       return;
     }
+    
     try {
       const { data: existingBookmark, error: fetchError } = await supabase
         .from('bookmarks')
@@ -354,7 +367,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
         .match({
           bookmarkable_id: provider.provider_id,
           bookmarkable_type: 'provider',
-          user_id: user.id,
+          user_id: user?.id || '',
         })
         .maybeSingle();
 
@@ -367,14 +380,16 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
           .eq('id', existingBookmark.id);
         if (deleteError) throw deleteError;
         setIsSaved(false);
+        showBookmarkRemoved();
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
           bookmarkable_id: provider.provider_id,
           bookmarkable_type: 'provider',
-          user_id: user.id,
+          user_id: user?.id || '',
         });
         if (insertError) throw insertError;
         setIsSaved(true);
+        showBookmarkSuccess();
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
@@ -591,7 +606,13 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                   Unser Barakah Effekt:
                 </div>
                 {/* Barakah Image */}
-                <div className="relative h-[198px] w-full overflow-hidden rounded-[16px] border border-[#959595]">
+                <button
+                  className="relative h-[198px] w-full overflow-hidden rounded-[16px] border border-[#959595] transition-transform active:scale-[0.98]"
+                  onClick={() => {
+                    onClose();
+                    router.push(`/community-services/${communityServices[0].community_service_id}`);
+                  }}
+                >
                   <Image
                     fill
                     alt={communityServices[0].community_service_name}
@@ -609,7 +630,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                       {communityServices[0].community_service_name}
                     </span>
                   </div>
-                </div>
+                </button>
                 {/* Barakah Badges */}
                 {Array.isArray(provider.barakah_effects) && provider.barakah_effects.length > 0 && (
                   <div className="mt-2 flex w-full flex-row flex-wrap gap-[9.8px]">

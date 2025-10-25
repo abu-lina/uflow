@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 import { X, ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag } from 'lucide-react';
@@ -11,6 +12,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
+import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
 import type { Provider } from '@/services/providers';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -26,7 +28,14 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   onClose,
   onBookmarkChange,
 }) => {
+  const router = useRouter();
   const isMobile = useIsMobile();
+  
+  // Use the new bookmark hook with authentication
+  const { handleBookmarkAction: checkAuthBeforeBookmark, showBookmarkSuccess, showBookmarkRemoved } = useBookmarkWithAuth({
+    bookmarkableId: provider.provider_id,
+    bookmarkableType: 'provider',
+  });
   function hasUrls(obj: unknown): obj is { urls: string[] } {
     return (
       typeof obj === 'object' &&
@@ -171,9 +180,12 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   }, [provider.provider_id]);
 
   const handleBookmark = async () => {
-    if (!user) {
+    // Check authentication first - this will show toast if not logged in
+    const canProceed = await checkAuthBeforeBookmark();
+    if (!canProceed) {
       return;
     }
+    
     try {
       const { data: existingBookmark, error: fetchError } = await supabase
         .from('bookmarks')
@@ -181,7 +193,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         .match({
           bookmarkable_id: provider.provider_id,
           bookmarkable_type: 'provider',
-          user_id: user.id,
+          user_id: user?.id || '',
         })
         .maybeSingle();
 
@@ -197,17 +209,19 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         if (typeof onBookmarkChange === 'function') {
           onBookmarkChange(provider.provider_id, false);
         }
+        showBookmarkRemoved();
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
           bookmarkable_id: provider.provider_id,
           bookmarkable_type: 'provider',
-          user_id: user.id,
+          user_id: user?.id || '',
         });
         if (insertError) throw insertError;
         setIsSaved(true);
         if (typeof onBookmarkChange === 'function') {
           onBookmarkChange(provider.provider_id, true);
         }
+        showBookmarkSuccess();
       }
     } catch {
       console.error('Error toggling bookmark');
@@ -403,7 +417,15 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 </div>
                 <div className="flex w-full flex-row items-start gap-6">
                   {/* Left: Zakat image, name, subtitle */}
-                  <div className="flex w-[160px] flex-shrink-0 flex-col items-start">
+                  <button
+                    className="flex w-[160px] flex-shrink-0 flex-col items-start transition-transform active:scale-[0.98]"
+                    onClick={() => {
+                      onClose();
+                      if (communityServices[0]?.community_service_id) {
+                        router.push(`/community-services/${communityServices[0].community_service_id}`);
+                      }
+                    }}
+                  >
                     <div className="relative mb-2 h-[120px] w-[160px] overflow-hidden rounded-[18px]">
                       <Image
                         fill
@@ -420,7 +442,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                       {communityServices[0]?.community_service_name}
                     </div>
                     <div className="text-uFlowText2 font-inter-tight text-base">Hatem Ipsum</div>
-                  </div>
+                  </button>
                   {/* Divider */}
                   <div className="mx-4 h-[120px] w-px bg-zinc-200" />
                   {/* Right: Barakah labels */}

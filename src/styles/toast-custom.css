@@ -1,0 +1,40 @@
+/* Custom toast styles using design tokens */
+[data-sonner-toast] {
+  /* Use CSS custom properties for maintainability */
+  --toast-warning-bg: #FDF5E6;
+  --toast-warning-border: #EFBC73;
+  --toast-warning-text: #C48A3A;
+  --toast-warning-button: #E6A94C;
+  --toast-warning-button-hover: #C48A3A;
+  
+  --toast-success-bg: #7BC4A9;
+  --toast-success-border: #4CA987;
+  --toast-success-text: #3D8A6D;
+  
+  --toast-info-bg: #4F9BAE;
+  --toast-info-border: #4F9BAE;
+  --toast-info-text: #ffffff;
+}
+
+/* Action button styling */
+[data-sonner-toast] [data-action] {
+  background-color: var(--toast-warning-button);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+[data-sonner-toast] [data-action]:hover {
+  background-color: var(--toast-warning-button-hover);
+}
+
+[data-sonner-toast] [data-action]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #EFBC73;
+}

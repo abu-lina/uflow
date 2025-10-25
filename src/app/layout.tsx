@@ -15,6 +15,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { SearchProvider } from '@/providers/search-provider';
 import { SplashProvider } from '@/providers/splash-provider';
 import '@/styles/globals.css';
+import '@/styles/toast-custom.css';
 
 import type { Metadata, Viewport } from 'next';
 

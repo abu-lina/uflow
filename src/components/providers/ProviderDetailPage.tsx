@@ -12,6 +12,7 @@ import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
+import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
 import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUrl, normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -74,6 +75,12 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const bookmarkableType = isCommunityService ? 'community_service' : 'provider';
   const bookmarkableId = isCommunityService ? provider.community_service_id : provider.provider_id;
 
+  // Use the new bookmark hook with authentication (after variables are declared)
+  const { handleBookmarkAction: checkAuthBeforeBookmark, showBookmarkSuccess, showBookmarkRemoved } = useBookmarkWithAuth({
+    bookmarkableId: bookmarkableId || '',
+    bookmarkableType,
+  });
+
   // Use React Query for caching community services
   const { 
     data: communityServices = [], 
@@ -110,7 +117,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   // Community services are now fetched via React Query hook above
 
   const handleBookmark = async () => {
-    if (!user) {
+    // Check authentication first - this will show toast if not logged in
+    const canProceed = await checkAuthBeforeBookmark();
+    if (!canProceed) {
       return;
     }
     
@@ -129,7 +138,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
         .match({
           bookmarkable_id: bookmarkableId,
           bookmarkable_type: bookmarkableType,
-          user_id: user.id,
+          user_id: user?.id || '',
         })
         .maybeSingle();
 
@@ -142,14 +151,16 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           .eq('id', existingBookmark.id);
         if (deleteError) throw deleteError;
         setIsSaved(false);
+        showBookmarkRemoved();
       } else {
         const { error: insertError } = await supabase.from('bookmarks').insert({
           bookmarkable_id: bookmarkableId,
           bookmarkable_type: bookmarkableType,
-          user_id: user.id,
+          user_id: user?.id || '',
         });
         if (insertError) throw insertError;
         setIsSaved(true);
+        showBookmarkSuccess();
       }
     } catch {
       console.error('Error toggling bookmark');
@@ -290,8 +301,12 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               {expandedBarakah && (
                 <div className="mt-4 space-y-3">
                   {communityServices.map((service, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="relative h-16 w-16 overflow-hidden rounded-sm">
+                    <button
+                      key={index}
+                      className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                      onClick={() => router.push(`/community-services/${service.community_service_id}`)}
+                    >
+                      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
                         <Image
                           fill
                           alt={service.community_service_name}
@@ -303,7 +318,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           }
                         />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="font-inter-tight font-medium text-gray-900">
                           {service.community_service_name}
                         </p>
@@ -314,7 +329,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? 'Initiativen unterstützt' : 'Spenden'}
                         </p>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -634,8 +649,12 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 {expandedBarakah && (
                   <div className="mt-4 space-y-3">
                     {communityServices.map((service, index) => (
-                      <div key={index} className="flex items-center gap-4">
-                        <div className="relative h-16 w-16 overflow-hidden rounded-sm">
+                      <button
+                        key={index}
+                        className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                        onClick={() => router.push(`/community-services/${service.community_service_id}`)}
+                      >
+                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
                           <Image
                             fill
                             alt={service.community_service_name}
@@ -647,7 +666,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                             }
                           />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <p className="font-inter-tight font-semibold text-gray-900">
                             {service.community_service_name}
                           </p>
@@ -658,7 +677,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                             +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? 'Initiativen unterstützt' : 'Spenden'}
                           </p>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
