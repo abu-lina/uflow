@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
@@ -40,6 +39,17 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
 
     void loadExistingImages();
   }, [resolvedParams.provider_id]);
+
+  // Cleanup blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up all blob URLs to prevent memory leaks
+      images.forEach(file => {
+        const url = URL.createObjectURL(file);
+        URL.revokeObjectURL(url);
+      });
+    };
+  }, []);
 
   // Handle new image upload
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,26 +194,41 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
                 Ausgewählte Bilder ({allDisplayImages.length})
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                {allDisplayImages.map((item, idx) => (
-                  <div key={idx} className="relative w-full h-[160px] rounded-[12px] overflow-hidden">
-                    <Image
-                      fill
-                      alt={`Preview ${idx + 1}`}
-                      className="object-cover"
-                      src={item.type === 'existing' ? item.url : URL.createObjectURL(item.file)}
-                    />
-                    <button
-                      className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#CDCDCD] bg-white/70 backdrop-blur-[1.25px]"
-                      type="button"
-                      onClick={() => removeImage(item.index, item.type === 'existing')}
-                    >
-                      <Icon 
-                        className="w-4 h-4 text-[#232323]" 
-                        icon="material-symbols:close-rounded" 
+                {allDisplayImages.map((item, idx) => {
+                  const imageUrl = item.type === 'existing' ? item.url : URL.createObjectURL(item.file);
+                  return (
+                    <div key={idx} className="relative w-full h-[160px] rounded-[12px] overflow-hidden bg-gray-100">
+                      <img
+                        alt={`Preview ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        src={imageUrl}
+                        onError={(e) => {
+                          console.error('Error loading image preview:', e);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully:', item.type === 'existing' ? 'existing image' : item.file.name);
+                        }}
                       />
-                    </button>
-                  </div>
-                ))}
+                      <button
+                        className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-[6px] border border-[#CDCDCD] bg-white/70 backdrop-blur-[1.25px]"
+                        type="button"
+                        onClick={() => {
+                          // Clean up blob URL if it's a new file
+                          if (item.type === 'new') {
+                            URL.revokeObjectURL(imageUrl);
+                          }
+                          removeImage(item.index, item.type === 'existing');
+                        }}
+                      >
+                        <Icon 
+                          className="w-4 h-4 text-[#232323]" 
+                          icon="material-symbols:close-rounded" 
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

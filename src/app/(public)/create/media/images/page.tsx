@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
 import { Icon } from '@iconify/react';
 
@@ -35,6 +34,17 @@ export default function ImageUploadPage() {
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
+
+  // Cleanup blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up all blob URLs to prevent memory leaks
+      formData.images.forEach(file => {
+        const url = URL.createObjectURL(file);
+        URL.revokeObjectURL(url);
+      });
+    };
+  }, []);
 
   // Scroll detection for sticky header with iOS boundary handling
   useEffect(() => {
@@ -204,27 +214,40 @@ export default function ImageUploadPage() {
                 Ausgewählte Bilder ({formData.images.length})
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                {formData.images.map((file, index) => (
-                  <div key={index} className="relative w-full h-[160px] rounded-[12px] overflow-hidden">
-                    <Image
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      height={160}
-                      src={URL.createObjectURL(file)}
-                      width={160}
-                    />
-                    <button
-                      className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 bg-white/80 border border-[#CDCDCD] backdrop-blur-sm rounded-full hover:bg-white transition-colors"
-                      type="button"
-                      onClick={() => removeImage(index)}
-                    >
-                      <Icon 
-                        className="w-4 h-4 text-[#232323]" 
-                        icon="material-symbols:close-rounded" 
+                {formData.images.map((file, index) => {
+                  const imageUrl = URL.createObjectURL(file);
+                  return (
+                    <div key={index} className="relative w-full h-[160px] rounded-[12px] overflow-hidden bg-gray-100">
+                      <img
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        src={imageUrl}
+                        onError={(e) => {
+                          console.error('Error loading image preview:', e);
+                          // Fallback to a placeholder if image fails to load
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully:', file.name);
+                        }}
                       />
-                    </button>
-                  </div>
-                ))}
+                      <button
+                        className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 bg-white/80 border border-[#CDCDCD] backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+                        type="button"
+                        onClick={() => {
+                          // Clean up the blob URL to prevent memory leaks
+                          URL.revokeObjectURL(imageUrl);
+                          removeImage(index);
+                        }}
+                      >
+                        <Icon 
+                          className="w-4 h-4 text-[#232323]" 
+                          icon="material-symbols:close-rounded" 
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
