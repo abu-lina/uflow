@@ -559,9 +559,15 @@
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
-}
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  /* Action button height enforcement */
+  .action-button-height {
+    height: 40px !important;
+    min-height: 40px !important;
+  }
 
 /* Replace the glow effect with a growth effect */
 .growth-effect {

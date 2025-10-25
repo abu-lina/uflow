@@ -1,5 +1,6 @@
 import React from 'react';
 import { ProviderIcon } from '@/components/ui/ProviderIcon';
+import { Button } from '@/components/ui/Button';
 
 interface ProviderOptionCardProps {
   variant: 'store' | 'recommend';
@@ -33,13 +34,15 @@ export function ProviderOptionCard({
       </div>
       
       {/* Action Button */}
-      <button 
-        className="flex justify-center items-center px-5 h-10 bg-[#589D96] rounded-[16.8px] text-white font-medium text-base leading-[19px] text-center hover:bg-teal-600 transition-colors duration-300 w-full"
+      <Button
+        fullWidth
+        size="md"
         type="button"
+        variant="action"
         onClick={onClick}
       >
         {buttonText}
-      </button>
+      </Button>
     </article>
   );
 }

@@ -6,27 +6,29 @@ import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center font-inter-tight text-base font-medium',
+  'inline-flex items-center justify-center font-inter-tight text-base font-medium transition-colors disabled:opacity-50',
   {
     variants: {
       variant: {
         default: 'bg-mint text-white hover:bg-[#4a8a84]',
-        primary: 'bg-[#589D96] text-white hover:bg-[#4a8a84] transition-colors disabled:opacity-50',
-        secondary: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#CDCDCD] transition-colors disabled:opacity-50',
-        success: 'bg-[#4a8a84] hover:bg-[#4a8a84] text-white transition-colors disabled:opacity-50',
-        danger: 'bg-[#D86363] text-white hover:bg-[#B84F4F] transition-colors disabled:opacity-50',
-        cancel: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#232323] transition-colors disabled:opacity-50',
+        primary: 'bg-[#589D96] text-white hover:bg-[#4a8a84]',
+        secondary: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#CDCDCD]',
+        success: 'bg-[#4a8a84] hover:bg-[#4a8a84] text-white',
+        danger: 'bg-[#D86363] text-white hover:bg-[#B84F4F]',
+        cancel: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#232323]',
         gradient: 'bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500 text-white',
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
-        auth: 'bg-[#589D96] text-white hover:bg-[#4a8a84] transition-colors disabled:opacity-50', // Auth button variant
+        auth: 'bg-[#589D96] text-white hover:bg-[#4a8a84]',
+        action: 'bg-[#589D96] text-white hover:bg-teal-600',
       },
       size: {
-        default: 'h-12 px-4 rounded-xl', // 48px height with base text
+        default: 'h-12 px-4 rounded-xl',
         sm: 'h-7 px-3 rounded-lg',
+        md: 'h-10 px-5 rounded-[16.8px] action-button-height',
         lg: 'h-14 px-6 rounded-xl',
-        footer: 'h-14 px-5 rounded-xl', // 56px height for footer buttons
+        footer: 'h-14 px-5 rounded-xl',
         icon: 'size-8',
       },
       fullWidth: {
