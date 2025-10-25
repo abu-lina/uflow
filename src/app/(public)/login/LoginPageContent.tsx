@@ -261,6 +261,16 @@ export function LoginPageContent() {
                 Anmelden
               </Button>
 
+              {/* Forgot Password Link */}
+              <div className="text-center">
+                <LinkButton
+                  type="button"
+                  onClick={() => router.push('/forgot-password')}
+                >
+                  Passwort vergessen?
+                </LinkButton>
+              </div>
+
               {/* Link Button (12px gap from main button via space-y-3) */}
               <LinkButton
                 type="button"

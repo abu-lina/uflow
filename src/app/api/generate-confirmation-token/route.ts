@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     
     console.log('[TOKEN] Generation request:', { userId, email, type });
     
-    if (!userId || !email || !type) {
+    if (!email || !type) {
       console.error('[TOKEN] Missing required fields:', { userId, email, type });
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -52,12 +52,37 @@ export async function POST(request: Request) {
 
     console.log('[TOKEN] Attempting to store token in database');
 
+    // For password reset, we need to find the userId from email
+    let finalUserId = userId;
+    if (!userId && type === 'password_reset') {
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+      
+      if (userError) {
+        console.error('[TOKEN] Error fetching users:', userError);
+        return NextResponse.json(
+          { error: 'Failed to find user' },
+          { status: 500 }
+        );
+      }
+      
+      const user = users.find(u => u.email === email);
+      if (!user) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        );
+      }
+      
+      finalUserId = user.id;
+    }
+
     // Store token in database for validation
     const supabaseAdmin = getSupabaseAdmin();
     const { error: insertError } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .insert({
-        user_id: userId,
+        user_id: finalUserId,
         email: email,
         token: token,
         type: type,

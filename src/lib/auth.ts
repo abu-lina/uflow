@@ -59,19 +59,72 @@ export const resetPasswordWithLanguage = async (
   email: string,
   language: 'en' | 'de' = 'en'
 ) => {
-  // Request password reset from Supabase
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
   
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/auth/reset-password`
-  });
-  
-  if (!error) {
+  try {
+    // First, check if user exists and is confirmed
+    const response = await fetch('/api/check-email-exists', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      return { 
+        error: { 
+          message: 'Unable to verify email. Please try again.' 
+        } 
+      };
+    }
+
+    const { exists, confirmed } = await response.json();
+    
+    if (!exists) {
+      return { 
+        error: { 
+          message: 'EMAIL_NOT_FOUND'
+        } 
+      };
+    }
+
+    if (!confirmed) {
+      return { 
+        error: { 
+          message: 'EMAIL_NOT_CONFIRMED'
+        } 
+      };
+    }
+
+    // Generate reset token
+    const tokenResponse = await fetch('/api/generate-confirmation-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        type: 'password_reset'
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const tokenData = await tokenResponse.json();
+      return { 
+        error: { 
+          message: tokenData.error || 'Failed to generate reset token' 
+        } 
+      };
+    }
+
+    const { token } = await tokenResponse.json();
+    
     // Send custom email via API route (keeps Resend key server-side)
-    const resetUrl = `${siteUrl}/auth/reset-password`;
+    const resetUrl = `${siteUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
     
     try {
-      const response = await fetch('/api/send-auth-email', {
+      const emailResponse = await fetch('/api/send-auth-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,15 +137,32 @@ export const resetPasswordWithLanguage = async (
         }),
       });
       
-      if (!response.ok) {
-        console.error('Failed to send reset email:', await response.text());
+      if (!emailResponse.ok) {
+        console.error('Failed to send reset email:', await emailResponse.text());
+        return { 
+          error: { 
+            message: 'Failed to send reset email. Please try again.' 
+          } 
+        };
       }
     } catch (emailError) {
       console.error('Failed to send reset email:', emailError);
+      return { 
+        error: { 
+          message: 'Failed to send reset email. Please try again.' 
+        } 
+      };
     }
+    
+    return { error: null };
+  } catch (error) {
+    console.error('Password reset error:', error);
+    return { 
+      error: { 
+        message: 'Network error. Please try again.' 
+      } 
+    };
   }
-  
-  return { error };
 };
 
 export const signInWithEmailConfirmation = async (
