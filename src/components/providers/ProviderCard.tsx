@@ -5,9 +5,8 @@ import Image from 'next/image';
 import { Icon } from '@iconify/react';
 
 import { Button } from '@/components/ui/Button';
-import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
+import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
@@ -48,10 +47,14 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     const [bookmarked, setBookmarked] = useState(isBookmarked);
     const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
     
-    // Use the new bookmark hook with authentication
-    const { handleBookmarkAction: checkAuthBeforeBookmark, showBookmarkSuccess, showBookmarkRemoved } = useBookmarkWithAuth({
+    // Use optimistic bookmarking
+    const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
       bookmarkableId: provider_id,
       bookmarkableType,
+      onBookmarkChange: (isBookmarked) => {
+        setBookmarked(isBookmarked);
+        onBookmarkChange?.(isBookmarked);
+      },
     });
     useEffect(() => {
       setBookmarked(isBookmarked);
@@ -74,9 +77,8 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     const handleBookmark = async (e: React.MouseEvent) => {
       e.stopPropagation();
       
-      // Check authentication first - this will show toast if not logged in
-      const canProceed = await checkAuthBeforeBookmark();
-      if (!canProceed) {
+      if (!user) {
+        // Show login prompt
         return;
       }
       
@@ -86,38 +88,10 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
           setShowAllahumaBarik(false);
         }, 900);
       }
+      
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const { data: existingBookmark, error: fetchError } = await supabase
-          .from('bookmarks')
-          .select('id')
-          .eq('bookmarkable_id', provider_id)
-          .eq('bookmarkable_type', bookmarkableType)
-          .eq('user_id', user?.id || '')
-          .maybeSingle();
-
-        if (fetchError) throw fetchError;
-
-        if (existingBookmark) {
-          const { error: deleteError } = await supabase
-            .from('bookmarks')
-            .delete()
-            .eq('id', existingBookmark.id);
-          if (deleteError) throw deleteError;
-          setBookmarked(false);
-          onBookmarkChange?.(false);
-          showBookmarkRemoved();
-        } else {
-          const { error: insertError } = await supabase.from('bookmarks').insert({
-            bookmarkable_id: provider_id,
-            bookmarkable_type: bookmarkableType,
-            user_id: user?.id || '',
-          });
-          if (insertError) throw insertError;
-          setBookmarked(true);
-          onBookmarkChange?.(true);
-          showBookmarkSuccess();
-        }
+        await handleOptimisticBookmark();
       } catch (error) {
         console.error('Error toggling bookmark:', error);
       } finally {

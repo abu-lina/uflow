@@ -12,7 +12,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
+import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider } from '@/services/providers';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -31,10 +31,16 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const router = useRouter();
   const isMobile = useIsMobile();
   
-  // Use the new bookmark hook with authentication
-  const { handleBookmarkAction: checkAuthBeforeBookmark, showBookmarkSuccess, showBookmarkRemoved } = useBookmarkWithAuth({
+  // Use optimistic bookmarking
+  const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: provider.provider_id,
     bookmarkableType: 'provider',
+    onBookmarkChange: (isBookmarked) => {
+      setIsSaved(isBookmarked);
+      if (typeof onBookmarkChange === 'function') {
+        onBookmarkChange(provider.provider_id, isBookmarked);
+      }
+    },
   });
   function hasUrls(obj: unknown): obj is { urls: string[] } {
     return (
@@ -180,51 +186,15 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   }, [provider.provider_id]);
 
   const handleBookmark = async () => {
-    // Check authentication first - this will show toast if not logged in
-    const canProceed = await checkAuthBeforeBookmark();
-    if (!canProceed) {
+    if (!user) {
+      // Show login prompt
       return;
     }
     
     try {
-      const { data: existingBookmark, error: fetchError } = await supabase
-        .from('bookmarks')
-        .select('id')
-        .match({
-          bookmarkable_id: provider.provider_id,
-          bookmarkable_type: 'provider',
-          user_id: user?.id || '',
-        })
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      if (existingBookmark) {
-        const { error: deleteError } = await supabase
-          .from('bookmarks')
-          .delete()
-          .eq('id', existingBookmark.id);
-        if (deleteError) throw deleteError;
-        setIsSaved(false);
-        if (typeof onBookmarkChange === 'function') {
-          onBookmarkChange(provider.provider_id, false);
-        }
-        showBookmarkRemoved();
-      } else {
-        const { error: insertError } = await supabase.from('bookmarks').insert({
-          bookmarkable_id: provider.provider_id,
-          bookmarkable_type: 'provider',
-          user_id: user?.id || '',
-        });
-        if (insertError) throw insertError;
-        setIsSaved(true);
-        if (typeof onBookmarkChange === 'function') {
-          onBookmarkChange(provider.provider_id, true);
-        }
-        showBookmarkSuccess();
-      }
-    } catch {
-      console.error('Error toggling bookmark');
+      await handleOptimisticBookmark();
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
     }
   };
 

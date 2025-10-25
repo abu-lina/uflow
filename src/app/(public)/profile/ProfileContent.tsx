@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { CircleHelp, LogOut, User, Lock, FileText, AlertTriangle, Heart } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 
 // import clsx from 'clsx'; // Not used in mobile version
 
@@ -26,7 +28,7 @@ import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useAuth } from '@/hooks/useAuth';
 import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
-import { getCreatedProviders, getBookmarkedProviders } from '@/services/providers';
+import { getCreatedProviders, getAllBookmarkedItems } from '@/services/providers';
 import { authService } from '@/features/auth/services/authService';
 import type { SupabaseUser } from '@/types/supabase-user';
 
@@ -37,6 +39,7 @@ interface ProfileContentProps {
 export function ProfileContent({ user }: ProfileContentProps) {
   const { user: clientUser, loading } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<UserTab>('created');
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -56,6 +59,20 @@ export function ProfileContent({ user }: ProfileContentProps) {
     }
   }, [effectiveUser, loading, router]);
 
+  // Event-driven cache invalidation for bookmark changes
+  useEffect(() => {
+    const handleBookmarkChange = () => {
+      if (effectiveUser) {
+        queryClient.invalidateQueries({ queryKey: ['saved-providers', effectiveUser.id] });
+        queryClient.invalidateQueries({ queryKey: ['bookmarks', effectiveUser.id] });
+      }
+    };
+
+    // Listen for bookmark change events
+    window.addEventListener('bookmark-changed', handleBookmarkChange);
+    return () => window.removeEventListener('bookmark-changed', handleBookmarkChange);
+  }, [effectiveUser, queryClient]);
+
   // Use React Query for created providers with caching
   const { data: createdProviders = [], isLoading: isLoadingCreated, error: createdError } = useQuery({
     queryKey: ['created-providers', effectiveUser?.id],
@@ -73,11 +90,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
     queryKey: ['saved-providers', effectiveUser?.id],
     queryFn: async () => {
       if (!effectiveUser) return [];
-      const data = await getBookmarkedProviders(effectiveUser.id);
+      const data = await getAllBookmarkedItems(effectiveUser.id);
       return data ?? [];
     },
     enabled: !!effectiveUser,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - smart caching
   });
 
   const isLoadingProviders = isLoadingCreated || isLoadingSaved;
@@ -427,9 +444,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Return content with modal
   return (
-    <>
+    <ErrorBoundary>
       {isMobile ? mobileContent : desktopContent}
       <MobileAboutModal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)} />
-    </>
+    </ErrorBoundary>
   );
 }

@@ -1,5 +1,4 @@
 // Server Component
-import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 
 import { ProfileContent } from './ProfileContent';
@@ -9,18 +8,5 @@ export default async function ProfilePage() {
 
   // If no user found server-side, we'll let the client-side handle it
   // instead of immediately redirecting, to prevent logout issues
-  if (!user) {
-    // Return the profile content with null user, let client-side handle auth
-    return (
-      <ErrorBoundary>
-        <ProfileContent user={null} />
-      </ErrorBoundary>
-    );
-  }
-
-  return (
-    <ErrorBoundary>
-      <ProfileContent user={user} />
-    </ErrorBoundary>
-  );
+  return <ProfileContent user={user} />;
 }

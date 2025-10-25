@@ -37,7 +37,7 @@ export default function SavedProvidersPage() {
       return await getAllBookmarkedItems(user.id);
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - smart caching
   });
 
   // Fetch cities from bookmarked items

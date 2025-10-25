@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ export default function MediaUploadPage() {
   const scrollContainerRef = useRef<Element | null>(null);
   
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { formData, clearFormData } = useFormData();
   const { user } = useAuth();
 
@@ -219,6 +221,11 @@ export default function MediaUploadPage() {
       
       // Show success message
       toast.success('Anbieter erfolgreich registriert!');
+      
+      // Invalidate React Query caches to refresh all provider lists
+      await queryClient.invalidateQueries({ queryKey: ['created-providers'] });
+      await queryClient.invalidateQueries({ queryKey: ['providers'] });
+      await queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
       
       // Clear form data
       clearFormData();

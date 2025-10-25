@@ -12,7 +12,7 @@ import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
+import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUrl, normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -75,10 +75,13 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const bookmarkableType = isCommunityService ? 'community_service' : 'provider';
   const bookmarkableId = isCommunityService ? provider.community_service_id : provider.provider_id;
 
-  // Use the new bookmark hook with authentication (after variables are declared)
-  const { handleBookmarkAction: checkAuthBeforeBookmark, showBookmarkSuccess, showBookmarkRemoved } = useBookmarkWithAuth({
+  // Use optimistic bookmarking
+  const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: bookmarkableId || '',
     bookmarkableType,
+    onBookmarkChange: (isBookmarked) => {
+      setIsSaved(isBookmarked);
+    },
   });
 
   // Use React Query for caching community services
@@ -117,9 +120,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   // Community services are now fetched via React Query hook above
 
   const handleBookmark = async () => {
-    // Check authentication first - this will show toast if not logged in
-    const canProceed = await checkAuthBeforeBookmark();
-    if (!canProceed) {
+    if (!user) {
+      // Show login prompt
       return;
     }
     
@@ -132,38 +134,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     }
     
     try {
-      const { data: existingBookmark, error: fetchError } = await supabase
-        .from('bookmarks')
-        .select('id')
-        .match({
-          bookmarkable_id: bookmarkableId,
-          bookmarkable_type: bookmarkableType,
-          user_id: user?.id || '',
-        })
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      if (existingBookmark) {
-        const { error: deleteError } = await supabase
-          .from('bookmarks')
-          .delete()
-          .eq('id', existingBookmark.id);
-        if (deleteError) throw deleteError;
-        setIsSaved(false);
-        showBookmarkRemoved();
-      } else {
-        const { error: insertError } = await supabase.from('bookmarks').insert({
-          bookmarkable_id: bookmarkableId,
-          bookmarkable_type: bookmarkableType,
-          user_id: user?.id || '',
-        });
-        if (insertError) throw insertError;
-        setIsSaved(true);
-        showBookmarkSuccess();
-      }
-    } catch {
-      console.error('Error toggling bookmark');
+      await handleOptimisticBookmark();
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
     }
   };
 
