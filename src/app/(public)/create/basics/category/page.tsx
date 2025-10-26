@@ -11,6 +11,7 @@ import { FormInput } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
 import { getProviderCategories } from '@/services/categories';
+import { shouldCreateCommunityService } from '@/utils/categoryUtils';
 
 export default function SelectCategoryPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -225,7 +226,14 @@ export default function SelectCategoryPage() {
                       ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
                       : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }`}
-                  onClick={() => updateFormData({ category: category.category_id })}
+                  onClick={async () => {
+                    const categoryId = category.category_id;
+                    const isCommunityService = await shouldCreateCommunityService(categoryId);
+                    updateFormData({ 
+                      category: categoryId,
+                      entityType: isCommunityService ? 'community_service' : 'provider'
+                    });
+                  }}
                 >
                   <span className="text-sm font-medium">
                     {category.name_de || category.name_en}

@@ -7,12 +7,13 @@ export interface Category {
   name_en?: string;
   description_de?: string;
   description_en?: string;
+  category_images?: Record<string, unknown>; // JSONB for category images
   applicable_to?: string[]; // Array of entity types: 'provider', 'community_service'
   created_at: string;
   updated_at: string;
 }
 
-// Fetch only categories that are referenced by at least one provider
+// Fetch categories that are referenced by providers OR community services
 export async function fetchUsedCategories(): Promise<Category[]> {
   // 1. Get all category_ids from providers
   const { data: providers, error: providersError } = await supabase.from('providers').select('category_id');
@@ -20,10 +21,21 @@ export async function fetchUsedCategories(): Promise<Category[]> {
     throw providersError;
   }
 
-  // Only include valid, non-null, non-empty category_ids
-  const allCategoryIds = Array.isArray(providers)
+  // 2. Get all category_ids from community services
+  const { data: communityServices, error: communityServicesError } = await supabase.from('community_services').select('category_id');
+  if (communityServicesError) {
+    throw communityServicesError;
+  }
+
+  // Combine and deduplicate category IDs
+  const providerCategoryIds = Array.isArray(providers)
     ? providers.map((p: { category_id: string | null }) => p.category_id)
     : [];
+  const communityServiceCategoryIds = Array.isArray(communityServices)
+    ? communityServices.map((cs: { category_id: string | null }) => cs.category_id)
+    : [];
+
+  const allCategoryIds = [...providerCategoryIds, ...communityServiceCategoryIds];
   const uniqueCategoryIds = Array.from(
     new Set(
       allCategoryIds.filter(
@@ -32,7 +44,7 @@ export async function fetchUsedCategories(): Promise<Category[]> {
     ),
   );
 
-  // 2. Fetch categories by those IDs
+  // 3. Fetch categories by those IDs
   const { data: categories, error: categoriesError } = await supabase
     .from('categories')
     .select('*')
@@ -43,8 +55,6 @@ export async function fetchUsedCategories(): Promise<Category[]> {
   }
 
   const categoryResults = Array.isArray(categories) ? categories : [];
-
-  // Community Services category removed - only show actual provider categories
 
   return categoryResults;
 }

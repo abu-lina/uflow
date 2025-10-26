@@ -391,19 +391,19 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   : provider.address_street || provider.address_city || undefined;
                 
                 const getImageUrl = () => {
-                  if (!provider.provider_images) return '/images/placeholder.jpg';
+                  if (!provider.images) return '/images/placeholder.jpg';
                   try {
                     let imagesData: { urls?: string[] } = {};
-                    if (typeof provider.provider_images === 'string') {
-                      imagesData = JSON.parse(provider.provider_images);
-                    } else if (Array.isArray(provider.provider_images)) {
-                      imagesData.urls = provider.provider_images;
+                    if (typeof provider.images === 'string') {
+                      imagesData = JSON.parse(provider.images);
+                    } else if (Array.isArray(provider.images)) {
+                      imagesData.urls = provider.images;
                     } else if (
-                      typeof provider.provider_images === 'object' &&
-                      provider.provider_images !== null &&
-                      'urls' in provider.provider_images
+                      typeof provider.images === 'object' &&
+                      provider.images !== null &&
+                      'urls' in provider.images
                     ) {
-                      imagesData = provider.provider_images;
+                      imagesData = provider.images;
                     }
                     if (imagesData.urls && imagesData.urls.length > 0) {
                       return imagesData.urls[0];
@@ -416,11 +416,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 
                 return (
                   <SelectableCard
-                    key={provider.provider_id}
+                    key={provider.id}
                     bottomText={address}
                     category={provider.category?.name_de || ''}
                     imageUrl={getImageUrl()}
-                    title={provider.provider_name}
+                    title={provider.name}
                   />
                 );
               })

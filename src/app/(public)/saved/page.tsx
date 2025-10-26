@@ -59,7 +59,7 @@ export default function SavedProvidersPage() {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((provider) => {
-        const nameMatch = provider.provider_name?.toLowerCase().includes(query);
+        const nameMatch = provider.name?.toLowerCase().includes(query);
         const addressMatch = 
           provider.address_street?.toLowerCase().includes(query) ||
           provider.address_city?.toLowerCase().includes(query);
@@ -248,20 +248,20 @@ export default function SavedProvidersPage() {
         
         <section className="grid w-full grid-cols-2 gap-4">
           {filteredProviders.map((provider) => {
-            const isCommunityService = !!provider.community_service_id;
-            const imageUrl = getFirstImageUrl(provider.provider_images);
+            const isCommunityService = provider.type === 'community_service';
+            const imageUrl = getFirstImageUrl(provider.images);
             const address = formatProviderAddress(provider.address_street, provider.address_city);
             
             return (
               <SelectableCard
-                key={provider.provider_id}
+                key={provider.id}
                 actionType="unsave"
                 bottomText={address}
                 category={provider.category?.name_de || ''}
                 imageUrl={imageUrl}
-                title={provider.provider_name}
-                onAction={() => handleUnsave(provider.provider_id, isCommunityService)}
-                onClick={() => handleProviderClick(provider.provider_id, isCommunityService)}
+                title={provider.name}
+                onAction={() => handleUnsave(provider.id, isCommunityService)}
+                onClick={() => handleProviderClick(provider.id, isCommunityService)}
               />
             );
           })}

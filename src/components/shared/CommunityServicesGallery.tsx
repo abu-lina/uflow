@@ -31,8 +31,8 @@ export function CommunityServicesGallery() {
   }, []);
 
   const handleCommunityServiceClick = (_communityServiceId: string) => {
-    // Navigate to search page with Spenden category filter
-    router.push('/providers?category=2335922b-76a9-4d79-b32a-b3f95941ba5c');
+    // Navigate to search page with Gemeinschaft & Spenden category filter
+    router.push('/providers?category=4470c3e0-458f-40a6-a96e-ca0fbdf145d7');
   };
 
   if (isLoading) {

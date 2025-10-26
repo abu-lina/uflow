@@ -110,36 +110,63 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
 
     const getImageUrl = () => {
       try {
-        if (!provider_images) {
-          return '/images/placeholder.jpg';
-        }
-
-        let imagesData: { urls?: string[] } = {};
-        if (typeof provider_images === 'string') {
-          const parsed = safeJsonParse<{ urls?: string[] }>(
-            provider_images,
-            (parsed): parsed is { urls?: string[] } => {
-              return (
-                typeof parsed === 'object' &&
-                parsed !== null &&
-                'urls' in parsed &&
-                Array.isArray(parsed.urls)
-              );
-            },
-          );
-          if (parsed) {
-            imagesData = parsed;
+        // Priority 1: Provider images
+        if (provider_images) {
+          let imagesData: { urls?: string[] } = {};
+          if (typeof provider_images === 'string') {
+            const parsed = safeJsonParse<{ urls?: string[] }>(
+              provider_images,
+              (parsed): parsed is { urls?: string[] } => {
+                return (
+                  typeof parsed === 'object' &&
+                  parsed !== null &&
+                  'urls' in parsed &&
+                  Array.isArray(parsed.urls)
+                );
+              },
+            );
+            if (parsed) {
+              imagesData = parsed;
+            }
+          } else if (Array.isArray(provider_images)) {
+            imagesData.urls = provider_images;
+          } else if (hasUrls(provider_images)) {
+            imagesData = provider_images;
           }
-        } else if (Array.isArray(provider_images)) {
-          imagesData.urls = provider_images;
-        } else if (hasUrls(provider_images)) {
-          imagesData = provider_images;
+
+          if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
+            return imagesData.urls[0];
+          }
         }
 
-        if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
-          return imagesData.urls[0];
+        // Priority 2: Category fallback images
+        if (category?.category_images) {
+          try {
+            let parsedCategoryImages;
+            
+            if (typeof category.category_images === 'string') {
+              parsedCategoryImages = JSON.parse(category.category_images);
+            } else {
+              parsedCategoryImages = category.category_images;
+            }
+            
+            // Handle different possible structures
+            if (Array.isArray(parsedCategoryImages) && parsedCategoryImages.length > 0) {
+              // Direct array of URLs
+              return parsedCategoryImages[0];
+            } else if (parsedCategoryImages.urls && Array.isArray(parsedCategoryImages.urls) && parsedCategoryImages.urls.length > 0) {
+              // Object with urls property
+              return parsedCategoryImages.urls[0];
+            } else if (parsedCategoryImages.url) {
+              // Single URL
+              return parsedCategoryImages.url;
+            }
+          } catch (err) {
+            console.warn('Error parsing category images in ProviderCard:', err);
+          }
         }
 
+        // Priority 3: Placeholder
         return '/images/placeholder.jpg';
       } catch (error) {
         console.error('Error parsing image data:', error);

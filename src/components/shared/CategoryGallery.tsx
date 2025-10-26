@@ -5,16 +5,18 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import { supabase } from '@/lib/supabase/client';
+import type { Category } from '@/services/categories';
 
 interface CategoryGalleryProps {
   categoryId: string;
+  category?: Category; // Optional category data for fallback images
 }
 
 interface ProviderImage {
   provider_images: string | null;
 }
 
-export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
+export default function CategoryGallery({ categoryId, category }: CategoryGalleryProps) {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,15 +24,18 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const { data, error } = await supabase
+        console.log('CategoryGallery received category:', category);
+        
+        // Priority 1: Get provider images
+        const { data: providersData, error: providersError } = await supabase
           .from('providers')
           .select('provider_images')
           .eq('category_id', categoryId)
           .limit(3);
 
-        if (error) throw error;
+        if (providersError) throw providersError;
 
-        const validImages = data
+        const providerImages = providersData
           .map((item: ProviderImage) => {
             try {
               if (!item.provider_images) return null;
@@ -42,8 +47,66 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
           })
           .filter((url): url is string => url !== null);
 
-        console.log('Fetched images:', validImages); // Debug log
-        setImages(validImages);
+        console.log('Provider images:', providerImages); // Debug log
+
+        // If we have enough provider images, use them
+        if (providerImages.length >= 3) {
+          setImages(providerImages.slice(0, 3));
+          return;
+        }
+
+        // Priority 2: Get category fallback images
+        const categoryImages: string[] = [];
+        console.log(`Category ${categoryId} - category_images check:`, category?.category_images);
+        
+        if (category?.category_images) {
+          console.log(`Category ${categoryId} - Raw category_images:`, category.category_images);
+          try {
+            // Handle different possible data structures
+            let parsedCategoryImages;
+            
+            if (typeof category.category_images === 'string') {
+              parsedCategoryImages = JSON.parse(category.category_images);
+            } else {
+              parsedCategoryImages = category.category_images;
+            }
+            
+            console.log(`Category ${categoryId} - Parsed category images:`, parsedCategoryImages);
+            
+            // Handle different possible structures
+            if (Array.isArray(parsedCategoryImages)) {
+              // Direct array of URLs
+              categoryImages.push(...parsedCategoryImages);
+              console.log(`Category ${categoryId} - Added array URLs:`, parsedCategoryImages);
+            } else if (parsedCategoryImages.urls && Array.isArray(parsedCategoryImages.urls)) {
+              // Object with urls property
+              categoryImages.push(...parsedCategoryImages.urls);
+              console.log(`Category ${categoryId} - Added urls property:`, parsedCategoryImages.urls);
+            } else if (parsedCategoryImages.url) {
+              // Single URL
+              categoryImages.push(parsedCategoryImages.url);
+              console.log(`Category ${categoryId} - Added single URL:`, parsedCategoryImages.url);
+            }
+          } catch (err) {
+            console.warn(`Category ${categoryId} - Error parsing category images:`, err);
+          }
+        } else {
+          console.log(`Category ${categoryId} - No category_images available`);
+        }
+
+        // Combine provider images with category images
+        const combinedImages = [...providerImages];
+        
+        // Fill remaining slots with category images (repeat if necessary)
+        while (combinedImages.length < 3 && categoryImages.length > 0) {
+          const categoryImageIndex = (combinedImages.length - providerImages.length) % categoryImages.length;
+          combinedImages.push(categoryImages[categoryImageIndex]);
+        }
+
+        console.log(`Category ${categoryId} - Provider images:`, providerImages);
+        console.log(`Category ${categoryId} - Category images:`, categoryImages);
+        console.log(`Category ${categoryId} - Combined images:`, combinedImages);
+        setImages(combinedImages);
       } catch (err) {
         console.error('Error fetching images:', err);
         setError('Failed to load images');
@@ -53,7 +116,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
     };
 
     fetchImages();
-  }, [categoryId]);
+  }, [categoryId, category]);
 
   // Always ensure we have exactly 3 images
   const displayImages = [...images];
@@ -61,7 +124,7 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
     displayImages.push('/images/placeholder.jpg');
   }
 
-  console.log('Display images:', displayImages); // Debug log
+  console.log('Final display images:', displayImages);
 
   if (loading) {
     return (
@@ -92,7 +155,9 @@ export default function CategoryGallery({ categoryId }: CategoryGalleryProps) {
             alt={
               imageUrl === '/images/placeholder.jpg'
                 ? `Placeholder image ${index + 1}`
-                : `Provider image ${index + 1}`
+                : imageUrl.includes('provider-images') || imageUrl.includes('providers')
+                ? `Provider image ${index + 1}`
+                : `Category image ${index + 1}`
             }
             className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
             priority={index < 2}

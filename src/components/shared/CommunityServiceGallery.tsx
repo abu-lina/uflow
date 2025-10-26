@@ -5,12 +5,17 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import { supabase } from '@/lib/supabase/client';
+import type { Category } from '@/services/categories';
 
 interface CommunityServiceImage {
   community_service_images: string | null;
 }
 
-export default function CommunityServiceGallery() {
+interface CommunityServiceGalleryProps {
+  category?: Category; // Optional category data for fallback images
+}
+
+export default function CommunityServiceGallery({ category }: CommunityServiceGalleryProps) {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +23,9 @@ export default function CommunityServiceGallery() {
   useEffect(() => {
     const fetchImages = async () => {
       try {
+        console.log('CommunityServiceGallery received category:', category);
+        
+        // Priority 1: Get community service images
         const { data, error } = await supabase
           .from('community_services')
           .select('community_service_images')
@@ -25,7 +33,7 @@ export default function CommunityServiceGallery() {
 
         if (error) throw error;
 
-        const validImages = data
+        const communityServiceImages = data
           .map((item: CommunityServiceImage) => {
             try {
               if (!item.community_service_images) return null;
@@ -59,8 +67,66 @@ export default function CommunityServiceGallery() {
           })
           .filter((url): url is string => url !== null);
 
-        console.log('Fetched community service images:', validImages); // Debug log
-        setImages(validImages);
+        console.log('Community service images:', communityServiceImages);
+
+        // If we have enough community service images, use them
+        if (communityServiceImages.length >= 3) {
+          setImages(communityServiceImages.slice(0, 3));
+          return;
+        }
+
+        // Priority 2: Get category fallback images
+        const categoryImages: string[] = [];
+        console.log('CommunityServiceGallery - category_images check:', category?.category_images);
+        
+        if (category?.category_images) {
+          console.log('CommunityServiceGallery - Raw category_images:', category.category_images);
+          try {
+            // Handle different possible data structures
+            let parsedCategoryImages;
+            
+            if (typeof category.category_images === 'string') {
+              parsedCategoryImages = JSON.parse(category.category_images);
+            } else {
+              parsedCategoryImages = category.category_images;
+            }
+            
+            console.log('CommunityServiceGallery - Parsed category images:', parsedCategoryImages);
+            
+            // Handle different possible structures
+            if (Array.isArray(parsedCategoryImages)) {
+              // Direct array of URLs
+              categoryImages.push(...parsedCategoryImages);
+              console.log('CommunityServiceGallery - Added array URLs:', parsedCategoryImages);
+            } else if (parsedCategoryImages.urls && Array.isArray(parsedCategoryImages.urls)) {
+              // Object with urls property
+              categoryImages.push(...parsedCategoryImages.urls);
+              console.log('CommunityServiceGallery - Added urls property:', parsedCategoryImages.urls);
+            } else if (parsedCategoryImages.url) {
+              // Single URL
+              categoryImages.push(parsedCategoryImages.url);
+              console.log('CommunityServiceGallery - Added single URL:', parsedCategoryImages.url);
+            }
+          } catch (err) {
+            console.warn('CommunityServiceGallery - Error parsing category images:', err);
+          }
+        } else {
+          console.log('CommunityServiceGallery - No category_images available');
+        }
+
+        // Combine community service images with category images
+        const combinedImages = [...communityServiceImages];
+        
+        // Fill remaining slots with category images (repeat if necessary)
+        while (combinedImages.length < 3 && categoryImages.length > 0) {
+          const categoryImageIndex = (combinedImages.length - communityServiceImages.length) % categoryImages.length;
+          combinedImages.push(categoryImages[categoryImageIndex]);
+        }
+
+        console.log('CommunityServiceGallery - Community service images:', communityServiceImages);
+        console.log('CommunityServiceGallery - Category images:', categoryImages);
+        console.log('CommunityServiceGallery - Combined images:', combinedImages);
+        setImages(combinedImages);
       } catch (err) {
         console.error('Error fetching community service images:', err);
         setError('Failed to load images');
@@ -70,7 +136,7 @@ export default function CommunityServiceGallery() {
     };
 
     fetchImages();
-  }, []);
+  }, [category]);
 
   // Always ensure we have exactly 3 images
   const displayImages = [...images];

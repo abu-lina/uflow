@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
-import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import type { Provider } from '@/services/providers';
 
 interface MobileProviderDetailProps {
@@ -22,8 +22,11 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
     }
   };
   
-  // Process images using shared utility
-  const imageUrls = getAllTrustedImageUrls(provider.provider_images);
+  // Process images using shared utility with category fallback
+  const imageUrls = getAllTrustedImageUrlsWithFallback(
+    provider.provider_images, 
+    provider.category?.category_images
+  );
   const allImageUrls = imageUrls.length > 0 ? imageUrls : [PLACEHOLDER_IMAGE];
 
   // Use the centralized image swipe hook

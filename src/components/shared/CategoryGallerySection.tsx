@@ -10,8 +10,8 @@ import { fetchUsedCategories, type Category } from '@/services/categories';
 import { formatAllahText } from '@/utils/textUtils';
 import { getLocalizedDescription, detectUserLanguage, getLocalizedName } from '@/utils/languageUtils';
 
-import CategoryGallery from './CategoryGallery';
-import CommunityServiceGallery from './CommunityServiceGallery';
+import UnifiedGallery from './UnifiedGallery';
+import { getEntityTypeForCategory } from '@/utils/entityTypeUtils';
 
 export function CategoryGallerySection() {
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -76,22 +76,30 @@ export function CategoryGallerySection() {
     }
   };
 
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        const fetchedCategories = await fetchUsedCategories();
-        console.log('Fetched categories for CategoryGallerySection:', fetchedCategories);
-        setCategories(fetchedCategories);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to load categories.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
+         useEffect(() => {
+           async function loadCategories() {
+             try {
+               const fetchedCategories = await fetchUsedCategories();
+               console.log('Fetched categories for CategoryGallerySection:', fetchedCategories);
+               // Debug each category's images
+               fetchedCategories.forEach((cat, index) => {
+                 console.log(`Category ${index} (${cat.name_de}):`, {
+                   id: cat.category_id,
+                   name: cat.name_de,
+                   category_images: cat.category_images
+                 });
+               });
+               setCategories(fetchedCategories);
+             } catch (err) {
+               console.error('Error fetching categories:', err);
+               setError('Failed to load categories.');
+             } finally {
+               setIsLoading(false);
+             }
+           }
 
-    loadCategories();
-  }, []);
+           loadCategories();
+         }, []);
 
   const handleCategoryClick = (categoryId: string) => {
     router.push(`/providers?category=${categoryId}`);
@@ -191,11 +199,11 @@ export function CategoryGallerySection() {
                 </div>
               </div>
 
-              {categoryId === '2335922b-76a9-4d79-b32a-b3f95941ba5c' ? (
-                <CommunityServiceGallery />
-              ) : (
-                <CategoryGallery categoryId={categoryId} />
-              )}
+              <UnifiedGallery 
+                category={category} 
+                categoryId={categoryId} 
+                entityType={getEntityTypeForCategory(categoryId)}
+              />
             </div>
           );
         })}

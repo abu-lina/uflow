@@ -8,6 +8,9 @@ export interface ProviderFormData {
   // Creation mode
   creationMode: ProviderCreationMode;
   
+  // Entity type (determined by category selection)
+  entityType: 'provider' | 'community_service';
+  
   // Basics
   title: string;
   category: string;
@@ -48,6 +51,7 @@ export interface ProviderFormData {
 
 const initialFormData: ProviderFormData = {
   creationMode: 'owner', // Default to owner mode
+  entityType: 'provider', // Default to provider
   title: '',
   category: '',
   description: '',

@@ -40,7 +40,11 @@ export default async function CommunityServiceDetailPage({
     needs_ids: [],
     offers: [],
     needs: [],
-    category: communityService.category ? { name_de: communityService.category.name_de || '' } : undefined,
+    category: communityService.category ? { 
+      name_de: communityService.category.name_de || '',
+      name_en: communityService.category.name_en,
+      category_images: communityService.category.category_images
+    } : undefined,
     community_service_id: communityService.community_service_id,
   };
 

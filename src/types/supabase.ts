@@ -7,6 +7,7 @@ export interface Category {
   name_en?: string;
   description_de?: string;
   description_en?: string;
+  category_images?: Record<string, unknown>; // JSONB for category images
   applicable_to?: string[];
   created_at: string;
   updated_at: string;
