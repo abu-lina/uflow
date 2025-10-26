@@ -10,7 +10,7 @@ import type { Category } from '@/types/supabase';
 import { FormInput } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
-import { getProviderCategories } from '@/services/categories';
+import { getCategories } from '@/services/categories';
 import { shouldCreateCommunityService } from '@/utils/categoryUtils';
 
 export default function SelectCategoryPage() {
@@ -39,8 +39,8 @@ export default function SelectCategoryPage() {
     async function fetchCategories() {
       setCategoriesLoading(true);
       try {
-        // Use the filtered categories service for providers
-        const categoriesData = await getProviderCategories();
+        // Get all categories so users can choose to create either providers or community services
+        const categoriesData = await getCategories();
         setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -229,10 +229,18 @@ export default function SelectCategoryPage() {
                   onClick={async () => {
                     const categoryId = category.category_id;
                     const isCommunityService = await shouldCreateCommunityService(categoryId);
+                    console.log('Category selected:', category.name_de, 'ID:', categoryId);
+                    console.log('Should create community service:', isCommunityService);
                     updateFormData({ 
                       category: categoryId,
                       entityType: isCommunityService ? 'community_service' : 'provider'
                     });
+                    console.log('Updated formData entityType to:', isCommunityService ? 'community_service' : 'provider');
+                    
+                    // Also log the current form data to verify it's being updated
+                    setTimeout(() => {
+                      console.log('Form data after update:', { category: categoryId, entityType: isCommunityService ? 'community_service' : 'provider' });
+                    }, 100);
                   }}
                 >
                   <span className="text-sm font-medium">

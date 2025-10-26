@@ -40,9 +40,11 @@ export default function MediaUploadPage() {
   
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { formData, clearFormData } = useFormData();
+  const { formData, clearFormData, isLoading } = useFormData();
   const { user } = useAuth();
 
+  // Simple entity type determination based on category
+  const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
 
   // Scroll detection for sticky header with iOS boundary handling
   useEffect(() => {
@@ -114,30 +116,44 @@ export default function MediaUploadPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Show loading state while form data is being restored
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#589D96] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading form data...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Submit the complete provider creation
+  // Submit the complete entity creation (provider or community service)
   const handleSave = async () => {
     if (!user) {
       console.error('User not authenticated');
-      toast.error('Sie müssen angemeldet sein, um einen Anbieter zu erstellen.');
+      toast.error('Sie müssen angemeldet sein, um einen Eintrag zu erstellen.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      console.log('Creating provider with form data:', formData);
 
       // Upload images if any
       let uploadedUrls: string[] = [];
       if (formData.images && formData.images.length > 0) {
-        console.log('Uploading images...');
+        
+        // Use separate buckets for better organization
+        const bucketName = isCommunityService ? 'community-service-images' : 'provider-images';
+        const folderName = isCommunityService ? 'community-services' : 'providers';
+        
         for (const imageFile of formData.images) {
           const fileExt = imageFile.name.split('.').pop();
           const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-          const filePath = `providers/${fileName}`;
+          const filePath = `${folderName}/${fileName}`;
 
           const { error: uploadError } = await supabase.storage
-            .from('provider-images')
+            .from(bucketName)
             .upload(filePath, imageFile);
 
           if (uploadError) {
@@ -146,105 +162,130 @@ export default function MediaUploadPage() {
           }
 
           const { data: { publicUrl } } = supabase.storage
-            .from('provider-images')
+            .from(bucketName)
             .getPublicUrl(filePath);
 
           uploadedUrls.push(publicUrl);
         }
       }
 
-      // Create provider data
       // Determine which ID field to set based on creation mode
       const isOwner = formData.creationMode === 'owner';
-      const insertData = {
-        provider_name: formData.title,
-        // If online business, all address fields are null
-        address_street: formData.isOnlineBusiness ? null : (formData.street || null),
-        address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
-        address_city: formData.isOnlineBusiness ? null : (formData.city || null),
-        address_country: formData.isOnlineBusiness ? null : (formData.country || null),
-        show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
-        category_id: formData.category || null,
-        contact_email: formData.email || null,
-        contact_phone: formData.phone || null,
-        social_website: formData.website || null,
-        social_instagram: formData.instagram || null,
-        barakah_effects: formData.tags || [],
-        // user_created_id: ALWAYS set to track who created this database entry
-        // provider_owner_id: Only set in owner mode (when user is the actual business owner)
-        user_created_id: user.id,
-        provider_owner_id: isOwner ? user.id : null,
-        provider_images: uploadedUrls.length > 0 ? JSON.stringify({ urls: uploadedUrls }) : null,
-        offers_ids: formData.offers_ids || [],
-        needs_ids: formData.needs_ids || [],
-      };
-      
-      console.log('Inserting provider with data:', insertData);
-      
-      const { data: createdProvider, error: providerError } = await supabase
-        .from('providers')
-        .insert([insertData])
-        .select('provider_id')
-        .single();
-      
-      if (providerError) {
-        console.error('Error creating provider:', providerError);
-        throw providerError;
-      }
 
-      if (!createdProvider) {
-        throw new Error('Provider created but no data returned');
-      }
-
-      console.log('Provider created successfully with ID:', createdProvider.provider_id);
-
-      // Create provider-community service relationships for all selected services
-      const selectedServiceIds = formData.selectedCommunityServiceIds || [];
-      if (selectedServiceIds.length > 0 && createdProvider.provider_id) {
-        console.log('Creating relationships with community services:', selectedServiceIds);
+      if (isCommunityService) {
+        // Create community service
+        const insertData = {
+          community_service_name: formData.title,
+          community_service_description: formData.description || null,
+          address_street: formData.isOnlineBusiness ? null : (formData.street || null),
+          address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
+          address_city: formData.isOnlineBusiness ? null : (formData.city || null),
+          address_country: formData.isOnlineBusiness ? null : (formData.country || null),
+          show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
+          category_id: formData.category || null,
+          contact_email: formData.email || null,
+          contact_phone: formData.phone || null,
+          social_website: formData.website || null,
+          social_instagram: formData.instagram || null,
+          barakah_effects: formData.tags || [],
+          user_created_id: user.id,
+          provider_id: isOwner ? user.id : null,
+          community_service_images: uploadedUrls.length > 0 ? uploadedUrls : null,
+          offers_ids: formData.offers_ids || [],
+          needs_ids: formData.needs_ids || [],
+          review_status: 'approved' as const, // Community services are auto-approved
+        };
         
-        const results = await Promise.allSettled(
-          selectedServiceIds.map(serviceId => 
-            createProviderCommunityServiceRelationship(createdProvider.provider_id, serviceId)
-          )
-        );
         
-        const failedCount = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).length;
+        const { data: createdService, error: serviceError } = await supabase
+          .from('community_services')
+          .insert([insertData])
+          .select('community_service_id')
+          .single();
         
-        if (failedCount > 0) {
-          console.error(`Failed to create ${failedCount} community service relationship(s)`);
-          toast.error(`Anbieter erstellt, aber ${failedCount} Initiative(n) konnten nicht verknüpft werden.`);
-        } else {
-          console.log(`Successfully created ${selectedServiceIds.length} community service relationship(s)`);
+        if (serviceError) {
+          console.error('Error creating community service:', serviceError);
+          throw serviceError;
         }
+
+        if (!createdService) {
+          throw new Error('Community service created but no data returned');
+        }
+
+        
+        toast.success('Gemeinschaftsdienst erfolgreich erstellt!');
+        
+      } else {
+        // Create provider
+        const insertData = {
+          provider_name: formData.title,
+          // If online business, all address fields are null
+          address_street: formData.isOnlineBusiness ? null : (formData.street || null),
+          address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
+          address_city: formData.isOnlineBusiness ? null : (formData.city || null),
+          address_country: formData.isOnlineBusiness ? null : (formData.country || null),
+          show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
+          category_id: formData.category || null,
+          contact_email: formData.email || null,
+          contact_phone: formData.phone || null,
+          social_website: formData.website || null,
+          social_instagram: formData.instagram || null,
+          barakah_effects: formData.tags || [],
+          // user_created_id: ALWAYS set to track who created this database entry
+          // provider_owner_id: Only set in owner mode (when user is the actual business owner)
+          user_created_id: user.id,
+          provider_owner_id: isOwner ? user.id : null,
+          provider_images: uploadedUrls.length > 0 ? JSON.stringify({ urls: uploadedUrls }) : null,
+          offers_ids: formData.offers_ids || [],
+          needs_ids: formData.needs_ids || [],
+        };
+        
+        
+        const { data: createdProvider, error: providerError } = await supabase
+          .from('providers')
+          .insert([insertData])
+          .select('provider_id')
+          .single();
+        
+        if (providerError) {
+          console.error('Error creating provider:', providerError);
+          throw providerError;
+        }
+
+        if (!createdProvider) {
+          throw new Error('Provider created but no data returned');
+        }
+
+        // Create provider-community service relationships for all selected services
+        if (formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0) {
+          for (const serviceId of formData.selectedCommunityServiceIds) {
+            const { error: relationshipError } = await createProviderCommunityServiceRelationship(
+              createdProvider.provider_id,
+              serviceId
+            );
+            
+            if (relationshipError) {
+              console.error('Error creating relationship:', relationshipError);
+              // Don't throw here - the provider was created successfully
+            }
+          }
+        }
+        
+        toast.success('Anbieter erfolgreich erstellt!');
       }
-      
-      // Show success message
-      toast.success('Anbieter erfolgreich registriert!');
-      
-      // Invalidate React Query caches to refresh all provider lists
-      await queryClient.invalidateQueries({ queryKey: ['created-providers'] });
-      await queryClient.invalidateQueries({ queryKey: ['providers'] });
-      await queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-      
-      // Clear form data
+
+      // Clear form data and redirect
       clearFormData();
       
-      // Redirect to create page
-      router.push('/create');
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ['community-services'] });
+      
+      router.push('/providers');
       
     } catch (error) {
-      console.error('Error in provider creation:', error);
-      
-      // Show user-friendly error message
-      const errorMessage = error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten';
-      
-      if (errorMessage.includes('JWT') || errorMessage.includes('auth') || errorMessage.includes('PGRST301')) {
-        toast.error('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
-        setTimeout(() => router.push('/signin'), 2000);
-      } else {
-        toast.error(`Fehler beim Erstellen: ${errorMessage}`);
-      }
+      console.error('Error creating entity:', error);
+      toast.error('Fehler beim Erstellen. Bitte versuchen Sie es erneut.');
     } finally {
       setIsSubmitting(false);
     }
@@ -260,7 +301,7 @@ export default function MediaUploadPage() {
           {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
-            onClick={() => router.push('/create/contact')}
+            onClick={() => router.back()}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
@@ -286,6 +327,7 @@ export default function MediaUploadPage() {
           <div className="mb-6">
             <StepIndicator currentStep={3} steps={STEPS} />
           </div>
+
 
           {/* Body */}
           <div className="flex flex-col items-start p-0 gap-8 w-[345px] h-[160px] flex-none order-1 flex-grow-0">
@@ -314,23 +356,25 @@ export default function MediaUploadPage() {
                   </div>
                 </button>
 
-                {/* Spenden-Projekt - Navigate to Social */}
-                <button
-                  className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
-                  onClick={() => router.push('/create/media/social')}
-                >
-                  <div className="flex flex-1 flex-col gap-1 items-start">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Soziale Initiativen</span>
-                    <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
-                      {(formData.selectedCommunityServiceIds || []).length > 0 
-                        ? `${(formData.selectedCommunityServiceIds || []).length} Initiativen ausgewählt` 
-                        : 'Initiativen auswählen'}
+                {/* Spenden-Projekt - Navigate to Social (only for providers) */}
+                {!isCommunityService && (
+                  <button
+                    className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+                    onClick={() => router.push('/create/media/social')}
+                  >
+                    <div className="flex flex-1 flex-col gap-1 items-start">
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Soziale Initiativen</span>
+                      <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+                        {(formData.selectedCommunityServiceIds || []).length > 0 
+                          ? `${(formData.selectedCommunityServiceIds || []).length} Initiativen ausgewählt` 
+                          : 'Initiativen auswählen'}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
-                  </div>
-                </button>
+                    <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
+                      <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                    </div>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -353,7 +397,7 @@ export default function MediaUploadPage() {
           >
             <Icon className="h-6 w-6 text-white" icon={isSubmitting ? "lucide:loader-2" : "lucide:save"} />
             <span className="text-base font-medium text-white leading-[19px]">
-              {isSubmitting ? 'Erstelle...' : 'Angebot registrieren'}
+              {isSubmitting ? 'Erstelle...' : `${isCommunityService ? 'Gemeinschaftsdienst' : 'Angebot'} registrieren`}
             </span>
           </button>
         </div>

@@ -114,7 +114,7 @@ export async function getCategories(): Promise<Category[]> {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .order('name')
+    .order('name_de', { ascending: true })
     .returns<Category[]>();
   if (error) {
     throw error;
@@ -136,17 +136,39 @@ export async function getCategoryById(id: string): Promise<Category | null> {
 
 // Fetch categories filtered by entity type (provider or community_service)
 export async function getCategoriesForEntity(entityType: 'provider' | 'community_service'): Promise<Category[]> {
-  const { data, error } = await supabase
+  // First try to get categories that explicitly contain the entity type
+  const { data: explicitData, error: explicitError } = await supabase
     .from('categories')
     .select('*')
-    .or(`applicable_to.is.null,applicable_to.cs.{${entityType}}`)
-    .order('name')
+    .contains('applicable_to', [entityType])
+    .order('name_de', { ascending: true })
     .returns<Category[]>();
   
-  if (error) {
-    throw error;
+  if (explicitError) {
+    console.error('Error fetching categories for entity:', entityType, explicitError);
+    throw explicitError;
   }
-  return Array.isArray(data) ? data : [];
+
+  // Also get categories with null applicable_to (available for all entity types)
+  const { data: nullData, error: nullError } = await supabase
+    .from('categories')
+    .select('*')
+    .is('applicable_to', null)
+    .order('name_de', { ascending: true })
+    .returns<Category[]>();
+
+  if (nullError) {
+    console.error('Error fetching null applicable_to categories:', nullError);
+    // Don't throw here, just log the error and continue with explicit data
+  }
+
+  // Combine and deduplicate results
+  const allCategories = [...(explicitData || []), ...(nullData || [])];
+  const uniqueCategories = allCategories.filter((category, index, self) => 
+    index === self.findIndex(c => c.category_id === category.category_id)
+  );
+
+  return uniqueCategories;
 }
 
 // Fetch categories for provider creation

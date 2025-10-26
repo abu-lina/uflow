@@ -175,7 +175,12 @@ export function FormProvider({ children }: FormProviderProps) {
   }, [formData, isLoading]);
 
   const updateFormData = useCallback((data: Partial<ProviderFormData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
+    console.log('FormProvider: updateFormData called with:', data);
+    setFormData(prev => {
+      const newData = { ...prev, ...data };
+      console.log('FormProvider: new form data:', newData);
+      return newData;
+    });
   }, []);
 
   const setCreationMode = useCallback((mode: ProviderCreationMode) => {
