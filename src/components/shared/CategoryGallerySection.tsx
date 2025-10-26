@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 
 import { fetchUsedCategories, type Category } from '@/services/categories';
 import { formatAllahText } from '@/utils/textUtils';
+import { getLocalizedDescription, detectUserLanguage, getLocalizedName } from '@/utils/languageUtils';
 
 import CategoryGallery from './CategoryGallery';
 import CommunityServiceGallery from './CommunityServiceGallery';
@@ -29,7 +30,24 @@ export function CategoryGallerySection() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const getCategorySubtitle = (categoryName: string): string => {
+  const getCategorySubtitle = (category: Category): string => {
+    // Use database description with language detection
+    const localizedDescription = getLocalizedDescription(
+      category.description_de,
+      category.description_en,
+      // Fallback to hardcoded descriptions if database descriptions are not available
+      getHardcodedSubtitle(category.name_de)
+    );
+    
+    return localizedDescription;
+  };
+
+  const getCategoryName = (category: Category): string => {
+    return getLocalizedName(category.name_de, category.name_en);
+  };
+
+  // Fallback function for hardcoded descriptions (when database descriptions are not available)
+  const getHardcodedSubtitle = (categoryName: string): string => {
     switch (categoryName) {
       case 'Supermarkt':
         return 'Halal einkaufen, Ummah unterstützen';
@@ -128,13 +146,15 @@ export function CategoryGallerySection() {
     >
       <div className="flex flex-col gap-6">
         {sortedCategories.map((category) => {
-          const categoryName = (category.name_de || '') as string;
+          const categoryName = getCategoryName(category);
           const categoryId = category.category_id as string;
 
           return (
             <div
               key={categoryId}
-              aria-label={`Alle Provider in der Kategorie ${categoryName} anzeigen`}
+              aria-label={detectUserLanguage() === 'en' 
+                ? `Show all providers in ${categoryName} category`
+                : `Alle Provider in der Kategorie ${categoryName} anzeigen`}
               className="flex cursor-pointer flex-col rounded-lg transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
               role="button"
               tabIndex={0}
@@ -144,7 +164,7 @@ export function CategoryGallerySection() {
               <div className="flex w-full flex-row items-center pl-3 pt-3 pb-3">
                 <div className="flex flex-1 min-w-0 flex-col items-start justify-center pr-3">
                   <div className="w-full font-inter text-sm font-normal leading-[140%] text-[#232323] break-words">
-                    {formatAllahText(getCategorySubtitle(categoryName))}
+                    {formatAllahText(getCategorySubtitle(category))}
                   </div>
                   <div className="w-full min-w-0 truncate font-inter text-xl font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
                     {categoryName}

@@ -6,6 +6,7 @@ export interface Category {
   name_de: string;
   name_en?: string;
   description_de?: string;
+  description_en?: string;
   applicable_to?: string[]; // Array of entity types: 'provider', 'community_service'
   created_at: string;
   updated_at: string;

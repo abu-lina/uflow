@@ -6,14 +6,16 @@ import React from 'react';
 export function formatAllahText(text: string): React.ReactNode {
   if (!text) return text;
 
-  // Split text by "Allah" or "Allahs" (case insensitive) - using word boundaries
-  const parts = text.split(/(\bAllah\b|\bAllahs\b)/gi);
+  // Split text by "Allah", "Allahs", "Allah's", "Allahs'", or "Allahs" (case insensitive) - using word boundaries
+  const parts = text.split(/(\bAllah\b|\bAllahs\b|\bAllah's\b|\bAllahs'\b)/gi);
 
   return parts.map((part, index) => {
     const isAllah = /^Allah$/i.test(part);
     const isAllahs = /^Allahs$/i.test(part);
+    const isAllahsPossessive = /^Allah's$/i.test(part);
+    const isAllahsPluralPossessive = /^Allahs'$/i.test(part);
 
-    if (isAllah || isAllahs) {
+    if (isAllah || isAllahs || isAllahsPossessive || isAllahsPluralPossessive) {
       return (
         <span
           key={index}
@@ -41,7 +43,7 @@ export function formatAllahText(text: string): React.ReactNode {
 export function formatAllahTextString(text: string): string {
   if (!text) return text;
 
-  return text.replace(/(\bAllah\b|\bAllahs\b)/gi, (match) => {
+  return text.replace(/(\bAllah\b|\bAllahs\b|\bAllah's\b|\bAllahs'\b)/gi, (match) => {
     return `${match} ﷲ`;
   });
 }
