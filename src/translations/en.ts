@@ -125,5 +125,39 @@ export const en = {
     weOffer: "We offer",
     weNeed: "We need",
     selectCategory: "Select category"
+  },
+  create: {
+    title: "Add Provider",
+    description: "Add a new provider or recommend someone you know.",
+    ownProvider: {
+      title: "I am the provider",
+      description: "Create your own profile to make your offer visible.",
+      buttonText: "Create own offer"
+    },
+    recommendProvider: {
+      title: "I know a provider",
+      description: "Recommend someone you know so others can find them.",
+      buttonText: "Recommend provider"
+    },
+    basics: {
+      title: "Create offer",
+      loginRequired: "Login required",
+      loginDescription: "You must be logged in to create an offer.",
+      goToLogin: "Go to login",
+      desktopMessage: "Please use the mobile view for offer creation."
+    },
+    steps: {
+      basics: "Basics",
+      location: "Location",
+      contact: "Contact",
+      media: "Media"
+    },
+    category: {
+      searchPlaceholder: "Search category...",
+      loading: "Loading...",
+      redirecting: "Redirecting...",
+      noResults: "No categories found",
+      noResultsDescription: "Try a different search term"
+    }
   }
 } as const;

@@ -14,6 +14,7 @@ import { Button, IconWithTitle, Icon } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function CreateBasicsPage() {
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
@@ -22,6 +23,7 @@ export default function CreateBasicsPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { formData, setCreationMode } = useFormData();
+  const { t } = useLanguage();
 
   // Use centralized mobile detection
   const isMobile = useIsSmallMobile();
@@ -109,7 +111,7 @@ export default function CreateBasicsPage() {
 
   // Loading state
   if (isLoading) {
-    return <div className="p-8 text-center">Lädt...</div>;
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
   // Desktop redirect
@@ -117,7 +119,7 @@ export default function CreateBasicsPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <span className="text-lg text-gray-500">
-          Bitte nutze die Mobile-Ansicht für die Angebotserstellung.
+          {t('create.basics.desktopMessage')}
         </span>
       </div>
     );
@@ -130,7 +132,7 @@ export default function CreateBasicsPage() {
     return (
       <PageLayout hasBackground={false} maxWidth="xs">
         <PageHeader 
-          title="Angebot erstellen"
+          title={t('create.basics.title')}
           variant="title-only"
         />
 
@@ -142,10 +144,10 @@ export default function CreateBasicsPage() {
               <IconWithTitle
                 icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
                 size="large"
-                title="Anmeldung erforderlich"
+                title={t('create.basics.loginRequired')}
               >
                 <p className="text-center text-base leading-normal text-content mt-2">
-                  Du musst angemeldet sein, um ein Angebot zu erstellen.
+                  {t('create.basics.loginDescription')}
                 </p>
               </IconWithTitle>
             </TitleSection>
@@ -158,7 +160,7 @@ export default function CreateBasicsPage() {
                   variant="auth"
                   onClick={() => router.push(`/login?returnUrl=${returnUrl}`)}
                 >
-                  Zur Anmeldung
+                  {t('create.basics.goToLogin')}
                 </Button>
               </div>
             </ContentSection>
@@ -172,7 +174,7 @@ export default function CreateBasicsPage() {
     <PageLayout hasBackground={false} maxWidth="xs">
       <PageHeader 
         isVisible={isHeaderSticky}
-        title="Angebot erstellen"
+        title={t('create.basics.title')}
         variant="back-and-title"
         onBack={() => router.push('/create')}
       />

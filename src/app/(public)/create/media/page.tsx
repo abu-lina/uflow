@@ -12,25 +12,7 @@ import { useFormData } from '@/providers/form-provider';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { createProviderCommunityServiceRelationship } from '@/services/community_services';
-
-const STEPS = [
-  {
-    title: 'Basics',
-    icon: 'mdi:information',
-  },
-  {
-    title: 'Location',
-    icon: 'mdi:map-marker',
-  },
-  {
-    title: 'Contact',
-    icon: 'mdi:account-group',
-  },
-  {
-    title: 'Media',
-    icon: 'mdi:image-multiple',
-  },
-];
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function MediaUploadPage() {
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
@@ -42,6 +24,27 @@ export default function MediaUploadPage() {
   const queryClient = useQueryClient();
   const { formData, clearFormData, isLoading } = useFormData();
   const { user } = useAuth();
+  const { t } = useLanguage();
+
+  // Steps with translations
+  const STEPS = [
+    {
+      title: t('create.steps.basics'),
+      icon: 'mdi:information',
+    },
+    {
+      title: t('create.steps.location'),
+      icon: 'mdi:map-marker',
+    },
+    {
+      title: t('create.steps.contact'),
+      icon: 'mdi:account-group',
+    },
+    {
+      title: t('create.steps.media'),
+      icon: 'mdi:image-multiple',
+    },
+  ];
 
   // Simple entity type determination based on category
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';

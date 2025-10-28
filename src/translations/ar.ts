@@ -121,5 +121,39 @@ export const ar = {
     weOffer: "نحن نقدم",
     weNeed: "نحن نحتاج",
     selectCategory: "اختر الفئة"
+  },
+  create: {
+    title: "إضافة مزود",
+    description: "أضف مزوداً جديداً أو أوصِ بشخص تعرفه.",
+    ownProvider: {
+      title: "أنا المزود",
+      description: "أنشئ ملفك الشخصي لجعل عرضك مرئياً.",
+      buttonText: "إنشاء عرض خاص"
+    },
+    recommendProvider: {
+      title: "أعرف مزوداً",
+      description: "أوصِ بشخص تعرفه حتى يتمكن الآخرون من العثور عليه.",
+      buttonText: "التوصية بمزود"
+    },
+    basics: {
+      title: "إنشاء عرض",
+      loginRequired: "تسجيل الدخول مطلوب",
+      loginDescription: "يجب أن تكون مسجلاً للدخول لإنشاء عرض.",
+      goToLogin: "الذهاب لتسجيل الدخول",
+      desktopMessage: "يرجى استخدام العرض المحمول لإنشاء العروض."
+    },
+    steps: {
+      basics: "الأساسيات",
+      location: "الموقع",
+      contact: "الاتصال",
+      media: "الوسائط"
+    },
+    category: {
+      searchPlaceholder: "البحث عن فئة...",
+      loading: "جاري التحميل...",
+      redirecting: "جاري التوجيه...",
+      noResults: "لم يتم العثور على فئات",
+      noResultsDescription: "جرب مصطلح بحث مختلف"
+    }
   }
 } as const;

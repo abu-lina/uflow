@@ -121,7 +121,7 @@ function SearchBarContent({
     }
 
     fetchCategories();
-  }, [selectedLocation, searchQuery]);
+  }, [selectedLocation, searchQuery, t]);
 
   // Fetch cities based on current filters
   useEffect(() => {
@@ -149,7 +149,7 @@ function SearchBarContent({
     }
 
     fetchCities();
-  }, [selectedCategory, searchQuery, customCities]);
+  }, [selectedCategory, searchQuery, customCities, t]);
 
   // Sync state with URL params only on initial mount or when the page changes
   useEffect(() => {
@@ -162,7 +162,7 @@ function SearchBarContent({
       setSelectedLocation(location);
       hasSyncedFromUrl.current = true;
     }
-  }, [pathname, searchParams, setSearchQuery, setSelectedCategory, setSelectedLocation]);
+  }, [pathname, searchParams, setSearchQuery, setSelectedCategory, setSelectedLocation, t]);
 
   useEffect(() => {
     setHasMounted(true);

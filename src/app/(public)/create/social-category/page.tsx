@@ -10,6 +10,7 @@ import type { Category } from '@/types/supabase';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
 import { getSocialProjectCategories } from '@/services/categories';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function SelectSocialCategoryPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -22,6 +23,7 @@ export default function SelectSocialCategoryPage() {
   const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const check = () => {
@@ -141,12 +143,12 @@ export default function SelectSocialCategoryPage() {
   };
 
   if (!checked) {
-    return <div className="flex h-screen w-full items-center justify-center">Loading...</div>;
+    return <div className="flex h-screen w-full items-center justify-center">{t('create.category.loading')}</div>;
   }
 
   if (!isMobile) {
     router.push('/profile');
-    return <div className="flex h-screen w-full items-center justify-center">Redirecting...</div>;
+    return <div className="flex h-screen w-full items-center justify-center">{t('create.category.redirecting')}</div>;
   }
 
   return (
@@ -187,7 +189,7 @@ export default function SelectSocialCategoryPage() {
             <Icon className="h-5 w-5 text-[#999999] mr-3" icon="lucide:search" />
             <input
               className="flex-1 border-none bg-transparent text-[15px] font-medium leading-[18px] text-[#272727] focus:outline-none"
-              placeholder="Kategorie suchen..."
+              placeholder={t('create.category.searchPlaceholder')}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -227,7 +229,7 @@ export default function SelectSocialCategoryPage() {
               <div className="flex flex-col items-center justify-center py-8">
                 <Icon className="h-12 w-12 text-gray-300 mb-4" icon="lucide:search-x" />
                 <p className="text-sm text-gray-500">
-                  Keine Kategorien gefunden
+                  {t('create.category.noResults')}
                 </p>
               </div>
             )}

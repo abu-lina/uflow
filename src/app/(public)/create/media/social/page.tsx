@@ -11,25 +11,7 @@ import { SelectableCard } from '@/components/shared/SelectableCard';
 import { useFormData } from '@/providers/form-provider';
 import { getCommunityServices, type CommunityService } from '@/services/community_services';
 import { getFirstImageUrl } from '@/utils/imageUtils';
-
-const STEPS = [
-  {
-    title: 'Basics',
-    icon: 'mdi:information',
-  },
-  {
-    title: 'Location',
-    icon: 'mdi:map-marker',
-  },
-  {
-    title: 'Contact',
-    icon: 'mdi:account',
-  },
-  {
-    title: 'Media',
-    icon: 'mdi:image-multiple',
-  },
-];
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function SocialProjectPage() {
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
@@ -41,6 +23,27 @@ export default function SocialProjectPage() {
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
+  const { t } = useLanguage();
+
+  // Steps with translations
+  const STEPS = [
+    {
+      title: t('create.steps.basics'),
+      icon: 'mdi:information',
+    },
+    {
+      title: t('create.steps.location'),
+      icon: 'mdi:map-marker',
+    },
+    {
+      title: t('create.steps.contact'),
+      icon: 'mdi:account',
+    },
+    {
+      title: t('create.steps.media'),
+      icon: 'mdi:image-multiple',
+    },
+  ];
 
   // Fetch community services on component mount
   useEffect(() => {

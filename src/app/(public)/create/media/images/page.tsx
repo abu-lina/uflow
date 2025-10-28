@@ -9,25 +9,6 @@ import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 
-const STEPS = [
-  {
-    title: 'Basics',
-    icon: 'mdi:information',
-  },
-  {
-    title: 'Location',
-    icon: 'mdi:map-marker',
-  },
-  {
-    title: 'Contact',
-    icon: 'mdi:account',
-  },
-  {
-    title: 'Media',
-    icon: 'mdi:image-multiple',
-  },
-];
-
 export default function ImageUploadPage() {
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const lastScrollY = useRef(0);
@@ -36,6 +17,26 @@ export default function ImageUploadPage() {
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
+
+  // Steps with translations
+  const STEPS = [
+    {
+      title: t('create.steps.basics'),
+      icon: 'mdi:information',
+    },
+    {
+      title: t('create.steps.location'),
+      icon: 'mdi:map-marker',
+    },
+    {
+      title: t('create.steps.contact'),
+      icon: 'mdi:account',
+    },
+    {
+      title: t('create.steps.media'),
+      icon: 'mdi:image-multiple',
+    },
+  ];
 
   // Cleanup blob URLs when component unmounts
   useEffect(() => {

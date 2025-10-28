@@ -8,25 +8,7 @@ import { Icon } from '@iconify/react';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
-
-const STEPS = [
-  {
-    title: 'Basics',
-    icon: 'mdi:information',
-  },
-  {
-    title: 'Location',
-    icon: 'mdi:map-marker',
-  },
-  {
-    title: 'Contact',
-    icon: 'mdi:account-group',
-  },
-  {
-    title: 'Media',
-    icon: 'mdi:image-multiple',
-  },
-];
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function LocationPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -37,6 +19,27 @@ export default function LocationPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { formData, updateFormData } = useFormData();
+  const { t } = useLanguage();
+
+  // Steps with translations
+  const STEPS = [
+    {
+      title: t('create.steps.basics'),
+      icon: 'mdi:information',
+    },
+    {
+      title: t('create.steps.location'),
+      icon: 'mdi:map-marker',
+    },
+    {
+      title: t('create.steps.contact'),
+      icon: 'mdi:account-group',
+    },
+    {
+      title: t('create.steps.media'),
+      icon: 'mdi:image-multiple',
+    },
+  ];
 
   // Mobile detection
   useEffect(() => {

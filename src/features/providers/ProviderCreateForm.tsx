@@ -15,26 +15,7 @@ import { useFormData, type ProviderFormData } from '@/providers/form-provider';
 import type { Category } from '@/types/supabase';
 import type { Offer, Need } from '@/types/offer';
 import { createProviderCommunityServiceRelationship } from '@/services/community_services';
-
-
-const STEPS = [
-  {
-    title: 'Basics',
-    icon: 'mdi:information',
-  },
-  {
-    title: 'Location',
-    icon: 'mdi:map-marker',
-  },
-  {
-    title: 'Contact',
-    icon: 'mdi:account-group',
-  },
-  {
-    title: 'Media',
-    icon: 'mdi:image-multiple',
-  },
-];
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface ProviderCreateFormProps {
   onNextStep?: () => void;
@@ -48,6 +29,27 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
   const [needs, setNeeds] = useState<Need[]>([]);
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
+
+  // Steps with translations
+  const STEPS = [
+    {
+      title: t('create.steps.basics'),
+      icon: 'mdi:information',
+    },
+    {
+      title: t('create.steps.location'),
+      icon: 'mdi:map-marker',
+    },
+    {
+      title: t('create.steps.contact'),
+      icon: 'mdi:account-group',
+    },
+    {
+      title: t('create.steps.media'),
+      icon: 'mdi:image-multiple',
+    },
+  ];
   const { formData, updateFormData } = useFormData();
 
   useEffect(() => {

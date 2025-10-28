@@ -121,5 +121,39 @@ export const tr = {
     weOffer: "Sunuyoruz",
     weNeed: "İhtiyacımız var",
     selectCategory: "Kategori seç"
+  },
+  create: {
+    title: "Sağlayıcı Ekle",
+    description: "Yeni bir sağlayıcı ekleyin veya tanıdığınız birini önerin.",
+    ownProvider: {
+      title: "Ben sağlayıcıyım",
+      description: "Teklifinizi görünür kılmak için kendi profilinizi oluşturun.",
+      buttonText: "Kendi teklifini oluştur"
+    },
+    recommendProvider: {
+      title: "Bir sağlayıcı tanıyorum",
+      description: "Tanıdığınız birini önerin ki başkaları onu bulabilsin.",
+      buttonText: "Sağlayıcı öner"
+    },
+    basics: {
+      title: "Teklif oluştur",
+      loginRequired: "Giriş gerekli",
+      loginDescription: "Teklif oluşturmak için giriş yapmış olmalısınız.",
+      goToLogin: "Girişe git",
+      desktopMessage: "Lütfen teklif oluşturmak için mobil görünümü kullanın."
+    },
+    steps: {
+      basics: "Temel Bilgiler",
+      location: "Konum",
+      contact: "İletişim",
+      media: "Medya"
+    },
+    category: {
+      searchPlaceholder: "Kategori ara...",
+      loading: "Yükleniyor...",
+      redirecting: "Yönlendiriliyor...",
+      noResults: "Kategori bulunamadı",
+      noResultsDescription: "Farklı bir arama terimi deneyin"
+    }
   }
 } as const;

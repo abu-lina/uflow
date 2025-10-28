@@ -127,5 +127,39 @@ export const de = {
     weOffer: "Wir bieten",
     weNeed: "Wir brauchen",
     selectCategory: "Kategorie auswählen"
+  },
+  create: {
+    title: "Anbieter hinzufügen",
+    description: "Füge einen neuen Anbieter hinzu oder empfehle jemanden, den du kennst.",
+    ownProvider: {
+      title: "Ich bin der Anbieter",
+      description: "Erstelle dein eigenes Profil, um dein Angebot sichtbar zu machen.",
+      buttonText: "Eigenes Angebot erstellen"
+    },
+    recommendProvider: {
+      title: "Ich kenne einen Anbieter",
+      description: "Empfiehl jemanden, den du kennst, damit andere ihn finden können.",
+      buttonText: "Anbieter empfehlen"
+    },
+    basics: {
+      title: "Angebot erstellen",
+      loginRequired: "Anmeldung erforderlich",
+      loginDescription: "Du musst angemeldet sein, um ein Angebot zu erstellen.",
+      goToLogin: "Zur Anmeldung",
+      desktopMessage: "Bitte nutze die Mobile-Ansicht für die Angebotserstellung."
+    },
+    steps: {
+      basics: "Basics",
+      location: "Location",
+      contact: "Contact",
+      media: "Media"
+    },
+    category: {
+      searchPlaceholder: "Kategorie suchen...",
+      loading: "Lädt...",
+      redirecting: "Weiterleitung...",
+      noResults: "Keine Kategorien gefunden",
+      noResultsDescription: "Versuche einen anderen Suchbegriff"
+    }
   }
 } as const;
