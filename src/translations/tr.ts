@@ -166,5 +166,28 @@ export const tr = {
     noResults: "Sonuç yok",
     noResultsDescription: "Hiçbir sağlayıcı arama kriterlerinize uymuyor.",
     errorRemovingItem: "Öğe kaldırılırken hata:"
+  },
+  login: {
+    title: "Giriş",
+    welcomeTitle: "Ummah Flow'a Hoş Geldiniz",
+    welcomeDescription: "Bölgenizdeki Müslüman teklifleri keşfedin inşallah.",
+    emailLabel: "E-posta",
+    emailPlaceholder: "E-posta girin",
+    passwordLabel: "Şifre",
+    passwordPlaceholder: "Şifre girin",
+    loginButton: "Giriş Yap",
+    loginButtonLoading: "Giriş yapılıyor...",
+    forgotPassword: "Şifremi unuttum?",
+    noAccount: "Hesabınız yok mu? Şimdi kayıt olun.",
+    unexpectedError: "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+    enterEmailFirst: "Lütfen önce e-posta adresinizi girin.",
+    confirmationEmailSent: "Onay e-postası gönderildi! Lütfen gelen kutunuzu kontrol edin.",
+    confirmationEmailFailed: "Onay e-postası gönderilemedi. Lütfen tekrar deneyin.",
+    emailSentToast: "E-posta gönderildi",
+    emailSentDescription: "E-posta adresinize yeni bir onay e-postası gönderildi.",
+    emailFailedToast: "E-posta gönderilemedi",
+    emailFailedDescription: "Lütfen tekrar deneyin veya destek ile iletişime geçin.",
+    errorOccurredToast: "Hata oluştu",
+    errorOccurredDescription: "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
   }
 } as const;

@@ -16,6 +16,7 @@ import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/c
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { signInWithEmailConfirmation } from '@/lib/auth';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface FormData {
   email: string;
@@ -26,6 +27,7 @@ export function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -105,7 +107,7 @@ export function LoginPageContent() {
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.');
+      setError(t('login.unexpectedError'));
       setIsEmailConfirmationError(false);
     } finally {
       setIsLoading(false);
@@ -123,7 +125,7 @@ export function LoginPageContent() {
 
   const handleResendConfirmation = async () => {
     if (!formData.email) {
-      setError('Bitte gib zuerst deine E-Mail-Adresse ein.');
+      setError(t('login.enterEmailFirst'));
       return;
     }
 
@@ -146,30 +148,30 @@ export function LoginPageContent() {
       });
 
       if (response.ok) {
-        setError('Bestätigungs-E-Mail gesendet! Bitte überprüfe deinen Posteingang.');
+        setError(t('login.confirmationEmailSent'));
         setIsEmailConfirmationError(false);
         
         // Show success toast
-        toast.success('E-Mail gesendet', {
-          description: 'Eine neue Bestätigungs-E-Mail wurde an deine E-Mail-Adresse gesendet.',
+        toast.success(t('login.emailSentToast'), {
+          description: t('login.emailSentDescription'),
           duration: 4000,
         });
       } else {
-        setError('Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.');
+        setError(t('login.confirmationEmailFailed'));
         
         // Show error toast
-        toast.error('E-Mail konnte nicht gesendet werden', {
-          description: 'Bitte versuche es erneut oder kontaktiere den Support.',
+        toast.error(t('login.emailFailedToast'), {
+          description: t('login.emailFailedDescription'),
           duration: 4000,
         });
       }
     } catch (error) {
       console.error('Resend confirmation error:', error);
-      setError('Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.');
+      setError(t('login.confirmationEmailFailed'));
       
       // Show error toast
-      toast.error('Fehler aufgetreten', {
-        description: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.',
+      toast.error(t('login.errorOccurredToast'), {
+        description: t('login.errorOccurredDescription'),
         duration: 4000,
       });
     } finally {
@@ -181,7 +183,7 @@ export function LoginPageContent() {
     <PageLayout hasBackground={false}>
       <PageHeader 
         rightIcon={<Logo className="h-12 w-12" height={48} width={48} />}
-        title="Login"
+        title={t('login.title')}
         variant="title-and-icon"
       />
 
@@ -191,8 +193,8 @@ export function LoginPageContent() {
         {/* Title + Paragraph with proper spacing */}
         <TitleSection>
           <TitleAndText
-            description="Entdecke muslimische Angebote in deiner Nähe insha'Allah."
-            title="Willkommen bei Ummah Flow"
+            description={t('login.welcomeDescription')}
+            title={t('login.welcomeTitle')}
           />
         </TitleSection>
 
@@ -204,16 +206,16 @@ export function LoginPageContent() {
             <FormInputGroup gap="gap-3">
               <FormInput
                 required
-                label="E-Mail"
-                placeholder="Email eingeben"
+                label={t('login.emailLabel')}
+                placeholder={t('login.emailPlaceholder')}
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
               />
               <FormInput
                 required
-                label="Passwort"
-                placeholder="Passwort eingeben"
+                label={t('login.passwordLabel')}
+                placeholder={t('login.passwordPlaceholder')}
                 rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
@@ -254,11 +256,11 @@ export function LoginPageContent() {
               <Button
                 fullWidth
                 loading={isLoading}
-                loadingText="Anmelden..."
+                loadingText={t('login.loginButtonLoading')}
                 type="submit"
                 variant="auth"
               >
-                Anmelden
+                {t('login.loginButton')}
               </Button>
 
               {/* Forgot Password Link */}
@@ -267,7 +269,7 @@ export function LoginPageContent() {
                   type="button"
                   onClick={() => router.push('/forgot-password')}
                 >
-                  Passwort vergessen?
+                  {t('login.forgotPassword')}
                 </LinkButton>
               </div>
 
@@ -276,7 +278,7 @@ export function LoginPageContent() {
                 type="button"
                 onClick={handleSignupClick}
               >
-                Noch kein Konto? Jetzt registrieren.
+                {t('login.noAccount')}
               </LinkButton>
             </div>
           </form>

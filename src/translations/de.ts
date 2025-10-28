@@ -172,5 +172,28 @@ export const de = {
     noResults: "Keine Ergebnisse",
     noResultsDescription: "Keine Anbieter entsprechen deinen Suchkriterien.",
     errorRemovingItem: "Fehler beim Entfernen des Items:"
+  },
+  login: {
+    title: "Login",
+    welcomeTitle: "Willkommen bei Ummah Flow",
+    welcomeDescription: "Entdecke muslimische Angebote in deiner Nähe insha'Allah.",
+    emailLabel: "E-Mail",
+    emailPlaceholder: "Email eingeben",
+    passwordLabel: "Passwort",
+    passwordPlaceholder: "Passwort eingeben",
+    loginButton: "Anmelden",
+    loginButtonLoading: "Anmelden...",
+    forgotPassword: "Passwort vergessen?",
+    noAccount: "Noch kein Konto? Jetzt registrieren.",
+    unexpectedError: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.",
+    enterEmailFirst: "Bitte gib zuerst deine E-Mail-Adresse ein.",
+    confirmationEmailSent: "Bestätigungs-E-Mail gesendet! Bitte überprüfe deinen Posteingang.",
+    confirmationEmailFailed: "Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.",
+    emailSentToast: "E-Mail gesendet",
+    emailSentDescription: "Eine neue Bestätigungs-E-Mail wurde an deine E-Mail-Adresse gesendet.",
+    emailFailedToast: "E-Mail konnte nicht gesendet werden",
+    emailFailedDescription: "Bitte versuche es erneut oder kontaktiere den Support.",
+    errorOccurredToast: "Fehler aufgetreten",
+    errorOccurredDescription: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut."
   }
 } as const;

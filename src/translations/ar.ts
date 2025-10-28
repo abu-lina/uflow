@@ -166,5 +166,28 @@ export const ar = {
     noResults: "لا توجد نتائج",
     noResultsDescription: "لا يوجد مزودين يطابقون معايير البحث الخاصة بك.",
     errorRemovingItem: "خطأ في إزالة العنصر:"
+  },
+  login: {
+    title: "تسجيل الدخول",
+    welcomeTitle: "مرحباً بك في أمّة فلو",
+    welcomeDescription: "اكتشف العروض الإسلامية في منطقتك إن شاء الله.",
+    emailLabel: "البريد الإلكتروني",
+    emailPlaceholder: "أدخل البريد الإلكتروني",
+    passwordLabel: "كلمة المرور",
+    passwordPlaceholder: "أدخل كلمة المرور",
+    loginButton: "تسجيل الدخول",
+    loginButtonLoading: "جاري تسجيل الدخول...",
+    forgotPassword: "نسيت كلمة المرور؟",
+    noAccount: "ليس لديك حساب؟ سجل الآن.",
+    unexpectedError: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    enterEmailFirst: "يرجى إدخال عنوان بريدك الإلكتروني أولاً.",
+    confirmationEmailSent: "تم إرسال بريد التأكيد! يرجى التحقق من صندوق الوارد.",
+    confirmationEmailFailed: "لا يمكن إرسال بريد التأكيد. يرجى المحاولة مرة أخرى.",
+    emailSentToast: "تم إرسال البريد",
+    emailSentDescription: "تم إرسال بريد تأكيد جديد إلى عنوان بريدك الإلكتروني.",
+    emailFailedToast: "لا يمكن إرسال البريد",
+    emailFailedDescription: "يرجى المحاولة مرة أخرى أو الاتصال بالدعم.",
+    errorOccurredToast: "حدث خطأ",
+    errorOccurredDescription: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."
   }
 } as const;

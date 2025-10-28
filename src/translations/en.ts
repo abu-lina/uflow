@@ -170,5 +170,28 @@ export const en = {
     noResults: "No results",
     noResultsDescription: "No providers match your search criteria.",
     errorRemovingItem: "Error removing item:"
+  },
+  login: {
+    title: "Login",
+    welcomeTitle: "Welcome to Ummah Flow",
+    welcomeDescription: "Discover Muslim offerings in your area insha'Allah.",
+    emailLabel: "Email",
+    emailPlaceholder: "Enter email",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter password",
+    loginButton: "Login",
+    loginButtonLoading: "Logging in...",
+    forgotPassword: "Forgot password?",
+    noAccount: "Don't have an account? Register now.",
+    unexpectedError: "An unexpected error occurred. Please try again.",
+    enterEmailFirst: "Please enter your email address first.",
+    confirmationEmailSent: "Confirmation email sent! Please check your inbox.",
+    confirmationEmailFailed: "Confirmation email could not be sent. Please try again.",
+    emailSentToast: "Email sent",
+    emailSentDescription: "A new confirmation email has been sent to your email address.",
+    emailFailedToast: "Email could not be sent",
+    emailFailedDescription: "Please try again or contact support.",
+    errorOccurredToast: "Error occurred",
+    errorOccurredDescription: "An unexpected error occurred. Please try again."
   }
 } as const;
