@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -49,7 +50,8 @@ const fadeInVariants = {
 
 export function LandingHero() {
   const router = useRouter();
-  const translationText = 'Im Namen Allahs des Allerbarmers, des Allbarmherzigen';
+  const { t } = useLanguage();
+  const translationText = t('landing.bismillah.translation');
   const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null);
   const [isReady, setIsReady] = useState(false);
   const typewriter = useTypewriter(translationText, 40, isFirstVisit === true && isReady);
@@ -219,13 +221,12 @@ export function LandingHero() {
                 initial={isFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >
-                <h1 className="w-full text-center font-inter-tight text-4xl font-medium leading-tight text-content-title sm:text-5xl sm:leading-[87px] md:text-6xl lg:text-[72px]">
-                  Von <span className="text-primary">Muslimen </span>
-                  <br className="block sm:hidden" />
-                  für <span className="text-primary">Muslime</span>
-                </h1>
+                <h1 
+                  className="w-full text-center font-inter-tight text-4xl font-medium leading-tight text-content-title sm:text-5xl sm:leading-[87px] md:text-6xl lg:text-[72px]"
+                  dangerouslySetInnerHTML={{ __html: t('landing.hero.title') }}
+                />
                 <p className="w-full max-w-xl text-center font-inter text-lg font-normal leading-snug text-content sm:text-xl sm:leading-[29px] md:text-2xl">
-                  Ein Marktplatz: Halal, transparent und mit Barakah – für dich und deine Ummah.
+                  {t('landing.hero.subtitle')}
                 </p>
               </motion.div>
             )}
@@ -246,7 +247,7 @@ export function LandingHero() {
                   variant="primary"
                   onClick={() => router.push('/providers')}
                 >
-                  Entdecke deine Ummah
+                  {t('landing.hero.getStarted')}
                 </Button>
               </motion.div>
             )}

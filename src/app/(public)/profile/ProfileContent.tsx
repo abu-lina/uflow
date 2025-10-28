@@ -25,6 +25,7 @@ import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
 import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProviderCard';
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/hooks/useAuth';
 import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
@@ -38,6 +39,7 @@ interface ProfileContentProps {
 
 export function ProfileContent({ user }: ProfileContentProps) {
   const { user: clientUser, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<UserTab>('created');
@@ -279,7 +281,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
               >
                 <LogOut className="h-6 w-6 text-black" />
                 <span className="font-inter-tight font-semibold text-[#232323]">
-                  {isLoggingOut ? 'Melde ab...' : 'Abmelden'}
+                  {isLoggingOut ? t('auth.logout') + '...' : t('auth.logout')}
                 </span>
               </button>
             </div>
@@ -294,7 +296,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
     <div className="flex min-h-full w-full flex-col items-center gap-8 sm:max-w-screen-xl md:pt-20">
       {/* Profile header (greeting, avatar, etc.) */}
       <div className="flex w-full flex-col items-center">
-        <div className="text-center font-baskerville text-base">As-Salamu-Aleikum</div>
+        <div className="text-center font-baskerville text-base">{t('common.greeting')}</div>
         <div className="flex w-full flex-row items-center justify-center">
             <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-primary p-4">
               <User className="h-10 w-10 text-white" />

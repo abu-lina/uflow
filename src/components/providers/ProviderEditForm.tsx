@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/types/supabase';
 import type { Provider } from '@/services/providers';
@@ -26,6 +27,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
     media: true,
   });
   const { user } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -275,7 +277,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
               <div className="flex flex-1 flex-col gap-1">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">Kategorie *</span>
                 <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
-                  {categories.find(cat => cat.category_id === formData.categoryId)?.name_de || 'Kategorie auswählen'}
+                  {categories.find(cat => cat.category_id === formData.categoryId)?.name_de || t('providers.selectCategory')}
                 </span>
               </div>
               <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />

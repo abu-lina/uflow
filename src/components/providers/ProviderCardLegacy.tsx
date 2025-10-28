@@ -7,6 +7,7 @@ import ShareIcon from '@mui/icons-material/Share';
 
 import { Button } from '@/components/ui/Button';
 import { OrnamentIcon } from '@/components/ui/OrnamentIcon';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 
 interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
@@ -29,8 +30,19 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     },
     ref,
   ) => {
+    const { t, language } = useLanguage();
     const address = `${address_street}, ${address_zip} ${address_city}`;
-    const categoryName = category?.name_de || '';
+    
+    // Get category name based on current language
+    const getCategoryName = () => {
+      if (!category) return t('search.unnamed');
+      if (language === 'en') {
+        return category.name_en || category.name_de || t('search.unnamed');
+      } else {
+        return category.name_de || category.name_en || t('search.unnamed');
+      }
+    };
+    const categoryName = getCategoryName();
 
     function hasUrls(obj: unknown): obj is { urls: string[] } {
       return (
@@ -143,7 +155,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
             <div className="my-2 h-px w-full bg-zinc-100" />
             <div className="flex w-full gap-3.5">
               <Button
-                aria-label="Speichern"
+                aria-label={t('providers.save')}
                 className="flex-1 gap-1"
                 icon={
                   <div className="relative size-4">
@@ -151,7 +163,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                   </div>
                 }
               >
-                Speichern
+                {t('providers.save')}
               </Button>
               <Button
                 aria-label="Website"

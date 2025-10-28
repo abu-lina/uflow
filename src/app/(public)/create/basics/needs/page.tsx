@@ -8,6 +8,7 @@ import { Icon } from '@iconify/react';
 import { supabase } from '@/lib/supabase/client';
 import type { Need } from '@/types/offer';
 import { useFormData } from '@/providers/form-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function SelectNeedsPage() {
   const [needs, setNeeds] = useState<Need[]>([]);
@@ -21,6 +22,7 @@ export default function SelectNeedsPage() {
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
+  const { t } = useLanguage();
 
   // Load needs from database
   useEffect(() => {
@@ -289,7 +291,7 @@ export default function SelectNeedsPage() {
           >
             <Icon className="h-6 w-6 text-white" icon="lucide:save" />
             <span className="text-base font-medium text-white leading-[19px]">
-              Speichern ({formData.needs_ids.length})
+              {t('actions.save')} ({formData.needs_ids.length})
             </span>
           </button>
         </div>

@@ -9,10 +9,12 @@ import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { SignupModal } from '@/features/auth/components/SignupModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export function Header() {
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -21,6 +23,7 @@ export function Header() {
   const { user, signOut, loading } = useAuth();
   const router = useRouter();
   const { isVisible } = useScrollDirection();
+  const { t } = useLanguage();
 
   // Handle search submission - navigate to providers page
   const handleSearchSubmit = (query: string, category: string | null, location: string) => {
@@ -98,7 +101,7 @@ export function Header() {
                   className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-title hover:bg-grey-light hover:text-[#333333] focus:text-content-title focus:outline-none active:text-content-title"
                   href="/about"
                 >
-                  Über Uns
+                  {t('navigation.about')}
                 </Link>
               )}
             </div>
@@ -114,6 +117,9 @@ export function Header() {
 
             {/* Right */}
             <div className="flex flex-row items-center gap-3">
+              {/* Language Switcher */}
+              <LanguageSwitcher variant="toggle" />
+              
               {loading ? (
                 <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-gray-100" />
               ) : user ? (
@@ -144,7 +150,7 @@ export function Header() {
                           router.push('/profile');
                         }}
                       >
-                        Profil Einstellungen
+                        {t('profile.accountSettings')}
                       </button>
                       <button
                         className="block w-full px-4 py-2 text-left text-base text-red-600 hover:bg-gray-50"
@@ -154,7 +160,7 @@ export function Header() {
                           router.push('/');
                         }}
                       >
-                        Abmelden
+                        {t('auth.logout')}
                       </button>
                     </div>
                   )}

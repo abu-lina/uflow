@@ -4,8 +4,11 @@ import { motion } from 'framer-motion';
 
 import { Bismillah } from '@/components/ui/Bismillah';
 import { ContentSection } from '@/components/layout/ContentSection';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export function SplashContent() {
+  const { t } = useLanguage();
+  
   return (
     <motion.div
       animate={{ opacity: 1 }}
@@ -36,8 +39,8 @@ export function SplashContent() {
               color: 'transparent'
             }}
           >
-            Im Namen Allahs des Allerbarmers,<br />
-            des Allbarmherzigen
+            {t('landing.bismillah.translation').split(',')[0]},<br />
+            {t('landing.bismillah.translation').split(',')[1]}
           </p>
         </motion.div>
 

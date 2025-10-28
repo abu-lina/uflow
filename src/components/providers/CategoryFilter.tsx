@@ -8,7 +8,9 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 
 import { useSearch } from '@/providers/search-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { fetchUsedCategories } from '@/services/categories';
+import type { Category } from '@/types/supabase';
 
 interface CategoryFilterProps {
   className?: string;
@@ -18,6 +20,16 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedCategory, setSelectedCategory } = useSearch();
+  const { t, language } = useLanguage();
+
+  // Helper function to get category name based on language
+  const getCategoryName = (category: Category) => {
+    if (language === 'en') {
+      return category.name_en || category.name_de || category.category_id || t('search.unnamed');
+    } else {
+      return category.name_de || category.name_en || category.category_id || t('search.unnamed');
+    }
+  };
 
   // Get current selected category from provider or URL
   const currentCategory = selectedCategory ?? searchParams.get('category');
@@ -27,10 +39,10 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
     queryKey: ['categories'],
     queryFn: async () => {
       const allCategories = await fetchUsedCategories();
-      // Sort categories alphabetically by name_de
+      // Sort categories alphabetically by appropriate name
       return allCategories.sort((a, b) => {
-        const nameA = (a.name_de || a.category_id || '').toLowerCase();
-        const nameB = (b.name_de || b.category_id || '').toLowerCase();
+        const nameA = getCategoryName(a).toLowerCase();
+        const nameB = getCategoryName(b).toLowerCase();
         return nameA.localeCompare(nameB);
       });
     },
@@ -166,7 +178,7 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
               whileTap={{ scale: 0.98 }}
               onClick={() => handleCategoryClick(category.category_id || null)}
             >
-              {category.name_de || category.category_id || 'Unbenannt'}
+              {getCategoryName(category)}
               {currentCategory === category.category_id && (
                 <motion.div
                   className="absolute -bottom-1 left-0 right-0 h-0.5"

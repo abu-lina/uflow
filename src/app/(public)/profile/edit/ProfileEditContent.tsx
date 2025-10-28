@@ -12,6 +12,7 @@ import { ContentSection } from '@/components/layout/ContentSection';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
 import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
 import { FormInput } from '@/components/ui/FormInput';
@@ -31,6 +32,7 @@ interface FormData {
 
 export function ProfileEditContent({ user }: ProfileEditContentProps) {
   const { user: clientUser, loading } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   
   // Use client-side user if server-side user is null
@@ -364,14 +366,14 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       <BottomActionNavbar
         height="h-16"
         primaryButton={{
-          label: isSaved ? 'Gespeichert' : hasChanges() ? 'Änderungen speichern' : 'Keine Änderungen',
+          label: isSaved ? t('actions.saved') : hasChanges() ? t('actions.saveChanges') : t('actions.noChanges'),
           icon: isSaved ? 'lucide:check' : 'lucide:save',
           onClick: submitForm,
           disabled: isSaved || isSubmitting || !hasChanges(),
           loading: isSubmitting,
-          loadingText: 'Speichern...',
+          loadingText: t('actions.saving'),
           variant: isSaved ? 'success' : 'primary',
-          'aria-label': isSaved ? 'Gespeichert' : 'Änderungen speichern',
+          'aria-label': isSaved ? t('actions.saved') : t('actions.saveChanges'),
         }}
       />
     </PageLayout>

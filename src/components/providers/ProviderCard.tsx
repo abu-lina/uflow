@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/providers/auth-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
@@ -43,6 +44,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     ref,
   ) => {
     const { user } = useAuth();
+    const { t, language } = useLanguage();
     const [isLoading, setIsLoading] = useState(false);
     const [bookmarked, setBookmarked] = useState(isBookmarked);
     const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
@@ -70,9 +72,19 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       address = address_city;
     } else {
       // No address means online business
-      address = 'Online';
+      address = t('providers.online');
     }
-    const categoryName = category?.name_de || '';
+    
+    // Get category name based on current language
+    const getCategoryName = () => {
+      if (!category) return t('search.unnamed');
+      if (language === 'en') {
+        return category.name_en || category.name_de || t('search.unnamed');
+      } else {
+        return category.name_de || category.name_en || t('search.unnamed');
+      }
+    };
+    const categoryName = getCategoryName();
 
     const handleBookmark = async (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -216,7 +228,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
               <button
                 className="w-full min-w-0 truncate text-uFlowText2 font-inter text-sm font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left"
                 disabled={!isAddressNavigable(address_street ?? undefined, address_zip ?? undefined, address_city ?? undefined)}
-                title={address ? `${address} - Adresse antippen zum Navigieren` : ''}
+                title={address ? `${address} - ${t('providers.addressTapToNavigate')}` : ''}
                 onClick={() => {
                   if (isAddressNavigable(address_street ?? undefined, address_zip ?? undefined, address_city ?? undefined)) {
                     openNavigation(address);
@@ -274,9 +286,9 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                       Allahuma Barik
                     </span>
                   ) : bookmarked ? (
-                    'Gespeichert'
+                    t('providers.saved')
                   ) : (
-                    'Speichern'
+                    t('providers.save')
                   )}
                 </Button>
                 {!hideWebsiteButton && (

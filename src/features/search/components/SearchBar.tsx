@@ -9,6 +9,7 @@ import { ChevronDown, Search, X } from 'lucide-react';
 
 // Local imports
 import { useSearch } from '@/providers/search-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { fetchUsedCategories, fetchFilteredCategories, type Category } from '@/services/categories';
 import { fetchProviderCities, fetchFilteredCities } from '@/services/providers';
 
@@ -35,6 +36,7 @@ function SearchBarContent({
 }: SearchBarProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const { t, language } = useLanguage();
   // State for input and dropdowns
   const [isTyping, setIsTyping] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -49,12 +51,21 @@ function SearchBarContent({
   } = useSearch();
   const [categories, setCategories] = useState<Category[]>([]);
 
-  const [locations, setLocations] = useState<string[]>(['Überall']);
+  const [locations, setLocations] = useState<string[]>([t('search.everywhere')]);
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
   const [hasMounted, setHasMounted] = useState(false);
+
+  // Helper function to get category name based on language
+  const getCategoryName = (category: Category) => {
+    if (language === 'en') {
+      return category.name_en || category.name_de || category.category_id || t('search.unnamed');
+    } else {
+      return category.name_de || category.name_en || category.category_id || t('search.unnamed');
+    }
+  };
 
   // Handle clicks outside dropdowns
   useEffect(() => {
@@ -96,7 +107,7 @@ function SearchBarContent({
     async function fetchCategories() {
       try {
         // If we have location or search query filters, use filtered categories
-        if ((selectedLocation && selectedLocation !== 'Überall') || searchQuery.trim()) {
+        if ((selectedLocation && selectedLocation !== t('search.everywhere')) || searchQuery.trim()) {
           const filteredCategories = await fetchFilteredCategories(selectedLocation, searchQuery);
           setCategories(filteredCategories);
         } else {
@@ -118,22 +129,22 @@ function SearchBarContent({
       try {
         // If custom cities are provided, use them instead of fetching from database
         if (customCities) {
-          setLocations(['Überall', ...customCities]);
+          setLocations([t('search.everywhere'), ...customCities]);
           return;
         }
 
         // If we have category or search query filters, use filtered cities
         if (selectedCategory || searchQuery.trim()) {
           const filteredCities = await fetchFilteredCities(selectedCategory, searchQuery);
-          setLocations(['Überall', ...filteredCities]);
+          setLocations([t('search.everywhere'), ...filteredCities]);
         } else {
           // Otherwise, fetch all cities
           const allCities = await fetchProviderCities();
-          setLocations(['Überall', ...allCities]);
+          setLocations([t('search.everywhere'), ...allCities]);
         }
       } catch (error) {
         console.error('Error fetching cities:', error);
-        setLocations(['Überall']);
+        setLocations([t('search.everywhere')]);
       }
     }
 
@@ -145,9 +156,9 @@ function SearchBarContent({
     if (!hasSyncedFromUrl.current) {
       const q = searchParams.get('q') || '';
       const category = searchParams.get('category') || null;
-      const location = searchParams.get('location') || 'Überall';
+      const location = searchParams.get('location') || t('search.everywhere');
       setSearchQuery(q);
-      setSelectedCategory(category === 'Alle' ? null : category);
+      setSelectedCategory(category === t('search.all') ? null : category);
       setSelectedLocation(location);
       hasSyncedFromUrl.current = true;
     }
@@ -172,16 +183,16 @@ function SearchBarContent({
 
   // Helper to get the label for the selected category
   const getCategoryLabel = (catId: string | null) => {
-    if (!catId || catId === 'Alle') {
-      return 'Alle';
+    if (!catId || catId === t('search.all')) {
+      return t('search.all');
     }
     const cat = categories.find((c) => c.category_id === catId);
-    return cat?.name_de || cat?.category_id || 'Unbenannt';
+    return cat ? getCategoryName(cat) : t('search.unnamed');
   };
 
   return (
     <div
-      aria-label="Suche in der Ummah"
+      aria-label={t('search.ariaLabel')}
       className={`relative flex h-10 flex-row items-center gap-4 rounded-lg bg-white px-2 ${className}`}
       role="search"
     >
@@ -192,7 +203,7 @@ function SearchBarContent({
           <input
             ref={inputRef}
             className={`w-full appearance-none truncate border-none bg-transparent px-1 text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
-            placeholder="In deiner Ummah suchen"
+            placeholder={t('search.placeholder')}
             type="text"
             value={searchQuery}
             onBlur={() => setIsTyping(false)}
@@ -205,7 +216,7 @@ function SearchBarContent({
           />
           {hasMounted && searchQuery && (
             <button
-              aria-label="Eingabe löschen"
+              aria-label={t('common.delete')}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-gray-100 focus:outline-none"
               type="button"
               onClick={() => {
@@ -266,7 +277,7 @@ function SearchBarContent({
                         onCategoryChange?.(null);
                       }}
                     >
-                      Alle
+                      {t('search.all')}
                     </button>
                     {categories.map((cat, idx) => (
                       <button
@@ -282,7 +293,7 @@ function SearchBarContent({
                           onCategoryChange?.(newCategory);
                         }}
                       >
-                        {cat.name_de || cat.category_id || 'Unbenannt'}
+                        {getCategoryName(cat)}
                       </button>
                     ))}
                   </div>
@@ -361,7 +372,7 @@ export function SearchBar(props: SearchBarProps) {
               <input
                 disabled
                 className="w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] text-gray-400 outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-                placeholder="In deiner Ummah suchen"
+                placeholder="Search in your Ummah"
                 type="text"
               />
             </div>

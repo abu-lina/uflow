@@ -343,10 +343,10 @@ export async function searchProviders(
     req = req.or(searchConditions.join(','));
   }
 
-  if (category && category !== 'Alle') {
+  if (category && category !== 'All' && category !== 'Alle') {
     req = req.eq('category_id', category);
   }
-  if (location && location !== 'Überall') {
+  if (location && location !== 'Everywhere' && location !== 'Überall') {
     req = req.eq('address_city', location);
   }
 

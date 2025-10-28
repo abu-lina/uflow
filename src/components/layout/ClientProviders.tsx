@@ -11,6 +11,8 @@ import { FilterProvider } from '@/providers/filter-provider';
 import { FormProvider } from '@/providers/form-provider';
 import { SearchProvider } from '@/providers/search-provider';
 import { SplashProvider } from '@/providers/splash-provider';
+import { LanguageProvider } from '@/providers/LanguageProvider';
+import { LanguageUpdater } from '@/components/layout/LanguageUpdater';
 import type { User } from '@supabase/supabase-js';
 
 interface ClientProvidersProps {
@@ -37,20 +39,23 @@ export function ClientProviders({ children, initialUser }: ClientProvidersProps)
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider initialUser={initialUser}>
-        <AuthSyncer />
-        <FormProvider>
-          <SplashProvider>
-            <SearchProvider>
-              <FilterProvider>
-                {children}
-                <Toaster position="top-center" />
-                <PWAInstallPrompt />
-              </FilterProvider>
-            </SearchProvider>
-          </SplashProvider>
-        </FormProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <LanguageUpdater />
+        <AuthProvider initialUser={initialUser}>
+          <AuthSyncer />
+          <FormProvider>
+            <SplashProvider>
+              <SearchProvider>
+                <FilterProvider>
+                  {children}
+                  <Toaster position="top-center" />
+                  <PWAInstallPrompt />
+                </FilterProvider>
+              </SearchProvider>
+            </SplashProvider>
+          </FormProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

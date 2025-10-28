@@ -13,6 +13,7 @@ import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE } from '@/utils/i
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUrl, normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -25,6 +26,7 @@ interface ProviderDetailPageProps {
 
 export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider, customActionButtons, backPath }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   
   const handleBack = () => {
     if (backPath) {
@@ -299,10 +301,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           {service.community_service_name}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {service.category?.name_de || 'Spenden'}
+                          {service.category?.name_de || t('providers.donations')}
                         </p>
                         <p className="text-sm text-gray-600">
-                          +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? 'Initiativen unterstützt' : 'Spenden'}
+                          +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? t('providers.initiativesSupported') : t('providers.donations')}
                         </p>
                       </div>
                     </button>
@@ -323,7 +325,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     onClick={() => setExpandedOffers(!expandedOffers)}
                   >
                     <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
-                      Wir bieten
+                      {t('providers.weOffer')}
                     </h3>
                     <ChevronDown 
                       className={`h-6 w-6 text-gray-600 transition-transform ${
@@ -402,7 +404,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             <div className="flex w-full gap-3.5">
               {/* Save Button */}
               <button
-                aria-label={isSaved ? 'Gespeichert entfernen' : 'Provider speichern'}
+                aria-label={isSaved ? t('actions.removeSaved') : t('actions.save')}
                 className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-base font-medium shadow transition ${
                   showAllahumaBarik
                     ? 'border border-[#D2B581] bg-white'
@@ -421,9 +423,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     Allahuma Barik
                   </span>
                 ) : isSaved ? (
-                  'Gespeichert'
+                  t('actions.saved')
                 ) : (
-                  'Speichern'
+                  t('actions.save')
                 )}
               </button>
 
@@ -647,10 +649,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                             {service.community_service_name}
                           </p>
                           <p className="text-sm text-gray-600">
-                            {service.category?.name_de || 'Spenden'}
+                            {service.category?.name_de || t('providers.donations')}
                           </p>
                           <p className="text-sm text-gray-600">
-                            +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? 'Initiativen unterstützt' : 'Spenden'}
+                            +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? t('providers.initiativesSupported') : t('providers.donations')}
                           </p>
                         </div>
                       </button>
@@ -763,9 +765,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       Allahuma Barik
                     </span>
                   ) : isSaved ? (
-                    'Gespeichert'
+                    t('actions.saved')
                   ) : (
-                    'Speichern'
+                    t('actions.save')
                   )}
                 </button>
                 <button

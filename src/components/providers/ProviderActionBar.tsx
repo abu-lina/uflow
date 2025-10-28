@@ -2,6 +2,7 @@ import React from 'react';
 
 import { Icon } from '@iconify/react';
 import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface ProviderActionBarProps {
   onSave?: () => void;
@@ -28,6 +29,8 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
   bookmarkableId,
   bookmarkableType = 'provider',
 }) => {
+  const { t } = useLanguage();
+  
   // Use the new bookmark hook with authentication
   const { handleBookmarkAction: checkAuthBeforeBookmark } = useBookmarkWithAuth({
     bookmarkableId: bookmarkableId || '',
@@ -48,7 +51,7 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
   <div className={`flex w-full gap-3.5 ${className}`}>
     {/* Save Button */}
     <button
-      aria-label={isSaved ? 'Gespeichert entfernen' : 'Provider speichern'}
+      aria-label={isSaved ? t('providers.removeSaved') : t('providers.saveProvider')}
       className="flex h-12 flex-1 items-center justify-center gap-1 rounded-lg bg-mint text-base font-medium text-white shadow transition hover:bg-mint/90"
       type="button"
       onClick={handleSaveWithAuth}
@@ -59,12 +62,12 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
         icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
         width={20}
       />
-      {isSaved ? 'Gespeichert' : 'Speichern'}
+      {isSaved ? t('providers.saved') : t('providers.save')}
     </button>
 
     {/* Share Button */}
     <button
-      aria-label="Provider teilen"
+      aria-label={t('providers.shareProvider')}
       className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm"
       type="button"
       onClick={onShare}
@@ -75,7 +78,7 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
     {/* Call Button (optional) */}
     {phoneNumber && (
       <a
-        aria-label="Anrufen"
+        aria-label={t('providers.call')}
         className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm"
         href={`tel:${phoneNumber}`}
         onClick={onCall}
@@ -87,7 +90,7 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
     {/* Website Button (optional) */}
     {websiteUrl && (
       <a
-        aria-label="Website"
+        aria-label={t('providers.website')}
         className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm"
         href={websiteUrl}
         rel="noopener noreferrer"

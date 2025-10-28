@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider } from '@/services/providers';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
@@ -30,6 +31,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
 }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
   
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
@@ -525,7 +527,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             />
             {expandedAction === 'save' && (
               <span className="font-inter-tight text-base font-medium text-white">
-                {isSaved ? 'Gespeichert' : 'Speichern'}
+                {isSaved ? t('providers.saved') : t('providers.save')}
               </span>
             )}
           </button>

@@ -10,6 +10,7 @@ import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader'
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState, SkeletonGrid } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
 import { useLoading } from '@/providers/LoadingProvider';
 import { useSearch } from '@/providers/search-provider';
@@ -22,8 +23,9 @@ export function ProvidersContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, loading: userLoading } = useAuth();
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
-  const location = searchParams.get('location') || 'Überall';
+  const location = searchParams.get('location') || t('search.everywhere');
   const query = searchParams.get('q') || '';
 
   // Get search context to sync with URL parameters
@@ -43,8 +45,8 @@ export function ProvidersContent() {
 
   // Use React Query for search results - properly cached across navigation
   const { data: searchResults = [], isLoading: loading, isFetching, error } = useQuery({
-    queryKey: ['providers', query, category || 'Alle', location],
-    queryFn: () => searchProvidersAndCommunityServices(query, category || 'Alle', location),
+    queryKey: ['providers', query, category || t('search.all'), location],
+    queryFn: () => searchProvidersAndCommunityServices(query, category || t('search.all'), location),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -156,15 +158,15 @@ export function ProvidersContent() {
 
   // Render content based on state
   const renderContent = () => {
-    if (isPreloading || (loading && searchResults.length === 0)) {
+    if (isPreloading || (loading && searchResults.length === 0 && !isFetching)) {
       return <SkeletonGrid count={12} />;
     }
 
     if (error) {
       return (
         <EmptyState
-          description="Es gab ein Problem beim Laden der Providers. Bitte versuche es erneut."
-          title="Fehler beim Laden"
+          description={t('providers.errorLoading')}
+          title={t('providers.errorTitle')}
         />
       );
     }
@@ -172,8 +174,8 @@ export function ProvidersContent() {
     if (searchResults.length === 0 && !loading && !isFetching) {
       return (
         <EmptyState
-          description="Versuche einen anderen Suchbegriff oder Filter"
-          title="Keine Ergebnisse gefunden"
+          description={t('providers.noResultsDescription')}
+          title={t('providers.noResultsFound')}
         />
       );
     }

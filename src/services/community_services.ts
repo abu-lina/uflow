@@ -89,12 +89,12 @@ export async function searchCommunityServices(
   }
 
   // Apply location filter if specified
-  if (location && location !== 'Überall') {
+  if (location && location !== 'Everywhere' && location !== 'Überall') {
     req = req.eq('address_city', location);
   }
 
   // Apply category filter if specified
-  if (category && category !== 'Alle') {
+  if (category && category !== 'All' && category !== 'Alle') {
     req = req.eq('category_id', category);
   }
 

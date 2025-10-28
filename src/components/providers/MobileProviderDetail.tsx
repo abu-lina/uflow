@@ -3,8 +3,15 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import type { Provider } from '@/services/providers';
+
+interface CategoryInfo {
+  name_de: string;
+  name_en?: string;
+  category_images?: Record<string, unknown>;
+}
 
 interface MobileProviderDetailProps {
   provider: Provider;
@@ -13,6 +20,17 @@ interface MobileProviderDetailProps {
 
 export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ provider, onBack }) => {
   const router = useRouter();
+  const { t, language } = useLanguage();
+  
+  // Helper function to get category name based on language
+  const getCategoryName = (category: CategoryInfo | undefined) => {
+    if (!category) return t('search.unnamed');
+    if (language === 'en') {
+      return category.name_en || category.name_de || t('search.unnamed');
+    } else {
+      return category.name_de || category.name_en || t('search.unnamed');
+    }
+  };
   
   const handleBack = () => {
     if (onBack) {
@@ -115,7 +133,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
           <div className="absolute bottom-0 left-0 flex h-full w-full items-end justify-start p-4">
             <div className="flex h-8 items-center justify-center rounded-sm border border-[#CDCDCD] bg-white/70 px-[10.59px] backdrop-blur-[1.99px]">
               <span className="font-inter-tight text-sm font-medium text-black">
-                {provider.category?.name_de || 'Kategorie'}
+                {getCategoryName(provider.category)}
               </span>
             </div>
           </div>

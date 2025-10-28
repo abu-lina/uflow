@@ -7,6 +7,7 @@ import { Icon } from '@iconify/react';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 const STEPS = [
   {
@@ -34,6 +35,7 @@ export default function ImageUploadPage() {
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
+  const { t } = useLanguage();
 
   // Cleanup blob URLs when component unmounts
   useEffect(() => {
@@ -281,7 +283,7 @@ export default function ImageUploadPage() {
           >
             <Icon className="h-6 w-6 text-white" icon="lucide:save" />
             <span className="text-base font-medium text-white leading-[19px]">
-              Speichern
+              {t('actions.save')}
             </span>
           </button>
         </div>

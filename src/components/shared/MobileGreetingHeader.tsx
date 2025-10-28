@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface MobileGreetingHeaderProps {
   className?: string;
@@ -10,6 +11,7 @@ interface MobileGreetingHeaderProps {
 
 export function MobileGreetingHeader({ className = '' }: MobileGreetingHeaderProps) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [hasAnimated, setHasAnimated] = useState(false);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function MobileGreetingHeader({ className = '' }: MobileGreetingHeaderPro
           })}
           className="font-inter text-sm font-medium leading-[140%] text-[#60606F]"
         >
-          {user ? `As-Salamu-Aleikum ${firstName},` : 'As-Salamu-Aleikum,'}
+          {user ? `${t('common.greeting')} ${firstName},` : `${t('common.greeting')},`}
         </MotionDiv>
         <MotionDiv
           {...(!hasAnimated && {
@@ -50,7 +52,7 @@ export function MobileGreetingHeader({ className = '' }: MobileGreetingHeaderPro
           })}
           className="font-inter text-xl font-semibold leading-[140%] text-[#5B9DA0]"
         >
-          Unterstütze Deine Ummah.
+          {t('common.supportYourUmmah')}
         </MotionDiv>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react';
 
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/providers/auth-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface MobileProfileScreenProps {
   onClose: () => void;
@@ -13,6 +14,7 @@ const SWIPE_AREA_HEIGHT = 48; // px
 
 export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClose }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const firstName = user?.user_metadata?.first_name || '';
   const lastName = user?.user_metadata?.last_name || '';
   const email = user?.email || '';
@@ -101,7 +103,7 @@ export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClos
             <div className="flex h-[155px] w-full flex-col items-center gap-2">
               <div className="flex w-full flex-col items-center gap-2">
                 <span className="bg-gradient-to-b from-[#D2B581] via-[#DCC391] to-[#AF8650] bg-clip-text font-baskerville text-[16px] leading-[18px] text-transparent">
-                  As-Salamu-Aleikum
+                  {t('common.greeting')}
                 </span>
                 <span className="font-inter-tight text-[32px] font-semibold leading-[39px] text-[#232323]">
                   {displayName}
