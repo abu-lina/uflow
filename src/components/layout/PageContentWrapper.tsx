@@ -41,6 +41,11 @@ interface PageContentWrapperProps {
    * @default false - should be true only for pages with regular mobile navbar
    */
   includeMobileNavSpacing?: boolean;
+  /**
+   * Whether to apply background with proper margins (respects footer margins)
+   * @default false
+   */
+  hasBackground?: boolean;
 }
 
 // Max-width mapping for type safety and consistency
@@ -99,6 +104,7 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
     padding = 'default',
     asMain = false,
     includeMobileNavSpacing = false,
+    hasBackground = false,
     ...props
   }, ref) => {
     // Handle both predefined variants and custom strings
@@ -113,40 +119,33 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
 
     const containerProps = {
       className: cn(
-        'flex flex-1 flex-col items-center min-h-0',
-        paddingClass,
-        centerVertically ? 'justify-center' : 'justify-start',
+        'flex flex-col items-center gap-6',
+        // Don't apply padding when hasBackground is true (content handles its own margins)
+        !hasBackground && paddingClass,
+        centerVertically ? 'justify-center flex-1' : '',
+        includeMobileNavSpacing && 'mobile-nav-spacing',
+        centerVertically ? 'justify-center items-center' : 'flex-shrink-0',
+        maxWidthClass,
+        // Apply background with proper margins (respects footer margins)
+        hasBackground && 'bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] rounded-t-2xl mx-6 sm:mx-8',
+        contentClassName,
         className
       ),
       ...props
     };
 
-    const contentDiv = (
-      <div className={cn(
-        'flex w-full gap-6',
-        includeMobileNavSpacing && 'mobile-nav-spacing',
-        centerVertically ? 'flex-1 flex-col justify-center items-center' : 'flex-col flex-shrink-0',
-        // Use min-h-0 instead of min-h-full to prevent overlap with fixed elements
-        centerVertically && !includeMobileNavSpacing ? 'min-h-0' : '',
-        maxWidthClass,
-        contentClassName
-      )}>
-        {children}
-      </div>
-    );
-
     // Use type assertion to handle the dynamic element types
     if (asMain) {
       return (
         <main {...containerProps} ref={ref as React.Ref<HTMLElement>}>
-          {contentDiv}
+          {children}
         </main>
       );
     }
 
     return (
       <div {...containerProps} ref={ref}>
-        {contentDiv}
+        {children}
       </div>
     );
   }

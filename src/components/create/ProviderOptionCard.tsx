@@ -18,16 +18,16 @@ export function ProviderOptionCard({
   onClick,
 }: ProviderOptionCardProps) {
   return (
-    <article className="flex flex-col justify-center items-center p-6 gap-6 w-full h-[200px] bg-white border border-[#D4D4D4] rounded-2xl shadow-sm hover:shadow-lg hover:border-teal-500 transition-all duration-300">
+    <article className="flex flex-col justify-center items-center p-4 sm:p-6 gap-4 sm:gap-6 w-full min-h-[160px] sm:min-h-[180px] bg-white border border-[#D4D4D4] rounded-2xl shadow-sm hover:shadow-lg hover:border-teal-500 transition-all duration-300">
       {/* Content: Icon + Title + Description */}
-      <div className="flex flex-row items-center gap-6 w-full">
+      <div className="flex flex-row items-center gap-3 sm:gap-6 w-full">
         <ProviderIcon variant={variant} />
         
-        <div className="flex flex-col items-start gap-2 flex-1">
-          <h2 className="font-medium text-lg leading-6 text-[#232323]">
+        <div className="flex flex-col items-start gap-1.5 sm:gap-2 flex-1">
+          <h2 className="font-medium text-base sm:text-lg leading-5 sm:leading-6 text-[#232323]">
             {title}
           </h2>
-          <p className="font-normal text-sm leading-4 tracking-[0.15px] text-[#272727]">
+          <p className="font-normal text-xs sm:text-sm leading-3.5 sm:leading-4 tracking-[0.15px] text-[#272727]">
             {description}
           </p>
         </div>

@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
-import { ContentSection } from '@/components/layout/ContentSection';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -34,38 +33,41 @@ export default function CreateProviderPage() {
   }
 
   return (
-    <PageLayout hasBackground={false}>
+    <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader title={t('create.title')} />
-
+      
       <HeaderSpacer />
+      
+      <PageContentWrapper 
+        centerVertically={true}
+        contentClassName="gap-8"
+        hasBackground={true}
+        includeMobileNavSpacing={true}
+        maxWidth="full"
+        padding="none"
+      >
+        <div className="flex flex-col items-center gap-6 sm:gap-8 w-full">
+          <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-center">
+            {t('create.description')}
+          </p>
+        </div>
+        
+        <div className="flex flex-col gap-3 w-full">
+          <ProviderOptionCard
+            buttonText={t('create.ownProvider.buttonText')}
+            description={t('create.ownProvider.description')}
+            title={t('create.ownProvider.title')}
+            variant="store"
+            onClick={handleOwnProvider}
+          />
 
-      <PageContentWrapper includeMobileNavSpacing={true}>
-        <div className="flex flex-col items-center gap-8 w-full">
-          <ContentSection>
-            <p className="font-normal text-base leading-[19px] text-[#7A7A7A]">
-              {t('create.description')}
-            </p>
-          </ContentSection>
-
-          <ContentSection>
-            <div className="flex flex-col gap-3 w-full">
-              <ProviderOptionCard
-                buttonText={t('create.ownProvider.buttonText')}
-                description={t('create.ownProvider.description')}
-                title={t('create.ownProvider.title')}
-                variant="store"
-                onClick={handleOwnProvider}
-              />
-
-              <ProviderOptionCard
-                buttonText={t('create.recommendProvider.buttonText')}
-                description={t('create.recommendProvider.description')}
-                title={t('create.recommendProvider.title')}
-                variant="recommend"
-                onClick={handleRecommendProvider}
-              />
-            </div>
-          </ContentSection>
+          <ProviderOptionCard
+            buttonText={t('create.recommendProvider.buttonText')}
+            description={t('create.recommendProvider.description')}
+            title={t('create.recommendProvider.title')}
+            variant="recommend"
+            onClick={handleRecommendProvider}
+          />
         </div>
       </PageContentWrapper>
     </PageLayout>

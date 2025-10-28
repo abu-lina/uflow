@@ -118,7 +118,9 @@ export const PageLayout = forwardRef<HTMLDivElement, PageLayoutProps>(
         ref={ref}
         className={cn(
           // Base layout classes
-          'relative w-full mx-auto flex-col',
+          'relative flex-col',
+          // Width handling - only add w-full and mx-auto when not full width
+          maxWidth !== 'full' && 'w-full mx-auto',
           // Height handling
           fullHeight ? 'flex flex-1' : 'flex min-h-screen',
           // Max-width handling
