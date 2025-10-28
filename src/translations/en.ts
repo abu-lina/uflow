@@ -159,5 +159,16 @@ export const en = {
       noResults: "No categories found",
       noResultsDescription: "Try a different search term"
     }
+  },
+  saved: {
+    title: "Saved",
+    loginRequired: "Login required",
+    loginDescription: "You must be logged in to view saved content.",
+    goToLogin: "Go to login",
+    noSavedProviders: "No saved providers",
+    noSavedProvidersDescription: "You haven't saved any providers yet. Save providers to see them here.",
+    noResults: "No results",
+    noResultsDescription: "No providers match your search criteria.",
+    errorRemovingItem: "Error removing item:"
   }
 } as const;

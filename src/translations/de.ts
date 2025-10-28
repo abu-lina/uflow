@@ -161,5 +161,16 @@ export const de = {
       noResults: "Keine Kategorien gefunden",
       noResultsDescription: "Versuche einen anderen Suchbegriff"
     }
+  },
+  saved: {
+    title: "Gespeichert",
+    loginRequired: "Anmeldung erforderlich",
+    loginDescription: "Du musst angemeldet sein, um gespeicherte Inhalte zu sehen.",
+    goToLogin: "Zur Anmeldung",
+    noSavedProviders: "Keine gespeicherten Anbieter",
+    noSavedProvidersDescription: "Du hast noch keine Anbieter gespeichert. Speichere Anbieter, um sie hier zu sehen.",
+    noResults: "Keine Ergebnisse",
+    noResultsDescription: "Keine Anbieter entsprechen deinen Suchkriterien.",
+    errorRemovingItem: "Fehler beim Entfernen des Items:"
   }
 } as const;

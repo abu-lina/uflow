@@ -21,6 +21,7 @@ import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
 import { getAllBookmarkedItems, fetchBookmarkedCities, type Provider } from '@/services/providers';
 import { getFirstImageUrl, formatProviderAddress } from '@/utils/imageUtils';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function SavedProvidersPage() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ export default function SavedProvidersPage() {
   const queryClient = useQueryClient();
   const { searchQuery, selectedLocation } = useSearch();
   const { isHeaderVisible } = useContainerScroll();
+  const { t } = useLanguage();
 
   // Use React Query for all bookmarked items (providers + community services)
   const { data: providers = [], isLoading: loading } = useQuery({
@@ -118,9 +120,9 @@ export default function SavedProvidersPage() {
         );
       }
     } catch (err) {
-      console.error('Fehler beim Entfernen des Items:', err);
+      console.error(t('saved.errorRemovingItem'), err);
     }
-  }, [user, queryClient]);
+  }, [user, queryClient, t]);
 
   // SearchBar callbacks - no-ops since filtering is handled by context
   const handleSearchSubmit = useCallback(() => {
@@ -155,10 +157,10 @@ export default function SavedProvidersPage() {
             <IconWithTitle
               icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
               size="large"
-              title="Anmeldung erforderlich"
+              title={t('saved.loginRequired')}
             >
               <p className="text-center text-base leading-normal text-content mt-2">
-                Du musst angemeldet sein, um gespeicherte Inhalte zu sehen.
+                {t('saved.loginDescription')}
               </p>
             </IconWithTitle>
           </TitleSection>
@@ -171,7 +173,7 @@ export default function SavedProvidersPage() {
                 variant="auth"
                 onClick={() => router.push('/login')}
               >
-                Zur Anmeldung
+                {t('saved.goToLogin')}
               </Button>
             </div>
           </ContentSection>
@@ -182,8 +184,8 @@ export default function SavedProvidersPage() {
     if (providers.length === 0) {
       return (
         <EmptyState
-          description="Du hast noch keine Anbieter gespeichert. Speichere Anbieter, um sie hier zu sehen."
-          title="Keine gespeicherten Anbieter"
+          description={t('saved.noSavedProvidersDescription')}
+          title={t('saved.noSavedProviders')}
         />
       );
     }
@@ -191,8 +193,8 @@ export default function SavedProvidersPage() {
     if (filteredProviders.length === 0) {
       return (
         <EmptyState
-          description="Keine Anbieter entsprechen deinen Suchkriterien."
-          title="Keine Ergebnisse"
+          description={t('saved.noResultsDescription')}
+          title={t('saved.noResults')}
         />
       );
     }
@@ -213,7 +215,7 @@ export default function SavedProvidersPage() {
   if (emptyState) {
     return (
       <PageLayout hasBackground={false}>
-        <PageHeader title="Gespeichert" variant="title-only" />
+        <PageHeader title={t('saved.title')} variant="title-only" />
         
         <HeaderSpacer />
         
@@ -228,7 +230,7 @@ export default function SavedProvidersPage() {
     <PageLayout hasBackground={false}>
       <PageHeader 
         isVisible={isHeaderVisible}
-        title="Gespeichert"
+        title={t('saved.title')}
         variant="title-only"
       />
 

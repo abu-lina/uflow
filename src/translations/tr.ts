@@ -155,5 +155,16 @@ export const tr = {
       noResults: "Kategori bulunamadı",
       noResultsDescription: "Farklı bir arama terimi deneyin"
     }
+  },
+  saved: {
+    title: "Kaydedilenler",
+    loginRequired: "Giriş gerekli",
+    loginDescription: "Kaydedilen içeriği görüntülemek için giriş yapmış olmalısınız.",
+    goToLogin: "Girişe git",
+    noSavedProviders: "Kaydedilen sağlayıcı yok",
+    noSavedProvidersDescription: "Henüz hiç sağlayıcı kaydetmediniz. Sağlayıcıları kaydedin ki burada görebilesiniz.",
+    noResults: "Sonuç yok",
+    noResultsDescription: "Hiçbir sağlayıcı arama kriterlerinize uymuyor.",
+    errorRemovingItem: "Öğe kaldırılırken hata:"
   }
 } as const;

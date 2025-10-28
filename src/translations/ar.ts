@@ -155,5 +155,16 @@ export const ar = {
       noResults: "لم يتم العثور على فئات",
       noResultsDescription: "جرب مصطلح بحث مختلف"
     }
+  },
+  saved: {
+    title: "المحفوظات",
+    loginRequired: "تسجيل الدخول مطلوب",
+    loginDescription: "يجب أن تكون مسجلاً للدخول لعرض المحتوى المحفوظ.",
+    goToLogin: "الذهاب لتسجيل الدخول",
+    noSavedProviders: "لا توجد مزودين محفوظين",
+    noSavedProvidersDescription: "لم تحفظ أي مزودين بعد. احفظ المزودين لتراهم هنا.",
+    noResults: "لا توجد نتائج",
+    noResultsDescription: "لا يوجد مزودين يطابقون معايير البحث الخاصة بك.",
+    errorRemovingItem: "خطأ في إزالة العنصر:"
   }
 } as const;
