@@ -41,8 +41,8 @@ export function useOptimisticBookmark({
       // Remove from saved providers list
       queryClient.setQueryData(['saved-providers', user.id], (old: unknown[] = []) => {
         return old.filter((item: unknown) => {
-          const provider = item as { provider_id?: string };
-          return provider.provider_id !== bookmarkableId;
+          const provider = item as { id?: string };
+          return provider.id !== bookmarkableId;
         });
       });
     }

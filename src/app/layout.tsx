@@ -46,7 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link href="/icons/icon-192x192.png" rel="apple-touch-icon" />
       </head>
       <body
-        className={`relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
+        className={`relative w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
         style={{
           minHeight: '100dvh',
           margin: 0,

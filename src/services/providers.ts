@@ -484,17 +484,28 @@ export async function getCreatedProviders(userId: string): Promise<Provider[]> {
 
 // Get all bookmarked items (providers and community services) for a user
 export async function getAllBookmarkedItems(userId: string): Promise<SearchResult[]> {
-  const { data: bookmarks, error: bookmarksError } = await supabase
+  console.log('[getAllBookmarkedItems] Starting query for userId:', userId);
+  
+  const query = supabase
     .from('bookmarks')
     .select('bookmarkable_id, bookmarkable_type')
     .eq('user_id', userId);
+  
+  console.log('[getAllBookmarkedItems] Query built, awaiting...');
+  const { data: bookmarks, error: bookmarksError } = await query;
+  console.log('[getAllBookmarkedItems] Query response:', { 
+    hasData: !!bookmarks, 
+    count: bookmarks?.length || 0,
+    hasError: !!bookmarksError 
+  });
 
   if (bookmarksError) {
-    console.error('Error fetching bookmarks:', bookmarksError);
+    console.error('[getAllBookmarkedItems] Error:', bookmarksError);
     throw bookmarksError;
   }
 
   if (!bookmarks || bookmarks.length === 0) {
+    console.log('[getAllBookmarkedItems] No bookmarks found');
     return [];
   }
 
@@ -507,39 +518,102 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
     .filter(b => b.bookmarkable_type === 'community_service')
     .map(b => b.bookmarkable_id);
 
+  console.log('[getAllBookmarkedItems] Separated:', {
+    totalBookmarks: bookmarks.length,
+    providerIds: providerIds.length,
+    communityServiceIds: communityServiceIds.length,
+    providerIds_list: providerIds,
+    communityServiceIds_list: communityServiceIds
+  });
+
   const results: SearchResult[] = [];
 
   // Fetch bookmarked providers
   if (providerIds.length > 0) {
+    console.log('[getAllBookmarkedItems] Fetching providers...');
     const { data: providers, error: providersError } = await supabase
       .from('providers')
       .select('*, category:categories(name_de, name_en, category_images)')
       .in('provider_id', providerIds)
       .returns<Provider[]>();
 
+    console.log('[getAllBookmarkedItems] Providers query result:', {
+      found: providers?.length || 0,
+      requested: providerIds.length,
+      hasError: !!providersError,
+      error: providersError?.message
+    });
+
     if (providersError) {
-      console.error('Error fetching bookmarked providers:', providersError);
-    } else if (providers) {
-      results.push(...providers.map(transformProviderToSearchResult));
+      console.error('[getAllBookmarkedItems] Error fetching bookmarked providers:', providersError);
+    } else if (providers && providers.length > 0) {
+      const transformed = providers.map(transformProviderToSearchResult);
+      console.log('[getAllBookmarkedItems] Transformed providers:', transformed.length);
+      results.push(...transformed);
+      
+      // Check if any requested providers are missing
+      if (providers.length < providerIds.length) {
+        const foundIds = new Set(providers.map(p => p.provider_id));
+        const missingIds = providerIds.filter(id => !foundIds.has(id));
+        console.warn('[getAllBookmarkedItems] Missing providers (bookmarked but deleted):', missingIds);
+        
+        // Clean up orphaned bookmarks - remove bookmarks for providers that don't exist
+        // This prevents the issue from persisting
+        if (missingIds.length > 0) {
+          console.log('[getAllBookmarkedItems] Cleaning up orphaned bookmarks for deleted providers...');
+          // Note: We'll clean these up in the background, but won't block the current request
+          void (async () => {
+            try {
+              const { error } = await supabase
+                .from('bookmarks')
+                .delete()
+                .in('bookmarkable_id', missingIds)
+                .eq('bookmarkable_type', 'provider');
+              
+              if (error) {
+                console.error('[getAllBookmarkedItems] Error cleaning up orphaned bookmarks:', error);
+              } else {
+                console.log('[getAllBookmarkedItems] Successfully cleaned up', missingIds.length, 'orphaned bookmarks');
+              }
+            } catch (err) {
+              console.error('[getAllBookmarkedItems] Exception cleaning bookmarks:', err);
+            }
+          })();
+        }
+      }
+    } else {
+      console.warn('[getAllBookmarkedItems] No providers found for IDs:', providerIds);
     }
   }
 
   // Fetch bookmarked community services
   if (communityServiceIds.length > 0) {
+    console.log('[getAllBookmarkedItems] Fetching community services...');
     const { data: communityServices, error: communityServicesError } = await supabase
       .from('community_services')
       .select('*, category:categories(name_de, name_en, category_images)')
       .in('community_service_id', communityServiceIds)
       .returns<CommunityService[]>();
 
+    console.log('[getAllBookmarkedItems] Community services query result:', {
+      found: communityServices?.length || 0,
+      requested: communityServiceIds.length,
+      hasError: !!communityServicesError
+    });
+
     if (communityServicesError) {
-      console.error('Error fetching bookmarked community services:', communityServicesError);
+      console.error('[getAllBookmarkedItems] Error fetching bookmarked community services:', communityServicesError);
     } else if (communityServices) {
-      results.push(...communityServices.map(transformCommunityServiceToSearchResult));
+      const transformed = communityServices.map(transformCommunityServiceToSearchResult);
+      console.log('[getAllBookmarkedItems] Transformed community services:', transformed.length);
+      results.push(...transformed);
     }
   }
 
-  return sortByCreationDate(results);
+  console.log('[getAllBookmarkedItems] Final results before sorting:', results.length);
+  const sorted = sortByCreationDate(results);
+  console.log('[getAllBookmarkedItems] Final results after sorting:', sorted.length);
+  return sorted;
 }
 
 // Fetch cities from bookmarked items

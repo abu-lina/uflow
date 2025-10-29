@@ -32,7 +32,7 @@ export function PageTransition({ children }: PageTransitionProps) {
       <motion.div
         key={pathname}
         animate={{ opacity: 1 }}
-        className="w-full flex-1 flex flex-col"
+        className="flex-1 flex flex-col"
         exit={{ opacity: 0 }}
         initial={{ opacity: 1 }}
         transition={{ duration: 0.15, ease: 'easeOut' }}

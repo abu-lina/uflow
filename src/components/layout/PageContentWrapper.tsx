@@ -2,6 +2,7 @@ import { ReactNode, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 type MaxWidthVariant = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+type FooterHeight = 'h-12' | 'h-16' | 'custom' | string;
 
 interface PageContentWrapperProps {
   /**
@@ -26,6 +27,12 @@ interface PageContentWrapperProps {
    * @default false
    */
   centerVertically?: boolean;
+  /**
+   * Footer height to account for when centering vertically
+   * Prevents content from being centered behind the footer
+   * @default 'h-16' - standard 64px footer
+   */
+  footerHeight?: FooterHeight;
   /**
    * Padding variant for the main container
    * @default 'default' - 16px padding from device edges (px-4)
@@ -59,13 +66,20 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
   full: 'max-w-full',
 } as const;
 
-// Padding mapping for consistent spacing - ensures 16px from device edges on mobile
+// Footer height mapping
+const footerHeightMap: Record<string, string> = {
+  'h-12': 'pb-12', // 48px
+  'h-16': 'pb-16', // 64px - default
+  'subpage': 'pb-20', // 80px for subpage buttons
+} as const;
+
+// Padding mapping for consistent spacing - ensures proper padding from device edges with safe area support
 const paddingMap = {
   none: 'px-0',
-  sm: 'px-2',              // 8px mobile only
-  default: 'px-4',         // 16px mobile - STANDARD for all pages
-  lg: 'px-6',              // 24px mobile
-  responsive: 'px-4 sm:px-5 md:px-6', // 16px mobile, 20px tablet, 24px desktop
+  sm: 'px-2',              // 8px mobile only (no safe area, minimal padding)
+  default: 'px-safe',      // 16px minimum + safe area insets - STANDARD for all pages
+  lg: 'px-6',              // 24px mobile (no safe area, legacy)
+  responsive: 'px-safe-responsive', // 16px mobile, 20px tablet, 24px desktop + safe area insets
 } as const;
 
 /**
@@ -101,6 +115,7 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
     contentClassName = '',
     maxWidth = 'sm',
     centerVertically = false,
+    footerHeight = 'h-16',
     padding = 'default',
     asMain = false,
     includeMobileNavSpacing = false,
@@ -117,17 +132,29 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
       ? paddingMap[padding as keyof typeof paddingMap]
       : padding;
 
+    // Get footer bottom padding class when centering vertically
+    const footerPaddingClass = centerVertically && footerHeight
+      ? (footerHeight in footerHeightMap 
+          ? footerHeightMap[footerHeight] 
+          : footerHeight) // Use as-is if custom string
+      : '';
+
     const containerProps = {
       className: cn(
-        'flex flex-col items-center gap-6',
+        'flex flex-col gap-6 w-full',
+        // Alignment: center vertically when needed, otherwise normal flow
+        centerVertically 
+          ? `justify-center items-center flex-1 ${footerPaddingClass}`
+          : '',
         // Don't apply padding when hasBackground is true (content handles its own margins)
         !hasBackground && paddingClass,
-        centerVertically ? 'justify-center flex-1' : '',
-        includeMobileNavSpacing && 'mobile-nav-spacing',
-        centerVertically ? 'justify-center items-center' : 'flex-shrink-0',
-        maxWidthClass,
+        // Max width constraint (only apply if not full)
+        maxWidthClass !== 'max-w-full' && maxWidthClass,
         // Apply background with proper margins (respects footer margins)
         hasBackground && 'bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] rounded-t-2xl mx-6 sm:mx-8',
+        // Mobile navigation spacing (only when not centering vertically to avoid double spacing)
+        includeMobileNavSpacing && !centerVertically && 'mobile-nav-spacing',
+        // Custom class names
         contentClassName,
         className
       ),

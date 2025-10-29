@@ -29,15 +29,15 @@ interface PageLayoutProps {
   fullHeight?: boolean;
 }
 
-// Responsive max-width mapping following the existing patterns
+// Responsive max-width mapping using cleaner utility classes
 const maxWidthMap: Record<MaxWidthVariant, string> = {
-  xs: 'max-w-xs',
-  sm: 'max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl', // Default responsive pattern
-  md: 'max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl',
-  lg: 'max-w-lg lg:max-w-2xl xl:max-w-4xl',
-  xl: 'max-w-xl xl:max-w-4xl',
-  '2xl': 'max-w-2xl xl:max-w-4xl',
-  full: 'max-w-full',
+  xs: 'page-container-xs',
+  sm: 'page-container-sm', // Default responsive pattern
+  md: 'page-container-md',
+  lg: 'page-container-lg',
+  xl: 'page-container-xl',
+  '2xl': 'page-container-2xl',
+  full: 'page-container-full',
 } as const;
 
 /**
@@ -117,14 +117,12 @@ export const PageLayout = forwardRef<HTMLDivElement, PageLayoutProps>(
       <div
         ref={ref}
         className={cn(
-          // Base layout classes
-          'relative flex-col',
-          // Width handling - only add w-full and mx-auto when not full width
-          maxWidth !== 'full' && 'w-full mx-auto',
-          // Height handling
-          fullHeight ? 'flex flex-1' : 'flex min-h-screen',
-          // Max-width handling
+          // Base layout classes - always flex-col for vertical stacking
+          'relative flex flex-col',
+          // Responsive container utility class handles width, mx-auto, and max-width
           maxWidthClass,
+          // Height handling - flex-1 to fill available space in parent flex container
+          fullHeight && 'flex-1',
           // Background handling
           hasBackground && 'bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]',
           className

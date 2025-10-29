@@ -193,7 +193,7 @@ function SearchBarContent({
   return (
     <div
       aria-label={t('search.ariaLabel')}
-      className={`relative flex h-10 flex-row items-center gap-4 rounded-lg bg-white px-2 ${className}`}
+      className={`relative flex h-10 w-full flex-row items-center gap-4 rounded-lg bg-white px-2 ${className}`}
       role="search"
     >
       <div suppressHydrationWarning className="flex w-full flex-row items-center justify-between">
@@ -362,7 +362,7 @@ export function SearchBar(props: SearchBarProps) {
       fallback={
         <div
           className={`
-            flex h-10 flex-row items-center gap-4 rounded-lg bg-white px-2
+            flex h-10 w-full flex-row items-center gap-4 rounded-lg bg-white px-2
             ${props.className}
           `}
         >

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
@@ -19,12 +19,12 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
-import { getAllBookmarkedItems, fetchBookmarkedCities, type Provider } from '@/services/providers';
+import { getAllBookmarkedItems, fetchBookmarkedCities } from '@/services/providers';
 import { getFirstImageUrl, formatProviderAddress } from '@/utils/imageUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function SavedProvidersPage() {
-  const { user } = useAuth();
+  const { user, isLoading: userLoading } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { searchQuery, selectedLocation } = useSearch();
@@ -32,14 +32,20 @@ export default function SavedProvidersPage() {
   const { t } = useLanguage();
 
   // Use React Query for all bookmarked items (providers + community services)
-  const { data: providers = [], isLoading: loading } = useQuery({
+  const { data: providers = [], isLoading: loading, error: queryError } = useQuery({
     queryKey: ['saved-providers', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      return await getAllBookmarkedItems(user.id);
+      try {
+        return await getAllBookmarkedItems(user.id);
+      } catch (error) {
+        console.error('Error loading saved items:', error);
+        throw error;
+      }
     },
-    enabled: !!user,
-    staleTime: 2 * 60 * 1000, // 2 minutes - smart caching
+    enabled: !!user && !userLoading,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
   });
 
   // Fetch cities from bookmarked items
@@ -52,6 +58,19 @@ export default function SavedProvidersPage() {
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Listen for bookmark change events to refresh the saved list
+  useEffect(() => {
+    const handleBookmarkChange = () => {
+      if (user) {
+        queryClient.invalidateQueries({ queryKey: ['saved-providers', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['bookmarked-cities', user.id] });
+      }
+    };
+
+    window.addEventListener('bookmark-changed', handleBookmarkChange);
+    return () => window.removeEventListener('bookmark-changed', handleBookmarkChange);
+  }, [user, queryClient]);
 
   // Filter providers based on search query and location
   const filteredProviders = useMemo(() => {
@@ -71,7 +90,10 @@ export default function SavedProvidersPage() {
     }
 
     // Filter by location
-    if (selectedLocation && selectedLocation !== 'Überall') {
+    // Handle both German ("Überall") and English ("Everywhere") for "all locations"
+    const isAllLocations = selectedLocation === 'Überall' || selectedLocation === 'Everywhere' || !selectedLocation;
+    
+    if (selectedLocation && !isAllLocations) {
       if (selectedLocation === 'Online') {
         // Filter for online businesses (no city)
         filtered = filtered.filter((provider) => 
@@ -111,8 +133,8 @@ export default function SavedProvidersPage() {
         await deleteBookmark(bookmark.id);
         
         // Optimistically update both caches
-        queryClient.setQueryData(['saved-providers', user.id], (old: Provider[] = []) => 
-          old.filter((s) => s.provider_id !== providerId)
+        queryClient.setQueryData(['saved-providers', user.id], (old: typeof providers = []) => 
+          old.filter((s) => s.id !== providerId)
         );
         
         queryClient.setQueryData(['bookmarks', user.id], (old: string[] = []) =>
@@ -124,23 +146,6 @@ export default function SavedProvidersPage() {
     }
   }, [user, queryClient, t]);
 
-  // SearchBar callbacks - no-ops since filtering is handled by context
-  const handleSearchSubmit = useCallback(() => {
-    // Filtering happens automatically via useMemo
-  }, []);
-
-  const handleClearSearch = useCallback(() => {
-    // Clearing is handled by SearchBar updating context
-  }, []);
-
-  const handleCategoryChange = useCallback(() => {
-    // Category changes handled by SearchBar updating context
-  }, []);
-
-  const handleLocationChange = useCallback(() => {
-    // Location changes handled by SearchBar updating context
-  }, []);
-
   const handleProviderClick = useCallback((providerId: string, isCommunityService: boolean) => {
     const detailPath = isCommunityService 
       ? `/community-services/${providerId}`
@@ -148,79 +153,49 @@ export default function SavedProvidersPage() {
     router.push(detailPath);
   }, [router]);
 
-  // Render helpers
+  // Render empty state based on current state
   const renderEmptyState = () => {
     if (!user) {
-      return (
-        <div className="flex w-full flex-col">
-          <TitleSection className="mb-10">
-            <IconWithTitle
-              icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
-              size="large"
-              title={t('saved.loginRequired')}
-            >
-              <p className="text-center text-base leading-normal text-content mt-2">
-                {t('saved.loginDescription')}
-              </p>
-            </IconWithTitle>
-          </TitleSection>
-
-          <ContentSection>
-            <div className="flex flex-col space-y-3">
-              <Button
-                fullWidth
-                type="button"
-                variant="auth"
-                onClick={() => router.push('/login')}
-              >
-                {t('saved.goToLogin')}
-              </Button>
-            </div>
-          </ContentSection>
-        </div>
-      );
+      return 'login_required';
     }
 
     if (providers.length === 0) {
-      return (
-        <EmptyState
-          description={t('saved.noSavedProvidersDescription')}
-          title={t('saved.noSavedProviders')}
-        />
-      );
+      return 'no_saved_items';
     }
 
     if (filteredProviders.length === 0) {
-      return (
-        <EmptyState
-          description={t('saved.noResultsDescription')}
-          title={t('saved.noResults')}
-        />
-      );
+      return 'no_results';
     }
 
     return null;
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-lg text-gray-500">Lädt...</p>
-      </div>
-    );
-  }
+  const emptyStateType = renderEmptyState();
 
-  const emptyState = renderEmptyState();
-  
-  if (emptyState) {
+  // Loading state
+  if (loading) {
     return (
       <PageLayout hasBackground={false}>
         <PageHeader title={t('saved.title')} variant="title-only" />
-        
         <HeaderSpacer />
-        
         <PageContentWrapper centerVertically={true}>
-          {emptyState}
+          <p className="text-lg text-gray-500 text-center">{t('saved.loading') || 'Loading...'}</p>
+        </PageContentWrapper>
+      </PageLayout>
+    );
+  }
+
+  // Error state
+  if (queryError) {
+    return (
+      <PageLayout hasBackground={false}>
+        <PageHeader title={t('saved.title')} variant="title-only" />
+        <HeaderSpacer />
+        <PageContentWrapper centerVertically={true}>
+          <EmptyState
+            description={t('saved.errorLoadingDescription') || 'Failed to load your saved items. Please try again.'}
+            title={t('saved.errorLoading') || 'Error loading saved items'}
+          />
         </PageContentWrapper>
       </PageLayout>
     );
@@ -236,38 +211,79 @@ export default function SavedProvidersPage() {
 
       <HeaderSpacer isVisible={isHeaderVisible} />
 
-      <PageContentWrapper>
-        <section className="w-full mb-6">
-          <SearchBar 
-            customCities={bookmarkedCities}
-            hideCategoryFilter={true}
-            onCategoryChange={handleCategoryChange}
-            onClearSearch={handleClearSearch}
-            onLocationChange={handleLocationChange}
-            onSearchSubmit={handleSearchSubmit}
+      <PageContentWrapper 
+        centerVertically={!!emptyStateType}
+        maxWidth="full"
+        padding="default"
+      >
+        {emptyStateType === 'login_required' ? (
+          <>
+            <TitleSection className="mb-10">
+              <IconWithTitle
+                icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
+                size="large"
+                title={t('saved.loginRequired')}
+              >
+                <p className="text-center text-base leading-normal text-content mt-2">
+                  {t('saved.loginDescription')}
+                </p>
+              </IconWithTitle>
+            </TitleSection>
+            <ContentSection>
+              <Button
+                fullWidth
+                type="button"
+                variant="auth"
+                onClick={() => router.push('/login')}
+              >
+                {t('saved.goToLogin')}
+              </Button>
+            </ContentSection>
+          </>
+        ) : emptyStateType === 'no_saved_items' ? (
+          <EmptyState
+            description={t('saved.noSavedProvidersDescription')}
+            title={t('saved.noSavedProviders')}
           />
-        </section>
-        
-        <section className="grid w-full grid-cols-2 gap-4">
-          {filteredProviders.map((provider) => {
-            const isCommunityService = provider.type === 'community_service';
-            const imageUrl = getFirstImageUrl(provider.images);
-            const address = formatProviderAddress(provider.address_street, provider.address_city);
+        ) : emptyStateType === 'no_results' ? (
+          <EmptyState
+            description={t('saved.noResultsDescription')}
+            title={t('saved.noResults')}
+          />
+        ) : (
+          <>
+            <SearchBar 
+              customCities={bookmarkedCities}
+              hideCategoryFilter={true}
+            />
             
-            return (
-              <SelectableCard
-                key={provider.id}
-                actionType="unsave"
-                bottomText={address}
-                category={provider.category?.name_de || ''}
-                imageUrl={imageUrl}
-                title={provider.name}
-                onAction={() => handleUnsave(provider.id, isCommunityService)}
-                onClick={() => handleProviderClick(provider.id, isCommunityService)}
-              />
-            );
-          })}
-        </section>
+            <ul 
+              aria-label={t('saved.savedItemsList') || 'Saved items'}
+              className="grid w-full grid-cols-2 gap-4 mt-6"
+              role="list"
+            >
+              {filteredProviders.map((provider) => {
+                const isCommunityService = provider.type === 'community_service';
+                const imageUrl = getFirstImageUrl(provider.images);
+                const address = formatProviderAddress(provider.address_street, provider.address_city);
+                
+                return (
+                  <li key={provider.id}>
+                    <SelectableCard
+                      actionType="unsave"
+                      bottomText={address}
+                      category={provider.category?.name_de || ''}
+                      imageUrl={imageUrl}
+                      title={provider.name}
+                      onAction={() => handleUnsave(provider.id, isCommunityService)}
+                      onClick={() => handleProviderClick(provider.id, isCommunityService)}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
       </PageContentWrapper>
     </PageLayout>
   );
