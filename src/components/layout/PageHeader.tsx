@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
-type HeaderVariant = 'title-only' | 'back-and-title' | 'back-title-icon' | 'title-and-icon';
+type HeaderVariant = 'title-only' | 'back-and-title' | 'back-title-icon' | 'title-and-icon' | 'about-logo';
 
 interface PageHeaderProps {
   /**
@@ -110,7 +110,7 @@ export function PageHeader({
 
   // Determine which elements to show based on variant
   const shouldShowBackButton = variant === 'back-and-title' || variant === 'back-title-icon';
-  const shouldShowRightIcon = variant === 'back-title-icon' || variant === 'title-and-icon';
+  const shouldShowRightIcon = variant === 'back-title-icon' || variant === 'title-and-icon' || variant === 'about-logo';
   
   // Priority: rightIcon > rightContent
   const actualRightContent = shouldShowRightIcon && rightIcon ? rightIcon : rightContent;

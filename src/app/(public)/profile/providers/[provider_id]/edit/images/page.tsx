@@ -4,6 +4,8 @@
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { toast } from 'sonner';
 
 import { supabase } from '@/lib/supabase/client';
@@ -138,26 +140,12 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
 
   return (
     <div className="flex h-screen flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      {/* Header */}
-      <header className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)]">
-        <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">
-          <button
-            aria-label="Zurück"
-            className="flex items-center justify-center w-8 h-8 -ml-1"
-            onClick={() => router.back()}
-          >
-            <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          <h1 className="text-xl font-semibold text-content-title">Bilder hochladen</h1>
-        </div>
-      </header>
-
-      {/* Dynamic Spacer */}
-      <div className="h-[calc(env(safe-area-inset-top)+24px+40px)]" />
+      <PageHeader isVisible={true} title="Bilder hochladen" variant="back-and-title" onBack={() => router.back()} />
+      <HeaderSpacer isVisible={true} />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-[393px] mx-auto px-4 pt-8 pb-24">
+        <div className="w-full px-safe-24 pt-8 pb-24">
           
           {/* Image Upload Section */}
           <div className="flex w-full flex-col gap-4">

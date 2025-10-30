@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
@@ -144,15 +146,8 @@ export default function LocationPage() {
     const returnUrl = encodeURIComponent('/create/location');
     return (
       <div className="relative flex w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-        {/* Sticky Header */}
-        <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top">
-          <div className="flex h-16 w-full items-center px-safe-24 pt-2">
-            {/* Left-aligned Title */}
-            <h1 className="text-xl font-semibold text-content-title">
-              Standort
-            </h1>
-          </div>
-        </div>
+        <PageHeader isVisible={true} title="Standort" />
+        <HeaderSpacer isVisible={true} />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col items-center justify-center px-safe-24 pt-20 mobile-nav-spacing">
@@ -185,32 +180,13 @@ export default function LocationPage() {
 
   return (
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-      {/* Single Sticky Header */}
-      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top transition-all duration-500 ease-in-out ${
-        isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      }`}>
-        <div className="flex h-16 w-full items-center px-safe-24 pt-2">
-          {/* Back Button */}
-          <button
-            className="flex h-8 w-8 items-center justify-center"
-            onClick={() => router.push('/create/basics')}
-          >
-            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          
-          {/* Title */}
-          <div className="flex flex-1 items-center justify-start">
-            <h1 className="text-xl font-semibold text-content-title leading-[29px]">
-              Standort
-            </h1>
-          </div>
-        </div>
-      </div>
-
-      {/* Spacer to prevent content jump */}
-      <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-16' : 'h-0'
-      }`} />
+      <PageHeader
+        isVisible={isHeaderSticky}
+        title="Standort"
+        variant="back-and-title"
+        onBack="/create/basics"
+      />
+      <HeaderSpacer isVisible={isHeaderSticky} />
 
       {/* Content */}
       <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">

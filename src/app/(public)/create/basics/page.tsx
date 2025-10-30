@@ -131,12 +131,11 @@ export default function CreateBasicsPage() {
     
     return (
       <PageLayout hasBackground={false} maxWidth="full">
-        <PageHeader 
+        <PageHeader
+          isVisible={true}
           title={t('create.basics.title')}
-          variant="title-only"
         />
-
-        <HeaderSpacer />
+        <HeaderSpacer isVisible={true} />
 
         <PageContentWrapper centerVertically={true} maxWidth="full" padding="lg-safe">
           <div className="flex w-full flex-col">
@@ -172,13 +171,12 @@ export default function CreateBasicsPage() {
 
   return (
     <PageLayout hasBackground={false} maxWidth="full">
-      <PageHeader 
+      <PageHeader
         isVisible={isHeaderSticky}
         title={t('create.basics.title')}
         variant="back-and-title"
-        onBack={() => router.push('/create')}
+        onBack="/create"
       />
-
       <HeaderSpacer isVisible={isHeaderSticky} />
 
       <PageContentWrapper maxWidth="full" padding="lg-safe">

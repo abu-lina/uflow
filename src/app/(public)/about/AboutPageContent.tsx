@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { MobileHeader } from '@/components/layout/MobileHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { MobileNavbar } from '@/components/layout/MobileNavbar';
+import Image from 'next/image';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
@@ -67,11 +68,21 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
   }, [isTransitioning]);
 
   return (
-    <PageLayout hasBackground={false}>
-      {/* HEADER SECTION - Fixed at top */}
-      <MobileHeader 
-        title={showSplashHeader ? undefined : 'Über Uns'}
-        variant={showSplashHeader ? 'splash' : 'about'}
+    <PageLayout hasBackground={false} maxWidth="full">
+      {/* HEADER SECTION - Fixed at top using reusable header */}
+      <PageHeader 
+        isVisible={true}
+        rightIcon={
+          <Image
+            alt="UFlow Logo"
+            className="h-12 w-12 rounded-full"
+            height={48}
+            src="/icons/icon-round-512.png"
+            width={48}
+          />
+        }
+        title={showSplashHeader ? '' : 'Über Uns'}
+        variant={showSplashHeader ? 'title-only' : 'about-logo'}
         onBack={showSplashHeader ? undefined : () => router.back()}
       />
 
@@ -82,7 +93,8 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
         centerVertically={true}
         contentClassName="flex flex-col items-center gap-4"
         includeMobileNavSpacing={false}
-        maxWidth="xs"
+        maxWidth="full"
+        padding="lg-safe"
       >
         {/* Card Container */}
         <div

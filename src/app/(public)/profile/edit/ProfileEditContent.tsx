@@ -10,7 +10,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { authService } from '@/features/auth/services/authService';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
@@ -31,7 +31,7 @@ interface FormData {
 }
 
 export function ProfileEditContent({ user }: ProfileEditContentProps) {
-  const { user: clientUser, loading } = useAuth();
+  const { user: clientUser, isLoading: loading } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
   
@@ -262,7 +262,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
 
   return (
-    <PageLayout hasBackground={false}>
+    <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader 
         isVisible={isHeaderSticky}
         title="Profil bearbeiten"
@@ -272,7 +272,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
       <HeaderSpacer isVisible={isHeaderSticky} />
 
-      <PageContentWrapper includeMobileNavSpacing={false} padding="lg-safe">
+      <PageContentWrapper includeMobileNavSpacing={false} maxWidth="full" padding="lg-safe">
         {/* Error Message */}
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-4">

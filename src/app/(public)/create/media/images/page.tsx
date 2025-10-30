@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
@@ -140,39 +142,15 @@ export default function ImageUploadPage() {
     router.push('/create/media/social');
   };
 
-  // Back to main media page
-  const handleBack = () => {
-    router.push('/create/media');
-  };
-
   return (
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-      {/* Single Sticky Header */}
-      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top transition-all duration-500 ease-in-out ${
-        isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      }`}>
-        <div className="flex h-16 w-full items-center px-safe-24 pt-2">
-          {/* Back Button */}
-          <button
-            className="flex h-8 w-8 items-center justify-center"
-            onClick={handleBack}
-          >
-            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          
-          {/* Title */}
-          <div className="flex flex-1 items-start">
-            <h1 className="text-xl font-semibold text-title">
-              Bilder hochladen
-            </h1>
-          </div>
-        </div>
-      </div>
-
-      {/* Spacer for fixed header */}
-      <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-16' : 'h-0'
-      }`} />
+      <PageHeader
+        isVisible={isHeaderSticky}
+        title="Bilder hochladen"
+        variant="back-and-title"
+        onBack="/create/media"
+      />
+      <HeaderSpacer isVisible={isHeaderSticky} />
 
       {/* Content */}
       <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">

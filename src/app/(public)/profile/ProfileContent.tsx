@@ -26,7 +26,7 @@ import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProv
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { getCreatedProviders, getAllBookmarkedItems } from '@/services/providers';
@@ -38,7 +38,7 @@ interface ProfileContentProps {
 }
 
 export function ProfileContent({ user }: ProfileContentProps) {
-  const { user: clientUser, loading } = useAuth();
+  const { user: clientUser, isLoading: loading } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
   const queryClient = useQueryClient();
