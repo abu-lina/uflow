@@ -52,28 +52,22 @@ export async function POST(request: Request) {
 
     console.log('[TOKEN] Attempting to store token in database');
 
-    // For password reset, we need to find the userId from email
+    // Resolve user id if not provided by looking up via email
+    // Applies to both email confirmation and password reset flows
     let finalUserId = userId;
-    if (!userId && type === 'password_reset') {
+    if (!finalUserId) {
       const supabaseAdmin = getSupabaseAdmin();
-      const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-      
+      // Fallback to listUsers when getUserByEmail is unavailable in this SDK version
+      const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
       if (userError) {
-        console.error('[TOKEN] Error fetching users:', userError);
-        return NextResponse.json(
-          { error: 'Failed to find user' },
-          { status: 500 }
-        );
+        console.error('[TOKEN] Error listing users:', userError);
+        return NextResponse.json({ error: 'Failed to find user' }, { status: 500 });
       }
-      
-      const user = users.find(u => u.email === email);
+      const normalized = email.trim().toLowerCase();
+      const user = users.find(u => (u.email || '').trim().toLowerCase() === normalized);
       if (!user) {
-        return NextResponse.json(
-          { error: 'User not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
-      
       finalUserId = user.id;
     }
 

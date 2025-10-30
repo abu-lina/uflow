@@ -133,8 +133,33 @@ export function LoginPageContent() {
     setError(null);
 
     try {
-      // Send resend confirmation email
-      const response = await fetch('/api/send-auth-email', {
+      // Generate a secure confirmation token on the server
+      const tokenResponse = await fetch('/api/generate-confirmation-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          type: 'signup',
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        setError(t('login.confirmationEmailFailed'));
+        toast.error(t('login.emailFailedToast'), {
+          description: t('login.emailFailedDescription'),
+          duration: 4000,
+        });
+        return;
+      }
+
+      const { token } = await tokenResponse.json();
+      const siteUrl = (typeof window !== 'undefined' ? window.location.origin : '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+      const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(formData.email)}`;
+
+      // Send confirmation email via server (keeps keys server-side)
+      const emailResponse = await fetch('/api/send-auth-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,11 +168,11 @@ export function LoginPageContent() {
           to: formData.email,
           type: 'confirmSignup',
           language: 'en', // You can detect this from browser language
-          confirmationUrl: `${window.location.origin}/auth/confirm?token=${formData.email}&type=signup&email=${encodeURIComponent(formData.email)}`,
+          confirmationUrl,
         }),
       });
 
-      if (response.ok) {
+      if (emailResponse.ok) {
         setError(t('login.confirmationEmailSent'));
         setIsEmailConfirmationError(false);
         

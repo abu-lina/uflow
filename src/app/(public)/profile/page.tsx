@@ -1,12 +1,8 @@
-// Server Component
-import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
+'use client';
 
 import { ProfileContent } from './ProfileContent';
 
-export default async function ProfilePage() {
-  const user = await getUserFromCookie();
-
-  // If no user found server-side, we'll let the client-side handle it
-  // instead of immediately redirecting, to prevent logout issues
-  return <ProfileContent user={user} />;
+export default function ProfilePage() {
+  // Let client-side auth decide and redirect
+  return <ProfileContent user={null} />;
 }

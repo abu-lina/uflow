@@ -47,6 +47,35 @@ const withPWA = require('next-pwa')({
   ],
 });
 
+const isDev = process.env.NODE_ENV === 'development';
+
+function buildCsp() {
+  const directives = [
+    "default-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
+    "img-src 'self' data: https: blob:",
+    [
+      'connect-src',
+      "'self'",
+      'https://api.iconify.design',
+      'https://api.unisvg.com',
+      'https://api.simplesvg.com',
+      'https://*.supabase.co',
+      isDev ? 'http://localhost:*' : null,
+      isDev ? 'http://127.0.0.1:*' : null,
+      isDev ? 'ws://localhost:*' : null,
+      isDev ? 'ws://127.0.0.1:*' : null,
+    ]
+      .filter(Boolean)
+      .join(' '),
+    "frame-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com",
+  ];
+
+  return directives.join('; ') + ';';
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Core Next.js settings
@@ -116,8 +145,7 @@ const nextConfig = {
     contentDispositionType: 'attachment',
     // Configure image qualities to fix the warning
     qualities: [25, 50, 75, 95],
-    contentSecurityPolicy:
-      "default-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co; frame-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com;",
+    contentSecurityPolicy: buildCsp(),
   },
 
   // Environment variables
@@ -214,8 +242,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value:
-              "default-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co; frame-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com;",
+            value: buildCsp(),
           },
         ],
       },

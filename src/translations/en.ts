@@ -74,7 +74,9 @@ export const en = {
     switchTo: "Switch to",
     current: "Current language",
     english: "English",
-    german: "German"
+    german: "German",
+    arabic: "Arabic",
+    turkish: "Turkish"
   },
   search: {
     placeholder: "Search in your Ummah",

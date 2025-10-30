@@ -1,8 +1,8 @@
-import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
+'use client';
+
 import { ProfileEditContent } from './ProfileEditContent';
 
-export default async function ProfileEditPage() {
-  const user = await getUserFromCookie();
-
-  return <ProfileEditContent user={user} />;
+export default function ProfileEditPage() {
+  // Let client-side auth decide and redirect
+  return <ProfileEditContent user={null} />;
 }

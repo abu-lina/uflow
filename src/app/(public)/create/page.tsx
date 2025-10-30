@@ -41,10 +41,11 @@ export default function CreateProviderPage() {
       <PageContentWrapper 
         centerVertically={true}
         contentClassName="gap-8"
-        hasBackground={true}
+        footerHeight="pb-mobile-nav"
+        hasBackground={false}
         includeMobileNavSpacing={true}
         maxWidth="full"
-        padding="none"
+        padding="responsive"
       >
         <div className="flex flex-col items-center gap-6 sm:gap-8 w-full">
           <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-center">

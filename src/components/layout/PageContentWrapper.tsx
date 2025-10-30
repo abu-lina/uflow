@@ -132,11 +132,16 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
       ? paddingMap[padding as keyof typeof paddingMap]
       : padding;
 
-    // Get footer bottom padding class when centering vertically
-    const footerPaddingClass = centerVertically && footerHeight
-      ? (footerHeight in footerHeightMap 
-          ? footerHeightMap[footerHeight] 
-          : footerHeight) // Use as-is if custom string
+    // Determine footer bottom padding class when centering vertically
+    // If mobile nav spacing is enabled, use the unified pb-mobile-nav to respect real footer height + safe area
+    const footerPaddingClass = centerVertically
+      ? (includeMobileNavSpacing
+          ? 'pb-mobile-nav'
+          : (footerHeight
+              ? (footerHeight in footerHeightMap 
+                  ? footerHeightMap[footerHeight]
+                  : footerHeight)
+              : ''))
       : '';
 
     const containerProps = {
@@ -148,11 +153,11 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
           : '',
         // Don't apply padding when hasBackground is true (content handles its own margins)
         !hasBackground && paddingClass,
-        // Max width constraint (only apply if not full)
-        maxWidthClass !== 'max-w-full' && maxWidthClass,
+        // Max width constraint (only apply if not full) and center container
+        maxWidthClass !== 'max-w-full' && [maxWidthClass, 'mx-auto'],
         // Apply background with proper margins (respects footer margins)
         hasBackground && 'bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] rounded-t-2xl mx-6 sm:mx-8',
-        // Mobile navigation spacing (only when not centering vertically to avoid double spacing)
+        // Mobile navigation spacing (only when not centering vertically; when centering, footerPaddingClass handles spacing)
         includeMobileNavSpacing && !centerVertically && 'mobile-nav-spacing',
         // Custom class names
         contentClassName,
