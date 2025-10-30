@@ -272,7 +272,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
       <HeaderSpacer isVisible={isHeaderSticky} />
 
-      <PageContentWrapper includeMobileNavSpacing={false}>
+      <PageContentWrapper includeMobileNavSpacing={false} padding="lg-safe">
         {/* Error Message */}
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-4">

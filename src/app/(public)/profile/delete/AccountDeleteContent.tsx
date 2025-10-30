@@ -186,6 +186,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
         asMain
         centerVertically
         className="content-scroll-container overflow-y-auto"
+        padding="lg-safe"
       >
         <div className="flex w-full flex-col">
           {/* Error Message */}

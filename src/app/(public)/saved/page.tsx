@@ -175,10 +175,10 @@ export default function SavedProvidersPage() {
   // Loading state
   if (loading) {
     return (
-      <PageLayout hasBackground={false}>
+      <PageLayout hasBackground={false} maxWidth="full">
         <PageHeader title={t('saved.title')} variant="title-only" />
         <HeaderSpacer />
-        <PageContentWrapper centerVertically={true}>
+        <PageContentWrapper centerVertically={true} maxWidth="full" padding="lg-safe">
           <p className="text-lg text-gray-500 text-center">{t('saved.loading') || 'Loading...'}</p>
         </PageContentWrapper>
       </PageLayout>
@@ -188,10 +188,10 @@ export default function SavedProvidersPage() {
   // Error state
   if (queryError) {
     return (
-      <PageLayout hasBackground={false}>
+      <PageLayout hasBackground={false} maxWidth="full">
         <PageHeader title={t('saved.title')} variant="title-only" />
         <HeaderSpacer />
-        <PageContentWrapper centerVertically={true}>
+        <PageContentWrapper centerVertically={true} maxWidth="full" padding="lg-safe">
           <EmptyState
             description={t('saved.errorLoadingDescription') || 'Failed to load your saved items. Please try again.'}
             title={t('saved.errorLoading') || 'Error loading saved items'}
@@ -202,7 +202,7 @@ export default function SavedProvidersPage() {
   }
 
   return (
-    <PageLayout hasBackground={false}>
+    <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader 
         isVisible={isHeaderVisible}
         title={t('saved.title')}
@@ -214,7 +214,7 @@ export default function SavedProvidersPage() {
       <PageContentWrapper 
         centerVertically={!!emptyStateType}
         maxWidth="full"
-        padding="default"
+        padding="lg-safe"
       >
         {emptyStateType === 'login_required' ? (
           <>

@@ -130,7 +130,7 @@ export default function CreateBasicsPage() {
     const returnUrl = encodeURIComponent('/create/basics');
     
     return (
-      <PageLayout hasBackground={false} maxWidth="xs">
+      <PageLayout hasBackground={false} maxWidth="full">
         <PageHeader 
           title={t('create.basics.title')}
           variant="title-only"
@@ -138,7 +138,7 @@ export default function CreateBasicsPage() {
 
         <HeaderSpacer />
 
-        <PageContentWrapper centerVertically={true} maxWidth="xs">
+        <PageContentWrapper centerVertically={true} maxWidth="full" padding="lg-safe">
           <div className="flex w-full flex-col">
             <TitleSection className="mb-10">
               <IconWithTitle
@@ -171,7 +171,7 @@ export default function CreateBasicsPage() {
   }
 
   return (
-    <PageLayout hasBackground={false} maxWidth="xs">
+    <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader 
         isVisible={isHeaderSticky}
         title={t('create.basics.title')}
@@ -181,7 +181,7 @@ export default function CreateBasicsPage() {
 
       <HeaderSpacer isVisible={isHeaderSticky} />
 
-      <PageContentWrapper maxWidth="xs">
+      <PageContentWrapper maxWidth="full" padding="lg-safe">
         <ProviderCreateForm 
           onNextStep={() => {
             // Navigate to location page

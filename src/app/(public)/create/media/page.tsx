@@ -295,16 +295,16 @@ export default function MediaUploadPage() {
   };
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
+    <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       {/* Single Sticky Header */}
       <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top transition-all duration-500 ease-in-out ${
         isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}>
-        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
+        <div className="flex h-16 w-full items-center px-safe-24 pt-2">
           {/* Back Button */}
           <button
             className="flex h-8 w-8 items-center justify-center"
-            onClick={() => router.back()}
+            onClick={() => router.push('/create/contact')}
           >
             <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
@@ -324,8 +324,8 @@ export default function MediaUploadPage() {
       }`} />
 
       {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
+      <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">
+        <div className="flex w-full flex-1 flex-col gap-8">
           {/* Step Indicator */}
           <div className="mb-6">
             <StepIndicator currentStep={3} steps={STEPS} />
@@ -333,16 +333,16 @@ export default function MediaUploadPage() {
 
 
           {/* Body */}
-          <div className="flex flex-col items-start p-0 gap-8 w-[345px] h-[160px] flex-none order-1 flex-grow-0">
+          <div className="flex flex-col items-start p-0 gap-8 w-full flex-none order-1 flex-grow-0">
             {/* personalData */}
-            <div className="flex flex-col items-start p-0 gap-4 w-[345px] h-[160px] flex-none order-0 self-stretch flex-grow-0">
+            <div className="flex flex-col items-start p-0 gap-4 w-full flex-none order-0 self-stretch flex-grow-0">
               {/* Media */}
-              <div className="w-[345px] h-6 font-inter-tight font-medium text-xl leading-6 text-[#232323] flex-none order-0 self-stretch flex-grow-0">
+              <div className="w-full font-inter-tight font-medium text-xl leading-6 text-[#232323] flex-none order-0 self-stretch flex-grow-0">
                 Media
               </div>
               
               {/* input */}
-              <div className="flex flex-col items-start p-0 gap-3 w-[345px] h-[120px] flex-none order-1 self-stretch flex-grow-0">
+              <div className="flex flex-col items-start p-0 gap-3 w-full flex-none order-1 self-stretch flex-grow-0">
                 {/* Account - Navigate to Images */}
                 <button
                   className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
@@ -390,9 +390,9 @@ export default function MediaUploadPage() {
         className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
+        <div className="flex h-[80px] w-full items-center justify-center px-safe-24 pb-4">
           <button
-            className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
+            className={`flex h-[48px] w-full items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
               isSubmitting ? 'bg-[#589D96] opacity-50 cursor-not-allowed' : 'bg-[#589D96] opacity-100'
             }`}
             disabled={isSubmitting}
