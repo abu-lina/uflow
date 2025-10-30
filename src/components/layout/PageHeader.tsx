@@ -121,7 +121,7 @@ export function PageHeader({
         isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       } ${className}`}
     >
-      <div className="flex items-center w-full pl-7 pr-4 h-header-height-mobile sm:h-header-height-tablet">
+      <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
         {/* Back Button */}
         {shouldShowBackButton && onBack && (
           <button

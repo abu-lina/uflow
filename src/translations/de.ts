@@ -17,7 +17,8 @@ export const de = {
     submit: "Absenden",
     confirm: "Bestätigen",
     yes: "Ja",
-    no: "Nein"
+    no: "Nein",
+    support: "Support"
   },
   navigation: {
     home: "Startseite",
@@ -57,7 +58,8 @@ export const de = {
     country: "Land",
     editProfile: "Profil bearbeiten",
     changePassword: "Passwort ändern",
-    accountSettings: "Kontoeinstellungen"
+    accountSettings: "Kontoeinstellungen",
+    yourContent: "Deine Inhalte"
   },
   landing: {
     hero: {

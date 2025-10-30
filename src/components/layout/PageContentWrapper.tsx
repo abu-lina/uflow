@@ -79,6 +79,7 @@ const paddingMap = {
   sm: 'px-2',              // 8px mobile only (no safe area, minimal padding)
   default: 'px-safe',      // 16px minimum + safe area insets - STANDARD for all pages
   lg: 'px-6',              // 24px mobile (no safe area, legacy)
+  'lg-safe': 'px-safe-24', // 24px minimum + safe area insets
   responsive: 'px-safe-responsive', // 16px mobile, 20px tablet, 24px desktop + safe area insets
 } as const;
 

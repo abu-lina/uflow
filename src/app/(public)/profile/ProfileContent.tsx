@@ -121,7 +121,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
     return (
       <PageLayout hasBackground={false}>
         <PageContentWrapper centerVertically={true}>
-          <LoadingSpinner text="Überprüfe Anmeldung..." />
+          <LoadingSpinner text={t('common.loading')} />
         </PageContentWrapper>
       </PageLayout>
     );
@@ -134,7 +134,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         <PageContentWrapper centerVertically={true}>
           <IconWithTitle
             icon={<Lock className="h-16 w-16 text-[#589D96]" />}
-            title="Anmeldung erforderlich"
+            title={t('saved.loginRequired')}
           />
         </PageContentWrapper>
       </PageLayout>
@@ -145,19 +145,19 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Mobile content - using proper layout components
   const mobileContent = (
-    <PageLayout hasBackground={false}>
+    <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader 
         isVisible={isHeaderVisible}
-        title="Profil"
+        title={t('navigation.profile')}
       />
 
       <HeaderSpacer isVisible={isHeaderVisible} />
 
-      <PageContentWrapper includeMobileNavSpacing={true}>
+      <PageContentWrapper includeMobileNavSpacing={true} maxWidth="full" padding="lg-safe">
         {/* Error Message */}
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-4">
-            <p className="text-center text-red-600">{error}</p>
+            <p className="text-center text-red-600">{t('providers.errorLoading')}</p>
           </div>
         )}
 
@@ -192,11 +192,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
         <ContentSection className="mt-6">
           <div>
             <SectionHeading>
-              Deine Inhalte
+              {t('profile.yourContent')}
             </SectionHeading>
             
             {isLoadingProviders ? (
-              <LoadingSpinner text="Lade Providers..." />
+              <LoadingSpinner text={t('providers.loadingProviders')} />
             ) : createdProviders.length > 0 ? (
               <div className="space-y-3">
                 {createdProviders.map((provider) => (
@@ -234,9 +234,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
               </div>
             ) : (
               <EmptyState
-                description="Erstelle deinen ersten Provider um loszulegen"
+                description={t('providers.noResultsDescription')}
                 icon={<FileText className="h-16 w-16 text-gray-400" />}
-                title="Keine Providers erstellt"
+                title={t('providers.noResultsFound')}
               />
             )}
           </div>
@@ -258,7 +258,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   src="/icons/icon-192x192.png"
                   width={24}
                 />
-                <span className="font-inter-tight font-semibold text-[#232323]">Über Uns</span>
+                <span className="font-inter-tight font-semibold text-[#232323]">{t('navigation.about')}</span>
               </button>
               
               {/* Divider */}
@@ -267,7 +267,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
               {/* Support */}
               <button className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50">
                 <CircleHelp className="h-6 w-6 text-black" />
-                <span className="font-inter-tight font-semibold text-[#232323]">Support</span>
+                <span className="font-inter-tight font-semibold text-[#232323]">{t('common.support') || 'Support'}</span>
               </button>
               
               {/* Divider */}
