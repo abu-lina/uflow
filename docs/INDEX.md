@@ -6,6 +6,9 @@ Jump to any documentation quickly!
 
 ## 🚀 I Want To...
 
+### Learn How to Use Ummah Flow (End Users)
+→ [`USER_GUIDE.md`](USER_GUIDE.md) - Complete guide for seekers and providers
+
 ### Deploy to Production
 → [`deployment/GITHUB_SECRETS_CHECKLIST.md`](deployment/GITHUB_SECRETS_CHECKLIST.md)  
 → [`deployment/HETZNER_DEPLOYMENT_STEPS.md`](deployment/HETZNER_DEPLOYMENT_STEPS.md)
@@ -54,11 +57,11 @@ Jump to any documentation quickly!
 
 ## 🆕 Recently Added
 
-1. [`deployment/DOCKER_SECURITY_BEST_PRACTICES.md`](deployment/DOCKER_SECURITY_BEST_PRACTICES.md)
-2. [`deployment/GITHUB_SECRETS_CHECKLIST.md`](deployment/GITHUB_SECRETS_CHECKLIST.md)
-3. [`fixes/FIXES_SUMMARY_SECURITY.md`](fixes/FIXES_SUMMARY_SECURITY.md)
-4. [`fixes/BUILD_FIXES_SUMMARY.md`](fixes/BUILD_FIXES_SUMMARY.md)
-5. [`CLEANUP_SUMMARY.md`](CLEANUP_SUMMARY.md)
+1. [`USER_GUIDE.md`](USER_GUIDE.md) - Complete user guide for end users
+2. [`deployment/DOCKER_SECURITY_BEST_PRACTICES.md`](deployment/DOCKER_SECURITY_BEST_PRACTICES.md)
+3. [`deployment/GITHUB_SECRETS_CHECKLIST.md`](deployment/GITHUB_SECRETS_CHECKLIST.md)
+4. [`fixes/FIXES_SUMMARY_SECURITY.md`](fixes/FIXES_SUMMARY_SECURITY.md)
+5. [`fixes/BUILD_FIXES_SUMMARY.md`](fixes/BUILD_FIXES_SUMMARY.md)
 
 ---
 

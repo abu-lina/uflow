@@ -9,7 +9,8 @@ docs/
 ├── deployment/      # Deployment guides (Hetzner, GitHub Actions, Docker)
 ├── fixes/           # Bug fix documentation and troubleshooting
 ├── guides/          # Setup guides and best practices
-└── archive/         # Old/historical documentation
+├── archive/         # Old/historical documentation
+└── USER_GUIDE.md    # Complete user guide for end users
 ```
 
 ---
@@ -158,6 +159,9 @@ ls docs/fixes/
 ---
 
 ## ✨ Most Important Documents
+
+### For End Users
+1. **USER_GUIDE.md** - Complete guide for using Ummah Flow (seekers and providers)
 
 ### For Deployment
 1. `deployment/GITHUB_SECRETS_CHECKLIST.md`
