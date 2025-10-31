@@ -13,7 +13,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { getSuggestedOffersForCategory, type SuggestedOffer } from '@/services/category-suggestions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { validateOfferOrNeedName, findSimilarItems, calculateSimilarity } from '@/utils/contentValidation';
+import { validateOfferOrNeedName, findSimilarItems, calculateSimilarity, normalizeText, areSynonyms } from '@/utils/contentValidation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 
@@ -61,14 +61,21 @@ export default function SelectOffersPage() {
     void fetchCategories();
   }, []);
 
-  // Load offers from database
+  // Load offers from database - only for the selected category
   useEffect(() => {
     async function fetchOffers() {
+      if (!formData.category) {
+        setOffers([]);
+        return;
+      }
+
       setIsLoading(true);
       try {
+        // Only fetch offers that match the selected category
         const { data, error } = await supabase
           .from('offers')
-          .select('offer_id, name_de, name_en, created_at, updated_at, created_by')
+          .select('offer_id, name_de, name_en, created_at, updated_at, created_by, category_id')
+          .eq('category_id', formData.category)
           .order('name_de', { ascending: true });
         
         if (error) {
@@ -84,7 +91,7 @@ export default function SelectOffersPage() {
     }
     
     void fetchOffers();
-  }, []);
+  }, [formData.category]);
 
   // Load suggested offers when category changes
   useEffect(() => {
@@ -189,8 +196,11 @@ export default function SelectOffersPage() {
   const availableSuggestedOffers = suggestedOffers.filter(offer =>
     !formData.offers_ids.includes(offer.offer_id)
   );
+  
+  // Other offers: exclude suggested/selected (all offers already filtered by category from fetch)
   const otherOffers = offers.filter(offer => 
-    !suggestedOfferIds.has(offer.offer_id) && !formData.offers_ids.includes(offer.offer_id)
+    !suggestedOfferIds.has(offer.offer_id) 
+    && !formData.offers_ids.includes(offer.offer_id)
   );
   
   // Filter all lists based on search query
@@ -205,20 +215,54 @@ export default function SelectOffersPage() {
     offer.name_de.toLowerCase().includes(searchLower)
   );
 
-  // Check if search query exactly matches any offer
-  const hasExactMatch = offers.some(offer => 
+  // Get all category-filtered offers (for search and similarity checks)
+  // This includes selected, suggested, and other offers that match the category
+  const categoryFilteredOffers = offers.filter(offer => 
+    formData.category ? offer.category_id === formData.category : true
+  );
+
+  // Check if search query exactly matches any offer (only within category-filtered offers)
+  const hasExactMatch = categoryFilteredOffers.some(offer => 
     offer.name_de.toLowerCase() === searchLower
   );
 
   // Find similar items to show as warnings (only medium similarity, not very similar ones that get auto-selected)
-  // Very similar items (>=85% similar) will be auto-selected, so we exclude them from the warning box
+  // Very similar items (<=15% similarity = synonyms/typos) will be auto-selected
+  // High similarity (15-85%) will also be auto-selected to prevent duplicates
+  // Only show items with medium similarity (85%+ different) as warnings
+  // Also filter out synonyms of each other to avoid showing duplicate suggestions
   const similarOffers = searchQuery.trim() && !hasExactMatch
-    ? findSimilarItems(searchQuery.trim(), offers, 0.4, 3).filter(offer => {
-        // Calculate similarity to exclude very similar items (>=85% similar) that get auto-selected
-        const similarity = calculateSimilarity(searchQuery.trim(), offer.name_de);
-        // Only show items with medium similarity (40-85%), not very similar ones
-        return similarity > 0.15 && similarity <= 0.85;
-      })
+    ? (() => {
+        const allSimilar = findSimilarItems(searchQuery.trim(), categoryFilteredOffers, 0.4, 10);
+        const filtered = allSimilar.filter(offer => {
+          // Calculate similarity to exclude very/high similarity items that get auto-selected
+          const similarity = calculateSimilarity(searchQuery.trim(), offer.name_de);
+          // Only show items with medium similarity (>85% different), not very similar ones
+          return similarity > 0.85;
+        });
+        
+        // Remove synonyms from the list to avoid showing duplicate suggestions
+        const uniqueSimilar: typeof filtered = [];
+        const seen = new Set<string>();
+        
+        for (const offer of filtered) {
+          const normalizedName = normalizeText(offer.name_de);
+          // Skip if we've already seen a synonym of this item
+          let isSynonym = false;
+          for (const seenName of Array.from(seen)) {
+            if (areSynonyms(offer.name_de, seenName)) {
+              isSynonym = true;
+              break;
+            }
+          }
+          if (!isSynonym && uniqueSimilar.length < 3) {
+            uniqueSimilar.push(offer);
+            seen.add(normalizedName);
+          }
+        }
+        
+        return uniqueSimilar;
+      })()
     : [];
 
   // Show "Create new" option if there's a search query with no exact match
@@ -299,7 +343,8 @@ export default function SelectOffersPage() {
         .from('offers')
         .insert([{ 
           name_de: searchQuery.trim(),
-          created_by: user.id 
+          created_by: user.id,
+          category_id: formData.category || null
         }])
         .select()
         .single();

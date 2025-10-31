@@ -5,6 +5,7 @@ export interface Offer {
   created_at?: string;
   updated_at?: string;
   created_by?: string | null;
+  category_id?: string | null;
 }
 
 export interface Need {
@@ -14,4 +15,5 @@ export interface Need {
   created_at?: string;
   updated_at?: string;
   created_by?: string | null;
+  category_id?: string | null;
 }

@@ -43,7 +43,7 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
     void loadExistingImages();
   }, [resolvedParams.provider_id]);
 
-  // Cleanup blob URLs when component unmounts
+  // Cleanup blob URLs when component unmounts or images change
   useEffect(() => {
     return () => {
       // Clean up all blob URLs to prevent memory leaks
@@ -52,7 +52,7 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
         URL.revokeObjectURL(url);
       });
     };
-  }, []);
+  }, [images]);
 
   // Handle new image upload
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

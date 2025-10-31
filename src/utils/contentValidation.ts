@@ -17,8 +17,92 @@ export function normalizeText(text: string): string {
 }
 
 /**
+ * Check if two strings are synonyms (common German patterns)
+ * Returns true ONLY for true synonyms: plural/singular, minor typos, abbreviations
+ * Does NOT match semantically related words (e.g., "Mittagessen" vs "Mittagstisch")
+ */
+export function areSynonyms(str1: string, str2: string): boolean {
+  const s1 = normalizeText(str1);
+  const s2 = normalizeText(str2);
+  
+  if (s1 === s2) return true;
+  
+  // STRICT: Only match plural/singular variations
+  // Pattern: Remove common German plural endings (e, en, er, n, s) and check if base matches
+  const removePlural = (s: string): string => {
+    // Try removing common plural endings
+    const patterns = [
+      /^(.*)(en|er|e|n)$/, // Most common: Beratungen -> Beratung
+      /^(.*)s$/, // English-style: Kurses -> Kurs (less common in German but possible)
+    ];
+    
+    for (const pattern of patterns) {
+      const match = s.match(pattern);
+      if (match && match[1].length >= 3) {
+        return match[1]; // Return the base word
+      }
+    }
+    return s; // No plural ending found, return as-is
+  };
+  
+  const base1 = removePlural(s1);
+  const base2 = removePlural(s2);
+  
+  // If removing plural endings makes them match, they're synonyms
+  if (base1 === base2 && base1.length >= 3) {
+    // Additional check: ensure one is clearly a plural/singular of the other
+    // Both should be similar length (not drastically different)
+    const lengthDiff = Math.abs(s1.length - s2.length);
+    if (lengthDiff <= 4) { // Plural endings typically add 1-4 characters
+      return true;
+    }
+  }
+  
+  // STRICT: Check for simple typos (single character difference in short words only)
+  // Only for very short words (≤6 chars) to avoid false positives
+  if (s1.length <= 6 && s2.length <= 6) {
+    const lengthDiff = Math.abs(s1.length - s2.length);
+    if (lengthDiff <= 1) {
+      const edits = countEdits(s1, s2);
+      // Only 1 edit allowed for short words (catches "Kaffee" vs "Kaffe")
+      if (edits === 1) {
+        return true;
+      }
+    }
+  }
+  
+  // DO NOT match:
+  // - Compound words that share a root (e.g., "Mittagessen" vs "Mittagstisch")
+  // - Semantically related but distinct terms
+  // - Words that are just similar (use similarity score instead, not synonym detection)
+  
+  return false;
+}
+
+/**
+ * Count minimum edits between two strings (simplified)
+ */
+function countEdits(str1: string, str2: string): number {
+  if (str1 === str2) return 0;
+  if (Math.abs(str1.length - str2.length) > 1) return 999;
+  
+  let edits = 0;
+  const minLen = Math.min(str1.length, str2.length);
+  
+  for (let i = 0; i < minLen; i++) {
+    if (str1[i] !== str2[i]) {
+      edits++;
+    }
+  }
+  
+  edits += Math.abs(str1.length - str2.length);
+  return edits;
+}
+
+/**
  * Calculate similarity between two strings using Levenshtein distance
- * Returns a value between 0 (identical) and 1 (completely different)
+ * Returns a value between 0 (identical/synonym) and 1 (completely different)
+ * Synonyms return very low similarity scores (< 0.15) to trigger auto-selection
  */
 export function calculateSimilarity(str1: string, str2: string): number {
   const s1 = normalizeText(str1);
@@ -26,15 +110,32 @@ export function calculateSimilarity(str1: string, str2: string): number {
   
   if (s1 === s2) return 0; // Identical
   
+  // Check if they are synonyms (plural/singular, typos, variations)
+  if (areSynonyms(str1, str2)) {
+    return 0.05; // Very high similarity - will trigger auto-selection
+  }
+  
   // Check if one contains the other (for cases like "Beratung" vs "Beratungen")
+  // BUT: Be strict - only if it's clearly a plural/singular relationship
   if (s1.includes(s2) || s2.includes(s1)) {
     const longer = s1.length > s2.length ? s1 : s2;
     const shorter = s1.length > s2.length ? s2 : s1;
-    // If shorter is >80% of longer, consider it very similar
-    return shorter.length / longer.length < 0.8 ? 0.2 : 0.1;
+    
+    // Only consider it very similar if:
+    // 1. Shorter is >85% of longer (almost identical, just plural ending)
+    // 2. AND the difference is small (1-4 chars, typical for plural endings)
+    const lengthRatio = shorter.length / longer.length;
+    const lengthDiff = longer.length - shorter.length;
+    
+    if (lengthRatio >= 0.85 && lengthDiff <= 4) {
+      return 0.1; // Very similar - likely plural/singular - will trigger auto-selection
+    }
+    
+    // For other substring relationships, use regular similarity calculation
+    // Don't treat as very similar just because they share a substring
   }
   
-  // Levenshtein distance algorithm
+  // Levenshtein distance algorithm for other similarities
   const len1 = s1.length;
   const len2 = s2.length;
   
@@ -186,18 +287,90 @@ export function validateOfferOrNeedName(
     // Sort by similarity (most similar first)
     allSimilar.sort((a, b) => a.similarity - b.similarity);
     
-    // If there's a very similar item (>= 0.85 similarity), auto-select it instead of creating
-    if (allSimilar.length > 0 && allSimilar[0].similarity <= 0.85) {
-      shouldAutoSelect = allSimilar[0];
-      errors.push(
-        `Ein sehr ähnlicher Eintrag existiert bereits: "${allSimilar[0].item.name_de}". Bitte verwenden Sie den vorhandenen Eintrag.`
-      );
-    } else if (allSimilar.length > 0) {
-      // Medium similarity - show as warnings but allow with confirmation
-      similarItems = allSimilar.slice(0, 3).map(s => s.item);
-      warnings.push(
-        `Ähnliche Einträge gefunden: ${similarItems.map(s => `"${s.name_de}"`).join(', ')}`
-      );
+    // Determine if we should auto-select or show warnings
+    if (allSimilar.length > 0) {
+      const topSimilar = allSimilar[0];
+      
+      // Category 1: True synonyms (plural/singular, minor typos) - ALWAYS auto-select
+      if (topSimilar.similarity <= 0.15) {
+        const isTrueSynonym = areSynonyms(name, topSimilar.item.name_de);
+        if (isTrueSynonym) {
+          shouldAutoSelect = topSimilar;
+          errors.push(
+            `Ein sehr ähnlicher Eintrag existiert bereits: "${topSimilar.item.name_de}". Bitte verwenden Sie den vorhandenen Eintrag.`
+          );
+        }
+        // If similarity <= 0.15 but NOT a true synonym, don't auto-select
+        // Let the user decide (it might be a legitimate different term)
+      }
+      // Category 2: Very high similarity (15-30% different) - likely duplicates, auto-select
+      // BUT: Only if they share a significant portion (to avoid false positives like "Mittagessen" vs "Mittagstisch")
+      else if (topSimilar.similarity <= 0.3) {
+        // Additional check: ensure the words share enough content to be considered duplicates
+        // "Mittagessen" (13 chars) vs "Mittagstisch" (13 chars) share "mittag" but different endings
+        // Similarity ~0.31-0.38 would pass, but they're distinct concepts
+        // Only auto-select if very short words or if they're almost identical
+        const shorter = name.length < topSimilar.item.name_de.length ? name : topSimilar.item.name_de;
+        
+        // For very short words (≤8 chars), auto-select if similarity is high
+        // For longer words, be more conservative - they might be distinct concepts
+        if (shorter.length <= 8 || topSimilar.similarity <= 0.2) {
+          shouldAutoSelect = topSimilar;
+          errors.push(
+            `Ein sehr ähnlicher Eintrag existiert bereits: "${topSimilar.item.name_de}". Bitte verwenden Sie den vorhandenen Eintrag.`
+          );
+        }
+        // Otherwise (longer words, 20-30% different), show as warning but allow creation
+      }
+      // Category 3: Medium-high similarity (30-85% different) - related but distinct terms
+      // For items like "Mittagessen" vs "Mittagstisch", show as warning but allow creation
+      // Don't auto-select - let user decide
+    }
+    
+    // If we haven't auto-selected and there are similar items, show them as warnings
+    if (!shouldAutoSelect && allSimilar.length > 0) {
+      // Show similar items that are worth warning about but not auto-selecting
+      // Filter out items that would have been auto-selected
+      const warningCandidates = allSimilar.filter(similar => {
+        // Skip true synonyms (would have been auto-selected in Category 1)
+        if (similar.similarity <= 0.15 && areSynonyms(name, similar.item.name_de)) return false;
+        // Skip very high similarity items (would have been auto-selected in Category 2)
+        const shorter = name.length < similar.item.name_de.length ? name : similar.item.name_de;
+        if (similar.similarity <= 0.3) {
+          // Only skip if it would have been auto-selected (short words or very high similarity)
+          if (shorter.length <= 8 || similar.similarity <= 0.2) return false;
+        }
+        // Show items with medium-high similarity (30-85% different) - related but distinct terms
+        // This catches cases like "Mittagessen" vs "Mittagstisch" - related but distinct
+        return similar.similarity <= 0.85;
+      });
+      
+      // Only show unique items (not synonyms of each other)
+      const uniqueSimilar: Array<{ name_de: string }> = [];
+      const seen = new Set<string>();
+      
+      for (const similar of warningCandidates.slice(0, 5)) {
+        const normalizedName = normalizeText(similar.item.name_de);
+        // Skip if we've already seen a synonym of this item
+        let isDuplicate = false;
+        for (const seenName of Array.from(seen)) {
+          if (areSynonyms(similar.item.name_de, seenName)) {
+            isDuplicate = true;
+            break;
+          }
+        }
+        if (!isDuplicate && uniqueSimilar.length < 3) {
+          uniqueSimilar.push(similar.item);
+          seen.add(normalizedName);
+        }
+      }
+      
+      if (uniqueSimilar.length > 0) {
+        similarItems = uniqueSimilar;
+        warnings.push(
+          `Ähnliche Einträge gefunden: ${similarItems.map(s => `"${s.name_de}"`).join(', ')}. Sind Sie sicher, dass Sie einen neuen Eintrag erstellen möchten?`
+        );
+      }
     }
   }
   

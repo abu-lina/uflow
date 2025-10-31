@@ -49,7 +49,7 @@ export async function getSuggestedOffersForCategory(
     // Fetch the actual offers
     const { data: offersData, error: offersError } = await supabase
       .from('offers')
-      .select('offer_id, name_de, name_en, created_by')
+      .select('offer_id, name_de, name_en, created_by, category_id')
       .in('offer_id', offerIds);
 
     if (offersError) {
@@ -113,7 +113,7 @@ export async function getSuggestedNeedsForCategory(
     // Fetch the actual needs
     const { data: needsData, error: needsError } = await supabase
       .from('needs')
-      .select('need_id, name_de, name_en, created_by')
+      .select('need_id, name_de, name_en, created_by, category_id')
       .in('need_id', needIds);
 
     if (needsError) {
