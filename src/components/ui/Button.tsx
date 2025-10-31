@@ -26,7 +26,7 @@ const buttonVariants = cva(
       size: {
         default: 'h-12 px-4 rounded-xl',
         sm: 'h-7 px-3 rounded-lg',
-        md: 'h-10 px-5 rounded-[16.8px] action-button-height',
+        md: 'h-10 px-5 rounded-md action-button-height',
         lg: 'h-14 px-6 rounded-xl',
         footer: 'h-14 px-5 rounded-xl',
         icon: 'size-8',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
@@ -8,11 +9,15 @@ import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { getFeatureFlag } from '@/config/feature-flags';
 
 export default function CreateProviderPage() {
   const router = useRouter();
   const isMobile = useIsSmallMobile();
   const { t } = useLanguage();
+  
+  // Feature flags
+  const isQuickImportEnabled = getFeatureFlag('enableQuickImport');
 
   const handleOwnProvider = () => {
     router.push('/create/basics');
@@ -20,6 +25,10 @@ export default function CreateProviderPage() {
 
   const handleRecommendProvider = () => {
     router.push('/recommend-provider');
+  };
+
+  const handleQuickCreate = () => {
+    router.push('/create-quick');
   };
 
   if (!isMobile) {
@@ -52,6 +61,31 @@ export default function CreateProviderPage() {
             {t('create.description')}
           </p>
         </div>
+
+        {/* Quick Create Option - Feature Flagged */}
+        {isQuickImportEnabled && (
+          <div className="w-full rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="rounded-full bg-primary/20 p-2">
+                <Icon className="h-5 w-5 text-primary" icon="mdi:lightning-bolt" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-content-title mb-1">
+                  Quick Import (Beta)
+                </h3>
+                <p className="text-sm text-content leading-relaxed">
+                  Import from Google or Instagram and auto-fill everything in seconds!
+                </p>
+              </div>
+            </div>
+            <button
+              className="w-full rounded-xl bg-primary hover:bg-primary-dark px-5 py-3 text-base font-medium text-white transition-colors"
+              onClick={handleQuickCreate}
+            >
+              Try Quick Import
+            </button>
+          </div>
+        )}
         
         <div className="flex flex-col gap-3 w-full">
           <ProviderOptionCard

@@ -11,6 +11,7 @@ export interface FeatureFlags {
   // UI features
   enablePWAInstallPrompt: boolean;
   enableAddressVisibilityToggle: boolean;
+  enableQuickImport: boolean;
   
   // Development features
   enableDebugMode: boolean;
@@ -28,6 +29,7 @@ export const defaultFeatureFlags: FeatureFlags = {
   // UI features - enabled by default
   enablePWAInstallPrompt: true,
   enableAddressVisibilityToggle: false, // Disabled by default
+  enableQuickImport: false, // Disabled by default - Beta feature
   
   // Development features - disabled by default
   enableDebugMode: false,
@@ -66,6 +68,7 @@ export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFl
     pwaPromptDebug: getFeatureFlag('pwaPromptDebug', overrides),
     enablePWAInstallPrompt: getFeatureFlag('enablePWAInstallPrompt', overrides),
     enableAddressVisibilityToggle: getFeatureFlag('enableAddressVisibilityToggle', overrides),
+    enableQuickImport: getFeatureFlag('enableQuickImport', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),
   };
 }
