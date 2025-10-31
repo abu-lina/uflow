@@ -457,7 +457,7 @@ export default function SelectOffersPage() {
                               </span>
                             </button>
                             {/* Delete button for user-created offers - always visible */}
-                            {('created_by' in offer && (offer as { created_by?: string }).created_by === user?.id) && (
+                            {offer.created_by === user?.id && (
                               <button
                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm hover:bg-red-600 transition-colors disabled:opacity-50"
                                 disabled={deletingId === offer.offer_id}

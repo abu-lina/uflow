@@ -457,7 +457,7 @@ export default function SelectNeedsPage() {
                               </span>
                             </button>
                             {/* Delete button for user-created needs - always visible */}
-                            {('created_by' in need && (need as { created_by?: string }).created_by === user?.id) && (
+                            {need.created_by === user?.id && (
                               <button
                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm hover:bg-red-600 transition-colors disabled:opacity-50"
                                 disabled={deletingId === need.need_id}

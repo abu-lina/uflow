@@ -4,6 +4,7 @@ export interface Offer {
   name_en?: string;
   created_at?: string;
   updated_at?: string;
+  created_by?: string | null;
 }
 
 export interface Need {
@@ -12,4 +13,5 @@ export interface Need {
   name_en?: string;
   created_at?: string;
   updated_at?: string;
+  created_by?: string | null;
 }
