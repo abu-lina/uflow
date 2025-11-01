@@ -14,6 +14,7 @@ export function useCommunityServicesForProvider(providerId: string) {
     refetchOnMount: false, // Don't refetch when component mounts if data exists
     retry: 1, // Only retry once on failure
     retryOnMount: false, // Don't retry on mount
+    placeholderData: (previousData) => previousData, // Show cached data while refetching
   });
 }
 

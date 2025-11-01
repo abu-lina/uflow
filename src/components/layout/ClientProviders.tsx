@@ -31,8 +31,10 @@ export function ClientProviders({ children, initialUser }: ClientProvidersProps)
             refetchOnWindowFocus: false,
             refetchOnMount: false,
             retry: 1,
-            retryOnMount: false,
-          },
+                    retryOnMount: false,
+                    // Use placeholderData to show cached data while refetching
+                    placeholderData: (previousData: unknown) => previousData,
+                  },
         },
       })
   );

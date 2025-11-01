@@ -7,9 +7,8 @@ import { ExploreSection } from '@/components/shared/ExploreSection';
 import { LandingHero } from '@/components/shared/LandingHero';
 import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
 
-// Ensure this page is treated as a client-side route (not statically generated)
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Ensure client-side navigation works properly for root route
+// No force-dynamic to allow Next.js to optimize client-side navigation
 
 export default function Home() {
   return (

@@ -72,18 +72,20 @@ export async function getCommunityServices(): Promise<CommunityService[]> {
   return Array.isArray(data) ? data : [];
 }
 
-// Search community services by name or description
+// Search community services by name or description with pagination
 export async function searchCommunityServices(
   query: string, 
   category: string = 'Alle', 
-  location: string = 'Überall'
+  location: string = 'Überall',
+  limit?: number,
+  offset?: number,
 ): Promise<CommunityService[]> {
   let req = supabase
     .from('community_services')
     .select('*, category:categories(name_de, name_en, category_images)')
     .eq('review_status', 'approved'); // Only show approved services
-
-  // Apply search query filter if specified
+  
+  // Apply search query filter if specified (before pagination for better query optimization)
   if (query && query.trim()) {
     req = req.or(`community_service_name.ilike.%${query.trim()}%,community_service_description.ilike.%${query.trim()}%`);
   }
@@ -98,9 +100,18 @@ export async function searchCommunityServices(
     req = req.eq('category_id', category);
   }
 
-  const { data, error } = await req
-    .order('community_service_name')
-    .returns<CommunityService[]>();
+  // Always order by created_at descending for consistent pagination
+  req = req.order('created_at', { ascending: false });
+
+  // Apply pagination if provided (after ordering)
+  if (limit !== undefined) {
+    req = req.limit(limit);
+  }
+  if (offset !== undefined) {
+    req = req.range(offset, offset + (limit || 1000) - 1);
+  }
+
+  const { data, error } = await req.returns<CommunityService[]>();
   
   if (error) {
     throw error;

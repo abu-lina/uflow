@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 
 import { motion } from 'framer-motion';
 
@@ -25,10 +26,18 @@ export function CategoryGallerySection() {
       sessionStorage.setItem('home-categories-animated', 'true');
     }
   }, []);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
   const router = useRouter();
+  
+  // Use React Query to cache categories data and prevent refetching on navigation
+  const { data: categories = [], isLoading, error: queryError } = useQuery({
+    queryKey: ['used-categories'],
+    queryFn: fetchUsedCategories,
+    staleTime: 10 * 60 * 1000, // 10 minutes - categories don't change often
+    placeholderData: (previousData) => previousData, // Show cached data immediately
+  });
+  
+  const error = queryError ? 'Failed to load categories.' : null;
 
   const getCategorySubtitle = (category: Category): string => {
     // Use database description with language detection
@@ -75,31 +84,6 @@ export function CategoryGallerySection() {
         return 'Lerne unsere Zakat Partner kennen';
     }
   };
-
-         useEffect(() => {
-           async function loadCategories() {
-             try {
-               const fetchedCategories = await fetchUsedCategories();
-               console.log('Fetched categories for CategoryGallerySection:', fetchedCategories);
-               // Debug each category's images
-               fetchedCategories.forEach((cat, index) => {
-                 console.log(`Category ${index} (${cat.name_de}):`, {
-                   id: cat.category_id,
-                   name: cat.name_de,
-                   category_images: cat.category_images
-                 });
-               });
-               setCategories(fetchedCategories);
-             } catch (err) {
-               console.error('Error fetching categories:', err);
-               setError('Failed to load categories.');
-             } finally {
-               setIsLoading(false);
-             }
-           }
-
-           loadCategories();
-         }, []);
 
   const handleCategoryClick = (categoryId: string) => {
     router.push(`/providers?category=${categoryId}`);

@@ -26,12 +26,24 @@ export const metadata: Metadata = {
     "Der erste halal-konforme Marktplatz der sicherstellt, das Jeder die Zakat entrichtet insha'Allah.",
 };
 
+// Force dynamic to ensure proper client-side navigation handling
+// This prevents Next.js from statically generating the layout which can cause reloads
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; // Don't cache layout to ensure client-side navigation works
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
+  // Get session for initial user state - this runs server-side but layout persists across navigation
+  let user = null;
+  try {
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    user = session?.user ?? null;
+  } catch (error) {
+    // If session check fails, continue without user (client will handle auth)
+    console.warn('Layout session check failed:', error);
+  }
   return (
     <html lang="de">
       <head>

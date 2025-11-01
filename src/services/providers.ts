@@ -173,71 +173,101 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
 }
 
 /**
- * Main search function that handles all entity types
+ * Main search function that handles all entity types with pagination
  */
 export async function searchProvidersAndCommunityServices(
   query: string,
   category: string,
   location: string,
-): Promise<SearchResult[]> {
+  page: number = 0,
+  pageSize: number = 5,
+): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const strategy = getSearchStrategy(category);
   
   switch (strategy) {
     case 'community_services_only':
-      return await searchCommunityServicesOnly(query, category, location);
+      return await searchCommunityServicesOnly(query, category, location, page, pageSize);
     
     case 'both':
-      return await searchBoth(query, category, location);
+      return await searchBoth(query, category, location, page, pageSize);
     
     case 'providers_only':
     default:
-      return await searchProvidersOnly(query, category, location);
+      return await searchProvidersOnly(query, category, location, page, pageSize);
   }
 }
 
 /**
- * Search only community services
+ * Search only community services with pagination
  */
 async function searchCommunityServicesOnly(
   query: string,
   category: string,
   location: string,
-): Promise<SearchResult[]> {
-  const communityServices = await searchCommunityServices(query, category, location);
-  return communityServices.map(transformCommunityServiceToSearchResult);
+  page: number = 0,
+  pageSize: number = 5,
+): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+  const offset = page * pageSize;
+  const limit = pageSize + 1; // Fetch one extra to check if there are more
+  
+  const communityServices = await searchCommunityServices(query, category, location, limit, offset);
+  const hasMore = communityServices.length > pageSize;
+  const results = communityServices.slice(0, pageSize).map(transformCommunityServiceToSearchResult);
+  
+  return { results, hasMore };
 }
 
 /**
- * Search only providers
+ * Search only providers with pagination
  */
 async function searchProvidersOnly(
   query: string,
   category: string,
   location: string,
-): Promise<SearchResult[]> {
-  const providers = await searchProviders(query, category, location);
-  const results = providers.map(transformProviderToSearchResult);
-  return sortByCreationDate(results);
+  page: number = 0,
+  pageSize: number = 5,
+): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+  const offset = page * pageSize;
+  const limit = pageSize + 1; // Fetch one extra to check if there are more
+  
+  const providers = await searchProviders(query, category, location, limit, offset);
+  const hasMore = providers.length > pageSize;
+  const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
+  const sortedResults = sortByCreationDate(results);
+  
+  return { results: sortedResults, hasMore };
 }
 
 /**
- * Search both providers and community services
+ * Search both providers and community services with pagination
  */
 async function searchBoth(
   query: string,
   category: string,
   location: string,
-): Promise<SearchResult[]> {
+  page: number = 0,
+  pageSize: number = 5,
+): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+  const offset = page * pageSize;
+  // For "both" strategy, we need to fetch more to ensure we have enough results
+  // since we'll merge and sort them
+  const fetchLimit = (pageSize + 1) * 2; // Fetch more to account for merging
+  
   const [providers, communityServices] = await Promise.all([
-    searchProviders(query, category, location),
-    searchCommunityServices(query, CATEGORY_IDS.ALL, location)
+    searchProviders(query, category, location, fetchLimit, offset),
+    searchCommunityServices(query, CATEGORY_IDS.ALL, location, fetchLimit, offset)
   ]);
 
   const providerResults = providers.map(transformProviderToSearchResult);
   const communityServiceResults = communityServices.map(transformCommunityServiceToSearchResult);
   
-  const combinedResults = [...providerResults, ...communityServiceResults];
-  return sortByCreationDate(combinedResults);
+  const combinedResults = sortByCreationDate([...providerResults, ...communityServiceResults]);
+  
+  // Check if we have more results
+  const hasMore = combinedResults.length > pageSize;
+  const results = combinedResults.slice(0, pageSize);
+  
+  return { results, hasMore };
 }
 
 export async function getProviders(): Promise<Provider[]> {
@@ -313,8 +343,21 @@ export async function searchProviders(
   query: string,
   category: string,
   location: string,
+  limit?: number,
+  offset?: number,
 ): Promise<Provider[]> {
   let req = supabase.from('providers').select('*, category:categories(name_de, name_en, category_images)');
+  
+  // Apply pagination if provided
+  if (limit !== undefined) {
+    req = req.limit(limit);
+  }
+  if (offset !== undefined) {
+    req = req.range(offset, offset + (limit || 1000) - 1);
+  }
+  
+  // Always order by created_at descending for consistent pagination
+  req = req.order('created_at', { ascending: false });
 
   if (query) {
     // First, search for matching offers and needs to get their IDs

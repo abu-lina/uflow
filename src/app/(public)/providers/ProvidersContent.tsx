@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
@@ -12,7 +12,6 @@ import { EmptyState, SkeletonGrid } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
-import { useLoading } from '@/providers/LoadingProvider';
 import { useSearch } from '@/providers/search-provider';
 import {
   searchProvidersAndCommunityServices,
@@ -41,14 +40,34 @@ export function ProvidersContent() {
   // Use provider state for category, fallback to URL params
   const category = selectedCategory ?? (searchParams.get('category') || null);
 
-  const { isPreloading } = useLoading();
-
-  // Use React Query for search results - properly cached across navigation
-  const { data: searchResults = [], isLoading: loading, isFetching, error } = useQuery({
+  // Use React Query infinite query for paginated search results
+  // Page size: 12 provides good balance between initial load and frequent pagination
+  const PAGE_SIZE = 12;
+  
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch,
+  } = useInfiniteQuery({
     queryKey: ['providers', query, category || t('search.all'), location],
-    queryFn: () => searchProvidersAndCommunityServices(query, category || t('search.all'), location),
+    queryFn: ({ pageParam = 0 }) => 
+      searchProvidersAndCommunityServices(query, category || t('search.all'), location, pageParam, PAGE_SIZE),
+    getNextPageParam: (lastPage, allPages) => 
+      lastPage.hasMore ? allPages.length : undefined,
+    initialPageParam: 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2, // Retry failed requests 2 times
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    // Show cached data immediately while refetching in background
+    placeholderData: (previousData) => previousData,
   });
+
+  // Flatten all pages into a single array
+  const searchResults = data?.pages.flatMap((page) => page.results) ?? [];
 
   // Use React Query for bookmarks - includes both providers and community services
   const { data: bookmarkedProviderIds = [] } = useQuery({
@@ -157,8 +176,13 @@ export function ProvidersContent() {
   }, [category, query, location]); // Only depend on URL parameters, not local state
 
   // Render content based on state
+  // Only show loading skeleton on true initial load (isLoading = true means no cached data)
+  // If we have cached data, show it immediately even if isFetching (background refetch)
   const renderContent = () => {
-    if (isPreloading || (loading && searchResults.length === 0 && !isFetching)) {
+    // True initial load: isLoading is true only when there's no cached data AND currently fetching
+    // In React Query v5: isLoading = isPending && isFetching
+    // Show skeleton grid matching the actual grid layout
+    if (isLoading) {
       return <SkeletonGrid count={12} />;
     }
 
@@ -171,7 +195,8 @@ export function ProvidersContent() {
       );
     }
 
-    if (searchResults.length === 0 && !loading && !isFetching) {
+    // Empty state: only show if we have no results
+    if (searchResults.length === 0) {
       return (
         <EmptyState
           description={t('providers.noResultsDescription')}
@@ -180,12 +205,18 @@ export function ProvidersContent() {
       );
     }
 
+    // Show results (cached data shown immediately, background refetch doesn't block UI)
     return (
       <SearchResultsList
         bookmarkedProviderIds={bookmarkedProviderIds}
+        error={error}
+        hasNextPage={hasNextPage ?? false}
+        isFetchingNextPage={isFetchingNextPage}
         searchResults={searchResults}
         onBookmarkChange={handleBookmarkChange}
+        onLoadMore={fetchNextPage}
         onProviderClick={handleProviderClick}
+        onRetry={() => refetch()}
       />
     );
   };

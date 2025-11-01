@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/services/categories';
 
@@ -16,8 +16,11 @@ interface ImageFallbackResult {
 }
 
 /**
- * Custom hook for handling image fallback logic
+ * Custom hook for handling image fallback logic with React Query caching
  * Priority: Entity images → Category images → Placeholder images
+ * 
+ * Best Practice: Uses React Query for caching and leverages cached category data
+ * to minimize duplicate fetches while still fetching entity images separately.
  */
 export function useImageFallback({
   categoryId,
@@ -25,44 +28,49 @@ export function useImageFallback({
   entityType,
   limit = 3,
 }: ImageFallbackOptions): ImageFallbackResult {
-  const [images, setImages] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchImages = async () => {
-      try {
-        // Priority 1: Get entity images
-        const entityImages = await fetchEntityImages(entityType, categoryId, limit);
-        
-        if (entityImages.length >= limit) {
-          setImages(entityImages.slice(0, limit));
-          return;
-        }
-
-        // Priority 2: Get category fallback images
-        const categoryImages = parseCategoryImages(category?.category_images);
-
-        // Priority 3: Combine and fill remaining slots
-        const combinedImages = [...entityImages];
-        while (combinedImages.length < limit && categoryImages.length > 0) {
-          const categoryImageIndex = (combinedImages.length - entityImages.length) % categoryImages.length;
-          combinedImages.push(categoryImages[categoryImageIndex]);
-        }
-
-        setImages(combinedImages);
-      } catch (err) {
-        console.error('Error fetching images:', err);
-        setError('Failed to load images');
-      } finally {
-        setLoading(false);
+  const queryClient = useQueryClient();
+  
+  // Use React Query to cache images per category and entity type
+  // Query key includes categoryId to ensure proper cache invalidation
+  const { data: images = [], isLoading, error: queryError } = useQuery({
+    queryKey: ['gallery-images', entityType, categoryId, limit],
+    queryFn: async () => {
+      // Try to get category from cache first (better practice than relying on prop)
+      let categoryData = category;
+      if (!categoryData) {
+        const cachedCategories = queryClient.getQueryData<Category[]>(['used-categories']);
+        categoryData = cachedCategories?.find(cat => cat.category_id === categoryId);
       }
-    };
 
-    fetchImages();
-  }, [categoryId, category, entityType, limit]);
+      // Priority 1: Get entity images (not in category data, requires separate fetch)
+      const entityImages = await fetchEntityImages(entityType, categoryId, limit);
+      
+      if (entityImages.length >= limit) {
+        return entityImages.slice(0, limit);
+      }
 
-  return { images, loading, error };
+      // Priority 2: Get category fallback images from cached category data
+      const categoryImages = parseCategoryImages(categoryData?.category_images);
+
+      // Priority 3: Combine and fill remaining slots
+      const combinedImages = [...entityImages];
+      while (combinedImages.length < limit && categoryImages.length > 0) {
+        const categoryImageIndex = (combinedImages.length - entityImages.length) % categoryImages.length;
+        combinedImages.push(categoryImages[categoryImageIndex]);
+      }
+
+      return combinedImages;
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes - images don't change often
+    placeholderData: (previousData) => previousData, // Show cached images immediately
+    enabled: !!categoryId, // Only run if categoryId exists
+  });
+
+  return {
+    images,
+    loading: isLoading,
+    error: queryError ? 'Failed to load images' : null,
+  };
 }
 
 /**

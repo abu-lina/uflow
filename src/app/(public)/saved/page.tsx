@@ -32,7 +32,8 @@ export default function SavedProvidersPage() {
   const { t } = useLanguage();
 
   // Use React Query for all bookmarked items (providers + community services)
-  const { data: providers = [], isLoading: loading, error: queryError } = useQuery({
+  // Show cached data immediately while refetching in background
+  const { data: providers = [], isLoading, error: queryError } = useQuery({
     queryKey: ['saved-providers', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -46,6 +47,8 @@ export default function SavedProvidersPage() {
     enabled: !!user && !userLoading,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
+    // Show cached data immediately while refetching
+    placeholderData: (previousData) => previousData,
   });
 
   // Fetch cities from bookmarked items
@@ -172,8 +175,9 @@ export default function SavedProvidersPage() {
 
   const emptyStateType = renderEmptyState();
 
-  // Loading state
-  if (loading) {
+  // Loading state: only show on true initial load (no cached data)
+  // isLoading is true only when there's no cached data AND currently fetching
+  if (isLoading) {
     return (
       <PageLayout hasBackground={false} maxWidth="full">
         <PageHeader title={t('saved.title')} variant="title-only" />

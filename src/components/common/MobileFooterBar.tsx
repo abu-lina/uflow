@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
@@ -59,36 +60,28 @@ export function MobileFooterBar() {
   const navRef = useRef<HTMLElement>(null);
 
 
+  // Prefetch home route on mount to ensure it's available
   useEffect(() => {
-    // No logging
-  }, [pathname, isNavigating]);
+    if (pathname !== '/') {
+      router.prefetch('/');
+    }
+  }, [router, pathname]);
 
-  const handleNavigation = useCallback(
-    (href: string) => (e: React.MouseEvent) => {
-      e.preventDefault();
+  // Prefetch route and likely data when user hovers/presses nav item
+  const handleNavIntent = useCallback(
+    (href: string) => {
+      // Don't prefetch if already on page or navigating
+      if (pathname === href || isNavigating) return;
 
-      // Don't navigate if already on the page
-      if (pathname === href) return;
-
-      // Don't navigate if already navigating
-      if (isNavigating) return;
-
-      setIsNavigating(true);
-
-      try {
-        if (href === '/profile' && !user) {
-          router.push('/login');
-          return;
-        }
-
-        // Navigate immediately - Next.js handles prefetching automatically
-        router.push(href);
-      } finally {
-        setTimeout(() => setIsNavigating(false), 150);
-      }
+      // Prefetch route (Next.js optimizes this)
+      router.prefetch(href);
+      
+      // Note: Data prefetching handled by React Query when page loads
+      // This just prefetches the route code
     },
-    [user, router, pathname, isNavigating],
+    [router, pathname, isNavigating],
   );
+
 
   return (
     <>
@@ -104,13 +97,34 @@ export function MobileFooterBar() {
               style={{ width: 40, height: 40 }}
               whileTap={{ scale: 0.99 }}
             >
-              <button
+              <Link
                 aria-label={item.label}
                 className={`flex items-center justify-center transition-opacity duration-75 ${
-                  isNavigating ? 'opacity-50' : 'opacity-100'
+                  isNavigating ? 'opacity-50 pointer-events-none' : 'opacity-100'
                 }`}
-                disabled={isNavigating}
-                onClick={handleNavigation(item.href)}
+                href={item.href === '/profile' && !user ? '/login' : item.href}
+                prefetch={true}
+                scroll={false}
+                onClick={(e) => {
+                  // Special handling for profile - redirect to login if not authenticated
+                  if (item.href === '/profile' && !user) {
+                    e.preventDefault();
+                    setIsNavigating(true);
+                    router.push('/login');
+                    setTimeout(() => setIsNavigating(false), 150);
+                    return;
+                  }
+                  
+                  // For all routes including root, let Next.js Link handle navigation naturally
+                  // Track navigation state for UI feedback only
+                  if (pathname !== item.href && !isNavigating) {
+                    setIsNavigating(true);
+                    // Next.js Link handles the actual navigation client-side
+                    setTimeout(() => setIsNavigating(false), 150);
+                  }
+                }}
+                onMouseEnter={() => handleNavIntent(item.href)}
+                onTouchStart={() => handleNavIntent(item.href)}
               >
                 {typeof item.icon === 'function' ? (
                   item.icon(
@@ -160,7 +174,7 @@ export function MobileFooterBar() {
                     />
                   </motion.div>
                 )}
-              </button>
+              </Link>
             </motion.div>
           ))}
         </div>

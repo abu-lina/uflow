@@ -76,6 +76,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   }, [effectiveUser, queryClient]);
 
   // Use React Query for created providers with caching
+  // Show cached data immediately while refetching in background
   const { data: createdProviders = [], isLoading: isLoadingCreated, error: createdError } = useQuery({
     queryKey: ['created-providers', effectiveUser?.id],
     queryFn: async () => {
@@ -85,9 +86,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
     },
     enabled: !!effectiveUser,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData) => previousData,
   });
 
   // Use React Query for saved providers with caching
+  // Show cached data immediately while refetching in background
   const { data: savedProviders = [], isLoading: isLoadingSaved, error: savedError } = useQuery({
     queryKey: ['saved-providers', effectiveUser?.id],
     queryFn: async () => {
@@ -97,6 +100,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
     },
     enabled: !!effectiveUser,
     staleTime: 2 * 60 * 1000, // 2 minutes - smart caching
+    placeholderData: (previousData) => previousData,
   });
 
   const isLoadingProviders = isLoadingCreated || isLoadingSaved;
@@ -195,6 +199,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
               {t('profile.yourContent')}
             </SectionHeading>
             
+            {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingProviders ? (
               <LoadingSpinner text={t('providers.loadingProviders')} />
             ) : createdProviders.length > 0 ? (
@@ -331,6 +336,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
       <div className="mt-6 w-full">
         {activeTab === 'created' && (
           <div className="flex flex-wrap justify-center gap-8">
+            {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingProviders ? (
               <LoadingSpinner text="Lade Providers..." />
             ) : createdProviders.length > 0 ? (
@@ -384,6 +390,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         )}
         {activeTab === 'saved' && (
           <div className="flex flex-wrap justify-center gap-8">
+            {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingProviders ? (
               <LoadingSpinner text="Lade Providers..." />
             ) : savedProviders.length > 0 ? (
