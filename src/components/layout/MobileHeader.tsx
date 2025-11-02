@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 
 import { Logo } from '@/components/ui/Logo';

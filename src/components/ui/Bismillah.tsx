@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useState } from 'react';
 
-import { motion, useAnimation } from 'framer-motion';
+import { motion, useAnimation } from 'motion/react';
 
 import { cn } from '@/lib/utils';
 

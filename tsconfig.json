@@ -44,5 +44,5 @@
     "src/**/*.tsx",
     "src/scripts/bundle-icons.mts"
   ],
-  "exclude": ["node_modules", "supabase/functions/**/*"]
+  "exclude": ["node_modules", "supabase/functions/**/*", "Figma_imports"]
 }

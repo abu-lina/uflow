@@ -73,8 +73,8 @@ export function SearchResultsList({
 
   return (
     <>
-      <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
-        {searchResults.map((result) => {
+    <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
+      {searchResults.map((result) => {
         // Convert SearchResult back to Provider format for compatibility
         const provider: Provider = {
           provider_id: result.id,
@@ -126,7 +126,7 @@ export function SearchResultsList({
           </div>
         );
       })}
-      </div>
+    </div>
       
       {/* Infinite scroll trigger - auto-loads as user approaches bottom */}
       {hasNextPage && (

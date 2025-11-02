@@ -1,9 +1,12 @@
-import { forwardRef, useState, useEffect } from 'react';
+import { forwardRef, useState, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
+import { AnimatePresence, motion } from 'motion/react';
 
 import { Icon } from '@iconify/react';
 
+import { AnimatedHeartIcon } from '@/components/ui/AnimatedHeartIcon';
+import { BarikButton } from '@/components/ui/BarikButton';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -46,8 +49,38 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     const { user } = useAuth();
     const { t, language } = useLanguage();
     const [isLoading, setIsLoading] = useState(false);
-    const [bookmarked, setBookmarked] = useState(isBookmarked);
+    // Initialize bookmarked state from prop to prevent flash on mount
+    const [bookmarked, setBookmarked] = useState(() => isBookmarked);
     const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [wasBookmarked, setWasBookmarked] = useState(false);
+    const [isPressed, setIsPressed] = useState(false);
+    const [shouldAnimateFill, setShouldAnimateFill] = useState(false);
+    const [isTransiting, setIsTransiting] = useState(false);
+    
+    // Refs to store timeout IDs for cleanup
+    const timeoutRefs = useRef<{
+      barikTimeout?: ReturnType<typeof setTimeout>;
+      fillTimeout?: ReturnType<typeof setTimeout>;
+      stateTimeout?: ReturnType<typeof setTimeout>;
+    }>({});
+    
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+      const refs = timeoutRefs.current;
+      return () => {
+        if (refs.barikTimeout) {
+          clearTimeout(refs.barikTimeout);
+        }
+        if (refs.fillTimeout) {
+          clearTimeout(refs.fillTimeout);
+        }
+        if (refs.stateTimeout) {
+          clearTimeout(refs.stateTimeout);
+        }
+      };
+    }, []);
     
     // Use optimistic bookmarking
     const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
@@ -58,9 +91,19 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
         onBookmarkChange?.(isBookmarked);
       },
     });
+    // Sync bookmarked state with prop, avoiding updates during active transitions
     useEffect(() => {
-      setBookmarked(isBookmarked);
+      // Only sync when not in a transition to prevent state conflicts
+      if (!isTransiting && !isAnimating && !showAllahumaBarik && !isLoading) {
+        setBookmarked(isBookmarked);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isBookmarked]);
+    
+    // Use prop directly for rendering when not transitioning to avoid flash
+    // During active transitions (barik/showing), use internal state; otherwise use prop directly
+    // When fill animation is active (shouldAnimateFill), use bookmarked state to ensure animation shows
+    const displayBookmarked = showAllahumaBarik || isLoading || shouldAnimateFill ? bookmarked : isBookmarked;
     let address = '';
     if (address_street && address_zip && address_city) {
       address = `${address_street}, ${address_zip} ${address_city}`;
@@ -94,20 +137,51 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
         return;
       }
       
-      if (!bookmarked) {
-        setShowAllahumaBarik(true);
-        setTimeout(() => {
-          setShowAllahumaBarik(false);
-        }, 900);
-      }
+      if (isAnimating) return;
       
-      setIsLoading(true);
-      try {
-        await handleOptimisticBookmark();
-      } catch (error) {
-        console.error('Error toggling bookmark:', error);
-      } finally {
-        setIsLoading(false);
+      if (!bookmarked) {
+        setIsAnimating(true);
+        setIsTransiting(true);
+        setShowAllahumaBarik(true);
+        // After showing Allahuma Barik, smoothly transition to Saved state
+        timeoutRefs.current.barikTimeout = setTimeout(async () => {
+          // Perform the actual bookmark action first (this will set bookmarked=true via optimistic update)
+          try {
+            await handleOptimisticBookmark();
+            // Small delay to ensure state updates propagate
+            timeoutRefs.current.stateTimeout = setTimeout(() => {
+              // Now hide barik and trigger fill animation
+              setShowAllahumaBarik(false);
+              setShouldAnimateFill(true);
+              
+              setIsAnimating(false);
+              // Reset animation flags after animation completes (stroke + fill = ~800ms)
+              timeoutRefs.current.fillTimeout = setTimeout(() => {
+                setShouldAnimateFill(false);
+                setIsTransiting(false);
+              }, 800);
+            }, 50);
+          } catch (error) {
+            console.error('Error toggling bookmark:', error);
+            setShowAllahumaBarik(false);
+            setIsAnimating(false);
+            setIsTransiting(false);
+          }
+        }, 1500);
+      } else {
+        // Track that we were bookmarked before toggling
+        setWasBookmarked(true);
+        // If already bookmarked, hide Allahuma Barik and toggle off
+        setShowAllahumaBarik(false);
+        setIsLoading(true);
+        try {
+          await handleOptimisticBookmark();
+        } catch (error) {
+          console.error('Error toggling bookmark:', error);
+        } finally {
+          setIsLoading(false);
+          setWasBookmarked(false);
+        }
       }
     };
 
@@ -263,34 +337,150 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
             )}
             {!hideActions && (
               <div className="flex w-full gap-3.5">
-                <Button
-                  aria-label={bookmarked ? 'Gespeichert entfernen' : 'Provider speichern'}
-                  className={`flex-1 gap-1 ${showAllahumaBarik ? 'border border-[#D2B581] bg-white' : ''}`}
-                  disabled={isLoading}
-                  icon={
-                    <div className="relative size-4">
-                      <Icon
-                        className={showAllahumaBarik ? 'text-[#D2B581]' : 'text-white'}
-                        height={16}
-                        icon={bookmarked ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
-                        width={16}
-                      />
-                    </div>
-                  }
-                  onClick={handleBookmark}
-                >
-                  {isLoading ? (
-                    '...'
-                  ) : showAllahumaBarik ? (
-                    <span className="bg-gold-gradient bg-clip-text text-transparent">
-                      Allahuma Barik
-                    </span>
-                  ) : bookmarked ? (
-                    t('providers.saved')
-                  ) : (
-                    t('providers.save')
-                  )}
-                </Button>
+                <div className="relative flex-1 h-12">
+                  <motion.div
+                    className="size-full cursor-pointer relative"
+                    style={{ 
+                      pointerEvents: (isLoading || isAnimating) ? 'none' : 'auto',
+                    }}
+                    transition={{ duration: 0.15 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleBookmark}
+                    onHoverEnd={() => setIsHovered(false)}
+                    onHoverStart={() => setIsHovered(true)}
+                    onMouseDown={() => setIsPressed(true)}
+                    onMouseLeave={() => setIsPressed(false)}
+                    onMouseUp={() => setIsPressed(false)}
+                    onTouchEnd={() => setIsPressed(false)}
+                    onTouchStart={() => setIsPressed(true)}
+                  >
+                    {/* Pressed state overlay */}
+                    <motion.div
+                      animate={{ opacity: isPressed ? 0.7 : 0 }}
+                      className="absolute inset-0 rounded-[12px] z-10 pointer-events-none"
+                      style={{
+                        background: '#49837D',
+                      }}
+                      transition={{ duration: 0.1 }}
+                    />
+                    {showAllahumaBarik ? (
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key="barik"
+                          animate={{ scale: 1 }}
+                          className="size-full"
+                          exit={{ opacity: 0, scale: 1.02 }}
+                          initial={{ scale: 0.98 }}
+                          style={{ opacity: 1 }}
+                          transition={{ 
+                            duration: 0.5, 
+                            ease: [0.25, 0.1, 0.25, 1]
+                          }}
+                        >
+                          <BarikButton />
+                        </motion.div>
+                      </AnimatePresence>
+                    ) : displayBookmarked ? (
+                      <div
+                        className="size-full"
+                      >
+                        <div className="relative rounded-[9.6px] size-full overflow-hidden">
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: '#49837D',
+                              opacity: 1,
+                            }}
+                          />
+                          <div 
+                            className="relative size-full"
+                            style={{
+                              boxShadow: isHovered 
+                                ? '0 2px 8px rgba(73, 131, 125, 0.15)' 
+                                : '0 1px 4px rgba(73, 131, 125, 0.1)',
+                            }}
+                          >
+                            <div className="flex flex-row items-center justify-center size-full">
+                              <div 
+                                className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
+                              >
+                                <AnimatedHeartIcon 
+                                  animate={false}
+                                  animateFill={shouldAnimateFill}
+                                  className=""
+                                  filled={true}
+                                  size={24}
+                                  useFigmaPath={true}
+                                />
+                                <div 
+                                  className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
+                                >
+                                  <p className="leading-[normal] whitespace-pre">{t('providers.saved')}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <motion.div
+                        key="speichern"
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="size-full"
+                        exit={{ opacity: 0, scale: 0.97, zIndex: 0 }}
+                        initial={{ opacity: 0, scale: 0.97 }}
+                        style={{ zIndex: 1 }}
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                      >
+                        <div className="relative rounded-[9.6px] size-full overflow-hidden">
+                          <motion.div 
+                            animate={{
+                              opacity: 1,
+                            }}
+                            className="absolute inset-0"
+                            style={{
+                              background: "#589d96",
+                            }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                          />
+                          <motion.div 
+                            animate={{
+                              boxShadow: isHovered 
+                                ? '0 2px 8px rgba(88, 157, 150, 0.15)' 
+                                : '0 1px 4px rgba(88, 157, 150, 0.1)',
+                            }}
+                            className="relative size-full"
+                            transition={{ duration: 0.2 }}
+                          >
+                            <div className="flex flex-row items-center justify-center size-full">
+                              <motion.div 
+                                animate={{ y: 0, opacity: 1 }}
+                                className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
+                                initial={{ y: 5, opacity: 0 }}
+                                transition={{ duration: 0.4, ease: "easeOut" }}
+                              >
+                                <AnimatedHeartIcon 
+                                  animate={wasBookmarked}
+                                  filled={false}
+                                  size={24}
+                                  useFigmaPath={true}
+                                />
+                                <motion.div 
+                                  animate={{ opacity: 1, x: 0 }}
+                                  className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
+                                  initial={{ opacity: 0, x: -3 }}
+                                  transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+                                >
+                                  <p className="leading-[normal] whitespace-pre">{t('providers.save')}</p>
+                                </motion.div>
+                              </motion.div>
+                            </div>
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    )}
+                </motion.div>
+              </div>
                 {!hideWebsiteButton && (
                   <Button
                     aria-label="Website"

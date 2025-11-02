@@ -29,8 +29,8 @@ vi.mock('next/image', () => ({
   },
 }));
 
-// Mock framer-motion
-vi.mock('framer-motion', () => ({
+// Mock motion
+vi.mock('motion/react', () => ({
   motion: {
     div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
     span: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <span {...props}>{children}</span>,

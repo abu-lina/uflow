@@ -1,7 +1,7 @@
 'use client';
 
 
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 import { AboutCard } from '@/components/shared/AboutCard';
 import { quotes } from '@/constants/quotes';

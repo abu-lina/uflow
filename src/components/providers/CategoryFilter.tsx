@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useSearch } from '@/providers/search-provider';

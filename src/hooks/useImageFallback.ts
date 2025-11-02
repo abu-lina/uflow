@@ -43,21 +43,21 @@ export function useImageFallback({
       }
 
       // Priority 1: Get entity images (not in category data, requires separate fetch)
-      const entityImages = await fetchEntityImages(entityType, categoryId, limit);
-      
-      if (entityImages.length >= limit) {
+        const entityImages = await fetchEntityImages(entityType, categoryId, limit);
+        
+        if (entityImages.length >= limit) {
         return entityImages.slice(0, limit);
-      }
+        }
 
       // Priority 2: Get category fallback images from cached category data
       const categoryImages = parseCategoryImages(categoryData?.category_images);
 
-      // Priority 3: Combine and fill remaining slots
-      const combinedImages = [...entityImages];
-      while (combinedImages.length < limit && categoryImages.length > 0) {
-        const categoryImageIndex = (combinedImages.length - entityImages.length) % categoryImages.length;
-        combinedImages.push(categoryImages[categoryImageIndex]);
-      }
+        // Priority 3: Combine and fill remaining slots
+        const combinedImages = [...entityImages];
+        while (combinedImages.length < limit && categoryImages.length > 0) {
+          const categoryImageIndex = (combinedImages.length - entityImages.length) % categoryImages.length;
+          combinedImages.push(categoryImages[categoryImageIndex]);
+        }
 
       return combinedImages;
     },

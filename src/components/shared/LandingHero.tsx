@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/providers/LanguageProvider';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 import { Button } from '@/components/ui/Button';
 import { Bismillah } from '@/components/ui/Bismillah';
@@ -35,7 +35,7 @@ function useTypewriter(text: string, speed = 40, shouldAnimate = true) {
 }
 
 // Custom easing curves for smooth animations
-const smoothEase = [0.16, 1, 0.3, 1]; // Custom easeOutExpo
+const smoothEase = [0.16, 1, 0.3, 1] as const; // Custom easeOutExpo
 
 const fadeInVariants = {
   hidden: { opacity: 0 },

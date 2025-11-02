@@ -44,18 +44,6 @@ export interface CommunityService {
 
 // Fetch all community services
 export async function getCommunityServices(): Promise<CommunityService[]> {
-  console.log('Fetching community services...');
-  
-  // First, let's check if there are any services at all
-  const { data: allData, error: allError } = await supabase
-    .from('community_services')
-    .select('*')
-    .limit(10);
-    
-  console.log('All community services (first 10):', allData);
-  console.log('All services error:', allError);
-  
-  // Now fetch only approved services with category information
   const { data, error } = await supabase
     .from('community_services')
     .select('*, category:categories(name_de, name_en, category_images)')
@@ -63,10 +51,8 @@ export async function getCommunityServices(): Promise<CommunityService[]> {
     .order('community_service_name')
     .returns<CommunityService[]>();
   
-  console.log('Approved services:', data);
-  console.log('Approved services error:', error);
-  
   if (error) {
+    console.error('Error fetching community services:', error);
     throw error;
   }
   return Array.isArray(data) ? data : [];
@@ -84,7 +70,7 @@ export async function searchCommunityServices(
     .from('community_services')
     .select('*, category:categories(name_de, name_en, category_images)')
     .eq('review_status', 'approved'); // Only show approved services
-  
+
   // Apply search query filter if specified (before pagination for better query optimization)
   if (query && query.trim()) {
     req = req.or(`community_service_name.ilike.%${query.trim()}%,community_service_description.ilike.%${query.trim()}%`);

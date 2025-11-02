@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 import { AboutCard } from '@/components/shared/AboutCard';
 import { quotes } from '@/constants/quotes';

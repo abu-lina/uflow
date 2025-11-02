@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 
 import { usePathname } from 'next/navigation';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 
 import { useLoading } from '@/providers/LoadingProvider';
 

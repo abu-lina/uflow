@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
+import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
@@ -71,6 +72,35 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
   const [isSaved, setIsSaved] = useState(false);
   const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [wasBookmarked, setWasBookmarked] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [shouldAnimateFill, setShouldAnimateFill] = useState(false);
+  const [isTransiting, setIsTransiting] = useState(false);
+  
+  // Refs to store timeout IDs for cleanup
+  const timeoutRefs = useRef<{
+    barikTimeout?: ReturnType<typeof setTimeout>;
+    fillTimeout?: ReturnType<typeof setTimeout>;
+    stateTimeout?: ReturnType<typeof setTimeout>;
+  }>({});
+  
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    const refs = timeoutRefs.current;
+    return () => {
+      if (refs.barikTimeout) {
+        clearTimeout(refs.barikTimeout);
+      }
+      if (refs.fillTimeout) {
+        clearTimeout(refs.fillTimeout);
+      }
+      if (refs.stateTimeout) {
+        clearTimeout(refs.stateTimeout);
+      }
+    };
+  }, []);
+  
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
@@ -124,30 +154,78 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
   // Community services are now fetched via React Query hook above
 
-  const handleBookmark = async () => {
+  const handleBookmark = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    
     if (!user) {
       // Show login prompt
       return;
     }
     
-    // Show animation if bookmarking (not unbookmarking)
-    if (!isSaved) {
-      setShowAllahumaBarik(true);
-      setTimeout(() => {
-        setShowAllahumaBarik(false);
-      }, 900);
-    }
+    if (isAnimating) return;
     
-    try {
-      await handleOptimisticBookmark();
-    } catch (error) {
-      console.error('Error toggling bookmark:', error);
+    if (!isSaved) {
+      setIsAnimating(true);
+      setIsTransiting(true);
+      setShowAllahumaBarik(true);
+      // After showing Allahuma Barik, smoothly transition to Saved state
+      timeoutRefs.current.barikTimeout = setTimeout(async () => {
+        // Now perform the actual bookmark action
+        // The optimistic update will set isSaved=true immediately
+        try {
+          await handleOptimisticBookmark();
+          // Small delay to ensure state updates propagate
+          timeoutRefs.current.stateTimeout = setTimeout(() => {
+            setShowAllahumaBarik(false);
+            // Trigger fill animation when transitioning to saved
+            setShouldAnimateFill(true);
+            
+            setIsAnimating(false);
+            // Reset animation flag after animation completes
+            timeoutRefs.current.fillTimeout = setTimeout(() => {
+              setShouldAnimateFill(false);
+              setIsTransiting(false);
+            }, 800);
+          }, 50);
+        } catch (error) {
+          console.error('Error toggling bookmark:', error);
+          setShowAllahumaBarik(false);
+          setIsAnimating(false);
+          setIsTransiting(false);
+        }
+      }, 1500);
+    } else {
+      // Track that we were bookmarked before toggling
+      setWasBookmarked(true);
+      // If already bookmarked, hide Allahuma Barik and toggle off
+      setShowAllahumaBarik(false);
+      setIsAnimating(true);
+      try {
+        await handleOptimisticBookmark();
+        // Small delay to ensure state updates propagate
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (error) {
+        console.error('Error toggling bookmark:', error);
+      } finally {
+        setIsAnimating(false);
+        setWasBookmarked(false);
+      }
     }
   };
 
   // Action handlers
-  const handleBookmarkAction = () => {
-    void handleBookmark();
+  const handleBookmarkAction = (e?: React.MouseEvent) => {
+    void handleBookmark(e);
+  };
+  
+  // Determine button state
+  const getButtonState = (): 'idle' | 'loading' | 'saved' | 'barik' => {
+    // Prioritize barik state - if showing barik, show it (even if animating)
+    if (showAllahumaBarik) return 'barik';
+    // Loading state only if actively animating AND not saved yet
+    if (isAnimating && !isSaved) return 'loading';
+    if (isSaved) return 'saved';
+    return 'idle';
   };
 
   const handleShareAction = () => {
@@ -403,31 +481,18 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
             <div className="flex w-full gap-3.5">
               {/* Save Button */}
-              <button
-                aria-label={isSaved ? t('actions.removeSaved') : t('actions.save')}
-                className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-base font-medium shadow transition ${
-                  showAllahumaBarik
-                    ? 'border border-[#D2B581] bg-white'
-                    : isSaved
-                    ? 'bg-[#589D96] text-white'
-                    : 'bg-mint text-white hover:bg-mint/90'
-                }`}
+              <BookmarkButton
+                isHovered={isHovered}
+                isTransiting={isTransiting}
+                savedText={t('actions.saved')}
+                saveText={t('actions.save')}
+                shouldAnimateFill={shouldAnimateFill}
+                state={getButtonState()}
+                wasBookmarked={wasBookmarked}
                 onClick={handleBookmarkAction}
-              >
-                <Icon
-                  className={`h-5 w-5 ${showAllahumaBarik ? 'text-[#D2B581]' : ''}`}
-                  icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
-                />
-                {showAllahumaBarik ? (
-                  <span className="bg-gold-gradient bg-clip-text text-transparent">
-                    Allahuma Barik
-                  </span>
-                ) : isSaved ? (
-                  t('actions.saved')
-                ) : (
-                  t('actions.save')
-                )}
-              </button>
+                onHoverEnd={() => setIsHovered(false)}
+                onHoverStart={() => setIsHovered(true)}
+              />
 
               {/* Share Button */}
               <button
@@ -746,30 +811,21 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               </div>
             ) : (
               <div className="flex gap-4">
-                <button
-                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 px-6 font-inter-tight font-medium transition-colors ${
-                    showAllahumaBarik
-                      ? 'border border-[#D2B581] bg-white'
-                      : isSaved
-                      ? 'bg-[#589D96] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={handleBookmarkAction}
-                >
-                  <Icon
-                    className={`h-5 w-5 ${showAllahumaBarik ? 'text-[#D2B581]' : ''}`}
-                    icon={isSaved ? 'iconamoon:heart-fill' : 'iconamoon:heart'}
+                <div className="flex-1">
+                  <BookmarkButton
+                    className="h-auto"
+                    isHovered={isHovered}
+                    isTransiting={isTransiting}
+                    savedText={t('actions.saved')}
+                    saveText={t('actions.save')}
+                    shouldAnimateFill={shouldAnimateFill}
+                    state={getButtonState()}
+                    wasBookmarked={wasBookmarked}
+                    onClick={handleBookmarkAction}
+                    onHoverEnd={() => setIsHovered(false)}
+                    onHoverStart={() => setIsHovered(true)}
                   />
-                  {showAllahumaBarik ? (
-                    <span className="bg-gold-gradient bg-clip-text text-transparent">
-                      Allahuma Barik
-                    </span>
-                  ) : isSaved ? (
-                    t('actions.saved')
-                  ) : (
-                    t('actions.save')
-                  )}
-                </button>
+                </div>
                 <button
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 px-6 font-inter-tight font-medium text-gray-700 hover:bg-gray-50"
                   onClick={handleShareAction}

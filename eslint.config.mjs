@@ -140,6 +140,7 @@ const eslintConfig = [
       'scripts/**/*.js',
       'scripts/**/*.ts',
       'next-env.d.ts', // Next.js generated file
+      'Figma_imports/**', // Figma reference files, not part of the app
     ],
   },
 
@@ -177,6 +178,18 @@ const eslintConfig = [
       '@typescript-eslint/no-unused-vars': 'warn',
       'react/jsx-sort-props': 'off', // Not critical for test utilities
       '@typescript-eslint/no-dynamic-delete': 'warn',
+    },
+  },
+
+  // Debug pages overrides - relax rules for development/debug pages
+  {
+    files: ['**/app/(debug)/**/*.tsx', '**/app/(debug)/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn', // Debug pages may need 'any'
+      '@typescript-eslint/no-unused-vars': 'warn', // Debug variables may be unused
+      '@typescript-eslint/no-require-imports': 'warn', // Debug pages may use require
+      'react/jsx-sort-props': 'warn', // Not critical for debug pages
+      'react/no-unescaped-entities': 'warn', // Debug content may have quotes
     },
   },
 ];
