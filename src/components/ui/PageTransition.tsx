@@ -35,6 +35,11 @@ export function PageTransition({ children }: PageTransitionProps) {
         className="flex-1 flex flex-col"
         exit={{ opacity: 0 }}
         initial={{ opacity: 1 }}
+        style={{
+          // Ensure backdrop-filter works on fixed headers by not creating a transform context
+          // Only animate opacity, avoid any transform that creates stacking context
+          willChange: 'opacity',
+        }}
         transition={{ duration: 0.15, ease: 'easeOut' }}
       >
         <Suspense fallback={<LoadingPlaceholder />}>

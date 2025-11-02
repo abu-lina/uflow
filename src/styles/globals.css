@@ -377,7 +377,13 @@
   }
   
   .header-gradient {
-    background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%);
+    background: linear-gradient(180deg, rgba(245, 245, 245, 0.85) 0%, rgba(251, 251, 251, 0.85) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    /* Fallback for devices that don't support backdrop-filter */
+    @supports not (backdrop-filter: blur(20px)) {
+      background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%);
+    }
   }
   
   /* Responsive page container utilities - cleaner alternative to long Tailwind responsive strings */

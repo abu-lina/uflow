@@ -95,7 +95,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     useEffect(() => {
       // Only sync when not in a transition to prevent state conflicts
       if (!isTransiting && !isAnimating && !showAllahumaBarik && !isLoading) {
-        setBookmarked(isBookmarked);
+      setBookmarked(isBookmarked);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isBookmarked]);
@@ -163,7 +163,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
             }, 50);
           } catch (error) {
             console.error('Error toggling bookmark:', error);
-            setShowAllahumaBarik(false);
+          setShowAllahumaBarik(false);
             setIsAnimating(false);
             setIsTransiting(false);
           }
@@ -173,13 +173,13 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
         setWasBookmarked(true);
         // If already bookmarked, hide Allahuma Barik and toggle off
         setShowAllahumaBarik(false);
-        setIsLoading(true);
-        try {
-          await handleOptimisticBookmark();
-        } catch (error) {
-          console.error('Error toggling bookmark:', error);
-        } finally {
-          setIsLoading(false);
+      setIsLoading(true);
+      try {
+        await handleOptimisticBookmark();
+      } catch (error) {
+        console.error('Error toggling bookmark:', error);
+      } finally {
+        setIsLoading(false);
           setWasBookmarked(false);
         }
       }
@@ -449,7 +449,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                             </div>
                           </div>
                         </div>
-                      </div>
+                    </div>
                     ) : (
                       <motion.div
                         key="speichern"
@@ -464,7 +464,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                           willChange: 'transform',
                         }}
                         transition={{ duration: 0.3, ease: 'easeOut' }}
-                      >
+                >
                         <div 
                           className="relative rounded-[9.6px] size-full overflow-hidden"
                           style={{
@@ -526,7 +526,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                           </motion.div>
                         </div>
                       </motion.div>
-                    )}
+                  )}
                 </motion.div>
               </div>
                 {!hideWebsiteButton && (
