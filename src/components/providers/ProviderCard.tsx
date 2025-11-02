@@ -342,6 +342,11 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                     className="size-full cursor-pointer relative"
                     style={{ 
                       pointerEvents: (isLoading || isAnimating) ? 'none' : 'auto',
+                      WebkitTapHighlightColor: 'transparent',
+                      WebkitTouchCallout: 'none',
+                      WebkitTransform: 'translateZ(0)',
+                      transform: 'translateZ(0)',
+                      willChange: 'transform',
                     }}
                     transition={{ duration: 0.15 }}
                     whileTap={{ scale: 0.98 }}
@@ -361,6 +366,10 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                       style={{
                         background: '#49837D',
                         borderRadius: displayBookmarked ? '9.6px' : '12px',
+                        WebkitTransform: 'translateZ(0)',
+                        transform: 'translateZ(0)',
+                        WebkitBackfaceVisibility: 'hidden',
+                        backfaceVisibility: 'hidden',
                       }}
                       transition={{ duration: 0.1 }}
                     />
@@ -396,6 +405,11 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                             isolation: 'isolate',
                             WebkitBackfaceVisibility: 'hidden',
                             backfaceVisibility: 'hidden',
+                            WebkitTransform: 'translateZ(0)',
+                            transform: 'translateZ(0)',
+                            willChange: 'transform',
+                            WebkitMaskImage: '-webkit-radial-gradient(white, white)',
+                            maskImage: 'radial-gradient(white, white)',
                           }}
                         >
                           <div 

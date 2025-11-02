@@ -56,6 +56,9 @@ export function BookmarkButton({
           pointerEvents: state === 'loading' ? 'none' : 'auto',
           WebkitTapHighlightColor: 'transparent',
           WebkitTouchCallout: 'none',
+          WebkitTransform: 'translateZ(0)',
+          transform: 'translateZ(0)',
+          willChange: 'transform',
         }}
         transition={{ duration: 0.15 }}
         whileTap={{ scale: 0.98 }}
@@ -71,6 +74,10 @@ export function BookmarkButton({
           style={{
             background: COLORS.mintPressed,
             borderRadius: state === 'saved' ? '9.6px' : '12px',
+            WebkitTransform: 'translateZ(0)',
+            transform: 'translateZ(0)',
+            WebkitBackfaceVisibility: 'hidden',
+            backfaceVisibility: 'hidden',
           }}
           transition={{ duration: 0.1 }}
         />
@@ -118,6 +125,11 @@ export function BookmarkButton({
                   isolation: 'isolate',
                   WebkitBackfaceVisibility: 'hidden',
                   backfaceVisibility: 'hidden',
+                  WebkitTransform: 'translateZ(0)',
+                  transform: 'translateZ(0)',
+                  willChange: 'transform',
+                  WebkitMaskImage: '-webkit-radial-gradient(white, white)',
+                  maskImage: 'radial-gradient(white, white)',
                 }}
               >
                 <div
