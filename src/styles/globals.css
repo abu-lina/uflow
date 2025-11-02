@@ -599,6 +599,14 @@
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   
+  /* Footer top padding: 8px on devices without safe area (iPhone SE), 16px on devices with safe area (iPhone 15 Pro) */
+  .pt-footer-safe {
+    /* Base 8px padding, scales to 16px when safe area exists */
+    /* Safe area top typically 59px on iPhone 15 Pro, so 8px / 59px ≈ 0.1356 */
+    /* We round to 0.14 for a cleaner value, ensuring 8px minimum and 16px maximum */
+    padding-top: clamp(8px, calc(8px + env(safe-area-inset-top) * 0.14), 16px);
+  }
+  
   /* Mobile navigation with safe area support */
   .mobile-nav-height {
     /* Ensures minimum 12px padding on all devices */

@@ -87,7 +87,7 @@ export function MobileFooterBar() {
     <>
       <nav
         ref={navRef}
-        className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] items-center justify-center bg-white px-6 pt-2 pb-safe drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center bg-white px-6 pt-footer-safe pb-safe drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
       >
         <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
           {navItems.map((item) => (
