@@ -150,6 +150,7 @@ export const shouldShowMobileFooter = (
   // Page patterns that should not show the footer
   const footerExcludedPatterns = [
     '/providers/', // Provider detail pages
+    '/community-services/', // Community service detail pages
     '/profile/providers/', // Profile provider detail pages
     '/create/media/images',
     '/create/media/social',

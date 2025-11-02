@@ -61,7 +61,7 @@ export default function QuickCreatePage() {
       street: instagramData.businessAddress || '',
       city: '',
       zip: '',
-      country: 'Deutschland',
+      country: '',
     });
 
     // Navigate to review page

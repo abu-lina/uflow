@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { AddressAutocomplete, type AddressComponents } from '@/components/ui/AddressAutocomplete';
+import { validateAddress, validateZipCode } from '@/utils/addressValidation';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
@@ -16,12 +18,26 @@ export default function LocationPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [checked, setChecked] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
+  const [validationErrors, setValidationErrors] = useState<{
+    street?: string;
+    zip?: string;
+    city?: string;
+    country?: string;
+  }>({});
   const lastScrollY = useRef(0);
   const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
+  
+  // Show manual fields if user has already entered data manually, or if they want to edit
+  // Must be initialized AFTER formData is available
+  const [showManualFields, setShowManualFields] = useState(() => {
+    // Check if user manually entered data (not from autocomplete)
+    const hasManualData = !!(formData.street || formData.city || formData.zip || formData.country);
+    return hasManualData;
+  });
 
   // Steps with translations
   const STEPS = [
@@ -125,9 +141,36 @@ export default function LocationPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Store initial address value in a ref to avoid any memoization issues
+  // Must be initialized AFTER formData is available
+  const initialAddressValueRef = useRef({
+    city: formData.city || '',
+    country: formData.country || '',
+    street: formData.street || '',
+    zip: formData.zip || '',
+  });
+  
+  // Note: We no longer auto-hide manual fields after autocomplete
+  // User can manually toggle via the "Edit fields" button
+
+  // Handle address autocomplete selection - completely stable callback
+  const handleAddressSelect = useCallback((address: AddressComponents) => {
+    // Call directly - updateFormData is stable (useCallback with empty deps)
+    updateFormData({
+      city: address.city,
+      country: address.country,
+      street: address.street,
+      zip: address.zip,
+    });
+    
+    // Clear validation errors after auto-fill
+    setValidationErrors({});
+    // Keep manual fields hidden after autocomplete (user can click "Edit fields" to show them)
+  }, [updateFormData]); // Only updateFormData is stable
+
   // Loading state
   if (!checked || isLoading) {
-    return <div className="p-8 text-center">Lädt...</div>;
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
   // Desktop redirect
@@ -135,7 +178,7 @@ export default function LocationPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <span className="text-lg text-gray-500">
-          Bitte nutze die Mobile-Ansicht für die Adresseingabe.
+          {t('create.location.desktopMessage')}
         </span>
       </div>
     );
@@ -146,19 +189,19 @@ export default function LocationPage() {
     const returnUrl = encodeURIComponent('/create/location');
     return (
       <div className="relative flex w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-        <PageHeader isVisible={true} title="Standort" />
+        <PageHeader isVisible={true} title={t('create.location.title')} />
         <HeaderSpacer isVisible={true} />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col items-center justify-center px-safe-24 pt-20 mobile-nav-spacing">
           <span className="text-center text-lg text-content-title mb-6">
-            Du musst angemeldet sein, um einen Standort anzugeben.
+            {t('create.location.loginRequired')}
           </span>
           <button
             className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 font-semibold text-base text-white transition-colors hover:bg-primary-dark"
             onClick={() => router.push(`/login?returnUrl=${returnUrl}`)}
           >
-            Zur Anmeldung
+            {t('create.location.goToLogin')}
           </button>
         </div>
       </div>
@@ -166,7 +209,59 @@ export default function LocationPage() {
   }
 
   const handleSave = () => {
-    router.push('/create/contact');
+    // Validate and set errors only when clicking the button
+    const validation = validateAddress({
+      street: formData.street,
+      zip: formData.zip,
+      city: formData.city,
+      country: formData.country,
+      isOnlineBusiness: formData.isOnlineBusiness,
+    });
+
+    setValidationErrors(validation.errors);
+    
+    if (validation.isValid || formData.isOnlineBusiness) {
+      router.push('/create/contact');
+    }
+  };
+
+  // Validate form fields
+  const validateField = (field: 'street' | 'zip' | 'city' | 'country') => {
+    const validation = validateAddress({
+      street: formData.street,
+      zip: formData.zip,
+      city: formData.city,
+      country: formData.country,
+      isOnlineBusiness: formData.isOnlineBusiness,
+    });
+
+    if (validation.errors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: validation.errors[field] }));
+    } else {
+      setValidationErrors(prev => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [field]: _unused, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  // Validate ZIP code based on country
+  const handleZipChange = (value: string) => {
+    updateFormData({ zip: value });
+    
+    if (value && formData.country) {
+      const zipError = validateZipCode(value, formData.country);
+      if (zipError) {
+        setValidationErrors(prev => ({ ...prev, zip: t('create.location.invalidZipCode') }));
+      } else {
+        setValidationErrors(prev => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { zip: _unused, ...rest } = prev;
+          return rest;
+        });
+      }
+    }
   };
 
   const isFormValid = () => {
@@ -174,15 +269,25 @@ export default function LocationPage() {
     if (formData.isOnlineBusiness) {
       return true;
     }
-    // Otherwise, city and country are required
-    return formData.city && formData.country;
+    
+    // Validate all fields
+    const validation = validateAddress({
+      street: formData.street,
+      zip: formData.zip,
+      city: formData.city,
+      country: formData.country,
+      isOnlineBusiness: formData.isOnlineBusiness,
+    });
+
+    // DON'T set validation errors here - it causes infinite loop when called during render
+    return validation.isValid;
   };
 
   return (
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader
         isVisible={isHeaderSticky}
-        title="Standort"
+        title={t('create.location.title')}
         variant="back-and-title"
         onBack="/create/basics"
       />
@@ -199,7 +304,7 @@ export default function LocationPage() {
           {/* Subtitle */}
           <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
             <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
-              Gib deinen Standort an, damit andere dich finden können.
+              {t('create.location.description')}
             </p>
           </div>
 
@@ -207,10 +312,10 @@ export default function LocationPage() {
           <div className="flex items-center justify-between w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3">
             <div className="flex flex-col">
               <span className="text-sm font-medium text-[#272727]">
-                Online-Geschäft
+                {t('create.location.onlineBusiness')}
               </span>
               <span className="text-xs text-[#7A7A7A]">
-                Kein physischer Standort
+                {t('create.location.noPhysicalLocation')}
               </span>
             </div>
             <button
@@ -243,104 +348,164 @@ export default function LocationPage() {
           {/* Form Fields */}
           {!formData.isOnlineBusiness ? (
             <div className="flex flex-col gap-4 w-full">
-              {/* Street */}
+              {/* Address Autocomplete */}
+              <div className="flex flex-col gap-1">
+                <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                  <AddressAutocomplete
+                    className="flex-1"
+                    initialValue={initialAddressValueRef.current}
+                    placeholder={t('create.location.enterAddress')}
+                    onAddressSelect={handleAddressSelect}
+                  />
+                </div>
+                {validationErrors.street && (
+                  <p className="text-xs text-red-500 px-3">{validationErrors.street}</p>
+                )}
+                {!validationErrors.street && (
+                  <div className="flex items-center justify-between px-3 py-1">
+                    <p className="text-xs text-[#7A7A7A]">{t('create.location.addressAutoFill')}</p>
+                    {!showManualFields ? (
+                      <button
+                        className="text-xs text-[#589D96] hover:underline cursor-pointer z-10 relative"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowManualFields(true);
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        {t('create.location.editFields')}
+                      </button>
+                    ) : (
+                      <button
+                        className="text-xs text-[#7A7A7A] hover:underline cursor-pointer z-10 relative"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowManualFields(false);
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        {t('create.location.hideFields')}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Manual Fields - Collapsible */}
+              {showManualFields && (
+                <div className="flex flex-col gap-4 pt-2 border-t border-gray-100">
+                  {/* Street */}
               <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                 <div className="flex w-full flex-col gap-1">
                   <label className="text-xs leading-[15px] text-[#999999]">
-                    Straße
+                    {t('create.location.street')}
                   </label>
                   <input
                     className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    placeholder="Straße eingeben"
+                    placeholder={t('create.location.enterStreet')}
                     type="text"
                     value={formData.street}
-                    onChange={(e) => updateFormData({ street: e.target.value })}
+                    onChange={(e) => {
+                      updateFormData({ street: e.target.value });
+                      validateField('street');
+                    }}
                   />
                 </div>
               </div>
+              {validationErrors.street && (
+                <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.street}</p>
+              )}
 
               {/* ZIP */}
               <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                 <div className="flex w-full flex-col gap-1">
                   <label className="text-xs leading-[15px] text-[#999999]">
-                    PLZ
+                    {t('create.location.zip')}
                   </label>
                   <input
                     className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    placeholder="PLZ eingeben"
+                    placeholder={t('create.location.enterZip')}
                     type="text"
                     value={formData.zip}
-                    onChange={(e) => updateFormData({ zip: e.target.value })}
+                    onChange={(e) => handleZipChange(e.target.value)}
                   />
                 </div>
               </div>
+              {validationErrors.zip && (
+                <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.zip}</p>
+              )}
 
               {/* City */}
               <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                 <div className="flex w-full flex-col gap-1">
                   <label className="text-xs leading-[15px] text-[#999999]">
-                    Stadt *
+                    {t('create.location.city')}
                   </label>
                   <input
                     required
                     className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    placeholder="Stadt eingeben"
+                    placeholder={t('create.location.enterCity')}
                     type="text"
                     value={formData.city}
-                    onChange={(e) => updateFormData({ city: e.target.value })}
+                    onChange={(e) => {
+                      updateFormData({ city: e.target.value });
+                      validateField('city');
+                    }}
                   />
                 </div>
               </div>
+              {validationErrors.city && (
+                <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.city}</p>
+              )}
 
               {/* Country */}
               <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                 <div className="flex w-full flex-col gap-1">
                   <label className="text-xs leading-[15px] text-[#999999]">
-                    Land *
+                    {t('create.location.country')}
                   </label>
                   <input
                     required
                     className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    placeholder="Land eingeben"
+                    placeholder={t('create.location.enterCountry')}
                     type="text"
                     value={formData.country}
-                    onChange={(e) => updateFormData({ country: e.target.value })}
+                    onChange={(e) => {
+                      updateFormData({ country: e.target.value });
+                      validateField('country');
+                      // Re-validate ZIP when country changes
+                      if (formData.zip) {
+                        handleZipChange(formData.zip);
+                      }
+                    }}
                   />
                 </div>
               </div>
+              {validationErrors.country && (
+                <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.country}</p>
+              )}
+                </div>
+              )}
 
-              {/* Show Address Toggle */}
-              <div className="flex items-center justify-between w-full py-2">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-[#272727]">
-                    Adresse anzeigen
-                  </span>
-                  <span className="text-xs text-[#7A7A7A]">
-                    Andere können deine Adresse sehen
-                  </span>
-                </div>
-                <button
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
-                    formData.showAddress ? 'bg-[#589D96]' : 'bg-gray-200'
-                  }`}
-                  onClick={() => updateFormData({ showAddress: !formData.showAddress })}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.showAddress ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#D4D4D4] bg-white">
               <Icon className="h-12 w-12 text-[#589D96] mb-3" icon="mdi:web" />
               <p className="text-sm font-medium text-[#272727] text-center mb-1">
-                Online-Geschäft
+                {t('create.location.onlineBusiness')}
               </p>
               <p className="text-xs text-[#7A7A7A] text-center">
-                Dein Geschäft wird als &ldquo;Online&rdquo; angezeigt
+                {t('create.location.onlineBusinessDisplay')}
               </p>
             </div>
           )}
@@ -363,7 +528,7 @@ export default function LocationPage() {
             onClick={handleSave}
           >
             <span className="text-base font-medium text-white leading-[19px]">
-              Weiter
+              {t('common.next')}
             </span>
             <Icon className="h-6 w-6 text-white" icon="lucide:chevron-right" />
           </button>

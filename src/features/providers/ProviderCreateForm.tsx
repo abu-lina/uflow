@@ -29,7 +29,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
   const [needs, setNeeds] = useState<Need[]>([]);
   const { user } = useAuth();
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Steps with translations
   const STEPS = [
@@ -357,7 +357,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                 {/* Explanatory Text */}
                 <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
                   <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
-                    Gib die grundlegenden Informationen zu deinem Angebot ein.
+                    {t('create.basics.description')}
                   </p>
                 </div>
                 
@@ -365,14 +365,14 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                   {/* First Name Field */}
                   <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Titel *</span>
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.basics.titleLabel')}</span>
                       <input
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-              placeholder="Titel eingeben"
+                        placeholder={t('create.basics.titlePlaceholder')}
                         type="text"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-            />
+                        value={formData.title}
+                        onChange={(e) => handleInputChange('title', e.target.value)}
+                      />
                     </div>
                   </div>
 
@@ -383,13 +383,17 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     onClick={() => router.push('/create/basics/category')}
                   >
                     <div className="flex flex-1 flex-col gap-1 items-start">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Kategorie *</span>
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.basics.categoryLabel')}</span>
                       <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left">
                         {formData.category 
-                          ? categories.find(cat => cat.category_id === formData.category)?.name_de || 
-                            categories.find(cat => cat.category_id === formData.category)?.name_en || 
-                            'Kategorie auswählen'
-                          : 'Kategorie auswählen'
+                          ? (() => {
+                              const category = categories.find(cat => cat.category_id === formData.category);
+                              if (!category) return t('create.basics.selectCategory');
+                              return language === 'en' 
+                                ? (category.name_en || category.name_de || t('create.basics.selectCategory'))
+                                : (category.name_de || category.name_en || t('create.basics.selectCategory'));
+                            })()
+                          : t('create.basics.selectCategory')
                         }
                       </div>
                     </div>
@@ -403,11 +407,16 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     onClick={() => router.push('/create/basics/offers')}
                   >
                     <div className="flex flex-1 flex-col gap-1 items-start">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Was biete ich? *</span>
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.basics.whatIOffer')}</span>
                       <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
                         {formData.offers_ids.length > 0 
-                          ? formData.offers_ids.map(id => offers.find(offer => offer.offer_id === id)?.name_de).filter(Boolean).join(', ')
-                          : 'Angebote auswählen'
+                          ? formData.offers_ids.map(id => {
+                              const offer = offers.find(offer => offer.offer_id === id);
+                              return language === 'en' 
+                                ? (offer?.name_en || offer?.name_de)
+                                : (offer?.name_de || offer?.name_en);
+                            }).filter(Boolean).join(', ')
+                          : t('create.basics.selectOffers')
                         }
                       </div>
                     </div>
@@ -423,11 +432,16 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     onClick={() => router.push('/create/basics/needs')}
                   >
                     <div className="flex flex-1 flex-col gap-1 items-start">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Was suche ich?</span>
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.basics.whatILookingFor')}</span>
                       <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
                         {formData.needs_ids.length > 0 
-                          ? formData.needs_ids.map(id => needs.find(need => need.need_id === id)?.name_de).filter(Boolean).join(', ')
-                          : 'Gesuche auswählen'
+                          ? formData.needs_ids.map(id => {
+                              const need = needs.find(need => need.need_id === id);
+                              return language === 'en' 
+                                ? (need?.name_en || need?.name_de)
+                                : (need?.name_de || need?.name_en);
+                            }).filter(Boolean).join(', ')
+                          : t('create.basics.selectNeeds')
                         }
                       </div>
                     </div>
@@ -706,13 +720,13 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     <>
                       <Icon className="h-6 w-6 text-white" icon="lucide:user-plus" />
                       <span className="text-base font-medium text-white leading-[19px]">
-                        Anbieter registrieren
+                        {t('create.basics.registerProvider')}
                       </span>
                     </>
                   ) : (
                     <>
                       <span className="text-base font-medium text-white leading-[19px]">
-                        Weiter
+                        {t('common.next')}
                       </span>
                       <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
                     </>

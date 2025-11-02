@@ -140,7 +140,17 @@ export const ar = {
       loginRequired: "تسجيل الدخول مطلوب",
       loginDescription: "يجب أن تكون مسجلاً للدخول لإنشاء عرض.",
       goToLogin: "الذهاب لتسجيل الدخول",
-      desktopMessage: "يرجى استخدام العرض المحمول لإنشاء العروض."
+      desktopMessage: "يرجى استخدام العرض المحمول لإنشاء العروض.",
+      description: "أدخل المعلومات الأساسية حول عرضك.",
+      titleLabel: "العنوان *",
+      titlePlaceholder: "أدخل العنوان",
+      categoryLabel: "الفئة *",
+      selectCategory: "اختر الفئة",
+      whatIOffer: "ماذا أقدم؟ *",
+      selectOffers: "اختر العروض",
+      whatILookingFor: "ماذا أبحث؟",
+      selectNeeds: "اختر الاحتياجات",
+      registerProvider: "تسجيل مزود"
     },
     steps: {
       basics: "الأساسيات",
@@ -148,12 +158,89 @@ export const ar = {
       contact: "الاتصال",
       media: "الوسائط"
     },
+    location: {
+      title: "الموقع",
+      description: "أدخل موقعك حتى يتمكن الآخرون من العثور عليك.",
+      loginRequired: "يجب أن تكون مسجلاً للدخول لتوفير موقع.",
+      goToLogin: "الذهاب لتسجيل الدخول",
+      desktopMessage: "يرجى استخدام العرض المحمول لإدخال العنوان.",
+      onlineBusiness: "عمل إلكتروني",
+      noPhysicalLocation: "لا يوجد موقع فعلي",
+      onlineBusinessDisplay: "سيتم عرض عملك كـ \"إلكتروني\"",
+      street: "الشارع",
+      enterStreet: "أدخل الشارع",
+      zip: "الرمز البريدي",
+      enterZip: "أدخل الرمز البريدي",
+      city: "المدينة *",
+      enterCity: "أدخل المدينة",
+      country: "الدولة *",
+      enterCountry: "أدخل الدولة",
+      showAddress: "إظهار العنوان",
+      othersCanSeeAddress: "يمكن للآخرين رؤية عنوانك",
+      enterAddress: "ابدأ بكتابة عنوان...",
+      typeToSearch: "اكتب 3 أحرف على الأقل للبحث",
+      invalidZipCode: "تنسيق الرمز البريدي غير صحيح",
+      cityRequired: "المدينة مطلوبة",
+      countryRequired: "الدولة مطلوبة",
+      addressAutoFill: "سيتم ملء حقول العنوان تلقائياً",
+      editFields: "إظهار الحقول",
+      hideFields: "إخفاء الحقول"
+    },
+    contact: {
+      title: "جهة الاتصال",
+      description: "أدخل معلومات الاتصال الخاصة بك (جميع الحقول اختيارية).",
+      loginRequired: "يجب أن تكون مسجلاً للدخول لتوفير معلومات الاتصال.",
+      goToLogin: "الذهاب لتسجيل الدخول",
+      desktopMessage: "يرجى استخدام العرض المحمول لمعلومات الاتصال.",
+      website: "الموقع الإلكتروني",
+      websitePlaceholder: "https://example.com",
+      instagram: "إنستغرام",
+      instagramPlaceholder: "@اسم_المستخدم",
+      phone: "الهاتف",
+      phonePlaceholder: "+966 123 456 789",
+      email: "البريد الإلكتروني",
+      emailPlaceholder: "email@example.com"
+    },
+    media: {
+      title: "الوسائط",
+      images: "الصور",
+      uploadImages: "رفع الصور",
+      imagesSelected: "{{count}} صورة محددة",
+      imagesSelectedCount: "{{count}} صورة محددة",
+      selectedImages: "الصور المحددة",
+      noImagesSelected: "لم يتم تحديد صور بعد",
+      clickToUpload: "انقر على \"رفع الصور\" للبدء",
+      socialInitiatives: "المبادرات الاجتماعية",
+      socialInitiativesTitle: "المبادرات الاجتماعية",
+      socialInitiativesDescription: "اختر المبادرات الاجتماعية التي تدعمها. بمجرد أن تتحقق الأطراف المسؤولة عن المبادرات من ذلك، سيتم ربط عرضك بالمبادرات.",
+      searchInitiatives: "البحث في المبادرات",
+      selectInitiatives: "اختر المبادرات",
+      initiativesSelected: "{{count}} مبادرة محددة",
+      noProjectsFound: "لم يتم العثور على مشاريع",
+      noDonationProjectsAvailable: "لا توجد مشاريع تبرع متاحة",
+      creating: "جارٍ الإنشاء...",
+      registerProvider: "تسجيل العرض",
+      registerCommunityService: "تسجيل خدمة المجتمع",
+      save: "حفظ",
+      errorCreating: "خطأ في الإنشاء. يرجى المحاولة مرة أخرى.",
+      mustBeLoggedIn: "يجب أن تكون مسجلاً للدخول لإنشاء إدخال.",
+      communityServiceCreated: "تم إنشاء خدمة المجتمع بنجاح!",
+      providerCreated: "تم إنشاء المزود بنجاح!",
+      loadingFormData: "جارٍ تحميل بيانات النموذج...",
+      contactAdminToAddProjects: "اتصل بالمسؤول لإضافة المشاريع",
+      selected: "محدد"
+    },
     category: {
       searchPlaceholder: "البحث عن فئة...",
       loading: "جاري التحميل...",
       redirecting: "جاري التوجيه...",
       noResults: "لم يتم العثور على فئات",
-      noResultsDescription: "جرب مصطلح بحث مختلف"
+      noResultsDescription: "جرب مصطلح بحث مختلف",
+      selectCategory: "اختر الفئة",
+      searchCategories: "البحث في الفئات",
+      searchDescription: "ابحث عن فئة مناسبة لتسهيل العثور عليك - إن شاء الله.",
+      loadingCategories: "جاري تحميل الفئات...",
+      desktopMessage: "يرجى استخدام العرض المحمول لاختيار الفئة."
     }
   },
   saved: {
@@ -188,6 +275,10 @@ export const ar = {
     emailFailedToast: "لا يمكن إرسال البريد",
     emailFailedDescription: "يرجى المحاولة مرة أخرى أو الاتصال بالدعم.",
     errorOccurredToast: "حدث خطأ",
-    errorOccurredDescription: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."
+    errorOccurredDescription: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    afterConfirmationLogin: "تسجيل الدخول بعد التأكيد"
+  },
+  signup: {
+    afterConfirmationLogin: "تسجيل الدخول بعد التأكيد"
   }
 } as const;

@@ -44,7 +44,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
     street: provider.address_street || '',
     zipCode: provider.address_zip || '',
     city: provider.address_city || '',
-    country: provider.address_country || 'Deutschland',
+    country: provider.address_country || '',
     isOnlineBusiness: !provider.address_city && !provider.address_zip, // If no address, assume online
     showAddress: provider.show_address !== undefined ? provider.show_address : true,
     website: provider.social_website || '',

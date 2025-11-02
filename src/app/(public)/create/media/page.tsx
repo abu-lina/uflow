@@ -78,8 +78,10 @@ export default function MediaUploadPage() {
             const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
             const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
             
-            // Ignore tiny scroll movements to prevent jitter
-            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+            // Always show header when at the top (regardless of scroll direction)
+            if (currentScrollY <= SCROLL_THRESHOLD) {
+              setIsHeaderSticky(true);
+              lastScrollY.current = currentScrollY;
               ticking = false;
               return;
             }
@@ -90,12 +92,14 @@ export default function MediaUploadPage() {
               return;
             }
             
-            // Always show header when at the top
-            if (currentScrollY <= SCROLL_THRESHOLD) {
-              setIsHeaderSticky(true);
+            // Ignore tiny scroll movements to prevent jitter
+            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+              ticking = false;
+              return;
             }
+            
             // Hide when scrolling down (past threshold)
-            else if (scrollDifference > 0) {
+            if (scrollDifference > 0) {
               setIsHeaderSticky(false);
             }
             // Show when scrolling up (past threshold)
@@ -127,7 +131,7 @@ export default function MediaUploadPage() {
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#589D96] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading form data...</p>
+          <p className="text-gray-600">{t('create.media.loadingFormData')}</p>
         </div>
       </div>
     );
@@ -137,7 +141,7 @@ export default function MediaUploadPage() {
   const handleSave = async () => {
     if (!user) {
       console.error('User not authenticated');
-      toast.error('Sie müssen angemeldet sein, um einen Eintrag zu erstellen.');
+      toast.error(t('create.media.mustBeLoggedIn'));
       return;
     }
 
@@ -218,7 +222,7 @@ export default function MediaUploadPage() {
         }
 
         
-        toast.success('Gemeinschaftsdienst erfolgreich erstellt!');
+        toast.success(t('create.media.communityServiceCreated'));
         
       } else {
         // Create provider
@@ -276,7 +280,7 @@ export default function MediaUploadPage() {
           }
         }
         
-        toast.success('Anbieter erfolgreich erstellt!');
+        toast.success(t('create.media.providerCreated'));
       }
 
       // Clear form data and redirect
@@ -290,7 +294,7 @@ export default function MediaUploadPage() {
       
     } catch (error) {
       console.error('Error creating entity:', error);
-      toast.error('Fehler beim Erstellen. Bitte versuchen Sie es erneut.');
+      toast.error(t('create.media.errorCreating'));
     } finally {
       setIsSubmitting(false);
     }
@@ -300,7 +304,7 @@ export default function MediaUploadPage() {
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader
         isVisible={isHeaderSticky}
-        title="Media"
+        title={t('create.media.title')}
         variant="back-and-title"
         onBack="/create/contact"
       />
@@ -319,11 +323,6 @@ export default function MediaUploadPage() {
           <div className="flex flex-col items-start p-0 gap-8 w-full flex-none order-1 flex-grow-0">
             {/* personalData */}
             <div className="flex flex-col items-start p-0 gap-4 w-full flex-none order-0 self-stretch flex-grow-0">
-              {/* Media */}
-              <div className="w-full font-inter-tight font-medium text-xl leading-6 text-[#232323] flex-none order-0 self-stretch flex-grow-0">
-                Media
-              </div>
-              
               {/* input */}
               <div className="flex flex-col items-start p-0 gap-3 w-full flex-none order-1 self-stretch flex-grow-0">
                 {/* Account - Navigate to Images */}
@@ -332,9 +331,11 @@ export default function MediaUploadPage() {
                   onClick={() => router.push('/create/media/images')}
                 >
                   <div className="flex flex-1 flex-col gap-1 items-start">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Bilder</span>
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.media.images')}</span>
                     <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
-                      {formData.images && formData.images.length > 0 ? `${formData.images.length} Bilder ausgewählt` : 'Bilder hochladen'}
+                      {formData.images && formData.images.length > 0 
+                        ? t('create.media.imagesSelected').replace('{{count}}', formData.images.length.toString())
+                        : t('create.media.uploadImages')}
                     </div>
                   </div>
                   <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
@@ -349,11 +350,11 @@ export default function MediaUploadPage() {
                     onClick={() => router.push('/create/media/social')}
                   >
                     <div className="flex flex-1 flex-col gap-1 items-start">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">Soziale Initiativen</span>
+                      <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.media.socialInitiatives')}</span>
                       <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
                         {(formData.selectedCommunityServiceIds || []).length > 0 
-                          ? `${(formData.selectedCommunityServiceIds || []).length} Initiativen ausgewählt` 
-                          : 'Initiativen auswählen'}
+                          ? t('create.media.initiativesSelected').replace('{{count}}', (formData.selectedCommunityServiceIds || []).length.toString())
+                          : t('create.media.selectInitiatives')}
                       </div>
                     </div>
                     <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
@@ -383,7 +384,11 @@ export default function MediaUploadPage() {
           >
             <Icon className="h-6 w-6 text-white" icon={isSubmitting ? "lucide:loader-2" : "lucide:save"} />
             <span className="text-base font-medium text-white leading-[19px]">
-              {isSubmitting ? 'Erstelle...' : `${isCommunityService ? 'Gemeinschaftsdienst' : 'Angebot'} registrieren`}
+              {isSubmitting 
+                ? t('create.media.creating')
+                : isCommunityService 
+                  ? t('create.media.registerCommunityService')
+                  : t('create.media.registerProvider')}
             </span>
           </button>
         </div>

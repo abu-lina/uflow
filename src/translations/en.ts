@@ -148,7 +148,17 @@ export const en = {
       loginRequired: "Login required",
       loginDescription: "You must be logged in to create an offer.",
       goToLogin: "Go to login",
-      desktopMessage: "Please use the mobile view for offer creation."
+      desktopMessage: "Please use the mobile view for offer creation.",
+      description: "Enter the basic information about your offer.",
+      titleLabel: "Title *",
+      titlePlaceholder: "Enter title",
+      categoryLabel: "Category *",
+      selectCategory: "Select category",
+      whatIOffer: "What do I offer? *",
+      selectOffers: "Select offers",
+      whatILookingFor: "What am I looking for?",
+      selectNeeds: "Select needs",
+      registerProvider: "Register provider"
     },
     steps: {
       basics: "Basics",
@@ -156,12 +166,89 @@ export const en = {
       contact: "Contact",
       media: "Media"
     },
+    location: {
+      title: "Location",
+      description: "Enter your location so others can find you.",
+      loginRequired: "You must be logged in to provide a location.",
+      goToLogin: "Go to login",
+      desktopMessage: "Please use the mobile view for address entry.",
+      onlineBusiness: "Online business",
+      noPhysicalLocation: "No physical location",
+      onlineBusinessDisplay: "Your business will be displayed as \"Online\"",
+      street: "Street",
+      enterStreet: "Enter street",
+      zip: "ZIP",
+      enterZip: "Enter ZIP",
+      city: "City *",
+      enterCity: "Enter city",
+      country: "Country *",
+      enterCountry: "Enter country",
+      showAddress: "Show address",
+      othersCanSeeAddress: "Others can see your address",
+      enterAddress: "Start typing an address...",
+      typeToSearch: "Type at least 3 characters to search",
+      invalidZipCode: "Invalid postal code format",
+      cityRequired: "City is required",
+      countryRequired: "Country is required",
+      addressAutoFill: "Address fields will be auto-filled",
+      editFields: "Show fields",
+      hideFields: "Hide fields"
+    },
+    contact: {
+      title: "Contact",
+      description: "Enter your contact information (all fields are optional).",
+      loginRequired: "You must be logged in to provide contact information.",
+      goToLogin: "Go to login",
+      desktopMessage: "Please use the mobile view for contact information.",
+      website: "Website",
+      websitePlaceholder: "https://example.com",
+      instagram: "Instagram",
+      instagramPlaceholder: "@username",
+      phone: "Phone",
+      phonePlaceholder: "+1 234 567890",
+      email: "Email",
+      emailPlaceholder: "email@example.com"
+    },
+    media: {
+      title: "Media",
+      images: "Images",
+      uploadImages: "Upload images",
+      imagesSelected: "{{count}} images selected",
+      imagesSelectedCount: "{{count}} images selected",
+      selectedImages: "Selected images",
+      noImagesSelected: "No images selected yet",
+      clickToUpload: "Click \"Upload images\" to get started",
+      socialInitiatives: "Social initiatives",
+      socialInitiativesTitle: "Social initiatives",
+      socialInitiativesDescription: "Select social initiatives you support. Once the responsible parties of the initiatives verify this, your offer will be linked with the initiatives.",
+      searchInitiatives: "Search initiatives",
+      selectInitiatives: "Select initiatives",
+      initiativesSelected: "{{count}} initiatives selected",
+      noProjectsFound: "No projects found",
+      noDonationProjectsAvailable: "No donation projects available",
+      creating: "Creating...",
+      registerProvider: "Register offer",
+      registerCommunityService: "Register community service",
+      save: "Save",
+      errorCreating: "Error creating. Please try again.",
+      mustBeLoggedIn: "You must be logged in to create an entry.",
+      communityServiceCreated: "Community service created successfully!",
+      providerCreated: "Provider created successfully!",
+      loadingFormData: "Loading form data...",
+      contactAdminToAddProjects: "Contact an administrator to add projects",
+      selected: "selected"
+    },
     category: {
       searchPlaceholder: "Search category...",
       loading: "Loading...",
       redirecting: "Redirecting...",
       noResults: "No categories found",
-      noResultsDescription: "Try a different search term"
+      noResultsDescription: "Try a different search term",
+      selectCategory: "Select category",
+      searchCategories: "Search categories",
+      searchDescription: "Search for a suitable category to be found more easily - inshaAllah.",
+      loadingCategories: "Loading categories...",
+      desktopMessage: "Please use the mobile view for category selection."
     }
   },
   saved: {
@@ -196,6 +283,10 @@ export const en = {
     emailFailedToast: "Email could not be sent",
     emailFailedDescription: "Please try again or contact support.",
     errorOccurredToast: "Error occurred",
-    errorOccurredDescription: "An unexpected error occurred. Please try again."
+    errorOccurredDescription: "An unexpected error occurred. Please try again.",
+    afterConfirmationLogin: "Login after confirmation"
+  },
+  signup: {
+    afterConfirmationLogin: "Login after confirmation"
   }
 } as const;

@@ -148,7 +148,17 @@ export const de = {
       loginRequired: "Anmeldung erforderlich",
       loginDescription: "Du musst angemeldet sein, um ein Angebot zu erstellen.",
       goToLogin: "Zur Anmeldung",
-      desktopMessage: "Bitte nutze die Mobile-Ansicht für die Angebotserstellung."
+      desktopMessage: "Bitte nutze die Mobile-Ansicht für die Angebotserstellung.",
+      description: "Gib die grundlegenden Informationen zu deinem Angebot ein.",
+      titleLabel: "Titel *",
+      titlePlaceholder: "Titel eingeben",
+      categoryLabel: "Kategorie *",
+      selectCategory: "Kategorie auswählen",
+      whatIOffer: "Was biete ich? *",
+      selectOffers: "Angebote auswählen",
+      whatILookingFor: "Was suche ich?",
+      selectNeeds: "Gesuche auswählen",
+      registerProvider: "Anbieter registrieren"
     },
     steps: {
       basics: "Basics",
@@ -156,12 +166,89 @@ export const de = {
       contact: "Contact",
       media: "Media"
     },
+    location: {
+      title: "Standort",
+      description: "Gib deinen Standort an, damit andere dich finden können.",
+      loginRequired: "Du musst angemeldet sein, um einen Standort anzugeben.",
+      goToLogin: "Zur Anmeldung",
+      desktopMessage: "Bitte nutze die Mobile-Ansicht für die Adresseingabe.",
+      onlineBusiness: "Online-Geschäft",
+      noPhysicalLocation: "Kein physischer Standort",
+      onlineBusinessDisplay: "Dein Geschäft wird als \"Online\" angezeigt",
+      street: "Straße",
+      enterStreet: "Straße eingeben",
+      zip: "PLZ",
+      enterZip: "PLZ eingeben",
+      city: "Stadt *",
+      enterCity: "Stadt eingeben",
+      country: "Land *",
+      enterCountry: "Land eingeben",
+      showAddress: "Adresse anzeigen",
+      othersCanSeeAddress: "Andere können deine Adresse sehen",
+      enterAddress: "Beginne eine Adresse einzutippen...",
+      typeToSearch: "Tippe mindestens 3 Zeichen zum Suchen",
+      invalidZipCode: "Ungültiges Postleitzahlenformat",
+      cityRequired: "Stadt ist erforderlich",
+      countryRequired: "Land ist erforderlich",
+      addressAutoFill: "Adressfelder werden automatisch ausgefüllt",
+      editFields: "Felder anzeigen",
+      hideFields: "Felder ausblenden"
+    },
+    contact: {
+      title: "Kontakt",
+      description: "Gib deine Kontaktinformationen an (alle Felder sind optional).",
+      loginRequired: "Du musst angemeldet sein, um Kontaktinformationen anzugeben.",
+      goToLogin: "Zur Anmeldung",
+      desktopMessage: "Bitte nutze die Mobile-Ansicht für die Kontaktinformationen.",
+      website: "Website",
+      websitePlaceholder: "https://example.com",
+      instagram: "Instagram",
+      instagramPlaceholder: "@username",
+      phone: "Telefon",
+      phonePlaceholder: "+49 123 456789",
+      email: "E-Mail",
+      emailPlaceholder: "email@example.com"
+    },
+    media: {
+      title: "Media",
+      images: "Bilder",
+      uploadImages: "Bilder hochladen",
+      imagesSelected: "{{count}} Bilder ausgewählt",
+      imagesSelectedCount: "{{count}} Bilder ausgewählt",
+      selectedImages: "Ausgewählte Bilder",
+      noImagesSelected: "Noch keine Bilder ausgewählt",
+      clickToUpload: "Klicke auf \"Bilder hochladen\" um zu beginnen",
+      socialInitiatives: "Soziale Initiativen",
+      socialInitiativesTitle: "Soziale Initiativen",
+      socialInitiativesDescription: "Wähle soziale Initiativen aus, die du unterstützt. Sobald die Verantwortlichen der Initiativen dies verifiziert haben, wird dein Angebot mit der Initiativen verknüpft.",
+      searchInitiatives: "Initiativen durchsuchen",
+      selectInitiatives: "Initiativen auswählen",
+      initiativesSelected: "{{count}} Initiativen ausgewählt",
+      noProjectsFound: "Keine Projekte gefunden",
+      noDonationProjectsAvailable: "Keine Spenden-Projekte verfügbar",
+      creating: "Erstelle...",
+      registerProvider: "Angebot registrieren",
+      registerCommunityService: "Gemeinschaftsdienst registrieren",
+      save: "Speichern",
+      errorCreating: "Fehler beim Erstellen. Bitte versuchen Sie es erneut.",
+      mustBeLoggedIn: "Sie müssen angemeldet sein, um einen Eintrag zu erstellen.",
+      communityServiceCreated: "Gemeinschaftsdienst erfolgreich erstellt!",
+      providerCreated: "Anbieter erfolgreich erstellt!",
+      loadingFormData: "Lade Formulardaten...",
+      contactAdminToAddProjects: "Kontaktieren Sie einen Administrator, um Projekte hinzuzufügen",
+      selected: "ausgewählt"
+    },
     category: {
       searchPlaceholder: "Kategorie suchen...",
       loading: "Lädt...",
       redirecting: "Weiterleitung...",
       noResults: "Keine Kategorien gefunden",
-      noResultsDescription: "Versuche einen anderen Suchbegriff"
+      noResultsDescription: "Versuche einen anderen Suchbegriff",
+      selectCategory: "Kategorie auswählen",
+      searchCategories: "Kategorien durchsuchen",
+      searchDescription: "Suche eine passende Kategorie aus, um leichter gefunden zu werden - inshaAllah.",
+      loadingCategories: "Lade Kategorien...",
+      desktopMessage: "Bitte nutze die Mobile-Ansicht für die Kategorieauswahl."
     }
   },
   saved: {
@@ -196,6 +283,10 @@ export const de = {
     emailFailedToast: "E-Mail konnte nicht gesendet werden",
     emailFailedDescription: "Bitte versuche es erneut oder kontaktiere den Support.",
     errorOccurredToast: "Fehler aufgetreten",
-    errorOccurredDescription: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut."
+    errorOccurredDescription: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.",
+    afterConfirmationLogin: "Nach Bestätigung anmelden"
+  },
+  signup: {
+    afterConfirmationLogin: "Nach Bestätigung anmelden"
   }
 } as const;

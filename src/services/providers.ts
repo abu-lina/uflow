@@ -83,12 +83,13 @@ type SearchStrategy = 'providers_only' | 'community_services_only' | 'both';
 /**
  * Determines the search strategy based on category
  */
-function getSearchStrategy(category: string): SearchStrategy {
+function getSearchStrategy(category: string | null | undefined): SearchStrategy {
+  // If no category or "All"/"Alle", search both providers and community services
+  if (!category || category === CATEGORY_IDS.ALL || category === 'All' || category === 'Alle') {
+    return 'both';
+  }
   if (category === CATEGORY_IDS.GEMEINSCHAFT_SPENDEN) {
     return 'community_services_only';
-  }
-  if (category === CATEGORY_IDS.ALL) {
-    return 'both';
   }
   return 'providers_only';
 }
@@ -177,23 +178,25 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
  */
 export async function searchProvidersAndCommunityServices(
   query: string,
-  category: string,
+  category: string | null | undefined,
   location: string,
   page: number = 0,
   pageSize: number = 5,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const strategy = getSearchStrategy(category);
+  // Normalize category: convert null/undefined to empty string, which is handled as "all" by search functions
+  const normalizedCategory = category || '';
   
   switch (strategy) {
     case 'community_services_only':
-      return await searchCommunityServicesOnly(query, category, location, page, pageSize);
+      return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
     
     case 'both':
-      return await searchBoth(query, category, location, page, pageSize);
+      return await searchBoth(query, normalizedCategory, location, page, pageSize);
     
     case 'providers_only':
     default:
-      return await searchProvidersOnly(query, category, location, page, pageSize);
+      return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize);
   }
 }
 

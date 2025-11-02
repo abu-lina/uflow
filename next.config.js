@@ -63,6 +63,7 @@ function buildCsp() {
       'https://api.unisvg.com',
       'https://api.simplesvg.com',
       'https://*.supabase.co',
+      'https://nominatim.openstreetmap.org',
       isDev ? 'http://localhost:*' : null,
       isDev ? 'http://127.0.0.1:*' : null,
       isDev ? 'ws://localhost:*' : null,

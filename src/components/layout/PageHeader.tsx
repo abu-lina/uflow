@@ -117,9 +117,15 @@ export function PageHeader({
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out md:hidden ${
+      className={`fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out md:hidden ${
         isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       } ${className}`}
+      style={{
+        background: 'linear-gradient(180deg, rgba(245, 245, 245, 0.85) 0%, rgba(251, 251, 251, 0.85) 100%)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        isolation: 'isolate',
+      }}
     >
       <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
         {/* Back Button */}

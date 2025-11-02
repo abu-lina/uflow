@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
 import { getCategories } from '@/services/categories';
 import { shouldCreateCommunityService } from '@/utils/categoryUtils';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function SelectCategoryPage() {
   const [isMobile, setIsMobile] = useState(false);
@@ -24,6 +25,7 @@ export default function SelectCategoryPage() {
   const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const check = () => {
@@ -130,14 +132,14 @@ export default function SelectCategoryPage() {
   }, []);
 
   if (!checked) {
-    return <div className="p-8 text-center">Lädt...</div>;
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
   if (!isMobile) {
     return (
       <div className="flex h-screen items-center justify-center">
         <span className="text-lg text-gray-500">
-          Bitte nutze die Mobile-Ansicht für die Kategorieauswahl.
+          {t('create.category.desktopMessage')}
         </span>
       </div>
     );
@@ -173,7 +175,7 @@ export default function SelectCategoryPage() {
           {/* Title */}
           <div className="flex flex-1 items-start">
             <h1 className="text-xl font-semibold text-title leading-[29px]">
-              Kategorie auswählen
+              {t('create.category.selectCategory')}
             </h1>
           </div>
         </div>
@@ -195,7 +197,7 @@ export default function SelectCategoryPage() {
               inputClassName="text-xs font-normal text-[#7C7C7C] leading-[15px] placeholder:text-[#7C7C7C] h-full"
               label=""
               labelClassName="hidden"
-              placeholder="Kategorien durchsuchen"
+              placeholder={t('create.category.searchCategories')}
               rightIcon={<Icon className="h-6 w-6 text-[#1B1D1D]" icon="material-symbols:search" />}
               type="text"
               value={searchQuery}
@@ -206,7 +208,7 @@ export default function SelectCategoryPage() {
             {/* Subtitle */}
             <div className="w-full">
               <p className="text-sm font-normal text-[#7A7A7A] leading-[17px]">
-                Suche eine passende Kategorie aus, um leichter gefunden zu werden - inshaAllah.
+                {t('create.category.searchDescription')}
               </p>
             </div>
           </div>
@@ -215,7 +217,7 @@ export default function SelectCategoryPage() {
           <div className="flex-1 space-y-2">
             {categoriesLoading ? (
               <div className="flex h-32 items-center justify-center">
-                <span className="text-gray-500">Lade Kategorien...</span>
+                <span className="text-gray-500">{t('create.category.loadingCategories')}</span>
               </div>
             ) : (
               filteredCategories.map((category) => (
@@ -270,7 +272,7 @@ export default function SelectCategoryPage() {
           >
             <Icon className="h-6 w-6 text-white" icon="lucide:save" />
             <span className="text-base font-medium text-white leading-[19px]">
-              Speichern
+              {t('actions.save')}
             </span>
           </button>
         </div>

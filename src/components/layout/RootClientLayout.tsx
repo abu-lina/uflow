@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingProvider } from '@/providers/LoadingProvider';
 import { useSplash } from '@/providers/splash-provider';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { shouldShowMobileFooter, shouldShowSubpageAction, getPageType } from '@/utils/navigationUtils';
 
 interface RootClientLayoutProps {
@@ -22,6 +23,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { isSplashVisible } = useSplash();
+  const { t } = useLanguage();
   const mainRef = useRef<HTMLElement>(null);
 
   // Use utility functions for cleaner logic
@@ -77,7 +79,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
               >
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-base font-medium text-white leading-[19px]">
-                    {pathname === '/signup/check-email' ? 'Nach Bestätigung anmelden' : 'Weiter'}
+                    {pathname === '/signup/check-email' ? t('signup.afterConfirmationLogin') : t('common.next')}
                   </span>
                   <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
                 </div>

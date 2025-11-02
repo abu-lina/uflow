@@ -92,8 +92,10 @@ export default function SocialProjectPage() {
             const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
             const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
             
-            // Ignore tiny scroll movements to prevent jitter
-            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+            // Always show header when at the top (regardless of scroll direction)
+            if (currentScrollY <= SCROLL_THRESHOLD) {
+              setIsHeaderSticky(true);
+              lastScrollY.current = currentScrollY;
               ticking = false;
               return;
             }
@@ -104,12 +106,14 @@ export default function SocialProjectPage() {
               return;
             }
             
-            // Always show header when at the top
-            if (currentScrollY <= SCROLL_THRESHOLD) {
-              setIsHeaderSticky(true);
+            // Ignore tiny scroll movements to prevent jitter
+            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
+              ticking = false;
+              return;
             }
+            
             // Hide when scrolling down (past threshold)
-            else if (scrollDifference > 0) {
+            if (scrollDifference > 0) {
               setIsHeaderSticky(false);
             }
             // Show when scrolling up (past threshold)
@@ -175,7 +179,7 @@ export default function SocialProjectPage() {
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader
         isVisible={isHeaderSticky}
-        title="Soziale Initiativen"
+        title={t('create.media.socialInitiativesTitle')}
         variant="back-and-title"
         onBack="/create/media"
       />
@@ -187,7 +191,7 @@ export default function SocialProjectPage() {
 
           <section className="w-full">
             <p className="font-normal text-base text-[#7A7A7A] px-3">
-              Wähle soziale Initiativen aus, die du unterstützt. Sobald die Verantwortlichen der Initiativen dies verifiziert haben, wird dein Angebot mit der Initiativen verknüpft.
+              {t('create.media.socialInitiativesDescription')}
             </p>
           </section>
 
@@ -196,7 +200,7 @@ export default function SocialProjectPage() {
               <Icon className="h-5 w-5 text-[#999999]" icon="lucide:search" />
               <input
                 className="flex-1 border-none bg-transparent text-[15px] font-medium text-[#272727] focus:outline-none focus:ring-0"
-                placeholder="Initiativen durchsuchen"
+                placeholder={t('create.media.searchInitiatives')}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -237,11 +241,11 @@ export default function SocialProjectPage() {
               <div className="flex flex-col items-center justify-center py-8">
                 <Icon className="h-12 w-12 text-gray-300 mb-4" icon="lucide:search-x" />
                 <p className="text-sm text-gray-500">
-                  {searchQuery ? 'Keine Projekte gefunden' : 'Keine Spenden-Projekte verfügbar'}
+                  {searchQuery ? t('create.media.noProjectsFound') : t('create.media.noDonationProjectsAvailable')}
                 </p>
                 {!searchQuery && (
                   <p className="text-xs text-gray-400 mt-2">
-                    Kontaktieren Sie einen Administrator, um Projekte hinzuzufügen
+                    {t('create.media.contactAdminToAddProjects')}
                   </p>
                 )}
               </div>
@@ -268,8 +272,8 @@ export default function SocialProjectPage() {
             <Icon className="h-6 w-6 text-white" icon="lucide:save" />
             <span className="text-base font-medium text-white leading-[19px]">
               {(formData.selectedCommunityServiceIds || []).length > 0 
-                ? `${(formData.selectedCommunityServiceIds || []).length} ausgewählt` 
-                : 'Speichern'}
+                ? `${(formData.selectedCommunityServiceIds || []).length} ${t('create.media.selected')}` 
+                : t('create.media.save')}
             </span>
           </button>
         </div>

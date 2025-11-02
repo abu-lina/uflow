@@ -118,7 +118,7 @@ export default function ContactPage() {
 
   // Loading state
   if (isLoading) {
-    return <div className="p-8 text-center">Lädt...</div>;
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
   // Desktop redirect
@@ -126,7 +126,7 @@ export default function ContactPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <span className="text-lg text-gray-500">
-          Bitte nutze die Mobile-Ansicht für die Kontaktinformationen.
+          {t('create.contact.desktopMessage')}
         </span>
       </div>
     );
@@ -137,19 +137,19 @@ export default function ContactPage() {
     const returnUrl = encodeURIComponent('/create/contact');
     return (
       <div className="relative flex w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-        <PageHeader isVisible={true} title="Kontakt" />
+        <PageHeader isVisible={true} title={t('create.contact.title')} />
         <HeaderSpacer isVisible={true} />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col items-center justify-center px-safe-24 pt-20 mobile-nav-spacing">
           <span className="text-center text-lg text-content-title mb-6">
-            Du musst angemeldet sein, um Kontaktinformationen anzugeben.
+            {t('create.contact.loginRequired')}
           </span>
           <button
             className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 font-semibold text-base text-white transition-colors hover:bg-primary-dark"
             onClick={() => router.push(`/login?returnUrl=${returnUrl}`)}
           >
-            Zur Anmeldung
+            {t('create.contact.goToLogin')}
           </button>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default function ContactPage() {
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader
         isVisible={isHeaderSticky}
-        title="Kontakt"
+        title={t('create.contact.title')}
         variant="back-and-title"
         onBack="/create/location"
       />
@@ -181,7 +181,7 @@ export default function ContactPage() {
           {/* Subtitle */}
           <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
             <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
-              Gib deine Kontaktinformationen an (alle Felder sind optional).
+              {t('create.contact.description')}
             </p>
           </div>
 
@@ -191,11 +191,11 @@ export default function ContactPage() {
             <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
               <div className="flex w-full flex-col gap-1">
                 <label className="text-xs leading-[15px] text-[#999999]">
-                  Website
+                  {t('create.contact.website')}
                 </label>
                 <input
                   className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder="https://example.com"
+                  placeholder={t('create.contact.websitePlaceholder')}
                   type="url"
                   value={formData.website}
                   onChange={(e) => updateFormData({ website: e.target.value })}
@@ -207,11 +207,11 @@ export default function ContactPage() {
             <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
               <div className="flex w-full flex-col gap-1">
                 <label className="text-xs leading-[15px] text-[#999999]">
-                  Instagram
+                  {t('create.contact.instagram')}
                 </label>
                 <input
                   className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder="@username"
+                  placeholder={t('create.contact.instagramPlaceholder')}
                   type="text"
                   value={formData.instagram}
                   onChange={(e) => updateFormData({ instagram: e.target.value })}
@@ -223,11 +223,11 @@ export default function ContactPage() {
             <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
               <div className="flex w-full flex-col gap-1">
                 <label className="text-xs leading-[15px] text-[#999999]">
-                  Telefon
+                  {t('create.contact.phone')}
                 </label>
                 <input
                   className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder="+49 123 456789"
+                  placeholder={t('create.contact.phonePlaceholder')}
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => updateFormData({ phone: e.target.value })}
@@ -239,11 +239,11 @@ export default function ContactPage() {
             <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
               <div className="flex w-full flex-col gap-1">
                 <label className="text-xs leading-[15px] text-[#999999]">
-                  E-Mail
+                  {t('create.contact.email')}
                 </label>
                 <input
                   className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder="email@example.com"
+                  placeholder={t('create.contact.emailPlaceholder')}
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateFormData({ email: e.target.value })}
@@ -265,7 +265,7 @@ export default function ContactPage() {
             onClick={handleSave}
           >
             <span className="text-base font-medium text-white leading-[19px]">
-              Weiter
+              {t('common.next')}
             </span>
             <Icon className="h-6 w-6 text-white" icon="lucide:chevron-right" />
           </button>

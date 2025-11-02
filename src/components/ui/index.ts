@@ -3,6 +3,8 @@ export { EmptyState } from './EmptyState';
 export { FormInput } from './FormInput';
 export { FormInputGroup } from './FormInputGroup';
 export { Icon } from './Icon';
+export { AddressAutocomplete } from './AddressAutocomplete';
+export type { AddressComponents } from './AddressAutocomplete';
 export { IconButton } from './IconButton';
 export { IconWithTitle } from './IconWithTitle';
 export { LinkButton } from './LinkButton';

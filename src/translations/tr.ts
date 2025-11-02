@@ -140,7 +140,17 @@ export const tr = {
       loginRequired: "Giriş gerekli",
       loginDescription: "Teklif oluşturmak için giriş yapmış olmalısınız.",
       goToLogin: "Girişe git",
-      desktopMessage: "Lütfen teklif oluşturmak için mobil görünümü kullanın."
+      desktopMessage: "Lütfen teklif oluşturmak için mobil görünümü kullanın.",
+      description: "Teklifinizle ilgili temel bilgileri girin.",
+      titleLabel: "Başlık *",
+      titlePlaceholder: "Başlık girin",
+      categoryLabel: "Kategori *",
+      selectCategory: "Kategori seç",
+      whatIOffer: "Ne sunuyorum? *",
+      selectOffers: "Teklifler seç",
+      whatILookingFor: "Ne arıyorum?",
+      selectNeeds: "İhtiyaçlar seç",
+      registerProvider: "Sağlayıcı kaydet"
     },
     steps: {
       basics: "Temel Bilgiler",
@@ -148,12 +158,89 @@ export const tr = {
       contact: "İletişim",
       media: "Medya"
     },
+    location: {
+      title: "Konum",
+      description: "Başkalarının sizi bulabilmesi için konumunuzu girin.",
+      loginRequired: "Konum sağlamak için giriş yapmış olmalısınız.",
+      goToLogin: "Girişe git",
+      desktopMessage: "Lütfen adres girişi için mobil görünümü kullanın.",
+      onlineBusiness: "Çevrimiçi işletme",
+      noPhysicalLocation: "Fiziksel konum yok",
+      onlineBusinessDisplay: "İşletmeniz \"Çevrimiçi\" olarak gösterilecek",
+      street: "Sokak",
+      enterStreet: "Sokak girin",
+      zip: "Posta Kodu",
+      enterZip: "Posta kodu girin",
+      city: "Şehir *",
+      enterCity: "Şehir girin",
+      country: "Ülke *",
+      enterCountry: "Ülke girin",
+      showAddress: "Adresi göster",
+      othersCanSeeAddress: "Başkaları adresinizi görebilir",
+      enterAddress: "Bir adres yazmaya başlayın...",
+      typeToSearch: "Aramak için en az 3 karakter yazın",
+      invalidZipCode: "Geçersiz posta kodu formatı",
+      cityRequired: "Şehir gerekli",
+      countryRequired: "Ülke gerekli",
+      addressAutoFill: "Adres alanları otomatik olarak doldurulacak",
+      editFields: "Alanları göster",
+      hideFields: "Alanları gizle"
+    },
+    contact: {
+      title: "İletişim",
+      description: "İletişim bilgilerinizi girin (tüm alanlar isteğe bağlıdır).",
+      loginRequired: "İletişim bilgisi sağlamak için giriş yapmış olmalısınız.",
+      goToLogin: "Girişe git",
+      desktopMessage: "Lütfen iletişim bilgileri için mobil görünümü kullanın.",
+      website: "Web sitesi",
+      websitePlaceholder: "https://example.com",
+      instagram: "Instagram",
+      instagramPlaceholder: "@kullanıcıadı",
+      phone: "Telefon",
+      phonePlaceholder: "+90 123 456 7890",
+      email: "E-posta",
+      emailPlaceholder: "email@example.com"
+    },
+    media: {
+      title: "Medya",
+      images: "Resimler",
+      uploadImages: "Resim yükle",
+      imagesSelected: "{{count}} resim seçildi",
+      imagesSelectedCount: "{{count}} resim seçildi",
+      selectedImages: "Seçilen resimler",
+      noImagesSelected: "Henüz resim seçilmedi",
+      clickToUpload: "Başlamak için \"Resim yükle\" seçeneğine tıklayın",
+      socialInitiatives: "Sosyal girişimler",
+      socialInitiativesTitle: "Sosyal girişimler",
+      socialInitiativesDescription: "Desteklediğiniz sosyal girişimleri seçin. Girişimlerin sorumlu tarafları bunu doğruladıktan sonra, teklifiniz girişimlerle bağlantılı olacaktır.",
+      searchInitiatives: "Girişimleri ara",
+      selectInitiatives: "Girişim seç",
+      initiativesSelected: "{{count}} girişim seçildi",
+      noProjectsFound: "Proje bulunamadı",
+      noDonationProjectsAvailable: "Bağış projesi mevcut değil",
+      creating: "Oluşturuluyor...",
+      registerProvider: "Teklif kaydet",
+      registerCommunityService: "Topluluk hizmeti kaydet",
+      save: "Kaydet",
+      errorCreating: "Oluşturulurken hata oluştu. Lütfen tekrar deneyin.",
+      mustBeLoggedIn: "Bir giriş oluşturmak için giriş yapmış olmalısınız.",
+      communityServiceCreated: "Topluluk hizmeti başarıyla oluşturuldu!",
+      providerCreated: "Sağlayıcı başarıyla oluşturuldu!",
+      loadingFormData: "Form verileri yükleniyor...",
+      contactAdminToAddProjects: "Proje eklemek için bir yöneticiyle iletişime geçin",
+      selected: "seçildi"
+    },
     category: {
       searchPlaceholder: "Kategori ara...",
       loading: "Yükleniyor...",
       redirecting: "Yönlendiriliyor...",
       noResults: "Kategori bulunamadı",
-      noResultsDescription: "Farklı bir arama terimi deneyin"
+      noResultsDescription: "Farklı bir arama terimi deneyin",
+      selectCategory: "Kategori seç",
+      searchCategories: "Kategorileri ara",
+      searchDescription: "Daha kolay bulunmak için uygun bir kategori seçin - inşallah.",
+      loadingCategories: "Kategoriler yükleniyor...",
+      desktopMessage: "Lütfen kategori seçimi için mobil görünümü kullanın."
     }
   },
   saved: {
@@ -188,6 +275,10 @@ export const tr = {
     emailFailedToast: "E-posta gönderilemedi",
     emailFailedDescription: "Lütfen tekrar deneyin veya destek ile iletişime geçin.",
     errorOccurredToast: "Hata oluştu",
-    errorOccurredDescription: "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+    errorOccurredDescription: "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+    afterConfirmationLogin: "Onay sonrası giriş yap"
+  },
+  signup: {
+    afterConfirmationLogin: "Onay sonrası giriş yap"
   }
 } as const;

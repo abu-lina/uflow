@@ -59,7 +59,7 @@ const initialFormData: ProviderFormData = {
   street: '',
   zip: '',
   city: '',
-  country: 'Deutschland',
+  country: '',
   showAddress: true,
   website: '',
   instagram: '',

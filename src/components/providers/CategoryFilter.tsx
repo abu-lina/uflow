@@ -152,7 +152,7 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
           whileTap={{ scale: 0.98 }}
           onClick={() => handleCategoryClick(null)}
         >
-          Alle
+          {t('search.all')}
           {!currentCategory && (
             <motion.div
               className="absolute -bottom-1 left-0 right-0 h-0.5"

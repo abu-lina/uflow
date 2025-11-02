@@ -146,7 +146,7 @@ export default function ImageUploadPage() {
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader
         isVisible={isHeaderSticky}
-        title="Bilder hochladen"
+        title={t('create.media.uploadImages')}
         variant="back-and-title"
         onBack="/create/media"
       />
@@ -182,7 +182,7 @@ export default function ImageUploadPage() {
                     icon="lucide:image-up" 
                   />
                   <span className="font-inter-tight font-semibold text-base leading-[19px] text-[#232323]">
-                    Bilder hochladen
+                    {t('create.media.uploadImages')}
                   </span>
                 </div>
               </button>
@@ -193,7 +193,7 @@ export default function ImageUploadPage() {
           {formData.images.length > 0 && (
             <div className="flex w-full flex-col gap-4">
               <h3 className="text-sm font-medium text-[#232323]">
-                Ausgewählte Bilder ({formData.images.length})
+                {t('create.media.selectedImages')} ({formData.images.length})
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {formData.images.map((file, index) => {
@@ -240,10 +240,10 @@ export default function ImageUploadPage() {
               <Icon className="h-16 w-16 text-gray-300" icon="lucide:image" />
               <div className="text-center">
                 <p className="text-sm text-gray-500 mb-2">
-                  Noch keine Bilder ausgewählt
+                  {t('create.media.noImagesSelected')}
                 </p>
                 <p className="text-xs text-gray-400">
-                  Klicke auf &quot;Bilder hochladen&quot; um zu beginnen
+                  {t('create.media.clickToUpload')}
                 </p>
               </div>
             </div>
