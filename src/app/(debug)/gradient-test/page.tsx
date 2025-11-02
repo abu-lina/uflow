@@ -25,8 +25,8 @@ export default function GradientTestPage() {
           <div className="bg-gray-50 p-6 rounded-lg">
             <h2 className="font-semibold mb-4">Test 1: Direct Gradient</h2>
             <div 
-              data-gradient-test="direct"
               className="w-full h-12 rounded-[12px] relative overflow-hidden"
+              data-gradient-test="direct"
               style={{
                 background: gradient,
               }}

@@ -63,12 +63,11 @@ export default function StyleCheckerPage() {
             >
               <AnimatePresence mode="wait">
                 <motion.div
+                  ref={gradientRef}
                   animate={{ opacity: 1, scale: 1 }}
                   className="size-full"
                   exit={{ opacity: 0, scale: 1.02 }}
                   initial={{ opacity: 0, scale: 0.98 }}
-                  key="barik"
-                  ref={gradientRef}
                   style={{ isolation: 'isolate' }}
                   transition={{ 
                     duration: 0.5, 

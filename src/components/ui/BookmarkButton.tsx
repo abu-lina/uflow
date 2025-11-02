@@ -177,10 +177,27 @@ export function BookmarkButton({
               className="size-full"
               exit={{ opacity: 0, scale: 0.97, zIndex: 0 }}
               initial={{ opacity: 0, scale: 0.97 }}
-              style={{ zIndex: 1 }}
+              style={{ 
+                zIndex: 1,
+                WebkitTransform: 'translateZ(0)',
+                transform: 'translateZ(0)',
+                willChange: 'transform',
+              }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <div className="relative rounded-[9.6px] size-full overflow-hidden">
+              <div 
+                className="relative rounded-[9.6px] size-full overflow-hidden"
+                style={{
+                  WebkitTransform: 'translateZ(0)',
+                  transform: 'translateZ(0)',
+                  willChange: 'transform',
+                  WebkitMaskImage: '-webkit-radial-gradient(white, white)',
+                  maskImage: 'radial-gradient(white, white)',
+                  isolation: 'isolate',
+                  WebkitBackfaceVisibility: 'hidden',
+                  backfaceVisibility: 'hidden',
+                }}
+              >
                 <motion.div
                   animate={{
                     opacity: 1,
@@ -188,6 +205,9 @@ export function BookmarkButton({
                   className="absolute inset-0"
                   style={{
                     background: COLORS.mint,
+                    borderRadius: '9.6px',
+                    WebkitTransform: 'translateZ(0)',
+                    transform: 'translateZ(0)',
                   }}
                   transition={{ duration: 0.5, ease: 'easeInOut' }}
                 />

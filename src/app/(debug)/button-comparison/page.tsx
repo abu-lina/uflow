@@ -1,13 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ORNAMENT_PATHS } from '@/constants/svg-paths';
 
 // Use our paths (Figma_imports excluded from build)
 const svgPathsBarik = ORNAMENT_PATHS;
-
-type ButtonState = "speichern" | "barik" | "gespeichert";
 
 // Our implementation
 function OurBarikButton() {

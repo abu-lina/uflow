@@ -86,11 +86,14 @@ const nextConfig = {
   // Docker/Standalone output for Hetzner deployment
   output: 'standalone',
   
-  // Cloudflare Pages optimization - use standard output for SSR
-  
-  // Optimize file tracing for Cloudflare Pages
+  // Optimize file tracing for standalone builds
   outputFileTracingIncludes: {
-    '/': ['./src/**/*'],
+    '/': ['./src/**/*', './public/**/*'],
+  },
+  
+  // Skip file tracing for routes that may not generate client reference manifests
+  outputFileTracingExcludes: {
+    '*': ['./node_modules/@swc/core*/**/*'],
   },
   
   experimental: {

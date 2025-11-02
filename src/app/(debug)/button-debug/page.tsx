@@ -71,8 +71,8 @@ export default function ButtonDebugPage() {
           <h2 className="text-xl font-semibold mb-4">Test 1: Static Gradient (No Animation)</h2>
           <div className="w-64 h-12 rounded-[12px] relative overflow-hidden">
             <div 
-              data-gradient-test="static"
               className="absolute inset-0"
+              data-gradient-test="static"
               style={{
                 background: gradientStyle,
               }}
@@ -95,8 +95,8 @@ export default function ButtonDebugPage() {
             >
               <div className="relative rounded-[12px] size-full overflow-hidden">
                 <div 
-                  data-gradient-test="motion-wrapper"
                   className="absolute inset-0"
+                  data-gradient-test="motion-wrapper"
                   style={{
                     background: gradientStyle,
                   }}
@@ -121,8 +121,8 @@ export default function ButtonDebugPage() {
             >
               <div className="relative rounded-[12px] size-full overflow-hidden">
                 <div 
-                  data-gradient-test="opacity-anim"
                   className="absolute inset-0"
+                  data-gradient-test="opacity-anim"
                   style={{
                     background: gradientStyle,
                   }}
@@ -170,7 +170,7 @@ export default function ButtonDebugPage() {
         <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
           <h3 className="font-semibold mb-3">🔍 Inspection Checklist:</h3>
           <ul className="list-disc list-inside space-y-1 text-sm">
-            <li>Check console for "GRADIENT DEBUG INFO"</li>
+            <li>Check console for &quot;GRADIENT DEBUG INFO&quot;</li>
             <li>Verify <code>opacity</code> is exactly 1</li>
             <li>Check parent chain - look for any opacity &lt; 1</li>
             <li>Inspect element in DevTools Elements tab</li>
