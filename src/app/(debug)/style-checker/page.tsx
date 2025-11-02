@@ -63,13 +63,13 @@ export default function StyleCheckerPage() {
             >
               <AnimatePresence mode="wait">
                 <motion.div
-                  key="barik"
                   animate={{ opacity: 1, scale: 1 }}
                   className="size-full"
                   exit={{ opacity: 0, scale: 1.02 }}
                   initial={{ opacity: 0, scale: 0.98 }}
+                  key="barik"
                   ref={gradientRef}
-                  style={{ isolation: "isolate" }}
+                  style={{ isolation: 'isolate' }}
                   transition={{ 
                     duration: 0.5, 
                     ease: [0.25, 0.1, 0.25, 1]
@@ -111,7 +111,7 @@ export default function StyleCheckerPage() {
           <ol className="list-decimal list-inside space-y-2 text-sm">
             <li>Open Browser DevTools (F12)</li>
             <li>Go to Console tab</li>
-            <li>Look for "=== GRADIENT COMPUTED STYLES ===" log</li>
+            <li>Look for &quot;=== GRADIENT COMPUTED STYLES ===&quot; log</li>
             <li>Check if <code>opacity</code> is exactly 1 (not 0.99 or similar)</li>
             <li>Check if <code>background-image</code> shows the correct gradient</li>
             <li>Check parent chain - if ANY parent has opacity &lt; 1, it dims the gradient</li>

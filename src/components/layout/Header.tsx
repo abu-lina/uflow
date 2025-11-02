@@ -2,14 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { ChevronDown } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
-import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { SignupModal } from '@/features/auth/components/SignupModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
@@ -117,9 +116,6 @@ export function Header() {
 
             {/* Right */}
             <div className="flex flex-row items-center gap-3">
-              {/* Language Switcher */}
-              <LanguageSwitcher variant="toggle" />
-              
               {loading ? (
                 <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-gray-100" />
               ) : user ? (
@@ -129,13 +125,7 @@ export function Header() {
                     className="flex items-center gap-1 rounded-full focus:outline-none"
                     onClick={() => setDropdownOpen((open) => !open)}
                   >
-                    <Image
-                      alt="Profil"
-                      className="rounded-full"
-                      height={32}
-                      src="/icons/icon-muslim.png"
-                      width={32}
-                    />
+                    <ProfileIcon className="shrink-0" isActive={dropdownOpen} />
                     <ChevronDown
                       aria-hidden="true"
                       className={`size-6 text-content transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}

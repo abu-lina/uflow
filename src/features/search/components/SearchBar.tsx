@@ -248,6 +248,9 @@ function SearchBarContent({
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsCategoryOpen(!isCategoryOpen);
+                    if (!isCategoryOpen) {
+                      setIsLocationOpen(false);
+                    }
                   }}
                 >
                   <span className="base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
@@ -273,6 +276,7 @@ function SearchBarContent({
                       onClick={() => {
                         setSelectedCategory(null);
                         setIsCategoryOpen(false);
+                        setIsLocationOpen(false);
                         // Call parent callback to handle category change
                         onCategoryChange?.(null);
                       }}
@@ -289,6 +293,7 @@ function SearchBarContent({
                           const newCategory = cat.category_id ?? null;
                           setSelectedCategory(newCategory);
                           setIsCategoryOpen(false);
+                          setIsLocationOpen(false);
                           // Call parent callback to handle category change
                           onCategoryChange?.(newCategory);
                         }}
@@ -314,6 +319,9 @@ function SearchBarContent({
               onClick={(e) => {
                 e.stopPropagation();
                 setIsLocationOpen(!isLocationOpen);
+                if (!isLocationOpen) {
+                  setIsCategoryOpen(false);
+                }
               }}
             >
               <span className="text-base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
@@ -340,6 +348,7 @@ function SearchBarContent({
                     onClick={() => {
                       setSelectedLocation(location);
                       setIsLocationOpen(false);
+                      setIsCategoryOpen(false);
                       // Call parent callback to handle location change
                       onLocationChange?.(location);
                     }}

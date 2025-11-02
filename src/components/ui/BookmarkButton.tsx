@@ -43,11 +43,19 @@ export function BookmarkButton({
   const { isPressed, ...pressedHandlers } = usePressedState();
 
   return (
-    <div className={`relative flex-1 h-12 ${className}`}>
+    <div 
+      className={`relative flex-1 h-12 ${className}`}
+      style={{
+        WebkitTapHighlightColor: 'transparent',
+        WebkitTouchCallout: 'none',
+      }}
+    >
       <motion.div
         className="size-full cursor-pointer relative"
         style={{
           pointerEvents: state === 'loading' ? 'none' : 'auto',
+          WebkitTapHighlightColor: 'transparent',
+          WebkitTouchCallout: 'none',
         }}
         transition={{ duration: 0.15 }}
         whileTap={{ scale: 0.98 }}
@@ -59,9 +67,10 @@ export function BookmarkButton({
         {/* Pressed state overlay */}
         <motion.div
           animate={{ opacity: isPressed ? 0.7 : 0 }}
-          className="absolute inset-0 rounded-[12px] z-10 pointer-events-none"
+          className="absolute inset-0 z-10 pointer-events-none"
           style={{
             background: COLORS.mintPressed,
+            borderRadius: state === 'saved' ? '9.6px' : '12px',
           }}
           transition={{ duration: 0.1 }}
         />
@@ -97,12 +106,25 @@ export function BookmarkButton({
         ) : state === 'saved' ? (
           <div
             className="size-full"
+            style={{
+              WebkitTapHighlightColor: 'transparent',
+              WebkitTouchCallout: 'none',
+            }}
           >
-              <div className="relative rounded-[9.6px] size-full overflow-hidden">
+              <div 
+                className="relative rounded-[9.6px] size-full overflow-hidden"
+                style={{
+                  backgroundColor: COLORS.mintPressed,
+                  isolation: 'isolate',
+                  WebkitBackfaceVisibility: 'hidden',
+                  backfaceVisibility: 'hidden',
+                }}
+              >
                 <div
                   className="absolute inset-0"
                   style={{
                     background: COLORS.mintPressed,
+                    borderRadius: '9.6px',
                     opacity: 1,
                   }}
                 />

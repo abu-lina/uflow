@@ -61,7 +61,7 @@ export default function ButtonDebugPage() {
   const gradientStyle = "linear-gradient(to right, #d2b581 4.348%, #e5d1a0 52.174%, #af8650 100%)";
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8" ref={testRef}>
+    <div ref={testRef} className="min-h-screen bg-gray-50 p-8">
       <h1 className="text-3xl font-bold mb-4">Button Gradient Debug Tool</h1>
       <p className="text-gray-600 mb-8">Open DevTools Console (F12) to see detailed inspection results</p>
       
@@ -91,7 +91,7 @@ export default function ButtonDebugPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="size-full"
               initial={{ opacity: 1, scale: 1 }}
-              style={{ isolation: "isolate" }}
+              style={{ isolation: 'isolate' }}
             >
               <div className="relative rounded-[12px] size-full overflow-hidden">
                 <div 
@@ -117,7 +117,7 @@ export default function ButtonDebugPage() {
               animate={{ opacity: 1 }}
               className="size-full"
               initial={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
             >
               <div className="relative rounded-[12px] size-full overflow-hidden">
                 <div 

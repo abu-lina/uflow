@@ -3,8 +3,7 @@
 import { useEffect } from 'react';
 import { motion } from 'motion/react';
 
-// Import gradient debug utility
-import '@/utils/gradient-debug';
+import { inspectGradient } from '@/utils/gradient-debug';
 
 export default function GradientTestPage() {
   useEffect(() => {
@@ -40,8 +39,8 @@ export default function GradientTestPage() {
               className="mt-2 text-sm text-blue-600 hover:underline"
               onClick={() => {
                 const el = document.querySelector('[data-gradient-test="direct"]');
-                if (typeof (window as any).inspectGradient === 'function') {
-                  (window as any).inspectGradient(el);
+                if (el && el instanceof HTMLElement) {
+                  inspectGradient(el);
                 }
               }}
             >
@@ -52,16 +51,16 @@ export default function GradientTestPage() {
           <div className="bg-gray-50 p-6 rounded-lg">
             <h2 className="font-semibold mb-4">Test 2: With Motion Animation</h2>
             <div className="w-full h-12">
-              <motion.div
-                animate={{ opacity: 1 }}
-                className="size-full rounded-[12px] relative overflow-hidden"
-                data-gradient-test="motion"
-                initial={{ opacity: 0 }}
-                style={{
-                  background: gradient,
-                }}
-                transition={{ duration: 0.5 }}
-              >
+            <motion.div
+              animate={{ opacity: 1 }}
+              className="size-full rounded-[12px] relative overflow-hidden"
+              data-gradient-test="motion"
+              initial={{ opacity: 0 }}
+              style={{
+                background: gradient,
+              }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            >
                 <div className="flex items-center justify-center h-full text-white font-medium">
                   Motion Gradient
                 </div>
@@ -71,8 +70,8 @@ export default function GradientTestPage() {
               className="mt-2 text-sm text-blue-600 hover:underline"
               onClick={() => {
                 const el = document.querySelector('[data-gradient-test="motion"]');
-                if (typeof (window as any).inspectGradient === 'function') {
-                  (window as any).inspectGradient(el);
+                if (el && el instanceof HTMLElement) {
+                  inspectGradient(el);
                 }
               }}
             >
@@ -114,7 +113,7 @@ export default function GradientTestPage() {
           <h3 className="font-semibold mb-3">🔍 How to Debug:</h3>
           <ol className="list-decimal list-inside space-y-2 text-sm">
             <li>Open DevTools Console (F12)</li>
-            <li>Click "Inspect in Console" button above any test gradient</li>
+            <li>Click &quot;Inspect in Console&quot; button above any test gradient</li>
             <li>Or manually: <code className="bg-blue-100 px-1 rounded">inspectGradient(element)</code></li>
             <li>Check the output for:
               <ul className="list-disc list-inside ml-6 mt-1">

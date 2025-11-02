@@ -175,7 +175,6 @@ function StaticBarikButton() {
 }
 
 export default function ButtonComparisonPage() {
-  const [buttonState, setButtonState] = useState<ButtonState>("barik");
 
   return (
     <div className="min-h-screen bg-white p-8">
@@ -196,9 +195,9 @@ export default function ButtonComparisonPage() {
           <div className="w-64 h-12">
             <motion.div
               animate={{ opacity: 1, scale: 1 }}
+              className="size-full"
               initial={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-              className="size-full"
             >
               <OurBarikButton />
             </motion.div>
@@ -211,9 +210,9 @@ export default function ButtonComparisonPage() {
           <div className="w-64 h-12">
             <motion.div
               animate={{ opacity: 1, scale: 1 }}
+              className="size-full"
               initial={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-              className="size-full"
             >
               <FigmaBarikButton />
             </motion.div>
@@ -229,9 +228,9 @@ export default function ButtonComparisonPage() {
               <div className="w-64 h-12">
                 <motion.div
                   animate={{ opacity: 1, scale: 1 }}
+                  className="size-full"
                   initial={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="size-full"
                 >
                   <OurBarikButton />
                 </motion.div>
@@ -242,9 +241,9 @@ export default function ButtonComparisonPage() {
               <div className="w-64 h-12">
                 <motion.div
                   animate={{ opacity: 1, scale: 1 }}
+                  className="size-full"
                   initial={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="size-full"
                 >
                   <FigmaBarikButton />
                 </motion.div>
@@ -279,7 +278,7 @@ export default function ButtonComparisonPage() {
           <br />
           1. Open browser DevTools (F12)
           <br />
-          2. Inspect the gradient div (the one with "absolute inset-0")
+          2. Inspect the gradient div (the one with &quot;absolute inset-0&quot;)
           <br />
           3. Check computed styles - look for:
           <br />

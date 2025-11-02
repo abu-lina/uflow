@@ -357,9 +357,10 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                     {/* Pressed state overlay */}
                     <motion.div
                       animate={{ opacity: isPressed ? 0.7 : 0 }}
-                      className="absolute inset-0 rounded-[12px] z-10 pointer-events-none"
+                      className="absolute inset-0 z-10 pointer-events-none"
                       style={{
                         background: '#49837D',
+                        borderRadius: displayBookmarked ? '9.6px' : '12px',
                       }}
                       transition={{ duration: 0.1 }}
                     />
@@ -383,12 +384,25 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                     ) : displayBookmarked ? (
                       <div
                         className="size-full"
+                        style={{
+                          WebkitTapHighlightColor: 'transparent',
+                          WebkitTouchCallout: 'none',
+                        }}
                       >
-                        <div className="relative rounded-[9.6px] size-full overflow-hidden">
+                        <div 
+                          className="relative rounded-[9.6px] size-full overflow-hidden"
+                          style={{
+                            backgroundColor: '#49837D',
+                            isolation: 'isolate',
+                            WebkitBackfaceVisibility: 'hidden',
+                            backfaceVisibility: 'hidden',
+                          }}
+                        >
                           <div 
                             className="absolute inset-0"
                             style={{
                               background: '#49837D',
+                              borderRadius: '9.6px',
                               opacity: 1,
                             }}
                           />
