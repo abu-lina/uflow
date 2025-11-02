@@ -61,21 +61,15 @@ export default function SelectOffersPage() {
     void fetchCategories();
   }, []);
 
-  // Load offers from database - only for the selected category
+  // Load offers from database - fetch ALL offers (from all categories and uncategorized)
   useEffect(() => {
     async function fetchOffers() {
-      if (!formData.category) {
-        setOffers([]);
-        return;
-      }
-
       setIsLoading(true);
       try {
-        // Only fetch offers that match the selected category
+        // Fetch ALL offers (from all categories and uncategorized)
         const { data, error } = await supabase
           .from('offers')
           .select('offer_id, name_de, name_en, created_at, updated_at, created_by, category_id')
-          .eq('category_id', formData.category)
           .order('name_de', { ascending: true });
         
         if (error) {
@@ -91,7 +85,7 @@ export default function SelectOffersPage() {
     }
     
     void fetchOffers();
-  }, [formData.category]);
+  }, []);
 
   // Load suggested offers when category changes
   useEffect(() => {
@@ -187,21 +181,27 @@ export default function SelectOffersPage() {
   // Get suggested offer IDs for filtering
   const suggestedOfferIds = new Set(suggestedOffers.map(o => o.offer_id));
   
-  // Get selected offers
+  // Get selected offers (from any category)
   const selectedOffers = offers.filter(offer => 
     formData.offers_ids.includes(offer.offer_id)
   );
   
-  // Split offers into suggested and other (excluding selected)
+  // Split suggested offers (excluding selected)
   const availableSuggestedOffers = suggestedOffers.filter(offer =>
     !formData.offers_ids.includes(offer.offer_id)
   );
   
-  // Other offers: exclude suggested/selected (all offers already filtered by category from fetch)
-  const otherOffers = offers.filter(offer => 
-    !suggestedOfferIds.has(offer.offer_id) 
-    && !formData.offers_ids.includes(offer.offer_id)
-  );
+  // Other offers: from other categories OR uncategorized (null category_id), excluding suggested/selected
+  const otherOffers = offers.filter(offer => {
+    const isFromOtherCategory = formData.category 
+      ? offer.category_id !== formData.category 
+      : true; // If no category selected, show all
+    const isUncategorized = offer.category_id === null;
+    const isNotSuggested = !suggestedOfferIds.has(offer.offer_id);
+    const isNotSelected = !formData.offers_ids.includes(offer.offer_id);
+    
+    return (isFromOtherCategory || isUncategorized) && isNotSuggested && isNotSelected;
+  });
   
   // Filter all lists based on search query
   const searchLower = searchQuery.toLowerCase().trim();
@@ -216,10 +216,10 @@ export default function SelectOffersPage() {
   );
 
   // Get all category-filtered offers (for search and similarity checks)
-  // This includes selected, suggested, and other offers that match the category
-  const categoryFilteredOffers = offers.filter(offer => 
-    formData.category ? offer.category_id === formData.category : true
-  );
+  // This includes all offers that match the selected category (for validation and auto-select)
+  const categoryFilteredOffers = formData.category 
+    ? offers.filter(offer => offer.category_id === formData.category)
+    : offers; // If no category, check all offers
 
   // Check if search query exactly matches any offer (only within category-filtered offers)
   const hasExactMatch = categoryFilteredOffers.some(offer => 
@@ -298,10 +298,13 @@ export default function SelectOffersPage() {
           updateFormData({ offers_ids: [...formData.offers_ids, existingOffer.offer_id] });
         }
         setSearchQuery('');
-        toast.info(`"${existingOffer.name_de}" wurde automatisch ausgewählt`, {
-          description: 'Ein sehr ähnlicher Eintrag wurde gefunden und verwendet.',
-          duration: 4000,
-        });
+        toast.info(
+          t('create.offers.autoSelected').replace('{{name}}', existingOffer.name_de),
+          {
+            description: t('create.offers.autoSelectedDescription'),
+            duration: 4000,
+          }
+        );
         return;
       }
     }
@@ -318,7 +321,9 @@ export default function SelectOffersPage() {
     if (validation.warnings.length > 0 && validation.similarItems && validation.similarItems.length > 0) {
       const similarNames = validation.similarItems.map(s => s.name_de).join(', ');
       const confirmed = window.confirm(
-        `Ähnliche Einträge gefunden: ${similarNames}\n\nMöchten Sie trotzdem "${searchQuery.trim()}" erstellen?`
+        t('create.offers.similarEntriesDialog')
+          .replace('{{similarNames}}', similarNames)
+          .replace('{{query}}', searchQuery.trim())
       );
       if (!confirmed) {
         // If user declines, offer to select the most similar item
@@ -329,7 +334,7 @@ export default function SelectOffersPage() {
           );
           if (mostSimilar && !formData.offers_ids.includes(mostSimilar.offer_id)) {
             updateFormData({ offers_ids: [...formData.offers_ids, mostSimilar.offer_id] });
-            toast.info(`"${mostSimilar.name_de}" wurde ausgewählt`);
+            toast.info(t('create.offers.wasSelected').replace('{{name}}', mostSimilar.name_de));
           }
         }
         setSearchQuery('');
@@ -352,10 +357,10 @@ export default function SelectOffersPage() {
       if (error) {
         // Check for unique constraint violation
         if (error.code === '23505' || error.message.includes('unique')) {
-          toast.error('Ein Eintrag mit diesem Namen existiert bereits');
+          toast.error(t('create.offers.entryExists'));
         } else {
           console.error('Error creating offer:', error);
-          toast.error('Fehler beim Erstellen des Angebots');
+          toast.error(t('create.offers.errorCreating'));
         }
       } else if (data) {
         // Add to local state
@@ -364,11 +369,11 @@ export default function SelectOffersPage() {
         updateFormData({ offers_ids: [...formData.offers_ids, data.offer_id] });
         // Clear search
         setSearchQuery('');
-        toast.success(`"${data.name_de}" wurde hinzugefügt`);
+        toast.success(t('create.offers.wasAdded').replace('{{name}}', data.name_de));
       }
     } catch (error) {
       console.error('Error creating offer:', error);
-      toast.error('Fehler beim Erstellen des Angebots');
+      toast.error(t('create.offers.errorCreating'));
     } finally {
       setIsCreating(false);
     }
@@ -388,7 +393,7 @@ export default function SelectOffersPage() {
       
       if (error) {
         console.error('Error deleting offer:', error);
-        toast.error('Angebot kann nicht gelöscht werden (möglicherweise bereits verwendet)');
+        toast.error(t('create.offers.cannotDelete'));
       } else {
         // Remove from local state
         setOffers(prev => prev.filter(o => o.offer_id !== offerId));
@@ -396,11 +401,11 @@ export default function SelectOffersPage() {
         updateFormData({ 
           offers_ids: formData.offers_ids.filter(id => id !== offerId) 
         });
-        toast.success(`"${offerName}" wurde gelöscht`);
+        toast.success(t('create.offers.wasDeleted').replace('{{name}}', offerName));
       }
     } catch (error) {
       console.error('Error deleting offer:', error);
-      toast.error('Fehler beim Löschen des Angebots');
+      toast.error(t('create.offers.errorDeleting'));
     } finally {
       setDeletingId(null);
     }
@@ -418,7 +423,7 @@ export default function SelectOffersPage() {
       {/* Reusable Header */}
       <PageHeader
         isVisible={isHeaderSticky}
-        title="Angebote auswählen"
+        title={t('create.offers.title')}
         variant="back-and-title"
         onBack="/create/basics"
       />
@@ -435,7 +440,7 @@ export default function SelectOffersPage() {
                 <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
                 <input
                   className="flex-1 text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
-                  placeholder="Angebote suchen oder neu erstellen..."
+                  placeholder={t('create.offers.searchPlaceholder')}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -459,7 +464,7 @@ export default function SelectOffersPage() {
             {/* Subtitle */}
             <div className="w-full">
               <p className="text-sm font-normal leading-[17px] text-[#7A7A7A]">
-                Suche nach Angeboten oder erstelle neue - inshaAllah.
+                {t('create.offers.description')}
               </p>
             </div>
           </div>
@@ -468,7 +473,7 @@ export default function SelectOffersPage() {
           <div className="flex-1 w-full pb-4">
             {isLoading ? (
               <div className="flex h-32 items-center justify-center">
-                <span className="text-gray-500">Lade Angebote...</span>
+                <span className="text-gray-500">{t('create.offers.loading')}</span>
               </div>
             ) : (
               <>
@@ -480,7 +485,7 @@ export default function SelectOffersPage() {
                       onClick={() => setIsSelectedExpanded(!isSelectedExpanded)}
                     >
                       <h3 className="text-md font-medium text-[#232323]">
-                        Ausgewählt ({filteredSelectedOffers.length})
+                        {t('create.offers.selected')} ({filteredSelectedOffers.length})
                       </h3>
                       <Icon 
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
@@ -506,7 +511,7 @@ export default function SelectOffersPage() {
                               <button
                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm hover:bg-red-600 transition-colors disabled:opacity-50"
                                 disabled={deletingId === offer.offer_id}
-                                title="Löschen"
+                                title={t('create.offers.delete')}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   deleteOffer(offer.offer_id, offer.name_de);
@@ -529,7 +534,7 @@ export default function SelectOffersPage() {
                       <Icon className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" icon="lucide:alert-triangle" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-yellow-800 mb-1">
-                          Ähnliche Einträge gefunden:
+                          {t('create.offers.similarFound')}
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {similarOffers.map((offer) => (
@@ -553,7 +558,7 @@ export default function SelectOffersPage() {
                 {/* Create New Option (when search has no exact match) */}
                 {showCreateOption && (
                   <div className="mb-6">
-                    <h3 className="mb-3 text-sm font-medium text-[#232323]">Neu erstellen</h3>
+                    <h3 className="mb-3 text-sm font-medium text-[#232323]">{t('create.offers.createNew')}</h3>
                     <button
                       className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-[#589D96] text-white border border-[#589D96] hover:bg-[#4a8780] transition-all duration-200 disabled:opacity-50"
                       disabled={isCreating}
@@ -561,7 +566,9 @@ export default function SelectOffersPage() {
                     >
                       <Icon className="h-4 w-4" icon="lucide:plus" />
                       <span className="text-sm font-medium">
-                        {isCreating ? 'Erstelle...' : `"${searchQuery}" hinzufügen`}
+                        {isCreating 
+                          ? t('create.offers.creating') 
+                          : t('create.offers.addButton').replace('{{query}}', searchQuery)}
                       </span>
                     </button>
                   </div>
@@ -575,7 +582,7 @@ export default function SelectOffersPage() {
                       onClick={() => setIsSuggestedExpanded(!isSuggestedExpanded)}
                     >
                       <h3 className="text-md font-medium text-[#232323]">
-                        Empfohlen für {selectedCategory?.name_de}
+                        {t('create.offers.recommendedFor').replace('{{category}}', selectedCategory?.name_de || '')}
                       </h3>
                       <Icon 
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
@@ -610,7 +617,7 @@ export default function SelectOffersPage() {
                       onClick={() => setIsOtherExpanded(!isOtherExpanded)}
                     >
                       <h3 className="text-md font-medium text-[#232323]">
-                        {filteredSuggestedOffers.length > 0 ? 'Weitere Angebote' : 'Verfügbare Angebote'} ({filteredOtherOffers.length})
+                        {(filteredSuggestedOffers.length > 0 ? t('create.offers.moreOffers') : t('create.offers.availableOffers'))} ({filteredOtherOffers.length})
                       </h3>
                       <Icon 
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
@@ -641,10 +648,10 @@ export default function SelectOffersPage() {
                 {!showCreateOption && filteredSelectedOffers.length === 0 && filteredSuggestedOffers.length === 0 && filteredOtherOffers.length === 0 && (
                   <div className="flex h-32 flex-col items-center justify-center gap-2">
                     <Icon className="h-12 w-12 text-gray-300" icon="lucide:search-x" />
-                    <span className="text-gray-500">Keine Angebote gefunden</span>
+                    <span className="text-gray-500">{t('create.offers.noOffersFound')}</span>
                     {searchQuery && (
                       <p className="text-sm text-gray-400">
-                        Drücke Enter um &quot;{searchQuery}&quot; hinzuzufügen
+                        {t('create.offers.pressEnterToAdd').replace('{{query}}', searchQuery)}
                       </p>
                     )}
                   </div>

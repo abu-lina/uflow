@@ -298,10 +298,13 @@ export default function SelectNeedsPage() {
           updateFormData({ needs_ids: [...formData.needs_ids, existingNeed.need_id] });
         }
         setSearchQuery('');
-        toast.info(`"${existingNeed.name_de}" wurde automatisch ausgewählt`, {
-          description: 'Ein sehr ähnlicher Eintrag wurde gefunden und verwendet.',
-          duration: 4000,
-        });
+        toast.info(
+          t('create.needs.autoSelected').replace('{{name}}', existingNeed.name_de),
+          {
+            description: t('create.needs.autoSelectedDescription'),
+            duration: 4000,
+          }
+        );
         return;
       }
     }
@@ -318,7 +321,9 @@ export default function SelectNeedsPage() {
     if (validation.warnings.length > 0 && validation.similarItems && validation.similarItems.length > 0) {
       const similarNames = validation.similarItems.map(s => s.name_de).join(', ');
       const confirmed = window.confirm(
-        `Ähnliche Einträge gefunden: ${similarNames}\n\nMöchten Sie trotzdem "${searchQuery.trim()}" erstellen?`
+        t('create.needs.similarEntriesDialog')
+          .replace('{{similarNames}}', similarNames)
+          .replace('{{query}}', searchQuery.trim())
       );
       if (!confirmed) {
         // If user declines, offer to select the most similar item
@@ -329,7 +334,7 @@ export default function SelectNeedsPage() {
           );
           if (mostSimilar && !formData.needs_ids.includes(mostSimilar.need_id)) {
             updateFormData({ needs_ids: [...formData.needs_ids, mostSimilar.need_id] });
-            toast.info(`"${mostSimilar.name_de}" wurde ausgewählt`);
+            toast.info(t('create.needs.wasSelected').replace('{{name}}', mostSimilar.name_de));
           }
         }
         setSearchQuery('');
@@ -352,10 +357,10 @@ export default function SelectNeedsPage() {
       if (error) {
         // Check for unique constraint violation
         if (error.code === '23505' || error.message.includes('unique')) {
-          toast.error('Ein Eintrag mit diesem Namen existiert bereits');
+          toast.error(t('create.needs.entryExists'));
         } else {
           console.error('Error creating need:', error);
-          toast.error('Fehler beim Erstellen des Gesuchs');
+          toast.error(t('create.needs.errorCreating'));
         }
       } else if (data) {
         // Add to local state
@@ -364,11 +369,11 @@ export default function SelectNeedsPage() {
         updateFormData({ needs_ids: [...formData.needs_ids, data.need_id] });
         // Clear search
         setSearchQuery('');
-        toast.success(`"${data.name_de}" wurde hinzugefügt`);
+        toast.success(t('create.needs.wasAdded').replace('{{name}}', data.name_de));
       }
     } catch (error) {
       console.error('Error creating need:', error);
-      toast.error('Fehler beim Erstellen des Gesuchs');
+      toast.error(t('create.needs.errorCreating'));
     } finally {
       setIsCreating(false);
     }
@@ -388,7 +393,7 @@ export default function SelectNeedsPage() {
       
       if (error) {
         console.error('Error deleting need:', error);
-        toast.error('Gesuch kann nicht gelöscht werden (möglicherweise bereits verwendet)');
+        toast.error(t('create.needs.cannotDelete'));
       } else {
         // Remove from local state
         setNeeds(prev => prev.filter(n => n.need_id !== needId));
@@ -396,11 +401,11 @@ export default function SelectNeedsPage() {
         updateFormData({ 
           needs_ids: formData.needs_ids.filter(id => id !== needId) 
         });
-        toast.success(`"${needName}" wurde gelöscht`);
+        toast.success(t('create.needs.wasDeleted').replace('{{name}}', needName));
       }
     } catch (error) {
       console.error('Error deleting need:', error);
-      toast.error('Fehler beim Löschen des Gesuchs');
+      toast.error(t('create.needs.errorDeleting'));
     } finally {
       setDeletingId(null);
     }
@@ -418,7 +423,7 @@ export default function SelectNeedsPage() {
       {/* Reusable Header */}
       <PageHeader
         isVisible={isHeaderSticky}
-        title="Gesuche auswählen"
+        title={t('create.needs.title')}
         variant="back-and-title"
         onBack="/create/basics"
       />
@@ -435,7 +440,7 @@ export default function SelectNeedsPage() {
                 <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
                 <input
                   className="flex-1 text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
-                  placeholder="Gesuche suchen oder neu erstellen..."
+                  placeholder={t('create.needs.searchPlaceholder')}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -459,7 +464,7 @@ export default function SelectNeedsPage() {
             {/* Subtitle */}
             <div className="w-full">
               <p className="text-sm font-normal leading-[17px] text-[#7A7A7A]">
-                Suche nach Gesuchen oder erstelle neue - inshaAllah.
+                {t('create.needs.description')}
               </p>
             </div>
           </div>
@@ -468,7 +473,7 @@ export default function SelectNeedsPage() {
           <div className="flex-1 w-full pb-4">
             {isLoading ? (
               <div className="flex h-32 items-center justify-center">
-                <span className="text-gray-500">Lade Gesuche...</span>
+                <span className="text-gray-500">{t('create.needs.loading')}</span>
               </div>
             ) : (
               <>
@@ -480,7 +485,7 @@ export default function SelectNeedsPage() {
                       onClick={() => setIsSelectedExpanded(!isSelectedExpanded)}
                     >
                       <h3 className="text-md font-medium text-[#232323]">
-                        Ausgewählt ({filteredSelectedNeeds.length})
+                        {t('create.needs.selected')} ({filteredSelectedNeeds.length})
                       </h3>
                       <Icon 
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
@@ -506,7 +511,7 @@ export default function SelectNeedsPage() {
                               <button
                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm hover:bg-red-600 transition-colors disabled:opacity-50"
                                 disabled={deletingId === need.need_id}
-                                title="Löschen"
+                                title={t('create.needs.delete')}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   deleteNeed(need.need_id, need.name_de);
@@ -529,7 +534,7 @@ export default function SelectNeedsPage() {
                       <Icon className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" icon="lucide:alert-triangle" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-yellow-800 mb-1">
-                          Ähnliche Einträge gefunden:
+                          {t('create.needs.similarFound')}
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {similarNeeds.map((need) => (
@@ -553,7 +558,7 @@ export default function SelectNeedsPage() {
                 {/* Create New Option (when search has no exact match) */}
                 {showCreateOption && (
                   <div className="mb-6">
-                    <h3 className="mb-3 text-sm font-medium text-[#232323]">Neu erstellen</h3>
+                    <h3 className="mb-3 text-sm font-medium text-[#232323]">{t('create.needs.createNew')}</h3>
                     <button
                       className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-[#589D96] text-white border border-[#589D96] hover:bg-[#4a8780] transition-all duration-200 disabled:opacity-50"
                       disabled={isCreating}
@@ -561,7 +566,9 @@ export default function SelectNeedsPage() {
                     >
                       <Icon className="h-4 w-4" icon="lucide:plus" />
                       <span className="text-sm font-medium">
-                        {isCreating ? 'Erstelle...' : `"${searchQuery}" hinzufügen`}
+                        {isCreating 
+                          ? t('create.needs.creating') 
+                          : t('create.needs.addButton').replace('{{query}}', searchQuery)}
                       </span>
                     </button>
                   </div>
@@ -575,7 +582,7 @@ export default function SelectNeedsPage() {
                       onClick={() => setIsSuggestedExpanded(!isSuggestedExpanded)}
                     >
                       <h3 className="text-md font-medium text-[#232323]">
-                        Empfohlen für {selectedCategory?.name_de}
+                        {t('create.needs.recommendedFor').replace('{{category}}', selectedCategory?.name_de || '')}
                       </h3>
                       <Icon 
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
@@ -610,7 +617,7 @@ export default function SelectNeedsPage() {
                       onClick={() => setIsOtherExpanded(!isOtherExpanded)}
                     >
                       <h3 className="text-md font-medium text-[#232323]">
-                        {filteredSuggestedNeeds.length > 0 ? 'Weitere Gesuche' : 'Verfügbare Gesuche'} ({filteredOtherNeeds.length})
+                        {(filteredSuggestedNeeds.length > 0 ? t('create.needs.moreNeeds') : t('create.needs.availableNeeds'))} ({filteredOtherNeeds.length})
                       </h3>
                       <Icon 
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
@@ -641,10 +648,10 @@ export default function SelectNeedsPage() {
                 {!showCreateOption && filteredSelectedNeeds.length === 0 && filteredSuggestedNeeds.length === 0 && filteredOtherNeeds.length === 0 && (
                   <div className="flex h-32 flex-col items-center justify-center gap-2">
                     <Icon className="h-12 w-12 text-gray-300" icon="lucide:search-x" />
-                    <span className="text-gray-500">Keine Gesuche gefunden</span>
+                    <span className="text-gray-500">{t('create.needs.noNeedsFound')}</span>
                     {searchQuery && (
                       <p className="text-sm text-gray-400">
-                        Drücke Enter um &quot;{searchQuery}&quot; hinzuzufügen
+                        {t('create.needs.pressEnterToAdd').replace('{{query}}', searchQuery)}
                       </p>
                     )}
                   </div>

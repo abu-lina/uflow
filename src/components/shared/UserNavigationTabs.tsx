@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 
-import dynamic from 'next/dynamic';
-const Icon = dynamic(() => import('@iconify/react').then((mod) => mod.Icon), { ssr: false });
+import { Icon } from '@iconify/react';
 
 import { HeartIcon } from '@/components/ui/icons/HeartIcon';
 
@@ -28,14 +26,6 @@ const BUTTON_STYLES = {
   text: 'font-inter-tight text-base font-medium',
 } as const;
 
-function ClientOnlyIcon(props: React.ComponentProps<typeof Icon>) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) {
-    return null;
-  }
-  return <Icon {...props} />;
-}
 
 export function UserNavigationTabs({
   activeTab,
@@ -85,7 +75,7 @@ export function UserNavigationTabs({
         role="tab"
         onClick={() => onTabChange('created')}
       >
-        <ClientOnlyIcon
+        <Icon
           className={`${BUTTON_STYLES.icon} ${
             activeTab === 'created' ? 'text-white' : 'text-text-secondary'
           }`}
@@ -106,7 +96,7 @@ export function UserNavigationTabs({
         role="tab"
         onClick={() => onTabChange('create')}
       >
-        <ClientOnlyIcon
+        <Icon
           className={`${BUTTON_STYLES.icon} ${
             activeTab === 'create' ? 'text-white' : 'text-text-secondary'
           }`}
@@ -123,7 +113,7 @@ export function UserNavigationTabs({
         className={`${BUTTON_STYLES.base} w-11 ${BUTTON_STYLES.inactive}`}
         onClick={onEditProfile}
       >
-        <ClientOnlyIcon
+        <Icon
           className={`${BUTTON_STYLES.icon} text-text-secondary`}
           icon="tabler:user-edit"
         />
