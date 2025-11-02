@@ -263,7 +263,7 @@ export default function SavedProvidersPage() {
             
             <ul 
               aria-label={t('saved.savedItemsList') || 'Saved items'}
-              className="grid w-full grid-cols-2 gap-4 mt-6"
+              className="grid w-full grid-cols-2 gap-4 mt-6 mobile-nav-spacing"
               role="list"
             >
               {filteredProviders.map((provider) => {

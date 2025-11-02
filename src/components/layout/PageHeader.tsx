@@ -117,7 +117,7 @@ export function PageHeader({
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out md:hidden ${
+      className={`fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2 transition-all duration-500 ease-in-out md:hidden ${
         isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       } ${className}`}
       style={{
