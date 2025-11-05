@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Ummah Flow',
   description:
-    "Der erste halal-konforme Marktplatz der sicherstellt, das Jeder die Zakat entrichtet insha'Allah.",
+    "Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet",
 };
 
 // Force dynamic to ensure proper client-side navigation handling
