@@ -201,11 +201,13 @@ export const shouldShowSubpageAction = (pathname: string): boolean => {
     return true;
   }
 
-  // Profile subpages (except main profile, edit, delete)
+  // Profile subpages (except main profile, edit, delete, provider detail pages, and edit pages that have custom buttons)
   if (pathname.includes('/profile/') && 
       pathname !== '/profile' && 
       !pathname.includes('/profile/edit') && 
-      !pathname.includes('/profile/delete')) {
+      !pathname.includes('/profile/delete') &&
+      !pathname.match(/^\/profile\/providers\/[^/]+$/) && // Exclude provider detail pages (they have custom FooterAction)
+      !pathname.match(/^\/profile\/providers\/[^/]+\/edit$/)) { // Exclude provider edit pages (they have custom FooterAction)
     return true;
   }
 

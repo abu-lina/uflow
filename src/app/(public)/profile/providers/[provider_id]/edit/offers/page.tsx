@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 
 import { supabase } from '@/lib/supabase/client';
 import type { Offer } from '@/types/offer';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 export default function EditOffersPage({ params }: { params: Promise<{ provider_id: string }> }) {
   const resolvedParams = use(params);
@@ -216,18 +217,16 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
       </main>
 
       {/* Save Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
-        <div className="flex w-full gap-3.5 max-w-[393px] mx-auto">
-          <button
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-[#589D96] text-base font-medium text-white shadow transition hover:bg-[#4a8a84] disabled:opacity-30"
-            disabled={selectedOfferIds.length === 0}
-            onClick={handleSave}
-          >
-            <Icon className="h-5 w-5" icon="lucide:check" />
-            {selectedOfferIds.length > 0 ? `${selectedOfferIds.length} ausgewählt` : 'Angebote auswählen'}
-          </button>
-        </div>
-      </div>
+      <FooterAction
+        actionButton={{
+          label: selectedOfferIds.length > 0 ? `${selectedOfferIds.length} ausgewählt` : 'Angebote auswählen',
+          icon: 'lucide:check',
+          onClick: handleSave,
+          variant: 'primary',
+          disabled: selectedOfferIds.length === 0,
+          'aria-label': 'Angebote speichern',
+        }}
+      />
     </div>
   );
 }

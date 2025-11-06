@@ -14,7 +14,7 @@ import { ContentSection } from '@/components/layout/ContentSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { EmptyState, Button, IconWithTitle, Icon } from '@/components/ui';
-import { useContainerScroll } from '@/hooks/useContainerScroll';
+import { useScrollHeader } from '@/hooks/useScrollHeader';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
@@ -28,7 +28,6 @@ export default function SavedProvidersPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { searchQuery, selectedLocation } = useSearch();
-  const { isHeaderVisible } = useContainerScroll();
   const { t } = useLanguage();
 
   // Use React Query for all bookmarked items (providers + community services)
@@ -49,6 +48,11 @@ export default function SavedProvidersPage() {
     retry: 1,
     // Show cached data immediately while refetching
     placeholderData: (previousData) => previousData,
+  });
+
+  // Use reusable scroll header hook
+  const { isHeaderVisible } = useScrollHeader({
+    dependencies: [providers, isLoading], // Re-initialize when content loads
   });
 
   // Fetch cities from bookmarked items

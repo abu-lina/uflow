@@ -1,5 +1,6 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useRef, useEffect } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 
 const iconButtonVariants = cva(
@@ -28,7 +29,7 @@ const iconButtonVariants = cva(
 export interface IconButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof iconButtonVariants> {
-  icon: React.ReactNode;
+  icon: React.ReactNode | string; // Support both ReactNode and Iconify string
   'aria-label': string;
   loading?: boolean;
 }
@@ -56,21 +57,85 @@ export interface IconButtonProps
  * ```
  */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, variant, size, icon, disabled, loading, ...props }, ref) => {
+  ({ className, variant, size, icon, disabled, loading, onClick, ...props }, ref) => {
     const isDisabled = disabled || loading;
+    const internalRef = useRef<HTMLButtonElement | null>(null);
+    
+    // Combine forwarded ref with internal ref using callback ref pattern
+    const setRef = (element: HTMLButtonElement | null) => {
+      internalRef.current = element;
+      if (typeof ref === 'function') {
+        ref(element);
+      } else if (ref) {
+        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = element;
+      }
+    };
+    
+    // Render icon - support both ReactNode and Iconify string
+    const renderIcon = () => {
+      if (loading) {
+        return <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />;
+      }
+      
+      if (typeof icon === 'string') {
+        // Use text-content-title for the icon color (#232323)
+        return <Icon aria-hidden="true" className="h-5 w-5 pointer-events-none text-content-title" icon={icon} />;
+      }
+      
+      // Wrap ReactNode icons to prevent click propagation issues
+      // The pointer-events-none ensures clicks always hit the button, not child SVG elements
+      // Use text-content-title for the icon color (#232323)
+      if (icon) {
+        return (
+          <span className="pointer-events-none flex items-center justify-center text-content-title" style={{ pointerEvents: 'none' }}>
+            {icon}
+          </span>
+        );
+      }
+      
+      return null;
+    };
+
+    // Handle click with proper event handling to prevent issues with injected code
+    // This ensures clicks are always handled at the button level, not child elements
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      // Prevent event from bubbling to document-level listeners that might
+      // try to access className.split() on child SVG elements
+      e.stopPropagation();
+      onClick?.(e);
+    };
+
+    // Use useEffect to ensure child SVG elements have safe className handling
+    // This is a defensive measure against injected code that tries to access className.split()
+    useEffect(() => {
+      const buttonElement = internalRef.current;
+      if (!buttonElement) return;
+
+      // Find all SVG elements within the button and ensure they have className as string
+      const svgElements = buttonElement.querySelectorAll('svg');
+      svgElements.forEach((svg) => {
+        // Ensure className is always a string (not DOMTokenList)
+        // This prevents errors when injected code tries to call className.split()
+        if (svg.className && typeof svg.className !== 'string') {
+          const classList = Array.from(svg.classList || []);
+          svg.setAttribute('class', classList.join(' '));
+        }
+        // Also ensure className exists and is a string even if it's empty
+        if (!svg.className || typeof svg.className !== 'string') {
+          svg.setAttribute('class', svg.getAttribute('class') || '');
+        }
+      });
+    }, [icon]);
     
     return (
       <button
-        ref={ref}
+        ref={setRef}
         className={cn(iconButtonVariants({ variant, size, className }))}
         disabled={isDisabled}
+        onClick={onClick ? handleClick : undefined}
         {...props}
       >
-        {loading ? (
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : (
-          icon
-        )}
+        {renderIcon()}
       </button>
     );
   }

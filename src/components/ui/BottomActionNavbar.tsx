@@ -48,7 +48,7 @@ export function BottomActionNavbar({
       <div className={`flex ${height} w-full max-w-[400px] mx-auto items-center px-4 pb-safe`}>
         {secondaryButton ? (
           /* Two Button Layout */
-          <div className="flex w-full gap-2">
+          <div className="flex w-full gap-3.5">
             <Button
               fullWidth
               aria-label={primaryButton['aria-label']}

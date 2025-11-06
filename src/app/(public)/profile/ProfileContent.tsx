@@ -27,8 +27,8 @@ import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationT
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
-import { useContainerScroll } from '@/hooks/useContainerScroll';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { useScrollHeader } from '@/hooks/useScrollHeader';
 import { getCreatedProviders, getAllBookmarkedItems } from '@/services/providers';
 import { authService } from '@/features/auth/services/authService';
 import type { SupabaseUser } from '@/types/supabase-user';
@@ -45,7 +45,6 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<UserTab>('created');
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { isHeaderVisible } = useContainerScroll();
 
   // Responsive: detect mobile using the centralized hook
   const isMobile = useIsSmallMobile();
@@ -74,6 +73,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
     window.addEventListener('bookmark-changed', handleBookmarkChange);
     return () => window.removeEventListener('bookmark-changed', handleBookmarkChange);
   }, [effectiveUser, queryClient]);
+
 
   // Use React Query for created providers with caching
   // Show cached data immediately while refetching in background
@@ -105,6 +105,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   const isLoadingProviders = isLoadingCreated || isLoadingSaved;
   const error = createdError || savedError ? 'Fehler beim Laden der Providers' : null;
+
+  // Use reusable scroll header hook
+  const { isHeaderVisible } = useScrollHeader({
+    dependencies: [createdProviders, savedProviders, isLoadingProviders], // Re-initialize when content loads
+  });
 
   // Handle logout
   const handleLogout = async () => {

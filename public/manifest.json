@@ -1,15 +1,15 @@
 {
-  "name": "Ummah Flow",
-  "short_name": "UFlow",
+  "name": "UFLOW",
+  "short_name": "UFLOW",
   "description": "A platform for the Muslim community",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#f5f5f5",
+  "theme_color": "#589D96",
   "orientation": "portrait",
   "scope": "/",
   "prefer_related_applications": false,
-  "categories": ["social", "lifestyle"],
+  "categories": ["shopping", "business","social"],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",

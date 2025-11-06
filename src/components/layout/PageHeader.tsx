@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import { cn } from '@/lib/utils';
 
 type HeaderVariant = 'title-only' | 'back-and-title' | 'back-title-icon' | 'title-and-icon' | 'about-logo';
 
@@ -44,7 +45,9 @@ interface PageHeaderProps {
 }
 
 /**
- * Unified reusable page header component with four variants
+ * Unified reusable page header component with scroll-based visibility
+ * 
+ * **This component is fully reusable across all pages!**
  * 
  * Variants:
  * - title-only: Title only (no chevron, no icon)
@@ -56,36 +59,51 @@ interface PageHeaderProps {
  * - Consistent spacing from safe area
  * - Responsive header height
  * - Optional back button navigation
- * - Optional scroll-based show/hide animation
+ * - Scroll-based show/hide animation (use with useScrollHeader hook)
  * - Flexible right-side content and icons
  * - Semantic HTML with <header> tag
+ * - Smooth 300ms transitions (Material Design standard)
  * 
  * @example
  * ```tsx
- * // Variant 1: Title only
+ * // Basic usage - static header
  * <PageHeader title="My Page" variant="title-only" />
+ * ```
  * 
- * // Variant 2: Back button and title
- * <PageHeader 
- *   title="My Page"
- *   variant="back-and-title"
- *   onBack="/previous-page"
- * />
+ * @example
+ * ```tsx
+ * // With scroll-based visibility (recommended for scrollable pages)
+ * import { useScrollHeader } from '@/hooks/useScrollHeader';
  * 
- * // Variant 3: Back, title, and right icon
- * <PageHeader 
- *   title="My Page"
- *   variant="back-title-icon"
- *   onBack="/previous-page"
- *   rightIcon={<Logo className="h-12 w-12" />}
- * />
+ * export function MyPage() {
+ *   const { isHeaderVisible } = useScrollHeader();
+ *   
+ *   return (
+ *     <PageLayout>
+ *       <PageHeader 
+ *         title="My Page" 
+ *         variant="back-and-title"
+ *         isVisible={isHeaderVisible}
+ *         onBack="/previous-page"
+ *       />
+ *       <HeaderSpacer isVisible={isHeaderVisible} />
+ *       <PageContentWrapper>
+ *         Your content here
+ *       </PageContentWrapper>
+ *     </PageLayout>
+ *   );
+ * }
+ * ```
  * 
- * // Variant 4: Title and right icon (48px)
- * <PageHeader 
- *   title="Login"
- *   variant="title-and-icon"
- *   rightIcon={<Logo className="h-12 w-12" height={48} width={48} />}
- * />
+ * @example
+ * ```tsx
+ * // With dependencies (re-initialize when content loads)
+ * const { data } = useQuery(...);
+ * const { isHeaderVisible } = useScrollHeader({
+ *   dependencies: [data]
+ * });
+ * 
+ * <PageHeader title="My Page" isVisible={isHeaderVisible} />
  * ```
  */
 export function PageHeader({
@@ -99,8 +117,12 @@ export function PageHeader({
   customContent,
 }: PageHeaderProps) {
   const router = useRouter();
+  const headerRef = useRef<HTMLElement>(null);
 
-  const handleBack = () => {
+  const handleBack = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent event from bubbling to document-level listeners that might
+    // try to access className.split() on child SVG elements
+    e.stopPropagation();
     if (typeof onBack === 'function') {
       onBack();
     } else if (typeof onBack === 'string') {
@@ -115,16 +137,46 @@ export function PageHeader({
   // Priority: rightIcon > rightContent
   const actualRightContent = shouldShowRightIcon && rightIcon ? rightIcon : rightContent;
 
+  // Use useEffect to ensure child SVG elements have safe className handling
+  // This is a defensive measure against injected code (e.g., Next.js dev tools) that tries to access className.split()
+  useEffect(() => {
+    const headerElement = headerRef.current;
+    if (!headerElement) return;
+
+    // Find all SVG elements within the header and ensure they have className as string
+    const svgElements = headerElement.querySelectorAll('svg');
+    svgElements.forEach((svg) => {
+      // Ensure className is always a string (not DOMTokenList)
+      // This prevents errors when injected code tries to call className.split()
+      if (svg.className && typeof svg.className !== 'string') {
+        const classList = Array.from(svg.classList || []);
+        svg.setAttribute('class', classList.join(' '));
+      }
+      // Also ensure className exists and is a string even if it's empty
+      if (!svg.className || typeof svg.className !== 'string') {
+        svg.setAttribute('class', svg.getAttribute('class') || '');
+      }
+    });
+  }, [shouldShowBackButton, actualRightContent]); // Re-run when content changes
+
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2 transition-all duration-500 ease-in-out md:hidden ${
-        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      } ${className}`}
+      ref={headerRef}
+      className={cn(
+        'fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2 md:hidden',
+        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0',
+        className
+      )}
       style={{
-        background: 'linear-gradient(180deg, rgba(245, 245, 245, 0.85) 0%, rgba(251, 251, 251, 0.85) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        isolation: 'isolate',
+        // Maximum blend with background - minimal blur for seamless integration
+        background: 'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        // Best practice: Consistent timing (Material Design 300ms, iOS HIG 250-350ms)
+        // Simple easing (ease-out) for natural deceleration - feels responsive yet smooth
+        // Respects prefers-reduced-motion via CSS media query (handled in globals.css)
+        // Balance: Fast enough to feel responsive, slow enough to be smooth
+        transition: 'transform 300ms cubic-bezier(0.2, 0, 0, 1), opacity 300ms cubic-bezier(0.2, 0, 0, 1)',
       }}
     >
       <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
@@ -135,7 +187,10 @@ export function PageHeader({
             className="flex items-center justify-center w-8 h-8 -ml-1"
             onClick={handleBack}
           >
-            <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
+            <Icon 
+              className="w-8 h-8 text-[#272727] pointer-events-none" 
+              icon="material-symbols:chevron-left" 
+            />
           </button>
         )}
 

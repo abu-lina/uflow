@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/types/supabase';
 import type { Provider } from '@/services/providers';
 import { createProviderCommunityServiceRelationship } from '@/services/community_services';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 interface ProviderEditFormProps {
   provider: Provider;
@@ -18,6 +19,7 @@ interface ProviderEditFormProps {
 }
 
 export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedSections, setExpandedSections] = useState({
@@ -232,6 +234,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
 
   return (
     <form
+      ref={formRef}
       className="flex flex-1 flex-col"
       onSubmit={handleSubmit}
     >
@@ -617,18 +620,31 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
         </div>
       </div>
 
-      {/* Save Button - Fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
-        <div className="flex w-full gap-3.5 max-w-[393px] mx-auto">
-          <button
-            className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#589D96] text-base font-semibold text-white transition hover:bg-[#4a8a84] disabled:opacity-30"
-            disabled={isSubmitting}
-            type="submit"
-          >
-            Änderungen speichern
-          </button>
-        </div>
-      </div>
+      {/* Save and Discard Buttons - Fixed at bottom */}
+      <FooterAction
+        primaryButton={{
+          label: 'Speichern',
+          icon: 'material-symbols:save-outline',
+          onClick: () => {
+            // Trigger form submission
+            if (formRef.current && !isSubmitting) {
+              formRef.current.requestSubmit();
+            }
+          },
+          variant: 'primary',
+          disabled: isSubmitting,
+          loading: isSubmitting,
+          'aria-label': 'Änderungen speichern',
+        }}
+        secondaryButton={{
+          icon: 'material-symbols:close',
+          onClick: () => {
+            // Discard changes and go back
+            router.back();
+          },
+          'aria-label': 'Änderungen verwerfen',
+        }}
+      />
     </form>
   );
 }

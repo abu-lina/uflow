@@ -11,7 +11,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-mint text-white hover:bg-[#4a8a84]',
-        primary: 'bg-[#589D96] text-white hover:bg-[#4a8a84]',
+        primary: 'bg-[#589D96] text-white hover:bg-[#589D96] active:bg-[#589D96]',
         secondary: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#CDCDCD]',
         success: 'bg-[#4a8a84] hover:bg-[#4a8a84] text-white',
         danger: 'bg-[#D86363] text-white hover:bg-[#B84F4F]',
@@ -63,7 +63,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       if (!icon || loading) return null;
       
       if (typeof icon === 'string') {
-        return <Icon aria-hidden="true" className="h-5 w-5" icon={icon} />;
+        return <Icon aria-hidden="true" className="h-6 w-6" icon={icon} />;
       }
       
       // For React components, don't constrain the size - let the component control its own size

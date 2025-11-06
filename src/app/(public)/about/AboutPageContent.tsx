@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { MobileNavbar } from '@/components/layout/MobileNavbar';
 import Image from 'next/image';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
@@ -12,6 +11,7 @@ import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { AboutCard } from '@/components/shared/AboutCard';
 import { quotes } from '@/constants/quotes';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 interface AboutPageContentProps {
   onComplete?: () => void;
@@ -82,7 +82,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
           />
         }
         title={showSplashHeader ? '' : 'Über Uns'}
-        variant={showSplashHeader ? 'title-only' : 'about-logo'}
+        variant={showSplashHeader ? 'title-only' : 'back-title-icon'}
         onBack={showSplashHeader ? undefined : () => router.back()}
       />
 
@@ -129,10 +129,12 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
 
       <BottomSpacer />
 
-      {/* NAVBAR SECTION - Fixed at bottom */}
-      <MobileNavbar
-        text={currentCardIndex < quotes.length - 1 ? 'Weiter' : 'Entdecke deine Ummah'}
-        onClick={() => {
+      {/* FOOTER ACTION - Fixed at bottom */}
+      <FooterAction
+        actionButton={{
+          label: currentCardIndex < quotes.length - 1 ? 'Weiter' : 'Entdecke deine Ummah',
+          trailingIcon: 'material-symbols:chevron-right',
+          onClick: () => {
           if (currentCardIndex < quotes.length - 1) {
             changeCard(currentCardIndex + 1);
           } else {
@@ -142,6 +144,8 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
               router.push('/');
             }
           }
+          },
+          variant: 'primary',
         }}
       />
     </PageLayout>

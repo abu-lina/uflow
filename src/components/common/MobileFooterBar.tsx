@@ -87,7 +87,14 @@ export function MobileFooterBar() {
     <>
       <nav
         ref={navRef}
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center bg-white px-6 pt-footer-safe pb-safe drop-shadow-[1px_-1px_1px_#EEEEEE] sm:px-8"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center px-6 pt-footer-safe pb-safe border-t border-gray-200/30 sm:px-8"
+        style={{
+          // Solid opaque background - matches page gradient exactly
+          background: 'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
+        }}
       >
         <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
           {navItems.map((item) => (

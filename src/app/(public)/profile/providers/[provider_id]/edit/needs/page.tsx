@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 
 import { supabase } from '@/lib/supabase/client';
 import type { Need } from '@/types/offer';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 export default function EditNeedsPage({ params }: { params: Promise<{ provider_id: string }> }) {
   const resolvedParams = use(params);
@@ -216,17 +217,15 @@ export default function EditNeedsPage({ params }: { params: Promise<{ provider_i
       </main>
 
       {/* Save Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
-        <div className="flex w-full gap-3.5 max-w-[393px] mx-auto">
-          <button
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-[#589D96] text-base font-medium text-white shadow transition hover:bg-[#4a8a84]"
-            onClick={handleSave}
-          >
-            <Icon className="h-5 w-5" icon="lucide:check" />
-            {selectedNeedIds.length > 0 ? `${selectedNeedIds.length} ausgewählt` : 'Speichern'}
-          </button>
-        </div>
-      </div>
+      <FooterAction
+        actionButton={{
+          label: selectedNeedIds.length > 0 ? `${selectedNeedIds.length} ausgewählt` : 'Speichern',
+          icon: 'lucide:check',
+          onClick: handleSave,
+          variant: 'primary',
+          'aria-label': 'Bedürfnisse speichern',
+        }}
+      />
     </div>
   );
 }

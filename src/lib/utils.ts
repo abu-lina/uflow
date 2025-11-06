@@ -19,12 +19,24 @@ export function cn(...inputs: ClassValue[]) {
  * Validates if a string contains valid Tailwind classes.
  * This is useful for debugging and ensuring class consistency.
  *
- * @param className - The class string to validate
+ * @param className - The class string to validate (can be string, DOMTokenList, or null/undefined)
  * @returns boolean indicating if all classes are valid
  */
-export function isValidTailwindClass(className: string): boolean {
+export function isValidTailwindClass(className: string | DOMTokenList | null | undefined): boolean {
+  // Handle null/undefined
+  if (!className) return false;
+  
+  // Convert DOMTokenList to string if needed
+  const classString = typeof className === 'string' ? className : className.toString();
+  
+  // Handle empty string
+  if (!classString.trim()) return false;
+  
   // Basic validation - can be enhanced with actual Tailwind class checking
-  return className.split(' ').every((cls) => {
+  return classString.split(' ').every((cls) => {
+    // Skip empty strings from split
+    if (!cls.trim()) return true;
+    
     // Check for common Tailwind patterns
     return (
       /^[a-z-]+$/.test(cls) || // Basic classes like 'flex', 'p-4'

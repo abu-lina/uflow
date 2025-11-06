@@ -3,11 +3,10 @@
 import { ReactNode, useRef } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Icon } from '@iconify/react';
 
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
 import { PageTransition } from '@/components/ui/PageTransition';
-import { Button } from '@/components/ui/Button';
+import { FooterAction } from '@/components/ui/FooterAction';
 import { LoadingProvider } from '@/providers/LoadingProvider';
 import { useSplash } from '@/providers/splash-provider';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,33 +58,21 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
         {/* Action button for subpages */}
         {showSubpageAction && (
-          <div 
-            className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px] block md:hidden" 
-            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-          >
-            <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
-              <Button
-                fullWidth
-                className="w-full max-w-[345px] shadow-[0px_8px_24px_rgba(88,157,150,0.25)] relative"
-                size="footer"
-                variant="primary"
-                onClick={() => {
+          <FooterAction
+            actionButton={{
+              label: pathname === '/signup/check-email' ? t('signup.afterConfirmationLogin') : t('common.next'),
+              icon: 'material-symbols:chevron-right',
+              onClick: () => {
                   if (pathname === '/signup/check-email') {
                     router.push('/login');
                   } else {
                     router.back();
                   }
-                }}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-base font-medium text-white leading-[19px]">
-                    {pathname === '/signup/check-email' ? t('signup.afterConfirmationLogin') : t('common.next')}
-                  </span>
-                  <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
-                </div>
-              </Button>
-            </div>
-          </div>
+              },
+              variant: 'primary',
+              'aria-label': pathname === '/signup/check-email' ? t('signup.afterConfirmationLogin') : t('common.next'),
+            }}
+          />
         )}
       </div>
     </LoadingProvider>

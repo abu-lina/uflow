@@ -9,6 +9,7 @@ import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { toast } from 'sonner';
 
 import { supabase } from '@/lib/supabase/client';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 export default function EditImagesPage({ params }: { params: Promise<{ provider_id: string }> }) {
   const resolvedParams = use(params);
@@ -239,24 +240,18 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
         </div>
       </main>
 
-      {/* Navbar */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
-          <button
-            className="flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity bg-[#589D96] opacity-100 disabled:opacity-50"
-            disabled={isUploading}
-            onClick={handleSave}
-          >
-            <Icon className="h-6 w-6 text-white" icon={isUploading ? "lucide:loader-2" : "lucide:save"} />
-            <span className="text-base font-medium text-white leading-[19px]">
-              {isUploading ? 'Speichern...' : 'Speichern'}
-            </span>
-          </button>
-        </div>
-      </div>
+      {/* Save Button */}
+      <FooterAction
+        actionButton={{
+          label: isUploading ? 'Speichern...' : 'Speichern',
+          icon: isUploading ? 'lucide:loader-2' : 'lucide:save',
+          onClick: handleSave,
+          variant: 'primary',
+          disabled: isUploading,
+          loading: isUploading,
+          'aria-label': 'Bilder speichern',
+        }}
+      />
     </div>
   );
 }
