@@ -29,7 +29,7 @@
     --header-height-mobile: 40px;
     --header-height-tablet: 48px;
     --header-height-desktop: 56px;
-    --content-gap: 32px; /* Standard gap between header and content */
+    --content-gap: 8px; /* Standard gap between header and content */
     
     /* Header total height calculations for spacer */
     --header-total-mobile: calc(var(--header-padding-mobile) + var(--header-height-mobile) + var(--content-gap));
@@ -377,12 +377,12 @@
   }
   
   .header-gradient {
-    background: linear-gradient(180deg, rgba(245, 245, 245, 0.85) 0%, rgba(251, 251, 251, 0.85) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: linear-gradient(180deg, rgba(245, 245, 245, 0.05) 0%, rgba(251, 251, 251, 0.05) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     /* Fallback for devices that don't support backdrop-filter */
     @supports not (backdrop-filter: blur(20px)) {
-      background: linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%);
+      background: linear-gradient(180deg, rgba(245, 245, 245, 0.9) 0%, rgba(251, 251, 251, 0.9) 100%);
     }
   }
   
@@ -622,9 +622,9 @@
   /* Header spacing utilities - uses design tokens for consistency */
   .header-spacer {
     /* Mobile: safe-area + header-padding + header-height + content-gap */
-    /* Total: env(safe-area-inset-top) + 16px + 40px + 32px = env(safe-area-inset-top) + 88px */
+    /* Total: env(safe-area-inset-top) + 16px + 40px + 8px = env(safe-area-inset-top) + 64px */
     height: calc(env(safe-area-inset-top) + var(--header-total-mobile));
-    min-height: var(--header-total-mobile); /* 88px fallback */
+    min-height: var(--header-total-mobile); /* 64px fallback */
     width: 100%;
     flex-shrink: 0; /* Prevent flex shrinking */
     display: block; /* Ensure it's a block element */
@@ -633,18 +633,18 @@
   @media (min-width: 640px) {
     .header-spacer {
       /* Tablet: safe-area + header-padding + header-height + content-gap */
-      /* Total: env(safe-area-inset-top) + 24px + 48px + 32px = env(safe-area-inset-top) + 104px */
+      /* Total: env(safe-area-inset-top) + 24px + 48px + 8px = env(safe-area-inset-top) + 80px */
       height: calc(env(safe-area-inset-top) + var(--header-total-tablet));
-      min-height: var(--header-total-tablet); /* 104px fallback */
+      min-height: var(--header-total-tablet); /* 80px fallback */
     }
   }
   
   @media (min-width: 768px) {
     .header-spacer {
       /* Desktop: safe-area + header-padding + header-height + content-gap */
-      /* Total: env(safe-area-inset-top) + 24px + 56px + 32px = env(safe-area-inset-top) + 112px */
+      /* Total: env(safe-area-inset-top) + 24px + 56px + 8px = env(safe-area-inset-top) + 88px */
       height: calc(env(safe-area-inset-top) + var(--header-total-desktop));
-      min-height: var(--header-total-desktop); /* 112px fallback */
+      min-height: var(--header-total-desktop); /* 88px fallback */
     }
   }
 

@@ -124,7 +124,7 @@ const config: Config = {
         'header-height-mobile': '40px',
         'header-height-tablet': '48px',
         'header-height-desktop': '56px',
-        'content-gap': '32px', // Standard gap between header and content
+        'content-gap': '8px', // Standard gap between header and content
         
         // Content padding design tokens for consistency
         'content-padding-mobile': '16px',    // Mobile horizontal padding (px-4)
@@ -135,9 +135,9 @@ const config: Config = {
         'auth-title-padding-left': '28px',   // Title section left padding (pl-7)
         'auth-title-padding-right': '16px',  // Title section right padding (pr-4)
         // Calculated header spacing - uses design tokens above for consistent spacing
-        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 32px)', // mobile: safe-area + padding + height + gap
-        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 32px)', // tablet: safe-area + padding + height + gap  
-        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 32px)', // desktop: safe-area + padding + height + gap
+        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 8px)', // mobile: safe-area + padding + height + gap
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 8px)', // tablet: safe-area + padding + height + gap  
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 8px)', // desktop: safe-area + padding + height + gap
         
         // Bottom action bar spacing - accounts for fixed bottom nav
         'bottom-spacing-12': 'calc(48px + 1rem + max(12px, env(safe-area-inset-bottom)))', // h-12 + padding + safe area
@@ -213,10 +213,10 @@ const config: Config = {
         'header-height-tablet': '48px', 
         'header-height-desktop': '56px',
         // Header spacing utilities for proper content positioning
-        // Must match PageHeader: pt-[calc(env(safe-area-inset-top)+16px)] + h-40 + 32px gap
-        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 32px)', // mobile: safe-area + padding + height + gap
-        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 32px)', // tablet: safe-area + padding + height + gap  
-        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 32px)', // desktop: safe-area + padding + height + gap
+        // Must match PageHeader: pt-[calc(env(safe-area-inset-top)+16px)] + h-40 + 8px gap
+        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 8px)', // mobile: safe-area + padding + height + gap
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 8px)', // tablet: safe-area + padding + height + gap  
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 8px)', // desktop: safe-area + padding + height + gap
       },
       backgroundImage: {
         'uflow-light': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',

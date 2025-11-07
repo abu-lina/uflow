@@ -125,9 +125,10 @@ export function PageHeader({
         className
       )}
       style={{
-        // Exact match with page background - no blur to ensure seamless integration
-        background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
-        backgroundAttachment: 'scroll',
+        // Transparent background with backdrop blur to obscure content behind
+        background: 'linear-gradient(180deg, rgba(245, 245, 245, 0.05) 0%, rgba(251, 251, 251, 0.05) 100%)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
       }}
     >
       <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
