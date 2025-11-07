@@ -14,7 +14,6 @@ import { ContentSection } from '@/components/layout/ContentSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { EmptyState, Button, IconWithTitle, Icon } from '@/components/ui';
-import { useScrollHeader } from '@/hooks/useScrollHeader';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
@@ -50,10 +49,6 @@ export default function SavedProvidersPage() {
     placeholderData: (previousData) => previousData,
   });
 
-  // Use reusable scroll header hook
-  const { isHeaderVisible } = useScrollHeader({
-    dependencies: [providers, isLoading], // Re-initialize when content loads
-  });
 
   // Fetch cities from bookmarked items
   const { data: bookmarkedCities = [] } = useQuery({
@@ -212,12 +207,11 @@ export default function SavedProvidersPage() {
   return (
     <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader 
-        isVisible={isHeaderVisible}
         title={t('saved.title')}
         variant="title-only"
       />
 
-      <HeaderSpacer isVisible={isHeaderVisible} />
+      <HeaderSpacer />
 
       <PageContentWrapper 
         centerVertically={!!emptyStateType}

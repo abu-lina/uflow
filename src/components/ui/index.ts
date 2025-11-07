@@ -1,5 +1,6 @@
 export { Button } from './Button';
 export { EmptyState } from './EmptyState';
+export { FooterAction } from './FooterAction';
 export { FormInput } from './FormInput';
 export { FormInputGroup } from './FormInputGroup';
 export { Icon } from './Icon';
@@ -9,6 +10,7 @@ export { IconButton } from './IconButton';
 export { IconWithTitle } from './IconWithTitle';
 export { LinkButton } from './LinkButton';
 export { LoadingSpinner } from './LoadingSpinner';
+export { PushNotificationPrompt } from './PushNotificationPrompt';
 export { SecondaryButton } from './SecondaryButton';
 export { SkeletonCard } from './SkeletonCard';
 export { SkeletonGrid } from './SkeletonGrid';

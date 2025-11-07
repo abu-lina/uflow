@@ -94,8 +94,8 @@ export default function QuickCreatePage() {
     
     return (
       <PageLayout hasBackground={false} maxWidth="full">
-        <PageHeader isVisible={true} title="Quick Create" />
-        <HeaderSpacer isVisible={true} />
+        <PageHeader title="Quick Create" />
+        <HeaderSpacer />
 
         <PageContentWrapper centerVertically={true} maxWidth="full" padding="lg-safe">
           <div className="flex w-full flex-col">
@@ -130,12 +130,11 @@ export default function QuickCreatePage() {
   return (
     <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader
-        isVisible={true}
         title="Quick Create"
         variant="back-and-title"
         onBack="/create"
       />
-      <HeaderSpacer isVisible={true} />
+      <HeaderSpacer />
 
       <PageContentWrapper maxWidth="full" padding="lg-safe">
         <div className="flex flex-col gap-6 pb-24">

@@ -18,11 +18,6 @@ interface PageHeaderProps {
    */
   variant?: HeaderVariant;
   /**
-   * Whether the header should be visible (for scroll-based hiding)
-   * @default true
-   */
-  isVisible?: boolean;
-  /**
    * Optional back button navigation path or callback
    */
   onBack?: string | (() => void);
@@ -59,7 +54,6 @@ interface PageHeaderProps {
  * - Consistent spacing from safe area
  * - Responsive header height
  * - Optional back button navigation
- * - Scroll-based show/hide animation (use with useScrollHeader hook)
  * - Flexible right-side content and icons
  * - Semantic HTML with <header> tag
  * - Smooth 300ms transitions (Material Design standard)
@@ -70,46 +64,10 @@ interface PageHeaderProps {
  * <PageHeader title="My Page" variant="title-only" />
  * ```
  * 
- * @example
- * ```tsx
- * // With scroll-based visibility (recommended for scrollable pages)
- * import { useScrollHeader } from '@/hooks/useScrollHeader';
- * 
- * export function MyPage() {
- *   const { isHeaderVisible } = useScrollHeader();
- *   
- *   return (
- *     <PageLayout>
- *       <PageHeader 
- *         title="My Page" 
- *         variant="back-and-title"
- *         isVisible={isHeaderVisible}
- *         onBack="/previous-page"
- *       />
- *       <HeaderSpacer isVisible={isHeaderVisible} />
- *       <PageContentWrapper>
- *         Your content here
- *       </PageContentWrapper>
- *     </PageLayout>
- *   );
- * }
- * ```
- * 
- * @example
- * ```tsx
- * // With dependencies (re-initialize when content loads)
- * const { data } = useQuery(...);
- * const { isHeaderVisible } = useScrollHeader({
- *   dependencies: [data]
- * });
- * 
- * <PageHeader title="My Page" isVisible={isHeaderVisible} />
- * ```
  */
 export function PageHeader({
   title,
   variant = 'title-only',
-  isVisible = true,
   onBack,
   rightContent,
   rightIcon,
@@ -164,19 +122,12 @@ export function PageHeader({
       ref={headerRef}
       className={cn(
         'fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2 md:hidden',
-        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0',
         className
       )}
       style={{
-        // Maximum blend with background - minimal blur for seamless integration
-        background: 'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        // Best practice: Consistent timing (Material Design 300ms, iOS HIG 250-350ms)
-        // Simple easing (ease-out) for natural deceleration - feels responsive yet smooth
-        // Respects prefers-reduced-motion via CSS media query (handled in globals.css)
-        // Balance: Fast enough to feel responsive, slow enough to be smooth
-        transition: 'transform 300ms cubic-bezier(0.2, 0, 0, 1), opacity 300ms cubic-bezier(0.2, 0, 0, 1)',
+        // Exact match with page background - no blur to ensure seamless integration
+        background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
+        backgroundAttachment: 'scroll',
       }}
     >
       <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">

@@ -31,13 +31,12 @@ export function SplashLayout({
             <Logo className="h-12 w-12" height={48} width={48} />
           </div>
         }
-        isVisible={true}
         title=""
         variant="title-only"
       />
 
       {/* HEADER SPACER */}
-      <HeaderSpacer isVisible={true} />
+      <HeaderSpacer />
 
       {/* CONTENT SECTION - Using PageContentWrapper like profile page */}
       <PageContentWrapper includeMobileNavSpacing={true}>

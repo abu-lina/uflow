@@ -28,7 +28,6 @@ import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
-import { useScrollHeader } from '@/hooks/useScrollHeader';
 import { getCreatedProviders, getAllBookmarkedItems } from '@/services/providers';
 import { authService } from '@/features/auth/services/authService';
 import type { SupabaseUser } from '@/types/supabase-user';
@@ -106,10 +105,6 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const isLoadingProviders = isLoadingCreated || isLoadingSaved;
   const error = createdError || savedError ? 'Fehler beim Laden der Providers' : null;
 
-  // Use reusable scroll header hook
-  const { isHeaderVisible } = useScrollHeader({
-    dependencies: [createdProviders, savedProviders, isLoadingProviders], // Re-initialize when content loads
-  });
 
   // Handle logout
   const handleLogout = async () => {
@@ -156,11 +151,10 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const mobileContent = (
     <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader 
-        isVisible={isHeaderVisible}
         title={t('navigation.profile')}
       />
 
-      <HeaderSpacer isVisible={isHeaderVisible} />
+      <HeaderSpacer />
 
       <PageContentWrapper includeMobileNavSpacing={true} maxWidth="full" padding="lg-safe">
         {/* Error Message */}

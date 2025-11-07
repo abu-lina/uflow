@@ -71,7 +71,6 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
     <PageLayout hasBackground={false} maxWidth="full">
       {/* HEADER SECTION - Fixed at top using reusable header */}
       <PageHeader 
-        isVisible={true}
         rightIcon={
           <Image
             alt="UFlow Logo"

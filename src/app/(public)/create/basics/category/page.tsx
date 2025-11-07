@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
 import type { Category } from '@/types/supabase';
-import { FormInput } from '@/components/ui';
+import { FormInput, FooterAction } from '@/components/ui';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
 import { getCategories } from '@/services/categories';
@@ -20,9 +22,6 @@ export default function SelectCategoryPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const [isHeaderSticky, setIsHeaderSticky] = useState(true);
-  const lastScrollY = useRef(0);
-  const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
@@ -61,75 +60,6 @@ export default function SelectCategoryPage() {
   }, []);
 
 
-  // Scroll detection for sticky header with iOS boundary handling
-  useEffect(() => {
-    // Use setTimeout to ensure DOM is ready (fixes iOS initial scroll issue)
-    const timer = setTimeout(() => {
-      scrollContainerRef.current = document.querySelector('.content-scroll-container');
-      const scrollContainer = scrollContainerRef.current;
-      
-      if (!scrollContainer) return;
-      
-      const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
-      const MIN_SCROLL_DELTA = 8; // Increased for iOS sensitivity
-      const BOUNDARY_BUFFER = 50; // Buffer zone for bottom boundary (iOS rubber band)
-      
-      let ticking = false; // Throttle using requestAnimationFrame
-      
-      const handleScroll = () => {
-        if (!ticking) {
-          window.requestAnimationFrame(() => {
-            const currentScrollY = scrollContainer?.scrollTop || 0;
-            const scrollDifference = currentScrollY - lastScrollY.current;
-            
-            // Calculate if we're near the bottom (iOS rubber band protection)
-            const scrollHeight = scrollContainer.scrollHeight;
-            const clientHeight = scrollContainer.clientHeight;
-            const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
-            const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
-            
-            // Ignore tiny scroll movements to prevent jitter
-            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
-              ticking = false;
-              return;
-            }
-            
-            // Ignore scroll changes when near bottom (iOS rubber band effect)
-            if (isNearBottom) {
-              ticking = false;
-              return;
-            }
-            
-            // Always show header when at the top
-            if (currentScrollY <= SCROLL_THRESHOLD) {
-              setIsHeaderSticky(true);
-            }
-            // Hide when scrolling down (past threshold)
-            else if (scrollDifference > 0) {
-              setIsHeaderSticky(false);
-            }
-            // Show when scrolling up (past threshold)
-            else if (scrollDifference < 0) {
-              setIsHeaderSticky(true);
-            }
-            
-            lastScrollY.current = currentScrollY;
-            ticking = false;
-          });
-          
-          ticking = true;
-        }
-      };
-
-      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-      
-      return () => {
-        scrollContainer.removeEventListener('scroll', handleScroll);
-      };
-    }, 100); // Small delay to ensure DOM is ready
-
-    return () => clearTimeout(timer);
-  }, []);
 
   if (!checked) {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
@@ -159,32 +89,13 @@ export default function SelectCategoryPage() {
 
   return (
     <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-      {/* Single Sticky Header */}
-      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top transition-all duration-500 ease-in-out ${
-        isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      }`}>
-        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
-          {/* Back Button */}
-          <button
-            className="flex h-8 w-8 items-center justify-center"
-            onClick={() => router.push('/create/basics')}
-          >
-            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          
-          {/* Title */}
-          <div className="flex flex-1 items-start">
-            <h1 className="text-xl font-semibold text-title leading-[29px]">
-              {t('create.category.selectCategory')}
-            </h1>
-          </div>
-        </div>
-      </div>
-
-      {/* Spacer to prevent content jump */}
-      <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-16' : 'h-0'
-      }`} />
+      {/* Header */}
+      <PageHeader
+        title={t('create.category.selectCategory')}
+        variant="back-and-title"
+        onBack="/create/basics"
+      />
+      <HeaderSpacer />
 
       {/* Content */}
       <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
@@ -255,28 +166,16 @@ export default function SelectCategoryPage() {
         </div>
       </div>
 
-      {/* Navbar */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
-          <button
-            className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-1 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              !formData.category 
-                ? 'bg-[#589D96] opacity-30 cursor-not-allowed' 
-                : 'bg-[#589D96] opacity-100'
-            }`}
-            disabled={!formData.category}
-            onClick={handleSave}
-          >
-            <Icon className="h-6 w-6 text-white" icon="lucide:save" />
-            <span className="text-base font-medium text-white leading-[19px]">
-              {t('actions.save')}
-            </span>
-          </button>
-        </div>
-      </div>
+      {/* Footer Action */}
+      <FooterAction
+        actionButton={{
+          label: t('actions.save'),
+          icon: 'lucide:save',
+          onClick: handleSave,
+          disabled: !formData.category,
+          variant: 'primary',
+        }}
+      />
     </div>
   );
 }

@@ -96,6 +96,8 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
     let scrollContainer: HTMLElement | Window | null = null;
     let cleanupFn: (() => void) | null = null;
     let hideScrollY = 0;
+    let pendingVisibility: boolean | null = null;
+    let visibilityTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const getScrollY = (container: HTMLElement | Window): number => {
       if (container === window) {
@@ -119,10 +121,20 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
     };
 
     const updateHeaderVisibility = (currentScrollY: number, scrollDifference: number, velocity: number) => {
+      // Clear any pending visibility changes
+      if (visibilityTimeout) {
+        clearTimeout(visibilityTimeout);
+        visibilityTimeout = null;
+      }
+
       // Always show header when at the top
       if (currentScrollY <= scrollThreshold) {
+        if (pendingVisibility !== true) {
+          pendingVisibility = true;
+          // Immediate update when at top (no delay needed)
         setIsHeaderVisible(true);
         hideScrollY = 0;
+        }
         return;
       }
 
@@ -135,15 +147,24 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
       if (scrollDifference > 0) {
         // Fast downward scroll: hide immediately
         if (velocity > velocityThreshold) {
+          if (pendingVisibility !== false) {
+            pendingVisibility = false;
           setIsHeaderVisible(false);
           hideScrollY = currentScrollY;
+          }
           return;
         }
-        // Slow downward scroll: hide after threshold
+        // Slow downward scroll: hide after threshold with small delay for smoothness
         if (currentScrollY > scrollThreshold) {
+          if (pendingVisibility !== false) {
+            pendingVisibility = false;
+            // Small delay prevents jitter on slow scrolls
+            visibilityTimeout = setTimeout(() => {
           setIsHeaderVisible(false);
           if (hideScrollY === 0) {
             hideScrollY = currentScrollY;
+              }
+            }, 50);
           }
         }
         return;
@@ -154,14 +175,21 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
         const scrollUpDistance = hideScrollY > 0 ? hideScrollY - currentScrollY : Math.abs(scrollDifference);
         // Fast upward scroll: show immediately
         if (Math.abs(velocity) > velocityThreshold) {
+          if (pendingVisibility !== true) {
+            pendingVisibility = true;
           setIsHeaderVisible(true);
           hideScrollY = 0;
+          }
           return;
         }
         // Slow upward scroll: require threshold
         if (scrollUpDistance >= showThreshold || currentScrollY <= scrollThreshold + 20) {
+          if (pendingVisibility !== true) {
+            pendingVisibility = true;
+            // Immediate show feels more responsive
           setIsHeaderVisible(true);
           hideScrollY = 0;
+          }
         }
       }
     };
@@ -237,6 +265,9 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
 
     return () => {
       clearTimeout(delayedAttach);
+      if (visibilityTimeout) {
+        clearTimeout(visibilityTimeout);
+      }
       if (cleanupFn) {
         cleanupFn();
       }

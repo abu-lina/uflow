@@ -7,9 +7,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { PushNotificationPrompt } from '@/components/ui/PushNotificationPrompt';
 import { LoadingProvider } from '@/providers/LoadingProvider';
 import { useSplash } from '@/providers/splash-provider';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { shouldShowMobileFooter, shouldShowSubpageAction, getPageType } from '@/utils/navigationUtils';
 
@@ -74,6 +75,12 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             }}
           />
         )}
+
+        {/* Push Notification Prompt */}
+        <PushNotificationPrompt 
+          autoShow={true}
+          showDelay={5000}
+        />
       </div>
     </LoadingProvider>
   );

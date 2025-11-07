@@ -139,12 +139,11 @@ function ReviewPageContent() {
   return (
     <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader
-        isVisible={true}
         title="Review & Publish"
         variant="back-and-title"
         onBack="/create-quick"
       />
-      <HeaderSpacer isVisible={true} />
+      <HeaderSpacer />
 
       <PageContentWrapper maxWidth="full" padding="lg-safe">
         <div className="flex flex-col gap-6 pb-32">

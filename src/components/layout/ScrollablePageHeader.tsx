@@ -10,11 +10,6 @@ interface ScrollablePageHeaderProps {
    */
   title: string;
   /**
-   * Whether the header should be visible
-   * Use with useContainerScroll hook
-   */
-  isVisible: boolean;
-  /**
    * Optional back button navigation path
    * If provided, shows a back button
    */
@@ -43,25 +38,20 @@ interface ScrollablePageHeaderProps {
  * 
  * Features:
  * - Consistent styling across all pages
- * - Smooth show/hide animation based on scroll
  * - Optional back button
  * - Flexible right-side content
  * - Safe area support for mobile devices
  * 
  * @example
  * ```tsx
- * const { isHeaderVisible } = useContainerScroll();
- * 
  * <ScrollablePageHeader
  *   title="My Page"
- *   isVisible={isHeaderVisible}
  *   onBack="/previous-page"
  * />
  * ```
  */
 export function ScrollablePageHeader({
   title,
-  isVisible,
   onBack,
   rightContent,
   className = '',
@@ -80,9 +70,12 @@ export function ScrollablePageHeader({
 
   return (
     <header
-      className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out ${
-        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      } ${className}`}
+      className={`fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+24px)] ${className}`}
+      style={{
+        // Exact match with page background - no blur to ensure seamless integration
+        background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
+        backgroundAttachment: 'scroll',
+      }}
     >
       <div className="flex items-start w-full max-w-[393px] mx-auto px-4 h-10">
         {/* Back Button */}

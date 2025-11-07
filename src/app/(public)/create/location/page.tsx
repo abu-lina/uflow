@@ -17,15 +17,12 @@ import { useLanguage } from '@/providers/LanguageProvider';
 export default function LocationPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const [validationErrors, setValidationErrors] = useState<{
     street?: string;
     zip?: string;
     city?: string;
     country?: string;
   }>({});
-  const lastScrollY = useRef(0);
-  const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { formData, updateFormData } = useFormData();
@@ -71,75 +68,6 @@ export default function LocationPage() {
   }, []);
 
 
-  // Scroll detection for sticky header with iOS boundary handling
-  useEffect(() => {
-    // Use setTimeout to ensure DOM is ready (fixes iOS initial scroll issue)
-    const timer = setTimeout(() => {
-      scrollContainerRef.current = document.querySelector('.content-scroll-container');
-      const contentContainer = scrollContainerRef.current;
-      
-      if (!contentContainer) return;
-      
-      const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
-      const MIN_SCROLL_DELTA = 8; // Increased for iOS sensitivity
-      const BOUNDARY_BUFFER = 50; // Buffer zone for bottom boundary (iOS rubber band)
-      
-      let ticking = false; // Throttle using requestAnimationFrame
-      
-      const handleScroll = () => {
-        if (!ticking) {
-          window.requestAnimationFrame(() => {
-            const currentScrollY = contentContainer?.scrollTop || 0;
-            const scrollDifference = currentScrollY - lastScrollY.current;
-            
-            // Calculate if we're near the bottom (iOS rubber band protection)
-            const scrollHeight = contentContainer.scrollHeight;
-            const clientHeight = contentContainer.clientHeight;
-            const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
-            const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
-            
-            // Ignore tiny scroll movements to prevent jitter
-            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
-              ticking = false;
-              return;
-            }
-            
-            // Ignore scroll changes when near bottom (iOS rubber band effect)
-            if (isNearBottom) {
-              ticking = false;
-              return;
-            }
-            
-            // Always show header when at the top
-            if (currentScrollY <= SCROLL_THRESHOLD) {
-              setIsHeaderSticky(true);
-            }
-            // Hide when scrolling down (past threshold)
-            else if (scrollDifference > 0) {
-              setIsHeaderSticky(false);
-            }
-            // Show when scrolling up (past threshold)
-            else if (scrollDifference < 0) {
-              setIsHeaderSticky(true);
-            }
-            
-            lastScrollY.current = currentScrollY;
-            ticking = false;
-          });
-          
-          ticking = true;
-        }
-      };
-
-      contentContainer.addEventListener('scroll', handleScroll, { passive: true });
-      
-      return () => {
-        contentContainer.removeEventListener('scroll', handleScroll);
-      };
-    }, 100); // Small delay to ensure DOM is ready
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Store initial address value in a ref to avoid any memoization issues
   // Must be initialized AFTER formData is available
@@ -189,8 +117,8 @@ export default function LocationPage() {
     const returnUrl = encodeURIComponent('/create/location');
     return (
       <div className="relative flex w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-        <PageHeader isVisible={true} title={t('create.location.title')} />
-        <HeaderSpacer isVisible={true} />
+        <PageHeader title={t('create.location.title')} />
+        <HeaderSpacer />
 
         {/* Main Content */}
         <div className="flex flex-1 flex-col items-center justify-center px-safe-24 pt-20 mobile-nav-spacing">
@@ -286,12 +214,11 @@ export default function LocationPage() {
   return (
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader
-        isVisible={isHeaderSticky}
         title={t('create.location.title')}
         variant="back-and-title"
         onBack="/create/basics"
       />
-      <HeaderSpacer isVisible={isHeaderSticky} />
+      <HeaderSpacer />
 
       {/* Content */}
       <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">

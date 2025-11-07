@@ -141,8 +141,8 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
 
   return (
     <div className="flex h-screen flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      <PageHeader isVisible={true} title="Bilder hochladen" variant="back-and-title" onBack={() => router.back()} />
-      <HeaderSpacer isVisible={true} />
+      <PageHeader title="Bilder hochladen" variant="back-and-title" onBack={() => router.back()} />
+      <HeaderSpacer />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">

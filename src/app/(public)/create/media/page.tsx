@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -17,10 +17,7 @@ import { createProviderCommunityServiceRelationship } from '@/services/community
 import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function MediaUploadPage() {
-  const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const lastScrollY = useRef(0);
-  const scrollContainerRef = useRef<Element | null>(null);
   
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -51,79 +48,6 @@ export default function MediaUploadPage() {
   // Simple entity type determination based on category
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
 
-  // Scroll detection for sticky header with iOS boundary handling
-  useEffect(() => {
-    // Use setTimeout to ensure DOM is ready (fixes iOS initial scroll issue)
-    const timer = setTimeout(() => {
-      scrollContainerRef.current = document.querySelector('.content-scroll-container');
-      const contentContainer = scrollContainerRef.current;
-      
-      if (!contentContainer) return;
-      
-      const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
-      const MIN_SCROLL_DELTA = 8; // Increased for iOS sensitivity
-      const BOUNDARY_BUFFER = 50; // Buffer zone for bottom boundary (iOS rubber band)
-      
-      let ticking = false; // Throttle using requestAnimationFrame
-      
-      const handleScroll = () => {
-        if (!ticking) {
-          window.requestAnimationFrame(() => {
-            const currentScrollY = contentContainer?.scrollTop || 0;
-            const scrollDifference = currentScrollY - lastScrollY.current;
-            
-            // Calculate if we're near the bottom (iOS rubber band protection)
-            const scrollHeight = contentContainer.scrollHeight;
-            const clientHeight = contentContainer.clientHeight;
-            const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
-            const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
-            
-            // Always show header when at the top (regardless of scroll direction)
-            if (currentScrollY <= SCROLL_THRESHOLD) {
-              setIsHeaderSticky(true);
-              lastScrollY.current = currentScrollY;
-              ticking = false;
-              return;
-            }
-            
-            // Ignore scroll changes when near bottom (iOS rubber band effect)
-            if (isNearBottom) {
-              ticking = false;
-              return;
-            }
-            
-            // Ignore tiny scroll movements to prevent jitter
-            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
-              ticking = false;
-              return;
-            }
-            
-            // Hide when scrolling down (past threshold)
-            if (scrollDifference > 0) {
-              setIsHeaderSticky(false);
-            }
-            // Show when scrolling up (past threshold)
-            else if (scrollDifference < 0) {
-              setIsHeaderSticky(true);
-            }
-            
-            lastScrollY.current = currentScrollY;
-            ticking = false;
-          });
-          
-          ticking = true;
-        }
-      };
-
-      contentContainer.addEventListener('scroll', handleScroll, { passive: true });
-      
-      return () => {
-        contentContainer.removeEventListener('scroll', handleScroll);
-      };
-    }, 100); // Small delay to ensure DOM is ready
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Show loading state while form data is being restored
   if (isLoading) {
@@ -303,12 +227,11 @@ export default function MediaUploadPage() {
   return (
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader
-        isVisible={isHeaderSticky}
         title={t('create.media.title')}
         variant="back-and-title"
         onBack="/create/contact"
       />
-      <HeaderSpacer isVisible={isHeaderSticky} />
+      <HeaderSpacer />
 
       {/* Content */}
       <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">

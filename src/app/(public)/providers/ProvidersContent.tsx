@@ -9,7 +9,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState, SkeletonGrid } from '@/components/ui';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
 import { useSearch } from '@/providers/search-provider';
@@ -21,7 +21,7 @@ import {
 export function ProvidersContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user, loading: userLoading } = useAuth();
+  const { user, isLoading: userLoading } = useAuth();
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const location = searchParams.get('location') || t('search.everywhere');

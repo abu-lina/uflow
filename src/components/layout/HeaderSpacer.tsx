@@ -4,11 +4,6 @@ import { cn } from '@/lib/utils';
 
 interface HeaderSpacerProps {
   /**
-   * Whether the header is visible (for scroll-based hiding)
-   * @default true
-   */
-  isVisible?: boolean;
-  /**
    * Additional CSS classes
    */
   className?: string;
@@ -29,26 +24,19 @@ interface HeaderSpacerProps {
  * 
  * @example
  * ```tsx
- * // Basic usage (always visible)
+ * // Basic usage
  * <HeaderSpacer />
- * 
- * // With scroll-based visibility
- * const { isHeaderVisible } = useContainerScroll();
- * <HeaderSpacer isVisible={isHeaderVisible} />
  * 
  * // With custom classes
  * <HeaderSpacer className="border-t" />
  * ```
  */
-export function HeaderSpacer({ isVisible = true, className }: HeaderSpacerProps) {
+export function HeaderSpacer({ className }: HeaderSpacerProps) {
   return (
     <div 
       aria-hidden="true"
       className={cn(
-        'w-full flex-shrink-0 transition-all duration-300',
-        isVisible
-          ? 'h-header-spacing sm:h-header-spacing-sm md:h-header-spacing-md'
-          : 'h-0 opacity-0',
+        'w-full flex-shrink-0 h-header-spacing sm:h-header-spacing-sm md:h-header-spacing-md',
         className
       )}
       role="presentation"

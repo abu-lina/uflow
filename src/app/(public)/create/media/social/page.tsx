@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
@@ -16,12 +16,9 @@ import { getFirstImageUrl } from '@/utils/imageUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function SocialProjectPage() {
-  const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [communityServices, setCommunityServices] = useState<CommunityService[]>([]);
   const [servicesLoading, setServicesLoading] = useState(false);
-  const lastScrollY = useRef(0);
-  const scrollContainerRef = useRef<Element | null>(null);
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
@@ -65,79 +62,6 @@ export default function SocialProjectPage() {
     void fetchCommunityServices();
   }, []);
 
-  // Scroll detection for sticky header with iOS boundary handling
-  useEffect(() => {
-    // Use setTimeout to ensure DOM is ready (fixes iOS initial scroll issue)
-    const timer = setTimeout(() => {
-      scrollContainerRef.current = document.querySelector('.content-scroll-container');
-      const contentContainer = scrollContainerRef.current;
-      
-      if (!contentContainer) return;
-      
-      const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
-      const MIN_SCROLL_DELTA = 8; // Increased for iOS sensitivity
-      const BOUNDARY_BUFFER = 50; // Buffer zone for bottom boundary (iOS rubber band)
-      
-      let ticking = false; // Throttle using requestAnimationFrame
-      
-      const handleScroll = () => {
-        if (!ticking) {
-          window.requestAnimationFrame(() => {
-            const currentScrollY = contentContainer?.scrollTop || 0;
-            const scrollDifference = currentScrollY - lastScrollY.current;
-            
-            // Calculate if we're near the bottom (iOS rubber band protection)
-            const scrollHeight = contentContainer.scrollHeight;
-            const clientHeight = contentContainer.clientHeight;
-            const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
-            const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
-            
-            // Always show header when at the top (regardless of scroll direction)
-            if (currentScrollY <= SCROLL_THRESHOLD) {
-              setIsHeaderSticky(true);
-              lastScrollY.current = currentScrollY;
-              ticking = false;
-              return;
-            }
-            
-            // Ignore scroll changes when near bottom (iOS rubber band effect)
-            if (isNearBottom) {
-              ticking = false;
-              return;
-            }
-            
-            // Ignore tiny scroll movements to prevent jitter
-            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
-              ticking = false;
-              return;
-            }
-            
-            // Hide when scrolling down (past threshold)
-            if (scrollDifference > 0) {
-              setIsHeaderSticky(false);
-            }
-            // Show when scrolling up (past threshold)
-            else if (scrollDifference < 0) {
-              setIsHeaderSticky(true);
-            }
-            
-            lastScrollY.current = currentScrollY;
-            ticking = false;
-          });
-          
-          ticking = true;
-        }
-      };
-
-      contentContainer.addEventListener('scroll', handleScroll, { passive: true });
-      
-      return () => {
-        contentContainer.removeEventListener('scroll', handleScroll);
-      };
-    }, 100); // Small delay to ensure DOM is ready
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Filter projects based on search
   const filteredProjects = communityServices.filter(service =>
@@ -178,12 +102,11 @@ export default function SocialProjectPage() {
   return (
     <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
       <PageHeader
-        isVisible={isHeaderSticky}
         title={t('create.media.socialInitiativesTitle')}
         variant="back-and-title"
         onBack="/create/media"
       />
-      <HeaderSpacer isVisible={isHeaderSticky} />
+      <HeaderSpacer />
 
       <main className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">
         <div className="flex w-full flex-col gap-8">

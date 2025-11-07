@@ -7,6 +7,8 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // Import custom push notification handler
+  importScripts: ['/sw-push-handler.js'],
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/.*\.supabase\.co\/.*$/,
@@ -175,9 +177,13 @@ const nextConfig = {
   },
 
   // Environment variables
+  // Note: NEXT_PUBLIC_* variables are automatically available in client components
+  // This section is only needed if you want to override or transform values
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    // VAPID key is optional, so we don't require it here
+    // It will be checked at runtime in the component
   },
 
   // Performance monitoring
@@ -296,6 +302,16 @@ const nextConfig = {
         source: '/old-path',
         destination: '/new-path',
         permanent: true,
+      },
+    ];
+  },
+
+  // Rewrites for Swagger
+  async rewrites() {
+    return [
+      {
+        source: '/api/swagger.json',
+        destination: '/api/swagger',
       },
     ];
   },
