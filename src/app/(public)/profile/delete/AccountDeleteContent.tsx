@@ -162,7 +162,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
           'aria-label': 'Konto behalten und zurück zum Profil',
         }}
         secondaryButton={{
-          icon: <Trash2 className="h-6 w-6 text-content-title" />,
+          icon: <Trash2 className="h-6 w-6 text-content-heading" />,
           disabled: isDeleting,
           loading: isDeleting,
           onClick: handleDeleteClick,

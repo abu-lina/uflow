@@ -2,10 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { PageLayout } from '@/components/layout/PageLayout';
-import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -42,19 +39,15 @@ export default function CreateProviderPage() {
   }
 
   return (
-    <PageLayout hasBackground={false} maxWidth="full">
-      <PageHeader title={t('create.title')} />
+    <ScrollablePageLayout>
+      <PageHeader 
+        title={t('create.title')} 
+        variant="title-only"
+      />
       
-      <HeaderSpacer />
-      
-      <PageContentWrapper 
-        centerVertically={true}
-        contentClassName="gap-8"
-        footerHeight="pb-mobile-nav"
-        hasBackground={false}
-        includeMobileNavSpacing={true}
+      <PageContent 
+        className="flex flex-col items-center gap-8"
         maxWidth="full"
-        padding="lg-safe"
       >
         <div className="flex flex-col items-center gap-6 sm:gap-8 w-full">
           <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
@@ -70,7 +63,7 @@ export default function CreateProviderPage() {
                 <Icon className="h-5 w-5 text-primary" icon="mdi:lightning-bolt" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-content-title mb-1">
+                <h3 className="text-base font-semibold text-content-heading mb-1">
                   Quick Import (Beta)
                 </h3>
                 <p className="text-sm text-content leading-relaxed">
@@ -104,7 +97,7 @@ export default function CreateProviderPage() {
             onClick={handleRecommendProvider}
           />
         </div>
-      </PageContentWrapper>
-    </PageLayout>
+      </PageContent>
+    </ScrollablePageLayout>
   );
 }

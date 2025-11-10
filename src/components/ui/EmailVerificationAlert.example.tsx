@@ -87,7 +87,7 @@ export function EmailVerificationAlertExamples() {
 
           {/* Mock button */}
           <button
-            className="mt-4 w-full rounded-lg bg-mint px-4 py-3 font-inter-tight text-sm font-medium text-white hover:bg-mint/90"
+            className="mt-4 w-full rounded-lg bg-primary px-4 py-3 font-inter-tight text-sm font-medium text-white hover:bg-primary/90"
             type="button"
           >
             Anmelden

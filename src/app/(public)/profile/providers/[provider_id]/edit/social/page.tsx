@@ -95,12 +95,12 @@ export default function EditSocialPage({ params }: { params: Promise<{ provider_
           >
             <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="text-xl font-semibold text-content-title">Soziale Initiativen</h1>
+          <h1 className="text-xl font-semibold text-content-heading">Soziale Initiativen</h1>
         </div>
       </header>
 
-      {/* Dynamic Spacer */}
-      <div className="h-[calc(env(safe-area-inset-top)+24px+40px)]" />
+      {/* Dynamic Spacer - 24px gap between header and content */}
+      <div className="h-[calc(env(safe-area-inset-top)+24px+40px+24px)]" />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
@@ -120,7 +120,7 @@ export default function EditSocialPage({ params }: { params: Promise<{ provider_
                 icon="lucide:search"
               />
               <input
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-[#589D96] focus:outline-none focus:ring-1 focus:ring-[#589D96]"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="Initiativen durchsuchen..."
                 type="text"
                 value={searchQuery}

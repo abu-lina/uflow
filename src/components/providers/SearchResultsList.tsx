@@ -5,6 +5,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import { Button } from '@/components/ui/Button';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
+import { usePrefetchProvider } from '@/hooks/useProvider';
 import type { SearchResult, Provider } from '@/services/providers';
 
 interface SearchResultsListProps {
@@ -31,6 +32,7 @@ export function SearchResultsList({
   onRetry,
 }: SearchResultsListProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const prefetchProvider = usePrefetchProvider();
 
   // Debounced load more handler to prevent rapid fire
   const debouncedLoadMore = useCallback(() => {
@@ -112,6 +114,10 @@ export function SearchResultsList({
                 e.preventDefault();
                 onProviderClick(provider);
               }
+            }}
+            onMouseEnter={() => {
+              // Prefetch provider data on hover for instant navigation
+              prefetchProvider(result.id);
             }}
           >
             <ProviderCard

@@ -11,7 +11,7 @@ export function PageIndicator({ activeIndex, count, className = '' }: PageIndica
         <div
           key={index}
           className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-            index === activeIndex ? 'bg-[#589D96]' : 'bg-[#D4D4D4]'
+            index === activeIndex ? 'bg-primary' : 'bg-[#D4D4D4]'
           }`}
         />
       ))}

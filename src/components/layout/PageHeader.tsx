@@ -1,9 +1,10 @@
 'use client';
 
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef, useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
+import { ScrollContext } from './ScrollablePageLayout';
 
 type HeaderVariant = 'title-only' | 'back-and-title' | 'back-title-icon' | 'title-and-icon' | 'about-logo';
 
@@ -37,6 +38,10 @@ interface PageHeaderProps {
    * Custom content to replace the default title
    */
   customContent?: ReactNode;
+  /**
+   * Scroll container ref for detecting scroll within a specific element
+   */
+  scrollContainerRef?: React.RefObject<HTMLElement>;
 }
 
 /**
@@ -73,9 +78,11 @@ export function PageHeader({
   rightIcon,
   className = '',
   customContent,
+  scrollContainerRef,
 }: PageHeaderProps) {
   const router = useRouter();
   const headerRef = useRef<HTMLElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const handleBack = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Prevent event from bubbling to document-level listeners that might
@@ -94,6 +101,65 @@ export function PageHeader({
   
   // Priority: rightIcon > rightContent
   const actualRightContent = shouldShowRightIcon && rightIcon ? rightIcon : rightContent;
+
+  // Get scroll context (from ScrollablePageLayout)
+  const scrollContext = useContext(ScrollContext);
+  
+  // Use explicit prop if provided, otherwise use context
+  const effectiveScrollRef = scrollContainerRef || scrollContext;
+
+  // Scroll detection for blur/glass effect
+  useEffect(() => {
+    const handleScroll = () => {
+      // Priority 1: Use effective scroll ref (explicit prop or context)
+      if (effectiveScrollRef?.current) {
+        const scrollY = effectiveScrollRef.current.scrollTop;
+        setIsScrolled(scrollY > 0);
+        return;
+      }
+
+      // Priority 2: Auto-detect main scroll container (our app structure)
+      const mainElement = document.querySelector('main.overflow-y-auto') as HTMLElement;
+      if (mainElement) {
+        const scrollY = mainElement.scrollTop;
+        setIsScrolled(scrollY > 0);
+        return;
+      }
+
+      // Priority 3: Fallback to window scroll
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      setIsScrolled(scrollY > 0);
+    };
+
+    // Check initial scroll position
+    handleScroll();
+
+    // Determine which element to listen to
+    let scrollElement: HTMLElement | Window = window;
+    
+    if (effectiveScrollRef?.current) {
+      scrollElement = effectiveScrollRef.current;
+    } else {
+      const mainElement = document.querySelector('main.overflow-y-auto') as HTMLElement;
+      if (mainElement) {
+        scrollElement = mainElement;
+      }
+    }
+
+    if (scrollElement instanceof HTMLElement) {
+      scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+    } else {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
+    return () => {
+      if (scrollElement instanceof HTMLElement) {
+        scrollElement.removeEventListener('scroll', handleScroll);
+      } else {
+        window.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [effectiveScrollRef]);
 
   // Use useEffect to ensure child SVG elements have safe className handling
   // This is a defensive measure against injected code (e.g., Next.js dev tools) that tries to access className.split()
@@ -121,14 +187,34 @@ export function PageHeader({
     <header
       ref={headerRef}
       className={cn(
-        'fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2 md:hidden',
+        'fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2',
         className
       )}
       style={{
-        // Transparent background with backdrop blur to obscure content behind
-        background: 'linear-gradient(180deg, rgba(245, 245, 245, 0.05) 0%, rgba(251, 251, 251, 0.05) 100%)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        // Smooth transition for all properties including backdrop-filter
+        transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+        // Glassy blur effect when scrolled - transparent with blur only
+        // backdropFilter blurs everything behind the header element
+        // blur(20px) creates the frosted glass blur effect
+        // saturate(180%) makes colors more vibrant through the blur
+        // isolation: isolate ensures backdrop-filter works correctly in stacking contexts
+        background: isScrolled 
+          ? 'rgba(255, 255, 255, 0.15)' 
+          : 'transparent',
+        backdropFilter: isScrolled 
+          ? 'blur(20px) saturate(180%)' 
+          : 'none',
+        WebkitBackdropFilter: isScrolled 
+          ? 'blur(20px) saturate(180%)' 
+          : 'none',
+        borderBottom: isScrolled 
+          ? '1px solid rgba(255, 255, 255, 0.18)' 
+          : '1px solid transparent',
+        isolation: 'isolate',
+        marginLeft: '-1px',
+        marginRight: '-1px',
+        paddingLeft: '1px',
+        paddingRight: '1px',
       }}
     >
       <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
@@ -140,7 +226,7 @@ export function PageHeader({
             onClick={handleBack}
           >
             <Icon 
-              className="w-8 h-8 text-[#272727] pointer-events-none" 
+              className="w-8 h-8 text-content-heading pointer-events-none" 
               icon="material-symbols:chevron-left" 
             />
           </button>
@@ -150,7 +236,7 @@ export function PageHeader({
         {customContent ? (
           customContent
         ) : (
-          <h1 className="text-xl font-semibold text-content-title flex-1">
+          <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
             {title}
           </h1>
         )}

@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
-import { getAllBookmarkedItems } from '@/services/providers';
 
 interface UseOptimisticBookmarkOptions {
   bookmarkableId: string;
@@ -88,16 +87,12 @@ export function useOptimisticBookmark({
         detail: { bookmarkableId, bookmarkableType, isBookmarked: newBookmarkState }
       }));
 
-      // 7. If adding bookmark, fetch fresh data and update cache
+      // 7. If adding bookmark, invalidate cache (don't fetch immediately - let it load on demand)
+      // This prevents blocking the UI with a large data fetch
       if (newBookmarkState) {
-        try {
-          const freshData = await getAllBookmarkedItems(user.id);
-          queryClient.setQueryData(['saved-providers', user.id], freshData);
-        } catch (error) {
-          console.error('Error fetching fresh bookmarked items:', error);
-          // Fallback to invalidation
-          queryClient.invalidateQueries({ queryKey: ['saved-providers', user.id] });
-        }
+        // Invalidate instead of fetching immediately - React Query will fetch in background
+        // This makes the bookmark action feel instant
+        queryClient.invalidateQueries({ queryKey: ['saved-providers', user.id] });
       }
 
     } catch (error) {

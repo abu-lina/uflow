@@ -182,7 +182,7 @@ export function BusinessSearch({ onSelect, onManualCreate }: BusinessSearchProps
     <div className="flex flex-col gap-6 w-full">
       {/* Search Input */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-content-title">
+        <label className="text-sm font-medium text-content-heading">
           Search for your business
         </label>
         <div className="relative">
@@ -229,7 +229,7 @@ export function BusinessSearch({ onSelect, onManualCreate }: BusinessSearchProps
             icon="mdi:information"
           />
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium text-content-title">
+            <p className="text-sm font-medium text-content-heading">
               Quick Business Import
             </p>
             <p className="text-xs text-content leading-relaxed">
@@ -249,7 +249,7 @@ export function BusinessSearch({ onSelect, onManualCreate }: BusinessSearchProps
 
       {/* Manual Create Button */}
       <button
-        className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-[#D4D4D4] bg-white px-5 py-3 text-base font-medium text-content-title transition-colors hover:border-primary hover:bg-primary/5"
+        className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-[#D4D4D4] bg-white px-5 py-3 text-base font-medium text-content-heading transition-colors hover:border-primary hover:bg-primary/5"
         type="button"
         onClick={onManualCreate}
       >

@@ -145,13 +145,13 @@ export default function EditCategoryPage({ params }: { params: Promise<{ provide
           >
             <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="text-xl font-semibold text-content-title">Kategorie wählen</h1>
+          <h1 className="text-xl font-semibold text-content-heading">Kategorie wählen</h1>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-[393px] mx-auto px-4 pt-[calc(env(safe-area-inset-top)+24px+40px+16px)] pb-safe-bottom">
+        <div className="w-full max-w-[393px] mx-auto px-4 pt-[calc(env(safe-area-inset-top)+24px+40px+24px)] pb-safe-bottom">
           {/* Search Bar */}
           <div className="mb-4">
             <div className="relative">
@@ -160,7 +160,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ provide
                 icon="lucide:search"
               />
               <input
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-[#589D96] focus:outline-none focus:ring-1 focus:ring-[#589D96]"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="Kategorien durchsuchen..."
                 type="text"
                 value={searchQuery}
@@ -181,7 +181,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ provide
                   key={category.category_id}
                   className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 ${
                     selectedCategoryId === category.category_id
-                      ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
+                      ? 'bg-primary-light text-content-heading border border-primary'
                       : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }`}
                   onClick={() => handleCategorySelect(category.category_id)}

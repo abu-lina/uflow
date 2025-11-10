@@ -19,9 +19,9 @@ interface TextareaFieldProps extends BaseFieldProps, TextareaHTMLAttributes<HTML
 
 const baseFieldStyles = {
   input:
-    'h-10 w-full rounded-[15px] border border-[#D4D4D4] bg-white px-4 font-inter text-[15px] text-[#272727] outline-none transition-colors focus:border-[#BFDBD8] focus:ring-1 focus:ring-[#BFDBD8]',
+    'h-10 w-full rounded-[15px] border border-[#D4D4D4] bg-white px-4 font-inter text-[15px] text-[#272727] outline-none transition-colors focus:border-primary-light focus:ring-1 focus:ring-primary-light',
   textarea:
-    'h-[160px] w-full rounded-[15px] border border-[#D4D4D4] bg-white p-4 font-inter text-[15px] text-[#272727] outline-none transition-colors focus:border-[#BFDBD8] focus:ring-1 focus:ring-[#BFDBD8]',
+    'h-[160px] w-full rounded-[15px] border border-[#D4D4D4] bg-white p-4 font-inter text-[15px] text-[#272727] outline-none transition-colors focus:border-primary-light focus:ring-1 focus:ring-primary-light',
   label: 'px-3 font-inter text-base text-[#999999]',
   error: 'mt-1 text-sm text-red-500',
 };

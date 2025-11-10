@@ -29,7 +29,7 @@ export default function CheckEmailPage() {
         <div className="flex w-full flex-col">
           <TitleSection className="mb-10">
             <IconWithTitle
-              icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:mail-outline" />}
+              icon={<Icon className="w-full h-full text-content-heading" icon="material-symbols:mail-outline" />}
               size="large"
               title="Überprüfe dein E‑Mail Postfach"
             >

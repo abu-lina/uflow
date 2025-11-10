@@ -53,10 +53,10 @@ export function SplashContent() {
         >
           <h1 className="font-inter-tight text-4xl font-medium text-center text-[#232323]">
             <span className="text-[#232323]">Von </span>
-            <span className="text-[#589D96]">Muslimen</span>
+            <span className="text-primary">Muslimen</span>
             <br />
             <span className="text-[#232323]">für </span>
-            <span className="text-[#589D96]">Muslime.</span>
+            <span className="text-primary">Muslime.</span>
           </h1>
 
           <p className="font-inter text-base leading-6 text-center text-[#555555]">

@@ -13,7 +13,7 @@ export function OrnamentFrame({ children, className = '', style, ...props }: Orn
     <div
       className={[
         'relative flex aspect-[16/9] w-full max-w-[800px] flex-col items-center justify-center',
-        'overflow-visible rounded-3xl border border-[#BFDBD8]',
+        'overflow-visible rounded-3xl border border-primary-light',
         className,
       ].join(' ')}
       style={style}
@@ -22,7 +22,7 @@ export function OrnamentFrame({ children, className = '', style, ...props }: Orn
       {/* Outer Mint Frame */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -inset-8 z-0 rounded-[2.5rem] bg-[#BFDBD8]"
+        className="pointer-events-none absolute -inset-8 z-0 rounded-[2.5rem] bg-primary-light"
       />
       {/* Content (Inner Frame) */}
       <div className="relative z-0 flex min-h-full w-full flex-col items-center justify-center rounded-3xl border-2 border-white p-12">

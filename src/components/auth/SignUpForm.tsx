@@ -39,12 +39,12 @@ export const SignUpForm = () => {
     <div className="max-w-md mx-auto">
       <form className="space-y-6" onSubmit={handleSignUp}>
         <div>
-          <label className="block text-sm font-medium text-content-title mb-2" htmlFor="email">
+          <label className="block text-sm font-medium text-content-heading mb-2" htmlFor="email">
             {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
           </label>
           <input
             required
-            className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
+            className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             id="email"
             placeholder={language === 'de' ? 'ihre@email.com' : 'your@email.com'}
             type="email"
@@ -54,12 +54,12 @@ export const SignUpForm = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-content-title mb-2" htmlFor="password">
+          <label className="block text-sm font-medium text-content-heading mb-2" htmlFor="password">
             {language === 'de' ? 'Passwort' : 'Password'}
           </label>
           <input
             required
-            className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-mint focus:border-mint outline-none"
+            className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             id="password"
             placeholder={language === 'de' ? 'Ihr Passwort' : 'Your password'}
             type="password"
@@ -69,7 +69,7 @@ export const SignUpForm = () => {
         </div>
         
         <button
-          className="w-full bg-mint text-white py-3 px-4 rounded-lg font-medium hover:bg-mint/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           disabled={loading}
           type="submit"
         >

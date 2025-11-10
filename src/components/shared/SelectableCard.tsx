@@ -58,7 +58,7 @@ export function SelectableCard({
             }}
           >
             <Icon 
-              className="w-[18px] h-[18px] text-content-title" 
+              className="w-[18px] h-[18px] text-content-heading" 
               icon={
                 actionType === 'unsave' 
                   ? "material-symbols:close-rounded" 

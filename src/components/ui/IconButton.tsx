@@ -8,7 +8,7 @@ const iconButtonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-[#589D96] text-white hover:bg-[#4a8a84]',
+        primary: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
         secondary: 'bg-[#EEEEEE] text-[#CDCDCD] hover:bg-gray-300',
         success: 'bg-[#4a8a84] text-white hover:bg-[#4a8a84]',
       },
@@ -78,16 +78,16 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       }
       
       if (typeof icon === 'string') {
-        // Use text-content-title for the icon color (#232323)
-        return <Icon aria-hidden="true" className="h-5 w-5 pointer-events-none text-content-title" icon={icon} />;
+        // Use text-content-heading for the icon color (#232323)
+        return <Icon aria-hidden="true" className="h-5 w-5 pointer-events-none text-content-heading" icon={icon} />;
       }
       
       // Wrap ReactNode icons to prevent click propagation issues
       // The pointer-events-none ensures clicks always hit the button, not child SVG elements
-      // Use text-content-title for the icon color (#232323)
+      // Use text-content-heading for the icon color (#232323)
       if (icon) {
         return (
-          <span className="pointer-events-none flex items-center justify-center text-content-title" style={{ pointerEvents: 'none' }}>
+          <span className="pointer-events-none flex items-center justify-center text-content-heading" style={{ pointerEvents: 'none' }}>
             {icon}
           </span>
         );

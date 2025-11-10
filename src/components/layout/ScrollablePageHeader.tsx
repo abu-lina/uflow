@@ -93,7 +93,7 @@ export function ScrollablePageHeader({
         {customContent ? (
           customContent
         ) : showTitle ? (
-          <h1 className="text-xl font-semibold text-content-title">
+          <h1 className="text-xl font-semibold text-content-heading">
             {title}
           </h1>
         ) : null}

@@ -71,7 +71,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
           <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
             <input
               required
-              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
+              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-primary focus:ring-0"
               disabled={isLoading}
               id="email"
               placeholder="Email"
@@ -82,7 +82,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
             <input
               required
               autoComplete="new-password"
-              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
+              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-primary focus:ring-0"
               disabled={isLoading}
               id="password"
               placeholder="Passwort"
@@ -93,7 +93,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
             <input
               required
               autoComplete="new-password"
-              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-[#589D96] focus:ring-0"
+              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-primary focus:ring-0"
               disabled={isLoading}
               id="confirmPassword"
               placeholder="Passwort wiederholen"
@@ -102,7 +102,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
             />
             <button
-              className="mt-4 w-full rounded-2xl bg-mint py-4 text-xl font-medium text-white"
+              className="mt-4 w-full rounded-2xl bg-primary py-4 text-xl font-medium text-white"
               disabled={isLoading}
               type="submit"
             >
@@ -110,7 +110,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
             </button>
           </form>
           <div className="mt-8 flex w-full items-center justify-between">
-            <p className="font-inter text-xs font-light text-grey">
+            <p className="font-inter text-xs font-light text-neutral">
               Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.
             </p>
             {onSwitchMode && (
@@ -126,7 +126,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
         </div>
         {/* Close Button */}
         <button
-          className="absolute right-8 top-8 z-20 flex size-8 items-center justify-center rounded-full hover:bg-grey-light"
+          className="absolute right-8 top-8 z-20 flex size-8 items-center justify-center rounded-full hover:bg-neutral-light"
           onClick={onClose}
         >
           <svg

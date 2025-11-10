@@ -234,14 +234,14 @@ export function PushNotificationPrompt({
         <div className="flex items-start gap-3">
           {/* Icon */}
           <div className="flex-shrink-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#589D96]/10">
-              <Bell className="h-5 w-5 text-[#589D96]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <Bell className="h-5 w-5 text-primary" />
             </div>
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-content-title mb-1">
+            <h3 className="text-sm font-semibold text-content-heading mb-1">
               Enable Notifications
             </h3>
             <p className="text-xs text-content leading-relaxed mb-3">

@@ -3,10 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { PageLayout } from '@/components/layout/PageLayout';
-import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
@@ -58,17 +55,16 @@ export default function CreateBasicsPage() {
     const returnUrl = encodeURIComponent('/create/basics');
     
     return (
-      <PageLayout hasBackground={false} maxWidth="full">
+      <ScrollablePageLayout>
         <PageHeader
           title={t('create.basics.title')}
         />
-        <HeaderSpacer />
 
-        <PageContentWrapper centerVertically={true} maxWidth="full" padding="lg-safe">
+        <PageContent className="flex items-center justify-center min-h-[60vh]" maxWidth="full">
           <div className="flex w-full flex-col">
             <TitleSection className="mb-10">
               <IconWithTitle
-                icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
+                icon={<Icon className="w-full h-full text-content-heading" icon="material-symbols:lock-outline" />}
                 size="large"
                 title={t('create.basics.loginRequired')}
               >
@@ -91,28 +87,27 @@ export default function CreateBasicsPage() {
               </div>
             </ContentSection>
           </div>
-        </PageContentWrapper>
-      </PageLayout>
+        </PageContent>
+      </ScrollablePageLayout>
     );
   }
 
   return (
-    <PageLayout hasBackground={false} maxWidth="full">
+    <ScrollablePageLayout>
       <PageHeader
         title={t('create.basics.title')}
         variant="back-and-title"
         onBack="/create"
       />
-      <HeaderSpacer />
 
-      <PageContentWrapper maxWidth="full" padding="lg-safe">
+      <PageContent maxWidth="full">
         <ProviderCreateForm 
           onNextStep={() => {
             // Navigate to location page
             router.push('/create/location');
           }}
         />
-      </PageContentWrapper>
-    </PageLayout>
+      </PageContent>
+    </ScrollablePageLayout>
   );
 }

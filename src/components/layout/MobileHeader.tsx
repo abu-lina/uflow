@@ -59,7 +59,7 @@ export function MobileHeader({
                 </button>
               )}
               {title && (
-                <h1 className="text-xl font-semibold text-content-title">
+                <h1 className="text-xl font-semibold text-content-heading">
                   {title}
                 </h1>
               )}
@@ -79,7 +79,7 @@ export function MobileHeader({
                 <Logo className="w-10 h-10" height={40} width={40} />
               </div>
               {title && (
-                <h1 className="text-xl font-semibold text-content-title">
+                <h1 className="text-xl font-semibold text-content-heading">
                   {title}
                 </h1>
               )}

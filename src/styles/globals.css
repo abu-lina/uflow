@@ -11,11 +11,11 @@
 
 @layer base {
   :root {
-    --background: 180 24% 48%; /* mint */
-    --background-light: 180 24% 88%; /* mint-light */
+    --background: 180 24% 48%; /* primary */
+    --background-light: 180 24% 88%; /* primary-light */
     --text: 0 0% 14%; /* text color */
-    --grey: 0 0% 80%; /* grey */
-    --grey-light: 0 0% 93%; /* grey-light */
+    --neutral: 0 0% 80%; /* neutral */
+    --neutral-light: 0 0% 93%; /* neutral-light */
     --border: 0 0% 83%; /* border */
     
     /* Mobile navigation spacing */
@@ -29,7 +29,7 @@
     --header-height-mobile: 40px;
     --header-height-tablet: 48px;
     --header-height-desktop: 56px;
-    --content-gap: 8px; /* Standard gap between header and content */
+    --content-gap: 24px; /* Standard gap between header and content */
     
     /* Header total height calculations for spacer */
     --header-total-mobile: calc(var(--header-padding-mobile) + var(--header-height-mobile) + var(--content-gap));
@@ -358,16 +358,16 @@
   h6,
   label,
   button {
-    @apply font-inter-tight text-content-title;
+    @apply font-inter-tight text-content-heading;
   }
 
   a {
-    @apply text-mint transition-colors duration-200;
+    @apply text-primary transition-colors duration-200;
   }
 
   a:hover,
   a:focus {
-    @apply text-mint-light;
+    @apply text-primary-light;
   }
 }
 
@@ -377,12 +377,25 @@
   }
   
   .header-gradient {
-    background: linear-gradient(180deg, rgba(245, 245, 245, 0.05) 0%, rgba(251, 251, 251, 0.05) 100%);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    /* Maximum blur and glass effect - balanced opacity for proper glassmorphism */
+    /* backdrop-filter blurs the CONTENT BEHIND the header, not the header itself */
+    /* Higher opacity (0.65) creates the glass effect while maximum blur (300px) blurs content behind */
+    /* isolation: isolate ensures backdrop-filter works consistently regardless of parent stacking contexts */
+    background: linear-gradient(180deg, rgba(245, 245, 245, 0.65) 0%, rgba(251, 251, 251, 0.65) 100%);
+    backdrop-filter: blur(300px) saturate(200%) brightness(1.1) contrast(1.15);
+    -webkit-backdrop-filter: blur(300px) saturate(200%) brightness(1.1) contrast(1.15);
+    isolation: isolate;
+    /* Enhanced glass styling with subtle borders and shadows */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      0 4px 30px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    /* Smooth transitions for backdrop-filter (handled in component inline styles for better control) */
+    transition: background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out;
     /* Fallback for devices that don't support backdrop-filter */
-    @supports not (backdrop-filter: blur(20px)) {
-      background: linear-gradient(180deg, rgba(245, 245, 245, 0.9) 0%, rgba(251, 251, 251, 0.9) 100%);
+    @supports not (backdrop-filter: blur(300px)) {
+      background: linear-gradient(180deg, rgba(245, 245, 245, 0.85) 0%, rgba(251, 251, 251, 0.85) 100%);
     }
   }
   
@@ -622,9 +635,9 @@
   /* Header spacing utilities - uses design tokens for consistency */
   .header-spacer {
     /* Mobile: safe-area + header-padding + header-height + content-gap */
-    /* Total: env(safe-area-inset-top) + 16px + 40px + 8px = env(safe-area-inset-top) + 64px */
+    /* Total: env(safe-area-inset-top) + 16px + 40px + 24px = env(safe-area-inset-top) + 80px */
     height: calc(env(safe-area-inset-top) + var(--header-total-mobile));
-    min-height: var(--header-total-mobile); /* 64px fallback */
+    min-height: var(--header-total-mobile); /* 80px fallback */
     width: 100%;
     flex-shrink: 0; /* Prevent flex shrinking */
     display: block; /* Ensure it's a block element */
@@ -633,18 +646,18 @@
   @media (min-width: 640px) {
     .header-spacer {
       /* Tablet: safe-area + header-padding + header-height + content-gap */
-      /* Total: env(safe-area-inset-top) + 24px + 48px + 8px = env(safe-area-inset-top) + 80px */
+      /* Total: env(safe-area-inset-top) + 24px + 48px + 24px = env(safe-area-inset-top) + 96px */
       height: calc(env(safe-area-inset-top) + var(--header-total-tablet));
-      min-height: var(--header-total-tablet); /* 80px fallback */
+      min-height: var(--header-total-tablet); /* 96px fallback */
     }
   }
   
   @media (min-width: 768px) {
     .header-spacer {
       /* Desktop: safe-area + header-padding + header-height + content-gap */
-      /* Total: env(safe-area-inset-top) + 24px + 56px + 8px = env(safe-area-inset-top) + 88px */
+      /* Total: env(safe-area-inset-top) + 24px + 56px + 24px = env(safe-area-inset-top) + 104px */
       height: calc(env(safe-area-inset-top) + var(--header-total-desktop));
-      min-height: var(--header-total-desktop); /* 88px fallback */
+      min-height: var(--header-total-desktop); /* 104px fallback */
     }
   }
 

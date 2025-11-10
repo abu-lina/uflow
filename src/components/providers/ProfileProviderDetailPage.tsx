@@ -89,7 +89,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
           </button>
 
           {/* Title */}
-          <h1 className="text-xl font-semibold text-content-title">
+          <h1 className="text-xl font-semibold text-content-heading">
             {provider.provider_name}
           </h1>
         </div>
@@ -234,7 +234,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                       {provider.offers.map((offer, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                          className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
                         >
                           {offer.name_de}
                         </span>
@@ -267,7 +267,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                       {provider.needs.map((need, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                          className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
                         >
                           {need.name_de}
                         </span>
@@ -281,7 +281,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
             {/* Profile-specific Action Buttons */}
             <div className="mt-8 flex gap-4">
               <button
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#589D96] py-3 px-6 font-inter-tight font-medium text-white hover:bg-[#4a8a84] transition-colors"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 px-6 font-inter-tight font-medium text-white hover:bg-primary-dark active:bg-primary-darker transition-colors"
                 onClick={handleEditAction}
               >
                 <Icon className="h-5 w-5" icon="material-symbols:edit" />

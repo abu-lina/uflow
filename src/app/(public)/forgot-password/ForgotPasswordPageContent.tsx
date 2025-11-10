@@ -217,7 +217,7 @@ export function ForgotPasswordPageContent() {
 
                 {/* Success Message */}
                 <div className="mb-8">
-                  <h2 className="mb-3 text-xl font-semibold text-content-title">
+                  <h2 className="mb-3 text-xl font-semibold text-content-heading">
                     {language === 'de' ? 'E-Mail gesendet!' : 'Email sent!'}
                   </h2>
                   <p className="text-content text-base leading-6">
@@ -250,7 +250,7 @@ export function ForgotPasswordPageContent() {
                 </div>
 
                 {/* Help Text */}
-                <div className="mt-6 rounded-2xl border border-border bg-grey-light/50 p-4">
+                <div className="mt-6 rounded-2xl border border-border bg-neutral-light/50 p-4">
                   <p className="text-sm text-content">
                     {language === 'de' 
                       ? 'E-Mail nicht erhalten? Überprüfe auch deinen Spam-Ordner oder versuche es in ein paar Minuten erneut.'

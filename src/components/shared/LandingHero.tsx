@@ -222,7 +222,7 @@ export function LandingHero() {
                 variants={fadeInVariants}
               >
                 <h1 
-                  className="w-full text-center font-inter-tight text-4xl font-medium leading-tight text-content-title sm:text-5xl sm:leading-[87px] md:text-6xl lg:text-[72px]"
+                  className="w-full text-center font-inter-tight text-4xl font-medium leading-tight text-content-heading sm:text-5xl sm:leading-[87px] md:text-6xl lg:text-[72px]"
                   dangerouslySetInnerHTML={{ __html: t('landing.hero.title') }}
                 />
                 <p className="w-full max-w-xl text-center font-inter text-lg font-normal leading-snug text-content sm:text-xl sm:leading-[29px] md:text-2xl">

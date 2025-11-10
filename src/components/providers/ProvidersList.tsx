@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import { sharedTransition } from '@/components/ui/PageTransition';
+import { usePrefetchProvider } from '@/hooks/useProvider';
 import type { Provider } from '@/services/providers';
 
 interface ProvidersListProps {
@@ -19,6 +20,8 @@ export function ProvidersList({
   onProviderClick,
   onBookmarkChange,
 }: ProvidersListProps) {
+  const prefetchProvider = usePrefetchProvider();
+
   return (
     <motion.div
       key={`providers-${providers.length}-${providers[0]?.provider_id || 'empty'}`}
@@ -45,6 +48,10 @@ export function ProvidersList({
               e.preventDefault();
               onProviderClick(provider);
             }
+          }}
+          onMouseEnter={() => {
+            // Prefetch provider data on hover for instant navigation
+            prefetchProvider(provider.provider_id);
           }}
         >
           <ProviderCard

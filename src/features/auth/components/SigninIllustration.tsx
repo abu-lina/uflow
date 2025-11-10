@@ -2,7 +2,7 @@ export function SigninIllustration() {
   return (
     <div className="relative size-[384px]">
       {/* Background Circle */}
-      <div className="absolute left-[7.39px] top-[7.39px] size-[369.23px] rounded-full bg-mint" />
+      <div className="absolute left-[7.39px] top-[7.39px] size-[369.23px] rounded-full bg-primary" />
 
       {/* Decorative Elements */}
       <div className="absolute left-1/2 top-[101.17px] -translate-x-1/2">

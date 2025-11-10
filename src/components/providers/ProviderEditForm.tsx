@@ -350,8 +350,8 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
                 </span>
               </div>
               <button
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
-                  formData.isOnlineBusiness ? 'bg-[#589D96]' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                  formData.isOnlineBusiness ? 'bg-primary' : 'bg-gray-200'
                 }`}
                 type="button"
                 onClick={() => {
@@ -450,8 +450,8 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
                     </span>
                   </div>
                   <button
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
-                      formData.showAddress ? 'bg-[#589D96]' : 'bg-gray-200'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                      formData.showAddress ? 'bg-primary' : 'bg-gray-200'
                     }`}
                     type="button"
                     onClick={() => handleInputChange('showAddress', !formData.showAddress)}
@@ -467,7 +467,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             ) : (
               /* Online Business State */
               <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#D4D4D4] bg-white">
-                <Icon className="h-12 w-12 text-[#589D96] mb-3" icon="mdi:web" />
+                <Icon className="h-12 w-12 text-primary mb-3" icon="mdi:web" />
                 <p className="text-sm font-medium text-[#272727] text-center mb-1">
                   Online-Geschäft
                 </p>

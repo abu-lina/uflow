@@ -65,7 +65,7 @@ export function AccountDeletionModal({
             
             {/* Keep Account Button */}
             <button
-              className="flex h-10 w-[360px] min-w-[123.08px] min-h-[23.4px] items-center justify-center gap-2 rounded-[15px] bg-[#589D96] px-0"
+              className="flex h-10 w-[360px] min-w-[123.08px] min-h-[23.4px] items-center justify-center gap-2 rounded-[15px] bg-primary hover:bg-primary-dark active:bg-primary-darker px-0"
               style={{
                 boxShadow: '0px 6.15385px 12.3077px 4.61538px rgba(0, 0, 0, 0.15), 0px 1.53846px 4.61538px rgba(0, 0, 0, 0.3)'
               }}

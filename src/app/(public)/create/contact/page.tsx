@@ -2,10 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 
-import { Icon } from '@iconify/react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { FooterAction } from '@/components/ui';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
@@ -63,13 +61,11 @@ export default function ContactPage() {
   if (!user) {
     const returnUrl = encodeURIComponent('/create/contact');
     return (
-      <div className="relative flex w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-        <PageHeader title={t('create.contact.title')} />
-        <HeaderSpacer />
+      <ScrollablePageLayout>
+        <PageHeader title={t('create.contact.title')} variant="title-only" />
 
-        {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-safe-24 pt-20 mobile-nav-spacing">
-          <span className="text-center text-lg text-content-title mb-6">
+        <PageContent className="flex flex-1 flex-col items-center justify-center">
+          <span className="text-center text-lg text-content-heading mb-6">
             {t('create.contact.loginRequired')}
           </span>
           <button
@@ -78,8 +74,8 @@ export default function ContactPage() {
           >
             {t('create.contact.goToLogin')}
           </button>
-        </div>
-      </div>
+        </PageContent>
+      </ScrollablePageLayout>
     );
   }
 
@@ -88,115 +84,103 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
+    <ScrollablePageLayout>
       <PageHeader
         title={t('create.contact.title')}
         variant="back-and-title"
         onBack="/create/location"
       />
-      <HeaderSpacer />
 
-      {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">
-        <div className="flex w-full flex-1 flex-col gap-6">
-          {/* Step Indicator */}
-          <div className="mb-6">
-            <StepIndicator currentStep={2} steps={STEPS} />
+      <PageContent hasFooter className="flex flex-col gap-6">
+        {/* Step Indicator */}
+        <div className="mb-6">
+          <StepIndicator currentStep={2} steps={STEPS} />
+        </div>
+
+        {/* Subtitle */}
+        <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
+          <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
+            {t('create.contact.description')}
+          </p>
+        </div>
+
+        {/* Form Fields */}
+        <div className="flex flex-col gap-4 w-full">
+          {/* Website */}
+          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="text-xs leading-[15px] text-[#999999]">
+                {t('create.contact.website')}
+              </label>
+              <input
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                placeholder={t('create.contact.websitePlaceholder')}
+                type="url"
+                value={formData.website}
+                onChange={(e) => updateFormData({ website: e.target.value })}
+              />
+            </div>
           </div>
 
-          {/* Subtitle */}
-          <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
-            <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
-              {t('create.contact.description')}
-            </p>
+          {/* Instagram */}
+          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="text-xs leading-[15px] text-[#999999]">
+                {t('create.contact.instagram')}
+              </label>
+              <input
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                placeholder={t('create.contact.instagramPlaceholder')}
+                type="text"
+                value={formData.instagram}
+                onChange={(e) => updateFormData({ instagram: e.target.value })}
+              />
+            </div>
           </div>
 
-          {/* Form Fields */}
-          <div className="flex flex-col gap-4 w-full">
-            {/* Website */}
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-[#999999]">
-                  {t('create.contact.website')}
-                </label>
-                <input
-                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder={t('create.contact.websitePlaceholder')}
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => updateFormData({ website: e.target.value })}
-                />
-              </div>
+          {/* Phone */}
+          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="text-xs leading-[15px] text-[#999999]">
+                {t('create.contact.phone')}
+              </label>
+              <input
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                placeholder={t('create.contact.phonePlaceholder')}
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => updateFormData({ phone: e.target.value })}
+              />
             </div>
+          </div>
 
-            {/* Instagram */}
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-[#999999]">
-                  {t('create.contact.instagram')}
-                </label>
-                <input
-                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder={t('create.contact.instagramPlaceholder')}
-                  type="text"
-                  value={formData.instagram}
-                  onChange={(e) => updateFormData({ instagram: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* Phone */}
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-[#999999]">
-                  {t('create.contact.phone')}
-                </label>
-                <input
-                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder={t('create.contact.phonePlaceholder')}
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => updateFormData({ phone: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* Email */}
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-[#999999]">
-                  {t('create.contact.email')}
-                </label>
-                <input
-                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                  placeholder={t('create.contact.emailPlaceholder')}
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateFormData({ email: e.target.value })}
-                />
-              </div>
+          {/* Email */}
+          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="text-xs leading-[15px] text-[#999999]">
+                {t('create.contact.email')}
+              </label>
+              <input
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                placeholder={t('create.contact.emailPlaceholder')}
+                type="email"
+                value={formData.email}
+                onChange={(e) => updateFormData({ email: e.target.value })}
+              />
             </div>
           </div>
         </div>
-      </div>
+      </PageContent>
 
-      {/* Navbar */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-safe-24 pb-4">
-          <button
-            className="flex h-[48px] w-full items-center justify-center gap-2 rounded-xl px-5 bg-[#589D96] shadow-[0px_8px_24px_rgba(88,157,150,0.25)]"
-            onClick={handleSave}
-          >
-            <span className="text-base font-medium text-white leading-[19px]">
-              {t('common.next')}
-            </span>
-            <Icon className="h-6 w-6 text-white" icon="lucide:chevron-right" />
-          </button>
-        </div>
-      </div>
-    </div>
+      {/* Footer Action */}
+      <FooterAction
+        actionButton={{
+          label: t('common.next'),
+          trailingIcon: 'lucide:chevron-right',
+          onClick: handleSave,
+          variant: 'primary',
+        }}
+      />
+    </ScrollablePageLayout>
   );
 }

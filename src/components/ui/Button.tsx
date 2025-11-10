@@ -10,8 +10,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-mint text-white hover:bg-[#4a8a84]',
-        primary: 'bg-[#589D96] text-white hover:bg-[#589D96] active:bg-[#589D96]',
+        default: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
+        primary: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
         secondary: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#CDCDCD]',
         success: 'bg-[#4a8a84] hover:bg-[#4a8a84] text-white',
         danger: 'bg-[#D86363] text-white hover:bg-[#B84F4F]',
@@ -20,8 +20,8 @@ const buttonVariants = cva(
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
-        auth: 'bg-[#589D96] text-white hover:bg-[#4a8a84]',
-        action: 'bg-[#589D96] text-white hover:bg-teal-600',
+        auth: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
+        action: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
       },
       size: {
         default: 'h-12 px-4 rounded-xl',

@@ -302,31 +302,27 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
     // If found in providers table, process and return
     if (data) {
-      // Fetch offers and needs separately
-      let offers: Array<{ name_de: string }> = [];
-      let needs: Array<{ name_de: string }> = [];
+      // Fetch offers and needs in parallel (not sequential) for better performance
+      const [offersResult, needsResult] = await Promise.all([
+        // Fetch offers if they exist
+        data.offers_ids && data.offers_ids.length > 0
+          ? supabase
+              .from('offers')
+              .select('name_de')
+              .in('offer_id', data.offers_ids)
+          : Promise.resolve({ data: [], error: null }),
+        
+        // Fetch needs if they exist
+        data.needs_ids && data.needs_ids.length > 0
+          ? supabase
+              .from('needs')
+              .select('name_de')
+              .in('need_id', data.needs_ids)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
 
-      if (data.offers_ids && data.offers_ids.length > 0) {
-        const { data: offersData, error: offersError } = await supabase
-          .from('offers')
-          .select('name_de')
-          .in('offer_id', data.offers_ids);
-
-        if (!offersError && offersData) {
-          offers = offersData;
-        }
-      }
-
-      if (data.needs_ids && data.needs_ids.length > 0) {
-        const { data: needsData, error: needsError } = await supabase
-          .from('needs')
-          .select('name_de')
-          .in('need_id', data.needs_ids);
-
-        if (!needsError && needsData) {
-          needs = needsData;
-        }
-      }
+      const offers = offersResult.data || [];
+      const needs = needsResult.data || [];
 
       return {
         ...data,

@@ -143,31 +143,38 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
         setIsAnimating(true);
         setIsTransiting(true);
         setShowAllahumaBarik(true);
-        // After showing Allahuma Barik, smoothly transition to Saved state
-        timeoutRefs.current.barikTimeout = setTimeout(async () => {
-          // Perform the actual bookmark action first (this will set bookmarked=true via optimistic update)
-          try {
-            await handleOptimisticBookmark();
-            // Small delay to ensure state updates propagate
-            timeoutRefs.current.stateTimeout = setTimeout(() => {
-              // Now hide barik and trigger fill animation
-              setShowAllahumaBarik(false);
-              setShouldAnimateFill(true);
-              
-              setIsAnimating(false);
-              // Reset animation flags after animation completes (stroke + fill = ~800ms)
-              timeoutRefs.current.fillTimeout = setTimeout(() => {
-                setShouldAnimateFill(false);
-                setIsTransiting(false);
-              }, 800);
-            }, 50);
-          } catch (error) {
-            console.error('Error toggling bookmark:', error);
-          setShowAllahumaBarik(false);
+        
+        // Start bookmark action immediately (optimistic update happens first)
+        const bookmarkStartTime = Date.now();
+        const minDisplayTime = 800; // Minimum time to show "Allahuma Barik" (800ms)
+        
+        try {
+          // Perform the bookmark action (optimistic update happens immediately)
+          await handleOptimisticBookmark();
+          
+          // Calculate remaining time to show "Allahuma Barik"
+          const elapsed = Date.now() - bookmarkStartTime;
+          const remainingTime = Math.max(0, minDisplayTime - elapsed);
+          
+          // Wait for minimum display time OR until request completes (whichever is longer)
+          timeoutRefs.current.stateTimeout = setTimeout(() => {
+            // Now hide barik and trigger fill animation
+            setShowAllahumaBarik(false);
+            setShouldAnimateFill(true);
+            
             setIsAnimating(false);
-            setIsTransiting(false);
-          }
-        }, 1500);
+            // Reset animation flags after animation completes (stroke + fill = ~800ms)
+            timeoutRefs.current.fillTimeout = setTimeout(() => {
+              setShouldAnimateFill(false);
+              setIsTransiting(false);
+            }, 800);
+          }, remainingTime);
+        } catch (error) {
+          console.error('Error toggling bookmark:', error);
+          setShowAllahumaBarik(false);
+          setIsAnimating(false);
+          setIsTransiting(false);
+        }
       } else {
         // Track that we were bookmarked before toggling
         setWasBookmarked(true);

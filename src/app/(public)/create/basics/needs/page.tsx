@@ -14,8 +14,8 @@ import { getSuggestedNeedsForCategory, type SuggestedNeed } from '@/services/cat
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { validateOfferOrNeedName, findSimilarItems, calculateSimilarity, normalizeText, areSynonyms } from '@/utils/contentValidation';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 export default function SelectNeedsPage() {
   const [needs, setNeeds] = useState<Need[]>([]);
@@ -347,18 +347,14 @@ export default function SelectNeedsPage() {
   };
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-      {/* Reusable Header */}
+    <ScrollablePageLayout>
       <PageHeader
         title={t('create.needs.title')}
         variant="back-and-title"
         onBack="/create/basics"
       />
-      <HeaderSpacer />
 
-      {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
+      <PageContent hasFooter className="flex flex-col gap-8">
           {/* Search Bar + Subtitle */}
           <div className="flex w-full flex-col gap-2">
             {/* Search Bar */}
@@ -406,7 +402,7 @@ export default function SelectNeedsPage() {
               <>
                 {/* Selected Needs Section */}
                 {filteredSelectedNeeds.length > 0 && (
-                  <div className="mb-6 rounded-2xl border border-[#589D96] bg-white/50 p-4 shadow-sm">
+                  <div className="mb-6 rounded-2xl border border-primary bg-white/50 p-4 shadow-sm">
                     <button
                       className="mb-3 flex items-center justify-between w-full text-left"
                       onClick={() => setIsSelectedExpanded(!isSelectedExpanded)}
@@ -426,7 +422,7 @@ export default function SelectNeedsPage() {
                         {filteredSelectedNeeds.map((need) => (
                           <div key={need.need_id} className="relative">
                             <button
-                              className="inline-flex rounded-xl px-4 py-2 pr-3 text-left transition-all duration-200 bg-[#BFDBD8] text-[#232323] border border-[#589D96]"
+                              className="inline-flex rounded-xl px-4 py-2 pr-3 text-left transition-all duration-200 bg-primary-light text-content-heading border border-primary"
                               onClick={() => toggleNeed(need.need_id)}
                             >
                               <span className="text-sm font-medium">
@@ -487,7 +483,7 @@ export default function SelectNeedsPage() {
                   <div className="mb-6">
                     <h3 className="mb-3 text-sm font-medium text-[#232323]">{t('create.needs.createNew')}</h3>
                     <button
-                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-[#589D96] text-white border border-[#589D96] hover:bg-[#4a8780] transition-all duration-200 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-primary text-white border border-primary hover:bg-primary-dark active:bg-primary-darker transition-all duration-200 disabled:opacity-50"
                       disabled={isCreating}
                       onClick={createNeedFromSearch}
                     >
@@ -586,31 +582,17 @@ export default function SelectNeedsPage() {
               </>
             )}
           </div>
-        </div>
-      </div>
+      </PageContent>
 
-      {/* Navbar */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
-          <button
-            className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              formData.needs_ids.length === 0
-                ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
-                : 'bg-[#589D96] opacity-100'
-            }`}
-            disabled={formData.needs_ids.length === 0}
-            onClick={handleSave}
-          >
-            <Icon className="h-6 w-6 text-white" icon="lucide:save" />
-            <span className="text-base font-medium text-white leading-[19px]">
-              {t('actions.save')} ({formData.needs_ids.length})
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+      <FooterAction
+        actionButton={{
+          label: `${t('actions.save')} (${formData.needs_ids.length})`,
+          icon: 'lucide:save',
+          onClick: handleSave,
+          disabled: formData.needs_ids.length === 0,
+          variant: 'primary',
+        }}
+      />
+    </ScrollablePageLayout>
   );
 }

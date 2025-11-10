@@ -162,7 +162,7 @@ export const de = {
     },
     offers: {
       title: "Angebote auswählen",
-      searchPlaceholder: "Angebote suchen oder neu erstellen...",
+      searchPlaceholder: "Angebote suchen und erstellen - inshaAllah.",
       description: "Suche nach Angeboten oder erstelle neue - inshaAllah.",
       loading: "Lade Angebote...",
       selected: "Ausgewählt",
@@ -185,7 +185,14 @@ export const de = {
       wasAdded: "\"{{name}}\" wurde hinzugefügt",
       cannotDelete: "Angebot kann nicht gelöscht werden (möglicherweise bereits verwendet)",
       wasDeleted: "\"{{name}}\" wurde gelöscht",
-      errorDeleting: "Fehler beim Löschen des Angebots"
+      errorDeleting: "Fehler beim Löschen des Angebots",
+      rateLimitExceeded: "Rate-Limit überschritten. Bitte versuchen Sie es in {{seconds}} Sekunden erneut.",
+      collapseSelected: "Ausgewählte Angebote einklappen",
+      expandSelected: "Ausgewählte Angebote ausklappen",
+      collapseRecommended: "Empfohlene Angebote einklappen",
+      expandRecommended: "Empfohlene Angebote ausklappen",
+      collapseMoreOffers: "Weitere Angebote einklappen",
+      expandMoreOffers: "Weitere Angebote ausklappen"
     },
     needs: {
       title: "Gesuche auswählen",

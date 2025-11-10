@@ -135,11 +135,11 @@ export function FooterAction({
             boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
           }}
         >
-          <div className={cn('flex w-full max-w-[393px] mx-auto px-4 py-4 pb-safe', contentClassName)}>
+          <div className={cn('flex w-full max-w-[393px] mx-auto px-4 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
             <Button
               fullWidth
               aria-label={actionButton['aria-label'] || actionButton.label}
-              className="!h-12 !min-h-[48px] !max-h-[48px]"
+              className="!h-[48px] !min-h-[48px] !max-h-[48px]"
               disabled={actionButton.disabled}
               icon={actionButton.icon}
               loading={actionButton.loading}
@@ -172,11 +172,11 @@ export function FooterAction({
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className={cn('flex w-full max-w-[393px] mx-auto px-4 py-4 pb-safe', contentClassName)}>
+        <div className={cn('flex w-full max-w-[393px] mx-auto px-4 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           <Button
             fullWidth
             aria-label={actionButton['aria-label'] || actionButton.label}
-            className="!h-12 !min-h-[48px] !max-h-[48px]"
+            className="!h-[48px] !min-h-[48px] !max-h-[48px]"
             disabled={actionButton.disabled}
             icon={actionButton.icon}
             loading={actionButton.loading}
@@ -207,12 +207,12 @@ export function FooterAction({
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className={cn('flex w-full gap-3.5 max-w-[393px] mx-auto px-4 py-4 pb-safe', contentClassName)}>
+        <div className={cn('flex w-full gap-3.5 max-w-[393px] mx-auto px-4 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           {/* Primary Action Button - Full width, 48px height */}
           <Button
             fullWidth
             aria-label={primaryButton['aria-label'] || primaryButton.label}
-            className="flex-1 !h-12 !min-h-[48px] !max-h-[48px]"
+            className="flex-1 !h-[48px] !min-h-[48px] !max-h-[48px]"
             disabled={primaryButton.disabled}
             icon={primaryButton.icon}
             loading={primaryButton.loading}

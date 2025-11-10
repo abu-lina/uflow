@@ -307,7 +307,7 @@ export function ResetPasswordPageContent() {
 
                 {/* Success Message */}
                 <div className="mb-8">
-                  <h2 className="mb-3 text-xl font-semibold text-content-title">
+                  <h2 className="mb-3 text-xl font-semibold text-content-heading">
                     {language === 'de' ? 'Passwort aktualisiert!' : 'Password updated!'}
                   </h2>
                   <p className="text-content text-base leading-6">

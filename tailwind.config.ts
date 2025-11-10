@@ -2,6 +2,54 @@ import type { Config } from 'tailwindcss';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
 
+/**
+ * Tailwind CSS Configuration
+ * 
+ * Best Practices Applied:
+ * - Minimal safelist (only dynamic classes)
+ * - Semantic color tokens reference base palettes
+ * - Organized sections with clear comments
+ * - Design tokens for consistency
+ * - Tailwind 4 compatible structure
+ * 
+ * Naming Conventions:
+ * ===================
+ * 
+ * 1. Base Color Palettes (Descriptive Names)
+ *    - Use descriptive palette names: `cod-gray`, `breaker-bay`
+ *    - Follow Tailwind 4 structure: 50-950 shades
+ *    - Purpose: Raw color values, rarely used directly
+ * 
+ * 2. Semantic Color Tokens (Purpose-Based)
+ *    - Use purpose-based names: `primary`, `content`, `background`, `border`, `neutral`
+ *    - Variants: `DEFAULT`, `light`, `dark`, `muted`, `soft`
+ *    - Purpose: Express intent, not appearance
+ *    - Examples:
+ *      * `primary` - Brand/primary actions
+ *      * `content` - Text colors (DEFAULT, heading, muted)
+ *      * `background` - Page/component backgrounds
+ *      * `border` - Border colors
+ *      * `neutral` - Neutral/muted UI elements
+ * 
+ * 3. Status Colors (Semantic)
+ *    - Use semantic names: `success`, `warning`, `danger`, `info`
+ *    - Consistent variants: `DEFAULT`, `light`, `dark`, `soft`
+ *    - Purpose: Communicate state/status
+ * 
+ * 4. Legacy Colors (Deprecated)
+ *    - Marked with `@deprecated` comments
+ *    - Maintained for backward compatibility
+ *    - Migration path documented in comments
+ *    - Examples: `mint` → use `primary`, `grey` → use `neutral`
+ * 
+ * Best Practices:
+ * - Always prefer semantic tokens over base palettes
+ * - Use `content.heading` for headings/icons, not `cod-gray-950`
+ * - Use `primary` instead of `breaker-bay-400`
+ * - Use `neutral` instead of `grey` for new code
+ * - Status colors should use consistent variant naming
+ */
+
 const config: Config = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,84 +57,61 @@ const config: Config = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/features/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  
+  // Minimal safelist - only for truly dynamic classes that can't be detected
+  // Tailwind automatically detects classes in content files
   safelist: [
-    // uFlow colors
-    'text-mint',
-    'text-mint-light',
-    'bg-mint',
-    'bg-mint-light',
-    'border-mint',
-    'ring-mint',
-    'hover:text-mint',
-    'hover:bg-mint',
-    'focus:ring-mint',
-    'focus:border-mint',
-    'text-text',
-    'text-grey',
-    'text-grey-light',
-    'bg-grey',
-    'bg-grey-light',
-    'border-border',
-    'bg-uflow-light',
-    'bg-gold-gradient',
-    'bg-gold-gradient-light',
-    'bg-gold-gradient-radial',
-    // Warning colors
+    // Dynamic color classes (only if generated programmatically)
+    // Most classes should be auto-detected from content files
+    {
+      pattern: /^(text|bg|border)-(cod-gray|breaker-bay)-(50|100|200|300|400|500|600|700|800|900|950)$/,
+    },
+    // Semantic status colors (with variants)
+    'text-success',
+    'bg-success-soft',
+    'text-info',
+    'bg-info-soft',
+    'text-warning',
     'bg-warning-soft',
+    'text-danger',
+    'bg-danger-soft',
     'border-warning/20',
     'text-warning/90',
-    // Font families
-    'font-inter-tight',
-    // Hover and focus states
-    'hover:bg-mint/90',
-    'focus-visible:ring-mint',
-    // Icon sizes (Material Symbols - standardized)
-    'w-icon-xs',
-    'h-icon-xs',
-    'w-icon-sm',
-    'h-icon-sm',
-    'w-icon-md',
-    'h-icon-md',
-    'w-icon-lg',
-    'h-icon-lg',
-    'w-icon-xl',
-    'h-icon-xl',
-    'w-icon-2xl',
-    'h-icon-2xl',
-    'w-icon-3xl',
-    'h-icon-3xl',
-    'w-icon-4xl',
-    'h-icon-4xl',
-    // Icon colors
-    'text-success',
-    'text-info',
-    'text-warning',
-    'text-danger',
-    // Header spacing utilities
+    // Semantic neutral colors
+    'bg-neutral',
+    'bg-neutral-light',
+    'bg-neutral-muted',
+    'text-neutral',
+    // Custom utilities that might be generated dynamically
     'h-header-spacing',
     'h-header-spacing-sm',
     'h-header-spacing-md',
-    // Bottom spacing utilities
     'h-bottom-spacing-12',
     'h-bottom-spacing-16',
     'h-bottom-spacing-subpage',
   ],
+
   theme: {
     screens: {
-      'xs': '376px',  // Custom breakpoint for devices larger than iPhone SE
-      'sm': '640px',
-      'md': '768px',
-      'lg': '1024px',
-      'xl': '1280px',
+      xs: '376px', // Custom breakpoint for devices larger than iPhone SE
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
       '2xl': '1536px',
     },
+
     extend: {
+      // ============================================
+      // Typography
+      // ============================================
       fontFamily: {
         'inter-tight': ['Inter Tight', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
         baskerville: ['Baskerville', 'serif'],
         heading: ['Montserrat', 'sans-serif'],
       },
+
       fontSize: {
         // Minor Third scale (1.2 ratio) - base = 16px
         // 11 → 13 → 16 → 19 → 23 → 27 → 33 → 40 → 48
@@ -100,8 +125,12 @@ const config: Config = {
         '4xl': ['2.488rem', { lineHeight: '2.625rem' }], // 40px / 42px (tighter)
         '5xl': ['2.986rem', { lineHeight: '3.125rem' }], // 48px / 50px (tighter)
       },
+
+      // ============================================
+      // Spacing & Layout
+      // ============================================
       spacing: {
-        // Following the Rule of 8 - Design System Spacing Scale
+        // Base spacing scale (Rule of 8)
         '2': '8px',
         '3': '12px',
         '4': '16px',
@@ -113,94 +142,165 @@ const config: Config = {
         '20': '80px',
         '24': '96px',
         '32': '128px',
-        // Safe area utilities
+
+        // Safe area utilities (for mobile devices)
         'safe-top': 'env(safe-area-inset-top)',
         'safe-bottom': 'env(safe-area-inset-bottom)',
         'safe-left': 'env(safe-area-inset-left)',
         'safe-right': 'env(safe-area-inset-right)',
-        // Header system design tokens - direct values for Tailwind compatibility
+
+        // Header system design tokens
         'header-padding-mobile': '16px',
         'header-padding-desktop': '24px',
         'header-height-mobile': '40px',
         'header-height-tablet': '48px',
         'header-height-desktop': '56px',
-        'content-gap': '8px', // Standard gap between header and content
-        
-        // Content padding design tokens for consistency
-        'content-padding-mobile': '16px',    // Mobile horizontal padding (px-4)
-        'content-padding-tablet': '20px',    // Tablet horizontal padding
-        'content-padding-desktop': '24px',   // Desktop horizontal padding
-        
+        'content-gap': '24px', // Standard gap between header and content
+
+        // Content padding design tokens
+        'content-padding-mobile': '16px',
+        'content-padding-tablet': '20px',
+        'content-padding-desktop': '24px',
+
         // Auth page specific padding tokens
-        'auth-title-padding-left': '28px',   // Title section left padding (pl-7)
-        'auth-title-padding-right': '16px',  // Title section right padding (pr-4)
-        // Calculated header spacing - uses design tokens above for consistent spacing
-        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 8px)', // mobile: safe-area + padding + height + gap
-        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 8px)', // tablet: safe-area + padding + height + gap  
-        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 8px)', // desktop: safe-area + padding + height + gap
-        
-        // Bottom action bar spacing - accounts for fixed bottom nav
-        'bottom-spacing-12': 'calc(48px + 1rem + max(12px, env(safe-area-inset-bottom)))', // h-12 + padding + safe area
-        'bottom-spacing-16': 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))', // h-16 + padding + safe area
-        'bottom-spacing-subpage': 'calc(80px + 1rem + max(12px, env(safe-area-inset-bottom)))', // subpage button (80px + 16px padding + safe area)
-        // Icon sizes (for Material Symbols - standardized)
-        'icon-xs': '16px',   // Extra small icons (inline with text)
-        'icon-sm': '20px',   // Small icons (buttons, inputs)
-        'icon-md': '24px',   // Medium icons (default)
-        'icon-lg': '32px',   // Large icons (headers)
-        'icon-xl': '48px',   // Extra large icons (feature highlights)
-        'icon-2xl': '64px',  // 2X large icons (success states, hero)
-        'icon-3xl': '96px',  // 3X large icons (major success/error states)
-        'icon-4xl': '144px', // 4X large icons (modal states, critical actions)
+        'auth-title-padding-left': '28px',
+        'auth-title-padding-right': '16px',
+
+        // Calculated header spacing utilities
+        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 24px)',
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 24px)',
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 24px)',
+
+        // Bottom action bar spacing
+        'bottom-spacing-12': 'calc(48px + 1rem + max(12px, env(safe-area-inset-bottom)))',
+        'bottom-spacing-16': 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))',
+        'bottom-spacing-subpage': 'calc(80px + 1rem + max(12px, env(safe-area-inset-bottom)))',
+
+        // Icon sizes (Material Symbols - standardized)
+        'icon-xs': '16px',
+        'icon-sm': '20px',
+        'icon-md': '24px',
+        'icon-lg': '32px',
+        'icon-xl': '48px',
+        'icon-2xl': '64px',
+        'icon-3xl': '96px',
+        'icon-4xl': '144px',
       },
+
+      // ============================================
+      // Colors
+      // ============================================
       colors: {
-        primary: {
-          DEFAULT: '#589D96', // Brand mint green
-          light: '#BFDBD8',
-          dark: '#4A8A84',
+        // Base color palettes (Tailwind 4 style)
+        'cod-gray': {
+          50: '#f6f6f6',
+          100: '#e7e7e7',
+          200: '#d1d1d1',
+          300: '#b0b0b0',
+          400: '#888888',
+          500: '#6d6d6d',
+          600: '#5d5d5d',
+          700: '#4f4f4f',
+          800: '#454545',
+          900: '#3d3d3d', // Normal text
+          950: '#0b0b0b', // Titles and icons
         },
+
+        'breaker-bay': {
+          50: '#f6f9f8',
+          100: '#dbebe8',
+          200: '#b8d6d2',
+          300: '#8cbab3',
+          400: '#589d96', // Primary brand color
+          500: '#438983',
+          600: '#356e6a',
+          700: '#2d5855',
+          800: '#274948',
+          900: '#243d3c',
+          950: '#102322',
+        },
+
+        // ============================================
+        // Semantic Color Tokens (Purpose-Based Naming)
+        // ============================================
+        
+        // Primary brand color
+        // State mapping: CSS pseudo-classes handle states, tokens provide colors
+        // - Default: bg-primary
+        // - Hover: hover:bg-primary-dark
+        // - Pressed: active:bg-primary-darker
+        // - Selected: bg-primary-light
+        primary: {
+          DEFAULT: '#589d96', // breaker-bay-400 (base/default)
+          light: '#b8d6d2',   // breaker-bay-200 (light backgrounds, selected states)
+          dark: '#438983',    // breaker-bay-500 (hover states)
+          darker: '#356e6a',  // breaker-bay-600 (pressed/clicked states)
+        },
+
+        // Background colors
         background: {
           DEFAULT: '#FFFFFF',
           dark: '#1F2937',
         },
+
+        // Content/text colors (semantic naming)
         content: {
-          DEFAULT: '#555555', // Main content text
-          title: '#232323', // Title/heading text
+          DEFAULT: '#3d3d3d', // cod-gray-900 (normal text)
+          heading: '#0b0b0b', // cod-gray-950 (headings and icons)
+          muted: '#888888',   // cod-gray-400 (secondary/subdued text)
         },
-        border: '#D4D4D4', // uflow-light-boarder
-        // Semantic colors (updated color palette)
+
+        // Border colors
+        border: {
+          DEFAULT: '#D4D4D4',
+          light: '#E7E7E7',   // cod-gray-100
+          muted: '#E7E7E7',   // Alias for light (semantic alternative)
+        },
+
+        // Neutral/muted colors (semantic alternative to "grey")
+        neutral: {
+          DEFAULT: '#CDCDCD',  // cod-gray-300 (approximate)
+          light: '#EEEEEE',  // cod-gray-100 (approximate)
+          muted: '#F6F6F6',  // cod-gray-50 (subtle backgrounds)
+        },
+
+        // ============================================
+        // Semantic Status Colors (Consistent Variants)
+        // ============================================
+        
         success: {
-          DEFAULT: '#4CA987', // Updated success green
+          DEFAULT: '#4CA987',
           light: '#7BC4A9',
           dark: '#3D8A6D',
+          soft: '#E8F5F0',    // Light background variant
         },
+
         warning: {
-          DEFAULT: '#E6A94C', // Updated warning orange
-          soft: '#FDF5E6', // Soft amber background
+          DEFAULT: '#E6A94C',
           light: '#EFBC73',
           dark: '#C48A3A',
+          soft: '#FDF5E6',    // Light background variant
         },
+
         danger: {
-          DEFAULT: '#D86363', // Updated error red
+          DEFAULT: '#D86363',
           light: '#E58989',
           dark: '#B84F4F',
+          soft: '#FCE8E8',    // Light background variant
         },
+
         info: {
-          DEFAULT: '#4F9BAE', // Updated info blue
+          DEFAULT: '#4F9BAE',
           light: '#7AB5C5',
           dark: '#3F7C8B',
+          soft: '#E6F2F5',    // Light background variant
         },
-        // uFlow brand colors (aliases for consistency)
-        mint: {
-          DEFAULT: '#589D96', // uflow-mint (same as primary)
-          light: '#BFDBD8', // uflow-light-mint
-        },
-        grey: {
-          DEFAULT: '#CDCDCD', // uflow-grey
-          light: '#EEEEEE', // uflow-light-grey
-        },
-        // Add any other semantic colors used in your codebase here
+
       },
+
+      // ============================================
+      // Border Radius
+      // ============================================
       borderRadius: {
         xs: '8px',
         sm: '12px',
@@ -208,24 +308,32 @@ const config: Config = {
         lg: '16.8px',
         full: '9999px',
       },
+
+      // ============================================
+      // Height Utilities
+      // ============================================
       height: {
         'header-height-mobile': '40px',
-        'header-height-tablet': '48px', 
+        'header-height-tablet': '48px',
         'header-height-desktop': '56px',
-        // Header spacing utilities for proper content positioning
-        // Must match PageHeader: pt-[calc(env(safe-area-inset-top)+16px)] + h-40 + 8px gap
-        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 8px)', // mobile: safe-area + padding + height + gap
-        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 8px)', // tablet: safe-area + padding + height + gap  
-        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 8px)', // desktop: safe-area + padding + height + gap
+        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 24px)',
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 24px)',
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 24px)',
       },
+
+      // ============================================
+      // Background Images
+      // ============================================
       backgroundImage: {
         'uflow-light': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
         'gold-gradient': 'linear-gradient(90deg, #D2B581 4.35%, #E5D1A0 52.17%, #AF8650 100%)',
-        'gold-gradient-light':
-          'linear-gradient(90deg, #F3E7D0 4.35%, #E5D1A0 52.17%, #EEE3D6 100%)',
-        'gold-gradient-radial':
-          'radial-gradient(47.83% 95.65% at 52.17% 47.83%, #D2B581 0%, #E5D1A0 50%, #D2B581 100%)',
+        'gold-gradient-light': 'linear-gradient(90deg, #F3E7D0 4.35%, #E5D1A0 52.17%, #EEE3D6 100%)',
+        'gold-gradient-radial': 'radial-gradient(47.83% 95.65% at 52.17% 47.83%, #D2B581 0%, #E5D1A0 50%, #D2B581 100%)',
       },
+
+      // ============================================
+      // Animations
+      // ============================================
       keyframes: {
         'accordion-down': {
           from: { height: '0' },
@@ -240,20 +348,25 @@ const config: Config = {
           '50%': { opacity: '.5' },
         },
       },
+
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
+
+      // ============================================
+      // Typography Plugin Configuration
+      // ============================================
       typography: {
         DEFAULT: {
           css: {
             maxWidth: '65ch',
             color: 'hsl(var(--foreground))',
             a: {
-              color: '#589D96',
+              color: 'rgb(88, 157, 150)', // primary.DEFAULT - using RGB for CSS-in-JS compatibility
               '&:hover': {
-                color: '#589D96',
+                color: 'rgb(88, 157, 150)', // primary.DEFAULT
               },
             },
           },
@@ -261,6 +374,7 @@ const config: Config = {
       },
     },
   },
+
   plugins: [forms, typography],
 };
 

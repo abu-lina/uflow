@@ -83,7 +83,7 @@ export function InstagramImport({ onImport }: InstagramImportProps) {
     <div className="flex flex-col gap-6 w-full">
       {/* Instagram Username Input */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-content-title">
+        <label className="text-sm font-medium text-content-heading">
           Instagram Username
         </label>
         <div className="flex gap-2">
@@ -147,7 +147,7 @@ export function InstagramImport({ onImport }: InstagramImportProps) {
               />
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base text-content-title truncate">
+              <h3 className="font-semibold text-base text-content-heading truncate">
                 {previewData.name}
               </h3>
               <p className="text-sm text-[#999999]">@{previewData.username}</p>
@@ -251,7 +251,7 @@ export function InstagramImport({ onImport }: InstagramImportProps) {
             icon="mdi:information"
           />
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium text-content-title">
+            <p className="text-sm font-medium text-content-heading">
               Import from Instagram
             </p>
             <p className="text-xs text-content leading-relaxed">

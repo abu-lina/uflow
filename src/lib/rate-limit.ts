@@ -105,6 +105,18 @@ export const rateLimiters = {
     perHour: (identifier: string) =>
       checkRateLimit(identifier, 5, 60 * 60 * 1000, 'push-subscribe'),
   },
+
+  /**
+   * Offer creation endpoint
+   * - 10 offers per minute per user
+   * - 50 offers per hour per user
+   */
+  createOffer: {
+    perMinute: (identifier: string) =>
+      checkRateLimit(identifier, 10, 60 * 1000, 'create-offer-minute'),
+    perHour: (identifier: string) =>
+      checkRateLimit(identifier, 50, 60 * 60 * 1000, 'create-offer-hour'),
+  },
 };
 
 /**

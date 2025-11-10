@@ -52,7 +52,7 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
     {/* Save Button */}
     <button
       aria-label={isSaved ? t('providers.removeSaved') : t('providers.saveProvider')}
-      className="flex h-12 flex-1 items-center justify-center gap-1 rounded-lg bg-mint text-base font-medium text-white shadow transition hover:bg-mint/90"
+      className="flex h-12 flex-1 items-center justify-center gap-1 rounded-lg bg-primary text-base font-medium text-white shadow transition hover:bg-primary/90"
       type="button"
       onClick={handleSaveWithAuth}
     >

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -16,6 +16,7 @@ import type { Category } from '@/types/supabase';
 import type { Offer, Need } from '@/types/offer';
 import { createProviderCommunityServiceRelationship } from '@/services/community_services';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 interface ProviderCreateFormProps {
   onNextStep?: () => void;
@@ -30,6 +31,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
   const { user } = useAuth();
   const router = useRouter();
   const { t, language } = useLanguage();
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Steps with translations
   const STEPS = [
@@ -340,6 +342,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       {/* Form Content */}
       <div className="flex flex-1 flex-col">
         <form 
+          ref={formRef}
           className="flex flex-1 flex-col" 
           onKeyDown={(e) => {
             // Prevent Enter key from submitting form on non-last steps
@@ -469,8 +472,8 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                       </span>
                     </div>
                     <button
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
-                        formData.isOnlineBusiness ? 'bg-[#589D96]' : 'bg-gray-200'
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                        formData.isOnlineBusiness ? 'bg-primary' : 'bg-gray-200'
                       }`}
                       type="button"
                       onClick={() => {
@@ -553,7 +556,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                         <div className="flex w-full items-center gap-3 px-3 py-3">
                           <input
                             checked={formData.showAddress}
-                            className="h-5 w-5 rounded border-2 border-[#E5E5E5] bg-white text-[#589D96] focus:ring-2 focus:ring-[#589D96] focus:ring-offset-0"
+                            className="h-5 w-5 rounded border-2 border-[#E5E5E5] bg-white text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0"
                             id="showAddress"
                             type="checkbox"
                             onChange={(e) => handleInputChange('showAddress', e.target.checked)}
@@ -566,7 +569,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     </>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#E5E5E5] bg-white">
-                      <Icon className="h-12 w-12 text-[#589D96] mb-3" icon="mdi:web" />
+                      <Icon className="h-12 w-12 text-primary mb-3" icon="mdi:web" />
                       <p className="text-sm font-medium text-[#272727] text-center mb-1">
                         Online-Geschäft
                       </p>
@@ -668,74 +671,62 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
             </div>
         )}
       </div>
-
-          {/* Sticky Navigation Buttons */}
-          <div 
-            className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-          >
-            <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
-              <div className="flex w-full max-w-full items-center gap-3">
-                  {/* Back Button - Show on steps 1, 2, 3, 4 (Location, Contact, Media) */}
-        {currentStep > 0 && (
-          <button
-                    className="flex h-[48px] flex-1 items-center justify-center gap-0 rounded-xl border border-[#589D96] bg-white px-5 transition-opacity hover:bg-gray-50"
-            type="button"
-            onClick={prevStep}
-          >
-                    <Icon className="h-6 w-6 text-[#589D96]" icon="material-symbols:chevron-left" />
-                    <span className="text-base font-medium text-[#589D96] leading-[19px]">
-            Zurück
-                    </span>
-          </button>
-        )}
-                
-                {/* Weiter Button */}
-          <button
-                  className={`flex h-[48px] ${currentStep > 0 ? 'flex-1' : 'w-full'} items-center justify-center gap-0 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              isSubmitting || !isStepValid(currentStep, formData)
-                      ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
-                      : 'bg-[#589D96] opacity-100'
-                  }`}
-            disabled={isSubmitting || !isStepValid(currentStep, formData)}
-                  type={currentStep === STEPS.length - 1 ? 'submit' : 'button'}
-                  onClick={(e) => {
-                    console.log('Weiter button clicked - currentStep:', currentStep, 'isLastStep:', currentStep === STEPS.length - 1);
-                    console.log('Button type:', currentStep === STEPS.length - 1 ? 'submit' : 'button');
-                    
-                    if (currentStep === STEPS.length - 1) {
-                      console.log('Last step - should trigger form submission');
-                      // Don't prevent default - let form submission happen naturally
-                    } else {
-                      console.log('Not last step - calling nextStep');
-                      e.preventDefault();
-                      e.stopPropagation();
-                      nextStep();
-                    }
-                  }}
-          >
-            {isSubmitting ? (
-                    <Icon className="h-5 w-5 animate-spin text-white" icon="mdi:loading" />
-                  ) : currentStep === STEPS.length - 1 ? (
-                    <>
-                      <Icon className="h-6 w-6 text-white" icon="lucide:user-plus" />
-                      <span className="text-base font-medium text-white leading-[19px]">
-                        {t('create.basics.registerProvider')}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-base font-medium text-white leading-[19px]">
-                        {t('common.next')}
-                      </span>
-                      <Icon className="h-6 w-6 text-white" icon="material-symbols:chevron-right" />
-                    </>
-            )}
-          </button>
-              </div>
-            </div>
-          </div>
         </form>
+
+        {/* Footer Action */}
+        {currentStep > 0 ? (
+          // Two buttons: Back (secondary) + Next/Submit (primary)
+          <FooterAction
+            primaryButton={{
+              label: isSubmitting
+                ? t('common.loading')
+                : currentStep === STEPS.length - 1
+                  ? t('create.basics.registerProvider')
+                  : t('common.next'),
+              icon: isSubmitting
+                ? 'mdi:loading'
+                : currentStep === STEPS.length - 1
+                  ? 'lucide:user-plus'
+                  : undefined,
+              trailingIcon: currentStep === STEPS.length - 1 ? undefined : 'material-symbols:chevron-right',
+              onClick: () => {
+                if (currentStep === STEPS.length - 1) {
+                  // Trigger form submission
+                  if (formRef.current) {
+                    formRef.current.requestSubmit();
+                  }
+                } else {
+                  nextStep();
+                }
+              },
+              disabled: isSubmitting || !isStepValid(currentStep, formData),
+              loading: isSubmitting,
+              variant: 'primary',
+            }}
+            secondaryButton={{
+              icon: 'material-symbols:chevron-left',
+              onClick: prevStep,
+              'aria-label': t('common.back'),
+            }}
+          />
+        ) : (
+          // Single button: Next only
+          <FooterAction
+            actionButton={{
+              label: t('common.next'),
+              trailingIcon: 'material-symbols:chevron-right',
+              onClick: () => {
+                if (onNextStep) {
+                  onNextStep();
+                } else {
+                  nextStep();
+                }
+              },
+              disabled: isSubmitting || !isStepValid(currentStep, formData),
+              variant: 'primary',
+            }}
+          />
+        )}
       </div>
     </div>
   );

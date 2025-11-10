@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { CategoryFilter } from '@/components/providers/CategoryFilter';
 
@@ -16,17 +17,30 @@ export function ProvidersPageHeader({
   onCategoryChange,
   onLocationChange,
 }: ProvidersPageHeaderProps) {
+  const headerRef = useRef<HTMLElement>(null);
+
   return (
     <header 
+      ref={headerRef}
       className="fixed left-0 right-0 top-0 z-50 sm:hidden"
       style={{
-        background: 'linear-gradient(180deg, rgba(245, 245, 245, 0.85) 0%, rgba(251, 251, 251, 0.85) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        // Ensure header is in its own stacking context, isolated from PageTransition's motion.div
+        // Smooth transition for all properties including backdrop-filter
+        transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+        // Glassy blur effect - always applied for consistent visual effect
+        // backdropFilter blurs everything behind the header element
+        // blur(20px) creates the frosted glass blur effect
+        // saturate(180%) makes colors more vibrant through the blur
+        // isolation: isolate ensures backdrop-filter works correctly in stacking contexts
+        // Background opacity - always visible for glass effect
+        background: 'rgba(255, 255, 255, 0.15)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
         isolation: 'isolate',
-        // Don't add translateZ here as it can interfere with backdrop-filter on some devices
-        // Background extends all the way to top edge (no padding on header itself)
+        marginLeft: '-1px',
+        marginRight: '-1px',
+        paddingLeft: '1px',
+        paddingRight: '1px',
       }}
     >
       <div 

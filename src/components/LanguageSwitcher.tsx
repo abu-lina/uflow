@@ -10,8 +10,8 @@ export const LanguageSwitcher = () => {
       <button
         className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
           language === 'en'
-            ? 'bg-mint text-white'
-            : 'text-content hover:text-mint'
+            ? 'bg-primary text-white'
+            : 'text-content hover:text-primary'
         }`}
         onClick={() => updateLanguage('en')}
       >
@@ -20,8 +20,8 @@ export const LanguageSwitcher = () => {
       <button
         className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
           language === 'de'
-            ? 'bg-mint text-white'
-            : 'text-content hover:text-mint'
+            ? 'bg-primary text-white'
+            : 'text-content hover:text-primary'
         }`}
         onClick={() => updateLanguage('de')}
       >

@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
+import { useQuery } from '@tanstack/react-query';
 import type { Provider } from '@/services/providers';
 import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -131,6 +132,48 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
 
+  // Use React Query for bookmark status (cached, non-blocking)
+  // This uses the same cache as the bookmarks list, so it's instant if already loaded
+  const { data: bookmarkedProviderIds = [] } = useQuery({
+    queryKey: ['bookmarks', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data: bookmarks } = await supabase
+        .from('bookmarks')
+        .select('bookmarkable_id, bookmarkable_type')
+        .eq('user_id', user.id);
+      return bookmarks?.map((b) => b.bookmarkable_id) || [];
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData) => previousData, // Show cached data immediately
+  });
+
+  // Derive bookmark status from cached data (instant, no network request)
+  useEffect(() => {
+    if (user && bookmarkedProviderIds.length > 0) {
+      setIsSaved(bookmarkedProviderIds.includes(provider.provider_id));
+    } else if (!user) {
+      setIsSaved(false);
+    }
+  }, [user, bookmarkedProviderIds, provider.provider_id]);
+
+  // Use React Query for community services (cached, non-blocking)
+  const { data: communityServicesData = [] } = useQuery({
+    queryKey: ['community-services', 'provider', provider.provider_id],
+    queryFn: () => getCommunityServicesForProvider(provider.provider_id),
+    enabled: !!provider.provider_id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: (previousData) => previousData, // Show cached data immediately
+  });
+
+  // Update state when data changes
+  useEffect(() => {
+    setCommunityServices(communityServicesData);
+  }, [communityServicesData]);
+
   // Keyboard navigation
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -145,47 +188,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, goToNext, goToPrevious]);
-
-  useEffect(() => {
-    const fetchBookmark = async () => {
-      if (!user) {
-        return;
-      }
-      try {
-        const { data: existingBookmark, error: fetchError } = await supabase
-          .from('bookmarks')
-          .select('id')
-          .match({
-            bookmarkable_id: provider.provider_id,
-            bookmarkable_type: 'provider',
-            user_id: user.id,
-          })
-          .maybeSingle();
-
-        if (fetchError) {
-          console.error('Error fetching bookmark:', fetchError);
-          return;
-        }
-        setIsSaved(!!existingBookmark);
-      } catch {
-        console.error('Error in fetchBookmark');
-      }
-    };
-    void fetchBookmark();
-  }, [user, provider.provider_id]);
-
-  useEffect(() => {
-    async function fetchCommunityServices() {
-      try {
-        const data = await getCommunityServicesForProvider(provider.provider_id);
-        console.log('DEBUG: provider_id', provider.provider_id, 'Fetched community services:', data);
-        setCommunityServices(data);
-      } catch {
-        console.error('DEBUG: Error fetching community services');
-      }
-    }
-    fetchCommunityServices();
-  }, [provider.provider_id]);
 
   const handleBookmark = async () => {
     if (!user) {
@@ -248,7 +250,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         {/* Close Icon Top Right */}
         <button
           aria-label="Schließen"
-          className="absolute right-6 top-6 z-50 flex size-10 items-center justify-center rounded-full bg-white/80 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-mint"
+          className="absolute right-6 top-6 z-50 flex size-10 items-center justify-center rounded-full bg-white/80 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           type="button"
           onClick={onClose}
         >
@@ -344,7 +346,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     key={i}
                     aria-label={`Bild ${i + 1} auswählen`}
                     className={`relative overflow-hidden rounded-[8px] border-2 transition-all hover:scale-105 ${
-                      selectedImageIdx === i ? 'scale-105 border-mint' : 'border-transparent'
+                      selectedImageIdx === i ? 'scale-105 border-primary' : 'border-transparent'
                     }`}
                     style={{ width: 80, height: 60 }}
                     type="button"
@@ -501,7 +503,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Save Button */}
           <button
             aria-expanded={expandedAction === 'save'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-[#589D96] px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('save')}
           >
@@ -534,7 +536,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Share Button */}
           <button
             aria-expanded={expandedAction === 'share'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-[#589D96] px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('share')}
           >
@@ -555,7 +557,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Phone Button */}
           <button
             aria-expanded={expandedAction === 'call'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-[#589D96] px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('call')}
           >
@@ -576,7 +578,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Website Button */}
           <button
             aria-expanded={expandedAction === 'website'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-[#589D96] px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('website')}
           >

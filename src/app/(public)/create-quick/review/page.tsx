@@ -170,7 +170,7 @@ function ReviewPageContent() {
                 icon="mdi:information"
               />
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-content-title">
+                <p className="text-sm font-medium text-content-heading">
                   Review your details
                 </p>
                 <p className="text-xs text-content leading-relaxed">
@@ -212,7 +212,7 @@ function ReviewPageContent() {
 
             {/* Location Section */}
             <div className="pt-4 border-t border-[#E5E5E5]">
-              <h3 className="text-sm font-semibold text-content-title mb-3">Location</h3>
+              <h3 className="text-sm font-semibold text-content-heading mb-3">Location</h3>
               
               <div className="flex flex-col gap-4">
                 {/* Street */}
@@ -276,7 +276,7 @@ function ReviewPageContent() {
 
             {/* Contact Section */}
             <div className="pt-4 border-t border-[#E5E5E5]">
-              <h3 className="text-sm font-semibold text-content-title mb-3">Contact</h3>
+              <h3 className="text-sm font-semibold text-content-heading mb-3">Contact</h3>
               
               <div className="flex flex-col gap-4">
                 {/* Phone */}

@@ -220,7 +220,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
                   className="flex items-center gap-3 w-full p-4 rounded-lg hover:bg-gray-50 transition-colors"
                   onClick={handleShareAction}
                 >
-                  <Icon className="h-6 w-6 text-[#589D96]" icon="lucide:share-2" />
+                  <Icon className="h-6 w-6 text-primary" icon="lucide:share-2" />
                   <span className="text-base font-medium text-[#232323]">Teilen</span>
                 </button>
 
@@ -316,7 +316,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
                   className="flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors"
                   onClick={handleShareAction}
                 >
-                  <Icon className="h-5 w-5 text-[#589D96]" icon="lucide:share-2" />
+                  <Icon className="h-5 w-5 text-primary" icon="lucide:share-2" />
                   <span className="text-sm font-medium text-[#232323]">Teilen</span>
                 </button>
 

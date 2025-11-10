@@ -54,7 +54,7 @@ interface IconWithTitleProps {
  * - Size variants: 'responsive' (48px->64px->96px) or 'large' (always 96px)
  * - Gap: 40px (gap-10 - using Tailwind config spacing)
  * - Centered layout with consistent typography
- * - Uses config-based colors (text-content-title)
+ * - Uses config-based colors (text-content-heading)
  * - Flexible for different scenarios (no icon for login, large icon for saved page)
  * - Customizable styling via className props
  * - Title and description text are grouped in one container div
@@ -65,7 +65,7 @@ interface IconWithTitleProps {
  * 
  * // With responsive icon sizing and description
  * <IconWithTitle
- *   icon={<Icon icon="material-symbols:lock-outline" className="w-full h-full text-content-title" />}
+ *   icon={<Icon icon="material-symbols:lock-outline" className="w-full h-full text-content-heading" />}
  *   title="Anmeldung erforderlich"
  * >
  *   <p className="text-center text-base leading-normal text-content mt-2">
@@ -75,14 +75,14 @@ interface IconWithTitleProps {
  * 
  * // Large icon for pages with plenty of vertical space
  * <IconWithTitle
- *   icon={<Icon icon="material-symbols:lock-outline" className="w-full h-full text-content-title" />}
+ *   icon={<Icon icon="material-symbols:lock-outline" className="w-full h-full text-content-heading" />}
  *   title="Anmeldung erforderlich"
  *   size="large"
  * />
  * 
  * // Extra large icon for modal states and critical actions
  * <IconWithTitle
- *   icon={<Icon icon="material-symbols:delete-outline" className="w-full h-full text-content-title" />}
+ *   icon={<Icon icon="material-symbols:delete-outline" className="w-full h-full text-content-heading" />}
  *   title="Konto löschen"
  *   size="xl"
  * />
@@ -123,7 +123,7 @@ export function IconWithTitle({
       <div className={cn('flex flex-col items-center gap-2', titleTextClassName)}>
         {/* Title */}
         <h2 className={cn(
-          'text-center text-3xl font-semibold leading-tight text-content-title',
+          'text-center text-3xl font-semibold leading-tight text-content-heading',
           titleClassName
         )}>
           {title}

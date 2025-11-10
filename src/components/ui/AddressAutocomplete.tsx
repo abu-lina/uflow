@@ -314,7 +314,7 @@ export function AddressAutocomplete({
               >
                 <div className="flex items-start gap-2">
                   <Icon
-                    className="h-4 w-4 text-[#589D96] mt-0.5 flex-shrink-0"
+                    className="h-4 w-4 text-primary mt-0.5 flex-shrink-0"
                     icon="mdi:map-marker"
                   />
                   <div className="flex-1 min-w-0">

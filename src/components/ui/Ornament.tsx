@@ -66,7 +66,7 @@ export const Ornament: React.FC<OrnamentProps> = ({ className, variant = 'defaul
         fill="white"
         fillRule="evenodd"
         mask="url(#path-1-inside-1_3_616)"
-        stroke="#mint"
+        stroke="#589d96"
         strokeWidth="0.0436557"
       />
     </svg>

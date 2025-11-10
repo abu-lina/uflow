@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
@@ -14,8 +14,13 @@ import { getSuggestedOffersForCategory, type SuggestedOffer } from '@/services/c
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { validateOfferOrNeedName, findSimilarItems, calculateSimilarity, normalizeText, areSynonyms } from '@/utils/contentValidation';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { validateAndSanitizeName } from '@/utils/sanitizeInput';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useRateLimit } from '@/hooks/useRateLimit';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { FooterAction } from '@/components/ui/FooterAction';
+import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
+import { OfferListSkeleton } from '@/components/ui/OfferListSkeleton';
 
 export default function SelectOffersPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -29,12 +34,23 @@ export default function SelectOffersPage() {
   // Collapsible section states
   const [isSelectedExpanded, setIsSelectedExpanded] = useState(true);
   const [isSuggestedExpanded, setIsSuggestedExpanded] = useState(true);
-  const [isOtherExpanded, setIsOtherExpanded] = useState(true);
+  const [isOtherExpanded, setIsOtherExpanded] = useState(false);
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
   const { user } = useAuth();
+
+  // Debounce search query to prevent excessive filtering
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
+
+  // Rate limiting: 10 offers per minute, 50 per hour
+  const rateLimitKey = user ? `create-offer-${user.id}` : 'create-offer-anon';
+  const { resetTime, checkLimit } = useRateLimit(
+    rateLimitKey,
+    10, // 10 offers per minute
+    60 * 1000 // 1 minute window
+  );
 
   // Load categories from database
   useEffect(() => {
@@ -59,11 +75,16 @@ export default function SelectOffersPage() {
   }, []);
 
   // Load offers from database - fetch ALL offers (from all categories and uncategorized)
+  // TODO: For large datasets (1000+ offers), consider implementing pagination:
+  // - Use .range(start, end) for pagination
+  // - Implement infinite scroll or "Load More" button
+  // - Consider category-based filtering to reduce initial load
   useEffect(() => {
     async function fetchOffers() {
       setIsLoading(true);
       try {
         // Fetch ALL offers (from all categories and uncategorized)
+        // Performance note: For 500+ offers, consider virtualization (react-window)
         const { data, error } = await supabase
           .from('offers')
           .select('offer_id, name_de, name_en, created_at, updated_at, created_by, category_id')
@@ -104,115 +125,189 @@ export default function SelectOffersPage() {
     void fetchSuggestedOffers();
   }, [formData.category]);
 
-
-
-  // Get suggested offer IDs for filtering
-  const suggestedOfferIds = new Set(suggestedOffers.map(o => o.offer_id));
-  
-  // Get selected offers (from any category)
-  const selectedOffers = offers.filter(offer => 
-    formData.offers_ids.includes(offer.offer_id)
+  // Memoize suggested offer IDs set
+  const suggestedOfferIds = useMemo(
+    () => new Set(suggestedOffers.map(o => o.offer_id)),
+    [suggestedOffers]
   );
   
-  // Split suggested offers (excluding selected)
-  const availableSuggestedOffers = suggestedOffers.filter(offer =>
-    !formData.offers_ids.includes(offer.offer_id)
+  // Memoize selected offers
+  const selectedOffers = useMemo(
+    () => offers.filter(offer => formData.offers_ids.includes(offer.offer_id)),
+    [offers, formData.offers_ids]
   );
   
-  // Other offers: from other categories OR uncategorized (null category_id), excluding suggested/selected
-  const otherOffers = offers.filter(offer => {
-    const isFromOtherCategory = formData.category 
-      ? offer.category_id !== formData.category 
-      : true; // If no category selected, show all
-    const isUncategorized = offer.category_id === null;
-    const isNotSuggested = !suggestedOfferIds.has(offer.offer_id);
-    const isNotSelected = !formData.offers_ids.includes(offer.offer_id);
+  // Memoize available suggested offers (excluding selected)
+  const availableSuggestedOffers = useMemo(
+    () => suggestedOffers.filter(offer => !formData.offers_ids.includes(offer.offer_id)),
+    [suggestedOffers, formData.offers_ids]
+  );
+  
+  // Memoize other offers (from other categories or uncategorized, excluding suggested/selected)
+  const otherOffers = useMemo(() => {
+    return offers.filter(offer => {
+      const isFromOtherCategory = formData.category 
+        ? offer.category_id !== formData.category 
+        : true;
+      const isUncategorized = offer.category_id === null;
+      const isNotSuggested = !suggestedOfferIds.has(offer.offer_id);
+      const isNotSelected = !formData.offers_ids.includes(offer.offer_id);
+      
+      return (isFromOtherCategory || isUncategorized) && isNotSuggested && isNotSelected;
+    });
+  }, [offers, formData.category, formData.offers_ids, suggestedOfferIds]);
+
+  // Memoize category-filtered offers (for validation and auto-select)
+  const categoryFilteredOffers = useMemo(
+    () => formData.category 
+      ? offers.filter(offer => offer.category_id === formData.category)
+      : offers,
+    [offers, formData.category]
+  );
+
+  // Memoize search lower for filtering (use debounced value)
+  const searchLower = useMemo(
+    () => debouncedSearchQuery.toLowerCase().trim(),
+    [debouncedSearchQuery]
+  );
+
+  // Memoize filtered lists based on debounced search
+  const filteredSelectedOffers = useMemo(
+    () => selectedOffers.filter(offer =>
+      offer.name_de.toLowerCase().includes(searchLower)
+    ),
+    [selectedOffers, searchLower]
+  );
+
+  const filteredSuggestedOffers = useMemo(
+    () => availableSuggestedOffers.filter(offer =>
+      offer.name_de.toLowerCase().includes(searchLower)
+    ),
+    [availableSuggestedOffers, searchLower]
+  );
+
+  const filteredOtherOffers = useMemo(
+    () => otherOffers.filter(offer =>
+      offer.name_de.toLowerCase().includes(searchLower)
+    ),
+    [otherOffers, searchLower]
+  );
+
+  // Memoize exact match check
+  const hasExactMatch = useMemo(
+    () => categoryFilteredOffers.some(offer => 
+      offer.name_de.toLowerCase() === searchLower
+    ),
+    [categoryFilteredOffers, searchLower]
+  );
+
+  // Memoize similar offers calculation (expensive operation)
+  // CRITICAL: Use debouncedSearchQuery to prevent running on every keystroke
+  // Only run if search query is long enough (>= 3 chars) to avoid expensive calculations
+  const similarOffers = useMemo(() => {
+    const trimmedQuery = debouncedSearchQuery.trim();
     
-    return (isFromOtherCategory || isUncategorized) && isNotSuggested && isNotSelected;
-  });
-  
-  // Filter all lists based on search query
-  const searchLower = searchQuery.toLowerCase().trim();
-  const filteredSelectedOffers = selectedOffers.filter(offer =>
-    offer.name_de.toLowerCase().includes(searchLower)
-  );
-  const filteredSuggestedOffers = availableSuggestedOffers.filter(offer =>
-    offer.name_de.toLowerCase().includes(searchLower)
-  );
-  const filteredOtherOffers = otherOffers.filter(offer =>
-    offer.name_de.toLowerCase().includes(searchLower)
-  );
+    // Early exit: Don't calculate if query is too short or exact match exists
+    if (!trimmedQuery || trimmedQuery.length < 3 || hasExactMatch) {
+      return [];
+    }
 
-  // Get all category-filtered offers (for search and similarity checks)
-  // This includes all offers that match the selected category (for validation and auto-select)
-  const categoryFilteredOffers = formData.category 
-    ? offers.filter(offer => offer.category_id === formData.category)
-    : offers; // If no category, check all offers
-
-  // Check if search query exactly matches any offer (only within category-filtered offers)
-  const hasExactMatch = categoryFilteredOffers.some(offer => 
-    offer.name_de.toLowerCase() === searchLower
-  );
-
-  // Find similar items to show as warnings (only medium similarity, not very similar ones that get auto-selected)
-  // Very similar items (<=15% similarity = synonyms/typos) will be auto-selected
-  // High similarity (15-85%) will also be auto-selected to prevent duplicates
-  // Only show items with medium similarity (85%+ different) as warnings
-  // Also filter out synonyms of each other to avoid showing duplicate suggestions
-  const similarOffers = searchQuery.trim() && !hasExactMatch
-    ? (() => {
-        const allSimilar = findSimilarItems(searchQuery.trim(), categoryFilteredOffers, 0.4, 10);
-        const filtered = allSimilar.filter(offer => {
-          // Calculate similarity to exclude very/high similarity items that get auto-selected
-          const similarity = calculateSimilarity(searchQuery.trim(), offer.name_de);
-          // Only show items with medium similarity (>85% different), not very similar ones
-          return similarity > 0.85;
-        });
-        
-        // Remove synonyms from the list to avoid showing duplicate suggestions
-        const uniqueSimilar: typeof filtered = [];
-        const seen = new Set<string>();
-        
-        for (const offer of filtered) {
-          const normalizedName = normalizeText(offer.name_de);
-          // Skip if we've already seen a synonym of this item
-          let isSynonym = false;
-          for (const seenName of Array.from(seen)) {
-            if (areSynonyms(offer.name_de, seenName)) {
-              isSynonym = true;
-              break;
-            }
-          }
-          if (!isSynonym && uniqueSimilar.length < 3) {
-            uniqueSimilar.push(offer);
-            seen.add(normalizedName);
-          }
+    // Performance optimization: Limit the number of offers to check
+    // Only check first 100 offers to avoid expensive calculations on large datasets
+    const offersToCheck = categoryFilteredOffers.slice(0, 100);
+    
+    // Find similar items (this is expensive - O(n) with Levenshtein distance)
+    const allSimilar = findSimilarItems(trimmedQuery, offersToCheck, 0.4, 10);
+    
+    // Filter by similarity threshold (avoid double calculation if possible)
+    const filtered = allSimilar.filter(offer => {
+      const similarity = calculateSimilarity(trimmedQuery, offer.name_de);
+      return similarity <= 0.15; // Only very similar items (0.15 = 85% similarity)
+    });
+    
+    // Remove synonyms to avoid duplicate suggestions (O(n²) but limited to small array)
+    const uniqueSimilar: typeof filtered = [];
+    const seen = new Set<string>();
+    
+    for (const offer of filtered) {
+      const normalizedName = normalizeText(offer.name_de);
+      let isSynonym = false;
+      
+      // Early exit if we already have enough results
+      if (uniqueSimilar.length >= 3) break;
+      
+      // Check against already seen items (limited to small array)
+      for (const seenName of Array.from(seen)) {
+        if (areSynonyms(offer.name_de, seenName)) {
+          isSynonym = true;
+          break;
         }
-        
-        return uniqueSimilar;
-      })()
-    : [];
+      }
+      
+      if (!isSynonym) {
+        uniqueSimilar.push(offer);
+        seen.add(normalizedName);
+      }
+    }
+    
+    return uniqueSimilar;
+  }, [debouncedSearchQuery, hasExactMatch, categoryFilteredOffers]);
 
-  // Show "Create new" option if there's a search query with no exact match
-  const showCreateOption = searchQuery.trim() && !hasExactMatch;
+  // Memoize show create option
+  const showCreateOption = useMemo(
+    () => searchQuery.trim() && !hasExactMatch,
+    [searchQuery, hasExactMatch]
+  );
 
-  // Get selected category name for display
-  const selectedCategory = categories.find(cat => cat.category_id === formData.category);
+  // Memoize selected category
+  const selectedCategory = useMemo(
+    () => categories.find(cat => cat.category_id === formData.category),
+    [categories, formData.category]
+  );
 
-  // Toggle offer selection (multi-selection)
-  const toggleOffer = (offerId: string) => {
-    const newOffers = formData.offers_ids.includes(offerId)
+  // Toggle offer selection (multi-selection) - memoized with useCallback
+  const toggleOffer = useCallback((offerId: string) => {
+    const isCurrentlySelected = formData.offers_ids.includes(offerId);
+    const offer = offers.find(o => o.offer_id === offerId);
+    const offerName = offer?.name_de || offer?.name_en || '';
+    
+    const newOffers = isCurrentlySelected
       ? formData.offers_ids.filter(id => id !== offerId)
       : [...formData.offers_ids, offerId];
+    
     updateFormData({ offers_ids: newOffers });
-  };
+    
+    // Show toast when offer is added (not when removed)
+    if (!isCurrentlySelected && offerName) {
+      toast.success(t('create.offers.wasAdded').replace('{{name}}', offerName));
+    }
+  }, [formData.offers_ids, offers, t, updateFormData]);
 
-  // Create new offer from search query
-  const createOfferFromSearch = async () => {
+  // Create new offer from search query - memoized with useCallback
+  const createOfferFromSearch = useCallback(async () => {
     if (!searchQuery.trim() || !user) return;
     
+    // Check rate limit
+    if (!checkLimit()) {
+      const secondsRemaining = resetTime 
+        ? Math.ceil((resetTime - Date.now()) / 1000)
+        : 60;
+      toast.error(
+        t('create.offers.rateLimitExceeded')?.replace('{{seconds}}', secondsRemaining.toString()) ||
+        `Rate limit exceeded. Please try again in ${secondsRemaining} seconds.`
+      );
+      return;
+    }
+    
+    // Sanitize input to prevent XSS
+    const sanitizedInput = validateAndSanitizeName(searchQuery.trim(), 100);
+    if (!sanitizedInput) {
+      toast.error(t('create.offers.errorCreating'));
+      return;
+    }
+    
     // Validate the input
-    const validation = validateOfferOrNeedName(searchQuery.trim(), offers, true);
+    const validation = validateOfferOrNeedName(sanitizedInput, offers, true);
     
     // If there's a very similar item, auto-select it instead of creating
     if (validation.shouldAutoSelect) {
@@ -251,7 +346,7 @@ export default function SelectOffersPage() {
       const confirmed = window.confirm(
         t('create.offers.similarEntriesDialog')
           .replace('{{similarNames}}', similarNames)
-          .replace('{{query}}', searchQuery.trim())
+          .replace('{{query}}', sanitizedInput)
       );
       if (!confirmed) {
         // If user declines, offer to select the most similar item
@@ -275,7 +370,7 @@ export default function SelectOffersPage() {
       const { data, error } = await supabase
         .from('offers')
         .insert([{ 
-          name_de: searchQuery.trim(),
+          name_de: sanitizedInput, // Use sanitized input
           created_by: user.id,
           category_id: formData.category || null
         }])
@@ -283,11 +378,12 @@ export default function SelectOffersPage() {
         .single();
       
       if (error) {
-        // Check for unique constraint violation
+        // Generic error message - don't leak implementation details
+        console.error('Error creating offer:', error);
+        // Check for unique constraint violation (but show generic message)
         if (error.code === '23505' || error.message.includes('unique')) {
           toast.error(t('create.offers.entryExists'));
         } else {
-          console.error('Error creating offer:', error);
           toast.error(t('create.offers.errorCreating'));
         }
       } else if (data) {
@@ -305,10 +401,10 @@ export default function SelectOffersPage() {
     } finally {
       setIsCreating(false);
     }
-  };
+  }, [searchQuery, user, offers, formData.category, formData.offers_ids, t, updateFormData, checkLimit, resetTime]);
 
-  // Delete an offer (only if user created it and it's not used)
-  const deleteOffer = async (offerId: string, offerName: string) => {
+  // Delete an offer (only if user created it and it's not used) - memoized with useCallback
+  const deleteOffer = useCallback(async (offerId: string, offerName: string) => {
     if (!user) return;
     
     setDeletingId(offerId);
@@ -333,81 +429,71 @@ export default function SelectOffersPage() {
       }
     } catch (error) {
       console.error('Error deleting offer:', error);
-      toast.error(t('create.offers.errorDeleting'));
+      toast.error(t('create.offers.cannotDelete'));
     } finally {
       setDeletingId(null);
     }
-  };
+  }, [user, formData.offers_ids, t, updateFormData]);
 
-  // Save selected offers and return to create page
-  const handleSave = () => {
+  // Save selected offers and return to create page - memoized with useCallback
+  const handleSave = useCallback(() => {
     if (formData.offers_ids.length > 0) {
       router.push('/create/basics');
     }
-  };
+  }, [formData.offers_ids, router]);
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-      {/* Reusable Header */}
-      <PageHeader
-        title={t('create.offers.title')}
-        variant="back-and-title"
-        onBack="/create/basics"
-      />
-      <HeaderSpacer />
+    <ErrorBoundary>
+      <ScrollablePageLayout>
+        <PageHeader
+          title={t('create.offers.title')}
+          variant="back-and-title"
+          onBack="/create/basics"
+        />
 
-      {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
-        <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
-          {/* Search Bar + Subtitle */}
-          <div className="flex w-full flex-col gap-2">
-            {/* Search Bar */}
-            <div className="flex h-[40px] w-full items-center rounded-2xl bg-white px-[10px] py-[5px] border-0">
-              <div className="flex items-center gap-3 flex-1">
-                <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
-                <input
-                  className="flex-1 text-xs font-normal text-[#7C7C7C] leading-[15px] outline-none placeholder:text-[#7C7C7C] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
-                  placeholder={t('create.offers.searchPlaceholder')}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && showCreateOption && !isCreating) {
-                      createOfferFromSearch();
-                    }
-                  }}
-                />
-                {searchQuery && (
-                  <button
-                    className="text-[#7C7C7C] hover:text-[#1B1D1D]"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <Icon className="size-5" icon="lucide:x" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Subtitle */}
-            <div className="w-full">
-              <p className="text-sm font-normal leading-[17px] text-[#7A7A7A]">
-                {t('create.offers.description')}
-              </p>
+        <PageContent hasFooter>
+        <div className="flex flex-col gap-6">
+          {/* Search Bar */}
+          <div className="flex h-[40px] w-full items-center rounded-2xl bg-white px-[10px] py-[5px] border-0">
+            <div className="flex items-center gap-3 flex-1">
+              <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
+              <input
+                className="flex-1 text-base font-normal text-gray-600 outline-none placeholder:text-sm placeholder:text-gray-500 border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
+                placeholder={t('create.offers.searchPlaceholder')}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && showCreateOption && !isCreating) {
+                    createOfferFromSearch();
+                  }
+                }}
+              />
+              {searchQuery && (
+                <button
+                  className="text-gray-500 hover:text-[#232323] transition-colors"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <Icon className="size-5" icon="lucide:x" />
+                </button>
+              )}
             </div>
           </div>
 
           {/* Offers List */}
-          <div className="flex-1 w-full pb-4">
-            {isLoading ? (
-              <div className="flex h-32 items-center justify-center">
-                <span className="text-gray-500">{t('create.offers.loading')}</span>
-              </div>
-            ) : (
-              <>
+          {isLoading ? (
+            <OfferListSkeleton />
+          ) : (
+            <div className="flex flex-col gap-3">
                 {/* Selected Offers Section */}
                 {filteredSelectedOffers.length > 0 && (
-                  <div className="mb-6 rounded-2xl border border-[#589D96] bg-white/50 p-4 shadow-sm">
+                  <div className="rounded-2xl border border-primary bg-white/50 p-4 shadow-sm">
                     <button
+                      aria-expanded={isSelectedExpanded}
+                      aria-label={isSelectedExpanded 
+                        ? t('create.offers.collapseSelected') || 'Collapse selected offers'
+                        : t('create.offers.expandSelected') || 'Expand selected offers'
+                      }
                       className="mb-3 flex items-center justify-between w-full text-left"
                       onClick={() => setIsSelectedExpanded(!isSelectedExpanded)}
                     >
@@ -415,10 +501,11 @@ export default function SelectOffersPage() {
                         {t('create.offers.selected')} ({filteredSelectedOffers.length})
                       </h3>
                       <Icon 
+                        aria-hidden="true"
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
                           isSelectedExpanded ? 'rotate-0' : '-rotate-90'
                         }`}
-                        icon="lucide:chevron-down" 
+                        icon="lucide:chevron-down"
                       />
                     </button>
                     {isSelectedExpanded && (
@@ -426,7 +513,7 @@ export default function SelectOffersPage() {
                         {filteredSelectedOffers.map((offer) => (
                           <div key={offer.offer_id} className="relative">
                             <button
-                              className="inline-flex rounded-xl px-4 py-2 pr-3 text-left transition-all duration-200 bg-[#BFDBD8] text-[#232323] border border-[#589D96]"
+                              className="inline-flex rounded-xl px-4 py-2 pr-3 text-left transition-all duration-200 bg-primary-light text-content-heading border border-primary"
                               onClick={() => toggleOffer(offer.offer_id)}
                             >
                               <span className="text-sm font-medium">
@@ -484,10 +571,10 @@ export default function SelectOffersPage() {
 
                 {/* Create New Option (when search has no exact match) */}
                 {showCreateOption && (
-                  <div className="mb-6">
+                  <div>
                     <h3 className="mb-3 text-sm font-medium text-[#232323]">{t('create.offers.createNew')}</h3>
                     <button
-                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-[#589D96] text-white border border-[#589D96] hover:bg-[#4a8780] transition-all duration-200 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-primary text-white border border-primary hover:bg-primary-dark active:bg-primary-darker transition-all duration-200 disabled:opacity-50"
                       disabled={isCreating}
                       onClick={createOfferFromSearch}
                     >
@@ -503,8 +590,13 @@ export default function SelectOffersPage() {
 
                 {/* Suggested Offers (based on category) */}
                 {filteredSuggestedOffers.length > 0 && (
-                  <div className="mb-6 rounded-2xl border border-gray-200 bg-white/50 p-4 shadow-sm">
+                  <div className="rounded-2xl border border-gray-200 bg-white/50 p-4 shadow-sm">
                     <button
+                      aria-expanded={isSuggestedExpanded}
+                      aria-label={isSuggestedExpanded
+                        ? t('create.offers.collapseRecommended') || 'Collapse recommended offers'
+                        : t('create.offers.expandRecommended') || 'Expand recommended offers'
+                      }
                       className="mb-3 flex items-center justify-between w-full text-left"
                       onClick={() => setIsSuggestedExpanded(!isSuggestedExpanded)}
                     >
@@ -512,10 +604,11 @@ export default function SelectOffersPage() {
                         {t('create.offers.recommendedFor').replace('{{category}}', selectedCategory?.name_de || '')}
                       </h3>
                       <Icon 
+                        aria-hidden="true"
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
                           isSuggestedExpanded ? 'rotate-0' : '-rotate-90'
                         }`}
-                        icon="lucide:chevron-down" 
+                        icon="lucide:chevron-down"
                       />
                     </button>
                     {isSuggestedExpanded && (
@@ -540,6 +633,11 @@ export default function SelectOffersPage() {
                 {filteredOtherOffers.length > 0 && (
                   <div className="rounded-2xl border border-gray-200 bg-white/50 p-4 shadow-sm">
                     <button
+                      aria-expanded={isOtherExpanded}
+                      aria-label={isOtherExpanded
+                        ? t('create.offers.collapseMoreOffers') || 'Collapse more offers'
+                        : t('create.offers.expandMoreOffers') || 'Expand more offers'
+                      }
                       className="mb-3 flex items-center justify-between w-full text-left"
                       onClick={() => setIsOtherExpanded(!isOtherExpanded)}
                     >
@@ -547,10 +645,11 @@ export default function SelectOffersPage() {
                         {(filteredSuggestedOffers.length > 0 ? t('create.offers.moreOffers') : t('create.offers.availableOffers'))} ({filteredOtherOffers.length})
                       </h3>
                       <Icon 
+                        aria-hidden="true"
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
                           isOtherExpanded ? 'rotate-0' : '-rotate-90'
                         }`}
-                        icon="lucide:chevron-down" 
+                        icon="lucide:chevron-down"
                       />
                     </button>
                     {isOtherExpanded && (
@@ -583,34 +682,21 @@ export default function SelectOffersPage() {
                     )}
                   </div>
                 )}
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </div>
+      </PageContent>
 
-      {/* Navbar */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
-          <button
-            className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              formData.offers_ids.length === 0
-                ? 'bg-[#589D96] opacity-30 cursor-not-allowed'
-                : 'bg-[#589D96] opacity-100'
-            }`}
-            disabled={formData.offers_ids.length === 0}
-            onClick={handleSave}
-          >
-            <Icon className="h-6 w-6 text-white" icon="lucide:save" />
-            <span className="text-base font-medium text-white leading-[19px]">
-              {t('actions.save')} ({formData.offers_ids.length})
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+      <FooterAction
+        actionButton={{
+          label: `${t('actions.save')} (${formData.offers_ids.length})`,
+          icon: 'lucide:save',
+          onClick: handleSave,
+          disabled: formData.offers_ids.length === 0,
+          variant: 'primary',
+        }}
+      />
+      </ScrollablePageLayout>
+    </ErrorBoundary>
   );
 }

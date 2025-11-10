@@ -36,7 +36,7 @@ export default function EmailVerificationAlert({
 
           {/* Resend Link */}
           <button
-            className="mt-1.5 w-fit font-inter-tight text-sm font-medium leading-[19px] text-mint hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-mint focus-visible:ring-offset-2"
+            className="mt-1.5 w-fit font-inter-tight text-sm font-medium leading-[19px] text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             type="button"
             onClick={onResend}
           >

@@ -162,7 +162,7 @@ export const en = {
     },
     offers: {
       title: "Select offers",
-      searchPlaceholder: "Search offers or create new...",
+      searchPlaceholder: "Search and create offers - inshaAllah.",
       description: "Search for offers or create new ones - inshaAllah.",
       loading: "Loading offers...",
       selected: "Selected",
@@ -185,7 +185,14 @@ export const en = {
       wasAdded: "\"{{name}}\" was added",
       cannotDelete: "Offer cannot be deleted (possibly already in use)",
       wasDeleted: "\"{{name}}\" was deleted",
-      errorDeleting: "Error deleting offer"
+      errorDeleting: "Error deleting offer",
+      rateLimitExceeded: "Rate limit exceeded. Please try again in {{seconds}} seconds.",
+      collapseSelected: "Collapse selected offers",
+      expandSelected: "Expand selected offers",
+      collapseRecommended: "Collapse recommended offers",
+      expandRecommended: "Expand recommended offers",
+      collapseMoreOffers: "Collapse more offers",
+      expandMoreOffers: "Expand more offers"
     },
     needs: {
       title: "Select needs",

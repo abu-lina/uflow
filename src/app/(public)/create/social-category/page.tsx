@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { FooterAction } from '@/components/ui/FooterAction';
 import type { Category } from '@/types/supabase';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
@@ -18,9 +20,6 @@ export default function SelectSocialCategoryPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const [isHeaderSticky, setIsHeaderSticky] = useState(true);
-  const lastScrollY = useRef(0);
-  const scrollContainerRef = useRef<Element | null>(null);
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
@@ -58,75 +57,6 @@ export default function SelectSocialCategoryPage() {
     void fetchCategories();
   }, []);
 
-  // Scroll detection for sticky header with iOS boundary handling
-  useEffect(() => {
-    // Use setTimeout to ensure DOM is ready (fixes iOS initial scroll issue)
-    const timer = setTimeout(() => {
-      scrollContainerRef.current = document.querySelector('.content-scroll-container');
-      const scrollContainer = scrollContainerRef.current;
-      
-      if (!scrollContainer) return;
-      
-      const SCROLL_THRESHOLD = 10; // Min px at top before header can hide
-      const MIN_SCROLL_DELTA = 8; // Increased for iOS sensitivity
-      const BOUNDARY_BUFFER = 50; // Buffer zone for bottom boundary (iOS rubber band)
-      
-      let ticking = false; // Throttle using requestAnimationFrame
-      
-      const handleScroll = () => {
-        if (!ticking) {
-          window.requestAnimationFrame(() => {
-            const currentScrollY = scrollContainer?.scrollTop || 0;
-            const scrollDifference = currentScrollY - lastScrollY.current;
-            
-            // Calculate if we're near the bottom (iOS rubber band protection)
-            const scrollHeight = scrollContainer.scrollHeight;
-            const clientHeight = scrollContainer.clientHeight;
-            const distanceFromBottom = scrollHeight - clientHeight - currentScrollY;
-            const isNearBottom = distanceFromBottom < BOUNDARY_BUFFER;
-            
-            // Ignore tiny scroll movements to prevent jitter
-            if (Math.abs(scrollDifference) < MIN_SCROLL_DELTA) {
-              ticking = false;
-              return;
-            }
-            
-            // Ignore scroll changes when near bottom (iOS rubber band effect)
-            if (isNearBottom) {
-              ticking = false;
-              return;
-            }
-            
-            // Always show header when at the top
-            if (currentScrollY <= SCROLL_THRESHOLD) {
-              setIsHeaderSticky(true);
-            }
-            // Hide when scrolling down (past threshold)
-            else if (scrollDifference > 0) {
-              setIsHeaderSticky(false);
-            }
-            // Show when scrolling up (past threshold)
-            else if (scrollDifference < 0) {
-              setIsHeaderSticky(true);
-            }
-            
-            lastScrollY.current = currentScrollY;
-            ticking = false;
-          });
-          
-          ticking = true;
-        }
-      };
-
-      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-      
-      return () => {
-        scrollContainer.removeEventListener('scroll', handleScroll);
-      };
-    }, 100); // Small delay to ensure DOM is ready
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Filter categories based on search query
   const filteredCategories = categories.filter(category =>
@@ -152,36 +82,14 @@ export default function SelectSocialCategoryPage() {
   }
 
   return (
-    <div className="relative flex h-screen w-full max-w-[393px] flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-      {/* Single Sticky Header */}
-      <div className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-safe-top transition-all duration-500 ease-in-out ${
-        isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      }`}>
-        <div className="flex h-16 w-full max-w-[393px] mx-auto items-center px-4 pt-2">
-          {/* Back Button */}
-          <button
-            className="flex h-8 w-8 items-center justify-center"
-            onClick={handleBack}
-          >
-            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          
-          {/* Title */}
-          <div className="flex flex-1 items-start">
-            <h1 className="text-xl font-semibold text-title">
-              Kategorie auswählen
-            </h1>
-          </div>
-        </div>
-      </div>
+    <ScrollablePageLayout>
+      <PageHeader
+        title="Kategorie auswählen"
+        variant="back-and-title"
+        onBack={handleBack}
+      />
 
-      {/* Spacer for fixed header */}
-      <div className={`transition-all duration-300 ${
-        isHeaderSticky ? 'h-16' : 'h-0'
-      }`} />
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col items-center px-4 pt-8 mobile-nav-spacing overflow-y-auto">
+      <PageContent maxWidth="full">
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
           
           {/* Search Input */}
@@ -208,7 +116,7 @@ export default function SelectSocialCategoryPage() {
                   key={category.category_id}
                   className={`flex w-full flex-col items-start rounded-xl p-4 text-left transition-all duration-200 ${
                     formData.socialCategory === category.category_id
-                      ? 'bg-[#BFDBD8] border border-[#589D96]'
+                      ? 'bg-primary-light border border-primary'
                       : 'bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }`}
                   onClick={() => updateFormData({ socialCategory: category.category_id })}
@@ -220,7 +128,7 @@ export default function SelectSocialCategoryPage() {
                       </span>
                     </div>
                     {formData.socialCategory === category.category_id && (
-                      <Icon className="h-5 w-5 text-[#589D96]" icon="lucide:check" />
+                      <Icon className="h-5 w-5 text-primary" icon="lucide:check" />
                     )}
                   </div>
                 </button>
@@ -236,30 +144,17 @@ export default function SelectSocialCategoryPage() {
           </div>
 
         </div>
-      </div>
+      </PageContent>
 
-      {/* Navbar */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-4 pb-4">
-          <button
-            className={`flex h-[48px] w-full max-w-[345px] items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              formData.socialCategory
-                ? 'bg-[#589D96] opacity-100'
-                : 'bg-[#589D96] opacity-30 cursor-not-allowed'
-            }`}
-            disabled={!formData.socialCategory}
-            onClick={handleSave}
-          >
-            <Icon className="h-6 w-6 text-white" icon="lucide:save" />
-            <span className="text-base font-medium text-white leading-[19px]">
-              Speichern
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+      <FooterAction
+        actionButton={{
+          label: t('actions.save'),
+          icon: 'lucide:save',
+          onClick: handleSave,
+          disabled: !formData.socialCategory,
+          variant: 'primary',
+        }}
+      />
+    </ScrollablePageLayout>
   );
 }

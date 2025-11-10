@@ -118,7 +118,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
             <button
               key={index}
               className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentCardIndex ? 'bg-[#589D96]' : 'bg-[#D4D4D4]'
+                index === currentCardIndex ? 'bg-primary' : 'bg-[#D4D4D4]'
               }`}
               onClick={() => changeCard(index)}
             />

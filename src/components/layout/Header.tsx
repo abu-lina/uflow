@@ -97,7 +97,7 @@ export function Header() {
               </Link>
               {!user && (
                 <Link
-                  className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-title hover:bg-grey-light hover:text-[#333333] focus:text-content-title focus:outline-none active:text-content-title"
+                  className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-heading hover:bg-neutral-light hover:text-[#333333] focus:text-content-heading focus:outline-none active:text-content-heading"
                   href="/about"
                 >
                   {t('navigation.about')}
@@ -158,13 +158,13 @@ export function Header() {
               ) : (
                 <>
                   <button
-                    className="flex h-10 items-center rounded-xl border border-grey px-3.5 text-base font-medium text-content"
+                    className="flex h-10 items-center rounded-xl border border-neutral px-3.5 text-base font-medium text-content"
                     onClick={() => router.push('/login')}
                   >
                     Anmelden
                   </button>
                   <button
-                    className="flex h-10 items-center rounded-xl bg-mint px-3.5 text-base font-medium text-white hover:bg-mint/90"
+                    className="flex h-10 items-center rounded-xl bg-primary px-3.5 text-base font-medium text-white hover:bg-primary/90"
                     onClick={() => setShowSignupModal(true)}
                   >
                     Registrieren

@@ -32,7 +32,7 @@ interface TitleAndTextProps {
  * Reusable Title + Paragraph component for consistent text sections.
  * 
  * Features:
- * - Title: text-3xl, center-aligned, uses content-title color (#232323)
+ * - Title: text-3xl, center-aligned, uses content-heading color (#0b0b0b)
  * - Description: text-base, center-aligned
  * - Fixed 8px gap between title and paragraph (space-y-2)
  * - Mobile-focused design
@@ -75,7 +75,7 @@ export function TitleAndText({
     <div className={cn('space-y-2', className)}>
       {title && (
         <h2 className={cn(
-          'text-center text-3xl font-semibold leading-tight text-content-title',
+          'text-center text-3xl font-semibold leading-tight text-content-heading',
           titleClassName
         )}>
           {title}

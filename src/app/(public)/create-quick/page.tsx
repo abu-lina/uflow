@@ -101,7 +101,7 @@ export default function QuickCreatePage() {
           <div className="flex w-full flex-col">
             <div className="mb-10">
               <IconWithTitle
-                icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
+                icon={<Icon className="w-full h-full text-content-heading" icon="material-symbols:lock-outline" />}
                 size="large"
                 title={t('create.basics.loginRequired')}
               >
@@ -140,7 +140,7 @@ export default function QuickCreatePage() {
         <div className="flex flex-col gap-6 pb-24">
           {/* Header */}
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold text-content-title">
+            <h2 className="text-xl font-semibold text-content-heading">
               Import your business details
             </h2>
             <p className="text-sm text-content">
@@ -159,7 +159,7 @@ export default function QuickCreatePage() {
                   <Icon className="h-8 w-8 text-[#4285F4]" icon="mdi:google" />
                 </div>
                 <div className="text-center">
-                  <p className="font-semibold text-sm text-content-title">Google</p>
+                  <p className="font-semibold text-sm text-content-heading">Google</p>
                   <p className="text-xs text-[#7A7A7A] mt-1">Search business</p>
                 </div>
               </button>
@@ -172,7 +172,7 @@ export default function QuickCreatePage() {
                   <Icon className="h-8 w-8 text-[#E4405F]" icon="mdi:instagram" />
                 </div>
                 <div className="text-center">
-                  <p className="font-semibold text-sm text-content-title">Instagram</p>
+                  <p className="font-semibold text-sm text-content-heading">Instagram</p>
                   <p className="text-xs text-[#7A7A7A] mt-1">Import profile</p>
                 </div>
               </button>
@@ -206,7 +206,7 @@ export default function QuickCreatePage() {
           {/* Benefits Section */}
           {selectedMethod === null && (
             <div className="space-y-3 pt-4">
-              <h3 className="text-sm font-semibold text-content-title">
+              <h3 className="text-sm font-semibold text-content-heading">
                 Why use quick import?
               </h3>
               
@@ -236,7 +236,7 @@ export default function QuickCreatePage() {
               </div>
 
               <button
-                className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-[#D4D4D4] bg-white px-5 py-4 text-base font-medium text-content-title transition-colors hover:border-primary hover:bg-primary/5"
+                className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-[#D4D4D4] bg-white px-5 py-4 text-base font-medium text-content-heading transition-colors hover:border-primary hover:bg-primary/5"
                 onClick={handleManualCreate}
               >
                 <Icon className="h-5 w-5" icon="mdi:pencil" />

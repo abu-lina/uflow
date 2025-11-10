@@ -12,7 +12,8 @@ import { ProviderActionBar } from '@/components/providers/ProviderActionBar';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
-import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
+import { useQuery } from '@tanstack/react-query';
+import { getCommunityServicesForProvider } from '@/services/community_services';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 interface ProviderCardModalProps {
@@ -60,16 +61,16 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
     };
   }, [open]);
 
-  // Fetch community services for this provider
-  const [communityServices, setCommunityServices] = React.useState<CommunityServiceData[]>([]);
-  useEffect(() => {
-    async function fetchCommunityServices() {
-      if (!open || !provider.provider_id) return;
-      const data = await getCommunityServicesForProvider(provider.provider_id);
-      setCommunityServices(data || []);
-    }
-    fetchCommunityServices();
-  }, [open, provider.provider_id]);
+  // Use React Query for community services (cached, non-blocking)
+  const { data: communityServices = [] } = useQuery({
+    queryKey: ['community-services', 'provider', provider.provider_id],
+    queryFn: () => getCommunityServicesForProvider(provider.provider_id),
+    enabled: open && !!provider.provider_id, // Only fetch when modal is open
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: (previousData) => previousData, // Show cached data immediately
+  });
 
   // Swipe down to close (mobile) with visual feedback
   const [dragY, setDragY] = React.useState(0);

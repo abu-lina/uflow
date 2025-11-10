@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Icon } from '@iconify/react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
 import { toast } from 'sonner';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
@@ -54,7 +54,7 @@ export default function MediaUploadPage() {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#589D96] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">{t('create.media.loadingFormData')}</p>
         </div>
       </div>
@@ -225,16 +225,14 @@ export default function MediaUploadPage() {
   };
 
   return (
-    <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
+    <ScrollablePageLayout>
       <PageHeader
         title={t('create.media.title')}
         variant="back-and-title"
         onBack="/create/contact"
       />
-      <HeaderSpacer />
 
-      {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">
+      <PageContent maxWidth="full">
         <div className="flex w-full flex-1 flex-col gap-8">
           {/* Step Indicator */}
           <div className="mb-6">
@@ -288,34 +286,24 @@ export default function MediaUploadPage() {
               </div>
             </div>
           </div>
-
         </div>
-      </div>
+      </PageContent>
 
-      {/* Save Button */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-safe-24 pb-4">
-          <button
-            className={`flex h-[48px] w-full items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              isSubmitting ? 'bg-[#589D96] opacity-50 cursor-not-allowed' : 'bg-[#589D96] opacity-100'
-            }`}
-            disabled={isSubmitting}
-            onClick={handleSave}
-          >
-            <Icon className="h-6 w-6 text-white" icon={isSubmitting ? "lucide:loader-2" : "lucide:save"} />
-            <span className="text-base font-medium text-white leading-[19px]">
-              {isSubmitting 
+      <FooterAction
+        actionButton={{
+          label: isSubmitting 
                 ? t('create.media.creating')
                 : isCommunityService 
                   ? t('create.media.registerCommunityService')
-                  : t('create.media.registerProvider')}
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+              : t('create.media.registerProvider'),
+          icon: isSubmitting ? 'lucide:loader-2' : 'lucide:save',
+          onClick: handleSave,
+          disabled: isSubmitting,
+          loading: isSubmitting,
+          loadingText: t('create.media.creating'),
+          variant: 'primary',
+        }}
+      />
+    </ScrollablePageLayout>
   );
 }

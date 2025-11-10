@@ -109,7 +109,7 @@ export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClos
                   {displayName}
                 </span>
               </div>
-              <div className="mt-4 flex h-[80px] w-[80px] items-center justify-center rounded-full bg-[#589D96]">
+              <div className="mt-4 flex h-[80px] w-[80px] items-center justify-center rounded-full bg-primary">
                 <Icon
                   className="text-white"
                   height={68}

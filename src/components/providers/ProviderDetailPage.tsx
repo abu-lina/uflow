@@ -14,6 +14,7 @@ import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE } from '@/utils/i
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
+import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
@@ -80,7 +81,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   
   // Refs to store timeout IDs for cleanup
   const timeoutRefs = useRef<{
-    barikTimeout?: ReturnType<typeof setTimeout>;
     fillTimeout?: ReturnType<typeof setTimeout>;
     stateTimeout?: ReturnType<typeof setTimeout>;
   }>({});
@@ -89,9 +89,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   useEffect(() => {
     const refs = timeoutRefs.current;
     return () => {
-      if (refs.barikTimeout) {
-        clearTimeout(refs.barikTimeout);
-      }
       if (refs.fillTimeout) {
         clearTimeout(refs.fillTimeout);
       }
@@ -125,32 +122,31 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     isLoading: isLoadingCommunityServices
   } = useCommunityServicesForProvider(provider.provider_id);
 
-  // Fetch bookmark status
-  useEffect(() => {
-    const fetchBookmark = async () => {
-      if (!user) return;
-      try {
-        const { data: existingBookmark, error: fetchError } = await supabase
-          .from('bookmarks')
-          .select('id')
-          .match({
-            bookmarkable_id: bookmarkableId,
-            bookmarkable_type: bookmarkableType,
-            user_id: user.id,
-          })
-          .maybeSingle();
+  // Use React Query for bookmark status (cached, non-blocking)
+  // This uses the same cache as the bookmarks list, so it's instant if already loaded
+  const { data: bookmarkedProviderIds = [] } = useQuery({
+    queryKey: ['bookmarks', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data: bookmarks } = await supabase
+        .from('bookmarks')
+        .select('bookmarkable_id, bookmarkable_type')
+        .eq('user_id', user.id);
+      return bookmarks?.map((b) => b.bookmarkable_id) || [];
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData) => previousData, // Show cached data immediately
+  });
 
-        if (fetchError) {
-          console.error('Error fetching bookmark:', fetchError);
-          return;
-        }
-        setIsSaved(!!existingBookmark);
-      } catch {
-        console.error('Error in fetchBookmark');
-      }
-    };
-    void fetchBookmark();
-  }, [user, bookmarkableId, bookmarkableType]);
+  // Derive bookmark status from cached data (instant, no network request)
+  useEffect(() => {
+    if (user && bookmarkedProviderIds.length > 0) {
+      setIsSaved(bookmarkedProviderIds.includes(bookmarkableId));
+    } else if (!user) {
+      setIsSaved(false);
+    }
+  }, [user, bookmarkedProviderIds, bookmarkableId]);
 
   // Community services are now fetched via React Query hook above
 
@@ -168,32 +164,38 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
       setIsAnimating(true);
       setIsTransiting(true);
       setShowAllahumaBarik(true);
-      // After showing Allahuma Barik, smoothly transition to Saved state
-      timeoutRefs.current.barikTimeout = setTimeout(async () => {
-        // Now perform the actual bookmark action
-        // The optimistic update will set isSaved=true immediately
-        try {
-          await handleOptimisticBookmark();
-          // Small delay to ensure state updates propagate
-          timeoutRefs.current.stateTimeout = setTimeout(() => {
-            setShowAllahumaBarik(false);
-            // Trigger fill animation when transitioning to saved
-            setShouldAnimateFill(true);
-            
-            setIsAnimating(false);
-            // Reset animation flag after animation completes
-            timeoutRefs.current.fillTimeout = setTimeout(() => {
-              setShouldAnimateFill(false);
-              setIsTransiting(false);
-            }, 800);
-          }, 50);
-        } catch (error) {
-          console.error('Error toggling bookmark:', error);
+      
+      // Start bookmark action immediately (optimistic update happens first)
+      const bookmarkStartTime = Date.now();
+      const minDisplayTime = 800; // Minimum time to show "Allahuma Barik" (800ms)
+      
+      try {
+        // Perform the bookmark action (optimistic update happens immediately)
+        await handleOptimisticBookmark();
+        
+        // Calculate remaining time to show "Allahuma Barik"
+        const elapsed = Date.now() - bookmarkStartTime;
+        const remainingTime = Math.max(0, minDisplayTime - elapsed);
+        
+        // Wait for minimum display time OR until request completes (whichever is longer)
+        timeoutRefs.current.stateTimeout = setTimeout(() => {
           setShowAllahumaBarik(false);
+          // Trigger fill animation when transitioning to saved
+          setShouldAnimateFill(true);
+          
           setIsAnimating(false);
-          setIsTransiting(false);
-        }
-      }, 1500);
+          // Reset animation flag after animation completes
+          timeoutRefs.current.fillTimeout = setTimeout(() => {
+            setShouldAnimateFill(false);
+            setIsTransiting(false);
+          }, 800);
+        }, remainingTime);
+      } catch (error) {
+        console.error('Error toggling bookmark:', error);
+        setShowAllahumaBarik(false);
+        setIsAnimating(false);
+        setIsTransiting(false);
+      }
     } else {
       // Track that we were bookmarked before toggling
       setWasBookmarked(true);
@@ -417,7 +419,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                         {provider.offers.map((offer, index) => (
                           <span
                             key={index}
-                            className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                            className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
                           >
                             {offer.name_de}
                           </span>
@@ -455,7 +457,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                         {provider.needs.map((need, index) => (
                           <span
                             key={index}
-                            className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                            className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
                           >
                             {need.name_de}
                           </span>
@@ -598,7 +600,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                   <button
                     key={i}
                     className={`relative overflow-hidden rounded-lg border-2 transition-all hover:scale-105 ${
-                      selectedImageIdx === i ? 'border-[#589D96]' : 'border-transparent'
+                      selectedImageIdx === i ? 'border-primary' : 'border-transparent'
                     }`}
                     style={{ width: 80, height: 60 }}
                     onClick={() => goToImage(i)}
@@ -749,7 +751,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           {provider.offers.map((offer, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                              className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
                             >
                               {offer.name_de}
                             </span>
@@ -787,7 +789,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           {provider.needs.map((need, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center rounded-xl bg-[#589D96]/10 px-3 py-1.5 text-sm font-medium text-[#589D96]"
+                              className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
                             >
                               {need.name_de}
                             </span>

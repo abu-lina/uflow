@@ -27,7 +27,7 @@ export function MobileActionButton({
   const baseClasses = "flex flex-row justify-center items-center w-full max-w-[345px] h-12 rounded-xl px-5 py-4 gap-2 transition-all duration-200";
   
   const variantClasses = {
-    primary: "bg-[#589D96] hover:bg-[#4a8a85] active:bg-[#3d7470]",
+    primary: "bg-primary hover:bg-primary-dark active:bg-primary-darker",
     secondary: "bg-gray-500 hover:bg-gray-600 active:bg-gray-700"
   };
 

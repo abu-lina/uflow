@@ -72,7 +72,7 @@ export function BookmarkButton({
           animate={{ opacity: isPressed ? 0.7 : 0 }}
           className="absolute inset-0 z-10 pointer-events-none"
           style={{
-            background: COLORS.mintPressed,
+            background: COLORS.primaryPressed,
             borderRadius: state === 'saved' ? '9.6px' : '12px',
             WebkitTransform: 'translateZ(0)',
             transform: 'translateZ(0)',
@@ -121,7 +121,7 @@ export function BookmarkButton({
               <div 
                 className="relative rounded-[9.6px] size-full overflow-hidden"
                 style={{
-                  backgroundColor: COLORS.mintPressed,
+                  backgroundColor: COLORS.primaryPressed,
                   isolation: 'isolate',
                   WebkitBackfaceVisibility: 'hidden',
                   backfaceVisibility: 'hidden',
@@ -135,7 +135,7 @@ export function BookmarkButton({
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: COLORS.mintPressed,
+                    background: COLORS.primaryPressed,
                     borderRadius: '9.6px',
                     opacity: 1,
                   }}
@@ -144,8 +144,8 @@ export function BookmarkButton({
                   className="relative size-full"
                   style={{
                     boxShadow: isHovered
-                      ? `0 2px 8px ${COLORS_RGBA.mint.shadowHover}`
-                      : `0 1px 4px ${COLORS_RGBA.mint.shadow}`,
+                      ? `0 2px 8px ${COLORS_RGBA.primary.shadowHover}`
+                      : `0 1px 4px ${COLORS_RGBA.primary.shadow}`,
                   }}
                 >
                   <div className="flex flex-row items-center justify-center size-full">
@@ -204,7 +204,7 @@ export function BookmarkButton({
                   }}
                   className="absolute inset-0"
                   style={{
-                    background: COLORS.mint,
+                    background: COLORS.primary,
                     borderRadius: '9.6px',
                     WebkitTransform: 'translateZ(0)',
                     transform: 'translateZ(0)',

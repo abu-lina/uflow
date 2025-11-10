@@ -130,13 +130,13 @@ export default function EditNeedsPage({ params }: { params: Promise<{ provider_i
           >
             <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="text-xl font-semibold text-content-title">Was suche ich?</h1>
+          <h1 className="text-xl font-semibold text-content-heading">Was suche ich?</h1>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-[393px] mx-auto px-4 pt-[calc(env(safe-area-inset-top)+24px+40px+16px)] pb-24">
+        <div className="w-full max-w-[393px] mx-auto px-4 pt-[calc(env(safe-area-inset-top)+24px+40px+24px)] pb-24">
           {/* Search Bar */}
           <div className="mb-4">
             <div className="relative">
@@ -145,7 +145,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ provider_i
                 icon="lucide:search"
               />
               <input
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-[#589D96] focus:outline-none focus:ring-1 focus:ring-[#589D96]"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="Bedürfnisse durchsuchen..."
                 type="text"
                 value={searchQuery}
@@ -166,7 +166,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ provider_i
             <h3 className="mb-2 text-sm font-medium text-[#232323]">Neues Bedürfnis erstellen</h3>
             <div className="flex gap-2">
               <input
-                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#589D96] focus:outline-none"
+                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 placeholder="Bedürfnis eingeben..."
                 type="text"
                 value={newNeed}
@@ -174,7 +174,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ provider_i
                 onKeyPress={(e) => e.key === 'Enter' && createNeed()}
               />
               <button
-                className="rounded-lg bg-[#589D96] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark active:bg-primary-darker disabled:opacity-50"
                 disabled={!newNeed.trim() || isCreating}
                 onClick={createNeed}
               >
@@ -198,7 +198,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ provider_i
                   key={need.need_id}
                   className={`w-full rounded-xl px-4 py-3 text-left transition-all duration-200 ${
                     selectedNeedIds.includes(need.need_id)
-                      ? 'bg-[#BFDBD8] text-[#232323] border border-[#589D96]'
+                      ? 'bg-primary-light text-content-heading border border-primary'
                       : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }`}
                   onClick={() => toggleNeed(need.need_id)}
@@ -206,7 +206,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ provider_i
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{need.name_de}</span>
                     {selectedNeedIds.includes(need.need_id) && (
-                      <Icon className="h-5 w-5 text-[#589D96]" icon="lucide:check" />
+                      <Icon className="h-5 w-5 text-primary" icon="lucide:check" />
                     )}
                   </div>
                 </button>

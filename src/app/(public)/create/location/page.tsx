@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
 import { AddressAutocomplete, type AddressComponents } from '@/components/ui/AddressAutocomplete';
 import { validateAddress, validateZipCode } from '@/utils/addressValidation';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
@@ -116,13 +116,11 @@ export default function LocationPage() {
   if (!user) {
     const returnUrl = encodeURIComponent('/create/location');
     return (
-      <div className="relative flex w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
-        <PageHeader title={t('create.location.title')} />
-        <HeaderSpacer />
+      <ScrollablePageLayout>
+        <PageHeader title={t('create.location.title')} variant="title-only" />
 
-        {/* Main Content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-safe-24 pt-20 mobile-nav-spacing">
-          <span className="text-center text-lg text-content-title mb-6">
+        <PageContent className="flex flex-1 flex-col items-center justify-center">
+          <span className="text-center text-lg text-content-heading mb-6">
             {t('create.location.loginRequired')}
           </span>
           <button
@@ -131,8 +129,8 @@ export default function LocationPage() {
           >
             {t('create.location.goToLogin')}
           </button>
-        </div>
-      </div>
+        </PageContent>
+      </ScrollablePageLayout>
     );
   }
 
@@ -212,17 +210,14 @@ export default function LocationPage() {
   };
 
   return (
-    <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
+    <ScrollablePageLayout>
       <PageHeader
         title={t('create.location.title')}
         variant="back-and-title"
         onBack="/create/basics"
       />
-      <HeaderSpacer />
 
-      {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">
-        <div className="flex w-full flex-1 flex-col gap-6">
+      <PageContent hasFooter className="flex flex-col gap-6">
           {/* Step Indicator */}
           <div className="mb-6">
             <StepIndicator currentStep={1} steps={STEPS} />
@@ -246,8 +241,8 @@ export default function LocationPage() {
               </span>
             </div>
             <button
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#589D96] focus:ring-offset-2 ${
-                formData.isOnlineBusiness ? 'bg-[#589D96]' : 'bg-gray-200'
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                formData.isOnlineBusiness ? 'bg-primary' : 'bg-gray-200'
               }`}
               onClick={() => {
                 const newIsOnline = !formData.isOnlineBusiness;
@@ -293,7 +288,7 @@ export default function LocationPage() {
                     <p className="text-xs text-[#7A7A7A]">{t('create.location.addressAutoFill')}</p>
                     {!showManualFields ? (
                       <button
-                        className="text-xs text-[#589D96] hover:underline cursor-pointer z-10 relative"
+                        className="text-xs text-primary hover:text-primary-dark hover:underline cursor-pointer z-10 relative"
                         type="button"
                         onClick={(e) => {
                           e.preventDefault();
@@ -427,7 +422,7 @@ export default function LocationPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#D4D4D4] bg-white">
-              <Icon className="h-12 w-12 text-[#589D96] mb-3" icon="mdi:web" />
+              <Icon className="h-12 w-12 text-primary mb-3" icon="mdi:web" />
               <p className="text-sm font-medium text-[#272727] text-center mb-1">
                 {t('create.location.onlineBusiness')}
               </p>
@@ -436,31 +431,17 @@ export default function LocationPage() {
               </p>
             </div>
           )}
-        </div>
-      </div>
+      </PageContent>
 
-      {/* Navbar */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-safe-24 pb-4">
-          <button
-            className={`flex h-[48px] w-full items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity ${
-              !isFormValid() 
-                ? 'bg-[#589D96] opacity-30 cursor-not-allowed' 
-                : 'bg-[#589D96] opacity-100'
-            }`}
-            disabled={!isFormValid()}
-            onClick={handleSave}
-          >
-            <span className="text-base font-medium text-white leading-[19px]">
-              {t('common.next')}
-            </span>
-            <Icon className="h-6 w-6 text-white" icon="lucide:chevron-right" />
-          </button>
-        </div>
-      </div>
-    </div>
+      <FooterAction
+        actionButton={{
+          label: t('common.next'),
+          trailingIcon: 'lucide:chevron-right',
+          onClick: handleSave,
+          disabled: !isFormValid(),
+          variant: 'primary',
+        }}
+      />
+    </ScrollablePageLayout>
   );
 }

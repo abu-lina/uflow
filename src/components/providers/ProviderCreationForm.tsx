@@ -42,7 +42,7 @@ export function ProviderCreationForm({ onSubmit }: ProviderCreationFormProps) {
           <input
             aria-label="Titel des Providers oder Services"
             autoComplete="off"
-            className="w-full rounded-[15px] border border-[#E5E5E5] bg-[#FAFAFA] px-4 py-2 font-inter-tight text-base text-content-title transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-[15px] border border-[#E5E5E5] bg-[#FAFAFA] px-4 py-2 font-inter-tight text-base text-content-heading transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
             id="provider-title"
             name="title"
             placeholder="Titel eingeben"

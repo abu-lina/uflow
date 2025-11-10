@@ -11,10 +11,7 @@ import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary'
 
 // import clsx from 'clsx'; // Not used in mobile version
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { PageLayout } from '@/components/layout/PageLayout';
-import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -123,25 +120,25 @@ export function ProfileContent({ user }: ProfileContentProps) {
   // Show loading while auth is being checked
   if (loading) {
     return (
-      <PageLayout hasBackground={false}>
-        <PageContentWrapper centerVertically={true}>
+      <ScrollablePageLayout>
+        <PageContent className="flex items-center justify-center min-h-[60vh]">
           <LoadingSpinner text={t('common.loading')} />
-        </PageContentWrapper>
-      </PageLayout>
+        </PageContent>
+      </ScrollablePageLayout>
     );
   }
 
   // Show authentication required if no user
   if (!effectiveUser) {
     return (
-      <PageLayout hasBackground={false}>
-        <PageContentWrapper centerVertically={true}>
+      <ScrollablePageLayout>
+        <PageContent className="flex items-center justify-center min-h-[60vh]">
           <IconWithTitle
-            icon={<Lock className="h-16 w-16 text-[#589D96]" />}
+            icon={<Lock className="h-16 w-16 text-primary" />}
             title={t('saved.loginRequired')}
           />
-        </PageContentWrapper>
-      </PageLayout>
+        </PageContent>
+      </ScrollablePageLayout>
     );
   }
 
@@ -149,14 +146,13 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Mobile content - using proper layout components
   const mobileContent = (
-    <PageLayout hasBackground={false} maxWidth="full">
+    <ScrollablePageLayout>
       <PageHeader 
         title={t('navigation.profile')}
+        variant="title-only"
       />
 
-      <HeaderSpacer />
-
-      <PageContentWrapper includeMobileNavSpacing={true} maxWidth="full" padding="lg-safe">
+      <PageContent maxWidth="full">
         {/* Error Message */}
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-4">
@@ -173,7 +169,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
             >
               <div className="flex items-center gap-4">
                 {/* Avatar */}
-                <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-full bg-[#589D96] p-1">
+                <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-full bg-primary p-1">
                   <User className="h-10 w-10 text-white" />
                 </div>
                 
@@ -291,8 +287,8 @@ export function ProfileContent({ user }: ProfileContentProps) {
             </div>
           </div>
         </ContentSection>
-      </PageContentWrapper>
-    </PageLayout>
+      </PageContent>
+    </ScrollablePageLayout>
   );
 
   // Desktop: tabbed view

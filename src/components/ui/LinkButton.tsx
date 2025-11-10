@@ -51,7 +51,7 @@ interface LinkButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 export const LinkButton = forwardRef<HTMLButtonElement, LinkButtonProps>(
   ({ children, className = '', variant = 'primary', ...props }, ref) => {
     const variantClasses = {
-      primary: 'text-[#589D96] hover:text-[#4a8a84]',
+      primary: 'text-primary hover:text-primary-dark',
       secondary: 'text-gray-600 hover:text-gray-800',
     };
 

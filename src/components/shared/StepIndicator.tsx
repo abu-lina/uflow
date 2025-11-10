@@ -22,7 +22,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
         />
         {/* Progress line - proportional within the inset line */}
         <div
-          className="absolute top-4 h-px bg-[#589D96]"
+          className="absolute top-4 h-px bg-primary"
           style={{
             left: `${(50 / steps.length)}%`,
             width: `${steps.length > 0 ? (Math.min(Math.max(currentStep, 0), steps.length - 1) / steps.length) * 100 : 0}%`,
@@ -42,9 +42,9 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
                   className={[
                     'flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold',
                     isCompleted
-                      ? 'border-[#589D96] bg-[#589D96] text-white'
+                      ? 'border-primary bg-primary text-white'
                       : isCurrent
-                      ? 'border-[#589D96] bg-white text-[#589D96]'
+                      ? 'border-primary bg-white text-primary'
                       : 'border-[#999999] bg-[#D7D7D7] text-[#999999]',
                   ].join(' ')}
                 >
@@ -73,7 +73,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
               key={step.title}
               className={[
                 'mx-auto text-xs font-semibold text-center',
-                (isCompleted || isCurrent) ? 'text-[#589D96]' : 'text-[#999999]'
+                (isCompleted || isCurrent) ? 'text-primary' : 'text-[#999999]'
               ].join(' ')}
             >
               {step.title}

@@ -84,7 +84,7 @@ export default function ConfirmEmail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-icon-xl h-icon-xl text-mint animate-spin mx-auto mb-4" />
+          <Loader2 className="w-icon-xl h-icon-xl text-primary animate-spin mx-auto mb-4" />
           <p className="text-content">Confirming your email...</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function ConfirmEmail() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <XCircle className="w-icon-3xl h-icon-3xl text-danger mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-content-title mb-4">Error confirming email</h1>
+          <h1 className="text-2xl font-bold text-content-heading mb-4">Error confirming email</h1>
           <p className="text-content mb-6">
             The confirmation link appears to be invalid or expired. This can happen if:
           </p>
@@ -107,7 +107,7 @@ export default function ConfirmEmail() {
           </ul>
           <div className="space-y-3">
             <button 
-              className="bg-mint text-white px-6 py-3 rounded-lg hover:bg-mint/90 transition-colors block mx-auto"
+              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors block mx-auto"
               onClick={() => router.push('/login')}
             >
               Go to Login
@@ -128,9 +128,9 @@ export default function ConfirmEmail() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <MailCheck className="w-icon-3xl h-icon-3xl text-success mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-content-title mb-4">Email confirmed successfully!</h1>
+        <h1 className="text-2xl font-bold text-content-heading mb-4">Email confirmed successfully!</h1>
         <p className="text-content mb-6">Redirecting to your dashboard...</p>
-        <Loader2 className="w-icon-lg h-icon-lg text-mint animate-spin mx-auto" />
+        <Loader2 className="w-icon-lg h-icon-lg text-primary animate-spin mx-auto" />
       </div>
     </div>
   );

@@ -87,7 +87,7 @@ export function ExploreSection() {
             className="text-uFlowText inline-block break-words text-center font-inter-tight text-2xl font-medium sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl"
             id="explore-heading"
           >
-            Entdecke Angebote aus <span className="text-mint">deiner Ummah</span>
+            Entdecke Angebote aus <span className="text-primary">deiner Ummah</span>
           </h2>
         </div>
         <p className="w-full max-w-2xl text-center font-inter-tight text-base font-normal text-neutral-600 sm:text-lg md:text-xl lg:text-2xl">

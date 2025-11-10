@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { PageLayout } from '@/components/layout/PageLayout';
-import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
@@ -178,51 +175,46 @@ export default function SavedProvidersPage() {
   // isLoading is true only when there's no cached data AND currently fetching
   if (isLoading) {
     return (
-      <PageLayout hasBackground={false} maxWidth="full">
+      <ScrollablePageLayout>
         <PageHeader title={t('saved.title')} variant="title-only" />
-        <HeaderSpacer />
-        <PageContentWrapper centerVertically={true} maxWidth="full" padding="lg-safe">
+        <PageContent className="flex items-center justify-center min-h-[60vh]" maxWidth="full">
           <p className="text-lg text-gray-500 text-center">{t('saved.loading') || 'Loading...'}</p>
-        </PageContentWrapper>
-      </PageLayout>
+        </PageContent>
+      </ScrollablePageLayout>
     );
   }
 
   // Error state
   if (queryError) {
     return (
-      <PageLayout hasBackground={false} maxWidth="full">
+      <ScrollablePageLayout>
         <PageHeader title={t('saved.title')} variant="title-only" />
-        <HeaderSpacer />
-        <PageContentWrapper centerVertically={true} maxWidth="full" padding="lg-safe">
+        <PageContent className="flex items-center justify-center min-h-[60vh]" maxWidth="full">
           <EmptyState
             description={t('saved.errorLoadingDescription') || 'Failed to load your saved items. Please try again.'}
             title={t('saved.errorLoading') || 'Error loading saved items'}
           />
-        </PageContentWrapper>
-      </PageLayout>
+        </PageContent>
+      </ScrollablePageLayout>
     );
   }
 
   return (
-    <PageLayout hasBackground={false} maxWidth="full">
+    <ScrollablePageLayout>
       <PageHeader 
         title={t('saved.title')}
         variant="title-only"
       />
 
-      <HeaderSpacer />
-
-      <PageContentWrapper 
-        centerVertically={!!emptyStateType}
+      <PageContent 
+        className={emptyStateType ? 'flex items-center justify-center min-h-[60vh]' : ''}
         maxWidth="full"
-        padding="lg-safe"
       >
         {emptyStateType === 'login_required' ? (
           <>
             <TitleSection className="mb-10">
               <IconWithTitle
-                icon={<Icon className="w-full h-full text-content-title" icon="material-symbols:lock-outline" />}
+                icon={<Icon className="w-full h-full text-content-heading" icon="material-symbols:lock-outline" />}
                 size="large"
                 title={t('saved.loginRequired')}
               >
@@ -286,7 +278,7 @@ export default function SavedProvidersPage() {
             </ul>
           </>
         )}
-      </PageContentWrapper>
-    </PageLayout>
+      </PageContent>
+    </ScrollablePageLayout>
   );
 }

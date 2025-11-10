@@ -10,7 +10,7 @@ export function ProviderIcon({ variant, className = 'w-12 h-12' }: ProviderIconP
     return (
       <svg 
         aria-hidden="true"
-        className={`text-content-title ${className}`} 
+        className={`text-content-heading ${className}`} 
         fill="none" 
         height="48" 
         viewBox="0 0 48 48" 
@@ -38,7 +38,7 @@ export function ProviderIcon({ variant, className = 'w-12 h-12' }: ProviderIconP
   return (
     <svg 
       aria-hidden="true"
-      className={`text-content-title ${className}`} 
+      className={`text-content-heading ${className}`} 
       fill="none" 
       height="52" 
       viewBox="0 0 53 52" 

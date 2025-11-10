@@ -5,8 +5,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { FooterAction } from '@/components/ui/FooterAction';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
@@ -71,16 +71,14 @@ export default function ImageUploadPage() {
   };
 
   return (
-    <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
+    <ScrollablePageLayout>
       <PageHeader
         title={t('create.media.uploadImages')}
         variant="back-and-title"
         onBack="/create/media"
       />
-      <HeaderSpacer />
 
-      {/* Content */}
-      <div className="content-scroll-container flex flex-1 flex-col items-center px-safe-24 pt-8 mobile-nav-spacing overflow-y-auto">
+      <PageContent maxWidth="full">
         <div className="flex w-full flex-1 flex-col gap-8">
           {/* Step Indicator */}
           <div className="mb-6">
@@ -176,25 +174,16 @@ export default function ImageUploadPage() {
             </div>
           )}
         </div>
-      </div>
+      </PageContent>
 
-      {/* Navbar */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px]" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-safe-24 pb-4">
-          <button
-            className="flex h-[48px] w-full items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-opacity bg-[#589D96] opacity-100"
-            onClick={handleSave}
-          >
-            <Icon className="h-6 w-6 text-white" icon="lucide:save" />
-            <span className="text-base font-medium text-white leading-[19px]">
-              {t('actions.save')}
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+      <FooterAction
+        actionButton={{
+          label: t('actions.save'),
+          icon: 'lucide:save',
+          onClick: handleSave,
+          variant: 'primary',
+        }}
+      />
+    </ScrollablePageLayout>
   );
 }

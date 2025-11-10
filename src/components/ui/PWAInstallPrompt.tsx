@@ -82,7 +82,7 @@ export function PWAInstallPrompt() {
         {/* Header Row: Logo, Title, Close */}
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-[7.2px] bg-[#589D96]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-[7.2px] bg-primary">
               <Image
                 alt="U-Flow App Icon"
                 className="rounded-[7.2px]"
