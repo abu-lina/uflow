@@ -477,7 +477,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           // Custom action buttons (like FooterAction) handle their own styling
           customActionButtons
         ) : (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 py-4">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 pt-4 pb-safe">
             <div className="flex w-full gap-3.5">
               {/* Save Button */}
               <BookmarkButton

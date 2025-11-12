@@ -8,16 +8,17 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "test -f .env.local && export $(cat .env.local | grep -v '^#' | xargs) || true && next build",
-    "build:raw": "next build",
-    "build:production": "npm ci --include=dev && next build && rm -rf .next/cache",
-    "start": "next start",
+    "build": "NODE_ENV=production next build",
+    "build:raw": "NODE_ENV=production next build",
+    "build:standalone": "STANDALONE_BUILD=true NODE_ENV=production next build",
+    "build:production": "npm ci --include=dev && NODE_ENV=production next build && rm -rf .next/cache",
+    "start": "NODE_ENV=production next start",
+    "start:standalone": "mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cd .next/standalone && NODE_ENV=production node server.js",
     "clean": "rm -rf .next",
     "build:clean": "npm run clean && npm run build",
     "analyze": "ANALYZE=true next build",
     "analyze:server": "BUNDLE_ANALYZE=server npm run build",
     "analyze:browser": "BUNDLE_ANALYZE=browser npm run build",
-    "start:prod": "NODE_ENV=production npm start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:watch": "eslint . --watch",
@@ -38,7 +39,7 @@
     "transform-svg": "ts-node scripts/transform-svg.ts",
     "fix:tailwind": "node scripts/fix-tailwind-classes.js",
     "fix:all": "npm run fix:tailwind && npm run format",
-    "build:local": "export $(cat .env.local | xargs) && next build"
+    "build:local": "export $(cat .env.local | xargs) && NODE_ENV=production next build"
   },
   "dependencies": {
     "@iconify/react": "^6.0.0",

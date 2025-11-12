@@ -27,8 +27,8 @@ ENV NODE_ENV=production
 # Fix SSL issues for Google Fonts
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-# Build the application (secrets not needed at build time)
-RUN npm run build:raw
+# Build the application with standalone output for Docker
+RUN npm run build:standalone
 
 # Production stage
 FROM node:20-alpine AS runner

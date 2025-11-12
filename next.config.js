@@ -50,6 +50,9 @@ const withPWA = require('next-pwa')({
 });
 
 const isDev = process.env.NODE_ENV === 'development';
+// Only enable standalone when explicitly building for Docker
+// This allows 'next start' to work for local production testing
+const isStandaloneBuild = process.env.STANDALONE_BUILD === 'true';
 
 function buildCsp() {
   const directives = [
@@ -85,19 +88,29 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  
+  // ESLint configuration
+  // Note: We use flat config (eslint.config.mjs) which Next.js may not auto-detect
+  // The warning "The Next.js plugin was not detected" is informational and doesn't affect functionality
+  // ESLint still works correctly - Next.js just can't auto-detect the plugin in flat config format
+  eslint: {
+    ignoreDuringBuilds: false, // Keep ESLint enabled during builds
+  },
 
   // Docker/Standalone output for Hetzner deployment
-  output: 'standalone',
-  
-  // Optimize file tracing for standalone builds
-  outputFileTracingIncludes: {
-    '/': ['./src/**/*', './public/**/*'],
-  },
-  
-  // Skip file tracing for routes that may not generate client reference manifests
-  outputFileTracingExcludes: {
-    '*': ['./node_modules/@swc/core*/**/*'],
-  },
+  // Only enable standalone when explicitly building for Docker (STANDALONE_BUILD=true)
+  // This allows 'next start' to work for local production testing
+  ...(isStandaloneBuild ? {
+    output: 'standalone',
+    // Optimize file tracing for standalone builds
+    outputFileTracingIncludes: {
+      '/': ['./src/**/*', './public/**/*'],
+    },
+    // Skip file tracing for routes that may not generate client reference manifests
+    outputFileTracingExcludes: {
+      '*': ['./node_modules/@swc/core*/**/*'],
+    },
+  } : {}),
   
   experimental: {
     optimizeCss: true,
@@ -105,13 +118,14 @@ const nextConfig = {
     optimizePackageImports: ['@mui/material', '@mui/icons-material', 'framer-motion'],
     // Preload critical chunks
     webpackBuildWorker: true,
-    // Enable faster builds
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  },
+  
+  // Turbopack configuration (migrated from experimental.turbo)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
@@ -289,6 +303,42 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'no-store, max-age=0',
+          },
+        ],
+      },
+      // Ensure proper MIME types for static assets
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/chunks/:path*.js',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/css/:path*.css',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'text/css; charset=utf-8',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },

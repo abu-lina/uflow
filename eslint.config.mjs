@@ -15,14 +15,16 @@ const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+  allConfig: js.configs.all,
 });
 
 const eslintConfig = [
   // Base JavaScript rules
   js.configs.recommended,
 
-  // Next.js configuration
-  ...compat.extends('next/core-web-vitals'),
+  // Next.js configuration - explicitly extend next/core-web-vitals
+  ...compat.extends('next/core-web-vitals', 'next'),
 
   // TypeScript configuration
   {
