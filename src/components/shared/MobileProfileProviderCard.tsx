@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 
 interface MobileProfileProviderCardProps {
@@ -17,6 +20,25 @@ export function MobileProfileProviderCard({
   savedText = 'Gespeichert',
   onClick,
 }: MobileProfileProviderCardProps) {
+  const [imageError, setImageError] = useState(false);
+
+  // Validate and normalize image URL
+  const normalizedImageUrl = (() => {
+    if (!imageUrl || imageUrl.trim() === '' || imageError) {
+      return '/images/placeholder.jpg';
+    }
+    // If it's already a full URL (starts with http:// or https://), use it as-is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If it's a relative path, ensure it starts with /
+    if (imageUrl.startsWith('/')) {
+      return imageUrl;
+    }
+    // Otherwise, treat as relative path
+    return `/${imageUrl}`;
+  })();
+
   return (
     <div
       className="flex w-full cursor-pointer items-center gap-3 rounded-lg bg-white p-3"
@@ -28,8 +50,10 @@ export function MobileProfileProviderCard({
           alt={title}
           className="h-full w-full object-cover"
           height={64}
-          src={imageUrl}
+          src={normalizedImageUrl}
+          unoptimized={normalizedImageUrl.startsWith('http')}
           width={64}
+          onError={() => setImageError(true)}
         />
       </div>
       

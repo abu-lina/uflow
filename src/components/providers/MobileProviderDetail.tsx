@@ -68,7 +68,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
   });
 
   return (
-    <div className="flex w-full max-w-[393px] flex-col items-start px-6 pt-6">
+    <div className="flex w-full flex-col items-start px-6 pt-6">
       {/* Image + Page Indicator Section */}
       <div className="flex w-full flex-col items-start gap-2">
         {/* Image Container */}

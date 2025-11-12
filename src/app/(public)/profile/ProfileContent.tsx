@@ -26,7 +26,9 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { getCreatedProviders, getAllBookmarkedItems, getRecommendations } from '@/services/providers';
+import { getCreatedCommunityServices, getRecommendedCommunityServices } from '@/services/community_services';
 import { authService } from '@/features/auth/services/authService';
+import { getFirstImageUrl } from '@/utils/imageUtils';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 interface ProfileContentProps {
@@ -53,6 +55,46 @@ export function ProfileContent({ user }: ProfileContentProps) {
     } else {
       return category.name_de || category.name_en || '';
     }
+  };
+
+  // Helper function to get image URL for community services
+  // Handles TEXT[] format from database (Supabase returns as array)
+  const getCommunityServiceImageUrl = (communityService: { 
+    community_service_images?: string[] | null | unknown;
+    community_service_name?: string;
+  }) => {
+    // Handle null or undefined
+    if (!communityService.community_service_images) {
+      console.log('No community_service_images for:', communityService.community_service_name || 'unknown');
+      return '/images/placeholder.jpg';
+    }
+
+    // Handle array format (TEXT[] from database)
+    if (Array.isArray(communityService.community_service_images)) {
+      const images = communityService.community_service_images;
+      if (images.length === 0) {
+        console.log('Empty images array for:', communityService.community_service_name || 'unknown');
+        return '/images/placeholder.jpg';
+      }
+      // Get first image and validate it's a non-empty string
+      const firstImage = images[0];
+      if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
+        console.log('Found image URL:', firstImage, 'for:', communityService.community_service_name || 'unknown');
+        return firstImage;
+      }
+      console.log('Invalid first image:', firstImage, 'for:', communityService.community_service_name || 'unknown');
+    } else {
+      // Log unexpected format
+      console.log('Unexpected images format:', typeof communityService.community_service_images, communityService.community_service_images, 'for:', communityService.community_service_name || 'unknown');
+    }
+
+    // Fallback to placeholder
+    return '/images/placeholder.jpg';
+  };
+
+  // Helper function to get provider image URL using the utility function
+  const getProviderImageUrl = (provider: { provider_images?: string | null | { urls?: string[] } }) => {
+    return getFirstImageUrl(provider.provider_images);
   };
 
   // Use client-side user if server-side user is null
@@ -122,8 +164,44 @@ export function ProfileContent({ user }: ProfileContentProps) {
     placeholderData: (previousData) => previousData,
   });
 
-  const isLoadingProviders = isLoadingCreated || isLoadingSaved || isLoadingRecommendations;
-  const error = createdError || savedError || recommendationsError ? t('providers.errorLoading') : null;
+  // Use React Query for created community services with caching
+  const { data: createdCommunityServices = [], isLoading: isLoadingCreatedCS, error: createdCSError } = useQuery({
+    queryKey: ['created-community-services', effectiveUser?.id],
+    queryFn: async () => {
+      if (!effectiveUser) return [];
+      const data = await getCreatedCommunityServices(effectiveUser.id);
+      // Debug: Log the data structure to see what we're getting
+      if (data && data.length > 0) {
+        console.log('Created community services data:', data.map(cs => ({
+          id: cs.community_service_id,
+          name: cs.community_service_name,
+          images: cs.community_service_images,
+          imagesType: typeof cs.community_service_images,
+          isArray: Array.isArray(cs.community_service_images),
+        })));
+      }
+      return data ?? [];
+    },
+    enabled: !!effectiveUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData) => previousData,
+  });
+
+  // Use React Query for recommended community services with caching
+  const { data: recommendedCommunityServices = [], isLoading: isLoadingRecommendedCS, error: recommendedCSError } = useQuery({
+    queryKey: ['recommended-community-services', effectiveUser?.id],
+    queryFn: async () => {
+      if (!effectiveUser) return [];
+      const data = await getRecommendedCommunityServices(effectiveUser.id);
+      return data ?? [];
+    },
+    enabled: !!effectiveUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData) => previousData,
+  });
+
+  const isLoadingProviders = isLoadingCreated || isLoadingSaved || isLoadingRecommendations || isLoadingCreatedCS || isLoadingRecommendedCS;
+  const error = createdError || savedError || recommendationsError || createdCSError || recommendedCSError ? t('providers.errorLoading') : null;
 
 
   // Handle logout
@@ -220,39 +298,28 @@ export function ProfileContent({ user }: ProfileContentProps) {
             {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingProviders ? (
               <LoadingSpinner text={t('providers.loadingProviders')} />
-            ) : createdProviders.length > 0 ? (
+            ) : createdProviders.length > 0 || createdCommunityServices.length > 0 ? (
               <div className="space-y-3">
                 {createdProviders.map((provider) => (
                   <MobileProfileProviderCard
                     key={provider.provider_id}
                     category={getCategoryName(provider.category) || t('search.unnamed')}
-                    imageUrl={(() => {
-                      if (!provider.provider_images) return '/images/placeholder.jpg';
-                      try {
-                        let imagesData: { urls?: string[] } = {};
-                        if (typeof provider.provider_images === 'string') {
-                          imagesData = JSON.parse(provider.provider_images);
-                        } else if (Array.isArray(provider.provider_images)) {
-                          imagesData.urls = provider.provider_images;
-                        } else if (
-                          typeof provider.provider_images === 'object' &&
-                          provider.provider_images !== null &&
-                          'urls' in provider.provider_images
-                        ) {
-                          imagesData = provider.provider_images;
-                        }
-                        if (imagesData.urls && imagesData.urls.length > 0) {
-                          return imagesData.urls[0];
-                        }
-                      } catch {
-                        return '/images/placeholder.jpg';
-                      }
-                      return '/images/placeholder.jpg';
-                    })()}
+                    imageUrl={getProviderImageUrl(provider)}
                     likes={provider.bookmark_count || 0}
                     savedText={t('actions.saved')}
                     title={provider.provider_name}
                     onClick={() => router.push(`/profile/providers/${provider.provider_id}`)}
+                  />
+                ))}
+                {createdCommunityServices.map((communityService) => (
+                  <MobileProfileProviderCard
+                    key={communityService.community_service_id}
+                    category={getCategoryName(communityService.category) || t('search.unnamed')}
+                    imageUrl={getCommunityServiceImageUrl(communityService)}
+                    likes={0}
+                    savedText={t('actions.saved')}
+                    title={communityService.community_service_name}
+                    onClick={() => router.push(`/community-services/${communityService.community_service_id}`)}
                   />
                 ))}
               </div>
@@ -274,41 +341,30 @@ export function ProfileContent({ user }: ProfileContentProps) {
             </SectionHeading>
             
             {/* Only show loading on true initial load - isLoading is true only when no cached data */}
-            {isLoadingRecommendations ? (
+            {isLoadingRecommendations || isLoadingRecommendedCS ? (
               <LoadingSpinner text={t('providers.loadingProviders')} />
-            ) : recommendations.length > 0 ? (
+            ) : recommendations.length > 0 || recommendedCommunityServices.length > 0 ? (
               <div className="space-y-3">
                 {recommendations.map((provider) => (
                   <MobileProfileProviderCard
                     key={provider.provider_id}
                     category={getCategoryName(provider.category) || t('search.unnamed')}
-                    imageUrl={(() => {
-                      if (!provider.provider_images) return '/images/placeholder.jpg';
-                      try {
-                        let imagesData: { urls?: string[] } = {};
-                        if (typeof provider.provider_images === 'string') {
-                          imagesData = JSON.parse(provider.provider_images);
-                        } else if (Array.isArray(provider.provider_images)) {
-                          imagesData.urls = provider.provider_images;
-                        } else if (
-                          typeof provider.provider_images === 'object' &&
-                          provider.provider_images !== null &&
-                          'urls' in provider.provider_images
-                        ) {
-                          imagesData = provider.provider_images;
-                        }
-                        if (imagesData.urls && imagesData.urls.length > 0) {
-                          return imagesData.urls[0];
-                        }
-                      } catch {
-                        return '/images/placeholder.jpg';
-                      }
-                      return '/images/placeholder.jpg';
-                    })()}
+                    imageUrl={getProviderImageUrl(provider)}
                     likes={provider.bookmark_count || 0}
                     savedText={t('actions.saved')}
                     title={provider.provider_name}
                     onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit`)}
+                  />
+                ))}
+                {recommendedCommunityServices.map((communityService) => (
+                  <MobileProfileProviderCard
+                    key={communityService.community_service_id}
+                    category={getCategoryName(communityService.category) || t('search.unnamed')}
+                    imageUrl={getCommunityServiceImageUrl(communityService)}
+                    likes={0}
+                    savedText={t('actions.saved')}
+                    title={communityService.community_service_name}
+                    onClick={() => router.push(`/community-services/${communityService.community_service_id}`)}
                   />
                 ))}
               </div>
@@ -414,46 +470,40 @@ export function ProfileContent({ user }: ProfileContentProps) {
             {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingProviders ? (
               <LoadingSpinner text={t('providers.loadingProviders')} />
-            ) : createdProviders.length > 0 ? (
-              createdProviders.map((provider) => {
-                const address = provider.address_street && provider.address_city
-                  ? `${provider.address_street}, ${provider.address_city}`
-                  : provider.address_street || provider.address_city || undefined;
-                
-                const getImageUrl = () => {
-                  if (!provider.provider_images) return '/images/placeholder.jpg';
-                  try {
-                    let imagesData: { urls?: string[] } = {};
-                    if (typeof provider.provider_images === 'string') {
-                      imagesData = JSON.parse(provider.provider_images);
-                    } else if (Array.isArray(provider.provider_images)) {
-                      imagesData.urls = provider.provider_images;
-                    } else if (
-                      typeof provider.provider_images === 'object' &&
-                      provider.provider_images !== null &&
-                      'urls' in provider.provider_images
-                    ) {
-                      imagesData = provider.provider_images;
-                    }
-                    if (imagesData.urls && imagesData.urls.length > 0) {
-                      return imagesData.urls[0];
-                    }
-                  } catch {
-                    return '/images/placeholder.jpg';
-                  }
-                  return '/images/placeholder.jpg';
-                };
-                
-                return (
-                  <SelectableCard
-                    key={provider.provider_id}
-                    bottomText={address}
-                    category={getCategoryName(provider.category)}
-                    imageUrl={getImageUrl()}
-                    title={provider.provider_name}
-                  />
-                );
-              })
+            ) : createdProviders.length > 0 || createdCommunityServices.length > 0 ? (
+              <>
+                {createdProviders.map((provider) => {
+                  const address = provider.address_street && provider.address_city
+                    ? `${provider.address_street}, ${provider.address_city}`
+                    : provider.address_street || provider.address_city || undefined;
+                  
+                  return (
+                    <SelectableCard
+                      key={provider.provider_id}
+                      bottomText={address}
+                      category={getCategoryName(provider.category)}
+                      imageUrl={getProviderImageUrl(provider)}
+                      title={provider.provider_name}
+                    />
+                  );
+                })}
+                {createdCommunityServices.map((communityService) => {
+                  const address = communityService.address_street && communityService.address_city
+                    ? `${communityService.address_street}, ${communityService.address_city}`
+                    : communityService.address_street || communityService.address_city || undefined;
+                  
+                  return (
+                    <SelectableCard
+                      key={communityService.community_service_id}
+                      bottomText={address}
+                      category={getCategoryName(communityService.category)}
+                      imageUrl={getCommunityServiceImageUrl(communityService)}
+                      title={communityService.community_service_name}
+                      onClick={() => router.push(`/community-services/${communityService.community_service_id}`)}
+                    />
+                  );
+                })}
+              </>
             ) : (
               <EmptyState
                 description={t('providers.createFirstProviderDescription')}
@@ -474,36 +524,12 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   ? `${provider.address_street}, ${provider.address_city}`
                   : provider.address_street || provider.address_city || undefined;
                 
-                const getImageUrl = () => {
-                  if (!provider.images) return '/images/placeholder.jpg';
-                  try {
-                    let imagesData: { urls?: string[] } = {};
-                    if (typeof provider.images === 'string') {
-                      imagesData = JSON.parse(provider.images);
-                    } else if (Array.isArray(provider.images)) {
-                      imagesData.urls = provider.images;
-                    } else if (
-                      typeof provider.images === 'object' &&
-                      provider.images !== null &&
-                      'urls' in provider.images
-                    ) {
-                      imagesData = provider.images;
-                    }
-                    if (imagesData.urls && imagesData.urls.length > 0) {
-                      return imagesData.urls[0];
-                    }
-                  } catch {
-                    return '/images/placeholder.jpg';
-                  }
-                  return '/images/placeholder.jpg';
-                };
-                
                 return (
                   <SelectableCard
                     key={provider.id}
                     bottomText={address}
                     category={getCategoryName(provider.category)}
-                    imageUrl={getImageUrl()}
+                    imageUrl={getFirstImageUrl(provider.images)}
                     title={provider.name}
                   />
                 );
@@ -520,49 +546,43 @@ export function ProfileContent({ user }: ProfileContentProps) {
         {activeTab === 'recommendations' && (
           <div className="flex flex-wrap justify-center gap-8">
             {/* Only show loading on true initial load - isLoading is true only when no cached data */}
-            {isLoadingRecommendations ? (
+            {isLoadingRecommendations || isLoadingRecommendedCS ? (
               <LoadingSpinner text={t('providers.loadingProviders')} />
-            ) : recommendations.length > 0 ? (
-              recommendations.map((provider) => {
-                const address = provider.address_street && provider.address_city
-                  ? `${provider.address_street}, ${provider.address_city}`
-                  : provider.address_street || provider.address_city || undefined;
-                
-                const getImageUrl = () => {
-                  if (!provider.provider_images) return '/images/placeholder.jpg';
-                  try {
-                    let imagesData: { urls?: string[] } = {};
-                    if (typeof provider.provider_images === 'string') {
-                      imagesData = JSON.parse(provider.provider_images);
-                    } else if (Array.isArray(provider.provider_images)) {
-                      imagesData.urls = provider.provider_images;
-                    } else if (
-                      typeof provider.provider_images === 'object' &&
-                      provider.provider_images !== null &&
-                      'urls' in provider.provider_images
-                    ) {
-                      imagesData = provider.provider_images;
-                    }
-                    if (imagesData.urls && imagesData.urls.length > 0) {
-                      return imagesData.urls[0];
-                    }
-                  } catch {
-                    return '/images/placeholder.jpg';
-                  }
-                  return '/images/placeholder.jpg';
-                };
-                
-                return (
-                  <SelectableCard
-                    key={provider.provider_id}
-                    bottomText={address}
-                    category={getCategoryName(provider.category)}
-                    imageUrl={getImageUrl()}
-                    title={provider.provider_name}
-                    onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit`)}
-                  />
-                );
-              })
+            ) : recommendations.length > 0 || recommendedCommunityServices.length > 0 ? (
+              <>
+                {recommendations.map((provider) => {
+                  const address = provider.address_street && provider.address_city
+                    ? `${provider.address_street}, ${provider.address_city}`
+                    : provider.address_street || provider.address_city || undefined;
+                  
+                  return (
+                    <SelectableCard
+                      key={provider.provider_id}
+                      bottomText={address}
+                      category={getCategoryName(provider.category)}
+                      imageUrl={getProviderImageUrl(provider)}
+                      title={provider.provider_name}
+                      onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit`)}
+                    />
+                  );
+                })}
+                {recommendedCommunityServices.map((communityService) => {
+                  const address = communityService.address_street && communityService.address_city
+                    ? `${communityService.address_street}, ${communityService.address_city}`
+                    : communityService.address_street || communityService.address_city || undefined;
+                  
+                  return (
+                    <SelectableCard
+                      key={communityService.community_service_id}
+                      bottomText={address}
+                      category={getCategoryName(communityService.category)}
+                      imageUrl={getCommunityServiceImageUrl(communityService)}
+                      title={communityService.community_service_name}
+                      onClick={() => router.push(`/community-services/${communityService.community_service_id}`)}
+                    />
+                  );
+                })}
+              </>
             ) : (
               <EmptyState
                 description={t('providers.noRecommendationsDescription')}

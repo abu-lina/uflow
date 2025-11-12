@@ -311,3 +311,32 @@ export async function getProvidersForCommunityService(communityServiceId: string
 
 // Legacy type alias for backward compatibility
 export type CommunityServiceData = CommunityService;
+
+// Get community services created by a specific user
+export async function getCreatedCommunityServices(userId: string): Promise<CommunityService[]> {
+  const { data, error } = await supabase
+    .from('community_services')
+    .select('*, category:categories(name_de, name_en, category_images)')
+    .eq('user_created_id', userId)
+    .order('created_at', { ascending: false })
+    .returns<CommunityService[]>();
+
+  if (error) {
+    console.error('Error fetching created community services:', error);
+    throw error;
+  }
+
+  return Array.isArray(data) ? data : [];
+}
+
+// Get recommended community services by a specific user (where user created but there's no owner)
+// Note: Community services don't have an owner concept like providers
+// Since community services created by the user should only appear in "content", 
+// this function returns an empty array to avoid duplicates
+// If you want recommendations for community services, define the logic here
+export async function getRecommendedCommunityServices(_userId: string): Promise<CommunityService[]> {
+  // For now, return empty array since community services created by user should only appear in "content"
+  // This prevents duplicates where the same community service appears in both sections
+  // If recommendations for community services are needed in the future, add logic here
+  return [];
+}

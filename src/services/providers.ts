@@ -525,12 +525,13 @@ export async function getCreatedProviders(userId: string): Promise<Provider[]> {
 }
 
 // Get recommendations by a specific user (where user recommended but is not the owner)
+// Excludes items where user is both owner and creator (those should only appear in "content")
 export async function getRecommendations(userId: string): Promise<Provider[]> {
+  // First, get all providers where user is the creator
   const { data, error } = await supabase
     .from('providers')
     .select('*, category:categories(name_de, name_en, category_images)')
     .eq('user_created_id', userId)
-    .is('provider_owner_id', null)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
 
@@ -539,7 +540,16 @@ export async function getRecommendations(userId: string): Promise<Provider[]> {
     throw error;
   }
 
-  return Array.isArray(data) ? data : [];
+  // Filter out items where user is also the owner (those belong in "content", not "recommendations")
+  // This ensures items only appear once - in "content" if user is owner, in "recommendations" if not
+  const filtered = Array.isArray(data) 
+    ? data.filter(provider => {
+        // Include only if provider_owner_id is null OR different from userId
+        return provider.provider_owner_id === null || provider.provider_owner_id !== userId;
+      })
+    : [];
+
+  return filtered;
 }
 
 // Get all bookmarked items (providers and community services) for a user
