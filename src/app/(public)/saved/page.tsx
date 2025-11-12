@@ -10,7 +10,7 @@ import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
-import { EmptyState, Button, IconWithTitle, Icon } from '@/components/ui';
+import { EmptyState, Button, IconWithTitle, Icon, SkeletonCard } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
@@ -171,33 +171,9 @@ export default function SavedProvidersPage() {
 
   const emptyStateType = renderEmptyState();
 
-  // Loading state: only show on true initial load (no cached data)
-  // isLoading is true only when there's no cached data AND currently fetching
-  if (isLoading) {
-    return (
-      <ScrollablePageLayout>
-        <PageHeader title={t('saved.title')} variant="title-only" />
-        <PageContent className="flex items-center justify-center min-h-[60vh]" maxWidth="full">
-          <p className="text-lg text-gray-500 text-center">{t('saved.loading') || 'Loading...'}</p>
-        </PageContent>
-      </ScrollablePageLayout>
-    );
-  }
-
-  // Error state
-  if (queryError) {
-    return (
-      <ScrollablePageLayout>
-        <PageHeader title={t('saved.title')} variant="title-only" />
-        <PageContent className="flex items-center justify-center min-h-[60vh]" maxWidth="full">
-          <EmptyState
-            description={t('saved.errorLoadingDescription') || 'Failed to load your saved items. Please try again.'}
-            title={t('saved.errorLoading') || 'Error loading saved items'}
-          />
-        </PageContent>
-      </ScrollablePageLayout>
-    );
-  }
+  // Always show page structure - never show full-page loading screen
+  // Show skeleton loaders in content area if loading and no cached data
+  const showSkeleton = isLoading && providers.length === 0 && !queryError && !userLoading;
 
   return (
     <ScrollablePageLayout>
@@ -207,10 +183,28 @@ export default function SavedProvidersPage() {
       />
 
       <PageContent 
-        className={emptyStateType ? 'flex items-center justify-center min-h-[60vh]' : ''}
+        className={emptyStateType && !showSkeleton ? 'flex items-center justify-center min-h-[60vh]' : ''}
         maxWidth="full"
       >
-        {emptyStateType === 'login_required' ? (
+        {showSkeleton ? (
+          // Show skeleton grid while loading (only on true initial load with no cache)
+          <>
+            <SearchBar 
+              customCities={[]}
+              hideCategoryFilter={true}
+            />
+            <div className="grid w-full grid-cols-2 gap-4 mt-6 mobile-nav-spacing">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonCard key={index} />
+              ))}
+            </div>
+          </>
+        ) : queryError ? (
+          <EmptyState
+            description={t('saved.errorLoadingDescription') || 'Failed to load your saved items. Please try again.'}
+            title={t('saved.errorLoading') || 'Error loading saved items'}
+          />
+        ) : emptyStateType === 'login_required' ? (
           <>
             <TitleSection className="mb-10">
               <IconWithTitle

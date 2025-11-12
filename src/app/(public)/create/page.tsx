@@ -50,7 +50,7 @@ export default function CreateProviderPage() {
         maxWidth="full"
       >
         <div className="flex flex-col items-center gap-6 sm:gap-8 w-full">
-          <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
+          <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left mb-6">
             {t('create.description')}
           </p>
         </div>

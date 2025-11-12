@@ -387,7 +387,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
               <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
                 <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                  Unser Barakah Effekt:
+                  {t('providers.ourBarakahEffect')}:
                 </div>
                 <div className="flex w-full flex-row items-start gap-6">
                   {/* Left: Zakat image, name, subtitle */}

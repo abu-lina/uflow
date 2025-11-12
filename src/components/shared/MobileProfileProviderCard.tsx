@@ -5,6 +5,7 @@ interface MobileProfileProviderCardProps {
   title: string;
   category: string;
   likes: number;
+  savedText?: string;
   onClick?: () => void;
 }
 
@@ -13,6 +14,7 @@ export function MobileProfileProviderCard({
   title,
   category,
   likes,
+  savedText = 'Gespeichert',
   onClick,
 }: MobileProfileProviderCardProps) {
   return (
@@ -45,7 +47,7 @@ export function MobileProfileProviderCard({
         
         {/* Likes */}
         <div className="font-inter text-sm text-[#555]">
-          {likes}x Gespeichert
+          {likes}x {savedText}
         </div>
       </div>
     </div>

@@ -21,7 +21,7 @@ export default function SelectCategoryPage() {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const check = () => {
@@ -73,10 +73,23 @@ export default function SelectCategoryPage() {
   }
 
 
-  const filteredCategories = categories.filter(category =>
-    category.name_de?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    category.name_en?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Helper function to get category name based on current language
+  // Categories only have name_de and name_en, so for other languages we fall back to English or German
+  const getCategoryName = (category: Category) => {
+    if (language === 'en') {
+      return category.name_en || category.name_de || category.category_id || '';
+    } else if (language === 'de') {
+      return category.name_de || category.name_en || category.category_id || '';
+    } else {
+      // For Arabic, Turkish, or any other language, prefer English, then German
+      return category.name_en || category.name_de || category.category_id || '';
+    }
+  };
+
+  const filteredCategories = categories.filter(category => {
+    const categoryName = getCategoryName(category);
+    return categoryName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const handleSave = () => {
     if (formData.category) {
@@ -111,7 +124,7 @@ export default function SelectCategoryPage() {
 
           {/* Subtitle */}
           <div className="w-full">
-            <p className="text-sm font-normal text-[#7A7A7A] leading-[17px]">
+            <p className="text-sm font-normal text-[#7A7A7A] leading-[17px] mb-6 pl-3">
               {t('create.category.searchDescription')}
             </p>
           </div>
@@ -124,36 +137,43 @@ export default function SelectCategoryPage() {
               <span className="text-gray-500">{t('create.category.loadingCategories')}</span>
             </div>
           ) : (
-            filteredCategories.map((category) => (
-              <button
-                key={category.category_id}
-                className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 ${
-                  formData.category === category.category_id
-                    ? 'bg-primary-light text-content-heading border border-primary'
-                    : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                }`}
-                onClick={async () => {
-                  const categoryId = category.category_id;
-                  const isCommunityService = await shouldCreateCommunityService(categoryId);
-                  console.log('Category selected:', category.name_de, 'ID:', categoryId);
-                  console.log('Should create community service:', isCommunityService);
-                  updateFormData({ 
-                    category: categoryId,
-                    entityType: isCommunityService ? 'community_service' : 'provider'
-                  });
-                  console.log('Updated formData entityType to:', isCommunityService ? 'community_service' : 'provider');
-                  
-                  // Also log the current form data to verify it's being updated
-                  setTimeout(() => {
-                    console.log('Form data after update:', { category: categoryId, entityType: isCommunityService ? 'community_service' : 'provider' });
-                  }, 100);
-                }}
-              >
-                <span className="text-sm font-medium">
-                  {category.name_de || category.name_en}
-                </span>
-              </button>
-            ))
+            filteredCategories
+              .sort((a, b) => {
+                // Sort by localized name
+                const nameA = getCategoryName(a).toLowerCase();
+                const nameB = getCategoryName(b).toLowerCase();
+                return nameA.localeCompare(nameB);
+              })
+              .map((category) => (
+                <button
+                  key={category.category_id}
+                  className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 ${
+                    formData.category === category.category_id
+                      ? 'bg-primary-light text-content-heading border border-primary'
+                      : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                  }`}
+                  onClick={async () => {
+                    const categoryId = category.category_id;
+                    const isCommunityService = await shouldCreateCommunityService(categoryId);
+                    console.log('Category selected:', getCategoryName(category), 'ID:', categoryId);
+                    console.log('Should create community service:', isCommunityService);
+                    updateFormData({ 
+                      category: categoryId,
+                      entityType: isCommunityService ? 'community_service' : 'provider'
+                    });
+                    console.log('Updated formData entityType to:', isCommunityService ? 'community_service' : 'provider');
+                    
+                    // Also log the current form data to verify it's being updated
+                    setTimeout(() => {
+                      console.log('Form data after update:', { category: categoryId, entityType: isCommunityService ? 'community_service' : 'provider' });
+                    }, 100);
+                  }}
+                >
+                  <span className="text-sm font-medium">
+                    {getCategoryName(category)}
+                  </span>
+                </button>
+              ))
           )}
         </div>
       </PageContent>

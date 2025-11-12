@@ -45,7 +45,7 @@ export function BottomActionNavbar({
 }: BottomActionNavbarProps) {
   return (
     <nav className={`fixed bottom-0 left-0 right-0 z-50 w-full bg-white/10 backdrop-blur-3xl border-t border-white/20 ${className}`}>
-      <div className={`flex ${height} w-full max-w-[400px] mx-auto items-center px-4 pb-safe`}>
+      <div className={`flex ${height} w-full max-w-[400px] mx-auto items-center px-6 pb-safe`}>
         {secondaryButton ? (
           /* Two Button Layout */
           <div className="flex w-full gap-3.5">

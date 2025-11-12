@@ -33,6 +33,17 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
   const { t, language } = useLanguage();
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Refs for input fields to enable keyboard navigation
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const streetInputRef = useRef<HTMLInputElement>(null);
+  const zipInputRef = useRef<HTMLInputElement>(null);
+  const cityInputRef = useRef<HTMLInputElement>(null);
+  const countryInputRef = useRef<HTMLInputElement>(null);
+  const websiteInputRef = useRef<HTMLInputElement>(null);
+  const instagramInputRef = useRef<HTMLInputElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
   // Steps with translations
   const STEPS = [
     {
@@ -97,6 +108,16 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
 
   const handleInputChange = (field: keyof ProviderFormData, value: string | string[] | File[] | boolean) => {
     updateFormData({ [field]: value });
+  };
+
+  // Handle Enter key to move to next input field
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, nextInputRef: React.RefObject<HTMLInputElement> | null) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (nextInputRef?.current) {
+        nextInputRef.current.focus();
+      }
+    }
   };
 
 
@@ -370,11 +391,19 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.basics.titleLabel')}</span>
                       <input
+                        ref={titleInputRef}
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
                         placeholder={t('create.basics.titlePlaceholder')}
                         type="text"
                         value={formData.title}
                         onChange={(e) => handleInputChange('title', e.target.value)}
+                        onKeyDown={(e) => {
+                          // On Enter, blur the field (no next input in step 0)
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            e.currentTarget.blur();
+                          }
+                        }}
                       />
                     </div>
                   </div>
@@ -503,11 +532,13 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                         <div className="flex flex-1 flex-col gap-1">
                           <span className="text-xs font-normal text-[#999999] leading-[15px]">Straße</span>
                           <input
+                            ref={streetInputRef}
                             className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
                   placeholder="Straße eingeben"
                             type="text"
                   value={formData.street}
                   onChange={(e) => handleInputChange('street', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, zipInputRef)}
                 />
                         </div>
                       </div>
@@ -516,11 +547,13 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                         <div className="flex flex-1 flex-col gap-1">
                           <span className="text-xs font-normal text-[#999999] leading-[15px]">PLZ</span>
                           <input
+                            ref={zipInputRef}
                             className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
                   placeholder="PLZ eingeben"
                             type="text"
                   value={formData.zip}
                   onChange={(e) => handleInputChange('zip', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, cityInputRef)}
                 />
                         </div>
                       </div>
@@ -529,11 +562,13 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                         <div className="flex flex-1 flex-col gap-1">
                           <span className="text-xs font-normal text-[#999999] leading-[15px]">Stadt *</span>
                           <input
+                            ref={cityInputRef}
                             className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
                             placeholder="Stadt eingeben"
                             type="text"
                             value={formData.city}
                             onChange={(e) => handleInputChange('city', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, countryInputRef)}
                           />
                         </div>
                       </div>
@@ -542,11 +577,19 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                         <div className="flex flex-1 flex-col gap-1">
                           <span className="text-xs font-normal text-[#999999] leading-[15px]">Land *</span>
                           <input
+                            ref={countryInputRef}
                             className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
                             placeholder="Land eingeben"
                             type="text"
                             value={formData.country}
                             onChange={(e) => handleInputChange('country', e.target.value)}
+                            onKeyDown={(e) => {
+                              // Last field in step 1, blur on Enter
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                e.currentTarget.blur();
+                              }
+                            }}
                           />
                         </div>
                       </div>
@@ -591,11 +634,13 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Website</span>
                       <input
+                        ref={websiteInputRef}
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
               placeholder="Website eingeben"
               type="url"
               value={formData.website}
               onChange={(e) => handleInputChange('website', e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, instagramInputRef)}
             />
                     </div>
                   </div>
@@ -604,11 +649,13 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Instagram</span>
                       <input
+                        ref={instagramInputRef}
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
               placeholder="Instagram eingeben"
                         type="text"
               value={formData.instagram}
               onChange={(e) => handleInputChange('instagram', e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, phoneInputRef)}
             />
                     </div>
                   </div>
@@ -617,11 +664,13 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Telefon</span>
                       <input
+                        ref={phoneInputRef}
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
               placeholder="Telefon eingeben"
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, emailInputRef)}
             />
                     </div>
                   </div>
@@ -630,11 +679,19 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-xs font-normal text-[#999999] leading-[15px]">Email</span>
                       <input
+                        ref={emailInputRef}
                         className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
               placeholder="Email eingeben"
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
+              onKeyDown={(e) => {
+                // Last field in step 2, blur on Enter
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+              }}
             />
                     </div>
                   </div>

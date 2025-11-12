@@ -507,17 +507,35 @@ export async function getProviderCount(): Promise<number> {
   return count ?? 0;
 }
 
-// Get providers created by a specific user
+// Get providers owned by a specific user (where user is the actual owner)
 export async function getCreatedProviders(userId: string): Promise<Provider[]> {
   const { data, error } = await supabase
     .from('providers')
     .select('*, category:categories(name_de, name_en, category_images)')
-    .eq('user_created_id', userId)
+    .eq('provider_owner_id', userId)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
 
   if (error) {
     console.error('Error fetching created providers:', error);
+    throw error;
+  }
+
+  return Array.isArray(data) ? data : [];
+}
+
+// Get recommendations by a specific user (where user recommended but is not the owner)
+export async function getRecommendations(userId: string): Promise<Provider[]> {
+  const { data, error } = await supabase
+    .from('providers')
+    .select('*, category:categories(name_de, name_en, category_images)')
+    .eq('user_created_id', userId)
+    .is('provider_owner_id', null)
+    .order('created_at', { ascending: false })
+    .returns<Provider[]>();
+
+  if (error) {
+    console.error('Error fetching recommendations:', error);
     throw error;
   }
 

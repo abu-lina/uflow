@@ -135,7 +135,7 @@ export function FooterAction({
             boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
           }}
         >
-          <div className={cn('flex w-full max-w-[393px] mx-auto px-4 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+          <div className={cn('flex w-full px-6 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
             <Button
               fullWidth
               aria-label={actionButton['aria-label'] || actionButton.label}
@@ -172,7 +172,7 @@ export function FooterAction({
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className={cn('flex w-full max-w-[393px] mx-auto px-4 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <div className={cn('flex w-full px-6 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           <Button
             fullWidth
             aria-label={actionButton['aria-label'] || actionButton.label}
@@ -207,10 +207,9 @@ export function FooterAction({
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className={cn('flex w-full gap-3.5 max-w-[393px] mx-auto px-4 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
-          {/* Primary Action Button - Full width, 48px height */}
+        <div className={cn('flex w-full gap-3.5 px-6 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+          {/* Primary Action Button - Full width (flex-1), 48px height */}
           <Button
-            fullWidth
             aria-label={primaryButton['aria-label'] || primaryButton.label}
             className="flex-1 !h-[48px] !min-h-[48px] !max-h-[48px]"
             disabled={primaryButton.disabled}
@@ -224,9 +223,10 @@ export function FooterAction({
             {primaryButton.label}
           </Button>
 
-          {/* Secondary Action Button - 48px x 48px */}
+          {/* Secondary Action Button - 48px x 48px (1:1 ratio) */}
           <IconButton
             aria-label={secondaryButton['aria-label']}
+            className="!h-[48px] !w-[48px] !min-h-[48px] !min-w-[48px] !max-h-[48px] !max-w-[48px] flex-shrink-0"
             disabled={secondaryButton.disabled}
             icon={renderIcon(secondaryButton.icon)}
             loading={secondaryButton.loading}

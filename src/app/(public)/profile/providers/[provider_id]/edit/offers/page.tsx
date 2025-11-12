@@ -7,6 +7,7 @@ import { Icon } from '@iconify/react';
 import { supabase } from '@/lib/supabase/client';
 import type { Offer } from '@/types/offer';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function EditOffersPage({ params }: { params: Promise<{ provider_id: string }> }) {
   const resolvedParams = use(params);
@@ -17,6 +18,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
   const [newOffer, setNewOffer] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
+  const { t, language } = useLanguage();
 
   // Load offers from database
   useEffect(() => {
@@ -72,9 +74,10 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
     void loadCurrentOffers();
   }, [resolvedParams.provider_id]);
 
-  const filteredOffers = offers.filter((offer) =>
-    offer.name_de?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredOffers = offers.filter((offer) => {
+    const offerName = language === 'en' ? (offer.name_en || offer.name_de || '') : (offer.name_de || offer.name_en || '');
+    return offerName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const toggleOffer = (offerId: string) => {
     setSelectedOfferIds(prev => {
@@ -124,13 +127,13 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
       <header className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)]">
         <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">
           <button
-            aria-label="Zurück"
+            aria-label={t('editProvider.back')}
             className="flex items-center justify-center w-8 h-8 -ml-1"
             onClick={() => router.back()}
           >
             <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="text-xl font-semibold text-content-heading">Was biete ich?</h1>
+          <h1 className="text-xl font-semibold text-content-heading">{t('editProvider.editOffers.title')}</h1>
         </div>
       </header>
 
@@ -146,7 +149,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
               />
               <input
                 className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                placeholder="Angebote durchsuchen..."
+                placeholder={t('editProvider.editOffers.searchPlaceholder')}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -157,17 +160,17 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
           {/* Subtitle */}
           <div className="mb-4">
             <p className="text-sm font-normal leading-[17px] text-[#7A7A7A]">
-              Wähle deine Angebote aus oder erstelle neue, um passende Gesuche zu erhalten - inshaAllah.
+              {t('editProvider.editOffers.description')}
             </p>
           </div>
 
           {/* Create New Offer */}
           <div className="mb-6">
-            <h3 className="mb-2 text-sm font-medium text-[#232323]">Neues Angebot erstellen</h3>
+            <h3 className="mb-2 text-sm font-medium text-[#232323]">{t('editProvider.editOffers.createNew')}</h3>
             <div className="flex gap-2">
               <input
                 className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                placeholder="Angebot eingeben..."
+                placeholder={t('editProvider.editOffers.offerPlaceholder')}
                 type="text"
                 value={newOffer}
                 onChange={(e) => setNewOffer(e.target.value)}
@@ -178,19 +181,19 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
                 disabled={!newOffer.trim() || isCreating}
                 onClick={createOffer}
               >
-                {isCreating ? '...' : 'Hinzufügen'}
+                {isCreating ? '...' : t('editProvider.editOffers.add')}
               </button>
             </div>
           </div>
 
           {/* Offers List */}
           <div className="mb-4">
-            <h3 className="mb-4 text-sm font-medium text-[#232323]">Verfügbare Angebote</h3>
+            <h3 className="mb-4 text-sm font-medium text-[#232323]">{t('editProvider.editOffers.availableOffers')}</h3>
           </div>
           <div className="space-y-2">
             {isLoading ? (
               <div className="flex h-32 items-center justify-center">
-                <span className="text-gray-500">Lade Angebote...</span>
+                <span className="text-gray-500">{t('editProvider.editOffers.loading')}</span>
               </div>
             ) : (
               filteredOffers.map((offer) => (
@@ -204,7 +207,9 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
                   onClick={() => toggleOffer(offer.offer_id)}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{offer.name_de}</span>
+                    <span className="text-sm font-medium">
+                      {language === 'en' ? (offer.name_en || offer.name_de || '') : (offer.name_de || offer.name_en || '')}
+                    </span>
                     {selectedOfferIds.includes(offer.offer_id) && (
                       <Icon className="h-5 w-5 text-primary" icon="lucide:check" />
                     )}
@@ -219,12 +224,12 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
       {/* Save Button */}
       <FooterAction
         actionButton={{
-          label: selectedOfferIds.length > 0 ? `${selectedOfferIds.length} ausgewählt` : 'Angebote auswählen',
+          label: selectedOfferIds.length > 0 ? t('editProvider.editOffers.selected').replace('{{count}}', selectedOfferIds.length.toString()) : t('editProvider.editOffers.selectOffers'),
           icon: 'lucide:check',
           onClick: handleSave,
           variant: 'primary',
           disabled: selectedOfferIds.length === 0,
-          'aria-label': 'Angebote speichern',
+          'aria-label': t('editProvider.editOffers.saveAria'),
         }}
       />
     </div>

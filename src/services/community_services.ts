@@ -107,6 +107,7 @@ export async function searchCommunityServices(
 
 // Get community service by ID
 export async function getCommunityServiceById(id: string): Promise<CommunityService | null> {
+  try {
   const { data, error } = await supabase
     .from('community_services')
     .select('*, category:categories(name_de, name_en, category_images)')
@@ -116,7 +117,42 @@ export async function getCommunityServiceById(id: string): Promise<CommunityServ
   if (error) {
     throw error;
   }
-  return data ?? null;
+
+    if (!data) {
+      return null;
+    }
+
+    // Fetch offers and needs in parallel (similar to getProviderById)
+    const [offersResult, needsResult] = await Promise.all([
+      // Fetch offers if they exist
+      data.offers_ids && data.offers_ids.length > 0
+        ? supabase
+            .from('offers')
+            .select('name_de')
+            .in('offer_id', data.offers_ids)
+        : Promise.resolve({ data: [], error: null }),
+      
+      // Fetch needs if they exist
+      data.needs_ids && data.needs_ids.length > 0
+        ? supabase
+            .from('needs')
+            .select('name_de')
+            .in('need_id', data.needs_ids)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    const offers = offersResult.data || [];
+    const needs = needsResult.data || [];
+
+    return {
+      ...data,
+      offers,
+      needs,
+    };
+  } catch (error) {
+    console.error('Error in getCommunityServiceById:', error);
+    throw error;
+  }
 }
 
 // Get community services by category

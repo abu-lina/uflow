@@ -67,7 +67,9 @@ export default function ImageUploadPage() {
 
   // Save and continue
   const handleSave = () => {
-    router.push('/create/media/social');
+    // Images are already saved in formData via updateFormData
+    // The form provider automatically persists to localStorage
+    router.push('/create/media');
   };
 
   return (

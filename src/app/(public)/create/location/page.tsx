@@ -225,13 +225,13 @@ export default function LocationPage() {
 
           {/* Subtitle */}
           <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
-            <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
+            <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left mb-6">
               {t('create.location.description')}
             </p>
           </div>
 
           {/* Online Business Toggle */}
-          <div className="flex items-center justify-between w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3">
+          <div className="flex items-center justify-between w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 mb-3">
             <div className="flex flex-col">
               <span className="text-sm font-medium text-[#272727]">
                 {t('create.location.onlineBusiness')}

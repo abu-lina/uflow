@@ -149,7 +149,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       
     } catch (err) {
       console.error('Error updating profile:', err);
-      setError('Fehler beim Aktualisieren des Profils');
+      setError(t('profile.errorUpdatingProfile'));
     } finally {
       setIsSubmitting(false);
     }
@@ -170,7 +170,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-600 mx-auto" />
-          <p className="text-gray-600">Überprüfe Anmeldung...</p>
+          <p className="text-gray-600">{t('profile.checkingAuth')}</p>
         </div>
       </div>
     );
@@ -182,7 +182,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <Lock className="mb-4 h-8 w-8 text-gray-600 mx-auto" />
-          <p className="text-gray-600">Anmeldung erforderlich</p>
+          <p className="text-gray-600">{t('profile.authRequired')}</p>
         </div>
       </div>
     );
@@ -192,7 +192,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
   return (
     <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader 
-        title="Profil bearbeiten"
+        title={t('profile.editProfile')}
         variant="back-and-title"
         onBack={() => router.back()}
       />
@@ -207,20 +207,20 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           </div>
         )}
 
-        {/* Persönliche Daten Section */}
+        {/* Personal Data Section */}
         <ContentSection>
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <SectionHeading>
-                Persönliche Daten
+                {t('profile.personalData')}
               </SectionHeading>
             
               <div className="space-y-3">
                 {/* First Name */}
                 <FormInput
                   required
-                  label="Vorname"
-                  labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                  label={t('profile.firstName')}
+                  labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
                   type="text"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
@@ -229,8 +229,8 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
                 {/* Last Name */}
                 <FormInput
                   required
-                  label="Nachname"
-                  labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                  label={t('profile.lastName')}
+                  labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
@@ -239,8 +239,8 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
                 {/* Email */}
                 <FormInput
                   required
-                  label="E-Mail"
-                  labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                  label={t('profile.email')}
+                  labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
@@ -249,8 +249,8 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
                 {/* Password Field with Hint */}
                 <div className="space-y-1">
                   <FormInput
-                    label="Passwort"
-                    labelClassName="h-[15px] w-[47px] font-inter-tight text-xs font-normal leading-[15px]"
+                    label={t('profile.password')}
+                    labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
                     rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
@@ -259,7 +259,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
                     onRightIconClick={() => setShowPassword(!showPassword)}
                   />
                   <p className="pl-2 text-xs text-gray-500">
-                    Lass das Feld leer, um das Passwort nicht zu ändern.
+                    {t('profile.passwordHint')}
                   </p>
                 </div>
               </div>
@@ -267,11 +267,11 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
           </form>
         </ContentSection>
 
-        {/* Konto verwalten Section */}
+        {/* Manage Account Section */}
         <ContentSection className="mt-8 mb-6">
           <div>
             <SectionHeading>
-              Konto verwalten
+              {t('profile.manageAccount')}
             </SectionHeading>
           
             <button
@@ -280,7 +280,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
             >
               <BrokenHeartIcon size={24} />
               <span className="font-inter-tight text-base font-semibold text-[#232323]">
-                Konto schließen
+                {t('profile.closeAccount')}
               </span>
             </button>
           </div>

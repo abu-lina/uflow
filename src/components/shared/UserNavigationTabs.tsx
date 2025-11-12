@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react';
 import { HeartIcon } from '@/components/ui/icons/HeartIcon';
 
 // Types
-export type UserTab = 'saved' | 'created' | 'create';
+export type UserTab = 'saved' | 'created' | 'recommendations' | 'create';
 
 export interface UserNavigationTabsProps {
   /** Currently active tab */
@@ -83,6 +83,27 @@ export function UserNavigationTabs({
         />
         {activeTab === 'created' && (
           <span className={`${BUTTON_STYLES.text} ml-1.5`}>Erstellt</span>
+        )}
+      </button>
+
+      {/* Recommendations Tab */}
+      <button
+        aria-label="Empfehlungen anzeigen"
+        aria-selected={activeTab === 'recommendations'}
+        className={`${BUTTON_STYLES.base} ${activeTab === 'recommendations' ? 'w-auto px-3' : 'w-11'} ${
+          activeTab === 'recommendations' ? BUTTON_STYLES.active : BUTTON_STYLES.inactive
+        }`}
+        role="tab"
+        onClick={() => onTabChange('recommendations')}
+      >
+        <Icon
+          className={`${BUTTON_STYLES.icon} ${
+            activeTab === 'recommendations' ? 'text-white' : 'text-text-secondary'
+          }`}
+          icon="mdi:star-outline"
+        />
+        {activeTab === 'recommendations' && (
+          <span className={`${BUTTON_STYLES.text} ml-1.5`}>Empfehlungen</span>
         )}
       </button>
 

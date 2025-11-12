@@ -99,7 +99,7 @@ export default function ContactPage() {
 
         {/* Subtitle */}
         <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
-          <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
+          <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left mb-6">
             {t('create.contact.description')}
           </p>
         </div>

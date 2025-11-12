@@ -25,7 +25,7 @@ import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
-import { getCreatedProviders, getAllBookmarkedItems } from '@/services/providers';
+import { getCreatedProviders, getAllBookmarkedItems, getRecommendations } from '@/services/providers';
 import { authService } from '@/features/auth/services/authService';
 import type { SupabaseUser } from '@/types/supabase-user';
 
@@ -35,7 +35,7 @@ interface ProfileContentProps {
 
 export function ProfileContent({ user }: ProfileContentProps) {
   const { user: clientUser, isLoading: loading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<UserTab>('created');
@@ -44,6 +44,16 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Responsive: detect mobile using the centralized hook
   const isMobile = useIsSmallMobile();
+
+  // Helper function to get category name based on current language
+  const getCategoryName = (category: { name_de?: string; name_en?: string } | undefined) => {
+    if (!category) return '';
+    if (language === 'en') {
+      return category.name_en || category.name_de || '';
+    } else {
+      return category.name_de || category.name_en || '';
+    }
+  };
 
   // Use client-side user if server-side user is null
   const effectiveUser: SupabaseUser | null = user || (clientUser as SupabaseUser | null);
@@ -99,8 +109,21 @@ export function ProfileContent({ user }: ProfileContentProps) {
     placeholderData: (previousData) => previousData,
   });
 
-  const isLoadingProviders = isLoadingCreated || isLoadingSaved;
-  const error = createdError || savedError ? 'Fehler beim Laden der Providers' : null;
+  // Use React Query for recommendations with caching
+  const { data: recommendations = [], isLoading: isLoadingRecommendations, error: recommendationsError } = useQuery({
+    queryKey: ['recommendations', effectiveUser?.id],
+    queryFn: async () => {
+      if (!effectiveUser) return [];
+      const data = await getRecommendations(effectiveUser.id);
+      return data ?? [];
+    },
+    enabled: !!effectiveUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData) => previousData,
+  });
+
+  const isLoadingProviders = isLoadingCreated || isLoadingSaved || isLoadingRecommendations;
+  const error = createdError || savedError || recommendationsError ? t('providers.errorLoading') : null;
 
 
   // Handle logout
@@ -202,7 +225,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 {createdProviders.map((provider) => (
                   <MobileProfileProviderCard
                     key={provider.provider_id}
-                    category={provider.category?.name_de || 'Unbekannt'}
+                    category={getCategoryName(provider.category) || t('search.unnamed')}
                     imageUrl={(() => {
                       if (!provider.provider_images) return '/images/placeholder.jpg';
                       try {
@@ -227,6 +250,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       return '/images/placeholder.jpg';
                     })()}
                     likes={provider.bookmark_count || 0}
+                    savedText={t('actions.saved')}
                     title={provider.provider_name}
                     onClick={() => router.push(`/profile/providers/${provider.provider_id}`)}
                   />
@@ -237,6 +261,62 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 description={t('providers.noResultsDescription')}
                 icon={<FileText className="h-16 w-16 text-gray-400" />}
                 title={t('providers.noResultsFound')}
+              />
+            )}
+          </div>
+        </ContentSection>
+
+        {/* Recommendations Section */}
+        <ContentSection className="mt-6">
+          <div>
+            <SectionHeading>
+              {t('profile.recommendations')}
+            </SectionHeading>
+            
+            {/* Only show loading on true initial load - isLoading is true only when no cached data */}
+            {isLoadingRecommendations ? (
+              <LoadingSpinner text={t('providers.loadingProviders')} />
+            ) : recommendations.length > 0 ? (
+              <div className="space-y-3">
+                {recommendations.map((provider) => (
+                  <MobileProfileProviderCard
+                    key={provider.provider_id}
+                    category={getCategoryName(provider.category) || t('search.unnamed')}
+                    imageUrl={(() => {
+                      if (!provider.provider_images) return '/images/placeholder.jpg';
+                      try {
+                        let imagesData: { urls?: string[] } = {};
+                        if (typeof provider.provider_images === 'string') {
+                          imagesData = JSON.parse(provider.provider_images);
+                        } else if (Array.isArray(provider.provider_images)) {
+                          imagesData.urls = provider.provider_images;
+                        } else if (
+                          typeof provider.provider_images === 'object' &&
+                          provider.provider_images !== null &&
+                          'urls' in provider.provider_images
+                        ) {
+                          imagesData = provider.provider_images;
+                        }
+                        if (imagesData.urls && imagesData.urls.length > 0) {
+                          return imagesData.urls[0];
+                        }
+                      } catch {
+                        return '/images/placeholder.jpg';
+                      }
+                      return '/images/placeholder.jpg';
+                    })()}
+                    likes={provider.bookmark_count || 0}
+                    savedText={t('actions.saved')}
+                    title={provider.provider_name}
+                    onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit`)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                description={t('providers.noRecommendationsDescription')}
+                icon={<FileText className="h-16 w-16 text-gray-400" />}
+                title={t('providers.noRecommendations')}
               />
             )}
           </div>
@@ -315,14 +395,14 @@ export function ProfileContent({ user }: ProfileContentProps) {
         <IconWithTitle
           className="w-full rounded-lg bg-red-50 p-6"
           icon={<AlertTriangle className="h-16 w-16 text-red-500" />}
-          title="Fehler beim Laden"
+          title={t('providers.errorTitle')}
         >
           <p className="text-center text-red-600 mb-4">{error}</p>
           <button
             className="w-full rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition-colors"
             onClick={() => window.location.reload()}
           >
-            Erneut versuchen
+            {t('common.retry')}
           </button>
         </IconWithTitle>
       )}
@@ -333,7 +413,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
           <div className="flex flex-wrap justify-center gap-8">
             {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingProviders ? (
-              <LoadingSpinner text="Lade Providers..." />
+              <LoadingSpinner text={t('providers.loadingProviders')} />
             ) : createdProviders.length > 0 ? (
               createdProviders.map((provider) => {
                 const address = provider.address_street && provider.address_city
@@ -368,7 +448,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   <SelectableCard
                     key={provider.provider_id}
                     bottomText={address}
-                    category={provider.category?.name_de || ''}
+                    category={getCategoryName(provider.category)}
                     imageUrl={getImageUrl()}
                     title={provider.provider_name}
                   />
@@ -376,9 +456,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
               })
             ) : (
               <EmptyState
-                description="Erstelle deinen ersten Provider um loszulegen"
+                description={t('providers.createFirstProviderDescription')}
                 icon={<FileText className="h-16 w-16 text-gray-400" />}
-                title="Keine Providers erstellt"
+                title={t('providers.noProvidersCreated')}
               />
             )}
           </div>
@@ -387,7 +467,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
           <div className="flex flex-wrap justify-center gap-8">
             {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingProviders ? (
-              <LoadingSpinner text="Lade Providers..." />
+              <LoadingSpinner text={t('providers.loadingProviders')} />
             ) : savedProviders.length > 0 ? (
               savedProviders.map((provider) => {
                 const address = provider.address_street && provider.address_city
@@ -422,7 +502,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   <SelectableCard
                     key={provider.id}
                     bottomText={address}
-                    category={provider.category?.name_de || ''}
+                    category={getCategoryName(provider.category)}
                     imageUrl={getImageUrl()}
                     title={provider.name}
                   />
@@ -430,9 +510,64 @@ export function ProfileContent({ user }: ProfileContentProps) {
               })
             ) : (
               <EmptyState
-                description="Speichere interessante Providers für später"
+                description={t('providers.saveProvidersDescription')}
                 icon={<Heart className="h-16 w-16 text-gray-400" />}
-                title="Keine Providers gespeichert"
+                title={t('providers.noProvidersSaved')}
+              />
+            )}
+          </div>
+        )}
+        {activeTab === 'recommendations' && (
+          <div className="flex flex-wrap justify-center gap-8">
+            {/* Only show loading on true initial load - isLoading is true only when no cached data */}
+            {isLoadingRecommendations ? (
+              <LoadingSpinner text={t('providers.loadingProviders')} />
+            ) : recommendations.length > 0 ? (
+              recommendations.map((provider) => {
+                const address = provider.address_street && provider.address_city
+                  ? `${provider.address_street}, ${provider.address_city}`
+                  : provider.address_street || provider.address_city || undefined;
+                
+                const getImageUrl = () => {
+                  if (!provider.provider_images) return '/images/placeholder.jpg';
+                  try {
+                    let imagesData: { urls?: string[] } = {};
+                    if (typeof provider.provider_images === 'string') {
+                      imagesData = JSON.parse(provider.provider_images);
+                    } else if (Array.isArray(provider.provider_images)) {
+                      imagesData.urls = provider.provider_images;
+                    } else if (
+                      typeof provider.provider_images === 'object' &&
+                      provider.provider_images !== null &&
+                      'urls' in provider.provider_images
+                    ) {
+                      imagesData = provider.provider_images;
+                    }
+                    if (imagesData.urls && imagesData.urls.length > 0) {
+                      return imagesData.urls[0];
+                    }
+                  } catch {
+                    return '/images/placeholder.jpg';
+                  }
+                  return '/images/placeholder.jpg';
+                };
+                
+                return (
+                  <SelectableCard
+                    key={provider.provider_id}
+                    bottomText={address}
+                    category={getCategoryName(provider.category)}
+                    imageUrl={getImageUrl()}
+                    title={provider.provider_name}
+                    onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit`)}
+                  />
+                );
+              })
+            ) : (
+              <EmptyState
+                description={t('providers.noRecommendationsDescription')}
+                icon={<FileText className="h-16 w-16 text-gray-400" />}
+                title={t('providers.noRecommendations')}
               />
             )}
           </div>

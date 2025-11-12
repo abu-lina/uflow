@@ -101,15 +101,15 @@ const nextConfig = {
   // Only enable standalone when explicitly building for Docker (STANDALONE_BUILD=true)
   // This allows 'next start' to work for local production testing
   ...(isStandaloneBuild ? {
-    output: 'standalone',
-    // Optimize file tracing for standalone builds
-    outputFileTracingIncludes: {
-      '/': ['./src/**/*', './public/**/*'],
-    },
-    // Skip file tracing for routes that may not generate client reference manifests
-    outputFileTracingExcludes: {
-      '*': ['./node_modules/@swc/core*/**/*'],
-    },
+  output: 'standalone',
+  // Optimize file tracing for standalone builds
+  outputFileTracingIncludes: {
+    '/': ['./src/**/*', './public/**/*'],
+  },
+  // Skip file tracing for routes that may not generate client reference manifests
+  outputFileTracingExcludes: {
+    '*': ['./node_modules/@swc/core*/**/*'],
+  },
   } : {}),
   
   experimental: {
@@ -122,10 +122,10 @@ const nextConfig = {
   
   // Turbopack configuration (migrated from experimental.turbo)
   turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
       },
     },
   },

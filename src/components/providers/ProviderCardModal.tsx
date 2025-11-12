@@ -15,6 +15,7 @@ import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
 import { useQuery } from '@tanstack/react-query';
 import { getCommunityServicesForProvider } from '@/services/community_services';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface ProviderCardModalProps {
   open: boolean;
@@ -35,6 +36,7 @@ interface ProviderCardModalProps {
 
 export function ProviderCardModal({ open, onClose, provider }: ProviderCardModalProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   
   // Use the new bookmark hook with authentication
   const { handleBookmarkAction: checkAuthBeforeBookmark } = useBookmarkWithAuth({
@@ -602,7 +604,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             {communityServices.length > 0 && (
               <div className="flex w-full flex-col items-start gap-2">
                 <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
-                  Unser Barakah Effekt:
+                  {t('providers.ourBarakahEffect')}:
                 </div>
                 {/* Barakah Image */}
                 <button
@@ -653,7 +655,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               provider.barakah_effects.length > 0 && (
                 <div className="flex w-full flex-col items-start gap-2">
                   <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
-                    Unser Barakah Effekt:
+                    {t('providers.ourBarakahEffect')}:
                   </div>
                   <div className="flex w-full flex-row flex-wrap gap-[9.8px]">
                     {provider.barakah_effects.map((effect, idx) => (
@@ -684,7 +686,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             </div>
           </div>
           {/* Sticky ProviderActionBar at the bottom on mobile */}
-          <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-4 pt-4 pb-safe sm:hidden">
+          <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-6 pt-4 pb-safe sm:hidden">
             <ProviderActionBar
               isSaved={isSaved}
               phoneNumber={provider.contact_phone || undefined}

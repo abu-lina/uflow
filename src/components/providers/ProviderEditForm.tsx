@@ -29,7 +29,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
     media: true,
   });
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -164,7 +164,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
     e.preventDefault();
     
     if (!user) {
-      toast.error('Du musst angemeldet sein');
+      toast.error(t('editProvider.mustBeLoggedIn'));
       router.push('/signin');
       return;
     }
@@ -226,7 +226,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
       }
     } catch (error) {
       console.error('Error updating provider:', error);
-      toast.error('Fehler beim Aktualisieren des Providers');
+      toast.error(t('editProvider.errorUpdating'));
     } finally {
       setIsSubmitting(false);
     }
@@ -248,7 +248,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             type="button"
             onClick={() => toggleSection('basics')}
           >
-            <h2 className="text-lg font-medium text-[#232323]">Basics</h2>
+            <h2 className="text-lg font-medium text-[#232323]">{t('editProvider.basics')}</h2>
             <Icon 
               className={`h-6 w-6 text-[#232323] transition-transform ${expandedSections.basics ? 'rotate-180' : ''}`}
               icon="material-symbols:expand-more"
@@ -260,11 +260,11 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             {/* Provider Name Field */}
             <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Titel *</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.titleField')} *</span>
                 <input
                   required
                   className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                  placeholder="Titel eingeben"
+                  placeholder={t('editProvider.titlePlaceholder')}
                   type="text"
                   value={formData.providerName}
                   onChange={(e) => handleInputChange('providerName', e.target.value)}
@@ -278,9 +278,13 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
               onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/category`)}
             >
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Kategorie *</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.category')} *</span>
                 <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
-                  {categories.find(cat => cat.category_id === formData.categoryId)?.name_de || t('providers.selectCategory')}
+                  {(() => {
+                    const category = categories.find(cat => cat.category_id === formData.categoryId);
+                    if (!category) return t('providers.selectCategory');
+                    return language === 'en' ? (category.name_en || category.name_de) : category.name_de;
+                  })()}
                 </span>
               </div>
               <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
@@ -292,11 +296,11 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
               onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/offers`)}
             >
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Was biete ich? *</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.whatDoIOffer')} *</span>
                 <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
                   {(formData.selectedOfferIds || []).length > 0 
-                    ? `${(formData.selectedOfferIds || []).length} Angebote ausgewählt`
-                    : 'Angebote auswählen'
+                    ? t('editProvider.offersSelected').replace('{{count}}', (formData.selectedOfferIds || []).length.toString())
+                    : t('editProvider.selectOffers')
                   }
                 </span>
               </div>
@@ -309,11 +313,11 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
               onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/needs`)}
             >
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Was suche ich?</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.whatDoINeed')}</span>
                 <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
                   {(formData.selectedNeedIds || []).length > 0 
-                    ? `${(formData.selectedNeedIds || []).length} Bedürfnisse ausgewählt`
-                    : 'Bedürfnisse auswählen'
+                    ? t('editProvider.needsSelected').replace('{{count}}', (formData.selectedNeedIds || []).length.toString())
+                    : t('editProvider.selectNeeds')
                   }
                 </span>
               </div>
@@ -330,7 +334,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             type="button"
             onClick={() => toggleSection('location')}
           >
-            <h2 className="text-lg font-medium text-[#232323]">Standort</h2>
+            <h2 className="text-lg font-medium text-[#232323]">{t('editProvider.location')}</h2>
             <Icon 
               className={`h-6 w-6 text-[#232323] transition-transform ${expandedSections.location ? 'rotate-180' : ''}`}
               icon="material-symbols:expand-more"
@@ -343,10 +347,10 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             <div className="flex items-center justify-between w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3">
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-[#272727]">
-                  Online-Geschäft
+                  {t('editProvider.onlineBusiness')}
                 </span>
                 <span className="text-xs text-[#7A7A7A]">
-                  Kein physischer Standort
+                  {t('editProvider.noPhysicalLocation')}
                 </span>
               </div>
               <button
@@ -384,10 +388,10 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
                 {/* Street Field */}
                 <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                   <div className="flex flex-1 flex-col gap-1">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Straße</span>
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.street')}</span>
                     <input
                       className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                      placeholder="Straße eingeben"
+                      placeholder={t('editProvider.streetPlaceholder')}
                       type="text"
                       value={formData.street}
                       onChange={(e) => handleInputChange('street', e.target.value)}
@@ -398,10 +402,10 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
                 {/* ZIP Code Field */}
                 <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                   <div className="flex flex-1 flex-col gap-1">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">PLZ</span>
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.zipCode')}</span>
                     <input
                       className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                      placeholder="PLZ eingeben"
+                      placeholder={t('editProvider.zipCodePlaceholder')}
                       type="text"
                       value={formData.zipCode}
                       onChange={(e) => handleInputChange('zipCode', e.target.value)}
@@ -412,11 +416,11 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
                 {/* City Field */}
                 <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                   <div className="flex flex-1 flex-col gap-1">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Stadt *</span>
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.city')} *</span>
                     <input
                       required
                       className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                      placeholder="Stadt eingeben"
+                      placeholder={t('editProvider.cityPlaceholder')}
                       type="text"
                       value={formData.city}
                       onChange={(e) => handleInputChange('city', e.target.value)}
@@ -427,41 +431,16 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
                 {/* Country Field */}
                 <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                   <div className="flex flex-1 flex-col gap-1">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Land *</span>
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.country')} *</span>
                     <input
                       required
                       className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                      placeholder="Land eingeben"
+                      placeholder={t('editProvider.countryPlaceholder')}
                       type="text"
                       value={formData.country}
                       onChange={(e) => handleInputChange('country', e.target.value)}
                     />
                   </div>
-                </div>
-
-                {/* Show Address Toggle */}
-                <div className="flex items-center justify-between w-full py-2">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-[#272727]">
-                      Adresse anzeigen
-                    </span>
-                    <span className="text-xs text-[#7A7A7A]">
-                      Andere können deine Adresse sehen
-                    </span>
-                  </div>
-                  <button
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                      formData.showAddress ? 'bg-primary' : 'bg-gray-200'
-                    }`}
-                    type="button"
-                    onClick={() => handleInputChange('showAddress', !formData.showAddress)}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        formData.showAddress ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
                 </div>
               </>
             ) : (
@@ -469,10 +448,10 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
               <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#D4D4D4] bg-white">
                 <Icon className="h-12 w-12 text-primary mb-3" icon="mdi:web" />
                 <p className="text-sm font-medium text-[#272727] text-center mb-1">
-                  Online-Geschäft
+                  {t('editProvider.onlineBusiness')}
                 </p>
                 <p className="text-xs text-[#7A7A7A] text-center">
-                  Dein Geschäft wird als &ldquo;Online&rdquo; angezeigt
+                  {t('editProvider.onlineBusinessDisplay')}
                 </p>
               </div>
             )}
@@ -487,7 +466,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             type="button"
             onClick={() => toggleSection('contact')}
           >
-            <h2 className="text-lg font-medium text-[#232323]">Kontakt</h2>
+            <h2 className="text-lg font-medium text-[#232323]">{t('editProvider.contact')}</h2>
             <Icon 
               className={`h-6 w-6 text-[#232323] transition-transform ${expandedSections.contact ? 'rotate-180' : ''}`}
               icon="material-symbols:expand-more"
@@ -499,10 +478,10 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             {/* Website Field */}
             <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Website</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.website')}</span>
                 <input
                   className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                  placeholder="Website eingeben"
+                  placeholder={t('editProvider.websitePlaceholder')}
                   type="url"
                   value={formData.website}
                   onChange={(e) => handleInputChange('website', e.target.value)}
@@ -513,10 +492,10 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             {/* Instagram Field */}
             <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Instagram</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.instagram')}</span>
                 <input
                   className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                  placeholder="@username"
+                  placeholder={t('editProvider.instagramPlaceholder')}
                   type="text"
                   value={formData.instagram}
                   onChange={(e) => handleInputChange('instagram', e.target.value)}
@@ -527,10 +506,10 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             {/* Email Field */}
             <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">E-Mail</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.email')}</span>
                 <input
                   className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                  placeholder="E-Mail eingeben"
+                  placeholder={t('editProvider.emailPlaceholder')}
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
@@ -541,10 +520,10 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             {/* Phone Field */}
             <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Telefon</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.phone')}</span>
                 <input
                   className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
-                  placeholder="Telefon eingeben"
+                  placeholder={t('editProvider.phonePlaceholder')}
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
@@ -562,7 +541,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             type="button"
             onClick={() => toggleSection('media')}
           >
-            <h2 className="text-lg font-medium text-[#232323]">Media</h2>
+            <h2 className="text-lg font-medium text-[#232323]">{t('editProvider.media')}</h2>
             <Icon 
               className={`h-6 w-6 text-[#232323] transition-transform ${expandedSections.media ? 'rotate-180' : ''}`}
               icon="material-symbols:expand-more"
@@ -578,15 +557,15 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
               onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/images`)}
             >
               <div className="flex flex-1 flex-col gap-1 items-start">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Bilder</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.images')}</span>
                 <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
                   {(() => {
                     try {
                       const images = formData.images ? JSON.parse(formData.images) : { urls: [] };
                       const imageCount = images.urls?.length || 0;
-                      return imageCount > 0 ? `${imageCount} Bilder ausgewählt` : 'Bilder hochladen';
+                      return imageCount > 0 ? t('editProvider.imagesSelected').replace('{{count}}', imageCount.toString()) : t('editProvider.uploadImages');
                     } catch {
-                      return 'Bilder hochladen';
+                      return t('editProvider.uploadImages');
                     }
                   })()}
                 </div>
@@ -603,11 +582,11 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
               onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/social`)}
             >
               <div className="flex flex-1 flex-col gap-1 items-start">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">Soziale Initiativen</span>
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.socialInitiatives')}</span>
                 <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
                   {(formData.selectedCommunityServiceIds || []).length > 0 
-                    ? `${(formData.selectedCommunityServiceIds || []).length} Initiativen ausgewählt`
-                    : 'Initiativen auswählen'
+                    ? t('editProvider.initiativesSelected').replace('{{count}}', (formData.selectedCommunityServiceIds || []).length.toString())
+                    : t('editProvider.selectInitiatives')
                   }
                 </div>
               </div>
@@ -623,7 +602,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
       {/* Save and Discard Buttons - Fixed at bottom */}
       <FooterAction
         primaryButton={{
-          label: 'Speichern',
+          label: t('editProvider.save'),
           icon: 'material-symbols:save-outline',
           onClick: () => {
             // Trigger form submission
@@ -634,7 +613,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
           variant: 'primary',
           disabled: isSubmitting,
           loading: isSubmitting,
-          'aria-label': 'Änderungen speichern',
+          'aria-label': t('editProvider.saveChanges'),
         }}
         secondaryButton={{
           icon: 'material-symbols:close',
@@ -642,7 +621,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             // Discard changes and go back
             router.back();
           },
-          'aria-label': 'Änderungen verwerfen',
+          'aria-label': t('editProvider.discardChanges'),
         }}
       />
     </form>

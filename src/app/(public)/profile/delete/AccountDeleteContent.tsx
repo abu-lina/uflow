@@ -6,15 +6,17 @@ import { Trash2, AlertTriangle, Loader2, Lock } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { BottomSpacer } from '@/components/layout/BottomSpacer';
+import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
+import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/features/auth/services/authService';
 import { accountService } from '@/services/account';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
 import { Button, IconWithTitle } from '@/components/ui';
 import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 interface AccountDeleteContentProps {
@@ -24,6 +26,7 @@ interface AccountDeleteContentProps {
 export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
   const { user: clientUser, loading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   
   // Use client-side user if server-side user is null
   const effectiveUser: SupabaseUser | null = user || (clientUser as SupabaseUser | null);
@@ -69,7 +72,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
       router.push('/?auth=required');
     } catch (err) {
       console.error('Error deleting account:', err);
-      setError(err instanceof Error ? err.message : 'Fehler beim Löschen des Kontos');
+      setError(err instanceof Error ? err.message : t('profile.errorDeletingAccount'));
     } finally {
       setIsDeleting(false);
     }
@@ -81,7 +84,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-600 mx-auto" />
-          <p className="text-gray-600">Überprüfe Anmeldung...</p>
+          <p className="text-gray-600">{t('profile.checkingAuth')}</p>
         </div>
       </div>
     );
@@ -93,80 +96,82 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <Lock className="mb-4 h-8 w-8 text-gray-600 mx-auto" />
-          <p className="text-gray-600">Anmeldung erforderlich</p>
+          <p className="text-gray-600">{t('profile.authRequired')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative flex h-screen w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]" style={{ height: '100dvh' }}>
+    <PageLayout hasBackground={false} maxWidth="full">
       <PageHeader 
-        title="Konto schließen"
+        title={t('profile.deleteAccount')}
         variant="back-and-title"
         onBack={() => router.back()}
       />
 
       <HeaderSpacer />
 
-      <PageContentWrapper
-        asMain
-        centerVertically
-        className="content-scroll-container overflow-y-auto"
-        padding="lg-safe"
-      >
-        <div className="flex w-full flex-col">
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 rounded-lg bg-red-50 p-4" role="alert">
-              <p className="text-center text-red-600">{error}</p>
-            </div>
-          )}
+      <PageContentWrapper includeMobileNavSpacing={false} maxWidth="full" padding="lg-safe">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 p-4" role="alert">
+            <p className="text-center text-red-600">{error}</p>
+          </div>
+        )}
 
-          {/* Icon + Title + Text */}
-          <TitleSection className="mb-10">
-            <IconWithTitle
-              icon={<BrokenHeartIcon size={96} />}
-              size="large"
-              title={
-                <>
-                  Deine Daten.
-                  <br />
-                  Deine Entscheidung.
-                </>
-              }
-              titleClassName="font-inter-tight text-3xl font-medium leading-[39px] text-black"
-            >
-              <div className="w-full">
-                <div className="font-inter text-[16px] font-light leading-[24px] text-black space-y-4 text-justify">
-                  <p>Schade, dass du dein Konto löschen möchtest.</p>
-                  <p>Bitte beachte: Die Löschung ist dauerhaft – alle deine Daten werden vollständig und sicher entfernt und können nicht wiederhergestellt werden.</p>
-                  <p>Dein Konto ist für andere nie sichtbar, und deine Privatsphäre bleibt geschützt.</p>
-                </div>
+        {/* Icon + Title + Text */}
+        <TitleSection className="mb-10">
+          <IconWithTitle
+            icon={<BrokenHeartIcon size={96} />}
+            size="large"
+            title={
+              (() => {
+                const titleText = t('profile.yourDataYourDecision');
+                const parts = titleText.split('\n');
+                return (
+                  <>
+                    {parts[0] || titleText}
+                    {parts[1] && (
+                      <>
+                        <br />
+                        {parts[1]}
+                      </>
+                    )}
+                  </>
+                );
+              })()
+            }
+            titleClassName="font-inter-tight text-3xl font-medium leading-[39px] text-black"
+          >
+            <div className="w-full">
+              <div className="font-inter text-[16px] font-light leading-[24px] text-black space-y-4 text-justify">
+                <p>{t('profile.deleteAccountIntro')}</p>
+                <p>{t('profile.deleteAccountWarning')}</p>
+                <p>{t('profile.deleteAccountPrivacy')}</p>
               </div>
-            </IconWithTitle>
-          </TitleSection>
-
-        </div>
+            </div>
+          </IconWithTitle>
+        </TitleSection>
       </PageContentWrapper>
 
-      <BottomSpacer height="h-16" />
+      <BottomSpacer />
 
       {/* Bottom Action Navbar */}
       <BottomActionNavbar
         height="h-16"
         primaryButton={{
-          label: 'Konto behalten',
+          label: t('profile.keepAccount'),
           disabled: isDeleting,
           onClick: () => router.push('/profile/edit'),
-          'aria-label': 'Konto behalten und zurück zum Profil',
+          'aria-label': t('profile.keepAccountAria'),
         }}
         secondaryButton={{
           icon: <Trash2 className="h-6 w-6 text-content-heading" />,
           disabled: isDeleting,
           loading: isDeleting,
           onClick: handleDeleteClick,
-          'aria-label': 'Konto dauerhaft löschen',
+          'aria-label': t('profile.deleteAccountAria'),
         }}
       />
 
@@ -179,10 +184,10 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
                 <AlertTriangle className="h-8 w-8 text-[#D86363]" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Konto wirklich löschen?
+                {t('profile.confirmDeleteTitle')}
               </h3>
               <p className="mt-2 text-sm text-gray-600">
-                Diese Aktion kann nicht rückgängig gemacht werden. Alle deine Daten werden dauerhaft gelöscht.
+                {t('profile.confirmDeleteDescription')}
               </p>
             </div>
             
@@ -193,7 +198,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
                 variant="cancel"
                 onClick={handleCancelDelete}
               >
-                Abbrechen
+                {t('common.cancel')}
               </Button>
               <Button
                 fullWidth
@@ -201,12 +206,12 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
                 variant="danger"
                 onClick={handleConfirmDelete}
               >
-                Ja, löschen
+                {t('profile.confirmDelete')}
               </Button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }

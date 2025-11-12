@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 
 import { supabase } from '@/lib/supabase/client';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function EditImagesPage({ params }: { params: Promise<{ provider_id: string }> }) {
   const resolvedParams = use(params);
@@ -17,6 +18,7 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
+  const { t } = useLanguage();
 
   // Load existing images from provider
   useEffect(() => {
@@ -123,11 +125,11 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
         localStorage.removeItem(`edit_images_${resolvedParams.provider_id}`);
       }
 
-      toast.success('Bilder erfolgreich aktualisiert!');
+      toast.success(t('editProvider.editImages.success'));
       router.back();
     } catch (error) {
       console.error('Error saving images:', error);
-      toast.error('Fehler beim Speichern der Bilder');
+      toast.error(t('editProvider.editImages.error'));
     } finally {
       setIsUploading(false);
     }
@@ -141,7 +143,7 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
 
   return (
     <div className="flex h-screen flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      <PageHeader title="Bilder hochladen" variant="back-and-title" onBack={() => router.back()} />
+      <PageHeader title={t('editProvider.editImages.title')} variant="back-and-title" onBack={() => router.back()} />
       <HeaderSpacer />
 
       {/* Main Content */}
@@ -170,7 +172,7 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
                     icon="lucide:image-up" 
                   />
                   <span className="font-inter-tight font-semibold text-base leading-[19px] text-[#232323]">
-                    Bilder hochladen
+                    {t('editProvider.editImages.uploadButton')}
                   </span>
                 </div>
               </button>
@@ -181,7 +183,7 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
           {allDisplayImages.length > 0 && (
             <div className="flex w-full flex-col gap-4 mt-8">
               <h3 className="text-sm font-medium text-[#232323]">
-                Ausgewählte Bilder ({allDisplayImages.length})
+                {t('editProvider.editImages.selectedImages').replace('{{count}}', allDisplayImages.length.toString())}
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {allDisplayImages.map((item, idx) => {
@@ -229,10 +231,10 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
               <Icon className="h-16 w-16 text-gray-300" icon="lucide:image" />
               <div className="text-center">
                 <p className="text-sm text-gray-500 mb-2">
-                  Noch keine Bilder ausgewählt
+                  {t('editProvider.editImages.noImagesSelected')}
                 </p>
                 <p className="text-xs text-gray-400">
-                  Klicke auf &quot;Bilder hochladen&quot; um zu beginnen
+                  {t('editProvider.editImages.clickToUpload')}
                 </p>
               </div>
             </div>
@@ -243,13 +245,13 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
       {/* Save Button */}
       <FooterAction
         actionButton={{
-          label: isUploading ? 'Speichern...' : 'Speichern',
+          label: isUploading ? t('editProvider.editImages.saving') : t('editProvider.editImages.save'),
           icon: isUploading ? 'lucide:loader-2' : 'lucide:save',
           onClick: handleSave,
           variant: 'primary',
           disabled: isUploading,
           loading: isUploading,
-          'aria-label': 'Bilder speichern',
+          'aria-label': t('editProvider.editImages.saveAria'),
         }}
       />
     </div>

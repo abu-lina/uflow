@@ -28,7 +28,17 @@ interface ProviderDetailPageProps {
 
 export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider, customActionButtons, backPath }) => {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  
+  // Helper function to get category name based on language
+  const getCategoryName = (category: { name_de?: string; name_en?: string } | undefined) => {
+    if (!category) return t('providers.donations');
+    if (language === 'en') {
+      return category.name_en || category.name_de || t('providers.donations');
+    } else {
+      return category.name_de || category.name_en || t('providers.donations');
+    }
+  };
   
   const handleBack = () => {
     if (backPath) {
@@ -345,7 +355,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               >
                 <div className="flex items-center gap-2">
                   <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
-                    Unser Barakah Effekt
+                    {t('providers.ourBarakahEffect')}
                   </h3>
                   <Icon className="h-4 w-4 text-gray-500" icon="material-symbols:info-outline" />
                 </div>
@@ -381,7 +391,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           {service.community_service_name}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {service.category?.name_de || t('providers.donations')}
+                          {getCategoryName(service.category)}
                         </p>
                         <p className="text-sm text-gray-600">
                           +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? t('providers.initiativesSupported') : t('providers.donations')}
@@ -443,7 +453,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     onClick={() => setExpandedNeeds(!expandedNeeds)}
                   >
                     <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
-                      Wir suchen
+                      {t('providers.weAreLookingFor')}
                     </h3>
                     <ChevronDown 
                       className={`h-6 w-6 text-gray-600 transition-transform ${
@@ -477,7 +487,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           // Custom action buttons (like FooterAction) handle their own styling
           customActionButtons
         ) : (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-4 pt-4 pb-safe">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-6 pt-4 pb-safe">
             <div className="flex w-full gap-3.5">
               {/* Save Button */}
               <BookmarkButton
@@ -625,7 +635,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 {provider.provider_name}
               </h2>
               <p className="mt-2 text-gray-600">
-                {provider.category?.name_de || ''}
+                {getCategoryName(provider.category)}
               </p>
               
               {/* Contact Actions */}
@@ -678,7 +688,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 >
                   <div className="flex items-center gap-2">
                     <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
-                      Unser Barakah Effekt
+                      {t('providers.ourBarakahEffect')}
                     </h3>
                     <Icon className="h-5 w-5 text-gray-500" icon="material-symbols:info-outline" />
                   </div>
@@ -713,7 +723,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                             {service.community_service_name}
                           </p>
                           <p className="text-sm text-gray-600">
-                            {service.category?.name_de || t('providers.donations')}
+                            {getCategoryName(service.category)}
                           </p>
                           <p className="text-sm text-gray-600">
                             +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? t('providers.initiativesSupported') : t('providers.donations')}
@@ -737,7 +747,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       onClick={() => setExpandedOffers(!expandedOffers)}
                     >
                       <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
-                        Wir bieten
+                        {t('providers.weOffer')}
                       </h3>
                       <ChevronDown 
                         className={`h-7 w-7 text-gray-600 transition-transform ${
@@ -775,7 +785,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       onClick={() => setExpandedNeeds(!expandedNeeds)}
                     >
                       <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
-                        Wir suchen
+                        {t('providers.weAreLookingFor')}
                       </h3>
                       <ChevronDown 
                         className={`h-7 w-7 text-gray-600 transition-transform ${
