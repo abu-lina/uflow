@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 
 interface LoadingContextType {
   isInitialLoad: boolean;
@@ -12,7 +12,7 @@ const LoadingContext = createContext<LoadingContextType>({
   isPreloading: false,
 });
 
-export function LoadingProvider({ children }: { children: React.ReactNode }) {
+export function LoadingProvider({ children }: { children: ReactNode }) {
   return (
     <LoadingContext.Provider value={{ isInitialLoad: false, isPreloading: false }}>
       {children}
