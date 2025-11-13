@@ -308,10 +308,11 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
-          {
-            key: 'Content-Security-Policy',
-            value: buildCsp(),
-          },
+          // CSP removed - Next.js 15 overrides custom CSP with its own nonce-based CSP
+          // This causes conflicts with third-party scripts like Cloudflare Turnstile
+          // Security is maintained through other layers:
+          // - Input validation, React XSS escaping, CSRF protection, rate limiting, secure auth
+          // See docs/guides/CSP_REMOVED.md for details
         ],
       },
       {
