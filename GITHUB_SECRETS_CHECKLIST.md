@@ -30,7 +30,19 @@ Go to: `https://github.com/abu-lina/uflow/settings/secrets/actions`
   - Value: Your Resend API key (starts with `re_`)
   - Used for: Runtime (email sending)
 
-### 3. Hetzner Deployment
+### 3. Cloudflare Turnstile (CAPTCHA)
+
+- [ ] **`NEXT_PUBLIC_TURNSTILE_SITE_KEY`**
+  - Value: Your Turnstile Site Key (starts with `0x4AAAAAAC...`)
+  - Get from: https://dash.cloudflare.com/?to=/:account/turnstile
+  - Used for: Build time + Runtime (client-side CAPTCHA)
+
+- [ ] **`TURNSTILE_SECRET_KEY`**
+  - Value: Your Turnstile Secret Key (hidden, click to reveal)
+  - Get from: Same Turnstile widget page
+  - Used for: Runtime (server-side verification)
+
+### 4. Hetzner Deployment
 
 - [ ] **`HETZNER_HOST`**
   - Value: `91.98.207.106`
@@ -53,7 +65,7 @@ Go to: `https://github.com/abu-lina/uflow/settings/secrets/actions`
    - Value: (paste the value)
    - Click **"Add secret"**
 
-4. Repeat for all 6 secrets
+4. Repeat for all 8 secrets
 
 ---
 
@@ -62,13 +74,15 @@ Go to: `https://github.com/abu-lina/uflow/settings/secrets/actions`
 You can't view secret values, but you can see if they're set:
 
 1. Go to: https://github.com/abu-lina/uflow/settings/secrets/actions
-2. You should see these 6 secrets listed:
+2. You should see these 8 secrets listed:
    - `HETZNER_HOST`
    - `HETZNER_SSH_KEY`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` ← NEW
    - `RESEND_API_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
+   - `TURNSTILE_SECRET_KEY` ← NEW
 
 ---
 
@@ -199,7 +213,7 @@ After secrets are configured:
 
 Before you push:
 
-- [ ] GitHub Secrets configured (all 6)
+- [ ] GitHub Secrets configured (all 8)
 - [ ] Changes committed locally
 - [ ] Build works locally (`npm run build`)
 - [ ] Ready to push
