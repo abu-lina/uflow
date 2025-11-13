@@ -72,6 +72,8 @@ function buildCsp() {
   const directives = [
     "default-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co https://challenges.cloudflare.com https://*.cloudflare.com",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.cloudflare.com",
+    // script-src-elem takes precedence for <script> elements - explicitly allow Cloudflare
+    "script-src-elem 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.cloudflare.com",
     "style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
     "font-src 'self' data:",
     "img-src 'self' data: https: blob:",
