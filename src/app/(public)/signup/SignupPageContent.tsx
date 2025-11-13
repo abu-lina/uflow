@@ -100,14 +100,46 @@ export function SignupPageContent() {
                 setError(null); // Clear any previous errors
               },
               'error-callback': (error?: string) => {
-                console.error('[SIGNUP] CAPTCHA verification error:', error);
-                console.error('[SIGNUP] Site key used:', siteKey?.substring(0, 10) + '...');
-                console.error('[SIGNUP] Possible causes:');
-                console.error('  - Site key not matching hostname in Cloudflare dashboard');
-                console.error('  - Hostname not added to Turnstile widget configuration');
-                console.error('  - Widget mode mismatch');
+                // Enhanced debugging for error 600010
+                const currentHostname = window.location.hostname;
+                const currentOrigin = window.location.origin;
+                const fullSiteKey = siteKey || 'NOT SET';
+                
+                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.error('[SIGNUP] CAPTCHA VERIFICATION ERROR');
+                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.error('Error Code:', error || 'Unknown');
+                console.error('Error 600010 = Invalid site key for this hostname');
+                console.error('');
+                console.error('🔍 DEBUGGING INFORMATION:');
+                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.error('Site Key (full):', fullSiteKey);
+                console.error('Site Key (first 20 chars):', fullSiteKey.substring(0, 20) + '...');
+                console.error('Current Hostname:', currentHostname);
+                console.error('Current Origin:', currentOrigin);
+                console.error('Widget ID:', captchaWidgetId.current);
+                console.error('');
+                console.error('✅ VERIFICATION CHECKLIST:');
+                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.error('1. Go to: https://dash.cloudflare.com/?to=/:account/turnstile');
+                console.error('2. Find widget with site key:', fullSiteKey.substring(0, 20) + '...');
+                console.error('3. Check hostnames configured:');
+                console.error('   - Should include:', currentHostname);
+                console.error('   - Should include: www.' + currentHostname, '(if you use www)');
+                console.error('4. Verify widget mode is "Managed"');
+                console.error('5. Compare site key in Cloudflare with:', fullSiteKey);
+                console.error('');
+                console.error('💡 COMMON FIXES:');
+                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.error('• Add hostname:', currentHostname, 'to Cloudflare Turnstile');
+                console.error('• Add www subdomain if you use it: www.' + currentHostname);
+                console.error('• Wait 5-10 minutes after adding hostname');
+                console.error('• Verify site key in GitHub Secrets matches Cloudflare');
+                console.error('• Check widget mode is "Managed"');
+                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                
                 setCaptchaToken(null);
-                setError('CAPTCHA verification failed. Please check your Turnstile configuration or try refreshing the page.');
+                setError('CAPTCHA verification failed. Check browser console for debugging info.');
               },
               'expired-callback': () => {
                 console.warn('[SIGNUP] CAPTCHA token expired');
