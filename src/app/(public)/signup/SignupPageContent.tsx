@@ -1,20 +1,40 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { PageLayout } from '@/components/layout/PageLayout';
-import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { signUpWithLanguage } from '@/lib/auth';
+
+// Cloudflare Turnstile types
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        element: HTMLElement,
+        options: {
+          sitekey: string;
+          callback?: (token: string) => void;
+          'error-callback'?: (error?: string) => void;
+          'expired-callback'?: () => void;
+          'timeout-callback'?: () => void;
+        }
+      ) => string;
+      reset: (widgetId?: string) => void;
+      getResponse: (widgetId?: string) => string | undefined;
+      remove: (widgetId?: string) => void;
+    };
+  }
+}
 
 interface FormData {
   email: string;
@@ -37,12 +57,110 @@ export function SignupPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaWidgetId = useRef<string | null>(null);
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = useCallback((field: keyof FormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
+  }, []);
+
+  // Load Cloudflare Turnstile script
+  useEffect(() => {
+    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    
+    // Only load CAPTCHA if site key is configured
+    if (!siteKey) {
+      console.warn('[SIGNUP] Turnstile site key not configured. CAPTCHA will be optional.');
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    
+    // Add error handling before appending
+    script.onload = () => {
+      console.log('[SIGNUP] Turnstile script loaded successfully');
+      
+      // Wait a bit for the script to fully initialize
+      setTimeout(() => {
+        // Render CAPTCHA after script loads
+        if (window.turnstile && captchaContainerRef.current && !captchaWidgetId.current) {
+          try {
+            const widgetId = window.turnstile.render(captchaContainerRef.current, {
+              sitekey: siteKey,
+              callback: (token: string) => {
+                console.log('[SIGNUP] CAPTCHA verified successfully, token received');
+                setCaptchaToken(token);
+                setError(null); // Clear any previous errors
+              },
+              'error-callback': (error?: string) => {
+                console.error('[SIGNUP] CAPTCHA verification error:', error);
+                console.error('[SIGNUP] Site key used:', siteKey?.substring(0, 10) + '...');
+                console.error('[SIGNUP] Possible causes:');
+                console.error('  - Site key not matching hostname in Cloudflare dashboard');
+                console.error('  - Hostname not added to Turnstile widget configuration');
+                console.error('  - Widget mode mismatch');
+                setCaptchaToken(null);
+                setError('CAPTCHA verification failed. Please check your Turnstile configuration or try refreshing the page.');
+              },
+              'expired-callback': () => {
+                console.warn('[SIGNUP] CAPTCHA token expired');
+                setCaptchaToken(null);
+              },
+              'timeout-callback': () => {
+                console.warn('[SIGNUP] CAPTCHA verification timeout');
+                setCaptchaToken(null);
+                setError('CAPTCHA verification timed out. Please try again.');
+              },
+            });
+            captchaWidgetId.current = widgetId;
+            console.log('[SIGNUP] CAPTCHA widget rendered with ID:', widgetId);
+          } catch (error) {
+            console.error('[SIGNUP] Error rendering CAPTCHA:', error);
+            setError('Failed to load CAPTCHA. Please refresh the page.');
+          }
+        } else {
+          console.warn('[SIGNUP] CAPTCHA container or Turnstile not available:', {
+            hasTurnstile: !!window.turnstile,
+            hasContainer: !!captchaContainerRef.current,
+            hasWidgetId: !!captchaWidgetId.current,
+          });
+        }
+      }, 100);
+    };
+
+    script.onerror = (error) => {
+      console.error('[SIGNUP] Failed to load Turnstile script:', error);
+      console.error('[SIGNUP] Script URL:', script.src);
+      console.error('[SIGNUP] Possible causes:');
+      console.error('  - Ad blocker blocking the script');
+      console.error('  - Network connectivity issues');
+      console.error('  - CSP (Content Security Policy) blocking the script');
+      console.error('  - Firewall blocking Cloudflare domains');
+      setError('Failed to load security verification. Please check your connection and try again, or disable ad blockers.');
+    };
+    
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup: remove script and CAPTCHA widget
+      if (captchaWidgetId.current && window.turnstile) {
+        try {
+          window.turnstile.remove(captchaWidgetId.current);
+        } catch (error) {
+          console.error('Error removing CAPTCHA:', error);
+        }
+      }
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, []);
 
   // Redirect if already logged in
@@ -67,14 +185,37 @@ export function SignupPageContent() {
       setError('Bitte gib deine E-Mail-Adresse ein.');
       return false;
     }
-    if (formData.password.length < 6) {
-      setError('Das Passwort muss mindestens 6 Zeichen lang sein.');
+    
+    // Enhanced password validation
+    if (formData.password.length < 8) {
+      setError('Das Passwort muss mindestens 8 Zeichen lang sein.');
       return false;
     }
+    
+    // Check for at least one letter
+    if (!/[a-zA-Z]/.test(formData.password)) {
+      setError('Das Passwort muss mindestens einen Buchstaben enthalten.');
+      return false;
+    }
+    
+    // Check for at least one number
+    if (!/\d/.test(formData.password)) {
+      setError('Das Passwort muss mindestens eine Zahl enthalten.');
+      return false;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       setError('Passwörter stimmen nicht überein.');
       return false;
     }
+    
+    // Check CAPTCHA (only if site key is configured)
+    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    if (siteKey && !captchaToken) {
+      setError('Bitte bestätige, dass du kein Roboter bist.');
+      return false;
+    }
+    
     setError(null);
     return true;
   };
@@ -90,11 +231,32 @@ export function SignupPageContent() {
     setError(null);
 
     try {
-      const { data, error } = await signUpWithLanguage(formData.email, formData.password, language);
+      // Get honeypot value from form
+      const form = e.target as HTMLFormElement;
+      const honeypotInput = form.querySelector('input[name="website"]') as HTMLInputElement;
+      const honeypot = honeypotInput?.value || '';
+      
+      // Reset CAPTCHA after submission
+      if (captchaWidgetId.current && window.turnstile) {
+        window.turnstile.reset(captchaWidgetId.current);
+      }
+      
+      const { data, error } = await signUpWithLanguage(
+        formData.email, 
+        formData.password, 
+        language,
+        captchaToken || undefined,
+        honeypot
+      );
       
       if (error) {
         setError(error.message || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
         setIsLoading(false);
+        // Reset CAPTCHA on error
+        if (captchaWidgetId.current && window.turnstile) {
+          window.turnstile.reset(captchaWidgetId.current);
+          setCaptchaToken(null);
+        }
         return;
       }
       
@@ -125,7 +287,7 @@ export function SignupPageContent() {
   };
 
   return (
-    <PageLayout hasBackground={false}>
+    <ScrollablePageLayout>
       {/* Loading Overlay - Prevents flash during redirect */}
       {isRedirecting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
@@ -142,9 +304,7 @@ export function SignupPageContent() {
         variant="title-and-icon"
       />
 
-      <HeaderSpacer />
-
-      <PageContentWrapper centerVertically={true}>
+      <PageContent maxWidth="361px" paddingBottom="pb-12">
         <div className="flex w-full flex-col">
           {/* Title + Paragraph with proper spacing */}
           <TitleSection className="mb-6 sm:mb-8">
@@ -157,6 +317,22 @@ export function SignupPageContent() {
           {/* Form Content with exact spacing structure */}
           <ContentSection>
             <form className="flex w-full flex-col" onSubmit={handleSubmit}>
+              {/* Honeypot field - hidden from users */}
+              <input
+                aria-hidden="true"
+                autoComplete="off"
+                name="website"
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  width: '1px',
+                  height: '1px',
+                  overflow: 'hidden',
+                }}
+                tabIndex={-1}
+                type="text"
+              />
+              
               {/* Form Input Fields */}
               <FormInputGroup gap="gap-3">
                 <FormInput
@@ -170,7 +346,7 @@ export function SignupPageContent() {
                 <FormInput
                   required
                   label="Passwort"
-                  placeholder="Mindestens 6 Zeichen"
+                  placeholder="Mindestens 8 Zeichen, Buchstabe und Zahl"
                   rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
@@ -211,6 +387,16 @@ export function SignupPageContent() {
                 </div>
               )}
 
+              {/* CAPTCHA - Cloudflare Turnstile */}
+              <div className="mt-4 flex justify-center">
+                <div ref={captchaContainerRef} id="turnstile-widget" />
+                {!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                  <p className="text-xs text-gray-500 text-center">
+                    CAPTCHA not configured. Please set NEXT_PUBLIC_TURNSTILE_SITE_KEY in your environment variables.
+                  </p>
+                )}
+              </div>
+
               {/* Button and links with proper spacing (24px gap from form fields) */}
               <div className="mt-6 flex flex-col space-y-3">
                 {/* Main Button */}
@@ -240,7 +426,7 @@ export function SignupPageContent() {
             </form>
           </ContentSection>
         </div>
-      </PageContentWrapper>
-    </PageLayout>
+      </PageContent>
+    </ScrollablePageLayout>
   );
 }

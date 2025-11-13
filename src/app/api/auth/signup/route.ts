@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { 
+  checkRateLimit, 
+  getClientIdentifier 
+} from '@/lib/rate-limit';
+import {
+  getClientIP,
+  checkIPBlocked,
+  markSuspiciousIP,
+  isDisposableEmail,
+  verifyTurnstileToken,
+  validatePasswordComplexity,
+  isSuspiciousTiming,
+} from '@/utils/security';
 
 // Lazy initialization - only creates client when first accessed
 function getSupabaseAdmin() {
@@ -24,12 +37,80 @@ function getSupabaseAdmin() {
 }
 
 export async function POST(request: Request) {
+  const startTime = Date.now();
+  const ip = getClientIP(request);
+  
   try {
-    const { email, password, language } = await request.json();
+    // 1. Check if IP is blocked
+    if (checkIPBlocked(ip)) {
+      console.log('[SIGNUP API] Blocked IP attempted signup:', ip);
+      return NextResponse.json(
+        { error: 'Access temporarily restricted. Please try again later.' },
+        { status: 403 }
+      );
+    }
+
+    // 2. Rate limiting: 3 signups per hour per IP
+    const identifier = getClientIdentifier(request);
+    if (!checkRateLimit(identifier, 3, 60 * 60 * 1000, 'signup')) {
+      markSuspiciousIP(ip, 1); // Block for 1 hour
+      console.log('[SIGNUP API] Rate limit exceeded for IP:', ip);
+      return NextResponse.json(
+        { error: 'Too many signup attempts. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    const body = await request.json();
+    const { email, password, language, captchaToken, honeypot } = body;
     
-    console.log('[SIGNUP API] Received signup request:', { email, language });
+    // 3. Honeypot check (should be empty)
+    if (honeypot && honeypot.trim() !== '') {
+      markSuspiciousIP(ip, 24); // Block for 24 hours
+      console.log('[SIGNUP API] Honeypot triggered for IP:', ip);
+      return NextResponse.json(
+        { error: 'Invalid request' },
+        { status: 400 }
+      );
+    }
+
+    // 4. CAPTCHA verification (Cloudflare Turnstile)
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
     
-    // Validate input
+    // Only require CAPTCHA if it's configured
+    if (turnstileSecretKey) {
+      if (!captchaToken) {
+        return NextResponse.json(
+          { error: 'CAPTCHA verification required. Please complete the security check.' },
+          { status: 400 }
+        );
+      }
+
+      const captchaResult = await verifyTurnstileToken(captchaToken, ip);
+      if (!captchaResult.success) {
+        markSuspiciousIP(ip, 1);
+        console.log('[SIGNUP API] CAPTCHA verification failed for IP:', ip);
+        return NextResponse.json(
+          { error: captchaResult.error || 'CAPTCHA verification failed. Please try again.' },
+          { status: 400 }
+        );
+      }
+    } else {
+      // CAPTCHA not configured - log warning but allow signup in development
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('[SIGNUP API] WARNING: TURNSTILE_SECRET_KEY not set in production!');
+      } else {
+        console.log('[SIGNUP API] CAPTCHA not configured (development mode)');
+      }
+    }
+
+    // 5. Request timing check (too fast = likely bot)
+    if (isSuspiciousTiming(startTime)) {
+      markSuspiciousIP(ip, 1);
+      console.log('[SIGNUP API] Suspiciously fast request from IP:', ip);
+    }
+    
+    // 6. Validate input
     if (!email || !password) {
       console.error('[SIGNUP API] Missing email or password');
       return NextResponse.json(
@@ -38,7 +119,7 @@ export async function POST(request: Request) {
       );
     }
     
-    // Validate email format
+    // 7. Email format validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       console.error('[SIGNUP API] Invalid email format:', email);
       return NextResponse.json(
@@ -46,15 +127,27 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
-    // Validate password length
-    if (password.length < 6) {
-      console.error('[SIGNUP API] Password too short');
+
+    // 8. Disposable email check
+    if (isDisposableEmail(email)) {
+      console.log('[SIGNUP API] Disposable email blocked:', email);
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
+        { error: 'Disposable email addresses are not allowed' },
         { status: 400 }
       );
     }
+    
+    // 9. Enhanced password validation
+    const passwordValidation = validatePasswordComplexity(password);
+    if (!passwordValidation.valid) {
+      console.error('[SIGNUP API] Password validation failed:', passwordValidation.error);
+      return NextResponse.json(
+        { error: passwordValidation.error || 'Password does not meet requirements' },
+        { status: 400 }
+      );
+    }
+    
+    console.log('[SIGNUP API] Received signup request:', { email, language });
     
     // Check if user already exists
     console.log('[SIGNUP API] Checking if user exists...');

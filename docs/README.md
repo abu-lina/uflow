@@ -48,8 +48,13 @@ Bug fixes and solutions:
 
 **Location:** `docs/guides/`
 
-Setup and best practice guides:
+### Security Guides
+- **SECURITY_OVERVIEW.md** - Complete security overview (Overall Grade: A)
+- **CSP_BEST_PRACTICES.md** - Content Security Policy best practices (Grade: A-)
+- **SIGNUP_SECURITY_IMPLEMENTATION.md** - Bot protection and signup security
+- **SIGNUP_SECURITY_BEST_PRACTICES_REVIEW.md** - Security assessment
 
+### Setup and Configuration Guides
 - **SUPABASE_SETUP_GUIDE.md** - Supabase configuration
 - **EMAIL_SETUP.md** - Email service setup
 - **BEST_PRACTICE_EMAIL_SETUP.md** - Email best practices

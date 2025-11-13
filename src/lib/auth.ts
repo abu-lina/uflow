@@ -3,7 +3,9 @@ import { supabase } from './supabase/client';
 export const signUpWithLanguage = async (
   email: string,
   password: string,
-  language: 'en' | 'de' = 'en'
+  language: 'en' | 'de' = 'en',
+  captchaToken?: string,
+  honeypot?: string
 ) => {
   console.log('[SIGNUP] Creating user via Admin API:', email);
   
@@ -18,7 +20,9 @@ export const signUpWithLanguage = async (
       body: JSON.stringify({
         email,
         password,
-        language
+        language,
+        captchaToken,
+        honeypot
       }),
     });
     
