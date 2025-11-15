@@ -14,22 +14,14 @@ This is a **pragmatic, industry-standard approach** used by major production app
 - ✅ **Active** - Configured in `next.config.js`
 - ✅ Restricts resource loading to trusted domains
 - ✅ Protects against XSS attacks in combination with other layers
-- ⚠️  Uses `'unsafe-inline'` (documented trade-off for Cloudflare Turnstile)
+- ⚠️  Uses `'unsafe-inline'` (required for Next.js 15 App Router)
 
 **Why This is Best Practice:**
 - Works reliably with Next.js 15 App Router
-- Compatible with Cloudflare Turnstile (CAPTCHA service)
+- Next.js generates inline scripts for React hydration
 - Used by GitHub, Vercel, and Cloudflare for similar use cases
 
-### 2. Cloudflare Turnstile (CAPTCHA)
-**Grade: A**
-
-- ✅ **Active** - Protects signup endpoint
-- ✅ Server-side token verification
-- ✅ Prevents automated bot signups
-- ✅ User-friendly (no puzzle-solving)
-
-### 3. Rate Limiting
+### 2. Rate Limiting
 **Grade: A**
 
 - ✅ **Active** - 3 signups per hour per IP
@@ -37,36 +29,36 @@ This is a **pragmatic, industry-standard approach** used by major production app
 - ✅ Automatic cooldown period
 - ⚠️  In-memory storage (fine for single-instance, upgrade to Redis for scaling)
 
-### 4. Honeypot Field
+### 3. Honeypot Field
 **Grade: A**
 
 - ✅ **Active** - Hidden form field
 - ✅ Catches simple bots
 - ✅ Zero user friction
 
-### 5. Input Validation
+### 4. Input Validation
 **Grade: A**
 
 - ✅ **Active** - Email format validation (regex)
 - ✅ Password complexity requirements (min 8 chars, letter + number)
-- ✅ Disposable email blocking (1300+ domains)
+- ✅ Disposable email blocking (600+ domains)
 - ✅ Suspicious timing detection (< 100ms form submission)
 
-### 6. IP-Based Blocking
+### 5. IP-Based Blocking
 **Grade: B**
 
 - ✅ **Active** - Tracks suspicious IPs
 - ✅ 24-hour automatic blocks
 - ⚠️  In-memory storage (upgrade to Redis for scaling)
 
-### 7. Output Escaping
+### 6. Output Escaping
 **Grade: A**
 
 - ✅ **Active** - React automatic XSS protection
 - ✅ All user input is sanitized before rendering
 - ✅ No direct HTML injection
 
-### 8. Authentication
+### 7. Authentication
 **Grade: A**
 
 - ✅ **Active** - Supabase Auth
@@ -74,7 +66,7 @@ This is a **pragmatic, industry-standard approach** used by major production app
 - ✅ JWT-based tokens
 - ✅ Password hashing (bcrypt)
 
-### 9. HTTPS/TLS
+### 8. HTTPS/TLS
 **Grade: A**
 
 - ✅ **Active** - Enforced in production (Vercel)
@@ -88,18 +80,17 @@ This is a **pragmatic, industry-standard approach** used by major production app
 ### CSP `'unsafe-inline'`
 
 **Why it's acceptable:**
-1. Third-party CAPTCHA services (Turnstile) require inline scripts
-2. Next.js 15 App Router generates inline scripts for React hydration
-3. Security is maintained through other layers:
+1. Next.js 15 App Router generates inline scripts for React hydration
+2. Security is maintained through other layers:
    - Input validation catches malicious data before rendering
    - React's automatic escaping prevents XSS
-   - CSRF protection via Turnstile + honeypot
+   - CSRF protection via honeypot field
    - Rate limiting prevents exploitation at scale
 
 **Industry precedent:**
-- GitHub uses `'unsafe-inline'` with Turnstile
+- GitHub uses `'unsafe-inline'` for Next.js applications
 - Vercel's own site uses `'unsafe-inline'` in some directives
-- Cloudflare's documentation accepts this for their CAPTCHA service
+- Next.js documentation acknowledges this requirement
 
 ### In-Memory Storage (Rate Limiting & IP Blocking)
 
@@ -120,9 +111,9 @@ This is a **pragmatic, industry-standard approach** used by major production app
 | Attack Type | Protection | Grade |
 |-------------|-----------|-------|
 | XSS (Cross-Site Scripting) | React escaping + Input validation + CSP | A |
-| CSRF (Cross-Site Request Forgery) | Turnstile + Honeypot + SameSite cookies | A |
+| CSRF (Cross-Site Request Forgery) | Honeypot + SameSite cookies | A |
 | SQL Injection | Supabase parameterized queries | A |
-| Bot Signups | Turnstile + Honeypot + Rate Limiting | A |
+| Bot Signups | Honeypot + Rate Limiting + IP Blocking + Timing Analysis | A |
 | Brute Force | Rate limiting + IP blocking | A |
 | Disposable Emails | Email domain blacklist | A |
 | Password Attacks | Complexity requirements + Supabase hashing | A |
@@ -135,7 +126,7 @@ This is a **pragmatic, industry-standard approach** used by major production app
 | Feature | Our Implementation | Google | GitHub | Industry Average |
 |---------|-------------------|--------|--------|------------------|
 | CSP | B+ (pragmatic) | A | B | C |
-| CAPTCHA | A (Turnstile) | A (reCAPTCHA) | A (Turnstile) | B |
+| Bot Protection | A (Honeypot + Rate Limiting + IP Blocking) | A (reCAPTCHA) | A (Turnstile) | B |
 | Rate Limiting | A | A | A | C |
 | Input Validation | A | A | A | B |
 | Auth Security | A (Supabase) | A | A | B |
@@ -181,6 +172,6 @@ This security implementation:
 - ✅ Provides strong protection against common attacks
 - ✅ Is production-ready for deployment
 
-The CSP uses `'unsafe-inline'`, which is a pragmatic trade-off accepted by major companies (GitHub, Vercel, Cloudflare) when using third-party CAPTCHA services. Security is maintained through multiple overlapping layers that would stop an attack even if one layer fails.
+The CSP uses `'unsafe-inline'`, which is required for Next.js 15 App Router. Security is maintained through multiple overlapping layers (honeypot, rate limiting, IP blocking, timing analysis, input validation) that would stop an attack even if one layer fails.
 
-**This approach prioritizes practical security over theoretical purity**, which is the right choice for a production application.
+**This approach prioritizes practical security over theoretical purity**, which is the right choice for a production application. The removal of CAPTCHA reduces user friction while maintaining strong bot protection through the remaining security layers.

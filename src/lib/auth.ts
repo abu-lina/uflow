@@ -4,7 +4,6 @@ export const signUpWithLanguage = async (
   email: string,
   password: string,
   language: 'en' | 'de' = 'en',
-  captchaToken?: string,
   honeypot?: string
 ) => {
   console.log('[SIGNUP] Creating user via Admin API:', email);
@@ -21,7 +20,6 @@ export const signUpWithLanguage = async (
         email,
         password,
         language,
-        captchaToken,
         honeypot
       }),
     });

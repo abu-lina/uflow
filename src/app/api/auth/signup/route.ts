@@ -10,7 +10,6 @@ import {
   checkIPBlocked,
   markSuspiciousIP,
   isDisposableEmail,
-  verifyTurnstileToken,
   validatePasswordComplexity,
   isSuspiciousTiming,
 } from '@/utils/security';
@@ -62,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { email, password, language, captchaToken, honeypot } = body;
+    const { email, password, language, honeypot } = body;
     
     // 3. Honeypot check (should be empty)
     if (honeypot && honeypot.trim() !== '') {
@@ -74,43 +73,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. CAPTCHA verification (Cloudflare Turnstile)
-    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
-    
-    // Only require CAPTCHA if it's configured
-    if (turnstileSecretKey) {
-      if (!captchaToken) {
-        return NextResponse.json(
-          { error: 'CAPTCHA verification required. Please complete the security check.' },
-          { status: 400 }
-        );
-      }
-
-      const captchaResult = await verifyTurnstileToken(captchaToken, ip);
-      if (!captchaResult.success) {
-        markSuspiciousIP(ip, 1);
-        console.log('[SIGNUP API] CAPTCHA verification failed for IP:', ip);
-        return NextResponse.json(
-          { error: captchaResult.error || 'CAPTCHA verification failed. Please try again.' },
-          { status: 400 }
-        );
-      }
-    } else {
-      // CAPTCHA not configured - log warning but allow signup in development
-      if (process.env.NODE_ENV === 'production') {
-        console.warn('[SIGNUP API] WARNING: TURNSTILE_SECRET_KEY not set in production!');
-      } else {
-        console.log('[SIGNUP API] CAPTCHA not configured (development mode)');
-      }
-    }
-
-    // 5. Request timing check (too fast = likely bot)
+    // 4. Request timing check (too fast = likely bot)
     if (isSuspiciousTiming(startTime)) {
       markSuspiciousIP(ip, 1);
       console.log('[SIGNUP API] Suspiciously fast request from IP:', ip);
     }
     
-    // 6. Validate input
+    // 5. Validate input
     if (!email || !password) {
       console.error('[SIGNUP API] Missing email or password');
       return NextResponse.json(
@@ -119,7 +88,7 @@ export async function POST(request: Request) {
       );
     }
     
-    // 7. Email format validation
+    // 6. Email format validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       console.error('[SIGNUP API] Invalid email format:', email);
       return NextResponse.json(
@@ -128,7 +97,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 8. Disposable email check
+    // 7. Disposable email check
     if (isDisposableEmail(email)) {
       console.log('[SIGNUP API] Disposable email blocked:', email);
       return NextResponse.json(
@@ -137,7 +106,7 @@ export async function POST(request: Request) {
       );
     }
     
-    // 9. Enhanced password validation
+    // 8. Enhanced password validation
     const passwordValidation = validatePasswordComplexity(password);
     if (!passwordValidation.valid) {
       console.error('[SIGNUP API] Password validation failed:', passwordValidation.error);

@@ -131,6 +131,7 @@ const eslintConfig = [
     ignores: [
       'node_modules/',
       '.next/',
+      '.open-next/',
       'out/',
       'dist/',
       'coverage/',
@@ -138,9 +139,11 @@ const eslintConfig = [
       '*.config.mjs',
       '*.config.ts',
       'public/sw.js',
+      'public/sw-push-handler.js',
       'public/workbox-*.js',
       'scripts/**/*.js',
       'scripts/**/*.ts',
+      'supabase/functions/**',
       'next-env.d.ts', // Next.js generated file
       'Figma_imports/**', // Figma reference files, not part of the app
     ],

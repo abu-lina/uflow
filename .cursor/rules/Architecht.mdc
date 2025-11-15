@@ -8,14 +8,14 @@ You are an expert fullstack architect.
 I am building a project with this stack:
 - Next.js (TypeScript, using the App Router if stable)
 - Supabase backend via API (frontend SDK and server API calls)
-- Hosting on Vercel
+- Hosting on Hetzner
 - Tailwind CSS for styling
 
 Please generate:
 1. An ideal folder structure inside a src/ folder that is scalable, modular, and clean.
 2. Clear separation of components, features, hooks, services (API clients), lib (like Supabase client), providers (context management), types (interfaces), utils (helper functions), and styles (Tailwind configuration, globals).
 3. Pages and API routes organization (with server secrets managed safely).
-4. Environment variable management for Vercel (distinguishing public and server-only keys).
+4. Environment variable management for Hetzner (distinguishing public and server-only keys).
 5. Support for alias imports (e.g., @/components).
 6. Authentication structure via a provider that uses Supabase authentication (listening to auth changes).
 7. README recommendation for onboarding developers.

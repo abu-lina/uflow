@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -14,27 +14,6 @@ import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/c
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { signUpWithLanguage } from '@/lib/auth';
-
-// Cloudflare Turnstile types
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (
-        element: HTMLElement,
-        options: {
-          sitekey: string;
-          callback?: (token: string) => void;
-          'error-callback'?: (error?: string) => void;
-          'expired-callback'?: () => void;
-          'timeout-callback'?: () => void;
-        }
-      ) => string;
-      reset: (widgetId?: string) => void;
-      getResponse: (widgetId?: string) => string | undefined;
-      remove: (widgetId?: string) => void;
-    };
-  }
-}
 
 interface FormData {
   email: string;
@@ -57,142 +36,12 @@ export function SignupPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const captchaWidgetId = useRef<string | null>(null);
-  const captchaContainerRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = useCallback((field: keyof FormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
-  }, []);
-
-  // Load Cloudflare Turnstile script
-  useEffect(() => {
-    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-    
-    // Only load CAPTCHA if site key is configured
-    if (!siteKey) {
-      console.warn('[SIGNUP] Turnstile site key not configured. CAPTCHA will be optional.');
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    script.defer = true;
-    
-    // Add error handling before appending
-    script.onload = () => {
-      console.log('[SIGNUP] Turnstile script loaded successfully');
-      
-      // Wait a bit for the script to fully initialize
-      setTimeout(() => {
-        // Render CAPTCHA after script loads
-        if (window.turnstile && captchaContainerRef.current && !captchaWidgetId.current) {
-          try {
-            const widgetId = window.turnstile.render(captchaContainerRef.current, {
-              sitekey: siteKey,
-              callback: (token: string) => {
-                console.log('[SIGNUP] CAPTCHA verified successfully, token received');
-                setCaptchaToken(token);
-                setError(null); // Clear any previous errors
-              },
-              'error-callback': (error?: string) => {
-                // Enhanced debugging for error 600010
-                const currentHostname = window.location.hostname;
-                const currentOrigin = window.location.origin;
-                const fullSiteKey = siteKey || 'NOT SET';
-                
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('[SIGNUP] CAPTCHA VERIFICATION ERROR');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('Error Code:', error || 'Unknown');
-                console.error('Error 600010 = Invalid site key for this hostname');
-                console.error('');
-                console.error('🔍 DEBUGGING INFORMATION:');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('Site Key (full):', fullSiteKey);
-                console.error('Site Key (first 20 chars):', fullSiteKey.substring(0, 20) + '...');
-                console.error('Current Hostname:', currentHostname);
-                console.error('Current Origin:', currentOrigin);
-                console.error('Widget ID:', captchaWidgetId.current);
-                console.error('');
-                console.error('✅ VERIFICATION CHECKLIST:');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('1. Go to: https://dash.cloudflare.com/?to=/:account/turnstile');
-                console.error('2. Find widget with site key:', fullSiteKey.substring(0, 20) + '...');
-                console.error('3. Check hostnames configured:');
-                console.error('   - Should include:', currentHostname);
-                console.error('   - Should include: www.' + currentHostname, '(if you use www)');
-                console.error('4. Verify widget mode is "Managed"');
-                console.error('5. Compare site key in Cloudflare with:', fullSiteKey);
-                console.error('');
-                console.error('💡 COMMON FIXES:');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.error('• Add hostname:', currentHostname, 'to Cloudflare Turnstile');
-                console.error('• Add www subdomain if you use it: www.' + currentHostname);
-                console.error('• Wait 5-10 minutes after adding hostname');
-                console.error('• Verify site key in GitHub Secrets matches Cloudflare');
-                console.error('• Check widget mode is "Managed"');
-                console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                
-                setCaptchaToken(null);
-                setError('CAPTCHA verification failed. Check browser console for debugging info.');
-              },
-              'expired-callback': () => {
-                console.warn('[SIGNUP] CAPTCHA token expired');
-                setCaptchaToken(null);
-              },
-              'timeout-callback': () => {
-                console.warn('[SIGNUP] CAPTCHA verification timeout');
-                setCaptchaToken(null);
-                setError('CAPTCHA verification timed out. Please try again.');
-              },
-            });
-            captchaWidgetId.current = widgetId;
-            console.log('[SIGNUP] CAPTCHA widget rendered with ID:', widgetId);
-          } catch (error) {
-            console.error('[SIGNUP] Error rendering CAPTCHA:', error);
-            setError('Failed to load CAPTCHA. Please refresh the page.');
-          }
-        } else {
-          console.warn('[SIGNUP] CAPTCHA container or Turnstile not available:', {
-            hasTurnstile: !!window.turnstile,
-            hasContainer: !!captchaContainerRef.current,
-            hasWidgetId: !!captchaWidgetId.current,
-          });
-        }
-      }, 100);
-    };
-
-    script.onerror = (error) => {
-      console.error('[SIGNUP] Failed to load Turnstile script:', error);
-      console.error('[SIGNUP] Script URL:', script.src);
-      console.error('[SIGNUP] Possible causes:');
-      console.error('  - Ad blocker blocking the script');
-      console.error('  - Network connectivity issues');
-      console.error('  - CSP (Content Security Policy) blocking the script');
-      console.error('  - Firewall blocking Cloudflare domains');
-      setError('Failed to load security verification. Please check your connection and try again, or disable ad blockers.');
-    };
-    
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup: remove script and CAPTCHA widget
-      if (captchaWidgetId.current && window.turnstile) {
-        try {
-          window.turnstile.remove(captchaWidgetId.current);
-        } catch (error) {
-          console.error('Error removing CAPTCHA:', error);
-        }
-      }
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
   }, []);
 
   // Redirect if already logged in
@@ -241,13 +90,6 @@ export function SignupPageContent() {
       return false;
     }
     
-    // Check CAPTCHA (only if site key is configured)
-    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-    if (siteKey && !captchaToken) {
-      setError('Bitte bestätige, dass du kein Roboter bist.');
-      return false;
-    }
-    
     setError(null);
     return true;
   };
@@ -268,27 +110,16 @@ export function SignupPageContent() {
       const honeypotInput = form.querySelector('input[name="website"]') as HTMLInputElement;
       const honeypot = honeypotInput?.value || '';
       
-      // Reset CAPTCHA after submission
-      if (captchaWidgetId.current && window.turnstile) {
-        window.turnstile.reset(captchaWidgetId.current);
-      }
-      
       const { data, error } = await signUpWithLanguage(
         formData.email, 
         formData.password, 
         language,
-        captchaToken || undefined,
         honeypot
       );
       
       if (error) {
         setError(error.message || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
         setIsLoading(false);
-        // Reset CAPTCHA on error
-        if (captchaWidgetId.current && window.turnstile) {
-          window.turnstile.reset(captchaWidgetId.current);
-          setCaptchaToken(null);
-        }
         return;
       }
       
@@ -418,16 +249,6 @@ export function SignupPageContent() {
                   </div>
                 </div>
               )}
-
-              {/* CAPTCHA - Cloudflare Turnstile */}
-              <div className="mt-4 flex justify-center">
-                <div ref={captchaContainerRef} id="turnstile-widget" />
-                {!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
-                  <p className="text-xs text-gray-500 text-center">
-                    CAPTCHA not configured. Please set NEXT_PUBLIC_TURNSTILE_SITE_KEY in your environment variables.
-                  </p>
-                )}
-              </div>
 
               {/* Button and links with proper spacing (24px gap from form fields) */}
               <div className="mt-6 flex flex-col space-y-3">
