@@ -6,12 +6,18 @@ import { useRouter } from 'next/navigation';
 import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
-import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
+import dynamic from 'next/dynamic';
 import { Button, IconWithTitle, Icon } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+
+// Lazy load heavy form component
+const ProviderCreateForm = dynamic(() => import('@/features/providers/ProviderCreateForm').then(mod => ({ default: mod.ProviderCreateForm })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="text-sm text-content">Loading...</div></div>,
+  ssr: false,
+});
 
 export default function CreateBasicsPage() {
   const router = useRouter();

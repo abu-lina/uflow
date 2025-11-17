@@ -1,11 +1,28 @@
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 
 import { LandingLayout } from '@/components/layout/LandingLayout';
-import { AboutSection } from '@/components/shared/AboutSection';
-import { CategoryGallerySection } from '@/components/shared/CategoryGallerySection';
-import { ExploreSection } from '@/components/shared/ExploreSection';
-import { LandingHero } from '@/components/shared/LandingHero';
-import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
+
+// Lazy load heavy landing page components for better initial load
+const MobileSplashScreen = dynamic(() => import('@/components/shared/MobileSplashScreen').then(mod => ({ default: mod.MobileSplashScreen })), {
+  loading: () => <div className="flex h-screen items-center justify-center" />,
+});
+
+const LandingHero = dynamic(() => import('@/components/shared/LandingHero').then(mod => ({ default: mod.LandingHero })), {
+  loading: () => <div className="flex h-screen items-center justify-center" />,
+});
+
+const AboutSection = dynamic(() => import('@/components/shared/AboutSection').then(mod => ({ default: mod.AboutSection })), {
+  loading: () => null,
+});
+
+const ExploreSection = dynamic(() => import('@/components/shared/ExploreSection').then(mod => ({ default: mod.ExploreSection })), {
+  loading: () => null,
+});
+
+const CategoryGallerySection = dynamic(() => import('@/components/shared/CategoryGallerySection').then(mod => ({ default: mod.CategoryGallerySection })), {
+  loading: () => null,
+});
 
 // Ensure this page is treated as a client-side route (not statically generated)
 export const dynamic = 'force-dynamic';

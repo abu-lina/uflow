@@ -105,6 +105,14 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   
+  // Performance optimizations
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+  
   // ESLint configuration
   // Note: We use flat config (eslint.config.mjs) which Next.js may not auto-detect
   // The warning "The Next.js plugin was not detected" is informational and doesn't affect functionality
@@ -131,7 +139,14 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    optimizePackageImports: ['@mui/material', '@mui/icons-material', 'framer-motion'],
+    optimizePackageImports: [
+      '@mui/material', 
+      '@mui/icons-material', 
+      'motion',
+      'lucide-react',
+      '@iconify/react',
+      '@tanstack/react-query',
+    ],
     // Preload critical chunks
     webpackBuildWorker: true,
   },
@@ -224,7 +239,7 @@ const nextConfig = {
     pagesBufferLength: 2,
   },
 
-  // Webpack optimization for Cloudflare Pages
+  // Webpack optimization for better code splitting
   webpack: (config, { isServer }) => {
     // Exclude Figma_imports from compilation
     config.watchOptions = {
@@ -234,21 +249,21 @@ const nextConfig = {
     if (!isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
-        maxSize: 300000, // 300KB max chunk size (better balance)
+        maxSize: 244000, // ~240KB max chunk size (better for mobile)
         minSize: 20000, // 20KB min chunk size (fewer small chunks)
         cacheGroups: {
           default: {
             minChunks: 2,
             priority: -20,
             reuseExistingChunk: true,
-            maxSize: 300000,
+            maxSize: 244000,
           },
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             priority: -10,
             chunks: 'all',
-            maxSize: 300000,
+            maxSize: 244000,
             minSize: 10000,
           },
           // Split large libraries into separate chunks
@@ -256,14 +271,35 @@ const nextConfig = {
             test: /[\\/]node_modules[\\/]@mui[\\/]/,
             name: 'mui',
             chunks: 'all',
-            maxSize: 300000,
+            maxSize: 244000,
             priority: 10,
           },
-          framer: {
-            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-            name: 'framer',
+          motion: {
+            test: /[\\/]node_modules[\\/]motion[\\/]/,
+            name: 'motion',
             chunks: 'all',
-            maxSize: 300000,
+            maxSize: 244000,
+            priority: 10,
+          },
+          lucide: {
+            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+            name: 'lucide',
+            chunks: 'all',
+            maxSize: 244000,
+            priority: 10,
+          },
+          iconify: {
+            test: /[\\/]node_modules[\\/]@iconify[\\/]/,
+            name: 'iconify',
+            chunks: 'all',
+            maxSize: 244000,
+            priority: 10,
+          },
+          supabase: {
+            test: /[\\/]node_modules[\\/]@supabase[\\/]/,
+            name: 'supabase',
+            chunks: 'all',
+            maxSize: 244000,
             priority: 10,
           },
         },

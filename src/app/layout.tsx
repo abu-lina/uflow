@@ -10,7 +10,12 @@ import '@/styles/toast-custom.css';
 
 import type { Metadata, Viewport } from 'next';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap', // Better font loading performance
+  preload: true,
+  variable: '--font-inter',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',

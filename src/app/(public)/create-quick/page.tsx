@@ -7,8 +7,20 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
-import { BusinessSearch, type PlaceData } from '@/components/create/BusinessSearch';
-import { InstagramImport, type InstagramData } from '@/components/create/InstagramImport';
+import dynamic from 'next/dynamic';
+import type { PlaceData } from '@/components/create/BusinessSearch';
+import type { InstagramData } from '@/components/create/InstagramImport';
+
+// Lazy load heavy import components
+const BusinessSearch = dynamic(() => import('@/components/create/BusinessSearch').then(mod => ({ default: mod.BusinessSearch })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="text-sm text-content">Loading...</div></div>,
+  ssr: false,
+});
+
+const InstagramImport = dynamic(() => import('@/components/create/InstagramImport').then(mod => ({ default: mod.InstagramImport })), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="text-sm text-content">Loading...</div></div>,
+  ssr: false,
+});
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
