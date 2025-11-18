@@ -16,7 +16,7 @@ if (!SPRINTS_DATA_SOURCE_ID) {
   );
 }
 
-export type SprintStatus = 'Planning' | 'Active' | 'Completed';
+export type SprintStatus = 'Planned' | 'Active' | 'Completed';
 
 export interface CreateSprintInput {
   name: string;
@@ -111,8 +111,8 @@ export async function createSprint(input: CreateSprintInput) {
       },
     },
     Status: {
-      select: {
-        name: 'Planning',
+      status: {
+        name: 'Planned',
       },
     },
   };
@@ -155,10 +155,57 @@ export async function getSprint(sprintId: string) {
  * Get active sprint
  */
 export async function getActiveSprint(): Promise<{ id: string; url: string; properties: unknown } | null> {
-  // For now, we'll need to query the database
-  // This requires implementing a query function
-  // For simplicity, return null and let the API handle querying
-  return null;
+  const { getNotionConfig } = await import('./client');
+  const config = getNotionConfig();
+  const NOTION_API_BASE = 'https://api.notion.com/v1';
+  
+  // Get sprints data source ID from environment
+  const sprintsDataSourceId = SPRINTS_DATA_SOURCE_ID;
+  
+  if (!sprintsDataSourceId) {
+    throw new Error('NOTION_SPRINTS_DATA_SOURCE_ID environment variable is required');
+  }
+
+  // Query for active sprint (status = "In progress")
+  const filter = {
+    property: 'Status',
+    status: {
+      equals: 'In progress',
+    },
+  };
+
+  const body = {
+    page_size: 1,
+    filter,
+    sorts: [
+      { property: 'Start Date', direction: 'descending' },
+    ],
+  };
+
+  const response = await fetch(`${NOTION_API_BASE}/data_sources/${sprintsDataSourceId}/query`, {
+    method: 'POST',
+    headers: config.headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(`Notion API error: ${error.message || response.statusText}`);
+  }
+
+  const data = await response.json();
+  const results = data.results || [];
+
+  if (results.length === 0) {
+    return null;
+  }
+
+  const sprint = results[0] as { id: string; url: string; properties: unknown };
+  return {
+    id: sprint.id,
+    url: sprint.url,
+    properties: sprint.properties,
+  };
 }
 
 /**

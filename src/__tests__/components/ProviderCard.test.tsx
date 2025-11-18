@@ -423,11 +423,27 @@ describe('ProviderCard Component', () => {
 
   describe('Error Handling', () => {
     it('should handle missing provider data gracefully', () => {
-      const incompleteProvider = {
+      const incompleteProvider: Provider = {
         provider_id: 'incomplete-123',
         provider_name: 'Incomplete Provider',
-        // Missing other required fields
-      } as Partial<Provider>;
+        provider_images: null,
+        category_id: null,
+        address_city: null,
+        social_website: null,
+        social_instagram: null,
+        contact_email: null,
+        contact_phone: null,
+        address_street: null,
+        address_country: null,
+        address_zip: null,
+        location_latitude: null,
+        location_longitude: null,
+        created_at: null,
+        updated_at: null,
+        barakah_effects: [],
+        offers_ids: [],
+        needs_ids: [],
+      };
       
       render(
         <ProviderCard

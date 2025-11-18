@@ -558,9 +558,25 @@ describe('ProviderDetailModal Component', () => {
     it('should handle missing provider data gracefully', () => {
       const incompleteProvider = {
         provider_id: 'incomplete-123',
-        name: 'Incomplete Provider',
-        // Missing other required fields
-      } as Partial<Provider>;
+        provider_name: 'Incomplete Provider',
+        provider_images: null,
+        category_id: null,
+        address_city: null,
+        social_website: null,
+        social_instagram: null,
+        contact_email: null,
+        contact_phone: null,
+        address_street: null,
+        address_country: null,
+        address_zip: null,
+        location_latitude: null,
+        location_longitude: null,
+        created_at: null,
+        updated_at: null,
+        barakah_effects: [],
+        offers_ids: [],
+        needs_ids: [],
+      } as Provider;
       
       render(
         <ProviderDetailModal

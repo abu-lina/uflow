@@ -17,7 +17,8 @@ export async function getEpicsDatabaseId(_epicPageId: string): Promise<string> {
   
   // Actually, for querying we need the database ID, not data source ID
   // The database ID can be extracted from the page URL or parent
-  // For now, return the known database ID from DATABASE_IDS.md
+  // For now, return the known database ID (without dashes for API)
+  // Database ID from URL: https://www.notion.so/2366163f450b8045985af4f66be56792
   return '2366163f450b8045985af4f66be56792';
 }
 

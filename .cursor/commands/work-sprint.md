@@ -1,6 +1,6 @@
 # Work Sprint
 
-Start working on sprint items automatically, ordered by priority.
+Automatically implement sprint items using expert rules, validate, test, and require confirmation before marking done.
 
 ## Usage
 
@@ -10,49 +10,80 @@ Start working on sprint items automatically, ordered by priority.
 
 ## What It Does
 
-1. **Fetches active sprint** from Notion
+1. **Fetches active sprint** from Notion (or uses provided sprint ID)
 2. **Gets highest priority "Ready" item** (top of list)
 3. **Marks item "In progress"**
-4. **Provides full context** to Cursor AI:
-   - Task name and description
-   - Acceptance criteria
-   - Expert review notes
+4. **Builds implementation context** from:
+   - Task name, description, and acceptance criteria
+   - Expert review notes from refinement
+   - Expert rules from `.cursor/rules/*-expert.mdc` files
    - Related epic information
-5. **Tracks progress** as items are completed
+5. **Implements the task** using AI with expert rules as guidelines
+6. **Validates implementation** against expert review criteria
+7. **Runs automated tests** (if available)
+8. **Runs linting and type checking**
+9. **Shows results** and asks for confirmation before marking done
+10. **Tracks progress** as items are completed
 
 ## Workflow
 
-### Starting Work
+### Automated Implementation Workflow
+
+When you run `@work-sprint.md`, the system:
+
+1. **Finds next "Ready" item** from active sprint
+2. **Marks it "In progress"**
+3. **Loads expert rules** for required experts from `.cursor/rules/`
+4. **Builds implementation context** combining:
+   - Task details and acceptance criteria
+   - Expert-specific implementation guidelines
+   - Validation criteria from expert rules
+5. **Displays context** for AI implementation
+6. **AI implements the task** following expert guidelines
+7. **Validates implementation** against expert review criteria
+8. **Runs automated tests** (`npm test`)
+9. **Runs linting and type checking** (`npm run lint` and `npm run type-check`)
+10. **Shows results** with pass/fail status for each check
+11. **Asks for confirmation** before marking as done
+12. **Marks item "Done"** if confirmed and all checks passed
+
+### Error Handling
+
+If any step fails:
+- **Stops immediately** and reports the error
+- **Keeps item "In progress"** status
+- **Waits for user intervention** before continuing
+- **Shows detailed error information** for debugging
+
+### Confirmation
+
+Before marking an item as done, the system asks:
 ```
-@work-sprint.md sprint-123
+❓ Mark this item as done? (y/n):
 ```
 
-System will:
-1. Find next "Ready" item
-2. Mark it "In progress"
-3. Provide context for Cursor to work on
+- **Yes (y)**: Marks item as done and shows next item
+- **No (n)**: Keeps item in progress for manual completion later
 
-### Completing Work
-After completing an item, mark it done:
-```
-Complete current sprint item
-```
+### API Access
 
-Or use API:
+Use the automated work API for programmatic access:
+
 ```
-POST /api/notion/work-sprint
+POST /api/notion/automated-work-sprint
 {
-  "sprintId": "sprint-123",
-  "action": "complete",
-  "itemId": "item-456"
+  "sprintId": "sprint-123",  // Optional - finds active sprint if omitted
+  "itemId": "item-456",       // Optional - gets next item if omitted
+  "autoConfirm": false        // Optional - auto-mark done if all checks pass
 }
 ```
 
-System will:
-1. Mark current item "Done"
-2. Get next "Ready" item
-3. Mark it "In progress"
-4. Provide context for next item
+Response includes:
+- Implementation context and prompt
+- Validation results per expert
+- Test results
+- Linting results
+- Ready-to-complete status
 
 ## Priority Order
 
@@ -64,14 +95,35 @@ Items are processed by their position in Notion:
 
 ## Context Provided
 
-For each sprint item, Cursor receives:
+For each sprint item, the system builds comprehensive context:
+
+### Task Information
 - **Task Name**: Clear task title
 - **Description**: Full task description
 - **Type**: Story, Task, or Bug
 - **Status**: Current status
+- **Acceptance Criteria**: From QA expert review
 - **Expert Notes**: Review notes from refinement
 - **Epic Link**: Related epic information
-- **Acceptance Criteria**: From QA expert review
+
+### Expert Rules Integration
+- **Required Experts**: Determined from refinement field or inferred from task type
+- **Implementation Guidelines**: Extracted from expert rules:
+  - Responsibilities sections
+  - Common Patterns sections
+  - Standards sections
+- **Validation Criteria**: Extracted from expert rules:
+  - Review Criteria sections
+  - Standards sections
+
+### Expert Rules Source
+Rules are loaded from `.cursor/rules/*-expert.mdc` files:
+- `backend-expert.mdc`
+- `frontend-expert.mdc`
+- `qa-expert.mdc`
+- `security-expert.mdc`
+- `compliance-expert.mdc`
+- `ux-ui-expert.mdc`
 
 ## Sprint Progress
 
@@ -108,11 +160,54 @@ You can work through the entire sprint:
 4. Track progress throughout
 5. Review completed items
 
+## Validation and Testing
+
+The system automatically validates and tests each implementation:
+
+### Expert Validation
+- Checks implementation against each required expert's review criteria
+- Validates against expert standards
+- Reports issues per expert
+- Overall validation status
+
+### Automated Testing
+- Runs `npm test` to execute test suite
+- Reports test pass/fail status
+- Shows test errors if any
+
+### Linting and Type Checking
+- Runs `npm run type-check` for TypeScript validation
+- Runs `npm run lint` for code quality checks
+- Reports all linting and type errors
+- Blocks completion if critical errors exist
+
 ## Best Practices
 
-- Work items in priority order
-- Complete items fully before moving on
-- Update status as you work
-- Review expert notes before starting
-- Test items before marking done
+- **Review implementation context** before AI implements
+- **Check validation results** to ensure expert criteria are met
+- **Review test results** before confirming completion
+- **Fix linting errors** before marking done
+- **Work items in priority order** (system handles this automatically)
+- **Complete items fully** before moving to next (system enforces this)
+
+## Troubleshooting
+
+### No Active Sprint Found
+- Create or activate a sprint in Notion (status = "In progress")
+- Or provide sprint ID: `@work-sprint.md [sprint-id]`
+
+### Tests Fail
+- Review test output in the results
+- Fix failing tests
+- Re-run the script
+
+### Linting Errors
+- Review linting output
+- Fix reported errors
+- Re-run the script
+
+### Validation Fails
+- Review expert validation issues
+- Ensure implementation follows expert guidelines
+- Update code to address validation issues
 

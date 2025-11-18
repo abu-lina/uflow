@@ -129,7 +129,8 @@ export async function fetchAndProcessEpics(
     // getAllEpics handles database ID formatting internally
     let dbId = databaseId;
     if (!dbId) {
-      // Use default from DATABASE_IDS.md
+      // Epics database ID from URL: https://www.notion.so/2366163f450b8045985af4f66be56792
+      // Database ID: 2366163f450b8045985af4f66be56792 (without dashes for API)
       dbId = '2366163f450b8045985af4f66be56792';
     }
     epics = await getAllEpics(dbId);

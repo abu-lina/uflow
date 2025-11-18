@@ -230,12 +230,11 @@ export async function getAllEpics(
   filter?: unknown,
   sorts?: Array<{ property: string; direction: 'ascending' | 'descending' }>
 ) {
-  // If database ID not provided, use default from DATABASE_IDS.md
+  // If database ID not provided, use default
   let dbId = databaseId;
   if (!dbId) {
-    // Epics database ID from DATABASE_IDS.md
-    // URL: https://www.notion.so/2366163f450b8045985af4f66be56792
-    // Database ID: 2366163f450b8045985af4f66be56792 (without dashes)
+    // Epics database ID from URL: https://www.notion.so/2366163f450b8045985af4f66be56792
+    // Database ID: 2366163f450b8045985af4f66be56792 (without dashes for API)
     dbId = '2366163f450b8045985af4f66be56792';
   }
 

@@ -277,10 +277,8 @@ export async function getAllStories(
 ) {
   let dbId = databaseId;
   if (!dbId) {
-    // Issues database ID from DATABASE_IDS.md
-    // URL: https://www.notion.so/2366163f450b80529b2ff97e97f771db
-    // Database ID: 2366163f-450b-8052-9b2f-f97e97f771db
-    // Notion API needs ID without dashes
+    // Issues database ID from URL: https://www.notion.so/2366163f450b80529b2ff97e97f771db
+    // Database ID: 2366163f450b80529b2ff97e97f771db (without dashes for API)
     dbId = '2366163f450b80529b2ff97e97f771db';
   }
   

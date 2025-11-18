@@ -14,6 +14,14 @@ export interface SprintItem {
   description: string;
   url: string;
   priority: number; // Lower number = higher priority
+  expertNotes?: string;
+  acceptanceCriteria?: string;
+  epicInfo?: {
+    id: string;
+    name: string;
+    url: string;
+  };
+  refinement?: string[]; // Required experts
 }
 
 export interface SprintProgress {
@@ -36,7 +44,7 @@ export async function getNextSprintItem(sprintId: string): Promise<SprintItem | 
     return null;
   }
 
-  // Fetch all issues and filter for "Ready" status
+  // Fetch all issues and filter for "Ready" or "Not started" status
   const readyItems: SprintItem[] = [];
 
   for (let i = 0; i < issues.length; i++) {
@@ -45,12 +53,22 @@ export async function getNextSprintItem(sprintId: string): Promise<SprintItem | 
       const page = await getPage(issue.id);
       const status = page.properties.Status?.status?.name || 'Not started';
       
-      if (status === 'Ready') {
+      // Pick up "Ready" or "Not started" items (skip "In progress" and "Done")
+      if (status === 'Ready' || status === 'Not started') {
         const name = page.properties.Name?.title?.[0]?.text?.content || 'Untitled';
         const type = page.properties.Type?.select?.name || 'Story';
         
-        // Extract description from content blocks
+        // Extract full description from content blocks
         const description = await extractPageDescription(issue.id);
+        
+        // Parse expert notes and acceptance criteria
+        const { expertNotes, acceptanceCriteria } = parseExpertNotesAndCriteria(description);
+        
+        // Get refinement experts
+        const refinement = (page.properties as { Refinement?: { multi_select?: Array<{ name: string }> } }).Refinement?.multi_select?.map(r => r.name) || [];
+        
+        // Get epic information
+        const epicInfo = await getEpicInfo(page);
         
         readyItems.push({
           id: issue.id,
@@ -60,6 +78,10 @@ export async function getNextSprintItem(sprintId: string): Promise<SprintItem | 
           description,
           url: page.url,
           priority: i, // Position in list = priority (lower = higher priority)
+          expertNotes: expertNotes || undefined,
+          acceptanceCriteria: acceptanceCriteria || undefined,
+          epicInfo,
+          refinement: refinement.length > 0 ? refinement : undefined,
         });
       }
     } catch (error) {
@@ -150,7 +172,7 @@ export async function getSprintProgress(sprintId: string): Promise<SprintProgres
 }
 
 /**
- * Extract page description from content blocks
+ * Extract page description from content blocks (full content)
  */
 async function extractPageDescription(pageId: string): Promise<string> {
   try {
@@ -170,18 +192,124 @@ async function extractPageDescription(pageId: string): Promise<string> {
     const data = await response.json();
     const blocks = data.results || [];
     
-    // Get first few paragraphs as description
+    // Extract all text from blocks
     const texts: string[] = [];
-    for (const block of blocks.slice(0, 3)) {
+    for (const block of blocks) {
       if (block.type === 'paragraph' && block.paragraph?.rich_text) {
         const text = block.paragraph.rich_text.map((rt: { plain_text: string }) => rt.plain_text).join('');
         if (text) texts.push(text);
+      } else if (block.type === 'heading_1' && block.heading_1?.rich_text) {
+        const text = block.heading_1.rich_text.map((rt: { plain_text: string }) => rt.plain_text).join('');
+        if (text) texts.push(`# ${text}`);
+      } else if (block.type === 'heading_2' && block.heading_2?.rich_text) {
+        const text = block.heading_2.rich_text.map((rt: { plain_text: string }) => rt.plain_text).join('');
+        if (text) texts.push(`## ${text}`);
+      } else if (block.type === 'heading_3' && block.heading_3?.rich_text) {
+        const text = block.heading_3.rich_text.map((rt: { plain_text: string }) => rt.plain_text).join('');
+        if (text) texts.push(`### ${text}`);
       }
     }
     
-    return texts.join(' ') || 'No description available';
+    return texts.join('\n\n') || 'No description available';
   } catch {
     return 'No description available';
   }
+}
+
+/**
+ * Parse expert notes and acceptance criteria from description
+ */
+function parseExpertNotesAndCriteria(description: string): { expertNotes: string; acceptanceCriteria: string } {
+  let expertNotes = '';
+  let acceptanceCriteria = '';
+  
+  // Look for Expert Review Notes section
+  const expertNotesMatch = description.match(/\*\*Expert Review Notes\*\*\s*\n\n([\s\S]*?)(?=\*\*Acceptance Criteria\*\*|$)/);
+  if (expertNotesMatch) {
+    expertNotes = expertNotesMatch[1].trim();
+  }
+  
+  // Look for Acceptance Criteria section
+  const criteriaMatch = description.match(/\*\*Acceptance Criteria\*\*\s*\n\n([\s\S]*?)(?=\*\*|$)/);
+  if (criteriaMatch) {
+    acceptanceCriteria = criteriaMatch[1].trim();
+  }
+  
+  return { expertNotes, acceptanceCriteria };
+}
+
+/**
+ * Get epic information from task
+ */
+async function getEpicInfo(page: { properties: unknown }): Promise<{ id: string; name: string; url: string } | undefined> {
+  try {
+    const epicRelation = (page.properties as { Epic?: { relation?: Array<{ id: string }> } }).Epic?.relation;
+    if (!epicRelation || epicRelation.length === 0) {
+      return undefined;
+    }
+    
+    const epicId = epicRelation[0].id;
+    const { getPage } = await import('./client');
+    const epicPage = await getPage(epicId);
+    const epicName = epicPage.properties.Name?.title?.[0]?.text?.content || 'Untitled Epic';
+    
+    return {
+      id: epicId,
+      name: epicName,
+      url: epicPage.url,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Get expert rules for a sprint item
+ */
+export async function getExpertRulesForItem(item: SprintItem): Promise<Map<string, string>> {
+  const { readExpertRules } = await import('./epicExpertAnalysis');
+  const allExpertRules = readExpertRules();
+  
+  // Get required experts from item refinement or infer from task
+  const requiredExperts = item.refinement || [];
+  
+  // Filter to only required experts
+  const relevantRules = new Map<string, string>();
+  for (const expert of requiredExperts) {
+    const rule = allExpertRules.get(expert);
+    if (rule) {
+      relevantRules.set(expert, rule);
+    }
+  }
+  
+  return relevantRules;
+}
+
+/**
+ * Validate implementation against expert rules
+ */
+export async function validateImplementation(item: SprintItem): Promise<{
+  passed: boolean;
+  expertValidations: Array<{
+    expert: string;
+    passed: boolean;
+    issues: string[];
+  }>;
+  overallIssues: string[];
+}> {
+  const { validateAgainstExpertRules } = await import('./automatedSprintWork');
+  const expertRules = await getExpertRulesForItem(item);
+  
+  // Create a basic implementation result for validation
+  // In practice, this would come from the actual implementation
+  const implementationResult = {
+    success: true,
+    filesModified: [],
+    errors: [],
+    warnings: [],
+    implementationSummary: `Implementation for: ${item.name}`,
+  };
+  
+  return await validateAgainstExpertRules(implementationResult, expertRules, item);
 }
 

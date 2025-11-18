@@ -22,12 +22,10 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const { databaseId } = body as { databaseId?: string };
 
-    // Epics database ID from DATABASE_IDS.md
-    // URL: https://www.notion.so/2366163f450b8045985af4f66be56792
-    // Database ID from URL: 2366163f450b8045985af4f66be56792 (no dashes)
+    // Epics database ID from URL: https://www.notion.so/2366163f450b8045985af4f66be56792
+    // Database ID: 2366163f450b8045985af4f66be56792 (without dashes for API)
     let dbId = databaseId;
     if (!dbId) {
-      // Use default database ID from DATABASE_IDS.md (without dashes for API)
       dbId = '2366163f450b8045985af4f66be56792';
     }
 

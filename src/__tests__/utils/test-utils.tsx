@@ -2,9 +2,11 @@ import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { vi } from 'vitest';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/providers/auth-provider';
 import { SearchProvider } from '@/providers/search-provider';
 import { LoadingProvider } from '@/providers/LoadingProvider';
+import { LanguageProvider } from '@/providers/LanguageProvider';
 import { mockAuthContext, mockSearchContext } from '../mocks/providerData';
 
 // Mock Next.js router
@@ -129,15 +131,28 @@ function customRender(
     return render(ui, renderOptions);
   }
 
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  });
+
   const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
     return (
-      <AuthProvider>
-        <SearchProvider>
-          <LoadingProvider>
-            {children}
-          </LoadingProvider>
-        </SearchProvider>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <LanguageProvider>
+          <AuthProvider>
+            <SearchProvider>
+              <LoadingProvider>
+                {children}
+              </LoadingProvider>
+            </SearchProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </QueryClientProvider>
     );
   };
 

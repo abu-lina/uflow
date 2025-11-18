@@ -3,16 +3,21 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../utils/test-utils';
 import { ProvidersContent } from '@/app/(public)/providers/ProvidersContent';
 import { mockBilalSearchResults } from '../mocks/providerData';
-import type { Provider } from '@/services/providers';
 // import { mockProviders } from '../mocks/providerData'; // Unused for now
 
 // Mock the search service to return specific results
 vi.mock('@/services/providers', () => ({
-  searchProvidersAndZakat: vi.fn((query: string) => {
+  searchProvidersAndCommunityServices: vi.fn((query: string) => {
     if (query.toLowerCase().includes('bilal')) {
-      return Promise.resolve(mockBilalSearchResults);
+      return Promise.resolve({
+        results: mockBilalSearchResults,
+        hasMore: false,
+      });
     }
-    return Promise.resolve([]);
+    return Promise.resolve({
+      results: [],
+      hasMore: false,
+    });
   }),
   getBookmarkedProviders: vi.fn(() => Promise.resolve([])),
 }));
@@ -534,18 +539,34 @@ describe('Complete User Journey: Search and View Provider', () => {
 
     it('should handle malformed provider data gracefully', async () => {
       // Mock search service to return malformed data
-      const { searchProvidersAndZakat } = await import('@/services/providers');
-      vi.mocked(searchProvidersAndZakat).mockResolvedValueOnce([
-        {
-          type: 'provider',
-          data: {
-            provider_id: 'malformed-123',
+      const { searchProvidersAndCommunityServices } = await import('@/services/providers');
+      vi.mocked(searchProvidersAndCommunityServices).mockResolvedValueOnce({
+        results: [
+          {
+            id: 'malformed-123',
             name: 'Malformed Provider',
-            // Missing other required fields
-          } as Partial<Provider>,
-          relevance_score: 0.5
-        }
-      ]);
+            type: 'provider' as const,
+            images: null,
+            category_id: null,
+            address_city: null,
+            social_website: null,
+            social_instagram: null,
+            contact_email: null,
+            contact_phone: null,
+            address_street: null,
+            address_country: null,
+            address_zip: null,
+            location_latitude: null,
+            location_longitude: null,
+            created_at: null,
+            updated_at: null,
+            barakah_effects: [],
+            offers_ids: [],
+            needs_ids: [],
+          }
+        ],
+        hasMore: false,
+      });
       
       render(<ProvidersContent />);
       

@@ -5,8 +5,7 @@ export const mockProviders: Provider[] = [
   {
     provider_id: 'bilal-moschee-123',
     provider_name: 'Bilal Moschee',
-    provider_offers: 'Beautiful mosque in the heart of the city, serving the local Muslim community with daily prayers and educational programs.',
-    provider_needs: 'We need volunteers for community outreach programs and maintenance support.',
+    description: 'Beautiful mosque in the heart of the city, serving the local Muslim community with daily prayers and educational programs.',
     category_id: 'mosque-category-123',
     address_city: 'Berlin',
     address_street: '123 Hauptstraße',
@@ -27,16 +26,16 @@ export const mockProviders: Provider[] = [
     created_at: '2024-01-15T10:00:00Z',
     updated_at: '2024-01-15T10:00:00Z',
     barakah_effects: ['Iman', 'Zakat', 'Sunnah'],
+    offers_ids: [],
+    needs_ids: [],
     category: {
       name_de: 'Moschee'
     },
-    zakat_id: null
   },
   {
     provider_id: 'islamic-center-456',
     provider_name: 'Islamic Center Berlin',
-    provider_offers: 'Modern Islamic center offering prayer facilities, Islamic education, and community events.',
-    provider_needs: 'We need funding for educational materials and equipment.',
+    description: 'Modern Islamic center offering prayer facilities, Islamic education, and community events.',
     category_id: 'islamic-center-category-456',
     address_city: 'Berlin',
     address_street: '456 Friedenstraße',
@@ -56,16 +55,16 @@ export const mockProviders: Provider[] = [
     created_at: '2024-01-10T14:00:00Z',
     updated_at: '2024-01-10T14:00:00Z',
     barakah_effects: ['Iman', 'Education'],
+    offers_ids: [],
+    needs_ids: [],
     category: {
       name_de: 'Islamisches Zentrum'
     },
-    zakat_id: null
   },
   {
     provider_id: 'halal-restaurant-789',
     provider_name: 'Halal Delights Restaurant',
-    provider_offers: 'Authentic halal cuisine serving traditional Middle Eastern and Turkish dishes.',
-    provider_needs: 'We need experienced kitchen staff and halal suppliers.',
+    description: 'Authentic halal cuisine serving traditional Middle Eastern and Turkish dishes.',
     category_id: 'restaurant-category-789',
     address_city: 'Hamburg',
     address_street: '789 Essenstraße',
@@ -85,10 +84,11 @@ export const mockProviders: Provider[] = [
     created_at: '2024-01-05T12:00:00Z',
     updated_at: '2024-01-05T12:00:00Z',
     barakah_effects: ['Sunnah'],
+    offers_ids: [],
+    needs_ids: [],
     category: {
       name_de: 'Restaurant'
     },
-    zakat_id: null
   }
 ];
 
@@ -97,7 +97,6 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[0].provider_id,
     name: mockProviders[0].provider_name,
-    description: mockProviders[0].provider_offers,
     images: mockProviders[0].provider_images,
     category_id: mockProviders[0].category_id,
     address_city: mockProviders[0].address_city,
@@ -113,6 +112,8 @@ export const mockSearchResults: SearchResult[] = [
     created_at: mockProviders[0].created_at,
     updated_at: mockProviders[0].updated_at,
     barakah_effects: mockProviders[0].barakah_effects,
+    offers_ids: mockProviders[0].offers_ids,
+    needs_ids: mockProviders[0].needs_ids,
     category: mockProviders[0].category,
     type: 'provider',
     originalProvider: mockProviders[0]
@@ -120,7 +121,6 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[1].provider_id,
     name: mockProviders[1].provider_name,
-    description: mockProviders[1].provider_offers,
     images: mockProviders[1].provider_images,
     category_id: mockProviders[1].category_id,
     address_city: mockProviders[1].address_city,
@@ -136,6 +136,8 @@ export const mockSearchResults: SearchResult[] = [
     created_at: mockProviders[1].created_at,
     updated_at: mockProviders[1].updated_at,
     barakah_effects: mockProviders[1].barakah_effects,
+    offers_ids: mockProviders[1].offers_ids,
+    needs_ids: mockProviders[1].needs_ids,
     category: mockProviders[1].category,
     type: 'provider',
     originalProvider: mockProviders[1]
@@ -143,7 +145,6 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[2].provider_id,
     name: mockProviders[2].provider_name,
-    description: mockProviders[2].provider_offers,
     images: mockProviders[2].provider_images,
     category_id: mockProviders[2].category_id,
     address_city: mockProviders[2].address_city,
@@ -159,6 +160,8 @@ export const mockSearchResults: SearchResult[] = [
     created_at: mockProviders[2].created_at,
     updated_at: mockProviders[2].updated_at,
     barakah_effects: mockProviders[2].barakah_effects,
+    offers_ids: mockProviders[2].offers_ids,
+    needs_ids: mockProviders[2].needs_ids,
     category: mockProviders[2].category,
     type: 'provider',
     originalProvider: mockProviders[2]
@@ -170,7 +173,6 @@ export const mockBilalSearchResults: SearchResult[] = [
   {
     id: mockProviders[0].provider_id,
     name: mockProviders[0].provider_name,
-    description: mockProviders[0].provider_offers,
     images: mockProviders[0].provider_images,
     category_id: mockProviders[0].category_id,
     address_city: mockProviders[0].address_city,
@@ -186,6 +188,8 @@ export const mockBilalSearchResults: SearchResult[] = [
     created_at: mockProviders[0].created_at,
     updated_at: mockProviders[0].updated_at,
     barakah_effects: mockProviders[0].barakah_effects,
+    offers_ids: mockProviders[0].offers_ids,
+    needs_ids: mockProviders[0].needs_ids,
     category: mockProviders[0].category,
     type: 'provider',
     originalProvider: mockProviders[0]

@@ -22,9 +22,8 @@ export async function POST(request: Request) {
       createMissing?: boolean;
     };
 
-    // Epics database ID from DATABASE_IDS.md
-    // URL: https://www.notion.so/2366163f450b8045985af4f66be56792
-    // Database ID: 2366163f450b8045985af4f66be56792 (without dashes)
+    // Epics database ID from URL: https://www.notion.so/2366163f450b8045985af4f66be56792
+    // Database ID: 2366163f450b8045985af4f66be56792 (without dashes for API)
     let dbId = databaseId;
     if (!dbId) {
       dbId = '2366163f450b8045985af4f66be56792';

@@ -42,7 +42,9 @@ export function getNotionConfig() {
 export async function getDatabaseDataSources(databaseId: string) {
   const config = getNotionConfig();
 
-  const response = await fetch(`${NOTION_API_BASE}/databases/${databaseId}`, {
+  // Ensure database ID has no dashes for API calls
+  const cleanDatabaseId = databaseId.replace(/-/g, '');
+  const response = await fetch(`${NOTION_API_BASE}/databases/${cleanDatabaseId}`, {
     method: 'GET',
     headers: config.headers,
   });
@@ -356,7 +358,10 @@ export async function getPage(pageId: string) {
 /**
  * Query a Notion database
  * 
- * @param databaseId - The database ID to query (not data source ID)
+ * For API version 2025-09-03, queries must use data source IDs instead of database IDs.
+ * This function automatically gets the data source ID from the database ID.
+ * 
+ * @param databaseId - The database ID to query (will be converted to data source ID)
  * @param filter - Optional filter object
  * @param sorts - Optional sort array
  * @param pageSize - Optional page size (default: 100, max: 100)
@@ -368,6 +373,10 @@ export async function queryDatabase(
   pageSize: number = 100
 ) {
   const config = getNotionConfig();
+
+  // For API 2025-09-03, we need to use data source ID for queries
+  // Get the data source ID from the database ID
+  const dataSourceId = await getDataSourceId(databaseId);
 
   const body: Record<string, unknown> = {
     page_size: Math.min(pageSize, 100),
@@ -381,7 +390,11 @@ export async function queryDatabase(
     body.sorts = sorts;
   }
 
-  const response = await fetch(`${NOTION_API_BASE}/databases/${databaseId}/query`, {
+  // Use data source ID for querying (API 2025-09-03 requirement)
+  // Data source IDs should have dashes
+  const url = `${NOTION_API_BASE}/data_sources/${dataSourceId}/query`;
+  
+  const response = await fetch(url, {
     method: 'POST',
     headers: config.headers,
     body: JSON.stringify(body),
@@ -390,11 +403,13 @@ export async function queryDatabase(
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }));
     const errorMessage = error.message || response.statusText || 'Unknown error';
-    console.error(`Failed to query database ${databaseId}:`, {
+    console.error(`Failed to query database ${databaseId} (data source ${dataSourceId}):`, {
       error: errorMessage,
       status: response.status,
       statusText: response.statusText,
+      url,
       databaseId,
+      dataSourceId,
       filter,
       sorts,
     });
@@ -407,3 +422,27 @@ export async function queryDatabase(
   return data.results || [];
 }
 
+/**
+ * Get a Notion database (schema)
+ */
+export async function getDatabase(databaseId: string) {
+  const config = getNotionConfig();
+
+  // Remove dashes from database ID for Notion API
+  const cleanDatabaseId = databaseId.replace(/-/g, '');
+
+  const response = await fetch(`${NOTION_API_BASE}/databases/${cleanDatabaseId}`, {
+    method: 'GET',
+    headers: config.headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    const errorMessage = error.message || response.statusText || 'Unknown error';
+    throw new Error(
+      `Notion API error: ${errorMessage}`
+    );
+  }
+
+  return response.json();
+}

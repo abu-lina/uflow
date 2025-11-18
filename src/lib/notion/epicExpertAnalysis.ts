@@ -45,6 +45,8 @@ export function readExpertRules(): Map<string, string> {
       // Convert kebab-case to proper name
       if (expertName === 'ux-ui') {
         expertName = 'UX/UI';
+      } else if (expertName === 'qa') {
+        expertName = 'QA';
       } else {
         expertName = expertName
           .split('-')
