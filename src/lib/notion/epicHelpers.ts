@@ -7,13 +7,16 @@ import { createPageInDataSource, appendContentToPage, updatePage, getPage, query
 // Epics database data source ID (from DATABASE_IDS.md)
 // Using data source ID directly for API version 2025-09-03
 // Must be set via NOTION_EPICS_DATA_SOURCE_ID environment variable
-const EPICS_DATA_SOURCE_ID = process.env.NOTION_EPICS_DATA_SOURCE_ID;
-
-if (!EPICS_DATA_SOURCE_ID) {
-  throw new Error(
-    'NOTION_EPICS_DATA_SOURCE_ID environment variable is required. ' +
-    'Set it in your .env.local file. See env.template for details.'
-  );
+// Lazy getter to avoid checking during build time
+function getEpicsDataSourceId(): string {
+  const id = process.env.NOTION_EPICS_DATA_SOURCE_ID;
+  if (!id) {
+    throw new Error(
+      'NOTION_EPICS_DATA_SOURCE_ID environment variable is required. ' +
+      'Set it in your .env.local file. See env.template for details.'
+    );
+  }
+  return id;
 }
 
 export type MoSCoW = 'Must have' | 'Should have' | 'Could have' | "Won't have";
@@ -113,7 +116,7 @@ export async function createEpic(input: CreateEpicInput) {
   const properties = formatEpicProperties(input);
 
   // Create the page with properties
-  const page = await createPageInDataSource(EPICS_DATA_SOURCE_ID as string, properties);
+  const page = await createPageInDataSource(getEpicsDataSourceId(), properties);
 
   // Add description as content if provided
   if (input.description) {
