@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSprint, type CreateSprintInput } from '@/lib/notion/sprintHelpers';
+import { createBranch } from '@/lib/git/branchHelpers';
 
 /**
  * POST /api/notion/create-sprint
@@ -37,6 +38,9 @@ export async function POST(request: Request) {
       isException: isException || false,
     });
 
+    // Create git branch with feature name
+    const branchResult = await createBranch(name);
+
     return NextResponse.json({
       success: true,
       sprint: {
@@ -45,6 +49,16 @@ export async function POST(request: Request) {
         startDate: sprint.dates.start.toISOString().split('T')[0],
         endDate: sprint.dates.end.toISOString().split('T')[0],
       },
+      branch: branchResult.success
+        ? {
+            name: branchResult.branchName,
+            created: true,
+          }
+        : {
+            name: branchResult.branchName,
+            created: false,
+            error: branchResult.error,
+          },
     });
   } catch (error) {
     console.error('Error creating Notion sprint:', error);

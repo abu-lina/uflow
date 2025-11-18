@@ -25,7 +25,8 @@ Or use the API:
    - Exception: Today to next Sunday (for this week only)
 3. **Creates sprint** in Notion Sprints database
 4. **Sets properties** (Name, Start Date, End Date, Goal, Status)
-5. **Returns sprint URL** and dates
+5. **Creates git branch** with sanitized sprint name
+6. **Returns sprint URL**, dates, and branch information
 
 ## Sprint Dates
 
@@ -70,9 +71,18 @@ Create a sprint:
 ## After Creation
 
 1. Sprint is created with dates
-2. Add items to sprint using `@add-to-sprint.md`
-3. Start working on sprint using `@work-sprint.md`
-4. Track progress using `@sprint-status.md`
+2. Git branch is created and checked out (based on sprint name)
+3. Add items to sprint using `@add-to-sprint.md`
+4. Start working on sprint using `@work-sprint.md`
+5. Track progress using `@sprint-status.md`
+
+## Git Branch
+
+When a sprint is created, a git branch is automatically created from the current branch:
+- Branch name is derived from the sprint name (sanitized for git)
+- Spaces and special characters are converted to hyphens
+- Branch name is lowercase
+- If branch already exists, creation is skipped (error returned in response)
 
 ## Next Steps
 
