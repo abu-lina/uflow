@@ -2,12 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
-import dynamic from 'next/dynamic';
+import { Button, IconWithTitle } from '@/components/ui';
+import { useAuth } from '@/providers/auth-provider';
+import { useFormData } from '@/providers/form-provider';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { PlaceData } from '@/components/create/BusinessSearch';
 import type { InstagramData } from '@/components/create/InstagramImport';
 
@@ -21,11 +26,6 @@ const InstagramImport = dynamic(() => import('@/components/create/InstagramImpor
   loading: () => <div className="flex items-center justify-center p-8"><div className="text-sm text-content">Loading...</div></div>,
   ssr: false,
 });
-import { useAuth } from '@/providers/auth-provider';
-import { useFormData } from '@/providers/form-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
-import { useLanguage } from '@/providers/LanguageProvider';
-import { Button, IconWithTitle } from '@/components/ui';
 
 type ImportMethod = 'google' | 'instagram' | null;
 
