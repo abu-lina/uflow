@@ -16,3 +16,5 @@ export { SkeletonCard } from './SkeletonCard';
 export { SkeletonGrid } from './SkeletonGrid';
 export { SectionHeading } from './SectionHeading';
 export { TitleAndText } from './TitleAndText';
+export { DynamicImportLoading } from './DynamicImportLoading';
+export { DynamicImportError } from './DynamicImportError';

@@ -2,14 +2,15 @@ import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 
 import { LandingLayout } from '@/components/layout/LandingLayout';
+import { DynamicImportLoading } from '@/components/ui/DynamicImportLoading';
 
 // Lazy load heavy landing page components for better initial load
 const MobileSplashScreen = dynamic(() => import('@/components/shared/MobileSplashScreen').then(mod => ({ default: mod.MobileSplashScreen })), {
-  loading: () => <div className="flex h-screen items-center justify-center" />,
+  loading: () => <DynamicImportLoading className="h-screen" />,
 });
 
 const LandingHero = dynamic(() => import('@/components/shared/LandingHero').then(mod => ({ default: mod.LandingHero })), {
-  loading: () => <div className="flex h-screen items-center justify-center" />,
+  loading: () => <DynamicImportLoading className="h-screen" />,
 });
 
 const AboutSection = dynamic(() => import('@/components/shared/AboutSection').then(mod => ({ default: mod.AboutSection })), {

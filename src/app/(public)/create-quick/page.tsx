@@ -14,17 +14,19 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { DynamicImportLoading } from '@/components/ui/DynamicImportLoading';
+import { DynamicImportError } from '@/components/ui/DynamicImportError';
 import type { PlaceData } from '@/components/create/BusinessSearch';
 import type { InstagramData } from '@/components/create/InstagramImport';
 
 // Lazy load heavy import components
 const BusinessSearch = dynamic(() => import('@/components/create/BusinessSearch').then(mod => ({ default: mod.BusinessSearch })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="text-sm text-content">Loading...</div></div>,
+  loading: () => <DynamicImportLoading />,
   ssr: false,
 });
 
 const InstagramImport = dynamic(() => import('@/components/create/InstagramImport').then(mod => ({ default: mod.InstagramImport })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="text-sm text-content">Loading...</div></div>,
+  loading: () => <DynamicImportLoading />,
   ssr: false,
 });
 

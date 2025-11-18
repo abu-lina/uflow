@@ -16,10 +16,11 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { DynamicImportLoading } from '@/components/ui/DynamicImportLoading';
 
 // Lazy load heavy form component
 const ProviderCreateForm = dynamic(() => import('@/features/providers/ProviderCreateForm').then(mod => ({ default: mod.ProviderCreateForm })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="text-sm text-content">Loading...</div></div>,
+  loading: () => <DynamicImportLoading />,
   ssr: false,
 });
 
