@@ -7,13 +7,16 @@ import { createPageInDataSource, updatePage, getPage } from './client';
 // Sprints database data source ID (from DATABASE_IDS.md)
 // Using data source ID directly for API version 2025-09-03
 // Must be set via NOTION_SPRINTS_DATA_SOURCE_ID environment variable
-const SPRINTS_DATA_SOURCE_ID = process.env.NOTION_SPRINTS_DATA_SOURCE_ID;
-
-if (!SPRINTS_DATA_SOURCE_ID) {
-  throw new Error(
-    'NOTION_SPRINTS_DATA_SOURCE_ID environment variable is required. ' +
-    'Set it in your .env.local file. See env.template for details.'
-  );
+// Lazy getter to avoid checking during build time
+function getSprintsDataSourceId(): string {
+  const id = process.env.NOTION_SPRINTS_DATA_SOURCE_ID;
+  if (!id) {
+    throw new Error(
+      'NOTION_SPRINTS_DATA_SOURCE_ID environment variable is required. ' +
+      'Set it in your .env.local file. See env.template for details.'
+    );
+  }
+  return id;
 }
 
 export type SprintStatus = 'Planned' | 'Active' | 'Completed';
@@ -129,7 +132,7 @@ export async function createSprint(input: CreateSprintInput) {
     };
   }
 
-  const page = await createPageInDataSource(SPRINTS_DATA_SOURCE_ID as string, properties);
+  const page = await createPageInDataSource(getSprintsDataSourceId(), properties);
 
   return {
     id: page.id,
@@ -160,11 +163,7 @@ export async function getActiveSprint(): Promise<{ id: string; url: string; prop
   const NOTION_API_BASE = 'https://api.notion.com/v1';
   
   // Get sprints data source ID from environment
-  const sprintsDataSourceId = SPRINTS_DATA_SOURCE_ID;
-  
-  if (!sprintsDataSourceId) {
-    throw new Error('NOTION_SPRINTS_DATA_SOURCE_ID environment variable is required');
-  }
+  const sprintsDataSourceId = getSprintsDataSourceId();
 
   // Query for active sprint (status = "In progress")
   const filter = {

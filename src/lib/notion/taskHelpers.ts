@@ -7,13 +7,16 @@ import { createPageInDataSource, appendContentToPage, updatePage, queryDatabase 
 // Issues database data source ID (from DATABASE_IDS.md)
 // Using data source ID directly for API version 2025-09-03
 // Must be set via NOTION_ISSUES_DATA_SOURCE_ID environment variable
-const ISSUES_DATA_SOURCE_ID = process.env.NOTION_ISSUES_DATA_SOURCE_ID;
-
-if (!ISSUES_DATA_SOURCE_ID) {
-  throw new Error(
-    'NOTION_ISSUES_DATA_SOURCE_ID environment variable is required. ' +
-    'Set it in your .env.local file. See env.template for details.'
-  );
+// Lazy getter to avoid checking during build time
+function getIssuesDataSourceId(): string {
+  const id = process.env.NOTION_ISSUES_DATA_SOURCE_ID;
+  if (!id) {
+    throw new Error(
+      'NOTION_ISSUES_DATA_SOURCE_ID environment variable is required. ' +
+      'Set it in your .env.local file. See env.template for details.'
+    );
+  }
+  return id;
 }
 
 export type TaskType = 'Story' | 'Task' | 'Bug';
@@ -102,7 +105,7 @@ export async function createTask(input: CreateTaskInput) {
   const properties = formatTaskProperties(input);
 
   // Create the page with properties using data source ID
-  const page = await createPageInDataSource(ISSUES_DATA_SOURCE_ID as string, properties);
+  const page = await createPageInDataSource(getIssuesDataSourceId(), properties);
 
   // Add description as content if provided
   if (input.description) {
