@@ -94,7 +94,7 @@ export function AnimatedHeartIcon({
             animate={{ opacity: 1, pathLength: 1 }}
             d={heartPath}
             fill="none"
-            initial={{ opacity: 0, pathLength: 0 }}
+            initial={false}
             stroke="var(--stroke-0, white)"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -132,7 +132,7 @@ export function AnimatedHeartIcon({
       }}
       className={`relative shrink-0 ${className}`}
       data-name="iconamoon:heart"
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={false}
       style={{ height: size, width: size }}
       transition={{
         duration: 0.5,

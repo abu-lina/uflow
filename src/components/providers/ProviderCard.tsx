@@ -463,7 +463,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                         animate={{ opacity: 1, scale: 1 }}
                         className="size-full"
                         exit={{ opacity: 0, scale: 0.97, zIndex: 0 }}
-                        initial={{ opacity: 0, scale: 0.97 }}
+                        initial={false}
                         style={{ 
                           zIndex: 1,
                           WebkitTransform: 'translateZ(0)',
@@ -490,6 +490,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                               opacity: 1,
                             }}
                             className="absolute inset-0"
+                            initial={false}
                             style={{
                               background: "#589d96",
                               borderRadius: '9.6px',
