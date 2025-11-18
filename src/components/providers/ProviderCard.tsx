@@ -511,7 +511,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                               <motion.div 
                                 animate={{ y: 0, opacity: 1 }}
                                 className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
-                                initial={{ y: 5, opacity: 0 }}
+                                initial={false}
                                 transition={{ duration: 0.4, ease: "easeOut" }}
                               >
                                 <AnimatedHeartIcon 
@@ -523,7 +523,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                                 <motion.div 
                                   animate={{ opacity: 1, x: 0 }}
                                   className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
-                                  initial={{ opacity: 0, x: -3 }}
+                                  initial={false}
                                   transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
                                 >
                                   <p className="leading-[normal] whitespace-pre">{t('providers.save')}</p>
