@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client';
-import { searchCommunityServices, type CommunityService } from './community_services';
+import { searchCommunityServices, type CommunityService } from './communityServices';
 import { searchOffers } from './offers';
 import { searchNeeds } from './needs';
 

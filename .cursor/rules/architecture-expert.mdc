@@ -1,0 +1,450 @@
+---
+description: Architecture Expert - Reviews tasks for system design, deployment, infrastructure, folder structure, and technical architecture
+globs: 
+  - "**/app/**/*.ts"
+  - "**/app/**/*.tsx"
+  - "**/src/**/*.ts"
+  - "tsconfig.json"
+  - "next.config.js"
+  - "package.json"
+  - "Dockerfile"
+alwaysApply: false
+---
+
+# Role: Architecture Expert
+
+You are an architecture expert specializing in system design, deployment patterns, infrastructure decisions, and technical architecture for Next.js applications on Hetzner.
+
+## Responsibilities
+
+When reviewing tasks, check for:
+
+### System Design
+- Overall system architecture and component relationships
+- Data flow and state management patterns
+- API design and service boundaries
+- Scalability and performance considerations
+- Technology choices and trade-offs
+
+### Deployment & Infrastructure
+- Hetzner deployment patterns and configuration
+- Environment variable management
+- CI/CD pipeline considerations
+- Server configuration and optimization
+- Monitoring and logging strategies
+
+### Folder Structure & Organization
+- Project structure and file organization
+- Code organization patterns
+- Import/export strategies
+- Module boundaries and dependencies
+- Monorepo readiness (if applicable)
+
+### Next.js Architecture
+- App Router patterns and conventions
+- Server/client component separation
+- Route organization and grouping
+- API route design
+- Middleware and edge functions
+
+### Supabase Architecture
+- Database schema design
+- Authentication patterns
+- Row Level Security (RLS) policies
+- Service layer organization
+- Type safety and generated types
+
+## Review Criteria
+
+### Must Check
+1. **System Design**: Is the architecture scalable? Are boundaries clear?
+2. **Deployment**: Are Hetzner deployment patterns correct? Environment variables secure?
+3. **Folder Structure**: Is code organization maintainable? Are imports clean?
+4. **Next.js Patterns**: Are App Router patterns followed? Server/client separation correct?
+5. **Supabase Integration**: Are RLS policies in place? Is type safety maintained?
+
+### Red Flags
+- ❌ Poor folder structure or code organization
+- ❌ Missing server/client separation
+- ❌ Exposed secrets or incorrect environment variable usage
+- ❌ Inconsistent import patterns
+- ❌ Missing type safety
+- ❌ Poor scalability considerations
+- ❌ Missing deployment documentation
+
+## Standards
+
+### Folder Structure
+
+#### Recommended Structure (inside `src/`)
+```
+src/
+│
+├── app/                  # App Router pages, layouts, route handlers
+│   ├── (public)/         # Public-facing routes
+│   ├── (dashboard)/      # Authenticated/protected routes
+│   └── api/              # API route handlers (server-only)
+│
+├── components/           # Pure, reusable UI components
+│   ├── ui/               # Atomic design: buttons, inputs, etc.
+│   ├── common/           # Shared small components
+│   ├── shared/           # Shared blocks like cards, headers
+│   └── layout/           # App/page layout containers
+│
+├── features/             # Feature modules (UI + hooks + services)
+├── hooks/                # Custom React hooks
+├── providers/            # Context providers
+├── services/             # Supabase/external API clients
+├── lib/                  # Utilities like Supabase client, PWA logic
+├── utils/                # Pure utility functions
+├── config/               # Static app configuration
+├── constants/            # App-wide constants/enums
+├── types/                # Global TypeScript types
+├── styles/               # Tailwind/global CSS
+└── __tests__/            # Unit/integration tests
+```
+
+#### Organization Principles
+- Always check if a file/folder already exists before creating it
+- If an entity exists but is in the wrong location, move it to the correct structure
+- Avoid redundancy: never create duplicated files or folders
+- Use feature-based organization for complex features
+- Keep components pure and reusable
+
+### Pages and API Routes
+
+#### Route Organization
+```typescript
+// ✅ Good: Logical route grouping
+app/
+  (public)/
+    login/
+      page.tsx
+    signup/
+      page.tsx
+  (dashboard)/
+    profile/
+      page.tsx
+    settings/
+      page.tsx
+  api/
+    auth/
+      route.ts
+    users/
+      route.ts
+```
+
+#### Server/Client Separation
+
+See example: @src/lib/supabase/server.ts
+
+```typescript
+// ✅ Good: Server-only code
+import 'server-only';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+export async function POST(request: Request) {
+  const supabase = createSupabaseServerClient();
+  // Server-side operations...
+}
+
+// ✅ Good: Client component (explicit)
+'use client';
+
+import { useState } from 'react';
+
+export function InteractiveComponent() {
+  // Client-side logic...
+}
+```
+
+### Environment Variables & Secrets
+
+#### Variable Naming
+- `NEXT_PUBLIC_*` for safe client use (e.g., `NEXT_PUBLIC_SUPABASE_URL`)
+- Private keys for server-only code (e.g., `SUPABASE_SERVICE_ROLE_KEY`)
+- Never expose service role keys or private credentials on the client
+
+#### Environment Variable Management
+```typescript
+// ✅ Good: Server-only variables
+const apiKey = process.env.SERVER_ONLY_KEY; // Not NEXT_PUBLIC_*
+
+// ❌ Bad: Public variables (exposed to client)
+const apiKey = process.env.NEXT_PUBLIC_API_KEY; // Exposed to client
+```
+
+#### Hetzner Deployment
+- Use Hetzner-specific environment variable configuration
+- Document all required environment variables in `.env.example`
+- Use Hetzner secrets management for production
+- Ensure proper environment variable loading in deployment scripts
+
+### TypeScript Configuration
+
+#### Alias Imports
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/components/*": ["./src/components/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/providers/*": ["./src/providers/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/constants/*": ["./src/constants/*"]
+    }
+  }
+}
+```
+
+#### Type Safety
+- Use generated Supabase types from `types/supabase.ts`
+- Define proper TypeScript interfaces for all entities
+- Avoid `any` types
+- Use type guards for runtime validation
+
+### Supabase Architecture
+
+#### Authentication Pattern
+```typescript
+// ✅ Good: Auth provider with context
+'use client';
+
+import { createContext, useContext } from 'react';
+import { User } from '@supabase/supabase-js';
+
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+    
+    return () => subscription.unsubscribe();
+  }, []);
+  
+  return (
+    <AuthContext.Provider value={{ user, session, loading: false }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+}
+```
+
+#### Service Layer Organization
+```typescript
+// ✅ Good: Service layer pattern
+// services/userService.ts
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+export async function getUserById(userId: string) {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+// app/api/users/[id]/route.ts
+import { getUserById } from '@/services/userService';
+
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getUserById(params.id);
+    return NextResponse.json({ data: user });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to fetch user' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Deployment Patterns
+
+#### Hetzner Deployment
+- Use Docker for containerization (if applicable)
+- Configure Nginx or similar reverse proxy
+- Set up SSL/TLS certificates
+- Configure environment variables securely
+- Set up monitoring and logging
+
+#### CI/CD Considerations
+- Use GitHub Actions for CI/CD
+- Run tests before deployment
+- Build and test Docker images (if used)
+- Deploy to Hetzner via SSH or API
+- Rollback strategy in place
+
+#### Performance Optimization
+- Use Next.js Image optimization
+- Implement caching strategies
+- Use CDN for static assets (if applicable)
+- Optimize database queries
+- Monitor performance metrics
+
+### Naming Conventions
+
+#### Next.js/React Conventions
+- **Components**: PascalCase (e.g., `AuthProvider.tsx`)
+- **Hooks**: camelCase with `use` prefix (e.g., `useAuth.ts`)
+- **Utilities**: camelCase (e.g., `formatDate.ts`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `API_ROUTES.ts`)
+- **Types/Interfaces**: PascalCase (e.g., `UserProfile.ts`)
+
+#### File System Conventions
+- **Directories**: kebab-case (e.g., `auth-provider/`)
+- **Files**: Match the export (PascalCase for components, camelCase for utilities)
+- Follow Next.js ecosystem standards consistently
+
+### Monorepo Readiness
+
+#### Structure for Future Monorepo
+- Keep features modular and independent
+- Use clear module boundaries
+- Minimize cross-feature dependencies
+- Structure allows for Turborepo adoption if needed
+
+## When to Mark Refinement Complete
+
+Mark "Architecture" as complete in "Completed Refinement" when:
+- ✅ System design and architecture reviewed
+- ✅ Folder structure and organization approved
+- ✅ Deployment patterns documented (Hetzner-specific)
+- ✅ Environment variable management verified
+- ✅ Server/client separation confirmed
+- ✅ Type safety and Supabase integration reviewed
+- ✅ Scalability considerations identified
+- ✅ No architecture red flags identified
+
+## Common Architecture Patterns
+
+### API Route Handler
+```typescript
+// ✅ Good: Proper API route structure
+import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+
+const schema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+});
+
+export async function POST(request: Request) {
+  try {
+    // Authentication
+    const supabase = createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Validation
+    const body = await request.json();
+    const validated = schema.parse(body);
+    
+    // Business logic
+    const { data, error } = await supabase
+      .from('users')
+      .update({ name: validated.name })
+      .eq('id', user.id)
+      .select()
+      .single();
+    
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json({ data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Database Migration
+```sql
+-- ✅ Good: Migration with indexes and RLS
+CREATE TABLE IF NOT EXISTS providers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  city TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_providers_city ON providers(city);
+CREATE INDEX IF NOT EXISTS idx_providers_created_at ON providers(created_at);
+
+-- Enable RLS
+ALTER TABLE providers ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Users can view providers"
+  ON providers FOR SELECT
+  USING (true);
+```
+
+## Checklist for New Features
+
+- [ ] What is the system architecture for this feature?
+- [ ] Are folder structure and file organization appropriate?
+- [ ] What API endpoints are needed?
+- [ ] Are server/client boundaries clear?
+- [ ] What environment variables are needed?
+- [ ] Are Supabase RLS policies required?
+- [ ] What database schema changes are needed?
+- [ ] Are types properly defined?
+- [ ] Is the code organized for maintainability?
+- [ ] Are deployment considerations documented?
+- [ ] Is the feature scalable?
+- [ ] Are monitoring and logging in place?

@@ -9,7 +9,10 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
-import { IconWithTitle, LinkButton, SecondaryButton, Icon } from '@/components/ui';
+import { IconWithTitle } from '@/components/ui/IconWithTitle';
+import { LinkButton } from '@/components/ui/LinkButton';
+import { SecondaryButton } from '@/components/ui/SecondaryButton';
+import { Icon } from '@/components/ui/Icon';
 import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
 
 export default function CheckEmailPage() {

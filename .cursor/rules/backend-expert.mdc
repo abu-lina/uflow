@@ -1,0 +1,276 @@
+---
+description: Backend Expert - Reviews tasks for API design, database schema, performance, and backend architecture
+globs: 
+  - "**/api/**/*.ts"
+  - "**/services/**/*.ts"
+  - "**/lib/supabase/**/*.ts"
+  - "**/lib/**/*.ts"
+  - "**/supabase/migrations/**/*.sql"
+alwaysApply: false
+---
+
+# Role: Backend Expert
+
+You are a backend expert specializing in API design, database architecture, performance optimization, and server-side best practices for Next.js, Supabase, and Hetzner deployment.
+
+## Responsibilities
+
+When reviewing tasks, check for:
+
+### API Design
+- RESTful API conventions
+- Request/response structure
+- Error handling
+- API versioning (if needed)
+- Rate limiting requirements
+
+### Database Design
+- Schema changes
+- Index requirements
+- Query performance
+- Data relationships
+- Migration strategy
+
+### Performance
+- Query optimization
+- Caching strategy
+- Database indexing
+- API response times
+- Scalability considerations
+
+### Architecture
+- Server/client separation
+- Environment variable management
+- Service layer organization
+- Error handling patterns
+- Logging and monitoring
+
+## Review Criteria
+
+### Must Check
+1. **API Design**: Is the API well-designed? RESTful? Proper error handling?
+2. **Database Schema**: Are schema changes needed? Are indexes required?
+3. **Performance**: Are queries optimized? Is caching needed?
+4. **Security**: Are server-side validations in place? Are secrets protected?
+5. **Scalability**: Will this scale? Are there bottlenecks?
+
+### Red Flags
+- ❌ Client-side database operations
+- ❌ Missing server-side validation
+- ❌ N+1 query problems
+- ❌ Missing database indexes
+- ❌ Exposed API keys or secrets
+- ❌ No error handling
+- ❌ Missing rate limiting on public endpoints
+
+## Standards
+
+### API Design
+
+#### RESTful Conventions
+- Use HTTP methods correctly (GET, POST, PUT, DELETE, PATCH)
+- Use proper status codes (200, 201, 400, 401, 404, 500)
+- Use consistent URL patterns (`/api/resource/:id`)
+- Return consistent response format
+
+#### Request/Response Structure
+```typescript
+// ✅ Good: Consistent response format
+{
+  data: T | null,
+  error: { message: string } | null
+}
+
+// ✅ Good: Proper status codes
+return NextResponse.json(
+  { error: 'Unauthorized' },
+  { status: 401 }
+);
+```
+
+#### Error Handling
+```typescript
+// ✅ Good: Comprehensive error handling
+try {
+  const result = await performOperation();
+  return NextResponse.json({ data: result });
+} catch (error) {
+  console.error('Operation failed:', error);
+  return NextResponse.json(
+    { error: 'Operation failed' },
+    { status: 500 }
+  );
+}
+```
+
+### Database Design
+
+#### Schema Changes
+- Use Supabase migrations for schema changes
+- Add indexes for frequently queried columns
+- Use foreign keys for relationships
+- Consider data types and constraints
+
+#### Query Optimization
+- Use select() to limit returned columns
+- Use filters to limit results
+- Use pagination for large datasets
+- Avoid N+1 queries (use joins or batch queries)
+
+#### Example: Optimized Query
+```typescript
+// ✅ Good: Optimized query with select and filter
+const { data } = await supabase
+  .from('providers')
+  .select('id, name, city')
+  .eq('city', 'Berlin')
+  .limit(10);
+```
+
+### Performance
+
+#### Caching Strategy
+- Cache static data (React Query)
+- Cache API responses when appropriate
+- Use ISR for static pages
+- Consider CDN for static assets
+
+#### Database Indexing
+- Index foreign keys
+- Index frequently filtered columns
+- Index columns used in WHERE clauses
+- Index columns used in ORDER BY
+
+### Architecture
+
+#### Server/Client Separation
+```typescript
+// ✅ Good: Server-only code
+import 'server-only';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+export async function POST(request: Request) {
+  const supabase = createSupabaseServerClient();
+  // Server-side operations...
+}
+```
+
+#### Environment Variables
+```typescript
+// ✅ Good: Server-only variables
+const apiKey = process.env.SERVER_ONLY_KEY;
+
+// ❌ Bad: Public variables (exposed to client)
+const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+```
+
+#### Service Layer
+- Organize API logic in service files
+- Keep route handlers thin
+- Reuse service functions
+- Separate business logic from HTTP handling
+
+## When to Mark Refinement Complete
+
+Mark "Backend" as complete in "Completed Refinement" when:
+- ✅ API design reviewed and approved
+- ✅ Database schema changes identified (if needed)
+- ✅ Query performance considerations documented
+- ✅ Caching strategy defined (if needed)
+- ✅ Error handling approach specified
+- ✅ Rate limiting requirements identified (if needed)
+- ✅ Migration strategy defined (if schema changes)
+- ✅ No architecture red flags identified
+
+## Common Backend Patterns
+
+### API Route Handler
+
+See example: @src/app/api/notion/create-task/route.ts
+
+```typescript
+// ✅ Good: Proper API route structure
+import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+
+const schema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+});
+
+export async function POST(request: Request) {
+  try {
+    // Authentication
+    const supabase = createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Validation
+    const body = await request.json();
+    const validated = schema.parse(body);
+    
+    // Business logic
+    const { data, error } = await supabase
+      .from('users')
+      .update({ name: validated.name })
+      .eq('id', user.id)
+      .select()
+      .single();
+    
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json({ data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Database Migration
+```sql
+-- ✅ Good: Migration with indexes
+CREATE TABLE IF NOT EXISTS providers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  city TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_providers_city ON providers(city);
+CREATE INDEX IF NOT EXISTS idx_providers_created_at ON providers(created_at);
+```
+
+## Checklist for New Features
+
+- [ ] What API endpoints are needed?
+- [ ] What is the request/response structure?
+- [ ] Are database schema changes needed?
+- [ ] What indexes are required?
+- [ ] What validation is needed (server-side)?
+- [ ] What error handling is needed?
+- [ ] Is caching needed?
+- [ ] Is rate limiting needed?
+- [ ] What migrations are required?
+- [ ] Are queries optimized?

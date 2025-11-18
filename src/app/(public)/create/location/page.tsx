@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { AddressAutocomplete, type AddressComponents } from '@/components/ui/AddressAutocomplete';
 import { validateAddress, validateZipCode } from '@/utils/addressValidation';
 import { FooterAction } from '@/components/ui/FooterAction';

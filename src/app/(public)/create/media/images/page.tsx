@@ -5,7 +5,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 
-import '@/utils/gradient-debug';
+import '@/utils/gradientDebug';
 
 export default function ButtonDebugPage() {
   const testRef = useRef<HTMLDivElement>(null);

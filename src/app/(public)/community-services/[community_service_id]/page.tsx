@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { ProviderDetailPage as ProviderDetailPageComponent } from '@/components/providers/ProviderDetailPage';
-import { getCommunityServiceById } from '@/services/community_services';
+import { getCommunityServiceById } from '@/services/communityServices';
 
 export default async function CommunityServiceDetailPage({ 
   params 

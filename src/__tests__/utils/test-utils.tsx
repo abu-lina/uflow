@@ -103,7 +103,7 @@ vi.mock('@/services/providers', () => ({
   getBookmarkedProviders: vi.fn(() => Promise.resolve([])),
 }));
 
-vi.mock('@/services/community_services', () => ({
+vi.mock('@/services/communityServices', () => ({
   getCommunityServicesForProvider: vi.fn(() => Promise.resolve([])),
 }));
 

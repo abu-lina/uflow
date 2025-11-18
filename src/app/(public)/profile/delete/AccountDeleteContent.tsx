@@ -10,11 +10,12 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { authService } from '@/features/auth/services/authService';
 import { accountService } from '@/services/account';
 import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
-import { Button, IconWithTitle } from '@/components/ui';
+import { Button } from '@/components/ui/Button';
+import { IconWithTitle } from '@/components/ui/IconWithTitle';
 import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { SupabaseUser } from '@/types/supabase-user';
@@ -24,7 +25,7 @@ interface AccountDeleteContentProps {
 }
 
 export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
-  const { user: clientUser, loading } = useAuth();
+  const { user: clientUser, isLoading: loading } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
   

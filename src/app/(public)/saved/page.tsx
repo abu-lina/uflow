@@ -5,12 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
 
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { SearchBar } from '@/features/search/components/SearchBar';
-import { EmptyState, Button, IconWithTitle, Icon, SkeletonCard } from '@/components/ui';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/Button';
+import { IconWithTitle } from '@/components/ui/IconWithTitle';
+import { Icon } from '@/components/ui/Icon';
+import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/providers/auth-provider';
 import { supabase } from '@/lib/supabase/client';
 
 export function AccountMenu() {

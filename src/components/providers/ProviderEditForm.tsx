@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/types/supabase';
 import type { Provider } from '@/services/providers';
-import { createProviderCommunityServiceRelationship } from '@/services/community_services';
+import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { FooterAction } from '@/components/ui/FooterAction';
 
 interface ProviderEditFormProps {

@@ -7,11 +7,13 @@ import { Icon } from '@iconify/react';
 
 // Header is implemented inline to match the media page structure
 import { StepIndicator } from '@/components/shared/StepIndicator';
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { useFormData } from '@/providers/form-provider';
-import { getCommunityServices, type CommunityService } from '@/services/community_services';
+import { getCommunityServices, type CommunityService } from '@/services/communityServices';
 import { getFirstImageUrl } from '@/utils/imageUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 

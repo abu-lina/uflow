@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { motion } from 'motion/react';
 
-import { inspectGradient } from '@/utils/gradient-debug';
+import { inspectGradient } from '@/utils/gradientDebug';
 
 export default function GradientTestPage() {
   useEffect(() => {

@@ -9,12 +9,12 @@ import { toast } from 'sonner';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { getFeatureFlag } from '@/config/feature-flags';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData, type ProviderFormData } from '@/providers/form-provider';
 import type { Category } from '@/types/supabase';
 import type { Offer, Need } from '@/types/offer';
-import { createProviderCommunityServiceRelationship } from '@/services/community_services';
+import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { FooterAction } from '@/components/ui/FooterAction';
 

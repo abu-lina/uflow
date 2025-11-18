@@ -1,0 +1,53 @@
+{
+  "databases": {
+    "issues": {
+      "name": "Issues",
+      "properties": {
+        "ID": "auto_increment_id",
+        "Type": "select",
+        "Name": "title",
+        "Status": "status",
+        "Device": "multi_select",
+        "Estimation": "number",
+        "⭐ Epics": "relation",
+        "Refinement": "multi_select",
+        "Completed Refinement": "multi_select",
+        "Ready?": "formula"
+      },
+      "type_options": {
+        "Type": ["Story", "Task", "Bug"],
+        "Status": ["Not started", "Ready", "In progress", "Done"],
+        "Device": ["Desktop", "Mobile"],
+        "Refinement": ["Backend", "Frontend", "QA", "Security", "Compliance", "UX/UI"],
+        "Completed Refinement": ["Backend", "Frontend", "QA", "Security", "Compliance", "UX/UI"]
+      }
+    },
+    "epics": {
+      "name": "Epics",
+      "properties": {
+        "Nº ID": "number",
+        "Name": "title",
+        "Description": "rich_text",
+        "MoSCoW": "select",
+        "Status": "select",
+        "Rank": "number",
+        "Target Delivery": "date",
+        "Sub-items": "relation",
+        "Labels": "multi_select"
+      }
+    },
+    "sprints": {
+      "name": "Sprints",
+      "properties": {
+        "Nº ID": "number",
+        "Name": "title",
+        "Start Date": "date",
+        "End Date": "date",
+        "Goal": "rich_text",
+        "Status": "select",
+        "Issues": "relation"
+      }
+    }
+  }
+}
+

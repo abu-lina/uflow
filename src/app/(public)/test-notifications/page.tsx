@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/providers/auth-provider';
 import { sendPushNotification } from '@/services/pushNotificationService';
 

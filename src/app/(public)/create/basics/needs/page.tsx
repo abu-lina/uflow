@@ -14,7 +14,9 @@ import { getSuggestedNeedsForCategory, type SuggestedNeed } from '@/services/cat
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { validateOfferOrNeedName, findSimilarItems, calculateSimilarity, normalizeText, areSynonyms } from '@/utils/contentValidation';
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 
 export default function SelectNeedsPage() {

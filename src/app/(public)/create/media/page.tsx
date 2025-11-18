@@ -5,15 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Icon } from '@iconify/react';
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { toast } from 'sonner';
 import { FooterAction } from '@/components/ui/FooterAction';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { supabase } from '@/lib/supabase/client';
-import { createProviderCommunityServiceRelationship } from '@/services/community_services';
+import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function MediaUploadPage() {

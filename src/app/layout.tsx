@@ -5,12 +5,19 @@ import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import { ClientProviders } from '@/components/layout/ClientProviders';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { detectLanguageFromServer } from '@/utils/serverLanguageUtils';
+import { generateLocalizedMetadata } from '@/utils/metadataUtils';
 import '@/styles/globals.css';
 import '@/styles/toast-custom.css';
 
 import type { Metadata, Viewport } from 'next';
 
-const inter = Inter({ subsets: ['latin'] });
+// Optimize font loading with display swap for better perceived performance
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -20,19 +27,35 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export const metadata: Metadata = {
-  title: 'Ummah Flow',
-  description:
-    "Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet",
-};
+// Get site URL from environment or use default
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
 
-// Force dynamic to ensure proper client-side navigation handling
-// This prevents Next.js from statically generating the layout which can cause reloads
+// Generate metadata dynamically based on language
+// Note: This is a function that will be called during render
+// Next.js 14+ supports async generateMetadata for dynamic metadata
+export async function generateMetadata(): Promise<Metadata> {
+  const language = await detectLanguageFromServer();
+  return generateLocalizedMetadata(language, siteUrl);
+}
+
+// Force dynamic rendering to support:
+// 1. Server-side session check for initial user state (prevents flash of unauthenticated content)
+// 2. Dynamic language detection from cookies/headers
+// Note: revalidate is not needed here (it's for ISR, not layouts)
 export const dynamic = 'force-dynamic';
-export const revalidate = 0; // Don't cache layout to ensure client-side navigation works
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Get session for initial user state - this runs server-side but layout persists across navigation
+interface RootLayoutProps {
+  children: React.ReactNode;
+}
+
+export default async function RootLayout({ children }: RootLayoutProps) {
+  // Detect language from server-side (cookies and headers)
+  // This ensures the HTML lang attribute matches user preference
+  const language = await detectLanguageFromServer();
+
+  // Get session for initial user state
+  // This prevents flash of unauthenticated content and provides better UX
+  // The client-side AuthProvider will sync and handle subsequent auth changes
   let user = null;
   try {
     const supabase = createSupabaseServerClient();
@@ -42,31 +65,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     user = session?.user ?? null;
   } catch (error) {
     // If session check fails, continue without user (client will handle auth)
-    console.warn('Layout session check failed:', error);
+    // Log in development for debugging, but don't break the layout
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Layout session check failed:', error);
+    }
   }
+
   return (
-    <html lang="de">
-      <head>
-        <meta
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
-          name="viewport"
-        />
-        <meta content="#f5f5f5" name="theme-color" />
-        <meta content="#f5f5f5" name="apple-mobile-web-app-status-bar-style" />
-        <meta content="default" name="apple-mobile-web-app-status-bar-style" />
-        <link href="/api/manifest" rel="manifest" />
-        <link href="/icons/icon-192x192.png" rel="apple-touch-icon" />
-      </head>
-      <body
-        className={`relative w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] ${inter.className}`}
-        style={{
-          minHeight: '100dvh',
-          margin: 0,
-          padding: 0,
-          background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
-          backgroundAttachment: 'scroll',
-        }}
-      >
+    <html lang={language}>
+      <body className={`relative w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] min-h-[100dvh] m-0 p-0 ${inter.className}`}>
         <ClientProviders initialUser={user}>
           {/* Desktop header only */}
           <div className="hidden md:block">

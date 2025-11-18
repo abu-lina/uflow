@@ -3,11 +3,15 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
-import { Button, IconWithTitle, Icon } from '@/components/ui';
+import { Button } from '@/components/ui/Button';
+import { IconWithTitle } from '@/components/ui/IconWithTitle';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';

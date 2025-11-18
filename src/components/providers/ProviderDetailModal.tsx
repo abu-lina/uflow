@@ -16,7 +16,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import { useQuery } from '@tanstack/react-query';
 import type { Provider } from '@/services/providers';
-import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/community_services';
+import { getCommunityServicesForProvider, type CommunityServiceData } from '@/services/communityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 interface ProviderDetailModalProps {

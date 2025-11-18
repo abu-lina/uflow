@@ -23,7 +23,7 @@ vi.mock('@/services/categories', () => ({
 }));
 
 // Mock the zakat projects service
-vi.mock('@/services/community_services', () => ({
+vi.mock('@/services/communityServices', () => ({
   getCommunityServicesForProvider: vi.fn(() => Promise.resolve([])),
 }));
 

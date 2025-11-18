@@ -8,7 +8,8 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 
 import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
-import { EmptyState, SkeletonGrid } from '@/components/ui';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';

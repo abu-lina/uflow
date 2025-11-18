@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import type { Category } from '@/types/supabase';
-import { FormInput, FooterAction } from '@/components/ui';
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { FormInput } from '@/components/ui/FormInput';
+import { FooterAction } from '@/components/ui/FooterAction';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
 import { getCategories } from '@/services/categories';

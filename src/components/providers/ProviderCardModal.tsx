@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
 import { useQuery } from '@tanstack/react-query';
-import { getCommunityServicesForProvider } from '@/services/community_services';
+import { getCommunityServicesForProvider } from '@/services/communityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 

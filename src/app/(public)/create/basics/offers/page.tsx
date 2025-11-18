@@ -17,7 +17,9 @@ import { validateOfferOrNeedName, findSimilarItems, calculateSimilarity, normali
 import { validateAndSanitizeName } from '@/utils/sanitizeInput';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useRateLimit } from '@/hooks/useRateLimit';
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { OfferListSkeleton } from '@/components/ui/OfferListSkeleton';

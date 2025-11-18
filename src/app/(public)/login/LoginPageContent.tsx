@@ -12,9 +12,13 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
-import { TitleAndText, FormInput, FormInputGroup, Button, LinkButton } from '@/components/ui';
+import { TitleAndText } from '@/components/ui/TitleAndText';
+import { FormInput } from '@/components/ui/FormInput';
+import { FormInputGroup } from '@/components/ui/FormInputGroup';
+import { Button } from '@/components/ui/Button';
+import { LinkButton } from '@/components/ui/LinkButton';
 import { Logo } from '@/components/ui/Logo';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { signInWithEmailConfirmation } from '@/lib/auth';
 import { useLanguage } from '@/providers/LanguageProvider';
 

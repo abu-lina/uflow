@@ -11,7 +11,9 @@ import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary'
 
 // import clsx from 'clsx'; // Not used in mobile version
 
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -26,7 +28,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { getCreatedProviders, getAllBookmarkedItems, getRecommendations } from '@/services/providers';
-import { getCreatedCommunityServices, getRecommendedCommunityServices } from '@/services/community_services';
+import { getCreatedCommunityServices, getRecommendedCommunityServices } from '@/services/communityServices';
 import { authService } from '@/features/auth/services/authService';
 import { getFirstImageUrl } from '@/utils/imageUtils';
 import type { SupabaseUser } from '@/types/supabase-user';

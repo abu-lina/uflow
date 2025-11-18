@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-
 import { usePathname, useRouter } from 'next/navigation';
-
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 
 export function AuthSyncer() {
   const { user } = useAuth();

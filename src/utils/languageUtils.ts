@@ -1,8 +1,15 @@
 /**
- * Language detection utilities
+ * Client-side language detection utilities
+ * 
+ * This file contains client-safe utilities that can be used in both
+ * client and server components (without server-only APIs).
+ * 
+ * For server-side language detection with cookies/headers, use
+ * @/utils/serverLanguageUtils instead.
  */
 
 export type SupportedLanguage = 'de' | 'en';
+export type ServerLanguage = 'de' | 'en' | 'ar' | 'tr';
 
 /**
  * Detect the user's preferred language from browser settings
@@ -79,3 +86,4 @@ export function getLocalizedName(
   // Fallback to German name
   return nameDe;
 }
+

@@ -13,7 +13,8 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { Button, IconWithTitle } from '@/components/ui';
+import { Button } from '@/components/ui/Button';
+import { IconWithTitle } from '@/components/ui/IconWithTitle';
 
 type ImportMethod = 'google' | 'instagram' | null;
 

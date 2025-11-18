@@ -1,6 +1,6 @@
 // React Query hooks for community services with caching
 import { useQuery } from '@tanstack/react-query';
-import { getCommunityServicesForProvider, getCommunityServices, getCommunityServicesByCategory, type CommunityService } from '@/services/community_services';
+import { getCommunityServicesForProvider, getCommunityServices, getCommunityServicesByCategory, type CommunityService } from '@/services/communityServices';
 
 // Hook for getting community services for a specific provider
 export function useCommunityServicesForProvider(providerId: string) {

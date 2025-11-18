@@ -11,7 +11,7 @@ import { Logo } from '@/components/ui/Logo';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { SignupModal } from '@/features/auth/components/SignupModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/providers/auth-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
 
@@ -19,7 +19,7 @@ export function Header() {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, isLoading: loading } = useAuth();
   const router = useRouter();
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();

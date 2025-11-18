@@ -1,8 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 
-import { useAuth } from '@/hooks/use-auth';
-import { AuthProvider } from '@/providers/auth-provider';
+import { useAuth, AuthProvider } from '@/providers/auth-provider';
 
 // Silence React error boundary warnings in test
 const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

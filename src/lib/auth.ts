@@ -1,3 +1,5 @@
+'use client';
+
 import { supabase } from './supabase/client';
 
 export const signUpWithLanguage = async (

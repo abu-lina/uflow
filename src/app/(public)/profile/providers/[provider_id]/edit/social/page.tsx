@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { SelectableCard } from '@/components/shared/SelectableCard';
-import { getCommunityServices, type CommunityService } from '@/services/community_services';
+import { getCommunityServices, type CommunityService } from '@/services/communityServices';
 import { getFirstImageUrl } from '@/utils/imageUtils';
 import { supabase } from '@/lib/supabase/client';
 import { FooterAction } from '@/components/ui/FooterAction';

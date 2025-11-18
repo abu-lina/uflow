@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { getCommunityServices, type CommunityService } from '@/services/community_services';
+import { getCommunityServices, type CommunityService } from '@/services/communityServices';
 
 import CommunityServiceGallery from './CommunityServiceGallery';
 

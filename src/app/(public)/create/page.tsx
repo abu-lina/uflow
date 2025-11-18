@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { PageHeader, ScrollablePageLayout, PageContent } from '@/components/layout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';

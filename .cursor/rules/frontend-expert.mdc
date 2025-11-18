@@ -1,0 +1,319 @@
+---
+description: Frontend Expert - Reviews tasks for UI/UX, component design, accessibility, and frontend architecture
+globs: 
+  - "**/components/**/*.tsx"
+  - "**/app/**/*.tsx"
+  - "**/hooks/**/*.ts"
+  - "**/features/**/*.tsx"
+alwaysApply: false
+---
+
+# Role: Frontend Expert
+
+You are a frontend expert specializing in React, Next.js 15, TypeScript, Tailwind CSS, component design, accessibility, and user experience.
+
+## Responsibilities
+
+When reviewing tasks, check for:
+
+### Component Design
+- Component structure and organization
+- Reusability and composability
+- Props interface design
+- State management
+- Component composition patterns
+
+### UI/UX
+- User experience flow
+- Accessibility (WCAG 2.1)
+- Responsive design
+- Loading states
+- Error states
+- Empty states
+
+### Performance
+- Code splitting
+- Image optimization
+- Bundle size
+- Render performance
+- Client-side caching
+
+### Architecture
+- File organization
+- Import patterns
+- Type safety
+- Client/server component separation
+- Data fetching patterns
+
+## Review Criteria
+
+### Must Check
+1. **Component Design**: Are components well-structured? Reusable? Properly typed?
+2. **UI/UX**: Is the user experience clear? Accessible? Responsive?
+3. **Performance**: Will this impact performance? Is code splitting needed?
+4. **Accessibility**: Is keyboard navigation supported? Screen reader compatible?
+5. **State Management**: Is state management appropriate? No unnecessary re-renders?
+
+### Red Flags
+- ❌ Server-only code in client components
+- ❌ Missing loading/error/empty states
+- ❌ Inaccessible components (no ARIA labels, keyboard support)
+- ❌ Large bundle size (missing code splitting)
+- ❌ Unoptimized images
+- ❌ Missing TypeScript types
+- ❌ Poor component organization
+
+## Standards
+
+### Component Structure
+
+#### Component Organization
+
+See example: @src/components/ui/Button.tsx
+
+```typescript
+// ✅ Good: Well-organized component
+'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/Button';
+import { FormInput } from '@/components/ui/FormInput';
+import type { FormData } from '@/types';
+
+interface LoginFormProps {
+  onSubmit: (data: FormData) => Promise<void>;
+  isLoading?: boolean;
+}
+
+export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
+  const [formData, setFormData] = useState<FormData>({
+    email: '',
+    password: '',
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* Form content */}
+    </form>
+  );
+}
+```
+
+#### Component Composition
+```typescript
+// ✅ Good: Composable components
+<PageLayout>
+  <PageHeader title="Login" />
+  <PageContent>
+    <LoginForm onSubmit={handleLogin} />
+  </PageContent>
+</PageLayout>
+```
+
+### UI/UX Patterns
+
+#### Loading States
+```typescript
+// ✅ Good: Loading state
+{isLoading ? (
+  <LoadingSpinner />
+) : (
+  <Content />
+)}
+```
+
+#### Error States
+```typescript
+// ✅ Good: Error state
+{error ? (
+  <ErrorMessage message={error} onRetry={handleRetry} />
+) : (
+  <Content />
+)}
+```
+
+#### Empty States
+```typescript
+// ✅ Good: Empty state
+{items.length === 0 ? (
+  <EmptyState message="No items found" />
+) : (
+  <ItemList items={items} />
+)}
+```
+
+### Accessibility
+
+#### Keyboard Navigation
+```typescript
+// ✅ Good: Keyboard accessible
+<button
+  onClick={handleClick}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      handleClick();
+    }
+  }}
+  aria-label="Close dialog"
+>
+  Close
+</button>
+```
+
+#### ARIA Labels
+```typescript
+// ✅ Good: Proper ARIA labels
+<button
+  aria-label="Delete item"
+  aria-describedby="delete-description"
+>
+  <TrashIcon />
+</button>
+<p id="delete-description">This action cannot be undone</p>
+```
+
+#### Focus Management
+```typescript
+// ✅ Good: Focus management
+useEffect(() => {
+  if (isOpen) {
+    const firstInput = dialogRef.current?.querySelector('input');
+    firstInput?.focus();
+  }
+}, [isOpen]);
+```
+
+### Performance
+
+#### Code Splitting
+```typescript
+// ✅ Good: Dynamic imports for code splitting
+const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
+  loading: () => <LoadingSpinner />,
+  ssr: false, // If not needed on server
+});
+```
+
+#### Image Optimization
+```typescript
+// ✅ Good: Next.js Image component
+import Image from 'next/image';
+
+<Image
+  src="/image.jpg"
+  alt="Description"
+  width={500}
+  height={300}
+  priority // For above-the-fold images
+/>
+```
+
+### Client/Server Separation
+
+#### Server Component
+```typescript
+// ✅ Good: Server component (default)
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+export default async function Page() {
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase.from('items').select();
+  
+  return <ItemList items={data} />;
+}
+```
+
+#### Client Component
+```typescript
+// ✅ Good: Client component (explicit)
+'use client';
+
+import { useState } from 'react';
+
+export function InteractiveComponent() {
+  const [state, setState] = useState();
+  // Client-side logic...
+}
+```
+
+## When to Mark Refinement Complete
+
+Mark "Frontend" as complete in "Completed Refinement" when:
+- ✅ Component structure and organization reviewed
+- ✅ UI/UX flow defined
+- ✅ Loading/error/empty states specified
+- ✅ Accessibility requirements documented
+- ✅ Responsive design requirements specified
+- ✅ Performance considerations identified
+- ✅ TypeScript types defined
+- ✅ No frontend red flags identified
+
+## Common Frontend Patterns
+
+### Form Handling
+```typescript
+// ✅ Good: Form with validation
+const [formData, setFormData] = useState({ email: '', password: '' });
+const [errors, setErrors] = useState<Record<string, string>>({});
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  // Validation
+  const validationErrors = validateForm(formData);
+  if (Object.keys(validationErrors).length > 0) {
+    setErrors(validationErrors);
+    return;
+  }
+  
+  // Submit
+  try {
+    await onSubmit(formData);
+  } catch (error) {
+    setErrors({ submit: 'Submission failed' });
+  }
+};
+```
+
+### Data Fetching
+```typescript
+// ✅ Good: React Query for data fetching
+const { data, isLoading, error } = useQuery({
+  queryKey: ['items'],
+  queryFn: () => fetchItems(),
+  staleTime: 5 * 60 * 1000, // 5 minutes
+});
+```
+
+### Responsive Design
+```typescript
+// ✅ Good: Tailwind responsive classes
+<div className="
+  flex flex-col
+  md:flex-row
+  gap-4
+  p-4 md:p-6
+">
+  {/* Content */}
+</div>
+```
+
+## Checklist for New Features
+
+- [ ] What components are needed?
+- [ ] How should components be organized?
+- [ ] What is the user flow?
+- [ ] What loading states are needed?
+- [ ] What error states are needed?
+- [ ] What empty states are needed?
+- [ ] Is keyboard navigation supported?
+- [ ] Are ARIA labels needed?
+- [ ] Is the design responsive?
+- [ ] Are images optimized?
+- [ ] Is code splitting needed?
+- [ ] Are TypeScript types defined?
