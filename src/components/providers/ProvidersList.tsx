@@ -27,7 +27,7 @@ export function ProvidersList({
       key={`providers-${providers.length}-${providers[0]?.provider_id || 'empty'}`}
       animate={{ opacity: 1 }}
       className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4"
-      initial={{ opacity: 0 }}
+      initial={false}
       transition={sharedTransition}
     >
       {providers.map((provider, index) => (
@@ -35,7 +35,7 @@ export function ProvidersList({
           key={provider.provider_id}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
-          initial={{ opacity: 0, y: 5, scale: 0.98 }}
+          initial={false}
           role="button"
           tabIndex={0}
           transition={{

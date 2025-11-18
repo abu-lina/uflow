@@ -90,20 +90,32 @@ export function AnimatedHeartIcon({
             />
           )
         ) : (
-          <motion.path
-            animate={{ opacity: 1, pathLength: 1 }}
-            d={heartPath}
-            fill="none"
-            initial={false}
-            stroke="var(--stroke-0, white)"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={strokeWidth}
-            transition={{
-              duration: 0.5,
-              ease: "easeInOut",
-            }}
-          />
+          animate ? (
+            <motion.path
+              animate={{ opacity: 1, pathLength: 1 }}
+              d={heartPath}
+              fill="none"
+              initial={{ opacity: 0, pathLength: 0 }}
+              stroke="var(--stroke-0, white)"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={strokeWidth}
+              transition={{
+                duration: 0.5,
+                ease: "easeInOut",
+              }}
+            />
+          ) : (
+            // Static unfilled heart - no animation on mount
+            <path
+              d={heartPath}
+              fill="none"
+              stroke="var(--stroke-0, white)"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={strokeWidth}
+            />
+          )
         )}
       </g>
     </svg>

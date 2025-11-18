@@ -1,4 +1,4 @@
-import { AboutPageContent } from './AboutPageContent';
+import { AboutPageContent } from '@/components/shared/AboutPageContent';
 
 export default function AboutPage() {
   return <AboutPageContent />;

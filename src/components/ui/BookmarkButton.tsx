@@ -176,7 +176,7 @@ export function BookmarkButton({
               animate={{ opacity: 1, scale: 1 }}
               className="size-full"
               exit={{ opacity: 0, scale: 0.97, zIndex: 0 }}
-              initial={{ opacity: 0, scale: 0.97 }}
+              initial={false}
               style={{ 
                 zIndex: 1,
                 WebkitTransform: 'translateZ(0)',
@@ -203,6 +203,7 @@ export function BookmarkButton({
                     opacity: 1,
                   }}
                   className="absolute inset-0"
+                  initial={false}
                   style={{
                     background: COLORS.primary,
                     borderRadius: '9.6px',
@@ -224,7 +225,7 @@ export function BookmarkButton({
                     <motion.div
                       animate={{ y: 0, opacity: 1 }}
                       className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
-                      initial={{ y: 5, opacity: 0 }}
+                      initial={false}
                       transition={{ duration: 0.4, ease: 'easeOut' }}
                     >
                       <AnimatedHeartIcon
@@ -236,7 +237,7 @@ export function BookmarkButton({
                       <motion.div
                         animate={{ opacity: 1, x: 0 }}
                         className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
-                        initial={{ opacity: 0, x: -3 }}
+                        initial={false}
                         transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
                       >
                         <p className="leading-[normal] whitespace-pre">{saveText}</p>

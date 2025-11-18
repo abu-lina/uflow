@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useSplash } from '@/providers/splash-provider';
-import { AboutPageContent } from '@/app/(public)/about/AboutPageContent';
+import { AboutPageContent } from '@/components/shared/AboutPageContent';
 import { CategoryGallerySection } from '@/components/shared/CategoryGallerySection';
 import { MobileGreetingHeader } from '@/components/shared/MobileGreetingHeader';
 import { SplashLayout } from '@/components/layout/SplashLayout';

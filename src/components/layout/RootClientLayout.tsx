@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -39,6 +39,10 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   return (
     <LoadingProvider>
       <div className="page-background relative flex h-screen-fix flex-col">
+        {/* Dev-only: ensure no service worker interferes with HMR/chunks */}
+        {process.env.NODE_ENV === 'development' && (
+          <DevServiceWorkerReset />
+        )}
         {/* Mobile Header - Above all content, edge-to-edge */}
         {isLandingPage && (
           <div className="block md:hidden">
@@ -77,11 +81,28 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         )}
 
         {/* Push Notification Prompt */}
-        <PushNotificationPrompt 
-          autoShow={true}
-          showDelay={5000}
-        />
+        {process.env.NODE_ENV === 'production' && (
+          <PushNotificationPrompt 
+            autoShow={true}
+            showDelay={5000}
+          />
+        )}
       </div>
     </LoadingProvider>
   );
+}
+
+function DevServiceWorkerReset() {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations()
+        .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+        .catch(() => {});
+      // Clear any runtime caches created by SW
+      if ('caches' in window) {
+        caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+      }
+    }
+  }, []);
+  return null;
 }
