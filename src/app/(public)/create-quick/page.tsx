@@ -14,19 +14,32 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { DynamicImportLoading } from '@/components/ui/DynamicImportLoading';
-import { DynamicImportError } from '@/components/ui/DynamicImportError';
 import type { PlaceData } from '@/components/create/BusinessSearch';
 import type { InstagramData } from '@/components/create/InstagramImport';
 
+// Loading component with i18n and accessibility
+function LoadingState() {
+  const { t } = useLanguage();
+  return (
+    <div 
+      className="flex items-center justify-center p-8"
+      role="status"
+      aria-live="polite"
+      aria-label={t('common.loading')}
+    >
+      <div className="text-sm text-content">{t('common.loading')}</div>
+    </div>
+  );
+}
+
 // Lazy load heavy import components
 const BusinessSearch = dynamic(() => import('@/components/create/BusinessSearch').then(mod => ({ default: mod.BusinessSearch })), {
-  loading: () => <DynamicImportLoading />,
+  loading: () => <LoadingState />,
   ssr: false,
 });
 
 const InstagramImport = dynamic(() => import('@/components/create/InstagramImport').then(mod => ({ default: mod.InstagramImport })), {
-  loading: () => <DynamicImportLoading />,
+  loading: () => <LoadingState />,
   ssr: false,
 });
 

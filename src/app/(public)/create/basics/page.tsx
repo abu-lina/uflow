@@ -16,11 +16,25 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { DynamicImportLoading } from '@/components/ui/DynamicImportLoading';
+
+// Loading component with i18n and accessibility
+function LoadingState() {
+  const { t } = useLanguage();
+  return (
+    <div 
+      className="flex items-center justify-center p-8"
+      role="status"
+      aria-live="polite"
+      aria-label={t('common.loading')}
+    >
+      <div className="text-sm text-content">{t('common.loading')}</div>
+    </div>
+  );
+}
 
 // Lazy load heavy form component
 const ProviderCreateForm = dynamic(() => import('@/features/providers/ProviderCreateForm').then(mod => ({ default: mod.ProviderCreateForm })), {
-  loading: () => <DynamicImportLoading />,
+  loading: () => <LoadingState />,
   ssr: false,
 });
 
