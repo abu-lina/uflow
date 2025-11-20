@@ -23,6 +23,8 @@ interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   isBookmarked?: boolean;
   onBookmarkChange?: (isBookmarked: boolean) => void;
   bookmarkableType?: 'provider' | 'community_service';
+  priority?: boolean;
+  loading?: 'eager' | 'lazy';
 }
 
 export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
@@ -43,6 +45,8 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       isBookmarked = false,
       onBookmarkChange,
       bookmarkableType = 'provider',
+      priority = false,
+      loading,
     },
     ref,
   ) => {
@@ -274,6 +278,8 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                 fill
                 alt={provider_name}
                 className="object-cover"
+                loading={loading}
+                priority={priority}
                 sizes="(max-width: 768px) 100vw, 288px"
                 src={getImageUrl()}
               />

@@ -76,7 +76,7 @@ export function SearchResultsList({
   return (
     <>
     <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
-      {searchResults.map((result) => {
+      {searchResults.map((result, index) => {
         // Convert SearchResult back to Provider format for compatibility
         const provider: Provider = {
           provider_id: result.id,
@@ -125,6 +125,8 @@ export function SearchResultsList({
               bookmarkableType={result.type}
               hideWebsiteButton={true}
               isBookmarked={bookmarkedProviderIds.includes(result.id)}
+              loading={index < 4 ? 'eager' : 'lazy'}
+              priority={index < 4}
               onBookmarkChange={(isBookmarked: boolean) =>
                 onBookmarkChange(result.id, isBookmarked)
               }

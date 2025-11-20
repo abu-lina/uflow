@@ -61,6 +61,9 @@ export function ProvidersContent() {
       lastPage.hasMore ? allPages.length : undefined,
     initialPageParam: 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep unused data for 10 min
+    refetchOnWindowFocus: false, // Don't refetch on tab switch
+    refetchOnMount: false, // Use cached data if available
     retry: 2, // Retry failed requests 2 times
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     // Show cached data immediately while refetching in background

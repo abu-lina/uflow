@@ -252,21 +252,18 @@ async function searchBoth(
   pageSize: number = 5,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const offset = page * pageSize;
-  // For "both" strategy, we need to fetch more to ensure we have enough results
-  // since we'll merge and sort them
-  const fetchLimit = (pageSize + 1) * 2; // Fetch more to account for merging
+  const limit = pageSize + 1; // Fetch one extra to check if there are more
   
+  // Fetch exactly what we need (not 2x)
   const [providers, communityServices] = await Promise.all([
-    searchProviders(query, category, location, fetchLimit, offset),
-    searchCommunityServices(query, CATEGORY_IDS.ALL, location, fetchLimit, offset)
+    searchProviders(query, category, location, limit, offset),
+    searchCommunityServices(query, CATEGORY_IDS.ALL, location, limit, offset)
   ]);
 
   const providerResults = providers.map(transformProviderToSearchResult);
   const communityServiceResults = communityServices.map(transformCommunityServiceToSearchResult);
   
   const combinedResults = sortByCreationDate([...providerResults, ...communityServiceResults]);
-  
-  // Check if we have more results
   const hasMore = combinedResults.length > pageSize;
   const results = combinedResults.slice(0, pageSize);
   
@@ -399,44 +396,41 @@ export async function searchProviders(
     return [];
   }
 
-  // Fetch offers and needs for each provider
-  const providersWithOffersAndNeeds = await Promise.all(
-    data.map(async (provider) => {
-      let offers: Array<{ name_de: string }> = [];
-      let needs: Array<{ name_de: string }> = [];
+  // Batch fetch all offers and needs at once to avoid N+1 query problem
+  const allOfferIds = Array.from(new Set(data.flatMap(p => p.offers_ids || [])));
+  const allNeedIds = Array.from(new Set(data.flatMap(p => p.needs_ids || [])));
 
-      if (provider.offers_ids && provider.offers_ids.length > 0) {
-        const { data: offersData, error: offersError } = await supabase
-          .from('offers')
-          .select('name_de')
-          .in('offer_id', provider.offers_ids);
+  // Batch queries with proper error handling
+  const [offersResult, needsResult] = await Promise.all([
+    allOfferIds.length > 0 
+      ? supabase.from('offers').select('offer_id, name_de').in('offer_id', allOfferIds)
+      : Promise.resolve({ data: [], error: null }),
+    allNeedIds.length > 0
+      ? supabase.from('needs').select('need_id, name_de').in('need_id', allNeedIds)
+      : Promise.resolve({ data: [], error: null })
+  ]);
 
-        if (!offersError && offersData) {
-          offers = offersData;
-        }
-      }
+  // Handle errors gracefully
+  if (offersResult.error) {
+    console.error('Error fetching offers:', offersResult.error);
+  }
+  if (needsResult.error) {
+    console.error('Error fetching needs:', needsResult.error);
+  }
 
-      if (provider.needs_ids && provider.needs_ids.length > 0) {
-        const { data: needsData, error: needsError } = await supabase
-          .from('needs')
-          .select('name_de')
-          .in('need_id', provider.needs_ids);
+  // Create maps for O(1) lookup
+  const offersMap = new Map((offersResult.data || []).map(o => [o.offer_id, o]));
+  const needsMap = new Map((needsResult.data || []).map(n => [n.need_id, n]));
 
-        if (!needsError && needsData) {
-          needs = needsData;
-        }
-      }
-
-      return {
-        ...provider,
-        offers_ids: provider.offers_ids || [],
-        needs_ids: provider.needs_ids || [],
-        barakah_effects: provider.barakah_effects || [],
-        offers,
-        needs,
-      };
-    })
-  );
+  // Map back to providers efficiently
+  const providersWithOffersAndNeeds = data.map(provider => ({
+    ...provider,
+    offers: (provider.offers_ids || []).map(id => offersMap.get(id)).filter(Boolean) as Array<{ name_de: string }>,
+    needs: (provider.needs_ids || []).map(id => needsMap.get(id)).filter(Boolean) as Array<{ name_de: string }>,
+    offers_ids: provider.offers_ids || [],
+    needs_ids: provider.needs_ids || [],
+    barakah_effects: provider.barakah_effects || [],
+  }));
 
   return providersWithOffersAndNeeds;
 }
