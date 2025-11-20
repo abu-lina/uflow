@@ -143,38 +143,31 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
         setIsAnimating(true);
         setIsTransiting(true);
         setShowAllahumaBarik(true);
-        
-        // Start bookmark action immediately (optimistic update happens first)
-        const bookmarkStartTime = Date.now();
-        const minDisplayTime = 800; // Minimum time to show "Allahuma Barik" (800ms)
-        
-        try {
-          // Perform the bookmark action (optimistic update happens immediately)
-          await handleOptimisticBookmark();
-          
-          // Calculate remaining time to show "Allahuma Barik"
-          const elapsed = Date.now() - bookmarkStartTime;
-          const remainingTime = Math.max(0, minDisplayTime - elapsed);
-          
-          // Wait for minimum display time OR until request completes (whichever is longer)
-          timeoutRefs.current.stateTimeout = setTimeout(() => {
-            // Now hide barik and trigger fill animation
-            setShowAllahumaBarik(false);
-            setShouldAnimateFill(true);
-            
-            setIsAnimating(false);
-            // Reset animation flags after animation completes (stroke + fill = ~800ms)
-            timeoutRefs.current.fillTimeout = setTimeout(() => {
-              setShouldAnimateFill(false);
-              setIsTransiting(false);
-            }, 800);
-          }, remainingTime);
-        } catch (error) {
-          console.error('Error toggling bookmark:', error);
+        // After showing Allahuma Barik, smoothly transition to Saved state
+        timeoutRefs.current.barikTimeout = setTimeout(async () => {
+          // Perform the actual bookmark action first (this will set bookmarked=true via optimistic update)
+          try {
+            await handleOptimisticBookmark();
+            // Small delay to ensure state updates propagate
+            timeoutRefs.current.stateTimeout = setTimeout(() => {
+              // Now hide barik and trigger fill animation
+              setShowAllahumaBarik(false);
+              setShouldAnimateFill(true);
+              
+              setIsAnimating(false);
+              // Reset animation flags after animation completes (stroke + fill = ~800ms)
+              timeoutRefs.current.fillTimeout = setTimeout(() => {
+                setShouldAnimateFill(false);
+                setIsTransiting(false);
+              }, 800);
+            }, 50);
+          } catch (error) {
+            console.error('Error toggling bookmark:', error);
           setShowAllahumaBarik(false);
-          setIsAnimating(false);
-          setIsTransiting(false);
-        }
+            setIsAnimating(false);
+            setIsTransiting(false);
+          }
+        }, 1500);
       } else {
         // Track that we were bookmarked before toggling
         setWasBookmarked(true);
@@ -490,7 +483,6 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                               opacity: 1,
                             }}
                             className="absolute inset-0"
-                            initial={false}
                             style={{
                               background: "#589d96",
                               borderRadius: '9.6px',
@@ -509,11 +501,8 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                             transition={{ duration: 0.2 }}
                           >
                             <div className="flex flex-row items-center justify-center size-full">
-                              <motion.div 
-                                animate={{ y: 0, opacity: 1 }}
+                              <div 
                                 className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
-                                initial={false}
-                                transition={{ duration: 0.4, ease: "easeOut" }}
                               >
                                 <AnimatedHeartIcon 
                                   animate={wasBookmarked}
@@ -521,15 +510,12 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                                   size={24}
                                   useFigmaPath={true}
                                 />
-                                <motion.div 
-                                  animate={{ opacity: 1, x: 0 }}
+                                <div 
                                   className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
-                                  initial={false}
-                                  transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
                                 >
                                   <p className="leading-[normal] whitespace-pre">{t('providers.save')}</p>
-                                </motion.div>
-                              </motion.div>
+                                </div>
+                              </div>
                             </div>
                           </motion.div>
                         </div>

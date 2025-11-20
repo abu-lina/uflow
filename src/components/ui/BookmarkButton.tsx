@@ -72,7 +72,7 @@ export function BookmarkButton({
           animate={{ opacity: isPressed ? 0.7 : 0 }}
           className="absolute inset-0 z-10 pointer-events-none"
           style={{
-            background: COLORS.primaryPressed,
+            background: COLORS.mintPressed,
             borderRadius: state === 'saved' ? '9.6px' : '12px',
             WebkitTransform: 'translateZ(0)',
             transform: 'translateZ(0)',
@@ -121,7 +121,7 @@ export function BookmarkButton({
               <div 
                 className="relative rounded-[9.6px] size-full overflow-hidden"
                 style={{
-                  backgroundColor: COLORS.primaryPressed,
+                  backgroundColor: COLORS.mintPressed,
                   isolation: 'isolate',
                   WebkitBackfaceVisibility: 'hidden',
                   backfaceVisibility: 'hidden',
@@ -135,7 +135,7 @@ export function BookmarkButton({
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: COLORS.primaryPressed,
+                    background: COLORS.mintPressed,
                     borderRadius: '9.6px',
                     opacity: 1,
                   }}
@@ -144,8 +144,8 @@ export function BookmarkButton({
                   className="relative size-full"
                   style={{
                     boxShadow: isHovered
-                      ? `0 2px 8px ${COLORS_RGBA.primary.shadowHover}`
-                      : `0 1px 4px ${COLORS_RGBA.primary.shadow}`,
+                      ? `0 2px 8px ${COLORS_RGBA.mint.shadowHover}`
+                      : `0 1px 4px ${COLORS_RGBA.mint.shadow}`,
                   }}
                 >
                   <div className="flex flex-row items-center justify-center size-full">
@@ -203,9 +203,8 @@ export function BookmarkButton({
                     opacity: 1,
                   }}
                   className="absolute inset-0"
-                  initial={false}
                   style={{
-                    background: COLORS.primary,
+                    background: COLORS.mint,
                     borderRadius: '9.6px',
                     WebkitTransform: 'translateZ(0)',
                     transform: 'translateZ(0)',
@@ -222,11 +221,8 @@ export function BookmarkButton({
                   transition={{ duration: 0.2 }}
                 >
                   <div className="flex flex-row items-center justify-center size-full">
-                    <motion.div
-                      animate={{ y: 0, opacity: 1 }}
+                    <div
                       className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
-                      initial={false}
-                      transition={{ duration: 0.4, ease: 'easeOut' }}
                     >
                       <AnimatedHeartIcon
                         animate={wasBookmarked}
@@ -234,15 +230,12 @@ export function BookmarkButton({
                         size={24}
                         useFigmaPath={true}
                       />
-                      <motion.div
-                        animate={{ opacity: 1, x: 0 }}
+                      <div
                         className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
-                        initial={false}
-                        transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
                       >
                         <p className="leading-[normal] whitespace-pre">{saveText}</p>
-                      </motion.div>
-                    </motion.div>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               </div>

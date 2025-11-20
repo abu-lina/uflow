@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { motion } from 'motion/react';
 
 import { HEART_PATH_FIGMA } from '@/constants/svg-paths';
@@ -16,7 +17,7 @@ interface AnimatedHeartIconProps {
 // Iconamoon heart SVG path (viewBox 0 0 24 24) - fallback for non-Figma mode
 const HEART_PATH = 'M19.071 13.142L13.414 18.8a2 2 0 0 1-2.828 0l-5.657-5.657A5 5 0 1 1 12 6.072a5 5 0 0 1 7.071 7.07';
 
-export function AnimatedHeartIcon({ 
+export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({ 
   filled = false, 
   animate = false,
   animateFill = false, // Only animate fill on user interaction, not initial mount
@@ -90,32 +91,15 @@ export function AnimatedHeartIcon({
             />
           )
         ) : (
-          animate ? (
-            <motion.path
-              animate={{ opacity: 1, pathLength: 1 }}
-              d={heartPath}
-              fill="none"
-              initial={{ opacity: 0, pathLength: 0 }}
-              stroke="var(--stroke-0, white)"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={strokeWidth}
-              transition={{
-                duration: 0.5,
-                ease: "easeInOut",
-              }}
-            />
-          ) : (
-            // Static unfilled heart - no animation on mount
-            <path
-              d={heartPath}
-              fill="none"
-              stroke="var(--stroke-0, white)"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={strokeWidth}
-            />
-          )
+          // Unfilled heart - render static to prevent flicker on mount
+          <path
+            d={heartPath}
+            fill="none"
+            stroke="var(--stroke-0, white)"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={strokeWidth}
+          />
         )}
       </g>
     </svg>
@@ -154,4 +138,4 @@ export function AnimatedHeartIcon({
       {iconContent}
     </motion.div>
   );
-}
+});
