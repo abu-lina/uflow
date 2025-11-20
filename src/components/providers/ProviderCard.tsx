@@ -53,6 +53,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     const { user } = useAuth();
     const { t, language } = useLanguage();
     const [isLoading, setIsLoading] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
     // Initialize bookmarked state from prop to prevent flash on mount
     const [bookmarked, setBookmarked] = useState(() => isBookmarked);
     const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
@@ -264,6 +265,9 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       }
     };
 
+    // Show skeleton while image is loading (but keep image loading in background)
+    const showSkeleton = !imageLoaded && !gradient;
+
     return (
       <div ref={ref} className={`inline-flex shrink-0 flex-col items-start ${className || ''}`}>
         <div className="relative flex h-64 w-72 flex-col items-center justify-between">
@@ -273,30 +277,46 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
               rounded-t-3xl bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500"
             />
           ) : (
-            <div className="border-uFlowWhite absolute left-0 top-0 h-64 w-72 overflow-hidden rounded-t-3xl border">
-              <Image
-                fill
-                alt={provider_name}
-                className="object-cover"
-                loading={loading}
-                priority={priority}
-                sizes="(max-width: 768px) 100vw, 288px"
-                src={getImageUrl()}
-              />
-            </div>
+            <>
+              {showSkeleton && (
+                <div className="absolute left-0 top-0 h-64 w-72 animate-pulse rounded-t-3xl bg-gray-200" />
+              )}
+              <div className={`border-uFlowWhite absolute left-0 top-0 h-64 w-72 overflow-hidden rounded-t-3xl border ${showSkeleton ? 'opacity-0' : 'opacity-100'}`}>
+                <Image
+                  fill
+                  alt={provider_name}
+                  className="object-cover"
+                  loading={loading}
+                  priority={priority}
+                  sizes="(max-width: 768px) 100vw, 288px"
+                  src={getImageUrl()}
+                  onLoad={() => setImageLoaded(true)}
+                />
+              </div>
+            </>
           )}
-          <div className="absolute bottom-3 left-3">
-            <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-[#CDCDCD] bg-white/70 px-2 backdrop-blur-[1.50px]">
-              <div className="justify-center text-center font-inter-tight text-sm font-medium text-[#333333]">
-                {categoryName}
+          {!showSkeleton && (
+            <div className="absolute bottom-3 left-3">
+              <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-[#CDCDCD] bg-white/70 px-2 backdrop-blur-[1.50px]">
+                <div className="justify-center text-center font-inter-tight text-sm font-medium text-[#333333]">
+                  {categoryName}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
-        <div
-          className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5
-        outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300"
-        >
+        {showSkeleton ? (
+          <div className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5 outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300">
+            <div className="flex w-full flex-col items-start gap-3.5">
+              <div className="h-6 w-3/4 animate-pulse rounded bg-gray-200" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200" />
+            </div>
+          </div>
+        ) : (
+          <div
+            className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5
+          outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300"
+          >
           <div className="flex w-full flex-col items-start gap-3.5">
             <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
               <span
@@ -546,7 +566,8 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
               </div>
             )}
           </div>
-        </div>
+          </div>
+        )}
       </div>
     );
   },
