@@ -9,18 +9,36 @@ import { LoadingProvider } from '@/providers/LoadingProvider';
 import { LanguageProvider } from '@/providers/LanguageProvider';
 import { mockAuthContext, mockSearchContext } from '../mocks/providerData';
 
-// Mock Next.js router
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
+// Mock Next.js router with stateful search params
+// This allows tests to simulate URL changes
+let mockSearchParams = new URLSearchParams();
+let mockPathname = '/providers';
+let searchParamsListeners: Array<() => void> = [];
+
+const createMockRouter = () => ({
     push: vi.fn(),
-    replace: vi.fn(),
+  replace: vi.fn((url: string) => {
+    // Update mock search params when router.replace is called
+    const urlObj = new URL(url, 'http://localhost');
+    mockSearchParams = urlObj.searchParams;
+    mockPathname = urlObj.pathname;
+    // Notify listeners (simulate re-render)
+    searchParamsListeners.forEach(listener => listener());
+  }),
     back: vi.fn(),
     forward: vi.fn(),
     refresh: vi.fn(),
     prefetch: vi.fn(),
-  }),
-  useSearchParams: () => new URLSearchParams(),
-  usePathname: () => '/',
+});
+
+// Mock Next.js router
+vi.mock('next/navigation', () => ({
+  useRouter: () => createMockRouter(),
+  useSearchParams: () => {
+    // Return current search params - this will be reactive in tests
+    return mockSearchParams;
+  },
+  usePathname: () => mockPathname,
 }));
 
 // Mock Next.js Image component
@@ -126,6 +144,16 @@ function customRender(
     withProviders = true,
     ...renderOptions
   } = options;
+
+  // Reset mock search params for each test
+  // Note: This needs to be exported so tests can reset it
+  if (typeof window !== 'undefined') {
+    (window as any).__resetMockSearchParams = () => {
+      mockSearchParams = new URLSearchParams();
+      mockPathname = '/providers';
+    };
+    (window as any).__resetMockSearchParams();
+  }
 
   if (!withProviders) {
     return render(ui, renderOptions);

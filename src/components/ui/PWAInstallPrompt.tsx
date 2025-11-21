@@ -171,3 +171,5 @@ export function PWAInstallPrompt() {
     </>
   );
 }
+
+export default PWAInstallPrompt;

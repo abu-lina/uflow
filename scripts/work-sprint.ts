@@ -42,6 +42,7 @@ async function workSprint() {
     // Import modules AFTER loading environment variables
     const { getNextSprintItem, markItemInProgress, getSprintProgress } = await import('../src/lib/notion/sprintWorkEngine');
     const { getSprint, getActiveSprint } = await import('../src/lib/notion/sprintHelpers');
+    const { createBranch } = await import('../src/lib/git/branchHelpers');
 
     console.log('🔍 Finding next item to work on...\n');
 
@@ -67,6 +68,19 @@ async function workSprint() {
     const sprintName = (sprint.properties as any).Name?.title?.[0]?.text?.content || 'Sprint';
     console.log(`📋 Sprint: ${sprintName}`);
     console.log(`   URL: ${sprint.url}\n`);
+
+    // Create or checkout sprint branch
+    console.log('🌿 Setting up sprint branch...\n');
+    const branchName = `sprint-${sprintName}`;
+    const branchResult = await createBranch(branchName);
+    const currentBranchName = branchResult.success ? branchResult.branchName : undefined;
+    
+    if (!branchResult.success) {
+      console.error(`❌ Error: Failed to create/checkout branch: ${branchResult.error}`);
+      console.log('   Continuing without branch...\n');
+    } else {
+      console.log(`✅ ${branchResult.created ? 'Created' : 'Checked out'} branch: ${branchResult.branchName}\n`);
+    }
 
     // Get next item
     const nextItem = await getNextSprintItem(sprintId);
@@ -223,7 +237,7 @@ async function workSprint() {
       rl.close();
 
       if (answer === 'y' || answer === 'yes') {
-        await markItemDone(nextItem.id);
+        await markItemDone(nextItem.id, currentBranchName);
         console.log('\n✅ Item marked as done!');
         
         // Get next item

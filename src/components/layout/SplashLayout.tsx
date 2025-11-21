@@ -16,7 +16,7 @@ interface SplashLayoutProps {
   animationDelay?: number;
 }
 
-export function SplashLayout({ 
+function SplashLayout({ 
   children, 
   onContinue, 
   continueText = "Weiter",
@@ -52,3 +52,6 @@ export function SplashLayout({
     </PageLayout>
   );
 }
+
+export { SplashLayout };
+export default SplashLayout;
