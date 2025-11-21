@@ -23,28 +23,28 @@ describe('SearchBar Component', () => {
     it('should render search input field', () => {
       render(<SearchBar />);
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
       expect(searchInput).toBeInTheDocument();
     });
 
     it('should render search button', () => {
       render(<SearchBar />);
       
-      const searchButton = screen.getByRole('button', { name: /suchen/i });
+      const searchButton = screen.getByRole('button', { name: /search/i });
       expect(searchButton).toBeInTheDocument();
     });
 
     it('should render location filter', () => {
       render(<SearchBar />);
       
-      const locationFilter = screen.getByText(/überall/i);
+      const locationFilter = screen.getByText(/everywhere/i);
       expect(locationFilter).toBeInTheDocument();
     });
 
     it('should render category filter', () => {
       render(<SearchBar />);
       
-      const categoryFilter = screen.getByText(/alle kategorien/i);
+      const categoryFilter = screen.getByText(/all/i);
       expect(categoryFilter).toBeInTheDocument();
     });
   });
@@ -53,7 +53,7 @@ describe('SearchBar Component', () => {
     it('should allow typing in search input', async () => {
       render(<SearchBar />);
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
       const searchTerm = 'Bilal';
       
       fireEvent.change(searchInput, { target: { value: searchTerm } });
@@ -77,8 +77,8 @@ describe('SearchBar Component', () => {
         }
       );
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
-      const searchButton = screen.getByRole('button', { name: /suchen/i });
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
+      const searchButton = screen.getByRole('button', { name: /search in your ummah/i });
       
       // Type search term
       fireEvent.change(searchInput, { target: { value: 'Bilal' } });
@@ -104,7 +104,7 @@ describe('SearchBar Component', () => {
         }
       );
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
       
       // Type search term and press Enter
       fireEvent.change(searchInput, { target: { value: 'Bilal' } });
@@ -128,7 +128,7 @@ describe('SearchBar Component', () => {
         }
       );
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
       
       // Type search term
       fireEvent.change(searchInput, { target: { value: 'Bilal' } });
@@ -144,7 +144,7 @@ describe('SearchBar Component', () => {
     it('should open category dropdown when clicked', async () => {
       render(<SearchBar />);
       
-      const categoryFilter = screen.getByText(/alle kategorien/i);
+      const categoryFilter = screen.getByText(/all/i);
       fireEvent.click(categoryFilter);
       
       // Wait for dropdown to appear
@@ -156,7 +156,7 @@ describe('SearchBar Component', () => {
     it('should open location dropdown when clicked', async () => {
       render(<SearchBar />);
       
-      const locationFilter = screen.getByText(/überall/i);
+      const locationFilter = screen.getByText(/everywhere/i);
       fireEvent.click(locationFilter);
       
       // Wait for dropdown to appear
@@ -177,7 +177,7 @@ describe('SearchBar Component', () => {
         }
       );
       
-      const categoryFilter = screen.getByText(/alle kategorien/i);
+      const categoryFilter = screen.getByText(/all/i);
       fireEvent.click(categoryFilter);
       
       // Wait for dropdown and select Mosque category
@@ -201,7 +201,7 @@ describe('SearchBar Component', () => {
         }
       );
       
-      const locationFilter = screen.getByText(/überall/i);
+      const locationFilter = screen.getByText(/everywhere/i);
       fireEvent.click(locationFilter);
       
       // Wait for dropdown and select Berlin location
@@ -227,8 +227,8 @@ describe('SearchBar Component', () => {
       
       render(<SearchBar />);
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
-      const searchButton = screen.getByRole('button', { name: /suchen/i });
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
+      const searchButton = screen.getByRole('button', { name: /search in your ummah/i });
       
       // Type search term and search
       fireEvent.change(searchInput, { target: { value: 'Bilal' } });
@@ -251,9 +251,9 @@ describe('SearchBar Component', () => {
       
       render(<SearchBar />);
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
-      const categoryFilter = screen.getByText(/alle kategorien/i);
-      const searchButton = screen.getByRole('button', { name: /suchen/i });
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
+      const categoryFilter = screen.getByText(/all/i);
+      const searchButton = screen.getByRole('button', { name: /search in your ummah/i });
       
       // Set category filter
       fireEvent.click(categoryFilter);
@@ -283,9 +283,9 @@ describe('SearchBar Component', () => {
       
       render(<SearchBar />);
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
-      const locationFilter = screen.getByText(/überall/i);
-      const searchButton = screen.getByRole('button', { name: /suchen/i });
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
+      const locationFilter = screen.getByText(/everywhere/i);
+      const searchButton = screen.getByRole('button', { name: /search in your ummah/i });
       
       // Set location filter
       fireEvent.click(locationFilter);
@@ -316,8 +316,8 @@ describe('SearchBar Component', () => {
       
       render(<SearchBar />);
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
-      const searchButton = screen.getByRole('button', { name: /suchen/i });
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
+      const searchButton = screen.getByRole('button', { name: /search in your ummah/i });
       
       // Verify elements are present and accessible
       expect(searchInput).toBeInTheDocument();
@@ -333,7 +333,7 @@ describe('SearchBar Component', () => {
     it('should handle mobile keyboard input correctly', async () => {
       render(<SearchBar />);
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
       
       // Simulate mobile keyboard input
       fireEvent.focus(searchInput);
@@ -365,8 +365,8 @@ describe('SearchBar Component', () => {
         }
       );
       
-      // const searchInput = screen.getByPlaceholderText(/suchen/i); // Not used in this test
-      const searchButton = screen.getByRole('button', { name: /suchen/i });
+      // const searchInput = screen.getByPlaceholderText(/search in your ummah/i); // Not used in this test
+      const searchButton = screen.getByRole('button', { name: /search in your ummah/i });
       
       // Try to search with empty input
       fireEvent.click(searchButton);
@@ -387,8 +387,8 @@ describe('SearchBar Component', () => {
         }
       );
       
-      const searchInput = screen.getByPlaceholderText(/suchen/i);
-      const searchButton = screen.getByRole('button', { name: /suchen/i });
+      const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
+      const searchButton = screen.getByRole('button', { name: /search in your ummah/i });
       
       // Search with special characters
       const searchTerm = 'Bilal & Co.';

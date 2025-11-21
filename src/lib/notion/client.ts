@@ -266,30 +266,79 @@ export async function appendContentToPage(
   // The page.id from API responses is typically without dashes, but handle both cases
   const pageIdWithoutDashes = pageId.replace(/-/g, '');
 
-  const response = await fetch(`${NOTION_API_BASE}/blocks/${pageIdWithoutDashes}/children`, {
-    method: 'POST',
-    headers: config.headers,
-    body: JSON.stringify({
-      children: blocks,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: response.statusText }));
-    const errorMessage = error.message || response.statusText || 'Unknown error';
-    console.error(`Failed to append content to page ${pageId}:`, {
-      error: errorMessage,
-      status: response.status,
-      statusText: response.statusText,
-      pageId,
-      pageIdWithoutDashes,
-    });
-    throw new Error(
-      `Notion API error: ${errorMessage}`
-    );
+  // Validate page ID format (should be 32 hex characters after removing dashes)
+  if (!/^[a-f0-9]{32}$/i.test(pageIdWithoutDashes)) {
+    console.error(`Invalid Notion page ID format: ${pageId} (${pageIdWithoutDashes})`);
+    throw new Error(`Invalid Notion page ID format. Expected UUID format.`);
   }
 
-  return response.json();
+  try {
+    const response = await fetch(`${NOTION_API_BASE}/blocks/${pageIdWithoutDashes}/children`, {
+      method: 'POST',
+      headers: config.headers,
+      body: JSON.stringify({
+        children: blocks,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ 
+        message: response.statusText,
+        code: response.status.toString(),
+      }));
+      
+      const errorMessage = errorData.message || response.statusText || 'Unknown error';
+      const errorCode = errorData.code || response.status.toString();
+      
+      // Log detailed error for debugging
+      console.error(`Failed to append content to page ${pageId}:`, {
+        error: errorMessage,
+        code: errorCode,
+        status: response.status,
+        statusText: response.statusText,
+        pageId,
+        pageIdWithoutDashes,
+        url: `${NOTION_API_BASE}/blocks/${pageIdWithoutDashes}/children`,
+        blocksCount: blocks.length,
+      });
+
+      // Provide more helpful error messages
+      if (response.status === 400) {
+        throw new Error(
+          `Notion API error: Invalid request (${errorMessage}). Page ID may be invalid or page may not exist.`
+        );
+      } else if (response.status === 401) {
+        throw new Error(
+          `Notion API error: Unauthorized. Check your NOTION_API_TOKEN.`
+        );
+      } else if (response.status === 404) {
+        throw new Error(
+          `Notion API error: Page not found. Page ID: ${pageId}`
+        );
+      } else {
+        throw new Error(
+          `Notion API error: ${errorMessage} (${errorCode})`
+        );
+      }
+    }
+
+    return await response.json();
+  } catch (error) {
+    // Re-throw if it's already our formatted error
+    if (error instanceof Error && error.message.startsWith('Notion API error:')) {
+      throw error;
+    }
+    
+    // Handle network errors
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(
+        `Network error while connecting to Notion API. Please check your internet connection.`
+      );
+    }
+    
+    // Re-throw unknown errors
+    throw error;
+  }
 }
 
 /**

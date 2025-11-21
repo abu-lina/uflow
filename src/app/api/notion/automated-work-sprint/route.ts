@@ -220,7 +220,15 @@ export async function POST(request: Request) {
 
     // Auto-confirm if requested and all checks pass
     if (autoConfirm && workResult.readyToComplete) {
-      await markItemDone(item.id);
+      // Try to get current branch name
+      let branchName: string | undefined;
+      try {
+        const { getCurrentBranch } = await import('@/lib/git/branchHelpers');
+        branchName = await getCurrentBranch();
+      } catch {
+        // Branch name not available, markItemDone will try to get it
+      }
+      await markItemDone(item.id, branchName);
       return NextResponse.json({
         ...response,
         completed: true,

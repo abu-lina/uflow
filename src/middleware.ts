@@ -31,7 +31,22 @@ export async function middleware(req: NextRequest) {
     });
 
     if (!res.ok) {
-      // Token invalid or expired
+      // Check if token is expired (403) - allow page to load so AuthSyncer can refresh
+      if (res.status === 403) {
+        try {
+          const errorData = await res.json();
+          // If it's a JWT expiration error, let the page load
+          // AuthSyncer will detect the session and sync fresh tokens
+          if (errorData.error_code === 'bad_jwt' || errorData.msg?.includes('expired')) {
+            return NextResponse.next();
+          }
+        } catch {
+          // If we can't parse the error, treat as expired and allow through
+          return NextResponse.next();
+        }
+      }
+      
+      // For other errors (401, invalid token, etc.), redirect to home
       return NextResponse.redirect(new URL('/', req.url));
     }
   }

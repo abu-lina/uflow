@@ -109,9 +109,10 @@ export async function markItemInProgress(itemId: string): Promise<void> {
 }
 
 /**
- * Mark item as done
+ * Mark item as done and add completion details
  */
-export async function markItemDone(itemId: string): Promise<void> {
+export async function markItemDone(itemId: string, branchName?: string): Promise<void> {
+  // Update status to Done
   await updatePage(itemId, {
     Status: {
       status: {
@@ -119,6 +120,47 @@ export async function markItemDone(itemId: string): Promise<void> {
       },
     },
   });
+
+  // Add completion details to the story
+  try {
+    const { appendContentToPage } = await import('./client');
+    const { getCurrentBranch } = await import('../git/branchHelpers');
+    
+    // Get current branch if not provided
+    let currentBranch = branchName;
+    if (!currentBranch) {
+      try {
+        currentBranch = await getCurrentBranch();
+      } catch {
+        currentBranch = 'unknown';
+      }
+    }
+
+    // Format completion timestamp
+    const completionDate = new Date().toISOString();
+    const formattedDate = new Date(completionDate).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    });
+
+    // Create completion details section
+    const completionDetails = `**Completion Details**
+
+- Completed: ${formattedDate}
+- Branch: ${currentBranch}
+- Status: All checks passed
+- Ready for Review: Yes`;
+
+    // Append completion details to the page
+    await appendContentToPage(itemId, completionDetails);
+  } catch (error) {
+    // Log error but don't fail the mark as done operation
+    console.warn(`Failed to add completion details to item ${itemId}:`, error);
+  }
 }
 
 /**

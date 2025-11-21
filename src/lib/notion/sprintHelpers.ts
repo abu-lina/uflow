@@ -269,3 +269,41 @@ export async function getSprintIssues(sprintId: string): Promise<Array<{ id: str
   return issueDetails;
 }
 
+/**
+ * Mark sprint as ready for review
+ * Adds completion information including branch name and completion date
+ */
+export async function markSprintReadyForReview(
+  sprintId: string,
+  branchName?: string
+): Promise<void> {
+  const { appendContentToPage } = await import('./client');
+  
+  // Format completion timestamp
+  const completionDate = new Date().toISOString();
+  const formattedDate = new Date(completionDate).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
+
+  // Create completion summary
+  const completionSummary = `**Sprint Completion Summary**
+
+- Completed: ${formattedDate}
+${branchName ? `- Branch: ${branchName}` : ''}
+- Status: All items completed
+- Ready for Review: Yes
+
+All sprint items have been completed and are ready for review.`;
+
+  // Append completion summary to the sprint page
+  await appendContentToPage(sprintId, completionSummary);
+  
+  // Optionally update sprint status (if you have a "Ready for Review" status)
+  // For now, we'll just add the content. Status can be updated manually if needed.
+}
+
