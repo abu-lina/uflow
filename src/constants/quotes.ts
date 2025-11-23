@@ -6,19 +6,18 @@ export interface Quote {
 
 export const quotes: Quote[] = [
   {
-    heading: 'Ein Marktplatz\nfür Muslime',
+    heading: 'Wo finde ich halal Anbieter?',
     quote:
-      'Inmitten des Leids der Palästinenser und den zahlreichen Herausforderungen, denen unsere Ummah gegenübersteht, wird deutlich, wie wichtig es ist, dass wir als Ummah enger zusammenkommen.',
+      'Tausende Muslime suchen nach halal Angeboten in Ihrer Stadt und wenn sie auf Reisen sind. Es gibt sie, aber man findet sie nicht so einfach.Lasst uns das gemeinsam ändern - inshaAllah.',
   },
   {
-    heading: 'Viele Muslime\naber wenig\nGemeinschaft?',
+    heading: 'Ein Marktplatz mit Barakah.',
     quote:
-      'Es wird eine Zeit kommen, in der die Muslime viele sein werden, doch ihr Zusammenhalt wird so schwach sein wie der Schaum des Meeres.',
-    author: 'Der Prophet Mohammed ﷺ, Sahih Muslim',
+      'Halal. Transparent. In deiner Stadt.<br>Für dich und deine Ummah.'
   },
   {
-    heading: 'Supporte Deine Ummah',
+    heading: 'Alles an einem Ort.',
     quote:
-      'Ummah Flow ist mehr als nur ein Marktplatz für Muslime: Es ist ein Ort, an dem wir unsere Gemeinschaft stärken können, indem wir muslimische Unternehmen und Läden unterstützen.',
+      'Finde muslimische Anbieter.<br>Teile eigene Angebote.<br>Entdecke Barakah in deiner Nähe.',
   },
 ];
