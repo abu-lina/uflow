@@ -2,7 +2,7 @@
 
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useState } from 'react';
 
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { AuthProvider } from '@/providers/auth-provider';
@@ -20,25 +20,24 @@ interface ClientProvidersProps {
   initialUser: User | null;
 }
 
+// Create QueryClient configuration outside component to avoid webpack bundling issues
+const queryClientConfig = {
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      retry: 1,
+      retryOnMount: false,
+      placeholderData: (previousData: unknown) => previousData,
+    },
+  },
+} as const;
+
 export function ClientProviders({ children, initialUser }: ClientProvidersProps) {
-  const queryClient = useMemo(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 5 * 60 * 1000,
-            gcTime: 30 * 60 * 1000,
-            refetchOnWindowFocus: false,
-            refetchOnMount: false,
-            retry: 1,
-            retryOnMount: false,
-            // Use placeholderData to show cached data while refetching
-            placeholderData: (previousData: unknown) => previousData,
-          },
-        },
-      }),
-    []
-  );
+  // Use useState with lazy initialization to ensure QueryClient is only created once
+  const [queryClient] = useState(() => new QueryClient(queryClientConfig));
 
   return (
     <QueryClientProvider client={queryClient}>

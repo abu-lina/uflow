@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 
 import { LandingLayout } from '@/components/layout/LandingLayout';
 import { AboutSection } from '@/components/shared/AboutSection';
-import { CategoryGallerySection } from '@/components/shared/CategoryGallerySection';
 import { ExploreSection } from '@/components/shared/ExploreSection';
 import { LandingHero } from '@/components/shared/LandingHero';
 import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
@@ -25,7 +24,6 @@ export default function Home() {
           <LandingHero />
           <AboutSection />
           <ExploreSection />
-          <CategoryGallerySection />
         </div>
       </LandingLayout>
     </Suspense>
