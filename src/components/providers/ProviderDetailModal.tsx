@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
-import { X, ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag, ChevronDown } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -131,6 +131,8 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [communityServices, setCommunityServices] = useState<CommunityServiceData[]>([]);
+  const [expandedOffers, setExpandedOffers] = useState(false);
+  const [expandedNeeds, setExpandedNeeds] = useState(false);
 
   // Use React Query for bookmark status (cached, non-blocking)
   // This uses the same cache as the bookmarks list, so it's instant if already loaded
@@ -265,9 +267,25 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 {provider.provider_name}
               </div>
             </div>
-            <div className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal">
-              {provider.category?.name_de || ''}
-            </div>
+            {formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined) ? (
+              <button
+                className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left"
+                disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                title="Adresse antippen zum Navigieren"
+                onClick={() => {
+                  const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
+                  if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                    openNavigation(address);
+                  }
+                }}
+              >
+                {formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+              </button>
+            ) : (
+              <div className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal">
+                {provider.category?.name_de || ''}
+              </div>
+            )}
           </div>
           {/* Enhanced Image Carousel */}
           <div className="flex h-[640px] flex-col items-start justify-start gap-4">
@@ -448,54 +466,83 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 </div>
               </div>
             </div>
-            {/* Adresse Section */}
-            <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
-              <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                <div className="inline-flex items-start justify-between self-stretch">
-                  <div className="inline-flex flex-1 flex-col items-start justify-start gap-2">
-                    <div className="text-uFlowText h-10 w-48 justify-start font-inter-tight text-2xl font-semibold">
-                      {provider.address_city ? 'Adresse:' : 'Standort:'}
-                    </div>
-                    {provider.address_city ? (
+            {/* Offers & Needs Section */}
+            {((provider.offers && provider.offers.length > 0) || (provider.needs && provider.needs.length > 0)) && (
+              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
+                <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
+                  {/* Offers Section */}
+                  {provider.offers && provider.offers.length > 0 && (
+                    <div className="flex w-full flex-col gap-2.5">
                       <button
-                        className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-neutral-800 disabled:hover:no-underline text-left"
-                        disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
-                        title="Adresse antippen zum Navigieren"
-                        onClick={() => {
-                          const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
-                          if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
-                            openNavigation(address);
-                          }
-                        }}
+                        className="flex w-full items-center justify-between"
+                        onClick={() => setExpandedOffers(!expandedOffers)}
                       >
-                        {provider.address_street}, <br />
-                        {provider.address_zip} {provider.address_city}
+                        <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
+                          {t('providers.weOffer')}
+                        </div>
+                        <ChevronDown 
+                          className={`h-6 w-6 text-gray-600 transition-transform ${
+                            expandedOffers ? 'rotate-180' : ''
+                          }`} 
+                        />
                       </button>
-                    ) : (
-                      <div className="justify-start self-stretch font-inter-tight text-base font-normal leading-tight text-neutral-800">
-                        Online
-                      </div>
-                    )}
-                  </div>
-                  <div className="relative w-0 self-stretch">
-                    <div className="absolute left-0 top-0 h-0 w-40 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-zinc-100" />
-                  </div>
-                  <div className="inline-flex flex-1 flex-col items-end justify-start gap-4 overflow-hidden">
-                    <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                      Öffnungszeiten:
+                      {expandedOffers && (
+                        <div className="mt-2">
+                          <div className="flex flex-wrap gap-2">
+                            {provider.offers.map((offer, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
+                              >
+                                {offer.name_de}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="inline-flex w-40 items-start justify-end gap-2">
-                      <div className="w-14 justify-start font-inter-tight text-base font-normal text-neutral-800">
-                        Mo - Fr:
-                      </div>
-                      <div className="w-24 justify-start text-right font-inter-tight text-base font-normal text-neutral-800">
-                        Fajr bis Isha
-                      </div>
+                  )}
+
+                  {/* Divider */}
+                  {provider.offers && provider.offers.length > 0 && provider.needs && provider.needs.length > 0 && (
+                    <hr className="w-full border-gray-200" />
+                  )}
+
+                  {/* Needs Section */}
+                  {provider.needs && provider.needs.length > 0 && (
+                    <div className="flex w-full flex-col gap-2.5">
+                      <button
+                        className="flex w-full items-center justify-between"
+                        onClick={() => setExpandedNeeds(!expandedNeeds)}
+                      >
+                        <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
+                          {t('providers.weAreLookingFor')}
+                        </div>
+                        <ChevronDown 
+                          className={`h-6 w-6 text-gray-600 transition-transform ${
+                            expandedNeeds ? 'rotate-180' : ''
+                          }`} 
+                        />
+                      </button>
+                      {expandedNeeds && (
+                        <div className="mt-2">
+                          <div className="flex flex-wrap gap-2">
+                            {provider.needs.map((need, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
+                              >
+                                {need.name_de}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
         {/* Actions Bar - moved outside left/right panels for true modal centering */}

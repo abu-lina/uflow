@@ -1,9 +1,11 @@
 'use client';
 
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 
 import { ProviderDetailPage as ProviderDetailPageComponent } from '@/components/providers/ProviderDetailPage';
+import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
 import { useProvider } from '@/hooks/useProvider';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import type { Provider } from '@/services/providers';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
@@ -19,13 +21,21 @@ interface ProviderDetailPageClientProps {
  * - Instant navigation if data already cached
  * - Shows loading skeleton instead of full-page spinner
  * - Prefetches data for faster subsequent loads
+ * - Uses modal on desktop, full page on mobile
  */
 export function ProviderDetailPageClient({ providerId, initialData }: ProviderDetailPageClientProps) {
+  const router = useRouter();
+  const isMobile = useIsMobile();
   const { data: provider, isLoading, error } = useProvider({
     providerId,
     enabled: true,
     initialData, // Use SSR data if available
   });
+
+  // Handle modal close - navigate back to providers page
+  const handleModalClose = () => {
+    router.push('/providers');
+  };
 
   // Show loading skeleton while fetching (only if no initial data)
   if (isLoading && !initialData) {
@@ -81,7 +91,17 @@ export function ProviderDetailPageClient({ providerId, initialData }: ProviderDe
     return notFound();
   }
 
-  // Render the actual provider detail page
+  // On desktop, use modal; on mobile, use full page
+  if (!isMobile) {
+    return (
+      <ProviderDetailModal
+        provider={provider}
+        onClose={handleModalClose}
+      />
+    );
+  }
+
+  // Render the actual provider detail page on mobile
   return <ProviderDetailPageComponent provider={provider} />;
 }
 

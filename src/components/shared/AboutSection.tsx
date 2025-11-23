@@ -34,13 +34,15 @@ export function AboutSection() {
           </p>
         </motion.div>
         <motion.div
-          className="flex w-full flex-col items-center gap-2"
+          className="flex w-full flex-col items-center gap-2 md:grid md:grid-cols-3 md:gap-6"
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
           viewport={{ once: true }}
           whileInView={{ opacity: 1, y: 0 }}
         >
-          <AboutCard cardIndex={2} quote={quotes[2]} />
+          {quotes.map((quote, index) => (
+            <AboutCard key={index} cardIndex={index} quote={quote} />
+          ))}
         </motion.div>
       </div>
     </section>

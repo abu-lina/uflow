@@ -129,7 +129,15 @@ export function ExploreSection() {
               href="/providers"
               tabIndex={0}
             >
-              <ProviderCard {...provider} className="w-full text-content" hideActions={true} />
+              <ProviderCard 
+                {...provider} 
+                className="w-full text-content" 
+                hideWebsiteButton={true}
+                isBookmarked={false}
+                onBookmarkChange={() => {
+                  // Non-actionable: bookmark button is shown but does nothing
+                }}
+              />
             </Link>
           ))}
         </div>
