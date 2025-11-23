@@ -467,5 +467,19 @@ export const tr = {
       success: "Resimler başarıyla güncellendi!",
       error: "Resimler kaydedilirken hata"
     }
+  },
+  legal: {
+    privacyPolicy: "Gizlilik Politikası",
+    termsOfService: "Hizmet Şartları",
+    acceptTerms: "Hizmet Şartları ve Gizlilik Politikasını kabul et",
+    acceptTermsText: "Kabul ediyorum ",
+    and: "ve",
+    consentRequired: "Hesap oluşturmak için Hizmet Şartları ve Gizlilik Politikasını kabul etmelisiniz",
+    downloadData: "Verilerimi İndir",
+    exportData: "Verilerimi Dışa Aktar",
+    consentHistory: "Onay Geçmişi",
+    viewPrivacyPolicy: "Gizlilik Politikasını Görüntüle",
+    viewTerms: "Hizmet Şartlarını Görüntüle",
+    lastUpdated: "Son güncelleme"
   }
 } as const;

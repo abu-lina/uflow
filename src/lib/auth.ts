@@ -5,8 +5,10 @@ import { supabase } from './supabase/client';
 export const signUpWithLanguage = async (
   email: string,
   password: string,
-  language: 'en' | 'de' = 'en',
-  honeypot?: string
+  language: 'en' | 'de' | 'ar' | 'tr' = 'en',
+  honeypot?: string,
+  termsAccepted?: boolean,
+  privacyAccepted?: boolean
 ) => {
   console.log('[SIGNUP] Creating user via Admin API:', email);
   
@@ -22,7 +24,9 @@ export const signUpWithLanguage = async (
         email,
         password,
         language,
-        honeypot
+        honeypot,
+        termsAccepted: termsAccepted === true,
+        privacyAccepted: privacyAccepted === true
       }),
     });
     
@@ -61,7 +65,7 @@ export const signUpWithLanguage = async (
 
 export const resetPasswordWithLanguage = async (
   email: string,
-  language: 'en' | 'de' = 'en'
+  language: 'en' | 'de' | 'ar' | 'tr' = 'en'
 ) => {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
   

@@ -61,9 +61,18 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { email, password, language, honeypot } = body;
+    const { email, password, language, honeypot, termsAccepted, privacyAccepted } = body;
     
-    // 3. Honeypot check (should be empty)
+    // 3. Validate consent (GDPR requirement)
+    if (termsAccepted !== true || privacyAccepted !== true) {
+      console.error('[SIGNUP API] Consent not accepted:', { termsAccepted, privacyAccepted });
+      return NextResponse.json(
+        { error: 'You must accept the Terms of Service and Privacy Policy to create an account' },
+        { status: 400 }
+      );
+    }
+    
+    // 4. Honeypot check (should be empty)
     if (honeypot && honeypot.trim() !== '') {
       markSuspiciousIP(ip, 24); // Block for 24 hours
       console.log('[SIGNUP API] Honeypot triggered for IP:', ip);
@@ -73,13 +82,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Request timing check (too fast = likely bot)
+    // 5. Request timing check (too fast = likely bot)
     if (isSuspiciousTiming(startTime)) {
       markSuspiciousIP(ip, 1);
       console.log('[SIGNUP API] Suspiciously fast request from IP:', ip);
     }
     
-    // 5. Validate input
+    // 6. Validate input
     if (!email || !password) {
       console.error('[SIGNUP API] Missing email or password');
       return NextResponse.json(
@@ -88,7 +97,7 @@ export async function POST(request: Request) {
       );
     }
     
-    // 6. Email format validation
+    // 7. Email format validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       console.error('[SIGNUP API] Invalid email format:', email);
       return NextResponse.json(
@@ -97,7 +106,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Disposable email check
+    // 8. Disposable email check
     if (isDisposableEmail(email)) {
       console.log('[SIGNUP API] Disposable email blocked:', email);
       return NextResponse.json(
@@ -106,7 +115,7 @@ export async function POST(request: Request) {
       );
     }
     
-    // 8. Enhanced password validation
+    // 9. Enhanced password validation
     const passwordValidation = validatePasswordComplexity(password);
     if (!passwordValidation.valid) {
       console.error('[SIGNUP API] Password validation failed:', passwordValidation.error);
@@ -169,6 +178,38 @@ export async function POST(request: Request) {
     }
     
     console.log('[SIGNUP API] ✅ User created successfully (no session):', email);
+    
+    // Log consent to consent_logs table (GDPR requirement)
+    const userAgent = request.headers.get('user-agent') || null;
+    const consentLogs = [
+      {
+        user_id: data.user.id,
+        consent_type: 'terms_of_service',
+        accepted: true,
+        accepted_at: new Date().toISOString(),
+        ip_address: ip,
+        user_agent: userAgent,
+      },
+      {
+        user_id: data.user.id,
+        consent_type: 'privacy_policy',
+        accepted: true,
+        accepted_at: new Date().toISOString(),
+        ip_address: ip,
+        user_agent: userAgent,
+      },
+    ];
+
+    const { error: consentError } = await getSupabaseAdmin()
+      .from('consent_logs')
+      .insert(consentLogs);
+
+    if (consentError) {
+      console.error('[SIGNUP API] Error logging consent:', consentError);
+      // Don't fail signup if consent logging fails, but log the error
+    } else {
+      console.log('[SIGNUP API] ✅ Consent logged successfully');
+    }
     
     // Generate confirmation token
     console.log('[SIGNUP API] Generating confirmation token...');

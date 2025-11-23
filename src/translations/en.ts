@@ -482,5 +482,19 @@ export const en = {
       success: "Images successfully updated!",
       error: "Error saving images"
     }
+  },
+  legal: {
+    privacyPolicy: "Privacy Policy",
+    termsOfService: "Terms of Service",
+    acceptTerms: "Accept Terms of Service and Privacy Policy",
+    acceptTermsText: "I accept the ",
+    and: "and",
+    consentRequired: "You must accept the Terms of Service and Privacy Policy to create an account",
+    downloadData: "Download My Data",
+    exportData: "Export My Data",
+    consentHistory: "Consent History",
+    viewPrivacyPolicy: "View Privacy Policy",
+    viewTerms: "View Terms of Service",
+    lastUpdated: "Last updated"
   }
 } as const;

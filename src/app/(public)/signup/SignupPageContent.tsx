@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
@@ -16,7 +17,7 @@ import { FormInputGroup } from '@/components/ui/FormInputGroup';
 import { Button } from '@/components/ui/Button';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { useAuth } from '@/providers/auth-provider';
-import { useLanguage } from '@/hooks/useLanguage';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { signUpWithLanguage } from '@/lib/auth';
 
 interface FormData {
@@ -40,6 +41,9 @@ export function SignupPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const { t } = useLanguage();
 
   const handleInputChange = useCallback((field: keyof FormData, value: string) => {
     setFormData(prev => ({
@@ -94,6 +98,12 @@ export function SignupPageContent() {
       return false;
     }
     
+    // Check consent (GDPR requirement)
+    if (!termsAccepted || !privacyAccepted) {
+      setError(t('legal.consentRequired') || 'Sie müssen den Allgemeinen Geschäftsbedingungen und der Datenschutzrichtlinie zustimmen.');
+      return false;
+    }
+    
     setError(null);
     return true;
   };
@@ -118,7 +128,9 @@ export function SignupPageContent() {
         formData.email, 
         formData.password, 
         language,
-        honeypot
+        honeypot,
+        termsAccepted,
+        privacyAccepted
       );
       
       if (error) {
@@ -254,8 +266,37 @@ export function SignupPageContent() {
                 </div>
               )}
 
-              {/* Button and links with proper spacing (24px gap from form fields) */}
-              <div className="mt-6 flex flex-col space-y-3">
+              {/* Consent Checkbox (24px gap from form fields) */}
+              <div className="mt-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    required
+                    aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
+                    aria-required="true"
+                    checked={termsAccepted && privacyAccepted}
+                    className="h-4 w-4 rounded border-gray-300 text-[#589D96] focus:ring-[#589D96] focus:ring-2 flex-shrink-0"
+                    type="checkbox"
+                    onChange={(e) => {
+                      setTermsAccepted(e.target.checked);
+                      setPrivacyAccepted(e.target.checked);
+                    }}
+                  />
+                  <span className="text-[11px] leading-[13px] text-[#7A7A7A]">
+                    {t('legal.acceptTermsText') || 'Ich akzeptiere die '}
+                    <Link className="underline hover:text-[#589D96]" href="/terms">
+                      {t('legal.termsOfService') || 'Allgemeinen Geschäftsbedingungen'}
+                    </Link>
+                    {' '}{t('legal.and') || 'und'}{' '}
+                    <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
+                      {t('legal.privacyPolicy') || 'Datenschutzrichtlinie'}
+                    </Link>
+                    .
+                  </span>
+                </label>
+              </div>
+
+              {/* Button and links with proper spacing (12px gap from consent checkbox) */}
+              <div className="mt-3 flex flex-col space-y-3">
                 {/* Main Button */}
                 <Button
                   fullWidth
@@ -274,11 +315,6 @@ export function SignupPageContent() {
                 >
                   Bereits ein Konto? Jetzt anmelden.
                 </LinkButton>
-
-                {/* AGB Text (12px gap from link button via space-y-3) */}
-                <p className="text-center text-[11px] leading-[13px] text-[#7A7A7A]">
-                  Wenn du fortfährst, erstellst du ein Konto und stimmst den Allgemeinen Geschäftsbedingungen und Datenschutzrichtlinien zu.
-                </p>
               </div>
             </form>
           </ContentSection>

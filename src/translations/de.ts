@@ -482,5 +482,19 @@ export const de = {
       success: "Bilder erfolgreich aktualisiert!",
       error: "Fehler beim Speichern der Bilder"
     }
+  },
+  legal: {
+    privacyPolicy: "Datenschutzrichtlinie",
+    termsOfService: "Allgemeine Geschäftsbedingungen",
+    acceptTerms: "Allgemeine Geschäftsbedingungen und Datenschutzrichtlinie akzeptieren",
+    acceptTermsText: "Ich akzeptiere die ",
+    and: "und",
+    consentRequired: "Sie müssen den Allgemeinen Geschäftsbedingungen und der Datenschutzrichtlinie zustimmen, um ein Konto zu erstellen",
+    downloadData: "Meine Daten herunterladen",
+    exportData: "Meine Daten exportieren",
+    consentHistory: "Einwilligungsverlauf",
+    viewPrivacyPolicy: "Datenschutzrichtlinie anzeigen",
+    viewTerms: "Allgemeine Geschäftsbedingungen anzeigen",
+    lastUpdated: "Zuletzt aktualisiert"
   }
 } as const;

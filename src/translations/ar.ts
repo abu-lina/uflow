@@ -467,5 +467,19 @@ export const ar = {
       success: "تم تحديث الصور بنجاح!",
       error: "خطأ في حفظ الصور"
     }
+  },
+  legal: {
+    privacyPolicy: "سياسة الخصوصية",
+    termsOfService: "شروط الخدمة",
+    acceptTerms: "قبول شروط الخدمة وسياسة الخصوصية",
+    acceptTermsText: "أوافق على ",
+    and: "و",
+    consentRequired: "يجب عليك الموافقة على شروط الخدمة وسياسة الخصوصية لإنشاء حساب",
+    downloadData: "تحميل بياناتي",
+    exportData: "تصدير بياناتي",
+    consentHistory: "سجل الموافقة",
+    viewPrivacyPolicy: "عرض سياسة الخصوصية",
+    viewTerms: "عرض شروط الخدمة",
+    lastUpdated: "آخر تحديث"
   }
 } as const;

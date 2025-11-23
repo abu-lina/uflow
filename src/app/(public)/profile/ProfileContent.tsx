@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CircleHelp, LogOut, User, Lock, FileText, AlertTriangle, Heart } from 'lucide-react';
+import { CircleHelp, LogOut, User, Lock, FileText, AlertTriangle, Heart, Download, Shield } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
@@ -31,6 +32,8 @@ import { getCreatedProviders, getAllBookmarkedItems, getRecommendations } from '
 import { getCreatedCommunityServices, getRecommendedCommunityServices } from '@/services/communityServices';
 import { authService } from '@/features/auth/services/authService';
 import { getFirstImageUrl } from '@/utils/imageUtils';
+import { dataExportService } from '@/services/dataExport';
+import { toast } from 'sonner';
 import type { SupabaseUser } from '@/types/supabase-user';
 
 interface ProfileContentProps {
@@ -45,6 +48,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<UserTab>('created');
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Responsive: detect mobile using the centralized hook
   const isMobile = useIsSmallMobile();
@@ -217,6 +221,21 @@ export function ProfileContent({ user }: ProfileContentProps) {
       // Logout error is already logged to console
     } finally {
       setIsLoggingOut(false);
+    }
+  };
+
+  // Handle data export
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      await dataExportService.exportUserData();
+      toast.success(t('legal.downloadData') || 'Data export started');
+    } catch (error) {
+      console.error('Export error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export data';
+      toast.error(errorMessage);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -408,6 +427,49 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 <span className="font-inter-tight font-semibold text-[#232323]">{t('common.support') || 'Support'}</span>
               </button>
               
+              {/* Divider */}
+              <div className="mx-4 h-px bg-gray-200" />
+
+              {/* Privacy Policy */}
+              <Link
+                className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50"
+                href="/privacy-policy"
+              >
+                <Shield className="h-6 w-6 text-black" />
+                <span className="font-inter-tight font-semibold text-[#232323]">
+                  {t('legal.privacyPolicy') || 'Privacy Policy'}
+                </span>
+              </Link>
+              
+              {/* Divider */}
+              <div className="mx-4 h-px bg-gray-200" />
+
+              {/* Terms of Service */}
+              <Link
+                className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50"
+                href="/terms"
+              >
+                <FileText className="h-6 w-6 text-black" />
+                <span className="font-inter-tight font-semibold text-[#232323]">
+                  {t('legal.termsOfService') || 'Terms of Service'}
+                </span>
+              </Link>
+              
+              {/* Divider */}
+              <div className="mx-4 h-px bg-gray-200" />
+
+              {/* Download My Data */}
+              <button
+                className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50 disabled:opacity-50"
+                disabled={isExporting}
+                onClick={handleExportData}
+              >
+                <Download className="h-6 w-6 text-black" />
+                <span className="font-inter-tight font-semibold text-[#232323]">
+                  {isExporting ? t('common.loading') + '...' : t('legal.downloadData') || 'Download My Data'}
+                </span>
+              </button>
+
               {/* Divider */}
               <div className="mx-4 h-px bg-gray-200" />
 

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { translations, type Language } from '@/translations';
+import { setCookie } from '@/utils/cookieUtils';
 
 // Supported languages mapping
 const LANGUAGE_MAPPING: Record<string, Language> = {
@@ -71,11 +72,19 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>('de'); // Always start with German to prevent hydration issues
 
-  // Save language preference to localStorage
+  // Save language preference to localStorage and cookie
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     if (typeof window !== 'undefined') {
+      // Save to localStorage for client-side persistence
       localStorage.setItem('preferred-language', lang);
+      // Set cookie so server can read it on next request
+      setCookie('preferred-language', lang, {
+        maxAge: 365, // 1 year
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production', // Secure in production (HTTPS only)
+      });
     }
   };
 
@@ -89,7 +98,22 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     if (typeof window !== 'undefined') {
       const savedLanguage = localStorage.getItem('preferred-language');
       if (!savedLanguage) {
+        // Save to both localStorage and cookie
         localStorage.setItem('preferred-language', detectedLang);
+        setCookie('preferred-language', detectedLang, {
+          maxAge: 365, // 1 year
+          path: '/',
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production', // Secure in production (HTTPS only)
+        });
+      } else {
+        // Ensure cookie is synced with localStorage (in case cookie was deleted)
+        setCookie('preferred-language', savedLanguage as Language, {
+          maxAge: 365,
+          path: '/',
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+        });
       }
     }
   }, []);

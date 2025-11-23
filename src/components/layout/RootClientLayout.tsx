@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
+import { DesktopFooter } from '@/components/layout/DesktopFooter';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { PushNotificationPrompt } from '@/components/ui/PushNotificationPrompt';
@@ -55,6 +56,13 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             {children}
           </PageTransition>
         </main>
+        
+        {/* Desktop Footer */}
+        <div className="hidden md:block">
+          <DesktopFooter />
+        </div>
+        
+        {/* Mobile Footer */}
         {showMobileFooter && (
           <div className="block md:hidden">
             <MobileFooterBar />
