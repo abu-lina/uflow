@@ -431,10 +431,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Desktop: tabbed view
   const desktopContent = (
-    <div className="flex min-h-full w-full flex-col items-center gap-8 sm:max-w-screen-xl md:pt-20">
+    <div className="flex min-h-full w-full flex-col items-center gap-8 sm:max-w-screen-xl md:pt-28">
       {/* Profile header (greeting, avatar, etc.) */}
       <div className="flex w-full flex-col items-center">
-        <div className="text-center font-baskerville text-base">{t('common.greeting')}</div>
         <div className="flex w-full flex-row items-center justify-center">
             <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-primary p-4">
               <User className="h-10 w-10 text-white" />

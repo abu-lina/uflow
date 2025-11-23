@@ -1,9 +1,8 @@
 'use client';
 
-
 import { Icon } from '@iconify/react';
 
-import { HeartIcon } from '@/components/ui/icons/HeartIcon';
+import { LucideHeart } from '@/components/ui/icons/LucideHeart';
 
 // Types
 export type UserTab = 'saved' | 'created' | 'recommendations' | 'create';
@@ -54,11 +53,11 @@ export function UserNavigationTabs({
         role="tab"
         onClick={() => onTabChange('saved')}
       >
-        <HeartIcon
+        <LucideHeart
           className={`${BUTTON_STYLES.icon} ${
             activeTab === 'saved' ? 'text-white' : 'text-text-secondary'
           }`}
-          isActive={activeTab === 'saved'}
+          filled={activeTab === 'saved'}
         />
         {activeTab === 'saved' && (
           <span className={`${BUTTON_STYLES.text} ml-1.5`}>Gespeichert</span>

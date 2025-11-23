@@ -280,29 +280,45 @@ export async function removeProviderCommunityServiceRelationship(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getProvidersForCommunityService(communityServiceId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase
+    // First, get the provider IDs from the relationship table
+    const { data: relationshipData, error: relationshipError } = await supabase
       .from('provider_community_services')
-      .select(`
-        provider_id,
-        providers!inner(
-          provider_id,
-          provider_name,
-          address_city,
-          category:categories(
-            name_de,
-            name_en
-          )
-        )
-      `)
-      .eq('community_service_id', communityServiceId)
-      .eq('providers.review_status', 'approved')
-      .order('providers.provider_name');
+      .select('provider_id')
+      .eq('community_service_id', communityServiceId);
     
-    if (error) {
-      throw error;
+    if (relationshipError) {
+      throw relationshipError;
     }
     
-    return data?.map(item => item.providers) || [];
+    if (!relationshipData || relationshipData.length === 0) {
+      return [];
+    }
+    
+    const providerIds = relationshipData.map(r => r.provider_id);
+    
+    // Then, query providers with category relationship
+    const { data: providersData, error: providersError } = await supabase
+      .from('providers')
+      .select(`
+        provider_id,
+        provider_name,
+        provider_images,
+        address_city,
+        category:categories(
+          name_de,
+          name_en,
+          category_images
+        )
+      `)
+      .in('provider_id', providerIds)
+      .eq('review_status', 'approved')
+      .order('provider_name');
+    
+    if (providersError) {
+      throw providersError;
+    }
+    
+    return providersData || [];
   } catch (error) {
     console.error('Error fetching providers for community service:', error);
     return [];

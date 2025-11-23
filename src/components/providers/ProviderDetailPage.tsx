@@ -10,7 +10,7 @@ import { MobileProviderDetail } from '@/components/providers/MobileProviderDetai
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
-import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE, type CategoryImages } from '@/utils/imageUtils';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
@@ -19,6 +19,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUrl, normalizeWebsiteUrl } from '@/utils/navigationUtils';
+import { getProvidersForCommunityService } from '@/services/communityServices';
 
 interface ProviderDetailPageProps {
   provider: Provider;
@@ -111,6 +112,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
+  const [expandedProviders, setExpandedProviders] = useState(false);
 
   // Determine if this is a community service or provider
   const isCommunityService = !!provider.community_service_id;
@@ -126,11 +128,33 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     },
   });
 
-  // Use React Query for caching community services
+  // Use React Query for caching community services (only for providers)
   const { 
     data: communityServices = [], 
     isLoading: isLoadingCommunityServices
   } = useCommunityServicesForProvider(provider.provider_id);
+
+  // Use React Query for providers supporting this community service (only for community services)
+  const { data: supportingProviders = [] } = useQuery<Array<{ 
+    provider_id: string; 
+    provider_name: string; 
+    provider_images?: string | null;
+    address_city?: string;
+    category?: { name_de?: string; name_en?: string; category_images?: unknown };
+  }>>({
+    queryKey: ['providers', 'community-service', provider.community_service_id],
+    queryFn: () => {
+      if (!provider.community_service_id) {
+        return Promise.resolve([]);
+      }
+      return getProvidersForCommunityService(provider.community_service_id);
+    },
+    enabled: isCommunityService && !!provider.community_service_id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: (previousData) => previousData,
+  });
 
   // Use React Query for bookmark status (cached, non-blocking)
   // This uses the same cache as the bookmarks list, so it's instant if already loaded
@@ -731,6 +755,61 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                         </div>
                       </button>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Supporting Providers Section (only for community services) */}
+            {isCommunityService && supportingProviders.length > 0 && (
+              <div className="rounded-2xl bg-white p-6 shadow-sm">
+                <button
+                  className="flex w-full items-center justify-between"
+                  onClick={() => setExpandedProviders(!expandedProviders)}
+                >
+                  <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                    Supporters
+                  </h3>
+                  <ChevronDown 
+                    className={`h-7 w-7 text-gray-600 transition-transform ${
+                      expandedProviders ? 'rotate-180' : ''
+                    }`} 
+                  />
+                </button>
+                {expandedProviders && (
+                  <div className="mt-4">
+                    {supportingProviders.map((supportingProvider) => {
+                      const providerImageUrls = getAllTrustedImageUrlsWithFallback(
+                        supportingProvider.provider_images,
+                        supportingProvider.category?.category_images as CategoryImages
+                      );
+                      const providerImage = providerImageUrls.length > 0 ? providerImageUrls[0] : PLACEHOLDER_IMAGE;
+                      
+                      return (
+                        <button
+                          key={supportingProvider.provider_id}
+                          className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                          onClick={() => router.push(`/providers/${supportingProvider.provider_id}`)}
+                        >
+                          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
+                            <Image
+                              fill
+                              alt={supportingProvider.provider_name}
+                              className="object-cover"
+                              src={providerImage}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-inter-tight font-semibold text-gray-900">
+                              {supportingProvider.provider_name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {getCategoryName(supportingProvider.category)}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>

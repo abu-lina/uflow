@@ -78,3 +78,4 @@ The following issues need content updates (replacing "souk" with "provider" in d
 - Content updates require MCP `replace_content_range` or manual Notion editing
 - Codebase already uses "Provider" terminology - no code changes needed
 
+

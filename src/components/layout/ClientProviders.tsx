@@ -2,7 +2,7 @@
 
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo } from 'react';
 
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { AuthProvider } from '@/providers/auth-provider';
@@ -21,7 +21,7 @@ interface ClientProvidersProps {
 }
 
 export function ClientProviders({ children, initialUser }: ClientProvidersProps) {
-  const [queryClient] = useState(
+  const queryClient = useMemo(
     () =>
       new QueryClient({
         defaultOptions: {
@@ -32,11 +32,12 @@ export function ClientProviders({ children, initialUser }: ClientProvidersProps)
             refetchOnMount: false,
             retry: 1,
             retryOnMount: false,
-                    // Use placeholderData to show cached data while refetching
-                    placeholderData: (previousData: unknown) => previousData,
+            // Use placeholderData to show cached data while refetching
+            placeholderData: (previousData: unknown) => previousData,
           },
         },
-      })
+      }),
+    []
   );
 
   return (

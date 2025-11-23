@@ -16,44 +16,37 @@ import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import { useQuery } from '@tanstack/react-query';
-import type { Provider } from '@/services/providers';
-import { getCommunityServicesForProvider } from '@/services/communityServices';
+import type { CommunityService } from '@/services/communityServices';
+import { getProvidersForCommunityService } from '@/services/communityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
+import { getAllTrustedImageUrlsWithFallback, type CategoryImages } from '@/utils/imageUtils';
 
-interface ProviderDetailModalProps {
-  provider: Provider;
+interface CommunityServiceDetailModalProps {
+  communityService: CommunityService;
   onClose: () => void;
-  onBookmarkChange?: (providerId: string, isBookmarked: boolean) => void;
+  onBookmarkChange?: (communityServiceId: string, isBookmarked: boolean) => void;
 }
 
-export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
-  provider,
+export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalProps> = ({
+  communityService,
   onClose,
   onBookmarkChange,
 }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
-    bookmarkableId: provider.provider_id,
-    bookmarkableType: 'provider',
+    bookmarkableId: communityService.community_service_id,
+    bookmarkableType: 'community_service',
     onBookmarkChange: (isBookmarked) => {
       setIsSaved(isBookmarked);
       if (typeof onBookmarkChange === 'function') {
-        onBookmarkChange(provider.provider_id, isBookmarked);
+        onBookmarkChange(communityService.community_service_id, isBookmarked);
       }
     },
   });
-  function hasUrls(obj: unknown): obj is { urls: string[] } {
-    return (
-      typeof obj === 'object' &&
-      obj !== null &&
-      Array.isArray((obj as { urls?: unknown }).urls) &&
-      (obj as { urls: unknown[] }).urls.every((u) => typeof u === 'string')
-    );
-  }
 
   // Only allow images from trusted domains
   function isTrustedUrl(url: string) {
@@ -70,26 +63,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
 
   const allImageUrls = (() => {
     try {
-      if (!provider.provider_images) {
+      if (!communityService.community_service_images || communityService.community_service_images.length === 0) {
         return [PLACEHOLDER_IMAGE];
       }
-      let imagesData: { urls?: string[] } = {};
-      if (typeof provider.provider_images === 'string') {
-        try {
-          imagesData = JSON.parse(provider.provider_images) as { urls?: string[] };
-        } catch {
-          imagesData = {};
-        }
-      } else if (Array.isArray(provider.provider_images)) {
-        imagesData.urls = provider.provider_images;
-      } else if (hasUrls(provider.provider_images)) {
-        imagesData = provider.provider_images;
-      }
-      if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
-        const trusted = imagesData.urls.filter(isTrustedUrl);
-        return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
-      }
-      return [PLACEHOLDER_IMAGE];
+      const trusted = communityService.community_service_images.filter(isTrustedUrl);
+      return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
     } catch {
       return [PLACEHOLDER_IMAGE];
     }
@@ -115,16 +93,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     minSwipeDistance: 30,
   });
 
-  // Debug selected image changes
-  useEffect(() => {
-    console.log(
-      'Selected image changed to:',
-      selectedImageIdx,
-      'URL:',
-      allImageUrls[selectedImageIdx],
-    );
-  }, [selectedImageIdx, allImageUrls]);
-
   const [expandedAction, setExpandedAction] = useState<'save' | 'share' | 'call' | 'website'>(
     'save',
   );
@@ -133,43 +101,60 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
+  const [expandedProviders, setExpandedProviders] = useState(false);
 
   // Use React Query for bookmark status (cached, non-blocking)
-  // This uses the same cache as the bookmarks list, so it's instant if already loaded
-  const { data: bookmarkedProviderIds = [] } = useQuery({
+  const { data: bookmarkedIds = [] } = useQuery({
     queryKey: ['bookmarks', user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data: bookmarks } = await supabase
         .from('bookmarks')
         .select('bookmarkable_id, bookmarkable_type')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('bookmarkable_type', 'community_service');
       return bookmarks?.map((b) => b.bookmarkable_id) || [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    placeholderData: (previousData) => previousData, // Show cached data immediately
+    placeholderData: (previousData) => previousData,
   });
 
-  // Derive bookmark status from cached data (instant, no network request)
+  // Derive bookmark status from cached data
   useEffect(() => {
-    if (user && bookmarkedProviderIds.length > 0) {
-      setIsSaved(bookmarkedProviderIds.includes(provider.provider_id));
+    if (user && bookmarkedIds.length > 0) {
+      setIsSaved(bookmarkedIds.includes(communityService.community_service_id));
     } else if (!user) {
       setIsSaved(false);
     }
-  }, [user, bookmarkedProviderIds, provider.provider_id]);
+  }, [user, bookmarkedIds, communityService.community_service_id]);
 
-  // Use React Query for community services (cached, non-blocking)
-  const { data: communityServices = [] } = useQuery({
-    queryKey: ['community-services', 'provider', provider.provider_id],
-    queryFn: () => getCommunityServicesForProvider(provider.provider_id),
-    enabled: !!provider.provider_id,
+  // Use React Query for providers supporting this community service
+  const { data: supportingProviders = [] } = useQuery<Array<{ 
+    provider_id: string; 
+    provider_name: string; 
+    provider_images?: string | null;
+    address_city?: string;
+    category?: { name_de?: string; name_en?: string; category_images?: unknown };
+  }>>({
+    queryKey: ['providers', 'community-service', communityService.community_service_id],
+    queryFn: () => getProvidersForCommunityService(communityService.community_service_id),
+    enabled: !!communityService.community_service_id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    placeholderData: (previousData) => previousData, // Show cached data immediately
+    placeholderData: (previousData) => previousData,
   });
+
+  // Helper function to get category name based on language
+  const getCategoryName = (category: { name_de?: string; name_en?: string } | undefined) => {
+    if (!category) return '';
+    if (language === 'en') {
+      return category.name_en || category.name_de || '';
+    } else {
+      return category.name_de || category.name_en || '';
+    }
+  };
 
   // Keyboard navigation
   useEffect(() => {
@@ -188,7 +173,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
 
   const handleBookmark = async () => {
     if (!user) {
-      // Show login prompt
       return;
     }
     
@@ -206,23 +190,21 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       void handleBookmark();
     }
     if (action === 'share') {
-      const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
+      const shareUrl = `${window.location.origin}/community-services/${communityService.community_service_id}`;
       
       if (navigator.share) {
         try {
           await navigator.share({
-            title: provider.provider_name,
+            title: communityService.community_service_name,
             text: '',
             url: shareUrl,
           });
         } catch (error) {
-          // User cancelled or share failed - don't show error for cancellation
           if ((error as Error).name !== 'AbortError') {
             console.log('Share cancelled or failed:', error);
           }
         }
       } else {
-        // Fallback: Copy to clipboard
         try {
           await navigator.clipboard.writeText(shareUrl);
           toast.success('Link in Zwischenablage kopiert!');
@@ -232,16 +214,14 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         }
       }
     } else if (action === 'call') {
-      if (!provider.contact_phone) {
+      if (!communityService.contact_phone) {
         toast.error('Keine Telefonnummer verfügbar');
         return;
       }
       
-      const phoneNumber = provider.contact_phone.trim();
+      const phoneNumber = communityService.contact_phone.trim();
       const telUrl = `tel:${phoneNumber}`;
       
-      // Create a temporary anchor element to trigger tel: link
-      // This works more reliably than window.open or window.location.href
       const link = document.createElement('a');
       link.href = telUrl;
       link.style.display = 'none';
@@ -249,18 +229,15 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       
       try {
         link.click();
-        // Clean up after a short delay
         setTimeout(() => {
           document.body.removeChild(link);
         }, 100);
       } catch (error) {
-        // Clean up on error
         if (document.body.contains(link)) {
           document.body.removeChild(link);
         }
         console.error('Failed to open tel link:', error);
         
-        // Fallback: Copy phone number to clipboard on desktop
         try {
           await navigator.clipboard.writeText(phoneNumber);
           toast.success(`Telefonnummer kopiert: ${phoneNumber}`);
@@ -269,25 +246,56 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           toast.error('Fehler beim Öffnen der Telefonnummer');
         }
       }
-    } else if (action === 'website' && provider.social_website) {
-      const url = normalizeWebsiteUrl(provider.social_website);
+    } else if (action === 'website' && communityService.social_website) {
+      const url = normalizeWebsiteUrl(communityService.social_website);
       if (url) window.open(url, '_blank');
     }
+  };
+
+  // Transform community service to provider format for mobile view
+  const providerForMobile = {
+    provider_id: communityService.community_service_id,
+    provider_name: communityService.community_service_name,
+    provider_images: communityService.community_service_images ? JSON.stringify({ urls: communityService.community_service_images }) : null,
+    category_id: communityService.category_id || null,
+    address_city: communityService.address_city || null,
+    social_website: communityService.social_website || null,
+    social_instagram: communityService.social_instagram || null,
+    contact_email: communityService.contact_email || null,
+    contact_phone: communityService.contact_phone || null,
+    address_street: communityService.address_street || null,
+    address_country: communityService.address_country || null,
+    address_zip: communityService.address_zip || null,
+    location_latitude: communityService.location_latitude || null,
+    location_longitude: communityService.location_longitude || null,
+    created_at: communityService.created_at,
+    updated_at: communityService.updated_at,
+    barakah_effects: communityService.barakah_effects || [],
+    offers_ids: communityService.offers_ids || [],
+    needs_ids: communityService.needs_ids || [],
+    offers: communityService.offers || [],
+    needs: communityService.needs || [],
+    category: communityService.category ? {
+      name_de: communityService.category.name_de || communityService.category.name_en || '',
+      name_en: communityService.category.name_en,
+      category_images: communityService.category.category_images,
+    } : undefined,
+    community_service_id: communityService.community_service_id,
   };
 
   // Render mobile version for mobile devices
   if (isMobile) {
     return (
-      <Modal isOpen={true} title={provider.provider_name} onClose={onClose}>
+      <Modal isOpen={true} title={communityService.community_service_name} onClose={onClose}>
         <div className="w-full max-w-sm">
-          <MobileProviderDetail provider={provider} />
+          <MobileProviderDetail provider={providerForMobile} />
         </div>
       </Modal>
     );
   }
 
   return (
-    <Modal isOpen={true} title={communityServices[0]?.community_service_name || provider.provider_name} onClose={onClose}>
+    <Modal isOpen={true} title={communityService.community_service_name} onClose={onClose}>
       <section
         aria-modal="true"
         className="relative flex h-[900px] w-[1200px] cursor-default bg-transparent"
@@ -310,26 +318,26 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           <div className="flex flex-col items-start justify-start gap-2 self-stretch">
             <div className="inline-flex items-center justify-start gap-8 self-stretch">
               <div className="text-uFlowText justify-start font-inter-tight text-3xl font-bold">
-                {provider.provider_name}
+                {communityService.community_service_name}
               </div>
             </div>
-            {formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined) ? (
+            {formatAddress(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined) ? (
               <button
                 className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left"
-                disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                disabled={!isAddressNavigable(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined)}
                 title="Adresse antippen zum Navigieren"
                 onClick={() => {
-                  const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
-                  if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                  const address = formatAddress(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined);
+                  if (isAddressNavigable(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined)) {
                     openNavigation(address);
                   }
                 }}
               >
-                {formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                {formatAddress(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined)}
               </button>
             ) : (
               <div className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal">
-                {provider.category?.name_de || ''}
+                {communityService.category?.name_de || ''}
               </div>
             )}
           </div>
@@ -341,7 +349,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 ref={imageContainerRef}
                 className="bg-uFlowAccent relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
                 data-testid="image-container"
-                onClick={() => console.log('Image container clicked')}
                 onTouchEnd={handleTouchEnd}
                 onTouchMove={handleTouchMove}
                 onTouchStart={handleTouchStart}
@@ -359,7 +366,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     >
                       <Image
                         fill
-                        alt={`${provider.provider_name} ${index + 1}`}
+                        alt={`${communityService.community_service_name} ${index + 1}`}
                         className="rounded-[32px] object-cover"
                         src={imageUrl}
                       />
@@ -367,7 +374,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   ))}
                 </div>
 
-                {/* Navigation Arrows (only show if multiple images and not at boundaries) */}
+                {/* Navigation Arrows */}
                 {allImageUrls.length > 1 && (
                   <>
                     {selectedImageIdx > 0 && (
@@ -398,7 +405,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     )}
                   </>
                 )}
-
               </div>
             </div>
 
@@ -418,7 +424,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   >
                     <Image
                       fill
-                      alt={`${provider.provider_name} thumbnail ${i + 1}`}
+                      alt={`${communityService.community_service_name} thumbnail ${i + 1}`}
                       className="rounded-[8px] object-cover"
                       src={img}
                     />
@@ -447,77 +453,99 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             />
           </button>
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
-            {/* Barakah Effekt Section */}
-            <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
-              <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                  {t('providers.ourBarakahEffect')}:
-                </div>
-                <div className="flex w-full flex-row items-start gap-6">
-                  {/* Left: Zakat image, name, subtitle */}
-                  <button
-                    className="flex w-[160px] flex-shrink-0 flex-col items-start transition-transform active:scale-[0.98]"
-                    onClick={() => {
-                      onClose();
-                      if (communityServices[0]?.community_service_id) {
-                        router.push(`/community-services/${communityServices[0].community_service_id}`);
-                      }
-                    }}
-                  >
-                    <div className="relative mb-2 h-[120px] w-[160px] overflow-hidden rounded-[18px]">
-                      <Image
-                        fill
-                        alt={communityServices[0]?.community_service_name || 'Community Service'}
-                        className="rounded-[18px] object-cover"
-                        src={
-                          communityServices[0]?.community_service_images && communityServices[0].community_service_images.length > 0
-                            ? communityServices[0].community_service_images[0]
-                            : PLACEHOLDER_IMAGE
-                        }
-                      />
-                    </div>
-                    <div className="text-uFlowText mb-0.5 font-inter-tight text-lg font-semibold">
-                      {communityServices[0]?.community_service_name}
-                    </div>
-                    <div className="text-uFlowText2 font-inter-tight text-base">Hatem Ipsum</div>
-                  </button>
-                  {/* Divider */}
-                  <div className="mx-4 h-[120px] w-px bg-zinc-200" />
-                  {/* Right: Barakah labels */}
+            {/* Barakah Effects Section */}
+            {communityService.barakah_effects && communityService.barakah_effects.length > 0 && (
+              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
+                <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
+                  <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
+                    {t('providers.ourBarakahEffect')}:
+                  </div>
                   <div className="flex min-h-[120px] flex-col flex-wrap items-start gap-2">
-                    {Array.isArray(provider.barakah_effects) && provider.barakah_effects.length > 0 ? (
-                      <div className="flex flex-col gap-2">
-                        {provider.barakah_effects.map((effect, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center gap-2 rounded border border-[#CDCDCD] bg-white px-3 py-1 font-inter-tight text-[16px] font-medium text-[#232323] shadow-sm"
-                          >
-                            {/* Icon mapping for known effects */}
-                            {effect === 'Iman' && <Sparkles className="h-4 w-4 text-gray-600" />}
-                            {effect === 'Zakat' && <Moon className="h-4 w-4 text-gray-600" />}
-                            {effect === 'Sunnah' && <Building2 className="h-4 w-4 text-gray-600" />}
-                            {!(effect === 'Iman' || effect === 'Zakat' || effect === 'Sunnah') && (
-                              <Tag className="h-4 w-4 text-gray-600" />
-                            )}
-                            {effect}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-uFlowText2 font-inter text-base">
-                        Keine Barakah Effekte
+                    {communityService.barakah_effects.map((effect, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-2 rounded border border-[#CDCDCD] bg-white px-3 py-1 font-inter-tight text-[16px] font-medium text-[#232323] shadow-sm"
+                      >
+                        {effect === 'Iman' && <Sparkles className="h-4 w-4 text-gray-600" />}
+                        {effect === 'Zakat' && <Moon className="h-4 w-4 text-gray-600" />}
+                        {effect === 'Sunnah' && <Building2 className="h-4 w-4 text-gray-600" />}
+                        {!(effect === 'Iman' || effect === 'Zakat' || effect === 'Sunnah') && (
+                          <Tag className="h-4 w-4 text-gray-600" />
+                        )}
+                        {effect}
                       </span>
-                    )}
+                    ))}
                   </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Supporting Providers Section */}
+            {supportingProviders.length > 0 && (
+              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
+                <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
+                  <button
+                    className="flex w-full items-center justify-between"
+                    onClick={() => setExpandedProviders(!expandedProviders)}
+                  >
+                    <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
+                      Supporters
+                    </div>
+                    <ChevronDown 
+                      className={`h-6 w-6 text-gray-600 transition-transform ${
+                        expandedProviders ? 'rotate-180' : ''
+                      }`} 
+                    />
+                  </button>
+                  {expandedProviders && (
+                    <div>
+                      {supportingProviders.map((provider) => {
+                        const providerImageUrls = getAllTrustedImageUrlsWithFallback(
+                          provider.provider_images,
+                          provider.category?.category_images as CategoryImages
+                        );
+                        const providerImage = providerImageUrls.length > 0 ? providerImageUrls[0] : PLACEHOLDER_IMAGE;
+                        
+                        return (
+                          <button
+                            key={provider.provider_id}
+                            className="flex w-full items-center gap-4 rounded-lg py-2 pr-2 pl-0 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                            onClick={() => {
+                              onClose();
+                              router.push(`/providers/${provider.provider_id}`);
+                            }}
+                          >
+                            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
+                              <Image
+                                fill
+                                alt={provider.provider_name}
+                                className="object-cover"
+                                src={providerImage}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-inter-tight font-semibold text-gray-900">
+                                {provider.provider_name}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {getCategoryName(provider.category)}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Offers & Needs Section */}
-            {((provider.offers && provider.offers.length > 0) || (provider.needs && provider.needs.length > 0)) && (
+            {((communityService.offers && communityService.offers.length > 0) || (communityService.needs && communityService.needs.length > 0)) && (
               <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
                 <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
                   {/* Offers Section */}
-                  {provider.offers && provider.offers.length > 0 && (
+                  {communityService.offers && communityService.offers.length > 0 && (
                     <div className="flex w-full flex-col gap-2.5">
                       <button
                         className="flex w-full items-center justify-between"
@@ -535,7 +563,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                       {expandedOffers && (
                         <div className="mt-2">
                           <div className="flex flex-wrap gap-2">
-                            {provider.offers.map((offer, index) => (
+                            {communityService.offers.map((offer, index) => (
                               <span
                                 key={index}
                                 className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
@@ -550,12 +578,12 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   )}
 
                   {/* Divider */}
-                  {provider.offers && provider.offers.length > 0 && provider.needs && provider.needs.length > 0 && (
+                  {communityService.offers && communityService.offers.length > 0 && communityService.needs && communityService.needs.length > 0 && (
                     <hr className="w-full border-gray-200" />
                   )}
 
                   {/* Needs Section */}
-                  {provider.needs && provider.needs.length > 0 && (
+                  {communityService.needs && communityService.needs.length > 0 && (
                     <div className="flex w-full flex-col gap-2.5">
                       <button
                         className="flex w-full items-center justify-between"
@@ -573,7 +601,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                       {expandedNeeds && (
                         <div className="mt-2">
                           <div className="flex flex-wrap gap-2">
-                            {provider.needs.map((need, index) => (
+                            {communityService.needs.map((need, index) => (
                               <span
                                 key={index}
                                 className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
@@ -591,7 +619,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             )}
           </div>
         </div>
-        {/* Actions Bar - moved outside left/right panels for true modal centering */}
+        {/* Actions Bar */}
         <div className="absolute bottom-10 left-1/2 flex h-[56px] w-auto -translate-x-1/2 items-center gap-0 rounded-[16.8px] border border-[#EEEEEE] bg-white px-2">
           {/* Save Button */}
           <button
@@ -694,3 +722,4 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     </Modal>
   );
 };
+

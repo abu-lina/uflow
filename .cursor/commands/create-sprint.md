@@ -82,3 +82,4 @@ Create a sprint:
 4. Track progress throughout the week
 5. Review completed items at end of sprint
 
+
