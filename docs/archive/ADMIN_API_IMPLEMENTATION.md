@@ -325,7 +325,7 @@ All achieved:
 When ready to deploy:
 
 1. **Environment Variables**
-   - Ensure `SUPABASE_SERVICE_ROLE_KEY` is set in Vercel
+   - Ensure `SUPABASE_SERVICE_ROLE_KEY` is set on Hetzner server
    - Verify `NEXT_PUBLIC_SITE_URL` is correct for production
 
 2. **Database Migration**
@@ -340,7 +340,7 @@ When ready to deploy:
    - [ ] Check server logs for errors
 
 4. **Monitoring**
-   - Watch Vercel function logs
+   - Watch server logs on Hetzner
    - Monitor signup success rate
    - Check for any error patterns
 

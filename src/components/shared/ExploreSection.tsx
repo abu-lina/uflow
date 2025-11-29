@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { usePinterestTicker } from '@/hooks/usePinterestTicker';
 import { useFilter } from '@/providers/filter-provider';
 import { getProviders, type Provider } from '@/services/providers';
+import { logSupabaseError } from '@/utils/errorUtils';
 
 const CARD_WIDTH = 288; // px
 const CARD_GAP = 32; // px (mr-8)
@@ -31,7 +32,13 @@ export function ExploreSection() {
         setProviders(data);
       } catch (err) {
         setError('Failed to load providers');
-        console.error('Error loading providers:', err);
+        logSupabaseError('ExploreSection.fetchProviders', err);
+        // Log additional details
+        if (err instanceof Error) {
+          console.error('Error loading providers:', err.message, err);
+        } else {
+          console.error('Error loading providers:', err);
+        }
       } finally {
         setLoading(false);
       }

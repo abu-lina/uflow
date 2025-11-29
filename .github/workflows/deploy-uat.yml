@@ -1,0 +1,125 @@
+name: Deploy to UAT
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  deploy-uat:
+    name: Build & Deploy to UAT
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image for UAT
+        run: |
+          docker build -t uflow-uat:latest \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            --build-arg NEXT_PUBLIC_SITE_URL="https://uat.ummahflow.com" \
+            --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.UAT_NEXT_PUBLIC_TURNSTILE_SITE_KEY || secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
+            --platform linux/amd64 .
+      
+      - name: Save Docker image
+        run: docker save uflow-uat:latest | gzip > uflow-uat.tar.gz
+      
+      - name: Upload files to Hetzner
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          source: "uflow-uat.tar.gz,nginx-uat-template.conf"
+          target: "/tmp/"
+      
+      - name: Deploy to UAT on Hetzner
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            set -e
+            cd /tmp
+            
+            echo "🛑 Stopping old UAT container..."
+            docker stop uflow-uat || true
+            docker rm uflow-uat || true
+            
+            echo "📦 Loading new UAT image..."
+            docker load < uflow-uat.tar.gz
+            
+            echo "🚀 Starting new UAT container on port 3001..."
+            docker run -d -p 3001:3000 \
+              -e NEXT_PUBLIC_SUPABASE_URL="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+              -e NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+              -e SUPABASE_SERVICE_ROLE_KEY="${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -e RESEND_API_KEY="${{ secrets.UAT_RESEND_API_KEY || secrets.RESEND_API_KEY }}" \
+              -e NEXT_PUBLIC_SITE_URL="https://uat.ummahflow.com" \
+              -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.UAT_NEXT_PUBLIC_TURNSTILE_SITE_KEY || secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
+              -e TURNSTILE_SECRET_KEY="${{ secrets.UAT_TURNSTILE_SECRET_KEY || secrets.TURNSTILE_SECRET_KEY }}" \
+              --name uflow-uat \
+              --restart unless-stopped \
+              uflow-uat:latest
+            
+            echo "⏳ Waiting for UAT app to start..."
+            sleep 10
+            
+            echo "🏥 UAT health check..."
+            for i in {1..30}; do
+                if curl -f http://localhost:3001/api/health > /dev/null 2>&1; then
+                    echo "✅ UAT app is healthy"
+                    break
+                fi
+                [ $i -eq 30 ] && echo "❌ UAT health check failed" && docker logs --tail 50 uflow-uat && exit 1
+                sleep 2
+            done
+            
+            echo "🔧 Updating Nginx for UAT..."
+            if [ -f "/tmp/nginx-uat-template.conf" ]; then
+                cp /tmp/nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
+                ln -sf /etc/nginx/sites-available/uat-ummahflow /etc/nginx/sites-enabled/uat-ummahflow
+            else
+                echo "⚠️ nginx-uat-template.conf not found, skipping Nginx update"
+            fi
+            
+            echo "🧪 Testing Nginx config..."
+            if nginx -t; then
+                systemctl reload nginx
+                echo "✅ Nginx reloaded for UAT"
+            else
+                echo "❌ Nginx config invalid"
+                exit 1
+            fi
+            
+            echo "🌐 Verifying UAT deployment..."
+            sleep 3
+            if curl -f https://uat.ummahflow.com/api/health > /dev/null 2>&1; then
+                echo "✅ UAT deployment successful!"
+            else
+                echo "⚠️ UAT health check through domain failed (may need DNS/SSL setup)"
+            fi
+            
+            rm -f /tmp/uflow-uat.tar.gz
+            echo "🎉 UAT deployment complete!"
+      
+      - name: UAT deployment summary
+        if: success()
+        run: |
+          echo "## ✅ UAT Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**UAT URL:** https://uat.ummahflow.com" >> $GITHUB_STEP_SUMMARY
+          echo "**Health Check:** https://uat.ummahflow.com/api/health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 UAT is now live! Production deployment will proceed next." >> $GITHUB_STEP_SUMMARY
+

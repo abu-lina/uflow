@@ -200,7 +200,7 @@ This is the right approach because:
 - Industry standard (many apps do this)
 
 **Examples of apps using this approach:**
-- Vercel (custom emails, immediate access)
+- Hetzner server (custom emails, immediate access)
 - Netlify (custom emails, optional confirmation)
 - Railway (custom emails, email verification separate from signup)
 

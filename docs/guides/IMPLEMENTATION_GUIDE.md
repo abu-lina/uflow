@@ -84,7 +84,7 @@ NEXT_PUBLIC_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
 SENTRY_AUTH_TOKEN=your-auth-token
 ```
 
-Add to Vercel environment variables (same values).
+Add to Hetzner server environment variables (same values).
 
 ### Step 4: Update Error Boundary
 **`src/components/common/error-boundary/ErrorBoundary.tsx`**:
@@ -265,29 +265,37 @@ export function logError(error: Error | unknown, context?: Record<string, any>) 
 
 ---
 
-## 2. Analytics with Vercel Analytics
+## 2. Analytics Setup
 
-### Step 1: Install Vercel Analytics
+### Step 1: Choose Analytics Solution
+
+**Option A: Google Analytics**
 ```bash
-npm install @vercel/analytics @vercel/speed-insights
+npm install @next/third-parties
+```
+
+**Option B: Plausible (Privacy-focused)**
+- Sign up at [plausible.io](https://plausible.io)
+- No npm package needed, just add script tag
+
+**Option C: Posthog (Open-source)**
+```bash
+npm install posthog-js
 ```
 
 ### Step 2: Update Root Layout
-**`src/app/layout.tsx`** - Add these imports and components:
+**`src/app/layout.tsx`** - Add analytics based on your choice:
+
+**For Google Analytics:**
 ```typescript
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
       <body>
-        {/* Existing providers and children */}
         {children}
-        
-        {/* Add Analytics */}
-        <Analytics />
-        <SpeedInsights />
+        <GoogleAnalytics gaId="G-XXXXXXXXXX" />
       </body>
     </html>
   );
@@ -297,46 +305,48 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 ### Step 3: Track Custom Events
 **`src/utils/analytics.ts`** (new file):
 ```typescript
-import { track } from '@vercel/analytics';
+// Example with Google Analytics
+// Adjust based on your chosen analytics solution
 
 export const analytics = {
   // Provider interactions
   searchProviders: (query: string, category: string, location: string) => {
-    track('search_providers', { query, category, location });
+    // Use your analytics solution's tracking method
+    // Example: gtag('event', 'search_providers', { query, category, location });
   },
 
   viewProvider: (providerId: string, providerName: string) => {
-    track('view_provider', { providerId, providerName });
+    // Track provider view
   },
 
   createProvider: (providerId: string, category: string, isOwner: boolean) => {
-    track('create_provider', { providerId, category, isOwner });
+    // Track provider creation
   },
 
   bookmarkProvider: (providerId: string, action: 'add' | 'remove') => {
-    track('bookmark_provider', { providerId, action });
+    // Track bookmark action
   },
 
   // Auth events
   signIn: (method: 'email' | 'google') => {
-    track('sign_in', { method });
+    // Track sign in
   },
 
   signUp: (method: 'email' | 'google') => {
-    track('sign_up', { method });
+    // Track sign up
   },
 
   signOut: () => {
-    track('sign_out');
+    // Track sign out
   },
 
   // Feature usage
   usePWAInstall: () => {
-    track('pwa_install');
+    // Track PWA install
   },
 
   shareProvider: (providerId: string, method: string) => {
-    track('share_provider', { providerId, method });
+    // Track share action
   },
 };
 
@@ -349,11 +359,10 @@ export const analytics = {
 // };
 ```
 
-### Step 4: Enable in Vercel Dashboard
-1. Go to your Vercel project
-2. Navigate to "Analytics" tab
-3. Enable "Web Analytics"
-4. Enable "Speed Insights"
+### Step 4: Configure Analytics
+1. Set up your chosen analytics service account
+2. Add required API keys or tracking IDs to environment variables
+3. Test tracking in development before deploying
 
 ---
 
@@ -730,7 +739,7 @@ export const dynamic = 'force-dynamic';
 
 ## 6. Environment Variables Checklist
 
-Update your `.env.local` and Vercel environment variables:
+Update your `.env.local` and Hetzner server environment variables:
 
 ```env
 # Existing
@@ -757,7 +766,7 @@ NODE_ENV=production
 After implementing all fixes:
 
 - [ ] **Test error tracking**: Trigger error, verify in Sentry
-- [ ] **Test analytics**: Check events in Vercel Analytics dashboard
+- [ ] **Test analytics**: Check events in your analytics dashboard
 - [ ] **Test rate limiting**: Make 100+ requests, verify 429 response
 - [ ] **Test health check**: Visit `/api/health`, verify response
 - [ ] **Test N+1 fix**: Check Network tab, verify only 3 queries
@@ -775,16 +784,16 @@ git commit -m "Add production readiness fixes: error monitoring, analytics, rate
 git push origin main
 ```
 
-2. **Add environment variables** in Vercel dashboard
+2. **Add environment variables** on Hetzner server
 
 3. **Deploy to production**:
 ```bash
-vercel --prod
+# Deploy to Hetzner using your deployment script
 ```
 
 4. **Verify deployment**:
    - Check Sentry for initialization
-   - Check Vercel Analytics dashboard
+   - Check your analytics dashboard
    - Test rate limiting manually
    - Verify uptime monitors are green
 
@@ -794,6 +803,6 @@ vercel --prod
 
 If you encounter issues:
 1. Check the [Sentry Next.js docs](https://docs.sentry.io/platforms/javascript/guides/nextjs/)
-2. Check the [Vercel Analytics docs](https://vercel.com/docs/analytics)
+2. Check your analytics service documentation
 3. Check the [Upstash docs](https://upstash.com/docs/redis/overall/getstarted)
 

@@ -33,8 +33,8 @@ git commit -m "Fix: Update email confirmation system"
 # 2. Push to main
 git push origin main
 
-# 3. Trigger Vercel deployment (if using Vercel)
-# This usually happens automatically when you push to main
+# 3. Deploy to Hetzner server
+# Use your deployment script to deploy to Hetzner
 ```
 
 ---
@@ -64,10 +64,10 @@ If you see "relation does not exist":
 
 Production might be using different Supabase credentials.
 
-#### **Check Vercel Environment Variables:**
+#### **Check Hetzner Environment Variables:**
 
-1. Go to Vercel Dashboard
-2. Your Project → Settings → Environment Variables
+1. SSH into your Hetzner server
+2. Check environment variables in your deployment configuration
 3. Verify these exist:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://your-prod-project.supabase.co
@@ -106,7 +106,7 @@ git commit -m "feat: Add custom email confirmation system with logging"
 git push origin main
 ```
 
-Wait for Vercel to deploy (usually ~2-3 minutes).
+Deploy to Hetzner server using your deployment script.
 
 ---
 
@@ -153,11 +153,10 @@ CREATE POLICY "Service role can manage tokens"
 
 ### **Step 3: Verify Environment Variables**
 
-In Vercel:
-1. Project → Settings → Environment Variables
-2. Check all required variables exist
-3. If you change anything, **redeploy**:
-   - Deployments → Latest → ⋮ → Redeploy
+On Hetzner server:
+1. SSH into your Hetzner server
+2. Check environment variables in your deployment configuration
+3. If you change anything, **redeploy** using your deployment script
 
 ---
 
@@ -172,12 +171,11 @@ In Vercel:
 
 ## 🔍 Debugging Production
 
-### **Check Vercel Logs:**
+### **Check Server Logs:**
 
-1. Go to Vercel Dashboard
-2. Your Project → Deployments → Latest
-3. Click "View Function Logs"
-4. Look for `/api/generate-confirmation-token` and `/api/confirm-email`
+1. SSH into your Hetzner server
+2. Check application logs (typically in `/var/log/` or via your process manager)
+3. Look for `/api/generate-confirmation-token` and `/api/confirm-email` in the logs
 
 ### **Expected Logs:**
 ```
@@ -227,9 +225,9 @@ Now they can log in!
 
 Before considering it fixed:
 
-- [ ] Latest code deployed to Vercel
+- [ ] Latest code deployed to Hetzner
 - [ ] Database migration applied to **production** Supabase
-- [ ] Environment variables set in Vercel
+- [ ] Environment variables set on Hetzner server
 - [ ] Redeployment triggered after env var changes
 - [ ] Test signup on production URL
 - [ ] Token appears in production database
@@ -267,14 +265,14 @@ git add .
 git commit -m "Your changes"
 git push origin main
 
-# 3. Vercel auto-deploys
-# Wait ~2-3 minutes
+# 3. Deploy to Hetzner
+# Use your deployment script
 
 # 4. Test on production
 # https://ummahflow.com
 
 # 5. Check logs if issues
-# Vercel Dashboard → Function Logs
+# SSH into Hetzner server and check application logs
 ```
 
 ---
@@ -282,8 +280,8 @@ git push origin main
 ## 💡 Pro Tips
 
 1. **Always test locally first** before deploying
-2. **Use Vercel Preview Deployments** for testing
-3. **Monitor Vercel logs** during production testing
+2. **Use staging environment** for testing
+3. **Monitor server logs** during production testing
 4. **Keep local and production databases separate**
 5. **Use staging environment** for major changes
 

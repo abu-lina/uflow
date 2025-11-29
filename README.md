@@ -6,8 +6,9 @@ A Next.js application for connecting community service providers with users.
 
 This application is deployed on **Hetzner Cloud** with automatic deployment via GitHub Actions.
 
-### Production URL
-- **Live App:** https://ummahflow.com
+### URLs
+- **Production:** https://ummahflow.com
+- **UAT:** https://uat.ummahflow.com
 
 ### Local Development
 ```bash
@@ -19,9 +20,12 @@ npm run dev
 ```
 
 ### Deployment
-- **Automatic:** Push to `main` branch triggers deployment with health checks
-- **Manual:** Run `./deploy-with-monitoring.sh` for manual deployment with monitoring
-- **Health Check:** https://ummahflow.com/api/health
+- **Production (Automatic):** Push to `main` branch triggers deployment with health checks
+- **Production (Manual):** Run `./deploy-with-monitoring.sh` for manual deployment with monitoring
+- **UAT:** See [UAT Deployment Guide](docs/deployment/UAT_DEPLOYMENT.md) for UAT setup
+- **Health Checks:** 
+  - Production: https://ummahflow.com/api/health
+  - UAT: https://uat.ummahflow.com/api/health
 - **Monitoring:** Run `./monitor-app.sh` to check app status
 
 ### CI/CD Pipeline

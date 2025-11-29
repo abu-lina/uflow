@@ -67,12 +67,12 @@ Email confirmation successful: {
 When you're ready to deploy to production:
 
 1. **Revert this change** in `.env.local` (or better, use `.env.production`)
-2. **Set in Vercel:**
+2. **Set on Hetzner server:**
    ```
    NEXT_PUBLIC_SITE_URL=https://ummahflow.com
    ```
 3. **Apply migration** to production database
-4. **Deploy code** to Vercel
+4. **Deploy code** to Hetzner
 5. **Test on production** with new signup
 
 ---

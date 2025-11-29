@@ -11,6 +11,7 @@ import { ChevronDown, Search, X } from 'lucide-react';
 import { useSearch } from '@/providers/search-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { fetchUsedCategories, fetchFilteredCategories, type Category } from '@/services/categories';
+import { logSupabaseError } from '@/utils/errorUtils';
 import { fetchProviderCities, fetchFilteredCities } from '@/services/providers';
 
 interface SearchBarProps {
@@ -115,12 +116,18 @@ function SearchBarContent({
           setCategories(allCategories);
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        logSupabaseError('SearchBar.fetchCategories', error);
         setCategories([]);
+        // Re-throw to ensure error is visible in console
+        if (error instanceof Error) {
+          console.error('Error fetching categories:', error.message, error);
+        } else {
+          console.error('Error fetching categories:', error);
+        }
       }
     }
 
-    fetchCategories();
+    void fetchCategories();
   }, [selectedLocation, searchQuery, t]);
 
   // Fetch cities based on current filters
@@ -143,12 +150,18 @@ function SearchBarContent({
           setLocations([t('search.everywhere'), ...allCities]);
         }
       } catch (error) {
-        console.error('Error fetching cities:', error);
+        logSupabaseError('SearchBar.fetchCities', error);
         setLocations([t('search.everywhere')]);
+        // Re-throw to ensure error is visible in console
+        if (error instanceof Error) {
+          console.error('Error fetching cities:', error.message, error);
+        } else {
+          console.error('Error fetching cities:', error);
+        }
       }
     }
 
-    fetchCities();
+    void fetchCities();
   }, [selectedCategory, searchQuery, customCities, t]);
 
   // Sync state with URL params only on initial mount or when the page changes

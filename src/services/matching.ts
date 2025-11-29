@@ -43,7 +43,7 @@ export async function findProvidersNeedingMyOffers(
       .from('providers')
       .select(`
         *,
-        category:categories(name_de, name_en, category_images)
+        category:categories(name_de, name_en)
       `)
       .neq('provider_id', providerId)
       .overlaps('needs_ids', provider.offers_ids);
@@ -120,7 +120,7 @@ export async function findProvidersOfferingMyNeeds(
       .from('providers')
       .select(`
         *,
-        category:categories(name_de, name_en, category_images)
+        category:categories(name_de, name_en)
       `)
       .neq('provider_id', providerId)
       .overlaps('offers_ids', provider.needs_ids);

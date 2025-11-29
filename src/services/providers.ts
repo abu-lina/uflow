@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase/client';
 import { searchCommunityServices, type CommunityService } from './communityServices';
 import { searchOffers } from './offers';
 import { searchNeeds } from './needs';
+import { logSupabaseError } from '@/utils/errorUtils';
 
 export interface Provider {
   provider_id: string;
@@ -275,12 +276,18 @@ async function searchBoth(
 export async function getProviders(): Promise<Provider[]> {
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories(name_de, name_en)')
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
 
   if (error) {
-    console.error('Error fetching providers:', error);
+    logSupabaseError('providers.getProviders', error);
+    // Log additional details before throwing
+    if (error instanceof Error) {
+      console.error('Error fetching providers:', error.message, error);
+    } else {
+      console.error('Error fetching providers:', error);
+    }
     throw error;
   }
 
@@ -294,7 +301,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
       .from('providers')
       .select(`
         *,
-        category:categories(name_de, name_en, category_images)
+        category:categories(name_de, name_en)
       `)
       .eq('provider_id', id)
       .maybeSingle();
@@ -344,7 +351,7 @@ export async function searchProviders(
   limit?: number,
   offset?: number,
 ): Promise<Provider[]> {
-  let req = supabase.from('providers').select('*, category:categories(name_de, name_en, category_images)');
+  let req = supabase.from('providers').select('*, category:categories(name_de, name_en)');
   
   // Apply pagination if provided
   if (limit !== undefined) {
@@ -507,7 +514,7 @@ export async function getProviderCount(): Promise<number> {
 export async function getCreatedProviders(userId: string): Promise<Provider[]> {
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories(name_de, name_en)')
     .eq('provider_owner_id', userId)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
@@ -526,7 +533,7 @@ export async function getRecommendations(userId: string): Promise<Provider[]> {
   // First, get all providers where user is the creator
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories(name_de, name_en)')
     .eq('user_created_id', userId)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
@@ -581,7 +588,7 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
   if (providerIds.length > 0) {
     const { data: providers, error: providersError } = await supabase
       .from('providers')
-      .select('*, category:categories(name_de, name_en, category_images)')
+      .select('*, category:categories(name_de, name_en)')
       .in('provider_id', providerIds)
       .returns<Provider[]>();
 
@@ -622,7 +629,7 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
   if (communityServiceIds.length > 0) {
     const { data: communityServices, error: communityServicesError } = await supabase
       .from('community_services')
-      .select('*, category:categories(name_de, name_en, category_images)')
+      .select('*, category:categories(name_de, name_en)')
       .in('community_service_id', communityServiceIds)
       .returns<CommunityService[]>();
 

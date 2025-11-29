@@ -8,7 +8,11 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:uat": "bash scripts/switch-env.sh uat && npm run dev",
+    "dev:prod": "bash scripts/switch-env.sh prod && npm run dev",
     "build": "NODE_ENV=production next build",
+    "build:uat": "bash scripts/switch-env.sh uat && npm run build",
+    "build:prod": "bash scripts/switch-env.sh prod && npm run build",
     "build:raw": "NODE_ENV=production next build",
     "build:standalone": "STANDALONE_BUILD=true NODE_ENV=production next build",
     "build:production": "npm ci --include=dev && NODE_ENV=production next build && rm -rf .next/cache",
@@ -40,7 +44,16 @@
     "fix:tailwind": "node scripts/fix-tailwind-classes.js",
     "fix:all": "npm run fix:tailwind && npm run format",
     "build:local": "export $(cat .env.local | xargs) && NODE_ENV=production next build",
-    "refine-tasks-from-top-epic": "npx tsx scripts/refine-top-epic-tasks.ts"
+    "refine-tasks-from-top-epic": "npx tsx scripts/refine-top-epic-tasks.ts",
+    "perf:test": "bash tests/performance/run-tests.sh",
+    "perf:baseline": "bash tests/performance/run-tests.sh baseline",
+    "perf:load": "bash tests/performance/run-tests.sh load",
+    "perf:stress": "bash tests/performance/run-tests.sh stress",
+    "perf:spike": "bash tests/performance/run-tests.sh spike",
+    "perf:auth": "bash tests/performance/run-tests.sh auth",
+    "perf:browsing": "bash tests/performance/run-tests.sh browsing",
+    "perf:admin": "bash tests/performance/run-tests.sh admin",
+    "perf:api": "bash tests/performance/run-tests.sh api"
   },
   "dependencies": {
     "@iconify/react": "^6.0.0",

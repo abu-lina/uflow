@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Your application has **strong foundational infrastructure** with Vercel + Supabase and good performance optimizations. However, there are **5 critical gaps** that must be addressed before scaling to 500 daily users:
+Your application has **strong foundational infrastructure** with Hetzner + Supabase and good performance optimizations. However, there are **5 critical gaps** that must be addressed before scaling to 500 daily users:
 
 1. ❌ **No error monitoring/tracking system**
 2. ❌ **No analytics or user behavior tracking**
@@ -21,14 +21,14 @@ Your application has **strong foundational infrastructure** with Vercel + Supaba
 ## ✅ Strengths (Well Prepared)
 
 ### 1. Infrastructure & Scalability ✅
-- ✅ **Vercel Edge Functions** - Auto-scaling, globally distributed
+- ✅ **Hetzner Server** - Reliable hosting infrastructure
 - ✅ **Supabase** - Managed Postgres with connection pooling
 - ✅ **PWA** - Offline support reduces server load
 - ✅ **CDN** - Static assets cached at edge
 - ✅ **Database Connection Pooling** - Supabase handles this automatically
-- ✅ **Region Optimization** - `fra1` (Frankfurt) for EU users
+- ✅ **Region Optimization** - Hetzner Frankfurt for EU users
 
-**Capacity**: Vercel can handle 10,000+ concurrent users, Supabase Free tier supports ~500 concurrent connections
+**Capacity**: Hetzner can handle 10,000+ concurrent users, Supabase Free tier supports ~500 concurrent connections
 
 ### 2. Performance Optimizations ✅
 - ✅ **Code Splitting** - 300KB max chunk size with vendor splitting
@@ -123,26 +123,11 @@ npm install @sentry/nextjs
 **Impact**: **HIGH** - Can't make data-driven decisions
 
 **Solution**: Add analytics
-```bash
-npm install @vercel/analytics
-```
 
-**Recommended Setup**:
-```typescript
-// Add to src/app/layout.tsx
-import { Analytics } from '@vercel/analytics/react';
-
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        {children}
-        <Analytics />
-      </body>
-    </html>
-  );
-}
-```
+**Recommended Services**:
+- **Google Analytics** - Free, comprehensive tracking
+- **Plausible** - Privacy-focused analytics
+- **Posthog** - Open-source product analytics
 
 **What to Track**:
 - Page views
@@ -173,10 +158,15 @@ export default function RootLayout({ children }) {
 ```typescript
 // src/middleware.ts
 import { Ratelimit } from '@upstash/ratelimit';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 const ratelimit = new Ratelimit({
-  redis: kv,
+  redis: redis,
   limiter: Ratelimit.slidingWindow(100, '1 h'), // 100 requests per hour
 });
 
@@ -307,9 +297,9 @@ export async function searchProviders(query: string, category: string, location:
    - Incident management
    - Status pages
 
-3. **Vercel Analytics** (Included)
-   - Already available in your plan
-   - Enable in Vercel dashboard
+3. **Application Monitoring**
+   - Set up monitoring on Hetzner server
+   - Use process manager logs (PM2, systemd, etc.)
 
 **What to Monitor**:
 - Homepage (`/`)
@@ -446,14 +436,14 @@ export async function GET() {
 - 10 pages/session = 15,000 page views/day
 - 3 API calls/page = 45,000 API calls/day = 1.35M/month (well under 500M)
 
-### Vercel Limits (Hobby Plan)
+### Hetzner Server Capacity
 
-| **Resource** | **Limit** | **Usage at 500 DAU** | **Status** |
+| **Resource** | **Capacity** | **Usage at 500 DAU** | **Status** |
 |--------------|-----------|----------------------|------------|
-| Bandwidth | 100 GB/month | ~10 GB/month | ✅ 90% free |
-| Edge Functions | 100 GB-Hours | ~5 GB-Hours | ✅ 95% free |
-| Serverless executions | 100 GB-Hours | ~10 GB-Hours | ✅ 90% free |
-| Build minutes | 6,000/month | ~100/month | ✅ 98% free |
+| Bandwidth | Unlimited | ~10 GB/month | ✅ Plenty of headroom |
+| CPU | Depends on plan | ~5-10% usage | ✅ Plenty of headroom |
+| Memory | Depends on plan | ~20-30% usage | ✅ Plenty of headroom |
+| Storage | Depends on plan | ~200 MB | ✅ Plenty of headroom |
 
 **Conclusion**: Your infrastructure can **comfortably handle 500 DAU** with current free tiers. You won't need to upgrade until **~2,000-3,000 DAU**.
 
@@ -463,7 +453,7 @@ export async function GET() {
 
 ### Critical (Must Complete)
 - [ ] **Implement error monitoring** (Sentry/LogRocket)
-- [ ] **Add analytics** (@vercel/analytics)
+- [ ] **Add analytics** (Google Analytics/Plausible/Posthog)
 - [ ] **Fix N+1 query problem** in `searchProviders()`
 - [ ] **Add rate limiting** to API routes
 - [ ] **Set up uptime monitoring** (UptimeRobot)
@@ -503,7 +493,7 @@ export async function GET() {
   - 8 GB database
   - 250 GB bandwidth
   - Daily backups
-- Enable **Vercel Analytics Pro** ($20/month)
+- Upgrade **Hetzner server** if needed
 - Add **CDN** for images (Cloudflare R2)
 
 ### 5,000-20,000 Users
@@ -535,7 +525,7 @@ Your infrastructure and architecture are **solid** and can handle 500 DAU comfor
 
 **Week 1** (Before Launch):
 1. Add Sentry for error tracking
-2. Add Vercel Analytics
+2. Add analytics (Google Analytics/Plausible/Posthog)
 3. Fix N+1 query problem
 4. Set up UptimeRobot
 
@@ -561,14 +551,14 @@ Your infrastructure and architecture are **solid** and can handle 500 DAU comfor
 
 ### Recommended Tools (All have free tiers)
 - **Error Tracking**: Sentry (5K errors/month free)
-- **Analytics**: Vercel Analytics (built-in)
+- **Analytics**: Google Analytics, Plausible, or Posthog
 - **Uptime Monitoring**: UptimeRobot (50 monitors free)
 - **Rate Limiting**: @upstash/ratelimit (10K requests/day free)
 - **Performance**: Lighthouse CI (free)
 
 ### Useful Links
 - [Supabase Performance Guide](https://supabase.com/docs/guides/platform/performance)
-- [Vercel Edge Config](https://vercel.com/docs/storage/edge-config)
+- [Hetzner Documentation](https://docs.hetzner.com/)
 - [Next.js Performance](https://nextjs.org/docs/app/building-your-application/optimizing)
 
 ---

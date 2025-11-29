@@ -16,22 +16,24 @@ npm install @sentry/nextjs
 npx @sentry/wizard@latest -i nextjs
 ```
 - Sign up at [sentry.io](https://sentry.io) (free tier: 5K errors/month)
-- Add `NEXT_PUBLIC_SENTRY_DSN` to Vercel env vars
+- Add `NEXT_PUBLIC_SENTRY_DSN` to your Hetzner server environment variables
 - See `IMPLEMENTATION_GUIDE.md` Section 1 for details
 
 ### 2. Add Analytics (5 minutes)
+Choose one of these analytics solutions:
+
+**Option A: Google Analytics**
 ```bash
-npm install @vercel/analytics @vercel/speed-insights
+npm install @next/third-parties
 ```
 
-Add to `src/app/layout.tsx`:
-```typescript
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+**Option B: Plausible (Privacy-focused)**
+- Sign up at [plausible.io](https://plausible.io)
+- Add script to `src/app/layout.tsx`
 
-// In your <body> tag:
-<Analytics />
-<SpeedInsights />
+**Option C: Posthog (Open-source)**
+```bash
+npm install posthog-js
 ```
 
 ### 3. Fix N+1 Query Problem (15 minutes)
@@ -61,7 +63,7 @@ npm install @upstash/ratelimit @upstash/redis
 
 ## What's Already Great
 
-✅ **Infrastructure**: Vercel + Supabase (auto-scaling)  
+✅ **Infrastructure**: Hetzner + Supabase (auto-scaling)  
 ✅ **Performance**: Code splitting, React Query caching, image optimization  
 ✅ **Security**: RLS policies, security headers, auth middleware  
 ✅ **Database**: Proper indexes, full-text search, database views  
@@ -75,8 +77,8 @@ npm install @upstash/ratelimit @upstash/redis
 |----------|-------------------|-----------------|--------|
 | **Supabase Bandwidth** | 5 GB/month | ~2-3 GB/month | ✅ 40% free |
 | **Supabase API Calls** | 500M/month | ~1.35M/month | ✅ 99% free |
-| **Vercel Bandwidth** | 100 GB/month | ~10 GB/month | ✅ 90% free |
-| **Vercel Functions** | 100 GB-Hours | ~10 GB-Hours | ✅ 90% free |
+| **Hetzner Bandwidth** | Unlimited | ~10 GB/month | ✅ Plenty of headroom |
+| **Hetzner Server** | Depends on plan | ~5-10% usage | ✅ Plenty of headroom |
 
 **Conclusion**: You can comfortably handle 500 DAU on free tiers. No upgrades needed until ~2,000-3,000 DAU.
 
@@ -108,13 +110,13 @@ npx autocannon -c 100 -d 30 http://localhost:3000
 ## Deployment Checklist
 
 - [ ] Implement error monitoring (Sentry)
-- [ ] Add analytics (Vercel Analytics)
+- [ ] Add analytics (Google Analytics/Plausible/Posthog)
 - [ ] Fix N+1 query problem
 - [ ] Create health check endpoint
 - [ ] Set up uptime monitoring (UptimeRobot)
-- [ ] Add environment variables to Vercel
+- [ ] Add environment variables to Hetzner server
 - [ ] Run `npm run build` successfully
-- [ ] Deploy to Vercel
+- [ ] Deploy to Hetzner
 - [ ] Test in production
 - [ ] Verify Sentry receives errors
 - [ ] Verify analytics tracks events
@@ -127,7 +129,7 @@ npx autocannon -c 100 -d 30 http://localhost:3000
 Monitor these metrics:
 
 1. **Sentry Dashboard**: Error rate, affected users
-2. **Vercel Analytics**: Page views, unique visitors, top pages
+2. **Analytics**: Page views, unique visitors, top pages
 3. **UptimeRobot**: Uptime %, response times
 4. **Supabase Dashboard**: Database size, API usage
 
@@ -143,7 +145,7 @@ Monitor these metrics:
 
 ### 1,000-5,000 Users
 - Upgrade to **Supabase Pro** ($25/month)
-- Enable **Vercel Analytics Pro** ($20/month)
+- Upgrade analytics plan if needed
 
 ### 5,000+ Users
 - Add **Redis caching** (Upstash)
@@ -156,7 +158,9 @@ Monitor these metrics:
 - **Detailed Report**: See `PRODUCTION_READINESS_REPORT.md`
 - **Implementation Guide**: See `IMPLEMENTATION_GUIDE.md`
 - **Sentry Docs**: https://docs.sentry.io/platforms/javascript/guides/nextjs/
-- **Vercel Analytics**: https://vercel.com/docs/analytics
+- **Google Analytics**: https://analytics.google.com
+- **Plausible**: https://plausible.io/docs
+- **Posthog**: https://posthog.com/docs
 - **Upstash**: https://upstash.com/docs
 
 ---

@@ -46,7 +46,7 @@ export interface CommunityService {
 export async function getCommunityServices(): Promise<CommunityService[]> {
   const { data, error } = await supabase
     .from('community_services')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories(name_de, name_en)')
     .eq('review_status', 'approved') // Only show approved services
     .order('community_service_name')
     .returns<CommunityService[]>();
@@ -68,7 +68,7 @@ export async function searchCommunityServices(
 ): Promise<CommunityService[]> {
   let req = supabase
     .from('community_services')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories(name_de, name_en)')
     .eq('review_status', 'approved'); // Only show approved services
 
   // Apply search query filter if specified (before pagination for better query optimization)
@@ -110,7 +110,7 @@ export async function getCommunityServiceById(id: string): Promise<CommunityServ
   try {
   const { data, error } = await supabase
     .from('community_services')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories(name_de, name_en)')
     .eq('community_service_id', id)
     .single<CommunityService>();
   
@@ -193,7 +193,7 @@ export async function getCommunityServicesForProvider(providerId: string): Promi
     
     const { data: communityServicesData, error: communityServicesError } = await supabase
       .from('community_services')
-      .select('*, category:categories(name_de, name_en, category_images)')
+      .select('*, category:categories(name_de, name_en)')
       .in('community_service_id', communityServiceIds)
       .eq('review_status', 'approved')
       .order('community_service_name');
@@ -212,7 +212,7 @@ export async function getCommunityServicesForProvider(providerId: string): Promi
     // Fallback to old method if new relationship doesn't exist yet
     const { data: fallbackData, error: fallbackError } = await supabase
       .from('community_services')
-      .select('*, category:categories(name_de, name_en, category_images)')
+      .select('*, category:categories(name_de, name_en)')
       .eq('provider_id', providerId)
       .eq('review_status', 'approved')
       .order('community_service_name')
@@ -306,8 +306,7 @@ export async function getProvidersForCommunityService(communityServiceId: string
         address_city,
         category:categories(
           name_de,
-          name_en,
-          category_images
+          name_en
         )
       `)
       .in('provider_id', providerIds)
@@ -332,7 +331,7 @@ export type CommunityServiceData = CommunityService;
 export async function getCreatedCommunityServices(userId: string): Promise<CommunityService[]> {
   const { data, error } = await supabase
     .from('community_services')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories(name_de, name_en)')
     .eq('user_created_id', userId)
     .order('created_at', { ascending: false })
     .returns<CommunityService[]>();

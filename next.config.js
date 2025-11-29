@@ -66,7 +66,7 @@ function buildCsp() {
   // - IP-based blocking for suspicious activity
   // - Secure authentication (Supabase session management)
   //
-  // This approach is used by major production apps including GitHub, Vercel, and Cloudflare.
+  // This approach is used by major production apps including GitHub and Cloudflare.
   // See docs/guides/CSP_HONEST_ASSESSMENT.md for full analysis.
   
   const directives = [

@@ -27,24 +27,20 @@
 
 ## ✅ **EU Hosting Options Ranked**
 
-### 🥇 1. Vercel (Frankfurt) - RECOMMENDED
+### 🥇 1. Hetzner (Frankfurt) - CURRENT SETUP ✅
 
-**You already configured this!** ✅
+**You're already using this!**
 
-Looking at your `vercel.json`:
-```json
-"regions": ["fra1"]
-```
-
-**Why Vercel is perfect for EU:**
-- ✅ **Frankfurt (fra1) region** - already configured!
-- ✅ EU data residency guaranteed
+**Why Hetzner is perfect for EU:**
+- ✅ **Frankfurt datacenter** - EU data residency
 - ✅ GDPR compliant
-- ✅ Serverless functions run in Frankfurt
-- ✅ Your app works perfectly (no changes needed)
-- ✅ You're already set up!
+- ✅ Full control over infrastructure
+- ✅ Cost-effective hosting (€4.15/month)
+- ✅ Your app is already deployed here!
 
-**Recommendation: STAY ON VERCEL** 🎯
+**Current Setup: Hetzner Frankfurt** 🎯
+
+**See:** [Hetzner Deployment Guide](./HETZNER_DEPLOYMENT.md) for setup instructions.
 
 ---
 
@@ -125,7 +121,7 @@ Looking at your `vercel.json`:
 
 | Provider | EU Region | GDPR | Cost/Month | Your Setup | Recommendation |
 |----------|-----------|------|------------|------------|----------------|
-| **Vercel** | ✅ Frankfurt | ✅ Yes | $0-20 | ✅ **Already configured!** | 🏆 **STAY HERE** |
+| **Hetzner** | ✅ Frankfurt | ✅ Yes | $5-20 | ✅ **Currently using!** | 🏆 **STAY HERE** |
 | Netlify | ❌ Global only | ❌ No | $0-19 | Configured | ❌ **Don't use** |
 | Railway | ✅ EU West | ✅ Yes | $7 | Not started | Good alternative |
 | Render | ✅ Frankfurt | ✅ Yes | $0-7 | Not started | OK with caveats |
@@ -136,17 +132,16 @@ Looking at your `vercel.json`:
 
 ## 🎯 **MY STRONG RECOMMENDATION**
 
-### **STAY ON VERCEL** ✅
+### **STAY ON HETZNER** ✅
 
 **Why:**
 
-1. ✅ **You already configured Frankfurt region!**
-   ```json
-   "regions": ["fra1"]
-   ```
+1. ✅ **You're already using Hetzner Frankfurt!**
+   - Your app is deployed on Hetzner
+   - Frankfurt datacenter ensures EU data residency
 
 2. ✅ **GDPR Compliant**
-   - All serverless functions run in Frankfurt
+   - All processing runs in Frankfurt
    - Data stays in EU
    - Meets data residency requirements
 
@@ -168,19 +163,17 @@ Looking at your `vercel.json`:
 
 ---
 
-## 🇪🇺 **Vercel EU Regions**
+## 🇪🇺 **Hetzner EU Datacenters**
 
-Vercel offers these EU regions:
+Hetzner offers these EU datacenters:
 
-| Region Code | Location | Latency |
-|-------------|----------|---------|
-| **fra1** | 🇩🇪 Frankfurt, Germany | **You're using this!** ✅ |
-| lhr1 | 🇬🇧 London, UK | Available |
-| cdg1 | 🇫🇷 Paris, France | Available |
-| ams1 | 🇳🇱 Amsterdam, Netherlands | Available |
-| dub1 | 🇮🇪 Dublin, Ireland | Available |
+| Location | Country | Status |
+|----------|---------|--------|
+| **Frankfurt** | 🇩🇪 Germany | **You're using this!** ✅ |
+| Nuremberg | 🇩🇪 Germany | Available |
+| Helsinki | 🇫🇮 Finland | Available |
 
-**Frankfurt (fra1) is perfect because:**
+**Frankfurt is perfect because:**
 - ✅ Central EU location
 - ✅ Excellent connectivity
 - ✅ Low latency across EU
@@ -190,7 +183,7 @@ Vercel offers these EU regions:
 
 ## 📋 **GDPR Compliance Checklist**
 
-With Vercel Frankfurt, you're compliant:
+With Hetzner Frankfurt, you're compliant:
 
 - [x] ✅ Data stored in EU (Frankfurt)
 - [x] ✅ Serverless functions run in EU
@@ -253,12 +246,12 @@ supabase db push
                  │
                  ▼
 ┌─────────────────────────────────────────────────┐
-│   Vercel Edge CDN (Global, cached at EU edge)   │
+│   CDN (Global, cached at EU edge)                │
 └────────────────┬────────────────────────────────┘
                  │
                  ▼
 ┌─────────────────────────────────────────────────┐
-│   Vercel Serverless Functions (Frankfurt 🇩🇪)   │ ✅ EU
+│   Hetzner Server (Frankfurt 🇩🇪)                 │ ✅ EU
 └────────────────┬────────────────────────────────┘
                  │
                  ▼
@@ -292,7 +285,7 @@ supabase db push
 3. **If Supabase is in EU:**
    - ✅ **You're fully compliant!**
    - ✅ No action needed
-   - ✅ Stay on Vercel
+   - ✅ Stay on Hetzner
 
 ### Optional (Future)
 
@@ -302,7 +295,7 @@ supabase db push
    - Cookie consent (if needed)
 
 5. **Add Data Processing Agreement (DPA)**
-   - Vercel offers EU DPA
+   - Hetzner offers EU DPA
    - Supabase offers EU DPA
    - Download and keep on file
 
@@ -332,23 +325,23 @@ Netlify's limitations for EU:
 
 | Provider | Setup | Cost @ 500 DAU | EU Compliant |
 |----------|-------|----------------|--------------|
-| **Vercel (fra1)** | ✅ Already done | **$0/month** | ✅ Yes |
+| **Hetzner (Frankfurt)** | ✅ Already done | **$5-20/month** | ✅ Yes |
 | Railway (EU) | New | $7/month | ✅ Yes |
 | Render (Frankfurt) | New | $7/month | ✅ Yes |
 | Fly.io (EU) | New + Docker | $10-15/month | ✅ Yes |
 | Netlify | 80% done | N/A | ❌ **No** |
 
-**Winner: Vercel** (already configured + free)
+**Winner: Hetzner** (already configured and in use)
 
 ---
 
 ## 🎯 **Final Recommendation**
 
-### **STAY ON VERCEL** 🏆
+### **STAY ON HETZNER** 🏆
 
 **Your current setup:**
-- ✅ Vercel Frankfurt region (fra1)
-- ✅ Already configured in `vercel.json`
+- ✅ Hetzner Frankfurt datacenter
+- ✅ Already deployed and configured
 - ✅ GDPR compliant (if Supabase is EU)
 - ✅ Works perfectly
 - ✅ Free tier sufficient
@@ -403,10 +396,10 @@ Then check in Supabase dashboard what region it's in.
 After confirming Supabase region, your stack will be:
 
 ```
-✅ Frontend: Vercel Frankfurt (fra1)
-✅ Backend: Vercel Serverless Functions (fra1)
+✅ Frontend: Hetzner Frankfurt
+✅ Backend: Hetzner Frankfurt
 ✅ Database: Supabase Frankfurt (eu-central-1)
-✅ CDN: Vercel Edge (global, origin in fra1)
+✅ CDN: Cloudflare or Hetzner CDN (global, origin in Frankfurt)
 
 = 100% EU data residency ✅
 = GDPR compliant ✅
