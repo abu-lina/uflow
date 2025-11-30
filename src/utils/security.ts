@@ -697,6 +697,14 @@ export function markSuspiciousIP(ip: string, hours: number = 24): void {
 }
 
 /**
+ * Unblock an IP address (useful for test mode)
+ * @param ip - IP address to unblock
+ */
+export function unblockIP(ip: string): void {
+  suspiciousIPs.delete(ip);
+}
+
+/**
  * Validate password complexity
  * Requirements:
  * - At least 8 characters

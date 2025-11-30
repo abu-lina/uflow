@@ -8,6 +8,7 @@ import {
   getClientIP,
   checkIPBlocked,
   markSuspiciousIP,
+  unblockIP,
 } from '@/utils/security';
 
 // Lazy initialization - only creates client when first accessed
@@ -38,12 +39,24 @@ function isTestMode(request: Request): boolean {
   const testApiKey = request.headers.get('x-test-api-key');
   const expectedKey = process.env.TEST_API_KEY;
   
+  // Check if test API key matches
   if (testApiKey && expectedKey && testApiKey === expectedKey) {
     return true;
   }
   
   // Also check NODE_ENV for test mode
-  return process.env.NODE_ENV === 'test';
+  if (process.env.NODE_ENV === 'test') {
+    return true;
+  }
+  
+  // Debug logging (only log if key is provided but doesn't match)
+  if (testApiKey && !expectedKey) {
+    console.warn('[LOGIN API] Test API key provided but TEST_API_KEY env var not set');
+  } else if (testApiKey && expectedKey && testApiKey !== expectedKey) {
+    console.warn('[LOGIN API] Test API key provided but does not match expected key');
+  }
+  
+  return false;
 }
 
 export async function POST(request: Request) {
@@ -53,12 +66,23 @@ export async function POST(request: Request) {
     const isTest = isTestMode(request);
     
     // 1. Check if IP is blocked (unless test mode)
+    // In test mode, we bypass IP blocking entirely
     if (!isTest && checkIPBlocked(ip)) {
-      console.log('[LOGIN API] Blocked IP attempted login:', ip);
+      console.log('[LOGIN API] Blocked IP attempted login:', ip, '(test mode:', isTest, ')');
       return NextResponse.json(
         { error: 'Access temporarily restricted. Please try again later.' },
         { status: 403 }
       );
+    }
+    
+    // Log test mode status for debugging
+    if (isTest) {
+      console.log('[LOGIN API] Test mode enabled, bypassing security checks for IP:', ip);
+      // Clear any existing IP blocks for this IP in test mode
+      if (checkIPBlocked(ip)) {
+        unblockIP(ip);
+        console.log('[LOGIN API] Cleared IP block for test mode:', ip);
+      }
     }
 
     // 2. Rate limiting: 10 login attempts per 15 minutes per IP (higher for testing)
