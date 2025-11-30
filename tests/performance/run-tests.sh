@@ -18,9 +18,18 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 REPORTS_DIR="$PROJECT_ROOT/tests/performance/reports"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
-# Test environment
-ENV=${ENV:-staging}
-BASE_URL=${BASE_URL:-http://localhost:3000}
+# Test environment - defaults to UAT
+ENV=${ENV:-uat}
+BASE_URL=${BASE_URL:-https://uat.ummahflow.com}
+
+# Detect environment from BASE_URL if not explicitly set
+if [[ "$BASE_URL" == *"uat"* ]]; then
+    ENV="uat"
+elif [[ "$BASE_URL" == *"localhost"* ]]; then
+    ENV="local"
+elif [[ "$BASE_URL" == *"ummahflow.com"* && "$BASE_URL" != *"uat"* ]]; then
+    ENV="production"
+fi
 
 echo -e "${BLUE}🚀 Starting Performance Tests${NC}"
 echo -e "${YELLOW}Environment: ${ENV}${NC}"
@@ -43,17 +52,19 @@ run_test() {
     local test_file=$2
     local scenario=${3:-default}
     
-    echo -e "${BLUE}Running: ${test_name}${NC}"
+    echo -e "${BLUE}Running: ${test_name} (scenario: ${scenario})${NC}"
     
     local report_file="${REPORTS_DIR}/${test_name}_${scenario}_${TIMESTAMP}.json"
     local summary_file="${REPORTS_DIR}/${test_name}_${scenario}_${TIMESTAMP}_summary.txt"
+    local csv_file="${REPORTS_DIR}/${test_name}_${scenario}_${TIMESTAMP}.csv"
     
-    # Run k6 test
+    # Run k6 test with comprehensive output
     k6 run \
-        --config "$SCRIPT_DIR/k6.config.js" \
         --env ENV="$ENV" \
         --env BASE_URL="$BASE_URL" \
+        --env SCENARIO="$scenario" \
         --out json="$report_file" \
+        --out csv="$csv_file" \
         --summary-export="$summary_file" \
         "$test_file" || {
         echo -e "${RED}❌ Test failed: ${test_name}${NC}"
@@ -61,7 +72,10 @@ run_test() {
     }
     
     echo -e "${GREEN}✅ Test completed: ${test_name}${NC}"
-    echo -e "${YELLOW}Report: ${report_file}${NC}"
+    echo -e "${YELLOW}Reports:${NC}"
+    echo -e "  - JSON: ${report_file}"
+    echo -e "  - CSV: ${csv_file}"
+    echo -e "  - Summary: ${summary_file}"
     echo ""
 }
 
@@ -103,6 +117,14 @@ case $TEST_TYPE in
         echo -e "${BLUE}Running spike tests...${NC}"
         run_test "combined-scenarios" "$SCRIPT_DIR/scenarios.js" "spike"
         ;;
+    database)
+        echo -e "${BLUE}Running database performance tests...${NC}"
+        if [ -f "$SCRIPT_DIR/database-load.js" ]; then
+            run_test "database-load" "$SCRIPT_DIR/database-load.js" "load"
+        else
+            echo -e "${YELLOW}⚠️  database-load.js not found, skipping${NC}"
+        fi
+        ;;
     all)
         echo -e "${BLUE}Running all tests...${NC}"
         run_test "auth-flow" "$SCRIPT_DIR/auth-flow.js" "$SCENARIO"
@@ -113,10 +135,26 @@ case $TEST_TYPE in
         ;;
     *)
         echo -e "${RED}Unknown test type: ${TEST_TYPE}${NC}"
-        echo "Usage: $0 [auth|browsing|admin|api|scenarios|baseline|load|stress|spike|all] [scenario]"
+        echo "Usage: $0 [auth|browsing|admin|api|scenarios|baseline|load|stress|spike|database|all] [scenario]"
         exit 1
         ;;
 esac
 
+# Generate summary report
+SUMMARY_FILE="${REPORTS_DIR}/summary_${TIMESTAMP}.txt"
+echo -e "${BLUE}Generating summary report...${NC}"
+{
+    echo "Performance Test Summary"
+    echo "======================"
+    echo "Environment: ${ENV}"
+    echo "Base URL: ${BASE_URL}"
+    echo "Timestamp: ${TIMESTAMP}"
+    echo ""
+    echo "Test Reports:"
+    ls -lh "${REPORTS_DIR}"/*${TIMESTAMP}* 2>/dev/null | awk '{print "  - " $9 " (" $5 ")"}' || echo "  No reports found"
+} > "$SUMMARY_FILE"
+
 echo -e "${GREEN}✅ All tests completed!${NC}"
 echo -e "${YELLOW}Reports directory: ${REPORTS_DIR}${NC}"
+echo -e "${YELLOW}Summary: ${SUMMARY_FILE}${NC}"
+

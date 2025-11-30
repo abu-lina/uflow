@@ -12,7 +12,7 @@
 
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
-import { BASE_URL, API_BASE_URL, TEST_ADMIN, options } from './k6.config.js';
+import { BASE_URL, API_BASE_URL, TEST_ADMIN, options as baseOptions } from './k6.config.js';
 import { login, getPendingProviders, reviewProvider, authenticatedRequest, waitRandom } from './utils.js';
 import http from 'k6/http';
 
@@ -21,42 +21,50 @@ const adminSuccessRate = new Rate('admin_success');
 const adminOperationTime = new Trend('admin_operation_time');
 const reviewSuccessRate = new Rate('admin_review_success');
 
-// Override default scenario for admin tests
-export const adminOptions = {
-  ...options,
+// Select scenario based on environment variable (default to baseline)
+const scenario = __ENV.SCENARIO || 'baseline';
+
+// Define all possible scenarios
+const adminScenarios = {
+  baseline: {
+    executor: 'constant-vus',
+    vus: 2,
+    duration: '2m',
+    tags: { scenario: 'admin_baseline' },
+  },
+  load: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '1m', target: 5 },
+      { duration: '3m', target: 10 },
+      { duration: '5m', target: 10 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '1m',
+    tags: { scenario: 'admin_load' },
+  },
+  stress: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '2m', target: 20 },
+      { duration: '5m', target: 20 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '1m',
+    tags: { scenario: 'admin_stress' },
+  },
+};
+
+// Export options for k6
+export const options = {
+  ...baseOptions,
   scenarios: {
-    admin_baseline: {
-      executor: 'constant-vus',
-      vus: 2,
-      duration: '2m',
-      tags: { scenario: 'admin_baseline' },
-    },
-    admin_load: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '1m', target: 5 },
-        { duration: '3m', target: 10 },
-        { duration: '5m', target: 10 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { scenario: 'admin_load' },
-    },
-    admin_stress: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '2m', target: 20 },
-        { duration: '5m', target: 20 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { scenario: 'admin_stress' },
-    },
+    admin_test: adminScenarios[scenario] || adminScenarios.baseline,
   },
   thresholds: {
-    ...options.thresholds,
+    ...baseOptions.thresholds,
     'admin_success': ['rate>0.98'], // 98% success rate
     'admin_review_success': ['rate>0.95'], // 95% review success
     'admin_operation_time': ['p(95)<1500'], // 95% of operations < 1.5s
@@ -219,3 +227,4 @@ export default function () {
     sleep(waitRandom(5, 10));
   }
 }
+

@@ -35,13 +35,30 @@ function getSupabaseAdmin() {
   );
 }
 
+/**
+ * Check if request is in test mode (bypasses rate limiting)
+ */
+function isTestMode(request: Request): boolean {
+  const testApiKey = request.headers.get('x-test-api-key');
+  const expectedKey = process.env.TEST_API_KEY;
+  
+  if (testApiKey && expectedKey && testApiKey === expectedKey) {
+    return true;
+  }
+  
+  // Also check NODE_ENV for test mode
+  return process.env.NODE_ENV === 'test';
+}
+
 export async function POST(request: Request) {
   const startTime = Date.now();
   const ip = getClientIP(request);
   
   try {
-    // 1. Check if IP is blocked
-    if (checkIPBlocked(ip)) {
+    const isTest = isTestMode(request);
+    
+    // 1. Check if IP is blocked (unless test mode)
+    if (!isTest && checkIPBlocked(ip)) {
       console.log('[SIGNUP API] Blocked IP attempted signup:', ip);
       return NextResponse.json(
         { error: 'Access temporarily restricted. Please try again later.' },
@@ -49,10 +66,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Rate limiting: 3 signups per hour per IP
+    // 2. Rate limiting: 3 signups per hour per IP (bypassed in test mode)
     const identifier = getClientIdentifier(request);
-    if (!checkRateLimit(identifier, 3, 60 * 60 * 1000, 'signup')) {
-      markSuspiciousIP(ip, 1); // Block for 1 hour
+    const rateLimit = isTest ? 1000 : 3; // Much higher limit in test mode
+    const rateLimitWindow = isTest ? 60 * 1000 : 60 * 60 * 1000; // 1 min in test, 1 hour in prod
+    
+    if (!checkRateLimit(identifier, rateLimit, rateLimitWindow, 'signup')) {
+      if (!isTest) {
+        markSuspiciousIP(ip, 1); // Block for 1 hour
+      }
       console.log('[SIGNUP API] Rate limit exceeded for IP:', ip);
       return NextResponse.json(
         { error: 'Too many signup attempts. Please try again later.' },
@@ -72,8 +94,8 @@ export async function POST(request: Request) {
       );
     }
     
-    // 4. Honeypot check (should be empty)
-    if (honeypot && honeypot.trim() !== '') {
+    // 4. Honeypot check (should be empty) - skip in test mode
+    if (!isTest && honeypot && honeypot.trim() !== '') {
       markSuspiciousIP(ip, 24); // Block for 24 hours
       console.log('[SIGNUP API] Honeypot triggered for IP:', ip);
       return NextResponse.json(
@@ -82,8 +104,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Request timing check (too fast = likely bot)
-    if (isSuspiciousTiming(startTime)) {
+    // 5. Request timing check (too fast = likely bot) - skip in test mode
+    if (!isTest && isSuspiciousTiming(startTime)) {
       markSuspiciousIP(ip, 1);
       console.log('[SIGNUP API] Suspiciously fast request from IP:', ip);
     }
@@ -150,14 +172,16 @@ export async function POST(request: Request) {
     
     // Create user via Admin API - NO auto-login!
     console.log('[SIGNUP API] Creating user with Admin API...');
+    // In test mode, auto-confirm email for convenience
+    const emailConfirm = isTest ? true : false;
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // Must confirm email first
+      email_confirm: emailConfirm, // Auto-confirm in test mode
       user_metadata: {
         language: language || 'en',
         preferred_language: language || 'en',
-        email_confirmed: false
+        email_confirmed: emailConfirm
       }
     });
     
@@ -235,33 +259,37 @@ export async function POST(request: Request) {
       console.log('[SIGNUP API] ✅ Token generated and stored');
     }
     
-    // Send confirmation email
-    console.log('[SIGNUP API] Sending confirmation email...');
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
-    const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(email)}`;
-    
-    try {
-      const emailResponse = await fetch(`${siteUrl}/api/send-auth-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: email,
-          type: 'confirmSignup',
-          language: language || 'en',
-          confirmationUrl
-        })
-      });
+    // Send confirmation email (skip in test mode)
+    if (!isTest) {
+      console.log('[SIGNUP API] Sending confirmation email...');
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
+      const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(email)}`;
       
-      if (emailResponse.ok) {
-        console.log('[SIGNUP API] ✅ Confirmation email sent successfully');
-      } else {
-        const errorText = await emailResponse.text();
-        console.error('[SIGNUP API] Failed to send email:', errorText);
-        // Don't fail signup if email fails - user can resend later
+      try {
+        const emailResponse = await fetch(`${siteUrl}/api/send-auth-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: email,
+            type: 'confirmSignup',
+            language: language || 'en',
+            confirmationUrl
+          })
+        });
+        
+        if (emailResponse.ok) {
+          console.log('[SIGNUP API] ✅ Confirmation email sent successfully');
+        } else {
+          const errorText = await emailResponse.text();
+          console.error('[SIGNUP API] Failed to send email:', errorText);
+          // Don't fail signup if email fails - user can resend later
+        }
+      } catch (emailError) {
+        console.error('[SIGNUP API] Exception sending email:', emailError);
+        // Don't fail signup if email fails
       }
-    } catch (emailError) {
-      console.error('[SIGNUP API] Exception sending email:', emailError);
-      // Don't fail signup if email fails
+    } else {
+      console.log('[SIGNUP API] Skipping confirmation email in test mode');
     }
     
     console.log('[SIGNUP API] Signup complete for:', email);

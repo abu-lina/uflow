@@ -12,7 +12,7 @@
 
 import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
-import { BASE_URL, API_BASE_URL, options } from './k6.config.js';
+import { BASE_URL, API_BASE_URL, options as baseOptions, TEST_API_KEY } from './k6.config.js';
 import { signup, login, checkHealth, randomSleep } from './utils.js';
 
 // Custom metrics
@@ -20,48 +20,56 @@ const signupSuccessRate = new Rate('auth_signup_success');
 const loginSuccessRate = new Rate('auth_login_success');
 const authErrorRate = new Rate('auth_errors');
 
-// Override default scenario for auth tests
-export const authOptions = {
-  ...options,
+// Select scenario based on environment variable (default to baseline)
+const scenario = __ENV.SCENARIO || 'baseline';
+
+// Define all possible scenarios
+const authScenarios = {
+  baseline: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '30s', target: 5 },
+      { duration: '1m', target: 10 },
+      { duration: '2m', target: 10 },
+      { duration: '30s', target: 0 },
+    ],
+    gracefulRampDown: '30s',
+    tags: { scenario: 'auth_baseline' },
+  },
+  load: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '1m', target: 20 },
+      { duration: '3m', target: 50 },
+      { duration: '5m', target: 50 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '1m',
+    tags: { scenario: 'auth_load' },
+  },
+  stress: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '2m', target: 100 },
+      { duration: '5m', target: 100 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '1m',
+    tags: { scenario: 'auth_stress' },
+  },
+};
+
+// Export options for k6
+export const options = {
+  ...baseOptions,
   scenarios: {
-    auth_baseline: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '30s', target: 5 },
-        { duration: '1m', target: 10 },
-        { duration: '2m', target: 10 },
-        { duration: '30s', target: 0 },
-      ],
-      gracefulRampDown: '30s',
-      tags: { scenario: 'auth_baseline' },
-    },
-    auth_load: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '1m', target: 20 },
-        { duration: '3m', target: 50 },
-        { duration: '5m', target: 50 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { scenario: 'auth_load' },
-    },
-    auth_stress: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '2m', target: 100 },
-        { duration: '5m', target: 100 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { scenario: 'auth_stress' },
-    },
+    auth_test: authScenarios[scenario] || authScenarios.baseline,
   },
   thresholds: {
-    ...options.thresholds,
+    ...baseOptions.thresholds,
     'auth_signup_success': ['rate>0.95'], // 95% signup success rate
     'auth_login_success': ['rate>0.98'], // 98% login success rate
     'auth_errors': ['rate<0.02'], // < 2% auth errors
@@ -79,11 +87,11 @@ export function testSignup() {
   const password = 'TestPassword123!';
   const language = 'en';
 
-  const result = signup(email, password, language);
+  const result = signup(email, password, language, TEST_API_KEY);
 
   const success = check(result, {
     'signup status is 200 or 201': (r) => r.status === 200 || r.status === 201,
-    'signup response time < 2s': (r) => r.status < 2000,
+    'signup response time < 2s': (r) => r.timings.duration < 2000,
   });
 
   signupSuccessRate.add(success);
@@ -99,10 +107,10 @@ export function testSignup() {
  * Test user login flow
  */
 export function testLogin(email, password) {
-  const token = login(email, password);
+  const token = login(email, password, TEST_API_KEY);
 
   const success = check(token, {
-    'login successful': () => token !== null,
+    'login successful': () => token !== null && token.length > 0,
   });
 
   loginSuccessRate.add(success);
@@ -128,6 +136,13 @@ export function testSessionValidation(token) {
 }
 
 /**
+ * Generate test user email based on index (0-99)
+ */
+function getTestUserEmail(index) {
+  return `test-user-${index}@example.com`;
+}
+
+/**
  * Main test function
  */
 export default function () {
@@ -142,9 +157,10 @@ export default function () {
     // 10% of VUs test signup
     testSignup();
   } else {
-    // 90% test login (assuming test users exist)
-    // In real scenario, you'd use pre-created test users
-    const testEmail = `test-user-${Math.floor(Math.random() * 100)}@example.com`;
+    // 90% test login using pre-created test users
+    // Use random index from 0-99 to select a test user
+    const testUserIndex = Math.floor(Math.random() * 100);
+    const testEmail = getTestUserEmail(testUserIndex);
     const testPassword = 'TestPassword123!';
     
     const token = testLogin(testEmail, testPassword);
@@ -166,3 +182,4 @@ export default function () {
 function waitRandom(min, max) {
   return Math.random() * (max - min) + min;
 }
+

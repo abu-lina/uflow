@@ -55,12 +55,17 @@ export function authenticatedRequest(method, url, token, body = null, params = {
 /**
  * Login and get access token
  */
-export function login(email, password) {
-  const url = `${API_BASE_URL}/auth/set`;
+export function login(email, password, testApiKey = null) {
+  const url = `${API_BASE_URL}/auth/login`;
   const payload = JSON.stringify({ email, password });
 
+  const headers = { 'Content-Type': 'application/json' };
+  if (testApiKey) {
+    headers['X-Test-API-Key'] = testApiKey;
+  }
+
   const response = http.post(url, payload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     tags: { name: 'login' },
   });
 
@@ -69,7 +74,18 @@ export function login(email, password) {
       const data = JSON.parse(response.body);
       return data.accessToken || null;
     } catch (e) {
+      console.error('[LOGIN] Failed to parse response:', e);
       return null;
+    }
+  }
+
+  // Log error for debugging
+  if (response.status !== 200) {
+    try {
+      const errorData = JSON.parse(response.body);
+      console.error('[LOGIN] Login failed:', errorData.error || 'Unknown error');
+    } catch (e) {
+      console.error('[LOGIN] Login failed with status:', response.status);
     }
   }
 
@@ -79,7 +95,7 @@ export function login(email, password) {
 /**
  * Sign up a new user
  */
-export function signup(email, password, language = 'en') {
+export function signup(email, password, language = 'en', testApiKey = null) {
   const url = `${API_BASE_URL}/auth/signup`;
   const payload = JSON.stringify({
     email,
@@ -90,8 +106,13 @@ export function signup(email, password, language = 'en') {
     honeypot: '', // Honeypot field should be empty
   });
 
+  const headers = { 'Content-Type': 'application/json' };
+  if (testApiKey) {
+    headers['X-Test-API-Key'] = testApiKey;
+  }
+
   const response = http.post(url, payload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     tags: { name: 'signup' },
   });
 
@@ -253,3 +274,4 @@ export function waitRandom(minSeconds, maxSeconds) {
   const waitTime = Math.random() * (maxSeconds - minSeconds) + minSeconds;
   return waitTime;
 }
+

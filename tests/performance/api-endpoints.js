@@ -12,7 +12,7 @@
 
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
-import { BASE_URL, API_BASE_URL, TEST_USER, options } from './k6.config.js';
+import { BASE_URL, API_BASE_URL, TEST_USER, options as baseOptions } from './k6.config.js';
 import { login, getNotionEpics, exportUserData, checkHealth, authenticatedRequest, waitRandom } from './utils.js';
 import http from 'k6/http';
 
@@ -21,48 +21,56 @@ const apiSuccessRate = new Rate('api_success');
 const apiResponseTime = new Trend('api_response_time');
 const notionApiSuccessRate = new Rate('notion_api_success');
 
-// Override default scenario for API tests
-export const apiOptions = {
-  ...options,
+// Select scenario based on environment variable (default to baseline)
+const scenario = __ENV.SCENARIO || 'baseline';
+
+// Define all possible scenarios
+const apiScenarios = {
+  baseline: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '30s', target: 5 },
+      { duration: '1m', target: 10 },
+      { duration: '2m', target: 10 },
+      { duration: '30s', target: 0 },
+    ],
+    gracefulRampDown: '30s',
+    tags: { scenario: 'api_baseline' },
+  },
+  load: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '1m', target: 20 },
+      { duration: '3m', target: 30 },
+      { duration: '5m', target: 30 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '1m',
+    tags: { scenario: 'api_load' },
+  },
+  stress: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '2m', target: 50 },
+      { duration: '5m', target: 50 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '1m',
+    tags: { scenario: 'api_stress' },
+  },
+};
+
+// Export options for k6
+export const options = {
+  ...baseOptions,
   scenarios: {
-    api_baseline: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '30s', target: 5 },
-        { duration: '1m', target: 10 },
-        { duration: '2m', target: 10 },
-        { duration: '30s', target: 0 },
-      ],
-      gracefulRampDown: '30s',
-      tags: { scenario: 'api_baseline' },
-    },
-    api_load: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '1m', target: 20 },
-        { duration: '3m', target: 30 },
-        { duration: '5m', target: 30 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { scenario: 'api_load' },
-    },
-    api_stress: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '2m', target: 50 },
-        { duration: '5m', target: 50 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { scenario: 'api_stress' },
-    },
+    api_test: apiScenarios[scenario] || apiScenarios.baseline,
   },
   thresholds: {
-    ...options.thresholds,
+    ...baseOptions.thresholds,
     'api_success': ['rate>0.95'], // 95% success rate
     'notion_api_success': ['rate>0.90'], // 90% Notion API success (external dependency)
     'api_response_time': ['p(95)<2000'], // 95% of API calls < 2s
@@ -233,3 +241,4 @@ export default function () {
   // Random pause between requests
   sleep(waitRandom(1, 3));
 }
+

@@ -66,3 +66,5 @@ echo "   • Ask me to apply migrations: 'apply schema with MCP'"
 echo "   • Ask me to verify setup: 'verify database with MCP'"
 echo ""
 
+
+

@@ -13,7 +13,7 @@
 
 import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
-import { BASE_URL, API_BASE_URL, options } from './k6.config.js';
+import { BASE_URL, API_BASE_URL, options as baseOptions } from './k6.config.js';
 import { checkHealth, waitRandom } from './utils.js';
 
 // Import test functions from other modules
@@ -26,11 +26,14 @@ import apiTest from './api-endpoints.js';
 const overallSuccessRate = new Rate('overall_success');
 const scenarioDistribution = new Rate('scenario_distribution');
 
-// Combined scenario configuration
-export const combinedOptions = {
-  ...options,
+// Select scenario based on environment variable (default to baseline)
+const scenario = __ENV.SCENARIO || 'baseline';
+
+// Combined scenario configuration with realistic user distribution
+const combinedOptions = {
+  ...baseOptions,
   scenarios: {
-    // Baseline test - light load
+    // Baseline test - light load (warm-up)
     baseline: {
       executor: 'ramping-vus',
       startVUs: 0,
@@ -41,97 +44,135 @@ export const combinedOptions = {
         { duration: '30s', target: 0 },
       ],
       gracefulRampDown: '30s',
-      tags: { test_type: 'baseline' },
+      tags: { test_type: 'baseline', load_level: 'low' },
     },
 
-    // Load test - expected production load
+    // Load test - expected production load (100-200 concurrent users)
     load: {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '2m', target: 50 },
-        { duration: '5m', target: 100 },
-        { duration: '10m', target: 100 },
-        { duration: '2m', target: 0 },
+        { duration: '2m', target: 50 },   // Warm-up
+        { duration: '3m', target: 100 },   // Ramp to expected load
+        { duration: '10m', target: 100 },  // Sustain expected load
+        { duration: '2m', target: 150 },   // Peak period
+        { duration: '5m', target: 150 },   // Sustain peak
+        { duration: '2m', target: 100 },   // Return to normal
+        { duration: '2m', target: 0 },     // Ramp down
       ],
       gracefulRampDown: '2m',
-      tags: { test_type: 'load' },
+      tags: { test_type: 'load', load_level: 'medium' },
     },
 
-    // Stress test - beyond expected load
+    // Stress test - beyond expected load (300-500 concurrent users)
     stress: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 100 },   // Start from baseline
+        { duration: '3m', target: 200 },   // Ramp up
+        { duration: '5m', target: 300 },   // Stress level 1
+        { duration: '5m', target: 300 },   // Sustain stress
+        { duration: '3m', target: 400 },   // Stress level 2
+        { duration: '5m', target: 400 },   // Sustain higher stress
+        { duration: '2m', target: 500 },   // Maximum stress
+        { duration: '3m', target: 500 },   // Test breaking point
+        { duration: '2m', target: 200 },   // Recovery
+        { duration: '2m', target: 0 },     // Ramp down
+      ],
+      gracefulRampDown: '3m',
+      tags: { test_type: 'stress', load_level: 'high' },
+    },
+
+    // Spike test - sudden traffic surge (0→300 users in 30s)
+    spike: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '10s', target: 50 },   // Quick ramp
+        { duration: '20s', target: 300 },  // Sudden spike
+        { duration: '2m', target: 300 },   // Sustain spike
+        { duration: '1m', target: 100 },   // Quick drop
+        { duration: '1m', target: 50 },     // Normalize
+        { duration: '1m', target: 0 },      // Ramp down
+      ],
+      gracefulRampDown: '1m',
+      tags: { test_type: 'spike', load_level: 'high' },
+    },
+
+    // Endurance test - long duration stability (50 users for 1 hour)
+    endurance: {
+      executor: 'constant-vus',
+      vus: 50,
+      duration: '1h',
+      tags: { test_type: 'endurance', load_level: 'medium' },
+    },
+
+    // Medium load test - 200 concurrent users (middle of expected range)
+    medium_load: {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
         { duration: '2m', target: 100 },
         { duration: '3m', target: 200 },
-        { duration: '5m', target: 200 },
+        { duration: '15m', target: 200 },
         { duration: '2m', target: 0 },
       ],
       gracefulRampDown: '2m',
-      tags: { test_type: 'stress' },
-    },
-
-    // Spike test - sudden traffic spike
-    spike: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '10s', target: 50 },
-        { duration: '1m', target: 300 },
-        { duration: '2m', target: 300 },
-        { duration: '1m', target: 50 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { test_type: 'spike' },
-    },
-
-    // Endurance test - long duration
-    endurance: {
-      executor: 'constant-vus',
-      vus: 50,
-      duration: '1h',
-      tags: { test_type: 'endurance' },
+      tags: { test_type: 'medium_load', load_level: 'medium' },
     },
   },
   thresholds: {
-    ...options.thresholds,
+    ...baseOptions.thresholds,
     'overall_success': ['rate>0.99'], // 99% overall success rate
   },
 };
 
+// Export options for k6 - select the appropriate scenario
+export const options = {
+  ...combinedOptions,
+  scenarios: {
+    [scenario]: combinedOptions.scenarios[scenario] || combinedOptions.scenarios.baseline,
+  },
+};
+
 /**
- * Determine which test scenario to run based on user distribution
+ * Determine which test scenario to run based on realistic user distribution
+ * Based on typical web application usage patterns:
+ * - 60-70% browsing users (most common)
+ * - 10-20% authentication users (login/signup)
+ * - 5-10% API endpoint users
+ * - 1-2% admin users
+ * - 5-10% mixed/other operations
  */
 function selectTestScenario() {
   const random = Math.random();
   
-  // 65% browsing users
+  // 65% browsing users (most common activity)
   if (random < 0.65) {
     scenarioDistribution.add(1, { scenario: 'browsing' });
     return 'browsing';
   }
   
-  // 15% authentication users
+  // 15% authentication users (login/signup)
   if (random < 0.80) {
     scenarioDistribution.add(1, { scenario: 'auth' });
     return 'auth';
   }
   
-  // 7.5% API endpoint users
-  if (random < 0.875) {
+  // 10% API endpoint users
+  if (random < 0.90) {
     scenarioDistribution.add(1, { scenario: 'api' });
     return 'api';
   }
   
-  // 1.5% admin users
-  if (random < 0.89) {
+  // 2% admin users
+  if (random < 0.92) {
     scenarioDistribution.add(1, { scenario: 'admin' });
     return 'admin';
   }
   
-  // 11% other/mixed
+  // 8% other/mixed operations
   scenarioDistribution.add(1, { scenario: 'mixed' });
   return 'mixed';
 }
@@ -203,3 +244,4 @@ export default function () {
   // Random pause between iterations
   sleep(waitRandom(1, 5));
 }
+

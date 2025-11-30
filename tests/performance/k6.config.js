@@ -14,8 +14,7 @@ export const options = {
   // Thresholds for performance metrics
   thresholds: {
     // Response time thresholds
-    'http_req_duration{status:200}': ['p(95)<1000', 'p(99)<2000'], // 95% < 1s, 99% < 2s
-    'http_req_duration{status:200}': ['avg<500'], // Average < 500ms
+    'http_req_duration{status:200}': ['p(95)<1000', 'p(99)<2000', 'avg<500'], // 95% < 1s, 99% < 2s, avg < 500ms
     'http_req_waiting': ['p(95)<800'], // Time to First Byte < 800ms
     
     // Error rate thresholds
@@ -25,6 +24,9 @@ export const options = {
     // Throughput thresholds
     'http_reqs': ['rate>20'], // At least 20 requests/second
     'http_reqs{status:200}': ['rate>19'], // At least 19 successful requests/second
+    
+    // Overall success rate
+    'checks': ['rate>0.99'], // > 99% of checks pass
   },
   
   // Default tags for all requests
@@ -55,9 +57,12 @@ export const options = {
   },
 };
 
-// Base URL configuration
-export const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+// Base URL configuration - defaults to UAT environment
+export const BASE_URL = __ENV.BASE_URL || 'https://uat.ummahflow.com';
 export const API_BASE_URL = `${BASE_URL}/api`;
+
+// Environment detection
+export const ENVIRONMENT = __ENV.ENV || (BASE_URL.includes('uat') ? 'uat' : BASE_URL.includes('localhost') ? 'local' : 'production');
 
 // Test user credentials (should be set via environment variables)
 export const TEST_USER = {
@@ -77,4 +82,23 @@ export const TARGETS = {
   errorRate: 0.001, // 0.1%
   rps: 50, // Requests per second
   peakRps: 100, // Peak requests per second
+  dbQueryP95: 500, // Database queries p95 < 500ms
+  pageLoadP95: 1500, // Page load p95 < 1.5s
+  successRate: 0.99, // > 99% success rate
 };
+
+// Test API Key for bypassing rate limits and security checks in test mode
+// Should be set via environment variable: TEST_API_KEY
+export const TEST_API_KEY = __ENV.TEST_API_KEY || null;
+
+// UAT-specific configuration
+export const UAT_CONFIG = {
+  baseUrl: 'https://uat.ummahflow.com',
+  testUserEmail: __ENV.TEST_USER_EMAIL || 'perf-test@ummahflow.com',
+  testUserPassword: __ENV.TEST_USER_PASSWORD || 'PerfTest123!',
+  testAdminEmail: __ENV.TEST_ADMIN_EMAIL || 'perf-admin@ummahflow.com',
+  testAdminPassword: __ENV.TEST_ADMIN_PASSWORD || 'PerfAdmin123!',
+  maxConcurrentUsers: parseInt(__ENV.MAX_CONCURRENT_USERS || '500', 10),
+  testDuration: __ENV.TEST_DURATION || '10m',
+};
+

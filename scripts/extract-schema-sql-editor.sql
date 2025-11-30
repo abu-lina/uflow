@@ -86,3 +86,5 @@ JOIN pg_enum e ON t.oid = e.enumtypid
 WHERE t.typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
 GROUP BY t.typname
 ORDER BY t.typname;
+
+

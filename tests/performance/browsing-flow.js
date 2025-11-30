@@ -13,7 +13,7 @@
 
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
-import { BASE_URL, options } from './k6.config.js';
+import { BASE_URL, options as baseOptions } from './k6.config.js';
 import { getProviders, searchProviders, getProviderDetails, randomSleep, waitRandom } from './utils.js';
 import http from 'k6/http';
 
@@ -22,49 +22,57 @@ const browsingSuccessRate = new Rate('browsing_success');
 const pageLoadTime = new Trend('page_load_time');
 const searchSuccessRate = new Rate('search_success');
 
-// Override default scenario for browsing tests
-export const browsingOptions = {
-  ...options,
+// Select scenario based on environment variable (default to baseline)
+const scenario = __ENV.SCENARIO || 'baseline';
+
+// Define all possible scenarios
+const browsingScenarios = {
+  baseline: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '30s', target: 10 },
+      { duration: '1m', target: 30 },
+      { duration: '2m', target: 30 },
+      { duration: '30s', target: 0 },
+    ],
+    gracefulRampDown: '30s',
+    tags: { scenario: 'browsing_baseline' },
+  },
+  load: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '1m', target: 50 },
+      { duration: '5m', target: 100 },
+      { duration: '10m', target: 100 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '1m',
+    tags: { scenario: 'browsing_load' },
+  },
+  stress: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '2m', target: 150 },
+      { duration: '5m', target: 200 },
+      { duration: '3m', target: 200 },
+      { duration: '1m', target: 0 },
+    ],
+    gracefulRampDown: '1m',
+    tags: { scenario: 'browsing_stress' },
+  },
+};
+
+// Export options for k6
+export const options = {
+  ...baseOptions,
   scenarios: {
-    browsing_baseline: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '30s', target: 10 },
-        { duration: '1m', target: 30 },
-        { duration: '2m', target: 30 },
-        { duration: '30s', target: 0 },
-      ],
-      gracefulRampDown: '30s',
-      tags: { scenario: 'browsing_baseline' },
-    },
-    browsing_load: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '1m', target: 50 },
-        { duration: '5m', target: 100 },
-        { duration: '10m', target: 100 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { scenario: 'browsing_load' },
-    },
-    browsing_stress: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '2m', target: 150 },
-        { duration: '5m', target: 200 },
-        { duration: '3m', target: 200 },
-        { duration: '1m', target: 0 },
-      ],
-      gracefulRampDown: '1m',
-      tags: { scenario: 'browsing_stress' },
-    },
+    browsing_test: browsingScenarios[scenario] || browsingScenarios.baseline,
   },
   thresholds: {
-    ...options.thresholds,
+    ...baseOptions.thresholds,
     'browsing_success': ['rate>0.99'], // 99% success rate
     'search_success': ['rate>0.95'], // 95% search success
     'page_load_time': ['p(95)<1000'], // 95% of pages load in < 1s
@@ -242,3 +250,4 @@ export default function () {
   // Random pause between sessions
   sleep(waitRandom(3, 8));
 }
+

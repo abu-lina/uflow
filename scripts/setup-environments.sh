@@ -99,3 +99,5 @@ echo "  • Local dev:    ${CYAN}npm run dev${NC} (uses .env.local)"
 echo "  • UAT testing:  ${CYAN}npm run dev:uat${NC} (uses .env.uat)"
 echo "  • Production:   ${CYAN}npm run build${NC} (uses .env.production)"
 
+
+

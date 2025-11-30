@@ -81,3 +81,5 @@ echo "  2. Run: ./scripts/switch-env.sh uat"
 echo "  3. Run: npm run dev"
 echo "  4. Check browser console for detailed error messages"
 
+
+

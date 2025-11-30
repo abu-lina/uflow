@@ -53,7 +53,15 @@
     "perf:auth": "bash tests/performance/run-tests.sh auth",
     "perf:browsing": "bash tests/performance/run-tests.sh browsing",
     "perf:admin": "bash tests/performance/run-tests.sh admin",
-    "perf:api": "bash tests/performance/run-tests.sh api"
+    "perf:api": "bash tests/performance/run-tests.sh api",
+    "perf:uat:baseline": "BASE_URL=https://uat.ummahflow.com ENV=uat bash tests/performance/run-tests.sh baseline",
+    "perf:uat:load": "BASE_URL=https://uat.ummahflow.com ENV=uat bash tests/performance/run-tests.sh load",
+    "perf:uat:stress": "BASE_URL=https://uat.ummahflow.com ENV=uat bash tests/performance/run-tests.sh stress",
+    "perf:uat:spike": "BASE_URL=https://uat.ummahflow.com ENV=uat bash tests/performance/run-tests.sh spike",
+    "perf:uat:database": "BASE_URL=https://uat.ummahflow.com ENV=uat bash tests/performance/run-tests.sh database",
+    "perf:uat:all": "BASE_URL=https://uat.ummahflow.com ENV=uat bash tests/performance/run-tests.sh all",
+    "perf:uat:setup": "node tests/performance/setup-test-data.mjs",
+    "perf:uat:cleanup": "node tests/performance/setup-test-data.mjs --cleanup"
   },
   "dependencies": {
     "@iconify/react": "^6.0.0",
@@ -103,6 +111,7 @@
     "@vitest/coverage-v8": "^3.1.2",
     "autoprefixer": "^10.4.18",
     "critters": "^0.0.23",
+    "dotenv": "^16.4.5",
     "eslint": "^9.27.0",
     "eslint-config-next": "^15.5.3",
     "eslint-config-prettier": "^9.1.0",

@@ -38,3 +38,5 @@ echo "1. Configure Nginx with the UAT config (see docs/deployment/UAT_DEPLOYMENT
 echo "2. Test the configuration: sudo nginx -t"
 echo "3. Reload Nginx: sudo systemctl reload nginx"
 
+
+

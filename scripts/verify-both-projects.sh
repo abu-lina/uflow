@@ -86,3 +86,5 @@ echo "   • Use MCP: Ask me to 'apply schema to UAT using MCP'"
 echo "   • Or use SQL Editor in UAT dashboard"
 echo ""
 
+
+

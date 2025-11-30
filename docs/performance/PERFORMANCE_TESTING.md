@@ -296,3 +296,5 @@ For issues or questions about performance testing:
 2. Review application logs
 3. Consult k6 documentation
 4. Review performance optimization recommendations in test results
+
+
