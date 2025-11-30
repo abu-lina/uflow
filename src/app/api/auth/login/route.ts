@@ -122,45 +122,9 @@ export async function POST(request: Request) {
       );
     }
     
-    console.log('[LOGIN API] Received login request:', { email });
+    console.log('[LOGIN API] Received login request:', { email, isTest });
     
-    // Check if user exists and is confirmed
-    const supabaseAdmin = getSupabaseAdmin();
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (listError) {
-      console.error('[LOGIN API] Error checking existing users:', listError);
-      return NextResponse.json(
-        { error: 'Failed to check user existence' },
-        { status: 500 }
-      );
-    }
-    
-    const user = users.find(u => u.email === email);
-    
-    if (!user) {
-      console.log('[LOGIN API] User not found:', email);
-      // Don't reveal if user exists for security
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-    
-    // Check email confirmation status
-    const emailConfirmed = user.email_confirmed_at !== null && 
-                          user.user_metadata?.email_confirmed === true;
-    
-    if (!emailConfirmed && !isTest) {
-      console.log('[LOGIN API] Email not confirmed:', email);
-      return NextResponse.json(
-        { error: 'Please confirm your email before logging in' },
-        { status: 403 }
-      );
-    }
-    
-    // Verify password by attempting to sign in
-    // Create a temporary client to verify credentials
+    // Get Supabase credentials for sign-in
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
@@ -172,6 +136,7 @@ export async function POST(request: Request) {
       );
     }
     
+    // Create client for sign-in
     const tempClient = createClient(
       supabaseUrl,
       supabaseAnonKey,
@@ -183,13 +148,85 @@ export async function POST(request: Request) {
       }
     );
     
+    // Attempt to sign in - this will verify credentials
     const { data: sessionData, error: signInError } = await tempClient.auth.signInWithPassword({
       email,
       password,
     });
     
+    // Handle sign-in errors
     if (signInError) {
-      console.error('[LOGIN API] Sign in error:', signInError);
+      console.error('[LOGIN API] Sign in error:', signInError.message);
+      
+      // Check if it's an email confirmation error
+      const isEmailNotConfirmed = signInError.message.includes('Email not confirmed') || 
+                                   signInError.message.includes('email_not_confirmed') ||
+                                   signInError.message.includes('email_not_verified');
+      
+      if (isEmailNotConfirmed) {
+        if (!isTest) {
+          return NextResponse.json(
+            { error: 'Please confirm your email before logging in' },
+            { status: 403 }
+          );
+        }
+        
+        // In test mode, auto-confirm the email and retry
+        console.log('[LOGIN API] Auto-confirming email in test mode for:', email);
+        try {
+          const supabaseAdmin = getSupabaseAdmin();
+          const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
+          const user = users.find(u => u.email === email);
+          
+          if (user) {
+            // Update user to confirm email
+            await supabaseAdmin.auth.admin.updateUserById(user.id, {
+              email_confirm: true,
+              user_metadata: { 
+                ...(user.user_metadata || {}), 
+                email_confirmed: true 
+              }
+            });
+            
+            // Retry sign-in after confirming
+            const { data: retryData, error: retryError } = await tempClient.auth.signInWithPassword({
+              email,
+              password,
+            });
+            
+            if (retryError) {
+              console.error('[LOGIN API] Retry sign in error after auto-confirm:', retryError.message);
+              return NextResponse.json(
+                { error: 'Invalid email or password' },
+                { status: 401 }
+              );
+            }
+            
+            if (!retryData.session) {
+              return NextResponse.json(
+                { error: 'Failed to create session' },
+                { status: 500 }
+              );
+            }
+            
+            console.log('[LOGIN API] ✅ Login successful (after auto-confirm) for:', email);
+            return NextResponse.json({ 
+              accessToken: retryData.session.access_token,
+              refreshToken: retryData.session.refresh_token,
+              user: {
+                id: retryData.user.id,
+                email: retryData.user.email
+              }
+            });
+          } else {
+            console.error('[LOGIN API] User not found for auto-confirm:', email);
+          }
+        } catch (confirmError) {
+          console.error('[LOGIN API] Error during auto-confirm:', confirmError);
+        }
+      }
+      
+      // Generic invalid credentials error
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }

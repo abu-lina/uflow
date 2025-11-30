@@ -120,6 +120,7 @@ export function signup(email, password, language = 'en', testApiKey = null) {
     status: response.status,
     body: response.body,
     success: response.status === 200 || response.status === 201,
+    timings: response.timings,
   };
 }
 

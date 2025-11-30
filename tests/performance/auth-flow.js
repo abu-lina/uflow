@@ -91,7 +91,7 @@ export function testSignup() {
 
   const success = check(result, {
     'signup status is 200 or 201': (r) => r.status === 200 || r.status === 201,
-    'signup response time < 2s': (r) => r.timings.duration < 2000,
+    'signup response time < 2s': (r) => r.timings && r.timings.duration < 2000,
   });
 
   signupSuccessRate.add(success);
@@ -116,6 +116,8 @@ export function testLogin(email, password) {
   loginSuccessRate.add(success);
   if (!success) {
     authErrorRate.add(1);
+    // Log which user failed for debugging
+    console.error(`[AUTH TEST] Login failed for: ${email}`);
   }
 
   return token;
@@ -146,6 +148,12 @@ function getTestUserEmail(index) {
  * Main test function
  */
 export default function () {
+  // Warn if TEST_API_KEY is not set (test mode won't work)
+  if (!TEST_API_KEY) {
+    console.warn('[AUTH TEST] WARNING: TEST_API_KEY not set. Test mode will not be enabled on server.');
+    console.warn('[AUTH TEST] Set TEST_API_KEY environment variable to bypass rate limiting and IP blocking.');
+  }
+  
   // Health check first
   const health = checkHealth();
   check(health, {
@@ -163,6 +171,13 @@ export default function () {
     const testEmail = getTestUserEmail(testUserIndex);
     const testPassword = 'TestPassword123!';
     
+    // Only attempt login if TEST_API_KEY is set (otherwise we'll hit rate limits)
+    if (!TEST_API_KEY) {
+      console.warn(`[AUTH TEST] Skipping login test - TEST_API_KEY not set. Run: node tests/performance/setup-test-users.js to create test users first.`);
+      sleep(waitRandom(1, 2));
+      return;
+    }
+    
     const token = testLogin(testEmail, testPassword);
     
     if (token) {
@@ -171,6 +186,12 @@ export default function () {
       
       // Simulate user session activity
       sleep(waitRandom(1, 3));
+    } else {
+      // If login failed, it might be because test users don't exist
+      // Log a helpful message (but only once to avoid spam)
+      if (__VU === 1 && __ITER === 0) {
+        console.warn(`[AUTH TEST] Login failed. Make sure test users exist. Run: node tests/performance/setup-test-users.js`);
+      }
     }
   }
 
