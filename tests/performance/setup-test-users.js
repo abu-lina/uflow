@@ -62,36 +62,44 @@ function generateTestEmail(index) {
 }
 
 /**
+ * Find user by email using pagination (handles large user lists)
+ */
+async function findUserByEmail(email) {
+  let page = 1;
+  const perPage = 1000; // Max per page
+  
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage
+    });
+    
+    if (error) {
+      throw error;
+    }
+    
+    const user = data.users.find(u => u.email === email);
+    if (user) {
+      return user;
+    }
+    
+    // If we got fewer users than requested, we've reached the end
+    if (data.users.length < perPage) {
+      return null;
+    }
+    
+    page++;
+  }
+}
+
+/**
  * Create a single test user
  */
 async function createTestUser(index) {
   const email = generateTestEmail(index);
   
   try {
-    // Check if user already exists
-    const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
-    if (listError) {
-      throw new Error(`Failed to list users: ${listError.message}`);
-    }
-    
-    const existingUser = users.find(u => u.email === email);
-    if (existingUser) {
-      // User exists, ensure it's confirmed
-      if (!existingUser.email_confirmed_at || existingUser.user_metadata?.email_confirmed !== true) {
-        await supabase.auth.admin.updateUserById(existingUser.id, {
-          email_confirm: true,
-          user_metadata: {
-            email_confirmed: true,
-            language: 'en',
-            preferred_language: 'en'
-          }
-        });
-        return { email, id: existingUser.id, created: false, confirmed: true };
-      }
-      return { email, id: existingUser.id, created: false, confirmed: false };
-    }
-    
-    // Create new user
+    // Try to create the user directly
     const { data, error } = await supabase.auth.admin.createUser({
       email,
       password: TEST_PASSWORD,
@@ -109,6 +117,44 @@ async function createTestUser(index) {
     
     return { email, id: data.user.id, created: true, confirmed: true };
   } catch (error) {
+    // Check if error is "user already exists" - treat as success
+    const errorMsg = error.message || '';
+    const isAlreadyExists = errorMsg.includes('already been registered') || 
+                           errorMsg.includes('already exists') ||
+                           errorMsg.includes('User already registered');
+    
+    if (isAlreadyExists) {
+      // User exists, find it using pagination and confirm it
+      try {
+        const existingUser = await findUserByEmail(email);
+        if (existingUser) {
+          // Ensure it's confirmed
+          const needsConfirmation = !existingUser.email_confirmed_at || 
+                                   existingUser.user_metadata?.email_confirmed !== true;
+          
+          if (needsConfirmation) {
+            await supabase.auth.admin.updateUserById(existingUser.id, {
+              email_confirm: true,
+              user_metadata: {
+                ...(existingUser.user_metadata || {}),
+                email_confirmed: true,
+                language: 'en',
+                preferred_language: 'en'
+              }
+            });
+            return { email, id: existingUser.id, created: false, confirmed: true };
+          }
+          return { email, id: existingUser.id, created: false, confirmed: true };
+        }
+        // User exists but couldn't find it - still treat as existing
+        return { email, id: null, created: false, confirmed: false };
+      } catch (fetchError) {
+        // If we can't fetch, still treat as existing (don't fail)
+        return { email, id: null, created: false, confirmed: false };
+      }
+    }
+    
+    // Only log as error if it's not an "already exists" case
     console.error(`   ❌ Failed to create user ${email}:`, error.message);
     return { email, id: null, created: false, confirmed: false, error: error.message };
   }
@@ -167,26 +213,42 @@ async function cleanupOldTestUsers() {
   console.log('🧹 Cleaning up old test users...\n');
   
   try {
-    const { data: { users }, error } = await supabase.auth.admin.listUsers();
-    if (error) {
-      throw error;
-    }
+    let page = 1;
+    const perPage = 1000;
+    let totalDeleted = 0;
     
-    const testUsers = users.filter(u => 
-      u.email && u.email.startsWith(`${TEST_EMAIL_PREFIX}-`) && u.email.endsWith('@example.com')
-    );
-    
-    let deleted = 0;
-    for (const user of testUsers) {
-      try {
-        await supabase.auth.admin.deleteUser(user.id);
-        deleted++;
-      } catch (error) {
-        console.error(`   ⚠️  Failed to delete ${user.email}:`, error.message);
+    while (true) {
+      const { data: { users }, error } = await supabase.auth.admin.listUsers({
+        page,
+        perPage
+      });
+      
+      if (error) {
+        throw error;
       }
+      
+      const testUsers = users.filter(u => 
+        u.email && u.email.startsWith(`${TEST_EMAIL_PREFIX}-`) && u.email.endsWith('@example.com')
+      );
+      
+      for (const user of testUsers) {
+        try {
+          await supabase.auth.admin.deleteUser(user.id);
+          totalDeleted++;
+        } catch (error) {
+          console.error(`   ⚠️  Failed to delete ${user.email}:`, error.message);
+        }
+      }
+      
+      // If we got fewer users than requested, we've reached the end
+      if (users.length < perPage) {
+        break;
+      }
+      
+      page++;
     }
     
-    console.log(`   ✅ Deleted ${deleted} old test users\n`);
+    console.log(`   ✅ Deleted ${totalDeleted} old test users\n`);
   } catch (error) {
     console.error('   ❌ Failed to cleanup:', error.message);
   }
@@ -261,5 +323,3 @@ if (import.meta.url === `file://${process.argv[1]}` || import.meta.url.endsWith(
 }
 
 export { createAllTestUsers, cleanupOldTestUsers, generateTestEmail, TEST_PASSWORD, TEST_EMAIL_PREFIX };
-
-
