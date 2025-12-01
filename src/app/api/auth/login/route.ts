@@ -191,8 +191,31 @@ export async function POST(request: Request) {
         console.log('[LOGIN API] Auto-confirming email in test mode for:', email);
         try {
           const supabaseAdmin = getSupabaseAdmin();
-          const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
-          const user = users.find(u => u.email === email);
+          
+          // Use pagination to find user (handles large user lists)
+          let user = null;
+          let page = 1;
+          const perPage = 1000;
+          
+          while (user === null) {
+            const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+              page,
+              perPage
+            });
+            
+            if (listError) {
+              throw listError;
+            }
+            
+            user = data.users.find(u => u.email === email);
+            
+            // If found or reached end of list, break
+            if (user || data.users.length < perPage) {
+              break;
+            }
+            
+            page++;
+          }
           
           if (user) {
             // Update user to confirm email

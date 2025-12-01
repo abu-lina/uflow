@@ -144,7 +144,14 @@ export function checkHealth() {
  * Get providers list (browsing)
  */
 export function getProviders(params = {}) {
-  const queryString = new URLSearchParams(params).toString();
+  // Build query string manually (k6 doesn't support URLSearchParams)
+  const queryParts = [];
+  for (const key in params) {
+    if (params.hasOwnProperty(key)) {
+      queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
+    }
+  }
+  const queryString = queryParts.join('&');
   const url = `${BASE_URL}/providers${queryString ? `?${queryString}` : ''}`;
   
   const response = http.get(url, {
@@ -162,7 +169,14 @@ export function getProviders(params = {}) {
  */
 export function searchProviders(query, params = {}) {
   const searchParams = { ...params, q: query };
-  const queryString = new URLSearchParams(searchParams).toString();
+  // Build query string manually (k6 doesn't support URLSearchParams)
+  const queryParts = [];
+  for (const key in searchParams) {
+    if (searchParams.hasOwnProperty(key)) {
+      queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(searchParams[key])}`);
+    }
+  }
+  const queryString = queryParts.join('&');
   const url = `${BASE_URL}/providers${queryString ? `?${queryString}` : ''}`;
   
   const response = http.get(url, {
@@ -195,7 +209,14 @@ export function getProviderDetails(providerId) {
  * Get pending providers (admin)
  */
 export function getPendingProviders(token, params = {}) {
-  const queryString = new URLSearchParams(params).toString();
+  // Build query string manually (k6 doesn't support URLSearchParams)
+  const queryParts = [];
+  for (const key in params) {
+    if (params.hasOwnProperty(key)) {
+      queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
+    }
+  }
+  const queryString = queryParts.join('&');
   const url = `${API_BASE_URL}/admin/pending-providers${queryString ? `?${queryString}` : ''}`;
   
   return authenticatedRequest('GET', url, token, null, {
@@ -223,7 +244,14 @@ export function reviewProvider(token, providerId, action, comment = '') {
  * Get Notion epics
  */
 export function getNotionEpics(token, params = {}) {
-  const queryString = new URLSearchParams(params).toString();
+  // Build query string manually (k6 doesn't support URLSearchParams)
+  const queryParts = [];
+  for (const key in params) {
+    if (params.hasOwnProperty(key)) {
+      queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
+    }
+  }
+  const queryString = queryParts.join('&');
   const url = `${API_BASE_URL}/notion/get-epics${queryString ? `?${queryString}` : ''}`;
   
   return authenticatedRequest('GET', url, token, null, {

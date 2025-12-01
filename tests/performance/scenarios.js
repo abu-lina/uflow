@@ -7,7 +7,12 @@
  * - 5-10% API endpoint users
  * - 1-2% admin users
  * 
- * Usage:
+ * For small-scale production (10-50 users), use realistic-load-test.js instead:
+ *   TEST_API_KEY=xxx SCENARIO=baseline k6 run tests/performance/realistic-load-test.js
+ *   TEST_API_KEY=xxx SCENARIO=peak k6 run tests/performance/realistic-load-test.js
+ *   TEST_API_KEY=xxx SCENARIO=stress k6 run tests/performance/realistic-load-test.js
+ * 
+ * This file is for larger scale testing (100-500 users):
  *   k6 run --config tests/performance/k6.config.js tests/performance/scenarios.js
  */
 
