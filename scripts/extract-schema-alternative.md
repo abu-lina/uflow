@@ -96,3 +96,4 @@ If you have all your migrations in `supabase/migrations/`, you can:
 This ensures you have the complete, up-to-date schema.
 
 
+
