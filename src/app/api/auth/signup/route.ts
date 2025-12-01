@@ -55,15 +55,36 @@ export async function POST(request: Request) {
   const ip = getClientIP(request);
   
   try {
+    // Debug: Log header values
+    const testApiKeyHeader = request.headers.get('x-test-api-key') || request.headers.get('X-Test-API-Key');
+    const expectedKey = process.env.TEST_API_KEY;
+    
     const isTest = isTestMode(request);
+    
+    // Enhanced debug logging
+    if (testApiKeyHeader) {
+      console.log('[SIGNUP API] Test API key header received:', testApiKeyHeader.substring(0, 10) + '...');
+      console.log('[SIGNUP API] Expected key set:', expectedKey ? 'YES' : 'NO');
+      console.log('[SIGNUP API] Test mode active:', isTest);
+    }
     
     // 1. Check if IP is blocked (unless test mode)
     if (!isTest && checkIPBlocked(ip)) {
-      console.log('[SIGNUP API] Blocked IP attempted signup:', ip);
+      console.log('[SIGNUP API] Blocked IP attempted signup:', ip, '(test mode:', isTest, ')');
+      if (testApiKeyHeader && !expectedKey) {
+        console.error('[SIGNUP API] ⚠️ TEST_API_KEY not set in server environment!');
+      }
       return NextResponse.json(
         { error: 'Access temporarily restricted. Please try again later.' },
         { status: 403 }
       );
+    }
+    
+    // Log test mode status for debugging
+    if (isTest) {
+      console.log('[SIGNUP API] ✅ Test mode enabled, bypassing security checks for IP:', ip);
+    } else if (testApiKeyHeader) {
+      console.warn('[SIGNUP API] ⚠️ Test API key provided but test mode not active. Check TEST_API_KEY env var.');
     }
 
     // 2. Rate limiting: 3 signups per hour per IP (bypassed in test mode)

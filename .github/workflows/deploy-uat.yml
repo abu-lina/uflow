@@ -68,6 +68,7 @@ jobs:
               -e NEXT_PUBLIC_SITE_URL="https://uat.ummahflow.com" \
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.UAT_NEXT_PUBLIC_TURNSTILE_SITE_KEY || secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.UAT_TURNSTILE_SECRET_KEY || secrets.TURNSTILE_SECRET_KEY }}" \
+              -e TEST_API_KEY="${{ secrets.UAT_TEST_API_KEY || secrets.TEST_API_KEY }}" \
               --name uflow-uat \
               --restart unless-stopped \
               uflow-uat:latest

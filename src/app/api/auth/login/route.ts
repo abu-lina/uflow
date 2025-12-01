@@ -63,12 +63,26 @@ export async function POST(request: Request) {
   const ip = getClientIP(request);
   
   try {
+    // Debug: Log header values
+    const testApiKeyHeader = request.headers.get('x-test-api-key') || request.headers.get('X-Test-API-Key');
+    const expectedKey = process.env.TEST_API_KEY;
+    
     const isTest = isTestMode(request);
+    
+    // Enhanced debug logging
+    if (testApiKeyHeader) {
+      console.log('[LOGIN API] Test API key header received:', testApiKeyHeader.substring(0, 10) + '...');
+      console.log('[LOGIN API] Expected key set:', expectedKey ? 'YES' : 'NO');
+      console.log('[LOGIN API] Test mode active:', isTest);
+    }
     
     // 1. Check if IP is blocked (unless test mode)
     // In test mode, we bypass IP blocking entirely
     if (!isTest && checkIPBlocked(ip)) {
       console.log('[LOGIN API] Blocked IP attempted login:', ip, '(test mode:', isTest, ')');
+      if (testApiKeyHeader && !expectedKey) {
+        console.error('[LOGIN API] ⚠️ TEST_API_KEY not set in server environment!');
+      }
       return NextResponse.json(
         { error: 'Access temporarily restricted. Please try again later.' },
         { status: 403 }
@@ -77,12 +91,14 @@ export async function POST(request: Request) {
     
     // Log test mode status for debugging
     if (isTest) {
-      console.log('[LOGIN API] Test mode enabled, bypassing security checks for IP:', ip);
+      console.log('[LOGIN API] ✅ Test mode enabled, bypassing security checks for IP:', ip);
       // Clear any existing IP blocks for this IP in test mode
       if (checkIPBlocked(ip)) {
         unblockIP(ip);
         console.log('[LOGIN API] Cleared IP block for test mode:', ip);
       }
+    } else if (testApiKeyHeader) {
+      console.warn('[LOGIN API] ⚠️ Test API key provided but test mode not active. Check TEST_API_KEY env var.');
     }
 
     // 2. Rate limiting: 10 login attempts per 15 minutes per IP (higher for testing)
