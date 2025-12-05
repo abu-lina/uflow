@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 import { ChevronDown } from 'lucide-react';
 
@@ -21,6 +21,7 @@ export function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, signOut, isLoading: loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();
 
@@ -81,6 +82,18 @@ export function Header() {
     };
   }, [dropdownOpen]);
 
+  // Handle About link click - scroll to section on home page, navigate otherwise
+  const handleAboutClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      const aboutSection = document.getElementById('about');
+      if (aboutSection) {
+        aboutSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+    // If not on home page, let the default Link behavior handle navigation
+  };
+
   return (
     <>
       <header
@@ -99,6 +112,7 @@ export function Header() {
                 <Link
                   className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-heading hover:bg-neutral-light hover:text-[#333333] focus:text-content-heading focus:outline-none active:text-content-heading"
                   href="/about"
+                  onClick={handleAboutClick}
                 >
                   {t('navigation.about')}
                 </Link>
