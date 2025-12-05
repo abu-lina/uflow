@@ -63,18 +63,22 @@ export function LandingHero() {
 
   // Check if this is the first visit
   useEffect(() => {
-    console.group('LandingHero First Visit Debug');
+    if (process.env.NODE_ENV === 'development') {
+      console.group('LandingHero First Visit Debug');
+    }
     const hasVisitedLanding = localStorage.getItem('hasVisitedLanding');
     const hasSeenBismillahAnimation = localStorage.getItem('hasSeenBismillahAnimation');
     const hasSeenBismillahCalligraphy = localStorage.getItem('hasSeenBismillahCalligraphy');
     const hasVisitedBismillah = localStorage.getItem('hasVisitedBismillah');
 
-    console.log('localStorage values:', {
-      hasVisitedLanding,
-      hasSeenBismillahAnimation,
-      hasSeenBismillahCalligraphy,
-      hasVisitedBismillah,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('localStorage values:', {
+        hasVisitedLanding,
+        hasSeenBismillahAnimation,
+        hasSeenBismillahCalligraphy,
+        hasVisitedBismillah,
+      });
+    }
 
     // If any of these flags are set, we consider it not a first visit
     const hasSeenBefore =
@@ -83,37 +87,49 @@ export function LandingHero() {
       hasSeenBismillahCalligraphy === 'true' ||
       hasVisitedBismillah === 'true';
 
-    console.log('Current isFirstVisit state:', isFirstVisit);
-    console.log('Has seen before:', hasSeenBefore);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Current isFirstVisit state:', isFirstVisit);
+      console.log('Has seen before:', hasSeenBefore);
+    }
 
     if (hasSeenBefore) {
-      console.log('Setting isFirstVisit to false - user has visited before');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Setting isFirstVisit to false - user has visited before');
+      }
       setIsFirstVisit(false);
       setShowHeading(true);
       setShowButton(true);
     } else {
-      console.log('Setting all Bismillah-related flags in localStorage - first visit');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Setting all Bismillah-related flags in localStorage - first visit');
+      }
       localStorage.setItem('hasVisitedLanding', 'true');
       localStorage.setItem('hasSeenBismillahAnimation', 'true');
       localStorage.setItem('hasSeenBismillahCalligraphy', 'true');
       localStorage.setItem('hasVisitedBismillah', 'true');
       setIsFirstVisit(true);
     }
-    console.groupEnd();
+    if (process.env.NODE_ENV === 'development') {
+      console.groupEnd();
+    }
     setIsReady(true);
   }, [isFirstVisit]);
 
   // Show heading after typewriter is done (only on first visit)
   useEffect(() => {
-    console.log(
-      'Typewriter effect - isFirstVisit:',
-      isFirstVisit,
-      'typewriter length:',
-      typewriter.length,
-    );
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        'Typewriter effect - isFirstVisit:',
+        isFirstVisit,
+        'typewriter length:',
+        typewriter.length,
+      );
+    }
     if (isFirstVisit === true && typewriter.length === translationText.length) {
       const timer = setTimeout(() => {
-        console.log('Setting showHeading to true after typewriter');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Setting showHeading to true after typewriter');
+        }
         setShowHeading(true);
       }, 800);
       return () => clearTimeout(timer);
@@ -131,21 +147,23 @@ export function LandingHero() {
   }, [showHeading, isFirstVisit]);
 
   useEffect(() => {
-    function logWidths() {
-      const container = containerRef.current;
-      const bismillah = bismillahRef.current;
-      const translation = translationRef.current;
-      if (container && bismillah && translation) {
-        console.group('LandingHero Width Debug');
-        console.log('Container width:', container.offsetWidth, container.clientWidth);
-        console.log('Bismillah SVG width:', bismillah.getBoundingClientRect().width);
-        console.log('Translation span width:', translation.offsetWidth, translation.clientWidth);
-        console.groupEnd();
-      }
+    if (process.env.NODE_ENV === 'development') {
+      const logWidths = () => {
+        const container = containerRef.current;
+        const bismillah = bismillahRef.current;
+        const translation = translationRef.current;
+        if (container && bismillah && translation) {
+          console.group('LandingHero Width Debug');
+          console.log('Container width:', container.offsetWidth, container.clientWidth);
+          console.log('Bismillah SVG width:', bismillah.getBoundingClientRect().width);
+          console.log('Translation span width:', translation.offsetWidth, translation.clientWidth);
+          console.groupEnd();
+        }
+      };
+      logWidths();
+      window.addEventListener('resize', logWidths);
+      return () => window.removeEventListener('resize', logWidths);
     }
-    logWidths();
-    window.addEventListener('resize', logWidths);
-    return () => window.removeEventListener('resize', logWidths);
   }, []);
 
   // For translation text with a mobile-only line break after the comma

@@ -127,7 +127,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       if (value && typeof value === 'object' && k in value) {
         value = (value as Record<string, unknown>)[k];
       } else {
-        console.warn(`Translation key "${key}" not found for language "${language}"`);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Translation key "${key}" not found for language "${language}"`);
+        }
         return key;
       }
     }

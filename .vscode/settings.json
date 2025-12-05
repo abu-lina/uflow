@@ -45,5 +45,8 @@
     "javascriptreact": "(?:className|class|tw)=\"([^\"]*)\"",
     "javascript": "(?:className|class|tw)=\"([^\"]*)\""
   },
-  "headwind.sortOnSave": true
+  "headwind.sortOnSave": true,
+  "cSpell.words": [
+    "Bismillah"
+  ]
 }

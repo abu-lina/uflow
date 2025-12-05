@@ -6,7 +6,8 @@ import { ExploreSection } from '@/components/shared/ExploreSection';
 import { LandingHero } from '@/components/shared/LandingHero';
 import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
 
-// Ensure this page is treated as a client-side route (not statically generated)
+// Ensure client-side navigation works properly for root route
+// Note: This is the canonical root page. The (public) route group version is kept for organization but this one takes precedence.
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 

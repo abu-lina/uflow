@@ -274,24 +274,41 @@ async function searchBoth(
 }
 
 export async function getProviders(): Promise<Provider[]> {
-  const { data, error } = await supabase
-    .from('providers')
-    .select('*, category:categories(name_de, name_en)')
-    .order('created_at', { ascending: false })
-    .returns<Provider[]>();
+  try {
+    const { data, error } = await supabase
+      .from('providers')
+      .select('*, category:categories(name_de, name_en)')
+      .order('created_at', { ascending: false })
+      .returns<Provider[]>();
 
-  if (error) {
-    logSupabaseError('providers.getProviders', error);
-    // Log additional details before throwing
-    if (error instanceof Error) {
-      console.error('Error fetching providers:', error.message, error);
-    } else {
-      console.error('Error fetching providers:', error);
+    if (error) {
+      logSupabaseError('providers.getProviders', error);
+      // Log additional details before throwing
+      if (error instanceof Error) {
+        console.error('Error fetching providers:', error.message, error);
+      } else {
+        console.error('Error fetching providers:', error);
+      }
+      throw error;
+    }
+
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    // Handle network errors specifically
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      const enhancedError = new Error(
+        `Network error fetching providers: ${error.message}. ` +
+        'This usually means:\n' +
+        '1. Check your internet connection\n' +
+        '2. Verify NEXT_PUBLIC_SUPABASE_URL is correct in .env.local\n' +
+        '3. Check if Supabase project is accessible\n' +
+        '4. Restart your dev server after updating .env.local'
+      );
+      enhancedError.cause = error;
+      throw enhancedError;
     }
     throw error;
   }
-
-  return Array.isArray(data) ? data : [];
 }
 
 export async function getProviderById(id: string): Promise<Provider | null> {
@@ -445,24 +462,41 @@ export async function searchProviders(
 }
 
 export async function fetchProviderCities(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('providers')
-    .select('address_city')
-    .returns<{ address_city: string | null }[]>();
+  try {
+    const { data, error } = await supabase
+      .from('providers')
+      .select('address_city')
+      .returns<{ address_city: string | null }[]>();
 
-  if (error) {
+    if (error) {
+      throw error;
+    }
+
+    const allCities = data?.map((p) => p.address_city) ?? [];
+    const uniqueCities = Array.from(
+      new Set(
+        allCities.filter((city): city is string => {
+          return typeof city === 'string' && city.trim() !== '' && city !== 'null';
+        }),
+      ),
+    );
+    return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
+  } catch (error) {
+    // Handle network errors specifically
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      const enhancedError = new Error(
+        `Network error fetching cities: ${error.message}. ` +
+        'This usually means:\n' +
+        '1. Check your internet connection\n' +
+        '2. Verify NEXT_PUBLIC_SUPABASE_URL is correct in .env.local\n' +
+        '3. Check if Supabase project is accessible\n' +
+        '4. Restart your dev server after updating .env.local'
+      );
+      enhancedError.cause = error;
+      throw enhancedError;
+    }
     throw error;
   }
-
-  const allCities = data?.map((p) => p.address_city) ?? [];
-  const uniqueCities = Array.from(
-    new Set(
-      allCities.filter((city): city is string => {
-        return typeof city === 'string' && city.trim() !== '' && city !== 'null';
-      }),
-    ),
-  );
-  return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
 }
 
 // Fetch cities that have content based on current search filters
@@ -470,33 +504,50 @@ export async function fetchFilteredCities(
   selectedCategory?: string | null,
   searchQuery?: string | null,
 ): Promise<string[]> {
-  let req = supabase.from('providers').select('address_city');
+  try {
+    let req = supabase.from('providers').select('address_city');
 
-  // Apply category filter if specified
-  if (selectedCategory && selectedCategory !== 'Alle') {
-    req = req.eq('category_id', selectedCategory);
-  }
+    // Apply category filter if specified
+    if (selectedCategory && selectedCategory !== 'Alle') {
+      req = req.eq('category_id', selectedCategory);
+    }
 
-  // Apply search query filter if specified
-  if (searchQuery && searchQuery.trim()) {
-    req = req.ilike('provider_name', `%${searchQuery.trim()}%`);
-  }
+    // Apply search query filter if specified
+    if (searchQuery && searchQuery.trim()) {
+      req = req.ilike('provider_name', `%${searchQuery.trim()}%`);
+    }
 
-  const { data, error } = await req.returns<{ address_city: string | null }[]>();
+    const { data, error } = await req.returns<{ address_city: string | null }[]>();
 
-  if (error) {
+    if (error) {
+      throw error;
+    }
+
+    const allCities = data?.map((p) => p.address_city) ?? [];
+    const uniqueCities = Array.from(
+      new Set(
+        allCities.filter((city): city is string => {
+          return typeof city === 'string' && city.trim() !== '' && city !== 'null';
+        }),
+      ),
+    );
+    return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
+  } catch (error) {
+    // Handle network errors specifically
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      const enhancedError = new Error(
+        `Network error fetching filtered cities: ${error.message}. ` +
+        'This usually means:\n' +
+        '1. Check your internet connection\n' +
+        '2. Verify NEXT_PUBLIC_SUPABASE_URL is correct in .env.local\n' +
+        '3. Check if Supabase project is accessible\n' +
+        '4. Restart your dev server after updating .env.local'
+      );
+      enhancedError.cause = error;
+      throw enhancedError;
+    }
     throw error;
   }
-
-  const allCities = data?.map((p) => p.address_city) ?? [];
-  const uniqueCities = Array.from(
-    new Set(
-      allCities.filter((city): city is string => {
-        return typeof city === 'string' && city.trim() !== '' && city !== 'null';
-      }),
-    ),
-  );
-  return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
 }
 
 export async function getProviderCount(): Promise<number> {

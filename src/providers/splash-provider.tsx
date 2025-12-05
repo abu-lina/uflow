@@ -25,12 +25,6 @@ export function SplashProvider({ children }: SplashProviderProps) {
     const firstVisit = !hasSeenSplashScreen();
     setIsFirstVisit(firstVisit);
     setIsSplashVisible(firstVisit);
-    
-    // Debug logging only in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[SPLASH] First visit:', firstVisit);
-      console.log('[SPLASH] localStorage value:', localStorage.getItem('hasSeenSplashScreen'));
-    }
   }, []);
 
   const setSplashVisible = useCallback((visible: boolean) => {

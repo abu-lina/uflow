@@ -151,12 +151,17 @@ function SearchBarContent({
         }
       } catch (error) {
         logSupabaseError('SearchBar.fetchCities', error);
+        // Set fallback to "everywhere" only, so the UI still works
         setLocations([t('search.everywhere')]);
-        // Re-throw to ensure error is visible in console
-        if (error instanceof Error) {
-          console.error('Error fetching cities:', error.message, error);
-        } else {
-          console.error('Error fetching cities:', error);
+        
+        // Don't re-throw - we've handled it gracefully
+        // The error is already logged by logSupabaseError
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            'Failed to fetch cities. Using fallback. ' +
+            'This is usually a network or configuration issue. ' +
+            'Check your .env.local and restart the dev server.'
+          );
         }
       }
     }
