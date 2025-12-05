@@ -21,6 +21,35 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
+      - name: Verify required secrets
+        run: |
+          # Set variables for easier checking
+          UAT_URL="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}"
+          UAT_KEY="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
+          
+          if [ -z "$UAT_URL" ] || [ "$UAT_URL" = "" ]; then
+            echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL secret is required and must not be empty"
+            exit 1
+          fi
+          
+          if [ -z "$UAT_KEY" ] || [ "$UAT_KEY" = "" ]; then
+            echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY secret is required and must not be empty"
+            exit 1
+          fi
+          
+          # Validate format (basic checks)
+          if [[ ! "$UAT_URL" =~ ^https://.*\.supabase\.co$ ]]; then
+            echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_URL has invalid format. Expected: https://your-project-ref.supabase.co"
+            exit 1
+          fi
+          
+          if [[ ! "$UAT_KEY" =~ ^eyJ ]]; then
+            echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY has invalid format. Expected a JWT token starting with 'eyJ'"
+            exit 1
+          fi
+          
+          echo "✅ Required secrets are present and valid"
+      
       - name: Build Docker image for UAT
         run: |
           docker build -t uflow-uat:latest \
