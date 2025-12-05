@@ -24,11 +24,40 @@ fi
 echo "📋 Loading UAT environment variables..."
 export $(cat .env.uat | grep -v '^#' | xargs)
 
-# Check required variables
-if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
-    echo -e "${RED}❌ Missing required environment variables in .env.uat${NC}"
+# Validate required environment variables
+echo "🔍 Validating required environment variables..."
+if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+    echo -e "${RED}❌ NEXT_PUBLIC_SUPABASE_URL is not set in .env.uat${NC}"
+    echo "See VERIFY_HETZNER_ENV.md for detailed instructions."
     exit 1
 fi
+
+if [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+    echo -e "${RED}❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is not set in .env.uat${NC}"
+    echo "See VERIFY_HETZNER_ENV.md for detailed instructions."
+    exit 1
+fi
+
+if [ -z "$NEXT_PUBLIC_SITE_URL" ]; then
+    echo -e "${YELLOW}⚠️  NEXT_PUBLIC_SITE_URL is not set, using default${NC}"
+    export NEXT_PUBLIC_SITE_URL="https://uat.ummahflow.com"
+fi
+
+# Validate Supabase URL format
+if [[ ! "$NEXT_PUBLIC_SUPABASE_URL" =~ ^https://.*\.supabase\.co$ ]]; then
+    echo -e "${RED}❌ Invalid NEXT_PUBLIC_SUPABASE_URL format: $NEXT_PUBLIC_SUPABASE_URL${NC}"
+    echo "Expected format: https://[project-ref].supabase.co"
+    exit 1
+fi
+
+# Validate anon key format (should start with eyJ for JWT)
+if [[ ! "$NEXT_PUBLIC_SUPABASE_ANON_KEY" =~ ^eyJ ]]; then
+    echo -e "${RED}❌ Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY format${NC}"
+    echo "Expected a JWT token starting with 'eyJ'"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Environment variables validated${NC}"
 
 # Build Docker image for UAT
 echo "🔨 Building UAT Docker image..."
