@@ -33,9 +33,14 @@ if (supabaseUrl && supabaseUrl.trim().length > 0) {
 }
 
 // Validate API key format (only if value is provided and non-empty)
-// Supabase anon keys typically start with 'eyJ' and are JWT tokens
+// Supabase anon keys can be either:
+// - JWT tokens (starts with 'eyJ') - legacy format
+// - Publishable keys (starts with 'sb_') - new format
 if (supabaseAnonKey && supabaseAnonKey.trim().length > 0) {
-  if (supabaseAnonKey.length < 100 || !supabaseAnonKey.startsWith('eyJ')) {
+  const isValidFormat = supabaseAnonKey.startsWith('eyJ') || supabaseAnonKey.startsWith('sb_');
+  const isLongEnough = supabaseAnonKey.length >= 50; // Both formats are long strings
+  
+  if (!isLongEnough || !isValidFormat) {
     const isPlaceholder = supabaseAnonKey.includes('your') || 
                           supabaseAnonKey.includes('placeholder') ||
                           supabaseAnonKey === 'your-anon-key-here' ||
@@ -51,7 +56,7 @@ if (supabaseAnonKey && supabaseAnonKey.trim().length > 0) {
     
     throw new Error(
       `Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY format. ` +
-      'Expected a JWT token (starts with "eyJ"). ' +
+      'Expected a JWT token (starts with "eyJ") or publishable key (starts with "sb_"). ' +
       'Please verify your .env.local file has the correct anon key from: ' +
       'https://supabase.com/dashboard/project/_/settings/api'
     );
@@ -59,7 +64,8 @@ if (supabaseAnonKey && supabaseAnonKey.trim().length > 0) {
 }
 
 // Try to extract project ref from JWT token to validate URL/key match
-if (supabaseUrl && supabaseAnonKey) {
+// Only works for JWT format (eyJ), not for new publishable keys (sb_)
+if (supabaseUrl && supabaseAnonKey && supabaseAnonKey.startsWith('eyJ')) {
   try {
     const tokenParts = supabaseAnonKey.split('.');
     if (tokenParts.length >= 2) {
