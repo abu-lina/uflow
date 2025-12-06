@@ -34,11 +34,13 @@ if (supabaseUrl && supabaseUrl.trim().length > 0) {
 
 // Validate API key format (only if value is provided and non-empty)
 // Supabase anon keys can be either:
-// - JWT tokens (starts with 'eyJ') - legacy format
-// - Publishable keys (starts with 'sb_') - new format
+// - JWT tokens (starts with 'eyJ') - legacy format, typically 200+ chars
+// - Publishable keys (starts with 'sb_') - new format, typically 40-60 chars
 if (supabaseAnonKey && supabaseAnonKey.trim().length > 0) {
   const isValidFormat = supabaseAnonKey.startsWith('eyJ') || supabaseAnonKey.startsWith('sb_');
-  const isLongEnough = supabaseAnonKey.length >= 50; // Both formats are long strings
+  // JWT tokens are much longer, publishable keys are shorter
+  const minLength = supabaseAnonKey.startsWith('eyJ') ? 100 : 30;
+  const isLongEnough = supabaseAnonKey.length >= minLength;
   
   if (!isLongEnough || !isValidFormat) {
     const isPlaceholder = supabaseAnonKey.includes('your') || 
