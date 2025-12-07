@@ -273,13 +273,19 @@ async function searchBoth(
   return { results, hasMore };
 }
 
-export async function getProviders(): Promise<Provider[]> {
+export async function getProviders(limit?: number): Promise<Provider[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('providers')
       .select('*, category:categories(name_de, name_en)')
-      .order('created_at', { ascending: false })
-      .returns<Provider[]>();
+      .order('created_at', { ascending: false });
+    
+    // Add limit if provided (for performance optimization)
+    if (limit !== undefined && limit > 0) {
+      query = query.limit(limit);
+    }
+
+    const { data, error } = await query.returns<Provider[]>();
 
     if (error) {
       logSupabaseError('providers.getProviders', error);

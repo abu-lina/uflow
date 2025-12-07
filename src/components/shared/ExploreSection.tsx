@@ -28,7 +28,9 @@ export function ExploreSection() {
   useEffect(() => {
     async function fetchProviders() {
       try {
-        const data = await getProviders();
+        // Limit to 20 providers for homepage carousel performance
+        // This reduces initial load time and improves rendering performance
+        const data = await getProviders(20);
         setProviders(data);
       } catch (err) {
         setError('Failed to load providers');
@@ -128,25 +130,32 @@ export function ExploreSection() {
             width: `${(CARD_WIDTH + CARD_GAP) * filteredProviders.length * 3}px`,
           }}
         >
-          {[...filteredProviders, ...filteredProviders, ...filteredProviders].map((provider, idx) => (
-            <Link
-              key={`${provider.provider_id}-${idx}`}
-              aria-label="Zu den Providers"
-              className="mr-8 w-[288px] shrink-0"
-              href="/providers"
-              tabIndex={0}
-            >
-              <ProviderCard 
-                {...provider} 
-                className="w-full text-content" 
-                hideWebsiteButton={true}
-                isBookmarked={false}
-                onBookmarkChange={() => {
-                  // Non-actionable: bookmark button is shown but does nothing
-                }}
-              />
-            </Link>
-          ))}
+          {[...filteredProviders, ...filteredProviders, ...filteredProviders].map((provider, idx) => {
+            // Only load first 6 cards eagerly (2 sets of 3 visible cards)
+            // Rest use lazy loading for better performance
+            const isVisible = idx < 6;
+            return (
+              <Link
+                key={`${provider.provider_id}-${idx}`}
+                aria-label="Zu den Providers"
+                className="mr-8 w-[288px] shrink-0"
+                href="/providers"
+                tabIndex={0}
+              >
+                <ProviderCard 
+                  {...provider} 
+                  className="w-full text-content" 
+                  hideWebsiteButton={true}
+                  isBookmarked={false}
+                  loading={isVisible ? 'eager' : 'lazy'}
+                  priority={isVisible && idx < 3}
+                  onBookmarkChange={() => {
+                    // Non-actionable: bookmark button is shown but does nothing
+                  }}
+                />
+              </Link>
+            );
+          })}
         </div>
       </motion.div>
 

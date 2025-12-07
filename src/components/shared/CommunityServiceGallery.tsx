@@ -197,7 +197,8 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
                   : `Community service image ${index + 1}`
               }
               className={`object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
-              priority={index < 2}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              priority={index === 0}
               sizes="(max-width: 640px) 33vw, (max-width: 768px) 33vw, 33vw"
               src={imageUrl}
             />

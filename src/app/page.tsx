@@ -8,8 +8,10 @@ import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
 
 // Ensure client-side navigation works properly for root route
 // Note: This is the canonical root page. The (public) route group version is kept for organization but this one takes precedence.
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Using 'auto' instead of 'force-dynamic' allows Next.js to optimize rendering
+// The page is mostly static content with client-side data fetching
+export const dynamic = 'auto';
+export const revalidate = 60; // Revalidate every 60 seconds for fresh content
 
 export default function Home() {
   return (
