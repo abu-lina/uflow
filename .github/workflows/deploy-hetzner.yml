@@ -69,6 +69,19 @@ jobs:
             docker stop uflow-app || true
             docker rm uflow-app || true
             
+            echo "🔍 Checking for any containers using port 3000..."
+            # Find all running containers and check if any use port 3000
+            for CONTAINER in $(docker ps -q); do
+                if docker port $CONTAINER 2>/dev/null | grep -q ":3000"; then
+                    echo "⚠️ Found container $CONTAINER using port 3000, stopping it..."
+                    docker stop $CONTAINER || true
+                    docker rm $CONTAINER || true
+                fi
+            done
+            
+            echo "⏸️ Waiting for port 3000 to be released..."
+            sleep 3
+            
             echo "📦 Loading new image..."
             docker load < uflow.tar.gz
             
