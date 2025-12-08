@@ -91,12 +91,10 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
         {/* Right Section */}
         <div className="flex h-full w-[571px] flex-col justify-center rounded-tr-[48px] bg-white p-16">
           <div className="mb-8">
-            <h1 className="font-inter-tight text-[40px] font-semibold leading-[1.1] text-[#232323]">
-              Willkommen bei
-              <br />
-              Ummah Flow
+            <h1 className="font-inter-tight text-3xl font-semibold text-[#232323]">
+              Willkommen bei Ummah Flow
             </h1>
-            <p className="mt-4 font-inter text-xl text-[#8C8C8C]">
+            <p className="mt-4 font-inter text-lg text-[#8C8C8C]">
               Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
             </p>
           </div>

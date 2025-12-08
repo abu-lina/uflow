@@ -159,10 +159,10 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
         {/* Right Section */}
         <div className="flex h-full w-[571px] flex-col justify-center rounded-tr-[48px] bg-white p-16 overflow-y-auto">
           <div className="mb-8">
-            <h1 className="font-inter-tight text-[40px] font-semibold leading-[1.1] text-[#232323]">
+            <h1 className="font-inter-tight text-3xl font-semibold text-[#232323]">
               Willkommen zurück
             </h1>
-            <p className="mt-4 font-inter text-xl text-[#8C8C8C]">
+            <p className="mt-4 font-inter text-lg text-[#8C8C8C]">
               Melde dich an, um fortzufahren.
             </p>
           </div>
