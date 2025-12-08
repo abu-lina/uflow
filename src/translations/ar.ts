@@ -474,6 +474,7 @@ export const ar = {
     acceptTerms: "قبول شروط الخدمة وسياسة الخصوصية",
     acceptTermsText: "أوافق على ",
     and: "و",
+    privacyStatement: "خصوصيتك وقيمك مهمة بالنسبة لنا – لن نبيع بياناتك أبداً.",
     consentRequired: "يجب عليك الموافقة على شروط الخدمة وسياسة الخصوصية لإنشاء حساب",
     downloadData: "تحميل بياناتي",
     exportData: "تصدير بياناتي",

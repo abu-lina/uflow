@@ -489,6 +489,7 @@ export const de = {
     acceptTerms: "Allgemeine Geschäftsbedingungen und Datenschutzrichtlinie akzeptieren",
     acceptTermsText: "Ich akzeptiere die ",
     and: "und",
+    privacyStatement: "Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.",
     consentRequired: "Sie müssen den Allgemeinen Geschäftsbedingungen und der Datenschutzrichtlinie zustimmen, um ein Konto zu erstellen",
     downloadData: "Meine Daten herunterladen",
     exportData: "Meine Daten exportieren",

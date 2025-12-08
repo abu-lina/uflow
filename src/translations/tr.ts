@@ -474,6 +474,7 @@ export const tr = {
     acceptTerms: "Hizmet Şartları ve Gizlilik Politikasını kabul et",
     acceptTermsText: "Kabul ediyorum ",
     and: "ve",
+    privacyStatement: "Gizliliğiniz ve değerleriniz bizim için önemlidir – verilerinizi asla satmayız.",
     consentRequired: "Hesap oluşturmak için Hizmet Şartları ve Gizlilik Politikasını kabul etmelisiniz",
     downloadData: "Verilerimi İndir",
     exportData: "Verilerimi Dışa Aktar",

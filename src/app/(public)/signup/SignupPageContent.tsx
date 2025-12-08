@@ -290,7 +290,7 @@ export function SignupPageContent() {
                     <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
                       {t('legal.privacyPolicy') || 'Datenschutzrichtlinie'}
                     </Link>
-                    .
+                    . {t('legal.privacyStatement') || 'Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.'}
                   </span>
                 </label>
               </div>

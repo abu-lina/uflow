@@ -234,3 +234,5 @@ echo "  3. SSL: sudo certbot --nginx -d $PROD_DOMAIN -d $UAT_DOMAIN"
 echo "  4. Containers: ./scripts/deploy-hetzner.sh and ./scripts/deploy-uat.sh"
 echo "  5. Firewall: sudo ufw allow 80/tcp && sudo ufw allow 443/tcp"
 
+
+

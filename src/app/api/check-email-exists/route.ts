@@ -100,8 +100,11 @@ export async function POST(request: Request) {
     // Log successful lookup
     console.log(`[SECURITY] Email found: ${email} from IP: ${ip}`);
     
-    // Fix: Check if email_confirmed is explicitly true
-    const emailConfirmed = user.user_metadata?.email_confirmed === true;
+    // Check both Supabase's email_confirmed_at and our custom metadata field
+    // User is confirmed if either field indicates confirmation
+    const emailConfirmed = 
+      user.email_confirmed_at !== null || 
+      user.user_metadata?.email_confirmed === true;
     
     return NextResponse.json({ 
       exists: true,

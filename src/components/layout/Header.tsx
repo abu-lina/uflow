@@ -10,6 +10,7 @@ import { ChevronDown } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { SignupModal } from '@/features/auth/components/SignupModal';
+import { LoginModal } from '@/features/auth/components/LoginModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { useAuth } from '@/providers/auth-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
@@ -17,6 +18,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 
 export function Header() {
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, signOut, isLoading: loading } = useAuth();
@@ -173,7 +175,7 @@ export function Header() {
                 <>
                   <button
                     className="flex h-10 items-center rounded-xl border border-neutral px-3.5 text-base font-medium text-content"
-                    onClick={() => router.push('/login')}
+                    onClick={() => setShowLoginModal(true)}
                   >
                     Anmelden
                   </button>
@@ -190,7 +192,24 @@ export function Header() {
         </div>
       </header>
 
-      {showSignupModal && <SignupModal onClose={() => setShowSignupModal(false)} />}
+      {showSignupModal && (
+        <SignupModal
+          onClose={() => setShowSignupModal(false)}
+          onSwitchMode={() => {
+            setShowSignupModal(false);
+            setShowLoginModal(true);
+          }}
+        />
+      )}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onSwitchMode={() => {
+            setShowLoginModal(false);
+            setShowSignupModal(true);
+          }}
+        />
+      )}
     </>
   );
 }

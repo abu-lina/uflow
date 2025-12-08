@@ -489,6 +489,7 @@ export const en = {
     acceptTerms: "Accept Terms of Service and Privacy Policy",
     acceptTermsText: "I accept the ",
     and: "and",
+    privacyStatement: "Your privacy and values are important to us – we never sell your data.",
     consentRequired: "You must accept the Terms of Service and Privacy Policy to create an account",
     downloadData: "Download My Data",
     exportData: "Export My Data",

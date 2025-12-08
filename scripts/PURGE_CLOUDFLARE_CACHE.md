@@ -110,3 +110,5 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache"
 
 Never commit your Cloudflare API token to git. Always use environment variables or a secure secrets manager.
 
+
+

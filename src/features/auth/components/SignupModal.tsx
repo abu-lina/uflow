@@ -1,10 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-
+import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
-import { supabase } from '@/lib/supabase/client';
+import { FormInput } from '@/components/ui/FormInput';
+import { FormInputGroup } from '@/components/ui/FormInputGroup';
+import { LinkButton } from '@/components/ui/LinkButton';
+import { signUpWithLanguage } from '@/lib/auth';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface SignupModalProps {
   onClose: () => void;
@@ -12,31 +17,58 @@ interface SignupModalProps {
 }
 
 export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
+  const { language, t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
     if (formData.password !== formData.confirmPassword) {
+      setError('Passwörter stimmen nicht überein.');
       return;
     }
+    
+    if (!termsAccepted || !privacyAccepted) {
+      setError(t('legal.consentRequired') || 'Sie müssen den Allgemeinen Geschäftsbedingungen und der Datenschutzrichtlinie zustimmen.');
+      return;
+    }
+    
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
-      if (error) {
-        throw error;
+      const { data, error: signupError } = await signUpWithLanguage(
+        formData.email,
+        formData.password,
+        language,
+        undefined, // honeypot
+        termsAccepted,
+        privacyAccepted
+      );
+      
+      if (signupError) {
+        setError(signupError.message || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
+        setIsLoading(false);
+        return;
       }
-      onClose();
+      
+      if (data) {
+        onClose();
+      }
     } catch (error) {
       console.error('Signup error:', error);
-    } finally {
+      setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.');
       setIsLoading(false);
     }
   };
@@ -68,61 +100,104 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
               Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
             </p>
           </div>
-          <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
-            <input
-              required
-              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-primary focus:ring-0"
-              disabled={isLoading}
-              id="email"
-              placeholder="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-            <input
-              required
-              autoComplete="new-password"
-              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-primary focus:ring-0"
-              disabled={isLoading}
-              id="password"
-              placeholder="Passwort"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
-            <input
-              required
-              autoComplete="new-password"
-              className="w-full border-0 border-b border-[#E5E5E5] bg-transparent px-0 py-4 text-xl text-[#232323] placeholder:text-[#B0B0B0] focus:border-primary focus:ring-0"
-              disabled={isLoading}
-              id="confirmPassword"
-              placeholder="Passwort wiederholen"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            />
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <FormInputGroup gap="gap-3">
+              <FormInput
+                required
+                disabled={isLoading}
+                label="E-Mail"
+                placeholder="Email eingeben"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+              <FormInput
+                required
+                autoComplete="new-password"
+                disabled={isLoading}
+                label="Passwort"
+                placeholder="Mindestens 8 Zeichen, Buchstabe und Zahl"
+                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                variant="with-icon"
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onRightIconClick={() => setShowPassword(!showPassword)}
+              />
+              <FormInput
+                required
+                autoComplete="new-password"
+                disabled={isLoading}
+                label="Passwort bestätigen"
+                placeholder="Passwort wiederholen"
+                rightIcon={showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={formData.confirmPassword}
+                variant="with-icon"
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onRightIconClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              />
+            </FormInputGroup>
+            
+            {/* Error Message */}
+            {error && (
+              <div className="mt-2">
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                  <p className="font-inter-tight text-sm leading-[19px] text-danger">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {/* Consent Checkbox */}
+            <div className="mt-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  required
+                  aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
+                  aria-required="true"
+                  checked={termsAccepted && privacyAccepted}
+                  className="h-4 w-4 rounded border-gray-300 text-[#589D96] focus:ring-[#589D96] focus:ring-2 flex-shrink-0"
+                  disabled={isLoading}
+                  type="checkbox"
+                  onChange={(e) => {
+                    setTermsAccepted(e.target.checked);
+                    setPrivacyAccepted(e.target.checked);
+                  }}
+                />
+                <span className="text-[11px] leading-[13px] text-[#7A7A7A]">
+                  {t('legal.acceptTermsText') || 'Ich akzeptiere die '}
+                  <Link className="underline hover:text-[#589D96]" href="/terms">
+                    {t('legal.termsOfService') || 'Allgemeinen Geschäftsbedingungen'}
+                  </Link>
+                  {' '}{t('legal.and') || 'und'}{' '}
+                  <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
+                    {t('legal.privacyPolicy') || 'Datenschutzrichtlinie'}
+                  </Link>
+                  . {t('legal.privacyStatement') || 'Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.'}
+                </span>
+              </label>
+            </div>
+            
             <button
-              className="mt-4 w-full rounded-2xl bg-primary py-4 text-xl font-medium text-white"
+              className="mt-3 w-full rounded-2xl bg-primary py-4 text-base font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
               type="submit"
             >
               {isLoading ? 'Wird registriert...' : 'Registrieren'}
             </button>
           </form>
-          <div className="mt-8 flex w-full items-center justify-between">
-            <p className="font-inter text-xs font-light text-neutral">
-              Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.
-            </p>
-            {onSwitchMode && (
-              <button
-                className="font-inter-tight text-base font-light text-black underline"
+          {onSwitchMode && (
+            <div className="mt-8 flex w-full justify-center">
+              <LinkButton
                 type="button"
                 onClick={onSwitchMode}
               >
-                Bereits registriert? Anmelden
-              </button>
-            )}
-          </div>
+                Bereits ein Konto? Jetzt anmelden.
+              </LinkButton>
+            </div>
+          )}
         </div>
         {/* Close Button */}
         <button

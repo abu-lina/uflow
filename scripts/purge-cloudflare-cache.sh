@@ -176,3 +176,5 @@ echo "  3. Hard refresh the page (Ctrl+F5 or Cmd+Shift+R)"
 echo "  4. Test the site - MIME type errors should be gone"
 echo ""
 
+
+

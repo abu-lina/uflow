@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client';
+import { logSupabaseError } from '@/utils/errorUtils';
 
 export interface CommunityService {
   id?: string;
@@ -329,19 +330,43 @@ export type CommunityServiceData = CommunityService;
 
 // Get community services created by a specific user
 export async function getCreatedCommunityServices(userId: string): Promise<CommunityService[]> {
-  const { data, error } = await supabase
-    .from('community_services')
-    .select('*, category:categories(name_de, name_en)')
-    .eq('user_created_id', userId)
-    .order('created_at', { ascending: false })
-    .returns<CommunityService[]>();
+  try {
+    const { data, error } = await supabase
+      .from('community_services')
+      .select('*, category:categories(name_de, name_en)')
+      .eq('user_created_id', userId)
+      .order('created_at', { ascending: false })
+      .returns<CommunityService[]>();
 
-  if (error) {
-    console.error('Error fetching created community services:', error);
+    if (error) {
+      logSupabaseError('communityServices.getCreatedCommunityServices', error);
+      // Log additional details before throwing
+      if (error instanceof Error) {
+        console.error('Error fetching created community services:', error.message, error);
+      } else {
+        console.error('Error fetching created community services:', JSON.stringify(error, null, 2), error);
+      }
+      throw error;
+    }
+
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    // Handle network errors specifically
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      const enhancedError = new Error(
+        `Network error fetching created community services: ${error.message}. ` +
+        'This usually means:\n' +
+        '1. Check your internet connection\n' +
+        '2. Verify NEXT_PUBLIC_SUPABASE_URL is correct in .env.local\n' +
+        '3. Check if Supabase project is accessible\n' +
+        '4. Restart your dev server after updating .env.local'
+      );
+      enhancedError.cause = error;
+      throw enhancedError;
+    }
+    // Re-throw other errors
     throw error;
   }
-
-  return Array.isArray(data) ? data : [];
 }
 
 // Get recommended community services by a specific user (where user created but there's no owner)

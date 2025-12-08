@@ -230,7 +230,12 @@ export const signInWithEmailConfirmation = async (
   }
 
   // Double-check: Ensure the logged-in user is actually confirmed
-  if (data.user && data.user.user_metadata?.email_confirmed !== true) {
+  // Check both Supabase's email_confirmed_at and our custom metadata field
+  const isConfirmed = 
+    data.user?.email_confirmed_at !== null || 
+    data.user?.user_metadata?.email_confirmed === true;
+  
+  if (data.user && !isConfirmed) {
     // Sign out the user immediately if they're not confirmed
     await supabase.auth.signOut();
     return { 

@@ -12,7 +12,6 @@ import { useSearch } from '@/providers/search-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { fetchUsedCategories, fetchFilteredCategories, type Category } from '@/services/categories';
 import { logSupabaseError } from '@/utils/errorUtils';
-import { fetchProviderCities, fetchFilteredCities } from '@/services/providers';
 
 interface SearchBarProps {
   className?: string;
@@ -139,6 +138,9 @@ function SearchBarContent({
           setLocations([t('search.everywhere'), ...customCities]);
           return;
         }
+
+        // Use dynamic import to avoid module initialization issues
+        const { fetchProviderCities, fetchFilteredCities } = await import('@/services/providers');
 
         // If we have category or search query filters, use filtered cities
         if (selectedCategory || searchQuery.trim()) {
