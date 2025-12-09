@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Provider } from '@/services/providers';
 import { getCommunityServicesForProvider, type CommunityService } from '@/services/communityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
+import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -70,7 +71,8 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
 
   const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 
-  const allImageUrls = (() => {
+  // Memoize image URL processing to avoid recomputation on every render
+  const allImageUrls = useMemo(() => {
     try {
       if (!provider.provider_images) {
         return [PLACEHOLDER_IMAGE];
@@ -95,7 +97,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     } catch {
       return [PLACEHOLDER_IMAGE];
     }
-  })();
+  }, [provider.provider_images]);
 
   // Use the centralized image swipe hook
   const {
@@ -135,8 +137,13 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
+  
+  // Track image loading states for skeleton display
+  const [mainImagesLoaded, setMainImagesLoaded] = useState<Record<number, boolean>>({});
+  const [communityImageLoaded, setCommunityImageLoaded] = useState(false);
+  const [thumbnailsLoaded, setThumbnailsLoaded] = useState<Record<number, boolean>>({});
 
-  // Use React Query for bookmark status (cached, non-blocking)
+  // Use React Query for both bookmark status and community services (parallel fetching)
   // This uses the same cache as the bookmarks list, so it's instant if already loaded
   const { data: bookmarkedProviderIds = [] } = useQuery({
     queryKey: ['bookmarks', user?.id],
@@ -153,18 +160,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     placeholderData: (previousData) => previousData, // Show cached data immediately
   });
 
-  // Derive bookmark status from cached data (instant, no network request)
-  useEffect(() => {
-    if (user && bookmarkedProviderIds.length > 0) {
-      setIsSaved(bookmarkedProviderIds.includes(provider.provider_id));
-    } else if (!user) {
-      setIsSaved(false);
-    }
-  }, [user, bookmarkedProviderIds, provider.provider_id]);
-
-  // Use React Query for community services (cached, non-blocking)
+  // Use React Query for community services (cached, non-blocking, parallel with bookmarks)
   // Use prefetched data from server to avoid client-side waterfall
-  const { data: communityServices = [] } = useQuery({
+  const { data: communityServices = [], isLoading: isLoadingCommunityServices } = useQuery({
     queryKey: ['community-services', 'provider', provider.provider_id],
     queryFn: () => getCommunityServicesForProvider(provider.provider_id),
     enabled: !!provider.provider_id,
@@ -175,6 +173,15 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     initialData: initialCommunityServices ?? undefined, // Use SSR data if available
     initialDataUpdatedAt: initialCommunityServices ? Date.now() : undefined, // Mark SSR data as fresh
   });
+
+  // Derive bookmark status from cached data (instant, no network request)
+  useEffect(() => {
+    if (user && bookmarkedProviderIds.length > 0) {
+      setIsSaved(bookmarkedProviderIds.includes(provider.provider_id));
+    } else if (!user) {
+      setIsSaved(false);
+    }
+  }, [user, bookmarkedProviderIds, provider.provider_id]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -291,15 +298,24 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     );
   }
 
+  // Check if any content is still loading
+  const isLoading = isLoadingCommunityServices || !mainImagesLoaded[selectedImageIdx];
+
   return (
     <Modal isOpen={true} title={communityServices[0]?.community_service_name || provider.provider_name} onClose={onClose}>
       <section
+        aria-busy={isLoading}
+        aria-label="Provider details"
         aria-modal="true"
         className="relative flex h-[900px] w-[1200px] cursor-default bg-transparent"
         role="dialog"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Screen reader announcement for loaded content */}
+        <div aria-atomic="true" aria-live="polite" className="sr-only">
+          {!isLoading && 'Provider details loaded'}
+        </div>
         {/* Close Icon Top Right */}
         <button
           aria-label="Schließen"
@@ -362,11 +378,21 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                       className="relative h-full w-full flex-shrink-0"
                       style={{ minWidth: '100%' }}
                     >
+                      {/* Skeleton loader */}
+                      {!mainImagesLoaded[index] && (
+                        <Skeleton className="absolute inset-0 rounded-[32px]" />
+                      )}
                       <Image
                         fill
                         alt={`${provider.provider_name} ${index + 1}`}
-                        className="rounded-[32px] object-cover"
+                        className={`rounded-[32px] object-cover transition-opacity duration-300 ${
+                          mainImagesLoaded[index] ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        priority={index === 0} // Prioritize first image
                         src={imageUrl}
+                        onLoad={() => {
+                          setMainImagesLoaded(prev => ({ ...prev, [index]: true }));
+                        }}
                       />
                     </div>
                   ))}
@@ -421,11 +447,21 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     type="button"
                     onClick={() => goToImage(i)}
                   >
+                    {/* Skeleton for thumbnails */}
+                    {!thumbnailsLoaded[i] && (
+                      <Skeleton className="absolute inset-0 rounded-[8px]" />
+                    )}
                     <Image
                       fill
                       alt={`${provider.provider_name} thumbnail ${i + 1}`}
-                      className="rounded-[8px] object-cover"
+                      className={`rounded-[8px] object-cover transition-opacity duration-200 ${
+                        thumbnailsLoaded[i] ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      loading="lazy"
                       src={img}
+                      onLoad={() => {
+                        setThumbnailsLoaded(prev => ({ ...prev, [i]: true }));
+                      }}
                     />
                   </button>
                 ))}
@@ -452,8 +488,8 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             />
           </button>
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
-            {/* Barakah Effekt Section */}
-            <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
+            {/* Barakah Effekt Section - with fade-in animation */}
+            <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100 animate-fadeIn" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
               <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
                 <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
                   {t('providers.ourBarakahEffect')}:
@@ -470,15 +506,23 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     }}
                   >
                     <div className="relative mb-2 h-[120px] w-[160px] overflow-hidden rounded-[18px]">
+                      {/* Skeleton for community service image */}
+                      {!communityImageLoaded && (
+                        <Skeleton className="absolute inset-0 rounded-[18px]" />
+                      )}
                       <Image
                         fill
                         alt={communityServices[0]?.community_service_name || 'Community Service'}
-                        className="rounded-[18px] object-cover"
+                        className={`rounded-[18px] object-cover transition-opacity duration-300 ${
+                          communityImageLoaded ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        loading="lazy"
                         src={
                           communityServices[0]?.community_service_images && communityServices[0].community_service_images.length > 0
                             ? communityServices[0].community_service_images[0]
                             : PLACEHOLDER_IMAGE
                         }
+                        onLoad={() => setCommunityImageLoaded(true)}
                       />
                     </div>
                     <div className="text-uFlowText mb-0.5 font-inter-tight text-lg font-semibold">
@@ -517,9 +561,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 </div>
               </div>
             </div>
-            {/* Offers & Needs Section */}
+            {/* Offers & Needs Section - with fade-in animation */}
             {((provider.offers && provider.offers.length > 0) || (provider.needs && provider.needs.length > 0)) && (
-              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
+              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100 animate-fadeIn" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
                 <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
                   {/* Offers Section */}
                   {provider.offers && provider.offers.length > 0 && (

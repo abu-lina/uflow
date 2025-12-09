@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCommunityServicesForProvider } from '@/services/communityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
 interface ProviderCardModalProps {
   open: boolean;
@@ -64,7 +65,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
   }, [open]);
 
   // Use React Query for community services (cached, non-blocking)
-  const { data: communityServices = [] } = useQuery({
+  const { data: communityServices = [], isLoading: isLoadingCommunityServices } = useQuery({
     queryKey: ['community-services', 'provider', provider.provider_id],
     queryFn: () => getCommunityServicesForProvider(provider.provider_id),
     enabled: open && !!provider.provider_id, // Only fetch when modal is open
@@ -104,7 +105,8 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
     }
   }
 
-  const allImageUrls = (() => {
+  // Memoize image URL processing to avoid recomputation on every render
+  const allImageUrls = useMemo(() => {
     try {
       if (!provider.provider_images) {
         return [PLACEHOLDER_IMAGE];
@@ -134,7 +136,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
     } catch {
       return [PLACEHOLDER_IMAGE];
     }
-  })();
+  }, [provider.provider_images]);
 
   const mainImageUrl = allImageUrls[selectedImageIdx] || PLACEHOLDER_IMAGE;
 
@@ -327,6 +329,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
 
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
+  
+  // Track image loading states for skeleton display
+  const [mainImagesLoaded, setMainImagesLoaded] = useState<Record<number, boolean>>({});
+  const [communityImageLoaded, setCommunityImageLoaded] = useState(false);
 
   useEffect(() => {
     const fetchBookmark = async () => {
@@ -428,6 +434,9 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
 
   if (!open) return null;
 
+  // Check if any content is still loading
+  const isLoading = isLoadingCommunityServices || !mainImagesLoaded[selectedImageIdx];
+
   return createPortal(
     <>
       {/* Fullscreen overlay */}
@@ -435,7 +444,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
       {/* Modal container */}
       <div
         ref={modalRef}
+        aria-busy={isLoading}
+        aria-label="Provider details"
         className="fixed inset-x-0 bottom-0 top-6 z-[1000000] flex items-start justify-center"
+        role="dialog"
         style={{
           transform: isClosing ? 'translateY(100vh)' : dragY ? `translateY(${dragY}px)` : undefined,
           transition: isClosing
@@ -445,6 +457,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               : 'none',
         }}
       >
+        {/* Screen reader announcement for loaded content */}
+        <div aria-atomic="true" aria-live="polite" className="sr-only">
+          {!isLoading && 'Provider details loaded'}
+        </div>
         <div className="hide-scrollbar animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Visual Section - Mobile Only */}
           <div className="relative h-96 w-full sm:hidden">
@@ -483,14 +499,23 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                     className="relative h-full w-full flex-shrink-0"
                     style={{ minWidth: '100%' }}
                   >
+                    {/* Skeleton loader */}
+                    {!mainImagesLoaded[index] && (
+                      <Skeleton className="absolute inset-0 rounded-tl-[29.4px] rounded-tr-[29.4px]" />
+                    )}
                     <Image
                       fill
-                      priority
                       alt={`Provider Visual ${index + 1}`}
-                      className="border-uFlowWhite h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover"
+                      className={`border-uFlowWhite h-full w-full rounded-tl-[29.4px] rounded-tr-[29.4px] border border-[1.1px] object-cover transition-opacity duration-300 ${
+                        mainImagesLoaded[index] ? 'opacity-100' : 'opacity-0'
+                      }`}
                       draggable="false"
+                      priority={index === 0}
                       src={imageUrl}
                       unselectable="on"
+                      onLoad={() => {
+                        setMainImagesLoaded(prev => ({ ...prev, [index]: true }));
+                      }}
                     />
                   </div>
                 ))}
@@ -600,9 +625,9 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                 </div>
               )}
             </div>
-            {/* Barakah Section (only if zakat project exists) */}
+            {/* Barakah Section (only if zakat project exists) - with fade-in animation */}
             {communityServices.length > 0 && (
-              <div className="flex w-full flex-col items-start gap-2">
+              <div className="flex w-full flex-col items-start gap-2 animate-fadeIn" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
                 <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
                   {t('providers.ourBarakahEffect')}:
                 </div>
@@ -614,16 +639,24 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                     router.push(`/community-services/${communityServices[0].community_service_id}`);
                   }}
                 >
+                  {/* Skeleton for community service image */}
+                  {!communityImageLoaded && (
+                    <Skeleton className="absolute inset-0 rounded-[16px]" />
+                  )}
                   <Image
                     fill
                     alt={communityServices[0].community_service_name}
-                    className="h-full w-full object-cover"
+                    className={`h-full w-full object-cover transition-opacity duration-300 ${
+                      communityImageLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    loading="lazy"
                     sizes="(max-width: 768px) 100vw, 50vw"
                     src={
                       communityServices[0].community_service_images && communityServices[0].community_service_images.length > 0
                         ? communityServices[0].community_service_images[0]
                         : '/images/placeholder.jpg'
                     }
+                    onLoad={() => setCommunityImageLoaded(true)}
                   />
                   {/* Barakah Title Overlay */}
                   <div className="absolute bottom-0 left-0 flex h-[41px] w-full items-center rounded-b-[16px] bg-white/10 px-2 backdrop-blur-[14px]">
@@ -649,11 +682,11 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                 )}
               </div>
             )}
-            {/* Barakah Effects Section (when no zakat project but has effects) */}
+            {/* Barakah Effects Section (when no zakat project but has effects) - with fade-in animation */}
             {communityServices.length === 0 &&
               Array.isArray(provider.barakah_effects) &&
               provider.barakah_effects.length > 0 && (
-                <div className="flex w-full flex-col items-start gap-2">
+                <div className="flex w-full flex-col items-start gap-2 animate-fadeIn" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
                   <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
                     {t('providers.ourBarakahEffect')}:
                   </div>
@@ -672,8 +705,8 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                 </div>
               )}
 
-            {/* Opening Hours Section */}
-            <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4">
+            {/* Opening Hours Section - with fade-in animation */}
+            <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4 animate-fadeIn" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
               <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
                 Öffnungszeiten:
               </div>
