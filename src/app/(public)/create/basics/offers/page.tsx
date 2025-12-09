@@ -76,26 +76,32 @@ export default function SelectOffersPage() {
     void fetchCategories();
   }, []);
 
-  // Load offers from database - fetch ALL offers (from all categories and uncategorized)
-  // TODO: For large datasets (1000+ offers), consider implementing pagination:
-  // - Use .range(start, end) for pagination
-  // - Implement infinite scroll or "Load More" button
-  // - Consider category-based filtering to reduce initial load
+  // Load offers from database with pagination - initial load of 100 offers
+  // Performance optimization: Load first 100 offers, then load more as needed
+  const [hasMoreOffers, setHasMoreOffers] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const INITIAL_LIMIT = 100;
+  const LOAD_MORE_LIMIT = 50;
+
   useEffect(() => {
     async function fetchOffers() {
       setIsLoading(true);
       try {
-        // Fetch ALL offers (from all categories and uncategorized)
-        // Performance note: For 500+ offers, consider virtualization (react-window)
+        // Fetch initial batch of offers (100 items for good balance)
         const { data, error } = await supabase
           .from('offers')
           .select('offer_id, name_de, name_en, created_at, updated_at, created_by, category_id')
-          .order('name_de', { ascending: true });
+          .order('name_de', { ascending: true })
+          .limit(INITIAL_LIMIT + 1); // Fetch one extra to check if there are more
         
         if (error) {
           console.error('Error fetching offers:', error);
         } else if (data) {
-          setOffers(data);
+          // Check if there are more offers
+          const hasMore = data.length > INITIAL_LIMIT;
+          setHasMoreOffers(hasMore);
+          // Set offers (limit to INITIAL_LIMIT)
+          setOffers(data.slice(0, INITIAL_LIMIT));
         }
       } catch (error) {
         console.error('Error fetching offers:', error);
@@ -106,6 +112,34 @@ export default function SelectOffersPage() {
     
     void fetchOffers();
   }, []);
+
+  // Load more offers function
+  const loadMoreOffers = useCallback(async () => {
+    if (isLoadingMore || !hasMoreOffers) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const { data, error } = await supabase
+        .from('offers')
+        .select('offer_id, name_de, name_en, created_at, updated_at, created_by, category_id')
+        .order('name_de', { ascending: true })
+        .range(offers.length, offers.length + LOAD_MORE_LIMIT);
+      
+      if (error) {
+        console.error('Error loading more offers:', error);
+      } else if (data && data.length > 0) {
+        setOffers(prev => [...prev, ...data]);
+        // If we got fewer than requested, there are no more
+        setHasMoreOffers(data.length === LOAD_MORE_LIMIT);
+      } else {
+        setHasMoreOffers(false);
+      }
+    } catch (error) {
+      console.error('Error loading more offers:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [offers.length, isLoadingMore, hasMoreOffers]);
 
   // Load suggested offers when category changes
   useEffect(() => {
@@ -682,6 +716,24 @@ export default function SelectOffersPage() {
                         {t('create.offers.pressEnterToAdd').replace('{{query}}', searchQuery)}
                       </p>
                     )}
+                  </div>
+                )}
+
+                {/* Load More button for other offers */}
+                {hasMoreOffers && !searchQuery && filteredOtherOffers.length > 0 && (
+                  <div className="flex justify-center pt-4">
+                    <button
+                      className="inline-flex items-center gap-2 rounded-xl px-6 py-2 bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-50"
+                      disabled={isLoadingMore}
+                      onClick={loadMoreOffers}
+                    >
+                      <Icon className="h-4 w-4" icon={isLoadingMore ? "lucide:loader-2" : "lucide:chevron-down"} />
+                      <span className="text-sm font-medium">
+                        {isLoadingMore 
+                          ? t('create.offers.loading') || 'Loading...'
+                          : t('create.offers.loadMore') || 'Load More Offers'}
+                      </span>
+                    </button>
                   </div>
                 )}
             </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { motion } from 'motion/react';
 
 interface EmptyStateProps {
@@ -9,7 +10,7 @@ interface EmptyStateProps {
   className?: string;
 }
 
-export function EmptyState({
+export const EmptyState = memo(function EmptyState({
   title = 'Keine Provider gefunden',
   description = 'Versuche es mit anderen Suchkriterien oder Kategorien.',
   icon,
@@ -36,4 +37,4 @@ export function EmptyState({
       <p className="max-w-md text-gray-600">{description}</p>
     </motion.div>
   );
-}
+});

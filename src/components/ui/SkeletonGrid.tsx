@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { motion } from 'motion/react';
 
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
@@ -9,7 +10,7 @@ interface SkeletonGridProps {
   className?: string;
 }
 
-export function SkeletonGrid({ count = 8, className = '' }: SkeletonGridProps) {
+export const SkeletonGrid = memo(function SkeletonGrid({ count = 8, className = '' }: SkeletonGridProps) {
   const skeletonCards = Array.from({ length: count }, (_, index) => (
     <motion.div
       key={index}
@@ -31,4 +32,4 @@ export function SkeletonGrid({ count = 8, className = '' }: SkeletonGridProps) {
       {skeletonCards}
     </div>
   );
-}
+});

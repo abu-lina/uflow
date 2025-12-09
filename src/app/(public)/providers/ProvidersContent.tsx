@@ -179,6 +179,16 @@ export function ProvidersContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, query, location]); // Only depend on URL parameters, not local state
 
+  // Prefetch likely next pages after initial load (performance optimization)
+  useEffect(() => {
+    // Only prefetch if user is logged in and page has loaded
+    if (user && !isLoading && !userLoading) {
+      // Prefetch profile and saved pages user is likely to visit
+      router.prefetch('/profile');
+      router.prefetch('/saved');
+    }
+  }, [user, isLoading, userLoading, router]);
+
   // Render content based on state
   // Only show loading skeleton on true initial load (isLoading = true means no cached data)
   // If we have cached data, show it immediately even if isFetching (background refetch)

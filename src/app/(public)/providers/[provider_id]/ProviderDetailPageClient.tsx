@@ -1,13 +1,43 @@
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 
-import { ProviderDetailPage as ProviderDetailPageComponent } from '@/components/providers/ProviderDetailPage';
-import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
 import { useProvider } from '@/hooks/useProvider';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import type { Provider } from '@/services/providers';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
+
+// Lazy load heavy modal component - only loads when needed (desktop view)
+const ProviderDetailModal = dynamic(
+  () => import('@/components/providers/ProviderDetailModal').then(mod => ({ default: mod.ProviderDetailModal })),
+  {
+    loading: () => (
+      <div className="flex min-h-screen items-center justify-center">
+        <Skeleton className="h-64 w-full max-w-4xl rounded-2xl" />
+      </div>
+    ),
+    ssr: false, // Modal is client-only
+  }
+);
+
+// Lazy load provider detail page component - only loads on mobile
+const ProviderDetailPageComponent = dynamic(
+  () => import('@/components/providers/ProviderDetailPage').then(mod => ({ default: mod.ProviderDetailPage })),
+  {
+    loading: () => (
+      <div className="flex min-h-screen flex-col">
+        <div className="sticky top-0 z-50 border-b border-neutral-200 bg-white px-6 py-4">
+          <Skeleton className="h-8 w-32" />
+        </div>
+        <div className="flex-1 px-6 py-8">
+          <Skeleton className="mx-auto h-96 w-full max-w-[361px] rounded-2xl" />
+        </div>
+      </div>
+    ),
+    ssr: false, // Client-only component
+  }
+);
 
 interface ProviderDetailPageClientProps {
   providerId: string;

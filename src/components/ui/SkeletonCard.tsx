@@ -9,31 +9,46 @@ interface SkeletonCardProps {
 export function SkeletonCard({ className = '' }: SkeletonCardProps) {
   return (
     <motion.div
-      animate={{ opacity: [0.6, 1, 0.6] }}
-      className={`overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm ${className}`}
-      transition={{ duration: 1.5, repeat: Infinity }}
+      animate={{ opacity: 1 }}
+      className={`relative overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm ${className}`}
+      initial={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
     >
-      {/* Image skeleton */}
-      <div className="aspect-[4/3] animate-pulse bg-gray-200" />
+      {/* Image skeleton with shimmer */}
+      <div className="relative aspect-[4/3] overflow-hidden bg-gray-200">
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+      </div>
 
       {/* Content skeleton */}
       <div className="space-y-3 p-4">
-        {/* Title skeleton */}
-        <div className="h-5 animate-pulse rounded bg-gray-200" />
-
-        {/* Category skeleton */}
-        <div className="h-4 w-1/3 animate-pulse rounded bg-gray-200" />
-
-        {/* Description skeleton */}
-        <div className="space-y-2">
-          <div className="h-3 animate-pulse rounded bg-gray-200" />
-          <div className="h-3 w-4/5 animate-pulse rounded bg-gray-200" />
+        {/* Title skeleton with shimmer */}
+        <div className="relative h-5 overflow-hidden rounded bg-gray-200">
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         </div>
 
-        {/* Action buttons skeleton */}
+        {/* Category skeleton with shimmer */}
+        <div className="relative h-4 w-1/3 overflow-hidden rounded bg-gray-200">
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        </div>
+
+        {/* Description skeleton with shimmer */}
+        <div className="space-y-2">
+          <div className="relative h-3 overflow-hidden rounded bg-gray-200">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          </div>
+          <div className="relative h-3 w-4/5 overflow-hidden rounded bg-gray-200">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          </div>
+        </div>
+
+        {/* Action buttons skeleton with shimmer */}
         <div className="flex items-center justify-between pt-2">
-          <div className="h-8 w-20 animate-pulse rounded bg-gray-200" />
-          <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />
+          <div className="relative h-8 w-20 overflow-hidden rounded bg-gray-200">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          </div>
+          <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gray-200">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          </div>
         </div>
       </div>
     </motion.div>

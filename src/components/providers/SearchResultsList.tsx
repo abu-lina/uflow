@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, memo } from 'react';
 
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import { Button } from '@/components/ui/Button';
@@ -20,7 +20,7 @@ interface SearchResultsListProps {
   onRetry?: () => void;
 }
 
-export function SearchResultsList({
+export const SearchResultsList = memo(function SearchResultsList({
   searchResults,
   bookmarkedProviderIds,
   onProviderClick,
@@ -166,4 +166,4 @@ export function SearchResultsList({
       )}
     </>
   );
-}
+});
