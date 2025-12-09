@@ -1,7 +1,9 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import type { Provider } from '@/services/providers';
+import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 
 interface ProvidersListProps {
   providers: Provider[];
@@ -16,6 +18,39 @@ export function ProvidersList({
   onProviderClick,
   onBookmarkChange,
 }: ProvidersListProps) {
+  const router = useRouter();
+
+  const handleMouseEnter = (provider: Provider) => {
+    // Prefetch route and image for community services
+    if (provider.community_service_id) {
+      // Prefetch the route
+      router.prefetch(`/community-services/${provider.community_service_id}`);
+      
+      // Prefetch the first image if available
+      let firstImageUrl: string | null = null;
+      if (provider.provider_images) {
+        try {
+          const imagesData = typeof provider.provider_images === 'string' 
+            ? JSON.parse(provider.provider_images)
+            : provider.provider_images;
+          firstImageUrl = Array.isArray(imagesData) 
+            ? imagesData[0] 
+            : imagesData.urls?.[0] || null;
+        } catch {
+          // Ignore parsing errors
+        }
+      }
+      
+      if (firstImageUrl && firstImageUrl !== PLACEHOLDER_IMAGE) {
+        const link = document.createElement('link');
+        link.rel = 'prefetch';
+        link.as = 'image';
+        link.href = firstImageUrl;
+        document.head.appendChild(link);
+      }
+    }
+  };
+
   return (
     <div
       key={`providers-${providers.length}-${providers[0]?.provider_id || 'empty'}`}
@@ -34,6 +69,7 @@ export function ProvidersList({
               onProviderClick(provider);
             }
           }}
+          onMouseEnter={() => handleMouseEnter(provider)}
         >
           <ProviderCard
             {...provider}

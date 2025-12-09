@@ -179,35 +179,56 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
               <div className="mt-6">
                 <h3 className="mb-3 text-lg font-semibold text-[#232323]">Verknüpfte Initiativen</h3>
                 <div className="space-y-3">
-                  {communityServices.map((service) => (
-                    <div key={service.community_service_id} className="flex items-center gap-3 rounded-lg bg-white p-3">
-                      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg">
-                        <Image
-                          alt={service.community_service_name}
-                          className="h-full w-full object-cover"
-                          height={48}
-                          src={service.community_service_images ? 
-                            (() => {
-                              try {
-                                const imagesData = typeof service.community_service_images === 'string' 
-                                  ? JSON.parse(service.community_service_images)
-                                  : service.community_service_images;
-                                return imagesData.urls?.[0] || PLACEHOLDER_IMAGE;
-                              } catch {
-                                return PLACEHOLDER_IMAGE;
-                              }
-                            })() 
-                            : PLACEHOLDER_IMAGE
-                          }
-                          width={48}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-[#232323]">{service.community_service_name}</h4>
-                        <p className="text-sm text-[#666]">{service.community_service_description}</p>
-                      </div>
-                    </div>
-                  ))}
+                  {communityServices.map((service) => {
+                    const firstImageUrl = service.community_service_images ? 
+                      (() => {
+                        try {
+                          const imagesData = typeof service.community_service_images === 'string' 
+                            ? JSON.parse(service.community_service_images)
+                            : service.community_service_images;
+                          return imagesData.urls?.[0] || PLACEHOLDER_IMAGE;
+                        } catch {
+                          return PLACEHOLDER_IMAGE;
+                        }
+                      })() 
+                      : PLACEHOLDER_IMAGE;
+
+                    const handleMouseEnter = () => {
+                      // Prefetch the route
+                      router.prefetch(`/community-services/${service.community_service_id}`);
+                      // Prefetch the first image
+                      if (firstImageUrl && firstImageUrl !== PLACEHOLDER_IMAGE) {
+                        const link = document.createElement('link');
+                        link.rel = 'prefetch';
+                        link.as = 'image';
+                        link.href = firstImageUrl;
+                        document.head.appendChild(link);
+                      }
+                    };
+
+                    return (
+                      <button
+                        key={service.community_service_id}
+                        className="flex w-full items-center gap-3 rounded-lg bg-white p-3 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                        onClick={() => router.push(`/community-services/${service.community_service_id}`)}
+                        onMouseEnter={handleMouseEnter}
+                      >
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg">
+                          <Image
+                            alt={service.community_service_name}
+                            className="h-full w-full object-cover"
+                            height={48}
+                            src={firstImageUrl}
+                            width={48}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-[#232323]">{service.community_service_name}</h4>
+                          <p className="text-sm text-[#666]">{service.community_service_description}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -198,7 +198,7 @@ const nextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 3600,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     // Configure image qualities to fix the warning

@@ -724,11 +724,30 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 </button>
                 {expandedBarakah && (
                   <div className="mt-4 space-y-3">
-                    {communityServices.map((service, index) => (
+                    {communityServices.map((service, index) => {
+                      const firstImageUrl = service.community_service_images && service.community_service_images.length > 0
+                        ? service.community_service_images[0]
+                        : PLACEHOLDER_IMAGE;
+                      
+                      const handleMouseEnter = () => {
+                        // Prefetch the route
+                        router.prefetch(`/community-services/${service.community_service_id}`);
+                        // Prefetch the first image
+                        if (firstImageUrl && firstImageUrl !== PLACEHOLDER_IMAGE) {
+                          const link = document.createElement('link');
+                          link.rel = 'prefetch';
+                          link.as = 'image';
+                          link.href = firstImageUrl;
+                          document.head.appendChild(link);
+                        }
+                      };
+
+                      return (
                       <button
                         key={index}
                         className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
                         onClick={() => router.push(`/community-services/${service.community_service_id}`)}
+                        onMouseEnter={handleMouseEnter}
                       >
                         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
                           <Image
@@ -754,7 +773,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           </p>
                         </div>
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

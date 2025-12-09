@@ -368,6 +368,9 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                         fill
                         alt={`${communityService.community_service_name} ${index + 1}`}
                         className="rounded-[32px] object-cover"
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        priority={index === 0}
+                        sizes="(max-width: 768px) 100vw, 640px"
                         src={imageUrl}
                       />
                     </div>
