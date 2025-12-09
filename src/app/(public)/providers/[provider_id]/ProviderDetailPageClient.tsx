@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { useProvider } from '@/hooks/useProvider';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import type { Provider } from '@/services/providers';
+import type { CommunityService } from '@/services/communityServices';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
 // Lazy load heavy modal component - only loads when needed (desktop view)
@@ -42,6 +43,7 @@ const ProviderDetailPageComponent = dynamic(
 interface ProviderDetailPageClientProps {
   providerId: string;
   initialData?: Provider | null;
+  initialCommunityServices?: CommunityService[];
 }
 
 /**
@@ -53,7 +55,7 @@ interface ProviderDetailPageClientProps {
  * - Prefetches data for faster subsequent loads
  * - Uses modal on desktop, full page on mobile
  */
-export function ProviderDetailPageClient({ providerId, initialData }: ProviderDetailPageClientProps) {
+export function ProviderDetailPageClient({ providerId, initialData, initialCommunityServices }: ProviderDetailPageClientProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { data: provider, isLoading, error } = useProvider({
@@ -125,6 +127,7 @@ export function ProviderDetailPageClient({ providerId, initialData }: ProviderDe
   if (!isMobile) {
     return (
       <ProviderDetailModal
+        initialCommunityServices={initialCommunityServices}
         provider={provider}
         onClose={handleModalClose}
       />
@@ -132,6 +135,6 @@ export function ProviderDetailPageClient({ providerId, initialData }: ProviderDe
   }
 
   // Render the actual provider detail page on mobile
-  return <ProviderDetailPageComponent provider={provider} />;
+  return <ProviderDetailPageComponent initialCommunityServices={initialCommunityServices} provider={provider} />;
 }
 

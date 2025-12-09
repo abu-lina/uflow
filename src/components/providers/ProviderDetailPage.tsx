@@ -19,15 +19,16 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUrl, normalizeWebsiteUrl } from '@/utils/navigationUtils';
-import { getProvidersForCommunityService } from '@/services/communityServices';
+import { getProvidersForCommunityService, type CommunityService } from '@/services/communityServices';
 
 interface ProviderDetailPageProps {
   provider: Provider;
   customActionButtons?: React.ReactNode;
   backPath?: string;
+  initialCommunityServices?: CommunityService[];
 }
 
-export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider, customActionButtons, backPath }) => {
+export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider, customActionButtons, backPath, initialCommunityServices }) => {
   const router = useRouter();
   const { t, language } = useLanguage();
   
@@ -129,10 +130,11 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   });
 
   // Use React Query for caching community services (only for providers)
+  // Use prefetched data from server to avoid client-side waterfall
   const { 
     data: communityServices = [], 
     isLoading: isLoadingCommunityServices
-  } = useCommunityServicesForProvider(provider.provider_id);
+  } = useCommunityServicesForProvider(provider.provider_id, initialCommunityServices);
 
   // Use React Query for providers supporting this community service (only for community services)
   const { data: supportingProviders = [] } = useQuery<Array<{ 

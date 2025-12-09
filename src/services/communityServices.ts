@@ -173,12 +173,19 @@ export async function getCommunityServicesByCategory(categoryId: string): Promis
 }
 
 // Get community services for a specific provider using the new many-to-many relationship
+// Optimized to use a single query through the relationship table
 export async function getCommunityServicesForProvider(providerId: string): Promise<CommunityService[]> {
   try {
-    // First, get the relationship IDs
+    // Use a single query through the relationship table to fetch community services
+    // This avoids the 2-query pattern and is more efficient
     const { data: relationshipData, error: relationshipError } = await supabase
       .from('provider_community_services')
-      .select('community_service_id')
+      .select(`
+        community_services:community_services(
+          *,
+          category:categories(name_de, name_en)
+        )
+      `)
       .eq('provider_id', providerId);
     
     if (relationshipError) {
@@ -186,31 +193,43 @@ export async function getCommunityServicesForProvider(providerId: string): Promi
     }
     
     if (!relationshipData || relationshipData.length === 0) {
-      throw new Error('No relationships found');
+      // Try fallback to old method if no relationships found
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('community_services')
+        .select('*, category:categories(name_de, name_en)')
+        .eq('provider_id', providerId)
+        .eq('review_status', 'approved')
+        .order('community_service_name')
+        .returns<CommunityService[]>();
+      
+      if (fallbackError) {
+        console.error('Error fetching community services (fallback):', fallbackError);
+        return [];
+      }
+      
+      return Array.isArray(fallbackData) ? fallbackData : [];
     }
     
-    // Now get the community services for those IDs
-    const communityServiceIds = relationshipData.map(r => r.community_service_id);
+    // Extract community services from relationship data and filter by review_status
+    // Handle both array and single object cases from Supabase nested select
+    const communityServices = relationshipData
+      .map((rel: { community_services: CommunityService | CommunityService[] | null }) => {
+        const cs = rel.community_services;
+        // If it's an array, take the first element; otherwise return as-is
+        return Array.isArray(cs) ? cs[0] : cs;
+      })
+      .filter((cs: CommunityService | null | undefined): cs is CommunityService => 
+        cs !== null && cs !== undefined && cs.review_status === 'approved'
+      )
+      .sort((a: CommunityService, b: CommunityService) => 
+        a.community_service_name.localeCompare(b.community_service_name)
+      );
     
-    const { data: communityServicesData, error: communityServicesError } = await supabase
-      .from('community_services')
-      .select('*, category:categories(name_de, name_en)')
-      .in('community_service_id', communityServiceIds)
-      .eq('review_status', 'approved')
-      .order('community_service_name');
+    return communityServices;
     
-    if (communityServicesError) {
-      throw communityServicesError;
-    }
-    
-    if (communityServicesData && communityServicesData.length > 0) {
-      return communityServicesData;
-    }
-    
-    throw new Error('No community services found');
-    
-  } catch {
+  } catch (error) {
     // Fallback to old method if new relationship doesn't exist yet
+    console.error('Error fetching community services, trying fallback:', error);
     const { data: fallbackData, error: fallbackError } = await supabase
       .from('community_services')
       .select('*, category:categories(name_de, name_en)')
@@ -220,7 +239,7 @@ export async function getCommunityServicesForProvider(providerId: string): Promi
       .returns<CommunityService[]>();
     
     if (fallbackError) {
-      console.error('Error fetching community services:', fallbackError);
+      console.error('Error fetching community services (fallback):', fallbackError);
       return [];
     }
     

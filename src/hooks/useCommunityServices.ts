@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCommunityServicesForProvider, getCommunityServices, getCommunityServicesByCategory, type CommunityService } from '@/services/communityServices';
 
 // Hook for getting community services for a specific provider
-export function useCommunityServicesForProvider(providerId: string) {
+export function useCommunityServicesForProvider(providerId: string, initialData?: CommunityService[]) {
   return useQuery<CommunityService[], Error>({
     queryKey: ['community-services', 'provider', providerId],
     queryFn: () => getCommunityServicesForProvider(providerId),
@@ -15,6 +15,8 @@ export function useCommunityServicesForProvider(providerId: string) {
     retry: 1, // Only retry once on failure
     retryOnMount: false, // Don't retry on mount
     placeholderData: (previousData) => previousData, // Show cached data while refetching
+    initialData: initialData ?? undefined, // Use SSR data if available
+    initialDataUpdatedAt: initialData ? Date.now() : undefined, // Mark SSR data as fresh
   });
 }
 

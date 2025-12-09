@@ -17,19 +17,21 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import { useQuery } from '@tanstack/react-query';
 import type { Provider } from '@/services/providers';
-import { getCommunityServicesForProvider } from '@/services/communityServices';
+import { getCommunityServicesForProvider, type CommunityService } from '@/services/communityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 interface ProviderDetailModalProps {
   provider: Provider;
   onClose: () => void;
   onBookmarkChange?: (providerId: string, isBookmarked: boolean) => void;
+  initialCommunityServices?: CommunityService[];
 }
 
 export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   provider,
   onClose,
   onBookmarkChange,
+  initialCommunityServices,
 }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -161,6 +163,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   }, [user, bookmarkedProviderIds, provider.provider_id]);
 
   // Use React Query for community services (cached, non-blocking)
+  // Use prefetched data from server to avoid client-side waterfall
   const { data: communityServices = [] } = useQuery({
     queryKey: ['community-services', 'provider', provider.provider_id],
     queryFn: () => getCommunityServicesForProvider(provider.provider_id),
@@ -169,6 +172,8 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     placeholderData: (previousData) => previousData, // Show cached data immediately
+    initialData: initialCommunityServices ?? undefined, // Use SSR data if available
+    initialDataUpdatedAt: initialCommunityServices ? Date.now() : undefined, // Mark SSR data as fresh
   });
 
   // Keyboard navigation
