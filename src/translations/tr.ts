@@ -28,7 +28,8 @@ export const tr = {
     login: "Giriş Yap",
     register: "Kayıt Ol",
     about: "Hakkında",
-    contact: "İletişim"
+    contact: "İletişim",
+    create: "Oluştur"
   },
   auth: {
     login: "Giriş Yap",

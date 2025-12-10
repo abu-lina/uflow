@@ -29,7 +29,8 @@ export const en = {
     login: "Login",
     register: "Register",
     about: "About",
-    contact: "Contact"
+    contact: "Contact",
+    create: "Create"
   },
   auth: {
     login: "Login",

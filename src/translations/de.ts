@@ -29,7 +29,8 @@ export const de = {
     login: "Anmelden",
     register: "Registrieren",
     about: "Über uns",
-    contact: "Kontakt"
+    contact: "Kontakt",
+    create: "Erstellen"
   },
   auth: {
     login: "Anmelden",

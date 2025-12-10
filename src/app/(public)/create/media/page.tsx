@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { toast } from 'sonner';
 import { FooterAction } from '@/components/ui/FooterAction';
@@ -14,9 +15,11 @@ import { FooterAction } from '@/components/ui/FooterAction';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
 import { useAuth } from '@/providers/auth-provider';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { supabase } from '@/lib/supabase/client';
 import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 export default function MediaUploadPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +29,10 @@ export default function MediaUploadPage() {
   const { formData, clearFormData, isLoading } = useFormData();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const isMobile = useIsSmallMobile();
+
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   // Steps with translations
   const STEPS = [
@@ -227,14 +234,20 @@ export default function MediaUploadPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
         title={t('create.media.title')}
         variant="back-and-title"
         onBack="/create/contact"
       />
 
-      <PageContent maxWidth="full">
+      <PageContent 
+        className={cn(
+          !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+        )}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
         <div className="flex w-full flex-1 flex-col gap-8">
           {/* Step Indicator */}
           <div className="mb-6">
@@ -306,6 +319,6 @@ export default function MediaUploadPage() {
           variant: 'primary',
         }}
       />
-    </ScrollablePageLayout>
+    </Layout>
   );
 }

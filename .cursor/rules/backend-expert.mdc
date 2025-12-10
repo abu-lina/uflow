@@ -59,9 +59,12 @@ When reviewing tasks, check for:
 - ❌ Missing server-side validation
 - ❌ N+1 query problems
 - ❌ Missing database indexes
+- ❌ Using ILIKE for search queries (use tsvector instead)
+- ❌ Adding Redis/Elasticsearch prematurely (<5,000 DAU)
 - ❌ Exposed API keys or secrets
 - ❌ No error handling
 - ❌ Missing rate limiting on public endpoints
+- ❌ Not using Postgres native features (tsvector, materialized views)
 
 ## Standards
 
@@ -116,6 +119,8 @@ try {
 - Use filters to limit results
 - Use pagination for large datasets
 - Avoid N+1 queries (use joins or batch queries)
+- Use `EXPLAIN ANALYZE` to identify slow queries
+- Consider materialized views for expensive aggregations
 
 #### Example: Optimized Query
 ```typescript
@@ -127,19 +132,44 @@ const { data } = await supabase
   .limit(10);
 ```
 
+#### Example: Full-Text Search (Preferred)
+```typescript
+// ✅ Good: Use Postgres full-text search with tsvector
+const { data, error } = await supabase.rpc('search_offers', {
+  search_query: 'search term',
+  limit_count: 100,
+  offset_count: 0,
+});
+
+// ❌ Bad: Using ILIKE for search (slow, no index usage)
+const { data } = await supabase
+  .from('offers')
+  .select('*')
+  .ilike('name_de', `%${query}%`);
+```
+
 ### Performance
 
 #### Caching Strategy
-- Cache static data (React Query)
-- Cache API responses when appropriate
-- Use ISR for static pages
-- Consider CDN for static assets
+- **Client-side**: React Query for API responses (5min stale, 30min GC)
+- **Service Worker**: PWA caching for offline support
+- **CDN**: Cloudflare for static assets
+- **Database**: Materialized views for expensive aggregations
+- **Avoid Redis** until scaling to multiple servers (>5,000 DAU)
 
 #### Database Indexing
 - Index foreign keys
 - Index frequently filtered columns
 - Index columns used in WHERE clauses
 - Index columns used in ORDER BY
+- **Full-text search**: Use GIN indexes with `tsvector` for search columns
+
+#### Search Implementation
+- **Use Postgres `tsvector` with GIN indexes** for all search functionality
+- **Avoid ILIKE** for search queries - use database functions with `ts_rank` for relevance
+- **Language-aware**: Use German/English text search configurations
+- **Performance**: GIN indexes provide 10-100x faster searches than sequential scans
+- **Example**: Use `search_offers()`, `search_needs()`, `search_providers_enhanced()` RPC functions
 
 ### Architecture
 
@@ -250,16 +280,43 @@ export async function POST(request: Request) {
 
 ### Database Migration
 ```sql
--- ✅ Good: Migration with indexes
+-- ✅ Good: Migration with indexes and full-text search
 CREATE TABLE IF NOT EXISTS providers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   city TEXT NOT NULL,
+  description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Standard indexes
 CREATE INDEX IF NOT EXISTS idx_providers_city ON providers(city);
 CREATE INDEX IF NOT EXISTS idx_providers_created_at ON providers(created_at);
+
+-- Full-text search indexes (GIN indexes for fast search)
+CREATE INDEX IF NOT EXISTS idx_providers_name_search 
+  ON providers USING gin(to_tsvector('german', name));
+CREATE INDEX IF NOT EXISTS idx_providers_description_search 
+  ON providers USING gin(to_tsvector('german', description));
+
+-- Full-text search function with ranking
+CREATE OR REPLACE FUNCTION search_providers(search_query TEXT)
+RETURNS TABLE (id UUID, name TEXT, rank REAL) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    p.id,
+    p.name,
+    ts_rank(
+      to_tsvector('german', p.name || ' ' || COALESCE(p.description, '')),
+      plainto_tsquery('german', search_query)
+    ) as rank
+  FROM providers p
+  WHERE to_tsvector('german', p.name || ' ' || COALESCE(p.description, '')) 
+    @@ plainto_tsquery('german', search_query)
+  ORDER BY rank DESC;
+END;
+$$ LANGUAGE plpgsql;
 ```
 
 ## Checklist for New Features
@@ -267,10 +324,12 @@ CREATE INDEX IF NOT EXISTS idx_providers_created_at ON providers(created_at);
 - [ ] What API endpoints are needed?
 - [ ] What is the request/response structure?
 - [ ] Are database schema changes needed?
-- [ ] What indexes are required?
+- [ ] What indexes are required? (including full-text search indexes if search is needed)
+- [ ] Are search queries using tsvector (not ILIKE)?
 - [ ] What validation is needed (server-side)?
 - [ ] What error handling is needed?
-- [ ] Is caching needed?
+- [ ] Is caching needed? (React Query, materialized views, or Redis?)
 - [ ] Is rate limiting needed?
 - [ ] What migrations are required?
-- [ ] Are queries optimized?
+- [ ] Are queries optimized? (use EXPLAIN ANALYZE)
+- [ ] Are expensive aggregations candidates for materialized views?

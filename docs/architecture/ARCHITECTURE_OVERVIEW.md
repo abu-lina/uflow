@@ -259,14 +259,23 @@ flowchart TB
 - **Features**:
   - Relational data model
   - Row Level Security (RLS)
-  - Full-text search
+  - Full-text search with `tsvector` and GIN indexes
+  - Semantic search with `pgvector` (when needed)
   - JSON/JSONB support
   - Array operations
   - Triggers and functions
+  - Materialized views for expensive aggregations
 - **Performance**:
-  - Indexed queries
-  - Connection pooling
-  - Query optimization
+  - GIN indexes for full-text search (10-100x faster than ILIKE)
+  - Indexed queries with proper query planning
+  - Connection pooling via Supabase
+  - Query optimization with `EXPLAIN ANALYZE`
+  - Materialized views for pre-computed aggregations
+- **Search Strategy**:
+  - Use Postgres `tsvector` with `ts_rank` for relevance ranking
+  - Language-aware stemming (German/English)
+  - Avoid ILIKE for search queries (use full-text search functions)
+  - Consider `pgvector` for semantic search only if needed
 - **Security**: RLS policies for data access control
 - **Backup Strategy**: See [Database Backup & Disaster Recovery](#database-backup--disaster-recovery) section
 - **Migrations**: See [Database Migrations](#database-migrations) section
@@ -433,10 +442,30 @@ flowchart TB
 
 ### Database Optimization
 
-- Indexed queries
-- Connection pooling
-- Query optimization
-- Efficient data models
+#### Full-Text Search
+- **Use Postgres `tsvector` with GIN indexes** for all search functionality
+- **Avoid ILIKE** for search queries - use database functions with `ts_rank` for relevance
+- **Language-aware**: Use German/English text search configurations
+- **Performance**: GIN indexes provide 10-100x faster searches than sequential scans
+
+#### Query Optimization
+- Indexed queries with proper query planning
+- Use `EXPLAIN ANALYZE` to identify slow queries
+- Connection pooling via Supabase
+- Efficient data models with proper relationships
+
+#### Caching Strategy
+- **Materialized views** for expensive aggregations (dashboard stats, counts by category)
+- **React Query** for client-side caching (5min stale, 30min GC)
+- **Service Worker** for offline caching (PWA)
+- **CDN** for static assets (Cloudflare)
+- **No Redis needed** until scaling to multiple servers (>5,000 DAU)
+
+#### Background Jobs
+- Use a **jobs table pattern** in Postgres for background processing
+- Simple table with status, payload, timestamps
+- Cron job or Edge Function to process pending jobs
+- Only add dedicated queue service (SQS/RabbitMQ) if high-volume, mission-critical
 
 ## Scalability Considerations
 
@@ -494,15 +523,19 @@ Monitor these metrics to determine when to scale:
 - **Cost**: Additional Supabase costs for replicas
 
 #### 4. Caching Layer
-- **Redis**: For session storage, rate limiting, query caching
-- **Implementation**: 
+- **Current**: In-memory rate limiting, React Query, Service Worker, CDN
+- **Materialized Views**: Use for expensive aggregations (dashboard stats)
+- **Redis**: Only consider when:
+  - Scaling to multiple servers (need shared state)
+  - Exceeding 5,000+ DAU
+  - Need distributed session storage
+- **Implementation** (if needed): 
   - Redis on separate Hetzner server (€4/month)
   - Or managed Redis (Upstash, Redis Cloud)
-- **Benefits**: 
-  - Faster response times
-  - Reduced database load
-  - Better rate limiting accuracy
-- **When**: High read traffic, need faster response times
+- **When NOT to add**: 
+  - Single server setup (<5,000 DAU)
+  - Can use Postgres materialized views instead
+  - In-memory caching is sufficient
 
 ### Cost Projections
 
@@ -903,20 +936,30 @@ Docker Container Environment Variables (all secrets)
 
 ## Technology Stack Summary
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| **Frontend** | Next.js | 15.5.2 |
-| **Language** | TypeScript | 5.5.4 |
-| **Styling** | Tailwind CSS | 3.4.1 |
-| **Backend** | Supabase | Latest |
-| **Database** | PostgreSQL | (via Supabase) |
-| **Hosting** | Hetzner Cloud | Ubuntu 22.04 |
-| **Container** | Docker | Node 20 Alpine |
-| **Web Server** | Nginx | Latest |
-| **CDN/Security** | Cloudflare | Latest |
-| **CI/CD** | GitHub Actions | Latest |
-| **Email** | Resend | Latest |
-| **Testing** | Vitest | 3.1.2 |
+| Layer | Technology | Version | Notes |
+|-------|-----------|---------|-------|
+| **Frontend** | Next.js | 15.5.2 | App Router, Server Components |
+| **Language** | TypeScript | 5.5.4 | Full type safety |
+| **Styling** | Tailwind CSS | 3.4.1 | Utility-first CSS |
+| **Backend** | Supabase | Latest | Auth, Database, Storage, Functions |
+| **Database** | PostgreSQL | (via Supabase) | Full-text search (tsvector), Materialized views |
+| **Search** | Postgres tsvector | Native | GIN indexes, ts_rank for relevance |
+| **Hosting** | Hetzner Cloud | Ubuntu 22.04 | EU-based, cost-effective |
+| **Container** | Docker | Node 20 Alpine | Standalone builds |
+| **Web Server** | Nginx | Latest | Reverse proxy, SSL termination |
+| **CDN/Security** | Cloudflare | Latest | DDoS protection, edge caching |
+| **CI/CD** | GitHub Actions | Latest | Automated deployment |
+| **Email** | Resend | Latest | Transactional emails |
+| **Testing** | Vitest | 3.1.2 | Unit and integration tests |
+
+### Stack Philosophy
+
+**"Start with Postgres. It can probably do more than you think."**
+
+- ✅ **Use native Postgres features**: Full-text search (tsvector), materialized views, jobs table pattern
+- ❌ **Avoid premature complexity**: No Redis, Elasticsearch, or separate queue services until actually needed
+- ✅ **Keep it simple**: Next.js + Supabase + Hetzner handles most use cases
+- ✅ **Scale when needed**: Add services only when you hit actual bottlenecks (>5,000 DAU, multiple servers)
 
 ## Conclusion
 
@@ -924,13 +967,21 @@ This architecture provides:
 
 - ✅ **Scalability**: Ready for growth with Docker containerization
 - ✅ **Security**: Multiple layers of protection
-- ✅ **Performance**: CDN, caching, and optimization strategies
+- ✅ **Performance**: CDN, caching, Postgres full-text search, and optimization strategies
 - ✅ **Reliability**: Health checks, automated deployments
-- ✅ **Cost-Effective**: Hetzner hosting at ~€4/month
+- ✅ **Cost-Effective**: Hetzner hosting at ~€4/month, no unnecessary services
 - ✅ **EU Compliance**: GDPR-friendly infrastructure
 - ✅ **Developer Experience**: Modern stack, TypeScript, automated workflows
+- ✅ **Simplicity**: Postgres-first approach, avoid premature complexity
 
-The architecture follows industry best practices and is designed for production use with room for future scaling.
+### Key Principles
+
+1. **Postgres-First**: Use native Postgres features (tsvector, materialized views) before adding external services
+2. **Simplicity**: Keep the stack minimal - Next.js + Supabase + Hetzner handles most use cases
+3. **Scale When Needed**: Only add Redis, Elasticsearch, or queue services when hitting actual bottlenecks
+4. **Cost-Effective**: Avoid paying for services you don't need (<€100/month total for 2,000+ DAU)
+
+The architecture follows proven best practices for solo developers and small teams, emphasizing simplicity and leveraging Postgres capabilities over adding complexity.
 
 ## Project Folder Structure
 

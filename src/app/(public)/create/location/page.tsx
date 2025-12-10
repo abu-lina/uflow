@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { AddressAutocomplete, type AddressComponents } from '@/components/ui/AddressAutocomplete';
 import { validateAddress, validateZipCode } from '@/utils/addressValidation';
@@ -14,11 +15,11 @@ import { FooterAction } from '@/components/ui/FooterAction';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 export default function LocationPage() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [checked, setChecked] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
     street?: string;
     zip?: string;
@@ -29,6 +30,7 @@ export default function LocationPage() {
   const { user, isLoading } = useAuth();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
+  const isMobile = useIsSmallMobile();
   
   // Show manual fields if user has already entered data manually, or if they want to edit
   // Must be initialized AFTER formData is available
@@ -58,16 +60,8 @@ export default function LocationPage() {
     },
   ];
 
-  // Mobile detection
-  useEffect(() => {
-    const check = () => {
-      setIsMobile(window.innerWidth < 640);
-      setChecked(true);
-    };
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
 
 
@@ -99,29 +93,25 @@ export default function LocationPage() {
   }, [updateFormData]); // Only updateFormData is stable
 
   // Loading state
-  if (!checked || isLoading) {
+  if (isLoading) {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
-  }
-
-  // Desktop redirect
-  if (!isMobile) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <span className="text-lg text-gray-500">
-          {t('create.location.desktopMessage')}
-        </span>
-      </div>
-    );
   }
 
   // Authentication check - redirect to login with return URL
   if (!user) {
     const returnUrl = encodeURIComponent('/create/location');
     return (
-      <ScrollablePageLayout>
+      <Layout>
         <PageHeader title={t('create.location.title')} variant="title-only" />
 
-        <PageContent className="flex flex-1 flex-col items-center justify-center">
+        <PageContent 
+          className={cn(
+            'flex flex-1 flex-col items-center justify-center',
+            !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+          )}
+          maxWidth="full"
+          paddingX={isMobile ? 'px-6' : 'px-0'}
+        >
           <span className="text-center text-lg text-content-heading mb-6">
             {t('create.location.loginRequired')}
           </span>
@@ -132,7 +122,7 @@ export default function LocationPage() {
             {t('create.location.goToLogin')}
           </button>
         </PageContent>
-      </ScrollablePageLayout>
+      </Layout>
     );
   }
 
@@ -212,14 +202,22 @@ export default function LocationPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
         title={t('create.location.title')}
         variant="back-and-title"
         onBack="/create/basics"
       />
 
-      <PageContent hasFooter className="flex flex-col gap-6">
+      <PageContent 
+        hasFooter 
+        className={cn(
+          'flex flex-col gap-6',
+          !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+        )}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
           {/* Step Indicator */}
           <div className="mb-6">
             <StepIndicator currentStep={1} steps={STEPS} />
@@ -444,6 +442,6 @@ export default function LocationPage() {
           variant: 'primary',
         }}
       />
-    </ScrollablePageLayout>
+    </Layout>
   );
 }

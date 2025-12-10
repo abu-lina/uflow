@@ -4,11 +4,13 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getFeatureFlag } from '@/config/feature-flags';
+import { cn } from '@/lib/utils';
 
 export default function CreateProviderPage() {
   const router = useRouter();
@@ -30,35 +32,32 @@ export default function CreateProviderPage() {
     router.push('/create-quick');
   };
 
-  if (!isMobile) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-lg text-gray-500">
-          {t('create.basics.desktopMessage')}
-        </p>
-      </div>
-    );
-  }
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader 
         title={t('create.title')} 
         variant="title-only"
       />
       
       <PageContent 
-        className="flex flex-col items-center gap-8"
-        maxWidth="full"
+        className={cn(
+          'flex flex-col items-center gap-8',
+          !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+        )}
+        maxWidth={isMobile ? 'full' : 'full'}
+        paddingX={isMobile ? 'px-6' : 'px-0'}
       >
         <div className="flex flex-col items-center gap-6 sm:gap-8 w-full">
-          <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left mb-6">
+          <p className="font-normal text-base md:text-lg leading-[19px] md:leading-6 text-[#7A7A7A] text-left mb-6 max-w-2xl">
             {t('create.description')}
           </p>
         </div>
 
-        {/* Quick Create Option - Feature Flagged */}
-        {isQuickImportEnabled && (
+        {/* Quick Create Option - Feature Flagged, Mobile Only */}
+        {isQuickImportEnabled && isMobile && (
           <div className="w-full rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
             <div className="flex items-start gap-3 mb-3">
               <div className="rounded-full bg-primary/20 p-2">
@@ -82,7 +81,9 @@ export default function CreateProviderPage() {
           </div>
         )}
         
-        <div className="flex flex-col gap-3 w-full">
+        <div className={cn(
+          'flex flex-col w-full gap-3 md:gap-6'
+        )}>
           <ProviderOptionCard
             buttonText={t('create.ownProvider.buttonText')}
             description={t('create.ownProvider.description')}
@@ -100,6 +101,6 @@ export default function CreateProviderPage() {
           />
         </div>
       </PageContent>
-    </ScrollablePageLayout>
+    </Layout>
   );
 }

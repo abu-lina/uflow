@@ -86,7 +86,7 @@ export function PageContent({
   asMain = true,
 }: PageContentProps) {
   const maxWidthClass = maxWidth === 'full' 
-    ? 'max-w-full' 
+    ? '' // Don't apply max-w-full, let className handle it
     : maxWidth === '361px'
     ? 'max-w-[361px]'
     : maxWidth === '480px'
@@ -103,13 +103,23 @@ export function PageContent({
     <Component
       className={cn(
         // Top padding: safe area + header height (88px)
+        // Desktop: 48px gap between Header (80px) and content = 128px total (pt-32)
         'pt-[calc(env(safe-area-inset-top)+88px)]',
+        'md:pt-[calc(env(safe-area-inset-top)+128px)]',
         paddingX,
         bottomPadding,
-        className
+        // Desktop: vertically center content when maxWidth is full
+        maxWidth === 'full' && 'md:flex md:items-center md:justify-center md:h-full',
+        // Only apply className to main when maxWidth is not full
+        maxWidth !== 'full' && className
       )}
     >
-      <div className={cn('mx-auto', maxWidthClass)}>
+      <div className={cn(
+        maxWidth !== 'full' && 'mx-auto',
+        maxWidthClass,
+        // When maxWidth is full, apply className to inner div for proper centering
+        maxWidth === 'full' && className
+      )}>
         {children}
       </div>
     </Component>

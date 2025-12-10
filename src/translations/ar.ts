@@ -28,7 +28,8 @@ export const ar = {
     login: "تسجيل الدخول",
     register: "التسجيل",
     about: "حول",
-    contact: "اتصل بنا"
+    contact: "اتصل بنا",
+    create: "إنشاء"
   },
   auth: {
     login: "تسجيل الدخول",

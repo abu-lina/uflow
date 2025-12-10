@@ -73,8 +73,44 @@ export async function searchCommunityServices(
     .eq('review_status', 'approved'); // Only show approved services
 
   // Apply search query filter if specified (before pagination for better query optimization)
+  // Use full-text search via RPC function for better performance with tsvector indexes
   if (query && query.trim()) {
-    req = req.or(`community_service_name.ilike.%${query.trim()}%,community_service_description.ilike.%${query.trim()}%`);
+    try {
+      const { data: searchResults, error: rpcError } = await supabase.rpc('search_community_services_enhanced', {
+        search_query: query.trim(),
+        category_filter: category && category !== 'All' && category !== 'Alle' ? category : null,
+        city_filter: location && location !== 'Everywhere' && location !== 'Überall' ? location : null,
+        limit_count: limit || 1000,
+        offset_count: offset || 0,
+      });
+
+      // If no error and we have results, use the full-text search results
+      if (!rpcError && searchResults && Array.isArray(searchResults) && searchResults.length > 0) {
+        // Use the IDs from full-text search results
+        const serviceIds = searchResults.map((s: { community_service_id: string }) => s.community_service_id);
+        req = req.in('community_service_id', serviceIds);
+      } else {
+        // Check if it's a function not found error
+        const isFunctionNotFound = 
+          rpcError?.code === '42883' || 
+          rpcError?.message?.includes('does not exist') ||
+          rpcError?.message?.includes('function') && rpcError?.message?.includes('not found');
+
+        if (isFunctionNotFound) {
+          // Silently fallback - this is expected during migration
+          console.debug('Full-text search function not available, using ILIKE fallback');
+        } else if (rpcError) {
+          // Log other errors but still fallback
+          console.warn('Error using full-text search, falling back to ILIKE:', rpcError);
+        }
+        // Fallback to ILIKE if RPC fails or returns no results
+        req = req.or(`community_service_name.ilike.%${query.trim()}%,community_service_description.ilike.%${query.trim()}%`);
+      }
+    } catch (error) {
+      // Catch any exceptions (e.g., function doesn't exist)
+      console.debug('Full-text search not available, using ILIKE fallback:', error);
+      req = req.or(`community_service_name.ilike.%${query.trim()}%,community_service_description.ilike.%${query.trim()}%`);
+    }
   }
 
   // Apply location filter if specified

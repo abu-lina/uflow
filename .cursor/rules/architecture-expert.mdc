@@ -71,6 +71,9 @@ When reviewing tasks, check for:
 - ❌ Missing type safety
 - ❌ Poor scalability considerations
 - ❌ Missing deployment documentation
+- ❌ Adding Redis/Elasticsearch/queue services prematurely (<5,000 DAU)
+- ❌ Not leveraging Postgres native features (tsvector, materialized views)
+- ❌ Using ILIKE for search instead of full-text search
 
 ## Standards
 
@@ -210,6 +213,21 @@ const apiKey = process.env.NEXT_PUBLIC_API_KEY; // Exposed to client
 
 ### Supabase Architecture
 
+#### Stack Philosophy
+**"Start with Postgres. It can probably do more than you think."**
+
+- ✅ **Use native Postgres features**: Full-text search (tsvector), materialized views, jobs table pattern
+- ❌ **Avoid premature complexity**: No Redis, Elasticsearch, or separate queue services until actually needed
+- ✅ **Keep it simple**: Next.js + Supabase + Hetzner handles most use cases
+- ✅ **Scale when needed**: Add services only when hitting actual bottlenecks (>5,000 DAU, multiple servers)
+
+#### Database-First Approach
+- Use Postgres `tsvector` with GIN indexes for search (10-100x faster than ILIKE)
+- Use materialized views for expensive aggregations (dashboard stats)
+- Use jobs table pattern for background processing (simple, no external service needed)
+- Only add Redis when scaling to multiple servers (shared state needed)
+- Only add Elasticsearch if Postgres full-text search isn't sufficient (rare)
+
 #### Authentication Pattern
 ```typescript
 // ✅ Good: Auth provider with context
@@ -310,10 +328,13 @@ export async function GET(
 
 #### Performance Optimization
 - Use Next.js Image optimization
-- Implement caching strategies
-- Use CDN for static assets (if applicable)
-- Optimize database queries
+- Implement caching strategies (React Query, Service Worker, CDN)
+- Use CDN for static assets (Cloudflare)
+- Optimize database queries with proper indexes
+- Use Postgres full-text search (tsvector) instead of ILIKE
+- Consider materialized views for expensive aggregations
 - Monitor performance metrics
+- **Avoid premature optimization**: Don't add Redis/Elasticsearch until actually needed (>5,000 DAU)
 
 ### Naming Conventions
 
@@ -443,8 +464,11 @@ CREATE POLICY "Users can view providers"
 - [ ] What environment variables are needed?
 - [ ] Are Supabase RLS policies required?
 - [ ] What database schema changes are needed?
+- [ ] Are full-text search indexes needed? (use tsvector, not ILIKE)
 - [ ] Are types properly defined?
 - [ ] Is the code organized for maintainability?
 - [ ] Are deployment considerations documented?
 - [ ] Is the feature scalable?
 - [ ] Are monitoring and logging in place?
+- [ ] Are we using Postgres native features before adding external services?
+- [ ] Is the solution simple enough? (avoid premature complexity)

@@ -354,7 +354,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
   }
 
   return (
-    <div className="flex w-full max-w-[361px] flex-1 flex-col">
+    <div className="flex w-full flex-1 flex-col">
       {/* Step Indicator */}
       <div className="mb-12">
       <StepIndicator currentStep={currentStep} steps={STEPS} />

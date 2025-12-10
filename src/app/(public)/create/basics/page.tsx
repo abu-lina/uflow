@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
+import { UnifiedProviderCreateForm } from '@/features/providers/UnifiedProviderCreateForm';
 import { Button } from '@/components/ui/Button';
 import { IconWithTitle } from '@/components/ui/IconWithTitle';
 import { Icon } from '@/components/ui/Icon';
@@ -16,6 +18,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 export default function CreateBasicsPage() {
   const router = useRouter();
@@ -38,20 +41,12 @@ export default function CreateBasicsPage() {
   }, [setCreationMode]);
 
 
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
+
   // Loading state
   if (isLoading) {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
-  }
-
-  // Desktop redirect
-  if (!isMobile) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <span className="text-lg text-gray-500">
-          {t('create.basics.desktopMessage')}
-        </span>
-      </div>
-    );
   }
 
   // Authentication check - redirect to login with return URL
@@ -59,12 +54,19 @@ export default function CreateBasicsPage() {
     const returnUrl = encodeURIComponent('/create/basics');
     
     return (
-      <ScrollablePageLayout>
+      <Layout>
         <PageHeader
           title={t('create.basics.title')}
         />
 
-        <PageContent className="flex items-center justify-center min-h-[60vh]" maxWidth="full">
+        <PageContent 
+          className={cn(
+            'flex items-center justify-center min-h-[60vh]',
+            !isMobile && 'max-w-[960px] mx-auto px-6 md:px-8'
+          )}
+          maxWidth="full"
+          paddingX={isMobile ? 'px-6' : 'px-0'}
+        >
           <div className="flex w-full flex-col">
             <TitleSection className="mb-10">
               <IconWithTitle
@@ -92,26 +94,36 @@ export default function CreateBasicsPage() {
             </ContentSection>
           </div>
         </PageContent>
-      </ScrollablePageLayout>
+      </Layout>
     );
   }
 
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
         title={t('create.basics.title')}
         variant="back-and-title"
         onBack="/create"
       />
 
-      <PageContent maxWidth="full">
-        <ProviderCreateForm 
-          onNextStep={() => {
-            // Navigate to location page
-            router.push('/create/location');
-          }}
-        />
+      <PageContent 
+        className={cn(
+          !isMobile && 'max-w-[960px] mx-auto px-6 md:px-8'
+        )}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
+        {isMobile ? (
+          <ProviderCreateForm 
+            onNextStep={() => {
+              // Navigate to location page
+              router.push('/create/location');
+            }}
+          />
+        ) : (
+          <UnifiedProviderCreateForm />
+        )}
       </PageContent>
-    </ScrollablePageLayout>
+    </Layout>
   );
 }

@@ -36,10 +36,18 @@ npm run dev
 
 ## 🛠️ Tech Stack
 - **Frontend:** Next.js 15, TypeScript, Tailwind CSS
-- **Backend:** Supabase
-- **Hosting:** Hetzner Cloud
+- **Backend:** Supabase (Auth, Database, Storage, Functions)
+- **Database:** PostgreSQL (Supabase) with full-text search (tsvector)
+- **Search:** Postgres native full-text search with GIN indexes
+- **Hosting:** Hetzner Cloud (EU-based, cost-effective)
 - **Deployment:** GitHub Actions + Docker
-- **Database:** PostgreSQL (Supabase)
+- **CDN/Security:** Cloudflare
+- **Email:** Resend
+
+### Stack Philosophy
+**"Start with Postgres. It can probably do more than you think."**
+
+We follow a Postgres-first approach, using native features (full-text search, materialized views) before adding external services. This keeps the stack simple, cost-effective, and maintainable. See [Architecture Overview](docs/architecture/ARCHITECTURE_OVERVIEW.md) for details.
 
 ## 📁 Project Structure
 - `src/app/` - Next.js App Router pages

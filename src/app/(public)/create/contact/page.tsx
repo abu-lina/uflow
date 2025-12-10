@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { StepIndicator } from '@/components/shared/StepIndicator';
@@ -11,6 +12,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 export default function ContactPage() {
   const router = useRouter();
@@ -43,30 +45,29 @@ export default function ContactPage() {
 
 
 
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
+
   // Loading state
   if (isLoading) {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
-  }
-
-  // Desktop redirect
-  if (!isMobile) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <span className="text-lg text-gray-500">
-          {t('create.contact.desktopMessage')}
-        </span>
-      </div>
-    );
   }
 
   // Authentication check - redirect to login with return URL
   if (!user) {
     const returnUrl = encodeURIComponent('/create/contact');
     return (
-      <ScrollablePageLayout>
+      <Layout>
         <PageHeader title={t('create.contact.title')} variant="title-only" />
 
-        <PageContent className="flex flex-1 flex-col items-center justify-center">
+        <PageContent 
+          className={cn(
+            'flex flex-1 flex-col items-center justify-center',
+            !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+          )}
+          maxWidth="full"
+          paddingX={isMobile ? 'px-6' : 'px-0'}
+        >
           <span className="text-center text-lg text-content-heading mb-6">
             {t('create.contact.loginRequired')}
           </span>
@@ -77,7 +78,7 @@ export default function ContactPage() {
             {t('create.contact.goToLogin')}
           </button>
         </PageContent>
-      </ScrollablePageLayout>
+      </Layout>
     );
   }
 
@@ -86,14 +87,22 @@ export default function ContactPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
         title={t('create.contact.title')}
         variant="back-and-title"
         onBack="/create/location"
       />
 
-      <PageContent hasFooter className="flex flex-col gap-6">
+      <PageContent 
+        hasFooter 
+        className={cn(
+          'flex flex-col gap-6',
+          !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+        )}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
         {/* Step Indicator */}
         <div className="mb-6">
           <StepIndicator currentStep={2} steps={STEPS} />
@@ -107,9 +116,15 @@ export default function ContactPage() {
         </div>
 
         {/* Form Fields */}
-        <div className="flex flex-col gap-4 w-full">
+        <div className={cn(
+          'flex w-full gap-4',
+          isMobile ? 'flex-col' : 'flex-row flex-wrap'
+        )}>
           {/* Website */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+          <div className={cn(
+            'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+            !isMobile && 'md:w-[calc(50%-8px)]'
+          )}>
             <div className="flex w-full flex-col gap-1">
               <label className="text-xs leading-[15px] text-[#999999]">
                 {t('create.contact.website')}
@@ -125,7 +140,10 @@ export default function ContactPage() {
           </div>
 
           {/* Instagram */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+          <div className={cn(
+            'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+            !isMobile && 'md:w-[calc(50%-8px)]'
+          )}>
             <div className="flex w-full flex-col gap-1">
               <label className="text-xs leading-[15px] text-[#999999]">
                 {t('create.contact.instagram')}
@@ -141,7 +159,10 @@ export default function ContactPage() {
           </div>
 
           {/* Phone */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+          <div className={cn(
+            'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+            !isMobile && 'md:w-[calc(50%-8px)]'
+          )}>
             <div className="flex w-full flex-col gap-1">
               <label className="text-xs leading-[15px] text-[#999999]">
                 {t('create.contact.phone')}
@@ -157,7 +178,10 @@ export default function ContactPage() {
           </div>
 
           {/* Email */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+          <div className={cn(
+            'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+            !isMobile && 'md:w-[calc(50%-8px)]'
+          )}>
             <div className="flex w-full flex-col gap-1">
               <label className="text-xs leading-[15px] text-[#999999]">
                 {t('create.contact.email')}
@@ -183,6 +207,6 @@ export default function ContactPage() {
           variant: 'primary',
         }}
       />
-    </ScrollablePageLayout>
+    </Layout>
   );
 }
