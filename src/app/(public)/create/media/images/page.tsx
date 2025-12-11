@@ -7,10 +7,12 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
-
-import { StepIndicator } from '@/components/shared/StepIndicator';
+import { Button } from '@/components/ui/Button';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { cn } from '@/lib/utils';
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 
@@ -19,26 +21,10 @@ export default function ImageUploadPage() {
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
+  const isMobile = useIsSmallMobile();
 
-  // Steps with translations
-  const STEPS = [
-    {
-      title: t('create.steps.basics'),
-      icon: 'mdi:information',
-    },
-    {
-      title: t('create.steps.location'),
-      icon: 'mdi:map-marker',
-    },
-    {
-      title: t('create.steps.contact'),
-      icon: 'mdi:account',
-    },
-    {
-      title: t('create.steps.media'),
-      icon: 'mdi:image-multiple',
-    },
-  ];
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   // Cleanup blob URLs when component unmounts
   useEffect(() => {
@@ -74,23 +60,51 @@ export default function ImageUploadPage() {
     router.push('/create/media');
   };
 
+  const handleBack = () => {
+    router.push('/create/basics');
+  };
+
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
+        className={cn(
+          !isMobile && 'md:top-20 md:z-[100] [&>div]:md:px-0 [&>div]:md:max-w-full'
+        )}
+        customContent={
+          !isMobile ? (
+            <div className="w-full max-w-[640px] mx-auto px-6 md:px-8 flex items-center h-header-height-mobile sm:h-header-height-tablet">
+              <button
+                aria-label="Zurück"
+                className="flex items-center justify-center w-8 h-8 -ml-1"
+                onClick={handleBack}
+              >
+                <Icon 
+                  className="w-8 h-8 text-content-heading pointer-events-none" 
+                  icon="material-symbols:chevron-left" 
+                />
+              </button>
+              <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
+                {t('create.media.uploadImages')}
+              </h1>
+            </div>
+          ) : undefined
+        }
         title={t('create.media.uploadImages')}
         variant="back-and-title"
-        onBack="/create/media"
+        onBack={isMobile ? "/create/basics" : undefined}
       />
 
-      <PageContent maxWidth="full">
-        <div className="flex w-full flex-1 flex-col gap-8">
-          {/* Step Indicator */}
-          <div className="mb-6">
-            <StepIndicator currentStep={3} steps={STEPS} />
-          </div>
-
-          {/* Image Upload Section */}
-          <div className="flex w-full flex-col gap-4">
+      <PageContent 
+        className={cn(
+          'flex flex-col gap-8',
+          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
+        )}
+        hasFooter={isMobile}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
+        {/* Image Upload Section */}
+        <div className="flex w-full flex-col gap-4">
             
             {/* Upload Button */}
             <div className="relative">
@@ -118,76 +132,92 @@ export default function ImageUploadPage() {
             </div>
           </div>
 
-          {/* Selected Images */}
-          {formData.images.length > 0 && (
-            <div className="flex w-full flex-col gap-4">
-              <h3 className="text-sm font-medium text-[#232323]">
-                {t('create.media.selectedImages')} ({formData.images.length})
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {formData.images.map((file, index) => {
-                  const imageUrl = URL.createObjectURL(file);
-                  return (
-                    <div key={index} className="relative w-full h-[160px] rounded-[12px] overflow-hidden bg-gray-100">
-                      <img
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        src={imageUrl}
-                        onError={(e) => {
-                          console.error('Error loading image preview:', e);
-                          // Fallback to a placeholder if image fails to load
-                          e.currentTarget.style.display = 'none';
-                        }}
-                        onLoad={() => {
-                          console.log('Image loaded successfully:', file.name);
-                        }}
+        {/* Selected Images */}
+        {formData.images.length > 0 && (
+          <div className="flex w-full flex-col gap-4">
+            <h3 className="text-sm font-medium text-[#232323]">
+              {t('create.media.selectedImages')} ({formData.images.length})
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {formData.images.map((file, index) => {
+                const imageUrl = URL.createObjectURL(file);
+                return (
+                  <div key={index} className="relative w-full h-[160px] rounded-[12px] overflow-hidden bg-gray-100">
+                    <img
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      src={imageUrl}
+                      onError={(e) => {
+                        console.error('Error loading image preview:', e);
+                        // Fallback to a placeholder if image fails to load
+                        e.currentTarget.style.display = 'none';
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', file.name);
+                      }}
+                    />
+                    <button
+                      className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 bg-white/80 border border-[#CDCDCD] backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+                      type="button"
+                      onClick={() => {
+                        // Clean up the blob URL to prevent memory leaks
+                        URL.revokeObjectURL(imageUrl);
+                        removeImage(index);
+                      }}
+                    >
+                      <Icon 
+                        className="w-4 h-4 text-[#232323]" 
+                        icon="material-symbols:close-rounded" 
                       />
-                      <button
-                        className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 bg-white/80 border border-[#CDCDCD] backdrop-blur-sm rounded-full hover:bg-white transition-colors"
-                        type="button"
-                        onClick={() => {
-                          // Clean up the blob URL to prevent memory leaks
-                          URL.revokeObjectURL(imageUrl);
-                          removeImage(index);
-                        }}
-                      >
-                        <Icon 
-                          className="w-4 h-4 text-[#232323]" 
-                          icon="material-symbols:close-rounded" 
-                        />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Empty State */}
-          {formData.images.length === 0 && (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4">
-              <Icon className="h-16 w-16 text-gray-300" icon="lucide:image" />
-              <div className="text-center">
-                <p className="text-sm text-gray-500 mb-2">
-                  {t('create.media.noImagesSelected')}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {t('create.media.clickToUpload')}
-                </p>
-              </div>
+        {/* Empty State */}
+        {formData.images.length === 0 && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4">
+            <Icon className="h-16 w-16 text-gray-300" icon="lucide:image" />
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-2">
+                {t('create.media.noImagesSelected')}
+              </p>
+              <p className="text-xs text-gray-400">
+                {t('create.media.clickToUpload')}
+              </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Desktop Save Button */}
+        {!isMobile && (
+          <div className="flex flex-col gap-3 pt-4">
+            <Button
+              fullWidth
+              icon="lucide:save"
+              variant="primary"
+              onClick={handleSave}
+            >
+              {t('actions.save')}
+            </Button>
+          </div>
+        )}
       </PageContent>
 
-      <FooterAction
-        actionButton={{
-          label: t('actions.save'),
-          icon: 'lucide:save',
-          onClick: handleSave,
-          variant: 'primary',
-        }}
-      />
-    </ScrollablePageLayout>
+      {/* Mobile Footer Action */}
+      {isMobile && (
+        <FooterAction
+          actionButton={{
+            label: t('actions.save'),
+            icon: 'lucide:save',
+            onClick: handleSave,
+            variant: 'primary',
+          }}
+        />
+      )}
+    </Layout>
   );
 }

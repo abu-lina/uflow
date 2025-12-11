@@ -5,15 +5,13 @@ import { Icon } from '@iconify/react';
 import { LucideHeart } from '@/components/ui/icons/LucideHeart';
 
 // Types
-export type UserTab = 'saved' | 'created' | 'recommendations' | 'create';
+export type UserTab = 'saved' | 'created' | 'recommendations' | 'create' | 'profile';
 
 export interface UserNavigationTabsProps {
   /** Currently active tab */
   activeTab: UserTab;
   /** Callback when tab changes */
   onTabChange: (tab: UserTab) => void;
-  /** Optional callback for editing profile */
-  onEditProfile?: () => void;
 }
 
 // Constants
@@ -29,7 +27,6 @@ const BUTTON_STYLES = {
 export function UserNavigationTabs({
   activeTab,
   onTabChange,
-  onEditProfile,
 }: UserNavigationTabsProps) {
   return (
     <div
@@ -106,37 +103,25 @@ export function UserNavigationTabs({
         )}
       </button>
 
-      {/* Create Provider Button */}
+      {/* Edit Profile Tab */}
       <button
-        aria-label="Neuen Provider erstellen"
-        aria-selected={activeTab === 'create'}
-        className={`${BUTTON_STYLES.base} ${activeTab === 'create' ? 'w-auto px-3' : 'w-11'} ${
-          activeTab === 'create' ? BUTTON_STYLES.active : BUTTON_STYLES.inactive
+        aria-label="Profil bearbeiten"
+        aria-selected={activeTab === 'profile'}
+        className={`${BUTTON_STYLES.base} ${activeTab === 'profile' ? 'w-auto px-3' : 'w-11'} ${
+          activeTab === 'profile' ? BUTTON_STYLES.active : BUTTON_STYLES.inactive
         }`}
         role="tab"
-        onClick={() => onTabChange('create')}
+        onClick={() => onTabChange('profile')}
       >
         <Icon
           className={`${BUTTON_STYLES.icon} ${
-            activeTab === 'create' ? 'text-white' : 'text-text-secondary'
+            activeTab === 'profile' ? 'text-white' : 'text-text-secondary'
           }`}
-          icon="ic:round-plus"
-        />
-        {activeTab === 'create' && (
-          <span className={`${BUTTON_STYLES.text} ml-1.5`}>Erstellen</span>
-        )}
-      </button>
-
-      {/* Edit Profile Button */}
-      <button
-        aria-label="Profil bearbeiten"
-        className={`${BUTTON_STYLES.base} w-11 ${BUTTON_STYLES.inactive}`}
-        onClick={onEditProfile}
-      >
-        <Icon
-          className={`${BUTTON_STYLES.icon} text-text-secondary`}
           icon="tabler:user-edit"
         />
+        {activeTab === 'profile' && (
+          <span className={`${BUTTON_STYLES.text} ml-1.5`}>Profil</span>
+        )}
       </button>
     </div>
   );

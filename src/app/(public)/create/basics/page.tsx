@@ -62,7 +62,7 @@ export default function CreateBasicsPage() {
         <PageContent 
           className={cn(
             'flex items-center justify-center min-h-[60vh]',
-            !isMobile && 'max-w-[960px] mx-auto px-6 md:px-8'
+            !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
           )}
           maxWidth="full"
           paddingX={isMobile ? 'px-6' : 'px-0'}
@@ -108,7 +108,7 @@ export default function CreateBasicsPage() {
 
       <PageContent 
         className={cn(
-          !isMobile && 'max-w-[960px] mx-auto px-6 md:px-8'
+          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
         )}
         maxWidth="full"
         paddingX={isMobile ? 'px-6' : 'px-0'}

@@ -8,8 +8,12 @@ import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { Button } from '@/components/ui/Button';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
@@ -17,24 +21,16 @@ import { getSocialProjectCategories } from '@/services/categories';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function SelectSocialCategoryPage() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [checked, setChecked] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
+  const isMobile = useIsSmallMobile();
 
-  useEffect(() => {
-    const check = () => {
-      setIsMobile(window.innerWidth < 640);
-      setChecked(true);
-    };
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   useEffect(() => {
     async function fetchCategories() {
@@ -74,24 +70,27 @@ export default function SelectSocialCategoryPage() {
     router.push('/create/media');
   };
 
-  if (!checked) {
-    return <div className="flex h-screen w-full items-center justify-center">{t('create.category.loading')}</div>;
-  }
-
+  // Desktop redirect - preserve existing behavior
   if (!isMobile) {
     router.push('/profile');
     return <div className="flex h-screen w-full items-center justify-center">{t('create.category.redirecting')}</div>;
   }
 
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
         title="Kategorie auswählen"
         variant="back-and-title"
         onBack={handleBack}
       />
 
-      <PageContent maxWidth="full">
+      <PageContent 
+        className={cn(
+          !isMobile && 'max-w-[960px] mx-auto px-6 md:px-8'
+        )}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
           
           {/* Search Input */}
@@ -145,18 +144,35 @@ export default function SelectSocialCategoryPage() {
             )}
           </div>
 
+          {/* Desktop Save Button */}
+          {!isMobile && (
+            <div className="flex flex-col gap-3 pt-4">
+              <Button
+                fullWidth
+                disabled={!formData.socialCategory}
+                icon="lucide:save"
+                variant="primary"
+                onClick={handleSave}
+              >
+                {t('actions.save')}
+              </Button>
+            </div>
+          )}
         </div>
       </PageContent>
 
-      <FooterAction
-        actionButton={{
-          label: t('actions.save'),
-          icon: 'lucide:save',
-          onClick: handleSave,
-          disabled: !formData.socialCategory,
-          variant: 'primary',
-        }}
-      />
-    </ScrollablePageLayout>
+      {/* Mobile Footer Action */}
+      {isMobile && (
+        <FooterAction
+          actionButton={{
+            label: t('actions.save'),
+            icon: 'lucide:save',
+            onClick: handleSave,
+            disabled: !formData.socialCategory,
+            variant: 'primary',
+          }}
+        />
+      )}
+    </Layout>
   );
 }

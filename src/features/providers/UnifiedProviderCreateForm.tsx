@@ -383,18 +383,24 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             <div className="flex flex-1 flex-col gap-1 items-start">
               <span className="text-xs leading-[15px] text-[#999999]">{t('create.basics.whatIOffer')}</span>
               <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
-                {formData.offers_ids.length > 0 
-                  ? formData.offers_ids.map(id => {
-                      const offer = offers.find(offer => offer.offer_id === id);
-                      return language === 'en' 
-                        ? (offer?.name_en || offer?.name_de)
-                        : (offer?.name_de || offer?.name_en);
-                    }).filter(Boolean).join(', ')
-                  : t('create.basics.selectOffers')
-                }
+                {(() => {
+                  const hasOffers = formData.offers_ids && formData.offers_ids.length > 0;
+                  if (hasOffers) {
+                    const selectedOffers = formData.offers_ids
+                      .map(id => {
+                        const offer = offers.find(offer => offer.offer_id === id);
+                        return language === 'en' 
+                          ? (offer?.name_en || offer?.name_de)
+                          : (offer?.name_de || offer?.name_en);
+                      })
+                      .filter(Boolean);
+                    return selectedOffers.length > 0 ? selectedOffers.join(', ') : t('create.basics.selectOffers');
+                  }
+                  return t('create.basics.selectOffers');
+                })()}
               </div>
             </div>
-            <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+            <Icon className="h-6 w-6 text-[#232323] flex-shrink-0" icon="material-symbols:chevron-right" />
           </button>
 
           {/* Needs */}
@@ -406,18 +412,24 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             <div className="flex flex-1 flex-col gap-1 items-start">
               <span className="text-xs leading-[15px] text-[#999999]">{t('create.basics.whatILookingFor')}</span>
               <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
-                {formData.needs_ids.length > 0 
-                  ? formData.needs_ids.map(id => {
-                      const need = needs.find(need => need.need_id === id);
-                      return language === 'en' 
-                        ? (need?.name_en || need?.name_de)
-                        : (need?.name_de || need?.name_en);
-                    }).filter(Boolean).join(', ')
-                  : t('create.basics.selectNeeds')
-                }
+                {(() => {
+                  const hasNeeds = formData.needs_ids && formData.needs_ids.length > 0;
+                  if (hasNeeds) {
+                    const selectedNeeds = formData.needs_ids
+                      .map(id => {
+                        const need = needs.find(need => need.need_id === id);
+                        return language === 'en' 
+                          ? (need?.name_en || need?.name_de)
+                          : (need?.name_de || need?.name_en);
+                      })
+                      .filter(Boolean);
+                    return selectedNeeds.length > 0 ? selectedNeeds.join(', ') : t('create.basics.selectNeeds');
+                  }
+                  return t('create.basics.selectNeeds');
+                })()}
               </div>
             </div>
-            <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+            <Icon className="h-6 w-6 text-[#232323] flex-shrink-0" icon="material-symbols:chevron-right" />
           </button>
         </div>
       </div>
@@ -655,7 +667,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
         
         <div className="flex flex-col gap-3">
           <button
-            className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+            className="flex w-full min-h-[54px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
             type="button"
             onClick={() => router.push('/create/media/images')}
           >
@@ -667,12 +679,12 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                   : t('create.media.uploadImages')}
               </div>
             </div>
-            <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+            <Icon className="h-6 w-6 text-[#232323] flex-shrink-0" icon="material-symbols:chevron-right" />
           </button>
 
           {!isCommunityService && (
             <button
-              className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+              className="flex w-full min-h-[54px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
               type="button"
               onClick={() => router.push('/create/media/social')}
             >
@@ -684,7 +696,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                     : t('create.media.selectInitiatives')}
                 </div>
               </div>
-              <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+              <Icon className="h-6 w-6 text-[#232323] flex-shrink-0" icon="material-symbols:chevron-right" />
             </button>
           )}
         </div>

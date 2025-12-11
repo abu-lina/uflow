@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CircleHelp, LogOut, User, Lock, FileText, AlertTriangle, Heart, Download, Shield } from 'lucide-react';
+import { Icon } from '@iconify/react';
+import { CircleHelp, LogOut, User, Lock, FileText, AlertTriangle, Heart, Download, Shield, Eye, EyeOff } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
@@ -18,6 +19,8 @@ import { PageContent } from '@/components/layout/PageContent';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { FormInput } from '@/components/ui/FormInput';
+import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconWithTitle } from '@/components/ui/IconWithTitle';
 import { SelectableCard } from '@/components/shared/SelectableCard';
@@ -45,10 +48,29 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const { t, language } = useLanguage();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<UserTab>('created');
+  const [activeTab, setActiveTab] = useState<UserTab>('saved');
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  
+  // Form state for profile tab
+  interface FormData {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+  }
+  const [formData, setFormData] = useState<FormData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [originalData, setOriginalData] = useState<FormData | null>(null);
 
   // Responsive: detect mobile using the centralized hook
   const isMobile = useIsSmallMobile();
@@ -127,6 +149,24 @@ export function ProfileContent({ user }: ProfileContentProps) {
     window.addEventListener('bookmark-changed', handleBookmarkChange);
     return () => window.removeEventListener('bookmark-changed', handleBookmarkChange);
   }, [effectiveUser, queryClient]);
+
+  // Initialize form data from user when effectiveUser changes
+  useEffect(() => {
+    if (effectiveUser) {
+      const fullName = effectiveUser.user_metadata?.full_name ?? '';
+      const nameParts = fullName.split(' ');
+      
+      const initialData: FormData = {
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: effectiveUser.email || '',
+        password: '',
+      };
+      
+      setFormData(initialData);
+      setOriginalData(initialData);
+    }
+  }, [effectiveUser]);
 
 
   // Use React Query for created providers with caching
@@ -265,6 +305,87 @@ export function ProfileContent({ user }: ProfileContentProps) {
   }
 
   const fullName = effectiveUser.user_metadata?.full_name ?? effectiveUser.email ?? 'Unknown User';
+
+  // Form handlers
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Check if form has changes
+  const hasChanges = () => {
+    if (!originalData) return false;
+    
+    return (
+      formData.firstName !== originalData.firstName ||
+      formData.lastName !== originalData.lastName ||
+      formData.email !== originalData.email ||
+      formData.password.trim() !== ''
+    );
+  };
+
+  const submitProfileForm = async () => {
+    setIsSubmitting(true);
+    setProfileError(null);
+    setIsSaved(false);
+
+    try {
+      // Update user metadata if name changed
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+      const currentFullName = effectiveUser?.user_metadata?.full_name ?? '';
+      
+      if (fullName !== currentFullName) {
+        await authService.updateUser({
+          data: {
+            full_name: fullName,
+          },
+        });
+      }
+
+      // Update email if changed
+      if (formData.email !== effectiveUser?.email) {
+        await authService.updateUser({
+          email: formData.email,
+        });
+      }
+
+      // Update password if provided
+      if (formData.password.trim()) {
+        await authService.updateUser({
+          password: formData.password,
+        });
+      }
+
+      // Show success state
+      setIsSaved(true);
+      
+      // Update original data to current form data (excluding password)
+      setOriginalData({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: '',
+      });
+      
+      // Clear password field after successful save
+      setFormData(prev => ({ ...prev, password: '' }));
+      
+      // Refresh user data
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      setProfileError(t('profile.errorUpdatingProfile'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseAccount = () => {
+    router.push('/profile/delete');
+  };
 
   // Mobile content - using proper layout components
   const mobileContent = (
@@ -527,6 +648,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
       )}
 
       <UserNavigationTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      
       <div className="mt-6 w-full">
         {activeTab === 'created' && (
           <div className="flex flex-wrap justify-center gap-8">
@@ -658,6 +780,134 @@ export function ProfileContent({ user }: ProfileContentProps) {
         {activeTab === 'create' && (
           <div className="flex flex-col items-center">
             <ProviderCreateForm />
+          </div>
+        )}
+        {activeTab === 'profile' && (
+          <div className="flex justify-center w-full">
+            <div className="w-full" style={{ maxWidth: '640px' }}>
+              {/* Error Message */}
+              {profileError && (
+                <div className="mb-4 rounded-lg bg-red-50 p-4">
+                  <p className="text-center text-red-600">{profileError}</p>
+                </div>
+              )}
+
+              {/* Personal Data Section */}
+              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); submitProfileForm(); }}>
+                <SectionHeading>
+                  {t('profile.personalData')}
+                </SectionHeading>
+              
+                <div className="space-y-3">
+                  {/* First Name */}
+                  <FormInput
+                    required
+                    label={t('profile.firstName')}
+                    labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  />
+
+                  {/* Last Name */}
+                  <FormInput
+                    required
+                    label={t('profile.lastName')}
+                    labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  />
+
+                  {/* Email */}
+                  <FormInput
+                    required
+                    label={t('profile.email')}
+                    labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                  />
+
+                  {/* Password Field with Hint */}
+                  <div className="space-y-1">
+                    <FormInput
+                      label={t('profile.password')}
+                      labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
+                      rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.password}
+                      variant="with-icon"
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      onRightIconClick={() => setShowPassword(!showPassword)}
+                    />
+                    <p className="pl-2 text-xs text-gray-500">
+                      {t('profile.passwordHint')}
+                    </p>
+                  </div>
+                </div>
+              </form>
+
+              {/* Manage Account Section */}
+              <ContentSection className="mt-8 mb-6">
+                <div>
+                  <SectionHeading>
+                    {t('profile.manageAccount')}
+                  </SectionHeading>
+                
+                  <button
+                    className="flex h-[54px] w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
+                    onClick={handleCloseAccount}
+                  >
+                    <BrokenHeartIcon size={24} />
+                    <span className="font-inter-tight text-base font-semibold text-[#232323]">
+                      {t('profile.closeAccount')}
+                    </span>
+                  </button>
+                </div>
+              </ContentSection>
+
+              {/* Save Button */}
+              <div className="mt-6 flex justify-center w-full">
+                <button
+                  className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 transition-colors ${
+                    isSaved 
+                      ? 'bg-green-500 text-white' 
+                      : hasChanges() 
+                        ? 'bg-primary text-white hover:bg-primary/90' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                  disabled={isSaved || isSubmitting || !hasChanges()}
+                  onClick={submitProfileForm}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span className="font-inter-tight text-base font-medium text-white">
+                        {t('actions.saving')}
+                      </span>
+                    </>
+                  ) : isSaved ? (
+                    <>
+                      <Icon className="h-5 w-5 text-white" icon="lucide:check" />
+                      <span className="font-inter-tight text-base font-medium text-white">
+                        {t('actions.saved')}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon 
+                        className={`h-5 w-5 ${hasChanges() ? 'text-white' : 'text-gray-500'}`} 
+                        icon={hasChanges() ? 'lucide:save' : 'lucide:file-text'}
+                      />
+                      <span className={`font-inter-tight text-base font-medium ${hasChanges() ? 'text-white' : 'text-gray-500'}`}>
+                        {hasChanges() ? t('actions.saveChanges') : t('actions.noChanges')}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

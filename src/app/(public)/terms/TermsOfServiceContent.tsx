@@ -1,16 +1,40 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { cn } from '@/lib/utils';
 
 export function TermsOfServiceContent() {
   const router = useRouter();
   const { language } = useLanguage();
+  const isMobile = useIsSmallMobile();
+
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
+
+  const handleBack = () => {
+    router.back();
+  };
+
+  // Helper function to render bullet-point lists as semantic HTML
+  const renderList = (listText: string) => {
+    return listText
+      .split('\n')
+      .filter((item) => item.trim())
+      .map((item, index) => (
+        <li key={index} className="text-content leading-6">
+          {item.replace(/^•\s*/, '').trim()}
+        </li>
+      ));
+  };
 
   // Terms of Service content in all languages
   const content: Record<string, Record<string, string>> = {
@@ -187,59 +211,96 @@ export function TermsOfServiceContent() {
   const langContent = content[language] || content.en;
 
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
+        className={cn(
+          !isMobile && 'md:top-20 md:z-[100] [&>div]:md:px-0 [&>div]:md:max-w-full'
+        )}
+        customContent={
+          !isMobile ? (
+            <div className="w-full max-w-[640px] mx-auto px-6 md:px-8 flex items-center h-header-height-mobile sm:h-header-height-tablet">
+              <button
+                aria-label="Zurück"
+                className="flex items-center justify-center w-8 h-8 -ml-1"
+                onClick={handleBack}
+              >
+                <Icon 
+                  className="w-8 h-8 text-content-heading pointer-events-none" 
+                  icon="material-symbols:chevron-left" 
+                />
+              </button>
+              <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
+                {langContent.title}
+              </h1>
+            </div>
+          ) : undefined
+        }
         title={langContent.title}
         variant="back-and-title"
-        onBack={() => router.back()}
+        onBack={isMobile ? handleBack : undefined}
       />
 
-      <PageContent maxWidth="640px" paddingBottom="pb-12">
+      <PageContent 
+        className={cn(
+          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
+        )}
+        maxWidth="full"
+        paddingBottom="pb-12"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
         <ContentSection>
           <div className="prose prose-sm max-w-none">
-            <p className="text-xs text-gray-500 mb-6">{langContent.lastUpdated}</p>
+            <p className="text-sm text-content-muted mb-6">{langContent.lastUpdated}</p>
             
-            <p className="mb-6">{langContent.intro}</p>
+            <p className="mb-6 text-base text-content leading-6">{langContent.intro}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.acceptance}</h2>
-            <p className="mb-6">{langContent.acceptanceText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.acceptance}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.acceptanceText}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.ageRequirement}</h2>
-            <p className="mb-6">{langContent.ageRequirementText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.ageRequirement}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.ageRequirementText}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.account}</h2>
-            <p className="mb-4">{langContent.accountText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.accountList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.account}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.accountText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.accountList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.acceptableUse}</h2>
-            <p className="mb-4">{langContent.acceptableUseText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.acceptableUseList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.acceptableUse}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.acceptableUseText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.acceptableUseList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.content}</h2>
-            <p className="mb-4">{langContent.contentText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.contentList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.content}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.contentText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.contentList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.intellectualProperty}</h2>
-            <p className="mb-6">{langContent.intellectualPropertyText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.intellectualProperty}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.intellectualPropertyText}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.termination}</h2>
-            <p className="mb-4">{langContent.terminationText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.terminationList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.termination}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.terminationText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.terminationList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.liability}</h2>
-            <p className="mb-6">{langContent.liabilityText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.liability}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.liabilityText}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.changes}</h2>
-            <p className="mb-6">{langContent.changesText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.changes}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.changesText}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.governingLaw}</h2>
-            <p className="mb-6">{langContent.governingLawText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.governingLaw}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.governingLawText}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.contact}</h2>
-            <p className="mb-6">{langContent.contactText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.contact}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.contactText}</p>
           </div>
         </ContentSection>
       </PageContent>
-    </ScrollablePageLayout>
+    </Layout>
   );
 }

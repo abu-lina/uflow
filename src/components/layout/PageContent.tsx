@@ -63,6 +63,12 @@ interface PageContentProps {
    * @default true
    */
   asMain?: boolean;
+  
+  /**
+   * Whether to vertically center content on desktop
+   * @default false
+   */
+  centerVertically?: boolean;
 }
 
 /**
@@ -84,6 +90,7 @@ export function PageContent({
   hasFooter = false,
   className,
   asMain = true,
+  centerVertically = false,
 }: PageContentProps) {
   const maxWidthClass = maxWidth === 'full' 
     ? '' // Don't apply max-w-full, let className handle it
@@ -103,13 +110,14 @@ export function PageContent({
     <Component
       className={cn(
         // Top padding: safe area + header height (88px)
-        // Desktop: 48px gap between Header (80px) and content = 128px total (pt-32)
+        // Desktop: Header at top-20 (80px) + header height (24px padding + 48px content + 8px padding = 80px) = 160px bottom
+        // Desktop: 32px gap = 192px total from top
         'pt-[calc(env(safe-area-inset-top)+88px)]',
-        'md:pt-[calc(env(safe-area-inset-top)+128px)]',
+        'md:pt-[calc(env(safe-area-inset-top)+192px)]',
         paddingX,
         bottomPadding,
-        // Desktop: vertically center content when maxWidth is full
-        maxWidth === 'full' && 'md:flex md:items-center md:justify-center md:h-full',
+        // Desktop: vertically center content when explicitly requested
+        centerVertically && 'md:flex md:items-center md:justify-center md:h-full',
         // Only apply className to main when maxWidth is not full
         maxWidth !== 'full' && className
       )}

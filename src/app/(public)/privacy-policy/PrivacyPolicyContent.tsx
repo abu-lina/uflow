@@ -1,16 +1,40 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { cn } from '@/lib/utils';
 
 export function PrivacyPolicyContent() {
   const router = useRouter();
   const { language } = useLanguage();
+  const isMobile = useIsSmallMobile();
+
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
+
+  const handleBack = () => {
+    router.back();
+  };
+
+  // Helper function to render bullet-point lists as semantic HTML
+  const renderList = (listText: string) => {
+    return listText
+      .split('\n')
+      .filter((item) => item.trim())
+      .map((item, index) => (
+        <li key={index} className="text-content leading-6">
+          {item.replace(/^•\s*/, '').trim()}
+        </li>
+      ));
+  };
 
   // Privacy Policy content in all languages
   const content: Record<string, Record<string, string>> = {
@@ -227,69 +251,132 @@ export function PrivacyPolicyContent() {
   const langContent = content[language] || content.en;
 
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
+        className={cn(
+          !isMobile && 'md:top-20 md:z-[100] [&>div]:md:px-0 [&>div]:md:max-w-full'
+        )}
+        customContent={
+          !isMobile ? (
+            <div className="w-full max-w-[640px] mx-auto px-6 md:px-8 flex items-center h-header-height-mobile sm:h-header-height-tablet">
+              <button
+                aria-label="Zurück"
+                className="flex items-center justify-center w-8 h-8 -ml-1"
+                onClick={handleBack}
+              >
+                <Icon 
+                  className="w-8 h-8 text-content-heading pointer-events-none" 
+                  icon="material-symbols:chevron-left" 
+                />
+              </button>
+              <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
+                {langContent.title}
+              </h1>
+            </div>
+          ) : undefined
+        }
         title={langContent.title}
         variant="back-and-title"
-        onBack={() => router.back()}
+        onBack={isMobile ? handleBack : undefined}
       />
 
-      <PageContent maxWidth="640px" paddingBottom="pb-12">
+      <PageContent 
+        className={cn(
+          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
+        )}
+        maxWidth="full"
+        paddingBottom="pb-12"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
         <ContentSection>
           <div className="prose prose-sm max-w-none">
-            <p className="text-xs text-gray-500 mb-6">{langContent.lastUpdated}</p>
+            <p className="text-sm text-content-muted mb-6">{langContent.lastUpdated}</p>
             
-            <p className="mb-6">{langContent.intro}</p>
+            <p className="mb-6 text-base text-content leading-6">{langContent.intro}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.dataController}</h2>
-            <p className="mb-6">{langContent.dataControllerText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.dataController}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.dataControllerText}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.dataCollection}</h2>
-            <p className="mb-4">{langContent.dataCollectionText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.dataCollectionList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.dataCollection}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.dataCollectionText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.dataCollectionList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.legalBasis}</h2>
-            <p className="mb-4">{langContent.legalBasisText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.legalBasisList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.legalBasis}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.legalBasisText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.legalBasisList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.dataProcessing}</h2>
-            <p className="mb-4">{langContent.dataProcessingText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.dataProcessingList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.dataProcessing}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.dataProcessingText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.dataProcessingList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.thirdParty}</h2>
-            <p className="mb-4">{langContent.thirdPartyText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-4">{langContent.thirdPartyList}</pre>
-            <p className="mb-6 text-sm italic">{langContent.thirdPartyNote}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.thirdParty}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.thirdPartyText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-4 list-disc list-inside">
+              {renderList(langContent.thirdPartyList)}
+            </ul>
+            <p className="mb-6 text-base text-content-muted italic leading-6">{langContent.thirdPartyNote}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.dataLocation}</h2>
-            <p className="mb-4">{langContent.dataLocationText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.dataLocationList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.dataLocation}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.dataLocationText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.dataLocationList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.userRights}</h2>
-            <p className="mb-4">{langContent.userRightsText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-4">{langContent.userRightsList}</pre>
-            <p className="mb-6">{langContent.userRightsExport}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.userRights}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.userRightsText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-4 list-disc list-inside">
+              {renderList(langContent.userRightsList)}
+            </ul>
+            <p className="mb-6 text-base text-content leading-6">{langContent.userRightsExport}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.dataRetention}</h2>
-            <p className="mb-4">{langContent.dataRetentionText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.dataRetentionList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.dataRetention}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.dataRetentionText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.dataRetentionList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.security}</h2>
-            <p className="mb-4">{langContent.securityText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.securityList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.security}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.securityText}</p>
+            <ul className="space-y-2 text-base bg-neutral-muted text-content p-4 rounded-lg mb-6 list-disc list-inside">
+              {renderList(langContent.securityList)}
+            </ul>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.cookies}</h2>
-            <p className="mb-4">{langContent.cookiesText}</p>
-            <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mb-6">{langContent.cookiesList}</pre>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.cookies}</h2>
+            <p className="mb-4 text-base text-content leading-6">{langContent.cookiesText}</p>
+            <div className="bg-neutral-muted p-4 rounded-lg mb-6">
+              {(() => {
+                const parts = langContent.cookiesList.split('\n\n');
+                const listItems = parts[0];
+                const additionalText = parts[1];
+                return (
+                  <>
+                    <ul className="space-y-2 text-base text-content list-disc list-inside">
+                      {renderList(listItems)}
+                    </ul>
+                    {additionalText && (
+                      <p className="text-base text-content mt-4 leading-6">
+                        {additionalText.trim()}
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.changes}</h2>
-            <p className="mb-6">{langContent.changesText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.changes}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.changesText}</p>
 
-            <h2 className="text-lg font-semibold mt-8 mb-4">{langContent.contact}</h2>
-            <p className="mb-6">{langContent.contactText}</p>
+            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.contact}</h2>
+            <p className="mb-6 text-base text-content leading-6">{langContent.contactText}</p>
           </div>
         </ContentSection>
       </PageContent>
-    </ScrollablePageLayout>
+    </Layout>
   );
 }

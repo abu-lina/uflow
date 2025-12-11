@@ -19,10 +19,14 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { Button } from '@/components/ui/Button';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { OfferListSkeleton } from '@/components/ui/OfferListSkeleton';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { cn } from '@/lib/utils';
 
 export default function SelectOffersPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -42,6 +46,10 @@ export default function SelectOffersPage() {
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const isMobile = useIsSmallMobile();
+
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   // Debounce search query to prevent excessive filtering
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
@@ -478,41 +486,85 @@ export default function SelectOffersPage() {
     }
   }, [formData.offers_ids, router]);
 
+  const handleBack = () => {
+    router.push('/create/basics');
+  };
+
   return (
     <ErrorBoundary>
-      <ScrollablePageLayout>
+      <Layout>
         <PageHeader
+          className={cn(
+            !isMobile && 'md:top-20 md:z-[100] [&>div]:md:px-0 [&>div]:md:max-w-full'
+          )}
+          customContent={
+            !isMobile ? (
+              <div className="w-full max-w-[640px] mx-auto px-6 md:px-8 flex items-center h-header-height-mobile sm:h-header-height-tablet">
+                <button
+                  aria-label="Zurück"
+                  className="flex items-center justify-center w-8 h-8 -ml-1"
+                  onClick={handleBack}
+                >
+                  <Icon 
+                    className="w-8 h-8 text-content-heading pointer-events-none" 
+                    icon="material-symbols:chevron-left" 
+                  />
+                </button>
+                <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
+                  {t('create.offers.title')}
+                </h1>
+              </div>
+            ) : undefined
+          }
           title={t('create.offers.title')}
           variant="back-and-title"
-          onBack="/create/basics"
+          onBack={isMobile ? "/create/basics" : undefined}
         />
 
-        <PageContent hasFooter>
+        <PageContent 
+          className={cn(
+            'flex flex-col gap-8',
+            !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
+          )}
+          hasFooter={isMobile}
+          maxWidth="full"
+          paddingX={isMobile ? 'px-6' : 'px-0'}
+        >
         <div className="flex flex-col gap-6">
-          {/* Search Bar */}
-          <div className="flex h-[40px] w-full items-center rounded-2xl bg-white px-[10px] py-[5px] border-0">
-            <div className="flex items-center gap-3 flex-1">
-              <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
-              <input
-                className="flex-1 text-base font-normal text-gray-600 outline-none placeholder:text-sm placeholder:text-gray-500 border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
-                placeholder={t('create.offers.searchPlaceholder')}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && showCreateOption && !isCreating) {
-                    createOfferFromSearch();
-                  }
-                }}
-              />
-              {searchQuery && (
-                <button
-                  className="text-gray-500 hover:text-[#232323] transition-colors"
-                  onClick={() => setSearchQuery('')}
-                >
-                  <Icon className="size-5" icon="lucide:x" />
-                </button>
-              )}
+          {/* Search Bar + Subtitle */}
+          <div className="flex w-full flex-col gap-2">
+            {/* Search Bar */}
+            <div className="flex h-[40px] w-full items-center rounded-2xl bg-white px-[10px] py-[5px] border-0">
+              <div className="flex items-center gap-3 flex-1">
+                <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
+                <input
+                  className="flex-1 text-base font-normal text-gray-600 outline-none placeholder:text-sm placeholder:text-gray-500 border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
+                  placeholder={t('create.offers.searchPlaceholder')}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && showCreateOption && !isCreating) {
+                      createOfferFromSearch();
+                    }
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    className="text-gray-500 hover:text-[#232323] transition-colors"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <Icon className="size-5" icon="lucide:x" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Subtitle */}
+            <div className="w-full">
+              <p className="text-sm font-normal text-[#7A7A7A] leading-[17px] mb-6 pl-3">
+                {t('create.offers.description')}
+              </p>
             </div>
           </div>
 
@@ -738,19 +790,37 @@ export default function SelectOffersPage() {
                 )}
             </div>
           )}
+
+          {/* Desktop Save Button */}
+          {!isMobile && (
+            <div className="flex flex-col gap-3 pt-4">
+              <Button
+                fullWidth
+                disabled={formData.offers_ids.length === 0}
+                icon="lucide:save"
+                variant="primary"
+                onClick={handleSave}
+              >
+                {`${t('actions.save')} (${formData.offers_ids.length})`}
+              </Button>
+            </div>
+          )}
         </div>
       </PageContent>
 
-      <FooterAction
-        actionButton={{
-          label: `${t('actions.save')} (${formData.offers_ids.length})`,
-          icon: 'lucide:save',
-          onClick: handleSave,
-          disabled: formData.offers_ids.length === 0,
-          variant: 'primary',
-        }}
-      />
-      </ScrollablePageLayout>
+      {/* Mobile Footer Action */}
+      {isMobile && (
+        <FooterAction
+          actionButton={{
+            label: `${t('actions.save')} (${formData.offers_ids.length})`,
+            icon: 'lucide:save',
+            onClick: handleSave,
+            disabled: formData.offers_ids.length === 0,
+            variant: 'primary',
+          }}
+        />
+      )}
+      </Layout>
     </ErrorBoundary>
   );
 }

@@ -16,8 +16,12 @@ import { toast } from 'sonner';
 import { validateOfferOrNeedName, findSimilarItems, calculateSimilarity, normalizeText, areSynonyms } from '@/utils/contentValidation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { Button } from '@/components/ui/Button';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { cn } from '@/lib/utils';
 
 export default function SelectNeedsPage() {
   const [needs, setNeeds] = useState<Need[]>([]);
@@ -37,6 +41,10 @@ export default function SelectNeedsPage() {
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const isMobile = useIsSmallMobile();
+
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   // Load categories from database
   useEffect(() => {
@@ -348,15 +356,49 @@ export default function SelectNeedsPage() {
     }
   };
 
+  const handleBack = () => {
+    router.push('/create/basics');
+  };
+
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
+        className={cn(
+          !isMobile && 'md:top-20 md:z-[100] [&>div]:md:px-0 [&>div]:md:max-w-full'
+        )}
+        customContent={
+          !isMobile ? (
+            <div className="w-full max-w-[640px] mx-auto px-6 md:px-8 flex items-center h-header-height-mobile sm:h-header-height-tablet">
+              <button
+                aria-label="Zurück"
+                className="flex items-center justify-center w-8 h-8 -ml-1"
+                onClick={handleBack}
+              >
+                <Icon 
+                  className="w-8 h-8 text-content-heading pointer-events-none" 
+                  icon="material-symbols:chevron-left" 
+                />
+              </button>
+              <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
+                {t('create.needs.title')}
+              </h1>
+            </div>
+          ) : undefined
+        }
         title={t('create.needs.title')}
         variant="back-and-title"
-        onBack="/create/basics"
+        onBack={isMobile ? "/create/basics" : undefined}
       />
 
-      <PageContent hasFooter className="flex flex-col gap-8">
+      <PageContent 
+        className={cn(
+          'flex flex-col gap-8',
+          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
+        )}
+        hasFooter={isMobile}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
           {/* Search Bar + Subtitle */}
           <div className="flex w-full flex-col gap-2">
             {/* Search Bar */}
@@ -388,7 +430,7 @@ export default function SelectNeedsPage() {
 
             {/* Subtitle */}
             <div className="w-full">
-              <p className="text-sm font-normal leading-[17px] text-[#7A7A7A]">
+              <p className="text-sm font-normal text-[#7A7A7A] leading-[17px] mb-6 pl-3">
                 {t('create.needs.description')}
               </p>
             </div>
@@ -583,18 +625,36 @@ export default function SelectNeedsPage() {
                 )}
               </>
             )}
+
+            {/* Desktop Save Button */}
+            {!isMobile && (
+              <div className="flex flex-col gap-3 pt-4">
+                <Button
+                  fullWidth
+                  disabled={formData.needs_ids.length === 0}
+                  icon="lucide:save"
+                  variant="primary"
+                  onClick={handleSave}
+                >
+                  {`${t('actions.save')} (${formData.needs_ids.length})`}
+                </Button>
+              </div>
+            )}
           </div>
       </PageContent>
 
-      <FooterAction
-        actionButton={{
-          label: `${t('actions.save')} (${formData.needs_ids.length})`,
-          icon: 'lucide:save',
-          onClick: handleSave,
-          disabled: formData.needs_ids.length === 0,
-          variant: 'primary',
-        }}
-      />
-    </ScrollablePageLayout>
+      {/* Mobile Footer Action */}
+      {isMobile && (
+        <FooterAction
+          actionButton={{
+            label: `${t('actions.save')} (${formData.needs_ids.length})`,
+            icon: 'lucide:save',
+            onClick: handleSave,
+            disabled: formData.needs_ids.length === 0,
+            variant: 'primary',
+          }}
+        />
+      )}
+    </Layout>
   );
 }

@@ -43,6 +43,7 @@ export default function CreateProviderPage() {
       />
       
       <PageContent 
+        centerVertically={!isMobile}
         className={cn(
           'flex flex-col items-center gap-8',
           !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'

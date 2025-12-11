@@ -7,34 +7,30 @@ import { Icon } from '@iconify/react';
 import type { Category } from '@/types/supabase';
 import { FormInput } from '@/components/ui/FormInput';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
 import { getCategories } from '@/services/categories';
 import { shouldCreateCommunityService } from '@/utils/categoryUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { cn } from '@/lib/utils';
 
 export default function SelectCategoryPage() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [checked, setChecked] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t, language } = useLanguage();
+  const isMobile = useIsSmallMobile();
 
-  useEffect(() => {
-    const check = () => {
-      setIsMobile(window.innerWidth < 640);
-      setChecked(true);
-    };
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   useEffect(() => {
     async function fetchCategories() {
@@ -58,23 +54,6 @@ export default function SelectCategoryPage() {
     }
     void fetchCategories();
   }, []);
-
-
-
-  if (!checked) {
-    return <div className="p-8 text-center">{t('common.loading')}</div>;
-  }
-
-  if (!isMobile) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <span className="text-lg text-gray-500">
-          {t('create.category.desktopMessage')}
-        </span>
-      </div>
-    );
-  }
-
 
   // Helper function to get category name based on current language
   // Categories only have name_de and name_en, so for other languages we fall back to English or German
@@ -100,21 +79,55 @@ export default function SelectCategoryPage() {
     }
   };
 
+  const handleBack = () => {
+    router.push('/create/basics');
+  };
+
   return (
-    <ScrollablePageLayout>
+    <Layout>
       <PageHeader
+        className={cn(
+          !isMobile && 'md:top-20 md:z-[100] [&>div]:md:px-0 [&>div]:md:max-w-full'
+        )}
+        customContent={
+          !isMobile ? (
+            <div className="w-full max-w-[640px] mx-auto px-6 md:px-8 flex items-center h-header-height-mobile sm:h-header-height-tablet">
+              <button
+                aria-label="Zurück"
+                className="flex items-center justify-center w-8 h-8 -ml-1"
+                onClick={handleBack}
+              >
+                <Icon 
+                  className="w-8 h-8 text-content-heading pointer-events-none" 
+                  icon="material-symbols:chevron-left" 
+                />
+              </button>
+              <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
+                {t('create.category.selectCategory')}
+              </h1>
+            </div>
+          ) : undefined
+        }
         title={t('create.category.selectCategory')}
         variant="back-and-title"
-        onBack="/create/basics"
+        onBack={isMobile ? "/create/basics" : undefined}
       />
 
-      <PageContent hasFooter className="flex flex-col gap-8">
+      <PageContent 
+        className={cn(
+          'flex flex-col gap-8',
+          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
+        )}
+        hasFooter={isMobile}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
         {/* Search Bar + Subtitle */}
         <div className="flex w-full flex-col gap-2">
           {/* Search Bar */}
           <FormInput
-            containerClassName="h-[40px] py-0"
-            inputClassName="text-xs font-normal text-[#7C7C7C] leading-[15px] placeholder:text-[#7C7C7C] h-full"
+            containerClassName="h-[44px] md:h-[48px] rounded-xl"
+            inputClassName="text-xs md:text-base font-normal text-[#7C7C7C] leading-[15px] md:leading-[19px] placeholder:text-[#7C7C7C]"
             label=""
             labelClassName="hidden"
             placeholder={t('create.category.searchCategories')}
@@ -139,6 +152,12 @@ export default function SelectCategoryPage() {
             <div className="flex h-32 items-center justify-center">
               <span className="text-gray-500">{t('create.category.loadingCategories')}</span>
             </div>
+          ) : filteredCategories.length === 0 ? (
+            <div className="flex h-32 items-center justify-center">
+              <span className="text-gray-500">
+                {searchQuery ? 'No categories found' : 'No categories available'}
+              </span>
+            </div>
           ) : (
             filteredCategories
               .sort((a, b) => {
@@ -150,7 +169,7 @@ export default function SelectCategoryPage() {
               .map((category) => (
                 <button
                   key={category.category_id}
-                  className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 ${
+                  className={`w-full rounded-xl px-4 py-2 md:h-[48px] md:py-0 md:flex md:items-center text-left transition-all duration-200 ${
                     formData.category === category.category_id
                       ? 'bg-primary-light text-content-heading border border-primary'
                       : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
@@ -172,25 +191,42 @@ export default function SelectCategoryPage() {
                     }, 100);
                   }}
                 >
-                  <span className="text-sm font-medium">
+                  <span className="text-base font-medium">
                     {getCategoryName(category)}
                   </span>
                 </button>
               ))
           )}
         </div>
+
+        {/* Desktop Save Button */}
+        {!isMobile && (
+          <div className="flex flex-col gap-3 pt-4">
+            <Button
+              fullWidth
+              disabled={!formData.category}
+              icon="lucide:save"
+              variant="primary"
+              onClick={handleSave}
+            >
+              {t('actions.save')}
+            </Button>
+          </div>
+        )}
       </PageContent>
 
-      {/* Footer Action */}
-      <FooterAction
-        actionButton={{
-          label: t('actions.save'),
-          icon: 'lucide:save',
-          onClick: handleSave,
-          disabled: !formData.category,
-          variant: 'primary',
-        }}
-      />
-    </ScrollablePageLayout>
+      {/* Mobile Footer Action */}
+      {isMobile && (
+        <FooterAction
+          actionButton={{
+            label: t('actions.save'),
+            icon: 'lucide:save',
+            onClick: handleSave,
+            disabled: !formData.category,
+            variant: 'primary',
+          }}
+        />
+      )}
+    </Layout>
   );
 }
