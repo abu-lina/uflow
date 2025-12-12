@@ -30,10 +30,9 @@ const queryClientConfig = {
       refetchOnMount: false,
       retry: 1,
       retryOnMount: false,
-      placeholderData: (previousData: unknown) => previousData,
     },
   },
-} as const;
+};
 
 export function ClientProviders({ children, initialUser }: ClientProvidersProps) {
   // Use useState with lazy initialization to ensure QueryClient is only created once

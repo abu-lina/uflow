@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 
 import { LandingLayout } from '@/components/layout/LandingLayout';
 import { AboutSection } from '@/components/shared/AboutSection';
+import { DesktopWaitlistSection } from '@/components/shared/DesktopWaitlistSection';
 import { ExploreSection } from '@/components/shared/ExploreSection';
 import { LandingHero } from '@/components/shared/LandingHero';
 import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
@@ -26,6 +27,7 @@ export default function Home() {
         <div className="relative z-10 hidden md:block">
           <LandingHero />
           <AboutSection />
+          <DesktopWaitlistSection />
           <ExploreSection />
         </div>
       </LandingLayout>

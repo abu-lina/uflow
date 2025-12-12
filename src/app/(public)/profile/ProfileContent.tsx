@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -249,6 +249,16 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const isLoadingProviders = isLoadingCreated || isLoadingSaved || isLoadingRecommendations || isLoadingCreatedCS || isLoadingRecommendedCS;
   const error = createdError || savedError || recommendationsError || createdCSError || recommendedCSError ? t('providers.errorLoading') : null;
 
+  // Handle removal from saved list (optimistic update)
+  const handleRemoveFromSaved = useCallback((removedId: string) => {
+    queryClient.setQueryData(['saved-providers', effectiveUser?.id], (old: unknown[] = []) => {
+      return old.filter((item: unknown) => {
+        const searchResult = item as { id?: string };
+        return searchResult.id !== removedId;
+      });
+    });
+  }, [queryClient, effectiveUser?.id]);
+
 
   // Handle logout
   const handleLogout = async () => {
@@ -395,7 +405,10 @@ export function ProfileContent({ user }: ProfileContentProps) {
         variant="title-only"
       />
 
-      <PageContent maxWidth="full">
+      <PageContent 
+        className="mobile-nav-spacing md:pb-8"
+        maxWidth="full"
+      >
         {/* Error Message */}
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-4">
@@ -431,7 +444,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         </ContentSection>
 
         {/* Deine Inhalte Section */}
-        <ContentSection className="mt-6">
+        <ContentSection className="mt-4">
           <div>
             <SectionHeading>
               {t('profile.yourContent')}
@@ -476,7 +489,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         </ContentSection>
 
         {/* Recommendations Section */}
-        <ContentSection className="mt-6">
+        <ContentSection className="mt-4">
           <div>
             <SectionHeading>
               {t('profile.recommendations')}
@@ -521,7 +534,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         </ContentSection>
 
         {/* Action Items */}
-        <ContentSection className="mt-8 mb-6">
+        <ContentSection className="mt-4 mb-8 md:mb-6">
           <div>
             <div className="rounded-lg bg-white">
               {/* Über Uns */}
@@ -614,7 +627,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Desktop: tabbed view
   const desktopContent = (
-    <div className="flex min-h-full w-full flex-col items-center gap-8 sm:max-w-screen-xl md:pt-28">
+    <div className="flex min-h-full w-full flex-col items-center gap-8 sm:max-w-screen-xl sm:mx-auto md:pt-28 md:pb-8">
       {/* Profile header (greeting, avatar, etc.) */}
       <div className="flex w-full flex-col items-center">
         <div className="flex w-full flex-row items-center justify-center">
@@ -712,10 +725,20 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 return (
                   <SelectableCard
                     key={provider.id}
+                    bookmarkableId={provider.id}
+                    bookmarkableType={provider.type}
                     bottomText={address}
                     category={getCategoryName(provider.category)}
                     imageUrl={getFirstImageUrl(provider.images)}
                     title={provider.name}
+                    onClick={() => {
+                      if (provider.type === 'community_service') {
+                        router.push(`/community-services/${provider.id}`);
+                      } else {
+                        router.push(`/providers/${provider.id}`);
+                      }
+                    }}
+                    onRemove={() => handleRemoveFromSaved(provider.id)}
                   />
                 );
               })

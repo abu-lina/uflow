@@ -16,10 +16,9 @@ interface SectionHeadingProps {
  * Reusable section heading component with consistent styling.
  * 
  * Features:
- * - Consistent 12px left padding (pl-3)
  * - Proper typography (Inter font, lg size, semibold weight)
  * - Bottom margin (mb-4) for spacing
- * - Left text alignment
+ * - Left text alignment (no padding - completely inline left)
  * - Customizable additional classes
  * 
  * @example
@@ -27,7 +26,7 @@ interface SectionHeadingProps {
  * <SectionHeading>Persönliche Daten</SectionHeading>
  * 
  * // With custom class
- * <SectionHeading className="mt-8">Konto verwalten</SectionHeading>
+ * <SectionHeading className="mt-8 pl-3">Konto verwalten</SectionHeading>
  * ```
  */
 export function SectionHeading({ 
@@ -36,7 +35,7 @@ export function SectionHeading({
 }: SectionHeadingProps) {
   return (
     <h2 className={cn(
-      'mb-4 pl-3 text-left font-inter-tight text-lg font-semibold text-[#232323]',
+      'mb-4 text-left font-inter-tight text-lg font-semibold text-content-heading',
       className
     )}>
       {children}

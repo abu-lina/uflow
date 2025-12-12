@@ -148,11 +148,11 @@ function customRender(
   // Reset mock search params for each test
   // Note: This needs to be exported so tests can reset it
   if (typeof window !== 'undefined') {
-    (window as any).__resetMockSearchParams = () => {
+    (window as Record<string, unknown>).__resetMockSearchParams = () => {
       mockSearchParams = new URLSearchParams();
       mockPathname = '/providers';
     };
-    (window as any).__resetMockSearchParams();
+    ((window as Record<string, unknown>).__resetMockSearchParams as () => void)();
   }
 
   if (!withProviders) {
