@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
+import Link from 'next/link';
 import { FormInput } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
+import { Logo } from '@/components/ui/Logo';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface WaitlistScreenProps {
   onSuccess: (email: string) => void;
@@ -11,9 +14,12 @@ interface WaitlistScreenProps {
 }
 
 export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: WaitlistScreenProps) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +31,12 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
       setError('Please enter a valid email address');
+      return;
+    }
+
+    // Check terms acceptance
+    if (!termsAccepted || !privacyAccepted) {
+      setError(t('legal.consentRequired') || 'You must accept the Terms of Service and Privacy Policy');
       return;
     }
 
@@ -46,11 +58,12 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
       >
         {/* Heading */}
         <div className="flex flex-col items-center gap-4 text-center">
+          <Logo height={96} width={96} />
           <h1 className="font-inter-tight text-3xl font-semibold leading-tight text-[#232323] sm:text-4xl">
-            Join the Waitlist
+            {t('waitlist.title')}
           </h1>
           <p className="font-inter text-base leading-normal text-[#555555] sm:text-lg">
-            Be the first to know when we launch
+            {t('waitlist.description')}
           </p>
         </div>
 
@@ -61,7 +74,7 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
             autoComplete="email"
             disabled={isSubmitting}
             label="Email"
-            placeholder="Enter your email"
+            placeholder={t('waitlist.emailPlaceholder')}
             type="email"
             value={email}
             onChange={(e) => {
@@ -84,24 +97,54 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
             </motion.p>
           )}
 
+          {/* Consent Checkbox */}
+          <div className="mt-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                required
+                aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
+                aria-required="true"
+                checked={termsAccepted && privacyAccepted}
+                className="h-4 w-4 rounded border-gray-300 text-[#589D96] focus:ring-[#589D96] focus:ring-2 flex-shrink-0"
+                disabled={isSubmitting}
+                type="checkbox"
+                onChange={(e) => {
+                  setTermsAccepted(e.target.checked);
+                  setPrivacyAccepted(e.target.checked);
+                }}
+              />
+              <span className="text-[11px] leading-[13px] text-[#7A7A7A]">
+                {t('waitlist.acceptTermsText') || 'I accept the '}
+                <Link className="underline hover:text-[#589D96]" href="/terms">
+                  {t('legal.termsOfService') || 'Terms of Service'}
+                </Link>
+                {t('waitlist.acceptTermsAnd') || ' and '}
+                <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
+                  {t('legal.privacyPolicy') || 'Privacy Policy'}
+                </Link>
+                {t('waitlist.acceptTermsEnd') || '.'}
+              </span>
+            </label>
+          </div>
+
           {/* Submit button */}
           <Button
             fullWidth
             aria-label="Join waitlist"
-            disabled={isSubmitting || !email.trim()}
+            disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
             loading={isSubmitting}
-            loadingText="Joining..."
+            loadingText={t('waitlist.joining')}
             size="lg"
             type="submit"
             variant="primary"
           >
-            Join Waitlist
+            {t('waitlist.joinButton')}
           </Button>
         </form>
 
         {/* Additional info */}
         <p className="text-center font-inter text-sm text-[#999999]">
-          We respect your privacy. No spam, ever.
+          {t('waitlist.privacyNotice')}
         </p>
       </motion.div>
     </div>

@@ -170,7 +170,7 @@ export function ProviderSelectionModal({
                 className="font-inter text-sm text-[#555555] md:text-base"
                 id="provider-modal-description"
               >
-                This helps us prepare the right experience for you
+                Let us know so we can support you in getting your services listed early.
               </p>
             </div>
 
@@ -196,7 +196,7 @@ export function ProviderSelectionModal({
                 variant="primary"
                 onClick={() => handleSelection(true)}
               >
-                Yes, I&apos;m a provider
+                I plan to offer services
               </Button>
               
               <Button
@@ -207,7 +207,7 @@ export function ProviderSelectionModal({
                 variant="secondary"
                 onClick={() => handleSelection(false)}
               >
-                No, I&apos;m not
+                I&apos;m here as a customer
               </Button>
             </div>
           </div>

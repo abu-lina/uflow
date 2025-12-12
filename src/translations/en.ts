@@ -498,5 +498,19 @@ export const en = {
     viewPrivacyPolicy: "View Privacy Policy",
     viewTerms: "View Terms of Service",
     lastUpdated: "Last updated"
+  },
+  waitlist: {
+    title: "Join the Flow",
+    description: "Help build the first halal marketplace for Muslims. Join the waitlist and secure early access.",
+    joinButton: "Join Waitlist",
+    joining: "Joining...",
+    emailPlaceholder: "Enter your email",
+    privacyNotice: "We respect your privacy. No spam, ever.",
+    acceptTermsText: "I accept the ",
+    acceptTermsAnd: " and ",
+    acceptTermsEnd: ".",
+    successTitle: "You're on the list!",
+    successDescription: "Check your email for confirmation",
+    successMessage: "We'll notify you as soon as we launch. In the meantime, feel free to share UmmahFlow with others."
   }
 } as const;

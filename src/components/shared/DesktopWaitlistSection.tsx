@@ -2,17 +2,23 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
+import Link from 'next/link';
 import { FormInput } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
+import { Logo } from '@/components/ui/Logo';
 import { ProviderSelectionModal } from '@/components/shared/ProviderSelectionModal';
 import { Icon } from '@iconify/react';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export function DesktopWaitlistSection() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +30,12 @@ export function DesktopWaitlistSection() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
       setError('Please enter a valid email address');
+      return;
+    }
+
+    // Check terms acceptance
+    if (!termsAccepted || !privacyAccepted) {
+      setError(t('legal.consentRequired') || 'You must accept the Terms of Service and Privacy Policy');
       return;
     }
 
@@ -60,14 +72,15 @@ export function DesktopWaitlistSection() {
               viewport={{ once: true }}
               whileInView={{ opacity: 1, y: 0 }}
             >
+              <Logo height={96} width={96} />
               <h2
                 className="w-full max-w-[960px] text-center font-inter-tight text-2xl font-medium leading-tight text-black sm:text-3xl md:text-4xl lg:text-5xl"
                 id="waitlist-heading"
               >
-                Join the <span className="text-primary">Waitlist</span>
+                {t('waitlist.title')}
               </h2>
               <p className="w-full max-w-2xl text-center font-inter text-base leading-snug text-content sm:text-lg md:text-xl">
-                Be the first to know when we launch. Join our community and discover services that matter.
+                {t('waitlist.description')}
               </p>
             </motion.div>
 
@@ -85,7 +98,7 @@ export function DesktopWaitlistSection() {
                 autoComplete="email"
                 disabled={isSubmitting}
                 label="Email"
-                placeholder="Enter your email"
+                placeholder={t('waitlist.emailPlaceholder')}
                 type="email"
                 value={email}
                 onChange={(e) => {
@@ -108,23 +121,53 @@ export function DesktopWaitlistSection() {
                 </motion.p>
               )}
 
+              {/* Consent Checkbox */}
+              <div className="mt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    required
+                    aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
+                    aria-required="true"
+                    checked={termsAccepted && privacyAccepted}
+                    className="h-4 w-4 rounded border-gray-300 text-[#589D96] focus:ring-[#589D96] focus:ring-2 flex-shrink-0"
+                    disabled={isSubmitting}
+                    type="checkbox"
+                    onChange={(e) => {
+                      setTermsAccepted(e.target.checked);
+                      setPrivacyAccepted(e.target.checked);
+                    }}
+                  />
+                  <span className="text-[11px] leading-[13px] text-[#7A7A7A]">
+                    {t('waitlist.acceptTermsText') || 'I accept the '}
+                    <Link className="underline hover:text-[#589D96]" href="/terms">
+                      {t('legal.termsOfService') || 'Terms of Service'}
+                    </Link>
+                    {t('waitlist.acceptTermsAnd') || ' and '}
+                    <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
+                      {t('legal.privacyPolicy') || 'Privacy Policy'}
+                    </Link>
+                    {t('waitlist.acceptTermsEnd') || '.'}
+                  </span>
+                </label>
+              </div>
+
               {/* Submit button */}
               <Button
                 fullWidth
                 aria-label="Join waitlist"
-                disabled={isSubmitting || !email.trim()}
+                disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
                 loading={isSubmitting}
-                loadingText="Joining..."
+                loadingText={t('waitlist.joining')}
                 size="lg"
                 type="submit"
                 variant="primary"
               >
-                Join Waitlist
+                {t('waitlist.joinButton')}
               </Button>
 
               {/* Privacy notice */}
               <p className="text-center font-inter text-sm text-[#999999]">
-                We respect your privacy. No spam, ever.
+                {t('waitlist.privacyNotice')}
               </p>
             </motion.form>
           </>
@@ -157,10 +200,10 @@ export function DesktopWaitlistSection() {
               transition={{ duration: 0.4, delay: 0.3, ease: 'easeOut' }}
             >
               <h2 className="font-inter-tight text-3xl font-semibold leading-tight text-[#232323] sm:text-4xl">
-                You&apos;re on the list!
+                {t('waitlist.successTitle')}
               </h2>
               <p className="font-inter text-base leading-normal text-[#555555] sm:text-lg">
-                Check your email for confirmation
+                {t('waitlist.successDescription')}
               </p>
             </motion.div>
 
@@ -172,7 +215,7 @@ export function DesktopWaitlistSection() {
               transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
             >
               <p className="text-center font-inter text-sm leading-relaxed text-[#555555]">
-                We&apos;ll notify you as soon as we launch. In the meantime, feel free to share UmmahFlow with others.
+                {t('waitlist.successMessage')}
               </p>
             </motion.div>
           </motion.div>
