@@ -341,18 +341,19 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
               </button>
             </div>
             {badges && badges.length > 0 && (
-              <div className="flex h-8 w-full items-center gap-2 overflow-hidden">
-                <div className="flex items-center gap-2 overflow-hidden">
+              <div className="flex h-6 w-full items-center gap-1.5 overflow-hidden">
+                <div className="flex items-center gap-1.5 overflow-hidden">
                   {badges.slice(0, 3).map((badge) => (
                     <BadgeLabel
                       key={badge.id}
                       badge={badge}
                       language={language === 'de' ? 'de' : 'en'}
+                      size="sm"
                     />
                   ))}
                   {badges.length > 3 && (
-                    <div className="flex h-8 shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-white/80 px-2 backdrop-blur-sm">
-                      <span className="font-inter-tight text-base font-medium text-[#232323]">
+                    <div className="flex h-6 shrink-0 items-center rounded-[3px] border border-[#CDCDCD] bg-white/80 px-1.5 backdrop-blur-sm">
+                      <span className="font-inter-tight text-sm font-medium text-[#232323]">
                         +{badges.length - 3}
                       </span>
                     </div>

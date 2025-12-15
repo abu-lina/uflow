@@ -1,6 +1,6 @@
 'use client';
 
-import { TrustLevel } from '@/types/badges';
+import { BadgeKey, TrustLevel } from '@/types/badges';
 import type {
   BadgeWithConfirmationStatus,
   ProviderBadgeWithType,
@@ -13,6 +13,7 @@ interface BadgeLabelProps {
   language?: 'de' | 'en';
   className?: string;
   showIcon?: boolean;
+  size?: 'md' | 'sm';
 }
 
 /**
@@ -32,6 +33,7 @@ export function BadgeLabel({
   language = 'de',
   className,
   showIcon = true,
+  size = 'md',
 }: BadgeLabelProps) {
   // Get badge type and trust level
   const badgeType = badge.badge_type;
@@ -42,8 +44,33 @@ export function BadgeLabel({
     return null;
   }
 
+  const shortLabels: Partial<
+    Record<
+      BadgeKey,
+      {
+        en: string;
+        de: string;
+      }
+    >
+  > = {
+    [BadgeKey.HALAL]: { en: 'HALAL', de: 'HALAL' },
+    [BadgeKey.MUSLIM_OWNED]: { en: 'MUSLIM', de: 'MUSLIM' },
+    [BadgeKey.FAMILY_FRIENDLY]: { en: 'FAMILY', de: 'FAMILIE' },
+    [BadgeKey.PRAYER_FRIENDLY]: { en: 'PRAYER', de: 'GEBET' },
+    [BadgeKey.SUPPORTS_SADAQAH]: { en: 'SADAQAH', de: 'SADAQAH' },
+    [BadgeKey.WOMEN_FRIENDLY]: { en: 'WOMEN', de: 'FRAUEN' },
+    [BadgeKey.COMMUNITY_ACTIVE]: { en: 'COMMUNITY', de: 'GEMEINDE' },
+  };
+
   // Get label text based on language
-  const labelText = badgeType.labels[language] || badgeType.labels.de || badgeType.badge_key;
+  const labelText =
+    badgeType.labels[language] || badgeType.labels.de || badgeType.badge_key;
+
+  const shortLabel =
+    shortLabels[badgeType.badge_key]?.[language] ||
+    shortLabels[badgeType.badge_key]?.en ||
+    labelText;
+  const displayText = shortLabel.toUpperCase();
 
   // Determine if icon should be shown
   const shouldShowIcon =
@@ -59,19 +86,21 @@ export function BadgeLabel({
       aria-label={ariaLabel}
       className={cn(
         'inline-flex flex-row items-center justify-center gap-1',
-        'h-8 px-2',
+        size === 'sm' ? 'h-6 px-1.5' : 'h-8 px-2',
         'bg-neutral-muted border border-neutral rounded-[3.7px]',
-        'font-inter-tight text-base font-medium text-content-heading',
+        size === 'sm'
+          ? 'font-inter-tight text-sm font-medium text-content-heading'
+          : 'font-inter-tight text-base font-medium text-content-heading',
         'whitespace-nowrap',
         className
       )}
       role="status"
     >
-      <span className="truncate">{labelText}</span>
+      <span className="truncate">{displayText}</span>
       {shouldShowIcon && (
         <TrustLevelIcon
           aria-hidden="true"
-          className="w-6 h-6 shrink-0"
+          className={cn('shrink-0', size === 'sm' ? 'h-5 w-5' : 'h-6 w-6')}
           trustLevel={trustLevel}
         />
       )}
