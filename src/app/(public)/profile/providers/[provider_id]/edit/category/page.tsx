@@ -122,7 +122,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ provide
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
         <div className="text-center">
-          <h1 className="mb-4 text-2xl font-semibold text-gray-900">{t('editProvider.editCategory.desktopTitle')}</h1>
+          <h1 className="mb-4 text-2xl font-semibold text-content-heading">{t('editProvider.editCategory.desktopTitle')}</h1>
           <p className="text-gray-600">
             {t('editProvider.editCategory.desktopMessage')}
           </p>

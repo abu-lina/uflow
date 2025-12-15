@@ -7,8 +7,8 @@ const secondaryButtonVariants = cva(
   {
     variants: {
       variant: {
-        text: 'bg-transparent border-border text-gray-600 hover:text-gray-800 hover:bg-gray-50',
-        'with-icon': 'bg-transparent border-border text-gray-600 hover:text-gray-800 hover:bg-gray-50 gap-2',
+        text: 'bg-transparent border-border text-content-muted hover:text-content hover:bg-gray-50',
+        'with-icon': 'bg-transparent border-border text-content-muted hover:text-content hover:bg-gray-50 gap-2',
       },
       size: {
         base: 'h-12 px-4', // 48px height with base text

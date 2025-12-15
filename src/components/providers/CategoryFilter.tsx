@@ -144,8 +144,8 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
         <motion.button
           className={`relative whitespace-nowrap px-4 py-1 text-base transition-colors ${
             !currentCategory
-              ? 'font-semibold text-gray-900'
-              : 'font-medium text-gray-600 hover:text-gray-800'
+              ? 'font-semibold text-content-heading'
+              : 'font-medium text-content-muted hover:text-content'
           }`}
           data-category-id="alle"
           whileHover={{ scale: 1.02 }}
@@ -170,8 +170,8 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
             <motion.button
               className={`relative whitespace-nowrap px-4 py-1 text-base transition-colors ${
                 currentCategory === category.category_id
-                  ? 'font-semibold text-gray-900'
-                  : 'font-medium text-gray-600 hover:text-gray-800'
+                  ? 'font-semibold text-content-heading'
+                  : 'font-medium text-content-muted hover:text-content'
               }`}
               data-category-id={category.category_id}
               whileHover={{ scale: 1.02 }}

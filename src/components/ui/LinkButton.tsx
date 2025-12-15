@@ -52,7 +52,7 @@ export const LinkButton = forwardRef<HTMLButtonElement, LinkButtonProps>(
   ({ children, className = '', variant = 'primary', ...props }, ref) => {
     const variantClasses = {
       primary: 'text-primary hover:text-primary-dark',
-      secondary: 'text-gray-600 hover:text-gray-800',
+      secondary: 'text-content-muted hover:text-content',
     };
 
     return (

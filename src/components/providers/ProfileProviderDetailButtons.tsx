@@ -262,7 +262,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
                   className="flex-1 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                   onClick={cancelDelete}
                 >
-                  <span className="text-base font-medium text-gray-700">Abbrechen</span>
+                  <span className="text-base font-medium text-content">Abbrechen</span>
                 </button>
                 <button
                   className="flex-1 py-3 rounded-lg bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
@@ -358,7 +358,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
                   className="flex-1 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                   onClick={cancelDelete}
                 >
-                  <span className="text-base font-medium text-gray-700">Abbrechen</span>
+                  <span className="text-base font-medium text-content">Abbrechen</span>
                 </button>
                 <button
                   className="flex-1 py-3 rounded-lg bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"

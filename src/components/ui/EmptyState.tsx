@@ -33,8 +33,8 @@ export const EmptyState = memo(function EmptyState({
         </motion.div>
       )}
 
-      <h3 className="mb-2 text-lg font-semibold text-gray-900">{title}</h3>
-      <p className="max-w-md text-gray-600">{description}</p>
+      <h3 className="mb-2 text-lg font-semibold text-content-heading">{title}</h3>
+      <p className="max-w-md text-content-muted">{description}</p>
     </motion.div>
   );
 });

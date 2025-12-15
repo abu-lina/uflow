@@ -87,7 +87,7 @@ export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClos
             className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/80 shadow"
             onClick={onClose}
           >
-            <Icon className="h-5 w-5 text-gray-700" icon="material-symbols:close-rounded" />
+            <Icon className="h-5 w-5 text-content-heading" icon="material-symbols:close-rounded" />
           </button>
           {/* Header */}
           <div className="flex h-[90px] w-full flex-col items-center">

@@ -59,10 +59,10 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
         {/* Heading */}
         <div className="flex flex-col items-center gap-4 text-center">
           <Logo height={96} width={96} />
-          <h1 className="font-inter-tight text-3xl font-semibold leading-tight text-[#232323] sm:text-4xl">
+          <h1 className="font-inter-tight text-3xl font-semibold leading-tight text-content-heading sm:text-4xl">
             {t('waitlist.title')}
           </h1>
-          <p className="font-inter text-base leading-normal text-[#555555] sm:text-lg">
+          <p className="font-inter text-base leading-normal text-content sm:text-lg">
             {t('waitlist.description')}
           </p>
         </div>

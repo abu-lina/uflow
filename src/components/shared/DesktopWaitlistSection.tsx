@@ -199,10 +199,10 @@ export function DesktopWaitlistSection() {
               initial={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.4, delay: 0.3, ease: 'easeOut' }}
             >
-              <h2 className="font-inter-tight text-3xl font-semibold leading-tight text-[#232323] sm:text-4xl">
+              <h2 className="font-inter-tight text-3xl font-semibold leading-tight text-content-heading sm:text-4xl">
                 {t('waitlist.successTitle')}
               </h2>
-              <p className="font-inter text-base leading-normal text-[#555555] sm:text-lg">
+              <p className="font-inter text-base leading-normal text-content sm:text-lg">
                 {t('waitlist.successDescription')}
               </p>
             </motion.div>
@@ -214,7 +214,7 @@ export function DesktopWaitlistSection() {
               initial={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
             >
-              <p className="text-center font-inter text-sm leading-relaxed text-[#555555]">
+              <p className="text-center font-inter text-sm leading-relaxed text-content">
                 {t('waitlist.successMessage')}
               </p>
             </motion.div>

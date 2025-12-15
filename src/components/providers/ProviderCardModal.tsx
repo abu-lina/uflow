@@ -571,7 +571,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/80 shadow"
             onClick={handleClose}
           >
-            <X className="h-5 w-5 text-gray-700" />
+            <X className="h-5 w-5 text-content-heading" />
           </button>
           {/* Visual Section - Desktop (unchanged) */}
           <div className="relative isolation-auto flex hidden h-[356px] w-full flex-col items-start justify-end gap-[12.25px] p-0 sm:block sm:w-[392px]">

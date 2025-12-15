@@ -184,7 +184,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
                 <AlertTriangle className="h-8 w-8 text-[#D86363]" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-content-heading">
                 {t('profile.confirmDeleteTitle')}
               </h3>
               <p className="mt-2 text-sm text-gray-600">

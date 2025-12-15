@@ -68,7 +68,7 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
               <button
                 key={lang.code}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                  language === lang.code ? 'bg-primary/10 text-primary' : 'text-gray-700'
+                  language === lang.code ? 'bg-primary/10 text-primary' : 'text-content'
                 }`}
                 onClick={() => {
                   setLanguage(lang.code);

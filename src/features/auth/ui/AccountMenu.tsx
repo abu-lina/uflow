@@ -36,7 +36,7 @@ export function AccountMenu() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5">
           <button
-            className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+            className="block w-full px-4 py-2 text-left text-sm text-content hover:bg-gray-100"
             onClick={handleSignOut}
           >
             Sign out

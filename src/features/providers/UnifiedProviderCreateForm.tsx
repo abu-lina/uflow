@@ -320,15 +320,15 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
     <form className="flex flex-col gap-8 pb-8" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
       {/* Basics Section */}
       <div className="flex flex-col gap-6">
-        <h2 className="text-xl font-semibold text-[#232323]">{t('create.steps.basics')}</h2>
+        <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.basics')}</h2>
         
         <div className="flex flex-col gap-4">
           {/* Title */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-[#999999]">{t('create.basics.titleLabel')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">{t('create.basics.titleLabel')}</label>
               <input
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.basics.titlePlaceholder')}
                 type="text"
                 value={formData.title}
@@ -344,8 +344,8 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             onClick={() => router.push('/create/basics/category')}
           >
             <div className="flex flex-1 flex-col gap-1 items-start">
-              <span className="text-xs leading-[15px] text-[#999999]">{t('create.basics.categoryLabel')}</span>
-              <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left">
+              <span className="text-xs leading-[15px] text-content-muted">{t('create.basics.categoryLabel')}</span>
+              <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left">
                 {formData.category 
                   ? (() => {
                       const category = categories.find(cat => cat.category_id === formData.category);
@@ -358,15 +358,15 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                 }
               </div>
             </div>
-            <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+            <Icon className="h-6 w-6 text-content-heading" icon="material-symbols:chevron-right" />
           </button>
 
           {/* Description */}
           <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-[#999999]">{t('create.basics.descriptionLabel')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">{t('create.basics.descriptionLabel')}</label>
               <textarea
-                className="w-full min-h-[100px] border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0 resize-none"
+                className="w-full min-h-[100px] border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0 resize-none"
                 placeholder={t('create.basics.descriptionPlaceholder')}
                 value={formData.description}
                 onChange={(e) => updateFormData({ description: e.target.value })}
@@ -381,8 +381,8 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             onClick={() => router.push('/create/basics/offers')}
           >
             <div className="flex flex-1 flex-col gap-1 items-start">
-              <span className="text-xs leading-[15px] text-[#999999]">{t('create.basics.whatIOffer')}</span>
-              <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+              <span className="text-xs leading-[15px] text-content-muted">{t('create.basics.whatIOffer')}</span>
+              <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left break-words">
                 {(() => {
                   const hasOffers = formData.offers_ids && formData.offers_ids.length > 0;
                   if (hasOffers) {
@@ -410,8 +410,8 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             onClick={() => router.push('/create/basics/needs')}
           >
             <div className="flex flex-1 flex-col gap-1 items-start">
-              <span className="text-xs leading-[15px] text-[#999999]">{t('create.basics.whatILookingFor')}</span>
-              <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+              <span className="text-xs leading-[15px] text-content-muted">{t('create.basics.whatILookingFor')}</span>
+              <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left break-words">
                 {(() => {
                   const hasNeeds = formData.needs_ids && formData.needs_ids.length > 0;
                   if (hasNeeds) {
@@ -436,13 +436,13 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
 
       {/* Location Section */}
       <div className="flex flex-col gap-6">
-        <h2 className="text-xl font-semibold text-[#232323]">{t('create.steps.location')}</h2>
+        <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.location')}</h2>
         
         {/* Online Business Toggle */}
         <div className="flex items-center justify-between w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3">
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-[#272727]">{t('create.location.onlineBusiness')}</span>
-            <span className="text-xs text-[#7A7A7A]">{t('create.location.noPhysicalLocation')}</span>
+            <span className="text-sm font-medium text-content">{t('create.location.onlineBusiness')}</span>
+            <span className="text-xs text-content-muted">{t('create.location.noPhysicalLocation')}</span>
           </div>
           <button
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
@@ -488,7 +488,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
               )}
               {!validationErrors.street && (
                 <div className="flex items-center justify-between px-3 py-1">
-                  <p className="text-xs text-[#7A7A7A]">{t('create.location.addressAutoFill')}</p>
+                  <p className="text-xs text-content-muted">{t('create.location.addressAutoFill')}</p>
                   <button
                     className="text-xs text-primary hover:text-primary-dark hover:underline cursor-pointer"
                     type="button"
@@ -506,9 +506,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                 {/* Street */}
                 <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                   <div className="flex w-full flex-col gap-1">
-                    <label className="text-xs leading-[15px] text-[#999999]">{t('create.location.street')}</label>
+                    <label className="text-xs leading-[15px] text-content-muted">{t('create.location.street')}</label>
                     <input
-                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterStreet')}
                       type="text"
                       value={formData.street}
@@ -526,9 +526,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                 {/* ZIP */}
                 <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                   <div className="flex w-full flex-col gap-1">
-                    <label className="text-xs leading-[15px] text-[#999999]">{t('create.location.zip')}</label>
+                    <label className="text-xs leading-[15px] text-content-muted">{t('create.location.zip')}</label>
                     <input
-                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterZip')}
                       type="text"
                       value={formData.zip}
@@ -543,10 +543,10 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                 {/* City */}
                 <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                   <div className="flex w-full flex-col gap-1">
-                    <label className="text-xs leading-[15px] text-[#999999]">{t('create.location.city')}</label>
+                    <label className="text-xs leading-[15px] text-content-muted">{t('create.location.city')}</label>
                     <input
                       required
-                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterCity')}
                       type="text"
                       value={formData.city}
@@ -564,10 +564,10 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                 {/* Country */}
                 <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                   <div className="flex w-full flex-col gap-1">
-                    <label className="text-xs leading-[15px] text-[#999999]">{t('create.location.country')}</label>
+                    <label className="text-xs leading-[15px] text-content-muted">{t('create.location.country')}</label>
                     <input
                       required
-                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterCountry')}
                       type="text"
                       value={formData.country}
@@ -592,23 +592,23 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
         {formData.isOnlineBusiness && (
           <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#D4D4D4] bg-white">
             <Icon className="h-12 w-12 text-primary mb-3" icon="mdi:web" />
-            <p className="text-sm font-medium text-[#272727] text-center mb-1">{t('create.location.onlineBusiness')}</p>
-            <p className="text-xs text-[#7A7A7A] text-center">{t('create.location.onlineBusinessDisplay')}</p>
+            <p className="text-sm font-medium text-content text-center mb-1">{t('create.location.onlineBusiness')}</p>
+            <p className="text-xs text-content-muted text-center">{t('create.location.onlineBusinessDisplay')}</p>
           </div>
         )}
       </div>
 
       {/* Contact Section */}
       <div className="flex flex-col gap-6">
-        <h2 className="text-xl font-semibold text-[#232323]">{t('create.steps.contact')}</h2>
+        <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.contact')}</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Website */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-[#999999]">{t('create.contact.website')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">{t('create.contact.website')}</label>
               <input
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.contact.websitePlaceholder')}
                 type="url"
                 value={formData.website}
@@ -620,9 +620,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           {/* Instagram */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-[#999999]">{t('create.contact.instagram')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">{t('create.contact.instagram')}</label>
               <input
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.contact.instagramPlaceholder')}
                 type="text"
                 value={formData.instagram}
@@ -634,9 +634,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           {/* Phone */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-[#999999]">{t('create.contact.phone')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">{t('create.contact.phone')}</label>
               <input
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.contact.phonePlaceholder')}
                 type="tel"
                 value={formData.phone}
@@ -648,9 +648,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           {/* Email */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-[#999999]">{t('create.contact.email')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">{t('create.contact.email')}</label>
               <input
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.contact.emailPlaceholder')}
                 type="email"
                 value={formData.email}
@@ -663,7 +663,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
 
       {/* Media Section */}
       <div className="flex flex-col gap-6">
-        <h2 className="text-xl font-semibold text-[#232323]">{t('create.steps.media')}</h2>
+        <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.media')}</h2>
         
         <div className="flex flex-col gap-3">
           <button
@@ -672,8 +672,8 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             onClick={() => router.push('/create/media/images')}
           >
             <div className="flex flex-1 flex-col gap-1 items-start">
-              <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.media.images')}</span>
-              <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+              <span className="text-xs font-normal text-content-muted leading-[15px]">{t('create.media.images')}</span>
+              <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left break-words">
                 {formData.images && formData.images.length > 0 
                   ? t('create.media.imagesSelected').replace('{{count}}', formData.images.length.toString())
                   : t('create.media.uploadImages')}
@@ -689,8 +689,8 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
               onClick={() => router.push('/create/media/social')}
             >
               <div className="flex flex-1 flex-col gap-1 items-start">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.media.socialInitiatives')}</span>
-                <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
+                <span className="text-xs font-normal text-content-muted leading-[15px]">{t('create.media.socialInitiatives')}</span>
+                <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left break-words">
                   {(formData.selectedCommunityServiceIds || []).length > 0 
                     ? t('create.media.initiativesSelected').replace('{{count}}', (formData.selectedCommunityServiceIds || []).length.toString())
                     : t('create.media.selectInitiatives')}

@@ -72,7 +72,7 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
       type="button"
       onClick={onShare}
     >
-      <Icon className="text-gray-700" height={20} icon="lucide:share-2" width={20} />
+      <Icon className="text-content-heading" height={20} icon="lucide:share-2" width={20} />
     </button>
 
     {/* Call Button (optional) */}
@@ -83,7 +83,7 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
         href={`tel:${phoneNumber}`}
         onClick={onCall}
       >
-        <Icon className="text-gray-700" height={20} icon="entypo:old-phone" width={20} />
+        <Icon className="text-content-heading" height={20} icon="entypo:old-phone" width={20} />
       </a>
     )}
 
@@ -97,7 +97,7 @@ export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({
         target="_blank"
         onClick={onWebsite}
       >
-        <Icon className="text-gray-700" height={20} icon="mdi:web" width={20} />
+        <Icon className="text-content-heading" height={20} icon="mdi:web" width={20} />
       </a>
     )}
   </div>

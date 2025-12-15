@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 import { logSupabaseError } from '@/utils/errorUtils';
+import type { ProviderBadgeWithType } from '@/types/badges';
 
 export interface CommunityService {
   id?: string;
@@ -41,6 +42,7 @@ export interface CommunityService {
   provider_id?: string;
   created_at: string;
   updated_at: string;
+  badges?: ProviderBadgeWithType[];
 }
 
 // Fetch all community services

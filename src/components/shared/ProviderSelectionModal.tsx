@@ -152,7 +152,7 @@ export function ProviderSelectionModal({
               type="button"
               onClick={handleClose}
             >
-              <Icon className="size-6 text-[#232323]" icon="material-symbols:close-rounded" />
+              <Icon className="size-6 text-content-heading" icon="material-symbols:close-rounded" />
             </button>
           </div>
 
@@ -161,13 +161,13 @@ export function ProviderSelectionModal({
             {/* Question */}
             <div className="flex flex-col items-center gap-2 text-center">
               <h2
-                className="font-inter-tight text-xl font-semibold leading-tight text-[#232323] md:text-2xl"
+                className="font-inter-tight text-xl font-semibold leading-tight text-content-heading md:text-2xl"
                 id="provider-modal-title"
               >
                 Are you joining as a provider?
               </h2>
               <p
-                className="font-inter text-sm text-[#555555] md:text-base"
+                className="font-inter text-sm text-content md:text-base"
                 id="provider-modal-description"
               >
                 Let us know so we can support you in getting your services listed early.

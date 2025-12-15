@@ -83,7 +83,7 @@ export function TitleAndText({
       )}
       {description && (
         <p className={cn(
-          'text-center text-base leading-normal text-[#7A7A7A]',
+          'text-center text-base leading-normal text-content-muted',
           descriptionClassName
         )}>
           {description}

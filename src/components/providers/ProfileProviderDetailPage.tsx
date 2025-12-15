@@ -309,7 +309,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                 Bearbeiten
               </button>
               <button
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 px-6 font-inter-tight font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 px-6 font-inter-tight font-medium text-content hover:bg-gray-50 transition-colors"
                 onClick={handleMoreActions}
               >
                 <Icon className="h-5 w-5" icon="material-symbols:more-horiz" />

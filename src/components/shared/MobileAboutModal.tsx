@@ -33,7 +33,7 @@ export function MobileAboutModal({ isOpen, onClose }: MobileAboutModalProps) {
             
             {/* Close Button */}
             <button
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-gray-600 hover:bg-white hover:text-gray-800"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-content-muted hover:bg-white hover:text-content-heading"
               onClick={onClose}
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

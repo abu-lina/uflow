@@ -431,10 +431,10 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 
                 {/* User Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="font-inter-tight text-lg font-semibold text-[#232323] truncate" title={fullName}>
+                  <div className="font-inter-tight text-lg font-semibold text-content-heading truncate" title={fullName}>
                     {fullName}
                   </div>
-                  <div className="font-inter text-sm text-[#555] truncate" title={effectiveUser.email}>
+                  <div className="font-inter text-sm text-content-muted truncate" title={effectiveUser.email}>
                     {effectiveUser.email}
                   </div>
                 </div>
@@ -549,7 +549,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   src="/icons/icon-192x192.png"
                   width={24}
                 />
-                <span className="font-inter-tight font-semibold text-[#232323]">{t('navigation.about')}</span>
+                <span className="font-inter-tight font-semibold text-content-heading">{t('navigation.about')}</span>
               </button>
               
               {/* Divider */}
@@ -558,7 +558,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
               {/* Support */}
               <button className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50">
                 <CircleHelp className="h-6 w-6 text-black" />
-                <span className="font-inter-tight font-semibold text-[#232323]">{t('common.support') || 'Support'}</span>
+                <span className="font-inter-tight font-semibold text-content-heading">{t('common.support') || 'Support'}</span>
               </button>
               
               {/* Divider */}
@@ -570,7 +570,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 href="/privacy-policy"
               >
                 <Shield className="h-6 w-6 text-black" />
-                <span className="font-inter-tight font-semibold text-[#232323]">
+                <span className="font-inter-tight font-semibold text-content-heading">
                   {t('legal.privacyPolicy') || 'Privacy Policy'}
                 </span>
               </Link>
@@ -584,7 +584,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 href="/terms"
               >
                 <FileText className="h-6 w-6 text-black" />
-                <span className="font-inter-tight font-semibold text-[#232323]">
+                <span className="font-inter-tight font-semibold text-content-heading">
                   {t('legal.termsOfService') || 'Terms of Service'}
                 </span>
               </Link>
@@ -599,7 +599,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 onClick={handleExportData}
               >
                 <Download className="h-6 w-6 text-black" />
-                <span className="font-inter-tight font-semibold text-[#232323]">
+                <span className="font-inter-tight font-semibold text-content-heading">
                   {isExporting ? t('common.loading') + '...' : t('legal.downloadData') || 'Download My Data'}
                 </span>
               </button>
@@ -614,7 +614,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 onClick={handleLogout}
               >
                 <LogOut className="h-6 w-6 text-black" />
-                <span className="font-inter-tight font-semibold text-[#232323]">
+                <span className="font-inter-tight font-semibold text-content-heading">
                   {isLoggingOut ? t('auth.logout') + '...' : t('auth.logout')}
                 </span>
               </button>
@@ -883,7 +883,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     onClick={handleCloseAccount}
                   >
                     <BrokenHeartIcon size={24} />
-                    <span className="font-inter-tight text-base font-semibold text-[#232323]">
+                    <span className="font-inter-tight text-base font-semibold text-content-heading">
                       {t('profile.closeAccount')}
                     </span>
                   </button>

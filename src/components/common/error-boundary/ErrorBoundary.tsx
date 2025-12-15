@@ -37,8 +37,8 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
           <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
             <AlertTriangle className="mb-4 h-16 w-16 text-red-500 mx-auto" />
-            <h2 className="mb-2 text-xl font-semibold text-gray-800">Etwas ist schiefgelaufen</h2>
-            <p className="mb-6 text-gray-600">
+            <h2 className="mb-2 text-xl font-semibold text-content-heading">Etwas ist schiefgelaufen</h2>
+            <p className="mb-6 text-content-muted">
               Es gab einen unerwarteten Fehler. Bitte versuche es erneut.
             </p>
             <div className="space-y-3">
@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Seite neu laden
               </button>
               <button
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-content hover:bg-gray-50"
                 onClick={() => this.setState({ hasError: false })}
               >
                 Erneut versuchen

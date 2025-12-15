@@ -294,7 +294,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           
           {/* Provider Info Card */}
           <div className="mx-6 mt-6 rounded-2xl bg-white p-4 shadow-sm">
-            <h2 className="font-inter-tight text-xl font-semibold text-gray-900">
+            <h2 className="font-inter-tight text-xl font-semibold text-content-heading">
               {provider.provider_name}
             </h2>
             {provider.address_city ? (
@@ -380,7 +380,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 onClick={() => setExpandedBarakah(!expandedBarakah)}
               >
                 <div className="flex items-center gap-2">
-                  <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
+                  <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
                     {t('providers.ourBarakahEffect')}
                   </h3>
                   <Icon className="h-4 w-4 text-gray-500" icon="material-symbols:info-outline" />
@@ -413,7 +413,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-inter-tight font-medium text-gray-900">
+                        <p className="font-inter-tight font-medium text-content">
                           {service.community_service_name}
                         </p>
                         <p className="text-sm text-gray-600">
@@ -440,7 +440,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     className="flex w-full items-center justify-between"
                     onClick={() => setExpandedOffers(!expandedOffers)}
                   >
-                    <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
+                    <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
                       {t('providers.weOffer')}
                     </h3>
                     <ChevronDown 
@@ -478,7 +478,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     className="flex w-full items-center justify-between"
                     onClick={() => setExpandedNeeds(!expandedNeeds)}
                   >
-                    <h3 className="font-inter-tight text-lg font-semibold text-gray-900">
+                    <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
                       {t('providers.weAreLookingFor')}
                     </h3>
                     <ChevronDown 
@@ -553,13 +553,13 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
         <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex items-center justify-between">
             <button
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+              className="flex items-center gap-2 text-content-muted hover:text-content-heading"
               onClick={handleBack}
             >
               <ArrowLeft className="h-5 w-5" />
               <span className="font-inter-tight">Zurück</span>
             </button>
-            <h1 className="font-inter-tight text-2xl font-bold text-gray-900">
+            <h1 className="font-inter-tight text-2xl font-bold text-content-heading">
               {provider.provider_name}
             </h1>
             <div className="w-20" /> {/* Spacer */}
@@ -657,7 +657,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           <div className="space-y-6">
             {/* Provider Info */}
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="font-inter-tight text-3xl font-bold text-gray-900">
+              <h2 className="font-inter-tight text-3xl font-bold text-content-heading">
                 {provider.provider_name}
               </h2>
               <p className="mt-2 text-gray-600">
@@ -713,7 +713,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                   onClick={() => setExpandedBarakah(!expandedBarakah)}
                 >
                   <div className="flex items-center gap-2">
-                    <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                    <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
                       {t('providers.ourBarakahEffect')}
                     </h3>
                     <Icon className="h-5 w-5 text-gray-500" icon="material-symbols:info-outline" />
@@ -764,7 +764,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-inter-tight font-semibold text-gray-900">
+                          <p className="font-inter-tight font-semibold text-content">
                             {service.community_service_name}
                           </p>
                           <p className="text-sm text-gray-600">
@@ -789,7 +789,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                   className="flex w-full items-center justify-between"
                   onClick={() => setExpandedProviders(!expandedProviders)}
                 >
-                  <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                  <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
                     Supporters
                   </h3>
                   <ChevronDown 
@@ -822,7 +822,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-inter-tight font-semibold text-gray-900">
+                            <p className="font-inter-tight font-semibold text-content">
                               {supportingProvider.provider_name}
                             </p>
                             <p className="text-sm text-gray-600">
@@ -847,7 +847,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       className="flex w-full items-center justify-between"
                       onClick={() => setExpandedOffers(!expandedOffers)}
                     >
-                      <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                      <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
                         {t('providers.weOffer')}
                       </h3>
                       <ChevronDown 
@@ -885,7 +885,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       className="flex w-full items-center justify-between"
                       onClick={() => setExpandedNeeds(!expandedNeeds)}
                     >
-                      <h3 className="font-inter-tight text-2xl font-semibold text-gray-900">
+                      <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
                         {t('providers.weAreLookingFor')}
                       </h3>
                       <ChevronDown 

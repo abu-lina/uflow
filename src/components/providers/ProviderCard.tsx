@@ -8,6 +8,7 @@ import { Icon } from '@iconify/react';
 import { AnimatedHeartIcon } from '@/components/ui/AnimatedHeartIcon';
 import { BarikButton } from '@/components/ui/BarikButton';
 import { Button } from '@/components/ui/Button';
+import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
@@ -37,6 +38,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       gradient = false,
       provider_images,
       barakah_effects = [],
+      badges = [],
       provider_name,
       provider_id,
       className,
@@ -338,6 +340,26 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
                 {address}
               </button>
             </div>
+            {badges && badges.length > 0 && (
+              <div className="flex h-8 w-full items-center gap-2 overflow-hidden">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  {badges.slice(0, 3).map((badge) => (
+                    <BadgeLabel
+                      key={badge.id}
+                      badge={badge}
+                      language={language === 'de' ? 'de' : 'en'}
+                    />
+                  ))}
+                  {badges.length > 3 && (
+                    <div className="flex h-8 shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-white/80 px-2 backdrop-blur-sm">
+                      <span className="font-inter-tight text-base font-medium text-[#232323]">
+                        +{badges.length - 3}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             {barakah_effects && barakah_effects.length > 0 && (
               <div className="flex h-7 w-full items-center gap-2 overflow-hidden">
                 <div className="flex items-center gap-2 overflow-hidden">

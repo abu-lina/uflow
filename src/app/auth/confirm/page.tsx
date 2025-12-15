@@ -113,7 +113,7 @@ export default function ConfirmEmail() {
               Go to Login
             </button>
             <button 
-              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors block mx-auto"
+              className="bg-gray-200 text-content px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors block mx-auto"
               onClick={() => router.push('/auth/signup')}
             >
               Sign Up Again

@@ -99,7 +99,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         {/* Label + Input Container */}
         <div className="flex w-full flex-col gap-1 px-3">
           <label className={cn(
-            'text-xs leading-[15px] text-[#999999]',
+            'text-xs leading-[15px] text-content-muted',
             labelClassName
           )}>
             {label}
@@ -107,7 +107,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
           <input
             ref={ref}
             className={cn(
-              'h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] placeholder:text-gray-300 focus:outline-none focus:ring-0',
+              'h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content placeholder:text-gray-300 focus:outline-none focus:ring-0',
               inputClassName,
               className
             )}
@@ -120,14 +120,14 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
           <div className={cn('px-3', iconClassName)}>
             {onRightIconClick ? (
               <button
-                className="flex h-6 w-6 items-center justify-center text-[#232323] hover:text-gray-700"
+                className="flex h-6 w-6 items-center justify-center text-content-heading hover:text-content"
                 type="button"
                 onClick={onRightIconClick}
               >
                 {rightIcon}
               </button>
             ) : (
-              <div className="flex h-6 w-6 items-center justify-center text-[#232323]">
+              <div className="flex h-6 w-6 items-center justify-center text-content-heading">
                 {rightIcon}
               </div>
             )}

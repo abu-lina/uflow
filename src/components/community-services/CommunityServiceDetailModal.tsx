@@ -527,7 +527,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-inter-tight font-semibold text-gray-900">
+                              <p className="font-inter-tight font-semibold text-content">
                                 {provider.provider_name}
                               </p>
                               <p className="text-sm text-gray-600">

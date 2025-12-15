@@ -38,7 +38,7 @@ export function Dropdown({ className, items, onChange, value }: DropdownProps) {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="text-base font-normal leading-[19px] text-gray-900">{value}</span>
+        <span className="text-base font-normal leading-[19px] text-content">{value}</span>
         <ChevronDown
           className={cn('h-6 w-6 -rotate-90 transition-transform', {
             'rotate-0': isOpen,

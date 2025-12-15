@@ -96,6 +96,7 @@ export const SearchResultsList = memo(function SearchResultsList({
           created_at: result.created_at,
           updated_at: result.updated_at,
           barakah_effects: result.barakah_effects,
+          badges: result.badges,
           offers_ids: result.offers_ids,
           needs_ids: result.needs_ids,
           category: result.category,

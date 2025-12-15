@@ -3,6 +3,9 @@ import { searchCommunityServices, type CommunityService } from './communityServi
 import { searchOffers } from './offers';
 import { searchNeeds } from './needs';
 import { logSupabaseError } from '@/utils/errorUtils';
+import type { ProviderBadgeWithType } from '@/types/badges';
+import { EntityType } from '@/types/badges';
+import { getBadgesForEntity } from './badges';
 
 export interface Provider {
   provider_id: string;
@@ -39,6 +42,7 @@ export interface Provider {
   user_created_id?: string | null;
   review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision';
   review_feedback?: string | null;
+  badges?: ProviderBadgeWithType[];
 }
 
 // Combined search result type
@@ -64,6 +68,7 @@ export interface SearchResult {
   needs_ids: string[];
   offers?: Array<{ name_de: string }>;
   needs?: Array<{ name_de: string }>;
+  badges?: ProviderBadgeWithType[];
   category?: {
     name_de: string;
     name_en?: string;
@@ -123,6 +128,7 @@ function transformProviderToSearchResult(provider: Provider): SearchResult {
     needs_ids: provider.needs_ids,
     offers: provider.offers,
     needs: provider.needs,
+    badges: provider.badges,
     category: provider.category,
     type: 'provider' as const,
     originalProvider: provider,
@@ -155,6 +161,7 @@ function transformCommunityServiceToSearchResult(communityService: CommunityServ
     needs_ids: communityService.needs_ids || [],
     offers: communityService.offers,
     needs: communityService.needs,
+    badges: communityService.badges,
     category: communityService.category ? {
       name_de: communityService.category.name_de || 'Unbekannt',
       name_en: communityService.category.name_en,
@@ -467,7 +474,31 @@ export async function searchProviders(
     barakah_effects: provider.barakah_effects || [],
   }));
 
-  return providersWithOffersAndNeeds;
+  // Batch fetch badges for all providers to avoid N+1 query problem
+  const badgesPromises = data.map(provider => 
+    getBadgesForEntity(provider.provider_id, EntityType.PROVIDER).catch(error => {
+      // Handle errors gracefully - badges are optional, shouldn't break search
+      console.error(`Error fetching badges for provider ${provider.provider_id}:`, error);
+      return [] as ProviderBadgeWithType[];
+    })
+  );
+  const badgesResults = await Promise.allSettled(badgesPromises);
+  
+  // Create badges map for O(1) lookup
+  const badgesMap = new Map<string, ProviderBadgeWithType[]>();
+  badgesResults.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      badgesMap.set(data[index].provider_id, result.value);
+    }
+  });
+
+  // Add badges to providers
+  const providersWithBadges = providersWithOffersAndNeeds.map(provider => ({
+    ...provider,
+    badges: badgesMap.get(provider.provider_id) || [],
+  }));
+
+  return providersWithBadges;
 }
 
 export async function fetchProviderCities(): Promise<string[]> {
