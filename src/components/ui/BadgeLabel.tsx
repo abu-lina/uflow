@@ -85,7 +85,7 @@ export function BadgeLabel({
     <span
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex flex-row items-center justify-center gap-1',
+        'inline-flex flex-row items-center justify-center',
         size === 'sm' ? 'h-6 px-1.5' : 'h-8 px-2',
         'bg-neutral-muted border border-neutral rounded-[3.7px]',
         size === 'sm'
