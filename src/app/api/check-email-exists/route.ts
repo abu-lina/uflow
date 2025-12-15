@@ -72,8 +72,33 @@ export async function POST(request: Request) {
     console.log(`[SECURITY] Email check attempt for: ${email} from IP: ${ip}`);
 
     // Use admin API to check user existence and metadata
+    // Use pagination to handle large user lists (same approach as login route)
     const supabaseAdmin = getSupabaseAdmin();
-    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+    let user = null;
+    let page = 1;
+    const perPage = 1000;
+    let error: { message: string } | null = null;
+
+    while (user === null) {
+      const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage
+      });
+
+      if (listError) {
+        error = listError;
+        break;
+      }
+
+      user = data.users.find(u => u.email === email);
+
+      // If found or reached end of list, break
+      if (user || data.users.length < perPage) {
+        break;
+      }
+
+      page++;
+    }
 
     if (error) {
       console.error('[SECURITY] Database error during email check:', error);
@@ -82,8 +107,6 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-
-    const user = users.find(u => u.email === email);
 
     // Always return same response to prevent email enumeration
     if (!user) {
