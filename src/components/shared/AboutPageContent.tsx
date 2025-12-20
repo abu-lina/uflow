@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -12,6 +13,7 @@ import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { AboutCard } from '@/components/shared/AboutCard';
 import { quotes } from '@/constants/quotes';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 
 interface AboutPageContentProps {
   onComplete?: () => void;
@@ -22,9 +24,14 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
   const router = useRouter();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -67,8 +74,24 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
     }
   }, [isTransitioning]);
 
+  // Language switcher portal - render at document root to avoid clipping
+  const languageSwitcherPortal = isMounted && typeof document !== 'undefined' && document.body ? createPortal(
+    <div 
+      className="fixed top-2 right-2 z-[9999] md:top-3 md:right-3" 
+      style={{ 
+        paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
+        paddingRight: 'max(env(safe-area-inset-right), 0.25rem)'
+      }}
+    >
+      <LanguageSwitcher variant="dropdown" />
+    </div>,
+    document.body
+  ) : null;
+
   return (
-    <PageLayout hasBackground={false} maxWidth="full">
+    <>
+      {languageSwitcherPortal}
+      <PageLayout hasBackground={false} maxWidth="full">
       {/* HEADER SECTION - Fixed at top using reusable header */}
       <PageHeader 
         rightIcon={
@@ -147,7 +170,8 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
           variant: 'primary',
         }}
       />
-    </PageLayout>
+      </PageLayout>
+    </>
   );
 }
 

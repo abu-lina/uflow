@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/Button';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { WaitlistResponse } from '@/types/waitlist';
 
 interface ProviderSelectionModalProps {
@@ -18,6 +19,7 @@ export function ProviderSelectionModal({
   onClose, 
   onComplete 
 }: ProviderSelectionModalProps) {
+  const { t } = useLanguage();
   const modalRef = useRef<HTMLDivElement>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,11 +46,11 @@ export function ProviderSelectionModal({
       if (!response.ok) {
         // Handle specific error cases
         if (response.status === 409) {
-          setError(data.error?.message || "You're already on the waitlist!");
+          setError(data.error?.message || t('waitlist.errorAlreadyOnWaitlist'));
         } else if (response.status === 429) {
-          setError('Too many requests. Please try again later.');
+          setError(t('waitlist.errorTooManyRequests'));
         } else {
-          setError(data.error?.message || 'An error occurred. Please try again.');
+          setError(data.error?.message || t('waitlist.errorGeneric'));
         }
         setIsSubmitting(false);
         return;
@@ -61,10 +63,10 @@ export function ProviderSelectionModal({
       
     } catch (err) {
       console.error('[Waitlist] Submit error:', err);
-      setError('Network error. Please check your connection.');
+      setError(t('waitlist.errorNetworkError'));
       setIsSubmitting(false);
     }
-  }, [email, onClose, onComplete]);
+  }, [email, onClose, onComplete, t]);
 
   const handleClose = useCallback(() => {
     if (isSubmitting) return;
@@ -164,13 +166,13 @@ export function ProviderSelectionModal({
                 className="font-inter-tight text-xl font-semibold leading-tight text-content-heading md:text-2xl"
                 id="provider-modal-title"
               >
-                Are you joining as a provider?
+                {t('waitlist.providerModalTitle')}
               </h2>
               <p
                 className="font-inter text-sm text-content md:text-base"
                 id="provider-modal-description"
               >
-                Let us know so we can support you in getting your services listed early.
+                {t('waitlist.providerModalDescription')}
               </p>
             </div>
 
@@ -189,25 +191,25 @@ export function ProviderSelectionModal({
             <div className="flex w-full flex-col gap-3">
               <Button
                 fullWidth
-                aria-label="Join as provider"
+                aria-label={t('waitlist.providerModalJoinAsProvider')}
                 disabled={isSubmitting}
                 loading={isSubmitting}
                 size="lg"
                 variant="primary"
                 onClick={() => handleSelection(true)}
               >
-                I plan to offer services
+                {t('waitlist.providerModalJoinAsProvider')}
               </Button>
               
               <Button
                 fullWidth
-                aria-label="Join as regular user"
+                aria-label={t('waitlist.providerModalJoinAsCustomer')}
                 disabled={isSubmitting}
                 size="lg"
                 variant="secondary"
                 onClick={() => handleSelection(false)}
               >
-                I&apos;m here as a customer
+                {t('waitlist.providerModalJoinAsCustomer')}
               </Button>
             </div>
           </div>

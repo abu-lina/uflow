@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/Button';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface WaitlistSuccessScreenProps {
   onContinue: () => void;
@@ -16,6 +17,7 @@ export function WaitlistSuccessScreen({
   autoDismiss = false,
   autoDismissDelay = 5000 
 }: WaitlistSuccessScreenProps) {
+  const { t } = useLanguage();
   
   // Auto-dismiss after delay if enabled
   useEffect(() => {
@@ -57,10 +59,10 @@ export function WaitlistSuccessScreen({
           transition={{ duration: 0.4, delay: 0.3, ease: 'easeOut' }}
         >
           <h1 className="font-inter-tight text-3xl font-semibold leading-tight text-content-heading sm:text-4xl">
-            You&apos;re on the list!
+            {t('waitlist.successTitle')}
           </h1>
           <p className="font-inter text-base leading-normal text-content sm:text-lg">
-            Check your email for confirmation
+            {t('waitlist.successDescription')}
           </p>
         </motion.div>
 
@@ -72,7 +74,7 @@ export function WaitlistSuccessScreen({
           transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
         >
           <p className="text-center font-inter text-sm leading-relaxed text-content">
-            We&apos;ll notify you as soon as we launch. In the meantime, feel free to share UmmahFlow with others who might benefit from our platform.
+            {t('waitlist.successMessage')}
           </p>
         </motion.div>
 
@@ -85,12 +87,12 @@ export function WaitlistSuccessScreen({
         >
           <Button
             fullWidth
-            aria-label="Continue to app"
+            aria-label={t('waitlist.successContinueButton')}
             size="lg"
             variant="primary"
             onClick={onContinue}
           >
-            Continue
+            {t('waitlist.successContinueButton')}
           </Button>
         </motion.div>
 
@@ -102,7 +104,7 @@ export function WaitlistSuccessScreen({
             initial={{ opacity: 0 }}
             transition={{ duration: 0.3, delay: 0.6 }}
           >
-            Continuing automatically in {autoDismissDelay / 1000} seconds...
+            {t('waitlist.successAutoDismiss').replace('{{seconds}}', String(autoDismissDelay / 1000))}
           </motion.p>
         )}
       </motion.div>

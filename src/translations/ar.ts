@@ -483,5 +483,31 @@ export const ar = {
     viewPrivacyPolicy: "عرض سياسة الخصوصية",
     viewTerms: "عرض شروط الخدمة",
     lastUpdated: "آخر تحديث"
+  },
+  waitlist: {
+    title: "انضم إلى التدفق",
+    description: "ساعد في بناء أول سوق للمسلمين. انضم إلى قائمة الانتظار واحصل على وصول مبكر.",
+    joinButton: "انضم إلى قائمة الانتظار",
+    joining: "جارٍ الانضمام...",
+    emailPlaceholder: "أدخل بريدك الإلكتروني",
+    privacyNotice: "نحترم خصوصيتك. لا بريد مزعج، أبداً.",
+    acceptTermsText: "أوافق على ",
+    acceptTermsAnd: " و ",
+    acceptTermsEnd: ".",
+    successTitle: "أنت في القائمة!",
+    successDescription: "تحقق من بريدك الإلكتروني للتأكيد",
+    successMessage: "سنخطرك بمجرد إطلاقنا. في هذه الأثناء، لا تتردد في مشاركة UmmahFlow مع الآخرين.",
+    errorInvalidEmail: "يرجى إدخال عنوان بريد إلكتروني صحيح",
+    errorConsentRequired: "يجب عليك الموافقة على شروط الخدمة وسياسة الخصوصية",
+    errorAlreadyOnWaitlist: "أنت بالفعل في قائمة الانتظار!",
+    errorTooManyRequests: "طلبات كثيرة جداً. يرجى المحاولة مرة أخرى لاحقاً.",
+    errorNetworkError: "خطأ في الشبكة. يرجى التحقق من اتصالك.",
+    errorGeneric: "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    providerModalTitle: "هل تنضم كمزود؟",
+    providerModalDescription: "أخبرنا حتى نتمكن من مساعدتك في إدراج خدماتك مبكراً.",
+    providerModalJoinAsProvider: "أخطط لتقديم خدمات",
+    providerModalJoinAsCustomer: "أنا هنا كعميل",
+    successContinueButton: "متابعة",
+    successAutoDismiss: "سيتم المتابعة تلقائياً خلال {{seconds}} ثانية..."
   }
 } as const;

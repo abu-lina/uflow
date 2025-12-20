@@ -29,13 +29,13 @@ export function DesktopWaitlistSection() {
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
-      setError('Please enter a valid email address');
+      setError(t('waitlist.errorInvalidEmail'));
       return;
     }
 
     // Check terms acceptance
     if (!termsAccepted || !privacyAccepted) {
-      setError(t('legal.consentRequired') || 'You must accept the Terms of Service and Privacy Policy');
+      setError(t('waitlist.errorConsentRequired'));
       return;
     }
 

@@ -483,5 +483,31 @@ export const tr = {
     viewPrivacyPolicy: "Gizlilik Politikasını Görüntüle",
     viewTerms: "Hizmet Şartlarını Görüntüle",
     lastUpdated: "Son güncelleme"
+  },
+  waitlist: {
+    title: "Akışa Katıl",
+    description: "Müslümanlar için ilk pazar yerini oluşturmaya yardımcı olun. Bekleme listesine katılın ve erken erişim sağlayın.",
+    joinButton: "Bekleme Listesine Katıl",
+    joining: "Katılıyor...",
+    emailPlaceholder: "E-postanızı girin",
+    privacyNotice: "Gizliliğinize saygı duyuyoruz. Asla spam yok.",
+    acceptTermsText: "Kabul ediyorum ",
+    acceptTermsAnd: " ve ",
+    acceptTermsEnd: ".",
+    successTitle: "Listedesiniz!",
+    successDescription: "Onay için e-postanızı kontrol edin",
+    successMessage: "Başladığımızda sizi bilgilendireceğiz. Bu arada UmmahFlow'u başkalarıyla paylaşmaktan çekinmeyin.",
+    errorInvalidEmail: "Lütfen geçerli bir e-posta adresi girin",
+    errorConsentRequired: "Hizmet Şartları ve Gizlilik Politikasını kabul etmelisiniz",
+    errorAlreadyOnWaitlist: "Zaten bekleme listesindesiniz!",
+    errorTooManyRequests: "Çok fazla istek. Lütfen daha sonra tekrar deneyin.",
+    errorNetworkError: "Ağ hatası. Lütfen bağlantınızı kontrol edin.",
+    errorGeneric: "Bir hata oluştu. Lütfen tekrar deneyin.",
+    providerModalTitle: "Sağlayıcı olarak mı katılıyorsunuz?",
+    providerModalDescription: "Bize bildirin, böylece hizmetlerinizi erken listelemek için size destek olabiliriz.",
+    providerModalJoinAsProvider: "Hizmet sunmayı planlıyorum",
+    providerModalJoinAsCustomer: "Müşteri olarak buradayım",
+    successContinueButton: "Devam Et",
+    successAutoDismiss: "{{seconds}} saniye içinde otomatik olarak devam edilecek..."
   }
 } as const;

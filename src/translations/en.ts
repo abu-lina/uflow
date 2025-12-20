@@ -501,7 +501,7 @@ export const en = {
   },
   waitlist: {
     title: "Join the Flow",
-    description: "Help build the first halal marketplace for Muslims. Join the waitlist and secure early access.",
+    description: "Help build the first marketplace for Muslims. Join the waitlist and secure early access.",
     joinButton: "Join Waitlist",
     joining: "Joining...",
     emailPlaceholder: "Enter your email",
@@ -511,6 +511,18 @@ export const en = {
     acceptTermsEnd: ".",
     successTitle: "You're on the list!",
     successDescription: "Check your email for confirmation",
-    successMessage: "We'll notify you as soon as we launch. In the meantime, feel free to share UmmahFlow with others."
+    successMessage: "We'll notify you as soon as we launch. In the meantime, feel free to share UmmahFlow with others.",
+    errorInvalidEmail: "Please enter a valid email address",
+    errorConsentRequired: "You must accept the Terms of Service and Privacy Policy",
+    errorAlreadyOnWaitlist: "You're already on the waitlist!",
+    errorTooManyRequests: "Too many requests. Please try again later.",
+    errorNetworkError: "Network error. Please check your connection.",
+    errorGeneric: "An error occurred. Please try again.",
+    providerModalTitle: "Are you joining as a provider?",
+    providerModalDescription: "Let us know so we can support you in getting your services listed early.",
+    providerModalJoinAsProvider: "I plan to offer services",
+    providerModalJoinAsCustomer: "I'm here as a customer",
+    successContinueButton: "Continue",
+    successAutoDismiss: "Continuing automatically in {{seconds}} seconds..."
   }
 } as const;

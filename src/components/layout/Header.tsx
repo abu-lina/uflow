@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { SignupModal } from '@/features/auth/components/SignupModal';
 import { LoginModal } from '@/features/auth/components/LoginModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useAuth } from '@/providers/auth-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -133,6 +134,8 @@ export function Header() {
 
             {/* Right */}
             <div className="flex flex-row items-center gap-3">
+              {/* Language Switcher - visible to all users, compact variant for header */}
+              <LanguageSwitcher className="flex" variant="compact" />
               {loading ? (
                 <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-gray-100" />
               ) : user ? (

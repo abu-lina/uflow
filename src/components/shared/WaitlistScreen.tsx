@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { FormInput } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 interface WaitlistScreenProps {
@@ -20,6 +22,12 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Ensure we're mounted before rendering portal (avoid hydration issues)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +38,13 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
-      setError('Please enter a valid email address');
+      setError(t('waitlist.errorInvalidEmail'));
       return;
     }
 
     // Check terms acceptance
     if (!termsAccepted || !privacyAccepted) {
-      setError(t('legal.consentRequired') || 'You must accept the Terms of Service and Privacy Policy');
+      setError(t('waitlist.errorConsentRequired'));
       return;
     }
 
@@ -48,8 +56,25 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
     onProviderQuestion(email);
   };
 
+  // Language switcher portal - render at document root to avoid clipping
+  const languageSwitcherPortal = isMounted && typeof document !== 'undefined' && document.body ? createPortal(
+    <div 
+      className="fixed top-2 right-2 z-[9999] md:top-3 md:right-3" 
+      style={{ 
+        paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
+        paddingRight: 'max(env(safe-area-inset-right), 0.25rem)'
+      }}
+    >
+      <LanguageSwitcher variant="dropdown" />
+    </div>,
+    document.body
+  ) : null;
+
   return (
-    <div className="flex h-screen w-full items-center justify-center px-4 sm:px-6 lg:px-8">
+    <>
+      {languageSwitcherPortal}
+      <div className="relative flex h-screen w-full items-center justify-center px-4 sm:px-6 lg:px-8">
+
       <motion.div
         animate={{ opacity: 1, y: 0 }}
         className="flex w-full max-w-md flex-col items-center gap-8"
@@ -149,7 +174,8 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
           {t('waitlist.privacyNotice')}
         </p>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 }
 
