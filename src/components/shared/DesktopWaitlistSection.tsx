@@ -112,7 +112,7 @@ export function DesktopWaitlistSection() {
                 <motion.p
                   animate={{ opacity: 1, y: 0 }}
                   aria-live="polite"
-                  className="text-sm text-[#D86363]"
+                  className="text-sm text-danger"
                   initial={{ opacity: 0, y: -10 }}
                   role="alert"
                   transition={{ duration: 0.2 }}
@@ -129,7 +129,7 @@ export function DesktopWaitlistSection() {
                     aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
                     aria-required="true"
                     checked={termsAccepted && privacyAccepted}
-                    className="h-4 w-4 rounded border-gray-300 text-[#589D96] focus:ring-[#589D96] focus:ring-2 flex-shrink-0"
+                    className="h-4 w-4 rounded border text-primary focus:ring-primary focus:ring-2 flex-shrink-0"
                     disabled={isSubmitting}
                     type="checkbox"
                     onChange={(e) => {
@@ -137,13 +137,13 @@ export function DesktopWaitlistSection() {
                       setPrivacyAccepted(e.target.checked);
                     }}
                   />
-                  <span className="text-[11px] leading-[13px] text-[#7A7A7A]">
+                  <span className="text-[11px] leading-[13px] text-content-muted">
                     {t('waitlist.acceptTermsText') || 'I accept the '}
-                    <Link className="underline hover:text-[#589D96]" href="/terms">
+                    <Link className="underline hover:text-primary" href="/terms">
                       {t('legal.termsOfService') || 'Terms of Service'}
                     </Link>
                     {t('waitlist.acceptTermsAnd') || ' and '}
-                    <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
+                    <Link className="underline hover:text-primary" href="/privacy-policy">
                       {t('legal.privacyPolicy') || 'Privacy Policy'}
                     </Link>
                     {t('waitlist.acceptTermsEnd') || '.'}
@@ -152,21 +152,23 @@ export function DesktopWaitlistSection() {
               </div>
 
               {/* Submit button */}
-              <Button
-                fullWidth
-                aria-label="Join waitlist"
-                disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
-                loading={isSubmitting}
-                loadingText={t('waitlist.joining')}
-                size="lg"
-                type="submit"
-                variant="primary"
-              >
-                {t('waitlist.joinButton')}
-              </Button>
+              <div className="mt-2">
+                <Button
+                  fullWidth
+                  aria-label="Join waitlist"
+                  disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
+                  loading={isSubmitting}
+                  loadingText={t('waitlist.joining')}
+                  size="lg"
+                  type="submit"
+                  variant="primary"
+                >
+                  {t('waitlist.joinButton')}
+                </Button>
+              </div>
 
               {/* Privacy notice */}
-              <p className="text-center font-inter text-sm text-[#999999]">
+              <p className="text-center font-inter text-sm text-content-muted">
                 {t('waitlist.privacyNotice')}
               </p>
             </motion.form>
@@ -182,12 +184,12 @@ export function DesktopWaitlistSection() {
             {/* Success Icon */}
             <motion.div
               animate={{ scale: 1, opacity: 1 }}
-              className="flex size-20 items-center justify-center rounded-full bg-[#589D96]/10"
+              className="flex size-20 items-center justify-center rounded-full bg-primary/10"
               initial={{ scale: 0, opacity: 0 }}
               transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
             >
               <Icon 
-                className="size-10 text-[#589D96]" 
+                className="size-10 text-primary" 
                 icon="material-symbols:check-circle-rounded" 
               />
             </motion.div>
@@ -210,7 +212,7 @@ export function DesktopWaitlistSection() {
             {/* Additional Info */}
             <motion.div
               animate={{ opacity: 1, y: 0 }}
-              className="flex w-full flex-col items-center gap-4 rounded-2xl bg-[#F5F5F5] px-6 py-4"
+              className="flex w-full flex-col items-center gap-4 rounded-2xl bg-neutral-muted px-6 py-4"
               initial={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
             >

@@ -1,5 +1,12 @@
 'use client';
 
+/**
+ * @deprecated This component is deprecated. Use the baseline Button component from '@/components/ui/Button' instead.
+ * MobileNavbar now uses the Button component directly for consistency.
+ * 
+ * This component is kept for backward compatibility but should not be used in new code.
+ */
+
 import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 

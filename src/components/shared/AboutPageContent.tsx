@@ -90,7 +90,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
       {/* CONTENT SECTION - Flexible middle area with proper centering */}
       <PageContentWrapper 
         centerVertically={true}
-        contentClassName="flex flex-col items-center gap-4"
+        contentClassName="flex flex-col items-center gap-4 pb-8"
         includeMobileNavSpacing={false}
         maxWidth="full"
         padding="lg-safe"

@@ -61,3 +61,9 @@ CREATE POLICY "Anyone can join waitlist"
 GRANT INSERT ON public.waitlist TO anon;
 GRANT INSERT ON public.waitlist TO authenticated;
 
+
+
+
+
+
+

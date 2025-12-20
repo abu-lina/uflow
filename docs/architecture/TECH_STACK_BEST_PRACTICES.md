@@ -236,3 +236,9 @@ When adding new features:
 - [Backend Expert Rules](../../.cursor/rules/backend-expert.mdc)
 - [Architecture Expert Rules](../../.cursor/rules/architecture-expert.mdc)
 
+
+
+
+
+
+

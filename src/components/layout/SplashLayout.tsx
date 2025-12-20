@@ -39,7 +39,10 @@ function SplashLayout({
       <HeaderSpacer />
 
       {/* CONTENT SECTION - Using PageContentWrapper like profile page */}
-      <PageContentWrapper includeMobileNavSpacing={true}>
+      <PageContentWrapper 
+        className="pb-8"
+        includeMobileNavSpacing={true}
+      >
         {children}
       </PageContentWrapper>
 

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/Button';
 import type { WaitlistResponse } from '@/types/waitlist';
 
@@ -145,15 +144,16 @@ export function ProviderSelectionModal({
         >
           {/* Close Button */}
           <div className="flex w-full justify-end">
-            <button
+            <Button
               aria-label="Close"
-              className="flex size-8 items-center justify-center rounded-full hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
+              className="rounded-full"
               disabled={isSubmitting}
+              icon="material-symbols:close-rounded"
+              size="icon"
               type="button"
+              variant="ghost"
               onClick={handleClose}
-            >
-              <Icon className="size-6 text-content-heading" icon="material-symbols:close-rounded" />
-            </button>
+            />
           </div>
 
           {/* Content */}
@@ -178,7 +178,7 @@ export function ProviderSelectionModal({
             {error && (
               <div
                 aria-live="polite"
-                className="w-full rounded-xl bg-[#FEE] px-4 py-3 text-center text-sm text-[#D86363]"
+                className="w-full rounded-xl bg-danger-soft px-4 py-3 text-center text-sm text-danger"
                 role="alert"
               >
                 {error}

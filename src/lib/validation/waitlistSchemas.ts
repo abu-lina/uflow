@@ -7,3 +7,9 @@ export const waitlistSchema = z.object({
 
 export type WaitlistInput = z.infer<typeof waitlistSchema>;
 
+
+
+
+
+
+

@@ -88,7 +88,7 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
             <motion.p
               animate={{ opacity: 1, y: 0 }}
               aria-live="polite"
-              className="text-sm text-[#D86363]"
+              className="text-sm text-danger"
               initial={{ opacity: 0, y: -10 }}
               role="alert"
               transition={{ duration: 0.2 }}
@@ -105,7 +105,7 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
                 aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
                 aria-required="true"
                 checked={termsAccepted && privacyAccepted}
-                className="h-4 w-4 rounded border-gray-300 text-[#589D96] focus:ring-[#589D96] focus:ring-2 flex-shrink-0"
+                className="h-4 w-4 rounded border text-primary focus:ring-primary focus:ring-2 flex-shrink-0"
                 disabled={isSubmitting}
                 type="checkbox"
                 onChange={(e) => {
@@ -113,13 +113,13 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
                   setPrivacyAccepted(e.target.checked);
                 }}
               />
-              <span className="text-[11px] leading-[13px] text-[#7A7A7A]">
+              <span className="text-[11px] leading-[13px] text-content-muted">
                 {t('waitlist.acceptTermsText') || 'I accept the '}
-                <Link className="underline hover:text-[#589D96]" href="/terms">
+                <Link className="underline hover:text-primary" href="/terms">
                   {t('legal.termsOfService') || 'Terms of Service'}
                 </Link>
                 {t('waitlist.acceptTermsAnd') || ' and '}
-                <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
+                <Link className="underline hover:text-primary" href="/privacy-policy">
                   {t('legal.privacyPolicy') || 'Privacy Policy'}
                 </Link>
                 {t('waitlist.acceptTermsEnd') || '.'}
@@ -128,22 +128,24 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
           </div>
 
           {/* Submit button */}
-          <Button
-            fullWidth
-            aria-label="Join waitlist"
-            disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
-            loading={isSubmitting}
-            loadingText={t('waitlist.joining')}
-            size="lg"
-            type="submit"
-            variant="primary"
-          >
-            {t('waitlist.joinButton')}
-          </Button>
+          <div className="mt-2">
+            <Button
+              fullWidth
+              aria-label="Join waitlist"
+              disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
+              loading={isSubmitting}
+              loadingText={t('waitlist.joining')}
+              size="lg"
+              type="submit"
+              variant="primary"
+            >
+              {t('waitlist.joinButton')}
+            </Button>
+          </div>
         </form>
 
         {/* Additional info */}
-        <p className="text-center font-inter text-sm text-[#999999]">
+        <p className="text-center font-inter text-sm text-content-muted">
           {t('waitlist.privacyNotice')}
         </p>
       </motion.div>

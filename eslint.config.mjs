@@ -145,7 +145,8 @@ const eslintConfig = [
       'scripts/**/*.ts',
       'supabase/functions/**',
       'next-env.d.ts', // Next.js generated file
-      'Figma_imports/**', // Figma reference files, not part of the app
+      'docs/design/figma-imports/**', // Figma reference files, not part of the app
+      'docs/archive/**', // Archived starter template and other reference material
     ],
   },
 

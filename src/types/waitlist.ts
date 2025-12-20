@@ -18,3 +18,9 @@ export interface WaitlistEntry {
   confirmed_at: string | null;
 }
 
+
+
+
+
+
+

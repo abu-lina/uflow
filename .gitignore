@@ -104,3 +104,8 @@ storybook-static
 # Performance test reports
 tests/performance/reports/
 *.k6.json
+
+# Imports - ignore backup/processed files, keep source files
+imports/**/*.backup
+imports/**/*.processed
+imports/**/*.tmp

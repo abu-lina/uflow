@@ -8,16 +8,19 @@ This directory contains all project documentation, organized by category followi
 docs/
 ├── architecture/      # System architecture, design decisions, database schema
 ├── design/            # UI/UX design system, components, styling
+│   └── figma-imports/ # Figma design reference files (archived, excluded from build)
 ├── features/          # Feature documentation and specifications
 ├── implementation/   # Implementation details and technical guides
 ├── deployment/       # Deployment guides (Hetzner, GitHub Actions, Docker)
 ├── guides/           # Setup guides, configuration, and best practices
 ├── fixes/            # Bug fix documentation and solutions
-├── troubleshooting/  # Troubleshooting guides and debugging
+├── troubleshooting/  # Troubleshooting guides, diagnostics, and status reports
+├── action-items/     # Action items, quick fixes, and urgent tasks
 ├── reviews/          # Code reviews, security reviews, architecture reviews
-├── performance/      # Performance analysis and optimization
+├── performance/      # Performance analysis, optimization, and testing
 ├── summaries/        # Project summaries, status reports, progress tracking
 ├── archive/          # Historical and archived documentation
+│   └── nextjs-supabase-starter/ # Original starter template (archived)
 ├── README.md         # This file
 ├── INDEX.md          # Quick navigation index
 └── USER_GUIDE.md     # Complete user guide for end users
@@ -52,6 +55,7 @@ UI/UX design system, components, and styling guidelines:
 - **SIGNUP_FLOW_DESIGN.md** - Signup flow design documentation
 - **TAILWIND_CONFIG_OPTIMIZATION.md** - Tailwind configuration
 - **previews/** - Design preview HTML files
+- **figma-imports/** - Figma design reference files (archived, excluded from build)
 
 ---
 
@@ -121,16 +125,27 @@ Setup guides, configuration, and best practices:
 
 ## 🔧 Fixes & Troubleshooting
 
-**Location:** `docs/fixes/` and `docs/troubleshooting/`
+**Location:** `docs/fixes/`, `docs/troubleshooting/`, and `docs/action-items/`
 
-Bug fixes, solutions, and troubleshooting guides:
+Bug fixes, solutions, troubleshooting guides, and action items:
 
+### Fixes
 - **FIX_LOGIN_AFTER_EMAIL_CONFIRMATION.md** - Email confirmation login issue
 - **FIX_406_EMAIL_CONFIRMATION.md** - 406 error fix
 - **BUILD_FIXES_SUMMARY.md** - Build linting error fixes
 - **FIXES_SUMMARY_SECURITY.md** - Security fixes summary
-- **TROUBLESHOOT_EMAIL_CONFIRMATION.md** - Email troubleshooting guide
-- **VAPID_SETUP.md** - Push notification setup troubleshooting
+
+### Troubleshooting
+- **CONNECTIVITY_*.md** - Connectivity status and troubleshooting
+- **MIME_*.md** - MIME type diagnostics and resolutions
+- **SUPABASE_FIX_*.md** - Supabase-related fixes and diagnostics
+- **HETZNER_*.md** - Hetzner server information and verification
+- **UAT_*.md** - UAT environment troubleshooting
+
+### Action Items
+- **ACTION_ITEMS.md** - Current action items and tasks
+- **PURGE_CLOUDFLARE_NOW.md** - Cloudflare cache purging
+- **CLEAR_BROWSER_CACHE.md** - Browser cache clearing instructions
 
 ---
 
@@ -155,11 +170,15 @@ Code reviews, security reviews, and architecture reviews:
 
 **Location:** `docs/performance/`
 
-Performance analysis and optimization:
+Performance analysis, optimization, and testing:
 
 - **PERFORMANCE_ISSUES_ANALYSIS.md** - Performance issues analysis
 - **PERFORMANCE_FIX_*.md** - Performance fix documentation
 - **PERFORMANCE_TESTING.md** - Performance testing guide
+- **PERFORMANCE_OPTIMIZATION_SUMMARY.md** - Optimization summary
+- **PERFORMANCE_TEST_NEXT_STEPS.md** - Next steps for performance testing
+- **PERFORMANCE_TEST_SETUP_INSTRUCTIONS.md** - Performance test setup
+- **TEST_LOCAL_BUILD.md** - Local build testing
 - **IMPLEMENTATION_SUMMARY.md** - Performance implementation summary
 
 ---
@@ -183,8 +202,9 @@ Project summaries, status reports, and progress tracking:
 
 **Location:** `docs/archive/`
 
-Historical documentation and old implementations:
+Historical documentation, old implementations, and archived reference material:
 
+- **nextjs-supabase-starter/** - Original Next.js + Supabase starter template (archived)
 - Feature documentation
 - Refactoring summaries
 - Old implementation guides
@@ -251,7 +271,8 @@ When adding new documentation:
 - **Deployment docs** → `docs/deployment/`
 - **Setup guides** → `docs/guides/`
 - **Bug fixes** → `docs/fixes/`
-- **Troubleshooting** → `docs/troubleshooting/`
+- **Troubleshooting/Diagnostics** → `docs/troubleshooting/`
+- **Action items/Quick fixes** → `docs/action-items/`
 - **Reviews** → `docs/reviews/`
 - **Performance** → `docs/performance/`
 - **Summaries** → `docs/summaries/`

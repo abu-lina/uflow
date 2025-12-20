@@ -12,7 +12,7 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
         primary: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
-        secondary: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#CDCDCD]',
+        secondary: 'bg-neutral-light hover:bg-neutral text-content-muted hover:text-content',
         success: 'bg-[#4a8a84] hover:bg-[#4a8a84] text-white',
         danger: 'bg-[#D86363] text-white hover:bg-[#B84F4F]',
         cancel: 'bg-[#EEEEEE] hover:bg-gray-300 text-[#232323]',

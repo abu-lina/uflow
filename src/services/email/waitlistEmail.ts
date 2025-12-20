@@ -207,3 +207,9 @@ export const sendWaitlistConfirmationEmail = async (
   }
 };
 
+
+
+
+
+
+

@@ -1,6 +1,7 @@
 'use client';
 
-import Image from 'next/image';
+import { AddButtonLottie } from '@/components/ui/AddButtonLottie';
+import { MapsLottie } from '@/components/ui/MapsLottie';
 import { OrigamiBirdIcon } from '@/components/ui/OrigamiBirdIcon';
 import type { Quote } from '@/constants/quotes';
 
@@ -16,26 +17,14 @@ export function AboutCard({ quote, cardIndex }: AboutCardProps) {
       <div className={`relative flex items-center justify-center flex-shrink-0 ${
         cardIndex === 0 
           ? 'h-[140px] w-auto sm:h-[200px] md:h-[196px] md:w-full' 
-          : cardIndex === 2
-          ? 'h-[140px] w-auto sm:h-[200px] md:h-[196px] md:w-full'
+          : cardIndex === 1
+          ? 'h-[240px] w-auto'
           : 'h-[140px] w-[115px] sm:h-[200px] sm:w-[150px] md:h-[196px] md:w-full'
       }`}>
         {cardIndex === 0 ? (
-          <Image
-            alt="Nabi"
-            className="h-[140px] w-auto object-contain sm:h-[200px] md:h-[196px] md:w-auto"
-            height={200}
-            src="/images/Nabi.png"
-            width={150}
-          />
-        ) : cardIndex === 2 ? (
-          <Image
-            alt="Home"
-            className="h-[140px] w-auto object-contain sm:h-[200px] md:h-[196px] md:w-auto"
-            height={200}
-            src="/images/Home.png"
-            width={150}
-          />
+          <MapsLottie className="h-[140px] w-auto sm:h-[200px] md:h-[196px] md:w-auto" />
+        ) : cardIndex === 1 ? (
+          <AddButtonLottie className="h-full w-auto" height={240} />
         ) : (
           <OrigamiBirdIcon alt="Origami Bird" className="h-[140px] w-[115px] sm:h-[200px] sm:w-[150px] md:h-[196px] md:w-auto" />
         )}
@@ -51,7 +40,7 @@ export function AboutCard({ quote, cardIndex }: AboutCardProps) {
         {/* Description - Responsive: sm (iPhone SE) → base (phones 376+) → lg (tablets 640+) → lg (desktop 768+) */}
         {/* Gap: 8px on iPhone SE, 16px on larger phones (376px+) */}
         <p 
-          className="w-full text-justify font-inter text-sm font-normal text-[#232323] xs:text-base sm:text-lg md:text-lg mt-2 xs:mt-4 [text-align-last:left]"
+          className="w-full text-center font-inter text-sm font-normal text-[#232323] xs:text-base sm:text-lg md:text-lg mt-2 xs:mt-4"
           dangerouslySetInnerHTML={{ __html: quote.quote }}
         />
       </div>

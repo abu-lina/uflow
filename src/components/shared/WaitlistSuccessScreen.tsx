@@ -39,12 +39,12 @@ export function WaitlistSuccessScreen({
         {/* Success Icon */}
         <motion.div
           animate={{ scale: 1, opacity: 1 }}
-          className="flex size-20 items-center justify-center rounded-full bg-[#589D96]/10"
+          className="flex size-20 items-center justify-center rounded-full bg-primary/10"
           initial={{ scale: 0, opacity: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
         >
           <Icon 
-            className="size-10 text-[#589D96]" 
+            className="size-10 text-primary" 
             icon="material-symbols:check-circle-rounded" 
           />
         </motion.div>
@@ -67,7 +67,7 @@ export function WaitlistSuccessScreen({
         {/* Additional Info */}
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="flex w-full flex-col items-center gap-4 rounded-2xl bg-[#F5F5F5] px-6 py-4"
+          className="flex w-full flex-col items-center gap-4 rounded-2xl bg-neutral-muted px-6 py-4"
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
         >
