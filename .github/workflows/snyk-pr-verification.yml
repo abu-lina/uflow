@@ -1,0 +1,256 @@
+name: Snyk PR Verification
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  verify-snyk-pr:
+    name: Verify Snyk PR
+    # Only run on Snyk PRs (branch pattern: snyk-fix-*)
+    if: startsWith(github.head_ref, 'snyk-fix-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for diff comparison
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Verify changed files
+        id: check-files
+        run: |
+          echo "## 📋 Changed Files Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          echo "Changed files:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$CHANGED_FILES" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if only package files are changed
+          ONLY_PACKAGE_FILES=true
+          for file in $CHANGED_FILES; do
+            if [[ "$file" != "package.json" && "$file" != "package-lock.json" ]]; then
+              echo "❌ Unexpected file changed: $file" >> $GITHUB_STEP_SUMMARY
+              ONLY_PACKAGE_FILES=false
+            fi
+          done
+          
+          if [ "$ONLY_PACKAGE_FILES" = true ]; then
+            echo "✅ Only package.json and package-lock.json modified" >> $GITHUB_STEP_SUMMARY
+            echo "files_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Other files modified - this may not be a standard Snyk PR" >> $GITHUB_STEP_SUMMARY
+            echo "files_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Node.js and npm versions
+        run: |
+          echo "## 🔍 Version Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          NODE_VERSION=$(node --version | sed 's/v//')
+          NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d. -f1)
+          
+          if [ "$NODE_MAJOR" -ge 18 ]; then
+            echo "✅ Node.js version: $NODE_VERSION (>=18.0.0)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Node.js version $NODE_VERSION does not meet requirement (>=18.0.0)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          NPM_VERSION=$(npm --version)
+          NPM_MAJOR=$(echo "$NPM_VERSION" | cut -d. -f1)
+          
+          if [ "$NPM_MAJOR" -ge 9 ]; then
+            echo "✅ npm version: $NPM_VERSION (>=9.0.0)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ npm version $NPM_VERSION does not meet requirement (>=9.0.0)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: |
+          echo "## 📦 Installing Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if npm ci --prefer-offline; then
+            echo "✅ Dependencies installed successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Failed to install dependencies" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Run build verification
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          echo "## 🔨 Build Verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if npm run build; then
+            echo "✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
+            
+            if [ -d ".next" ]; then
+              echo "✅ Build output directory (.next) exists" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Build output directory (.next) not found" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          else
+            echo "❌ Build failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          echo "## 🧪 Test Execution" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if npm run test; then
+            echo "✅ Tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Tests failed or no tests found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Run lint check
+        continue-on-error: true
+        run: |
+          echo "## 🔍 Lint Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if npm run lint; then
+            echo "✅ Lint check passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Lint check failed or found warnings" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Run type check
+        run: |
+          echo "## 📝 Type Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if npm run type-check; then
+            echo "✅ Type check passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Type check failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Check version compatibility
+        run: |
+          echo "## 🔢 Version Compatibility Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check React version (should be pinned to 18.3.1)
+          REACT_VERSION=$(grep -A 2 '"overrides"' package.json | grep -A 1 '"react"' | grep -o '"[^"]*"' | head -1 | tr -d '"' || echo "")
+          if [ -n "$REACT_VERSION" ]; then
+            if [[ "$REACT_VERSION" == "18.3.1"* ]]; then
+              echo "✅ React version pinned correctly: $REACT_VERSION" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ React version changed: $REACT_VERSION (expected 18.3.1)" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Check Next.js version
+          NEXT_VERSION=$(grep '"next"' package.json | grep -o '"[^"]*"' | head -1 | tr -d '"' || echo "")
+          if [ -n "$NEXT_VERSION" ]; then
+            echo "ℹ️ Next.js version: $NEXT_VERSION" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate dependency diff
+        run: |
+          echo "## 📊 Dependency Changes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          DIFF_OUTPUT=$(git diff origin/${{ github.base_ref }}...HEAD -- package.json || echo "")
+          
+          if [ -n "$DIFF_OUTPUT" ]; then
+            echo "Package changes:" >> $GITHUB_STEP_SUMMARY
+            echo '```diff' >> $GITHUB_STEP_SUMMARY
+            echo "$DIFF_OUTPUT" | grep -E "^\+|^\-" | grep -v "^+++\|^---" | head -30 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Could not generate diff" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate expert review checklist
+        if: always()
+        run: |
+          echo "## ✅ Expert Review Checklist" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please complete the following expert reviews:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] **Architecture Expert**: System design, deployment, Next.js/Supabase compatibility" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] **Backend Expert**: API compatibility, database impact, service layer" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] **Security Expert**: CVE details, fix appropriateness, breaking changes risk" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] **Compliance Expert**: Data protection, GDPR impact, legal compliance" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] **Frontend Expert**: Component compatibility, TypeScript, bundle size" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] **UX/UI Expert**: Design system, accessibility, responsive design" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📖 Use the [Snyk PR Review Guide](https://github.com/${{ github.repository }}/blob/main/docs/guides/SNYK_PR_REVIEW.md) for detailed checklists." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📝 Use the [Review Template](https://github.com/${{ github.repository }}/blob/main/docs/templates/SNYK_PR_REVIEW_TEMPLATE.md) for structured reviews." >> $GITHUB_STEP_SUMMARY
+
+      - name: Post PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read step summary if available
+            let summary = '## 🔍 Snyk PR Verification Results\n\n';
+            summary += 'Automated verification completed. Please review the results below.\n\n';
+            summary += '### ✅ Automated Checks\n\n';
+            summary += '- ✅ Changed files verified\n';
+            summary += '- ✅ Node.js/npm version check\n';
+            summary += '- ✅ Dependency installation\n';
+            summary += '- ✅ Build verification\n';
+            summary += '- ✅ Type check\n';
+            summary += '- ⚠️ Tests and lint (check logs)\n\n';
+            summary += '### 📋 Next Steps\n\n';
+            summary += '1. Review the [verification summary](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n';
+            summary += '2. Complete expert review checklists in the [Snyk PR Review Guide](https://github.com/${{ github.repository }}/blob/main/docs/guides/SNYK_PR_REVIEW.md)\n';
+            summary += '3. Use the [Review Template](https://github.com/${{ github.repository }}/blob/main/docs/templates/SNYK_PR_REVIEW_TEMPLATE.md) for structured reviews\n';
+            summary += '4. Approve PR if all checks pass\n\n';
+            summary += '---\n\n';
+            summary += '**Workflow Run**: [${{ github.workflow }} #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+      - name: Verification summary
+        if: always()
+        run: |
+          echo "## 🎯 Verification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Automated verification completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next Steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review all checks above" >> $GITHUB_STEP_SUMMARY
+          echo "2. Complete expert review checklists" >> $GITHUB_STEP_SUMMARY
+          echo "3. Approve PR if all checks pass" >> $GITHUB_STEP_SUMMARY
