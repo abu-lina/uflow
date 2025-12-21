@@ -147,6 +147,7 @@ const eslintConfig = [
       'next-env.d.ts', // Next.js generated file
       'docs/design/figma-imports/**', // Figma reference files, not part of the app
       'docs/archive/**', // Archived starter template and other reference material
+      'tests/**', // Performance and integration tests (k6, etc.)
     ],
   },
 

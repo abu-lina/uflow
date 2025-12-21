@@ -58,8 +58,8 @@ describe.skip('Complete User Journey: Search and View Provider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset search params before each test
-    if (typeof window !== 'undefined' && (window as Record<string, unknown>).__resetMockSearchParams) {
-      ((window as Record<string, unknown>).__resetMockSearchParams as () => void)();
+    if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).__resetMockSearchParams) {
+      ((window as unknown as Record<string, unknown>).__resetMockSearchParams as () => void)();
     }
   });
 

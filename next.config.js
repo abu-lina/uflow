@@ -131,7 +131,7 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    optimizePackageImports: ['@mui/material', '@mui/icons-material', 'framer-motion'],
+    optimizePackageImports: ['@mui/material', '@mui/icons-material', 'motion', 'lucide-react'],
     // Preload critical chunks
     webpackBuildWorker: true,
   },
