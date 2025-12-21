@@ -2,6 +2,8 @@
  * Utility functions for handling navigation and maps integration
  */
 
+import type { User } from '@supabase/supabase-js';
+
 /**
  * Opens the device's default navigation app with the given address
  * @param address - The full address string
@@ -133,14 +135,21 @@ export const normalizeWebsiteUrl = (website: string | null | undefined): string 
  * Determines if the current pathname should show the mobile footer bar
  * @param pathname - Current pathname
  * @param isSplashVisible - Whether splash screen is visible
- * @param user - Current user object (can be null)
+ * @param user - Current authenticated user (null for early access or guests)
  * @returns True if mobile footer should be shown
  */
 export const shouldShowMobileFooter = (
   pathname: string,
   isSplashVisible: boolean,
-  _user: unknown
+  user: User | null
 ): boolean => {
+  // Hide menu bar for users who are not authenticated
+  // This includes early access users (waitlist token but no auth session)
+  // and guest users (no token, no auth)
+  if (!user) {
+    return false;
+  }
+
   // Pages that should never show the footer
   const footerExcludedPages = [
     '/about',
