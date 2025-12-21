@@ -41,6 +41,7 @@ jobs:
             --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
             --build-arg NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
             --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
+            --build-arg NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED="${{ secrets.NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED }}" \
             --platform linux/amd64 .
       
       - name: Save Docker image
