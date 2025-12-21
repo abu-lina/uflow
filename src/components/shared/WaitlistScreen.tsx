@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { getFeatureFlag } from '@/config/feature-flags';
+import type { WaitlistResponse } from '@/types/waitlist';
 
 interface WaitlistScreenProps {
-  onSuccess: (email: string) => void;
+  onSuccess: (email: string, token?: string) => void;
   onProviderQuestion: (email: string) => void;
 }
 
@@ -51,9 +53,55 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
     // Set loading state
     setIsSubmitting(true);
 
-    // Show provider question modal immediately
-    // We'll submit to backend after user answers
-    onProviderQuestion(email);
+    // Check if provider selection modal is enabled
+    const showProviderModal = getFeatureFlag('enableProviderSelectionModal');
+    
+    if (showProviderModal) {
+      // Show provider question modal - user will answer and submit happens in modal
+      onProviderQuestion(email);
+    } else {
+      // Feature flag disabled - submit directly without asking if they're a provider
+      try {
+        const response = await fetch('/api/waitlist/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email.toLowerCase().trim(),
+            isProvider: null, // Skip provider question
+          }),
+        });
+
+        const data: WaitlistResponse = await response.json();
+
+        if (!response.ok) {
+          // Handle specific error cases
+          if (response.status === 409) {
+            setError(data.error?.message || t('waitlist.errorAlreadyOnWaitlist'));
+          } else if (response.status === 429) {
+            setError(t('waitlist.errorTooManyRequests'));
+          } else {
+            setError(data.error?.message || t('waitlist.errorGeneric'));
+          }
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Success - extract token and show success screen
+        console.log('[Waitlist] Successfully joined (provider modal skipped):', { email });
+        const waitlistToken = data.data?.waitlistToken;
+        
+        // Call onSuccess with email and token
+        _onSuccess(email, waitlistToken);
+        
+        // Note: Token is also stored in HTTP-only cookie by the API as backup
+      } catch (err) {
+        console.error('[Waitlist] Submit error:', err);
+        setError(t('waitlist.errorNetworkError'));
+        setIsSubmitting(false);
+      }
+    }
   };
 
   // Language switcher portal - render at document root to avoid clipping
@@ -95,10 +143,10 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
         {/* Form */}
         <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
           <FormInput
-            aria-label="Email address"
+            aria-label={t('auth.email')}
             autoComplete="email"
             disabled={isSubmitting}
-            label="Email"
+            label={t('auth.email')}
             placeholder={t('waitlist.emailPlaceholder')}
             type="email"
             value={email}
@@ -156,7 +204,7 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
           <div className="mt-2">
             <Button
               fullWidth
-              aria-label="Join waitlist"
+              aria-label={t('waitlist.joinButton')}
               disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
               loading={isSubmitting}
               loadingText={t('waitlist.joining')}

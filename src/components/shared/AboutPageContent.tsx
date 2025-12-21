@@ -11,9 +11,9 @@ import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { AboutCard } from '@/components/shared/AboutCard';
-import { quotes } from '@/constants/quotes';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface AboutPageContentProps {
   onComplete?: () => void;
@@ -22,6 +22,19 @@ interface AboutPageContentProps {
 
 export function AboutPageContent({ onComplete, showSplashHeader = false }: AboutPageContentProps) {
   const router = useRouter();
+  const { t } = useLanguage();
+  
+  // Get translated quotes
+  const translatedQuotes = [
+    {
+      heading: t('about.quotes.first.heading'),
+      quote: t('about.quotes.first.quote'),
+    },
+    {
+      heading: t('about.quotes.second.heading'),
+      quote: t('about.quotes.second.quote'),
+    },
+  ];
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -48,7 +61,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
-    if (isLeftSwipe && currentCardIndex < quotes.length - 1) {
+    if (isLeftSwipe && currentCardIndex < translatedQuotes.length - 1) {
       setIsTransitioning(true);
       setCurrentCardIndex(currentCardIndex + 1);
     }
@@ -59,7 +72,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
   };
 
   const changeCard = (newIndex: number) => {
-    if (newIndex !== currentCardIndex && newIndex >= 0 && newIndex < quotes.length) {
+    if (newIndex !== currentCardIndex && newIndex >= 0 && newIndex < translatedQuotes.length) {
       setIsTransitioning(true);
       setCurrentCardIndex(newIndex);
     }
@@ -103,7 +116,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
             width={48}
           />
         }
-        title={showSplashHeader ? '' : 'Über Uns'}
+        title={showSplashHeader ? '' : t('about.title')}
         variant={showSplashHeader ? 'title-only' : 'back-title-icon'}
         onBack={showSplashHeader ? undefined : () => router.back()}
       />
@@ -131,13 +144,13 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
               isTransitioning ? 'scale-95 opacity-80' : 'scale-100 opacity-100'
             }`}
           >
-            <AboutCard cardIndex={currentCardIndex} quote={quotes[currentCardIndex]} />
+            <AboutCard cardIndex={currentCardIndex} quote={translatedQuotes[currentCardIndex]} />
           </div>
         </div>
         
         {/* Page Indicator */}
         <div className="flex flex-row justify-center items-center w-full gap-2">
-          {quotes.map((_, index) => (
+          {translatedQuotes.map((_, index) => (
             <button
               key={index}
               className={`w-2 h-2 rounded-full transition-colors ${
@@ -154,10 +167,10 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
       {/* FOOTER ACTION - Fixed at bottom */}
       <FooterAction
         actionButton={{
-          label: currentCardIndex < quotes.length - 1 ? 'Weiter' : 'Entdecke deine Ummah',
+          label: currentCardIndex < translatedQuotes.length - 1 ? t('about.continue') : t('about.discover'),
           trailingIcon: 'material-symbols:chevron-right',
           onClick: () => {
-          if (currentCardIndex < quotes.length - 1) {
+          if (currentCardIndex < translatedQuotes.length - 1) {
             changeCard(currentCardIndex + 1);
           } else {
             if (onComplete) {

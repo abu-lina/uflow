@@ -95,6 +95,26 @@ export const en = {
       translation: "In the name of Allah, the Most Gracious, the Most Merciful"
     }
   },
+  about: {
+    title: "About Us",
+    quotes: {
+      first: {
+        heading: "Where do I find halal providers?",
+        quote: "As a Muslim, I'm missing a central app that shows me halal restaurants as well as Muslim shops and services."
+      },
+      second: {
+        heading: "A marketplace with Barakah.",
+        quote: "Recommend places, discover new offers and support Muslim providers - insha'Allah."
+      }
+    },
+    continue: "Next",
+    discover: "Discover your Ummah"
+  },
+  splash: {
+    title: "From Muslims for Muslims.",
+    subtitle: "Ummah Flow - the first halal-compliant marketplace connecting Muslims - insha'Allah.",
+    continue: "Continue"
+  },
   language: {
     switchTo: "Switch to",
     current: "Current language",
@@ -509,9 +529,11 @@ export const en = {
     acceptTermsText: "I accept the ",
     acceptTermsAnd: " and ",
     acceptTermsEnd: ".",
-    successTitle: "You're on the list!",
-    successDescription: "Check your email for confirmation",
+    successTitle: "You're on the list.",
+    successDescription: "Confirm your email to secure your spot. We'll notify you as soon as Ummah Flow launches.",
     successMessage: "We'll notify you as soon as we launch. In the meantime, feel free to share UmmahFlow with others.",
+    successFaithTone: "BarakAllahu feek for joining.",
+    successSecondaryText: "You can help shape Ummah Flow right now.",
     errorInvalidEmail: "Please enter a valid email address",
     errorConsentRequired: "You must accept the Terms of Service and Privacy Policy",
     errorAlreadyOnWaitlist: "You're already on the waitlist!",
@@ -519,10 +541,29 @@ export const en = {
     errorNetworkError: "Network error. Please check your connection.",
     errorGeneric: "An error occurred. Please try again.",
     providerModalTitle: "Are you joining as a provider?",
-    providerModalDescription: "Let us know so we can support you in getting your services listed early.",
-    providerModalJoinAsProvider: "I plan to offer services",
-    providerModalJoinAsCustomer: "I'm here as a customer",
-    successContinueButton: "Continue",
-    successAutoDismiss: "Continuing automatically in {{seconds}} seconds..."
+    providerModalDescription: "Let us know briefly so we can better support you at the start.",
+    providerModalJoinAsProvider: "I want to offer something",
+    providerModalJoinAsCustomer: "I'm here as a user",
+    successContinueButton: "Continue to early access",
+    successAutoDismiss: "Continuing automatically in {{seconds}} seconds...",
+    earlyAccess: {
+      title: "Welcome to early access 🌱",
+      description: "Ummah Flow is growing.\nYou're here early and can help make halal places visible.",
+      suggestProvider: "Suggest a provider",
+      selectCity: "Select city",
+      learnMore: "Learn more about Ummah Flow",
+      skipForNow: "Later",
+    },
+    citySelection: {
+      title: "Which city interests you?",
+      searchPlaceholder: "Search city...",
+      statusLive: "Live",
+      statusComingSoon: "Coming soon",
+      statusNotActive: "Not yet active",
+      providerCount_one: "{{count}} provider",
+      providerCount_other: "{{count}} providers",
+      notifyToast: "We'll notify you when {{city}} goes live",
+      noResults: "No cities found",
+    }
   }
 } as const;

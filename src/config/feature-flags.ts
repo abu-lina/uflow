@@ -12,9 +12,13 @@ export interface FeatureFlags {
   enablePWAInstallPrompt: boolean;
   enableAddressVisibilityToggle: boolean;
   enableQuickImport: boolean;
+  enableProviderSelectionModal: boolean;
   
   // Development features
   enableDebugMode: boolean;
+  
+  // Launch control
+  isAppLaunched: boolean; // Controls app launch status - when false, app routes redirect to /waitlist
 }
 
 /**
@@ -30,9 +34,13 @@ export const defaultFeatureFlags: FeatureFlags = {
   enablePWAInstallPrompt: true,
   enableAddressVisibilityToggle: false, // Disabled by default
   enableQuickImport: false, // Disabled by default - Beta feature
+  enableProviderSelectionModal: false, // Disabled by default - Skip provider question
   
   // Development features - disabled by default
   enableDebugMode: false,
+  
+  // Launch control - disabled by default (waitlist mode)
+  isAppLaunched: false, // Default: waitlist mode - set to true when ready to launch
 };
 
 /**
@@ -69,7 +77,9 @@ export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFl
     enablePWAInstallPrompt: getFeatureFlag('enablePWAInstallPrompt', overrides),
     enableAddressVisibilityToggle: getFeatureFlag('enableAddressVisibilityToggle', overrides),
     enableQuickImport: getFeatureFlag('enableQuickImport', overrides),
+    enableProviderSelectionModal: getFeatureFlag('enableProviderSelectionModal', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),
+    isAppLaunched: getFeatureFlag('isAppLaunched', overrides),
   };
 }
 

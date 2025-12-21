@@ -4,7 +4,7 @@ export interface WaitlistSubmission {
 }
 
 export interface WaitlistResponse {
-  data: { success: boolean } | null;
+  data: { success: boolean; waitlistToken?: string } | null;
   error: { message: string } | null;
 }
 

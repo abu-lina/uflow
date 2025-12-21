@@ -93,6 +93,26 @@ export const tr = {
       translation: "Rahman ve Rahim olan Allah'ın adıyla"
     }
   },
+  about: {
+    title: "Hakkımızda",
+    quotes: {
+      first: {
+        heading: "Helal sağlayıcıları nerede bulabilirim?",
+        quote: "Bir Müslüman olarak, bana helal restoranların yanı sıra Müslüman mağazaları ve hizmetlerini gösteren merkezi bir uygulama eksik."
+      },
+      second: {
+        heading: "Bereketli bir pazar yeri.",
+        quote: "Yerler öner, yeni teklifler keşfet ve Müslüman sağlayıcıları destekle - inşaAllah."
+      }
+    },
+    continue: "Devam Et",
+    discover: "Ümmetini Keşfet"
+  },
+  splash: {
+    title: "Müslümanlardan Müslümanlara.",
+    subtitle: "Ummah Flow - Müslümanları birbirine bağlayan ilk helal uyumlu pazar yeri - inşaAllah.",
+    continue: "Devam Et"
+  },
   language: {
     switchTo: "Değiştir",
     current: "Mevcut dil",
@@ -494,20 +514,41 @@ export const tr = {
     acceptTermsText: "Kabul ediyorum ",
     acceptTermsAnd: " ve ",
     acceptTermsEnd: ".",
-    successTitle: "Listedesiniz!",
-    successDescription: "Onay için e-postanızı kontrol edin",
+    successTitle: "Listedesiniz.",
+    successDescription: "Yerinizi güvence altına almak için e-postanızı onaylayın. Ummah Flow başladığında sizi bilgilendireceğiz.",
     successMessage: "Başladığımızda sizi bilgilendireceğiz. Bu arada UmmahFlow'u başkalarıyla paylaşmaktan çekinmeyin.",
+    successFaithTone: "Katıldığın için Allah razı olsun.",
+    successSecondaryText: "Şimdi Ummah Flow'u şekillendirmeye yardımcı olabilirsiniz.",
     errorInvalidEmail: "Lütfen geçerli bir e-posta adresi girin",
     errorConsentRequired: "Hizmet Şartları ve Gizlilik Politikasını kabul etmelisiniz",
     errorAlreadyOnWaitlist: "Zaten bekleme listesindesiniz!",
     errorTooManyRequests: "Çok fazla istek. Lütfen daha sonra tekrar deneyin.",
     errorNetworkError: "Ağ hatası. Lütfen bağlantınızı kontrol edin.",
     errorGeneric: "Bir hata oluştu. Lütfen tekrar deneyin.",
-    providerModalTitle: "Sağlayıcı olarak mı katılıyorsunuz?",
-    providerModalDescription: "Bize bildirin, böylece hizmetlerinizi erken listelemek için size destek olabiliriz.",
-    providerModalJoinAsProvider: "Hizmet sunmayı planlıyorum",
-    providerModalJoinAsCustomer: "Müşteri olarak buradayım",
-    successContinueButton: "Devam Et",
-    successAutoDismiss: "{{seconds}} saniye içinde otomatik olarak devam edilecek..."
+    providerModalTitle: "Sağlayıcı olarak mı katılıyorsun?",
+    providerModalDescription: "Kısaca bize bildir, böylece başlangıçta sana daha iyi destek olabiliriz.",
+    providerModalJoinAsProvider: "Bir şey sunmak istiyorum",
+    providerModalJoinAsCustomer: "Kullanıcı olarak buradayım",
+    successContinueButton: "Erken erişime devam et",
+    successAutoDismiss: "{{seconds}} saniye içinde otomatik olarak devam edilecek...",
+    earlyAccess: {
+      title: "Erken erişime hoş geldiniz 🌱",
+      description: "Ummah Flow büyüyor.\nErken katıldınız ve helal mekanları görünür kılmaya yardımcı olabilirsiniz.",
+      suggestProvider: "Sağlayıcı öner",
+      selectCity: "Şehir seç",
+      learnMore: "Ummah Flow hakkında daha fazla bilgi",
+      skipForNow: "Sonra",
+    },
+    citySelection: {
+      title: "Hangi şehir ilginizi çekiyor?",
+      searchPlaceholder: "Şehir ara...",
+      statusLive: "Canlı",
+      statusComingSoon: "Yakında",
+      statusNotActive: "Henüz aktif değil",
+      providerCount_one: "{{count}} sağlayıcı",
+      providerCount_other: "{{count}} sağlayıcı",
+      notifyToast: "{{city}} canlıya geçtiğinde sizi bilgilendireceğiz",
+      noResults: "Şehir bulunamadı",
+    }
   }
 } as const;

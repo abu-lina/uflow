@@ -95,6 +95,26 @@ export const de = {
       translation: "Im Namen Allahs des Allerbarmers, des Allbarmherzigen"
     }
   },
+  about: {
+    title: "Über Uns",
+    quotes: {
+      first: {
+        heading: "Wo finde ich halal Anbieter?",
+        quote: "Als Muslim fehlt mir eine zentrale App, die mir halal Restaurants sowie muslimische Shops und Services zeigt."
+      },
+      second: {
+        heading: "Ein Marktplatz mit Barakah.",
+        quote: "Empfiehl Orte, entdecke neue Angebote und unterstütze muslimische Anbieter - inshaAllah."
+      }
+    },
+    continue: "Weiter",
+    discover: "Entdecke deine Ummah"
+  },
+  splash: {
+    title: "Von Muslimen für Muslime.",
+    subtitle: "Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet - insha'Allah.",
+    continue: "Weiter"
+  },
   language: {
     switchTo: "Wechseln zu",
     current: "Aktuelle Sprache",
@@ -509,20 +529,41 @@ export const de = {
     acceptTermsText: "Ich akzeptiere die ",
     acceptTermsAnd: " und ",
     acceptTermsEnd: ".",
-    successTitle: "Du bist auf der Liste!",
-    successDescription: "Überprüfe deine E-Mail zur Bestätigung",
+    successTitle: "Du bist auf der Warteliste.",
+    successDescription: "Bestätige deine E-Mail, um deinen Platz zu sichern. Wir informieren dich, sobald Ummah Flow startet.",
     successMessage: "Wir benachrichtigen dich, sobald wir starten. In der Zwischenzeit kannst du UmmahFlow gerne mit anderen teilen.",
+    successFaithTone: "BarakAllahu feek fürs Mitmachen.",
+    successSecondaryText: "Du kannst Ummah Flow schon jetzt mitgestalten.",
     errorInvalidEmail: "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     errorConsentRequired: "Sie müssen den Allgemeinen Geschäftsbedingungen und der Datenschutzrichtlinie zustimmen",
     errorAlreadyOnWaitlist: "Sie sind bereits auf der Warteliste!",
     errorTooManyRequests: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
     errorNetworkError: "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
     errorGeneric: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
-    providerModalTitle: "Treten Sie als Anbieter bei?",
-    providerModalDescription: "Lassen Sie es uns wissen, damit wir Sie dabei unterstützen können, Ihre Dienstleistungen frühzeitig einzutragen.",
-    providerModalJoinAsProvider: "Ich plane, Dienstleistungen anzubieten",
-    providerModalJoinAsCustomer: "Ich bin hier als Kunde",
-    successContinueButton: "Weiter",
-    successAutoDismiss: "Wird automatisch in {{seconds}} Sekunden fortgesetzt..."
+    providerModalTitle: "Trittst du als Anbieter bei?",
+    providerModalDescription: "Sag uns kurz Bescheid, damit wir dich beim Start besser unterstützen können.",
+    providerModalJoinAsProvider: "Ich möchte etwas anbieten",
+    providerModalJoinAsCustomer: "Ich bin als Nutzer hier",
+    successContinueButton: "Weiter zum frühen Zugang",
+    successAutoDismiss: "Wird automatisch in {{seconds}} Sekunden fortgesetzt...",
+    earlyAccess: {
+      title: "Willkommen im frühen Zugang 🌱",
+      description: "Ummah Flow wächst gerade.\nDu bist früh dabei und kannst helfen, halal Orte sichtbar zu machen.",
+      suggestProvider: "Anbieter vorschlagen",
+      selectCity: "Stadt auswählen",
+      learnMore: "Mehr über Ummah Flow erfahren",
+      skipForNow: "Später",
+    },
+    citySelection: {
+      title: "Welche Stadt interessiert dich?",
+      searchPlaceholder: "Stadt suchen...",
+      statusLive: "Live",
+      statusComingSoon: "Bald verfügbar",
+      statusNotActive: "Noch nicht aktiv",
+      providerCount_one: "{{count}} Anbieter",
+      providerCount_other: "{{count}} Anbieter",
+      notifyToast: "Wir benachrichtigen dich, wenn {{city}} live geht",
+      noResults: "Keine Städte gefunden",
+    }
   }
 } as const;

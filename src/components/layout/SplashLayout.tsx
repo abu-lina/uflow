@@ -10,6 +10,7 @@ import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { MobileNavbar } from '@/components/layout/MobileNavbar';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface SplashLayoutProps {
   children: ReactNode;
@@ -21,9 +22,10 @@ interface SplashLayoutProps {
 function SplashLayout({ 
   children, 
   onContinue, 
-  continueText = "Weiter",
+  continueText,
   animationDelay = 0 
 }: SplashLayoutProps) {
+  const { t } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ function SplashLayout({
       {/* NAVBAR SECTION - Fixed at bottom */}
       <MobileNavbar
         animationDelay={animationDelay}
-        text={continueText}
+        text={continueText || t('splash.continue')}
         onClick={onContinue}
       />
       </PageLayout>

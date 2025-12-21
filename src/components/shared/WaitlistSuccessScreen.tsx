@@ -66,17 +66,17 @@ export function WaitlistSuccessScreen({
           </p>
         </motion.div>
 
-        {/* Additional Info */}
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="flex w-full flex-col items-center gap-4 rounded-2xl bg-neutral-muted px-6 py-4"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
-        >
-          <p className="text-center font-inter text-sm leading-relaxed text-content">
-            {t('waitlist.successMessage')}
-          </p>
-        </motion.div>
+        {/* Optional Faith Tone */}
+        {t('waitlist.successFaithTone') && (
+          <motion.p
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center font-inter text-sm text-content-muted"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
+          >
+            {t('waitlist.successFaithTone')}
+          </motion.p>
+        )}
 
         {/* Continue Button */}
         <motion.div
@@ -96,13 +96,25 @@ export function WaitlistSuccessScreen({
           </Button>
         </motion.div>
 
+        {/* Optional Secondary Text */}
+        {t('waitlist.successSecondaryText') && (
+          <motion.p
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center font-inter text-xs text-content-muted"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4, delay: 0.7, ease: 'easeOut' }}
+          >
+            {t('waitlist.successSecondaryText')}
+          </motion.p>
+        )}
+
         {/* Auto-dismiss indicator */}
         {autoDismiss && (
           <motion.p
             animate={{ opacity: 1 }}
             className="text-center font-inter text-xs text-content-muted"
             initial={{ opacity: 0 }}
-            transition={{ duration: 0.3, delay: 0.6 }}
+            transition={{ duration: 0.3, delay: 0.8 }}
           >
             {t('waitlist.successAutoDismiss').replace('{{seconds}}', String(autoDismissDelay / 1000))}
           </motion.p>

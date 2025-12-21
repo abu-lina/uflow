@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { waitlistSchema } from '@/lib/validation/waitlistSchemas';
 import { sendWaitlistConfirmationEmail } from '@/services/email/waitlistEmail';
+import { generateWaitlistToken } from '@/lib/utils/waitlist-token';
 import type { WaitlistResponse } from '@/types/waitlist';
 
 /**
@@ -64,7 +65,10 @@ export async function POST(request: Request) {
 
     const { email, isProvider } = validation.data;
 
-    // 3. Insert into database
+    // 3. Generate secure waitlist token
+    const waitlistToken = generateWaitlistToken();
+
+    // 4. Insert into database
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
     const supabase = createSupabaseServerClient();
 
@@ -73,13 +77,14 @@ export async function POST(request: Request) {
       .insert({
         email: email.toLowerCase().trim(),
         is_provider: isProvider,
+        waitlist_token: waitlistToken,
         ip_address: ip,
         user_agent: userAgent,
       });
     // Note: We don't use .select() because RLS doesn't allow SELECT on waitlist table
     // The insert will succeed and we can return success without reading the data
 
-    // 4. Handle duplicate email (unique constraint violation)
+    // 5. Handle duplicate email (unique constraint violation)
     if (error) {
       // PostgreSQL unique constraint violation code
       if (error.code === '23505') {
@@ -104,7 +109,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Send confirmation email (async, don't block response)
+    // 6. Send confirmation email (async, don't block response)
     // Fire and forget - we don't want email failures to block signup
     sendWaitlistConfirmationEmail(email, isProvider).catch((error) => {
       console.error('[Waitlist] Failed to send confirmation email:', error);
@@ -112,14 +117,28 @@ export async function POST(request: Request) {
 
     console.log('[Waitlist] New signup:', { email, isProvider, ip });
 
-    // 6. Return success response
-    return NextResponse.json<WaitlistResponse>(
+    // 7. Set waitlist token as HTTP-only cookie (secure, 30 days)
+    const response = NextResponse.json<WaitlistResponse>(
       { 
-        data: { success: true },
+        data: { 
+          success: true,
+          waitlistToken
+        },
         error: null 
       },
       { status: 201 }
     );
+
+    // Set HTTP-only cookie for token persistence
+    response.cookies.set('waitlist_token', waitlistToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+    });
+
+    return response;
 
   } catch (error) {
     console.error('[Waitlist] Unexpected error:', error);

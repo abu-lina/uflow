@@ -10,7 +10,7 @@ interface ProviderSelectionModalProps {
   isOpen: boolean;
   email: string;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (token?: string) => void;
 }
 
 export function ProviderSelectionModal({ 
@@ -58,8 +58,12 @@ export function ProviderSelectionModal({
 
       // Success - close modal and show success screen
       console.log('[Waitlist] Successfully joined:', { email, isProvider });
+      
+      // Extract waitlist token from response
+      const waitlistToken = data.data?.waitlistToken;
+      
       onClose();
-      onComplete();
+      onComplete(waitlistToken);
       
     } catch (err) {
       console.error('[Waitlist] Submit error:', err);
@@ -75,13 +79,13 @@ export function ProviderSelectionModal({
     setTimeout(() => {
       setIsClosing(false);
       // Submit with isProvider = null when closing without selection
-      submitWaitlist(null);
+      void submitWaitlist(null);
     }, 300);
   }, [isSubmitting, submitWaitlist]);
 
-  const handleSelection = async (isProvider: boolean) => {
+  const handleSelection = (isProvider: boolean) => {
     if (isSubmitting) return;
-    await submitWaitlist(isProvider);
+    void submitWaitlist(isProvider);
   };
 
   // Handle escape key
@@ -147,7 +151,7 @@ export function ProviderSelectionModal({
           {/* Close Button */}
           <div className="flex w-full justify-end">
             <Button
-              aria-label="Close"
+              aria-label={t('common.close')}
               className="rounded-full"
               disabled={isSubmitting}
               icon="material-symbols:close-rounded"

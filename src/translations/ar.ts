@@ -93,6 +93,26 @@ export const ar = {
       translation: "بسم الله الرحمن الرحيم"
     }
   },
+  about: {
+    title: "حولنا",
+    quotes: {
+      first: {
+        heading: "أين أجد مزودي الحلال؟",
+        quote: "كمسلم، ينقصني تطبيق مركزي يعرض لي مطاعم الحلال وكذلك المتاجر والخدمات الإسلامية."
+      },
+      second: {
+        heading: "سوق مع البركة.",
+        quote: "أوصِ بالأماكن، اكتشف عروضاً جديدة وادعم مزودي المسلمين - إن شاء الله."
+      }
+    },
+    continue: "التالي",
+    discover: "اكتشف أمتك"
+  },
+  splash: {
+    title: "من المسلمين للمسلمين.",
+    subtitle: "Ummah Flow - أول سوق حلال يربط المسلمين ببعضهم البعض - إن شاء الله.",
+    continue: "متابعة"
+  },
   language: {
     switchTo: "التبديل إلى",
     current: "اللغة الحالية",
@@ -494,9 +514,11 @@ export const ar = {
     acceptTermsText: "أوافق على ",
     acceptTermsAnd: " و ",
     acceptTermsEnd: ".",
-    successTitle: "أنت في القائمة!",
-    successDescription: "تحقق من بريدك الإلكتروني للتأكيد",
+    successTitle: "أنت في القائمة.",
+    successDescription: "أكد بريدك الإلكتروني لتأمين مكانك. سنخطرك بمجرد إطلاق Ummah Flow.",
     successMessage: "سنخطرك بمجرد إطلاقنا. في هذه الأثناء، لا تتردد في مشاركة UmmahFlow مع الآخرين.",
+    successFaithTone: "بارك الله فيك على الانضمام.",
+    successSecondaryText: "يمكنك المساعدة في تشكيل Ummah Flow الآن.",
     errorInvalidEmail: "يرجى إدخال عنوان بريد إلكتروني صحيح",
     errorConsentRequired: "يجب عليك الموافقة على شروط الخدمة وسياسة الخصوصية",
     errorAlreadyOnWaitlist: "أنت بالفعل في قائمة الانتظار!",
@@ -504,10 +526,29 @@ export const ar = {
     errorNetworkError: "خطأ في الشبكة. يرجى التحقق من اتصالك.",
     errorGeneric: "حدث خطأ. يرجى المحاولة مرة أخرى.",
     providerModalTitle: "هل تنضم كمزود؟",
-    providerModalDescription: "أخبرنا حتى نتمكن من مساعدتك في إدراج خدماتك مبكراً.",
-    providerModalJoinAsProvider: "أخطط لتقديم خدمات",
-    providerModalJoinAsCustomer: "أنا هنا كعميل",
-    successContinueButton: "متابعة",
-    successAutoDismiss: "سيتم المتابعة تلقائياً خلال {{seconds}} ثانية..."
+    providerModalDescription: "أخبرنا باختصار حتى نتمكن من دعمك بشكل أفضل في البداية.",
+    providerModalJoinAsProvider: "أريد أن أقدم شيئاً",
+    providerModalJoinAsCustomer: "أنا هنا كمستخدم",
+    successContinueButton: "المتابعة إلى الوصول المبكر",
+    successAutoDismiss: "سيتم المتابعة تلقائياً خلال {{seconds}} ثانية...",
+    earlyAccess: {
+      title: "مرحبًا بك في الوصول المبكر 🌱",
+      description: "أُمّة فلو تنمو.\nأنت هنا مبكرًا ويمكنك المساعدة في جعل الأماكن الحلال مرئية.",
+      suggestProvider: "اقترح مزودًا",
+      selectCity: "اختر المدينة",
+      learnMore: "تعرف على المزيد عن أمة فلو",
+      skipForNow: "لاحقًا",
+    },
+    citySelection: {
+      title: "ما المدينة التي تهمك؟",
+      searchPlaceholder: "ابحث عن مدينة...",
+      statusLive: "مباشر",
+      statusComingSoon: "قريبًا",
+      statusNotActive: "غير نشط بعد",
+      providerCount_one: "مزود {{count}}",
+      providerCount_other: "{{count}} مزود",
+      notifyToast: "سنخطرك عندما تصبح {{city}} مباشرة",
+      noResults: "لم يتم العثور على مدن",
+    }
   }
 } as const;

@@ -139,12 +139,13 @@ export const normalizeWebsiteUrl = (website: string | null | undefined): string 
 export const shouldShowMobileFooter = (
   pathname: string,
   isSplashVisible: boolean,
-  user: unknown
+  _user: unknown
 ): boolean => {
   // Pages that should never show the footer
   const footerExcludedPages = [
     '/about',
     '/signup/check-email',
+    '/waitlist', // Waitlist/early access page should be full-screen without footer
   ];
 
   // Page patterns that should not show the footer
@@ -177,8 +178,8 @@ export const shouldShowMobileFooter = (
     return false;
   }
 
-  // Special case: Don't show footer for create pages when user is logged in
-  if (user && pathname.startsWith('/create') && pathname !== '/create') {
+  // Don't show footer for create subpages (action menu will be shown instead)
+  if (pathname.startsWith('/create') && pathname !== '/create') {
     return false;
   }
 
@@ -208,6 +209,13 @@ export const shouldShowSubpageAction = (pathname: string): boolean => {
       !pathname.includes('/profile/delete') &&
       !pathname.match(/^\/profile\/providers\/[^/]+$/) && // Exclude provider detail pages (they have custom FooterAction)
       !pathname.match(/^\/profile\/providers\/[^/]+\/edit$/)) { // Exclude provider edit pages (they have custom FooterAction)
+    return true;
+  }
+
+  // Create subpages (except main create page)
+  // Note: Some create pages have their own FooterAction components, but this ensures
+  // the navigation menu is hidden and action menu can be shown if needed
+  if (pathname.startsWith('/create/') && pathname !== '/create') {
     return true;
   }
 

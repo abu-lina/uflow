@@ -28,7 +28,7 @@ export function SplashContent() {
           {/* Arabic Calligraphy */}
           <Bismillah className="h-auto w-full" shouldAnimate={false} />
 
-          {/* German Translation */}
+          {/* Translation */}
           <p 
             className="font-baskerville text-base text-center w-full"
             style={{
@@ -39,8 +39,26 @@ export function SplashContent() {
               color: 'transparent'
             }}
           >
-            {t('landing.bismillah.translation').split(',')[0]},<br />
-            {t('landing.bismillah.translation').split(',')[1]}
+            {(() => {
+              const translation = t('landing.bismillah.translation');
+              const firstCommaIndex = translation.indexOf(',');
+              
+              if (firstCommaIndex === -1) {
+                // No comma found, display as single line
+                return translation;
+              }
+              
+              // Split at first comma only, so we get everything before and everything after
+              const beforeComma = translation.substring(0, firstCommaIndex);
+              const afterComma = translation.substring(firstCommaIndex + 1).trim();
+              
+              return (
+                <>
+                  {beforeComma},<br />
+                  {afterComma}
+                </>
+              );
+            })()}
           </p>
         </motion.div>
 
@@ -52,15 +70,86 @@ export function SplashContent() {
           transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
         >
           <h1 className="font-inter-tight text-4xl font-medium text-center text-[#232323]">
-            <span className="text-[#232323]">Von </span>
-            <span className="text-primary">Muslimen</span>
-            <br />
-            <span className="text-[#232323]">für </span>
-            <span className="text-primary">Muslime.</span>
+            {(() => {
+              const title = t('splash.title');
+              // Parse title: highlight Muslim-related words and add line break after first Muslim word
+              const words = title.split(/(\s+)/);
+              const result: React.ReactNode[] = [];
+              let key = 0;
+              let foundFirstMuslim = false;
+              
+              words.forEach((word, index) => {
+                const trimmed = word.trim();
+                if (!trimmed && word) {
+                  // Preserve whitespace
+                  result.push(word);
+                  return;
+                }
+                
+                if (!trimmed) return;
+                
+                const lowerWord = trimmed.toLowerCase();
+                // Check for Muslim-related words in different languages
+                const isMuslimWord = 
+                  lowerWord.includes('muslim') || 
+                  lowerWord.includes('مسلم') || 
+                  lowerWord.includes('müslüman');
+                
+                if (isMuslimWord) {
+                  result.push(
+                    <span key={key++} className="text-primary">
+                      {trimmed}
+                    </span>
+                  );
+                  // Add line break after first Muslim word (before the next non-whitespace word)
+                  if (!foundFirstMuslim) {
+                    foundFirstMuslim = true;
+                    // Check if there's a next word after whitespace
+                    const nextNonWhitespace = words.slice(index + 1).find(w => w.trim());
+                    if (nextNonWhitespace) {
+                      result.push(<br key={key++} />);
+                    }
+                  }
+                } else {
+                  result.push(<span key={key++}>{word}</span>);
+                }
+              });
+              
+              return result;
+            })()}
           </h1>
 
           <p className="font-inter text-base leading-6 text-center text-[#555555]">
-            Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet - <span className="text-[#C2A274]">insha&apos;Allah.</span>
+            {(() => {
+              const subtitle = t('splash.subtitle');
+              // Find and highlight "insha'Allah" or equivalent
+              const inshaPatterns = [
+                /insha'?allah/gi,
+                /إن شاء الله/gi,
+                /inşaallah/gi,
+                /inşallah/gi
+              ];
+              
+              let highlighted = subtitle;
+              inshaPatterns.forEach(pattern => {
+                highlighted = highlighted.replace(pattern, (match) => {
+                  return `__IN SHA__${match}__END__`;
+                });
+              });
+              
+              const parts = highlighted.split(/(__IN SHA__.*?__END__)/);
+              return parts.map((part, index) => {
+                if (part.startsWith('__IN SHA__') && part.endsWith('__END__')) {
+                  const text = part.replace(/__IN SHA__|__END__/g, '');
+                  return (
+                    <span key={index} className="text-[#C2A274]">
+                      {text}
+                    </span>
+                  );
+                }
+                return <span key={index}>{part}</span>;
+              });
+            })()}
           </p>
         </motion.div>
 

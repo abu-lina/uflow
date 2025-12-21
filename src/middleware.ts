@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { getFeatureFlag } from '@/config/feature-flags';
+import { shouldRedirectToWaitlist } from '@/lib/middleware-utils';
 
 // Simple in-memory rate limiting store (for production, use Redis or similar)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -71,8 +73,21 @@ function checkRateLimit(key: string, maxRequests: number): { allowed: boolean; r
 }
 
 export async function middleware(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+  const accessToken = req.cookies.get('sb-access-token')?.value;
+  const waitlistToken = req.cookies.get('waitlist_token')?.value;
+
+  // Check app launch status and redirect to waitlist if needed
+  // This check runs before rate limiting to ensure waitlist is always accessible
+  const isAppLaunched = getFeatureFlag('isAppLaunched');
+  const needsRedirect = await shouldRedirectToWaitlist(pathname, isAppLaunched, accessToken, waitlistToken);
+  
+  if (needsRedirect) {
+    return NextResponse.redirect(new URL('/waitlist', req.url));
+  }
+
   // Rate limiting for API routes
-  const isApiRoute = req.nextUrl.pathname.startsWith('/api');
+  const isApiRoute = pathname.startsWith('/api');
   
   if (isApiRoute) {
     const key = getRateLimitKey(req);

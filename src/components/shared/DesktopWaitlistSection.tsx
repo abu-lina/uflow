@@ -94,10 +94,10 @@ export function DesktopWaitlistSection() {
               onSubmit={handleSubmit}
             >
               <FormInput
-                aria-label="Email address"
+                aria-label={t('auth.email')}
                 autoComplete="email"
                 disabled={isSubmitting}
-                label="Email"
+                label={t('auth.email')}
                 placeholder={t('waitlist.emailPlaceholder')}
                 type="email"
                 value={email}
@@ -155,7 +155,7 @@ export function DesktopWaitlistSection() {
               <div className="mt-2">
                 <Button
                   fullWidth
-                  aria-label="Join waitlist"
+                  aria-label={t('waitlist.joinButton')}
                   disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
                   loading={isSubmitting}
                   loadingText={t('waitlist.joining')}
