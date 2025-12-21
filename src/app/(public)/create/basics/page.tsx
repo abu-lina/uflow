@@ -31,19 +31,8 @@ export default function CreateBasicsPage() {
 
   // Set creation mode to 'owner' if not already set (recommendation mode is set by /recommend-provider route)
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create/basics/page.tsx:33',message:'useEffect: Checking creation mode on mount',data:{currentMode:formData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
     if (formData.creationMode !== 'recommendation') {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create/basics/page.tsx:35',message:'useEffect: Setting mode to owner',data:{previousMode:formData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       setCreationMode('owner');
-    } else {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create/basics/page.tsx:39',message:'useEffect: Mode is already recommendation, not changing',data:{mode:formData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
     }
     // Only run once on mount - don't include formData.creationMode in deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,19 +102,9 @@ export default function CreateBasicsPage() {
   // In recommendation mode, use router.back() to return to previous page (early access screen)
   // In owner mode, navigate to /create selection page
   const handleBack = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create/basics/page.tsx:104',message:'handleBack called',data:{creationMode:formData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
-    
     if (formData.creationMode === 'recommendation') {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create/basics/page.tsx:106',message:'Calling router.back() - recommendation mode',data:{mode:formData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       router.back();
     } else {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'create/basics/page.tsx:109',message:'Navigating to /create - owner mode',data:{mode:formData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       router.push('/create');
     }
   };

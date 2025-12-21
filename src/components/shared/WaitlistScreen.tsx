@@ -58,48 +58,78 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
     
     if (showProviderModal) {
       // Show provider question modal - user will answer and submit happens in modal
+      setIsSubmitting(false); // Reset loading since modal will handle submission
       onProviderQuestion(email);
     } else {
       // Feature flag disabled - submit directly without asking if they're a provider
-      try {
-        const response = await fetch('/api/waitlist/join', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: email.toLowerCase().trim(),
-            isProvider: null, // Skip provider question
-          }),
-        });
+      await submitWaitlist(email, null);
+    }
+  };
 
-        const data: WaitlistResponse = await response.json();
+  const submitWaitlist = async (emailToSubmit: string, isProvider: boolean | null) => {
+    try {
+      const response = await fetch('/api/waitlist/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailToSubmit.toLowerCase().trim(),
+          isProvider,
+        }),
+      });
 
-        if (!response.ok) {
-          // Handle specific error cases
-          if (response.status === 409) {
-            setError(data.error?.message || t('waitlist.errorAlreadyOnWaitlist'));
-          } else if (response.status === 429) {
-            setError(t('waitlist.errorTooManyRequests'));
-          } else {
-            setError(data.error?.message || t('waitlist.errorGeneric'));
-          }
-          setIsSubmitting(false);
-          return;
+      const data: WaitlistResponse = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error cases with better messages
+        let errorMessage = t('waitlist.errorGeneric');
+        
+        if (response.status === 409) {
+          errorMessage = data.error?.message || t('waitlist.errorAlreadyOnWaitlist');
+        } else if (response.status === 429) {
+          errorMessage = t('waitlist.errorTooManyRequests');
+        } else if (response.status === 400) {
+          errorMessage = data.error?.message || t('waitlist.errorInvalidEmail');
+        } else if (response.status >= 500) {
+          errorMessage = t('waitlist.errorServerError') || t('waitlist.errorGeneric');
+        } else {
+          errorMessage = data.error?.message || t('waitlist.errorGeneric');
         }
-
-        // Success - extract token and show success screen
-        console.log('[Waitlist] Successfully joined (provider modal skipped):', { email });
-        const waitlistToken = data.data?.waitlistToken;
         
-        // Call onSuccess with email and token
-        _onSuccess(email, waitlistToken);
-        
-        // Note: Token is also stored in HTTP-only cookie by the API as backup
-      } catch (err) {
-        console.error('[Waitlist] Submit error:', err);
-        setError(t('waitlist.errorNetworkError'));
+        setError(errorMessage);
         setIsSubmitting(false);
+        return;
+      }
+
+      // Success - extract token and show success screen
+      console.log('[Waitlist] Successfully joined:', { email: emailToSubmit });
+      const waitlistToken = data.data?.waitlistToken;
+      
+      // Call onSuccess with email and token
+      _onSuccess(emailToSubmit, waitlistToken);
+      
+      // Note: Token is also stored in HTTP-only cookie by the API as backup
+    } catch (err) {
+      console.error('[Waitlist] Submit error:', err);
+      
+      // Determine if it's a network error or something else
+      const isNetworkError = err instanceof TypeError && err.message.includes('fetch');
+      const errorMessage = isNetworkError 
+        ? t('waitlist.errorNetworkError')
+        : t('waitlist.errorGeneric');
+      
+      setError(errorMessage);
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRetry = () => {
+    // Retry submission with current form data
+    if (email && termsAccepted && privacyAccepted) {
+      const showProviderModal = getFeatureFlag('enableProviderSelectionModal');
+      if (!showProviderModal) {
+        submitWaitlist(email, null);
       }
     }
   };
@@ -156,18 +186,32 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
             }}
           />
 
-          {/* Error message */}
+          {/* Error message with retry option */}
           {error && (
-            <motion.p
+            <motion.div
               animate={{ opacity: 1, y: 0 }}
               aria-live="polite"
-              className="text-sm text-danger"
+              className="flex flex-col gap-2"
               initial={{ opacity: 0, y: -10 }}
               role="alert"
               transition={{ duration: 0.2 }}
             >
-              {error}
-            </motion.p>
+              <p className="text-sm text-danger">
+                {error}
+              </p>
+              {/* Show retry button for network/server errors */}
+              {(error.includes('network') || error.includes('server') || error.includes('error')) && (
+                <Button
+                  className="self-start"
+                  size="sm"
+                  type="button"
+                  variant="secondary"
+                  onClick={handleRetry}
+                >
+                  {t('waitlist.retry') || 'Try Again'}
+                </Button>
+              )}
+            </motion.div>
           )}
 
           {/* Consent Checkbox */}

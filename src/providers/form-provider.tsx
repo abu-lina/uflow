@@ -99,9 +99,6 @@ export function FormProvider({ children }: FormProviderProps) {
       const savedData = localStorage.getItem('providerFormData');
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'form-provider.tsx:99',message:'Loading form data from localStorage',data:{savedCreationMode:parsedData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         
         // Convert base64 image data back to File objects if they exist
         if (parsedData.images && parsedData.images.length > 0) {
@@ -187,17 +184,11 @@ export function FormProvider({ children }: FormProviderProps) {
   }, []);
 
   const setCreationMode = useCallback((mode: ProviderCreationMode) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'form-provider.tsx:186',message:'setCreationMode called',data:{mode,previousMode:formData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     setFormData(prev => {
       const newData = { ...prev, creationMode: mode };
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/30fa8616-f6d4-485d-8046-9dc6cf35c029',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'form-provider.tsx:189',message:'FormData updated with new creation mode',data:{newMode:newData.creationMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       return newData;
     });
-  }, [formData.creationMode]);
+  }, []);
 
   const clearFormData = useCallback(() => {
     setFormData(initialFormData);
