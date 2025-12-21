@@ -13,7 +13,6 @@ import { WaitlistScreen } from '@/components/shared/WaitlistScreen';
 import { ProviderSelectionModal } from '@/components/shared/ProviderSelectionModal';
 import { WaitlistSuccessScreen } from '@/components/shared/WaitlistSuccessScreen';
 import { EarlyAccessScreen } from '@/components/shared/EarlyAccessScreen';
-import { CitySelectionModal } from '@/components/shared/CitySelectionModal';
 
 interface MobileSplashScreenProps {
   onContinue?: () => void;
@@ -39,7 +38,6 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   const [waitlistToken, setWaitlistToken] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [showEarlyAccess, setShowEarlyAccess] = useState(false);
-  const [showCityModal, setShowCityModal] = useState(false);
   const [showAboutFromEarlyAccess, setShowAboutFromEarlyAccess] = useState(false);
   const [isCheckingWaitlistStatus, setIsCheckingWaitlistStatus] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -154,8 +152,15 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   };
 
   const handleSelectCity = () => {
-    // Open city selection modal
-    setShowCityModal(true);
+    // Navigate to city selection page
+    // Keep early access state in sessionStorage so we can restore it when user comes back
+    sessionStorage.setItem('showEarlyAccess', 'true');
+    sessionStorage.setItem('waitlistEmail', waitlistEmail);
+    if (waitlistToken) {
+      sessionStorage.setItem('waitlistToken', waitlistToken);
+    }
+    dismissSplash();
+    router.push('/city-selection');
   };
 
   const handleLearnMore = () => {
@@ -173,11 +178,6 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
     dismissSplash();
   };
 
-  const handleCitySelected = (city: string) => {
-    // City selected - close modal, could show success message
-    console.log('[Early Access] City selected:', city);
-    setShowCityModal(false);
-  };
 
   const handleAboutCompleteFromEarlyAccess = () => {
     // Return to early access screen after viewing about page
@@ -201,24 +201,14 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   // so users see early access even if splash was dismissed
   if (showEarlyAccess) {
     return (
-      <>
-        <EarlyAccessScreen
-          email={waitlistEmail}
-          waitlistToken={waitlistToken || ''} // Empty string if not available (will use cookie)
-          onComplete={handleEarlyAccessComplete}
-          onLearnMore={handleLearnMore}
-          onSelectCity={handleSelectCity}
-          onSuggestProvider={handleSuggestProvider}
-        />
-        {/* City Selection Modal */}
-        <CitySelectionModal
-          email={waitlistEmail}
-          isOpen={showCityModal}
-          waitlistToken={waitlistToken || ''} // Empty string if not available (will use cookie)
-          onCitySelected={handleCitySelected}
-          onClose={() => setShowCityModal(false)}
-        />
-      </>
+      <EarlyAccessScreen
+        email={waitlistEmail}
+        waitlistToken={waitlistToken || ''} // Empty string if not available (will use cookie)
+        onComplete={handleEarlyAccessComplete}
+        onLearnMore={handleLearnMore}
+        onSelectCity={handleSelectCity}
+        onSuggestProvider={handleSuggestProvider}
+      />
     );
   }
 

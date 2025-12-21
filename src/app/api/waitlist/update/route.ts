@@ -65,32 +65,33 @@ export async function PATCH(request: Request) {
 
     const { email, waitlistToken, ...updates } = validation.data;
 
-    // 3. Update database
+    // 3. Update database using RPC function
+    // The RPC function handles token validation and RLS bypass securely
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
     const supabase = createSupabaseServerClient();
 
-    // Build update object (only include defined fields)
-    const updateData: Record<string, unknown> = {};
-    if (updates.has_seen_early_access !== undefined) {
-      updateData.has_seen_early_access = updates.has_seen_early_access;
-    }
+    // Log what we're trying to update
     if (updates.selected_city !== undefined) {
-      updateData.selected_city = updates.selected_city;
-    }
-    if (updates.skipped_early_access !== undefined) {
-      updateData.skipped_early_access = updates.skipped_early_access;
+      console.log('[Waitlist Update] Updating selected_city:', { 
+        email: email.toLowerCase().trim(), 
+        selected_city: updates.selected_city,
+        tokenLength: waitlistToken?.length 
+      });
     }
 
-    // Update only if email + token match (security check)
-    const { error, count } = await supabase
-      .from('waitlist')
-      .update(updateData)
-      .eq('email', email.toLowerCase().trim())
-      .eq('waitlist_token', waitlistToken);
+    // Call RPC function to update waitlist entry
+    // Function validates token and bypasses RLS using SECURITY DEFINER
+    const { data: result, error } = await supabase.rpc('update_waitlist_entry_with_token', {
+      p_email: email.toLowerCase().trim(),
+      p_token: waitlistToken,
+      p_selected_city: updates.selected_city ?? null,
+      p_has_seen_early_access: updates.has_seen_early_access ?? null,
+      p_skipped_early_access: updates.skipped_early_access ?? null,
+    });
 
     // 4. Handle errors
     if (error) {
-      console.error('[Waitlist Update] Database error:', error);
+      console.error('[Waitlist Update] RPC function error:', error);
       return NextResponse.json(
         { 
           data: null,
@@ -100,19 +101,27 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Check if any rows were updated (validates email + token match)
-    if (count === 0) {
-      console.log('[Waitlist Update] No matching entry found:', { email });
+    // Check result from RPC function
+    if (!result || !result.success) {
+      console.log('[Waitlist Update] Update failed:', {
+        email: email.toLowerCase().trim(),
+        error: result?.error || 'Invalid email or token',
+        tokenLength: waitlistToken?.length
+      });
       return NextResponse.json(
         { 
           data: null,
-          error: { message: 'Invalid email or token' } 
+          error: { message: result?.error || 'Invalid email or token' } 
         },
         { status: 404 }
       );
     }
 
-    console.log('[Waitlist Update] Successfully updated:', { email, updates });
+    console.log('[Waitlist Update] Successfully updated:', { 
+      email, 
+      updates,
+      rowsUpdated: result.updated
+    });
 
     // 5. Return success response
     return NextResponse.json(
