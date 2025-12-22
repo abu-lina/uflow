@@ -36,7 +36,7 @@ interface WaitlistStatusResponse {
  * 
  * Handles:
  * - State transitions
- * - localStorage/sessionStorage persistence
+ * - localStorage persistence
  * - API status checking
  * - Flow progression
  */
@@ -84,7 +84,7 @@ export function useWaitlistFlow() {
   }, [currentState]);
 
   /**
-   * Initialize state from localStorage/sessionStorage and API
+   * Initialize state from localStorage and API
    * Shows appropriate screen immediately, then checks API in background
    */
   useEffect(() => {
@@ -92,13 +92,14 @@ export function useWaitlistFlow() {
       return;
     }
 
-    // 1. Check sessionStorage for early access state (highest priority, instant)
-    const shouldShowEarlyAccess = sessionStorage.getItem('showEarlyAccess') === 'true';
-    const storedEmail = sessionStorage.getItem('waitlistEmail');
-    const storedToken = sessionStorage.getItem('waitlistToken') || '';
+    // 1. Check localStorage for early access state (persists across sessions)
+    // This provides fast restoration while API call completes
+    const shouldShowEarlyAccess = localStorage.getItem('showEarlyAccess') === 'true';
+    const storedEmail = localStorage.getItem('waitlistEmail');
+    const storedToken = localStorage.getItem('waitlistToken') || '';
 
     if (shouldShowEarlyAccess && storedEmail) {
-      // Show early access immediately
+      // Show early access immediately (fast path)
       setFlowData({
         email: storedEmail,
         waitlistToken: storedToken,
@@ -106,19 +107,34 @@ export function useWaitlistFlow() {
       setCurrentState('earlyAccess');
       setIsInitialized(true);
       
-      // Check API in background to sync state
+      // Verify with API in background
       fetch('/api/waitlist/status')
         .then((response) => response.json())
         .then((data: WaitlistStatusResponse) => {
-          if (data.data && data.data.has_seen_early_access) {
-            // User has seen early access, clear sessionStorage
-            sessionStorage.removeItem('showEarlyAccess');
-            sessionStorage.removeItem('waitlistEmail');
-            sessionStorage.removeItem('waitlistToken');
+          if (data.data?.has_seen_early_access) {
+            // Confirmed - user has seen it, keep localStorage for next visit
+            // (Don't clear it - it's our persistence layer)
+          } else if (data.data && !data.data.has_seen_early_access) {
+            // Database says not seen - sync it (edge case)
+            fetch('/api/waitlist/update', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: storedEmail,
+                waitlistToken: storedToken,
+                has_seen_early_access: true,
+              }),
+            });
+          } else {
+            // No waitlist entry - clear localStorage
+            localStorage.removeItem('showEarlyAccess');
+            localStorage.removeItem('waitlistEmail');
+            localStorage.removeItem('waitlistToken');
           }
         })
         .catch((error) => {
           console.error('[WaitlistFlow] Background status check failed:', error);
+          // Keep localStorage on error - better UX
         });
       return;
     }
@@ -139,32 +155,32 @@ export function useWaitlistFlow() {
       .then((data: WaitlistStatusResponse) => {
         if (data.data && !data.data.has_seen_early_access) {
           // User has joined waitlist but hasn't seen early access screen yet
-          // Only update if we're still in initial state (not if user has progressed)
           const email = data.data.email;
           setFlowData((prev) => ({
             email,
-            waitlistToken: prev.waitlistToken, // Keep existing token if any
+            waitlistToken: prev.waitlistToken,
           }));
-          sessionStorage.setItem('showEarlyAccess', 'true');
-          sessionStorage.setItem('waitlistEmail', email);
           
-          // Only transition to early access if we're still in splash/waitlist state
+          // Store in localStorage for persistence across sessions
+          localStorage.setItem('showEarlyAccess', 'true');
+          localStorage.setItem('waitlistEmail', email);
+          
+          // Transition to early access if still in initial state
           setCurrentState((prevState) => {
-            if (prevState === 'splash' || prevState === 'waitlist') {
+            if (prevState === 'splash' || prevState === 'waitlist' || prevState === 'loading') {
               return 'earlyAccess';
             }
             return prevState;
           });
         } else if (data.data && data.data.has_seen_early_access) {
-          // User has already seen early access - clear sessionStorage
-          sessionStorage.removeItem('showEarlyAccess');
-          sessionStorage.removeItem('waitlistEmail');
-          sessionStorage.removeItem('waitlistToken');
+          // User has already seen early access
+          // Keep localStorage for fast restoration on next visit
+          // (Don't clear it - it's our persistence mechanism)
         } else {
-          // No waitlist entry - clear sessionStorage
-          sessionStorage.removeItem('showEarlyAccess');
-          sessionStorage.removeItem('waitlistEmail');
-          sessionStorage.removeItem('waitlistToken');
+          // No waitlist entry - clear localStorage
+          localStorage.removeItem('showEarlyAccess');
+          localStorage.removeItem('waitlistEmail');
+          localStorage.removeItem('waitlistToken');
         }
       })
       .catch((error) => {
@@ -240,11 +256,11 @@ export function useWaitlistFlow() {
     // Success → Early Access
     handleSuccessComplete: useCallback(() => {
       if (currentState === 'success') {
-        // Store early access state
-        sessionStorage.setItem('showEarlyAccess', 'true');
-        sessionStorage.setItem('waitlistEmail', flowData.email);
+        // Store early access state in localStorage (persists across sessions)
+        localStorage.setItem('showEarlyAccess', 'true');
+        localStorage.setItem('waitlistEmail', flowData.email);
         if (flowData.waitlistToken) {
-          sessionStorage.setItem('waitlistToken', flowData.waitlistToken);
+          localStorage.setItem('waitlistToken', flowData.waitlistToken);
         }
         transitionTo('earlyAccess');
       }
@@ -267,11 +283,11 @@ export function useWaitlistFlow() {
     // Early Access → Complete (dismiss splash, show galleries)
     handleEarlyAccessComplete: useCallback(() => {
       if (currentState === 'earlyAccess') {
-        // Clear early access state
-        sessionStorage.removeItem('showEarlyAccess');
-        sessionStorage.removeItem('waitlistEmail');
-        sessionStorage.removeItem('waitlistToken');
-        // State will be managed by parent component
+        // User explicitly skipped - clear localStorage
+        // Database already has has_seen_early_access = true
+        localStorage.removeItem('showEarlyAccess');
+        localStorage.removeItem('waitlistEmail');
+        localStorage.removeItem('waitlistToken');
         transitionTo('waitlist');
       }
     }, [currentState, transitionTo]),

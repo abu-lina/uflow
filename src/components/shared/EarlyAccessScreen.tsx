@@ -34,6 +34,37 @@ export function EarlyAccessScreen({
   const [selectedCity, setSelectedCity] = useState<SelectedCityData | null>(null);
   const [isLoadingCity, setIsLoadingCity] = useState(true);
 
+  // Mark as seen when component mounts (only once)
+  useEffect(() => {
+    const markAsSeen = async () => {
+      try {
+        const body: Record<string, unknown> = {
+          email,
+          has_seen_early_access: true,
+        };
+        
+        if (waitlistToken) {
+          body.waitlistToken = waitlistToken;
+        }
+        
+        await fetch('/api/waitlist/update', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+        
+        console.log('[Early Access] Marked as seen:', email);
+      } catch (error) {
+        console.error('[Early Access] Failed to mark as seen:', error);
+        // Don't block rendering on error
+      }
+    };
+    
+    markAsSeen();
+  }, []); // Empty deps - run once on mount
+
   // Fetch selected city from sessionStorage or API
   useEffect(() => {
     async function loadSelectedCity() {
@@ -129,26 +160,21 @@ export function EarlyAccessScreen({
     }
   };
 
-  const handleSuggestProvider = async () => {
-    await updateWaitlistEntry({ has_seen_early_access: true });
+  const handleSuggestProvider = () => {
     onSuggestProvider();
   };
 
-  const handleSelectCity = async () => {
-    await updateWaitlistEntry({ has_seen_early_access: true });
+  const handleSelectCity = () => {
     onSelectCity();
   };
 
-  const handleLearnMore = async () => {
-    await updateWaitlistEntry({ has_seen_early_access: true });
+  const handleLearnMore = () => {
     onLearnMore();
   };
 
   const handleSkip = async () => {
-    await updateWaitlistEntry({
-      has_seen_early_access: true,
-      skipped_early_access: true,
-    });
+    // Still need to mark as skipped
+    await updateWaitlistEntry({ skipped_early_access: true });
     onComplete();
   };
 

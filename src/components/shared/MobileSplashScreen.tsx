@@ -64,20 +64,20 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   // Navigation handlers for early access screen
   const handleSuggestProvider = () => {
     // Navigate to provider recommendation flow
-    // Keep early access state in sessionStorage so we can restore it when user comes back
-    sessionStorage.setItem('showEarlyAccess', 'true');
-    sessionStorage.setItem('waitlistEmail', flowData.email);
+    // Keep early access state in localStorage so we can restore it when user comes back
+    localStorage.setItem('showEarlyAccess', 'true');
+    localStorage.setItem('waitlistEmail', flowData.email);
     dismissSplash();
     router.push('/recommend-provider');
   };
 
   const handleSelectCity = () => {
     // Navigate to city selection page
-    // Keep early access state in sessionStorage so we can restore it when user comes back
-    sessionStorage.setItem('showEarlyAccess', 'true');
-    sessionStorage.setItem('waitlistEmail', flowData.email);
+    // Keep early access state in localStorage so we can restore it when user comes back
+    localStorage.setItem('showEarlyAccess', 'true');
+    localStorage.setItem('waitlistEmail', flowData.email);
     if (flowData.waitlistToken) {
-      sessionStorage.setItem('waitlistToken', flowData.waitlistToken);
+      localStorage.setItem('waitlistToken', flowData.waitlistToken);
     }
     dismissSplash();
     router.push('/city-selection');
