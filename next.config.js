@@ -312,11 +312,21 @@ const nextConfig = {
         ],
       },
       {
-        source: '/api/:path((?!manifest).*)*',  // Exclude /api/manifest - it needs caching for PWA
+        source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
             value: 'no-store, max-age=0',
+          },
+        ],
+      },
+      // Manifest route needs caching for PWA - override the general API rule
+      {
+        source: '/api/manifest',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, must-revalidate',
           },
         ],
       },
