@@ -311,22 +311,22 @@ const nextConfig = {
           // See docs/guides/CSP_REMOVED.md for details
         ],
       },
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, max-age=0',
-          },
-        ],
-      },
-      // Manifest route needs caching for PWA - override the general API rule
+      // Manifest route needs caching for PWA - must come BEFORE general API rule
       {
         source: '/api/manifest',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, max-age=3600, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0',
           },
         ],
       },
