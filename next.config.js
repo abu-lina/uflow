@@ -312,7 +312,7 @@ const nextConfig = {
         ],
       },
       {
-        source: '/api/:path*',
+        source: '/api/:path((?!manifest).*)*',  // Exclude /api/manifest - it needs caching for PWA
         headers: [
           {
             key: 'Cache-Control',

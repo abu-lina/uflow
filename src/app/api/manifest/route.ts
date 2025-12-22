@@ -242,7 +242,7 @@ export async function GET(request: NextRequest) {
       'Content-Type': 'application/manifest+json',
       'Cache-Control': 'public, max-age=3600, must-revalidate', // Cache with revalidation
       'ETag': etag, // Enable conditional requests
-      'Vary': 'Accept-Language, Cookie', // Important: tells CDN/cache to vary by these headers
+      'Vary': 'Accept-Language', // CDN caches 4 versions (one per language) for better efficiency
     },
   });
 }
