@@ -42,6 +42,7 @@ jobs:
             --build-arg NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
             --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
             --build-arg NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED="${{ secrets.NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED }}" \
+            --build-arg DISABLE_PWA=false \
             --platform linux/amd64 .
       
       - name: Save Docker image
@@ -95,6 +96,7 @@ jobs:
               -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              -e DISABLE_PWA=false \
               --name uflow-app uflow:latest
             
             echo "⏳ Waiting for app to start..."

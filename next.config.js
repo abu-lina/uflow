@@ -6,11 +6,9 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  // Disable PWA only in local development (localhost), not in UAT
-  // UAT uses NODE_ENV=development but should still have PWA enabled
-  disable: process.env.NODE_ENV === 'development' && 
-           (!process.env.NEXT_PUBLIC_SITE_URL || 
-            process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')),
+  // Disable PWA based on explicit environment variable
+  // Set DISABLE_PWA=true for local development, false for UAT/production
+  disable: process.env.DISABLE_PWA === 'true',
   // Import custom push notification handler
   importScripts: ['/sw-push-handler.js'],
   runtimeCaching: [
