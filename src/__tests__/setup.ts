@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import React from 'react';
 import { afterAll, vi } from 'vitest';
 
 // Set up environment variables
@@ -104,7 +105,11 @@ vi.mock('@/lib/supabase/client', () => ({
 
 // Mock components
 vi.mock('@/components/ui/skeleton/Skeleton', () => ({
-  FormSkeleton: () => null,
+  Skeleton: ({ children, className }: { children?: React.ReactNode; className?: string }) =>
+    React.createElement('div', { className, 'data-testid': 'skeleton' }, children),
+  FormSkeleton: () => React.createElement('div', { 'data-testid': 'form-skeleton' }, React.createElement('div')),
+  default: ({ children, className }: { children?: React.ReactNode; className?: string }) =>
+    React.createElement('div', { className, 'data-testid': 'skeleton' }, children),
 }));
 
 vi.mock('@/components/error-boundary/ErrorBoundary', () => ({
