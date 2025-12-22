@@ -1,0 +1,185 @@
+Cursor Prompt — Fix PWA vs Browser Waitlist State Persistence
+
+Context
+
+We have a mobile-first web app + PWA onboarding flow with:
+
+Intro screens
+
+Waitlist email submission
+
+Confirmation screen
+
+Early Access / Community Mode screen
+
+Currently, when a user:
+
+Enters the onboarding in the browser
+
+Submits their email to the waitlist
+
+Installs the PWA
+
+…the app forgets that the user already submitted their email and shows the waitlist again.
+
+This is incorrect UX.
+
+Goal
+
+Ensure that users who already submitted their email on the same device:
+
+Never see the waitlist screen again
+
+Automatically re-enter Early Access after PWA install
+
+Are not required to re-enter their email unless they explicitly reset
+
+Email confirmation (double opt-in) must NOT block Early Access.
+
+Required Fix (Authoritative)
+1. Introduce a local onboarding state (device-level)
+
+Create a persistent local state that survives:
+
+Browser refresh
+
+PWA install
+
+App reopen
+
+Use localStorage (or IndexedDB if already used elsewhere).
+
+Key name
+
+ummahflow_onboarding
+
+
+Shape
+
+interface OnboardingState {
+  email: string
+  waitlistSubmitted: boolean
+  earlyAccessUnlocked: boolean
+  submittedAt: string // ISO timestamp
+}
+
+2. Write to local state immediately after waitlist success
+
+When the waitlist API returns success (email accepted):
+
+localStorage.setItem(
+  "ummahflow_onboarding",
+  JSON.stringify({
+    email,
+    waitlistSubmitted: true,
+    earlyAccessUnlocked: true,
+    submittedAt: new Date().toISOString()
+  })
+)
+
+
+This must happen:
+
+BEFORE showing the “You’re on the list” screen
+
+WITHOUT waiting for email confirmation
+
+3. App bootstrap logic (browser + PWA)
+
+On every app load (including PWA start), run this logic:
+
+const onboarding = localStorage.getItem("ummahflow_onboarding")
+
+if (onboarding?.waitlistSubmitted === true) {
+  // user already joined waitlist on this device
+  skipIntroAndWaitlist()
+  showEarlyAccess()
+} else {
+  showIntroOnboarding()
+}
+
+
+Important
+
+Do NOT rely on backend session or cookies for this
+
+Local device state is the source of truth for onboarding flow
+
+4. Email confirmation behavior
+
+Email confirmation is backend-only and must not block UI access.
+
+Rules:
+
+User can access Early Access immediately after submitting email
+
+Confirmation email is required only for:
+
+Launch access
+
+Notifications
+
+UI should optionally show a reminder text:
+
+“Bitte bestätige deine E-Mail, damit wir dich benachrichtigen können.”
+
+Do NOT:
+
+Block Early Access
+
+Re-show waitlist
+
+Force re-entry of email
+
+5. Edge cases (intentional behavior)
+Scenario	Expected behavior
+User clears browser storage	Waitlist shown again
+User switches device	Waitlist shown
+User opens PWA after install	Early Access shown
+User reloads page	Early Access shown
+User not confirmed email	Early Access still shown
+
+This is correct and intentional.
+
+6. Optional (but recommended): helper hook
+
+Create a helper:
+
+useOnboardingState()
+
+
+Exposes:
+
+{
+  hasJoinedWaitlist: boolean
+  email: string | null
+  unlockEarlyAccess: () => void
+  resetOnboarding: () => void
+}
+
+
+Use this hook everywhere onboarding logic is needed.
+
+Acceptance Criteria (Must Pass)
+
+User submits email in browser → installs PWA → sees Early Access, NOT waitlist
+
+No second email input required on same device
+
+Early Access available without email confirmation
+
+Clearing storage resets flow
+
+Works on iOS Safari + installed PWA
+
+Non-Goals (Do NOT implement)
+
+❌ Forcing login or authentication
+
+❌ Blocking Early Access behind email confirmation
+
+❌ Using cookies instead of persistent storage
+
+❌ Asking for email twice on same device
+
+Build exactly this behavior. Do not improvise UX logic.

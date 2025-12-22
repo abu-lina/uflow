@@ -556,6 +556,7 @@ export const en = {
       skipForNow: "Later",
       yourCityLabel: "Your city",
       cityNotifySubtext: "We'll notify you when your city is ready.",
+      confirmEmailReminder: "Please confirm your email so we can notify you.",
     },
     citySelection: {
       title: "Which city are you interested in?",

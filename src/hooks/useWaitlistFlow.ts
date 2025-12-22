@@ -2,6 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSplash } from '@/providers/splash-provider';
+import {
+  getOnboardingState,
+  setOnboardingState,
+  clearOnboardingState,
+} from '@/lib/utils/onboarding-state';
 
 /**
  * Waitlist flow states
@@ -92,17 +97,15 @@ export function useWaitlistFlow() {
       return;
     }
 
-    // 1. Check localStorage for early access state (persists across sessions)
+    // 1. Check consolidated onboarding state (persists across sessions)
     // This provides fast restoration while API call completes
-    const shouldShowEarlyAccess = localStorage.getItem('showEarlyAccess') === 'true';
-    const storedEmail = localStorage.getItem('waitlistEmail');
-    const storedToken = localStorage.getItem('waitlistToken') || '';
+    const onboardingState = getOnboardingState();
 
-    if (shouldShowEarlyAccess && storedEmail) {
+    if (onboardingState?.earlyAccessUnlocked) {
       // Show early access immediately (fast path)
       setFlowData({
-        email: storedEmail,
-        waitlistToken: storedToken,
+        email: onboardingState.email,
+        waitlistToken: onboardingState.waitlistToken || '',
       });
       setCurrentState('earlyAccess');
       setIsInitialized(true);
@@ -120,16 +123,14 @@ export function useWaitlistFlow() {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                email: storedEmail,
-                waitlistToken: storedToken,
+                email: onboardingState.email,
+                waitlistToken: onboardingState.waitlistToken,
                 has_seen_early_access: true,
               }),
             });
           } else {
-            // No waitlist entry - clear localStorage
-            localStorage.removeItem('showEarlyAccess');
-            localStorage.removeItem('waitlistEmail');
-            localStorage.removeItem('waitlistToken');
+            // No waitlist entry - clear consolidated state
+            clearOnboardingState();
           }
         })
         .catch((error) => {
@@ -161,9 +162,13 @@ export function useWaitlistFlow() {
             waitlistToken: prev.waitlistToken,
           }));
           
-          // Store in localStorage for persistence across sessions
-          localStorage.setItem('showEarlyAccess', 'true');
-          localStorage.setItem('waitlistEmail', email);
+          // Store in consolidated state for persistence across sessions
+          setOnboardingState({
+            email,
+            waitlistSubmitted: true,
+            earlyAccessUnlocked: true,
+            submittedAt: new Date().toISOString(),
+          });
           
           // Transition to early access if still in initial state
           setCurrentState((prevState) => {
@@ -177,10 +182,8 @@ export function useWaitlistFlow() {
           // Keep localStorage for fast restoration on next visit
           // (Don't clear it - it's our persistence mechanism)
         } else {
-          // No waitlist entry - clear localStorage
-          localStorage.removeItem('showEarlyAccess');
-          localStorage.removeItem('waitlistEmail');
-          localStorage.removeItem('waitlistToken');
+          // No waitlist entry - clear consolidated state
+          clearOnboardingState();
         }
       })
       .catch((error) => {
@@ -256,15 +259,11 @@ export function useWaitlistFlow() {
     // Success → Early Access
     handleSuccessComplete: useCallback(() => {
       if (currentState === 'success') {
-        // Store early access state in localStorage (persists across sessions)
-        localStorage.setItem('showEarlyAccess', 'true');
-        localStorage.setItem('waitlistEmail', flowData.email);
-        if (flowData.waitlistToken) {
-          localStorage.setItem('waitlistToken', flowData.waitlistToken);
-        }
+        // State already persisted by WaitlistScreen/ProviderSelectionModal
+        // Just transition to early access screen
         transitionTo('earlyAccess');
       }
-    }, [currentState, flowData, transitionTo]),
+    }, [currentState, transitionTo]),
 
     // Early Access → About (Learn More)
     handleLearnMore: useCallback(() => {
@@ -283,11 +282,9 @@ export function useWaitlistFlow() {
     // Early Access → Complete (dismiss splash, show galleries)
     handleEarlyAccessComplete: useCallback(() => {
       if (currentState === 'earlyAccess') {
-        // User explicitly skipped - clear localStorage
+        // CRITICAL: Keep localStorage intact so PWA knows user already joined
         // Database already has has_seen_early_access = true
-        localStorage.removeItem('showEarlyAccess');
-        localStorage.removeItem('waitlistEmail');
-        localStorage.removeItem('waitlistToken');
+        // State persists for future sessions/PWA installs
         transitionTo('waitlist');
       }
     }, [currentState, transitionTo]),

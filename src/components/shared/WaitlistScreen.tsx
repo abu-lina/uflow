@@ -10,6 +10,7 @@ import { Logo } from '@/components/ui/Logo';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getFeatureFlag } from '@/config/feature-flags';
+import { setOnboardingState } from '@/lib/utils/onboarding-state';
 import type { WaitlistResponse } from '@/types/waitlist';
 
 interface WaitlistScreenProps {
@@ -102,11 +103,21 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
         return;
       }
 
-      // Success - extract token and show success screen
+      // Success - extract token and persist state IMMEDIATELY
       console.log('[Waitlist] Successfully joined:', { email: emailToSubmit });
       const waitlistToken = data.data?.waitlistToken;
       
-      // Call onSuccess with email and token
+      // CRITICAL: Write to localStorage BEFORE showing success screen
+      // This ensures state persists when user installs PWA
+      setOnboardingState({
+        email: emailToSubmit,
+        waitlistSubmitted: true,
+        earlyAccessUnlocked: true,
+        submittedAt: new Date().toISOString(),
+        waitlistToken,
+      });
+      
+      // Call onSuccess with email and token (state already persisted)
       _onSuccess(emailToSubmit, waitlistToken);
       
       // Note: Token is also stored in HTTP-only cookie by the API as backup

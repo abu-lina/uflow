@@ -541,6 +541,7 @@ export const ar = {
       skipForNow: "لاحقًا",
       yourCityLabel: "مدينتك",
       cityNotifySubtext: "سنخطرك عندما تكون مدينتك جاهزة.",
+      confirmEmailReminder: "يرجى تأكيد بريدك الإلكتروني حتى نتمكن من إخطارك.",
     },
     citySelection: {
       title: "ما المدينة التي تهتم بها؟",

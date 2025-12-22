@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { setOnboardingState } from '@/lib/utils/onboarding-state';
 import type { WaitlistResponse } from '@/types/waitlist';
 
 interface ProviderSelectionModalProps {
@@ -56,11 +57,21 @@ export function ProviderSelectionModal({
         return;
       }
 
-      // Success - close modal and show success screen
+      // Success - persist state IMMEDIATELY, then close modal
       console.log('[Waitlist] Successfully joined:', { email, isProvider });
       
       // Extract waitlist token from response
       const waitlistToken = data.data?.waitlistToken;
+      
+      // CRITICAL: Write to localStorage BEFORE closing modal
+      // This ensures state persists when user installs PWA
+      setOnboardingState({
+        email,
+        waitlistSubmitted: true,
+        earlyAccessUnlocked: true,
+        submittedAt: new Date().toISOString(),
+        waitlistToken,
+      });
       
       onClose();
       onComplete(waitlistToken);

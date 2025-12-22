@@ -541,6 +541,7 @@ export const tr = {
       skipForNow: "Sonra",
       yourCityLabel: "Şehriniz",
       cityNotifySubtext: "Şehriniz hazır olduğunda sizi bilgilendireceğiz.",
+      confirmEmailReminder: "Lütfen e-postanızı onaylayın, böylece sizi bilgilendirebiliriz.",
     },
     citySelection: {
       title: "Hangi şehirle ilgileniyorsunuz?",

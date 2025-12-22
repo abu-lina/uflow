@@ -63,7 +63,8 @@ export function EarlyAccessScreen({
     };
     
     markAsSeen();
-  }, []); // Empty deps - run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - run once on mount (email and waitlistToken are stable props)
 
   // Fetch selected city from sessionStorage or API
   useEffect(() => {
@@ -316,14 +317,24 @@ export function EarlyAccessScreen({
           </Button>
         </motion.div>
 
+        {/* Email Confirmation Reminder */}
+        <motion.p
+          animate={{ opacity: 1 }}
+          className="text-sm text-content-muted text-center mt-4"
+          initial={{ opacity: 0 }}
+          transition={{ duration: 0.3, delay: 0.6 }}
+        >
+          {t('waitlist.earlyAccess.confirmEmailReminder')}
+        </motion.p>
+
         {/* Skip Link */}
         <motion.button
           animate={{ opacity: 1 }}
           aria-label={t('waitlist.earlyAccess.skipForNow')}
-          className="text-sm text-content-muted hover:text-content transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="text-sm text-content-muted hover:text-content transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           disabled={isUpdating}
           initial={{ opacity: 0 }}
-          transition={{ duration: 0.3, delay: 0.5 }}
+          transition={{ duration: 0.3, delay: 0.7 }}
           type="button"
           onClick={handleSkip}
         >
