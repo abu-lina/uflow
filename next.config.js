@@ -11,6 +11,16 @@ const withPWA = require('next-pwa')({
   disable: process.env.DISABLE_PWA === 'true',
   // Import custom push notification handler
   importScripts: ['/sw-push-handler.js'],
+  // Exclude files that may not exist in standalone builds
+  // These files are generated during build but may not exist in standalone output
+  buildExcludes: [
+    /app-build-manifest\.json$/,
+    /middleware-manifest\.json$/,
+  ],
+  // Don't fail on missing precache files
+  fallbacks: {
+    document: '/offline.html',
+  },
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/.*\.supabase\.co\/.*$/,

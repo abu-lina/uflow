@@ -138,12 +138,20 @@ function ServiceWorkerRegistration() {
           navigator.serviceWorker
             .register('/sw.js')
             .then((registration) => {
-              console.log('✅ Service Worker registered:', registration.scope);
+              // Only log in development
+              if (process.env.NODE_ENV === 'development') {
+                console.log('✅ Service Worker registered:', registration.scope);
+              }
             })
             .catch((error) => {
+              // Log errors in all environments for debugging
               console.error('❌ Service Worker registration failed:', error);
+              // Could integrate with error monitoring service here
             });
         }
+      }).catch((error) => {
+        // Handle errors when checking registrations
+        console.error('❌ Failed to check service worker registrations:', error);
       });
     }
   }, []);
