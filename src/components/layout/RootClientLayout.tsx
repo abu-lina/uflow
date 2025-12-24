@@ -40,8 +40,10 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   return (
     <LoadingProvider>
       <div className="page-background relative flex h-screen-fix flex-col">
-        {/* Dev-only: ensure no service worker interferes with HMR/chunks */}
-        {process.env.NODE_ENV === 'development' && (
+        {/* Dev-only: ensure no service worker interferes with HMR/chunks (only on localhost) */}
+        {process.env.NODE_ENV === 'development' && 
+         typeof window !== 'undefined' && 
+         (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
           <DevServiceWorkerReset />
         )}
         {/* Auto-register service worker for PWA */}
