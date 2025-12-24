@@ -1,12 +1,18 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { getFeatureFlag } from '@/config/feature-flags';
+import { AboutSection } from '@/components/shared/AboutSection';
+import { DesktopWaitlistSection } from '@/components/shared/DesktopWaitlistSection';
+import { ExploreSection } from '@/components/shared/ExploreSection';
+import { LandingHero } from '@/components/shared/LandingHero';
+import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
 
 /**
- * Root page - redirects based on app launch status and early access completion
+ * Root page - shows waitlist onboarding or redirects based on app state
  * 
  * Browser users:
- *   - When app is not launched: Redirects to /waitlist
+ *   - When app is not launched: Shows waitlist content directly on root
  *   - When app is launched: Redirects to /providers
  * 
  * Early access users (after completing onboarding):
@@ -14,7 +20,7 @@ import { getFeatureFlag } from '@/config/feature-flags';
  *   - Welcome page provides proper URL context for iOS PWA
  * 
  * PWA users:
- *   - Use manifest start_url: /pwa-start (handles standalone mode detection)
+ *   - Use manifest start_url: / (root handles routing based on PWA state)
  */
 export const dynamic = 'force-dynamic'; // Always check feature flag on each request
 
@@ -38,11 +44,26 @@ export default async function Home({
     redirect('/welcome');
   }
   
-  if (!isAppLaunched) {
-    // App not launched - redirect to waitlist
-    redirect('/waitlist');
+  if (isAppLaunched) {
+    // App launched - redirect to main app (providers page)
+    redirect('/providers');
   }
   
-  // App launched - redirect to main app (providers page)
-  redirect('/providers');
+  // App not launched - show waitlist content directly on root
+  return (
+    <Suspense fallback={<div className="flex h-64 items-center justify-center"></div>}>
+      {/* Mobile Content */}
+      <div className="md:hidden">
+        <MobileSplashScreen />
+      </div>
+
+      {/* Desktop Landing Content */}
+      <div className="relative z-10 hidden md:block">
+        <LandingHero />
+        <AboutSection />
+        <DesktopWaitlistSection />
+        <ExploreSection />
+      </div>
+    </Suspense>
+  );
 }

@@ -10,6 +10,7 @@
     "dev": "next dev",
     "dev:uat": "bash scripts/switch-env.sh uat && npm run dev",
     "dev:prod": "bash scripts/switch-env.sh prod && npm run dev",
+    "prebuild": "node scripts/generate-manifest.js",
     "build": "NODE_ENV=production next build",
     "build:uat": "bash scripts/switch-env.sh uat && npm run build",
     "build:prod": "bash scripts/switch-env.sh prod && npm run build",

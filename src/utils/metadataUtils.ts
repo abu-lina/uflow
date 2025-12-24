@@ -92,7 +92,7 @@ export function generateLocalizedMetadata(language: ServerLanguage, siteUrl: str
         'max-snippet': -1,
       },
     },
-    manifest: '/api/manifest',
+    manifest: '/manifest.json',
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent', // Better for iOS standalone mode
