@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { AboutSection } from '@/components/shared/AboutSection';
 import { DesktopWaitlistSection } from '@/components/shared/DesktopWaitlistSection';
@@ -33,14 +32,11 @@ export default async function Home({
   const params = await searchParams;
   const fromEarlyAccess = params.from === 'early-access';
   
-  // Check if user has waitlist token (completed waitlist)
-  const cookieStore = await cookies();
-  const waitlistToken = cookieStore.get('waitlist_token')?.value;
-  
-  // If coming from early access or has token, show welcome page for PWA install
-  if (!isAppLaunched && (fromEarlyAccess || waitlistToken)) {
-    // Check if early access was completed (set by useWaitlistFlow)
-    // Note: This check happens on server, so we rely on query param primarily
+  // Only redirect to /welcome if coming from early access completion (first time)
+  // This allows PWA users to see early access page on subsequent visits
+  // MobileSplashScreen will detect early access state from localStorage and show it
+  if (!isAppLaunched && fromEarlyAccess) {
+    // First time after completing early access - redirect to welcome for PWA install
     redirect('/welcome');
   }
   
