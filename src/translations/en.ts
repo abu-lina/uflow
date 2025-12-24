@@ -575,5 +575,11 @@ export const en = {
       noResults: "No cities found",
       backButton: "Back",
     }
+  },
+  welcome: {
+    title: "Welcome to the Ummah Flow Community",
+    subtitle: "Install the app for the best experience",
+    preparing: "Preparing installation...",
+    continueInBrowser: "Continue in Browser"
   }
 } as const;

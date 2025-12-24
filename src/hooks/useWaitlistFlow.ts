@@ -279,15 +279,23 @@ export function useWaitlistFlow() {
       }
     }, [currentState, transitionTo]),
 
-    // Early Access → Complete (dismiss splash, show galleries)
+    // Early Access → Complete (redirect to welcome page for PWA install)
     handleEarlyAccessComplete: useCallback(() => {
       if (currentState === 'earlyAccess') {
         // CRITICAL: Keep localStorage intact so PWA knows user already joined
         // Database already has has_seen_early_access = true
         // State persists for future sessions/PWA installs
-        transitionTo('waitlist');
+        
+        // Mark early access as completed for welcome page detection
+        localStorage.setItem('early_access_completed', 'true');
+        
+        // Redirect to root with query parameter for welcome page
+        // This ensures proper URL context for iOS PWA installation
+        if (typeof window !== 'undefined') {
+          window.location.href = '/?from=early-access';
+        }
       }
-    }, [currentState, transitionTo]),
+    }, [currentState]),
 
     // Provider question handler (shows modal, doesn't change state)
     handleProviderQuestion: useCallback((email: string) => {

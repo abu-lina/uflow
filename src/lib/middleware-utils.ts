@@ -77,10 +77,12 @@ export function isAppRoute(pathname: string): boolean {
 
 /**
  * Check if pathname should be excluded from waitlist redirect
- * Returns true for routes that should always be accessible (waitlist, API, static assets)
+ * Returns true for routes that should always be accessible (waitlist, API, static assets, PWA routes)
  */
 export function isExcludedRoute(pathname: string): boolean {
   const isWaitlistRoute = pathname === '/waitlist';
+  const isPwaStart = pathname === '/pwa-start'; // PWA entry point
+  const isWelcome = pathname === '/welcome'; // Welcome page for PWA install
   const isApiRoute = pathname.startsWith('/api');
   const isStaticAsset =
     pathname.startsWith('/_next') ||
@@ -88,7 +90,7 @@ export function isExcludedRoute(pathname: string): boolean {
     pathname.startsWith('/manifest') ||
     !!pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|woff|woff2|ttf|eot)$/);
 
-  return isWaitlistRoute || isApiRoute || isStaticAsset;
+  return isWaitlistRoute || isPwaStart || isWelcome || isApiRoute || isStaticAsset;
 }
 
 /**

@@ -560,5 +560,11 @@ export const ar = {
       noResults: "لم يتم العثور على مدن",
       backButton: "رجوع",
     }
+  },
+  welcome: {
+    title: "مرحباً بك في مجتمع أمة فلو",
+    subtitle: "قم بتثبيت التطبيق للحصول على أفضل تجربة",
+    preparing: "جارٍ تحضير التثبيت...",
+    continueInBrowser: "المتابعة في المتصفح"
   }
 } as const;

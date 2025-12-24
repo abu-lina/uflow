@@ -10,13 +10,31 @@ import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useSplash } from '@/providers/splash-provider';
 
-export function PWAInstallPrompt() {
+interface PWAInstallPromptProps {
+  showImmediately?: boolean; // Skip delay and dismissal check
+  context?: 'welcome' | 'general'; // Customize messaging based on context
+  onInstalled?: () => void; // Callback after successful installation
+}
+
+export function PWAInstallPrompt({ 
+  showImmediately = false,
+  context: _context = 'general',
+  onInstalled
+}: PWAInstallPromptProps = {}) {
   const { isInstallable, isIOS, install } = usePWAInstall();
   const { isSplashVisible } = useSplash();
   const [isVisible, setIsVisible] = useState(false);
   const isDebugEnabled = getFeatureFlag('pwaPromptDebug');
 
   useEffect(() => {
+    // If showImmediately prop is set, show right away
+    if (showImmediately) {
+      if (isInstallable || isIOS) {
+        setIsVisible(true);
+      }
+      return;
+    }
+
     // If debug mode is enabled, show immediately (but still respect splash screen)
     if (isDebugEnabled && !isSplashVisible) {
       setIsVisible(true);
@@ -40,7 +58,7 @@ export function PWAInstallPrompt() {
       if (isInstallable || isIOS) setIsVisible(true);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [isInstallable, isIOS, isDebugEnabled, isSplashVisible]);
+  }, [isInstallable, isIOS, isDebugEnabled, isSplashVisible, showImmediately]);
 
   if (!isVisible) return null;
 
@@ -53,14 +71,18 @@ export function PWAInstallPrompt() {
     if ((e.target as HTMLElement).closest('.pwa-close-btn')) return;
     if (!isIOS && isInstallable) {
       install();
+      // Call onInstalled callback if provided
+      if (onInstalled) {
+        onInstalled();
+      }
     }
   };
 
   const handleClose = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setIsVisible(false);
-    // Only save dismissal if not in debug mode
-    if (!isDebugEnabled) {
+    // Only save dismissal if not in debug mode and not showing immediately
+    if (!isDebugEnabled && !showImmediately) {
       localStorage.setItem('pwaPromptDismissed', Date.now().toString());
     }
   };

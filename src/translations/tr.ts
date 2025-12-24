@@ -560,5 +560,11 @@ export const tr = {
       noResults: "Şehir bulunamadı",
       backButton: "Geri",
     }
+  },
+  welcome: {
+    title: "Ummah Flow Topluluğuna Hoş Geldiniz",
+    subtitle: "En iyi deneyim için uygulamayı yükleyin",
+    preparing: "Kurulum hazırlanıyor...",
+    continueInBrowser: "Tarayıcıda Devam Et"
   }
 } as const;

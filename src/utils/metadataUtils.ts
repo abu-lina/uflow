@@ -95,7 +95,7 @@ export function generateLocalizedMetadata(language: ServerLanguage, siteUrl: str
     manifest: '/api/manifest',
     appleWebApp: {
       capable: true,
-      statusBarStyle: 'default',
+      statusBarStyle: 'black-translucent', // Better for iOS standalone mode
       title: content.title,
     },
     icons: {
