@@ -44,6 +44,8 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         {process.env.NODE_ENV === 'development' && (
           <DevServiceWorkerReset />
         )}
+        {/* Auto-register service worker for PWA */}
+        <ServiceWorkerRegistration />
         {/* Mobile Header - Above all content, edge-to-edge */}
         {isLandingPage && (
           <div className="block md:hidden">
@@ -110,6 +112,37 @@ function DevServiceWorkerReset() {
       if ('caches' in window) {
         caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
       }
+    }
+  }, []);
+  return null;
+}
+
+function ServiceWorkerRegistration() {
+  useEffect(() => {
+    // Register service worker if:
+    // 1. We're in a browser environment
+    // 2. Service workers are supported
+    // 3. We're not on localhost (PWA should be disabled for local dev)
+    if (
+      typeof window !== 'undefined' &&
+      'serviceWorker' in navigator &&
+      !window.location.hostname.includes('localhost') &&
+      !window.location.hostname.includes('127.0.0.1')
+    ) {
+      // Check if already registered
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        if (registrations.length === 0) {
+          // Register service worker
+          navigator.serviceWorker
+            .register('/sw.js')
+            .then((registration) => {
+              console.log('✅ Service Worker registered:', registration.scope);
+            })
+            .catch((error) => {
+              console.error('❌ Service Worker registration failed:', error);
+            });
+        }
+      });
     }
   }, []);
   return null;
