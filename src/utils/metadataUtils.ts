@@ -97,6 +97,21 @@ export function generateLocalizedMetadata(language: ServerLanguage, siteUrl: str
       capable: true,
       statusBarStyle: 'black-translucent', // Better for iOS standalone mode
       title: content.title,
+      startupImage: [
+        {
+          url: '/icons/icon-512x512.png',
+          media: '(device-width: 390px) and (device-height: 844px)', // iPhone 14/15
+        },
+      ],
+    },
+    other: {
+      // Critical for Safari PWA recognition
+      'apple-mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-status-bar-style': 'black-translucent',
+      'apple-mobile-web-app-title': content.title,
+      'mobile-web-app-capable': 'yes',
+      // Ensure manifest is discovered
+      'theme-color': '#589D96',
     },
     icons: {
       icon: [

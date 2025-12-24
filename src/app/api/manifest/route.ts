@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
     name: 'UFLOW',
     short_name: 'UFLOW',
     description: 'A platform for the Muslim community',
-    start_url: '/pwa-start', // PWA entry point with standalone detection
+    start_url: '/', // Root URL - page.tsx handles routing based on PWA state
     display: 'standalone',
     background_color: '#f5f5f5',
     theme_color: '#589D96',

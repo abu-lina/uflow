@@ -12,7 +12,7 @@ import { useSplash } from '@/providers/splash-provider';
 
 interface PWAInstallPromptProps {
   showImmediately?: boolean; // Skip delay and dismissal check
-  context?: 'welcome' | 'general'; // Customize messaging based on context
+  context?: 'welcome' | 'general' | 'early-access'; // Customize messaging based on context
   onInstalled?: () => void; // Callback after successful installation
 }
 
@@ -29,8 +29,13 @@ export function PWAInstallPrompt({
   useEffect(() => {
     // If showImmediately prop is set, show right away
     if (showImmediately) {
-      if (isInstallable || isIOS) {
+      // For iOS: Always show (no beforeinstallprompt event)
+      // For Android: Only show if installable
+      if (isIOS || isInstallable) {
         setIsVisible(true);
+        console.log('[PWA Prompt] Showing immediately', { isIOS, isInstallable, context: _context });
+      } else {
+        console.warn('[PWA Prompt] Not showing - not installable', { isIOS, isInstallable, context: _context });
       }
       return;
     }
@@ -38,6 +43,7 @@ export function PWAInstallPrompt({
     // If debug mode is enabled, show immediately (but still respect splash screen)
     if (isDebugEnabled && !isSplashVisible) {
       setIsVisible(true);
+      console.log('[PWA Prompt] Debug mode enabled');
       return;
     }
 
@@ -50,15 +56,19 @@ export function PWAInstallPrompt({
     // Only show if not dismissed in the last 3 days
     const lastDismissed = localStorage.getItem('pwaPromptDismissed');
     if (lastDismissed && Date.now() - Number(lastDismissed) < 3 * 24 * 60 * 60 * 1000) {
+      console.log('[PWA Prompt] Dismissed recently, not showing');
       return;
     }
     
     // Show PWA prompt after a delay (3 seconds after splash is dismissed)
     const timer = setTimeout(() => {
-      if (isInstallable || isIOS) setIsVisible(true);
+      if (isInstallable || isIOS) {
+        setIsVisible(true);
+        console.log('[PWA Prompt] Showing after delay', { isIOS, isInstallable });
+      }
     }, 3000);
     return () => clearTimeout(timer);
-  }, [isInstallable, isIOS, isDebugEnabled, isSplashVisible, showImmediately]);
+  }, [isInstallable, isIOS, isDebugEnabled, isSplashVisible, showImmediately, _context]);
 
   if (!isVisible) return null;
 

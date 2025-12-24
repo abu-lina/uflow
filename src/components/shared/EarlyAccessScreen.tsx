@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/Button';
+import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 interface EarlyAccessScreenProps {
@@ -341,6 +342,12 @@ export function EarlyAccessScreen({
           {t('waitlist.earlyAccess.skipForNow')}
         </motion.button>
       </motion.div>
+
+      {/* PWA Install Prompt - Show on iOS */}
+      <PWAInstallPrompt 
+        context="early-access"
+        showImmediately={true}
+      />
     </div>
   );
 }

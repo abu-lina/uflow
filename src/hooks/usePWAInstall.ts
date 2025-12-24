@@ -13,11 +13,20 @@ export function usePWAInstall() {
   useEffect(() => {
     // Check if the app is already installed
     const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
-    if (isInstalled) return;
+    if (isInstalled) {
+      console.log('[PWA] Already installed in standalone mode');
+      return;
+    }
 
     // Check if it's iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
     setIsIOS(isIOSDevice);
+    console.log('[PWA] Device detection', { 
+      isIOSDevice, 
+      userAgent: navigator.userAgent,
+      isInstalled,
+      displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'
+    });
 
     // Handle the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -25,6 +34,7 @@ export function usePWAInstall() {
       const promptEvent = e as BeforeInstallPromptEvent;
       setDeferredPrompt(promptEvent);
       setIsInstallable(true);
+      console.log('[PWA] beforeinstallprompt event fired - app is installable');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
@@ -35,13 +45,21 @@ export function usePWAInstall() {
   }, []);
 
   const install = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      console.warn('[PWA] Install called but no deferred prompt available');
+      return;
+    }
 
+    console.log('[PWA] Showing install prompt...');
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
+    console.log('[PWA] Install prompt outcome:', outcome);
 
     if (outcome === 'accepted') {
       setIsInstallable(false);
+      console.log('[PWA] User accepted installation');
+    } else {
+      console.log('[PWA] User dismissed installation');
     }
 
     setDeferredPrompt(null);
