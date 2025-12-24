@@ -119,6 +119,12 @@ export async function shouldRedirectToWaitlist(
   accessToken?: string,
   waitlistToken?: string
 ): Promise<boolean> {
+  // Exclude root route - it shows waitlist content directly, not via redirect
+  // Page component handles routing for early access users and launched app
+  if (pathname === '/') {
+    return false;
+  }
+
   // If app is launched, no redirect needed
   if (isAppLaunched) {
     return false;
