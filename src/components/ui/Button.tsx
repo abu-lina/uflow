@@ -19,6 +19,7 @@ const buttonVariants = cva(
         gradient: 'bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500 text-white',
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
+        tertiary: 'text-content-muted hover:text-content bg-transparent',
         link: 'text-primary underline-offset-4 hover:underline',
         auth: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
         action: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
@@ -29,6 +30,7 @@ const buttonVariants = cva(
         md: 'h-10 px-5 rounded-md action-button-height',
         lg: 'h-14 px-6 rounded-xl',
         footer: 'h-14 px-5 rounded-xl',
+        text: 'h-auto px-0 rounded-none',
         icon: 'size-8',
       },
       fullWidth: {

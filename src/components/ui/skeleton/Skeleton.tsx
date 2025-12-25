@@ -9,13 +9,13 @@ export function Skeleton({ className }: SkeletonProps) {
     <div
       aria-label="Loading..."
       className={cn(
-        'relative overflow-hidden rounded-md bg-gray-200',
+        'relative overflow-hidden rounded-md bg-neutral-light',
         'before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent',
         className
       )}
       role="status"
     >
-      <div className="h-full w-full bg-gray-200" />
+      <div className="h-full w-full bg-neutral-light" />
     </div>
   );
 }

@@ -35,7 +35,6 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
     handleSuccessComplete,
     handleLearnMore,
     handleAboutCompleteFromEarlyAccess,
-    handleEarlyAccessComplete,
     handleProviderQuestion,
     handleWaitlistComplete,
   } = useWaitlistFlow();
@@ -180,7 +179,6 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
           <EarlyAccessScreen
             email={flowData.email}
             waitlistToken={flowData.waitlistToken || ''} // Empty string if not available (will use cookie)
-            onComplete={handleEarlyAccessComplete}
             onLearnMore={handleLearnMore}
             onSelectCity={handleSelectCity}
             onSuggestProvider={handleSuggestProvider}
