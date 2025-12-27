@@ -85,17 +85,24 @@ export function CitySelectionModal({
   const handleCitySelect = async (city: City) => {
     if (isSubmitting) return;
 
+    // Validate required fields before making request
+    if (!email || !email.trim()) {
+      console.error('[City Selection Modal] Email is missing');
+      toast.error(t('common.error'));
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const body: Record<string, unknown> = {
-        email,
+        email: email.trim(),
         selected_city: city.city_name,
       };
       
-      // Only include token if provided (otherwise API will use cookie)
-      if (waitlistToken) {
-        body.waitlistToken = waitlistToken;
+      // Include token if provided (API will also check cookie as fallback)
+      if (waitlistToken && waitlistToken.trim()) {
+        body.waitlistToken = waitlistToken.trim();
       }
       
       // Update waitlist entry with selected city
@@ -108,7 +115,10 @@ export function CitySelectionModal({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update city preference');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData?.error?.message || 'Failed to update city preference';
+        console.error('[City Selection Modal] API error:', errorMessage, errorData);
+        throw new Error(errorMessage);
       }
 
       // Show success toast
@@ -119,8 +129,9 @@ export function CitySelectionModal({
       onCitySelected(city.city_name);
       handleClose();
     } catch (error) {
-      console.error('[City Selection] Failed to save:', error);
-      toast.error(t('common.error'));
+      console.error('[City Selection Modal] Failed to save:', error);
+      const errorMessage = error instanceof Error ? error.message : t('common.error');
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -319,7 +319,12 @@ export const en = {
       phone: "Phone",
       phonePlaceholder: "+1 234 567890",
       email: "Email",
-      emailPlaceholder: "email@example.com"
+      emailPlaceholder: "email@example.com",
+      submitButton: "Submit",
+      submitting: "Submitting...",
+      providerCreated: "Provider suggested successfully!",
+      communityServiceCreated: "Community service suggested successfully!",
+      errorCreating: "Error creating. Please try again."
     },
     media: {
       title: "Media",
@@ -587,7 +592,7 @@ export const en = {
       },
     },
     citySelection: {
-      title: "Which city are you interested in?",
+      title: "Choose your city",
       supportingText: "Help us decide where Ummah Flow should launch first.",
       searchPlaceholder: "Search city…",
       statusLive: "Live",

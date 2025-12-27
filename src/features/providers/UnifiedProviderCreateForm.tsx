@@ -14,6 +14,7 @@ import type { Offer, Need } from '@/types/offer';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { Button } from '@/components/ui/Button';
 import { useQueryClient } from '@tanstack/react-query';
+import { createProviderOrService } from '@/services/providerService';
 
 interface UnifiedProviderCreateFormProps {
   onSuccess?: () => void;
@@ -130,6 +131,12 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
   };
 
   const isFormValid = () => {
+    // For recommendation mode with "Next" button, only validate basics (title, category, offers)
+    if (formData.creationMode === 'recommendation') {
+      return !!formData.title && !!formData.category && formData.offers_ids && formData.offers_ids.length > 0;
+    }
+    
+    // For owner mode (submit), validate location if not online business
     if (formData.isOnlineBusiness) return true;
     const validation = validateAddress({
       street: formData.street,
@@ -142,7 +149,10 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
   };
 
   const handleSubmit = async () => {
-    if (!user) {
+    // In recommendation mode, allow anonymous users (skip auth check)
+    const isRecommendationMode = formData.creationMode === 'recommendation';
+    
+    if (!user && !isRecommendationMode) {
       toast.error(t('create.media.mustBeLoggedIn'));
       return;
     }
@@ -166,134 +176,18 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
     try {
       setIsSubmitting(true);
 
-      // Upload images
-      let uploadedUrls: string[] = [];
+      // Use the shared service function
+      await createProviderOrService(
+        formData,
+        user,
+        isRecommendationMode
+      );
+
+      // Show success message
       const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
-      const bucketName = isCommunityService ? 'community-service-images' : 'provider-images';
-      const folderName = isCommunityService ? 'community-services' : 'providers';
-
-      if (formData.images && formData.images.length > 0) {
-        for (const imageFile of formData.images) {
-          const fileExt = imageFile.name.split('.').pop();
-          const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-          const filePath = `${folderName}/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from(bucketName)
-            .upload(filePath, imageFile);
-
-          if (uploadError) {
-            console.error('Error uploading image:', uploadError);
-            throw uploadError;
-          }
-
-          const { data: { publicUrl } } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(filePath);
-
-          uploadedUrls.push(publicUrl);
-        }
-      }
-
-      const isOwner = formData.creationMode === 'owner';
-
       if (isCommunityService) {
-        const insertData = {
-          community_service_name: formData.title,
-          community_service_description: formData.description || null,
-          address_street: formData.isOnlineBusiness ? null : (formData.street || null),
-          address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
-          address_city: formData.isOnlineBusiness ? null : (formData.city || null),
-          address_country: formData.isOnlineBusiness ? null : (formData.country || null),
-          show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
-          category_id: formData.category || null,
-          contact_email: formData.email || null,
-          contact_phone: formData.phone || null,
-          social_website: formData.website || null,
-          social_instagram: formData.instagram || null,
-          barakah_effects: formData.tags || [],
-          user_created_id: user.id,
-          provider_id: isOwner ? user.id : null,
-          community_service_images: uploadedUrls.length > 0 ? uploadedUrls : null,
-          offers_ids: formData.offers_ids || [],
-          needs_ids: formData.needs_ids || [],
-          review_status: 'approved' as const,
-        };
-
-        const { data: createdService, error: serviceError } = await supabase
-          .from('community_services')
-          .insert([insertData])
-          .select('community_service_id')
-          .single();
-
-        if (serviceError) {
-          throw serviceError;
-        }
-
-        if (formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0) {
-          const relationships = formData.selectedCommunityServiceIds.map(serviceId => ({
-            provider_id: createdService.community_service_id,
-            community_service_id: serviceId
-          }));
-          
-          const { error: relationshipError } = await supabase
-            .from('provider_community_services')
-            .insert(relationships);
-          
-          if (relationshipError) {
-            console.error('Error creating provider-community service relationships:', relationshipError);
-          }
-        }
-
-        toast.success(t('create.media.providerCreated'));
+        toast.success(t('create.media.communityServiceCreated'));
       } else {
-        const insertData = {
-          provider_name: formData.title,
-          provider_description: formData.description || null,
-          address_street: formData.isOnlineBusiness ? null : (formData.street || null),
-          address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
-          address_city: formData.isOnlineBusiness ? null : (formData.city || null),
-          address_country: formData.isOnlineBusiness ? null : (formData.country || null),
-          show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
-          category_id: formData.category || null,
-          contact_email: formData.email || null,
-          contact_phone: formData.phone || null,
-          social_website: formData.website || null,
-          social_instagram: formData.instagram || null,
-          barakah_effects: formData.tags || [],
-          user_created_id: user.id,
-          provider_id: isOwner ? user.id : null,
-          provider_images: uploadedUrls.length > 0 ? uploadedUrls : null,
-          offers_ids: formData.offers_ids || [],
-          needs_ids: formData.needs_ids || [],
-          review_status: 'pending' as const,
-        };
-
-        const { data: createdProvider, error: providerError } = await supabase
-          .from('providers')
-          .insert([insertData])
-          .select('provider_id')
-          .single();
-
-        if (providerError) {
-          throw providerError;
-        }
-
-        if (formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0) {
-          const relationships = formData.selectedCommunityServiceIds.map(serviceId => ({
-            provider_id: createdProvider.provider_id,
-            community_service_id: serviceId
-          }));
-          
-          const { error: relationshipError } = await supabase
-            .from('provider_community_services')
-            .insert(relationships);
-          
-          if (relationshipError) {
-            console.error('Error creating provider-community service relationships:', relationshipError);
-          }
-        }
-
         toast.success(t('create.media.providerCreated'));
       }
 
@@ -705,21 +599,38 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
         </div>
       </div>
 
-      {/* Submit Button */}
-      <div className="flex justify-end pt-4">
-        <Button
-          disabled={isSubmitting || !isFormValid()}
-          loading={isSubmitting}
-          loadingText={t('create.media.creating')}
-          type="submit"
-          variant="primary"
-        >
-          {isSubmitting 
-            ? t('create.media.creating')
-            : isCommunityService 
-              ? t('create.media.registerCommunityService')
-              : t('create.media.registerProvider')}
-        </Button>
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3 pt-4">
+        {/* In recommendation mode, show "Next" button to navigate to location page */}
+        {formData.creationMode === 'recommendation' && (
+          <Button
+            disabled={isSubmitting || !isFormValid()}
+            variant="primary"
+            onClick={() => {
+              console.log('[UnifiedProviderCreateForm] Next button clicked, navigating to /create/location');
+              router.push('/create/location');
+            }}
+          >
+            {t('common.next')}
+          </Button>
+        )}
+        
+        {/* Submit button - show only if not in recommendation mode or if form is complete */}
+        {formData.creationMode !== 'recommendation' && (
+          <Button
+            disabled={isSubmitting || !isFormValid()}
+            loading={isSubmitting}
+            loadingText={t('create.media.creating')}
+            type="submit"
+            variant="primary"
+          >
+            {isSubmitting 
+              ? t('create.media.creating')
+              : isCommunityService 
+                ? t('create.media.registerCommunityService')
+                : t('create.media.registerProvider')}
+          </Button>
+        )}
       </div>
     </form>
   );

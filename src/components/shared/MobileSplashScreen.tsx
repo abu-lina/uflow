@@ -13,6 +13,7 @@ import { WaitlistScreen } from '@/components/shared/WaitlistScreen';
 import { ProviderSelectionModal } from '@/components/shared/ProviderSelectionModal';
 import { WaitlistSuccessScreen } from '@/components/shared/WaitlistSuccessScreen';
 import { EarlyAccessScreen } from '@/components/shared/EarlyAccessScreen';
+import { setOnboardingState } from '@/lib/utils/onboarding-state';
 
 interface MobileSplashScreenProps {
   onContinue?: () => void;
@@ -64,8 +65,22 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   const handleSuggestProvider = () => {
     // Navigate to provider recommendation flow
     // Keep early access state in localStorage so we can restore it when user comes back
+    // Set both old keys (for backward compatibility) and new consolidated state
     localStorage.setItem('showEarlyAccess', 'true');
     localStorage.setItem('waitlistEmail', flowData.email);
+    if (flowData.waitlistToken) {
+      localStorage.setItem('waitlistToken', flowData.waitlistToken);
+    }
+    
+    // Set consolidated state for proper detection when navigating back to /
+    setOnboardingState({
+      email: flowData.email,
+      waitlistSubmitted: true,
+      earlyAccessUnlocked: true,
+      submittedAt: new Date().toISOString(),
+      waitlistToken: flowData.waitlistToken || undefined,
+    });
+    
     dismissSplash();
     router.push('/recommend-provider');
   };
@@ -73,11 +88,28 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   const handleSelectCity = () => {
     // Navigate to city selection page
     // Keep early access state in localStorage so we can restore it when user comes back
+    // Set both old keys (for backward compatibility) and new consolidated state
     localStorage.setItem('showEarlyAccess', 'true');
     localStorage.setItem('waitlistEmail', flowData.email);
     if (flowData.waitlistToken) {
       localStorage.setItem('waitlistToken', flowData.waitlistToken);
     }
+    
+    // Also store in sessionStorage for city selection page (it checks both)
+    sessionStorage.setItem('waitlistEmail', flowData.email);
+    if (flowData.waitlistToken) {
+      sessionStorage.setItem('waitlistToken', flowData.waitlistToken);
+    }
+    
+    // Set consolidated state for proper detection when navigating back to /
+    setOnboardingState({
+      email: flowData.email,
+      waitlistSubmitted: true,
+      earlyAccessUnlocked: true,
+      submittedAt: new Date().toISOString(),
+      waitlistToken: flowData.waitlistToken || undefined,
+    });
+    
     dismissSplash();
     router.push('/city-selection');
   };

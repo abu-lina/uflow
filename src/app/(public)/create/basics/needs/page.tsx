@@ -36,6 +36,7 @@ export default function SelectNeedsPage() {
   const [isSelectedExpanded, setIsSelectedExpanded] = useState(true);
   const [isSuggestedExpanded, setIsSuggestedExpanded] = useState(true);
   const [isOtherExpanded, setIsOtherExpanded] = useState(true);
+  const [isUnrelatedExpanded, setIsUnrelatedExpanded] = useState(true);
   
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
@@ -68,37 +69,53 @@ export default function SelectNeedsPage() {
     void fetchCategories();
   }, []);
 
-  // Load needs from database - only for the selected category
+  // Load needs from database - fetch all needs, then sort by relevance
   useEffect(() => {
     async function fetchNeeds() {
-      if (!formData.category) {
-        setNeeds([]);
-        return;
-      }
-
       setIsLoading(true);
       try {
-        // Only fetch needs that match the selected category
+        // Fetch all needs (even if no category is selected, show all needs)
         const { data, error } = await supabase
           .from('needs')
           .select('need_id, name_de, name_en, created_at, updated_at, created_by, category_id')
-          .eq('category_id', formData.category)
           .order('name_de', { ascending: true });
         
         if (error) {
           console.error('Error fetching needs:', error);
+          toast.error(t('create.needs.errorLoading') || 'Error loading needs. Please try again.');
+          setNeeds([]);
         } else if (data) {
-          setNeeds(data);
+          // Sort needs: category-related first (if category is selected), then unrelated
+          // Within each group, maintain alphabetical order
+          const sortedNeeds = formData.category
+            ? [...data].sort((a, b) => {
+                const aIsRelated = a.category_id === formData.category;
+                const bIsRelated = b.category_id === formData.category;
+                
+                // If one is related and the other isn't, related comes first
+                if (aIsRelated && !bIsRelated) return -1;
+                if (!aIsRelated && bIsRelated) return 1;
+                
+                // If both are in the same group, sort alphabetically
+                return a.name_de.localeCompare(b.name_de);
+              })
+            : data; // If no category, just use alphabetical order
+          
+          setNeeds(sortedNeeds);
+        } else {
+          setNeeds([]);
         }
       } catch (error) {
         console.error('Error fetching needs:', error);
+        toast.error(t('create.needs.errorLoading') || 'Error loading needs. Please try again.');
+        setNeeds([]);
       } finally {
         setIsLoading(false);
       }
     }
     
     void fetchNeeds();
-  }, [formData.category]);
+  }, [formData.category, t]);
 
   // Load suggested needs when category changes
   useEffect(() => {
@@ -135,10 +152,20 @@ export default function SelectNeedsPage() {
     !formData.needs_ids.includes(need.need_id)
   );
   
-  // Other needs: exclude suggested/selected (all needs already filtered by category from fetch)
+  // Split other needs into category-related and unrelated
   const otherNeeds = needs.filter(need => 
     !suggestedNeedIds.has(need.need_id) 
     && !formData.needs_ids.includes(need.need_id)
+  );
+  
+  // Category-related other needs (matching category but not in suggested list)
+  const categoryRelatedNeeds = otherNeeds.filter(need =>
+    need.category_id === formData.category
+  );
+  
+  // Unrelated needs (from other categories or uncategorized)
+  const unrelatedNeeds = otherNeeds.filter(need =>
+    need.category_id !== formData.category
   );
   
   // Filter all lists based on search query
@@ -149,7 +176,10 @@ export default function SelectNeedsPage() {
   const filteredSuggestedNeeds = availableSuggestedNeeds.filter(need =>
     need.name_de.toLowerCase().includes(searchLower)
   );
-  const filteredOtherNeeds = otherNeeds.filter(need =>
+  const filteredCategoryRelatedNeeds = categoryRelatedNeeds.filter(need =>
+    need.name_de.toLowerCase().includes(searchLower)
+  );
+  const filteredUnrelatedNeeds = unrelatedNeeds.filter(need =>
     need.name_de.toLowerCase().includes(searchLower)
   );
 
@@ -219,7 +249,14 @@ export default function SelectNeedsPage() {
 
   // Create new need from search query
   const createNeedFromSearch = async () => {
-    if (!searchQuery.trim() || !user) return;
+    // In recommendation mode, allow anonymous users (skip auth check)
+    const isRecommendationMode = formData.creationMode === 'recommendation';
+    
+    if (!searchQuery.trim()) return;
+    if (!user && !isRecommendationMode) {
+      toast.error(t('create.needs.mustBeLoggedIn') || 'You must be logged in to create a need');
+      return;
+    }
     
     // Validate the input
     const validation = validateOfferOrNeedName(searchQuery.trim(), needs, true);
@@ -286,7 +323,7 @@ export default function SelectNeedsPage() {
         .from('needs')
         .insert([{ 
           name_de: searchQuery.trim(),
-          created_by: user.id,
+          created_by: user?.id || null, // Allow null for anonymous users in recommendation mode
           category_id: formData.category || null
         }])
         .select()
@@ -576,15 +613,15 @@ export default function SelectNeedsPage() {
                   </div>
                 )}
 
-                {/* All Other Needs */}
-                {filteredOtherNeeds.length > 0 && (
-                  <div className="rounded-2xl border border-gray-200 bg-white/50 p-4 shadow-sm">
+                {/* Category-Related Other Needs */}
+                {filteredCategoryRelatedNeeds.length > 0 && (
+                  <div className="mb-6 rounded-2xl border border-gray-200 bg-white/50 p-4 shadow-sm">
                     <button
                       className="mb-3 flex items-center justify-between w-full text-left"
                       onClick={() => setIsOtherExpanded(!isOtherExpanded)}
                     >
                       <h3 className="text-md font-medium text-[#232323]">
-                        {(filteredSuggestedNeeds.length > 0 ? t('create.needs.moreNeeds') : t('create.needs.availableNeeds'))} ({filteredOtherNeeds.length})
+                        {t('create.needs.moreNeeds') || 'Weitere Bedürfnisse'} ({filteredCategoryRelatedNeeds.length})
                       </h3>
                       <Icon 
                         className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
@@ -595,7 +632,42 @@ export default function SelectNeedsPage() {
                     </button>
                     {isOtherExpanded && (
                       <div className="flex flex-wrap gap-2 animate-in fade-in duration-200">
-                        {filteredOtherNeeds.map((need) => (
+                        {filteredCategoryRelatedNeeds.map((need) => (
+                          <button
+                            key={need.need_id}
+                            className="inline-flex rounded-xl px-4 py-2 text-left transition-all duration-200 bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                            onClick={() => toggleNeed(need.need_id)}
+                          >
+                            <span className="text-sm font-medium">
+                              {need.name_de}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Unrelated Needs (from other categories) */}
+                {filteredUnrelatedNeeds.length > 0 && (
+                  <div className="rounded-2xl border border-gray-200 bg-white/50 p-4 shadow-sm">
+                    <button
+                      className="mb-3 flex items-center justify-between w-full text-left"
+                      onClick={() => setIsUnrelatedExpanded(!isUnrelatedExpanded)}
+                    >
+                      <h3 className="text-md font-medium text-[#232323]">
+                        Other needs ({filteredUnrelatedNeeds.length})
+                      </h3>
+                      <Icon 
+                        className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
+                          isUnrelatedExpanded ? 'rotate-0' : '-rotate-90'
+                        }`}
+                        icon="lucide:chevron-down" 
+                      />
+                    </button>
+                    {isUnrelatedExpanded && (
+                      <div className="flex flex-wrap gap-2 animate-in fade-in duration-200">
+                        {filteredUnrelatedNeeds.map((need) => (
                           <button
                             key={need.need_id}
                             className="inline-flex rounded-xl px-4 py-2 text-left transition-all duration-200 bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
@@ -612,7 +684,7 @@ export default function SelectNeedsPage() {
                 )}
 
                 {/* No results message */}
-                {!showCreateOption && filteredSelectedNeeds.length === 0 && filteredSuggestedNeeds.length === 0 && filteredOtherNeeds.length === 0 && (
+                {!showCreateOption && filteredSelectedNeeds.length === 0 && filteredSuggestedNeeds.length === 0 && filteredCategoryRelatedNeeds.length === 0 && filteredUnrelatedNeeds.length === 0 && (
                   <div className="flex h-32 flex-col items-center justify-center gap-2">
                     <Icon className="h-12 w-12 text-gray-300" icon="lucide:search-x" />
                     <span className="text-gray-500">{t('create.needs.noNeedsFound')}</span>

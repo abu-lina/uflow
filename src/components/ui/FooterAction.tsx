@@ -124,7 +124,7 @@ export function FooterAction({
       return (
         <footer
           className={cn(
-            'fixed bottom-0 left-0 right-0 z-50 w-full border-t border-gray-200/30',
+            'fixed bottom-0 left-0 right-0 z-[60] w-full border-t border-gray-200/30',
             className
           )}
           style={{
@@ -133,25 +133,25 @@ export function FooterAction({
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
+            pointerEvents: 'auto',
           }}
         >
           <div className={cn('flex w-full px-6 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
             <Button
               fullWidth
               aria-label={actionButton['aria-label'] || actionButton.label}
-              className="!h-[48px] !min-h-[48px] !max-h-[48px]"
+              className="!h-[48px] !min-h-[48px] !max-h-[48px] relative z-[60] pointer-events-auto"
               disabled={actionButton.disabled}
               icon={actionButton.icon}
+              id={`footer-action-button-${actionButton.label.replace(/\s+/g, '-').toLowerCase()}`}
               loading={actionButton.loading}
               loadingText={actionButton.loadingText}
               size="default"
+              trailingIcon={actionButton.trailingIcon}
               variant={actionButton.variant || 'primary'}
               onClick={actionButton.onClick}
             >
-              <span className="flex items-center gap-2 whitespace-nowrap">
-                {actionButton.label}
-                {!actionButton.loading && renderIcon(actionButton.trailingIcon)}
-              </span>
+              {actionButton.label}
             </Button>
           </div>
         </footer>
@@ -176,12 +176,14 @@ export function FooterAction({
           <Button
             fullWidth
             aria-label={actionButton['aria-label'] || actionButton.label}
-            className="!h-[48px] !min-h-[48px] !max-h-[48px]"
+            className="!h-[48px] !min-h-[48px] !max-h-[48px] relative z-[60] pointer-events-auto"
             disabled={actionButton.disabled}
             icon={actionButton.icon}
+            id={`footer-action-button-${actionButton.label.replace(/\s+/g, '-').toLowerCase()}`}
             loading={actionButton.loading}
             loadingText={actionButton.loadingText}
             size="default"
+            trailingIcon={actionButton.trailingIcon}
             variant={actionButton.variant || 'primary'}
             onClick={actionButton.onClick}
           >
@@ -217,6 +219,7 @@ export function FooterAction({
             loading={primaryButton.loading}
             loadingText={primaryButton.loadingText}
             size="default"
+            trailingIcon={primaryButton.trailingIcon}
             variant={primaryButton.variant || 'primary'}
             onClick={primaryButton.onClick}
           >

@@ -22,15 +22,35 @@ import { cn } from '@/lib/utils';
 
 export default function CreateBasicsPage() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
-  const { formData, setCreationMode } = useFormData();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { formData, setCreationMode, isLoading: isFormDataLoading } = useFormData();
   const { t } = useLanguage();
 
   // Use centralized mobile detection
   const isMobile = useIsSmallMobile();
+  
+  const isLoading = isAuthLoading || isFormDataLoading;
 
   // Set creation mode to 'owner' if not already set (recommendation mode is set by /recommend-provider route)
+  // Also check localStorage as fallback in case formData hasn't loaded yet
   useEffect(() => {
+    // Check localStorage first to preserve recommendation mode if it was set
+    if (typeof window !== 'undefined') {
+      try {
+        const savedData = localStorage.getItem('providerFormData');
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          if (parsed.creationMode === 'recommendation') {
+            setCreationMode('recommendation');
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('[CreateBasicsPage] Error reading localStorage:', e);
+      }
+    }
+    
+    // Only set to 'owner' if not already 'recommendation'
     if (formData.creationMode !== 'recommendation') {
       setCreationMode('owner');
     }
@@ -48,8 +68,29 @@ export default function CreateBasicsPage() {
   }
 
   // In recommendation mode, allow anonymous users (skip auth check)
+  // Check creation mode from formData (loaded from localStorage)
+  // Also check localStorage directly as a fallback in case formData hasn't loaded yet
+  const getCreationMode = (): 'owner' | 'recommendation' => {
+    if (formData.creationMode === 'recommendation') return 'recommendation';
+    // Fallback: check localStorage directly
+    if (typeof window !== 'undefined') {
+      try {
+        const savedData = localStorage.getItem('providerFormData');
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          if (parsed.creationMode === 'recommendation') return 'recommendation';
+        }
+      } catch {
+        // Ignore errors
+      }
+    }
+    return 'owner';
+  };
+  
+  const isRecommendationMode = getCreationMode() === 'recommendation';
+  
   // Authentication check - redirect to login with return URL (unless recommendation mode)
-  const isRecommendationMode = formData.creationMode === 'recommendation';
+  // Only check after formData has had a chance to load
   if (!user && !isRecommendationMode) {
     const returnUrl = encodeURIComponent('/create/basics');
     
@@ -99,11 +140,13 @@ export default function CreateBasicsPage() {
   }
 
   // Determine back button handler based on creation mode
-  // In recommendation mode, use router.back() to return to previous page (early access screen)
+  // In recommendation mode, navigate to root (/) which will show early access screen
   // In owner mode, navigate to /create selection page
   const handleBack = () => {
     if (formData.creationMode === 'recommendation') {
-      router.back();
+      // Navigate to root - MobileSplashScreen will detect early access state from localStorage
+      // and show EarlyAccessScreen automatically
+      router.push('/');
     } else {
       router.push('/create');
     }
@@ -128,7 +171,33 @@ export default function CreateBasicsPage() {
           <ProviderCreateForm 
             onNextStep={() => {
               // Navigate to location page
-              router.push('/create/location');
+              // Use replace in recommendation mode to avoid back button issues
+              // Check both formData and localStorage to ensure we have the correct mode
+              const checkRecommendationMode = (): boolean => {
+                if (formData.creationMode === 'recommendation') return true;
+                // Fallback: check localStorage directly
+                if (typeof window !== 'undefined') {
+                  try {
+                    const savedData = localStorage.getItem('providerFormData');
+                    if (savedData) {
+                      const parsed = JSON.parse(savedData);
+                      if (parsed.creationMode === 'recommendation') return true;
+                    }
+                  } catch (e) {
+                    console.error('[CreateBasics] Error reading localStorage:', e);
+                  }
+                }
+                return false;
+              };
+              
+              const isRecommendationMode = checkRecommendationMode();
+              
+              // Navigate immediately
+              if (isRecommendationMode) {
+                router.replace('/create/location');
+              } else {
+                router.push('/create/location');
+              }
             }}
           />
         ) : (

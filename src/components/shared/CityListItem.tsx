@@ -21,7 +21,7 @@ interface CityListItemProps {
  * - Line 2: Status + interest count (e.g., "Not active yet · 14 people interested")
  * 
  * Features:
- * - Rule of 8 spacing (p-4, gap-2)
+ * - Rule of 8 spacing (p-4)
  * - Hover states
  * - Disabled state when submitting
  * - Semantic Tailwind colors
@@ -47,7 +47,7 @@ export const CityListItem = memo(function CityListItem({
     <motion.button
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'w-full flex flex-col gap-2 p-4 rounded-xl bg-neutral-muted text-left transition-all duration-150',
+        'w-full flex flex-col p-4 rounded-xl bg-white text-left transition-all duration-150 h-[72px]',
         'hover:bg-neutral-light hover:shadow-sm',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',

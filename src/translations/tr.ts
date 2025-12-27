@@ -304,7 +304,12 @@ export const tr = {
       phone: "Telefon",
       phonePlaceholder: "+90 123 456 7890",
       email: "E-posta",
-      emailPlaceholder: "email@example.com"
+      emailPlaceholder: "email@example.com",
+      submitButton: "Gönder",
+      submitting: "Gönderiliyor...",
+      providerCreated: "Sağlayıcı başarıyla önerildi!",
+      communityServiceCreated: "Topluluk hizmeti başarıyla önerildi!",
+      errorCreating: "Oluşturma hatası. Lütfen tekrar deneyin."
     },
     media: {
       title: "Medya",
@@ -546,6 +551,11 @@ export const tr = {
       yourCityLabel: "Şehriniz",
       cityNotifySubtext: "Şehriniz hazır olduğunda sizi bilgilendireceğiz.",
       confirmEmailReminder: "Lütfen e-postanızı onaylayın, böylece sizi bilgilendirebiliriz.",
+      errorLoadingCity: "Şehir bilgileri yüklenirken hata oluştu. Lütfen tekrar deneyin.",
+      errorMarkingSeen: "Durum güncellenirken hata oluştu. Bu, deneyiminizi etkilemeyecektir.",
+      retry: "Tekrar dene",
+      citySelected: "Şehir başarıyla seçildi!",
+      othersInterested: "kişi ilgileniyor",
       pwaInstall: {
         title: "Ummah Flow'u ana ekranınıza ekleyin",
         description: "Daha hızlı erişim ve çevrimdışı hazır — tıpkı bir uygulama gibi.",
@@ -567,7 +577,7 @@ export const tr = {
       },
     },
     citySelection: {
-      title: "Hangi şehirle ilgileniyorsunuz?",
+      title: "Şehrinizi seçin",
       supportingText: "Ummah Flow'un ilk olarak nerede başlaması gerektiğine karar vermemize yardımcı olun.",
       searchPlaceholder: "Şehir ara…",
       statusLive: "Canlı",

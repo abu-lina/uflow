@@ -49,27 +49,28 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  icon?: React.ReactNode | string; // Support both ReactNode and Iconify string
+  icon?: React.ReactNode | string; // Support both ReactNode and Iconify string (leading icon)
+  trailingIcon?: React.ReactNode | string; // Trailing icon (after text)
   loading?: boolean;
   loadingText?: string;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, icon, loading = false, loadingText, children, disabled, ...props }, ref) => {
+  ({ className, variant, size, fullWidth, icon, trailingIcon, loading = false, loadingText, children, disabled, ...props }, ref) => {
     const isDisabled = disabled || loading;
     const hasText = loading ? (loadingText || children) : children;
-    const isIconOnly = icon && !hasText;
+    const isIconOnly = (icon || trailingIcon) && !hasText;
     
     // Render icon - support both ReactNode and Iconify string
-    const renderIcon = () => {
-      if (!icon || loading) return null;
+    const renderIcon = (iconProp?: React.ReactNode | string) => {
+      if (!iconProp || loading) return null;
       
-      if (typeof icon === 'string') {
-        return <Icon aria-hidden="true" className="h-6 w-6" icon={icon} />;
+      if (typeof iconProp === 'string') {
+        return <Icon aria-hidden="true" className="h-6 w-6" icon={iconProp} />;
       }
       
       // For React components, don't constrain the size - let the component control its own size
-      return icon;
+      return iconProp;
     };
     
     return (
@@ -83,12 +84,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={isDisabled}
         {...props}
       >
-        {renderIcon()}
+        {renderIcon(icon)}
         {(hasText || loading) && (
           <span className="text-center">
             {loading ? (loadingText || children) : children}
           </span>
         )}
+        {renderIcon(trailingIcon)}
       </button>
     );
   },

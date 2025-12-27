@@ -119,30 +119,68 @@ export async function shouldRedirectToWaitlist(
   accessToken?: string,
   waitlistToken?: string
 ): Promise<boolean> {
+  // DEBUG: Log decision process for create routes
+  const isCreateRoute = pathname.startsWith('/create/');
+  if (isCreateRoute) {
+    console.log('[shouldRedirectToWaitlist] Checking:', {
+      pathname,
+      isAppLaunched,
+      hasAccessToken: !!accessToken,
+      hasWaitlistToken: !!waitlistToken,
+      isExcluded: isExcludedRoute(pathname),
+      isAppRoute: isAppRoute(pathname),
+      isEarlyAccessRoute: isEarlyAccessRoute(pathname),
+    });
+  }
+
   // Exclude root route - it shows waitlist content directly, not via redirect
   // Page component handles routing for early access users and launched app
   if (pathname === '/') {
+    if (isCreateRoute) console.log('[shouldRedirectToWaitlist] Root route, no redirect');
     return false;
   }
 
   // If app is launched, no redirect needed
   if (isAppLaunched) {
+    if (isCreateRoute) console.log('[shouldRedirectToWaitlist] App launched, no redirect');
     return false;
   }
 
   // If route is excluded (waitlist, API, static assets), no redirect needed
   if (isExcludedRoute(pathname)) {
+    if (isCreateRoute) console.log('[shouldRedirectToWaitlist] Excluded route, no redirect');
     return false;
   }
 
   // If not an app route, no redirect needed
   if (!isAppRoute(pathname)) {
+    if (isCreateRoute) console.log('[shouldRedirectToWaitlist] Not an app route, no redirect');
     return false;
   }
 
   // If user has waitlist token and is accessing early access routes, allow access
   if (waitlistToken && isEarlyAccessRoute(pathname)) {
+    if (isCreateRoute) console.log('[shouldRedirectToWaitlist] Has waitlist token + early access route, allowing');
     return false; // Allow early access users to use these routes
+  }
+  
+  // Special case: Allow access to /create/* routes in early access mode even without waitlist token
+  // This handles cases where the cookie might not be set/read correctly but the user is
+  // legitimately in early access (coming from early access screen).
+  // Security: The individual page components will handle authentication/authorization checks
+  // (e.g., checking for recommendation mode from localStorage/formData). If the user is not
+  // in recommendation mode and not logged in, pages will show login screens.
+  if (!isAppLaunched && pathname.startsWith('/create/')) {
+    if (isCreateRoute) {
+      console.log('[shouldRedirectToWaitlist] Early access + /create/* route, allowing:', {
+        pathname,
+        isAppLaunched,
+        hasAccessToken: !!accessToken,
+        hasWaitlistToken: !!waitlistToken,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    return false; // Allow access, let page components handle auth/authorization
   }
 
   // If user is admin/moderator, allow access (bypass waitlist)
@@ -151,11 +189,15 @@ export async function shouldRedirectToWaitlist(
     if (user) {
       const hasAccess = await isAdminOrModerator(user.id);
       if (hasAccess) {
+        if (isCreateRoute) console.log('[shouldRedirectToWaitlist] Admin/moderator, allowing');
         return false; // Admin/moderator can access app during waitlist mode
       }
     }
   }
 
   // Redirect to waitlist
+  if (isCreateRoute) {
+    console.log('[shouldRedirectToWaitlist] All checks failed, redirecting to waitlist');
+  }
   return true;
 }

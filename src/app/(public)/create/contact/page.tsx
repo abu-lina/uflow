@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
@@ -12,19 +15,25 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { createProviderOrService } from '@/services/providerService';
 import { cn } from '@/lib/utils';
 
 export default function ContactPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, isLoading } = useAuth();
-  const { formData, updateFormData } = useFormData();
+  const { formData, updateFormData, clearFormData } = useFormData();
   const { t } = useLanguage();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Use centralized mobile detection
   const isMobile = useIsSmallMobile();
 
-  // Steps with translations
-  const STEPS = [
+  // Determine if in recommendation mode
+  const isRecommendationMode = formData.creationMode === 'recommendation';
+
+  // Steps with translations - 3 steps for recommendation, 4 for owner
+  const STEPS_RECOMMENDATION = [
     {
       title: t('create.steps.basics'),
       icon: 'mdi:information',
@@ -37,11 +46,17 @@ export default function ContactPage() {
       title: t('create.steps.contact'),
       icon: 'mdi:account-group',
     },
+  ];
+
+  const STEPS_OWNER = [
+    ...STEPS_RECOMMENDATION,
     {
       title: t('create.steps.media'),
       icon: 'mdi:image-multiple',
     },
   ];
+
+  const STEPS = isRecommendationMode ? STEPS_RECOMMENDATION : STEPS_OWNER;
 
 
 
@@ -53,8 +68,9 @@ export default function ContactPage() {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
-  // Authentication check - redirect to login with return URL
-  if (!user) {
+  // In recommendation mode, allow anonymous users (skip auth check)
+  // Authentication check - redirect to login with return URL (unless recommendation mode)
+  if (!user && !isRecommendationMode) {
     const returnUrl = encodeURIComponent('/create/contact');
     return (
       <Layout>
@@ -82,8 +98,45 @@ export default function ContactPage() {
     );
   }
 
-  const handleSave = () => {
-    router.push('/create/media');
+  const handleSave = async () => {
+    // In recommendation mode, submit directly (skip media step)
+    if (isRecommendationMode) {
+      try {
+        setIsSubmitting(true);
+
+        await createProviderOrService(
+          formData,
+          user,
+          isRecommendationMode
+        );
+
+        // Show success message
+        const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
+        if (isCommunityService) {
+          toast.success(t('create.contact.communityServiceCreated') || t('create.media.communityServiceCreated'));
+        } else {
+          toast.success(t('create.contact.providerCreated') || t('create.media.providerCreated'));
+        }
+
+        // Clear form data
+        clearFormData();
+
+        // Invalidate relevant queries
+        queryClient.invalidateQueries({ queryKey: ['providers'] });
+        queryClient.invalidateQueries({ queryKey: ['community-services'] });
+
+        // Redirect to waitlist to show early access screen again
+        router.push('/waitlist');
+      } catch (error) {
+        console.error('Error creating entity:', error);
+        toast.error(t('create.contact.errorCreating') || t('create.media.errorCreating'));
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      // Owner mode: navigate to media step
+      router.push('/create/media');
+    }
   };
 
   return (
@@ -105,7 +158,10 @@ export default function ContactPage() {
       >
         {/* Step Indicator */}
         <div className="mb-6">
-          <StepIndicator currentStep={2} steps={STEPS} />
+          <StepIndicator 
+            currentStep={isRecommendationMode ? 2 : 2} 
+            steps={STEPS} 
+          />
         </div>
 
         {/* Subtitle */}
@@ -201,9 +257,17 @@ export default function ContactPage() {
       {/* Footer Action */}
       <FooterAction
         actionButton={{
-          label: t('common.next'),
-          trailingIcon: 'lucide:chevron-right',
+          label: isSubmitting
+            ? (t('create.contact.submitting') || t('create.media.creating'))
+            : isRecommendationMode
+            ? (t('create.contact.submitButton') || t('common.submit'))
+            : t('common.next'),
+          trailingIcon: isRecommendationMode && !isSubmitting ? undefined : 'lucide:chevron-right',
+          icon: isSubmitting ? 'lucide:loader-2' : undefined,
           onClick: handleSave,
+          disabled: isSubmitting,
+          loading: isSubmitting,
+          loadingText: t('create.contact.submitting') || t('create.media.creating'),
           variant: 'primary',
         }}
       />

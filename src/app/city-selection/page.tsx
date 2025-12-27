@@ -6,11 +6,16 @@ import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
+import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
+import { PageContent } from '@/components/layout/PageContent';
 import { Button } from '@/components/ui/Button';
-import { FormInput } from '@/components/ui/FormInput';
 import { CityListItem } from '@/components/shared/CityListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 interface CityData {
   id: string;
@@ -42,6 +47,7 @@ interface CitiesResponse {
 export default function CitySelectionPage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const isMobile = useIsSmallMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [cities, setCities] = useState<CityData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,15 +59,58 @@ export default function CitySelectionPage() {
   const [waitlistToken, setWaitlistToken] = useState<string>('');
   const [previousCity, setPreviousCity] = useState<string | null>(null);
 
-  // Load email, token, and previous city from sessionStorage
+  // Choose layout based on screen size
+  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
+
+  // Load email, token, and previous city from storage (check both localStorage and sessionStorage)
+  // Also fetch from API as fallback
   useEffect(() => {
-    const storedEmail = sessionStorage.getItem('waitlistEmail') || '';
-    const storedToken = sessionStorage.getItem('waitlistToken') || '';
-    const storedCity = sessionStorage.getItem('selectedCity');
+    async function loadUserData() {
+      // Try sessionStorage first (preferred for current session)
+      let storedEmail = sessionStorage.getItem('waitlistEmail') || '';
+      let storedToken = sessionStorage.getItem('waitlistToken') || '';
+      
+      // Fallback to localStorage (set by MobileSplashScreen)
+      if (!storedEmail) {
+        storedEmail = localStorage.getItem('waitlistEmail') || '';
+      }
+      if (!storedToken) {
+        storedToken = localStorage.getItem('waitlistToken') || '';
+      }
+      
+      // If still missing, try to fetch from API
+      if (!storedEmail || !storedToken) {
+        try {
+          const response = await fetch('/api/waitlist/status');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.data?.email) {
+              storedEmail = data.data.email;
+              // Store in sessionStorage for future use
+              sessionStorage.setItem('waitlistEmail', storedEmail);
+            }
+          }
+        } catch (err) {
+          console.error('[City Selection] Failed to fetch waitlist status:', err);
+        }
+      }
+      
+      // Store in sessionStorage for consistency (even if from localStorage)
+      if (storedEmail) {
+        sessionStorage.setItem('waitlistEmail', storedEmail);
+      }
+      if (storedToken) {
+        sessionStorage.setItem('waitlistToken', storedToken);
+      }
+      
+      const storedCity = sessionStorage.getItem('selectedCity');
+      
+      setEmail(storedEmail);
+      setWaitlistToken(storedToken);
+      setPreviousCity(storedCity);
+    }
     
-    setEmail(storedEmail);
-    setWaitlistToken(storedToken);
-    setPreviousCity(storedCity);
+    loadUserData();
   }, []);
 
   // Fetch cities on mount
@@ -113,18 +162,27 @@ export default function CitySelectionPage() {
   const handleCitySelect = async (city: CityData) => {
     if (isSubmitting) return;
     
+    // Validate required fields before making request
+    if (!email || !email.trim()) {
+      console.error('[City Selection] Email is missing');
+      toast.error(t('common.error'));
+      return;
+    }
+
+    if (!waitlistToken || !waitlistToken.trim()) {
+      console.error('[City Selection] Waitlist token is missing');
+      toast.error(t('common.error'));
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
       const body: Record<string, unknown> = {
-        email,
+        email: email.trim(),
         selected_city: city.city_name,
+        waitlistToken: waitlistToken.trim(),
       };
-      
-      // Only include token if provided (otherwise API will use cookie)
-      if (waitlistToken) {
-        body.waitlistToken = waitlistToken;
-      }
       
       // Update waitlist entry with selected city
       const response = await fetch('/api/waitlist/update', {
@@ -136,7 +194,10 @@ export default function CitySelectionPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update city preference');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData?.error?.message || 'Failed to update city preference';
+        console.error('[City Selection] API error:', errorMessage, errorData);
+        throw new Error(errorMessage);
       }
 
       // Store selected city in sessionStorage
@@ -159,7 +220,8 @@ export default function CitySelectionPage() {
       }, 500);
     } catch (err) {
       console.error('[City Selection] Failed to save:', err);
-      toast.error(t('common.error'));
+      const errorMessage = err instanceof Error ? err.message : t('common.error');
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -171,33 +233,28 @@ export default function CitySelectionPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-background">
-      {/* Header with back button */}
-      <div className="pt-[env(safe-area-inset-top)] px-4 py-4 border-b border-border-light">
-        <Button
-          aria-label={t('waitlist.citySelection.backButton')}
-          disabled={isSubmitting}
-          icon="material-symbols:arrow-back-rounded"
-          size="sm"
-          variant="ghost"
-          onClick={handleBack}
-        >
-          {t('waitlist.citySelection.backButton')}
-        </Button>
-      </div>
+    <Layout>
+      <PageHeader
+        title={t('waitlist.citySelection.title')}
+        variant="back-and-title"
+        onBack={handleBack}
+      />
 
-      {/* Content */}
-      <div className="flex-1 flex flex-col px-4 pb-[env(safe-area-inset-bottom)]">
-        {/* Title and supporting text */}
+      <PageContent
+        className={cn(
+          'flex flex-col gap-6',
+          !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+        )}
+        maxWidth="full"
+        paddingX={isMobile ? 'px-6' : 'px-0'}
+      >
+        {/* Supporting text */}
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-4 py-6"
+          className="flex flex-col gap-4"
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-          <h1 className="font-inter-tight text-2xl font-semibold leading-tight text-content-heading">
-            {t('waitlist.citySelection.title')}
-          </h1>
           <p className="font-inter text-base leading-normal text-content">
             {t('waitlist.citySelection.supportingText')}
           </p>
@@ -210,22 +267,37 @@ export default function CitySelectionPage() {
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
         >
-          <FormInput
-            autoFocus
-            aria-label={t('waitlist.citySelection.searchPlaceholder')}
-            disabled={isSubmitting || isLoading}
-            label={t('waitlist.citySelection.searchPlaceholder')}
-            placeholder={t('waitlist.citySelection.searchPlaceholder')}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="flex h-[40px] w-full items-center rounded-2xl bg-white px-[10px] py-[5px] border border-[#D4D4D4]">
+            <div className="flex items-center gap-3 flex-1">
+              <Icon className="size-6 shrink-0 text-[#1B1D1D]" icon="lucide:search" />
+              <input
+                autoFocus
+                aria-label={t('waitlist.citySelection.searchPlaceholder')}
+                className="flex-1 text-base font-normal text-gray-600 outline-none placeholder:text-sm placeholder:text-gray-500 border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent pl-0"
+                disabled={isSubmitting || isLoading}
+                placeholder={t('waitlist.citySelection.searchPlaceholder')}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  aria-label={t('common.delete')}
+                  className="flex items-center justify-center p-1 rounded hover:bg-gray-100 focus:outline-none"
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <Icon className="size-4 text-gray-400" icon="lucide:x" />
+                </button>
+              )}
+            </div>
+          </div>
         </motion.div>
 
         {/* Cities list */}
         <motion.div
           animate={{ opacity: 1 }}
-          className="flex-1 flex flex-col gap-3 pb-6"
+          className="flex-1 flex flex-col gap-3"
           initial={{ opacity: 0 }}
           transition={{ duration: 0.4, delay: 0.2, ease: 'easeOut' }}
         >
@@ -306,8 +378,8 @@ export default function CitySelectionPage() {
             </div>
           )}
         </motion.div>
-      </div>
-    </div>
+      </PageContent>
+    </Layout>
   );
 }
 

@@ -304,7 +304,12 @@ export const ar = {
       phone: "الهاتف",
       phonePlaceholder: "+966 123 456 789",
       email: "البريد الإلكتروني",
-      emailPlaceholder: "email@example.com"
+      emailPlaceholder: "email@example.com",
+      submitButton: "إرسال",
+      submitting: "جاري الإرسال...",
+      providerCreated: "تم اقتراح المزود بنجاح!",
+      communityServiceCreated: "تم اقتراح خدمة المجتمع بنجاح!",
+      errorCreating: "خطأ في الإنشاء. يرجى المحاولة مرة أخرى."
     },
     media: {
       title: "الوسائط",
@@ -546,6 +551,11 @@ export const ar = {
       yourCityLabel: "مدينتك",
       cityNotifySubtext: "سنخطرك عندما تكون مدينتك جاهزة.",
       confirmEmailReminder: "يرجى تأكيد بريدك الإلكتروني حتى نتمكن من إخطارك.",
+      errorLoadingCity: "فشل تحميل معلومات المدينة. يرجى المحاولة مرة أخرى.",
+      errorMarkingSeen: "فشل تحديث الحالة. لن يؤثر هذا على تجربتك.",
+      retry: "حاول مرة أخرى",
+      citySelected: "تم اختيار المدينة بنجاح!",
+      othersInterested: "أشخاص مهتمون بـ",
       pwaInstall: {
         title: "أضف أمة فلو إلى شاشتك الرئيسية",
         description: "وصول أسرع وجاهز للعمل دون اتصال — تمامًا مثل التطبيق.",
@@ -567,7 +577,7 @@ export const ar = {
       },
     },
     citySelection: {
-      title: "ما المدينة التي تهتم بها؟",
+      title: "اختر مدينتك",
       supportingText: "ساعدنا في تحديد أين يجب أن تنطلق أمة فلو أولاً.",
       searchPlaceholder: "ابحث عن مدينة…",
       statusLive: "مباشر",

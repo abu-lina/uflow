@@ -319,7 +319,12 @@ export const de = {
       phone: "Telefon",
       phonePlaceholder: "+49 123 456789",
       email: "E-Mail",
-      emailPlaceholder: "email@example.com"
+      emailPlaceholder: "email@example.com",
+      submitButton: "Absenden",
+      submitting: "Wird gesendet...",
+      providerCreated: "Anbieter erfolgreich vorgeschlagen!",
+      communityServiceCreated: "Gemeinschaftsdienst erfolgreich vorgeschlagen!",
+      errorCreating: "Fehler beim Erstellen. Bitte versuche es erneut."
     },
     media: {
       title: "Media",
@@ -561,6 +566,11 @@ export const de = {
       yourCityLabel: "Deine Stadt",
       cityNotifySubtext: "Wir benachrichtigen dich, wenn deine Stadt bereit ist.",
       confirmEmailReminder: "Bitte bestätige deine E-Mail, damit wir dich benachrichtigen können.",
+      errorLoadingCity: "Fehler beim Laden der Stadtinformationen. Bitte versuche es erneut.",
+      errorMarkingSeen: "Fehler beim Aktualisieren des Status. Dies beeinträchtigt deine Erfahrung nicht.",
+      retry: "Erneut versuchen",
+      citySelected: "Stadt erfolgreich ausgewählt!",
+      othersInterested: "weitere interessiert an",
       pwaInstall: {
         title: "Ummah Flow zum Startbildschirm hinzufügen",
         description: "Schnellerer Zugriff und offline-fähig — genau wie eine App.",
@@ -582,7 +592,7 @@ export const de = {
       },
     },
     citySelection: {
-      title: "Welche Stadt interessiert dich?",
+      title: "Wähle deine Stadt",
       supportingText: "Hilf uns zu entscheiden, wo Ummah Flow zuerst starten soll.",
       searchPlaceholder: "Stadt suchen…",
       statusLive: "Live",

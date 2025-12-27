@@ -95,10 +95,17 @@ export function FormProvider({ children }: FormProviderProps) {
 
   // Load form data from localStorage on mount
   useEffect(() => {
+    console.log('[FormProvider] Loading form data from localStorage...');
     try {
       const savedData = localStorage.getItem('providerFormData');
       if (savedData) {
         const parsedData = JSON.parse(savedData);
+        console.log('[FormProvider] Loaded form data from localStorage:', {
+          creationMode: parsedData.creationMode,
+          hasTitle: !!parsedData.title,
+          hasCategory: !!parsedData.category,
+          timestamp: new Date().toISOString(),
+        });
         
         // Convert base64 image data back to File objects if they exist
         if (parsedData.images && parsedData.images.length > 0) {
@@ -120,12 +127,15 @@ export function FormProvider({ children }: FormProviderProps) {
         }
         
         setFormData(parsedData);
+      } else {
+        console.log('[FormProvider] No saved form data found in localStorage, using defaults');
       }
     } catch (error) {
-      console.error('Error loading form data from localStorage:', error);
+      console.error('[FormProvider] Error loading form data from localStorage:', error);
       // Keep default form data if loading fails
     } finally {
       setIsLoading(false);
+      console.log('[FormProvider] Form data loading complete, isLoading set to false');
     }
   }, []);
 
@@ -184,11 +194,20 @@ export function FormProvider({ children }: FormProviderProps) {
   }, []);
 
   const setCreationMode = useCallback((mode: ProviderCreationMode) => {
+    console.log('[FormProvider] setCreationMode called:', {
+      mode,
+      previousMode: formData.creationMode,
+      timestamp: new Date().toISOString(),
+    });
     setFormData(prev => {
       const newData = { ...prev, creationMode: mode };
+      console.log('[FormProvider] Creation mode updated:', {
+        previous: prev.creationMode,
+        new: newData.creationMode,
+      });
       return newData;
     });
-  }, []);
+  }, [formData.creationMode]);
 
   const clearFormData = useCallback(() => {
     setFormData(initialFormData);

@@ -44,20 +44,37 @@ export async function PATCH(request: Request) {
     const cookieStore = await cookies();
     const tokenFromCookie = cookieStore.get('waitlist_token')?.value;
     
+    // Merge token from cookie if not in body
+    const finalToken = body.waitlistToken || tokenFromCookie;
+    
+    // Validate that we have a token from either source
+    if (!finalToken || finalToken.trim().length === 0) {
+      console.log('[Waitlist Update] Token missing from both body and cookie');
+      return NextResponse.json(
+        { 
+          data: null,
+          error: { message: 'Token is required' } 
+        },
+        { status: 400 }
+      );
+    }
+    
     // If token not in body, try to get from cookie
     const bodyWithToken = {
       ...body,
-      waitlistToken: body.waitlistToken || tokenFromCookie,
+      waitlistToken: finalToken,
     };
     
     const validation = waitlistUpdateSchema.safeParse(bodyWithToken);
     
     if (!validation.success) {
       console.log('[Waitlist Update] Validation failed:', validation.error.errors);
+      const firstError = validation.error.errors[0];
+      const errorMessage = firstError?.message || 'Invalid request data';
       return NextResponse.json(
         { 
           data: null,
-          error: { message: 'Invalid request data' } 
+          error: { message: errorMessage, details: validation.error.errors } 
         },
         { status: 400 }
       );

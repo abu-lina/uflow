@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -44,8 +44,13 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
 
-  // Steps with translations
-  const STEPS = [
+  const { formData, updateFormData } = useFormData();
+
+  // Determine if in recommendation mode
+  const isRecommendationMode = formData.creationMode === 'recommendation';
+
+  // Steps with translations - 3 steps for recommendation, 4 for owner
+  const STEPS_RECOMMENDATION = [
     {
       title: t('create.steps.basics'),
       icon: 'mdi:information',
@@ -58,12 +63,17 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       title: t('create.steps.contact'),
       icon: 'mdi:account-group',
     },
+  ];
+
+  const STEPS_OWNER = [
+    ...STEPS_RECOMMENDATION,
     {
       title: t('create.steps.media'),
       icon: 'mdi:image-multiple',
     },
   ];
-  const { formData, updateFormData } = useFormData();
+
+  const STEPS = isRecommendationMode ? STEPS_RECOMMENDATION : STEPS_OWNER;
 
   useEffect(() => {
     async function fetchCategories() {
@@ -302,7 +312,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
     }, 1000);
   };
 
-  const nextStep = () => {
+  const nextStep = useCallback(() => {
     console.log('nextStep called - currentStep:', currentStep, 'STEPS.length:', STEPS.length);
     if (currentStep < STEPS.length - 1) {
       console.log('Advancing to step:', currentStep + 1);
@@ -318,13 +328,47 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
     } else {
       console.log('Already on last step, not advancing');
     }
-  };
+  }, [currentStep, onNextStep]);
 
   const prevStep = () => {
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
     }
   };
+
+  // Calculate button disabled state - don't memoize to ensure it's always current
+  const buttonDisabled = currentStep === 0 
+    ? (isSubmitting || !isStepValid(currentStep, formData))
+    : false;
+
+  const handleNextClick = useCallback(() => {
+    // Validate before proceeding
+    const validationResult = isStepValid(currentStep, formData);
+    
+    if (!validationResult) {
+      // Provide specific feedback based on what's missing
+      if (currentStep === 0) {
+        if (!formData.title) {
+          toast.error(language === 'de' ? 'Bitte geben Sie einen Titel ein' : 'Please enter a title');
+        } else if (!formData.category) {
+          toast.error(language === 'de' ? 'Bitte wählen Sie eine Kategorie aus' : 'Please select a category');
+        } else if (!formData.offers_ids || formData.offers_ids.length === 0) {
+          toast.error(language === 'de' ? 'Bitte wählen Sie mindestens ein Angebot aus' : 'Please select at least one offer');
+        }
+      }
+      return;
+    }
+    
+    if (onNextStep) {
+      try {
+        onNextStep();
+      } catch (error) {
+        console.error('[ProviderCreateForm] Error in onNextStep callback:', error);
+      }
+    } else {
+      nextStep();
+    }
+  }, [currentStep, formData, onNextStep, language, nextStep]);
 
 
   function isStepValid(step: number, data: ProviderFormData) {
@@ -352,6 +396,24 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
         return false;
     }
   }
+
+  // DEBUG: Log form state on render
+  useEffect(() => {
+    if (currentStep === 0) {
+      const isValid = isStepValid(currentStep, formData);
+      console.log('[ProviderCreateForm] Step 0 state:', {
+        isStepValid: isValid,
+        isSubmitting,
+        formData: {
+          title: formData.title,
+          category: formData.category,
+          offers_ids: formData.offers_ids,
+          offers_ids_length: formData.offers_ids?.length || 0,
+        },
+        buttonDisabled: isSubmitting || !isValid,
+      });
+    }
+  }, [currentStep, formData.title, formData.category, formData.offers_ids, isSubmitting, formData]);
 
   return (
     <div className="flex w-full flex-1 flex-col">
@@ -772,14 +834,8 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
             actionButton={{
               label: t('common.next'),
               trailingIcon: 'material-symbols:chevron-right',
-              onClick: () => {
-                if (onNextStep) {
-                  onNextStep();
-                } else {
-                  nextStep();
-                }
-              },
-              disabled: isSubmitting || !isStepValid(currentStep, formData),
+              onClick: handleNextClick,
+              disabled: buttonDisabled,
               variant: 'primary',
             }}
           />

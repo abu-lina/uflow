@@ -329,7 +329,14 @@ export default function SelectOffersPage() {
 
   // Create new offer from search query - memoized with useCallback
   const createOfferFromSearch = useCallback(async () => {
-    if (!searchQuery.trim() || !user) return;
+    // In recommendation mode, allow anonymous users (skip auth check)
+    const isRecommendationMode = formData.creationMode === 'recommendation';
+    
+    if (!searchQuery.trim()) return;
+    if (!user && !isRecommendationMode) {
+      toast.error(t('create.offers.mustBeLoggedIn') || 'You must be logged in to create an offer');
+      return;
+    }
     
     // Check rate limit
     if (!checkLimit()) {
@@ -415,7 +422,7 @@ export default function SelectOffersPage() {
         .from('offers')
         .insert([{ 
           name_de: sanitizedInput, // Use sanitized input
-          created_by: user.id,
+          created_by: user?.id || null, // Allow null for anonymous users in recommendation mode
           category_id: formData.category || null
         }])
         .select()
@@ -445,7 +452,7 @@ export default function SelectOffersPage() {
     } finally {
       setIsCreating(false);
     }
-  }, [searchQuery, user, offers, formData.category, formData.offers_ids, t, updateFormData, checkLimit, resetTime]);
+  }, [searchQuery, user, offers, formData.category, formData.offers_ids, formData.creationMode, t, updateFormData, checkLimit, resetTime]);
 
   // Delete an offer (only if user created it and it's not used) - memoized with useCallback
   const deleteOffer = useCallback(async (offerId: string, offerName: string) => {

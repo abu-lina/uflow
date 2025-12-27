@@ -14,7 +14,7 @@ import { FooterAction } from '@/components/ui/FooterAction';
 
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
-import { useFormData } from '@/providers/form-provider';
+import { useFormData, type ProviderCreationMode } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
@@ -27,10 +27,12 @@ export default function LocationPage() {
     country?: string;
   }>({});
   const router = useRouter();
-  const { user, isLoading } = useAuth();
-  const { formData, updateFormData } = useFormData();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { formData, updateFormData, isLoading: isFormDataLoading } = useFormData();
   const { t } = useLanguage();
   const isMobile = useIsSmallMobile();
+  
+  const isLoading = isAuthLoading || isFormDataLoading;
   
   // Show manual fields if user has already entered data manually, or if they want to edit
   // Must be initialized AFTER formData is available
@@ -40,8 +42,8 @@ export default function LocationPage() {
     return hasManualData;
   });
 
-  // Steps with translations
-  const STEPS = [
+  // Steps with translations - will be conditionally set after getCreationMode is defined
+  const STEPS_RECOMMENDATION = [
     {
       title: t('create.steps.basics'),
       icon: 'mdi:information',
@@ -54,6 +56,10 @@ export default function LocationPage() {
       title: t('create.steps.contact'),
       icon: 'mdi:account-group',
     },
+  ];
+
+  const STEPS_OWNER = [
+    ...STEPS_RECOMMENDATION,
     {
       title: t('create.steps.media'),
       icon: 'mdi:image-multiple',
@@ -92,13 +98,53 @@ export default function LocationPage() {
     // Keep manual fields hidden after autocomplete (user can click "Edit fields" to show them)
   }, [updateFormData]); // Only updateFormData is stable
 
-  // Loading state
+  // Loading state - wait for both auth and formData to load
   if (isLoading) {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
-  // Authentication check - redirect to login with return URL
-  if (!user) {
+  // In recommendation mode, allow anonymous users (skip auth check)
+  // Check creation mode from formData (loaded from localStorage)
+  // Also check localStorage directly as a fallback in case formData hasn't loaded yet
+  const getCreationMode = (): ProviderCreationMode => {
+    // First check formData (most reliable if loaded)
+    if (formData.creationMode === 'recommendation') {
+      return 'recommendation';
+    }
+    
+    // Fallback: check localStorage directly (in case formData hasn't loaded yet)
+    if (typeof window !== 'undefined') {
+      try {
+        const savedData = localStorage.getItem('providerFormData');
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          if (parsed.creationMode === 'recommendation') {
+            return 'recommendation';
+          }
+        }
+      } catch (e) {
+        console.error('[LocationPage] getCreationMode: Error reading localStorage:', e);
+      }
+    }
+    
+    return 'owner';
+  };
+  
+  // IMPORTANT: Only determine recommendation mode after formData has loaded
+  // This prevents race conditions where we check before localStorage data is loaded
+  // We check both formData.creationMode (which may still be default 'owner' if not loaded)
+  // and localStorage directly as a fallback
+  const isRecommendationMode = !isFormDataLoading && getCreationMode() === 'recommendation';
+  
+  // Set STEPS based on mode
+  const STEPS = isRecommendationMode ? STEPS_RECOMMENDATION : STEPS_OWNER;
+  
+  // Authentication check - redirect to login with return URL (unless recommendation mode)
+  // CRITICAL: Only check after formData has fully loaded to avoid race conditions
+  // We must wait for isFormDataLoading to be false AND ensure we've checked localStorage
+  // The getCreationMode() function checks both formData and localStorage, so it's safe
+  // Note: isRecommendationMode is defined above after getCreationMode
+  if (!user && !isRecommendationMode && !isFormDataLoading) {
     const returnUrl = encodeURIComponent('/create/location');
     return (
       <Layout>

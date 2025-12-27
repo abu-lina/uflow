@@ -221,12 +221,10 @@ export const shouldShowSubpageAction = (pathname: string): boolean => {
     return true;
   }
 
-  // Create subpages (except main create page)
-  // Note: Some create pages have their own FooterAction components, but this ensures
-  // the navigation menu is hidden and action menu can be shown if needed
-  if (pathname.startsWith('/create/') && pathname !== '/create') {
-    return true;
-  }
+  // Create subpages are excluded from subpage action button
+  // Create pages have their own FooterAction components (e.g., ProviderCreateForm)
+  // and should not show RootClientLayout's FooterAction to avoid event handler conflicts
+  // The navigation menu is already hidden by shouldShowMobileFooter for create subpages
 
   return false;
 };
