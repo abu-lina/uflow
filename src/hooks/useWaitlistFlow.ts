@@ -7,6 +7,7 @@ import {
   setOnboardingState,
   clearOnboardingState,
 } from '@/lib/utils/onboarding-state';
+import { getFeatureFlag } from '@/config/feature-flags';
 
 /**
  * Waitlist flow states
@@ -62,7 +63,6 @@ export function useWaitlistFlow() {
    */
   const transitionTo = useCallback((newState: WaitlistFlowState, data?: Partial<WaitlistFlowData>) => {
     if (isTransitioningRef.current) {
-      console.warn('[WaitlistFlow] Transition blocked - already transitioning');
       return;
     }
 
@@ -73,20 +73,13 @@ export function useWaitlistFlow() {
       setFlowData((prev) => ({ ...prev, ...data }));
     }
 
-    // Log state transition for debugging
-    console.log('[WaitlistFlow] State transition:', {
-      from: currentState,
-      to: newState,
-      data,
-    });
-
     setCurrentState(newState);
 
     // Allow next transition after a brief delay
     setTimeout(() => {
       isTransitioningRef.current = false;
     }, 100);
-  }, [currentState]);
+  }, []);
 
   /**
    * Initialize state from localStorage and API
@@ -97,12 +90,27 @@ export function useWaitlistFlow() {
       return;
     }
 
+    // Check if waitlist should be skipped
+    const skipWaitlist = getFeatureFlag('skipWaitlist');
+
     // 1. Check consolidated onboarding state (persists across sessions)
     // This provides fast restoration while API call completes
     const onboardingState = getOnboardingState();
 
     if (onboardingState?.earlyAccessUnlocked) {
-      // Show early access immediately (fast path)
+      // Check if user has a selected city
+      const selectedCity = 
+        typeof window !== 'undefined' 
+          ? localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity')
+          : null;
+
+      if (selectedCity) {
+        // City selected - don't initialize flow, let RootPageContent handle routing
+        // This ensures the root page shows the appropriate stage content
+        return;
+      }
+
+      // Show early access immediately (fast path) - only if no city selected yet
       setFlowData({
         email: onboardingState.email,
         waitlistToken: onboardingState.waitlistToken || '',
@@ -110,37 +118,57 @@ export function useWaitlistFlow() {
       setCurrentState('earlyAccess');
       setIsInitialized(true);
       
-      // Verify with API in background
-      fetch('/api/waitlist/status')
-        .then((response) => response.json())
-        .then((data: WaitlistStatusResponse) => {
-          if (data.data?.has_seen_early_access) {
-            // Confirmed - user has seen it, keep localStorage for next visit
-            // (Don't clear it - it's our persistence layer)
-          } else if (data.data && !data.data.has_seen_early_access) {
-            // Database says not seen - sync it (edge case)
-            fetch('/api/waitlist/update', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email: onboardingState.email,
-                waitlistToken: onboardingState.waitlistToken,
-                has_seen_early_access: true,
-              }),
-            });
-          } else {
-            // No waitlist entry - clear consolidated state
-            clearOnboardingState();
-          }
-        })
-        .catch((error) => {
-          console.error('[WaitlistFlow] Background status check failed:', error);
-          // Keep localStorage on error - better UX
-        });
+      // Verify with API in background (only if waitlist is not skipped)
+      if (!skipWaitlist) {
+        fetch('/api/waitlist/status')
+          .then((response) => response.json())
+          .then((data: WaitlistStatusResponse) => {
+            if (data.data?.has_seen_early_access) {
+              // Confirmed - user has seen it, keep localStorage for next visit
+              // (Don't clear it - it's our persistence layer)
+            } else if (data.data && !data.data.has_seen_early_access) {
+              // Database says not seen - sync it (edge case)
+              fetch('/api/waitlist/update', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: onboardingState.email,
+                  waitlistToken: onboardingState.waitlistToken,
+                  has_seen_early_access: true,
+                }),
+              });
+            } else {
+              // No waitlist entry - clear consolidated state
+              clearOnboardingState();
+            }
+          })
+          .catch((error) => {
+            console.error('[WaitlistFlow] Background status check failed:', error);
+            // Keep localStorage on error - better UX
+          });
+      }
       return;
     }
 
-    // 2. Show initial state immediately based on splash visibility
+    // 2. If waitlist is skipped, still show splash/about flow (skip waitlist step)
+    // Flow: Splash → About → Early Access (skip waitlist)
+    if (skipWaitlist) {
+      setFlowData({
+        email: '',
+        waitlistToken: '',
+      });
+      // Start with splash (user will go: splash → about → earlyAccess)
+      if (isSplashVisible) {
+        setCurrentState('splash');
+      } else {
+        // If splash is not visible, go directly to about (welcome, problem, solution)
+        setCurrentState('about');
+      }
+      setIsInitialized(true);
+      return;
+    }
+
+    // 3. Show initial state immediately based on splash visibility
     // This prevents blocking while API call is in progress
     if (isSplashVisible) {
       setCurrentState('splash');
@@ -149,7 +177,7 @@ export function useWaitlistFlow() {
     }
     setIsInitialized(true);
 
-    // 3. Check API for waitlist status in background
+    // 4. Check API for waitlist status in background
     // Update state if needed (e.g., user has joined waitlist but hasn't seen early access)
     fetch('/api/waitlist/status')
       .then((response) => response.json())
@@ -230,7 +258,7 @@ export function useWaitlistFlow() {
    * Handlers for state transitions
    */
   const handlers = {
-    // Splash → About
+    // Splash → About (onboarding cards: welcome, problem, solution)
     handleContinue: useCallback(() => {
       if (currentState === 'splash') {
         hasProgressedRef.current = true; // Mark as progressed
@@ -238,11 +266,14 @@ export function useWaitlistFlow() {
       }
     }, [currentState, transitionTo]),
 
-    // About → Waitlist
+    // About → Early Access (skip waitlist)
     handleAboutComplete: useCallback(() => {
       if (currentState === 'about') {
         hasProgressedRef.current = true; // Mark as progressed
-        transitionTo('waitlist');
+        transitionTo('earlyAccess', {
+          email: '',
+          waitlistToken: '',
+        });
       }
     }, [currentState, transitionTo]),
 

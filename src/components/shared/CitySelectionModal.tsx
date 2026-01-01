@@ -8,6 +8,7 @@ import { FormInput } from '@/components/ui/FormInput';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { getOnboardingState, setOnboardingState } from '@/lib/utils/onboarding-state';
 
 interface City {
   id: string;
@@ -19,8 +20,8 @@ interface City {
 
 interface CitySelectionModalProps {
   isOpen: boolean;
-  email: string;
-  waitlistToken: string; // Can be empty string if token is in HTTP-only cookie
+  email?: string; // Optional - not required when waitlist is skipped
+  waitlistToken?: string; // Optional - can be empty string if token is in HTTP-only cookie
   onClose: () => void;
   onCitySelected: (city: string) => void;
 }
@@ -85,40 +86,55 @@ export function CitySelectionModal({
   const handleCitySelect = async (city: City) => {
     if (isSubmitting) return;
 
-    // Validate required fields before making request
-    if (!email || !email.trim()) {
-      console.error('[City Selection Modal] Email is missing');
-      toast.error(t('common.error'));
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      const body: Record<string, unknown> = {
-        email: email.trim(),
-        selected_city: city.city_name,
-      };
+      // CRITICAL: Persist city BEFORE API call
+      localStorage.setItem('selectedCity', city.city_name);
+      sessionStorage.setItem('selectedCity', city.city_name);
       
-      // Include token if provided (API will also check cookie as fallback)
-      if (waitlistToken && waitlistToken.trim()) {
-        body.waitlistToken = waitlistToken.trim();
+      // CRITICAL: Ensure onboarding state exists when city is selected
+      // Always create state, even without email (for pre-launch flow)
+      const onboardingState = getOnboardingState();
+      
+      if (!onboardingState) {
+        // Create onboarding state (with or without email)
+        setOnboardingState({
+          email: email?.trim() || '',
+          waitlistSubmitted: !!email?.trim(), // Only true if email exists
+          earlyAccessUnlocked: true,
+          submittedAt: new Date().toISOString(),
+          waitlistToken: waitlistToken?.trim() || undefined,
+        });
       }
       
-      // Update waitlist entry with selected city
-      const response = await fetch('/api/waitlist/update', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
+      // Only update waitlist API if email is provided (for future compatibility)
+      if (email && email.trim()) {
+        const body: Record<string, unknown> = {
+          email: email.trim(),
+          selected_city: city.city_name,
+        };
+        
+        // Include token if provided (API will also check cookie as fallback)
+        if (waitlistToken && waitlistToken.trim()) {
+          body.waitlistToken = waitlistToken.trim();
+        }
+        
+        // Update waitlist entry with selected city
+        const response = await fetch('/api/waitlist/update', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData?.error?.message || 'Failed to update city preference';
-        console.error('[City Selection Modal] API error:', errorMessage, errorData);
-        throw new Error(errorMessage);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData?.error?.message || 'Failed to update city preference';
+          console.error('[City Selection Modal] API error:', errorMessage, errorData);
+          throw new Error(errorMessage);
+        }
       }
 
       // Show success toast

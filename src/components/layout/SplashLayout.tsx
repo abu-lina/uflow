@@ -1,14 +1,10 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, cloneElement, isValidElement } from 'react';
 import { createPortal } from 'react-dom';
 
-import { PageLayout } from '@/components/layout/PageLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
-import { MobileNavbar } from '@/components/layout/MobileNavbar';
-import { Logo } from '@/components/ui/Logo';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
 
@@ -22,8 +18,8 @@ interface SplashLayoutProps {
 function SplashLayout({ 
   children, 
   onContinue, 
-  continueText,
-  animationDelay = 0 
+  continueText: _continueText,
+  animationDelay: _animationDelay = 0 
 }: SplashLayoutProps) {
   const { t } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
@@ -46,39 +42,42 @@ function SplashLayout({
     document.body
   ) : null;
 
+  // Check if header has visible content (empty title means no visible header)
+  const hasHeaderContent = false; // PageHeader with empty title has no visible content
+  const footerText = t('splash.footer');
+  const hasFooterContent = footerText && footerText.trim().length > 0;
+
   return (
     <>
       {languageSwitcherPortal}
-      <PageLayout hasBackground={false}>
-        {/* HEADER SECTION - Using PageHeader with centered logo */}
-        <PageHeader 
-          customContent={
-            <div className="flex items-center justify-center w-full">
-              <Logo className="h-12 w-12" height={48} width={48} />
-            </div>
-          }
-          title=""
-          variant="title-only"
-        />
+      <div className="flex flex-col h-screen">
+        {/* HEADER SECTION - Only render if there's visible content */}
+        {hasHeaderContent && (
+          <>
+            <PageHeader 
+              title=""
+              variant="title-only"
+            />
+            <HeaderSpacer />
+          </>
+        )}
 
-      {/* HEADER SPACER */}
-      <HeaderSpacer />
+        {/* CONTENT SECTION - Always centered */}
+        <div className="flex-1 w-full px-6 flex items-center justify-center">
+          {isValidElement(children) && children.type
+            ? cloneElement(children, { onContinue } as { onContinue: () => void })
+            : children}
+        </div>
 
-      {/* CONTENT SECTION - Using PageContentWrapper like profile page */}
-      <PageContentWrapper 
-        className="pb-8"
-        includeMobileNavSpacing={true}
-      >
-        {children}
-      </PageContentWrapper>
-
-      {/* NAVBAR SECTION - Fixed at bottom */}
-      <MobileNavbar
-        animationDelay={animationDelay}
-        text={continueText || t('splash.continue')}
-        onClick={onContinue}
-      />
-      </PageLayout>
+        {/* FOOTER SECTION - Only render if there's content */}
+        {hasFooterContent && (
+          <footer className="w-full py-4 px-6 flex-shrink-0">
+            <p className="font-inter text-xs font-light leading-[13px] text-center text-content-muted">
+              {footerText}
+            </p>
+          </footer>
+        )}
+      </div>
     </>
   );
 }

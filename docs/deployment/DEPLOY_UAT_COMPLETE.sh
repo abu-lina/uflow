@@ -87,3 +87,6 @@ echo "2. Check DevTools → Application → Service Workers"
 echo "3. Verify service worker is registered"
 echo "4. Test PWA on iPhone (add to home screen, verify standalone mode)"
 
+
+
+

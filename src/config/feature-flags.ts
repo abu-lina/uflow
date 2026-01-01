@@ -19,6 +19,7 @@ export interface FeatureFlags {
   
   // Launch control
   isAppLaunched: boolean; // Controls app launch status - when false, app routes redirect to /waitlist
+  skipWaitlist: boolean; // When true, skip waitlist in onboarding flow
 }
 
 /**
@@ -41,6 +42,7 @@ export const defaultFeatureFlags: FeatureFlags = {
   
   // Launch control - disabled by default (waitlist mode)
   isAppLaunched: false, // Default: waitlist mode - set to true when ready to launch
+  skipWaitlist: true, // Skip waitlist pre-launch (set to false when going live)
 };
 
 /**
@@ -80,6 +82,7 @@ export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFl
     enableProviderSelectionModal: getFeatureFlag('enableProviderSelectionModal', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),
     isAppLaunched: getFeatureFlag('isAppLaunched', overrides),
+    skipWaitlist: getFeatureFlag('skipWaitlist', overrides),
   };
 }
 

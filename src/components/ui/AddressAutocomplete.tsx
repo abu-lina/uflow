@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 
 export interface AddressComponents {
   street: string;
@@ -197,7 +198,7 @@ export function AddressAutocomplete({
       street: formatStreetAddress(result),
       zip: result.address?.postcode || '',
       city: result.address?.city || result.address?.town || result.address?.village || result.address?.municipality || '',
-      country: result.address?.country || '',
+      country: normalizeCountryNameForDisplay(result.address?.country || ''),
       latitude: parseFloat(result.lat),
       longitude: parseFloat(result.lon),
       formattedAddress: result.display_name,

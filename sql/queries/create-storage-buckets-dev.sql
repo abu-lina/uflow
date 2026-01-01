@@ -203,3 +203,6 @@ CREATE POLICY "Users can delete their own avatar" ON storage.objects
 -- ✅ avatars (public, 2 MB, image types, 4 policies)
 -- =====================================================
 
+
+
+

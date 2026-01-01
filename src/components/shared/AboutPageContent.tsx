@@ -9,9 +9,8 @@ import Image from 'next/image';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
-import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { AboutCard } from '@/components/shared/AboutCard';
-import { FooterAction } from '@/components/ui/FooterAction';
+import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
 
@@ -27,12 +26,12 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
   // Get translated quotes
   const translatedQuotes = [
     {
-      heading: t('about.quotes.first.heading'),
-      quote: t('about.quotes.first.quote'),
-    },
-    {
       heading: t('about.quotes.second.heading'),
       quote: t('about.quotes.second.quote'),
+    },
+    {
+      heading: t('about.quotes.third.heading'),
+      quote: t('about.quotes.third.quote'),
     },
   ];
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -126,7 +125,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
       {/* CONTENT SECTION - Flexible middle area with proper centering */}
       <PageContentWrapper 
         centerVertically={true}
-        contentClassName="flex flex-col items-center gap-4 pb-8"
+        contentClassName="flex flex-col items-center gap-8 pb-8"
         includeMobileNavSpacing={false}
         maxWidth="full"
         padding="lg-safe"
@@ -147,42 +146,27 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
             <AboutCard cardIndex={currentCardIndex} quote={translatedQuotes[currentCardIndex]} />
           </div>
         </div>
-        
-        {/* Page Indicator */}
-        <div className="flex flex-row justify-center items-center w-full gap-2">
-          {translatedQuotes.map((_, index) => (
-            <button
-              key={index}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentCardIndex ? 'bg-primary' : 'bg-[#D4D4D4]'
-              }`}
-              onClick={() => changeCard(index)}
-            />
-          ))}
-        </div>
-      </PageContentWrapper>
 
-      <BottomSpacer />
-
-      {/* FOOTER ACTION - Fixed at bottom */}
-      <FooterAction
-        actionButton={{
-          label: currentCardIndex < translatedQuotes.length - 1 ? t('about.continue') : t('about.discover'),
-          trailingIcon: 'material-symbols:chevron-right',
-          onClick: () => {
-          if (currentCardIndex < translatedQuotes.length - 1) {
-            changeCard(currentCardIndex + 1);
-          } else {
-            if (onComplete) {
-              onComplete();
+        {/* CTA Button - 32px below content (gap-8 = 32px) */}
+        <Button
+          fullWidth
+          trailingIcon="material-symbols:chevron-right"
+          variant="primary"
+          onClick={() => {
+            if (currentCardIndex < translatedQuotes.length - 1) {
+              changeCard(currentCardIndex + 1);
             } else {
-              router.push('/');
+              if (onComplete) {
+                onComplete();
+              } else {
+                router.push('/');
+              }
             }
-          }
-          },
-          variant: 'primary',
-        }}
-      />
+          }}
+        >
+          {currentCardIndex < translatedQuotes.length - 1 ? t('about.continue') : t('about.discover')}
+        </Button>
+      </PageContentWrapper>
       </PageLayout>
     </>
   );

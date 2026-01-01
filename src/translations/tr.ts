@@ -97,12 +97,16 @@ export const tr = {
     title: "Hakkımızda",
     quotes: {
       first: {
-        heading: "Helal sağlayıcıları nerede bulabilirim?",
-        quote: "Bir Müslüman olarak, bana helal restoranların yanı sıra Müslüman mağazaları ve hizmetlerini gösteren merkezi bir uygulama eksik."
+        heading: "Ummah Flow'a Hoş Geldiniz",
+        quote: "Şehrinizdeki Müslüman sağlayıcıları keşfedin – yiyeceklerden hizmetlere kadar."
       },
       second: {
-        heading: "Bereketli bir pazar yeri.",
-        quote: "Yerler öner, yeni teklifler keşfet ve Müslüman sağlayıcıları destekle - inşaAllah."
+        heading: "Müslüman sağlayıcıları nerede bulabilirim?",
+        quote: "Birçok Müslüman teklifi görünmez kalıyor – kendi şehrimizde bile."
+      },
+      third: {
+        heading: "Ummah Flow Müslümanları Müslüman teklifleriyle buluşturur.",
+        quote: "Böylece Müslüman sağlayıcıları daha kolay bulabilir ve paramızı güvenle bilinçli bir şekilde önce Ümmet içinde harcayabiliriz."
       }
     },
     continue: "Devam Et",
@@ -110,8 +114,10 @@ export const tr = {
   },
   splash: {
     title: "Müslümanlardan Müslümanlara.",
-    subtitle: "Ummah Flow - Müslümanları birbirine bağlayan ilk helal uyumlu pazar yeri - inşaAllah.",
-    continue: "Devam Et"
+    subtitle: "Ummah Flow Müslüman sağlayıcıları görünür kılar – adil ve topluluk odaklı.",
+    continue: "Devam Et",
+    discoverProviders: "Müslüman Sağlayıcıları Keşfet",
+    footer: "Erken Erişim · Birlikte İnşa Edildi"
   },
   language: {
     switchTo: "Değiştir",
@@ -539,7 +545,11 @@ export const tr = {
     earlyAccess: {
       title: "Erken erişime hoş geldiniz 🌱",
       description: "Ummah Flow büyüyor.\nErkensin — ve Müslüman yerleri görünür kılmaya yardımcı olabilirsin.",
+      homeTitle: "Ummah Flow'a Hoş Geldiniz",
+      homeDescription: "Ummah Flow Erken Erişim aşamasındadır.\n\nHenüz tüm şehirler ve sağlayıcılar mevcut değil — tam olarak şu anda birlikte inşa ettiğimiz şey bu.",
+      selectCityButton: "Şehrimi seç",
       suggestProvider: "Sağlayıcı öner",
+      badge: "Erken Erişim",
       selectCity: "Şehir seç (isteğe bağlı)",
       selectCityHelper: "Ummah Flow'un şehir şehir büyümesine yardımcı ol.",
       changeCity: "Şehri değiştir",
@@ -577,7 +587,10 @@ export const tr = {
       },
     },
     citySelection: {
-      title: "Şehrinizi seçin",
+      title: "Şehriniz",
+      subtitle: "Bölgenizdeki Müslüman sağlayıcıları keşfetmek için bir şehir seçin.",
+      searchButton: "Başka şehir ara …",
+      discoverButton: "Müslüman sağlayıcıları keşfet",
       supportingText: "Ummah Flow'un ilk olarak nerede başlaması gerektiğine karar vermemize yardımcı olun.",
       searchPlaceholder: "Şehir ara…",
       statusLive: "Canlı",
@@ -592,6 +605,14 @@ export const tr = {
       notifyToast: "{{city}} canlıya geçtiğinde sizi bilgilendireceğiz",
       noResults: "Şehir bulunamadı",
       backButton: "Geri",
+    },
+    cityEarlyAccess: {
+      title: "{{city}} şu anda inşa ediliyor.",
+      description: "Erken Erişim şehri olarak {{city}}, Ummah ile birlikte adım adım büyüyor. Her öneri, Müslüman tekliflerini görünür kılmaya yardımcı olur.",
+      suggestProvider: "Sağlayıcı öner",
+      receiveUpdates: "{{city}} için güncellemeleri al",
+      subscribeSuccess: "{{city}} daha fazla sağlayıcıya sahip olduğunda bilgilendirileceksiniz.",
+      subscribeError: "Abone olma hatası. Lütfen tekrar deneyin.",
     }
   },
   welcome: {

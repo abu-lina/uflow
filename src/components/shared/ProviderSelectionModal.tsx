@@ -58,8 +58,6 @@ export function ProviderSelectionModal({
       }
 
       // Success - persist state IMMEDIATELY, then close modal
-      console.log('[Waitlist] Successfully joined:', { email, isProvider });
-      
       // Extract waitlist token from response
       const waitlistToken = data.data?.waitlistToken;
       

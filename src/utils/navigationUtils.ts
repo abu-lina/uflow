@@ -132,66 +132,112 @@ export const normalizeWebsiteUrl = (website: string | null | undefined): string 
  */
 
 /**
+ * Check if user has completed onboarding (earlyAccessUnlocked + city selected)
+ * This is the single source of truth for onboarding completion status.
+ * 
+ * IMPORTANT: Returns false if onboarding is not complete (safe default)
+ * 
+ * @returns True if user has completed onboarding (earlyAccessUnlocked + city selected)
+ */
+export function hasCompletedOnboarding(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    // Check onboarding state - if no state exists, user hasn't completed onboarding
+    const onboardingStateStr = localStorage.getItem('ummahflow_onboarding');
+    if (!onboardingStateStr) {
+      return false;
+    }
+
+    const onboardingState = JSON.parse(onboardingStateStr);
+    
+    // Must have earlyAccessUnlocked flag
+    if (!onboardingState?.earlyAccessUnlocked) {
+      return false;
+    }
+
+    // Must have a selected city (in either localStorage or sessionStorage)
+    const selectedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
+    if (!selectedCity) {
+      return false;
+    }
+
+    // Both conditions met - onboarding is complete
+    return true;
+  } catch (error) {
+    // On any error, assume onboarding is not complete (safe default)
+    console.error('[NavigationUtils] Failed to check onboarding state:', error);
+    return false;
+  }
+}
+
+/**
  * Determines if the current pathname should show the mobile footer bar
  * @param pathname - Current pathname
  * @param isSplashVisible - Whether splash screen is visible
  * @param user - Current authenticated user (null for early access or guests)
+ * @param isAppLaunched - Whether app is launched (Stage 3 - Full Access)
  * @returns True if mobile footer should be shown
  */
 export const shouldShowMobileFooter = (
   pathname: string,
   isSplashVisible: boolean,
-  user: User | null
+  user: User | null,
+  isAppLaunched: boolean = false
 ): boolean => {
-  // Hide menu bar for users who are not authenticated
-  // This includes early access users (waitlist token but no auth session)
-  // and guest users (no token, no auth)
-  if (!user) {
+  // 1. HIGHEST PRIORITY: Check onboarding completion first
+  // This ensures footer NEVER shows during onboarding, regardless of other flags
+  const onboardingComplete = hasCompletedOnboarding();
+  
+  if (!onboardingComplete) {
+    // Hide footer if onboarding is not complete, no matter what
     return false;
   }
 
-  // Pages that should never show the footer
-  const footerExcludedPages = [
-    '/about',
-    '/signup/check-email',
-    '/waitlist', // Waitlist/early access page should be full-screen without footer
-  ];
+  // 2. Hide footer when splash is visible (even for returning users)
+  if (isSplashVisible) {
+    return false;
+  }
 
-  // Page patterns that should not show the footer
+  // 3. Check excluded pages (pages that never show footer)
+  const footerExcludedPages = ['/signup/check-email', '/waitlist'];
+  if (footerExcludedPages.includes(pathname)) {
+    return false;
+  }
+
+  // 4. Check excluded patterns (page patterns that never show footer)
   const footerExcludedPatterns = [
-    '/providers/', // Provider detail pages
-    '/community-services/', // Community service detail pages
-    '/profile/providers/', // Profile provider detail pages
+    '/providers/',
+    '/community-services/',
+    '/profile/providers/',
     '/create/media/images',
     '/create/media/social',
     '/profile/edit',
     '/profile/delete',
   ];
-
-  // Check if current path is in excluded pages
-  if (footerExcludedPages.includes(pathname)) {
+  if (footerExcludedPatterns.some(pattern => pathname.includes(pattern))) {
     return false;
   }
 
-  // Check if current path matches excluded patterns
-  const matchesExcludedPattern = footerExcludedPatterns.some(pattern => 
-    pathname.includes(pattern)
-  );
-
-  if (matchesExcludedPattern) {
-    return false;
-  }
-
-  // Don't show footer when splash is visible
-  if (isSplashVisible) {
-    return false;
-  }
-
-  // Don't show footer for create subpages (action menu will be shown instead)
+  // 5. Hide footer for create subpages (action menu will be shown instead)
   if (pathname.startsWith('/create') && pathname !== '/create') {
     return false;
   }
 
+  // 6. Stage 3 (Full Access): Show footer if app is launched
+  if (isAppLaunched) {
+    return true;
+  }
+
+  // 7. Stages 1 & 2 (Early Access): Hide footer (CityEarlyAccessNavbar will be shown instead)
+  // Also hide for unauthenticated users in non-launched app
+  if (!user) {
+    return false;
+  }
+
+  // 8. Default: Show footer for authenticated users in early access
   return true;
 };
 
@@ -237,6 +283,67 @@ export const shouldShowSubpageAction = (pathname: string): boolean => {
 export const isProviderDetailPage = (pathname: string): boolean => {
   return (pathname.startsWith('/providers/') && pathname !== '/providers') || 
          pathname.startsWith('/profile/providers/');
+};
+
+/**
+ * Determines if CityEarlyAccessNavbar should be shown
+ * @param pathname - Current pathname
+ * @param isAppLaunched - Whether app is launched (Stage 3)
+ * @param user - Current authenticated user
+ * @returns True if CityEarlyAccessNavbar should be shown
+ */
+export const shouldShowCityEarlyAccessNavbar = (
+  pathname: string,
+  isAppLaunched: boolean,
+  _user: User | null
+): boolean => {
+  // Never show in Stage 3 (Full Access)
+  if (isAppLaunched) {
+    return false;
+  }
+
+  // Check if onboarding is complete
+  const onboardingComplete = hasCompletedOnboarding();
+
+  // Show on root if onboarding is complete
+  if (pathname === '/' && onboardingComplete) {
+    return true;
+  }
+
+  // Hide on onboarding pages if onboarding is not complete
+  const onboardingPages = ['/', '/about', '/welcome', '/city-selection'];
+  if (onboardingPages.includes(pathname) && !onboardingComplete) {
+    return false;
+  }
+
+  // Hide on excluded pages
+  const excludedPages = [
+    '/about',
+    '/signup/check-email',
+    '/waitlist',
+    '/welcome',
+  ];
+
+  const excludedPatterns = [
+    '/providers/', // Provider detail pages
+    '/community-services/', // Community service detail pages
+    '/profile/providers/', // Profile provider detail pages
+    '/create/media/images',
+    '/create/media/social',
+    '/profile/edit',
+    '/profile/delete',
+  ];
+
+  if (excludedPages.includes(pathname)) {
+    return false;
+  }
+
+  if (excludedPatterns.some(pattern => pathname.includes(pattern))) {
+    return false;
+  }
+
+  // Show on: /, /city/*, /providers, /create (and subpages that don't match excluded patterns)
+  return true;
 };
 
 /**

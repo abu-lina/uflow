@@ -4,6 +4,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
+import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 
 interface BusinessSearchProps {
   onSelect: (placeData: PlaceData) => void;
@@ -71,6 +72,9 @@ export function BusinessSearch({ onSelect, onManualCreate }: BusinessSearchProps
         }
       });
 
+      // Normalize country (replace Israel with Palestine)
+      country = normalizeCountryNameForDisplay(country);
+
       // Get photos (first 5)
       const photos: string[] = [];
       if (place.photos && place.photos.length > 0) {
@@ -95,7 +99,6 @@ export function BusinessSearch({ onSelect, onManualCreate }: BusinessSearchProps
         formattedAddress: place.formatted_address || '',
       };
 
-      console.log('Place data parsed:', placeData);
       onSelect(placeData);
     } catch (err) {
       console.error('Error processing place:', err);

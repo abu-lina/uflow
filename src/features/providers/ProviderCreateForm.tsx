@@ -134,17 +134,12 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleSubmit called - currentStep:', currentStep, 'STEPS.length:', STEPS.length);
     
     // Only allow submission on the last step
     if (currentStep !== STEPS.length - 1) {
-      console.log('Form submission prevented - not on last step. Current step:', currentStep, 'Last step:', STEPS.length - 1);
       return;
     }
     
-    console.log('Form submission allowed - on last step:', currentStep);
-    console.log('Form data at submission:', formData);
-    console.log('Category value:', formData.category);
     setIsSubmitting(true);
 
     if (!user) {
@@ -180,16 +175,10 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
 
     // 1. Upload images to Supabase Storage and collect trusted URLs
     const uploadedUrls: string[] = [];
-    console.log(
-      'Images to upload:',
-      formData.images.length,
-      formData.images.map((f) => f.name),
-    );
 
     for (const file of formData.images) {
       const fileExt = file.name.split('.').pop();
       const filePath = `providers/${Date.now()}-${Math.random()}.${fileExt}`;
-      console.log('Uploading file:', file.name, 'to path:', filePath);
 
       const { error: uploadError } = await supabase.storage.from('provider-images').upload(filePath, file);
       if (uploadError) {
@@ -205,21 +194,12 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
           const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
           if (hostname === supabaseUrl.hostname) {
             uploadedUrls.push(publicUrlData.publicUrl);
-            console.log('Successfully uploaded:', file.name, 'URL:', publicUrlData.publicUrl);
           }
         } catch {
           console.error('Invalid URL for', file.name);
         }
       }
     }
-
-    console.log('Total uploaded URLs:', uploadedUrls.length);
-    console.log('Form data before insert:', {
-      category: formData.category,
-      offers_ids: formData.offers_ids,
-      needs_ids: formData.needs_ids,
-      user_id: user.id
-    });
 
     // 2. Save provider with trusted Supabase image URLs
     // Determine which ID field to set based on creation mode
@@ -247,13 +227,6 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       needs_ids: formData.needs_ids.length > 0 ? formData.needs_ids : null,
     };
     
-    console.log('Insert data:', insertData);
-    console.log('Category ID in insert data:', insertData.category_id);
-    console.log('Offers IDs in insert data:', insertData.offers_ids);
-    console.log('Needs IDs in insert data:', insertData.needs_ids);
-    console.log('Form data offers_ids:', formData.offers_ids);
-    console.log('Form data needs_ids:', formData.needs_ids);
-    
     const { data: createdProvider, error: providerError } = await supabase
       .from('providers')
       .insert([insertData])
@@ -280,12 +253,9 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       return;
     }
 
-    console.log('Provider created successfully with ID:', createdProvider.provider_id);
-
     // Create provider-community service relationships for all selected services
     const selectedServiceIds = formData.selectedCommunityServiceIds || [];
     if (selectedServiceIds.length > 0 && createdProvider.provider_id) {
-      console.log('Creating relationships with community services:', selectedServiceIds);
       
       const results = await Promise.allSettled(
         selectedServiceIds.map(serviceId => 
@@ -298,13 +268,10 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       if (failedCount > 0) {
         console.error(`Failed to create ${failedCount} community service relationship(s)`);
         toast.error(`Anbieter erstellt, aber ${failedCount} Initiative(n) konnten nicht verknüpft werden.`);
-      } else {
-        console.log(`Successfully created ${selectedServiceIds.length} community service relationship(s)`);
       }
     }
 
     setIsSubmitting(false);
-    console.log('Provider created successfully, redirecting to create page...');
     toast.success('Anbieter erfolgreich registriert!');
     // Force a page refresh to ensure the redirect works
     setTimeout(() => {
@@ -313,10 +280,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
   };
 
   const nextStep = useCallback(() => {
-    console.log('nextStep called - currentStep:', currentStep, 'STEPS.length:', STEPS.length);
     if (currentStep < STEPS.length - 1) {
-      console.log('Advancing to step:', currentStep + 1);
-      
       // Call the onNextStep callback if provided (for external navigation)
       // Call it when advancing from step 0 (Basics) to trigger external navigation to location page
       if (onNextStep && currentStep === 0) {
@@ -325,10 +289,8 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       }
       
       setCurrentStep((prev) => prev + 1);
-    } else {
-      console.log('Already on last step, not advancing');
     }
-  }, [currentStep, onNextStep]);
+  }, [currentStep, onNextStep, STEPS.length]);
 
   const prevStep = () => {
     if (currentStep > 0) {
@@ -397,23 +359,6 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
     }
   }
 
-  // DEBUG: Log form state on render
-  useEffect(() => {
-    if (currentStep === 0) {
-      const isValid = isStepValid(currentStep, formData);
-      console.log('[ProviderCreateForm] Step 0 state:', {
-        isStepValid: isValid,
-        isSubmitting,
-        formData: {
-          title: formData.title,
-          category: formData.category,
-          offers_ids: formData.offers_ids,
-          offers_ids_length: formData.offers_ids?.length || 0,
-        },
-        buttonDisabled: isSubmitting || !isValid,
-      });
-    }
-  }, [currentStep, formData.title, formData.category, formData.offers_ids, isSubmitting, formData]);
 
   return (
     <div className="flex w-full flex-1 flex-col">
@@ -431,7 +376,6 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
             // Prevent Enter key from submitting form on non-last steps
             if (e.key === 'Enter' && currentStep !== STEPS.length - 1) {
               e.preventDefault();
-              console.log('Enter key prevented - not on last step');
             }
           }}
           onSubmit={handleSubmit}

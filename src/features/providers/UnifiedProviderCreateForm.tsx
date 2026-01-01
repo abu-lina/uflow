@@ -607,7 +607,6 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             disabled={isSubmitting || !isFormValid()}
             variant="primary"
             onClick={() => {
-              console.log('[UnifiedProviderCreateForm] Next button clicked, navigating to /create/location');
               router.push('/create/location');
             }}
           >

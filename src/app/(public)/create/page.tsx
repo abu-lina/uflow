@@ -7,6 +7,7 @@ import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
+import { CityEarlyAccessNavbar } from '@/components/shared/CityEarlyAccessNavbar';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getFeatureFlag } from '@/config/feature-flags';
@@ -102,6 +103,9 @@ export default function CreateProviderPage() {
           />
         </div>
       </PageContent>
+      
+      {/* Bottom Navigation Bar */}
+      <CityEarlyAccessNavbar />
     </Layout>
   );
 }

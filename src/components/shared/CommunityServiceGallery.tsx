@@ -23,8 +23,6 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        console.log('CommunityServiceGallery received category:', category);
-        
         // Priority 1: Get community service images
         const { data, error } = await supabase
           .from('community_services')
@@ -67,8 +65,6 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
           })
           .filter((url): url is string => url !== null);
 
-        console.log('Community service images:', communityServiceImages);
-
         // If we have enough community service images, use them
         if (communityServiceImages.length >= 3) {
           setImages(communityServiceImages.slice(0, 3));
@@ -77,10 +73,8 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
 
         // Priority 2: Get category fallback images
         const categoryImages: string[] = [];
-        console.log('CommunityServiceGallery - category_images check:', category?.category_images);
         
         if (category?.category_images) {
-          console.log('CommunityServiceGallery - Raw category_images:', category.category_images);
           try {
             // Handle different possible data structures
             let parsedCategoryImages;
@@ -91,27 +85,20 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
               parsedCategoryImages = category.category_images;
             }
             
-            console.log('CommunityServiceGallery - Parsed category images:', parsedCategoryImages);
-            
             // Handle different possible structures
             if (Array.isArray(parsedCategoryImages)) {
               // Direct array of URLs
               categoryImages.push(...parsedCategoryImages);
-              console.log('CommunityServiceGallery - Added array URLs:', parsedCategoryImages);
             } else if (parsedCategoryImages.urls && Array.isArray(parsedCategoryImages.urls)) {
               // Object with urls property
               categoryImages.push(...parsedCategoryImages.urls);
-              console.log('CommunityServiceGallery - Added urls property:', parsedCategoryImages.urls);
             } else if (parsedCategoryImages.url) {
               // Single URL
               categoryImages.push(parsedCategoryImages.url);
-              console.log('CommunityServiceGallery - Added single URL:', parsedCategoryImages.url);
             }
           } catch (err) {
             console.warn('CommunityServiceGallery - Error parsing category images:', err);
           }
-        } else {
-          console.log('CommunityServiceGallery - No category_images available');
         }
 
         // Combine community service images with category images
@@ -123,9 +110,6 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
           combinedImages.push(categoryImages[categoryImageIndex]);
         }
 
-        console.log('CommunityServiceGallery - Community service images:', communityServiceImages);
-        console.log('CommunityServiceGallery - Category images:', categoryImages);
-        console.log('CommunityServiceGallery - Combined images:', combinedImages);
         setImages(combinedImages);
       } catch (err) {
         console.error('Error fetching community service images:', err);
@@ -143,8 +127,6 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
   while (displayImages.length < 3) {
     displayImages.push('/images/placeholder.jpg');
   }
-
-  console.log('Display community service images:', displayImages); // Debug log
 
   if (loading) {
     return (

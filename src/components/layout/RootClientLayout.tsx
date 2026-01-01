@@ -3,8 +3,8 @@
 import { ReactNode, useEffect, useRef } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
-
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
+import { CityEarlyAccessNavbar } from '@/components/shared/CityEarlyAccessNavbar';
 import { DesktopFooter } from '@/components/layout/DesktopFooter';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { FooterAction } from '@/components/ui/FooterAction';
@@ -13,7 +13,8 @@ import { LoadingProvider } from '@/providers/LoadingProvider';
 import { useSplash } from '@/providers/splash-provider';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { shouldShowMobileFooter, shouldShowSubpageAction, getPageType } from '@/utils/navigationUtils';
+import { getFeatureFlag } from '@/config/feature-flags';
+import { shouldShowMobileFooter, shouldShowCityEarlyAccessNavbar, shouldShowSubpageAction, getPageType } from '@/utils/navigationUtils';
 
 interface RootClientLayoutProps {
   children: ReactNode;
@@ -26,16 +27,19 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const { isSplashVisible } = useSplash();
   const { t } = useLanguage();
   const mainRef = useRef<HTMLElement>(null);
+  
+  // Check feature flag synchronously on client-side (not in useEffect to avoid timing issues)
+  const isAppLaunched = typeof window !== 'undefined' ? getFeatureFlag('isAppLaunched') : false;
 
   // Use utility functions for cleaner logic
   const pageType = getPageType(pathname);
   const { isLandingPage } = pageType;
   
   // Determine what UI elements should be shown
-  const showMobileFooter = shouldShowMobileFooter(pathname, isSplashVisible, user);
+  // CRITICAL: This must be calculated on every render to catch state changes
+  const showMobileFooter = shouldShowMobileFooter(pathname, isSplashVisible, user, isAppLaunched);
+  const showCityEarlyAccessNavbar = shouldShowCityEarlyAccessNavbar(pathname, isAppLaunched, user);
   const showSubpageAction = shouldShowSubpageAction(pathname);
-
-  // Note: Debug logging removed for production readiness
 
   return (
     <LoadingProvider>
@@ -66,10 +70,17 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
           <DesktopFooter />
         </div>
         
-        {/* Mobile Footer */}
+        {/* Mobile Footer - Stage 3 (Full Access) */}
         {showMobileFooter && (
           <div className="block md:hidden">
             <MobileFooterBar />
+          </div>
+        )}
+
+        {/* City Early Access Navbar - Stages 1 & 2 (Early Access) */}
+        {showCityEarlyAccessNavbar && (
+          <div className="block md:hidden">
+            <CityEarlyAccessNavbar />
           </div>
         )}
 
@@ -137,11 +148,8 @@ function ServiceWorkerRegistration() {
           // Register service worker
           navigator.serviceWorker
             .register('/sw.js')
-            .then((registration) => {
-              // Only log in development
-              if (process.env.NODE_ENV === 'development') {
-                console.log('✅ Service Worker registered:', registration.scope);
-              }
+            .then(() => {
+              // Service worker registered successfully
             })
             .catch((error) => {
               // Log errors in all environments for debugging

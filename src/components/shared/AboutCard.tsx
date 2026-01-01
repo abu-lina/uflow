@@ -1,7 +1,7 @@
 'use client';
 
 import { AddButtonLottie } from '@/components/ui/AddButtonLottie';
-import { MapsLottie } from '@/components/ui/MapsLottie';
+import { MapIllustration } from '@/components/ui/MapIllustration';
 import { OrigamiBirdIcon } from '@/components/ui/OrigamiBirdIcon';
 import type { Quote } from '@/constants/quotes';
 
@@ -12,17 +12,17 @@ interface AboutCardProps {
 
 export function AboutCard({ quote, cardIndex }: AboutCardProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-[#D4D4D4] bg-white px-6 py-6 shadow-sm w-full sm:gap-4 md:aspect-[3/4] md:justify-start md:overflow-hidden">
+    <div className="flex flex-col items-center justify-center gap-3 w-full sm:gap-4 md:aspect-[3/4] md:justify-start md:overflow-hidden">
       {/* Icon - Responsive ratio: current on mobile, 3:4 on larger devices */}
       <div className={`relative flex items-center justify-center flex-shrink-0 ${
         cardIndex === 0 
-          ? 'h-[140px] w-auto sm:h-[200px] md:h-[196px] md:w-full' 
+          ? 'h-[241px] w-[295px] sm:h-[241px] sm:w-[295px] md:h-[241px] md:w-[295px]' 
           : cardIndex === 1
           ? 'h-[240px] w-auto'
           : 'h-[140px] w-[115px] sm:h-[200px] sm:w-[150px] md:h-[196px] md:w-full'
       }`}>
         {cardIndex === 0 ? (
-          <MapsLottie className="h-[140px] w-auto sm:h-[200px] md:h-[196px] md:w-auto" />
+          <MapIllustration className="w-full h-full" />
         ) : cardIndex === 1 ? (
           <AddButtonLottie className="h-full w-auto" height={240} />
         ) : (
@@ -37,10 +37,9 @@ export function AboutCard({ quote, cardIndex }: AboutCardProps) {
           {quote.heading}
         </h3>
         
-        {/* Description - Responsive: sm (iPhone SE) → base (phones 376+) → lg (tablets 640+) → lg (desktop 768+) */}
-        {/* Gap: 8px on iPhone SE, 16px on larger phones (376px+) */}
+        {/* Description - 16px (text-base) */}
         <p 
-          className="w-full text-center font-inter text-sm font-normal text-[#232323] xs:text-base sm:text-lg md:text-lg mt-2 xs:mt-4"
+          className="w-full text-center font-inter text-base font-normal text-[#232323] mt-2 xs:mt-4"
           dangerouslySetInnerHTML={{ __html: quote.quote }}
         />
       </div>

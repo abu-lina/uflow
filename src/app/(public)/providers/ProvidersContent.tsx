@@ -19,15 +19,17 @@ import {
   type Provider,
 } from '@/services/providers';
 
-export function ProvidersContent() {
+interface ProvidersContentProps {
+  defaultLocation?: string; // For Stage 2: render on root with city filter
+}
+
+export function ProvidersContent({ defaultLocation }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isLoading: userLoading } = useAuth();
   const { t } = useLanguage();
   const searchParams = useSearchParams();
-  const location = searchParams.get('location') || t('search.everywhere');
-  const query = searchParams.get('q') || '';
-
+  
   // Get search context to sync with URL parameters
   const {
     selectedCategory,
@@ -37,6 +39,13 @@ export function ProvidersContent() {
     selectedLocation,
     setSelectedLocation,
   } = useSearch();
+
+  // Priority: defaultLocation > URL param > context > fallback
+  const location = defaultLocation || 
+                   searchParams.get('location') || 
+                   selectedLocation || 
+                   t('search.everywhere');
+  const query = searchParams.get('q') || '';
 
   // Use provider state for category, fallback to URL params
   const category = selectedCategory ?? (searchParams.get('category') || null);
@@ -160,9 +169,9 @@ export function ProvidersContent() {
     router.replace(`/providers?${params.toString()}`, { scroll: false });
   }, [router]);
 
-  // Sync URL parameters with search context - only when they actually change
+  // Sync location/category/query with search context - only when they actually change
   useEffect(() => {
-    // Use URL parameters as source of truth, but only update if they've changed
+    // Use resolved location as source of truth (defaultLocation > URL param > context > fallback)
     // This prevents unnecessary re-renders and state conflicts
     if (category !== selectedCategory) {
       setSelectedCategory(category);
@@ -170,14 +179,16 @@ export function ProvidersContent() {
     if (query !== searchQuery) {
       setSearchQuery(query);
     }
-    if (location !== selectedLocation) {
-      setSelectedLocation(location);
+    // Sync location: if defaultLocation is provided, use it; otherwise use URL param or context
+    const locationToSync = defaultLocation || searchParams.get('location') || selectedLocation;
+    if (locationToSync && locationToSync !== selectedLocation) {
+      setSelectedLocation(locationToSync);
     }
     // ESLint warning is intentionally ignored here to prevent infinite loops
     // The setter functions are stable and don't need to be in dependencies
     // Including searchQuery, selectedCategory, selectedLocation would cause infinite re-renders
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, query, location]); // Only depend on URL parameters, not local state
+  }, [category, query, location, defaultLocation]); // Include defaultLocation to sync when it changes
 
   // Prefetch likely next pages after initial load (performance optimization)
   useEffect(() => {

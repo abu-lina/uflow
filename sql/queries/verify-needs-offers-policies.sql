@@ -37,3 +37,6 @@ ORDER BY tablename, policyname;
 -- SELECT policies: Should have "Needs are viewable by everyone" and "Offers are viewable by everyone" with qual = "(true)"
 -- INSERT policies: Should have "Anyone can insert needs" and "Anyone can insert offers" with with_check = "(true)"
 
+
+
+

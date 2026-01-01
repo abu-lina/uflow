@@ -39,3 +39,6 @@ echo ""
 echo "💚 Container Health:"
 docker inspect uflow-app --format='{{.State.Status}}' 2>/dev/null || echo "Container not found"
 
+
+
+

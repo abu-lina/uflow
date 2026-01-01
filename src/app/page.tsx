@@ -1,11 +1,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { getFeatureFlag } from '@/config/feature-flags';
-import { AboutSection } from '@/components/shared/AboutSection';
-import { DesktopWaitlistSection } from '@/components/shared/DesktopWaitlistSection';
-import { ExploreSection } from '@/components/shared/ExploreSection';
-import { LandingHero } from '@/components/shared/LandingHero';
-import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
+import { RootPageContent } from '@/components/shared/RootPageContent';
 
 /**
  * Root page - shows waitlist onboarding or redirects based on app state
@@ -40,26 +36,12 @@ export default async function Home({
     redirect('/welcome');
   }
   
-  if (isAppLaunched) {
-    // App launched - redirect to main app (providers page)
-    redirect('/providers');
-  }
-  
-  // App not launched - show waitlist content directly on root
+  // RootPageContent handles conditional rendering:
+  // - If onboarding complete: Shows CityEarlyAccessEmptyState at root
+  // - Otherwise: Shows waitlist/onboarding content
   return (
     <Suspense fallback={<div className="flex h-64 items-center justify-center"></div>}>
-      {/* Mobile Content */}
-      <div className="md:hidden">
-        <MobileSplashScreen />
-      </div>
-
-      {/* Desktop Landing Content */}
-      <div className="relative z-10 hidden md:block">
-        <LandingHero />
-        <AboutSection />
-        <DesktopWaitlistSection />
-        <ExploreSection />
-      </div>
+      <RootPageContent />
     </Suspense>
   );
 }

@@ -3,157 +3,134 @@
 import { motion } from 'motion/react';
 
 import { Bismillah } from '@/components/ui/Bismillah';
-import { ContentSection } from '@/components/layout/ContentSection';
+import { Button } from '@/components/ui/Button';
+import { Logo } from '@/components/ui/Logo';
 import { useLanguage } from '@/providers/LanguageProvider';
 
-export function SplashContent() {
+interface SplashContentProps {
+  onContinue?: () => void;
+}
+
+export function SplashContent({ onContinue }: SplashContentProps) {
   const { t } = useLanguage();
   
   return (
     <motion.div
       animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-center min-h-full"
+      className="flex flex-col items-center w-full gap-16"
       initial={{ opacity: 0 }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
     >
-      {/* Content Container - All content grouped together */}
-      <ContentSection>
-        {/* Calligraphy + Translation */}
+      {/* Body Content */}
+      <div className="flex flex-col items-center w-full gap-8">
+        {/* Bismillah + Translation */}
         <motion.div 
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center w-full gap-1 mb-8"
+          className="flex flex-col items-center w-full gap-1 px-12"
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
         >
           {/* Arabic Calligraphy */}
-          <Bismillah className="h-auto w-full" shouldAnimate={false} />
+          <Bismillah className="h-auto w-full max-w-[345px]" shouldAnimate={false} />
 
           {/* Translation */}
           <p 
-            className="font-baskerville text-base text-center w-full"
-            style={{
-              background: 'linear-gradient(180deg, #D2B581 -49.22%, #DCC391 -3.81%, #AF8650 88.33%, #E5D1A0 228.56%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              color: 'transparent'
-            }}
+            className="font-baskerville text-xs leading-[13px] text-center w-full bg-gold-gradient bg-clip-text text-transparent"
           >
-            {(() => {
-              const translation = t('landing.bismillah.translation');
-              const firstCommaIndex = translation.indexOf(',');
-              
-              if (firstCommaIndex === -1) {
-                // No comma found, display as single line
-                return translation;
-              }
-              
-              // Split at first comma only, so we get everything before and everything after
-              const beforeComma = translation.substring(0, firstCommaIndex);
-              const afterComma = translation.substring(firstCommaIndex + 1).trim();
-              
-              return (
-                <>
-                  {beforeComma},<br />
-                  {afterComma}
-                </>
-              );
-            })()}
+            {t('landing.bismillah.translation')}
           </p>
         </motion.div>
 
-        {/* Welcome Message */}
-        <motion.div 
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center w-full gap-4 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
-        >
-          <h1 className="font-inter-tight text-4xl font-medium text-center text-[#232323]">
-            {(() => {
-              const title = t('splash.title');
-              // Parse title: highlight Muslim-related words and add line break after first Muslim word
-              const words = title.split(/(\s+)/);
-              const result: React.ReactNode[] = [];
-              let key = 0;
-              let foundFirstMuslim = false;
-              
-              words.forEach((word, index) => {
-                const trimmed = word.trim();
-                if (!trimmed && word) {
-                  // Preserve whitespace
-                  result.push(word);
-                  return;
-                }
+        {/* Logo + Text + CTA */}
+        <div className="flex flex-col items-center w-full gap-8 max-w-[345px]">
+          {/* Logo */}
+          <motion.div
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
+          >
+            <Logo className="h-24 w-24" height={96} width={96} />
+          </motion.div>
+
+          {/* Title + Subtitle */}
+          <motion.div 
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center w-full gap-2"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 0.6, ease: 'easeOut' }}
+          >
+            {/* Title */}
+            <h1 className="font-inter-tight text-3xl font-medium leading-[40px] text-center text-content-heading">
+              {(() => {
+                const title = t('splash.title');
+                // Parse title: highlight Muslim-related words and add line break after first Muslim word
+                const words = title.split(/(\s+)/);
+                const result: React.ReactNode[] = [];
+                let key = 0;
+                let foundFirstMuslim = false;
                 
-                if (!trimmed) return;
-                
-                const lowerWord = trimmed.toLowerCase();
-                // Check for Muslim-related words in different languages
-                const isMuslimWord = 
-                  lowerWord.includes('muslim') || 
-                  lowerWord.includes('مسلم') || 
-                  lowerWord.includes('müslüman');
-                
-                if (isMuslimWord) {
-                  result.push(
-                    <span key={key++} className="text-primary">
-                      {trimmed}
-                    </span>
-                  );
-                  // Add line break after first Muslim word (before the next non-whitespace word)
-                  if (!foundFirstMuslim) {
-                    foundFirstMuslim = true;
-                    // Check if there's a next word after whitespace
-                    const nextNonWhitespace = words.slice(index + 1).find(w => w.trim());
-                    if (nextNonWhitespace) {
-                      result.push(<br key={key++} />);
-                    }
+                words.forEach((word, index) => {
+                  const trimmed = word.trim();
+                  if (!trimmed && word) {
+                    result.push(word);
+                    return;
                   }
-                } else {
-                  result.push(<span key={key++}>{word}</span>);
-                }
-              });
-              
-              return result;
-            })()}
-          </h1>
-
-          <p className="font-inter text-base leading-6 text-center text-[#555555]">
-            {(() => {
-              const subtitle = t('splash.subtitle');
-              // Find and highlight "insha'Allah" or equivalent
-              const inshaPatterns = [
-                /insha'?allah/gi,
-                /إن شاء الله/gi,
-                /inşaallah/gi,
-                /inşallah/gi
-              ];
-              
-              let highlighted = subtitle;
-              inshaPatterns.forEach(pattern => {
-                highlighted = highlighted.replace(pattern, (match) => {
-                  return `__IN SHA__${match}__END__`;
+                  
+                  if (!trimmed) return;
+                  
+                  const lowerWord = trimmed.toLowerCase();
+                  const isMuslimWord = 
+                    lowerWord.includes('muslim') || 
+                    lowerWord.includes('مسلم') || 
+                    lowerWord.includes('müslüman');
+                  
+                  if (isMuslimWord) {
+                    result.push(
+                      <span key={key++} className="text-primary">
+                        {trimmed}
+                      </span>
+                    );
+                    if (!foundFirstMuslim) {
+                      foundFirstMuslim = true;
+                      const nextNonWhitespace = words.slice(index + 1).find(w => w.trim());
+                      if (nextNonWhitespace) {
+                        result.push(<br key={key++} />);
+                      }
+                    }
+                  } else {
+                    result.push(<span key={key++}>{word}</span>);
+                  }
                 });
-              });
-              
-              const parts = highlighted.split(/(__IN SHA__.*?__END__)/);
-              return parts.map((part, index) => {
-                if (part.startsWith('__IN SHA__') && part.endsWith('__END__')) {
-                  const text = part.replace(/__IN SHA__|__END__/g, '');
-                  return (
-                    <span key={index} className="text-[#C2A274]">
-                      {text}
-                    </span>
-                  );
-                }
-                return <span key={index}>{part}</span>;
-              });
-            })()}
-          </p>
-        </motion.div>
+                
+                return result;
+              })()}
+            </h1>
 
-      </ContentSection>
+            {/* Subtitle */}
+            <p className="font-inter text-base font-normal leading-[19px] text-center text-content">
+              {t('splash.subtitle')}
+            </p>
+          </motion.div>
+
+          {/* CTA Button */}
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
+          >
+            <Button
+              className="h-12 rounded-md"
+              icon="lucide:store"
+              variant="primary"
+              onClick={onContinue}
+            >
+              {t('splash.discoverProviders')}
+            </Button>
+          </motion.div>
+        </div>
+      </div>
     </motion.div>
   );
 }

@@ -104,7 +104,6 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
       }
 
       // Success - extract token and persist state IMMEDIATELY
-      console.log('[Waitlist] Successfully joined:', { email: emailToSubmit });
       const waitlistToken = data.data?.waitlistToken;
       
       // CRITICAL: Write to localStorage BEFORE showing success screen

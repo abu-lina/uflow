@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 
-import { useSplash } from '@/providers/splash-provider';
 import { useWaitlistFlow } from '@/hooks/useWaitlistFlow';
 import { AboutPageContent } from '@/components/shared/AboutPageContent';
 import { SplashLayout } from '@/components/layout/SplashLayout';
@@ -13,15 +11,12 @@ import { WaitlistScreen } from '@/components/shared/WaitlistScreen';
 import { ProviderSelectionModal } from '@/components/shared/ProviderSelectionModal';
 import { WaitlistSuccessScreen } from '@/components/shared/WaitlistSuccessScreen';
 import { EarlyAccessScreen } from '@/components/shared/EarlyAccessScreen';
-import { setOnboardingState } from '@/lib/utils/onboarding-state';
 
 interface MobileSplashScreenProps {
   onContinue?: () => void;
 }
 
 export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScreenProps) {
-  const router = useRouter();
-  const { dismissSplash } = useSplash();
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -34,7 +29,6 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
     handleAboutComplete,
     handleWaitlistSuccess,
     handleSuccessComplete,
-    handleLearnMore,
     handleAboutCompleteFromEarlyAccess,
     handleProviderQuestion,
     handleWaitlistComplete,
@@ -44,6 +38,26 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // REMOVED: City redirect logic - let RootPageContent handle routing
+  // This ensures the root page shows appropriate stage content without redirects
+  // which is critical for PWA installability
+  // useEffect(() => {
+  //   if (!isMounted || !isInitialized) return;
+  //
+  //   // Only redirect if user is in early access state (has completed onboarding)
+  //   if (currentState === 'earlyAccess') {
+  //     const selectedCity = 
+  //       typeof window !== 'undefined' 
+  //         ? localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity')
+  //         : null;
+  //
+  //     if (selectedCity) {
+  //       // Redirect to city page - it will handle provider count check and show appropriate screen
+  //       router.replace(`/city/${encodeURIComponent(selectedCity)}`);
+  //     }
+  //   }
+  // }, [isMounted, isInitialized, currentState, router]);
 
   // Handle provider question - show modal
   const handleProviderQuestionWithModal = (email: string) => {
@@ -61,58 +75,6 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
     handleWaitlistComplete(token);
   };
 
-  // Navigation handlers for early access screen
-  const handleSuggestProvider = () => {
-    // Navigate to provider recommendation flow
-    // Keep early access state in localStorage so we can restore it when user comes back
-    // Set both old keys (for backward compatibility) and new consolidated state
-    localStorage.setItem('showEarlyAccess', 'true');
-    localStorage.setItem('waitlistEmail', flowData.email);
-    if (flowData.waitlistToken) {
-      localStorage.setItem('waitlistToken', flowData.waitlistToken);
-    }
-    
-    // Set consolidated state for proper detection when navigating back to /
-    setOnboardingState({
-      email: flowData.email,
-      waitlistSubmitted: true,
-      earlyAccessUnlocked: true,
-      submittedAt: new Date().toISOString(),
-      waitlistToken: flowData.waitlistToken || undefined,
-    });
-    
-    dismissSplash();
-    router.push('/recommend-provider');
-  };
-
-  const handleSelectCity = () => {
-    // Navigate to city selection page
-    // Keep early access state in localStorage so we can restore it when user comes back
-    // Set both old keys (for backward compatibility) and new consolidated state
-    localStorage.setItem('showEarlyAccess', 'true');
-    localStorage.setItem('waitlistEmail', flowData.email);
-    if (flowData.waitlistToken) {
-      localStorage.setItem('waitlistToken', flowData.waitlistToken);
-    }
-    
-    // Also store in sessionStorage for city selection page (it checks both)
-    sessionStorage.setItem('waitlistEmail', flowData.email);
-    if (flowData.waitlistToken) {
-      sessionStorage.setItem('waitlistToken', flowData.waitlistToken);
-    }
-    
-    // Set consolidated state for proper detection when navigating back to /
-    setOnboardingState({
-      email: flowData.email,
-      waitlistSubmitted: true,
-      earlyAccessUnlocked: true,
-      submittedAt: new Date().toISOString(),
-      waitlistToken: flowData.waitlistToken || undefined,
-    });
-    
-    dismissSplash();
-    router.push('/city-selection');
-  };
 
   // During SSR and initial hydration, show consistent content to prevent hydration mismatch
   if (!isMounted || !isInitialized) {
@@ -210,10 +172,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         >
           <EarlyAccessScreen
             email={flowData.email}
-            waitlistToken={flowData.waitlistToken || ''} // Empty string if not available (will use cookie)
-            onLearnMore={handleLearnMore}
-            onSelectCity={handleSelectCity}
-            onSuggestProvider={handleSuggestProvider}
+            waitlistToken={flowData.waitlistToken || ''}
           />
         </motion.div>
       )}

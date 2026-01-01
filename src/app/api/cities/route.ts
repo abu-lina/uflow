@@ -5,7 +5,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 /**
  * GET /api/cities
  * 
- * Fetch all cities with community interest counts
+ * Fetch all cities with provider counts and interest counts
+ * Provider count = number of approved providers in providers table where address_city = city_name
  * Interest count = number of waitlist entries where selected_city = city_name
  * 
  * Response format:
@@ -15,6 +16,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
  *     city_name: string;
  *     country: string;
  *     is_unlocked: boolean;
+ *     provider_count: number;
  *     interest_count: number;
  *   }>;
  *   error: null | { message: string };
@@ -59,49 +61,70 @@ export async function GET(request: Request) {
       );
     }
     
-    // Get interest counts using RPC function
-    // Function bypasses RLS using SECURITY DEFINER and returns aggregated counts (no PII)
-    const { data: interestCounts, error: countsError } = await supabase.rpc('get_city_interest_counts');
+    // Get provider counts from providers table (only approved providers)
+    const { data: providerCounts, error: providerCountsError } = await supabase
+      .from('providers')
+      .select('address_city')
+      .eq('review_status', 'approved')
+      .not('address_city', 'is', null);
     
-    if (countsError) {
-      console.error('[Cities API] Error fetching interest counts:', countsError);
+    if (providerCountsError) {
+      console.error('[Cities API] Error fetching provider counts:', providerCountsError);
       return NextResponse.json(
         { 
           data: null,
-          error: { message: 'Failed to fetch interest counts' } 
+          error: { message: 'Failed to fetch provider counts' } 
         },
         { status: 500 }
       );
     }
     
-    // Create a map of city_name -> interest_count for quick lookup
-    const countsMap = new Map<string, number>();
-    (interestCounts || []).forEach((item: { city_name: string; interest_count: number }) => {
-      countsMap.set(item.city_name, Number(item.interest_count));
+    // Count providers per city
+    const providerCountsMap = new Map<string, number>();
+    (providerCounts || []).forEach((provider: { address_city: string | null }) => {
+      if (provider.address_city) {
+        const cityName = provider.address_city.trim();
+        providerCountsMap.set(cityName, (providerCountsMap.get(cityName) || 0) + 1);
+      }
     });
     
-    // Join cities with interest counts
-    const citiesWithInterest = (citiesData || []).map((city) => ({
+    // Get interest counts using RPC function (for backward compatibility)
+    const { data: interestCounts, error: countsError } = await supabase.rpc('get_city_interest_counts');
+    
+    if (countsError) {
+      console.error('[Cities API] Error fetching interest counts:', countsError);
+      // Continue without interest counts, not critical
+    }
+    
+    // Create a map of city_name -> interest_count for quick lookup
+    const interestCountsMap = new Map<string, number>();
+    (interestCounts || []).forEach((item: { city_name: string; interest_count: number }) => {
+      interestCountsMap.set(item.city_name, Number(item.interest_count));
+    });
+    
+    // Join cities with provider counts and interest counts
+    const citiesWithCounts = (citiesData || []).map((city) => ({
       ...city,
-      interest_count: countsMap.get(city.city_name) || 0,
+      provider_count: providerCountsMap.get(city.city_name) || 0,
+      interest_count: interestCountsMap.get(city.city_name) || 0,
     }));
     
-    // Sort by interest count (descending), then by city name (ascending)
-    citiesWithInterest.sort((a, b) => {
-      if (b.interest_count !== a.interest_count) {
-        return b.interest_count - a.interest_count;
+    // Sort by provider count (descending), then by city name (ascending)
+    citiesWithCounts.sort((a, b) => {
+      if (b.provider_count !== a.provider_count) {
+        return b.provider_count - a.provider_count;
       }
       return a.city_name.localeCompare(b.city_name);
     });
 
     // Log for debugging
-    console.log('[Cities API] Returning cities with interest counts:', 
-      citiesWithInterest.map(c => `${c.city_name}: ${c.interest_count}`).join(', '));
+    console.log('[Cities API] Returning cities with provider counts:', 
+      citiesWithCounts.map(c => `${c.city_name}: ${c.provider_count} providers`).join(', '));
 
     // 3. Return success response
     return NextResponse.json(
       { 
-        data: citiesWithInterest,
+        data: citiesWithCounts,
         error: null 
       },
       { status: 200 }

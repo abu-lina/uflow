@@ -99,12 +99,16 @@ export const de = {
     title: "Über Uns",
     quotes: {
       first: {
-        heading: "Wo finde ich halal Anbieter?",
-        quote: "Als Muslim fehlt mir eine zentrale App, die mir halal Restaurants sowie muslimische Shops und Services zeigt."
+        heading: "Willkommen bei Ummah Flow",
+        quote: "Entdecke muslimische Anbieter in deiner Stadt – von Lebensmitteln bis zu Dienstleistungen."
       },
       second: {
-        heading: "Ein Marktplatz mit Barakah.",
-        quote: "Empfiehl Orte, entdecke neue Angebote und unterstütze muslimische Anbieter - inshaAllah."
+        heading: "Wo finde ich muslimische Anbieter?",
+        quote: "Viele muslimische Angebote bleiben unsichtbar – selbst in unserer eigenen Stadt."
+      },
+      third: {
+        heading: "Ummah Flow verbindet Muslime mit muslimischen Angeboten.",
+        quote: "Damit wir muslimische Anbieter leichter finden und unser Geld mit Vertrauen bewusst zuerst innerhalb der Ummah ausgeben."
       }
     },
     continue: "Weiter",
@@ -112,8 +116,10 @@ export const de = {
   },
   splash: {
     title: "Von Muslimen für Muslime.",
-    subtitle: "Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet - insha'Allah.",
-    continue: "Weiter"
+    subtitle: "Ummah Flow macht muslimische Anbieter sichtbar – fair und gemeinschaftlich.",
+    continue: "Weiter",
+    discoverProviders: "Muslimische Anbieter entdecken",
+    footer: "Early Access · Gemeinsam aufgebaut"
   },
   language: {
     switchTo: "Wechseln zu",
@@ -554,7 +560,11 @@ export const de = {
     earlyAccess: {
       title: "Willkommen im frühen Zugang 🌱",
       description: "Ummah Flow wächst.\nDu bist früh dran — und kannst helfen, muslimische Orte sichtbar zu machen.",
+      homeTitle: "Willkommen bei Ummah Flow",
+      homeDescription: "Ummah Flow befindet sich im Early Access.\n\nNoch sind nicht alle Städte und Anbieter vertreten – genau das bauen wir gerade gemeinsam auf.",
+      selectCityButton: "Meine Stadt auswählen",
       suggestProvider: "Anbieter vorschlagen",
+      badge: "Early Access",
       selectCity: "Stadt auswählen (optional)",
       selectCityHelper: "Hilf uns, Ummah Flow Stadt für Stadt wachsen zu lassen.",
       changeCity: "Stadt ändern",
@@ -592,7 +602,10 @@ export const de = {
       },
     },
     citySelection: {
-      title: "Wähle deine Stadt",
+      title: "Deine Stadt",
+      subtitle: "Wähle eine Stadt, um muslimische Anbieter in deiner Umgebung zu entdecken.",
+      searchButton: "Andere Stadt suchen …",
+      discoverButton: "Muslimische Anbieter entdecken",
       supportingText: "Hilf uns zu entscheiden, wo Ummah Flow zuerst starten soll.",
       searchPlaceholder: "Stadt suchen…",
       statusLive: "Live",
@@ -607,6 +620,14 @@ export const de = {
       notifyToast: "Wir benachrichtigen dich, wenn {{city}} live geht",
       noResults: "Keine Städte gefunden",
       backButton: "Zurück",
+    },
+    cityEarlyAccess: {
+      title: "{{city}} wird gerade aufgebaut.",
+      description: "Als Early-Access-Stadt wächst {{city}} Schritt für Schritt gemeinsam mit der Ummah. Jede Empfehlung hilft, muslimische Angebote sichtbar zu machen.",
+      suggestProvider: "Anbieter vorschlagen",
+      receiveUpdates: "Updates zu {{city}} erhalten",
+      subscribeSuccess: "Du wirst benachrichtigt, wenn {{city}} mehr Anbieter hat.",
+      subscribeError: "Fehler beim Abonnieren. Bitte versuche es erneut.",
     }
   },
   welcome: {

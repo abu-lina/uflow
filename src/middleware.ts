@@ -77,36 +77,13 @@ export async function middleware(req: NextRequest) {
   const accessToken = req.cookies.get('sb-access-token')?.value;
   const waitlistToken = req.cookies.get('waitlist_token')?.value;
 
-  // DEBUG: Log middleware execution for create routes
-  if (pathname.startsWith('/create/')) {
-    console.log('[Middleware] Create route access:', {
-      pathname,
-      hasAccessToken: !!accessToken,
-      hasWaitlistToken: !!waitlistToken,
-      waitlistTokenValue: waitlistToken ? `${waitlistToken.substring(0, 8)}...` : 'none',
-      timestamp: new Date().toISOString(),
-      referer: req.headers.get('referer'),
-    });
-  }
-
   // Check app launch status and redirect to waitlist if needed
   // This check runs before rate limiting to ensure waitlist is always accessible
   const isAppLaunched = getFeatureFlag('isAppLaunched');
   const needsRedirect = await shouldRedirectToWaitlist(pathname, isAppLaunched, accessToken, waitlistToken);
   
   if (needsRedirect) {
-    console.log('[Middleware] Redirecting to /waitlist:', {
-      pathname,
-      isAppLaunched,
-      hasAccessToken: !!accessToken,
-      hasWaitlistToken: !!waitlistToken,
-    });
     return NextResponse.redirect(new URL('/waitlist', req.url));
-  }
-  
-  // DEBUG: Log successful access
-  if (pathname.startsWith('/create/')) {
-    console.log('[Middleware] Allowing access to:', pathname);
   }
 
   // Rate limiting for API routes

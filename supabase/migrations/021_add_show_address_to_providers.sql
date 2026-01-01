@@ -20,3 +20,6 @@ COMMENT ON COLUMN public.providers.show_address IS 'Whether to show the provider
 -- Providers table now has show_address column matching community_services
 -- =====================================================
 
+
+
+

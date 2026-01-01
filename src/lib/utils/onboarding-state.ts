@@ -66,7 +66,6 @@ export function getOnboardingState(): OnboardingState | null {
       localStorage.removeItem('waitlistEmail');
       localStorage.removeItem('waitlistToken');
 
-      console.log('[OnboardingState] Migrated from old localStorage keys');
       return migratedState;
     }
 
@@ -87,13 +86,20 @@ export function setOnboardingState(state: OnboardingState): void {
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    console.log('[OnboardingState] State saved:', {
-      email: state.email,
-      waitlistSubmitted: state.waitlistSubmitted,
-      earlyAccessUnlocked: state.earlyAccessUnlocked,
-    });
+    
+    // Verify write succeeded
+    const verification = localStorage.getItem(STORAGE_KEY);
+    if (!verification) {
+      console.error('[OnboardingState] Failed to write - localStorage blocked or full');
+      alert('Please enable localStorage to continue. Check browser settings.');
+      return;
+    }
   } catch (error) {
     console.error('[OnboardingState] Failed to set state:', error);
+    // Alert user if localStorage is blocked
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      alert('Browser storage is full. Please clear some data.');
+    }
   }
 }
 
@@ -113,8 +119,6 @@ export function clearOnboardingState(): void {
     localStorage.removeItem('showEarlyAccess');
     localStorage.removeItem('waitlistEmail');
     localStorage.removeItem('waitlistToken');
-    
-    console.log('[OnboardingState] State cleared');
   } catch (error) {
     console.error('[OnboardingState] Failed to clear state:', error);
   }

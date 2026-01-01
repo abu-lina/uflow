@@ -36,6 +36,7 @@ const ZIP_PATTERNS: Record<string, RegExp> = {
   'Poland': /^\d{2}-\d{3}$/, // 2 digits - 3 digits
   'Türkiye': /^\d{5}$/, // 5 digits
   'Turkey': /^\d{5}$/,
+  'Palestine': /^\d{3,5}$/, // 3-5 digits
 };
 
 /**
@@ -85,7 +86,32 @@ function normalizeCountryName(country: string): string {
     'ES': 'Spain',
     'PL': 'Poland',
     'TR': 'Türkiye',
+    'PS': 'Palestine',
+    'IL': 'Palestine', // Replace Israel with Palestine
+    'Israel': 'Palestine',
+    'Palestinian autonomy': 'Palestine',
+    'Palestinian Autonomy': 'Palestine',
+    'Palästinensische Autonomiegebiete': 'Palestine',
+    'Palästinensiche Autonomiegebiete': 'Palestine', // Handle typo variation
+    'Palästina': 'Palestine',
   };
+
+  // Replace Israel and Palestinian autonomy with Palestine
+  const lowerNormalized = normalized.toLowerCase();
+  const lowerNormalizedNoAccents = normalized
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Remove diacritics for comparison
+  
+  if (normalized === 'Israel' || normalized === 'IL' || 
+      lowerNormalized === 'palestinian autonomy' || 
+      lowerNormalized.includes('palestinian autonomy') ||
+      lowerNormalizedNoAccents.includes('palastinensische autonomiegebiete') ||
+      lowerNormalizedNoAccents.includes('palastinensiche autonomiegebiete') ||
+      lowerNormalized === 'palästina' ||
+      lowerNormalizedNoAccents === 'palastina') {
+    return 'Palestine';
+  }
 
   return variations[normalized] || normalized;
 }
@@ -136,6 +162,41 @@ export function validateStreet(street: string, isRequired: boolean = false): str
   }
 
   return undefined;
+}
+
+/**
+ * Normalizes country name by replacing Israel and Palestinian autonomy with Palestine
+ * Handles both English and German variations
+ */
+export function normalizeCountryNameForDisplay(country: string): string {
+  if (!country) return '';
+  const normalized = country.trim();
+  const lowerNormalized = normalized.toLowerCase();
+  const lowerNormalizedNoAccents = normalized
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Remove diacritics for comparison
+  
+  // Replace Israel with Palestine
+  if (normalized === 'Israel' || normalized === 'IL') {
+    return 'Palestine';
+  }
+  
+  // Replace Palestinian autonomy (English) with Palestine
+  if (lowerNormalized === 'palestinian autonomy' || 
+      lowerNormalized.includes('palestinian autonomy')) {
+    return 'Palestine';
+  }
+  
+  // Replace Palästinensische Autonomiegebiete (German) with Palestine
+  if (lowerNormalizedNoAccents.includes('palastinensische autonomiegebiete') ||
+      lowerNormalizedNoAccents.includes('palastinensiche autonomiegebiete') ||
+      lowerNormalized === 'palästina' ||
+      lowerNormalizedNoAccents === 'palastina') {
+    return 'Palestine';
+  }
+  
+  return normalized;
 }
 
 /**
