@@ -18,7 +18,8 @@ export const ar = {
     confirm: "تأكيد",
     yes: "نعم",
     no: "لا",
-    retry: "حاول مرة أخرى"
+    retry: "حاول مرة أخرى",
+    optional: "اختياري"
   },
   navigation: {
     home: "الرئيسية",
@@ -192,6 +193,40 @@ export const ar = {
       description: "أوصِ بشخص تعرفه حتى يتمكن الآخرون من العثور عليه.",
       buttonText: "التوصية بمزود"
     },
+    recommend: {
+      title: "التوصية بمزود",
+      step1Title: "المعلومات الأساسية",
+      step2Title: "الاتصال",
+      step2Description: "قدم طريقة اتصال واحدة على الأقل.",
+      providerName: "اسم المزود",
+      providerNamePlaceholder: "أدخل اسم المزود",
+      category: "الفئة",
+      selectCategory: "اختر الفئة",
+      city: "المدينة",
+      cityPlaceholder: "أدخل المدينة",
+      offers: "العروض",
+      selectOffers: "اختر العروض",
+      offersSelected: "تم اختيار {{count}} عرض",
+      email: "البريد الإلكتروني",
+      emailPlaceholder: "email@example.com",
+      phone: "الهاتف",
+      phonePlaceholder: "+966 123 456789",
+      website: "الموقع الإلكتروني",
+      websitePlaceholder: "https://example.com",
+      instagram: "إنستغرام",
+      instagramPlaceholder: "@اسم_المستخدم",
+      message: "رسالة",
+      messagePlaceholder: "أدخل رسالة اختيارية (مثل لماذا توصي بهذا المزود)",
+      submit: "إرسال",
+      submitting: "جاري الإرسال...",
+      success: "تم التوصية بالمزود بنجاح!",
+      error: "خطأ في إنشاء التوصية. يرجى المحاولة مرة أخرى.",
+      titleRequired: "يرجى إدخال اسم المزود",
+      categoryRequired: "يرجى اختيار فئة",
+      offersRequired: "يرجى اختيار عرض واحد على الأقل",
+      cityRequired: "يرجى إدخال مدينة",
+      contactRequired: "يرجى تقديم طريقة اتصال واحدة على الأقل (البريد الإلكتروني، الهاتف، الموقع الإلكتروني أو إنستغرام)"
+    },
     basics: {
       title: "إنشاء عرض",
       loginRequired: "تسجيل الدخول مطلوب",
@@ -356,7 +391,9 @@ export const ar = {
       searchCategories: "البحث في الفئات",
       searchDescription: "ابحث عن فئة مناسبة لتسهيل العثور عليك - إن شاء الله.",
       loadingCategories: "جاري تحميل الفئات...",
-      desktopMessage: "يرجى استخدام العرض المحمول لاختيار الفئة."
+      desktopMessage: "يرجى استخدام العرض المحمول لاختيار الفئة.",
+      noCategoriesFound: "لم يتم العثور على فئات",
+      noCategoriesAvailable: "لا توجد فئات متاحة"
     }
   },
   saved: {

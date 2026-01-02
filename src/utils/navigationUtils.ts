@@ -330,6 +330,7 @@ export const shouldShowCityEarlyAccessNavbar = (
     '/profile/providers/', // Profile provider detail pages
     '/create/media/images',
     '/create/media/social',
+    '/create/recommend', // Recommendation flow pages (have their own navigation)
     '/profile/edit',
     '/profile/delete',
   ];

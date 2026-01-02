@@ -17,8 +17,8 @@ export default function RecommendProviderPage() {
     // Set the creation mode to 'recommendation'
     setCreationMode('recommendation');
     
-    // Redirect to the basics form (use replace to avoid adding to history)
-    router.replace('/create/basics');
+    // Redirect to the streamlined recommendation form
+    router.replace('/create/recommend');
   }, [setCreationMode, router]);
 
   // Show a loading state while redirecting

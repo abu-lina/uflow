@@ -49,7 +49,7 @@ export function CityEarlyAccessEmptyState({
     if (onSuggestProvider) {
       onSuggestProvider();
     } else {
-      router.push('/create');
+      router.push('/create/recommend');
     }
   };
 

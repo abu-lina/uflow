@@ -19,7 +19,8 @@ export const en = {
     yes: "Yes",
     no: "No",
     support: "Support",
-    retry: "Try again"
+    retry: "Try again",
+    optional: "Optional"
   },
   navigation: {
     home: "Home",
@@ -200,6 +201,40 @@ export const en = {
       description: "Recommend someone you know so others can find them.",
       buttonText: "Recommend provider"
     },
+    recommend: {
+      title: "Recommend Provider",
+      step1Title: "Basic Information",
+      step2Title: "Contact",
+      step2Description: "Provide at least one contact method.",
+      providerName: "Provider Name",
+      providerNamePlaceholder: "Enter provider name",
+      category: "Category",
+      selectCategory: "Select category",
+      city: "City",
+      cityPlaceholder: "Enter city",
+      offers: "Offers",
+      selectOffers: "Select offers",
+      offersSelected: "{{count}} offers selected",
+      email: "Email",
+      emailPlaceholder: "email@example.com",
+      phone: "Phone",
+      phonePlaceholder: "+1 234 567890",
+      website: "Website",
+      websitePlaceholder: "https://example.com",
+      instagram: "Instagram",
+      instagramPlaceholder: "@username",
+      message: "Message",
+      messagePlaceholder: "Enter optional message (e.g., why you're recommending this provider)",
+      submit: "Submit",
+      submitting: "Submitting...",
+      success: "Provider successfully recommended!",
+      error: "Error creating recommendation. Please try again.",
+      titleRequired: "Please enter a provider name",
+      categoryRequired: "Please select a category",
+      offersRequired: "Please select at least one offer",
+      cityRequired: "Please enter a city",
+      contactRequired: "Please provide at least one contact method (email, phone, website, or Instagram)"
+    },
     basics: {
       title: "Create offer",
       loginRequired: "Login required",
@@ -371,7 +406,9 @@ export const en = {
       searchCategories: "Search categories",
       searchDescription: "Search for a suitable category to be found more easily - inshaAllah.",
       loadingCategories: "Loading categories...",
-      desktopMessage: "Please use the mobile view for category selection."
+      desktopMessage: "Please use the mobile view for category selection.",
+      noCategoriesFound: "No categories found",
+      noCategoriesAvailable: "No categories available"
     }
   },
   saved: {

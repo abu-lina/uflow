@@ -19,7 +19,8 @@ export const de = {
     yes: "Ja",
     no: "Nein",
     support: "Support",
-    retry: "Erneut versuchen"
+    retry: "Erneut versuchen",
+    optional: "Optional"
   },
   navigation: {
     home: "Startseite",
@@ -200,6 +201,40 @@ export const de = {
       description: "Empfiehl jemanden, den du kennst, damit andere ihn finden können.",
       buttonText: "Anbieter empfehlen"
     },
+    recommend: {
+      title: "Anbieter empfehlen",
+      step1Title: "Grundinformationen",
+      step2Title: "Kontakt",
+      step2Description: "Gib mindestens eine Kontaktmöglichkeit an.",
+      providerName: "Anbietername",
+      providerNamePlaceholder: "Name des Anbieters eingeben",
+      category: "Kategorie",
+      selectCategory: "Kategorie auswählen",
+      city: "Stadt",
+      cityPlaceholder: "Stadt eingeben",
+      offers: "Angebote",
+      selectOffers: "Angebote auswählen",
+      offersSelected: "{{count}} Angebote ausgewählt",
+      email: "E-Mail",
+      emailPlaceholder: "email@example.com",
+      phone: "Telefon",
+      phonePlaceholder: "+49 123 456789",
+      website: "Website",
+      websitePlaceholder: "https://example.com",
+      instagram: "Instagram",
+      instagramPlaceholder: "@username",
+      message: "Nachricht",
+      messagePlaceholder: "Optionale Nachricht eingeben (z.B. warum du diesen Anbieter empfiehlst)",
+      submit: "Absenden",
+      submitting: "Wird gesendet...",
+      success: "Anbieter erfolgreich vorgeschlagen!",
+      error: "Fehler beim Erstellen. Bitte versuche es erneut.",
+      titleRequired: "Bitte gib einen Anbieternamen ein",
+      categoryRequired: "Bitte wähle eine Kategorie aus",
+      offersRequired: "Bitte wähle mindestens ein Angebot aus",
+      cityRequired: "Bitte gib eine Stadt ein",
+      contactRequired: "Bitte gib mindestens eine Kontaktmöglichkeit an (E-Mail, Telefon, Website oder Instagram)"
+    },
     basics: {
       title: "Angebot erstellen",
       loginRequired: "Anmeldung erforderlich",
@@ -371,7 +406,9 @@ export const de = {
       searchCategories: "Kategorien durchsuchen",
       searchDescription: "Suche eine passende Kategorie aus, um leichter gefunden zu werden - inshaAllah.",
       loadingCategories: "Lade Kategorien...",
-      desktopMessage: "Bitte nutze die Mobile-Ansicht für die Kategorieauswahl."
+      desktopMessage: "Bitte nutze die Mobile-Ansicht für die Kategorieauswahl.",
+      noCategoriesFound: "Keine Kategorien gefunden",
+      noCategoriesAvailable: "Keine Kategorien verfügbar"
     }
   },
   saved: {

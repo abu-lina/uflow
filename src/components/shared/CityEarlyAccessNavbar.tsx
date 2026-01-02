@@ -43,7 +43,7 @@ export function CityEarlyAccessNavbar() {
     pathname.startsWith('/city/') || 
     (pathname === '/providers' && !isAppLaunched);
   
-  const isCreateActive = pathname === '/create';
+  const isCreateActive = pathname === '/create' || pathname.startsWith('/create/recommend');
 
   return (
     <nav
@@ -96,7 +96,7 @@ export function CityEarlyAccessNavbar() {
             'gap-2',
             isCreateActive && 'border-b-[2.4px] border-primary'
           )}
-          href="/create"
+          href="/create/recommend"
           scroll={false}
         >
           <CreateIcon isActive={isCreateActive} />

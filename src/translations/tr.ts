@@ -18,7 +18,8 @@ export const tr = {
     confirm: "Onayla",
     yes: "Evet",
     no: "Hayır",
-    retry: "Tekrar dene"
+    retry: "Tekrar dene",
+    optional: "İsteğe bağlı"
   },
   navigation: {
     home: "Ana Sayfa",
@@ -192,6 +193,40 @@ export const tr = {
       description: "Tanıdığınız birini önerin ki başkaları onu bulabilsin.",
       buttonText: "Sağlayıcı öner"
     },
+    recommend: {
+      title: "Sağlayıcı Öner",
+      step1Title: "Temel Bilgiler",
+      step2Title: "İletişim",
+      step2Description: "En az bir iletişim yöntemi sağlayın.",
+      providerName: "Sağlayıcı Adı",
+      providerNamePlaceholder: "Sağlayıcı adını girin",
+      category: "Kategori",
+      selectCategory: "Kategori seç",
+      city: "Şehir",
+      cityPlaceholder: "Şehir girin",
+      offers: "Teklifler",
+      selectOffers: "Teklifler seç",
+      offersSelected: "{{count}} teklif seçildi",
+      email: "E-posta",
+      emailPlaceholder: "email@example.com",
+      phone: "Telefon",
+      phonePlaceholder: "+90 123 456789",
+      website: "Web Sitesi",
+      websitePlaceholder: "https://example.com",
+      instagram: "Instagram",
+      instagramPlaceholder: "@kullanıcıadı",
+      message: "Mesaj",
+      messagePlaceholder: "İsteğe bağlı mesaj girin (örn. bu sağlayıcıyı neden önerdiğiniz)",
+      submit: "Gönder",
+      submitting: "Gönderiliyor...",
+      success: "Sağlayıcı başarıyla önerildi!",
+      error: "Öneri oluşturulurken hata oluştu. Lütfen tekrar deneyin.",
+      titleRequired: "Lütfen bir sağlayıcı adı girin",
+      categoryRequired: "Lütfen bir kategori seçin",
+      offersRequired: "Lütfen en az bir teklif seçin",
+      cityRequired: "Lütfen bir şehir girin",
+      contactRequired: "Lütfen en az bir iletişim yöntemi sağlayın (e-posta, telefon, web sitesi veya Instagram)"
+    },
     basics: {
       title: "Teklif oluştur",
       loginRequired: "Giriş gerekli",
@@ -356,7 +391,9 @@ export const tr = {
       searchCategories: "Kategorileri ara",
       searchDescription: "Daha kolay bulunmak için uygun bir kategori seçin - inşallah.",
       loadingCategories: "Kategoriler yükleniyor...",
-      desktopMessage: "Lütfen kategori seçimi için mobil görünümü kullanın."
+      desktopMessage: "Lütfen kategori seçimi için mobil görünümü kullanın.",
+      noCategoriesFound: "Kategori bulunamadı",
+      noCategoriesAvailable: "Kategori mevcut değil"
     }
   },
   saved: {
