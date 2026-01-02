@@ -14,10 +14,13 @@ import { cn } from '@/lib/utils';
  * Bottom navigation bar with Home and Create items.
  * Home is active when on the city early access page.
  * 
- * Design:
- * - 80px height
- * - Backdrop blur
+ * Design (matches MobileFooterBar pattern):
+ * - Dynamic height with pt-footer-safe and pb-safe
+ * - Solid opaque background gradient (no transparency)
+ * - Backdrop blur (20px)
+ * - Box shadow for depth
  * - Safe area handling
+ * - Max width: 400px
  * - Home: Active state with primary color and bottom border (2.4px)
  * - Create: Inactive state with muted color
  */
@@ -46,18 +49,21 @@ export function CityEarlyAccessNavbar() {
     <nav
       className={cn(
         'fixed bottom-0 left-0 right-0 z-50',
-        'flex w-full items-center justify-between',
-        'h-20 px-6',
-        'pb-safe-bottom',
-        'backdrop-blur-[12px]',
-        'border-t border-gray-200/30'
+        'flex w-full items-center justify-center',
+        'px-6 pt-footer-safe pb-safe',
+        'border-t border-gray-200/30',
+        'sm:px-8'
       )}
       role="navigation"
       style={{
-        background: 'linear-gradient(to bottom, rgba(245, 245, 245, 0.9) 0%, rgba(251, 251, 251, 0.9) 100%)',
+        // Solid opaque background - matches MobileFooterBar exactly
+        background: 'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
       }}
     >
-      <div className="mx-auto flex w-full max-w-[393px] flex-row items-center justify-between gap-8">
+      <div className="flex w-full max-w-[400px] flex-row items-center justify-between gap-8">
         {/* Home */}
         <Link
           aria-label="Home"
