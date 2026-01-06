@@ -665,6 +665,8 @@ export const en = {
       receiveUpdates: "Receive updates for {{city}}",
       subscribeSuccess: "You will be notified when {{city}} has more providers.",
       subscribeError: "Error subscribing. Please try again.",
+      changeCity: "Change city",
+      cityChanged: "City changed",
     }
   },
   welcome: {

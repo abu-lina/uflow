@@ -6,13 +6,15 @@ import { Bismillah } from '@/components/ui/Bismillah';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useSplash } from '@/providers/splash-provider';
 
 interface SplashContentProps {
   onContinue?: () => void;
 }
 
 export function SplashContent({ onContinue }: SplashContentProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { isFirstVisit } = useSplash();
   
   return (
     <motion.div
@@ -33,12 +35,14 @@ export function SplashContent({ onContinue }: SplashContentProps) {
           {/* Arabic Calligraphy */}
           <Bismillah className="h-auto w-full max-w-[345px]" shouldAnimate={false} />
 
-          {/* Translation */}
-          <p 
-            className="font-baskerville text-xs leading-[13px] text-center w-full bg-gold-gradient bg-clip-text text-transparent"
-          >
-            {t('landing.bismillah.translation')}
-          </p>
+          {/* Translation - Hidden for Arabic since the Arabic text is already shown above */}
+          {language !== 'ar' && (
+            <p 
+              className="font-baskerville text-xs leading-[13px] text-center w-full bg-gold-gradient bg-clip-text text-transparent"
+            >
+              {t('landing.bismillah.translation')}
+            </p>
+          )}
         </motion.div>
 
         {/* Logo + Text + CTA */}
@@ -116,12 +120,12 @@ export function SplashContent({ onContinue }: SplashContentProps) {
           {/* CTA Button */}
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-center"
+            className={isFirstVisit ? "flex w-full" : "flex justify-center"}
             initial={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
           >
             <Button
-              className="h-12 rounded-md"
+              className="h-12 rounded-md w-full"
               icon="lucide:store"
               variant="primary"
               onClick={onContinue}

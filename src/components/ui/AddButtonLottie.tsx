@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { LottieAnimation } from './LottieAnimation';
+import { cn } from '@/lib/utils';
 
 interface AddButtonLottieProps {
   className?: string;
@@ -9,43 +8,12 @@ interface AddButtonLottieProps {
 }
 
 export function AddButtonLottie({ className = '', height = 240 }: AddButtonLottieProps) {
-  const [animationData, setAnimationData] = useState<object | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadAnimation = async () => {
-      try {
-        const response = await fetch('/animations/add-button-transition.json');
-        const data = await response.json();
-        setAnimationData(data);
-      } catch (error) {
-        console.error('Failed to load Lottie animation:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadAnimation();
-  }, []);
-
-  if (isLoading || !animationData) {
-    return (
-      <div
-        className={`flex items-center justify-center ${className}`}
-        style={{ height: typeof height === 'number' ? `${height}px` : height }}
-      >
-        <div className="h-12 w-12 animate-pulse rounded-full bg-gray-200" />
-      </div>
-    );
-  }
-
   return (
-    <LottieAnimation
-      animationData={animationData}
-      autoplay={true}
-      className={className}
-      height={height}
-      loop={true}
+    <img
+      alt="Map illustration showing halal locations"
+      className={cn('h-full w-auto object-contain', className)}
+      src="/images/maps-solution.png"
+      style={{ height: typeof height === 'number' ? `${height}px` : height }}
     />
   );
 }

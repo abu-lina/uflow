@@ -311,7 +311,7 @@ export const shouldShowCityEarlyAccessNavbar = (
   }
 
   // Hide on onboarding pages if onboarding is not complete
-  const onboardingPages = ['/', '/about', '/welcome', '/city-selection'];
+  const onboardingPages = ['/', '/about', '/welcome'];
   if (onboardingPages.includes(pathname) && !onboardingComplete) {
     return false;
   }
@@ -319,6 +319,7 @@ export const shouldShowCityEarlyAccessNavbar = (
   // Hide on excluded pages
   const excludedPages = [
     '/about',
+    '/city-selection', // Always hide navbar on city selection page
     '/signup/check-email',
     '/waitlist',
     '/welcome',

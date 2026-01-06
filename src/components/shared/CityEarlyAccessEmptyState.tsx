@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/Button';
-import { ProgressBar } from '@/components/ui/ProgressBar';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
@@ -43,6 +42,11 @@ export function CityEarlyAccessEmptyState({
   // Detect reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined' && 
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Handle city selection navigation
+  const handleCitySelect = () => {
+    router.push('/city-selection');
+  };
 
   // Handle suggest provider navigation
   const handleSuggestProvider = () => {
@@ -94,7 +98,7 @@ export function CityEarlyAccessEmptyState({
       >
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="flex w-full max-w-[345px] flex-col items-center gap-16"
+          className="flex w-full max-w-[345px] flex-col items-center gap-8"
           initial={{ opacity: 0, y: 20 }}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, ease: 'easeOut' }}
         >
@@ -105,10 +109,25 @@ export function CityEarlyAccessEmptyState({
             initial={{ opacity: 0, y: 20 }}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.1, ease: 'easeOut' }}
           >
-            {/* City Name */}
-            <h1 className="w-full text-center font-inter-tight text-[33px] font-semibold leading-[40px] text-content-heading">
-              {cityName}
-            </h1>
+            {/* City Name - Tappable with Edit Icon */}
+            <button
+              aria-label={t('waitlist.cityEarlyAccess.changeCity')}
+              className="group relative w-full transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
+              type="button"
+              onClick={handleCitySelect}
+            >
+              <h1 className="text-center font-inter-tight text-[33px] font-semibold leading-[40px] text-content-heading group-hover:text-primary transition-colors">
+                {cityName}
+              </h1>
+              <Icon
+                aria-hidden="true"
+                className="absolute right-0 top-1/2 -translate-y-1/2 size-4 text-content-heading group-hover:text-primary transition-all duration-200 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 pointer-events-none"
+                icon="lucide:pencil"
+                style={{
+                  transition: prefersReducedMotion ? 'none' : 'opacity 200ms ease-in-out',
+                }}
+              />
+            </button>
 
             {/* Early Access Badge */}
             <div className="flex flex-row items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
@@ -139,16 +158,6 @@ export function CityEarlyAccessEmptyState({
             <p className="w-full text-center font-inter text-base font-normal leading-[19px] text-content-muted">
               {t('waitlist.cityEarlyAccess.description').replace('{{city}}', cityName)}
             </p>
-          </motion.div>
-
-          {/* Progress Bar */}
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full"
-            initial={{ opacity: 0, y: 20 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.3, ease: 'easeOut' }}
-          >
-            <ProgressBar value={75} />
           </motion.div>
 
           {/* CTA Buttons Container */}

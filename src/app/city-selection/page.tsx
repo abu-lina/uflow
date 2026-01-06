@@ -64,6 +64,7 @@ export default function CitySelectionPage() {
   const [cities, setCities] = useState<CityData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
+  const [selectedCityName, setSelectedCityName] = useState<string | null>(null);
   
   // Inline search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -214,6 +215,7 @@ export default function CitySelectionPage() {
   // Handle city selection (from top 3 cities)
   const handleCitySelect = (city: CityData) => {
     setSelectedCityId(city.id);
+    setSelectedCityName(city.city_name);
     
     // Store selected city with verification
     try {
@@ -258,27 +260,39 @@ export default function CitySelectionPage() {
       updateWaitlistCity(email, waitlistToken, city.city_name);
     }
     
-    // Navigate to root page (RootPageContent will show city content after onboarding)
-    setTimeout(() => {
-      router.push('/');
-    }, 800);
+    // DO NOT auto-forward - user must explicitly tap CTA button
   };
 
   // Handle city selection from search results
   const handleSearchCitySelect = async (city: NominatimCityResult) => {
     const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
     
+    setSelectedCityId(null); // Clear top 3 selection
+    setSelectedCityName(cityName);
+    
     // Store selected city
     sessionStorage.setItem('selectedCity', cityName);
     localStorage.setItem('selectedCity', cityName);
+    
+    // CRITICAL: Ensure onboarding state exists when city is selected
+    const email = sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
+    const waitlistToken = sessionStorage.getItem('waitlistToken') || localStorage.getItem('waitlistToken') || '';
+    const onboardingState = getOnboardingState();
+    
+    if (!onboardingState) {
+      setOnboardingState({
+        email: email || '',
+        waitlistSubmitted: !!email,
+        earlyAccessUnlocked: true,
+        submittedAt: new Date().toISOString(),
+        waitlistToken: waitlistToken || undefined,
+      });
+    }
     
     // Show confirmation toast
     toast.success(t('waitlist.citySelection.confirmToast').replace('{{city}}', cityName));
     
     // Try to update waitlist if email/token available
-    const email = sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
-    const waitlistToken = sessionStorage.getItem('waitlistToken') || localStorage.getItem('waitlistToken') || '';
-    
     if (email) {
       await updateWaitlistCity(email, waitlistToken, cityName);
     }
@@ -287,11 +301,7 @@ export default function CitySelectionPage() {
     setSearchQuery('');
     setSearchResults([]);
     
-    // Navigate to city page - it will check provider_count and redirect accordingly
-    // This ensures we always have the correct provider count
-    setTimeout(() => {
-      router.push(`/city/${encodeURIComponent(cityName)}`);
-    }, 800);
+    // DO NOT auto-forward - user must explicitly tap CTA button
   };
 
   // Update waitlist with selected city
@@ -347,9 +357,11 @@ export default function CitySelectionPage() {
     }
   };
 
-  // Handle discover CTA
+  // Handle discover CTA - navigate to city page (early access page)
   const handleDiscoverClick = () => {
-    router.push('/providers');
+    if (selectedCityName) {
+      router.push(`/city/${encodeURIComponent(selectedCityName)}`);
+    }
   };
 
   return (
@@ -621,7 +633,13 @@ export default function CitySelectionPage() {
           >
             <button
               aria-label={t('waitlist.citySelection.discoverButton')}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-primary font-inter-tight text-base font-medium text-white transition-all duration-150 hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className={cn(
+                "flex h-12 w-full items-center justify-center gap-2 rounded-sm font-inter-tight text-base font-medium text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                selectedCityName 
+                  ? "bg-primary hover:bg-primary-dark" 
+                  : "bg-primary/50 cursor-not-allowed"
+              )}
+              disabled={!selectedCityName}
               type="button"
               onClick={handleDiscoverClick}
             >

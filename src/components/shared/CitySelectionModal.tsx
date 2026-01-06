@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
+import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/FormInput';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -22,6 +23,7 @@ interface CitySelectionModalProps {
   isOpen: boolean;
   email?: string; // Optional - not required when waitlist is skipped
   waitlistToken?: string; // Optional - can be empty string if token is in HTTP-only cookie
+  currentCity?: string; // Optional - currently selected city name for visual indication
   onClose: () => void;
   onCitySelected: (city: string) => void;
 }
@@ -30,6 +32,7 @@ export function CitySelectionModal({
   isOpen,
   email,
   waitlistToken,
+  currentCity,
   onClose,
   onCitySelected,
 }: CitySelectionModalProps) {
@@ -277,20 +280,34 @@ export function CitySelectionModal({
               <div className="flex flex-col gap-2">
                 {filteredCities.map((city) => {
                   const status = getCityStatus(city);
+                  const isCurrentCity = currentCity && city.city_name.toLowerCase() === currentCity.toLowerCase();
                   return (
                     <button
                       key={city.id}
-                      aria-label={`${city.city_name} - ${status.label}`}
-                      className="flex items-center justify-between p-4 rounded-xl bg-neutral-soft hover:bg-neutral-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label={`${city.city_name} - ${status.label}${isCurrentCity ? ' (Current)' : ''}`}
+                      className={`flex items-center justify-between p-4 rounded-xl transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isCurrentCity
+                          ? 'bg-primary-light border border-primary'
+                          : 'bg-neutral-soft hover:bg-neutral-muted'
+                      }`}
                       disabled={isSubmitting}
                       type="button"
                       onClick={() => handleCitySelect(city)}
                     >
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-inter-tight font-medium text-content-heading">
+                          <span className={`font-inter-tight font-medium ${
+                            isCurrentCity ? 'text-primary' : 'text-content-heading'
+                          }`}>
                             {city.city_name}
                           </span>
+                          {isCurrentCity && (
+                            <Icon 
+                              aria-hidden="true"
+                              className="size-4 text-primary"
+                              icon="lucide:check-circle"
+                            />
+                          )}
                           <span className="text-xs text-content-muted">{city.country}</span>
                         </div>
                         {city.provider_count > 0 && (

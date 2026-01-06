@@ -598,7 +598,7 @@ export const de = {
       title: "Willkommen im frühen Zugang 🌱",
       description: "Ummah Flow wächst.\nDu bist früh dran — und kannst helfen, muslimische Orte sichtbar zu machen.",
       homeTitle: "Willkommen bei Ummah Flow",
-      homeDescription: "Ummah Flow befindet sich im Early Access.\n\nNoch sind nicht alle Städte und Anbieter vertreten – genau das bauen wir gerade gemeinsam auf.",
+      homeDescription: "Ummah Flow befindet sich im Early Access.  Noch sind nicht alle Städte und Anbieter vertreten – genau das bauen wir gerade gemeinsam auf.",
       selectCityButton: "Meine Stadt auswählen",
       suggestProvider: "Anbieter vorschlagen",
       badge: "Early Access",
@@ -640,9 +640,9 @@ export const de = {
     },
     citySelection: {
       title: "Deine Stadt",
-      subtitle: "Wähle eine Stadt, um muslimische Anbieter in deiner Umgebung zu entdecken.",
+      subtitle: "Wähle eine Stadt, um muslimische Anbieter in deiner Umgebung zu entdecken.\nDer Ausbau erfolgt stadtweise – Schritt für Schritt.",
       searchButton: "Andere Stadt suchen …",
-      discoverButton: "Muslimische Anbieter entdecken",
+      discoverButton: "Stadt anzeigen",
       supportingText: "Hilf uns zu entscheiden, wo Ummah Flow zuerst starten soll.",
       searchPlaceholder: "Stadt suchen…",
       statusLive: "Live",
@@ -665,6 +665,8 @@ export const de = {
       receiveUpdates: "Updates zu {{city}} erhalten",
       subscribeSuccess: "Du wirst benachrichtigt, wenn {{city}} mehr Anbieter hat.",
       subscribeError: "Fehler beim Abonnieren. Bitte versuche es erneut.",
+      changeCity: "Stadt ändern",
+      cityChanged: "Stadt geändert",
     }
   },
   welcome: {
