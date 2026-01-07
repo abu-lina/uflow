@@ -92,7 +92,10 @@ export function CityEarlyAccessEmptyState({
       <main 
         className={cn(
           'flex flex-1 items-center justify-center',
-          'w-full px-6'
+          'w-full px-6',
+          // Account for footer height: pt-footer-safe (8px min) + h-12 (48px) + pb-safe
+          // pb-safe = max(12px, env(safe-area-inset-bottom)), so total = max(68px, 56px + env(safe-area-inset-bottom))
+          'pb-[max(68px,calc(56px+env(safe-area-inset-bottom)))]'
         )}
         role="main"
       >

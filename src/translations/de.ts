@@ -203,7 +203,7 @@ export const de = {
     },
     recommend: {
       title: "Anbieter empfehlen",
-      step1Title: "Grundinformationen",
+      step1Title: "Basics",
       step2Title: "Kontakt",
       step2Description: "Gib mindestens eine Kontaktmöglichkeit an.",
       providerName: "Anbietername",

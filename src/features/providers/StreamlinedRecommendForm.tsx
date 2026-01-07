@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -10,9 +10,9 @@ import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { createProviderOrService } from '@/services/providerService';
-import { StepIndicator } from '@/components/shared/StepIndicator';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
 
@@ -33,19 +33,9 @@ interface RecommendFormData {
   phone: string;
   website: string;
   instagram: string;
+  userEmail: string; // User's email for follow-up
   message: string; // optional
 }
-
-const STEPS = [
-  {
-    title: 'Basics',
-    icon: 'mdi:information',
-  },
-  {
-    title: 'Contact',
-    icon: 'mdi:account-group',
-  },
-];
 
 export function StreamlinedRecommendForm({ onSuccess, initialCity }: StreamlinedRecommendFormProps) {
   const router = useRouter();
@@ -54,9 +44,21 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
   const { t, language } = useLanguage();
   const isMobile = useIsSmallMobile();
   
-  const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  
+  // State for selected contact methods
+  const [selectedContacts, setSelectedContacts] = useState<{
+    email: boolean;
+    phone: boolean;
+    website: boolean;
+    instagram: boolean;
+  }>({
+    email: false,
+    phone: false,
+    website: false,
+    instagram: false,
+  });
   
   // Local form state for streamlined form
   const [formData, setFormData] = useState<RecommendFormData>({
@@ -68,6 +70,7 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
     phone: contextFormData.phone || '',
     website: contextFormData.website || '',
     instagram: contextFormData.instagram || '',
+    userEmail: '',
     message: contextFormData.description || '',
   });
 
@@ -120,47 +123,32 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
   }, [categories, language]);
 
   // Validation
-  const isStep1Valid = useCallback(() => {
-    return !!formData.title && !!formData.category && formData.offers_ids.length > 0 && !!formData.city;
-  }, [formData]);
+  const isFormValid = useCallback(() => {
+    const hasBasics = !!formData.title && !!formData.category && !!formData.city;
+    const hasContact = 
+      (selectedContacts.email && formData.email.trim().length > 0) ||
+      (selectedContacts.phone && formData.phone.trim().length > 0) ||
+      (selectedContacts.website && formData.website.trim().length > 0) ||
+      (selectedContacts.instagram && formData.instagram.trim().length > 0);
+    return hasBasics && hasContact;
+  }, [formData, selectedContacts]);
 
-  const isStep2Valid = useCallback(() => {
-    const hasEmail = formData.email.trim().length > 0;
-    const hasPhone = formData.phone.trim().length > 0;
-    const hasWebsite = formData.website.trim().length > 0;
-    const hasInstagram = formData.instagram.trim().length > 0;
-    return hasEmail || hasPhone || hasWebsite || hasInstagram;
-  }, [formData]);
+  const handleBack = useCallback(() => {
+    router.push('/');
+  }, [router]);
 
-  // Navigation handlers
-  const handleNext = useCallback(() => {
-    if (currentStep === 0 && !isStep1Valid()) {
+  // Submit handler
+  const handleSubmit = useCallback(async () => {
+    if (!isFormValid()) {
       if (!formData.title) {
         toast.error(t('create.recommend.titleRequired'));
       } else if (!formData.category) {
         toast.error(t('create.recommend.categoryRequired'));
-      } else if (formData.offers_ids.length === 0) {
-        toast.error(t('create.recommend.offersRequired'));
       } else if (!formData.city) {
         toast.error(t('create.recommend.cityRequired'));
+      } else {
+        toast.error(t('create.recommend.contactRequired'));
       }
-      return;
-    }
-    setCurrentStep(1);
-  }, [currentStep, isStep1Valid, formData, t]);
-
-  const handleBack = useCallback(() => {
-    if (currentStep === 0) {
-      router.push('/');
-    } else {
-      setCurrentStep(0);
-    }
-  }, [currentStep, router]);
-
-  // Submit handler
-  const handleSubmit = useCallback(async () => {
-    if (!isStep2Valid()) {
-      toast.error(t('create.recommend.contactRequired'));
       return;
     }
 
@@ -178,6 +166,7 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
         phone: formData.phone,
         website: formData.website,
         instagram: formData.instagram,
+        userEmail: formData.userEmail,
         description: formData.message,
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
@@ -215,6 +204,8 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
         instagram: '',
         description: '',
       });
+      // Also clear local userEmail state
+      setFormData(prev => ({ ...prev, userEmail: '' }));
 
       queryClient.invalidateQueries({ queryKey: ['providers'] });
       queryClient.invalidateQueries({ queryKey: ['community-services'] });
@@ -230,7 +221,7 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, isStep2Valid, contextFormData, updateFormData, queryClient, router, onSuccess, t]);
+  }, [formData, isFormValid, contextFormData, updateFormData, queryClient, router, onSuccess, t]);
 
   // Navigate to category selection
   const handleSelectCategory = useCallback(() => {
@@ -248,243 +239,311 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
     router.push('/create/recommend/category');
   }, [formData, router, updateFormData]);
 
-  // Navigate to offers selection
-  const handleSelectOffers = useCallback(() => {
-    // Save current form state
-    updateFormData({
-      title: formData.title,
-      category: formData.category,
-      city: formData.city,
-      email: formData.email,
-      phone: formData.phone,
-      website: formData.website,
-      instagram: formData.instagram,
-      description: formData.message,
-    });
-    router.push('/create/recommend/offers');
-  }, [formData, router, updateFormData]);
 
-  return (
-    <div className="flex flex-col gap-6 pb-8">
-      {/* Step Indicator */}
-      <div className="mb-6">
-        <StepIndicator currentStep={currentStep} steps={STEPS} />
-      </div>
+  // ContactCheckbox component
+  interface ContactCheckboxProps {
+    label: string;
+    checked: boolean;
+    value: string;
+    placeholder: string;
+    type?: string;
+    onToggle: () => void;
+    onChange: (value: string) => void;
+    autoFormat?: (value: string) => string;
+  }
 
-      {/* Step 1: Basics */}
-      {currentStep === 0 && (
-        <div className="flex flex-col gap-6">
-          <h2 className="text-xl font-semibold text-content-heading">{t('create.recommend.step1Title')}</h2>
-          
-          {/* Provider Name */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.providerName')} *
-              </label>
-              <input
-                aria-label={t('create.recommend.providerName')}
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.providerNamePlaceholder')}
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              />
-            </div>
+  const ContactCheckbox = ({
+    label,
+    checked,
+    value,
+    placeholder,
+    type = 'text',
+    onToggle,
+    onChange,
+    autoFormat,
+  }: ContactCheckboxProps) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Focus input when checkbox is checked
+    useEffect(() => {
+      if (checked && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [checked]);
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onToggle();
+      }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = autoFormat ? autoFormat(e.target.value) : e.target.value;
+      onChange(newValue);
+    };
+
+    return (
+      <div
+        aria-checked={checked}
+        className={cn(
+          'flex w-full items-center rounded-2xl border border-border bg-white px-3 py-2 cursor-pointer transition-all',
+          checked ? 'min-h-[54px]' : 'h-[54px]'
+        )}
+        role="checkbox"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="flex w-full flex-row items-center gap-2">
+          {/* Checkbox Icon */}
+          <div className="flex-shrink-0">
+            <Icon
+              className="h-6 w-6 text-content"
+              icon={checked ? 'lucide:square-check' : 'lucide:square'}
+            />
           </div>
 
-          {/* Category */}
-          <div 
-            aria-label={t('create.recommend.selectCategory')}
-            className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 cursor-pointer"
-            role="button"
-            tabIndex={0}
-            onClick={handleSelectCategory}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleSelectCategory();
-              }
-            }}
-          >
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.category')} *
-              </label>
-              <div className="flex items-center justify-between">
-                <span className="text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
-                  {formData.category ? getCategoryName(formData.category) : t('create.recommend.selectCategory')}
-                </span>
-                <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
-              </div>
-            </div>
-          </div>
-
-          {/* City */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.city')} *
-              </label>
-              <input
-                aria-label={t('create.recommend.city')}
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.cityPlaceholder')}
-                value={formData.city}
-                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          {/* Offers */}
-          <div 
-            aria-label={t('create.recommend.selectOffers')}
-            className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 cursor-pointer"
-            role="button"
-            tabIndex={0}
-            onClick={handleSelectOffers}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleSelectOffers();
-              }
-            }}
-          >
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.offers')} *
-              </label>
-              <div className="flex items-center justify-between">
-                <span className="text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
-                  {formData.offers_ids.length > 0 
-                    ? t('create.recommend.offersSelected').replace('{{count}}', formData.offers_ids.length.toString())
-                    : t('create.recommend.selectOffers')
-                  }
-                </span>
-                <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
-              </div>
-            </div>
+          {/* Label + Input Container */}
+          <div className="flex flex-1 flex-col gap-1">
+            {checked ? (
+              <>
+                {/* Small label when checked */}
+                <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+                  {label}
+                </label>
+                {/* Input field */}
+                <input
+                  ref={inputRef}
+                  aria-label={label}
+                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                  placeholder={placeholder}
+                  type={type}
+                  value={value}
+                  onChange={handleInputChange}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </>
+            ) : (
+              /* Large label when unchecked */
+              <span className="font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
+                {label}
+              </span>
+            )}
           </div>
         </div>
-      )}
+      </div>
+    );
+  };
 
-      {/* Step 2: Contact */}
-      {currentStep === 1 && (
-        <div className="flex flex-col gap-6">
-          <h2 className="text-xl font-semibold text-content-heading">{t('create.recommend.step2Title')}</h2>
-          <p className="text-base text-content-muted">{t('create.recommend.step2Description')}</p>
-          
-          {/* Email */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.email')}
-              </label>
-              <input
-                aria-label={t('create.recommend.email')}
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.emailPlaceholder')}
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          {/* Phone */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.phone')}
-              </label>
-              <input
-                aria-label={t('create.recommend.phone')}
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.phonePlaceholder')}
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          {/* Website */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.website')}
-              </label>
-              <input
-                aria-label={t('create.recommend.website')}
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.websitePlaceholder')}
-                type="url"
-                value={formData.website}
-                onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          {/* Instagram */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.instagram')}
-              </label>
-              <input
-                aria-label={t('create.recommend.instagram')}
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.instagramPlaceholder')}
-                type="text"
-                value={formData.instagram}
-                onChange={(e) => {
-                  let value = e.target.value;
-                  // Auto-add @ if user types without it
-                  if (value && !value.startsWith('@')) {
-                    value = '@' + value;
-                  }
-                  setFormData(prev => ({ ...prev, instagram: value }));
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Message (Optional) */}
-          <div className="flex flex-col gap-2">
+  return (
+    <div className={cn(
+      'flex flex-col gap-6',
+      // Add extra bottom padding on mobile to account for fixed FooterAction
+      isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8'
+    )}>
+      {/* Section 1: Basics */}
+      <div className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold text-content-heading">{t('create.recommend.step1Title')}</h2>
+        
+        {/* Provider Name */}
+        <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+          <div className="flex w-full flex-col gap-1">
             <label className="text-xs leading-[15px] text-content-muted">
-              {t('create.recommend.message')} ({t('common.optional')})
+              {t('create.recommend.providerName')} *
             </label>
-            <textarea
-              aria-label={t('create.recommend.message')}
-              className="min-h-[120px] w-full rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder={t('create.recommend.messagePlaceholder')}
-              value={formData.message}
-              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+            <input
+              aria-label={t('create.recommend.providerName')}
+              className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+              placeholder={t('create.recommend.providerNamePlaceholder')}
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
             />
           </div>
         </div>
-      )}
+
+        {/* Category */}
+        <div 
+          aria-label={t('create.recommend.selectCategory')}
+          className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 cursor-pointer"
+          role="button"
+          tabIndex={0}
+          onClick={handleSelectCategory}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleSelectCategory();
+            }
+          }}
+        >
+          <div className="flex w-full flex-col gap-1">
+            <label className="text-xs leading-[15px] text-content-muted">
+              {t('create.recommend.category')} *
+            </label>
+            <div className="flex items-center justify-between">
+              <span className="text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
+                {formData.category ? getCategoryName(formData.category) : t('create.recommend.selectCategory')}
+              </span>
+              <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
+            </div>
+          </div>
+        </div>
+
+        {/* City */}
+        <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+          <div className="flex w-full flex-col gap-1">
+            <label className="text-xs leading-[15px] text-content-muted">
+              {t('create.recommend.city')} *
+            </label>
+            <input
+              aria-label={t('create.recommend.city')}
+              className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+              placeholder={t('create.recommend.cityPlaceholder')}
+              value={formData.city}
+              onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Section 2: Contact */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <h3 className="text-xl font-semibold text-content-heading">Kontakt zum Anbieter</h3>
+          <p className="text-base text-content-muted">
+            Bitte wähle mindestens eine Kontaktmethode aus, im Anschluss kannst du dann den jeweiligen Kontakt eintragen - inshaAllah.
+          </p>
+        </div>
+
+        {/* Contact Checkboxes */}
+        <div className="flex flex-col gap-3">
+          <ContactCheckbox
+            checked={selectedContacts.email}
+            label={t('create.recommend.email')}
+            placeholder={t('create.recommend.emailPlaceholder')}
+            type="email"
+            value={formData.email}
+            onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+            onToggle={() => {
+              const wasChecked = selectedContacts.email;
+              setSelectedContacts(prev => ({ ...prev, email: !prev.email }));
+              if (wasChecked) {
+                // Clear email when unchecking
+                setFormData(prev => ({ ...prev, email: '' }));
+              }
+            }}
+          />
+
+          <ContactCheckbox
+            checked={selectedContacts.website}
+            label={t('create.recommend.website')}
+            placeholder={t('create.recommend.websitePlaceholder')}
+            type="url"
+            value={formData.website}
+            onChange={(value) => setFormData(prev => ({ ...prev, website: value }))}
+            onToggle={() => {
+              const wasChecked = selectedContacts.website;
+              setSelectedContacts(prev => ({ ...prev, website: !prev.website }));
+              if (wasChecked) {
+                setFormData(prev => ({ ...prev, website: '' }));
+              }
+            }}
+          />
+
+          <ContactCheckbox
+            checked={selectedContacts.phone}
+            label={t('create.recommend.phone')}
+            placeholder={t('create.recommend.phonePlaceholder')}
+            type="tel"
+            value={formData.phone}
+            onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+            onToggle={() => {
+              const wasChecked = selectedContacts.phone;
+              setSelectedContacts(prev => ({ ...prev, phone: !prev.phone }));
+              if (wasChecked) {
+                setFormData(prev => ({ ...prev, phone: '' }));
+              }
+            }}
+          />
+
+          <ContactCheckbox
+            checked={selectedContacts.instagram}
+            label={t('create.recommend.instagram')}
+            placeholder={t('create.recommend.instagramPlaceholder')}
+            type="text"
+            value={formData.instagram}
+            onChange={(value) => {
+              // Auto-add @ if user types without it
+              let formattedValue = value;
+              if (formattedValue && !formattedValue.startsWith('@')) {
+                formattedValue = '@' + formattedValue;
+              }
+              setFormData(prev => ({ ...prev, instagram: formattedValue }));
+            }}
+            onToggle={() => {
+              const wasChecked = selectedContacts.instagram;
+              setSelectedContacts(prev => ({ ...prev, instagram: !prev.instagram }));
+              if (wasChecked) {
+                setFormData(prev => ({ ...prev, instagram: '' }));
+              }
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Section 3: User Email */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <h3 className="text-xl font-semibold text-content-heading">Deine E-Mail-Adresse</h3>
+          <p className="text-base text-content-muted">
+            Nur für Rückfragen oder um dich zu informieren, wenn deine Stadt freigeschaltet wird.
+          </p>
+        </div>
+
+        {/* User Email Input */}
+        <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
+          <div className="flex w-full flex-col gap-1">
+            <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+              Deine E-Mail-Adresse
+            </label>
+            <input
+              aria-label="Deine E-Mail-Adresse"
+              className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+              placeholder="deine@email.de"
+              type="email"
+              value={formData.userEmail}
+              onChange={(e) => setFormData(prev => ({ ...prev, userEmail: e.target.value }))}
+            />
+          </div>
+        </div>
+
+        {/* Message (Optional) */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs leading-[15px] text-content-muted">
+            {t('create.recommend.message')} ({t('common.optional')})
+          </label>
+          <textarea
+            aria-label={t('create.recommend.message')}
+            className="min-h-[120px] w-full rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder={t('create.recommend.messagePlaceholder')}
+            value={formData.message}
+            onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+          />
+        </div>
+      </div>
 
       {/* Footer Actions */}
       {isMobile && (
         <FooterAction
-          actionButton={
-            currentStep === 0
-              ? {
-                  label: t('common.next'),
-                  trailingIcon: 'lucide:chevron-right',
-                  onClick: handleNext,
-                  disabled: !isStep1Valid() || isSubmitting,
-                  variant: 'primary',
-                }
-              : {
-                  label: isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit'),
-                  onClick: handleSubmit,
-                  disabled: !isStep2Valid() || isSubmitting,
-                  loading: isSubmitting,
-                  loadingText: t('create.recommend.submitting'),
-                  variant: 'primary',
-                }
-          }
+          actionButton={{
+            disabled: !isFormValid() || isSubmitting,
+            label: isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit'),
+            loading: isSubmitting,
+            loadingText: t('create.recommend.submitting'),
+            onClick: handleSubmit,
+            variant: 'primary',
+          }}
         />
       )}
 
@@ -496,20 +555,16 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
             variant="secondary"
             onClick={handleBack}
           >
-            {currentStep === 0 ? t('common.cancel') : t('common.back')}
+            {t('common.cancel')}
           </Button>
           <Button
-            disabled={
-              (currentStep === 0 && !isStep1Valid()) ||
-              (currentStep === 1 && (!isStep2Valid() || isSubmitting))
-            }
-            loading={currentStep === 1 && isSubmitting}
+            disabled={!isFormValid() || isSubmitting}
+            loading={isSubmitting}
             loadingText={t('create.recommend.submitting')}
-            trailingIcon={currentStep === 0 ? 'lucide:chevron-right' : undefined}
             variant="primary"
-            onClick={currentStep === 0 ? handleNext : handleSubmit}
+            onClick={handleSubmit}
           >
-            {currentStep === 0 ? t('common.next') : (isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit'))}
+            {isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit')}
           </Button>
         </div>
       )}
