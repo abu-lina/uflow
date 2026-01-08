@@ -101,6 +101,8 @@ const EARLY_ACCESS_ROUTES = [
   '/recommend-provider',
   '/create',
   '/city',
+  '/providers', // Allow access to provider list and detail pages in early access
+  '/community-services', // Allow access to community service detail pages in early access
 ];
 
 /**
@@ -161,6 +163,17 @@ export async function shouldRedirectToWaitlist(
   // The /recommend-provider page will set recommendation mode and redirect to /create/basics
   if (!isAppLaunched && pathname === '/recommend-provider') {
     return false; // Allow access, let page handle recommendation mode setup
+  }
+
+  // Special case: Allow access to provider and community service detail pages in early access mode
+  // This allows Stage 2 users (who have completed onboarding) to view provider details
+  // even if they don't have a waitlist token cookie set. The page components will handle
+  // any necessary authentication/authorization checks.
+  if (!isAppLaunched && (
+    pathname.startsWith('/providers/') || 
+    pathname.startsWith('/community-services/')
+  )) {
+    return false; // Allow access, let page components handle auth/authorization
   }
 
   // If user is admin/moderator, allow access (bypass waitlist)

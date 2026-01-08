@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -11,6 +12,7 @@ import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { MobileGreetingHeader } from '@/components/shared/MobileGreetingHeader';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
@@ -31,6 +33,11 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
   const { user, isLoading: userLoading } = useAuth();
   const { t } = useLanguage();
   const searchParams = useSearchParams();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // Get search context to sync with URL parameters
   const {
@@ -248,8 +255,23 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
     );
   };
 
+  // Language switcher portal - render at document root to avoid clipping (only for Stage 2)
+  const languageSwitcherPortal = showGreeting && isMounted && typeof document !== 'undefined' && document.body ? createPortal(
+    <div 
+      className="fixed top-2 right-2 z-[9999] sm:hidden" 
+      style={{ 
+        paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
+        paddingRight: 'max(env(safe-area-inset-right), 0.25rem)'
+      }}
+    >
+      <LanguageSwitcher variant="dropdown" />
+    </div>,
+    document.body
+  ) : null;
+
   return (
     <>
+      {languageSwitcherPortal}
       {showGreeting ? (
         // Fixed greeting header for Stage 2 (matches ProvidersPageHeader style)
         <header 
@@ -270,14 +292,16 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
           }}
         >
           <div 
-            className="px-6 py-4"
+            className="px-4 py-4"
             style={{
               // Add safe area padding to content, not header background
               // Use max() to ensure minimum 24px padding on devices without safe area (like iPhone SE)
               paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
             }}
           >
-            <MobileGreetingHeader cityName={defaultLocation} />
+            <div className="max-w-72 mx-auto">
+              <MobileGreetingHeader cityName={defaultLocation} />
+            </div>
           </div>
         </header>
       ) : (

@@ -39,7 +39,7 @@ export function MobileGreetingHeader({ className = '', cityName }: MobileGreetin
   return (
     <div className={`w-full ${className}`}>
       {/* Main Header with staggered animation */}
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="flex flex-col items-start gap-0">
         <MotionDiv
           {...(!hasAnimated && {
             animate: { opacity: 1, x: 0 },
@@ -56,7 +56,7 @@ export function MobileGreetingHeader({ className = '', cityName }: MobileGreetin
             initial: { opacity: 0, x: -20 },
             transition: { duration: 0.4, delay: 0.2 },
           })}
-          className="font-inter text-3xl font-semibold leading-tight text-[#5B9DA0]"
+          className="font-inter text-2xl font-semibold leading-tight text-[#5B9DA0] -mt-0.5"
         >
           {supportText}
         </MotionDiv>
