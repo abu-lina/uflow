@@ -451,7 +451,7 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
     )}>
       {/* Section 1: Basics */}
       <div className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-content-heading">{t('create.recommend.step1Title')}</h2>
+        <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.step1Title')}</h2>
         
         {/* Provider Name */}
         <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
@@ -516,7 +516,7 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
       {/* Section 2: Contact */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h3 className="text-xl font-semibold text-content-heading">Kontakt zum Anbieter</h3>
+          <h3 className="text-lg font-semibold text-content-heading">Kontakt zum Anbieter</h3>
           <p className="text-base text-content-muted">
             Bitte wähle mindestens eine Kontaktmethode aus, im Anschluss kannst du dann den jeweiligen Kontakt eintragen - inshaAllah.
           </p>
@@ -569,7 +569,7 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
       {/* Section 3: User Email */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h3 className="text-xl font-semibold text-content-heading">Deine E-Mail-Adresse</h3>
+          <h3 className="text-lg font-semibold text-content-heading">Deine E-Mail-Adresse</h3>
           <p className="text-base text-content-muted">
             Nur für Rückfragen oder um dich zu informieren, wenn deine Stadt freigeschaltet wird.
           </p>
