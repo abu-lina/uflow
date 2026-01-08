@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import type { Category } from '@/types/supabase';
-import { FormInput } from '@/components/ui/FormInput';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -117,18 +116,16 @@ export default function SelectCategoryPage() {
         paddingX={isMobile ? 'px-6' : 'px-0'}
       >
         <div className="flex w-full flex-col gap-2">
-          <FormInput
-            containerClassName="h-[44px] md:h-[48px] rounded-xl"
-            inputClassName="text-xs md:text-base font-normal text-[#7C7C7C] leading-[15px] md:leading-[19px] placeholder:text-[#7C7C7C]"
-            label=""
-            labelClassName="hidden"
-            placeholder={t('create.category.searchCategories')}
-            rightIcon={<Icon className="h-6 w-6 text-[#1B1D1D]" icon="material-symbols:search" />}
-            type="text"
-            value={searchQuery}
-            variant="with-icon"
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="flex h-[54px] w-full items-center rounded-xl border border-[#D4D4D4] bg-white px-3">
+            <Icon className="h-6 w-6 flex-shrink-0 text-[#1B1D1D] mr-2" icon="lucide:search" />
+            <input
+              className="flex-1 border-none bg-transparent text-base font-normal text-[#7C7C7C] leading-[19px] placeholder:text-[#7C7C7C] focus:outline-none px-0"
+              placeholder={t('create.category.searchCategories')}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
           <div className="w-full">
             <p className="text-sm font-normal text-[#7A7A7A] leading-[17px] mb-6 pl-3">
@@ -158,7 +155,7 @@ export default function SelectCategoryPage() {
               .map((category) => (
                 <button
                   key={category.category_id}
-                  className={`w-full rounded-xl px-4 py-2 md:h-[48px] md:py-0 md:flex md:items-center text-left transition-all duration-200 ${
+                  className={`w-full h-[54px] rounded-xl px-4 flex items-center text-left transition-all duration-200 ${
                     formData.category === category.category_id
                       ? 'bg-primary-light text-content-heading border border-primary'
                       : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'

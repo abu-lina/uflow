@@ -453,62 +453,66 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.step1Title')}</h2>
         
-        {/* Provider Name */}
-        <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-          <div className="flex w-full flex-col gap-1">
-            <label className="text-xs leading-[15px] text-content-muted">
-              {t('create.recommend.providerName')} *
-            </label>
-            <input
-              aria-label={t('create.recommend.providerName')}
-              className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-              placeholder={t('create.recommend.providerNamePlaceholder')}
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-            />
+        <div className="flex flex-col gap-3">
+          {/* Provider Name */}
+          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.recommend.providerName')} *
+              </label>
+              <input
+                aria-label={t('create.recommend.providerName')}
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                placeholder={t('create.recommend.providerNamePlaceholder')}
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Category */}
-        <div 
-          aria-label={t('create.recommend.selectCategory')}
-          className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 cursor-pointer"
-          role="button"
-          tabIndex={0}
-          onClick={handleSelectCategory}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleSelectCategory();
-            }
-          }}
-        >
-          <div className="flex w-full flex-col gap-1">
-            <label className="text-xs leading-[15px] text-content-muted">
-              {t('create.recommend.category')} *
-            </label>
-            <div className="flex items-center justify-between">
-              <span className="text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
-                {categoryDisplayName}
-              </span>
+          {/* Category */}
+          <div 
+            aria-label={t('create.recommend.selectCategory')}
+            className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 cursor-pointer relative"
+            role="button"
+            tabIndex={0}
+            onClick={handleSelectCategory}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleSelectCategory();
+              }
+            }}
+          >
+            <div className="flex w-full flex-col gap-1 pr-6">
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.recommend.category')} *
+              </label>
+              <div className="flex items-center justify-between">
+                <span className="text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
+                  {categoryDisplayName}
+                </span>
+              </div>
+            </div>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center flex-shrink-0">
               <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
             </div>
           </div>
-        </div>
 
-        {/* City */}
-        <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-          <div className="flex w-full flex-col gap-1">
-            <label className="text-xs leading-[15px] text-content-muted">
-              {t('create.recommend.city')} *
-            </label>
-            <input
-              aria-label={t('create.recommend.city')}
-              className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-              placeholder={t('create.recommend.cityPlaceholder')}
-              value={formData.city}
-              onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-            />
+          {/* City */}
+          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.recommend.city')} *
+              </label>
+              <input
+                aria-label={t('create.recommend.city')}
+                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                placeholder={t('create.recommend.cityPlaceholder')}
+                value={formData.city}
+                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -516,9 +520,9 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
       {/* Section 2: Contact */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-content-heading">Kontakt zum Anbieter</h3>
+          <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.contactTitle')}</h3>
           <p className="text-base text-content-muted">
-            Bitte wähle mindestens eine Kontaktmethode aus, im Anschluss kannst du dann den jeweiligen Kontakt eintragen - inshaAllah.
+            {t('create.recommend.contactDescription')}
           </p>
         </div>
 
@@ -569,53 +573,57 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
       {/* Section 3: User Email */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-content-heading">Deine E-Mail-Adresse</h3>
+          <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h3>
           <p className="text-base text-content-muted">
-            Nur für Rückfragen oder um dich zu informieren, wenn deine Stadt freigeschaltet wird.
+            {t('create.recommend.userEmailDescription')}
           </p>
         </div>
 
-        {/* User Email Input */}
-        <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
-          <div className="flex w-full flex-col gap-1">
-            <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
-              Deine E-Mail-Adresse
-            </label>
-            <input
-              ref={userEmailInputRef}
-              aria-label="Deine E-Mail-Adresse"
-              className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-              placeholder="deine@email.de"
-              type="email"
-              value={formData.userEmail}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                const cursorPosition = e.target.selectionStart || newValue.length;
-                setFormData(prev => ({ ...prev, userEmail: newValue }));
-                // Maintain focus and cursor position after state update
-                setTimeout(() => {
-                  if (userEmailInputRef.current) {
-                    userEmailInputRef.current.focus();
-                    userEmailInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
-                  }
-                }, 0);
-              }}
-            />
+        <div className="flex flex-col gap-3">
+          {/* User Email Input */}
+          <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+                {t('create.recommend.userEmailLabel')}
+              </label>
+              <input
+                ref={userEmailInputRef}
+                aria-label={t('create.recommend.userEmailLabel')}
+                className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                placeholder={t('create.recommend.userEmailPlaceholder')}
+                type="email"
+                value={formData.userEmail}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  const cursorPosition = e.target.selectionStart || newValue.length;
+                  setFormData(prev => ({ ...prev, userEmail: newValue }));
+                  // Maintain focus and cursor position after state update
+                  setTimeout(() => {
+                    if (userEmailInputRef.current) {
+                      userEmailInputRef.current.focus();
+                      userEmailInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
+                    }
+                  }, 0);
+                }}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Message (Optional) */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs leading-[15px] text-content-muted">
-            {t('create.recommend.message')} ({t('common.optional')})
-          </label>
-          <textarea
-            aria-label={t('create.recommend.message')}
-            className="min-h-[120px] w-full rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder={t('create.recommend.messagePlaceholder')}
-            value={formData.message}
-            onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-          />
+          {/* Message (Optional) */}
+          <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-border bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+                {t('create.recommend.message')} ({t('common.optional')})
+              </label>
+              <textarea
+                aria-label={t('create.recommend.message')}
+                className="min-h-[100px] w-full resize-none border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                placeholder={t('create.recommend.messagePlaceholder')}
+                value={formData.message}
+                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
