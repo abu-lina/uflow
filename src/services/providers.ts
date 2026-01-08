@@ -184,6 +184,33 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
 }
 
 /**
+ * Check if a category value is a valid category ID (UUID) or a translated "all" string
+ * Category IDs are UUIDs, so if it's not a UUID, it's likely a translation and should be ignored
+ */
+function isValidCategoryId(category: string | null | undefined): boolean {
+  if (!category) return false;
+  
+  // Check if it's a known "all" translation
+  const allTranslations = ['All', 'Alle', 'الكل', 'Tümü'];
+  if (allTranslations.includes(category)) return false;
+  
+  // Check if it's a valid UUID format (category IDs are UUIDs)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(category);
+}
+
+/**
+ * Check if a location value is a valid city name or a translated "everywhere" string
+ */
+function isValidLocation(location: string | null | undefined): boolean {
+  if (!location) return false;
+  
+  // Check if it's a known "everywhere" translation
+  const everywhereTranslations = ['Everywhere', 'Überall', 'في كل مكان', 'Her yerde'];
+  return !everywhereTranslations.includes(location);
+}
+
+/**
  * Main search function that handles all entity types with pagination
  */
 export async function searchProvidersAndCommunityServices(
@@ -424,10 +451,10 @@ export async function searchProviders(
     req = req.or(searchConditions.join(','));
   }
 
-  if (category && category !== 'All' && category !== 'Alle') {
+  if (isValidCategoryId(category)) {
     req = req.eq('category_id', category);
   }
-  if (location && location !== 'Everywhere' && location !== 'Überall') {
+  if (isValidLocation(location)) {
     req = req.eq('address_city', location);
   }
 

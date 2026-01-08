@@ -61,6 +61,33 @@ export async function getCommunityServices(): Promise<CommunityService[]> {
   return Array.isArray(data) ? data : [];
 }
 
+/**
+ * Check if a category value is a valid category ID (UUID) or a translated "all" string
+ * Category IDs are UUIDs, so if it's not a UUID, it's likely a translation and should be ignored
+ */
+function isValidCategoryId(category: string | null | undefined): boolean {
+  if (!category) return false;
+  
+  // Check if it's a known "all" translation
+  const allTranslations = ['All', 'Alle', 'الكل', 'Tümü'];
+  if (allTranslations.includes(category)) return false;
+  
+  // Check if it's a valid UUID format (category IDs are UUIDs)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(category);
+}
+
+/**
+ * Check if a location value is a valid city name or a translated "everywhere" string
+ */
+function isValidLocation(location: string | null | undefined): boolean {
+  if (!location) return false;
+  
+  // Check if it's a known "everywhere" translation
+  const everywhereTranslations = ['Everywhere', 'Überall', 'في كل مكان', 'Her yerde'];
+  return !everywhereTranslations.includes(location);
+}
+
 // Search community services by name or description with pagination
 export async function searchCommunityServices(
   query: string, 
@@ -80,8 +107,8 @@ export async function searchCommunityServices(
     try {
       const { data: searchResults, error: rpcError } = await supabase.rpc('search_community_services_enhanced', {
         search_query: query.trim(),
-        category_filter: category && category !== 'All' && category !== 'Alle' ? category : null,
-        city_filter: location && location !== 'Everywhere' && location !== 'Überall' ? location : null,
+        category_filter: isValidCategoryId(category) ? category : null,
+        city_filter: isValidLocation(location) ? location : null,
         limit_count: limit || 1000,
         offset_count: offset || 0,
       });
@@ -116,12 +143,12 @@ export async function searchCommunityServices(
   }
 
   // Apply location filter if specified
-  if (location && location !== 'Everywhere' && location !== 'Überall') {
+  if (isValidLocation(location)) {
     req = req.eq('address_city', location);
   }
 
   // Apply category filter if specified
-  if (category && category !== 'All' && category !== 'Alle') {
+  if (isValidCategoryId(category)) {
     req = req.eq('category_id', category);
   }
 
