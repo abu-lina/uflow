@@ -627,7 +627,7 @@ export const tr = {
       title: "Şehriniz",
       subtitle: "Bölgenizdeki Müslüman sağlayıcıları keşfetmek için bir şehir seçin.",
       searchButton: "Başka şehir ara …",
-      discoverButton: "Müslüman sağlayıcıları keşfet",
+      discoverButton: "Şehri göster",
       supportingText: "Ummah Flow'un ilk olarak nerede başlaması gerektiğine karar vermemize yardımcı olun.",
       searchPlaceholder: "Şehir ara…",
       statusLive: "Canlı",

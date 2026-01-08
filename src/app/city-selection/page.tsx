@@ -252,9 +252,6 @@ export default function CitySelectionPage() {
       });
     }
     
-    // Show confirmation toast
-    toast.success(t('waitlist.citySelection.confirmToast').replace('{{city}}', city.city_name));
-    
     // Try to update waitlist if email/token available (for future compatibility)
     if (email) {
       updateWaitlistCity(email, waitlistToken, city.city_name);
@@ -288,9 +285,6 @@ export default function CitySelectionPage() {
         waitlistToken: waitlistToken || undefined,
       });
     }
-    
-    // Show confirmation toast
-    toast.success(t('waitlist.citySelection.confirmToast').replace('{{city}}', cityName));
     
     // Try to update waitlist if email/token available
     if (email) {

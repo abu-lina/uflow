@@ -10,6 +10,7 @@ import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader'
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
+import { MobileGreetingHeader } from '@/components/shared/MobileGreetingHeader';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
@@ -21,9 +22,10 @@ import {
 
 interface ProvidersContentProps {
   defaultLocation?: string; // For Stage 2: render on root with city filter
+  showGreeting?: boolean; // Show greeting header instead of search bar and category filter
 }
 
-export function ProvidersContent({ defaultLocation }: ProvidersContentProps = {}) {
+export function ProvidersContent({ defaultLocation, showGreeting = false }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isLoading: userLoading } = useAuth();
@@ -247,17 +249,54 @@ export function ProvidersContent({ defaultLocation }: ProvidersContentProps = {}
   };
 
   return (
-    <div className="relative min-h-full">
-      <ProvidersPageHeader
-        onCategoryChange={handleCategoryChange}
-        onClearSearch={handleClearSearch}
-        onLocationChange={handleLocationChange}
-        onSearchSubmit={handleSearchSubmit}
-      />
+    <>
+      {showGreeting ? (
+        // Fixed greeting header for Stage 2 (matches ProvidersPageHeader style)
+        <header 
+          className="fixed left-0 right-0 top-0 z-50 sm:hidden"
+          style={{
+            // Smooth transition for all properties including backdrop-filter
+            transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+            // Glassy blur effect - always applied for consistent visual effect
+            background: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
+            isolation: 'isolate',
+            marginLeft: '-1px',
+            marginRight: '-1px',
+            paddingLeft: '1px',
+            paddingRight: '1px',
+          }}
+        >
+          <div 
+            className="px-6 py-4"
+            style={{
+              // Add safe area padding to content, not header background
+              // Use max() to ensure minimum 24px padding on devices without safe area (like iPhone SE)
+              paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
+            }}
+          >
+            <MobileGreetingHeader cityName={defaultLocation} />
+          </div>
+        </header>
+      ) : (
+        // Search bar and category filter header (fixed)
+        <ProvidersPageHeader
+          onCategoryChange={handleCategoryChange}
+          onClearSearch={handleClearSearch}
+          onLocationChange={handleLocationChange}
+          onSearchSubmit={handleSearchSubmit}
+        />
+      )}
 
-      <main className="mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden mobile-nav-spacing pt-32 sm:pt-8 md:pt-28">
+      <main className={`w-full mx-auto min-h-full max-w-screen-xl overflow-x-hidden mobile-nav-spacing ${
+        showGreeting 
+          ? 'pt-0 sm:pt-8 md:pt-28' // No top padding - CityCard pb-8 provides the gap, fixed header overlays
+          : 'pt-32 sm:pt-8 md:pt-28' // Full padding when fixed header is shown
+      }`}>
         {renderContent()}
       </main>
-    </div>
+    </>
   );
 }

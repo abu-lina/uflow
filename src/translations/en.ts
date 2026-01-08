@@ -642,7 +642,7 @@ export const en = {
       title: "Your City",
       subtitle: "Choose a city to discover Muslim providers in your area.",
       searchButton: "Search other city …",
-      discoverButton: "Discover Muslim providers",
+      discoverButton: "Show city",
       supportingText: "Help us decide where Ummah Flow should launch first.",
       searchPlaceholder: "Search city…",
       statusLive: "Live",

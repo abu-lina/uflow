@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
@@ -23,26 +23,41 @@ export default function RecommendPage() {
     setCreationMode('recommendation');
   }, [setCreationMode]);
 
-  // Get city from localStorage
-  const getInitialCity = () => {
+  // Memoize initial city to prevent re-computation on every render
+  const initialCity = useMemo(() => {
     if (typeof window === 'undefined') return '';
     return localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity') || '';
-  };
+  }, []);
 
-  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
-
-  const handleBack = () => {
+  // Memoize callbacks to prevent prop changes
+  const handleBack = useCallback(() => {
     router.push('/');
-  };
+  }, [router]);
 
-  const handleSuccess = () => {
-    router.push('/waitlist');
-  };
+  const handleSuccess = useCallback(() => {
+    // Redirect back to city overview after successful recommendation
+    const city = initialCity || 
+      (typeof window !== 'undefined' 
+        ? localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity')
+        : '');
+    
+    if (city) {
+      router.push(`/city/${encodeURIComponent(city)}`);
+    } else {
+      // Fallback to home if no city is available
+      router.push('/');
+    }
+  }, [router, initialCity]);
+
+  // Memoize title to prevent re-computation
+  const pageTitle = useMemo(() => t('create.recommend.title'), [t]);
+
+  const LayoutComponent = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   return (
-    <Layout>
+    <LayoutComponent>
       <PageHeader
-        title={t('create.recommend.title')}
+        title={pageTitle}
         variant="back-and-title"
         onBack={handleBack}
       />
@@ -55,11 +70,11 @@ export default function RecommendPage() {
         paddingX={isMobile ? 'px-6' : 'px-0'}
       >
         <StreamlinedRecommendForm
-          initialCity={getInitialCity()}
+          initialCity={initialCity}
           onSuccess={handleSuccess}
         />
       </PageContent>
-    </Layout>
+    </LayoutComponent>
   );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 
 export type ProviderCreationMode = 'owner' | 'recommendation';
 
@@ -188,8 +188,20 @@ export function FormProvider({ children }: FormProviderProps) {
     localStorage.removeItem('providerCreationMode');
   }, []);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      formData,
+      updateFormData,
+      clearFormData,
+      setCreationMode,
+      isLoading,
+    }),
+    [formData, updateFormData, clearFormData, setCreationMode, isLoading]
+  );
+
   return (
-    <FormContext.Provider value={{ formData, updateFormData, clearFormData, setCreationMode, isLoading }}>
+    <FormContext.Provider value={contextValue}>
       {children}
     </FormContext.Provider>
   );

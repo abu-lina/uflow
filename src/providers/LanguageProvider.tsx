@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { translations, type Language } from '@/translations';
 import { setCookie } from '@/utils/cookieUtils';
 
@@ -168,8 +168,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     });
   }, []);
 
-  // Translation function
-  const t = (key: string): string => {
+  // Translation function - memoized to prevent recreation on every render
+  const t = useCallback((key: string): string => {
     const keys = key.split('.');
     let value: unknown = translations[language];
 
@@ -185,10 +185,20 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
 
     return typeof value === 'string' ? value : key;
-  };
+  }, [language]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      language,
+      setLanguage,
+      t,
+    }),
+    [language, setLanguage, t]
+  );
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );

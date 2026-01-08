@@ -627,7 +627,7 @@ export const ar = {
       title: "مدينتك",
       subtitle: "اختر مدينة لاكتشاف مزودي الخدمات المسلمين في منطقتك.",
       searchButton: "البحث عن مدينة أخرى …",
-      discoverButton: "اكتشف مزودي الخدمات المسلمين",
+      discoverButton: "عرض المدينة",
       supportingText: "ساعدنا في تحديد أين يجب أن تنطلق أمة فلو أولاً.",
       searchPlaceholder: "ابحث عن مدينة…",
       statusLive: "مباشر",

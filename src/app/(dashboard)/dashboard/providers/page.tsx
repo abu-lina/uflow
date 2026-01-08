@@ -86,7 +86,15 @@ export default function AdminProvidersPage() {
         }),
       });
 
-      const responseData = await response.json() as { data?: unknown; error?: string };
+      const responseData = await response.json() as { 
+        data?: { 
+          provider_id?: string;
+          provider_name?: string;
+          review_status?: string;
+          review_feedback?: string | null;
+        }; 
+        error?: string 
+      };
 
       if (!response.ok) {
         // Revert optimistic update on error
@@ -102,6 +110,25 @@ export default function AdminProvidersPage() {
 
       // Refetch to ensure consistency
       await refetch();
+      
+      // Invalidate provider count cache when a provider is approved/rejected
+      // This ensures the city stage updates immediately
+      if (status === 'approved' || status === 'rejected') {
+        // Get the provider's city from the providers list before it's removed
+        const provider = providers.find(p => p.provider_id === providerId);
+        if (provider?.address_city) {
+          // #region agent log
+          console.log('[DEBUG] Invalidating provider-count cache', { city: provider.address_city, status });
+          fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard/providers/page.tsx:103',message:'Invalidating provider-count cache',data:{city:provider.address_city,status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+          // #endregion
+          queryClient.invalidateQueries({ queryKey: ['provider-count', provider.address_city] });
+        } else {
+          // If city not available, invalidate all provider-count queries
+          queryClient.invalidateQueries({ queryKey: ['provider-count'] });
+        }
+        // Also invalidate general provider queries
+        queryClient.invalidateQueries({ queryKey: ['providers'] });
+      }
     } catch (err) {
       // Revert optimistic update on error
       await refetch();

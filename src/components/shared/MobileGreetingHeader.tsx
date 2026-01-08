@@ -7,9 +7,10 @@ import { useLanguage } from '@/providers/LanguageProvider';
 
 interface MobileGreetingHeaderProps {
   className?: string;
+  cityName?: string; // Optional city name to include in the greeting
 }
 
-export function MobileGreetingHeader({ className = '' }: MobileGreetingHeaderProps) {
+export function MobileGreetingHeader({ className = '', cityName }: MobileGreetingHeaderProps) {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -28,12 +29,17 @@ export function MobileGreetingHeader({ className = '' }: MobileGreetingHeaderPro
   const firstName =
     user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
 
+  // Construct the support text with city name if provided
+  const supportText = cityName 
+    ? `in ${cityName}.`
+    : t('common.supportYourUmmah');
+
   const MotionDiv = hasAnimated ? 'div' : motion.div;
 
   return (
     <div className={`w-full ${className}`}>
       {/* Main Header with staggered animation */}
-      <div className="flex flex-col items-start pl-3">
+      <div className="flex flex-col items-center gap-0.5">
         <MotionDiv
           {...(!hasAnimated && {
             animate: { opacity: 1, x: 0 },
@@ -50,9 +56,9 @@ export function MobileGreetingHeader({ className = '' }: MobileGreetingHeaderPro
             initial: { opacity: 0, x: -20 },
             transition: { duration: 0.4, delay: 0.2 },
           })}
-          className="font-inter text-xl font-semibold leading-[140%] text-[#5B9DA0]"
+          className="font-inter text-3xl font-semibold leading-tight text-[#5B9DA0]"
         >
-          {t('common.supportYourUmmah')}
+          {supportText}
         </MotionDiv>
       </div>
     </div>

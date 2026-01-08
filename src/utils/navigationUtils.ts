@@ -179,13 +179,15 @@ export function hasCompletedOnboarding(): boolean {
  * @param isSplashVisible - Whether splash screen is visible
  * @param user - Current authenticated user (null for early access or guests)
  * @param isAppLaunched - Whether app is launched (Stage 3 - Full Access)
+ * @param stage - Current app stage ('stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading')
  * @returns True if mobile footer should be shown
  */
 export const shouldShowMobileFooter = (
   pathname: string,
   isSplashVisible: boolean,
   user: User | null,
-  isAppLaunched: boolean = false
+  isAppLaunched: boolean = false,
+  stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading'
 ): boolean => {
   // 1. HIGHEST PRIORITY: Check onboarding completion first
   // This ensures footer NEVER shows during onboarding, regardless of other flags
@@ -226,8 +228,9 @@ export const shouldShowMobileFooter = (
     return false;
   }
 
-  // 6. Stage 3 (Full Access): Show footer if app is launched
-  if (isAppLaunched) {
+  // 6. Stage 3 (Full Access): Show footer if app is launched OR stage is stage3 (provider count >= 15)
+  const isStage3 = isAppLaunched || stage === 'stage3';
+  if (isStage3) {
     return true;
   }
 
@@ -290,15 +293,18 @@ export const isProviderDetailPage = (pathname: string): boolean => {
  * @param pathname - Current pathname
  * @param isAppLaunched - Whether app is launched (Stage 3)
  * @param user - Current authenticated user
+ * @param stage - Current app stage ('stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading')
  * @returns True if CityEarlyAccessNavbar should be shown
  */
 export const shouldShowCityEarlyAccessNavbar = (
   pathname: string,
   isAppLaunched: boolean,
-  _user: User | null
+  _user: User | null,
+  stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading'
 ): boolean => {
-  // Never show in Stage 3 (Full Access)
-  if (isAppLaunched) {
+  // Never show in Stage 3 (Full Access) - either from isAppLaunched or provider count >= 15
+  const isStage3 = isAppLaunched || stage === 'stage3';
+  if (isStage3) {
     return false;
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
@@ -14,6 +14,7 @@ import { useSplash } from '@/providers/splash-provider';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getFeatureFlag } from '@/config/feature-flags';
+import { useAppStage } from '@/hooks/useAppStage';
 import { shouldShowMobileFooter, shouldShowCityEarlyAccessNavbar, shouldShowSubpageAction, getPageType } from '@/utils/navigationUtils';
 
 interface RootClientLayoutProps {
@@ -27,9 +28,18 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const { isSplashVisible } = useSplash();
   const { t } = useLanguage();
   const mainRef = useRef<HTMLElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Track when component has mounted to prevent hydration mismatches
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // Check feature flag synchronously on client-side (not in useEffect to avoid timing issues)
   const isAppLaunched = typeof window !== 'undefined' ? getFeatureFlag('isAppLaunched') : false;
+
+  // Get app stage to determine navigation (Stage 3 can be from isAppLaunched or provider count >= 15)
+  const { stage } = useAppStage();
 
   // Use utility functions for cleaner logic
   const pageType = getPageType(pathname);
@@ -37,8 +47,9 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   
   // Determine what UI elements should be shown
   // CRITICAL: This must be calculated on every render to catch state changes
-  const showMobileFooter = shouldShowMobileFooter(pathname, isSplashVisible, user, isAppLaunched);
-  const showCityEarlyAccessNavbar = shouldShowCityEarlyAccessNavbar(pathname, isAppLaunched, user);
+  const showMobileFooter = shouldShowMobileFooter(pathname, isSplashVisible, user, isAppLaunched, stage);
+  // Only calculate showCityEarlyAccessNavbar after mount to prevent hydration mismatch
+  const showCityEarlyAccessNavbar = isMounted && shouldShowCityEarlyAccessNavbar(pathname, isAppLaunched, user, stage);
   const showSubpageAction = shouldShowSubpageAction(pathname);
 
   return (
