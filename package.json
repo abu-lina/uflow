@@ -47,6 +47,7 @@
     "build:local": "export $(cat .env.local | xargs) && NODE_ENV=production next build",
     "refine-tasks-from-top-epic": "npx tsx scripts/refine-top-epic-tasks.ts",
     "remove-watermark": "tsx scripts/remove-lottie-watermark.ts",
+    "generate:providers": "npx tsx scripts/generate-fake-providers.ts",
     "perf:test": "bash tests/performance/run-tests.sh",
     "perf:baseline": "bash tests/performance/run-tests.sh baseline",
     "perf:load": "bash tests/performance/run-tests.sh load",
@@ -96,6 +97,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.0.0",
     "@eslint/js": "^9.25.1",
+    "@faker-js/faker": "^10.2.0",
     "@next/bundle-analyzer": "^16.0.0",
     "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/forms": "^0.5.10",

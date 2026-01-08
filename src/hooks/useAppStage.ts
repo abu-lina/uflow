@@ -18,70 +18,37 @@ export interface AppStageData {
 
 /**
  * Fetch provider count for a specific city
+ * Uses case-insensitive matching to handle city name variations
  */
 async function fetchProviderCount(cityName: string): Promise<number> {
-  // #region agent log
-  console.log('[DEBUG] fetchProviderCount called', { cityName });
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAppStage.ts:22',message:'fetchProviderCount called',data:{cityName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
+  // Normalize city name: trim whitespace
+  const normalizedCityName = cityName.trim();
   
-  // Debug: Check what providers exist for this city
-  const { data: allProviders, error: debugError } = await supabase
-    .from('providers')
-    .select('provider_id, provider_name, address_city, review_status')
-    .eq('address_city', cityName);
-  
-  // #region agent log
-  const providerStatuses = allProviders?.map(p => ({ 
-    id: p.provider_id, 
-    name: p.provider_name, 
-    status: p.review_status,
-    city: p.address_city 
-  })) || [];
-  const approvedCount = providerStatuses.filter(p => p.status === 'approved').length;
-  const pendingCount = providerStatuses.filter(p => p.status === 'pending').length;
-  console.log('[DEBUG] All providers for city', { 
-    cityName, 
-    totalProviders: allProviders?.length,
-    approvedCount,
-    pendingCount,
-    providers: providerStatuses,
-    debugError: debugError?.message 
+  // Use RPC function for case-insensitive exact matching
+  const { data, error } = await supabase.rpc('get_provider_count_by_city', {
+    city_name: normalizedCityName,
   });
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAppStage.ts:26',message:'All providers for city',data:{cityName,totalProviders:allProviders?.length,approvedCount,pendingCount,providers:providerStatuses,debugError:debugError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-  
-  // Also fetch approved providers separately to debug
-  const { data: approvedProviders, error: approvedError } = await supabase
-    .from('providers')
-    .select('provider_id, provider_name, address_city, review_status')
-    .eq('review_status', 'approved')
-    .eq('address_city', cityName);
-  
-  const { count, error } = await supabase
-    .from('providers')
-    .select('*', { count: 'exact', head: true })
-    .eq('review_status', 'approved')
-    .eq('address_city', cityName);
-
-  // #region agent log
-  console.log('[DEBUG] fetchProviderCount result', { 
-    cityName, 
-    count, 
-    approvedProvidersCount: approvedProviders?.length,
-    approvedProviders: approvedProviders?.map(p => ({ id: p.provider_id, name: p.provider_name, city: p.address_city, status: p.review_status })),
-    error: error?.message,
-    approvedError: approvedError?.message
-  });
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAppStage.ts:50',message:'fetchProviderCount result',data:{cityName,count,approvedProvidersCount:approvedProviders?.length,approvedProviders:approvedProviders?.map(p=>({id:p.provider_id,name:p.provider_name,city:p.address_city,status:p.review_status})),error:error?.message,approvedError:approvedError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
 
   if (error) {
     console.error('[useAppStage] Error fetching provider count:', error);
-    throw error;
+    // Fallback to direct query if RPC fails
+    const { count: fallbackCount, error: fallbackError } = await supabase
+      .from('providers')
+      .select('*', { count: 'exact', head: true })
+      .eq('review_status', 'approved')
+      .eq('address_city', normalizedCityName);
+    
+    if (fallbackError) {
+      throw fallbackError;
+    }
+    
+    console.log(`[useAppStage] Provider count for "${normalizedCityName}" (fallback): ${fallbackCount ?? 0}`);
+    return fallbackCount ?? 0;
   }
 
-  return count ?? 0;
+  const count = typeof data === 'number' ? data : 0;
+  console.log(`[useAppStage] Provider count for "${normalizedCityName}": ${count}`);
+  return count;
 }
 
 /**
@@ -122,10 +89,6 @@ export function useAppStage(): AppStageData {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const selectedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
-      // #region agent log
-      console.log('[DEBUG] City name from storage', { selectedCity });
-      fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAppStage.ts:72',message:'City name from storage',data:{selectedCity},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       setCityName(selectedCity || undefined);
     }
   }, []);
@@ -141,7 +104,7 @@ export function useAppStage(): AppStageData {
       return fetchProviderCount(cityName);
     },
     enabled: !!cityName && !isAppLaunched,
-    staleTime: process.env.NODE_ENV === 'development' ? 30 * 1000 : 5 * 60 * 1000, // 30 seconds in dev, 5 minutes in prod
+    staleTime: process.env.NODE_ENV === 'development' ? 10 * 1000 : 2 * 60 * 1000, // 10 seconds in dev, 2 minutes in prod
     retry: 1,
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     refetchOnMount: true, // Refetch when component mounts
@@ -188,11 +151,6 @@ export function useAppStage(): AppStageData {
 
     // Determine Stage 1, Stage 2, or Stage 3 based on provider count
     if (providerCount !== undefined) {
-      const newStage = providerCount < 6 ? 'stage1' : providerCount < 15 ? 'stage2' : 'stage3';
-      // #region agent log
-      console.log('[DEBUG] Stage calculation', { providerCount, cityName, calculatedStage: newStage, currentStage: stage, willChange: newStage !== stage });
-      fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useAppStage.ts:134',message:'Stage calculation',data:{providerCount,cityName,calculatedStage:newStage,currentStage:stage,willChange:newStage !== stage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       if (providerCount < 6) {
         setStage('stage1');
       } else if (providerCount < 15) {

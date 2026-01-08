@@ -134,7 +134,7 @@ export function CategoryGallerySection() {
         initial: { opacity: 0, y: 20 },
         transition: { duration: 0.8, ease: 'easeOut' },
       })}
-      className="w-full pb-20 pt-4 lg:hidden"
+      className="w-full pb-20 pt-0 lg:hidden"
     >
       <div className="flex flex-col gap-6">
         {sortedCategories.map((category) => {

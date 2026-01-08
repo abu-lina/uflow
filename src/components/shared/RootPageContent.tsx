@@ -7,6 +7,7 @@ import { useAppStage } from '@/hooks/useAppStage';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
 import { Stage2Content } from './Stage2Content';
 import { CategoryGallerySection } from './CategoryGallerySection';
+import { MobileGreetingHeader } from './MobileGreetingHeader';
 import { AboutSection } from './AboutSection';
 import { DesktopWaitlistSection } from './DesktopWaitlistSection';
 import { ExploreSection } from './ExploreSection';
@@ -37,11 +38,6 @@ export function RootPageContent() {
   
   // Get app stage to determine which content to show
   const { stage, cityName, isLoading: stageLoading } = useAppStage();
-  
-  // #region agent log
-  console.log('[DEBUG] RootPageContent component render', { stage, cityName, stageLoading, shouldShowCityContent, selectedCity, isRecovering });
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RootPageContent.tsx:39',message:'RootPageContent component render',data:{stage,cityName,stageLoading,shouldShowCityContent,selectedCity,isRecovering},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-  // #endregion
 
   useEffect(() => {
     // Check if waitlist should be skipped
@@ -123,17 +119,8 @@ export function RootPageContent() {
     setShouldShowCityContent(hasCompletedOnboarding);
   }, []);
 
-  // #region agent log
-  console.log('[DEBUG] RootPageContent render check', { shouldShowCityContent, selectedCity, isRecovering, stageLoading, stage, cityName, willShowStageContent: shouldShowCityContent && selectedCity });
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RootPageContent.tsx:122',message:'RootPageContent render check',data:{shouldShowCityContent,selectedCity,isRecovering,stageLoading,stage,cityName,willShowStageContent:shouldShowCityContent && selectedCity},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-  // #endregion
-
   // Wait for client-side check or recovery to complete
   if (shouldShowCityContent === null || isRecovering || stageLoading) {
-    // #region agent log
-    console.log('[DEBUG] RootPageContent early return', { shouldShowCityContent, isRecovering, stageLoading, stage, cityName });
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RootPageContent.tsx:132',message:'RootPageContent early return',data:{shouldShowCityContent,isRecovering,stageLoading,stage,cityName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-    // #endregion
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -146,10 +133,6 @@ export function RootPageContent() {
 
   // Show stage-based content if user has completed onboarding (early access + city selected)
   if (shouldShowCityContent && selectedCity) {
-    // #region agent log
-    console.log('[DEBUG] RootPageContent will render stage content', { stage, shouldShowCityContent, selectedCity, cityName });
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RootPageContent.tsx:144',message:'RootPageContent will render stage content',data:{stage,shouldShowCityContent,selectedCity,cityName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-    // #endregion
     // Handle receive updates subscription
     const handleReceiveUpdates = async () => {
       try {
@@ -191,11 +174,6 @@ export function RootPageContent() {
     // Use cityName from useAppStage hook (more reliable than selectedCity state)
     const displayCity = cityName || selectedCity;
 
-    // #region agent log
-    console.log('[DEBUG] RootPageContent render', { stage, cityName, selectedCity, displayCity });
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RootPageContent.tsx:174',message:'RootPageContent render',data:{stage,cityName,selectedCity,displayCity},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
-
     // Stage 1: Early Access Empty State (0-5 providers)
     if (stage === 'stage1' && displayCity) {
       return (
@@ -214,8 +192,41 @@ export function RootPageContent() {
     // Stage 3: Category Gallery (15+ providers or isAppLaunched)
     if (stage === 'stage3') {
       return (
-        <div className="min-h-screen w-full bg-uflow-light">
-          <div className="pt-safe-top">
+        <div className="flex min-h-screen w-full flex-col bg-uflow-light">
+          {/* Greeting Header - Fixed at top (matches Stage 2 style) */}
+          <header 
+            className="fixed left-0 right-0 top-0 z-50 sm:hidden"
+            style={{
+              // Smooth transition for all properties including backdrop-filter
+              transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+              // Glassy blur effect - always applied for consistent visual effect
+              background: 'rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
+              isolation: 'isolate',
+              marginLeft: '-1px',
+              marginRight: '-1px',
+              paddingLeft: '1px',
+              paddingRight: '1px',
+            }}
+          >
+            <div 
+              className="px-6 py-4 text-left"
+              style={{
+                // Add safe area padding to content, not header background
+                // Use max() to ensure minimum 24px padding on devices without safe area (like iPhone SE)
+                paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
+              }}
+            >
+              <div className="max-w-72">
+                <MobileGreetingHeader cityName={displayCity} />
+              </div>
+            </div>
+          </header>
+
+          {/* Category Gallery - Below header with proper spacing */}
+          <div className="w-full pt-[calc(env(safe-area-inset-top)+80px+32px)] px-6">
             <CategoryGallerySection />
           </div>
         </div>

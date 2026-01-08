@@ -189,27 +189,63 @@ export const shouldShowMobileFooter = (
   isAppLaunched: boolean = false,
   stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading'
 ): boolean => {
-  // 1. HIGHEST PRIORITY: Check onboarding completion first
-  // This ensures footer NEVER shows during onboarding, regardless of other flags
+  // 1. Stage 3 (Full Access): Show footer if app is launched OR stage is stage3 (provider count >= 15)
+  // This bypasses onboarding check since Stage 3 means full access
+  const isStage3 = isAppLaunched || stage === 'stage3';
+  if (isStage3) {
+    // For Stage 3, only check excluded pages (splash should not block footer in Stage 3)
+    // Note: Splash screen check removed for Stage 3 since it's full access
+    
+    // Check excluded pages (pages that never show footer)
+    const footerExcludedPages = ['/signup/check-email', '/waitlist'];
+    if (footerExcludedPages.includes(pathname)) {
+      return false;
+    }
+
+    // Check excluded patterns (page patterns that never show footer)
+    const footerExcludedPatterns = [
+      '/providers/',
+      '/community-services/',
+      '/profile/providers/',
+      '/create/media/images',
+      '/create/media/social',
+      '/profile/edit',
+      '/profile/delete',
+    ];
+    if (footerExcludedPatterns.some(pattern => pathname.includes(pattern))) {
+      return false;
+    }
+
+    // Hide footer for create subpages (action menu will be shown instead)
+    if (pathname.startsWith('/create') && pathname !== '/create') {
+      return false;
+    }
+
+    // Stage 3: Show footer (full access)
+    return true;
+  }
+
+  // 2. For Stages 1 & 2: Check onboarding completion
+  // This ensures footer NEVER shows during onboarding for early access stages
   const onboardingComplete = hasCompletedOnboarding();
   
   if (!onboardingComplete) {
-    // Hide footer if onboarding is not complete, no matter what
+    // Hide footer if onboarding is not complete for early access stages
     return false;
   }
 
-  // 2. Hide footer when splash is visible (even for returning users)
+  // 3. Hide footer when splash is visible (even for returning users)
   if (isSplashVisible) {
     return false;
   }
 
-  // 3. Check excluded pages (pages that never show footer)
+  // 4. Check excluded pages (pages that never show footer)
   const footerExcludedPages = ['/signup/check-email', '/waitlist'];
   if (footerExcludedPages.includes(pathname)) {
     return false;
   }
 
-  // 4. Check excluded patterns (page patterns that never show footer)
+  // 5. Check excluded patterns (page patterns that never show footer)
   const footerExcludedPatterns = [
     '/providers/',
     '/community-services/',
@@ -223,15 +259,9 @@ export const shouldShowMobileFooter = (
     return false;
   }
 
-  // 5. Hide footer for create subpages (action menu will be shown instead)
+  // 6. Hide footer for create subpages (action menu will be shown instead)
   if (pathname.startsWith('/create') && pathname !== '/create') {
     return false;
-  }
-
-  // 6. Stage 3 (Full Access): Show footer if app is launched OR stage is stage3 (provider count >= 15)
-  const isStage3 = isAppLaunched || stage === 'stage3';
-  if (isStage3) {
-    return true;
   }
 
   // 7. Stages 1 & 2 (Early Access): Hide footer (CityEarlyAccessNavbar will be shown instead)

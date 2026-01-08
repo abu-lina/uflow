@@ -52,6 +52,20 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const showCityEarlyAccessNavbar = isMounted && shouldShowCityEarlyAccessNavbar(pathname, isAppLaunched, user, stage);
   const showSubpageAction = shouldShowSubpageAction(pathname);
 
+  // Debug logging for footer visibility (development only)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      console.log('[RootClientLayout] Footer Debug:', {
+        pathname,
+        isSplashVisible,
+        isAppLaunched,
+        stage,
+        showMobileFooter,
+        user: user ? 'authenticated' : 'not authenticated',
+      });
+    }
+  }, [pathname, isSplashVisible, isAppLaunched, stage, showMobileFooter, user]);
+
   return (
     <LoadingProvider>
       <div className="page-background relative flex h-screen-fix flex-col">
@@ -83,7 +97,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         
         {/* Mobile Footer - Stage 3 (Full Access) */}
         {showMobileFooter && (
-          <div className="block md:hidden">
+          <div className="block md:hidden" data-testid="mobile-footer-bar">
             <MobileFooterBar />
           </div>
         )}
