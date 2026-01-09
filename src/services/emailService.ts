@@ -18,25 +18,25 @@ const getResendClient = () => {
 const templates = {
   confirmSignup: {
     en: {
-      subject: 'Welcome to UmmahFlow! Please confirm your email',
+      subject: 'Welcome to Ummah Flow! Please confirm your email',
       html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Welcome to UmmahFlow</title>
+  <title>Welcome to Ummah Flow</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Connecting Community Services</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
     <div style="padding: 40px 32px;">
-      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Welcome to UmmahFlow!</h2>
+      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Welcome to Ummah Flow!</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
         Thank you for joining our community! We're excited to help you connect with local services and providers.
@@ -54,7 +54,7 @@ const templates = {
       </div>
       
       <p style="margin: 32px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
-        If you didn't create an account with UmmahFlow, you can safely ignore this email.
+        If you didn't create an account with Ummah Flow, you can safely ignore this email.
       </p>
     </div>
     
@@ -62,7 +62,7 @@ const templates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Best regards,<br>
-        <strong style="color: #232323;">The UmmahFlow Team</strong>
+        <strong style="color: #232323;">The Ummah Flow Team</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
@@ -73,25 +73,25 @@ const templates = {
 </html>`
     },
     de: {
-      subject: 'Willkommen bei UmmahFlow! Bitte bestätigen Sie Ihre E-Mail',
+      subject: 'Willkommen bei Ummah Flow! Bitte bestätigen Sie Ihre E-Mail',
       html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Willkommen bei UmmahFlow</title>
+  <title>Willkommen bei Ummah Flow</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Community-Services verbinden</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
     <div style="padding: 40px 32px;">
-      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Willkommen bei UmmahFlow!</h2>
+      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Willkommen bei Ummah Flow!</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
         Vielen Dank, dass Sie unserer Community beigetreten sind! Wir freuen uns, Ihnen dabei zu helfen, sich mit lokalen Dienstleistern und Anbietern zu vernetzen.
@@ -109,7 +109,7 @@ const templates = {
       </div>
       
       <p style="margin: 32px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
-        Falls Sie kein Konto bei UmmahFlow erstellt haben, können Sie diese E-Mail ignorieren.
+        Falls Sie kein Konto bei Ummah Flow erstellt haben, können Sie diese E-Mail ignorieren.
       </p>
     </div>
     
@@ -117,7 +117,7 @@ const templates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Mit freundlichen Grüßen,<br>
-        <strong style="color: #232323;">Das UmmahFlow Team</strong>
+        <strong style="color: #232323;">Das Ummah Flow Team</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
@@ -130,20 +130,20 @@ const templates = {
   },
   resetPassword: {
     en: {
-      subject: 'Reset your UmmahFlow password',
+      subject: 'Reset your Ummah Flow password',
       html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Reset Your Password - UmmahFlow</title>
+  <title>Reset Your Password - Ummah Flow</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Connecting Community Services</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -151,7 +151,7 @@ const templates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Reset Your Password</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        We received a request to reset your password for your UmmahFlow account.
+        We received a request to reset your password for your Ummah Flow account.
       </p>
       
       <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #555555;">
@@ -178,7 +178,7 @@ const templates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Best regards,<br>
-        <strong style="color: #232323;">The UmmahFlow Team</strong>
+        <strong style="color: #232323;">The Ummah Flow Team</strong>
       </p>
     </div>
   </div>
@@ -186,20 +186,20 @@ const templates = {
 </html>`
     },
     de: {
-      subject: 'UmmahFlow-Passwort zurücksetzen',
+      subject: 'Ummah Flow-Passwort zurücksetzen',
       html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Passwort zurücksetzen - UmmahFlow</title>
+  <title>Passwort zurücksetzen - Ummah Flow</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Community-Services verbinden</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -207,7 +207,7 @@ const templates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Passwort zurücksetzen</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        Wir haben eine Anfrage zum Zurücksetzen Ihres UmmahFlow-Passworts erhalten.
+        Wir haben eine Anfrage zum Zurücksetzen Ihres Ummah Flow-Passworts erhalten.
       </p>
       
       <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #555555;">
@@ -234,7 +234,7 @@ const templates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Mit freundlichen Grüßen,<br>
-        <strong style="color: #232323;">Das UmmahFlow Team</strong>
+        <strong style="color: #232323;">Das Ummah Flow Team</strong>
       </p>
     </div>
   </div>
@@ -244,20 +244,20 @@ const templates = {
   },
   magicLink: {
     en: {
-      subject: 'Sign in to UmmahFlow',
+      subject: 'Sign in to Ummah Flow',
       html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Sign in to UmmahFlow</title>
+  <title>Sign in to Ummah Flow</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Connecting Community Services</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -265,13 +265,13 @@ const templates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Sign in to your account</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        Click the button below to sign in to your UmmahFlow account. No password required.
+        Click the button below to sign in to your Ummah Flow account. No password required.
       </p>
       
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
         <a href="{{CONFIRMATION_URL}}" style="display: inline-block; padding: 16px 32px; background: #589D96; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em;">
-          Sign in to UmmahFlow
+          Sign in to Ummah Flow
         </a>
       </div>
       
@@ -288,7 +288,7 @@ const templates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Best regards,<br>
-        <strong style="color: #232323;">The UmmahFlow Team</strong>
+        <strong style="color: #232323;">The Ummah Flow Team</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
@@ -299,20 +299,20 @@ const templates = {
 </html>`
     },
     de: {
-      subject: 'Bei UmmahFlow anmelden',
+      subject: 'Bei Ummah Flow anmelden',
       html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Bei UmmahFlow anmelden</title>
+  <title>Bei Ummah Flow anmelden</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Community-Services verbinden</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -320,13 +320,13 @@ const templates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Bei Ihrem Konto anmelden</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        Klicken Sie auf die Schaltfläche unten, um sich bei Ihrem UmmahFlow-Konto anzumelden. Kein Passwort erforderlich.
+        Klicken Sie auf die Schaltfläche unten, um sich bei Ihrem Ummah Flow-Konto anzumelden. Kein Passwort erforderlich.
       </p>
       
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
         <a href="{{CONFIRMATION_URL}}" style="display: inline-block; padding: 16px 32px; background: #589D96; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em;">
-          Bei UmmahFlow anmelden
+          Bei Ummah Flow anmelden
         </a>
       </div>
       
@@ -343,7 +343,7 @@ const templates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Mit freundlichen Grüßen,<br>
-        <strong style="color: #232323;">Das UmmahFlow Team</strong>
+        <strong style="color: #232323;">Das Ummah Flow Team</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
@@ -354,20 +354,20 @@ const templates = {
 </html>`
     },
     ar: {
-      subject: 'تسجيل الدخول إلى UmmahFlow',
+      subject: 'تسجيل الدخول إلى Ummah Flow',
       html: `<!DOCTYPE html>
 <html dir="rtl">
 <head>
   <meta charset="utf-8">
-  <title>تسجيل الدخول إلى UmmahFlow</title>
+  <title>تسجيل الدخول إلى Ummah Flow</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">ربط خدمات المجتمع</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -375,13 +375,13 @@ const templates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">تسجيل الدخول إلى حسابك</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        انقر على الزر أدناه لتسجيل الدخول إلى حسابك في UmmahFlow. لا حاجة لكلمة مرور.
+        انقر على الزر أدناه لتسجيل الدخول إلى حسابك في Ummah Flow. لا حاجة لكلمة مرور.
       </p>
       
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
         <a href="{{CONFIRMATION_URL}}" style="display: inline-block; padding: 16px 32px; background: #589D96; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em;">
-          تسجيل الدخول إلى UmmahFlow
+          تسجيل الدخول إلى Ummah Flow
         </a>
       </div>
       
@@ -398,7 +398,7 @@ const templates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         مع أطيب التحيات،<br>
-        <strong style="color: #232323;">فريق UmmahFlow</strong>
+        <strong style="color: #232323;">فريق Ummah Flow</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
@@ -409,20 +409,20 @@ const templates = {
 </html>`
     },
     tr: {
-      subject: "UmmahFlow'a giriş yapın",
+      subject: "Ummah Flow'a giriş yapın",
       html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>UmmahFlow'a giriş yapın</title>
+  <title>Ummah Flow'a giriş yapın</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Topluluk Hizmetlerini Bağlamak</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -430,13 +430,13 @@ const templates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Hesabınıza giriş yapın</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        UmmahFlow hesabınıza giriş yapmak için aşağıdaki düğmeye tıklayın. Şifre gerekmez.
+        Ummah Flow hesabınıza giriş yapmak için aşağıdaki düğmeye tıklayın. Şifre gerekmez.
       </p>
       
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
         <a href="{{CONFIRMATION_URL}}" style="display: inline-block; padding: 16px 32px; background: #589D96; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em;">
-          UmmahFlow'a giriş yapın
+          Ummah Flow'a giriş yapın
         </a>
       </div>
       
@@ -453,7 +453,7 @@ const templates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Saygılarımızla,<br>
-        <strong style="color: #232323;">UmmahFlow Ekibi</strong>
+        <strong style="color: #232323;">Ummah Flow Ekibi</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>

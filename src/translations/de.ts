@@ -209,7 +209,7 @@ export const de = {
       step1Title: "Basics",
       step2Title: "Kontakt",
       contactTitle: "Kontakt zum Anbieter",
-      contactDescription: "Bitte wähle mindestens eine Kontaktmethode aus, im Anschluss kannst du dann den jeweiligen Kontakt eintragen - inshaAllah.",
+      contactDescription: "Wähle mindestens eine Kontaktmethode aus, um die Details einzutragen.",
       step2Description: "Gib mindestens eine Kontaktmöglichkeit an.",
       providerName: "Anbietername",
       providerNamePlaceholder: "Name des Anbieters eingeben",

@@ -209,7 +209,7 @@ export const en = {
       step1Title: "Basic Information",
       step2Title: "Contact",
       contactTitle: "Provider Contact",
-      contactDescription: "Please select at least one contact method, then you can enter the respective contact information - inshaAllah.",
+      contactDescription: "Select at least one contact method to add its details.",
       step2Description: "Provide at least one contact method.",
       providerName: "Provider Name",
       providerNamePlaceholder: "Enter provider name",

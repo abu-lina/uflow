@@ -22,15 +22,15 @@ const waitlistTemplates = {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>You're on the UmmahFlow Waitlist!</title>
+  <title>You're on the Ummah Flow Waitlist!</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Connecting Community Services</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -38,7 +38,7 @@ const waitlistTemplates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">You're on the list!</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        Thank you for joining the UmmahFlow waitlist as a <strong>service provider</strong>! We're excited to help you connect with community members looking for services like yours.
+        Thank you for joining the Ummah Flow waitlist as a <strong>service provider</strong>! We're excited to help you connect with community members looking for services like yours.
       </p>
       
       <div style="background: #F5F5F5; border-left: 4px solid #589D96; padding: 16px 20px; margin: 24px 0; border-radius: 8px;">
@@ -49,7 +49,7 @@ const waitlistTemplates = {
       </div>
       
       <p style="margin: 24px 0 0 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        In the meantime, feel free to share UmmahFlow with others who might benefit from our platform.
+        In the meantime, feel free to share Ummah Flow with others who might benefit from our platform.
       </p>
     </div>
     
@@ -57,7 +57,7 @@ const waitlistTemplates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Best regards,<br>
-        <strong style="color: #232323;">The UmmahFlow Team</strong>
+        <strong style="color: #232323;">The Ummah Flow Team</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
@@ -73,15 +73,15 @@ const waitlistTemplates = {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>You're on the UmmahFlow Waitlist!</title>
+  <title>You're on the Ummah Flow Waitlist!</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Connecting Community Services</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -89,7 +89,7 @@ const waitlistTemplates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">You're on the list!</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        Thank you for joining the UmmahFlow waitlist! We're building a platform to help you discover and connect with community services.
+        Thank you for joining the Ummah Flow waitlist! We're building a platform to help you discover and connect with community services.
       </p>
       
       <div style="background: #F5F5F5; border-left: 4px solid #589D96; padding: 16px 20px; margin: 24px 0; border-radius: 8px;">
@@ -100,7 +100,7 @@ const waitlistTemplates = {
       </div>
       
       <p style="margin: 24px 0 0 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        In the meantime, feel free to share UmmahFlow with friends and family who might benefit from connecting with community services.
+        In the meantime, feel free to share Ummah Flow with friends and family who might benefit from connecting with community services.
       </p>
     </div>
     
@@ -108,7 +108,7 @@ const waitlistTemplates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Best regards,<br>
-        <strong style="color: #232323;">The UmmahFlow Team</strong>
+        <strong style="color: #232323;">The Ummah Flow Team</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
@@ -124,15 +124,15 @@ const waitlistTemplates = {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>You're on the UmmahFlow Waitlist!</title>
+  <title>You're on the Ummah Flow Waitlist!</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
   <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
     
     <!-- Header -->
     <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
-      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
-      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Connecting Community Services</p>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">Ummah Flow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Von Muslimen für Muslime.</p>
     </div>
     
     <!-- Content -->
@@ -140,7 +140,7 @@ const waitlistTemplates = {
       <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">You're on the list!</h2>
       
       <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        Thank you for joining the UmmahFlow waitlist! We're building a platform to connect community services and those who need them.
+        Thank you for joining the Ummah Flow waitlist! We're building a platform to connect community services and those who need them.
       </p>
       
       <div style="background: #F5F5F5; border-left: 4px solid #589D96; padding: 16px 20px; margin: 24px 0; border-radius: 8px;">
@@ -151,7 +151,7 @@ const waitlistTemplates = {
       </div>
       
       <p style="margin: 24px 0 0 0; font-size: 16px; line-height: 1.6; color: #555555;">
-        In the meantime, feel free to share UmmahFlow with others who might benefit from our platform.
+        In the meantime, feel free to share Ummah Flow with others who might benefit from our platform.
       </p>
     </div>
     
@@ -159,7 +159,7 @@ const waitlistTemplates = {
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
         Best regards,<br>
-        <strong style="color: #232323;">The UmmahFlow Team</strong>
+        <strong style="color: #232323;">The Ummah Flow Team</strong>
       </p>
       <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
         <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>

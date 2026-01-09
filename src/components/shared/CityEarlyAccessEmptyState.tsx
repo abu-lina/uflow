@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
@@ -8,7 +7,6 @@ import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 interface CityEarlyAccessEmptyStateProps {
   cityName: string;
@@ -33,11 +31,10 @@ export function CityEarlyAccessEmptyState({
   cityName,
   country: _country,
   onSuggestProvider,
-  onReceiveUpdates,
+  onReceiveUpdates: _onReceiveUpdates,
 }: CityEarlyAccessEmptyStateProps) {
   const { t } = useLanguage();
   const router = useRouter();
-  const [isSubscribing, setIsSubscribing] = useState(false);
 
   // Detect reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined' && 
@@ -57,21 +54,22 @@ export function CityEarlyAccessEmptyState({
     }
   };
 
-  // Handle receive updates subscription
-  const handleReceiveUpdates = async () => {
-    if (onReceiveUpdates) {
-      setIsSubscribing(true);
-      try {
-        await onReceiveUpdates();
-        toast.success(t('waitlist.cityEarlyAccess.subscribeSuccess').replace('{{city}}', cityName));
-      } catch (error) {
-        console.error('[City Early Access] Failed to subscribe:', error);
-        toast.error(t('waitlist.cityEarlyAccess.subscribeError'));
-      } finally {
-        setIsSubscribing(false);
-      }
-    }
-  };
+  // TODO: Implement handleReceiveUpdates when receive updates button is enabled
+  // const handleReceiveUpdates = async () => {
+  //   const [isSubscribing, setIsSubscribing] = useState(false);
+  //   if (onReceiveUpdates) {
+  //     setIsSubscribing(true);
+  //     try {
+  //       await onReceiveUpdates();
+  //       toast.success(t('waitlist.cityEarlyAccess.subscribeSuccess').replace('{{city}}', cityName));
+  //     } catch (error) {
+  //       console.error('[City Early Access] Failed to subscribe:', error);
+  //       toast.error(t('waitlist.cityEarlyAccess.subscribeError'));
+  //     } finally {
+  //       setIsSubscribing(false);
+  //     }
+  //   }
+  // };
 
   return (
     <div className="flex h-screen w-full flex-col items-center bg-uflow-light">
@@ -181,7 +179,8 @@ export function CityEarlyAccessEmptyState({
               {t('waitlist.cityEarlyAccess.suggestProvider')}
             </Button>
 
-            {/* Secondary CTA: Receive Updates */}
+            {/* Secondary CTA: Receive Updates - Temporarily hidden until functionality is implemented */}
+            {/* TODO: Uncomment when handleReceiveUpdates is implemented
             <Button
               fullWidth
               aria-label={t('waitlist.cityEarlyAccess.receiveUpdates').replace('{{city}}', cityName)}
@@ -192,6 +191,7 @@ export function CityEarlyAccessEmptyState({
             >
               {t('waitlist.cityEarlyAccess.receiveUpdates').replace('{{city}}', cityName)}
             </Button>
+            */}
           </motion.div>
         </motion.div>
       </main>
