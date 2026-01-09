@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface MapIllustrationProps {
@@ -15,10 +16,12 @@ interface MapIllustrationProps {
  */
 export function MapIllustration({ className = '' }: MapIllustrationProps) {
   return (
-    <img
+    <Image
       alt="Map illustration showing halal and non-halal locations"
       className={cn('w-full h-full object-contain rounded-3xl', className)}
+      height={400}
       src="/images/maps-problem.png"
+      width={400}
     />
   );
 }

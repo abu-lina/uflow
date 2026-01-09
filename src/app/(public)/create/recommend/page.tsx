@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
@@ -14,9 +14,13 @@ import { cn } from '@/lib/utils';
 
 export default function RecommendPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setCreationMode } = useFormData();
   const { t } = useLanguage();
   const isMobile = useIsSmallMobile();
+  
+  // Check if success screen should be shown from URL
+  const showSuccessScreen = searchParams.get('success') === 'true';
 
   // Set creation mode to recommendation on mount
   useEffect(() => {
@@ -56,11 +60,13 @@ export default function RecommendPage() {
 
   return (
     <LayoutComponent>
-      <PageHeader
-        title={pageTitle}
-        variant="back-and-title"
-        onBack={handleBack}
-      />
+      {!showSuccessScreen && (
+        <PageHeader
+          title={pageTitle}
+          variant="back-and-title"
+          onBack={handleBack}
+        />
+      )}
 
       <PageContent
         className={cn(

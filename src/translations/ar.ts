@@ -2,6 +2,7 @@ export const ar = {
   common: {
     greeting: "السلام عليكم",
     supportYourUmmah: "ادعم أمتك.",
+    supportYourUmmahInCity: "ادعم أمتك في {{city}}.",
     welcome: "أهلاً وسهلاً",
     loading: "جاري التحميل...",
     error: "خطأ",
@@ -126,7 +127,9 @@ export const ar = {
     english: "الإنجليزية",
     german: "الألمانية",
     arabic: "العربية",
-    turkish: "التركية"
+    turkish: "التركية",
+    urdu: "الأردية",
+    pashtu: "البشتوية"
   },
   search: {
     placeholder: "ابحث في أمتك",
@@ -225,7 +228,11 @@ export const ar = {
       categoryRequired: "يرجى اختيار فئة",
       offersRequired: "يرجى اختيار عرض واحد على الأقل",
       cityRequired: "يرجى إدخال مدينة",
-      contactRequired: "يرجى تقديم طريقة اتصال واحدة على الأقل (البريد الإلكتروني، الهاتف، الموقع الإلكتروني أو إنستغرام)"
+      contactRequired: "يرجى تقديم طريقة اتصال واحدة على الأقل (البريد الإلكتروني، الهاتف، الموقع الإلكتروني أو إنستغرام)",
+      successTitle: "بارك الله فيك",
+      successDescription: "اقتراحك يساعد في جعل المزودين المسلمين مرئيين في مدينتك.",
+      recommendAnother: "التوصية بمزود آخر",
+      backToOverview: "العودة إلى النظرة العامة"
     },
     basics: {
       title: "إنشاء عرض",

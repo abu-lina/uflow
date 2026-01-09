@@ -2,6 +2,7 @@ export const de = {
   common: {
     greeting: "As-Salamu-Aleikum",
     supportYourUmmah: "Unterstütze Deine Ummah.",
+    supportYourUmmahInCity: "Unterstütze Deine Ummah in {{city}}.",
     welcome: "Willkommen",
     loading: "Lädt...",
     error: "Fehler",
@@ -128,7 +129,9 @@ export const de = {
     english: "Englisch",
     german: "Deutsch",
     arabic: "Arabisch",
-    turkish: "Türkisch"
+    turkish: "Türkisch",
+    urdu: "Urdu",
+    pashtu: "Paschtu"
   },
   search: {
     placeholder: "In deiner Ummah suchen",
@@ -239,7 +242,11 @@ export const de = {
       categoryRequired: "Bitte wähle eine Kategorie aus",
       offersRequired: "Bitte wähle mindestens ein Angebot aus",
       cityRequired: "Bitte gib eine Stadt ein",
-      contactRequired: "Bitte gib mindestens eine Kontaktmöglichkeit an (E-Mail, Telefon, Website oder Instagram)"
+      contactRequired: "Bitte gib mindestens eine Kontaktmöglichkeit an (E-Mail, Telefon, Website oder Instagram)",
+      successTitle: "BarakAllahu feek",
+      successDescription: "Dein Vorschlag hilft, muslimische Anbieter in deiner Stadt sichtbar zu machen.",
+      recommendAnother: "Weiteren Anbieter empfehlen",
+      backToOverview: "Zurück zur Übersicht"
     },
     basics: {
       title: "Angebot erstellen",

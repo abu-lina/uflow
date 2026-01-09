@@ -59,12 +59,21 @@ function SearchBarContent({
   const [hasMounted, setHasMounted] = useState(false);
 
   // Helper function to get category name based on language
+  // Categories are stored in DE/EN only, so we use English for non-German languages when available
   const getCategoryName = (category: Category) => {
+    // For English, prefer English name
     if (language === 'en') {
       return category.name_en || category.name_de || category.category_id || t('search.unnamed');
-    } else {
+    }
+    
+    // For German, prefer German name
+    if (language === 'de') {
       return category.name_de || category.name_en || category.category_id || t('search.unnamed');
     }
+    
+    // For all other languages (ar, tr, ur, ps), prefer English over German
+    // This provides better internationalization than showing German text
+    return category.name_en || category.name_de || category.category_id || t('search.unnamed');
   };
 
   // Handle clicks outside dropdowns

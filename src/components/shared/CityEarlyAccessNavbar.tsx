@@ -6,13 +6,16 @@ import { usePathname } from 'next/navigation';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import { CreateIcon } from '@/components/ui/icons/CreateIcon';
+import { SavedIcon } from '@/components/ui/icons/SavedIcon';
+import { useAppStage } from '@/hooks/useAppStage';
 import { cn } from '@/lib/utils';
 
 /**
  * City Early Access Navigation Bar
  * 
- * Bottom navigation bar with Home and Create items.
- * Home is active when on the city early access page.
+ * Bottom navigation bar with Home, Create, and Saved (Bookmark) items.
+ * - Stage 1: Home, Create
+ * - Stage 2: Home, Create, Saved (Bookmark)
  * 
  * Design (matches MobileFooterBar pattern):
  * - Dynamic height with pt-footer-safe and pb-safe
@@ -21,12 +24,13 @@ import { cn } from '@/lib/utils';
  * - Box shadow for depth
  * - Safe area handling
  * - Max width: 400px
- * - Home: Active state with primary color and bottom border (2.4px)
- * - Create: Inactive state with muted color
+ * - Active state with primary color and bottom border (2.4px)
+ * - Inactive state with muted color
  */
 export function CityEarlyAccessNavbar() {
   const pathname = usePathname();
   const [isAppLaunched, setIsAppLaunched] = useState(false);
+  const { stage } = useAppStage();
 
   // Check feature flag client-side
   useEffect(() => {
@@ -44,6 +48,11 @@ export function CityEarlyAccessNavbar() {
     (pathname === '/providers' && !isAppLaunched);
   
   const isCreateActive = pathname === '/create' || pathname.startsWith('/create/recommend');
+  
+  const isSavedActive = pathname === '/saved';
+
+  // Show Saved menu item only for Stage 2
+  const showSaved = stage === 'stage2';
 
   return (
     <nav
@@ -63,28 +72,22 @@ export function CityEarlyAccessNavbar() {
         boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
       }}
     >
-      <div className="flex w-full max-w-[400px] flex-row items-center justify-between gap-8">
+      <div className={cn(
+        'flex w-full max-w-[400px] flex-row items-center justify-between',
+        showSaved ? 'gap-4' : 'gap-8'
+      )}>
         {/* Home */}
         <Link
           aria-label="Home"
           className={cn(
             'flex flex-1 flex-row items-center justify-center',
             'h-12',
-            'gap-2',
             isHomeActive && 'border-b-[2.4px] border-primary'
           )}
           href="/"
           scroll={false}
         >
           <HomeIcon isActive={isHomeActive} />
-          <span
-            className={cn(
-              'font-inter-tight text-base font-semibold leading-[19px]',
-              isHomeActive ? 'text-primary' : 'text-[#777777]'
-            )}
-          >
-            HOME
-          </span>
         </Link>
 
         {/* Create */}
@@ -93,22 +96,29 @@ export function CityEarlyAccessNavbar() {
           className={cn(
             'flex flex-1 flex-row items-center justify-center',
             'h-12',
-            'gap-2',
             isCreateActive && 'border-b-[2.4px] border-primary'
           )}
           href="/create/recommend"
           scroll={false}
         >
           <CreateIcon isActive={isCreateActive} />
-          <span
-            className={cn(
-              'font-inter-tight text-base font-semibold leading-[19px]',
-              isCreateActive ? 'text-primary' : 'text-[#777777]'
-            )}
-          >
-            CREATE
-          </span>
         </Link>
+
+        {/* Saved (Bookmark) - Only shown in Stage 2 */}
+        {showSaved && (
+          <Link
+            aria-label="Saved"
+            className={cn(
+              'flex flex-1 flex-row items-center justify-center',
+              'h-12',
+              isSavedActive && 'border-b-[2.4px] border-primary'
+            )}
+            href="/saved"
+            scroll={false}
+          >
+            <SavedIcon isActive={isSavedActive} />
+          </Link>
+        )}
       </div>
     </nav>
   );

@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
     
     // Validate email type
-    if (type !== 'confirmSignup' && type !== 'resetPassword') {
+    if (type !== 'confirmSignup' && type !== 'resetPassword' && type !== 'magicLink') {
       return NextResponse.json(
         { error: 'Invalid email type' },
         { status: 400 }
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
     
     // Validate language
-    if (language !== 'en' && language !== 'de') {
+    if (language !== 'en' && language !== 'de' && language !== 'ar' && language !== 'tr') {
       return NextResponse.json(
         { error: 'Invalid language' },
         { status: 400 }

@@ -176,6 +176,14 @@ export async function shouldRedirectToWaitlist(
     return false; // Allow access, let page components handle auth/authorization
   }
 
+  // Special case: Allow access to /saved in early access mode for Stage 2 users
+  // This allows Stage 2 users (who have completed onboarding) to access their saved/bookmarked items
+  // even if they don't have a waitlist token cookie set. The page component will handle
+  // authentication checks and show login screen if needed.
+  if (!isAppLaunched && pathname === '/saved') {
+    return false; // Allow access, let page component handle auth/authorization
+  }
+
   // If user is admin/moderator, allow access (bypass waitlist)
   if (accessToken) {
     const user = await validateUser(accessToken);

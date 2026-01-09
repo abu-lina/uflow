@@ -179,7 +179,17 @@ export default function EditCategoryPage({ params }: { params: Promise<{ provide
               </div>
             ) : (
               filteredCategories.map((category) => {
-                const categoryName = language === 'en' ? (category.name_en || category.name_de || '') : (category.name_de || category.name_en || '');
+                // Get category name based on language
+                // Categories are stored in DE/EN only, so we use English for non-German languages when available
+                let categoryName = '';
+                if (language === 'en') {
+                  categoryName = category.name_en || category.name_de || '';
+                } else if (language === 'de') {
+                  categoryName = category.name_de || category.name_en || '';
+                } else {
+                  // For all other languages (ar, tr, ur, ps), prefer English over German
+                  categoryName = category.name_en || category.name_de || '';
+                }
                 return (
                   <button
                     key={category.category_id}

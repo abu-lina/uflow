@@ -126,13 +126,23 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     }
     
     // Get category name based on current language
+    // Categories are stored in DE/EN only, so we use English for non-German languages when available
     const getCategoryName = () => {
       if (!category) return t('search.unnamed');
+      
+      // For English, prefer English name
       if (language === 'en') {
         return category.name_en || category.name_de || t('search.unnamed');
-      } else {
+      }
+      
+      // For German, prefer German name
+      if (language === 'de') {
         return category.name_de || category.name_en || t('search.unnamed');
       }
+      
+      // For all other languages (ar, tr, ur, ps), prefer English over German
+      // This provides better internationalization than showing German text
+      return category.name_en || category.name_de || t('search.unnamed');
     };
     const categoryName = getCategoryName();
 

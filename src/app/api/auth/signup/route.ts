@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { email, password, language, honeypot, termsAccepted, privacyAccepted } = body;
+    const { email, password, language, honeypot, termsAccepted, privacyAccepted, emailOnly } = body;
     
     // 3. Validate consent (GDPR requirement)
     if (termsAccepted !== true || privacyAccepted !== true) {
@@ -132,10 +132,19 @@ export async function POST(request: Request) {
     }
     
     // 6. Validate input
-    if (!email || !password) {
-      console.error('[SIGNUP API] Missing email or password');
+    if (!email) {
+      console.error('[SIGNUP API] Missing email');
       return NextResponse.json(
-        { error: 'Missing email or password' },
+        { error: 'Missing email' },
+        { status: 400 }
+      );
+    }
+
+    // For email-only signup (Stage 2), password is optional
+    if (!emailOnly && !password) {
+      console.error('[SIGNUP API] Missing password (required for password-based signup)');
+      return NextResponse.json(
+        { error: 'Missing password' },
         { status: 400 }
       );
     }
@@ -158,14 +167,16 @@ export async function POST(request: Request) {
       );
     }
     
-    // 9. Enhanced password validation
-    const passwordValidation = validatePasswordComplexity(password);
-    if (!passwordValidation.valid) {
-      console.error('[SIGNUP API] Password validation failed:', passwordValidation.error);
-      return NextResponse.json(
-        { error: passwordValidation.error || 'Password does not meet requirements' },
-        { status: 400 }
-      );
+    // 9. Enhanced password validation (only if password is provided)
+    if (password) {
+      const passwordValidation = validatePasswordComplexity(password);
+      if (!passwordValidation.valid) {
+        console.error('[SIGNUP API] Password validation failed:', passwordValidation.error);
+        return NextResponse.json(
+          { error: passwordValidation.error || 'Password does not meet requirements' },
+          { status: 400 }
+        );
+      }
     }
     
     console.log('[SIGNUP API] Received signup request:', { email, language });
@@ -195,14 +206,20 @@ export async function POST(request: Request) {
     console.log('[SIGNUP API] Creating user with Admin API...');
     // In test mode, auto-confirm email for convenience
     const emailConfirm = isTest ? true : false;
+    
+    // For email-only signup, generate a random password (user won't use it)
+    // Supabase requires a password, but we'll use magic links for authentication
+    const userPassword = password || crypto.randomBytes(32).toString('hex');
+    
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password,
+      password: userPassword,
       email_confirm: emailConfirm, // Auto-confirm in test mode
       user_metadata: {
         language: language || 'en',
         preferred_language: language || 'en',
-        email_confirmed: emailConfirm
+        email_confirmed: emailConfirm,
+        email_only_signup: emailOnly === true, // Track if user signed up without password
       }
     });
     

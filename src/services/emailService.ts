@@ -241,16 +241,240 @@ const templates = {
 </body>
 </html>`
     }
+  },
+  magicLink: {
+    en: {
+      subject: 'Sign in to UmmahFlow',
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sign in to UmmahFlow</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
+  <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Connecting Community Services</p>
+    </div>
+    
+    <!-- Content -->
+    <div style="padding: 40px 32px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Sign in to your account</h2>
+      
+      <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
+        Click the button below to sign in to your UmmahFlow account. No password required.
+      </p>
+      
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="{{CONFIRMATION_URL}}" style="display: inline-block; padding: 16px 32px; background: #589D96; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em;">
+          Sign in to UmmahFlow
+        </a>
+      </div>
+      
+      <p style="margin: 32px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
+        If you didn't request this sign-in link, you can safely ignore this email.
+      </p>
+      
+      <p style="margin: 16px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
+        <strong>Security tip:</strong> This link will expire in 1 hour for your security.
+      </p>
+    </div>
+    
+    <!-- Footer -->
+    <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
+      <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
+        Best regards,<br>
+        <strong style="color: #232323;">The UmmahFlow Team</strong>
+      </p>
+      <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
+        <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`
+    },
+    de: {
+      subject: 'Bei UmmahFlow anmelden',
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bei UmmahFlow anmelden</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
+  <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Community-Services verbinden</p>
+    </div>
+    
+    <!-- Content -->
+    <div style="padding: 40px 32px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Bei Ihrem Konto anmelden</h2>
+      
+      <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
+        Klicken Sie auf die Schaltfläche unten, um sich bei Ihrem UmmahFlow-Konto anzumelden. Kein Passwort erforderlich.
+      </p>
+      
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="{{CONFIRMATION_URL}}" style="display: inline-block; padding: 16px 32px; background: #589D96; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em;">
+          Bei UmmahFlow anmelden
+        </a>
+      </div>
+      
+      <p style="margin: 32px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
+        Falls Sie diesen Anmelde-Link nicht angefordert haben, können Sie diese E-Mail ignorieren.
+      </p>
+      
+      <p style="margin: 16px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
+        <strong>Sicherheitstipp:</strong> Dieser Link läuft aus Sicherheitsgründen in 1 Stunde ab.
+      </p>
+    </div>
+    
+    <!-- Footer -->
+    <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
+      <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
+        Mit freundlichen Grüßen,<br>
+        <strong style="color: #232323;">Das UmmahFlow Team</strong>
+      </p>
+      <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
+        <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`
+    },
+    ar: {
+      subject: 'تسجيل الدخول إلى UmmahFlow',
+      html: `<!DOCTYPE html>
+<html dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>تسجيل الدخول إلى UmmahFlow</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
+  <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">ربط خدمات المجتمع</p>
+    </div>
+    
+    <!-- Content -->
+    <div style="padding: 40px 32px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">تسجيل الدخول إلى حسابك</h2>
+      
+      <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
+        انقر على الزر أدناه لتسجيل الدخول إلى حسابك في UmmahFlow. لا حاجة لكلمة مرور.
+      </p>
+      
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="{{CONFIRMATION_URL}}" style="display: inline-block; padding: 16px 32px; background: #589D96; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em;">
+          تسجيل الدخول إلى UmmahFlow
+        </a>
+      </div>
+      
+      <p style="margin: 32px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
+        إذا لم تطلب رابط تسجيل الدخول هذا، يمكنك تجاهل هذا البريد الإلكتروني بأمان.
+      </p>
+      
+      <p style="margin: 16px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
+        <strong>نصيحة أمنية:</strong> ستنتهي صلاحية هذا الرابط خلال ساعة واحدة لأمانك.
+      </p>
+    </div>
+    
+    <!-- Footer -->
+    <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
+      <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
+        مع أطيب التحيات،<br>
+        <strong style="color: #232323;">فريق UmmahFlow</strong>
+      </p>
+      <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
+        <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`
+    },
+    tr: {
+      subject: "UmmahFlow'a giriş yapın",
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>UmmahFlow'a giriş yapın</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); min-height: 100vh;">
+  <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%); padding: 40px 32px; text-align: center; border-bottom: 1px solid #D4D4D4;">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600; color: #232323; letter-spacing: -0.02em;">UmmahFlow</h1>
+      <p style="margin: 8px 0 0 0; font-size: 16px; color: #555555; font-weight: 400;">Topluluk Hizmetlerini Bağlamak</p>
+    </div>
+    
+    <!-- Content -->
+    <div style="padding: 40px 32px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #232323; letter-spacing: -0.01em;">Hesabınıza giriş yapın</h2>
+      
+      <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #555555;">
+        UmmahFlow hesabınıza giriş yapmak için aşağıdaki düğmeye tıklayın. Şifre gerekmez.
+      </p>
+      
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="{{CONFIRMATION_URL}}" style="display: inline-block; padding: 16px 32px; background: #589D96; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em;">
+          UmmahFlow'a giriş yapın
+        </a>
+      </div>
+      
+      <p style="margin: 32px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
+        Bu giriş bağlantısını talep etmediyseniz, bu e-postayı güvenle yok sayabilirsiniz.
+      </p>
+      
+      <p style="margin: 16px 0 0 0; font-size: 14px; line-height: 1.5; color: #555555;">
+        <strong>Güvenlik ipucu:</strong> Bu bağlantı güvenliğiniz için 1 saat içinde sona erecektir.
+      </p>
+    </div>
+    
+    <!-- Footer -->
+    <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
+      <p style="margin: 0 0 8px 0; font-size: 14px; color: #555555;">
+        Saygılarımızla,<br>
+        <strong style="color: #232323;">UmmahFlow Ekibi</strong>
+      </p>
+      <p style="margin: 16px 0 0 0; font-size: 12px; color: #555555;">
+        <a href="https://ummahflow.com" style="color: #589D96; text-decoration: none;">ummahflow.com</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`
+    }
   }
 };
 
 export const sendAuthEmail = async (
   to: string,
-  type: 'confirmSignup' | 'resetPassword',
-  language: 'en' | 'de',
+  type: 'confirmSignup' | 'resetPassword' | 'magicLink',
+  language: 'en' | 'de' | 'ar' | 'tr',
   confirmationUrl: string
 ) => {
-  const template = templates[type][language];
+  // Fallback to 'en' if language is not available in templates
+  const availableLanguage = language in templates[type] ? language : 'en';
+  const template = templates[type][availableLanguage as 'en' | 'de'];
   const resend = getResendClient();
   
   return await resend.emails.send({

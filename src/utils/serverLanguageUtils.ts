@@ -9,10 +9,10 @@ import 'server-only';
 
 import { headers, cookies } from 'next/headers';
 
-export type ServerLanguage = 'de' | 'en' | 'ar' | 'tr';
+export type ServerLanguage = 'de' | 'en' | 'ar' | 'tr' | 'ur' | 'ps';
 
 // Valid language codes (must match client-side)
-const VALID_LANGUAGES: ServerLanguage[] = ['de', 'en', 'ar', 'tr'];
+const VALID_LANGUAGES: ServerLanguage[] = ['de', 'en', 'ar', 'tr', 'ur', 'ps'];
 
 // Language mapping for variants (must match client-side)
 const LANGUAGE_MAPPING: Record<string, ServerLanguage> = {
@@ -20,6 +20,8 @@ const LANGUAGE_MAPPING: Record<string, ServerLanguage> = {
   'de': 'de',
   'ar': 'ar',
   'tr': 'tr',
+  'ur': 'ur',
+  'ps': 'ps',
   'en-us': 'en',
   'en-gb': 'en',
   'en-ca': 'en',
@@ -32,6 +34,10 @@ const LANGUAGE_MAPPING: Record<string, ServerLanguage> = {
   'ar-eg': 'ar',
   'ar-ma': 'ar',
   'tr-tr': 'tr',
+  'ur-pk': 'ur',
+  'ur-in': 'ur',
+  'ps-af': 'ps',
+  'ps-pk': 'ps',
 };
 
 // Check if a language code is valid

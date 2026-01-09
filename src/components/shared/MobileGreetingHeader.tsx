@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { translateCityName } from '@/utils/cityTranslation';
 
 interface MobileGreetingHeaderProps {
   className?: string;
@@ -12,8 +13,9 @@ interface MobileGreetingHeaderProps {
 
 export function MobileGreetingHeader({ className = '', cityName }: MobileGreetingHeaderProps) {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [translatedCityName, setTranslatedCityName] = useState<string | undefined>(cityName);
 
   useEffect(() => {
     // Check if we've already animated this session
@@ -25,13 +27,42 @@ export function MobileGreetingHeader({ className = '', cityName }: MobileGreetin
     }
   }, []);
 
+  // Translate city name when cityName or language changes
+  useEffect(() => {
+    if (!cityName) {
+      setTranslatedCityName(undefined);
+      return;
+    }
+
+    let isCancelled = false;
+
+    // Translate city name to user's language
+    translateCityName(cityName, language)
+      .then((translated) => {
+        if (!isCancelled) {
+          setTranslatedCityName(translated);
+        }
+      })
+      .catch((error) => {
+        if (!isCancelled) {
+          console.warn('Failed to translate city name:', error);
+          // Fallback to original city name on error
+          setTranslatedCityName(cityName);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [cityName, language]);
+
   // Get user's first name
   const firstName =
     user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User';
 
-  // Construct the support text with city name if provided
-  const supportText = cityName 
-    ? `in ${cityName}.`
+  // Construct the support text with translated city name if provided
+  const supportText = translatedCityName 
+    ? t('common.supportYourUmmahInCity', { city: translatedCityName })
     : t('common.supportYourUmmah');
 
   const MotionDiv = hasAnimated ? 'div' : motion.div;

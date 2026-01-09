@@ -1,11 +1,12 @@
 'use client';
 
 import { supabase } from './supabase/client';
+import type { Language } from '@/translations';
 
 export const signUpWithLanguage = async (
   email: string,
   password: string,
-  language: 'en' | 'de' | 'ar' | 'tr' = 'en',
+  language: Language = 'en',
   honeypot?: string,
   termsAccepted?: boolean,
   privacyAccepted?: boolean
@@ -247,4 +248,149 @@ export const signInWithEmailConfirmation = async (
   }
 
   return { data, error: null };
+};
+
+/**
+ * Sign in with magic link (email-only, no password)
+ * For Stage 2 users - passwordless authentication
+ * Uses Resend for branded email delivery
+ */
+export const signInWithMagicLink = async (
+  email: string,
+  language: 'en' | 'de' | 'ar' | 'tr' = 'en'
+) => {
+  try {
+    // Send magic link via our API (uses Resend for branded emails)
+    const response = await fetch('/api/auth/magic-link', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        email,
+        language 
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Handle specific error codes from API
+      if (data.error === 'EMAIL_NOT_FOUND') {
+        return { 
+          data: null, 
+          error: { 
+            message: 'EMAIL_NOT_FOUND'
+          } 
+        };
+      }
+
+      if (data.error === 'EMAIL_NOT_CONFIRMED') {
+        return { 
+          data: null, 
+          error: { 
+            message: 'EMAIL_NOT_CONFIRMED'
+          } 
+        };
+      }
+
+      // Generic error
+      return { 
+        data: null, 
+        error: { 
+          message: data.error || 'Failed to send magic link. Please try again.' 
+        } 
+      };
+    }
+
+    // Success - magic link sent via Resend
+    return { 
+      data: { 
+        message: 'Magic link sent successfully' 
+      }, 
+      error: null 
+    };
+  } catch (error) {
+    console.error('Magic link error:', error);
+    return { 
+      data: null, 
+      error: { 
+        message: 'Network error. Please try again.' 
+      } 
+    };
+  }
+};
+
+/**
+ * Sign up with email only (no password) - for Stage 2
+ * Creates user account and sends magic link for first login
+ */
+export const signUpWithEmailOnly = async (
+  email: string,
+  language: 'en' | 'de' | 'ar' | 'tr' = 'en',
+  honeypot?: string,
+  termsAccepted?: boolean,
+  privacyAccepted?: boolean
+) => {
+  console.log('[SIGNUP] Creating user via Admin API (email-only):', email);
+  
+  try {
+    // Call our server-side API to create user without password
+    const response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password: null, // No password for Stage 2
+        language,
+        honeypot,
+        termsAccepted: termsAccepted === true,
+        privacyAccepted: privacyAccepted === true,
+        emailOnly: true, // Flag to indicate email-only signup
+      }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('[SIGNUP] Signup failed:', data.error);
+      return { 
+        data: null, 
+        error: { message: data.error || 'Signup failed' } 
+      };
+    }
+    
+    console.log('[SIGNUP] ✅ User created successfully (no password, no session)');
+    
+    // After user is created, send magic link for first login
+    const magicLinkResult = await signInWithMagicLink(email, language);
+    
+    if (magicLinkResult.error) {
+      // User is created but magic link failed - still return success
+      // User can request magic link again later
+      console.warn('[SIGNUP] User created but magic link failed:', magicLinkResult.error);
+    } else {
+      console.log('[SIGNUP] ✅ Magic link sent');
+    }
+    
+    // Return success with user data
+    return { 
+      data: { 
+        user: { 
+          id: data.userId,
+          email: data.email
+        } 
+      }, 
+      error: null 
+    };
+    
+  } catch (error) {
+    console.error('[SIGNUP] Network or unexpected error:', error);
+    return { 
+      data: null, 
+      error: { message: 'Network error. Please try again.' } 
+    };
+  }
 };

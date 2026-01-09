@@ -10,6 +10,8 @@ const LANGUAGE_MAPPING: Record<string, Language> = {
   'de': 'de',
   'ar': 'ar',
   'tr': 'tr',
+  'ur': 'ur',
+  'ps': 'ps',
   'en-us': 'en',
   'en-gb': 'en',
   'en-ca': 'en',
@@ -22,11 +24,15 @@ const LANGUAGE_MAPPING: Record<string, Language> = {
   'ar-eg': 'ar',
   'ar-ma': 'ar',
   'tr-tr': 'tr',
+  'ur-pk': 'ur',
+  'ur-in': 'ur',
+  'ps-af': 'ps',
+  'ps-pk': 'ps',
   // Add more mappings as needed
 };
 
 // Valid language codes
-const VALID_LANGUAGES: Language[] = ['en', 'de', 'ar', 'tr'];
+const VALID_LANGUAGES: Language[] = ['en', 'de', 'ar', 'tr', 'ur', 'ps'];
 
 // Check if a language code is valid
 function isValidLanguage(lang: string | null): lang is Language {
@@ -96,7 +102,7 @@ function detectLanguage(): Language {
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, variables?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -110,7 +116,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Save language preference to localStorage and cookie
   // This represents an explicit user choice, so it will always take precedence over auto-detection
-  const setLanguage = (lang: Language) => {
+  const setLanguage = useCallback((lang: Language) => {
     if (!isValidLanguage(lang)) {
       console.warn(`Invalid language code: ${lang}. Falling back to 'de'.`);
       lang = 'de';
@@ -129,7 +135,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         secure: process.env.NODE_ENV === 'production', // Secure in production (HTTPS only)
       });
     }
-  };
+  }, []);
 
   // Handle language detection after hydration
   useEffect(() => {
@@ -169,7 +175,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   }, []);
 
   // Translation function - memoized to prevent recreation on every render
-  const t = useCallback((key: string): string => {
+  const t = useCallback((key: string, variables?: Record<string, string | number>): string => {
     const keys = key.split('.');
     let value: unknown = translations[language];
 
@@ -184,7 +190,16 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       }
     }
 
-    return typeof value === 'string' ? value : key;
+    let result = typeof value === 'string' ? value : key;
+
+    // Replace variables in the format {{variableName}}
+    if (variables) {
+      for (const [varName, varValue] of Object.entries(variables)) {
+        result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(varValue));
+      }
+    }
+
+    return result;
   }, [language]);
 
   // Memoize context value to prevent unnecessary re-renders

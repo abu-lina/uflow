@@ -2,6 +2,7 @@ export const tr = {
   common: {
     greeting: "Selamün Aleyküm",
     supportYourUmmah: "Ümmetini destekle.",
+    supportYourUmmahInCity: "{{city}} şehrindeki ümmetini destekle.",
     welcome: "Hoş geldiniz",
     loading: "Yükleniyor...",
     error: "Hata",
@@ -126,7 +127,9 @@ export const tr = {
     english: "İngilizce",
     german: "Almanca",
     arabic: "Arapça",
-    turkish: "Türkçe"
+    turkish: "Türkçe",
+    urdu: "Urduca",
+    pashtu: "Peştuca"
   },
   search: {
     placeholder: "Ümmetinde ara",
@@ -225,7 +228,11 @@ export const tr = {
       categoryRequired: "Lütfen bir kategori seçin",
       offersRequired: "Lütfen en az bir teklif seçin",
       cityRequired: "Lütfen bir şehir girin",
-      contactRequired: "Lütfen en az bir iletişim yöntemi sağlayın (e-posta, telefon, web sitesi veya Instagram)"
+      contactRequired: "Lütfen en az bir iletişim yöntemi sağlayın (e-posta, telefon, web sitesi veya Instagram)",
+      successTitle: "BarakAllahu feek",
+      successDescription: "Öneriniz, şehrinizdeki Müslüman sağlayıcıları görünür kılmaya yardımcı olur.",
+      recommendAnother: "Başka bir sağlayıcı öner",
+      backToOverview: "Genel bakışa dön"
     },
     basics: {
       title: "Teklif oluştur",

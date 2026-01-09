@@ -9,7 +9,7 @@
  */
 
 export type SupportedLanguage = 'de' | 'en';
-export type ServerLanguage = 'de' | 'en' | 'ar' | 'tr';
+export type ServerLanguage = 'de' | 'en' | 'ar' | 'tr' | 'ur' | 'ps';
 
 /**
  * Detect the user's preferred language from browser settings

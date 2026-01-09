@@ -665,9 +665,26 @@ export function getClientIP(request: Request): string {
 }
 
 /**
+ * Check if an IP is a localhost address (development)
+ */
+export function isLocalhostIP(ip: string): boolean {
+  return ip === '127.0.0.1' || 
+         ip === '::1' || 
+         ip === 'localhost' || 
+         ip === 'unknown' ||
+         ip.startsWith('127.') ||
+         ip.startsWith('::ffff:127.');
+}
+
+/**
  * Check if an IP is currently blocked
  */
 export function checkIPBlocked(ip: string): boolean {
+  // Always allow localhost in development
+  if (isLocalhostIP(ip) && process.env.NODE_ENV !== 'production') {
+    return false;
+  }
+  
   const entry = suspiciousIPs.get(ip);
   if (!entry) return false;
   
@@ -702,6 +719,13 @@ export function markSuspiciousIP(ip: string, hours: number = 24): void {
  */
 export function unblockIP(ip: string): void {
   suspiciousIPs.delete(ip);
+}
+
+/**
+ * Clear all blocked IPs (useful for development)
+ */
+export function clearAllBlockedIPs(): void {
+  suspiciousIPs.clear();
 }
 
 /**

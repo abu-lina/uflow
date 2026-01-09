@@ -11,6 +11,8 @@ const localeMap: Record<ServerLanguage, string> = {
   en: 'en_US',
   ar: 'ar_SA',
   tr: 'tr_TR',
+  ur: 'ur_PK',
+  ps: 'ps_AF',
 };
 
 // Localized metadata content
@@ -30,6 +32,14 @@ const metadataContent: Record<ServerLanguage, { title: string; description: stri
   tr: {
     title: 'Ummah Flow',
     description: 'Ummah Flow - Müslümanları birbirine bağlayan ilk helal uyumlu pazar yeri',
+  },
+  ur: {
+    title: 'Ummah Flow',
+    description: 'Ummah Flow - مسلمانوں کو آپس میں جوڑنے والی پہلی حلال مارکیٹ پلیس',
+  },
+  ps: {
+    title: 'Ummah Flow',
+    description: 'Ummah Flow - د مسلمانانو سره نښلونکي لومړۍ حلال بازار',
   },
 };
 

@@ -53,6 +53,10 @@ export default async function RootLayout({ children }: RootLayoutProps) {
   // This ensures the HTML lang attribute matches user preference
   const language = await detectLanguageFromServer();
 
+  // Determine text direction for RTL languages
+  const rtlLanguages = ['ar', 'ur', 'ps'];
+  const isRtl = rtlLanguages.includes(language);
+
   // Get session for initial user state
   // This prevents flash of unauthenticated content and provides better UX
   // The client-side AuthProvider will sync and handle subsequent auth changes
@@ -72,7 +76,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
   }
 
   return (
-    <html lang={language}>
+    <html dir={isRtl ? 'rtl' : 'ltr'} lang={language}>
       <body className={`relative w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] min-h-[100dvh] m-0 p-0 ${inter.className}`}>
         <ClientProviders initialUser={user}>
           {/* Desktop header only */}

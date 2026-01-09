@@ -21,7 +21,9 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
     { code: 'de' as const, name: t('language.german'), iso: 'DE' },
     { code: 'ar' as const, name: t('language.arabic'), iso: 'AR' },
     { code: 'tr' as const, name: t('language.turkish'), iso: 'TR' },
-  ];
+    { code: 'ur' as const, name: t('language.urdu'), iso: 'UR' },
+    { code: 'ps' as const, name: t('language.pashtu'), iso: 'PS' },
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
   const currentLanguage = languages.find(lang => lang.code === language);
 
@@ -97,7 +99,7 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
             ref={dropdownRef}
             aria-label={t('language.current')}
             className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
-            dir={language === 'ar' ? 'rtl' : 'ltr'}
+            dir={['ar', 'ur', 'ps'].includes(language) ? 'rtl' : 'ltr'}
             role="menu"
           >
             {languages.map((lang) => (
@@ -151,7 +153,7 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
 
   // Default dropdown variant
   return (
-    <div className={`relative ${className}`} dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className={`relative ${className}`} dir={['ar', 'ur', 'ps'].includes(language) ? 'rtl' : 'ltr'}>
       <button
         ref={buttonRef}
         aria-expanded={isOpen}

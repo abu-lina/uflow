@@ -31,13 +31,37 @@ interface ProviderCardModalProps {
     barakah_effects?: string[];
     contact_phone?: string | null;
     social_website?: string | null;
-    category?: { name_de?: string } | null;
+    category?: { name_de?: string; name_en?: string } | null;
   };
 }
 
 export function ProviderCardModal({ open, onClose, provider }: ProviderCardModalProps) {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  
+  // Get category name based on current language
+  // Categories are stored in DE/EN only, so we use English for non-German languages when available
+  const getCategoryName = () => {
+    if (!provider.category) return t('search.unnamed');
+    
+    const category = provider.category as { name_de?: string; name_en?: string };
+    
+    // For English, prefer English name
+    if (language === 'en') {
+      return category.name_en || category.name_de || t('search.unnamed');
+    }
+    
+    // For German, prefer German name
+    if (language === 'de') {
+      return category.name_de || category.name_en || t('search.unnamed');
+    }
+    
+    // For all other languages (ar, tr, ur, ps), prefer English over German
+    // This provides better internationalization than showing German text
+    return category.name_en || category.name_de || t('search.unnamed');
+  };
+  
+  const categoryName = getCategoryName();
   
   // Use the new bookmark hook with authentication
   const { handleBookmarkAction: checkAuthBeforeBookmark } = useBookmarkWithAuth({
@@ -589,7 +613,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             <div className="z-10 flex h-[63.57px] w-full flex-col items-start justify-end px-[15.89px] sm:w-[392px]">
               <div className="flex h-[31.78px] w-[97.19px] flex-row items-center justify-center rounded-[9.54px] border border-[#CDCDCD] bg-white/70 px-[10.6px] backdrop-blur-[2px]">
                 <span className="flex h-[22px] w-[76px] items-center text-center font-inter-tight text-lg font-medium text-black">
-                  {provider.category?.name_de || ''}
+                  {categoryName}
                 </span>
               </div>
             </div>

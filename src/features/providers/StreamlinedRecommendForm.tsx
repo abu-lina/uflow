@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Icon } from '@iconify/react';
@@ -12,6 +12,7 @@ import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { createProviderOrService } from '@/services/providerService';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
+import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScreen';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
@@ -149,7 +150,7 @@ interface RecommendFormData {
   message: string; // optional
 }
 
-export function StreamlinedRecommendForm({ onSuccess, initialCity }: StreamlinedRecommendFormProps) {
+export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }: StreamlinedRecommendFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { formData: contextFormData, updateFormData, setCreationMode } = useFormData();
@@ -157,6 +158,8 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
   const isMobile = useIsSmallMobile();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const searchParams = useSearchParams();
+  const showSuccess = searchParams.get('success') === 'true';
   const [categories, setCategories] = useState<Category[]>([]);
   const userEmailInputRef = useRef<HTMLInputElement>(null);
   
@@ -258,6 +261,49 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
     router.push('/');
   }, [router]);
 
+  // Handle "Weiteren Anbieter empfehlen" - reset form and show form again
+  const handleRecommendAnother = useCallback(() => {
+    // Remove success param from URL to show form again
+    router.replace('/create/recommend', { scroll: false });
+    // Reset form data
+    setFormData({
+      title: '',
+      category: '',
+      city: initialCity || '',
+      offers_ids: [],
+      email: '',
+      phone: '',
+      website: '',
+      instagram: '',
+      userEmail: '',
+      message: '',
+    });
+    // Reset contact checkboxes
+    setSelectedContacts({
+      email: false,
+      phone: false,
+      website: false,
+      instagram: false,
+    });
+    // Clear context form data
+    updateFormData({
+      title: '',
+      category: '',
+      city: '',
+      offers_ids: [],
+      email: '',
+      phone: '',
+      website: '',
+      instagram: '',
+      description: '',
+    });
+  }, [initialCity, updateFormData, router]);
+
+  // Handle "Zurück zur Übersicht" - navigate to home
+  const handleGoBack = useCallback(() => {
+    router.push('/');
+  }, [router]);
+
   // Submit handler
   const handleSubmit = useCallback(async () => {
     if (!isFormValid) {
@@ -311,8 +357,6 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
         true // Recommendation mode
       );
 
-      toast.success(t('create.recommend.success'));
-
       // Clear form data
       updateFormData({
         title: '',
@@ -331,29 +375,15 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
       queryClient.invalidateQueries({ queryKey: ['providers'] });
       queryClient.invalidateQueries({ queryKey: ['community-services'] });
 
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        // Redirect back to city overview after successful recommendation
-        const city = formData.city || 
-          (typeof window !== 'undefined' 
-            ? localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity')
-            : '');
-        
-        if (city) {
-          router.push(`/city/${encodeURIComponent(city)}`);
-        } else {
-          // Fallback to home if no city is available
-          router.push('/');
-        }
-      }
+      // Show success screen by updating URL
+      router.replace('/create/recommend?success=true', { scroll: false });
     } catch (error) {
       console.error('Error creating recommendation:', error);
       toast.error(t('create.recommend.error'));
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, isFormValid, contextFormData, updateFormData, queryClient, router, onSuccess, t]);
+  }, [formData, isFormValid, contextFormData, updateFormData, queryClient, router, t]);
 
   // Navigate to category selection
   const handleSelectCategory = useCallback(() => {
@@ -442,6 +472,16 @@ export function StreamlinedRecommendForm({ onSuccess, initialCity }: Streamlined
   const phonePlaceholder = useMemo(() => t('create.recommend.phonePlaceholder'), [t]);
   const instagramLabel = useMemo(() => t('create.recommend.instagram'), [t]);
   const instagramPlaceholder = useMemo(() => t('create.recommend.instagramPlaceholder'), [t]);
+
+  // Show success screen if submission was successful
+  if (showSuccess) {
+    return (
+      <RecommendSuccessScreen
+        onGoBack={handleGoBack}
+        onRecommendAnother={handleRecommendAnother}
+      />
+    );
+  }
 
   return (
     <div className={cn(
