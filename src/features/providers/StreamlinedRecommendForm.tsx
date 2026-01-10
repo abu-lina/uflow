@@ -226,7 +226,14 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as SavedRecommendFormData;
-        return parsed.formData;
+        // Prioritize contextFormData.category/offers if they exist (user just selected them)
+        return {
+          ...parsed.formData,
+          category: contextFormData.category || parsed.formData.category,
+          offers_ids: (contextFormData.offers_ids && contextFormData.offers_ids.length > 0)
+            ? contextFormData.offers_ids
+            : parsed.formData.offers_ids,
+        };
       }
     } catch (error) {
       console.error('[StreamlinedRecommendForm] Error loading initial form data:', error);
@@ -348,8 +355,17 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       
       const saved = loadSavedRecommendFormData();
       if (saved) {
-        // Restore form data (lazy initializer already loaded it, but ensure it's fully synced)
-        setFormData(saved.formData);
+        // Restore form data, but prioritize contextFormData.category/offers if they exist
+        // (user might have just selected them on sub-pages)
+        const restoredFormData = {
+          ...saved.formData,
+          // Use contextFormData category/offers if they exist (newly selected), otherwise use saved
+          category: contextFormData.category || saved.formData.category,
+          offers_ids: (contextFormData.offers_ids && contextFormData.offers_ids.length > 0) 
+            ? contextFormData.offers_ids 
+            : saved.formData.offers_ids,
+        };
+        setFormData(restoredFormData);
         // Restore selected contacts - ensure checkboxes match field values
         setSelectedContacts({
           email: saved.selectedContacts.email || !!saved.formData.email,
@@ -357,22 +373,29 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
           website: saved.selectedContacts.website || !!saved.formData.website,
           instagram: saved.selectedContacts.instagram || !!saved.formData.instagram,
         });
-        // Sync with contextFormData to ensure category and offers are available
+        // Sync with contextFormData to ensure all data is available in context
         updateFormData({
-          title: saved.formData.title,
-          category: saved.formData.category,
-          city: saved.formData.city,
-          offers_ids: saved.formData.offers_ids,
-          email: saved.formData.email,
-          phone: saved.formData.phone,
-          website: saved.formData.website,
-          instagram: saved.formData.instagram,
-          description: saved.formData.message,
+          title: restoredFormData.title,
+          category: restoredFormData.category,
+          city: restoredFormData.city,
+          offers_ids: restoredFormData.offers_ids,
+          email: restoredFormData.email,
+          phone: restoredFormData.phone,
+          website: restoredFormData.website,
+          instagram: restoredFormData.instagram,
+          description: restoredFormData.message,
         });
         // Mark city as initialized since we loaded it from saved data
         cityInitializedRef.current = true;
       } else {
-        // No saved form data, so initialize city from initialCity or localStorage
+        // No saved form data, so initialize from contextFormData or defaults
+        if (contextFormData.category) {
+          setFormData(prev => ({ ...prev, category: contextFormData.category }));
+        }
+        if (contextFormData.offers_ids && contextFormData.offers_ids.length > 0) {
+          setFormData(prev => ({ ...prev, offers_ids: contextFormData.offers_ids }));
+        }
+        // Initialize city from initialCity or localStorage
         if (!cityInitializedRef.current) {
           cityInitializedRef.current = true;
           
@@ -389,7 +412,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         }
       }
     }
-  }, [loadSavedRecommendFormData, initialCity, updateFormData, formData.city]);
+  }, [loadSavedRecommendFormData, initialCity, updateFormData, formData.city, contextFormData.category, contextFormData.offers_ids]);
 
   // City search function
   const searchCities = useCallback(async (query: string) => {
@@ -576,11 +599,13 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, []);
 
   // Sync with context formData when it changes (from navigation)
-  // Only sync if values actually changed to prevent unnecessary re-renders
+  // This ensures that when user selects category/offers on sub-pages, it updates local formData
   useEffect(() => {
+    // Always sync category if it exists in contextFormData (user just selected it)
     if (contextFormData.category && contextFormData.category !== formData.category) {
       setFormData(prev => ({ ...prev, category: contextFormData.category }));
     }
+    // Always sync offers_ids if they exist in contextFormData (user just selected them)
     if (contextFormData.offers_ids && contextFormData.offers_ids.length > 0 && 
         JSON.stringify(contextFormData.offers_ids) !== JSON.stringify(formData.offers_ids)) {
       setFormData(prev => ({ ...prev, offers_ids: contextFormData.offers_ids }));

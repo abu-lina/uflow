@@ -270,7 +270,15 @@ export default function CityPage() {
         </header>
 
         {/* Category Gallery - Below header with proper spacing */}
-        <div className="w-full pt-[calc(env(safe-area-inset-top)+80px+32px)] px-6">
+        {/* 
+          Spacing breakdown for visual 32px gap:
+          - Header top padding: max(24px, env(safe-area-inset-top) + 24px)
+          - Header content height: ~69px (greeting + support text)
+          - Header bottom padding: 16px (py-4 bottom)
+          - Visual gap: 32px
+          Using max() to ensure minimum 141px for devices without safe area
+        */}
+        <div className="w-full pt-[max(141px,calc(env(safe-area-inset-top)+141px))] px-6">
           <CategoryGallerySection />
         </div>
       </div>

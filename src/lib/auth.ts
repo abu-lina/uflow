@@ -294,11 +294,47 @@ export const signInWithMagicLink = async (
         };
       }
 
-      // Generic error
+      // Check for specific error codes
+      if (data.code === 'IP_BLOCKED') {
+        console.error('[MAGIC LINK CLIENT] IP blocked:', data.ip, data.debug);
+        return { 
+          data: null, 
+          error: { 
+            message: 'Your IP address has been temporarily blocked. Please try again later or contact support.',
+            code: 'IP_BLOCKED',
+            details: data
+          } 
+        };
+      }
+
+      if (data.code === 'RATE_LIMIT_EXCEEDED') {
+        console.error('[MAGIC LINK CLIENT] Rate limit exceeded:', data);
+        return { 
+          data: null, 
+          error: { 
+            message: `Too many requests. Please wait ${data.window} before trying again.`,
+            code: 'RATE_LIMIT_EXCEEDED',
+            details: data
+          } 
+        };
+      }
+
+      // Generic error - log the full response for debugging
+      console.error('[MAGIC LINK CLIENT] API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: data.error,
+        code: data.code,
+        details: data.details,
+        debug: data.debug
+      });
+      
       return { 
         data: null, 
         error: { 
-          message: data.error || 'Failed to send magic link. Please try again.' 
+          message: data.error || 'Failed to send magic link. Please try again.',
+          code: data.code,
+          details: data.details
         } 
       };
     }

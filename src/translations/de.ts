@@ -2,7 +2,7 @@ export const de = {
   common: {
     greeting: "As-Salamu-Aleikum",
     supportYourUmmah: "Unterstütze Deine Ummah.",
-    supportYourUmmahInCity: "Unterstütze Deine Ummah in {{city}}.",
+    supportYourUmmahInCity: "in {{city}}.",
     welcome: "Willkommen",
     loading: "Lädt...",
     error: "Fehler",

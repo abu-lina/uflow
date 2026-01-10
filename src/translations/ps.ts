@@ -2,7 +2,7 @@ export const ps = {
   common: {
     greeting: "السلام علیکم",
     supportYourUmmah: "ستاسو امت ملاتړ وکړئ.",
-    supportYourUmmahInCity: "په {{city}} کې ستاسو امت ملاتړ وکړئ.",
+    supportYourUmmahInCity: "په {{city}} کې",
     welcome: "ښه راغلاست",
     loading: "لوډیږي...",
     error: "ستونزه",

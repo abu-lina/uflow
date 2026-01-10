@@ -2,7 +2,7 @@ export const ur = {
   common: {
     greeting: "السلام علیکم",
     supportYourUmmah: "اپنی امت کی مدد کریں۔",
-    supportYourUmmahInCity: "{{city}} میں اپنی امت کی مدد کریں۔",
+    supportYourUmmahInCity: "{{city}} میں",
     welcome: "خوش آمدید",
     loading: "لوڈ ہو رہا ہے...",
     error: "خرابی",

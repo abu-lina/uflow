@@ -39,12 +39,13 @@ export function Stage2Content({ cityName }: Stage2ContentProps) {
         Header structure:
         - paddingTop: max(24px, calc(env(safe-area-inset-top) + 24px))
         - py-4 top: 16px
-        - Content (MobileGreetingHeader): ~70px (two lines of text)
+        - Content (MobileGreetingHeader): ~35px (two lines of text)
         - py-4 bottom: 16px
-        - Total: max(126px, calc(env(safe-area-inset-top) + 126px))
-        - Add 8px gap for visual spacing: max(134px, calc(env(safe-area-inset-top) + 134px))
+        - Total header height: ~91px (safe-area + 91px)
+        - Visual gap: 24px
+        - Total padding: max(115px, calc(env(safe-area-inset-top) + 115px))
       */}
-      <div className="flex w-full items-center justify-center px-4 pt-[max(134px,calc(env(safe-area-inset-top)+134px))] pb-8">
+      <div className="flex w-full items-center justify-center px-4 pt-[max(115px,calc(env(safe-area-inset-top)+115px))] pb-8">
         <CityCard cityName={cityName} onSuggestProvider={handleSuggestProvider} />
       </div>
 

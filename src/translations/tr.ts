@@ -2,7 +2,7 @@ export const tr = {
   common: {
     greeting: "Selamün Aleyküm",
     supportYourUmmah: "Ümmetini destekle.",
-    supportYourUmmahInCity: "{{city}} şehrindeki ümmetini destekle.",
+    supportYourUmmahInCity: "{{city}} şehrinde.",
     welcome: "Hoş geldiniz",
     loading: "Yükleniyor...",
     error: "Hata",

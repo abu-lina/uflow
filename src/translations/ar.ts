@@ -2,7 +2,7 @@ export const ar = {
   common: {
     greeting: "السلام عليكم",
     supportYourUmmah: "ادعم أمتك.",
-    supportYourUmmahInCity: "ادعم أمتك في {{city}}.",
+    supportYourUmmahInCity: "في {{city}}.",
     welcome: "أهلاً وسهلاً",
     loading: "جاري التحميل...",
     error: "خطأ",
