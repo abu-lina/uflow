@@ -127,7 +127,8 @@ export async function POST(request: Request) {
       emailTrimmed: email.trim(),
     });
     
-    // First, check if token exists at all (regardless of email) for debugging
+    // First, check if token exists at all (regardless of email or used status) for debugging
+    // This helps us distinguish between "token not found" vs "token already used"
     const { data: tokenByTokenOnly } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .select('*')
@@ -144,7 +145,30 @@ export async function POST(request: Request) {
       expiresAt: tokenByTokenOnly?.expires_at,
     });
     
-    // Try case-insensitive email match first (emails should be case-insensitive)
+    // Check if token exists but is already used (before checking for valid unused token)
+    if (tokenByTokenOnly && tokenByTokenOnly.used) {
+      const storedEmail = tokenByTokenOnly.email?.toLowerCase();
+      const providedEmailLower = email.toLowerCase();
+      
+      if (storedEmail === providedEmailLower) {
+        logAuth('warn', {
+          event: 'token_verification_already_used',
+          ip,
+          email,
+          tokenId: tokenByTokenOnly.id,
+          duration: Date.now() - startTime,
+        });
+        return NextResponse.json(
+          { 
+            error: 'This magic link has already been used. Magic links can only be used once. Please request a new one.',
+            code: 'TOKEN_ALREADY_USED'
+          },
+          { status: 400 }
+        );
+      }
+    }
+    
+    // Try case-insensitive email match for unused tokens
     // This handles cases where email might be stored with different casing
     let { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
