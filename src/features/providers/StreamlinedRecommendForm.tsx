@@ -151,6 +151,18 @@ interface RecommendFormData {
   message: string; // optional
 }
 
+interface SavedRecommendFormData {
+  formData: RecommendFormData;
+  selectedContacts: {
+    email: boolean;
+    phone: boolean;
+    website: boolean;
+    instagram: boolean;
+  };
+}
+
+const RECOMMEND_FORM_STORAGE_KEY = 'recommendFormData';
+
 interface NominatimCityResult {
   place_id: number;
   display_name: string;
@@ -182,6 +194,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const cityInputRef = useRef<HTMLInputElement>(null);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const cityInitializedRef = useRef(false); // Track if initial city has been loaded
+  const formDataInitializedRef = useRef(false); // Track if form data has been loaded from storage
   
   // City search state
   const [citySearchQuery, setCitySearchQuery] = useState('');
@@ -191,56 +204,192 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
   const citySearchAbortControllerRef = useRef<AbortController | null>(null);
   
-  // State for selected contact methods
+  // Initialize form state - use lazy initializer to check localStorage first
+  const [formData, setFormData] = useState<RecommendFormData>(() => {
+    if (typeof window === 'undefined') {
+      return {
+        title: contextFormData.title || '',
+        category: contextFormData.category || '',
+        city: initialCity || '',
+        offers_ids: contextFormData.offers_ids || [],
+        email: contextFormData.email || '',
+        phone: contextFormData.phone || '',
+        website: contextFormData.website || '',
+        instagram: contextFormData.instagram || '',
+        userEmail: '',
+        message: contextFormData.description || '',
+      };
+    }
+
+    // Try to load from localStorage first
+    try {
+      const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as SavedRecommendFormData;
+        return parsed.formData;
+      }
+    } catch (error) {
+      console.error('[StreamlinedRecommendForm] Error loading initial form data:', error);
+    }
+
+    // Fallback to contextFormData and initialCity
+    return {
+      title: contextFormData.title || '',
+      category: contextFormData.category || '',
+      city: initialCity || '',
+      offers_ids: contextFormData.offers_ids || [],
+      email: contextFormData.email || '',
+      phone: contextFormData.phone || '',
+      website: contextFormData.website || '',
+      instagram: contextFormData.instagram || '',
+      userEmail: '',
+      message: contextFormData.description || '',
+    };
+  });
+
+  // Initialize selected contacts - use lazy initializer to check localStorage first
   const [selectedContacts, setSelectedContacts] = useState<{
     email: boolean;
     phone: boolean;
     website: boolean;
     instagram: boolean;
-  }>({
-    email: false,
-    phone: false,
-    website: false,
-    instagram: false,
+  }>(() => {
+    if (typeof window === 'undefined') {
+      return {
+        email: false,
+        phone: false,
+        website: false,
+        instagram: false,
+      };
+    }
+
+    // Try to load from localStorage first
+    try {
+      const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as SavedRecommendFormData;
+        return parsed.selectedContacts;
+      }
+    } catch (error) {
+      console.error('[StreamlinedRecommendForm] Error loading initial contacts:', error);
+    }
+
+    // Fallback: determine from formData if fields have values
+    // Note: This will use the formData from the useState above
+    try {
+      const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as SavedRecommendFormData;
+        return {
+          email: !!parsed.formData.email,
+          phone: !!parsed.formData.phone,
+          website: !!parsed.formData.website,
+          instagram: !!parsed.formData.instagram,
+        };
+      }
+    } catch {
+      // Ignore
+    }
+
+    return {
+      email: false,
+      phone: false,
+      website: false,
+      instagram: false,
+    };
   });
   
-  // Local form state for streamlined form
-  const [formData, setFormData] = useState<RecommendFormData>({
-    title: contextFormData.title || '',
-    category: contextFormData.category || '',
-    city: initialCity || '',
-    offers_ids: contextFormData.offers_ids || [],
-    email: contextFormData.email || '',
-    phone: contextFormData.phone || '',
-    website: contextFormData.website || '',
-    instagram: contextFormData.instagram || '',
-    userEmail: '',
-    message: contextFormData.description || '',
-  });
-  
+
+  // Helper function to load saved recommend form data
+  const loadSavedRecommendFormData = useCallback((): SavedRecommendFormData | null => {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved) as SavedRecommendFormData;
+      }
+    } catch (error) {
+      console.error('[StreamlinedRecommendForm] Error loading saved form data:', error);
+    }
+    return null;
+  }, []);
+
+  // Helper function to save recommend form data
+  const saveRecommendFormData = useCallback((data: RecommendFormData, contacts: typeof selectedContacts) => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const dataToSave: SavedRecommendFormData = {
+        formData: data,
+        selectedContacts: contacts,
+      };
+      localStorage.setItem(RECOMMEND_FORM_STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error('[StreamlinedRecommendForm] Error saving form data:', error);
+    }
+  }, []);
+
+  // Helper function to clear saved recommend form data
+  const clearSavedRecommendFormData = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(RECOMMEND_FORM_STORAGE_KEY);
+  }, []);
 
   // Set creation mode to recommendation on mount
   useEffect(() => {
     setCreationMode('recommendation');
   }, [setCreationMode]);
 
-  // Load city from localStorage only once on initial mount
+  // Load saved form data from localStorage on mount and sync with context
   useEffect(() => {
-    if (!cityInitializedRef.current && typeof window !== 'undefined') {
-      cityInitializedRef.current = true;
+    if (!formDataInitializedRef.current && typeof window !== 'undefined') {
+      formDataInitializedRef.current = true;
       
-      // Only load from localStorage if no initialCity prop and formData.city is empty
-      if (!initialCity && !formData.city) {
-        const savedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
-        if (savedCity) {
-          setFormData(prev => ({ ...prev, city: savedCity }));
+      const saved = loadSavedRecommendFormData();
+      if (saved) {
+        // Restore form data (lazy initializer already loaded it, but ensure it's fully synced)
+        setFormData(saved.formData);
+        // Restore selected contacts - ensure checkboxes match field values
+        setSelectedContacts({
+          email: saved.selectedContacts.email || !!saved.formData.email,
+          phone: saved.selectedContacts.phone || !!saved.formData.phone,
+          website: saved.selectedContacts.website || !!saved.formData.website,
+          instagram: saved.selectedContacts.instagram || !!saved.formData.instagram,
+        });
+        // Sync with contextFormData to ensure category and offers are available
+        updateFormData({
+          title: saved.formData.title,
+          category: saved.formData.category,
+          city: saved.formData.city,
+          offers_ids: saved.formData.offers_ids,
+          email: saved.formData.email,
+          phone: saved.formData.phone,
+          website: saved.formData.website,
+          instagram: saved.formData.instagram,
+          description: saved.formData.message,
+        });
+        // Mark city as initialized since we loaded it from saved data
+        cityInitializedRef.current = true;
+      } else {
+        // No saved form data, so initialize city from initialCity or localStorage
+        if (!cityInitializedRef.current) {
+          cityInitializedRef.current = true;
+          
+          // Use initialCity prop if provided and formData.city is empty
+          if (initialCity && !formData.city) {
+            setFormData(prev => ({ ...prev, city: initialCity }));
+          } else if (!formData.city) {
+            // Fallback to localStorage/sessionStorage
+            const savedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
+            if (savedCity) {
+              setFormData(prev => ({ ...prev, city: savedCity }));
+            }
+          }
         }
-      } else if (initialCity && !formData.city) {
-        // If initialCity prop is provided, use it
-        setFormData(prev => ({ ...prev, city: initialCity }));
       }
     }
-  }, [initialCity, formData.city]);
+  }, [loadSavedRecommendFormData, initialCity, updateFormData, formData.city]);
 
   // City search function
   const searchCities = useCallback(async (query: string) => {
@@ -438,6 +587,13 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     }
   }, [contextFormData.category, contextFormData.offers_ids, formData.category, formData.offers_ids]);
 
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (formDataInitializedRef.current) {
+      saveRecommendFormData(formData, selectedContacts);
+    }
+  }, [formData, selectedContacts, saveRecommendFormData]);
+
   // Helper to get category name - memoized
   const getCategoryName = useCallback((categoryId: string) => {
     const category = categories.find(c => c.category_id === categoryId);
@@ -504,7 +660,9 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       instagram: '',
       description: '',
     });
-  }, [initialCity, updateFormData, router]);
+    // Clear saved form data from localStorage
+    clearSavedRecommendFormData();
+  }, [initialCity, updateFormData, router, clearSavedRecommendFormData]);
 
   // Handle "Zurück zur Übersicht" - navigate to home
   const handleGoBack = useCallback(() => {
@@ -578,6 +736,15 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       });
       // Also clear local userEmail state
       setFormData(prev => ({ ...prev, userEmail: '' }));
+      // Clear selected contacts
+      setSelectedContacts({
+        email: false,
+        phone: false,
+        website: false,
+        instagram: false,
+      });
+      // Clear saved form data from localStorage
+      clearSavedRecommendFormData();
 
       queryClient.invalidateQueries({ queryKey: ['providers'] });
       queryClient.invalidateQueries({ queryKey: ['community-services'] });
@@ -590,7 +757,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, isFormValid, contextFormData, updateFormData, queryClient, router, t]);
+    }, [formData, isFormValid, contextFormData, updateFormData, queryClient, router, t, clearSavedRecommendFormData]);
 
   // Navigate to category selection
   const handleSelectCategory = useCallback(() => {

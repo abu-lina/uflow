@@ -122,48 +122,30 @@ export async function POST(request: Request) {
       expiresAt: tokenByTokenOnly?.expires_at,
     });
     
-    // Try exact match first
+    // Try case-insensitive email match first (emails should be case-insensitive)
+    // This handles cases where email might be stored with different casing
     let { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .select('*')
       .eq('token', token)
-      .eq('email', email)
+      .ilike('email', email) // Case-insensitive match
       .eq('type', 'magic_link')
       .eq('used', false)
       .maybeSingle();
     
     // #region agent log
-    console.log('[VERIFY MAGIC LINK] Query result (exact match):', {
+    console.log('[VERIFY MAGIC LINK] Query result (case-insensitive match):', {
       hasTokenData: !!tokenData,
       hasTokenError: !!tokenError,
       tokenError: tokenError?.message,
       tokenDataId: tokenData?.id,
       tokenDataEmail: tokenData?.email,
+      providedEmail: email,
+      emailsMatch: tokenData?.email?.toLowerCase() === email.toLowerCase(),
       tokenDataUsed: tokenData?.used,
       tokenDataExpiresAt: tokenData?.expires_at,
     });
     // #endregion
-    
-    // If not found, try case-insensitive email match (email might be stored differently)
-    if (!tokenData && !tokenError) {
-      console.log('[VERIFY MAGIC LINK] Trying case-insensitive email match...');
-      const { data: tokenDataCaseInsensitive } = await supabaseAdmin
-        .from('email_confirmation_tokens')
-        .select('*')
-        .eq('token', token)
-        .ilike('email', email)
-        .eq('type', 'magic_link')
-        .eq('used', false)
-        .maybeSingle();
-      
-      if (tokenDataCaseInsensitive) {
-        console.log('[VERIFY MAGIC LINK] Found token with case-insensitive match:', {
-          storedEmail: tokenDataCaseInsensitive.email,
-          providedEmail: email,
-        });
-        tokenData = tokenDataCaseInsensitive;
-      }
-    }
     
     // #region agent log
     console.log('[VERIFY MAGIC LINK] Final token data after all queries:', {
