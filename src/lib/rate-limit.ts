@@ -147,9 +147,18 @@ export function getClientIdentifier(
     return `user:${userId}`;
   }
 
-  // Get IP from headers
+  // Get IP from headers - prioritize Cloudflare, then x-forwarded-for, then x-real-ip
+  const cfIp = request.headers.get('cf-connecting-ip');
   const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
-  return `ip:${ip}`;
+  const realIp = request.headers.get('x-real-ip');
+  
+  // Use Cloudflare IP if available (most reliable)
+  const ip = cfIp?.trim() || 
+             (forwarded ? forwarded.split(',')[0].trim() : null) || 
+             realIp?.trim() || 
+             'unknown';
+  
+  // Ensure no spaces in identifier
+  return `ip:${ip.replace(/\s+/g, '')}`;
 }
 

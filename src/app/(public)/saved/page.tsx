@@ -272,11 +272,21 @@ export default function SavedProvidersPage() {
             setLoginError('Diese E-Mail-Adresse ist nicht registriert. Bitte erstelle zuerst ein Konto.');
             setIsEmailConfirmationError(false);
           } else {
-            setLoginError('Fehler beim Senden des Magic Links. Bitte versuche es erneut.');
+            const errorMessage = error.message || 'Fehler beim Senden des Magic Links. Bitte versuche es erneut.';
+            setLoginError(errorMessage);
             setIsEmailConfirmationError(false);
+            
+            // Show diagnostic URL if available
+            const diagnosticUrl = 'diagnosticUrl' in error && typeof error.diagnosticUrl === 'string' 
+              ? error.diagnosticUrl 
+              : undefined;
+            const toastDescription = diagnosticUrl 
+              ? `Bitte besuche diese URL für Diagnose: ${diagnosticUrl}`
+              : 'Bitte versuche es erneut oder kontaktiere den Support.';
+            
             toast.error('Magic Link fehlgeschlagen', {
-              description: 'Bitte versuche es erneut oder kontaktiere den Support.',
-              duration: 4000,
+              description: toastDescription,
+              duration: 8000,
             });
           }
           return;

@@ -477,10 +477,36 @@ export const sendAuthEmail = async (
   const template = templates[type][availableLanguage as 'en' | 'de'];
   const resend = getResendClient();
   
-  return await resend.emails.send({
-    from: 'noreply@ummahflow.com',
-    to,
-    subject: template.subject,
-    html: template.html.replace('{{CONFIRMATION_URL}}', confirmationUrl)
-  });
+  try {
+    const result = await resend.emails.send({
+      from: 'noreply@ummahflow.com',
+      to,
+      subject: template.subject,
+      html: template.html.replace('{{CONFIRMATION_URL}}', confirmationUrl)
+    });
+    
+    // Log for debugging
+    console.log('[RESEND EMAIL] Email sent successfully:', {
+      to,
+      type,
+      emailId: result.data?.id,
+      error: result.error
+    });
+    
+    // Resend returns { data: { id: string }, error: null } on success
+    // or { data: null, error: { message: string } } on failure
+    if (result.error) {
+      throw new Error(`Resend API error: ${result.error.message || JSON.stringify(result.error)}`);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('[RESEND EMAIL] Failed to send email:', {
+      to,
+      type,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    throw error;
+  }
 };

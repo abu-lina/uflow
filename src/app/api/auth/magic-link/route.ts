@@ -91,6 +91,18 @@ export async function POST(request: Request) {
     const isTest = isTestMode(request);
     const identifier = getClientIdentifier(request);
     
+    // Parse request body early for use in diagnostic URLs (before early returns)
+    // Store the parsed body so we can reuse it later
+    let body: { email?: string; language?: string } = {};
+    let email = '';
+    try {
+      body = await request.json();
+      email = body.email || '';
+    } catch {
+      // Request body parsing failed or missing - body and email will remain empty
+      // This is OK for early returns where we just need it for diagnostic URLs
+    }
+    
     // #region agent log
     await debugLog('magic-link/route.ts:65', 'Test mode check', {isTest,ip}, 'ALL');
     // #endregion
@@ -127,6 +139,7 @@ export async function POST(request: Request) {
           ip,
           identifier,
           message: 'Your IP address has been temporarily blocked due to suspicious activity. Please contact support if you believe this is an error.',
+          diagnosticUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://uat.ummahflow.com'}/api/auth/magic-link-diagnostic?email=${encodeURIComponent(email || '')}`,
           debug: process.env.NODE_ENV !== 'production' ? { ipBlocked, identifier } : undefined
         },
         { status: 403 }
@@ -153,6 +166,11 @@ export async function POST(request: Request) {
       }
       console.log('[MAGIC LINK API] Rate limit exceeded for IP:', ip);
       console.log('[MAGIC LINK API] Identifier:', identifier);
+      const requestOrigin = request.headers.get('origin') || 
+                           request.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
+                           process.env.NEXT_PUBLIC_SITE_URL || 
+                           'https://uat.ummahflow.com';
+      
       return NextResponse.json(
         { 
           error: 'Too many magic link requests. Please try again later.',
@@ -160,14 +178,15 @@ export async function POST(request: Request) {
           ip,
           limit: rateLimit,
           window: `${rateLimitWindow / 1000 / 60} minutes`,
-          debug: 'Visit /api/auth/debug-ip-status to check your rate limit status'
+          diagnosticUrl: `${requestOrigin}/api/auth/magic-link-diagnostic?email=${encodeURIComponent(email || '')}`,
+          message: `You have exceeded the limit of ${rateLimit} requests per ${rateLimitWindow / 1000 / 60} minutes. Please wait before trying again.`
         },
         { status: 429 }
       );
     }
 
-    const body = await request.json();
-    const { email, language } = body;
+    // Extract language from already-parsed body (email already extracted above)
+    const { language } = body;
     
     // 3. Validate input
     if (!email) {
@@ -387,12 +406,43 @@ export async function POST(request: Request) {
         magicLinkUrl
       );
       
+      // Extract error to help TypeScript with type narrowing
+      const emailError = emailResult.error as { message?: string } | null | undefined;
+      
+      // Helper to safely get error message
+      const getErrorMessage = (err: unknown): string | undefined => {
+        if (err && typeof err === 'object' && 'message' in err) {
+          return String(err.message);
+        }
+        return undefined;
+      };
+      
       // #region agent log
-      await debugLog('magic-link/route.ts:292', 'Resend email send success', {email,emailResultId:emailResult.data?.id,emailResultData:emailResult}, 'C');
+      await debugLog('magic-link/route.ts:292', 'Resend email send success', {
+        email,
+        emailResultId: emailResult.data?.id,
+        hasError: !!emailError,
+        errorMessage: getErrorMessage(emailError),
+        emailResultData: emailResult
+      }, 'C');
       // #endregion
       
+      // Check if Resend returned an error even though no exception was thrown
+      if (emailError) {
+        console.error('[MAGIC LINK API] ❌ Resend returned error in response:', emailError);
+        const errorDetails = getErrorMessage(emailError) || JSON.stringify(emailError);
+        return NextResponse.json(
+          { 
+            error: 'Failed to send magic link email.',
+            code: 'RESEND_API_ERROR',
+            details: errorDetails
+          },
+          { status: 500 }
+        );
+      }
+      
       console.log('[MAGIC LINK API] ✅ Magic link email sent successfully via Resend');
-      console.log('[MAGIC LINK API] Resend response:', emailResult);
+      console.log('[MAGIC LINK API] Resend email ID:', emailResult.data?.id);
     } catch (emailError) {
       // #region agent log
       await debugLog('magic-link/route.ts:294', 'Resend email send failure', {email,errorMessage:emailError instanceof Error ? emailError.message : String(emailError),errorName:emailError instanceof Error ? emailError.name : undefined,hasResendKey:!!process.env.RESEND_API_KEY}, 'C');
@@ -404,10 +454,18 @@ export async function POST(request: Request) {
         stack: emailError instanceof Error ? emailError.stack : undefined
       });
       // Return error - don't silently fail
+      const requestOrigin = request.headers.get('origin') || 
+                           request.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
+                           process.env.NEXT_PUBLIC_SITE_URL || 
+                           'https://uat.ummahflow.com';
+      
       return NextResponse.json(
         { 
           error: 'Failed to send magic link email. Please check Resend configuration.',
-          details: emailError instanceof Error ? emailError.message : String(emailError)
+          code: 'EMAIL_SEND_FAILED',
+          details: emailError instanceof Error ? emailError.message : String(emailError),
+          diagnosticUrl: `${requestOrigin}/api/auth/magic-link-diagnostic?email=${encodeURIComponent(email || '')}`,
+          message: 'We were unable to send the magic link email. Please try again or contact support if the problem persists.'
         },
         { status: 500 }
       );
@@ -423,7 +481,8 @@ export async function POST(request: Request) {
         identifier,
         email,
         requestOrigin,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        diagnosticUrl: `${requestOrigin}/api/auth/magic-link-diagnostic?email=${encodeURIComponent(email)}`
       }
     });
     

@@ -302,7 +302,8 @@ export const signInWithMagicLink = async (
           error: { 
             message: 'Your IP address has been temporarily blocked. Please try again later or contact support.',
             code: 'IP_BLOCKED',
-            details: data
+            details: data,
+            diagnosticUrl: data.diagnosticUrl
           } 
         };
       }
@@ -312,9 +313,23 @@ export const signInWithMagicLink = async (
         return { 
           data: null, 
           error: { 
-            message: `Too many requests. Please wait ${data.window} before trying again.`,
+            message: data.message || `Too many requests. Please wait ${data.window} before trying again.`,
             code: 'RATE_LIMIT_EXCEEDED',
-            details: data
+            details: data,
+            diagnosticUrl: data.diagnosticUrl
+          } 
+        };
+      }
+
+      if (data.code === 'EMAIL_SEND_FAILED') {
+        console.error('[MAGIC LINK CLIENT] Email send failed:', data);
+        return { 
+          data: null, 
+          error: { 
+            message: data.message || 'Failed to send magic link email. Please try again or contact support.',
+            code: 'EMAIL_SEND_FAILED',
+            details: data,
+            diagnosticUrl: data.diagnosticUrl
           } 
         };
       }

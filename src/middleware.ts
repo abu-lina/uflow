@@ -139,6 +139,7 @@ export async function middleware(req: NextRequest) {
   if (isProtectedRoute) {
     // Check for authentication token in cookies
     const accessToken = req.cookies.get('sb-access-token')?.value;
+    const refreshToken = req.cookies.get('sb-refresh-token')?.value;
     
     if (!accessToken) {
       // Not authenticated, redirect to home
@@ -153,12 +154,82 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/', req.url));
     }
 
-    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    // Attempt to validate the access token
+    let res = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         apikey: supabaseAnonKey,
+        'x-client-info': 'uflow-middleware',
       },
     });
+
+    // If token validation failed, try to refresh it if we have a refresh token
+    if (!res.ok && res.status === 403 && refreshToken) {
+      let errorData: { error_code?: string; msg?: string } | null = null;
+      try {
+        errorData = await res.json();
+      } catch {
+        // If we can't parse the error, fall through to allow AuthSyncer to handle it
+      }
+
+      // If it's a JWT expiration error, attempt to refresh the token
+      if (errorData && (errorData.error_code === 'bad_jwt' || errorData.msg?.includes('expired'))) {
+        try {
+          const refreshRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              apikey: supabaseAnonKey,
+              'x-client-info': 'uflow-middleware',
+            },
+            body: new URLSearchParams({
+              refresh_token: refreshToken,
+            }),
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json() as {
+              access_token: string;
+              refresh_token?: string;
+            };
+
+            // Retry validation with the new access token
+            res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+              headers: {
+                Authorization: `Bearer ${refreshData.access_token}`,
+                apikey: supabaseAnonKey,
+                'x-client-info': 'uflow-middleware',
+              },
+            });
+
+            // If validation succeeds with refreshed token, update cookies
+            if (res.ok) {
+              const response = NextResponse.next();
+              response.cookies.set('sb-access-token', refreshData.access_token, {
+                httpOnly: true,
+                path: '/',
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+              });
+              if (refreshData.refresh_token) {
+                response.cookies.set('sb-refresh-token', refreshData.refresh_token, {
+                  httpOnly: true,
+                  path: '/',
+                  sameSite: 'lax',
+                  secure: process.env.NODE_ENV === 'production',
+                });
+              }
+              return response;
+            }
+          }
+        } catch (refreshError) {
+          // Refresh failed, fall through to allow AuthSyncer to handle it
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[middleware] Token refresh failed:', refreshError);
+          }
+        }
+      }
+    }
 
     if (!res.ok) {
       // Check if token is expired (403) - allow page to load so AuthSyncer can refresh
