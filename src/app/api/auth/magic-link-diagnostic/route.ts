@@ -6,12 +6,28 @@ import { getClientIdentifier, getRemainingRequests } from '@/lib/rate-limit';
  * User-friendly diagnostic endpoint for magic link issues
  * Users can visit this URL on their iPhone to get diagnostic information
  * GET /api/auth/magic-link-diagnostic?email=user@example.com
+ * GET /api/auth/magic-link-diagnostic?email=user@example.com&ip=85.216.121.245 (admin only - requires x-admin-key header)
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const email = url.searchParams.get('email');
-  const ip = getClientIP(request);
-  const identifier = getClientIdentifier(request);
+  const adminKey = request.headers.get('x-admin-key');
+  const expectedKey = process.env.ADMIN_DEBUG_KEY || 'debug-key-change-in-production';
+  
+  // Allow admin to check specific IP by providing it in query params
+  let ip: string;
+  let identifier: string;
+  
+  const requestedIP = url.searchParams.get('ip');
+  if (requestedIP && adminKey === expectedKey) {
+    // Admin override - check the requested IP instead of visitor's IP
+    ip = requestedIP;
+    identifier = `ip:${ip.replace(/\s+/g, '')}`;
+  } else {
+    // Normal mode - use visitor's IP
+    ip = getClientIP(request);
+    identifier = getClientIdentifier(request);
+  }
   
   const isBlocked = checkIPBlocked(ip);
   
@@ -37,11 +53,15 @@ export async function GET(request: Request) {
     'cf-connecting-ip': request.headers.get('cf-connecting-ip'),
   };
   
+  const isAdminMode = requestedIP && adminKey === expectedKey;
+  
   const diagnostic = {
     timestamp: new Date().toISOString(),
     ip,
     identifier,
     email: email || 'not provided',
+    mode: isAdminMode ? 'admin' : 'user',
+    note: isAdminMode ? 'Admin mode: Checking specific IP provided in query parameter' : 'User mode: Showing diagnostic for your current IP address',
     status: {
       ipBlocked: isBlocked,
       rateLimitExceeded: magicLinkRateLimit === 0,

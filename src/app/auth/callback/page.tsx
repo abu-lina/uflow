@@ -55,37 +55,97 @@ export default function AuthCallbackPage() {
           fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth/callback/page.tsx:47',message:'Before verify API call',data:{hasMagicToken:!!magicToken,magicTokenLength:magicToken?.length,email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
           // #endregion
           
-          // Verify the token with our API
-          const verifyResponse = await fetch('/api/auth/verify-magic-link', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              token: magicToken,
-              email
-            }),
-          });
+          // Verify the token with our API with timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
           
-          const verifyData = await verifyResponse.json();
+          let verifyResponse: Response;
+          let verifyData: {
+            success?: boolean;
+            hashedToken?: string;
+            error?: string;
+            code?: string;
+            details?: string;
+          };
+          
+          try {
+            verifyResponse = await fetch('/api/auth/verify-magic-link', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                token: magicToken,
+                email
+              }),
+              signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            // Check if response is OK before parsing JSON
+            if (!verifyResponse.ok) {
+              // Try to parse error response
+              try {
+                verifyData = await verifyResponse.json();
+              } catch {
+                verifyData = { error: `HTTP ${verifyResponse.status}: ${verifyResponse.statusText}` };
+              }
+            } else {
+              verifyData = await verifyResponse.json();
+            }
+          } catch (fetchError) {
+            clearTimeout(timeoutId);
+            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+              console.error('[AUTH CALLBACK PAGE] Request timeout after 30 seconds');
+              setErrorMessage('Request timed out. Please try again or request a new magic link.');
+              setStatus('error');
+              return;
+            }
+            console.error('[AUTH CALLBACK PAGE] Fetch error:', fetchError);
+            setErrorMessage('Network error. Please check your connection and try again.');
+            setStatus('error');
+            return;
+          }
           
           // #region agent log
           fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth/callback/page.tsx:62',message:'After verify API call',data:{ok:verifyResponse.ok,status:verifyResponse.status,error:verifyData.error,hasSuccess:verifyData.success,hasHashedToken:!!verifyData.hashedToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
           // #endregion
           
           if (!verifyResponse.ok) {
-            console.error('[AUTH CALLBACK PAGE] Token verification failed:', verifyData.error);
-            setErrorMessage(
-              verifyData.error || 
-              'This magic link is invalid or has expired. Please request a new one.'
-            );
+            console.error('[AUTH CALLBACK PAGE] Token verification failed:', {
+              status: verifyResponse.status,
+              statusText: verifyResponse.statusText,
+              error: verifyData.error,
+              code: verifyData.code,
+              details: verifyData.details
+            });
+            
+            // Provide more specific error messages
+            let errorMsg = verifyData.error || 'This magic link is invalid or has expired. Please request a new one.';
+            
+            if (verifyData.code === 'IP_BLOCKED') {
+              errorMsg = 'Your IP address has been temporarily blocked. Please contact support.';
+            } else if (verifyData.code === 'RATE_LIMIT_EXCEEDED') {
+              errorMsg = 'Too many verification attempts. Please wait before trying again.';
+            } else if (verifyResponse.status === 400) {
+              errorMsg = verifyData.error || 'Invalid or expired magic link. Please request a new one.';
+            } else if (verifyResponse.status === 500) {
+              errorMsg = 'Server error. Please try again or contact support.';
+            }
+            
+            setErrorMessage(errorMsg);
             setStatus('error');
             return;
           }
           
           if (!verifyData.success || !verifyData.hashedToken) {
-            console.error('[AUTH CALLBACK PAGE] No hashed token in response');
-            setErrorMessage('Failed to create session. Please try again.');
+            console.error('[AUTH CALLBACK PAGE] No hashed token in response:', {
+              success: verifyData.success,
+              hasHashedToken: !!verifyData.hashedToken,
+              response: verifyData
+            });
+            setErrorMessage('Failed to create session. Please try again or request a new magic link.');
             setStatus('error');
             return;
           }
@@ -217,7 +277,8 @@ export default function AuthCallbackPage() {
 
       } catch (error) {
         console.error('[AUTH CALLBACK PAGE] Exception during callback:', error);
-        setErrorMessage('An unexpected error occurred. Please try again.');
+        const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.';
+        setErrorMessage(errorMsg);
         setStatus('error');
       }
     };
