@@ -101,7 +101,6 @@ export async function createProviderOrService(
     // Create provider
     const insertData = {
       provider_name: formData.title,
-      provider_description: formData.description || null,
       // If online business, all address fields are null
       address_street: formData.isOnlineBusiness ? null : (formData.street || null),
       address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),

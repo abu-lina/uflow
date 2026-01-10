@@ -212,6 +212,12 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     [language, setLanguage, t]
   );
 
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'providers/LanguageProvider.tsx:206',message:'LanguageProvider context value changed',data:{language},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  }, [language]);
+  // #endregion
+
   return (
     <LanguageContext.Provider value={contextValue}>
       {children}

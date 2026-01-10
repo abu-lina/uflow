@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from '@iconify/react';
@@ -56,6 +56,12 @@ interface NominatimCityResult {
  * - Full accessibility support
  */
 export default function CitySelectionPage() {
+  // #region agent log
+  const renderId = useRef(0);
+  renderId.current += 1;
+  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:58',message:'Component render',data:{renderId:renderId.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
   const router = useRouter();
   const { t } = useLanguage();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -72,13 +78,39 @@ export default function CitySelectionPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   
+  // Track if initial animation has completed to prevent re-animation on re-renders
+  // Use state instead of ref so useMemo recalculates when animation completes
+  const [hasAnimated, setHasAnimated] = useState(false);
+  // Track if cities have been fetched to prevent re-fetching on context changes
+  const hasFetchedCitiesRef = useRef(false);
+  // Store latest t function for use in error handlers
+  const tRef = useRef(t);
+  
+  // Update t ref whenever t changes
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
+  
   // Detect reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined' && 
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Fetch cities on mount
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:78',message:'State values',data:{renderId:renderId.current,isLoading,selectedCityId,selectedCityName,citiesCount:cities.length,hasAnimated,hasFetchedCities:hasFetchedCitiesRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+
+  // Fetch cities on mount only (not on context changes)
   useEffect(() => {
+    // Prevent re-fetching if cities have already been loaded
+    if (hasFetchedCitiesRef.current) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:95',message:'Skipping fetch - already loaded',data:{hasFetchedCities:true},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      return;
+    }
+
     async function fetchCities() {
+      hasFetchedCitiesRef.current = true;
       setIsLoading(true);
       
       try {
@@ -113,16 +145,42 @@ export default function CitySelectionPage() {
         }
         
         setCities(result);
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:128',message:'Cities loaded',data:{citiesCount:result.length,cityNames:result.map(c=>c.city_name)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
       } catch (err) {
         console.error('[City Selection] Failed to fetch cities:', err);
-        toast.error(t('common.error'));
+        // Use tRef to get latest translation function without causing re-fetches
+        toast.error(tRef.current('common.error'));
       } finally {
         setIsLoading(false);
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:143',message:'Loading complete',data:{isLoading:false},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
       }
     }
 
     fetchCities();
-  }, [t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run on mount
+
+  // Mark animation as complete after cities have loaded and animation time has passed
+  useEffect(() => {
+    if (!isLoading && cities.length > 0 && !hasAnimated) {
+      const animationDuration = prefersReducedMotion ? 0 : 0.3 + (cities.length - 1) * 0.05;
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:133',message:'Animation timer started',data:{animationDuration,prefersReducedMotion},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      const timer = setTimeout(() => {
+        setHasAnimated(true);
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:136',message:'Animation marked complete',data:{hasAnimated:true},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+      }, (animationDuration + 0.1) * 1000); // Add small buffer
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, cities.length, prefersReducedMotion, hasAnimated]);
 
 
   // Search cities using Nominatim API
@@ -192,11 +250,12 @@ export default function CitySelectionPage() {
       }
       console.error('[City Search] Error fetching cities:', error);
       setSearchResults([]);
-      toast.error(t('common.error'));
+      // Use tRef to get latest translation function without causing callback recreation
+      toast.error(tRef.current('common.error'));
     } finally {
       setIsSearching(false);
     }
-  }, [t]);
+  }, []); // Empty deps - t is accessed via tRef
 
   // Debounced search
   useEffect(() => {
@@ -212,10 +271,16 @@ export default function CitySelectionPage() {
     return () => clearTimeout(timer);
   }, [searchQuery, searchCities]);
 
-  // Handle city selection (from top 3 cities)
-  const handleCitySelect = (city: CityData) => {
+  // Handle city selection (from top 3 cities) - memoized to prevent re-renders
+  const handleCitySelect = useCallback((city: CityData) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:231',message:'City selected - BEFORE state update',data:{cityId:city.id,cityName:city.city_name,currentSelectedId:selectedCityId,hasAnimated},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     setSelectedCityId(city.id);
     setSelectedCityName(city.city_name);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:233',message:'City selected - AFTER state update',data:{cityId:city.id,cityName:city.city_name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     
     // Store selected city with verification
     try {
@@ -258,7 +323,7 @@ export default function CitySelectionPage() {
     }
     
     // DO NOT auto-forward - user must explicitly tap CTA button
-  };
+  }, []); // Empty deps - uses state setters and refs which are stable
 
   // Handle city selection from search results
   const handleSearchCitySelect = async (city: NominatimCityResult) => {
@@ -358,6 +423,88 @@ export default function CitySelectionPage() {
     }
   };
 
+  // Memoize city buttons to prevent re-renders when LanguageProvider context changes
+  // Use tRef.current to avoid dependency on t function reference
+  // Include hasAnimated in dependencies so memo recalculates when animation completes
+  const cityButtons = useMemo(() => {
+    return cities.map((city, index) => {
+      // Only animate on initial mount, not on re-renders
+      const shouldAnimate = !hasAnimated && !isLoading;
+      
+      // #region agent log
+      if (index === 0) {
+        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:457',message:'City button render (memoized)',data:{cityId:city.id,index,shouldAnimate,hasAnimated,isLoading,selectedCityId,renderId:renderId.current},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'A'})}).catch(()=>{});
+      }
+      // #endregion
+      
+      // Always use motion.button but conditionally control animation props
+      // This prevents React from unmounting/remounting when switching component types
+      const buttonClassName = cn(
+        'flex h-[54px] items-center justify-between rounded-sm border border-border bg-white p-4',
+        'transition-all duration-150',
+        'hover:bg-neutral-muted hover:border-primary',
+        'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+        selectedCityId === city.id && 'border-primary bg-primary/5'
+      );
+      const buttonAriaLabel = city.provider_count > 0
+        ? `${city.city_name}, ${tRef.current('waitlist.citySelection.providerCount_other').replace('{{count}}', String(city.provider_count))}`
+        : city.city_name;
+      
+      // Conditionally include animation props only when shouldAnimate is true
+      // When false, explicitly set initial={false} to disable all Framer Motion processing
+      const motionProps = shouldAnimate ? {
+        animate: { opacity: 1, x: 0 },
+        initial: { opacity: 0, x: -20 },
+        transition: prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: index * 0.05 },
+        onAnimationStart: () => {
+          // #region agent log
+          if (index === 0) {
+            fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:477',message:'Framer Motion animation START',data:{cityId:city.id,index},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'A'})}).catch(()=>{});
+          }
+          // #endregion
+        },
+        onAnimationComplete: () => {
+          // #region agent log
+          if (index === 0) {
+            fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:484',message:'Framer Motion animation COMPLETE',data:{cityId:city.id,index},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'A'})}).catch(()=>{});
+          }
+          // #endregion
+        },
+      } : {
+        initial: false, // Explicitly disable Framer Motion processing
+        animate: false, // Explicitly disable animation
+      };
+      
+      return (
+        <motion.button
+          key={city.id}
+          {...motionProps}
+          aria-label={buttonAriaLabel}
+          className={buttonClassName}
+          layout={false}
+          type="button"
+          onClick={() => handleCitySelect(city)}
+        >
+          <div className="flex items-center gap-2">
+            <span className="font-inter-tight text-base font-semibold text-content-heading">
+              {city.city_name}
+            </span>
+            {city.provider_count > 0 && (
+              <span className="font-inter-tight text-base font-light text-content-heading">
+                {tRef.current('waitlist.citySelection.providerCount_other').replace('{{count}}', String(city.provider_count))}
+              </span>
+            )}
+          </div>
+          <Icon 
+            aria-hidden="true"
+            className="size-6 text-content-heading"
+            icon={selectedCityId === city.id ? "material-symbols:radio-button-checked" : "material-symbols:radio-button-unchecked"}
+          />
+        </motion.button>
+      );
+    });
+  }, [cities, selectedCityId, isLoading, prefersReducedMotion, hasAnimated, handleCitySelect]);
+
   return (
     <div className="flex h-screen w-full flex-col items-center bg-uflow-light">
       {/* Header - 80px with safe area */}
@@ -384,6 +531,7 @@ export default function CitySelectionPage() {
           animate={{ opacity: 1, y: 0 }}
           className="flex w-full max-w-[345px] flex-col gap-8"
           initial={{ opacity: 0, y: 20 }}
+          layout={false}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, ease: 'easeOut' }}
         >
           {/* Title + Subtitle */}
@@ -391,6 +539,7 @@ export default function CitySelectionPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex w-full flex-col gap-4"
             initial={{ opacity: 0, y: 20 }}
+            layout={false}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.1, ease: 'easeOut' }}
           >
             {/* Title */}
@@ -409,6 +558,7 @@ export default function CitySelectionPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex w-full flex-col gap-3"
             initial={{ opacity: 0, y: 20 }}
+            layout={false}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.2, ease: 'easeOut' }}
           >
             {isLoading ? (
@@ -433,51 +583,15 @@ export default function CitySelectionPage() {
               </>
             ) : (
               <>
-                {/* Top 3 Cities */}
-                {cities.map((city, index) => (
-                  <motion.button
-                    key={city.id}
-                    animate={{ opacity: 1, x: 0 }}
-                    aria-label={
-                      city.provider_count > 0
-                        ? `${city.city_name}, ${t('waitlist.citySelection.providerCount_other').replace('{{count}}', String(city.provider_count))}`
-                        : city.city_name
-                    }
-                    className={cn(
-                      'flex h-[54px] items-center justify-between rounded-sm border border-border bg-white p-4',
-                      'transition-all duration-150',
-                      'hover:bg-neutral-muted hover:border-primary',
-                      'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                      selectedCityId === city.id && 'border-primary bg-primary/5'
-                    )}
-                    initial={{ opacity: 0, x: -20 }}
-                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: index * 0.05 }}
-                    type="button"
-                    onClick={() => handleCitySelect(city)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-inter-tight text-base font-semibold text-content-heading">
-                        {city.city_name}
-                      </span>
-                      {city.provider_count > 0 && (
-                        <span className="font-inter-tight text-base font-light text-content-heading">
-                          {t('waitlist.citySelection.providerCount_other').replace('{{count}}', String(city.provider_count))}
-                        </span>
-                      )}
-                    </div>
-                    <Icon 
-                      aria-hidden="true"
-                      className="size-6 text-content-heading"
-                      icon={selectedCityId === city.id ? "material-symbols:radio-button-checked" : "material-symbols:radio-button-unchecked"}
-                    />
-                  </motion.button>
-                ))}
+                {/* Top 3 Cities - Memoized to prevent re-renders on context changes */}
+                {cityButtons}
 
                 {/* Search Input */}
                 <motion.div
-                  animate={{ opacity: 1, x: 0 }}
+                  animate={!hasAnimated && !isLoading ? { opacity: 1, x: 0 } : false}
                   className="flex flex-col gap-2"
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={!hasAnimated && !isLoading ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }}
+                  layout={false}
                   transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: 0.15 }}
                 >
                   {/* Search Input */}
@@ -586,6 +700,7 @@ export default function CitySelectionPage() {
                                     isSelected && 'bg-primary/5 border-primary'
                                   )}
                                   initial={{ opacity: 0, x: -20 }}
+                                  layout={false}
                                   role="option"
                                   transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, delay: index * 0.03 }}
                                   type="button"
@@ -623,6 +738,7 @@ export default function CitySelectionPage() {
             animate={{ opacity: 1, y: 0 }}
             className="w-full"
             initial={{ opacity: 0, y: 20 }}
+            layout={false}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.3, ease: 'easeOut' }}
           >
             <button
