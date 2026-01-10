@@ -346,6 +346,12 @@ CREATE INDEX IF NOT EXISTS idx_category_suggested_needs_priority ON public.categ
 CREATE INDEX IF NOT EXISTS idx_email_confirmation_tokens_token ON public.email_confirmation_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_email_confirmation_tokens_user_id ON public.email_confirmation_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_email_confirmation_tokens_email ON public.email_confirmation_tokens(email);
+-- Composite index for token lookup (token, email, type, used) - optimized for verify-magic-link queries
+CREATE INDEX IF NOT EXISTS idx_email_confirmation_tokens_lookup ON public.email_confirmation_tokens(token, email, type, used);
+-- Partial index for expiration cleanup queries
+CREATE INDEX IF NOT EXISTS idx_email_confirmation_tokens_expires_at ON public.email_confirmation_tokens(expires_at) WHERE used = FALSE;
+-- Index for type filtering
+CREATE INDEX IF NOT EXISTS idx_email_confirmation_tokens_type ON public.email_confirmation_tokens(type);
 
 -- Push Subscriptions indexes
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON public.push_subscriptions(user_id);

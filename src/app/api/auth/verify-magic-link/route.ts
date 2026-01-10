@@ -5,6 +5,7 @@ import {
   checkIPBlocked,
 } from '@/utils/security';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { logAuth } from '@/lib/logger';
 
 // Lazy initialization - only creates client when first accessed
 function getSupabaseAdmin() {
@@ -42,62 +43,48 @@ function isTestMode(request: Request): boolean {
 }
 
 export async function POST(request: Request) {
+  const startTime = Date.now();
   const ip = getClientIP(request);
   
-  console.log('[VERIFY MAGIC LINK API] ========================================');
-  console.log('[VERIFY MAGIC LINK API] Magic link verification request received');
-  console.log('[VERIFY MAGIC LINK API] IP:', ip);
-  console.log('[VERIFY MAGIC LINK API] ========================================');
+  logAuth('info', {
+    event: 'token_verification_request',
+    ip,
+  });
   
   try {
     const isTest = isTestMode(request);
     
-    // 1. Check if IP is blocked (unless test mode)
-    if (!isTest && checkIPBlocked(ip)) {
-      console.log('[VERIFY MAGIC LINK API] Blocked IP attempted verification:', ip);
-      return NextResponse.json(
-        { error: 'Access temporarily restricted. Please try again later.' },
-        { status: 403 }
-      );
-    }
-    
-    // 2. Rate limiting: 10 verification attempts per hour per IP
-    const identifier = getClientIdentifier(request);
-    const rateLimit = isTest ? 1000 : 10;
-    const rateLimitWindow = isTest ? 60 * 1000 : 60 * 60 * 1000;
-    
-    if (!checkRateLimit(identifier, rateLimit, rateLimitWindow, 'verify-magic-link')) {
-      console.log('[VERIFY MAGIC LINK API] Rate limit exceeded for IP:', ip);
-      return NextResponse.json(
-        { error: 'Too many verification attempts. Please try again later.' },
-        { status: 429 }
-      );
-    }
-    
     const body = await request.json();
     const { token, email } = body;
     
-    // 3. Validate input
+    // 1. Validate input first
     if (!token || !email) {
-      console.error('[VERIFY MAGIC LINK API] Missing token or email');
+      logAuth('warn', {
+        event: 'token_verification_missing_input',
+        ip,
+      });
       return NextResponse.json(
         { error: 'Missing token or email' },
         { status: 400 }
       );
     }
     
-    // 4. Validate email format
+    // 2. Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      console.error('[VERIFY MAGIC LINK API] Invalid email format:', email);
+      logAuth('warn', {
+        event: 'token_verification_invalid_email',
+        ip,
+        email,
+      });
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
       );
     }
     
-    console.log('[VERIFY MAGIC LINK API] Verifying token for email:', email);
-    
-    // 5. Verify token from database
+    // 3. Verify token from database FIRST
+    // If token is valid, we allow verification even if IP is blocked
+    // because the token itself proves legitimacy
     const supabaseAdmin = getSupabaseAdmin();
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
@@ -109,28 +96,100 @@ export async function POST(request: Request) {
       .maybeSingle();
     
     if (tokenError) {
-      console.error('[VERIFY MAGIC LINK API] Database error:', tokenError);
+      logAuth('error', {
+        event: 'token_verification_database_error',
+        ip,
+        email,
+        error: tokenError.message || 'Database error',
+        duration: Date.now() - startTime,
+      });
       return NextResponse.json(
         { error: 'Failed to verify token' },
         { status: 500 }
       );
     }
     
-    if (!tokenData) {
-      console.log('[VERIFY MAGIC LINK API] Token not found or already used');
-      return NextResponse.json(
-        { error: 'Invalid or expired magic link. Please request a new one.' },
-        { status: 400 }
-      );
-    }
+    // 4. Check if token is valid
+    // If token is valid, allow verification even if IP is blocked
+    // because the token itself proves legitimacy
+    const isTokenValid = tokenData && new Date(tokenData.expires_at) >= new Date();
     
-    // 6. Check if token is expired
-    if (new Date(tokenData.expires_at) < new Date()) {
-      console.log('[VERIFY MAGIC LINK API] Token expired');
+    if (!isTokenValid) {
+      // Token is invalid - apply rate limiting and IP blocking to prevent brute force
+      const identifier = getClientIdentifier(request);
+      const rateLimit = isTest ? 1000 : 10;
+      const rateLimitWindow = isTest ? 60 * 1000 : 60 * 60 * 1000;
+      
+      if (!checkRateLimit(identifier, rateLimit, rateLimitWindow, 'verify-magic-link')) {
+        logAuth('warn', {
+          event: 'token_verification_rate_limit_exceeded',
+          ip,
+          email,
+          duration: Date.now() - startTime,
+        });
+        return NextResponse.json(
+          { error: 'Too many verification attempts. Please try again later.' },
+          { status: 429 }
+        );
+      }
+      
+      // Check IP blocking for invalid tokens
+      const ipBlocked = !isTest && checkIPBlocked(ip);
+      if (ipBlocked) {
+        logAuth('warn', {
+          event: 'token_verification_blocked_ip',
+          ip,
+          email,
+          tokenValid: false,
+          ipBlocked: true,
+          duration: Date.now() - startTime,
+        });
+        return NextResponse.json(
+          { error: 'Access temporarily restricted. Please try again later.' },
+          { status: 403 }
+        );
+      }
+      
+      // Token invalid but IP not blocked - return token error
+      if (!tokenData) {
+        logAuth('warn', {
+          event: 'token_verification_not_found',
+          ip,
+          email,
+          tokenValid: false,
+          duration: Date.now() - startTime,
+        });
+        return NextResponse.json(
+          { error: 'Invalid or expired magic link. Please request a new one.' },
+          { status: 400 }
+        );
+      }
+      
+      logAuth('warn', {
+        event: 'token_verification_expired',
+        ip,
+        email,
+        tokenValid: false,
+        duration: Date.now() - startTime,
+      });
       return NextResponse.json(
         { error: 'Magic link has expired. Please request a new one.' },
         { status: 400 }
       );
+    }
+    
+    // Token is valid - proceed with verification even if IP is blocked
+    // The valid token proves the user is legitimate, so we bypass IP blocking
+    const ipBlocked = !isTest && checkIPBlocked(ip);
+    if (ipBlocked) {
+      logAuth('info', {
+        event: 'token_verification_bypass_ip_block',
+        ip,
+        email,
+        tokenValid: true,
+        ipBlocked: true,
+        bypassed: true,
+      });
     }
     
     // 7. Mark token as used
@@ -140,17 +199,26 @@ export async function POST(request: Request) {
       .eq('id', tokenData.id);
     
     if (updateError) {
-      console.error('[VERIFY MAGIC LINK API] Error marking token as used:', updateError);
-      // Continue anyway - token verification succeeded
+      logAuth('warn', {
+        event: 'token_verification_update_error',
+        ip,
+        email,
+        error: updateError.message || 'Failed to mark token as used',
+        // Continue anyway - token verification succeeded
+      });
     }
-    
-    console.log('[VERIFY MAGIC LINK API] ✅ Token verified successfully');
     
     // 8. Get user to check if they need email confirmation
     const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (userError) {
-      console.error('[VERIFY MAGIC LINK API] Error fetching user:', userError);
+      logAuth('error', {
+        event: 'token_verification_user_fetch_error',
+        ip,
+        email,
+        error: userError.message || 'Failed to fetch user',
+        duration: Date.now() - startTime,
+      });
       return NextResponse.json(
         { error: 'Failed to verify user' },
         { status: 500 }
@@ -160,7 +228,12 @@ export async function POST(request: Request) {
     const user = users.find(u => u.id === tokenData.user_id);
     
     if (!user) {
-      console.error('[VERIFY MAGIC LINK API] User not found');
+      logAuth('error', {
+        event: 'token_verification_user_not_found',
+        ip,
+        email,
+        duration: Date.now() - startTime,
+      });
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -168,7 +241,12 @@ export async function POST(request: Request) {
     }
     
     if (!user.email) {
-      console.error('[VERIFY MAGIC LINK API] User email not found');
+      logAuth('error', {
+        event: 'token_verification_user_email_missing',
+        ip,
+        email,
+        duration: Date.now() - startTime,
+      });
       return NextResponse.json(
         { error: 'User email not found' },
         { status: 400 }
@@ -179,7 +257,6 @@ export async function POST(request: Request) {
     const isConfirmed = user.email_confirmed_at !== null || user.user_metadata?.email_confirmed === true;
     
     if (!isConfirmed) {
-      console.log('[VERIFY MAGIC LINK API] Confirming email for user');
       const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
         user.id,
         {
@@ -193,10 +270,13 @@ export async function POST(request: Request) {
       );
       
       if (confirmError) {
-        console.error('[VERIFY MAGIC LINK API] Error confirming email:', confirmError);
-        // Continue anyway - we can still create a session
-      } else {
-        console.log('[VERIFY MAGIC LINK API] ✅ Email confirmed');
+        logAuth('warn', {
+          event: 'token_verification_email_confirm_error',
+          ip,
+          email,
+          error: confirmError.message || 'Failed to confirm email',
+          // Continue anyway - we can still create a session
+        });
       }
     }
     
@@ -217,7 +297,13 @@ export async function POST(request: Request) {
     });
     
     if (linkError) {
-      console.error('[VERIFY MAGIC LINK API] Error generating session link:', linkError);
+      logAuth('error', {
+        event: 'token_verification_session_link_error',
+        ip,
+        email,
+        error: linkError.message || 'Failed to generate session link',
+        duration: Date.now() - startTime,
+      });
       return NextResponse.json(
         { error: 'Failed to create session. Please try again.' },
         { status: 500 }
@@ -229,15 +315,29 @@ export async function POST(request: Request) {
     const hashedToken = linkData.properties?.hashed_token;
     
     if (!hashedToken) {
-      console.error('[VERIFY MAGIC LINK API] No hashed_token in response');
-      console.error('[VERIFY MAGIC LINK API] Link data:', JSON.stringify(linkData, null, 2));
+      logAuth('error', {
+        event: 'token_verification_missing_hashed_token',
+        ip,
+        email,
+        error: 'No hashed_token in generateLink response',
+        duration: Date.now() - startTime,
+      });
       return NextResponse.json(
         { error: 'Failed to generate session token' },
         { status: 500 }
       );
     }
     
-    console.log('[VERIFY MAGIC LINK API] ✅ Generated hashed token for session');
+    const duration = Date.now() - startTime;
+    logAuth('info', {
+      event: 'token_verification_success',
+      ip,
+      email,
+      tokenValid: true,
+      ipBlocked: ipBlocked,
+      bypassed: ipBlocked,
+      duration,
+    });
     
     // Return the hashed token and user info
     // The client will use this hashed_token with verifyOtp to create the session
@@ -251,7 +351,12 @@ export async function POST(request: Request) {
     });
     
   } catch (error) {
-    console.error('[VERIFY MAGIC LINK API] Unexpected error:', error);
+    logAuth('error', {
+      event: 'token_verification_unexpected_error',
+      ip,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      duration: Date.now() - startTime,
+    });
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
