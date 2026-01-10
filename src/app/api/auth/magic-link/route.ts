@@ -131,18 +131,35 @@ export async function POST(request: Request) {
     console.log('[MAGIC LINK API] Received magic link request:', { email, language });
     
     // 7. Check if user exists, create if not
+    // Use pagination to find user (handles large user lists)
     const supabaseAdmin = getSupabaseAdmin();
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    let user = null;
+    let page = 1;
+    const perPage = 1000;
     
-    if (listError) {
-      console.error('[MAGIC LINK API] Error checking existing users:', listError);
-      return NextResponse.json(
-        { error: 'Failed to verify user' },
-        { status: 500 }
-      );
+    while (user === null) {
+      const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage
+      });
+      
+      if (listError) {
+        console.error('[MAGIC LINK API] Error checking existing users:', listError);
+        return NextResponse.json(
+          { error: 'Failed to verify user' },
+          { status: 500 }
+        );
+      }
+      
+      user = data.users.find(u => u.email === email);
+      
+      // If found or reached end of list, break
+      if (user || data.users.length < perPage) {
+        break;
+      }
+      
+      page++;
     }
-    
-    let user = users.find(u => u.email === email);
     
     // If user doesn't exist, create them automatically (passwordless signup)
     if (!user) {
