@@ -34,7 +34,14 @@ export function RecommendSuccessScreen({
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-uflow-light px-6">
+    <div 
+      className="absolute inset-x-0 flex w-full items-center justify-center bg-uflow-light px-6"
+      style={{
+        top: 'env(safe-area-inset-top)',
+        bottom: 'calc(64px + env(safe-area-inset-bottom))',
+        height: 'calc(100vh - env(safe-area-inset-top) - 64px - env(safe-area-inset-bottom))',
+      }}
+    >
       <motion.div
         animate={{ opacity: 1, y: 0 }}
         className="flex w-full max-w-[345px] flex-col items-center gap-6"
