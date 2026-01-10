@@ -1,31 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { appendFile } from 'fs/promises';
 import {
   getClientIP,
   checkIPBlocked,
 } from '@/utils/security';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { logAuth } from '@/lib/logger';
-
-// Debug logging helper
-const DEBUG_LOG_PATH = '/Users/NARAFIQ/01 Personal/Projects/uflow/.cursor/debug.log';
-async function debugLog(location: string, message: string, data: Record<string, unknown>, hypothesisId: string) {
-  const logEntry = JSON.stringify({
-    location,
-    message,
-    data,
-    timestamp: Date.now(),
-    sessionId: 'debug-session',
-    runId: 'run1',
-    hypothesisId
-  }) + '\n';
-  try {
-    await appendFile(DEBUG_LOG_PATH, logEntry, 'utf8');
-  } catch {
-    // Silently fail if log file can't be written
-  }
-}
 
 // Lazy initialization - only creates client when first accessed
 function getSupabaseAdmin() {
@@ -66,10 +46,6 @@ export async function POST(request: Request) {
   const startTime = Date.now();
   const ip = getClientIP(request);
   
-  // #region agent log
-  await debugLog('verify-magic-link/route.ts:45', 'POST request received', {ip,startTime}, 'ALL');
-  // #endregion
-  
   logAuth('info', {
     event: 'token_verification_request',
     ip,
@@ -80,10 +56,6 @@ export async function POST(request: Request) {
     
     const body = await request.json();
     const { token, email } = body;
-    
-    // #region agent log
-    await debugLog('verify-magic-link/route.ts:58', 'Request body parsed', {hasToken:!!token,tokenLength:token?.length,hasEmail:!!email,email,isTest}, 'A,C');
-    // #endregion
     
     // 1. Validate input first
     if (!token || !email) {
@@ -114,10 +86,6 @@ export async function POST(request: Request) {
     // If token is valid, we allow verification even if IP is blocked
     // because the token itself proves legitimacy
     const supabaseAdmin = getSupabaseAdmin();
-    
-    // #region agent log
-    await debugLog('verify-magic-link/route.ts:96', 'Before database query', {tokenPrefix:token?.substring(0,8),tokenLength:token?.length,email,emailLower:email.toLowerCase(),emailTrimmed:email.trim()}, 'D');
-    // #endregion
     
     console.log('[VERIFY MAGIC LINK] Before database query:', {
       token: token?.substring(0, 8) + '...',
@@ -179,10 +147,6 @@ export async function POST(request: Request) {
       .eq('used', false)
       .maybeSingle();
     
-    // #region agent log
-    await debugLog('verify-magic-link/route.ts:127', 'Token query result', {hasTokenData:!!tokenData,hasTokenError:!!tokenError,tokenError:tokenError?.message,tokenDataId:tokenData?.id,tokenDataEmail:tokenData?.email,providedEmail:email,emailsMatch:tokenData?.email?.toLowerCase()===email.toLowerCase(),tokenDataUsed:tokenData?.used,tokenDataExpiresAt:tokenData?.expires_at}, 'D');
-    // #endregion
-    
     console.log('[VERIFY MAGIC LINK] Query result (case-insensitive match):', {
       hasTokenData: !!tokenData,
       hasTokenError: !!tokenError,
@@ -194,13 +158,6 @@ export async function POST(request: Request) {
       tokenDataUsed: tokenData?.used,
       tokenDataExpiresAt: tokenData?.expires_at,
     });
-    
-    // #region agent log
-    console.log('[VERIFY MAGIC LINK] Final token data after all queries:', {
-      hasTokenData: !!tokenData,
-      tokenDataEmail: tokenData?.email,
-    });
-    // #endregion
     
     if (tokenError) {
       logAuth('error', {
@@ -222,10 +179,6 @@ export async function POST(request: Request) {
     const now = new Date();
     const expiresAt = tokenData ? new Date(tokenData.expires_at) : null;
     const isTokenValid = tokenData && expiresAt && expiresAt >= now;
-    
-    // #region agent log
-    await debugLog('verify-magic-link/route.ts:115', 'Token validity check', {isTokenValid,hasTokenData:!!tokenData,expiresAt:expiresAt?.toISOString(),now:now.toISOString(),isExpired:expiresAt?expiresAt<now:null}, 'A,B');
-    // #endregion
     
     if (!isTokenValid) {
       // Token is invalid - apply rate limiting and IP blocking to prevent brute force
@@ -249,10 +202,6 @@ export async function POST(request: Request) {
       // Check IP blocking for invalid tokens
       const ipBlocked = !isTest && checkIPBlocked(ip);
       
-      // #region agent log
-      await debugLog('verify-magic-link/route.ts:137', 'IP blocking check for invalid token', {ip,isTest,ipBlocked,isTokenValid}, 'D');
-      // #endregion
-      
       if (ipBlocked) {
         logAuth('warn', {
           event: 'token_verification_blocked_ip',
@@ -262,10 +211,6 @@ export async function POST(request: Request) {
           ipBlocked: true,
           duration: Date.now() - startTime,
         });
-        
-        // #region agent log
-        await debugLog('verify-magic-link/route.ts:148', 'Returning IP blocked error', {ip,email,error:'Access temporarily restricted'}, 'D');
-        // #endregion
         
         return NextResponse.json(
           { error: 'Access temporarily restricted. Please try again later.' },
@@ -304,10 +249,6 @@ export async function POST(request: Request) {
     // Token is valid - proceed with verification even if IP is blocked
     // The valid token proves the user is legitimate, so we bypass IP blocking
     const ipBlocked = !isTest && checkIPBlocked(ip);
-    
-    // #region agent log
-    await debugLog('verify-magic-link/route.ts:258', 'IP check for valid token', {ip,isTest,ipBlocked,isTokenValid:true}, 'A');
-    // #endregion
     
     if (ipBlocked) {
       logAuth('info', {
@@ -416,10 +357,6 @@ export async function POST(request: Request) {
                          'http://localhost:3000';
     
     // Generate a Supabase magic link (this creates a proper hashed_token)
-    // #region agent log
-    await debugLog('verify-magic-link/route.ts:366', 'Before generateLink call', {userEmail:user.email,requestOrigin}, 'ALL');
-    // #endregion
-    
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email: user.email,
@@ -427,10 +364,6 @@ export async function POST(request: Request) {
         redirectTo: `${requestOrigin}/auth/callback`,
       }
     });
-    
-    // #region agent log
-    await debugLog('verify-magic-link/route.ts:374', 'generateLink result', {hasLinkError:!!linkError,linkError:linkError?.message,hasLinkData:!!linkData,hasHashedToken:!!linkData?.properties?.hashed_token}, 'ALL');
-    // #endregion
     
     if (linkError) {
       logAuth('error', {

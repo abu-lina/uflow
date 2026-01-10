@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { appendFile } from 'fs/promises';
 import { 
   checkRateLimit, 
   getClientIdentifier 
@@ -14,27 +13,6 @@ import {
   isSuspiciousTiming,
 } from '@/utils/security';
 import { sendAuthEmail } from '@/services/emailService';
-
-// Debug logging helper
-const DEBUG_LOG_PATH = '/Users/NARAFIQ/01 Personal/Projects/uflow/.cursor/debug.log';
-async function debugLog(location: string, message: string, data: Record<string, unknown>, hypothesisId: string) {
-  const logEntry = JSON.stringify({
-    location,
-    message,
-    data,
-    timestamp: Date.now(),
-    sessionId: 'debug-session',
-    runId: 'run1',
-    hypothesisId
-  }) + '\n';
-  try {
-    await appendFile(DEBUG_LOG_PATH, logEntry, 'utf8');
-    console.log(`[DEBUG LOG] ${location}: ${message}`, data);
-  } catch (err) {
-    console.error(`[DEBUG LOG ERROR] Failed to write to ${DEBUG_LOG_PATH}:`, err);
-    console.log(`[DEBUG LOG FALLBACK] ${location}: ${message}`, data);
-  }
-}
 
 // Lazy initialization - only creates client when first accessed
 function getSupabaseAdmin() {
@@ -76,10 +54,6 @@ export async function POST(request: Request) {
   const startTime = Date.now();
   const ip = getClientIP(request);
   
-  // #region agent log
-  await debugLog('magic-link/route.ts:53', 'POST request received', {ip,startTime,nodeEnv:process.env.NODE_ENV,hasResendKey:!!process.env.RESEND_API_KEY,siteUrl:process.env.NEXT_PUBLIC_SITE_URL}, 'A,B,C,E,F');
-  // #endregion
-  
   console.log('[MAGIC LINK API] ========================================');
   console.log('[MAGIC LINK API] Magic link request received');
   console.log('[MAGIC LINK API] IP:', ip);
@@ -103,18 +77,10 @@ export async function POST(request: Request) {
       // This is OK for early returns where we just need it for diagnostic URLs
     }
     
-    // #region agent log
-    await debugLog('magic-link/route.ts:65', 'Test mode check', {isTest,ip}, 'ALL');
-    // #endregion
-    
     // 1. Check if IP is blocked (unless test mode or localhost in development)
     // NOTE: For magic links, we're more lenient - only block if explicitly marked as suspicious
     // This prevents false positives from rate limiting
     const ipBlocked = !isTest && checkIPBlocked(ip);
-    
-    // #region agent log
-    await debugLog('magic-link/route.ts:68', 'IP blocking check', {ip,isTest,ipBlocked,identifier}, 'A');
-    // #endregion
     
     // Log IP blocking status for debugging (will show in server logs)
     if (ipBlocked) {
@@ -151,18 +117,14 @@ export async function POST(request: Request) {
     
     console.log('[MAGIC LINK API] IP blocking check passed');
 
-    // 2. Rate limiting: 5 magic links per hour per IP (bypassed in test mode)
-    const rateLimit = isTest ? 1000 : 5; // Higher limit than signup since it's passwordless
+    // 2. Rate limiting: 10 magic links per hour per IP (bypassed in test mode)
+    const rateLimit = isTest ? 1000 : 10; // Higher limit than signup since it's passwordless
     const rateLimitWindow = isTest ? 60 * 1000 : 60 * 60 * 1000; // 1 min in test, 1 hour in prod
     const rateLimitAllowed = checkRateLimit(identifier, rateLimit, rateLimitWindow, 'magic-link');
     
-    // #region agent log
-    await debugLog('magic-link/route.ts:84', 'Rate limit check', {ip,identifier,rateLimit,rateLimitWindow,rateLimitAllowed,isTest}, 'B');
-    // #endregion
-    
     if (!rateLimitAllowed) {
       if (!isTest) {
-        markSuspiciousIP(ip, 1); // Block for 1 hour
+        markSuspiciousIP(ip, 0.25); // Block for 15 minutes
       }
       console.log('[MAGIC LINK API] Rate limit exceeded for IP:', ip);
       console.log('[MAGIC LINK API] Identifier:', identifier);
@@ -314,11 +276,7 @@ export async function POST(request: Request) {
     console.log('[MAGIC LINK API] Token expires at:', expiresAt.toISOString());
     
     // Store token in database
-    // #region agent log
-    await debugLog('magic-link/route.ts:224', 'Before token storage', {userId:user.id,email,tokenLength:token.length,expiresAt:expiresAt.toISOString()}, 'D');
-    // #endregion
-    
-    const { error: tokenError, data: tokenData } = await supabaseAdmin
+    const { error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .insert({
         user_id: user.id,
@@ -330,10 +288,6 @@ export async function POST(request: Request) {
       })
       .select()
       .single();
-    
-    // #region agent log
-    await debugLog('magic-link/route.ts:235', 'Token storage result', {hasTokenError:!!tokenError,tokenError:tokenError?.message,hasTokenData:!!tokenData,tokenId:tokenData?.id}, 'D');
-    // #endregion
     
     if (tokenError) {
       console.error('[MAGIC LINK API] Error storing token:', tokenError);
@@ -350,10 +304,6 @@ export async function POST(request: Request) {
     // Priority: origin header > referer header > NEXT_PUBLIC_SITE_URL > localhost:3000
     let requestOrigin = request.headers.get('origin');
     const referer = request.headers.get('referer');
-    
-    // #region agent log
-    await debugLog('magic-link/route.ts:248', 'Request origin detection', {originHeader:requestOrigin,refererHeader:referer,envSiteUrl:process.env.NEXT_PUBLIC_SITE_URL}, 'F');
-    // #endregion
     
     if (!requestOrigin) {
       if (referer) {
@@ -378,10 +328,6 @@ export async function POST(request: Request) {
     // Use our custom callback endpoint with token parameter
     const magicLinkUrl = `${requestOrigin}/auth/callback?magic_token=${token}&email=${encodeURIComponent(email)}`;
     
-    // #region agent log
-    await debugLog('magic-link/route.ts:272', 'Magic link URL generated', {requestOrigin,magicLinkUrl:magicLinkUrl.substring(0,100),tokenLength:token.length,email}, 'F');
-    // #endregion
-    
     console.log('[MAGIC LINK API] Generated magic link URL');
     console.log('[MAGIC LINK API] Request origin:', requestOrigin);
     console.log('[MAGIC LINK API] Magic link URL (first 100 chars):', magicLinkUrl.substring(0, 100));
@@ -394,10 +340,6 @@ export async function POST(request: Request) {
     try {
       console.log('[MAGIC LINK API] Sending magic link email via Resend...');
       console.log('[MAGIC LINK API] Magic link URL:', magicLinkUrl.substring(0, 100) + '...');
-      
-      // #region agent log
-      await debugLog('magic-link/route.ts:283', 'Before Resend email send', {email,emailLanguage,hasResendKey:!!process.env.RESEND_API_KEY}, 'C');
-      // #endregion
       
       const emailResult = await sendAuthEmail(
         email,
@@ -417,16 +359,6 @@ export async function POST(request: Request) {
         return undefined;
       };
       
-      // #region agent log
-      await debugLog('magic-link/route.ts:292', 'Resend email send success', {
-        email,
-        emailResultId: emailResult.data?.id,
-        hasError: !!emailError,
-        errorMessage: getErrorMessage(emailError),
-        emailResultData: emailResult
-      }, 'C');
-      // #endregion
-      
       // Check if Resend returned an error even though no exception was thrown
       if (emailError) {
         console.error('[MAGIC LINK API] ❌ Resend returned error in response:', emailError);
@@ -444,10 +376,6 @@ export async function POST(request: Request) {
       console.log('[MAGIC LINK API] ✅ Magic link email sent successfully via Resend');
       console.log('[MAGIC LINK API] Resend email ID:', emailResult.data?.id);
     } catch (emailError) {
-      // #region agent log
-      await debugLog('magic-link/route.ts:294', 'Resend email send failure', {email,errorMessage:emailError instanceof Error ? emailError.message : String(emailError),errorName:emailError instanceof Error ? emailError.name : undefined,hasResendKey:!!process.env.RESEND_API_KEY}, 'C');
-      // #endregion
-      
       console.error('[MAGIC LINK API] ❌ Failed to send email via Resend:', emailError);
       console.error('[MAGIC LINK API] Error details:', {
         message: emailError instanceof Error ? emailError.message : String(emailError),

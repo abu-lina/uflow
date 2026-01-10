@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   // Check rate limits
   const magicLinkRateLimit = getRemainingRequests(
     identifier,
-    5,
+    10,
     60 * 60 * 1000,
     'magic-link'
   );
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     rateLimits: {
       magicLink: {
         remaining: magicLinkRateLimit,
-        limit: 5,
+        limit: 10,
         window: '1 hour',
         status: magicLinkRateLimit === 0 ? 'EXCEEDED' : magicLinkRateLimit === null ? 'NONE' : 'OK'
       },
@@ -97,10 +97,10 @@ export async function GET(request: Request) {
   
   // Add recommendations
   if (isBlocked) {
-    diagnostic.recommendations.push('Your IP address is temporarily blocked. Please wait 1 hour or contact support.');
+    diagnostic.recommendations.push('Your IP address is temporarily blocked. Please wait 15 minutes or contact support.');
   }
   if (magicLinkRateLimit === 0) {
-    diagnostic.recommendations.push('You have exceeded the rate limit (5 requests per hour). Please wait before requesting another magic link.');
+    diagnostic.recommendations.push('You have exceeded the rate limit (10 requests per hour). Please wait before requesting another magic link.');
   }
   if (!process.env.RESEND_API_KEY) {
     diagnostic.recommendations.push('Email service is not configured. Contact support immediately.');
