@@ -233,7 +233,19 @@ export function RootPageContent() {
       );
     }
 
-    // Fallback: Show Stage 1 if stage is not determined yet
+    // Show loading state while stage is being determined
+    if (stage === 'loading' && displayCity) {
+      return (
+        <div className="flex h-64 items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback: Show Stage 1 if stage is not determined yet (should not happen in normal flow)
     if (displayCity) {
       return (
         <CityEarlyAccessEmptyState

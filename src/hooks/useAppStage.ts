@@ -85,12 +85,50 @@ export function useAppStage(): AppStageData {
   // When skipWaitlist is true, don't require earlyAccessUnlocked
   const earlyAccessUnlocked = skipWaitlist ? true : (onboardingState?.earlyAccessUnlocked ?? false);
 
-  // Get selected city from localStorage
-  useEffect(() => {
+  // Helper function to read city from storage
+  const readCityFromStorage = () => {
     if (typeof window !== 'undefined') {
-      const selectedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
-      setCityName(selectedCity || undefined);
+      return localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity') || undefined;
     }
+    return undefined;
+  };
+
+  // Get selected city from localStorage on mount
+  useEffect(() => {
+    const selectedCity = readCityFromStorage();
+    setCityName(selectedCity);
+  }, []);
+
+  // Listen for city selection changes (storage events + custom events)
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    // Handle storage events (cross-tab changes)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'selectedCity' || e.key === null) {
+        const selectedCity = readCityFromStorage();
+        setCityName(selectedCity);
+      }
+    };
+
+    // Handle custom events (same-tab changes)
+    const handleCityChange = () => {
+      const selectedCity = readCityFromStorage();
+      setCityName(selectedCity);
+    };
+
+    // Listen for storage events (works for cross-tab)
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Listen for custom events (works for same-tab)
+    window.addEventListener('city-selected', handleCityChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('city-selected', handleCityChange);
+    };
   }, []);
 
   // Fetch provider count if city is selected and not in Stage 3
@@ -151,13 +189,15 @@ export function useAppStage(): AppStageData {
 
     // Determine Stage 1, Stage 2, or Stage 3 based on provider count
     if (providerCount !== undefined) {
+      let newStage: AppStage;
       if (providerCount < 6) {
-        setStage('stage1');
+        newStage = 'stage1';
       } else if (providerCount < 15) {
-        setStage('stage2');
+        newStage = 'stage2';
       } else {
-        setStage('stage3');
+        newStage = 'stage3';
       }
+      setStage(newStage);
       setError(undefined);
     }
   }, [isAppLaunched, earlyAccessUnlocked, cityName, providerCount, isLoadingCount, countError, skipWaitlist]);

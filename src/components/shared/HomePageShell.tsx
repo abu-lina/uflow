@@ -108,6 +108,9 @@ export function HomePageShell() {
             if (typeof window !== 'undefined') {
               sessionStorage.setItem('selectedCity', cityName);
               localStorage.setItem('selectedCity', cityName);
+              
+              // Dispatch custom event to notify useAppStage hook immediately
+              window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName } }));
             }
           } catch (err) {
             console.error('[HomePageShell] Failed to subscribe:', err);

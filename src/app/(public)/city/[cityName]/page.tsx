@@ -121,6 +121,9 @@ export default function CityPage() {
       // Store selected city
       sessionStorage.setItem('selectedCity', cityName);
       localStorage.setItem('selectedCity', cityName);
+      
+      // Dispatch custom event to notify useAppStage hook immediately
+      window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName } }));
     } catch (err) {
       console.error('[City Page] Failed to subscribe:', err);
       throw err;

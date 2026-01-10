@@ -35,7 +35,7 @@ export function Stage2Content({ cityName }: Stage2ContentProps) {
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-uflow-light">
       {/* City Card - Centered at top with header spacing */}
-      <div className="flex w-full items-center justify-center px-4 pt-[calc(env(safe-area-inset-top)+80px+32px)] pb-8">
+      <div className="flex w-full items-center justify-center px-4 pt-[max(96px,calc(env(safe-area-inset-top)+96px))] pb-8">
         <CityCard cityName={cityName} onSuggestProvider={handleSuggestProvider} />
       </div>
 

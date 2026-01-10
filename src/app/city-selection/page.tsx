@@ -56,12 +56,6 @@ interface NominatimCityResult {
  * - Full accessibility support
  */
 export default function CitySelectionPage() {
-  // #region agent log
-  const renderId = useRef(0);
-  renderId.current += 1;
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:58',message:'Component render',data:{renderId:renderId.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-  
   const router = useRouter();
   const { t } = useLanguage();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -95,17 +89,10 @@ export default function CitySelectionPage() {
   const prefersReducedMotion = typeof window !== 'undefined' && 
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:78',message:'State values',data:{renderId:renderId.current,isLoading,selectedCityId,selectedCityName,citiesCount:cities.length,hasAnimated,hasFetchedCities:hasFetchedCitiesRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-
   // Fetch cities on mount only (not on context changes)
   useEffect(() => {
     // Prevent re-fetching if cities have already been loaded
     if (hasFetchedCitiesRef.current) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:95',message:'Skipping fetch - already loaded',data:{hasFetchedCities:true},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return;
     }
 
@@ -145,37 +132,24 @@ export default function CitySelectionPage() {
         }
         
         setCities(result);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:128',message:'Cities loaded',data:{citiesCount:result.length,cityNames:result.map(c=>c.city_name)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
       } catch (err) {
         console.error('[City Selection] Failed to fetch cities:', err);
         // Use tRef to get latest translation function without causing re-fetches
         toast.error(tRef.current('common.error'));
       } finally {
         setIsLoading(false);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:143',message:'Loading complete',data:{isLoading:false},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
       }
     }
 
     fetchCities();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run on mount
 
   // Mark animation as complete after cities have loaded and animation time has passed
   useEffect(() => {
     if (!isLoading && cities.length > 0 && !hasAnimated) {
       const animationDuration = prefersReducedMotion ? 0 : 0.3 + (cities.length - 1) * 0.05;
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:133',message:'Animation timer started',data:{animationDuration,prefersReducedMotion},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       const timer = setTimeout(() => {
         setHasAnimated(true);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:136',message:'Animation marked complete',data:{hasAnimated:true},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
       }, (animationDuration + 0.1) * 1000); // Add small buffer
 
       return () => clearTimeout(timer);
@@ -273,19 +247,16 @@ export default function CitySelectionPage() {
 
   // Handle city selection (from top 3 cities) - memoized to prevent re-renders
   const handleCitySelect = useCallback((city: CityData) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:231',message:'City selected - BEFORE state update',data:{cityId:city.id,cityName:city.city_name,currentSelectedId:selectedCityId,hasAnimated},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     setSelectedCityId(city.id);
     setSelectedCityName(city.city_name);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:233',message:'City selected - AFTER state update',data:{cityId:city.id,cityName:city.city_name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     
     // Store selected city with verification
     try {
       sessionStorage.setItem('selectedCity', city.city_name);
       localStorage.setItem('selectedCity', city.city_name);
+      
+      // Dispatch custom event to notify useAppStage hook immediately
+      window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName: city.city_name } }));
       
       // Verify persistence
       const verified = localStorage.getItem('selectedCity');
@@ -335,6 +306,9 @@ export default function CitySelectionPage() {
     // Store selected city
     sessionStorage.setItem('selectedCity', cityName);
     localStorage.setItem('selectedCity', cityName);
+    
+    // Dispatch custom event to notify useAppStage hook immediately
+    window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName } }));
     
     // CRITICAL: Ensure onboarding state exists when city is selected
     const email = sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
@@ -431,12 +405,6 @@ export default function CitySelectionPage() {
       // Only animate on initial mount, not on re-renders
       const shouldAnimate = !hasAnimated && !isLoading;
       
-      // #region agent log
-      if (index === 0) {
-        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:457',message:'City button render (memoized)',data:{cityId:city.id,index,shouldAnimate,hasAnimated,isLoading,selectedCityId,renderId:renderId.current},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'A'})}).catch(()=>{});
-      }
-      // #endregion
-      
       // Always use motion.button but conditionally control animation props
       // This prevents React from unmounting/remounting when switching component types
       const buttonClassName = cn(
@@ -456,20 +424,6 @@ export default function CitySelectionPage() {
         animate: { opacity: 1, x: 0 },
         initial: { opacity: 0, x: -20 },
         transition: prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: index * 0.05 },
-        onAnimationStart: () => {
-          // #region agent log
-          if (index === 0) {
-            fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:477',message:'Framer Motion animation START',data:{cityId:city.id,index},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'A'})}).catch(()=>{});
-          }
-          // #endregion
-        },
-        onAnimationComplete: () => {
-          // #region agent log
-          if (index === 0) {
-            fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'city-selection/page.tsx:484',message:'Framer Motion animation COMPLETE',data:{cityId:city.id,index},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v6',hypothesisId:'A'})}).catch(()=>{});
-          }
-          // #endregion
-        },
       } : {
         initial: false, // Explicitly disable Framer Motion processing
         animate: false, // Explicitly disable animation

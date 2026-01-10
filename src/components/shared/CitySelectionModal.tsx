@@ -96,6 +96,9 @@ export function CitySelectionModal({
       localStorage.setItem('selectedCity', city.city_name);
       sessionStorage.setItem('selectedCity', city.city_name);
       
+      // Dispatch custom event to notify useAppStage hook immediately
+      window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName: city.city_name } }));
+      
       // CRITICAL: Ensure onboarding state exists when city is selected
       // Always create state, even without email (for pre-launch flow)
       const onboardingState = getOnboardingState();
