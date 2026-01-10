@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from '@iconify/react';
+import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
@@ -330,9 +331,9 @@ export default function CitySelectionPage() {
       await updateWaitlistCity(email, waitlistToken, cityName);
     }
     
-    // Clear search
-    setSearchQuery('');
-    setSearchResults([]);
+    // DO NOT clear search query/results - keep them visible so user can select another city
+    // Only reset the selected result index
+    setSelectedResultIndex(-1);
     
     // DO NOT auto-forward - user must explicitly tap CTA button
   };
@@ -551,10 +552,9 @@ export default function CitySelectionPage() {
                   {/* Search Input */}
                   <div className="relative">
                     <div className="flex h-[54px] items-center gap-1 rounded-sm border border-border bg-white px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
-                      <Icon
+                      <Search
                         aria-hidden="true"
                         className="size-6 shrink-0 text-content-muted"
-                        icon="material-symbols:search-rounded"
                       />
                       <input
                         ref={searchInputRef}
@@ -639,19 +639,20 @@ export default function CitySelectionPage() {
                             {searchResults.map((city, index) => {
                               const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
                               const country = normalizeCountryNameForDisplay(city.address?.country || '');
-                              const isSelected = index === selectedResultIndex;
+                              const isHovered = index === selectedResultIndex;
+                              const isCurrentlySelected = selectedCityName === cityName;
 
                               return (
                                 <motion.button
                                   key={city.place_id}
                                   animate={{ opacity: 1, x: 0 }}
                                   aria-label={`${cityName}${country ? `, ${country}` : ''}`}
-                                  aria-selected={isSelected}
+                                  aria-selected={isCurrentlySelected || isHovered}
                                   className={cn(
                                     'flex h-[54px] items-center justify-between rounded-sm border border-border bg-white p-4 text-left transition-all duration-150',
                                     'hover:bg-neutral-muted hover:border-primary',
                                     'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                                    isSelected && 'bg-primary/5 border-primary'
+                                    (isHovered || isCurrentlySelected) && 'bg-primary/5 border-primary'
                                   )}
                                   initial={{ opacity: 0, x: -20 }}
                                   layout={false}
@@ -672,7 +673,7 @@ export default function CitySelectionPage() {
                                   <Icon
                                     aria-hidden="true"
                                     className="size-6 text-content-heading"
-                                    icon={isSelected ? "material-symbols:radio-button-checked" : "material-symbols:radio-button-unchecked"}
+                                    icon={isCurrentlySelected ? "material-symbols:radio-button-checked" : "material-symbols:radio-button-unchecked"}
                                   />
                                 </motion.button>
                               );

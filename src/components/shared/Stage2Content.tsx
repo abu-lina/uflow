@@ -35,7 +35,16 @@ export function Stage2Content({ cityName }: Stage2ContentProps) {
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-uflow-light">
       {/* City Card - Centered at top with header spacing */}
-      <div className="flex w-full items-center justify-center px-4 pt-[max(96px,calc(env(safe-area-inset-top)+96px))] pb-8">
+      {/* 
+        Header structure:
+        - paddingTop: max(24px, calc(env(safe-area-inset-top) + 24px))
+        - py-4 top: 16px
+        - Content (MobileGreetingHeader): ~70px (two lines of text)
+        - py-4 bottom: 16px
+        - Total: max(126px, calc(env(safe-area-inset-top) + 126px))
+        - Add 8px gap for visual spacing: max(134px, calc(env(safe-area-inset-top) + 134px))
+      */}
+      <div className="flex w-full items-center justify-center px-4 pt-[max(134px,calc(env(safe-area-inset-top)+134px))] pb-8">
         <CityCard cityName={cityName} onSuggestProvider={handleSuggestProvider} />
       </div>
 

@@ -16,6 +16,7 @@ import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScre
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
+import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 
 interface StreamlinedRecommendFormProps {
   onSuccess?: () => void;
@@ -150,6 +151,22 @@ interface RecommendFormData {
   message: string; // optional
 }
 
+interface NominatimCityResult {
+  place_id: number;
+  display_name: string;
+  name: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+    country?: string;
+    country_code?: string;
+  };
+  lat: string;
+  lon: string;
+}
+
 export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }: StreamlinedRecommendFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -162,6 +179,17 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const showSuccess = searchParams.get('success') === 'true';
   const [categories, setCategories] = useState<Category[]>([]);
   const userEmailInputRef = useRef<HTMLInputElement>(null);
+  const cityInputRef = useRef<HTMLInputElement>(null);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
+  const cityInitializedRef = useRef(false); // Track if initial city has been loaded
+  
+  // City search state
+  const [citySearchQuery, setCitySearchQuery] = useState('');
+  const [citySearchResults, setCitySearchResults] = useState<NominatimCityResult[]>([]);
+  const [isCitySearching, setIsCitySearching] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
+  const citySearchAbortControllerRef = useRef<AbortController | null>(null);
   
   // State for selected contact methods
   const [selectedContacts, setSelectedContacts] = useState<{
@@ -196,15 +224,194 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     setCreationMode('recommendation');
   }, [setCreationMode]);
 
-  // Load city from localStorage if not provided
+  // Load city from localStorage only once on initial mount
   useEffect(() => {
-    if (!formData.city && typeof window !== 'undefined') {
-      const savedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
-      if (savedCity) {
-        setFormData(prev => ({ ...prev, city: savedCity }));
+    if (!cityInitializedRef.current && typeof window !== 'undefined') {
+      cityInitializedRef.current = true;
+      
+      // Only load from localStorage if no initialCity prop and formData.city is empty
+      if (!initialCity && !formData.city) {
+        const savedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
+        if (savedCity) {
+          setFormData(prev => ({ ...prev, city: savedCity }));
+        }
+      } else if (initialCity && !formData.city) {
+        // If initialCity prop is provided, use it
+        setFormData(prev => ({ ...prev, city: initialCity }));
       }
     }
-  }, [formData.city]);
+  }, [initialCity]); // Only depend on initialCity, not formData.city
+
+  // City search function
+  const searchCities = useCallback(async (query: string) => {
+    // Cancel previous request
+    if (citySearchAbortControllerRef.current) {
+      citySearchAbortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    citySearchAbortControllerRef.current = new AbortController();
+
+    if (query.trim().length < 2) {
+      setCitySearchResults([]);
+      setIsCitySearching(false);
+      setShowCityDropdown(false);
+      return;
+    }
+
+    setIsCitySearching(true);
+    setShowCityDropdown(true);
+
+    try {
+      // Use Nominatim search API for cities
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?` +
+        `format=json&` +
+        `q=${encodeURIComponent(query)}&` +
+        `addressdetails=1&` +
+        `limit=10&` +
+        `featuretype=city,town,village&` +
+        `countrycodes=`, // Empty = all countries
+        {
+          signal: citySearchAbortControllerRef.current.signal,
+          headers: {
+            'User-Agent': 'UmmahFlow/1.0', // Required by Nominatim ToS
+            'Accept-Language': 'de,en', // Prefer German, fallback to English
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch city suggestions');
+      }
+
+      const data: NominatimCityResult[] = await response.json();
+      
+      // Filter and format results
+      const formattedCities = data
+        .filter((result) => {
+          // Only include results that have a city/town/village name
+          return result.address?.city || result.address?.town || result.address?.village;
+        })
+        .map((result) => {
+          // Replace Israel with Palestine in country field
+          const country = normalizeCountryNameForDisplay(result.address?.country || '');
+          return {
+            ...result,
+            address: {
+              ...result.address,
+              country: country,
+            },
+          };
+        });
+
+      setCitySearchResults(formattedCities);
+      setSelectedCityIndex(-1);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Request was cancelled, ignore
+        return;
+      }
+      console.error('[City Search] Error fetching cities:', error);
+      setCitySearchResults([]);
+    } finally {
+      setIsCitySearching(false);
+    }
+  }, []);
+
+  // Debounced city search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (citySearchQuery.trim()) {
+        searchCities(citySearchQuery);
+      } else {
+        setCitySearchResults([]);
+        setIsCitySearching(false);
+        setShowCityDropdown(false);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [citySearchQuery, searchCities]);
+
+  // Handle city selection from dropdown
+  const handleCitySelect = useCallback((city: NominatimCityResult) => {
+    const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
+    setFormData(prev => ({ ...prev, city: cityName }));
+    setCitySearchQuery('');
+    setCitySearchResults([]);
+    setShowCityDropdown(false);
+    setSelectedCityIndex(-1);
+    cityInputRef.current?.blur();
+  }, []);
+
+  // Handle city input change
+  const handleCityInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, city: value }));
+    setCitySearchQuery(value);
+    setSelectedCityIndex(-1);
+  }, []);
+
+  // Handle city input focus
+  const handleCityInputFocus = useCallback(() => {
+    if (citySearchQuery.trim().length >= 2 && citySearchResults.length > 0) {
+      setShowCityDropdown(true);
+    }
+  }, [citySearchQuery, citySearchResults]);
+
+  // Handle city input blur - delay to allow click on dropdown
+  const handleCityInputBlur = useCallback(() => {
+    setTimeout(() => {
+      if (!cityDropdownRef.current?.contains(document.activeElement)) {
+        setShowCityDropdown(false);
+      }
+    }, 200);
+  }, []);
+
+  // Handle keyboard navigation for city dropdown
+  const handleCityInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showCityDropdown || citySearchResults.length === 0) {
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedCityIndex((prev) => 
+        prev < citySearchResults.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedCityIndex((prev) => (prev > 0 ? prev - 1 : -1));
+    } else if (e.key === 'Enter' && selectedCityIndex >= 0 && citySearchResults[selectedCityIndex]) {
+      e.preventDefault();
+      handleCitySelect(citySearchResults[selectedCityIndex]);
+    } else if (e.key === 'Escape') {
+      setShowCityDropdown(false);
+      setSelectedCityIndex(-1);
+    }
+  }, [showCityDropdown, citySearchResults, selectedCityIndex, handleCitySelect]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        cityInputRef.current &&
+        cityDropdownRef.current &&
+        !cityInputRef.current.contains(event.target as Node) &&
+        !cityDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowCityDropdown(false);
+      }
+    };
+
+    if (showCityDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showCityDropdown]);
 
   // Load categories
   useEffect(() => {
@@ -540,19 +747,90 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
           </div>
 
           {/* City */}
-          <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">
-                {t('create.recommend.city')} *
-              </label>
-              <input
-                aria-label={t('create.recommend.city')}
-                className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.cityPlaceholder')}
-                value={formData.city}
-                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-              />
+          <div className="relative">
+            <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+              <div className="flex w-full flex-col gap-1">
+                <label className="text-xs leading-[15px] text-content-muted">
+                  {t('create.recommend.city')} *
+                </label>
+                <input
+                  ref={cityInputRef}
+                  aria-autocomplete="list"
+                  aria-controls="city-search-results"
+                  aria-expanded={showCityDropdown}
+                  aria-label={t('create.recommend.city')}
+                  className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                  placeholder={t('create.recommend.cityPlaceholder')}
+                  value={formData.city}
+                  onBlur={handleCityInputBlur}
+                  onChange={handleCityInputChange}
+                  onFocus={handleCityInputFocus}
+                  onKeyDown={handleCityInputKeyDown}
+                />
+              </div>
+              {isCitySearching && (
+                <Icon
+                  className="ml-2 h-5 w-5 animate-spin text-content-muted"
+                  icon="material-symbols:progress-activity"
+                />
+              )}
             </div>
+            
+            {/* City Search Dropdown */}
+            {showCityDropdown && (
+              <div
+                ref={cityDropdownRef}
+                className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+                id="city-search-results"
+                role="listbox"
+              >
+                {isCitySearching ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Icon
+                      className="h-6 w-6 animate-spin text-primary"
+                      icon="material-symbols:progress-activity"
+                    />
+                  </div>
+                ) : citySearchResults.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm text-content-muted">
+                    {citySearchQuery.trim().length < 2
+                      ? t('waitlist.citySelection.supportingText')
+                      : t('waitlist.citySelection.noResults')}
+                  </div>
+                ) : (
+                  citySearchResults.map((city, index) => {
+                    const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
+                    const country = normalizeCountryNameForDisplay(city.address?.country || '');
+                    const isSelected = index === selectedCityIndex;
+
+                    return (
+                      <button
+                        key={city.place_id}
+                        aria-selected={isSelected}
+                        className={cn(
+                          'w-full px-4 py-3 text-left transition-colors',
+                          'hover:bg-neutral-muted',
+                          isSelected && 'bg-primary/5'
+                        )}
+                        role="option"
+                        type="button"
+                        onClick={() => handleCitySelect(city)}
+                        onMouseEnter={() => setSelectedCityIndex(index)}
+                      >
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[15px] font-medium text-content-heading">
+                            {cityName}
+                          </span>
+                          {country && (
+                            <span className="text-xs text-content-muted">{country}</span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
