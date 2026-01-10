@@ -46,6 +46,10 @@ export async function POST(request: Request) {
   const startTime = Date.now();
   const ip = getClientIP(request);
   
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'verify-magic-link/route.ts:45',message:'POST request received',data:{ip,startTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+  // #endregion
+  
   logAuth('info', {
     event: 'token_verification_request',
     ip,
@@ -56,6 +60,10 @@ export async function POST(request: Request) {
     
     const body = await request.json();
     const { token, email } = body;
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'verify-magic-link/route.ts:58',message:'Request body parsed',data:{hasToken:!!token,tokenLength:token?.length,hasEmail:!!email,email,isTest},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+    // #endregion
     
     // 1. Validate input first
     if (!token || !email) {
@@ -86,7 +94,36 @@ export async function POST(request: Request) {
     // If token is valid, we allow verification even if IP is blocked
     // because the token itself proves legitimacy
     const supabaseAdmin = getSupabaseAdmin();
-    const { data: tokenData, error: tokenError } = await supabaseAdmin
+    
+    // #region agent log
+    console.log('[VERIFY MAGIC LINK] Before database query:', {
+      token: token?.substring(0, 8) + '...',
+      tokenLength: token?.length,
+      email,
+      emailLower: email.toLowerCase(),
+      emailTrimmed: email.trim(),
+    });
+    // #endregion
+    
+    // First, check if token exists at all (regardless of email) for debugging
+    const { data: tokenByTokenOnly } = await supabaseAdmin
+      .from('email_confirmation_tokens')
+      .select('*')
+      .eq('token', token)
+      .eq('type', 'magic_link')
+      .maybeSingle();
+    
+    console.log('[VERIFY MAGIC LINK] Token lookup (token only):', {
+      found: !!tokenByTokenOnly,
+      storedEmail: tokenByTokenOnly?.email,
+      providedEmail: email,
+      emailsMatch: tokenByTokenOnly?.email?.toLowerCase() === email.toLowerCase(),
+      used: tokenByTokenOnly?.used,
+      expiresAt: tokenByTokenOnly?.expires_at,
+    });
+    
+    // Try exact match first
+    let { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .select('*')
       .eq('token', token)
@@ -94,6 +131,46 @@ export async function POST(request: Request) {
       .eq('type', 'magic_link')
       .eq('used', false)
       .maybeSingle();
+    
+    // #region agent log
+    console.log('[VERIFY MAGIC LINK] Query result (exact match):', {
+      hasTokenData: !!tokenData,
+      hasTokenError: !!tokenError,
+      tokenError: tokenError?.message,
+      tokenDataId: tokenData?.id,
+      tokenDataEmail: tokenData?.email,
+      tokenDataUsed: tokenData?.used,
+      tokenDataExpiresAt: tokenData?.expires_at,
+    });
+    // #endregion
+    
+    // If not found, try case-insensitive email match (email might be stored differently)
+    if (!tokenData && !tokenError) {
+      console.log('[VERIFY MAGIC LINK] Trying case-insensitive email match...');
+      const { data: tokenDataCaseInsensitive } = await supabaseAdmin
+        .from('email_confirmation_tokens')
+        .select('*')
+        .eq('token', token)
+        .ilike('email', email)
+        .eq('type', 'magic_link')
+        .eq('used', false)
+        .maybeSingle();
+      
+      if (tokenDataCaseInsensitive) {
+        console.log('[VERIFY MAGIC LINK] Found token with case-insensitive match:', {
+          storedEmail: tokenDataCaseInsensitive.email,
+          providedEmail: email,
+        });
+        tokenData = tokenDataCaseInsensitive;
+      }
+    }
+    
+    // #region agent log
+    console.log('[VERIFY MAGIC LINK] Final token data after all queries:', {
+      hasTokenData: !!tokenData,
+      tokenDataEmail: tokenData?.email,
+    });
+    // #endregion
     
     if (tokenError) {
       logAuth('error', {
@@ -112,7 +189,13 @@ export async function POST(request: Request) {
     // 4. Check if token is valid
     // If token is valid, allow verification even if IP is blocked
     // because the token itself proves legitimacy
-    const isTokenValid = tokenData && new Date(tokenData.expires_at) >= new Date();
+    const now = new Date();
+    const expiresAt = tokenData ? new Date(tokenData.expires_at) : null;
+    const isTokenValid = tokenData && expiresAt && expiresAt >= now;
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'verify-magic-link/route.ts:115',message:'Token validity check',data:{isTokenValid,hasTokenData:!!tokenData,expiresAt:expiresAt?.toISOString(),now:now.toISOString(),isExpired:expiresAt?expiresAt<now:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});
+    // #endregion
     
     if (!isTokenValid) {
       // Token is invalid - apply rate limiting and IP blocking to prevent brute force
@@ -135,6 +218,11 @@ export async function POST(request: Request) {
       
       // Check IP blocking for invalid tokens
       const ipBlocked = !isTest && checkIPBlocked(ip);
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'verify-magic-link/route.ts:137',message:'IP blocking check for invalid token',data:{ip,isTest,ipBlocked,isTokenValid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      
       if (ipBlocked) {
         logAuth('warn', {
           event: 'token_verification_blocked_ip',
@@ -144,6 +232,11 @@ export async function POST(request: Request) {
           ipBlocked: true,
           duration: Date.now() - startTime,
         });
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'verify-magic-link/route.ts:148',message:'Returning IP blocked error',data:{ip,email,error:'Access temporarily restricted'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
         return NextResponse.json(
           { error: 'Access temporarily restricted. Please try again later.' },
           { status: 403 }

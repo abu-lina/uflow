@@ -240,7 +240,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         setFormData(prev => ({ ...prev, city: initialCity }));
       }
     }
-  }, [initialCity]); // Only depend on initialCity, not formData.city
+  }, [initialCity, formData.city]);
 
   // City search function
   const searchCities = useCallback(async (query: string) => {
@@ -761,6 +761,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                   aria-label={t('create.recommend.city')}
                   className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                   placeholder={t('create.recommend.cityPlaceholder')}
+                  role="combobox"
                   value={formData.city}
                   onBlur={handleCityInputBlur}
                   onChange={handleCityInputChange}

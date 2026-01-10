@@ -17,7 +17,9 @@ export default function AuthCallbackPage() {
       const type = searchParams.get('type');
       const code = searchParams.get('code');
       const magicToken = searchParams.get('magic_token');
-      const email = searchParams.get('email');
+      const emailRaw = searchParams.get('email');
+      // Ensure email is properly decoded (Next.js should do this, but be explicit)
+      const email = emailRaw ? decodeURIComponent(emailRaw) : null;
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
@@ -25,6 +27,8 @@ export default function AuthCallbackPage() {
         hasToken: !!token, 
         hasCode: !!code, 
         hasMagicToken: !!magicToken,
+        emailRaw,
+        email,
         type,
         error,
         errorDescription
@@ -47,6 +51,10 @@ export default function AuthCallbackPage() {
         if (magicToken && email) {
           console.log('[AUTH CALLBACK PAGE] Processing custom magic link token');
           
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth/callback/page.tsx:47',message:'Before verify API call',data:{hasMagicToken:!!magicToken,magicTokenLength:magicToken?.length,email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+          // #endregion
+          
           // Verify the token with our API
           const verifyResponse = await fetch('/api/auth/verify-magic-link', {
             method: 'POST',
@@ -60,6 +68,10 @@ export default function AuthCallbackPage() {
           });
           
           const verifyData = await verifyResponse.json();
+          
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth/callback/page.tsx:62',message:'After verify API call',data:{ok:verifyResponse.ok,status:verifyResponse.status,error:verifyData.error,hasSuccess:verifyData.success,hasHashedToken:!!verifyData.hashedToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+          // #endregion
           
           if (!verifyResponse.ok) {
             console.error('[AUTH CALLBACK PAGE] Token verification failed:', verifyData.error);
