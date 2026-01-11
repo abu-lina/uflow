@@ -44,5 +44,5 @@
     "src/**/*.tsx",
     "src/scripts/bundle-icons.mts"
   ],
-  "exclude": ["node_modules", "supabase/functions/**/*", "docs/design/figma-imports", "docs/archive/nextjs-supabase-starter", "scripts/**/*.ts"]
+  "exclude": ["node_modules", "supabase/functions/**/*", "docs/archive/nextjs-supabase-starter", "scripts/**/*.ts"]
 }

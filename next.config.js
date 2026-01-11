@@ -238,10 +238,10 @@ const nextConfig = {
 
   // Webpack optimization for Cloudflare Pages
   webpack: (config, { isServer }) => {
-    // Exclude Figma imports and archive from compilation
+    // Exclude archive from compilation
     config.watchOptions = {
       ...config.watchOptions,
-      ignored: ['**/node_modules/**', '**/.next/**', '**/docs/design/figma-imports/**', '**/docs/archive/**'],
+      ignored: ['**/node_modules/**', '**/.next/**', '**/docs/archive/**'],
     };
     if (!isServer) {
       config.optimization.splitChunks = {

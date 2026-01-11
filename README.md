@@ -55,12 +55,11 @@ We follow a Postgres-first approach, using native features (full-text search, ma
 - `src/lib/` - Utilities and configurations
 - `src/services/` - API services
 - `src/types/` - TypeScript type definitions
-- `docs/` - All project documentation (see [docs/README.md](docs/README.md))
+  - `docs/` - All project documentation (see [docs/README.md](docs/README.md))
   - `docs/deployment/` - Deployment guides and procedures
   - `docs/troubleshooting/` - Troubleshooting guides and diagnostics
   - `docs/performance/` - Performance analysis and testing
   - `docs/action-items/` - Action items and quick fixes
-  - `docs/design/figma-imports/` - Figma design reference files (archived)
   - `docs/archive/` - Archived starter template and reference material
 
 ## 🔧 Environment Variables

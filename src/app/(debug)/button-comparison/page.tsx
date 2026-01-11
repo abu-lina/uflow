@@ -3,7 +3,7 @@
 import { motion } from 'motion/react';
 import { ORNAMENT_PATHS } from '@/constants/svg-paths';
 
-// Use our paths (Figma imports archived in docs/design/figma-imports, excluded from build)
+// Use our paths (Figma imports were archived and have been removed)
 const svgPathsBarik = ORNAMENT_PATHS;
 
 // Our implementation

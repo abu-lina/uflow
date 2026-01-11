@@ -8,7 +8,6 @@ This directory contains all project documentation, organized by category followi
 docs/
 ├── architecture/      # System architecture, design decisions, database schema
 ├── design/            # UI/UX design system, components, styling
-│   └── figma-imports/ # Figma design reference files (archived, excluded from build)
 ├── features/          # Feature documentation and specifications
 ├── implementation/   # Implementation details and technical guides
 ├── deployment/       # Deployment guides (Hetzner, GitHub Actions, Docker)
@@ -55,7 +54,6 @@ UI/UX design system, components, and styling guidelines:
 - **SIGNUP_FLOW_DESIGN.md** - Signup flow design documentation
 - **TAILWIND_CONFIG_OPTIMIZATION.md** - Tailwind configuration
 - **previews/** - Design preview HTML files
-- **figma-imports/** - Figma design reference files (archived, excluded from build)
 
 ---
 
