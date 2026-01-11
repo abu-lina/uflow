@@ -23,16 +23,10 @@ ENV DISABLE_PWA=$DISABLE_PWA
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
 
-# Configure npm for better reliability in Docker builds
-# Increase timeouts and retries for network reliability
-RUN npm config set fetch-retries 5 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm config set network-timeout 300000
-
 # Install dependencies with BuildX cache mount for faster rebuilds
 # Cache persists across builds, only invalidates when package files change
 # BuildX cache mount provides automatic caching - npm will use cache when available
+# Removed --prefer-offline to allow network access when new packages aren't in cache
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --no-audit
 
