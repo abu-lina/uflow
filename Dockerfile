@@ -25,9 +25,8 @@ COPY package.json package-lock.json ./
 
 # Install dependencies with BuildX cache mount for faster rebuilds
 # Cache persists across builds, only invalidates when package files change
-# Try offline first (faster), fall back to online if cache is empty (resilient)
+# BuildX cache mount provides automatic caching - npm will use cache when available
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --prefer-offline --no-audit || \
     npm ci --no-audit
 
 # Copy source code (this layer invalidates on code changes, but npm cache persists)
