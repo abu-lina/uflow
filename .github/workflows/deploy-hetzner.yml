@@ -16,6 +16,9 @@ jobs:
     name: Build & Deploy to Production
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
     # Production deployments are always manual (works on GitHub Free tier)
     
     steps:
