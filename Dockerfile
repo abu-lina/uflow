@@ -25,11 +25,26 @@ COPY package.json package-lock.json ./
 
 # Install dependencies with BuildX cache mount for faster rebuilds
 # Cache persists across builds, only invalidates when package files change
-# Try --prefer-offline first (fast when cache is populated), fallback to network if needed
+# Diagnostic logging to identify root cause
 RUN --mount=type=cache,target=/root/.npm \
-    (npm ci --prefer-offline --no-audit 2>&1 || \
-     (echo "⚠️ Offline install failed, retrying with network access..." && \
-      npm ci --no-audit))
+    echo "🔍 DEBUG: Starting npm ci..." && \
+    echo "🔍 DEBUG: Node version: $(node --version)" && \
+    echo "🔍 DEBUG: npm version: $(npm --version)" && \
+    echo "🔍 DEBUG: Package files present:" && \
+    ls -la package.json package-lock.json && \
+    echo "🔍 DEBUG: Attempting npm ci with --prefer-offline..." && \
+    npm ci --prefer-offline --no-audit 2>&1 | tee /tmp/npm-output.log || \
+    (EXIT_CODE=$?; \
+     echo "❌ DEBUG: npm ci --prefer-offline failed with exit code: $EXIT_CODE" && \
+     echo "🔍 DEBUG: npm output:" && \
+     cat /tmp/npm-output.log && \
+     echo "⚠️ Retrying with network access..." && \
+     npm ci --no-audit 2>&1 | tee /tmp/npm-retry.log || \
+     (RETRY_EXIT=$?; \
+      echo "❌ DEBUG: npm ci retry failed with exit code: $RETRY_EXIT" && \
+      echo "🔍 DEBUG: Retry output:" && \
+      cat /tmp/npm-retry.log && \
+      exit $RETRY_EXIT))
 
 # Copy source code (this layer invalidates on code changes, but npm cache persists)
 COPY . .
