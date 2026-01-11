@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Icon } from '@iconify/react';
+import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -110,25 +110,24 @@ export function CityEarlyAccessEmptyState({
             initial={{ opacity: 0, y: 20 }}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.1, ease: 'easeOut' }}
           >
-            {/* City Name - Tappable with Edit Icon */}
-            <button
-              aria-label={t('waitlist.cityEarlyAccess.changeCity')}
-              className="group relative w-full transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
-              type="button"
-              onClick={handleCitySelect}
-            >
-              <h1 className="text-center font-inter-tight text-[33px] font-semibold leading-[40px] text-content-heading group-hover:text-primary transition-colors">
+            {/* City Name - Inline with Edit Icon (matches Stage 2 pattern) */}
+            <div className="flex w-full items-center justify-center gap-1">
+              <h1 className="text-center font-inter-tight text-[33px] font-semibold leading-[40px] text-content-heading">
                 {cityName}
               </h1>
-              <Icon
-                aria-hidden="true"
-                className="absolute right-0 top-1/2 -translate-y-1/2 size-4 text-content-heading group-hover:text-primary transition-all duration-200 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 pointer-events-none"
-                icon="lucide:pencil"
-                style={{
-                  transition: prefersReducedMotion ? 'none' : 'opacity 200ms ease-in-out',
-                }}
-              />
-            </button>
+              <button
+                aria-label={t('waitlist.cityEarlyAccess.changeCity')}
+                className="inline-flex items-center justify-center hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 rounded p-0.5"
+                type="button"
+                onClick={handleCitySelect}
+              >
+                <Icon
+                  aria-hidden="true"
+                  className="w-6 h-6 text-content-heading"
+                  icon="lucide:location-edit"
+                />
+              </button>
+            </div>
 
             {/* Early Access Badge */}
             <div className="flex flex-row items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
