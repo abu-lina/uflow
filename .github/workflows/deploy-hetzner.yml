@@ -46,7 +46,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}/uflow:latest
+          tags: ghcr.io/${{ github.repository_owner }}/uflow:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -104,7 +104,7 @@ jobs:
             else
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
             fi
-            docker pull ghcr.io/${{ github.repository }}/uflow:latest
+            docker pull ghcr.io/${{ github.repository_owner }}/uflow:latest
             
             echo "🚀 Starting new container..."
             NEW_CONTAINER=$(docker run -d -p 3000:3000 \
@@ -118,7 +118,7 @@ jobs:
               -e DISABLE_PWA=false \
               --name uflow-app \
               --restart unless-stopped \
-              ghcr.io/${{ github.repository }}/uflow:latest)
+              ghcr.io/${{ github.repository_owner }}/uflow:latest)
             
             echo "⏳ Waiting for app to start..."
             sleep 10
