@@ -185,13 +185,36 @@ jobs:
             docker rm uflow-uat || true
             
             echo "📦 Pulling new UAT image from GHCR..."
+            IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/uflow-uat:latest"
+            
             # Use PAT if available, otherwise try GITHUB_TOKEN (may need package:read permission)
             if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+              echo "🔐 Logging in to GHCR with PAT..."
               echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             else
+              echo "⚠️ GHCR_PAT not found, trying GITHUB_TOKEN (may not work for private repos)"
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
             fi
-            docker pull ghcr.io/${{ github.repository_owner }}/uflow-uat:latest
+            
+            echo "🔍 Attempting to pull: $IMAGE_NAME"
+            if ! docker pull "$IMAGE_NAME"; then
+              echo ""
+              echo "❌ Failed to pull image from GHCR"
+              echo "   Image: $IMAGE_NAME"
+              echo ""
+              echo "   Possible causes:"
+              echo "   1. Image doesn't exist yet (build step may have failed)"
+              echo "   2. GHCR_PAT token doesn't have 'read:packages' permission"
+              echo "   3. Package visibility is set to private and token can't access it"
+              echo ""
+              echo "   Solutions:"
+              echo "   - Check if the 'Build and push Docker image to GHCR' step succeeded"
+              echo "   - Verify GHCR_PAT has 'read:packages' permission"
+              echo "   - Check package visibility at: https://github.com/${{ github.repository_owner }}?tab=packages"
+              echo ""
+              exit 1
+            fi
+            echo "✅ Image pulled successfully"
             
             echo "🚀 Starting new UAT container on port 3001..."
             NEW_CONTAINER=$(docker run -d -p 3001:3000 \
