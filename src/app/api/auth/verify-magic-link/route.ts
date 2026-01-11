@@ -220,15 +220,38 @@ export async function POST(request: Request) {
       
       // Token invalid but IP not blocked - return token error
       if (!tokenData) {
+        // Check if token exists but email doesn't match
+        if (tokenByTokenOnly) {
+          logAuth('warn', {
+            event: 'token_verification_email_mismatch',
+            ip,
+            email,
+            storedEmail: tokenByTokenOnly.email,
+            tokenValid: false,
+            duration: Date.now() - startTime,
+          });
+          return NextResponse.json(
+            { 
+              error: 'Invalid magic link. The email in the link does not match the token.',
+              code: 'EMAIL_MISMATCH'
+            },
+            { status: 400 }
+          );
+        }
+        
         logAuth('warn', {
           event: 'token_verification_not_found',
           ip,
           email,
           tokenValid: false,
+          tokenPrefix: token?.substring(0, 8),
           duration: Date.now() - startTime,
         });
         return NextResponse.json(
-          { error: 'Invalid or expired magic link. Please request a new one.' },
+          { 
+            error: 'Invalid or expired magic link. Please request a new one.',
+            code: 'TOKEN_NOT_FOUND'
+          },
           { status: 400 }
         );
       }
@@ -238,10 +261,16 @@ export async function POST(request: Request) {
         ip,
         email,
         tokenValid: false,
+        expiresAt: expiresAt?.toISOString(),
+        now: now.toISOString(),
         duration: Date.now() - startTime,
       });
       return NextResponse.json(
-        { error: 'Magic link has expired. Please request a new one.' },
+        { 
+          error: 'Magic link has expired. Please request a new one.',
+          code: 'TOKEN_EXPIRED',
+          expiresAt: expiresAt?.toISOString()
+        },
         { status: 400 }
       );
     }
@@ -278,13 +307,19 @@ export async function POST(request: Request) {
     }
     
     // 8. Get user to check if they need email confirmation
-    const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+    // Use getUserById instead of listUsers to avoid performance issues with large user bases
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
     
     if (userError) {
+      console.error('[VERIFY MAGIC LINK] Error fetching user:', {
+        userId: tokenData.user_id,
+        error: userError.message
+      });
       logAuth('error', {
         event: 'token_verification_user_fetch_error',
         ip,
         email,
+        userId: tokenData.user_id,
         error: userError.message || 'Failed to fetch user',
         duration: Date.now() - startTime,
       });
@@ -294,13 +329,16 @@ export async function POST(request: Request) {
       );
     }
     
-    const user = users.find(u => u.id === tokenData.user_id);
-    
     if (!user) {
+      console.error('[VERIFY MAGIC LINK] User not found:', {
+        userId: tokenData.user_id,
+        email
+      });
       logAuth('error', {
         event: 'token_verification_user_not_found',
         ip,
         email,
+        userId: tokenData.user_id,
         duration: Date.now() - startTime,
       });
       return NextResponse.json(
