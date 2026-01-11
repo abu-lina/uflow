@@ -72,6 +72,7 @@
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.1.0",
     "@supabase/ssr": "^0.8.0",
+    "@swc/helpers": "^0.5.18",
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-query-devtools": "^5.90.12",
     "class-variance-authority": "^0.7.1",
