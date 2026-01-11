@@ -33,32 +33,56 @@ jobs:
       
       - name: Verify required secrets
         run: |
-          # Set variables for easier checking
-          UAT_URL="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}"
-          UAT_KEY="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
+          # Check for UAT-specific secrets first, then fall back to production secrets
+          UAT_URL="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL }}"
+          UAT_KEY="${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
           
+          # Fallback to production secrets if UAT secrets are not set
           if [ -z "$UAT_URL" ] || [ "$UAT_URL" = "" ]; then
-            echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL secret is required and must not be empty"
-            exit 1
+            echo "⚠️ UAT_NEXT_PUBLIC_SUPABASE_URL not found, using NEXT_PUBLIC_SUPABASE_URL"
+            UAT_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
           fi
           
           if [ -z "$UAT_KEY" ] || [ "$UAT_KEY" = "" ]; then
+            echo "⚠️ UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY not found, using NEXT_PUBLIC_SUPABASE_ANON_KEY"
+            UAT_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
+          fi
+          
+          # Validate URL is present and not empty
+          if [ -z "$UAT_URL" ] || [ "$UAT_URL" = "" ]; then
+            echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL secret is required and must not be empty"
+            echo "   Please add one of these secrets in Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          
+          # Validate KEY is present and not empty
+          if [ -z "$UAT_KEY" ] || [ "$UAT_KEY" = "" ]; then
             echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY secret is required and must not be empty"
+            echo "   Please add one of these secrets in Settings → Secrets and variables → Actions"
             exit 1
           fi
           
-          # Validate format (basic checks)
+          # Validate URL format (basic check)
           if [[ ! "$UAT_URL" =~ ^https://.*\.supabase\.co$ ]]; then
-            echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_URL has invalid format. Expected: https://your-project-ref.supabase.co"
+            echo "❌ Error: Supabase URL has invalid format"
+            echo "   Current value: $UAT_URL"
+            echo "   Expected format: https://<project-ref>.supabase.co"
+            echo "   Example: https://abcdefghijklmnop.supabase.co"
             exit 1
           fi
           
+          # Validate KEY format (must be JWT starting with eyJ)
           if [[ ! "$UAT_KEY" =~ ^eyJ ]]; then
-            echo "❌ Error: UAT_NEXT_PUBLIC_SUPABASE_ANON_KEY has invalid format. Expected a JWT token starting with 'eyJ'"
+            echo "❌ Error: Supabase anon key has invalid format"
+            echo "   Current value starts with: ${UAT_KEY:0:10}..."
+            echo "   Expected: JWT token starting with 'eyJ'"
+            echo "   Please verify the secret value in Settings → Secrets and variables → Actions"
             exit 1
           fi
           
           echo "✅ Required secrets are present and valid"
+          echo "   Using Supabase URL: ${UAT_URL:0:30}..."
+          echo "   Using anon key: ${UAT_KEY:0:20}..."
       
       - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v5
