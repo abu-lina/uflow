@@ -1,16 +1,10 @@
 # Simple Dockerfile for Next.js 15 App Router on Hetzner
+# Optimized for layer caching and BuildX cache mounts
 
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Accept build arguments for public variables only
+# Accept build arguments early (before COPY to maximize cache hits)
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_SITE_URL
@@ -26,7 +20,26 @@ ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 ENV NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED=$NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED
 ENV DISABLE_PWA=$DISABLE_PWA
 
-# Validate critical environment variables at build time
+# Copy package files first for better layer caching
+COPY package.json package-lock.json ./
+
+# Install dependencies with BuildX cache mount for faster rebuilds
+# Cache persists across builds, only invalidates when package files change
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline --no-audit
+
+# Copy source code (this layer invalidates on code changes, but npm cache persists)
+COPY . .
+
+# Disable telemetry and set production mode
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Fix SSL issues for Google Fonts
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
+# Validate critical environment variables and build in one step
+# This reduces layers while maintaining validation
 RUN if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then \
       echo "ERROR: NEXT_PUBLIC_SUPABASE_URL not set during build"; \
       echo "This variable must be passed as --build-arg during docker build"; \
@@ -39,17 +52,8 @@ RUN if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then \
       echo "See deployment scripts for proper usage"; \
       exit 1; \
     fi && \
-    echo "✅ Build-time environment variables validated"
-
-# Disable telemetry and set production mode
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
-
-# Fix SSL issues for Google Fonts
-ENV NODE_TLS_REJECT_UNAUTHORIZED=0
-
-# Build the application with standalone output for Docker
-RUN npm run build:standalone
+    echo "✅ Build-time environment variables validated" && \
+    npm run build:standalone
 
 # Verify build outputs exist
 RUN echo "Verifying build outputs..." && \
