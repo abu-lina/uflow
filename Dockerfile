@@ -25,26 +25,29 @@ COPY package.json package-lock.json ./
 
 # Install dependencies with BuildX cache mount for faster rebuilds
 # Cache persists across builds, only invalidates when package files change
-# Diagnostic logging to identify root cause
+# Use a shell script approach for reliable error handling
 RUN --mount=type=cache,target=/root/.npm \
-    echo "🔍 DEBUG: Starting npm ci..." && \
+    set -e && \
     echo "🔍 DEBUG: Node version: $(node --version)" && \
     echo "🔍 DEBUG: npm version: $(npm --version)" && \
-    echo "🔍 DEBUG: Package files present:" && \
+    echo "🔍 DEBUG: Package files:" && \
     ls -la package.json package-lock.json && \
-    echo "🔍 DEBUG: Attempting npm ci with --prefer-offline..." && \
-    npm ci --prefer-offline --no-audit 2>&1 | tee /tmp/npm-output.log || \
-    (EXIT_CODE=$?; \
-     echo "❌ DEBUG: npm ci --prefer-offline failed with exit code: $EXIT_CODE" && \
-     echo "🔍 DEBUG: npm output:" && \
-     cat /tmp/npm-output.log && \
-     echo "⚠️ Retrying with network access..." && \
-     npm ci --no-audit 2>&1 | tee /tmp/npm-retry.log || \
-     (RETRY_EXIT=$?; \
-      echo "❌ DEBUG: npm ci retry failed with exit code: $RETRY_EXIT" && \
-      echo "🔍 DEBUG: Retry output:" && \
-      cat /tmp/npm-retry.log && \
-      exit $RETRY_EXIT))
+    echo "🔍 DEBUG: Attempting npm ci..." && \
+    if npm ci --prefer-offline --no-audit 2>&1; then \
+      echo "✅ npm ci succeeded with --prefer-offline"; \
+    else \
+      EXIT_CODE=$?; \
+      echo "❌ DEBUG: npm ci --prefer-offline failed (exit: $EXIT_CODE)" && \
+      echo "⚠️ Retrying without --prefer-offline..." && \
+      npm ci --no-audit 2>&1 || \
+      (RETRY_EXIT=$?; \
+       echo "❌ DEBUG: npm ci retry also failed (exit: $RETRY_EXIT)" && \
+       echo "🔍 DEBUG: Checking npm registry access..." && \
+       npm config get registry && \
+       echo "🔍 DEBUG: Testing network connectivity..." && \
+       ping -c 1 registry.npmjs.org || echo "⚠️ Cannot ping npm registry" && \
+       exit $RETRY_EXIT); \
+    fi
 
 # Copy source code (this layer invalidates on code changes, but npm cache persists)
 COPY . .
