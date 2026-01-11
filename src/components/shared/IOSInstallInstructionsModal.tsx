@@ -60,6 +60,14 @@ export function IOSInstallInstructionsModal({
     }, 200);
   };
 
+  const handleLater = () => {
+    // Save dismissal to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pwa_install_dismissed', 'true');
+    }
+    handleClose();
+  };
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       handleClose();
@@ -199,16 +207,30 @@ export function IOSInstallInstructionsModal({
               </div>
             </div>
 
-            {/* Got it Button */}
-            <Button
-              fullWidth
-              aria-label={t('waitlist.earlyAccess.pwaInstall.iosModal.gotIt')}
-              size="lg"
-              variant="primary"
-              onClick={handleClose}
-            >
-              {t('waitlist.earlyAccess.pwaInstall.iosModal.gotIt')}
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex w-full flex-col gap-3">
+              {/* Primary: "Zum Startbildschirm hinzufügen" */}
+              <Button
+                fullWidth
+                aria-label={t('waitlist.earlyAccess.pwaInstall.iosModal.gotIt')}
+                size="lg"
+                variant="primary"
+                onClick={handleClose}
+              >
+                {t('waitlist.earlyAccess.pwaInstall.iosModal.gotIt')}
+              </Button>
+
+              {/* Secondary: "Später" */}
+              <Button
+                fullWidth
+                aria-label={t('waitlist.earlyAccess.pwaInstall.iosModal.later')}
+                size="lg"
+                variant="secondary"
+                onClick={handleLater}
+              >
+                {t('waitlist.earlyAccess.pwaInstall.iosModal.later')}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

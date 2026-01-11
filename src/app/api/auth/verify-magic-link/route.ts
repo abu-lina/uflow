@@ -87,15 +87,7 @@ export async function POST(request: Request) {
     // because the token itself proves legitimacy
     const supabaseAdmin = getSupabaseAdmin();
     
-    console.log('[VERIFY MAGIC LINK] Before database query:', {
-      token: token?.substring(0, 8) + '...',
-      tokenLength: token?.length,
-      email,
-      emailLower: email.toLowerCase(),
-      emailTrimmed: email.trim(),
-    });
-    
-    // First, check if token exists at all (regardless of email or used status) for debugging
+    // First, check if token exists at all (regardless of email or used status)
     // This helps us distinguish between "token not found" vs "token already used"
     const { data: tokenByTokenOnly } = await supabaseAdmin
       .from('email_confirmation_tokens')
@@ -103,15 +95,6 @@ export async function POST(request: Request) {
       .eq('token', token)
       .eq('type', 'magic_link')
       .maybeSingle();
-    
-    console.log('[VERIFY MAGIC LINK] Token lookup (token only):', {
-      found: !!tokenByTokenOnly,
-      storedEmail: tokenByTokenOnly?.email,
-      providedEmail: email,
-      emailsMatch: tokenByTokenOnly?.email?.toLowerCase() === email.toLowerCase(),
-      used: tokenByTokenOnly?.used,
-      expiresAt: tokenByTokenOnly?.expires_at,
-    });
     
     // Check if token exists but is already used (before checking for valid unused token)
     if (tokenByTokenOnly && tokenByTokenOnly.used) {
@@ -146,18 +129,6 @@ export async function POST(request: Request) {
       .eq('type', 'magic_link')
       .eq('used', false)
       .maybeSingle();
-    
-    console.log('[VERIFY MAGIC LINK] Query result (case-insensitive match):', {
-      hasTokenData: !!tokenData,
-      hasTokenError: !!tokenError,
-      tokenError: tokenError?.message,
-      tokenDataId: tokenData?.id,
-      tokenDataEmail: tokenData?.email,
-      providedEmail: email,
-      emailsMatch: tokenData?.email?.toLowerCase() === email.toLowerCase(),
-      tokenDataUsed: tokenData?.used,
-      tokenDataExpiresAt: tokenData?.expires_at,
-    });
     
     if (tokenError) {
       logAuth('error', {
@@ -311,10 +282,6 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
     
     if (userError) {
-      console.error('[VERIFY MAGIC LINK] Error fetching user:', {
-        userId: tokenData.user_id,
-        error: userError.message
-      });
       logAuth('error', {
         event: 'token_verification_user_fetch_error',
         ip,
@@ -330,10 +297,6 @@ export async function POST(request: Request) {
     }
     
     if (!user) {
-      console.error('[VERIFY MAGIC LINK] User not found:', {
-        userId: tokenData.user_id,
-        email
-      });
       logAuth('error', {
         event: 'token_verification_user_not_found',
         ip,

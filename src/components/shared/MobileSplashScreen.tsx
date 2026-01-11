@@ -89,6 +89,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
 
   // Render based on current state using state machine
   // Use AnimatePresence for smooth transitions between states
+  
   return (
     <AnimatePresence mode="wait">
       {currentState === 'loading' && (

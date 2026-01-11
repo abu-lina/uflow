@@ -9,11 +9,19 @@ export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     // Check if the app is already installed
-    const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
-    if (isInstalled) {
+    const checkInstalled = () => {
+      const installed = window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+      setIsInstalled(installed);
+      return installed;
+    };
+
+    const installed = checkInstalled();
+    if (installed) {
       console.log('[PWA] Already installed in standalone mode');
       return;
     }
@@ -24,7 +32,7 @@ export function usePWAInstall() {
     console.log('[PWA] Device detection', { 
       isIOSDevice, 
       userAgent: navigator.userAgent,
-      isInstalled,
+      isInstalled: installed,
       displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'
     });
 
@@ -37,10 +45,20 @@ export function usePWAInstall() {
       console.log('[PWA] beforeinstallprompt event fired - app is installable');
     };
 
+    // Handle appinstalled event (fires after successful installation)
+    const handleAppInstalled = () => {
+      console.log('[PWA] App installed successfully');
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -65,9 +83,18 @@ export function usePWAInstall() {
     setDeferredPrompt(null);
   };
 
+  // Alias for backwards compatibility and new API
+  const triggerInstall = install;
+  const canInstallNatively = isInstallable;
+
   return {
-    isInstallable,
+    // New API (aligned with spec)
+    canInstallNatively,
     isIOS,
+    isInstalled,
+    triggerInstall,
+    // Backwards compatibility aliases
+    isInstallable,
     install,
   };
 }

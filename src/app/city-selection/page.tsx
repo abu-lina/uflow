@@ -91,10 +91,30 @@ export default function CitySelectionPage() {
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Fetch cities on mount only (not on context changes)
+  // Use sessionStorage to persist fetch state across React Strict Mode remounts
   useEffect(() => {
-    // Prevent re-fetching if cities have already been loaded
+    // Only skip fetch if cities are already loaded (not just if fetch was attempted)
+    // This prevents issues where sessionStorage says fetch happened but cities are empty
+    if (cities.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if we're already fetching to prevent duplicate requests during React Strict Mode
     if (hasFetchedCitiesRef.current) {
       return;
+    }
+
+    // Check sessionStorage - if it says fetched but cities are empty, clear it to allow retry
+    const storageKey = 'city-selection-fetched';
+    const wasFetchedInStorage = typeof window !== 'undefined' && 
+      sessionStorage.getItem(storageKey) === 'true';
+    
+    // If sessionStorage says fetched but we have no cities, clear it (likely a failed fetch or page refresh)
+    if (wasFetchedInStorage && cities.length === 0) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(storageKey);
+      }
     }
 
     async function fetchCities() {
@@ -133,8 +153,19 @@ export default function CitySelectionPage() {
         }
         
         setCities(result);
+        
+        // Only mark as fetched in sessionStorage after successful fetch
+        // This prevents issues where failed fetches block future attempts
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('city-selection-fetched', 'true');
+        }
       } catch (err) {
         console.error('[City Selection] Failed to fetch cities:', err);
+        // Clear the fetch flag on error so we can retry
+        hasFetchedCitiesRef.current = false;
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('city-selection-fetched');
+        }
         // Use tRef to get latest translation function without causing re-fetches
         toast.error(tRef.current('common.error'));
       } finally {
@@ -143,7 +174,8 @@ export default function CitySelectionPage() {
     }
 
     fetchCities();
-  }, []); // Empty deps - only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run on mount, cities.length check is intentional
 
   // Mark animation as complete after cities have loaded and animation time has passed
   useEffect(() => {
@@ -551,6 +583,12 @@ export default function CitySelectionPage() {
                 >
                   {/* Search Input */}
                   <div className="relative">
+                    <label
+                      className="sr-only"
+                      htmlFor="city-search-input"
+                    >
+                      {t('waitlist.citySelection.searchPlaceholder')}
+                    </label>
                     <div className="flex h-[54px] items-center gap-1 rounded-sm border border-border bg-white px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
                       <Search
                         aria-hidden="true"
@@ -562,6 +600,8 @@ export default function CitySelectionPage() {
                         aria-describedby="search-results-description"
                         aria-label={t('waitlist.citySelection.searchPlaceholder')}
                         className="flex-1 border-0 bg-transparent text-base font-normal text-content-heading outline-none placeholder:text-content-muted focus:ring-0 pl-0"
+                        id="city-search-input"
+                        name="city-search"
                         placeholder={t('waitlist.citySelection.searchButton')}
                         type="text"
                         value={searchQuery}

@@ -43,8 +43,11 @@ export function EarlyAccessScreen({
   const prefersReducedMotion = typeof window !== 'undefined' && 
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Handle city selection navigation
-  const handleSelectCity = () => {
+  // Handle city selection navigation - store data before navigation
+  const handleSelectCityClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     // Store email and token in sessionStorage for city selection page (if available)
     if (email) {
       sessionStorage.setItem('waitlistEmail', email);
@@ -53,7 +56,7 @@ export function EarlyAccessScreen({
       sessionStorage.setItem('waitlistToken', waitlistToken);
     }
     
-    // Navigate to city selection page
+    // Use router.push directly instead of Link to ensure navigation works
     router.push('/city-selection');
   };
 
@@ -112,17 +115,19 @@ export function EarlyAccessScreen({
           {/* CTA Button */}
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="w-full"
+            className="w-full relative z-10"
             initial={{ opacity: 0, y: 20 }}
+            style={{ pointerEvents: 'auto' }}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.3, ease: 'easeOut' }}
           >
             <Button
               fullWidth
               aria-label={t('waitlist.earlyAccess.selectCityButton')}
-              className="h-12 justify-center rounded-sm font-inter-tight text-base font-medium"
+              className="h-12 justify-center rounded-sm font-inter-tight text-base font-medium relative z-10 w-full"
               size="lg"
+              type="button"
               variant="primary"
-              onClick={handleSelectCity}
+              onClick={handleSelectCityClick}
             >
               {t('waitlist.earlyAccess.selectCityButton')}
             </Button>

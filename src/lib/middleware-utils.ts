@@ -83,6 +83,7 @@ export function isExcludedRoute(pathname: string): boolean {
   const isWaitlistRoute = pathname === '/waitlist';
   const isPwaStart = pathname === '/pwa-start'; // PWA entry point
   const isWelcome = pathname === '/welcome'; // Welcome page for PWA install
+  const isCitySelection = pathname === '/city-selection'; // City selection page (part of onboarding)
   const isApiRoute = pathname.startsWith('/api');
   const isStaticAsset =
     pathname.startsWith('/_next') ||
@@ -90,7 +91,7 @@ export function isExcludedRoute(pathname: string): boolean {
     pathname.startsWith('/manifest') ||
     !!pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|woff|woff2|ttf|eot)$/);
 
-  return isWaitlistRoute || isPwaStart || isWelcome || isApiRoute || isStaticAsset;
+  return isWaitlistRoute || isPwaStart || isWelcome || isCitySelection || isApiRoute || isStaticAsset;
 }
 
 /**
