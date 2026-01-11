@@ -25,6 +25,12 @@ This document provides an overview of all security measures implemented in the a
    - Recommendations for improvement
    - Production readiness evaluation
 
+4. **[Managing Blocked IPs](./MANAGE_BLOCKED_IPS.md)**
+   - Viewing blocked IP addresses
+   - Unblocking IPs (single or bulk)
+   - Admin key setup
+   - Rate limit reference
+
 ## Security Layers
 
 ### 1. Network & Transport Layer
@@ -142,7 +148,7 @@ This document provides an overview of all security measures implemented in the a
    - Is the issue actively being exploited?
 
 2. **Immediate Actions**
-   - Block malicious IPs if necessary
+   - Block malicious IPs if necessary (see [Managing Blocked IPs](./MANAGE_BLOCKED_IPS.md))
    - Disable affected features if critical
    - Notify affected users if data breach
 

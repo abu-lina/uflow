@@ -714,6 +714,50 @@ export function markSuspiciousIP(ip: string, hours: number = 24): void {
 }
 
 /**
+ * Get all currently blocked IPs with their details
+ * @returns Array of blocked IP information
+ */
+export function getAllBlockedIPs(): Array<{
+  ip: string;
+  count: number;
+  blockedUntil: number;
+  blockedUntilDate: string;
+  timeRemaining: number;
+  timeRemainingMinutes: number;
+  attempts: number[];
+}> {
+  const now = Date.now();
+  const blocked: Array<{
+    ip: string;
+    count: number;
+    blockedUntil: number;
+    blockedUntilDate: string;
+    timeRemaining: number;
+    timeRemainingMinutes: number;
+    attempts: number[];
+  }> = [];
+  
+  suspiciousIPs.forEach((entry, ip) => {
+    if (now < entry.blockedUntil) {
+      // Still blocked
+      const timeRemaining = entry.blockedUntil - now;
+      blocked.push({
+        ip,
+        count: entry.count,
+        blockedUntil: entry.blockedUntil,
+        blockedUntilDate: new Date(entry.blockedUntil).toISOString(),
+        timeRemaining,
+        timeRemainingMinutes: Math.ceil(timeRemaining / (60 * 1000)),
+        attempts: entry.attempts
+      });
+    }
+  });
+  
+  // Sort by time remaining (shortest first)
+  return blocked.sort((a, b) => a.timeRemaining - b.timeRemaining);
+}
+
+/**
  * Unblock an IP address (useful for test mode)
  * @param ip - IP address to unblock
  */
