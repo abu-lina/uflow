@@ -25,29 +25,10 @@ COPY package.json package-lock.json ./
 
 # Install dependencies with BuildX cache mount for faster rebuilds
 # Cache persists across builds, only invalidates when package files change
-# Use a shell script approach for reliable error handling
+# Removed --prefer-offline to allow downloading new packages when dependencies are updated
+# BuildX cache mount still provides automatic caching for subsequent builds
 RUN --mount=type=cache,target=/root/.npm \
-    set -e && \
-    echo "🔍 DEBUG: Node version: $(node --version)" && \
-    echo "🔍 DEBUG: npm version: $(npm --version)" && \
-    echo "🔍 DEBUG: Package files:" && \
-    ls -la package.json package-lock.json && \
-    echo "🔍 DEBUG: Attempting npm ci..." && \
-    if npm ci --prefer-offline --no-audit 2>&1; then \
-      echo "✅ npm ci succeeded with --prefer-offline"; \
-    else \
-      EXIT_CODE=$?; \
-      echo "❌ DEBUG: npm ci --prefer-offline failed (exit: $EXIT_CODE)" && \
-      echo "⚠️ Retrying without --prefer-offline..." && \
-      npm ci --no-audit 2>&1 || \
-      (RETRY_EXIT=$?; \
-       echo "❌ DEBUG: npm ci retry also failed (exit: $RETRY_EXIT)" && \
-       echo "🔍 DEBUG: Checking npm registry access..." && \
-       npm config get registry && \
-       echo "🔍 DEBUG: Testing network connectivity..." && \
-       ping -c 1 registry.npmjs.org || echo "⚠️ Cannot ping npm registry" && \
-       exit $RETRY_EXIT); \
-    fi
+    npm ci --no-audit
 
 # Copy source code (this layer invalidates on code changes, but npm cache persists)
 COPY . .
