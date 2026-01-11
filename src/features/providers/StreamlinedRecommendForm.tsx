@@ -630,9 +630,21 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, [categories, language]);
 
   // Memoize category name display to prevent re-renders
-  const categoryDisplayName = useMemo(() => {
-    return formData.category ? getCategoryName(formData.category) : t('create.recommend.selectCategory');
-  }, [formData.category, getCategoryName, t]);
+  // Use useState to avoid hydration mismatch (categories may not be loaded during SSR)
+  const [categoryDisplayName, setCategoryDisplayName] = useState(() => {
+    // Initial value that's consistent between server and client
+    return formData.category ? '' : t('create.recommend.selectCategory');
+  });
+
+  // Update category display name when category or categories change
+  useEffect(() => {
+    if (formData.category && categories.length > 0) {
+      const name = getCategoryName(formData.category);
+      setCategoryDisplayName(name || t('create.recommend.selectCategory'));
+    } else if (!formData.category) {
+      setCategoryDisplayName(t('create.recommend.selectCategory'));
+    }
+  }, [formData.category, categories, getCategoryName, t]);
 
   // Validation - memoized to prevent unnecessary re-renders
   const isFormValid = useMemo(() => {
