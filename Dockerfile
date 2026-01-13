@@ -42,7 +42,10 @@ ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 # Validate critical environment variables and build in one step
 # This reduces layers while maintaining validation
-RUN if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then \
+# Add Next.js build cache mount for faster rebuilds
+# Cache persists across builds, only invalidates when source code changes
+RUN --mount=type=cache,target=/app/.next/cache \
+    if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then \
       echo "ERROR: NEXT_PUBLIC_SUPABASE_URL not set during build"; \
       echo "This variable must be passed as --build-arg during docker build"; \
       echo "See deployment scripts for proper usage"; \

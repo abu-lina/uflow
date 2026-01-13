@@ -24,6 +24,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - name: Check nginx config changed
+        id: nginx-check
+        run: |
+          # For manual deployments, always upload (no previous commit to compare)
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            CHANGED=1
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -c 'nginx-template.conf' || echo 0)
+          fi
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+      
+      - name: Upload Nginx config to Hetzner
+        if: steps.nginx-check.outputs.changed != '0'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          source: "nginx-template.conf"
+          target: "/tmp/"
       
       - name: Verify deployment confirmation
         run: |
@@ -61,15 +84,6 @@ jobs:
             DISABLE_PWA=false
           platforms: linux/amd64
       
-      - name: Upload Nginx config to Hetzner
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HETZNER_HOST }}
-          username: root
-          key: ${{ secrets.HETZNER_SSH_KEY }}
-          source: "nginx-template.conf"
-          target: "/tmp/"
-      
       - name: Deploy to Hetzner
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -80,25 +94,8 @@ jobs:
             set -e
             cd /tmp
             
-            # Store old container ID for rollback
+            # Blue-green deployment: Start new container on temp port, verify, then swap
             OLD_CONTAINER=$(docker ps -q -f name=uflow-app) || true
-            
-            echo "🛑 Stopping old container..."
-            docker stop uflow-app || true
-            docker rm uflow-app || true
-            
-            echo "🔍 Checking for any containers using port 3000..."
-            # Find all running containers and check if any use port 3000
-            for CONTAINER in $(docker ps -q); do
-                if docker port $CONTAINER 2>/dev/null | grep -q ":3000"; then
-                    echo "⚠️ Found container $CONTAINER using port 3000, stopping it..."
-                    docker stop $CONTAINER || true
-                    docker rm $CONTAINER || true
-                fi
-            done
-            
-            echo "⏸️ Waiting for port 3000 to be released..."
-            sleep 3
             
             echo "📦 Pulling new image from GHCR..."
             IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/uflow:latest"
@@ -132,8 +129,58 @@ jobs:
             fi
             echo "✅ Image pulled successfully"
             
-            echo "🚀 Starting new container..."
-            NEW_CONTAINER=$(docker run -d -p 3000:3000 \
+            echo "🚀 Starting new container on temporary port 3002 (blue-green deployment)..."
+            NEW_CONTAINER=$(docker run -d -p 3002:3000 \
+              -e NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+              -e NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+              -e SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
+              -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
+              -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
+              -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              -e DISABLE_PWA=false \
+              --name uflow-new \
+              --restart unless-stopped \
+              ghcr.io/${{ github.repository_owner }}/uflow:latest)
+            
+            echo "⏳ Waiting for new container to start..."
+            sleep 3
+            
+            echo "🏥 Health check on new container (port 3002)..."
+            HEALTH_CHECK_FAILED=true
+            for i in {1..20}; do
+                if curl -f http://localhost:3002/api/health > /dev/null 2>&1; then
+                    echo "✅ New container is healthy"
+                    HEALTH_CHECK_FAILED=false
+                    break
+                fi
+                echo "Health check attempt $i/20..."
+                sleep 1
+            done
+            
+            if [ "$HEALTH_CHECK_FAILED" = "true" ]; then
+                echo "❌ Health check failed on new container - cleaning up..."
+                docker logs --tail 50 uflow-new
+                docker stop uflow-new || true
+                docker rm uflow-new || true
+                exit 1
+            fi
+            
+            echo "🔄 Swapping containers (zero-downtime deployment)..."
+            # Stop old container
+            if [ -n "$OLD_CONTAINER" ]; then
+                echo "🛑 Stopping old container..."
+                docker stop uflow-app || true
+                docker rm uflow-app || true
+            fi
+            
+            # Stop new container and restart on production port
+            echo "🔄 Moving new container to production port 3000..."
+            docker stop uflow-new || true
+            docker rm uflow-new || true
+            
+            # Start on production port
+            docker run -d -p 3000:3000 \
               -e NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
               -e NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
               -e SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -144,34 +191,9 @@ jobs:
               -e DISABLE_PWA=false \
               --name uflow-app \
               --restart unless-stopped \
-              ghcr.io/${{ github.repository_owner }}/uflow:latest)
+              ghcr.io/${{ github.repository_owner }}/uflow:latest
             
-            echo "⏳ Waiting for app to start..."
-            sleep 10
-            
-            echo "🏥 Health check..."
-            HEALTH_CHECK_FAILED=true
-            for i in {1..30}; do
-                if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
-                    echo "✅ App is healthy"
-                    HEALTH_CHECK_FAILED=false
-                    break
-                fi
-                echo "Health check attempt $i/30..."
-                sleep 2
-            done
-            
-            if [ "$HEALTH_CHECK_FAILED" = "true" ]; then
-                echo "❌ Health check failed - rolling back..."
-                docker logs --tail 50 uflow-app
-                docker stop uflow-app || true
-                docker rm uflow-app || true
-                if [ -n "$OLD_CONTAINER" ]; then
-                    echo "🔄 Restarting old container..."
-                    docker start $OLD_CONTAINER || true
-                fi
-                exit 1
-            fi
+            echo "✅ Container swap complete"
             
             echo "🔧 Updating Nginx..."
             sed "s/{{DOMAIN}}/ummahflow.com/g" /tmp/nginx-template.conf > /etc/nginx/sites-available/ummahflow
