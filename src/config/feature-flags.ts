@@ -40,8 +40,8 @@ export const defaultFeatureFlags: FeatureFlags = {
   // Development features - disabled by default
   enableDebugMode: false,
   
-  // Launch control - disabled by default (waitlist mode)
-  isAppLaunched: false, // Default: waitlist mode - set to true when ready to launch
+  // Launch control - app is launched (waitlist disabled)
+  isAppLaunched: true, // App is launched - waitlist is disabled
   skipWaitlist: true, // Skip waitlist pre-launch (set to false when going live)
 };
 

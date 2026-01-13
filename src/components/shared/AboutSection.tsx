@@ -34,7 +34,7 @@ export function AboutSection() {
           </p>
         </motion.div>
         <motion.div
-          className="flex w-full flex-col items-center gap-2 md:grid md:grid-cols-3 md:gap-6"
+          className="flex w-full flex-col items-center gap-2 md:flex md:flex-row md:justify-center md:gap-6"
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
           viewport={{ once: true }}

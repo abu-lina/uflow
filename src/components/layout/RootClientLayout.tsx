@@ -46,8 +46,8 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const { isLandingPage } = pageType;
   
   // Determine what UI elements should be shown
-  // CRITICAL: This must be calculated on every render to catch state changes
-  const showMobileFooter = shouldShowMobileFooter(pathname, isSplashVisible, user, isAppLaunched, stage);
+  // CRITICAL: Only calculate after mount to prevent hydration mismatch (isAppLaunched differs on server vs client)
+  const showMobileFooter = isMounted && shouldShowMobileFooter(pathname, isSplashVisible, user, isAppLaunched, stage);
   // Only calculate showCityEarlyAccessNavbar after mount to prevent hydration mismatch
   const showCityEarlyAccessNavbar = isMounted && shouldShowCityEarlyAccessNavbar(pathname, isAppLaunched, user, stage);
   const showSubpageAction = shouldShowSubpageAction(pathname);
