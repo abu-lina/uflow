@@ -584,7 +584,9 @@ export const en = {
     viewTerms: "View Terms of Service",
     lastUpdated: "Last updated",
     impressum: "Legal Notice",
-    magicLinkConsent: "By continuing, you agree to our"
+    magicLinkConsent: "By continuing, you agree to our",
+    legalInfo: "Legal information",
+    legalLinksTitle: "Legal"
   },
   waitlist: {
     title: "Join the Flow",

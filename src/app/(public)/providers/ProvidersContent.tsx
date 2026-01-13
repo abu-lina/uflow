@@ -13,6 +13,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { MobileGreetingHeader } from '@/components/shared/MobileGreetingHeader';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
@@ -34,6 +36,7 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -255,6 +258,29 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
     );
   };
 
+  // Info icon portal - render at document root to avoid clipping (only for Stage 2)
+  // Positioned directly below the LanguageSwitcher on the right side (no gap), right-aligned
+  // z-index lower than LanguageSwitcher to ensure dropdown appears above it
+  const infoIconPortal = showGreeting && isMounted && typeof document !== 'undefined' && document.body ? createPortal(
+    <div 
+      className="fixed top-10 right-2 z-[9998] sm:hidden" 
+      style={{ 
+        paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
+        paddingRight: 'max(env(safe-area-inset-right), 0.25rem)'
+      }}
+    >
+      <button
+        aria-label={t('legal.legalInfo') || 'Legal information'}
+        className="flex items-center justify-center p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ml-auto"
+        type="button"
+        onClick={() => setShowLegalModal(true)}
+      >
+        <Icon className="w-5 h-5 text-content-heading" icon="lucide:info" />
+      </button>
+    </div>,
+    document.body
+  ) : null;
+
   // Language switcher portal - render at document root to avoid clipping (only for Stage 2)
   const languageSwitcherPortal = showGreeting && isMounted && typeof document !== 'undefined' && document.body ? createPortal(
     <div 
@@ -271,7 +297,9 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
 
   return (
     <>
+      {infoIconPortal}
       {languageSwitcherPortal}
+      <LegalLinksModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} />
       {showGreeting ? (
         // Fixed greeting header for Stage 2 (matches ProvidersPageHeader style)
         <header 

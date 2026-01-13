@@ -1,6 +1,7 @@
 import { forwardRef, useState, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { Icon } from '@iconify/react';
@@ -54,6 +55,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
   ) => {
     const { user } = useAuth();
     const { t, language } = useLanguage();
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     // Initialize bookmarked state from prop to prevent flash on mount
@@ -150,7 +152,8 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       e.stopPropagation();
       
       if (!user) {
-        // Show login prompt
+        // Redirect to bookmark menu (saved page) when not authenticated
+        router.push('/saved');
         return;
       }
       

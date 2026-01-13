@@ -563,7 +563,9 @@ export const tr = {
     viewTerms: "Hizmet Şartlarını Görüntüle",
     lastUpdated: "Son güncelleme",
     impressum: "Yasal Bildirim",
-    magicLinkConsent: "Devam ederek, bizim"
+    magicLinkConsent: "Devam ederek, bizim",
+    legalInfo: "Yasal bilgiler",
+    legalLinksTitle: "Yasal"
   },
   waitlist: {
     title: "Akışa Katıl",

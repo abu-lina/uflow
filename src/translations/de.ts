@@ -584,7 +584,9 @@ export const de = {
     viewTerms: "Allgemeine Geschäftsbedingungen anzeigen",
     lastUpdated: "Zuletzt aktualisiert",
     impressum: "Impressum",
-    magicLinkConsent: "Mit dem Fortfahren akzeptierst du unsere"
+    magicLinkConsent: "Mit dem Fortfahren akzeptierst du unsere",
+    legalInfo: "Rechtliche Informationen",
+    legalLinksTitle: "Rechtliches"
   },
   waitlist: {
     title: "Werde Teil des Flows",

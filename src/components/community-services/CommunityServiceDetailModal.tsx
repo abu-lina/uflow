@@ -173,6 +173,8 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
 
   const handleBookmark = async () => {
     if (!user) {
+      // Redirect to bookmark menu (saved page) when not authenticated
+      router.push('/saved');
       return;
     }
     

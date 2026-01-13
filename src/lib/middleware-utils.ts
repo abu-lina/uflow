@@ -192,6 +192,12 @@ export async function shouldRedirectToWaitlist(
     return false; // Allow access, let page component handle auth/authorization
   }
 
+  // Special case: Legal pages must always be publicly accessible (GDPR/TMG compliance)
+  // These pages should be accessible regardless of app launch status or waitlist token
+  if (pathname === '/terms' || pathname === '/privacy-policy' || pathname === '/impressum') {
+    return false; // Always allow access to legal pages
+  }
+
   // If user is admin/moderator, allow access (bypass waitlist)
   if (accessToken) {
     const user = await validateUser(accessToken);

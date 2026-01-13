@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/hooks/useLanguage';
-import { showLoginRequiredToast, showBookmarkSuccessToast, showBookmarkRemovedToast } from '@/utils/toastMessages';
+import { showBookmarkSuccessToast, showBookmarkRemovedToast } from '@/utils/toastMessages';
 
 interface UseBookmarkWithAuthOptions {
   bookmarkableId: string;
@@ -21,17 +21,15 @@ export const useBookmarkWithAuth = ({
 
   const handleBookmarkAction = useCallback(async () => {
     if (!user) {
-      // Show login required toast with action to redirect to login
-      showLoginRequiredToast(language, () => {
-        router.push('/login');
-      });
+      // Redirect to bookmark menu (saved page) when not authenticated
+      router.push('/saved');
       return;
     }
 
     // If user is authenticated, proceed with bookmark logic
     // This will be handled by the existing bookmark logic in components
     return true;
-  }, [user, language, router]);
+  }, [user, router]);
 
   const showBookmarkSuccess = useCallback(() => {
     showBookmarkSuccessToast(language);

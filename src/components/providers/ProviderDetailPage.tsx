@@ -190,7 +190,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     e?.stopPropagation();
     
     if (!user) {
-      // Show login prompt
+      // Redirect to bookmark menu (saved page) when not authenticated
+      router.push('/saved');
       return;
     }
     

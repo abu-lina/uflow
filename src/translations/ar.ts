@@ -563,7 +563,9 @@ export const ar = {
     viewTerms: "عرض شروط الخدمة",
     lastUpdated: "آخر تحديث",
     impressum: "البيانات القانونية",
-    magicLinkConsent: "بالمتابعة، أنت توافق على"
+    magicLinkConsent: "بالمتابعة، أنت توافق على",
+    legalInfo: "معلومات قانونية",
+    legalLinksTitle: "قانوني"
   },
   waitlist: {
     title: "انضم إلى التدفق",

@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
 
@@ -35,6 +37,7 @@ export function CityEarlyAccessEmptyState({
 }: CityEarlyAccessEmptyStateProps) {
   const { t } = useLanguage();
   const router = useRouter();
+  const [showLegalModal, setShowLegalModal] = useState(false);
 
   // Detect reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined' && 
@@ -76,12 +79,22 @@ export function CityEarlyAccessEmptyState({
       {/* Header - 80px with safe area */}
       <header 
         className={cn(
-          'flex w-full items-center justify-end',
+          'flex w-full items-center justify-between',
           'h-20 px-6',
           'pt-safe-top'
         )}
         role="banner"
       >
+        {/* Info Icon - Opens legal links */}
+        <button
+          aria-label={t('legal.legalInfo') || 'Legal information'}
+          className="flex items-center justify-center p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+          type="button"
+          onClick={() => setShowLegalModal(true)}
+        >
+          <Icon className="w-5 h-5 text-content-heading" icon="lucide:info" />
+        </button>
+
         {/* Language Selector - Top Right */}
         <LanguageSwitcher variant="dropdown" />
       </header>
@@ -194,6 +207,9 @@ export function CityEarlyAccessEmptyState({
           </motion.div>
         </motion.div>
       </main>
+
+      {/* Legal Links Modal */}
+      <LegalLinksModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} />
     </div>
   );
 }
