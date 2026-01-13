@@ -246,7 +246,8 @@ export const en = {
       successTitle: "BarakAllahu feek",
       successDescription: "Your suggestion helps make Muslim providers visible in your city.",
       recommendAnother: "Recommend another provider",
-      backToOverview: "Back to overview"
+      backToOverview: "Back to overview",
+      emailConsentText: "By providing your email, you consent to it being stored to receive follow-up about this recommendation."
     },
     basics: {
       title: "Create offer",
@@ -457,6 +458,9 @@ export const en = {
     emailFailedDescription: "Please try again or contact support.",
     errorOccurredToast: "Error occurred",
     errorOccurredDescription: "An unexpected error occurred. Please try again.",
+    magicLinkButton: "Send Magic Link",
+    magicLinkLoading: "Sending Magic Link...",
+    magicLinkDescription: "We'll send you a Magic Link via email. No password required.",
     afterConfirmationLogin: "Login after confirmation"
   },
   signup: {
@@ -578,7 +582,9 @@ export const en = {
     consentHistory: "Consent History",
     viewPrivacyPolicy: "View Privacy Policy",
     viewTerms: "View Terms of Service",
-    lastUpdated: "Last updated"
+    lastUpdated: "Last updated",
+    impressum: "Legal Notice",
+    magicLinkConsent: "By continuing, you agree to our"
   },
   waitlist: {
     title: "Join the Flow",

@@ -3,6 +3,11 @@ import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { createProviderCommunityServiceRelationship } from './communityServices';
 
+// Extended form data type that may include userEmail for anonymous recommendations
+type ExtendedProviderFormData = ProviderFormData & {
+  userEmail?: string;
+};
+
 export interface CreateProviderResult {
   provider_id?: string;
   community_service_id?: string;
@@ -18,20 +23,14 @@ export interface CreateProviderResult {
  * @returns The created entity ID (provider_id or community_service_id)
  */
 export async function createProviderOrService(
-  formData: ProviderFormData,
+  formData: ExtendedProviderFormData,
   user: User | null,
   isRecommendationMode: boolean
 ): Promise<CreateProviderResult> {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'providerService.ts:20',message:'Function entry',data:{hasUser:!!user,userId:user?.id,isRecommendationMode,creationMode:formData.creationMode,category:formData.category},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-  // #endregion
   // Explicitly check for null/undefined user in recommendation mode
   const isAnonymous = (user === null || user === undefined) && isRecommendationMode;
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
   const isOwner = formData.creationMode === 'owner';
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'providerService.ts:28',message:'Auth state computed',data:{isAnonymous,isCommunityService,isOwner,userIsNull:user===null,userIsUndefined:user===undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B,C'})}).catch(()=>{});
-  // #endregion
 
   // Upload images if any exist
   let uploadedUrls: string[] = [];
@@ -95,62 +94,20 @@ export async function createProviderOrService(
       // The RLS policy requires user_created_id to be NULL for anonymous users
       user_created_id: isAnonymous ? null : (user?.id ?? null),
       provider_id: isAnonymous ? null : ((isOwner && user?.id) ? user.id : null),
+      // Store recommender email for anonymous recommendations (with consent)
+      recommender_email: isAnonymous && formData.userEmail ? formData.userEmail : null,
     };
 
-    // #region agent log
-    const insertPayload = JSON.parse(JSON.stringify(insertData));
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'providerService.ts:87',message:'Before insert - insert data prepared',data:{user_created_id:insertPayload.user_created_id,user_created_id_type:typeof insertPayload.user_created_id,user_created_id_is_null:insertPayload.user_created_id===null,user_created_id_is_undefined:insertPayload.user_created_id===undefined,provider_id:insertPayload.provider_id,provider_id_is_null:insertPayload.provider_id===null,isAnonymous,isRecommendationMode,allKeys:Object.keys(insertPayload)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B,D'})}).catch(()=>{});
-    // #endregion
-    // Log the insert data for debugging - show the exact JSON that will be sent
-    console.log('[Community Service Creation] Insert data (exact JSON):', JSON.stringify(insertPayload, null, 2));
-    console.log('[Community Service Creation] Key fields:', {
-      user_created_id: insertPayload.user_created_id,
-      provider_id: insertPayload.provider_id,
-      user_created_id_is_null: insertPayload.user_created_id === null,
-      provider_id_is_null: insertPayload.provider_id === null,
-      isAnonymous,
-      isRecommendationMode,
-    });
-
-    // #region agent log
-    const { data: { session } } = await supabase.auth.getSession();
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    // Check if anon key is JWT format (eyJ) or publishable key (sb_)
-    const isJWTFormat = anonKey?.startsWith('eyJ');
-    const isPublishableKey = anonKey?.startsWith('sb_');
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'providerService.ts:101',message:'About to call supabase insert',data:{table:'community_services',hasInsertData:!!insertData,hasSession:!!session,sessionUser:session?.user?.id,supabaseUrl,anonKeyPresent:!!anonKey,anonKeyType:isJWTFormat?'JWT':isPublishableKey?'Publishable':'Unknown',anonKeyPrefix:anonKey?.substring(0,15)+'...'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F,G,H'})}).catch(()=>{});
-    // #endregion
     // Insert without SELECT to avoid SELECT policy blocking pending reviews
     const { error: serviceError } = await supabase
       .from('community_services')
       .insert([insertData]);
 
     if (serviceError) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'providerService.ts:107',message:'Insert failed with error',data:{errorCode:serviceError.code,errorMessage:serviceError.message,errorDetails:serviceError.details,errorHint:serviceError.hint,user_created_id:insertData.user_created_id,user_created_id_type:typeof insertData.user_created_id,user_created_id_is_null:insertData.user_created_id===null,isAnonymous,isRecommendationMode,fullError:JSON.stringify(serviceError)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C,D,E,F,G'})}).catch(()=>{});
-      // #endregion
-      console.error('Error creating community service:', {
-        message: serviceError.message,
-        code: serviceError.code,
-        details: serviceError.details,
-        hint: serviceError.hint,
-        fullError: serviceError,
-      });
-      console.error('[Community Service Creation] Failed insert data:', JSON.stringify({
-        community_service_name: insertData.community_service_name,
-        user_created_id: insertData.user_created_id,
-        provider_id: insertData.provider_id,
-        isAnonymous,
-        isRecommendationMode,
-        user: user ? { id: user.id, email: user.email } : null,
-      }, null, 2));
+      console.error('Error creating community service:', serviceError);
       throw serviceError;
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'providerService.ts:130',message:'Insert succeeded',data:{community_service_id:generatedServiceId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     return { community_service_id: generatedServiceId };
   } else {
     // Create provider
@@ -179,6 +136,8 @@ export async function createProviderOrService(
       offers_ids: formData.offers_ids || [],
       needs_ids: formData.needs_ids || [],
       review_status: 'pending' as const, // Providers need review
+      // Store recommender email for anonymous recommendations (with consent)
+      recommender_email: isAnonymous && formData.userEmail ? formData.userEmail : null,
     };
 
     // CRITICAL: Always explicitly set these fields with null (not undefined)
@@ -204,43 +163,13 @@ export async function createProviderOrService(
       });
     }
 
-    // Log the insert data for debugging - show the exact JSON that will be sent
-    const insertPayload = JSON.parse(JSON.stringify(insertData));
-    console.log('[Provider Creation] Insert data (exact JSON):', JSON.stringify(insertPayload, null, 2));
-    console.log('[Provider Creation] Key fields:', {
-      user_created_id: insertPayload.user_created_id,
-      provider_owner_id: insertPayload.provider_owner_id,
-      user_created_id_is_null: insertPayload.user_created_id === null,
-      provider_owner_id_is_null: insertPayload.provider_owner_id === null,
-      isAnonymous,
-      isRecommendationMode,
-    });
-
     // Insert without SELECT to avoid SELECT policy blocking pending reviews
     const { error: providerError } = await supabase
       .from('providers')
       .insert([insertData]);
 
     if (providerError) {
-      console.error('Error creating provider:', {
-        message: providerError.message,
-        code: providerError.code,
-        details: providerError.details,
-        hint: providerError.hint,
-        fullError: providerError,
-      });
-      console.error('[Provider Creation] Failed insert data:', JSON.stringify({
-        provider_name: insertData.provider_name,
-        user_created_id: insertData.user_created_id,
-        provider_owner_id: insertData.provider_owner_id,
-        isAnonymous,
-        isRecommendationMode,
-        user: user ? { id: user.id, email: user.email } : null,
-        // Show all fields to debug
-        allFields: Object.keys(insertData),
-        user_created_id_type: typeof insertData.user_created_id,
-        provider_owner_id_type: typeof insertData.provider_owner_id,
-      }, null, 2));
+      console.error('Error creating provider:', providerError);
       throw providerError;
     }
 

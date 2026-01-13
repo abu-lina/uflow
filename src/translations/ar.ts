@@ -232,7 +232,8 @@ export const ar = {
       successTitle: "بارك الله فيك",
       successDescription: "اقتراحك يساعد في جعل المزودين المسلمين مرئيين في مدينتك.",
       recommendAnother: "التوصية بمزود آخر",
-      backToOverview: "العودة إلى النظرة العامة"
+      backToOverview: "العودة إلى النظرة العامة",
+      emailConsentText: "من خلال تقديم بريدك الإلكتروني، أنت توافق على تخزينه لتلقي متابعة حول هذه التوصية."
     },
     basics: {
       title: "إنشاء عرض",
@@ -436,6 +437,9 @@ export const ar = {
     emailFailedDescription: "يرجى المحاولة مرة أخرى أو الاتصال بالدعم.",
     errorOccurredToast: "حدث خطأ",
     errorOccurredDescription: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+    magicLinkButton: "إرسال رابط سحري",
+    magicLinkLoading: "جاري إرسال الرابط السحري...",
+    magicLinkDescription: "سنرسل لك رابطًا سحريًا عبر البريد الإلكتروني. لا حاجة لكلمة المرور.",
     afterConfirmationLogin: "تسجيل الدخول بعد التأكيد"
   },
   signup: {
@@ -557,7 +561,9 @@ export const ar = {
     consentHistory: "سجل الموافقة",
     viewPrivacyPolicy: "عرض سياسة الخصوصية",
     viewTerms: "عرض شروط الخدمة",
-    lastUpdated: "آخر تحديث"
+    lastUpdated: "آخر تحديث",
+    impressum: "البيانات القانونية",
+    magicLinkConsent: "بالمتابعة، أنت توافق على"
   },
   waitlist: {
     title: "انضم إلى التدفق",

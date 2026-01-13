@@ -259,6 +259,38 @@ export async function POST(request: Request) {
       user = newUserData.user;
       console.log('[MAGIC LINK API] ✅ New user created successfully:', email);
       console.log('[MAGIC LINK API] User email confirmed:', user.email_confirmed_at !== null);
+      
+      // Log consent for magic link signup (GDPR compliance)
+      const userAgent = request.headers.get('user-agent') || null;
+      const consentLogs = [
+        {
+          user_id: user.id,
+          consent_type: 'terms_of_service',
+          accepted: true,
+          accepted_at: new Date().toISOString(),
+          ip_address: ip,
+          user_agent: userAgent,
+        },
+        {
+          user_id: user.id,
+          consent_type: 'privacy_policy',
+          accepted: true,
+          accepted_at: new Date().toISOString(),
+          ip_address: ip,
+          user_agent: userAgent,
+        },
+      ];
+
+      const { error: consentError } = await supabaseAdmin
+        .from('consent_logs')
+        .insert(consentLogs);
+
+      if (consentError) {
+        console.error('[MAGIC LINK API] Error logging consent:', consentError);
+        // Continue anyway - user creation succeeded
+      } else {
+        console.log('[MAGIC LINK API] ✅ Consent logged for new user');
+      }
     }
 
     // 8. Magic links work for both confirmed and unconfirmed users

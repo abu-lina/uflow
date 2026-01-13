@@ -7,7 +7,7 @@
 
 import 'server-only';
 
-import { headers, cookies } from 'next/headers';
+import { headers } from 'next/headers';
 
 export type ServerLanguage = 'de' | 'en' | 'ar' | 'tr' | 'ur' | 'ps';
 
@@ -51,30 +51,24 @@ function normalizeLanguageCode(lang: string): string {
 }
 
 /**
- * Detect language from server-side request (cookies and headers)
+ * Detect language from server-side request (headers only)
  * Used in server components and API routes
  * 
- * Detection priority (matches client-side logic):
- * 1. User preference cookie (explicit user choice - highest priority)
- * 2. Accept-Language header (auto-detection - only if no saved preference)
- * 3. Default fallback to German
+ * Note: We no longer use cookies for language preference to avoid requiring cookie consent.
+ * Client-side uses localStorage, and server-side uses Accept-Language header.
+ * 
+ * Detection priority:
+ * 1. Accept-Language header (auto-detection from browser)
+ * 2. Default fallback to German
  * 
  * @returns Promise resolving to the detected language code
  */
 export async function detectLanguageFromServer(): Promise<ServerLanguage> {
   try {
-    const cookieStore = await cookies();
     const headersList = await headers();
     
-    // Priority 1: Check for user's language preference cookie
-    // This represents an explicit user choice, so it always takes precedence
-    const languageCookie = cookieStore.get('preferred-language')?.value;
-    if (isValidLanguage(languageCookie)) {
-      return languageCookie;
-    }
-
-    // Priority 2: Check Accept-Language header (only if no saved preference)
-    // This is auto-detection, similar to client-side navigator.languages
+    // Check Accept-Language header for auto-detection
+    // This matches browser language preferences
     const acceptLanguage = headersList.get('accept-language');
     
     if (!acceptLanguage) {

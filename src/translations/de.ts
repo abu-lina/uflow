@@ -246,7 +246,8 @@ export const de = {
       successTitle: "BarakAllahu feek",
       successDescription: "Dein Vorschlag hilft, muslimische Anbieter in deiner Stadt sichtbar zu machen.",
       recommendAnother: "Weiteren Anbieter empfehlen",
-      backToOverview: "Zurück zur Übersicht"
+      backToOverview: "Zurück zur Übersicht",
+      emailConsentText: "Durch die Angabe Ihrer E-Mail-Adresse stimmen Sie der Speicherung zu, um Nachfragen zu dieser Empfehlung zu erhalten."
     },
     basics: {
       title: "Angebot erstellen",
@@ -457,6 +458,9 @@ export const de = {
     emailFailedDescription: "Bitte versuche es erneut oder kontaktiere den Support.",
     errorOccurredToast: "Fehler aufgetreten",
     errorOccurredDescription: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.",
+    magicLinkButton: "Magic Link senden",
+    magicLinkLoading: "Magic Link wird gesendet...",
+    magicLinkDescription: "Wir senden dir einen Magic Link per E-Mail. Kein Passwort erforderlich.",
     afterConfirmationLogin: "Nach Bestätigung anmelden"
   },
   signup: {
@@ -578,7 +582,9 @@ export const de = {
     consentHistory: "Einwilligungsverlauf",
     viewPrivacyPolicy: "Datenschutzrichtlinie anzeigen",
     viewTerms: "Allgemeine Geschäftsbedingungen anzeigen",
-    lastUpdated: "Zuletzt aktualisiert"
+    lastUpdated: "Zuletzt aktualisiert",
+    impressum: "Impressum",
+    magicLinkConsent: "Mit dem Fortfahren akzeptierst du unsere"
   },
   waitlist: {
     title: "Werde Teil des Flows",

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { CircleHelp, LogOut, User, Lock, FileText, AlertTriangle, Heart, Download, Shield, Eye, EyeOff } from 'lucide-react';
+import { CircleHelp, LogOut, User, Lock, FileText, AlertTriangle, Heart, Download, Shield, Eye, EyeOff, Scale } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
@@ -586,6 +586,20 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 <FileText className="h-6 w-6 text-black" />
                 <span className="font-inter-tight font-semibold text-content-heading">
                   {t('legal.termsOfService') || 'Terms of Service'}
+                </span>
+              </Link>
+              
+              {/* Divider */}
+              <div className="mx-4 h-px bg-gray-200" />
+
+              {/* Impressum */}
+              <Link
+                className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50"
+                href="/impressum"
+              >
+                <Scale className="h-6 w-6 text-black" />
+                <span className="font-inter-tight font-semibold text-content-heading">
+                  {t('legal.impressum') || 'Impressum'}
                 </span>
               </Link>
               

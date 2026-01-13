@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { translations, type Language } from '@/translations';
-import { setCookie } from '@/utils/cookieUtils';
 
 // Supported languages mapping
 const LANGUAGE_MAPPING: Record<string, Language> = {
@@ -114,8 +113,9 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>('de'); // Always start with German to prevent hydration issues
 
-  // Save language preference to localStorage and cookie
+  // Save language preference to localStorage only
   // This represents an explicit user choice, so it will always take precedence over auto-detection
+  // Note: We use localStorage only (no cookies) to avoid requiring cookie consent under GDPR
   const setLanguage = useCallback((lang: Language) => {
     if (!isValidLanguage(lang)) {
       console.warn(`Invalid language code: ${lang}. Falling back to 'de'.`);
@@ -127,13 +127,6 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       // Save to localStorage for client-side persistence
       // This marks it as a user-selected preference (not auto-detected)
       localStorage.setItem('preferred-language', lang);
-      // Set cookie so server can read it on next request
-      setCookie('preferred-language', lang, {
-        maxAge: 365, // 1 year
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production', // Secure in production (HTTPS only)
-      });
     }
   }, []);
 
@@ -147,14 +140,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     const savedLanguage = localStorage.getItem('preferred-language');
     
     if (isValidLanguage(savedLanguage)) {
-      // User has explicitly selected a language - use it and sync cookie
+      // User has explicitly selected a language - use it
       setLanguageState(savedLanguage);
-      setCookie('preferred-language', savedLanguage, {
-        maxAge: 365,
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-      });
       return;
     }
 
@@ -166,12 +153,6 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     // Save the auto-detected language as initial preference
     // This allows it to persist across sessions, but user can still override it
     localStorage.setItem('preferred-language', detectedLang);
-    setCookie('preferred-language', detectedLang, {
-      maxAge: 365, // 1 year
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    });
   }, []);
 
   // Translation function - memoized to prevent recreation on every render

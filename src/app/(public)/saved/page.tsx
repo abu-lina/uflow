@@ -2,6 +2,7 @@
 
 import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -462,16 +463,29 @@ export default function SavedProvidersPage() {
                       fullWidth
                       disabled={isLoginLoading}
                       loading={isLoginLoading}
-                      loadingText={useMagicLink ? 'Magic Link wird gesendet...' : t('login.loading') || 'Anmeldung...'}
+                      loadingText={useMagicLink ? t('login.magicLinkLoading') : t('login.loading') || 'Anmeldung...'}
                       type="submit"
                       variant="auth"
                     >
-                      {useMagicLink ? 'Magic Link senden' : t('login.submit') || 'Anmelden'}
+                      {useMagicLink ? t('login.magicLinkButton') : t('login.submit') || 'Anmelden'}
                     </Button>
                     {useMagicLink && (
-                      <p className="text-center text-sm text-content">
-                        Wir senden dir einen Magic Link per E-Mail. Kein Passwort erforderlich.
-                      </p>
+                      <>
+                        <p className="text-center text-sm text-content">
+                          {t('login.magicLinkDescription')}
+                        </p>
+                        <p className="text-center text-xs text-content-muted mt-2">
+                          {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
+                          <Link className="underline hover:text-primary" href="/terms">
+                            {t('legal.termsOfService')}
+                          </Link>
+                          {' '}{t('legal.and')}{' '}
+                          <Link className="underline hover:text-primary" href="/privacy-policy">
+                            {t('legal.privacyPolicy')}
+                          </Link>
+                          .
+                        </p>
+                      </>
                     )}
                     {!useMagicLink && (
                       <div className="text-center">

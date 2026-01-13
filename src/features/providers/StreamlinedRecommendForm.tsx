@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Icon } from '@iconify/react';
@@ -9,6 +10,7 @@ import { Icon } from '@iconify/react';
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
+import { useAuth } from '@/providers/auth-provider';
 import { createProviderOrService } from '@/services/providerService';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
@@ -185,6 +187,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const { formData: contextFormData, updateFormData, setCreationMode } = useFormData();
   const { t, language } = useLanguage();
   const isMobile = useIsSmallMobile();
+  const { user } = useAuth();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchParams = useSearchParams();
@@ -721,10 +724,14 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       return;
     }
 
+
     try {
       setIsSubmitting(true);
 
       // Prepare formData for service function
+      // Use authenticated user's email if available, otherwise use form input
+      const userEmail = user?.email || formData.userEmail;
+      
       const serviceFormData = {
         ...contextFormData,
         title: formData.title,
@@ -735,7 +742,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         phone: formData.phone,
         website: formData.website,
         instagram: formData.instagram,
-        userEmail: formData.userEmail,
+        userEmail: userEmail,
         description: formData.message,
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
@@ -755,7 +762,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
 
       await createProviderOrService(
         serviceFormData,
-        null, // Anonymous user
+        user || null, // Pass authenticated user if available, otherwise null for anonymous
         true // Recommendation mode
       );
 
@@ -794,7 +801,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     } finally {
       setIsSubmitting(false);
     }
-    }, [formData, isFormValid, contextFormData, updateFormData, queryClient, router, t, clearSavedRecommendFormData]);
+    }, [formData, isFormValid, contextFormData, updateFormData, queryClient, router, t, clearSavedRecommendFormData, user]);
 
   // Navigate to category selection
   const handleSelectCategory = useCallback(() => {
@@ -1093,59 +1100,85 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         </div>
       </div>
 
-      {/* Section 3: User Email */}
+      {/* Section 3: User Email - Only show for anonymous users */}
+      {!user && (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h3>
+            <p className="text-base text-content-muted">
+              {t('create.recommend.userEmailDescription')}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-0">
+            {/* User Email Input */}
+            <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
+              <div className="flex w-full flex-col gap-1">
+                <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+                  {t('create.recommend.userEmailLabel')}
+                </label>
+                <input
+                  ref={userEmailInputRef}
+                  aria-label={t('create.recommend.userEmailLabel')}
+                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                  placeholder={t('create.recommend.userEmailPlaceholder')}
+                  type="email"
+                  value={formData.userEmail}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    const cursorPosition = e.target.selectionStart || newValue.length;
+                    setFormData(prev => ({ ...prev, userEmail: newValue }));
+                    // Maintain focus and cursor position after state update
+                    setTimeout(() => {
+                      if (userEmailInputRef.current) {
+                        userEmailInputRef.current.focus();
+                        userEmailInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
+                      }
+                    }, 0);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Email Consent Text - Only show when email is provided */}
+            {formData.userEmail && (
+              <p className="mt-1 text-xs leading-[15px] text-content-muted">
+                {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
+                <Link className="underline hover:text-primary" href="/terms">
+                  {t('legal.termsOfService')}
+                </Link>
+                {' '}{t('legal.and')}{' '}
+                <Link className="underline hover:text-primary" href="/privacy-policy">
+                  {t('legal.privacyPolicy')}
+                </Link>
+                .
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Section 4: Message (Optional) */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h3>
+          <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.message')}</h3>
           <p className="text-base text-content-muted">
-            {t('create.recommend.userEmailDescription')}
+            {t('common.optional')}
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          {/* User Email Input */}
-          <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
-                {t('create.recommend.userEmailLabel')}
-              </label>
-              <input
-                ref={userEmailInputRef}
-                aria-label={t('create.recommend.userEmailLabel')}
-                className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.userEmailPlaceholder')}
-                type="email"
-                value={formData.userEmail}
-                onChange={(e) => {
-                  const newValue = e.target.value;
-                  const cursorPosition = e.target.selectionStart || newValue.length;
-                  setFormData(prev => ({ ...prev, userEmail: newValue }));
-                  // Maintain focus and cursor position after state update
-                  setTimeout(() => {
-                    if (userEmailInputRef.current) {
-                      userEmailInputRef.current.focus();
-                      userEmailInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
-                    }
-                  }, 0);
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Message (Optional) */}
-          <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-border bg-white px-3 py-2">
-            <div className="flex w-full flex-col gap-1">
-              <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
-                {t('create.recommend.message')} ({t('common.optional')})
-              </label>
-              <textarea
-                aria-label={t('create.recommend.message')}
-                className="min-h-[100px] w-full resize-none border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={t('create.recommend.messagePlaceholder')}
-                value={formData.message}
-                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-              />
-            </div>
+        <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-border bg-white px-3 py-2">
+          <div className="flex w-full flex-col gap-1">
+            <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+              {t('create.recommend.message')} ({t('common.optional')})
+            </label>
+            <textarea
+              aria-label={t('create.recommend.message')}
+              className="min-h-[100px] w-full resize-none border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+              placeholder={t('create.recommend.messagePlaceholder')}
+              value={formData.message}
+              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+            />
           </div>
         </div>
       </div>

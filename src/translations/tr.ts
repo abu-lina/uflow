@@ -232,7 +232,8 @@ export const tr = {
       successTitle: "BarakAllahu feek",
       successDescription: "Öneriniz, şehrinizdeki Müslüman sağlayıcıları görünür kılmaya yardımcı olur.",
       recommendAnother: "Başka bir sağlayıcı öner",
-      backToOverview: "Genel bakışa dön"
+      backToOverview: "Genel bakışa dön",
+      emailConsentText: "E-posta adresinizi sağlayarak, bu öneri hakkında takip almak için saklanmasına izin veriyorsunuz."
     },
     basics: {
       title: "Teklif oluştur",
@@ -436,6 +437,9 @@ export const tr = {
     emailFailedDescription: "Lütfen tekrar deneyin veya destek ile iletişime geçin.",
     errorOccurredToast: "Hata oluştu",
     errorOccurredDescription: "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+    magicLinkButton: "Sihirli Bağlantı Gönder",
+    magicLinkLoading: "Sihirli bağlantı gönderiliyor...",
+    magicLinkDescription: "Size e-posta ile bir Sihirli Bağlantı göndereceğiz. Şifre gerekmez.",
     afterConfirmationLogin: "Onay sonrası giriş yap"
   },
   signup: {
@@ -557,7 +561,9 @@ export const tr = {
     consentHistory: "Onay Geçmişi",
     viewPrivacyPolicy: "Gizlilik Politikasını Görüntüle",
     viewTerms: "Hizmet Şartlarını Görüntüle",
-    lastUpdated: "Son güncelleme"
+    lastUpdated: "Son güncelleme",
+    impressum: "Yasal Bildirim",
+    magicLinkConsent: "Devam ederek, bizim"
   },
   waitlist: {
     title: "Akışa Katıl",

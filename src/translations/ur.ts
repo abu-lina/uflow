@@ -245,7 +245,8 @@ export const ur = {
       successTitle: "بارک اللہ فیک",
       successDescription: "آپ کی تجویز آپ کے شہر میں مسلم فراہم کنندگان کو قابل دید بنانے میں مدد کرتی ہے۔",
       recommendAnother: "دوسرا فراہم کنندہ تجویز کریں",
-      backToOverview: "جائزے پر واپس"
+      backToOverview: "جائزے پر واپس",
+      emailConsentText: "اپنا ای میل پتہ فراہم کرکے، آپ اس سفارش کے بارے میں فالو اپ حاصل کرنے کے لیے اسے محفوظ کرنے کی اجازت دیتے ہیں۔"
     },
     basics: {
       title: "پیشکش بنائیں",
@@ -456,6 +457,9 @@ export const ur = {
     emailFailedDescription: "براہ کرم دوبارہ کوشش کریں یا سپورٹ سے رابطہ کریں۔",
     errorOccurredToast: "خرابی پیش آئی",
     errorOccurredDescription: "ایک غیر متوقع خرابی پیش آئی۔ براہ کرم دوبارہ کوشش کریں۔",
+    magicLinkButton: "میجک لنک بھیجیں",
+    magicLinkLoading: "میجک لنک بھیجا جا رہا ہے...",
+    magicLinkDescription: "ہم آپ کو ای میل کے ذریعے ایک میجک لنک بھیجیں گے۔ پاس ورڈ کی ضرورت نہیں۔",
     afterConfirmationLogin: "تصدیق کے بعد لاگ ان"
   },
   signup: {
@@ -577,7 +581,8 @@ export const ur = {
     consentHistory: "رضامندی کی تاریخ",
     viewPrivacyPolicy: "رازداری کی پالیسی دیکھیں",
     viewTerms: "سروس کی شرائط دیکھیں",
-    lastUpdated: "آخری اپ ڈیٹ"
+    lastUpdated: "آخری اپ ڈیٹ",
+    magicLinkConsent: "جاری رکھ کر، آپ ہماری"
   },
   waitlist: {
     title: "فلو میں شامل ہوں",

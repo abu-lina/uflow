@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { shouldRedirectToWaitlist } from '@/lib/middleware-utils';
+import { isJWTExpired } from '@/utils/jwt';
 
 // Simple in-memory rate limiting store (for production, use Redis or similar)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -154,7 +155,78 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/', req.url));
     }
 
-    // Attempt to validate the access token
+    // Check if token is expired before making API call
+    // This reduces unnecessary requests and log noise
+    const tokenExpired = isJWTExpired(accessToken);
+    
+    // If token is expired and we have a refresh token, try to refresh first
+    if (tokenExpired && refreshToken) {
+      try {
+        const refreshRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            apikey: supabaseAnonKey,
+            'x-client-info': 'uflow-middleware',
+          },
+          body: new URLSearchParams({
+            refresh_token: refreshToken,
+          }),
+        });
+
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json() as {
+            access_token: string;
+            refresh_token?: string;
+          };
+
+          // Validate the new access token
+          let res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+            headers: {
+              Authorization: `Bearer ${refreshData.access_token}`,
+              apikey: supabaseAnonKey,
+              'x-client-info': 'uflow-middleware',
+            },
+          });
+
+          // If validation succeeds with refreshed token, update cookies
+          if (res.ok) {
+            const response = NextResponse.next();
+            response.cookies.set('sb-access-token', refreshData.access_token, {
+              httpOnly: true,
+              path: '/',
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+            });
+            if (refreshData.refresh_token) {
+              response.cookies.set('sb-refresh-token', refreshData.refresh_token, {
+                httpOnly: true,
+                path: '/',
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+              });
+            }
+            return response;
+          }
+        }
+      } catch (refreshError) {
+        // Refresh failed, fall through to allow AuthSyncer to handle it
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[middleware] Token refresh failed:', refreshError);
+        }
+      }
+      
+      // Token expired and refresh failed/not available - allow page to load
+      // AuthSyncer will detect the session and sync fresh tokens
+      return NextResponse.next();
+    }
+
+    // If token is expired but no refresh token, allow through for AuthSyncer
+    if (tokenExpired) {
+      return NextResponse.next();
+    }
+
+    // Token appears valid - validate with Supabase
     let res = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -164,6 +236,7 @@ export async function middleware(req: NextRequest) {
     });
 
     // If token validation failed, try to refresh it if we have a refresh token
+    // Note: This should rarely happen now since we check expiration before making the request
     if (!res.ok && res.status === 403 && refreshToken) {
       let errorData: { error_code?: string; msg?: string } | null = null;
       try {

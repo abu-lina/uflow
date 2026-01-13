@@ -31,6 +31,12 @@ export function DesktopFooter() {
             </Link>
             <Link
               className="text-gray-600 hover:text-[#589D96] transition-colors"
+              href="/impressum"
+            >
+              {t('legal.impressum') || 'Impressum'}
+            </Link>
+            <Link
+              className="text-gray-600 hover:text-[#589D96] transition-colors"
               href="/about"
             >
               {t('navigation.about') || 'About'}

@@ -1,4 +1,5 @@
 import { isAdminOrModerator } from '@/lib/auth/roles';
+import { isJWTExpired } from '@/utils/jwt';
 import type { User } from '@supabase/supabase-js';
 
 /**
@@ -38,6 +39,12 @@ export async function validateUser(accessToken: string): Promise<User | null> {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+
+  // Check if token is expired before making API call
+  // This reduces unnecessary requests and log noise
+  if (isJWTExpired(accessToken)) {
     return null;
   }
 

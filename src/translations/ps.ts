@@ -241,7 +241,8 @@ export const ps = {
       categoryRequired: "مهرباني وکړئ کټګوري غوره کړئ",
       offersRequired: "مهرباني وکړئ لږترلږه یو وړاندیز غوره کړئ",
       cityRequired: "مهرباني وکړئ ښار داخل کړئ",
-      contactRequired: "مهرباني وکړئ لږترلږه یو د اړیکو طریقه وړاندې کړئ (بریښنالیک، تلیفون، وېب پاڼه، یا انسټاګرام)"
+      contactRequired: "مهرباني وکړئ لږترلږه یو د اړیکو طریقه وړاندې کړئ (بریښنالیک، تلیفون، وېب پاڼه، یا انسټاګرام)",
+      emailConsentText: "ستاسو د بریښنالیک پته ورکولو سره، تاسو د دې وړاندیز په اړه تعقیب ترلاسه کولو لپاره د هغې ذخیره کولو سره موافقه کوئ."
     },
     basics: {
       title: "وړاندیز جوړ کړئ",
@@ -452,6 +453,9 @@ export const ps = {
     emailFailedDescription: "مهرباني وکړئ بیا هڅه وکړئ یا د ملاتړ سره اړیکه ونیسئ.",
     errorOccurredToast: "ستونزه رامنځته شوه",
     errorOccurredDescription: "یوه ناڅاپي ستونزه رامنځته شوه. مهرباني وکړئ بیا هڅه وکړئ.",
+    magicLinkButton: "میجک لینک ولیږئ",
+    magicLinkLoading: "میجک لینک لیږل کیږي...",
+    magicLinkDescription: "موږ به تاسو ته د بریښنالیک له لارې یو میجک لینک واستوو. پاسورډ ته اړتیا نشته.",
     afterConfirmationLogin: "د تایید وروسته ننوتل"
   },
   signup: {
@@ -573,7 +577,8 @@ export const ps = {
     consentHistory: "د رضامندۍ تاریخ",
     viewPrivacyPolicy: "د محرمیت پالیسي وګورئ",
     viewTerms: "د خدمت شرطونه وګورئ",
-    lastUpdated: "وروستی تازه"
+    lastUpdated: "وروستی تازه",
+    magicLinkConsent: "د دوام سره، تاسو زموږ"
   },
   waitlist: {
     title: "فلو ته یوځای شئ",

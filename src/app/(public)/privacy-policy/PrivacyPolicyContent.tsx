@@ -82,7 +82,7 @@ export function PrivacyPolicyContent() {
       
       cookies: 'Cookies',
       cookiesText: 'We use only essential cookies:',
-      cookiesList: '• Authentication cookies (required for login)\n• Language preference cookies (to remember your language choice)\n\nWe do not use tracking cookies, analytics cookies, or advertising cookies.',
+      cookiesList: '• Authentication cookies (required for login)\n\nWe do not use tracking cookies, analytics cookies, advertising cookies, or preference cookies.',
       
       changes: 'Changes to This Policy',
       changesText: 'We may update this Privacy Policy from time to time. We will notify you of any material changes by email or through our platform. The "Last updated" date at the top indicates when this policy was last revised.',
@@ -134,7 +134,7 @@ export function PrivacyPolicyContent() {
       
       cookies: 'Cookies',
       cookiesText: 'Wir verwenden nur essentielle Cookies:',
-      cookiesList: '• Authentifizierungs-Cookies (erforderlich für die Anmeldung)\n• Sprachpräferenz-Cookies (zur Speicherung Ihrer Sprachauswahl)\n\nWir verwenden keine Tracking-Cookies, Analyse-Cookies oder Werbe-Cookies.',
+      cookiesList: '• Authentifizierungs-Cookies (erforderlich für die Anmeldung)\n\nWir verwenden keine Tracking-Cookies, Analyse-Cookies, Werbe-Cookies oder Präferenz-Cookies.',
       
       changes: 'Änderungen an dieser Richtlinie',
       changesText: 'Wir können diese Datenschutzrichtlinie von Zeit zu Zeit aktualisieren. Wir werden Sie über wesentliche Änderungen per E-Mail oder über unsere Plattform informieren. Das Datum "Zuletzt aktualisiert" oben zeigt an, wann diese Richtlinie zuletzt überarbeitet wurde.',
@@ -186,7 +186,7 @@ export function PrivacyPolicyContent() {
       
       cookies: 'ملفات تعريف الارتباط',
       cookiesText: 'نستخدم ملفات تعريف الارتباط الأساسية فقط:',
-      cookiesList: '• ملفات تعريف الارتباط للمصادقة (مطلوبة لتسجيل الدخول)\n• ملفات تعريف الارتباط لتفضيل اللغة (لتذكر اختيار اللغة)\n\nلا نستخدم ملفات تعريف الارتباط للتتبع أو التحليلات أو الإعلانات.',
+      cookiesList: '• ملفات تعريف الارتباط للمصادقة (مطلوبة لتسجيل الدخول)\n\nلا نستخدم ملفات تعريف الارتباط للتتبع أو التحليلات أو الإعلانات أو التفضيلات.',
       
       changes: 'التغييرات على هذه السياسة',
       changesText: 'قد نحدث سياسة الخصوصية هذه من وقت لآخر. سنخطرك بأي تغييرات جوهرية عبر البريد الإلكتروني أو من خلال منصتنا. يشير تاريخ "آخر تحديث" في الأعلى إلى آخر مراجعة لهذه السياسة.',
@@ -238,7 +238,7 @@ export function PrivacyPolicyContent() {
       
       cookies: 'Çerezler',
       cookiesText: 'Yalnızca temel çerezleri kullanıyoruz:',
-      cookiesList: '• Kimlik doğrulama çerezleri (giriş için gerekli)\n• Dil tercihi çerezleri (dil seçiminizi hatırlamak için)\n\nİzleme çerezleri, analitik çerezler veya reklam çerezleri kullanmıyoruz.',
+      cookiesList: '• Kimlik doğrulama çerezleri (giriş için gerekli)\n\nİzleme çerezleri, analitik çerezler, reklam çerezleri veya tercih çerezleri kullanmıyoruz.',
       
       changes: 'Bu Politikadaki Değişiklikler',
       changesText: 'Bu Gizlilik Politikasını zaman zaman güncelleyebiliriz. Önemli değişiklikler hakkında size e-posta veya platformumuz aracılığıyla bildirimde bulunacağız. Üstteki "Son güncelleme" tarihi, bu politikanın son ne zaman gözden geçirildiğini gösterir.',
