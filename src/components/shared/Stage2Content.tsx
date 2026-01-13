@@ -34,7 +34,7 @@ export function Stage2Content({ cityName }: Stage2ContentProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-uflow-light">
-      {/* City Card - Centered at top with header spacing */}
+      {/* City Card - Centered at top with header spacing - Hidden on desktop */}
       {/* 
         Header structure:
         - paddingTop: max(24px, calc(env(safe-area-inset-top) + 24px))
@@ -45,7 +45,7 @@ export function Stage2Content({ cityName }: Stage2ContentProps) {
         - Visual gap: 24px
         - Total padding: max(115px, calc(env(safe-area-inset-top) + 115px))
       */}
-      <div className="flex w-full items-center justify-center px-4 pt-[max(115px,calc(env(safe-area-inset-top)+115px))] pb-8">
+      <div className="flex w-full items-center justify-center px-4 pt-[max(115px,calc(env(safe-area-inset-top)+115px))] pb-8 md:hidden">
         <CityCard cityName={cityName} onSuggestProvider={handleSuggestProvider} />
       </div>
 
