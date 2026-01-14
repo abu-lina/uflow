@@ -119,7 +119,7 @@ export function LandingHero() {
 
   return (
     <section className="w-full px-6">
-      <div className="flex min-h-[calc(100dvh-64px-env(safe-area-inset-bottom))] flex-col items-stretch justify-center gap-8 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+      <div className="flex min-h-[600px] lg:min-h-[calc(100dvh-64px)] flex-col items-stretch justify-center gap-8 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
         {/* 1. Top: Calligraphy + roman text */}
         <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2 px-6">
           {isFirstVisit ? (

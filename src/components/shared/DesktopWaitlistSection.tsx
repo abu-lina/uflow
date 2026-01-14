@@ -58,7 +58,7 @@ export function DesktopWaitlistSection() {
   return (
     <section
       aria-labelledby="waitlist-heading"
-      className="flex h-screen w-full scroll-mt-16 flex-col items-center justify-center gap-8 px-4 focus:outline-none sm:px-6 lg:px-8"
+      className="flex min-h-screen w-full scroll-mt-16 flex-col items-center justify-center gap-8 px-4 py-16 focus:outline-none sm:px-6 lg:px-8 lg:py-24"
       id="waitlist"
     >
       <div className="flex w-full max-w-screen-md flex-col items-center gap-8">

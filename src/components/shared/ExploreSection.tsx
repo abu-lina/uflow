@@ -81,7 +81,7 @@ export function ExploreSection() {
   return (
     <section
       aria-labelledby="explore-heading"
-      className="flex h-screen w-full flex-col items-center justify-center gap-12 px-4 py-8 sm:gap-20 sm:px-6 sm:py-12 md:py-24 lg:px-8"
+      className="flex min-h-screen w-full flex-col items-center justify-center gap-12 px-4 py-8 sm:gap-20 sm:px-6 sm:py-12 md:py-24 lg:px-8"
       id="explore"
     >
       <motion.div
