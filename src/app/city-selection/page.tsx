@@ -441,11 +441,6 @@ export default function CitySelectionPage() {
             <span className="font-inter-tight text-base font-semibold text-content-heading">
               {city.city_name}
             </span>
-            {city.provider_count > 0 && (
-              <span className="font-inter-tight text-base font-light text-content-heading">
-                {tRef.current('waitlist.citySelection.providerCount_other').replace('{{count}}', String(city.provider_count))}
-              </span>
-            )}
           </div>
           <Icon 
             aria-hidden="true"

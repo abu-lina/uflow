@@ -313,14 +313,6 @@ export function CitySelectionModal({
                           )}
                           <span className="text-xs text-content-muted">{city.country}</span>
                         </div>
-                        {city.provider_count > 0 && (
-                          <span className="text-xs text-content-muted">
-                            {t('waitlist.citySelection.providerCount_other').replace(
-                              '{{count}}',
-                              String(city.provider_count)
-                            )}
-                          </span>
-                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{status.emoji}</span>
