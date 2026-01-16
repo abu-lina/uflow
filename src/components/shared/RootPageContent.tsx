@@ -181,6 +181,7 @@ export function RootPageContent() {
   // Desktop: Always show landing page content regardless of city stage
   // Mobile: Show stage-based content if onboarding complete, otherwise show waitlist
   const isAppLaunched = getFeatureFlag('isAppLaunched');
+  const skipWaitlist = getFeatureFlag('skipWaitlist');
   
   return (
     <>
@@ -188,8 +189,8 @@ export function RootPageContent() {
       <div className="relative z-10 hidden md:block">
         <LandingHero />
         <AboutSection />
-        {/* Only show waitlist section when app is not launched */}
-        {!isAppLaunched && <DesktopWaitlistSection />}
+        {/* Only show waitlist section when app is not launched AND waitlist is not skipped */}
+        {!isAppLaunched && !skipWaitlist && <DesktopWaitlistSection />}
         <ExploreSection />
       </div>
 

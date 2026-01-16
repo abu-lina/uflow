@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from '@iconify/react';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
 import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
@@ -62,8 +63,6 @@ export default function CitySelectionPage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   
-  const [cities, setCities] = useState<CityData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [selectedCityName, setSelectedCityName] = useState<string | null>(null);
   
@@ -76,8 +75,6 @@ export default function CitySelectionPage() {
   // Track if initial animation has completed to prevent re-animation on re-renders
   // Use state instead of ref so useMemo recalculates when animation completes
   const [hasAnimated, setHasAnimated] = useState(false);
-  // Track if cities have been fetched to prevent re-fetching on context changes
-  const hasFetchedCitiesRef = useRef(false);
   // Store latest t function for use in error handlers
   const tRef = useRef(t);
   
@@ -90,92 +87,60 @@ export default function CitySelectionPage() {
   const prefersReducedMotion = typeof window !== 'undefined' && 
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Fetch cities on mount only (not on context changes)
-  // Use sessionStorage to persist fetch state across React Strict Mode remounts
-  useEffect(() => {
-    // Only skip fetch if cities are already loaded (not just if fetch was attempted)
-    // This prevents issues where sessionStorage says fetch happened but cities are empty
-    if (cities.length > 0) {
-      setIsLoading(false);
-      return;
-    }
+  // Fetch cities using React Query with caching
+  const { data: allCitiesData, isLoading, error: citiesError } = useQuery({
+    queryKey: ['cities'],
+    queryFn: async (): Promise<CityData[]> => {
+      const response = await fetch('/api/cities');
+      const data: CitiesResponse = await response.json();
 
-    // Check if we're already fetching to prevent duplicate requests during React Strict Mode
-    if (hasFetchedCitiesRef.current) {
-      return;
-    }
+      if (!response.ok || data.error) {
+        throw new Error(data.error?.message || 'Failed to fetch cities');
+      }
 
-    // Check sessionStorage - if it says fetched but cities are empty, clear it to allow retry
-    const storageKey = 'city-selection-fetched';
-    const wasFetchedInStorage = typeof window !== 'undefined' && 
-      sessionStorage.getItem(storageKey) === 'true';
+      return data.data || [];
+    },
+    staleTime: process.env.NODE_ENV === 'development' ? 10 * 1000 : 5 * 60 * 1000, // 10 seconds in dev, 5 minutes in prod
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false, // Don't refetch on window focus (cached data is fine)
+    refetchOnMount: false, // Use cached data if available
+  });
+
+  // Process cities data: Always show Berlin, Frankfurt, and Stuttgart in that order
+  const cities = useMemo(() => {
+    if (!allCitiesData) return [];
     
-    // If sessionStorage says fetched but we have no cities, clear it (likely a failed fetch or page refresh)
-    if (wasFetchedInStorage && cities.length === 0) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(storageKey);
+    const targetCities = ['Berlin', 'Frankfurt', 'Stuttgart'];
+    const result: CityData[] = [];
+    
+    for (const cityName of targetCities) {
+      const found = allCitiesData.find((city) => city.city_name === cityName);
+      if (found) {
+        result.push(found);
+      } else {
+        // Create placeholder if city not found in database
+        result.push({
+          id: `placeholder-${cityName.toLowerCase()}`,
+          city_name: cityName,
+          country: 'Germany',
+          is_unlocked: false,
+          interest_count: 0,
+          provider_count: 0,
+        });
       }
     }
+    
+    return result;
+  }, [allCitiesData]);
 
-    async function fetchCities() {
-      hasFetchedCitiesRef.current = true;
-      setIsLoading(true);
-      
-      try {
-        const response = await fetch('/api/cities');
-        const data: CitiesResponse = await response.json();
-
-        if (!response.ok || data.error) {
-          throw new Error(data.error?.message || 'Failed to fetch cities');
-        }
-
-        // Always show Berlin, Frankfurt, and Stuttgart in that order
-        const targetCities = ['Berlin', 'Frankfurt', 'Stuttgart'];
-        const allCities = data.data || [];
-        
-        // If any city is missing, fill with empty data structure
-        const result: CityData[] = [];
-        for (const cityName of targetCities) {
-          const found = allCities.find((city) => city.city_name === cityName);
-          if (found) {
-            result.push(found);
-          } else {
-            // Create placeholder if city not found in database
-            result.push({
-              id: `placeholder-${cityName.toLowerCase()}`,
-              city_name: cityName,
-              country: 'Germany',
-              is_unlocked: false,
-              interest_count: 0,
-              provider_count: 0,
-            });
-          }
-        }
-        
-        setCities(result);
-        
-        // Only mark as fetched in sessionStorage after successful fetch
-        // This prevents issues where failed fetches block future attempts
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('city-selection-fetched', 'true');
-        }
-      } catch (err) {
-        console.error('[City Selection] Failed to fetch cities:', err);
-        // Clear the fetch flag on error so we can retry
-        hasFetchedCitiesRef.current = false;
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('city-selection-fetched');
-        }
-        // Use tRef to get latest translation function without causing re-fetches
-        toast.error(tRef.current('common.error'));
-      } finally {
-        setIsLoading(false);
-      }
+  // Show error toast if cities fetch failed
+  useEffect(() => {
+    if (citiesError) {
+      console.error('[City Selection] Failed to fetch cities:', citiesError);
+      toast.error(tRef.current('common.error'));
     }
-
-    fetchCities();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty deps - only run on mount, cities.length check is intentional
+  }, [citiesError]);
 
   // Mark animation as complete after cities have loaded and animation time has passed
   useEffect(() => {

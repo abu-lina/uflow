@@ -41,17 +41,14 @@ export async function GET(request: Request) {
       );
     }
 
-    // 2. Fetch cities and interest counts using RPC function
+    // 2. Fetch cities with counts using optimized RPC function (single query)
     const supabase = createSupabaseServerClient();
     
-    // Fetch all cities
-    const { data: citiesData, error: citiesError } = await supabase
-      .from('cities')
-      .select('id, city_name, country, is_unlocked')
-      .order('city_name', { ascending: true });
+    // Use combined RPC function to get cities with provider and interest counts in one query
+    const { data: citiesWithCounts, error: rpcError } = await supabase.rpc('get_cities_with_counts');
     
-    if (citiesError) {
-      console.error('[Cities API] Failed to fetch cities:', citiesError);
+    if (rpcError) {
+      console.error('[Cities API] Failed to fetch cities with counts:', rpcError);
       return NextResponse.json(
         { 
           data: null,
@@ -60,71 +57,16 @@ export async function GET(request: Request) {
         { status: 500 }
       );
     }
-    
-    // Get provider counts from providers table (only approved providers)
-    const { data: providerCounts, error: providerCountsError } = await supabase
-      .from('providers')
-      .select('address_city')
-      .eq('review_status', 'approved')
-      .not('address_city', 'is', null);
-    
-    if (providerCountsError) {
-      console.error('[Cities API] Error fetching provider counts:', providerCountsError);
-      return NextResponse.json(
-        { 
-          data: null,
-          error: { message: 'Failed to fetch provider counts' } 
-        },
-        { status: 500 }
-      );
-    }
-    
-    // Count providers per city
-    const providerCountsMap = new Map<string, number>();
-    (providerCounts || []).forEach((provider: { address_city: string | null }) => {
-      if (provider.address_city) {
-        const cityName = provider.address_city.trim();
-        providerCountsMap.set(cityName, (providerCountsMap.get(cityName) || 0) + 1);
-      }
-    });
-    
-    // Get interest counts using RPC function (for backward compatibility)
-    const { data: interestCounts, error: countsError } = await supabase.rpc('get_city_interest_counts');
-    
-    if (countsError) {
-      console.error('[Cities API] Error fetching interest counts:', countsError);
-      // Continue without interest counts, not critical
-    }
-    
-    // Create a map of city_name -> interest_count for quick lookup
-    const interestCountsMap = new Map<string, number>();
-    (interestCounts || []).forEach((item: { city_name: string; interest_count: number }) => {
-      interestCountsMap.set(item.city_name, Number(item.interest_count));
-    });
-    
-    // Join cities with provider counts and interest counts
-    const citiesWithCounts = (citiesData || []).map((city) => ({
-      ...city,
-      provider_count: providerCountsMap.get(city.city_name) || 0,
-      interest_count: interestCountsMap.get(city.city_name) || 0,
-    }));
-    
-    // Sort by provider count (descending), then by city name (ascending)
-    citiesWithCounts.sort((a, b) => {
-      if (b.provider_count !== a.provider_count) {
-        return b.provider_count - a.provider_count;
-      }
-      return a.city_name.localeCompare(b.city_name);
-    });
 
     // Log for debugging
     console.log('[Cities API] Returning cities with provider counts:', 
-      citiesWithCounts.map(c => `${c.city_name}: ${c.provider_count} providers`).join(', '));
+      (citiesWithCounts || []).map((c: { city_name: string; provider_count: number }) => 
+        `${c.city_name}: ${c.provider_count} providers`).join(', '));
 
     // 3. Return success response
     return NextResponse.json(
       { 
-        data: citiesWithCounts,
+        data: citiesWithCounts || [],
         error: null 
       },
       { status: 200 }

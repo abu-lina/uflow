@@ -40,9 +40,9 @@ export const defaultFeatureFlags: FeatureFlags = {
   // Development features - disabled by default
   enableDebugMode: false,
   
-  // Launch control - app is launched (waitlist disabled)
-  isAppLaunched: true, // App is launched - waitlist is disabled
-  skipWaitlist: true, // Skip waitlist pre-launch (set to false when going live)
+  // Launch control - early access mode (onboarding without waitlist)
+  isAppLaunched: false, // Enable early access UI stages (Stage 1/2/3 based on provider count)
+  skipWaitlist: true, // Skip waitlist in onboarding flow (show splash → about → city selection)
 };
 
 /**
