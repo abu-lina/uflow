@@ -27,6 +27,7 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
         const { data, error } = await supabase
           .from('community_services')
           .select('community_service_images')
+          .eq('review_status', 'approved')
           .limit(3);
 
         if (error) throw error;

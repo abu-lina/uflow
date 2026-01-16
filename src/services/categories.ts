@@ -16,13 +16,19 @@ export interface Category {
 // Fetch categories that are referenced by providers OR community services
 export async function fetchUsedCategories(): Promise<Category[]> {
   // 1. Get all category_ids from providers
-  const { data: providers, error: providersError } = await supabase.from('providers').select('category_id');
+  const { data: providers, error: providersError } = await supabase
+    .from('providers')
+    .select('category_id')
+    .eq('review_status', 'approved');
   if (providersError) {
     throw providersError;
   }
 
   // 2. Get all category_ids from community services
-  const { data: communityServices, error: communityServicesError } = await supabase.from('community_services').select('category_id');
+  const { data: communityServices, error: communityServicesError } = await supabase
+    .from('community_services')
+    .select('category_id')
+    .eq('review_status', 'approved');
   if (communityServicesError) {
     throw communityServicesError;
   }
@@ -64,7 +70,10 @@ export async function fetchFilteredCategories(
   selectedLocation?: string | null,
   searchQuery?: string | null,
 ): Promise<Category[]> {
-  let req = supabase.from('providers').select('category_id');
+  let req = supabase
+    .from('providers')
+    .select('category_id')
+    .eq('review_status', 'approved');
 
   // Apply location filter if specified
   if (selectedLocation && selectedLocation !== 'Überall') {
