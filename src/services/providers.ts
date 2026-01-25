@@ -220,20 +220,27 @@ export async function searchProvidersAndCommunityServices(
   page: number = 0,
   pageSize: number = 5,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
-  const strategy = getSearchStrategy(category);
-  // Normalize category: convert null/undefined to empty string, which is handled as "all" by search functions
-  const normalizedCategory = category || '';
-  
-  switch (strategy) {
-    case 'community_services_only':
-      return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
+  try {
+    const strategy = getSearchStrategy(category);
+    // Normalize category: convert null/undefined to empty string, which is handled as "all" by search functions
+    const normalizedCategory = category || '';
     
-    case 'both':
-      return await searchBoth(query, normalizedCategory, location, page, pageSize);
-    
-    case 'providers_only':
-    default:
-      return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize);
+    switch (strategy) {
+      case 'community_services_only':
+        return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
+      
+      case 'both':
+        return await searchBoth(query, normalizedCategory, location, page, pageSize);
+      
+      case 'providers_only':
+      default:
+        return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize);
+    }
+  } catch (error) {
+    // Log error for debugging
+    console.error('[searchProvidersAndCommunityServices] Error:', error);
+    // Return empty results instead of throwing to prevent UI crashes
+    return { results: [], hasMore: false };
   }
 }
 
@@ -530,16 +537,32 @@ export async function searchProviders(
 
 export async function fetchProviderCities(): Promise<string[]> {
   try {
-    const { data, error } = await supabase
-      .from('providers')
-      .select('address_city')
-      .returns<{ address_city: string | null }[]>();
+    // Fetch cities from both providers and community_services tables
+    const [providersResult, communityServicesResult] = await Promise.all([
+      supabase
+        .from('providers')
+        .select('address_city')
+        .returns<{ address_city: string | null }[]>(),
+      supabase
+        .from('community_services')
+        .select('address_city')
+        .eq('review_status', 'approved') // Only include approved services
+        .returns<{ address_city: string | null }[]>(),
+    ]);
 
-    if (error) {
-      throw error;
+    if (providersResult.error) {
+      throw providersResult.error;
     }
 
-    const allCities = data?.map((p) => p.address_city) ?? [];
+    if (communityServicesResult.error) {
+      throw communityServicesResult.error;
+    }
+
+    // Combine cities from both sources
+    const providerCities = providersResult.data?.map((p) => p.address_city) ?? [];
+    const communityServiceCities = communityServicesResult.data?.map((cs) => cs.address_city) ?? [];
+    const allCities = [...providerCities, ...communityServiceCities];
+
     const uniqueCities = Array.from(
       new Set(
         allCities.filter((city): city is string => {
@@ -572,25 +595,44 @@ export async function fetchFilteredCities(
   searchQuery?: string | null,
 ): Promise<string[]> {
   try {
-    let req = supabase.from('providers').select('address_city');
+    // Build queries for both providers and community_services
+    let providersReq = supabase.from('providers').select('address_city');
+    let communityServicesReq = supabase
+      .from('community_services')
+      .select('address_city')
+      .eq('review_status', 'approved'); // Only include approved services
 
     // Apply category filter if specified
     if (selectedCategory && selectedCategory !== 'Alle') {
-      req = req.eq('category_id', selectedCategory);
+      providersReq = providersReq.eq('category_id', selectedCategory);
+      communityServicesReq = communityServicesReq.eq('category_id', selectedCategory);
     }
 
     // Apply search query filter if specified
     if (searchQuery && searchQuery.trim()) {
-      req = req.ilike('provider_name', `%${searchQuery.trim()}%`);
+      providersReq = providersReq.ilike('provider_name', `%${searchQuery.trim()}%`);
+      communityServicesReq = communityServicesReq.ilike('community_service_name', `%${searchQuery.trim()}%`);
     }
 
-    const { data, error } = await req.returns<{ address_city: string | null }[]>();
+    // Execute both queries in parallel
+    const [providersResult, communityServicesResult] = await Promise.all([
+      providersReq.returns<{ address_city: string | null }[]>(),
+      communityServicesReq.returns<{ address_city: string | null }[]>(),
+    ]);
 
-    if (error) {
-      throw error;
+    if (providersResult.error) {
+      throw providersResult.error;
     }
 
-    const allCities = data?.map((p) => p.address_city) ?? [];
+    if (communityServicesResult.error) {
+      throw communityServicesResult.error;
+    }
+
+    // Combine cities from both sources
+    const providerCities = providersResult.data?.map((p) => p.address_city) ?? [];
+    const communityServiceCities = communityServicesResult.data?.map((cs) => cs.address_city) ?? [];
+    const allCities = [...providerCities, ...communityServiceCities];
+
     const uniqueCities = Array.from(
       new Set(
         allCities.filter((city): city is string => {

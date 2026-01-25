@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { detectPWA } from '@/utils/pwaUtils';
-import { getFeatureFlag } from '@/config/feature-flags';
 
 /**
  * PWA Start Page - Entry point for PWA installations
@@ -22,21 +21,14 @@ export default function PWAStart() {
 
   useEffect(() => {
     const pwaInfo = detectPWA();
-    const isAppLaunched = getFeatureFlag('isAppLaunched');
     
     // Detect if running in standalone mode (PWA)
     if (pwaInfo.isPWA || pwaInfo.isStandalone) {
-      // In PWA mode - route based on app status
-      if (isAppLaunched) {
-        // App is launched - show main app (providers)
-        router.replace('/providers');
-      } else {
-        // App not launched - show waitlist in standalone mode
-        router.replace('/waitlist');
-      }
+      // In PWA mode - always route to providers (waitlist is disabled)
+      router.replace('/providers');
     } else {
       // Not in PWA mode (browser) - redirect to root
-      // Root will handle routing to waitlist or welcome page
+      // Root will handle routing to providers or welcome page
       router.replace('/');
     }
   }, [router]);

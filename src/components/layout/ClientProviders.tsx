@@ -1,8 +1,8 @@
 'use client';
 
+import React, { useState } from 'react';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
 
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { AuthProvider } from '@/providers/auth-provider';
@@ -20,23 +20,38 @@ interface ClientProvidersProps {
   initialUser: User | null;
 }
 
-// Create QueryClient configuration outside component to avoid webpack bundling issues
-const queryClientConfig = {
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 30 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      retry: 1,
-      retryOnMount: false,
+// QueryClient configuration - defined as a function to avoid webpack evaluation issues
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        retry: 1,
+        retryOnMount: false,
+      },
     },
-  },
-};
+  });
+}
+
+let browserQueryClient: QueryClient | undefined = undefined;
+
+function getQueryClient() {
+  if (typeof window === 'undefined') {
+    // Server: always make a new query client
+    return makeQueryClient();
+  } else {
+    // Browser: use singleton pattern to keep the same query client
+    if (!browserQueryClient) browserQueryClient = makeQueryClient();
+    return browserQueryClient;
+  }
+}
 
 export function ClientProviders({ children, initialUser }: ClientProvidersProps) {
   // Use useState with lazy initialization to ensure QueryClient is only created once
-  const [queryClient] = useState(() => new QueryClient(queryClientConfig));
+  const [queryClient] = useState(() => getQueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>

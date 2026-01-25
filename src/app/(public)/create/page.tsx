@@ -20,6 +20,7 @@ export default function CreateProviderPage() {
   
   // Feature flags
   const isQuickImportEnabled = getFeatureFlag('enableQuickImport');
+  const isOSMImportEnabled = getFeatureFlag('enableOSMImport');
 
   const handleOwnProvider = () => {
     router.push('/create/basics');
@@ -31,6 +32,10 @@ export default function CreateProviderPage() {
 
   const handleQuickCreate = () => {
     router.push('/create-quick');
+  };
+
+  const handleOSMImport = () => {
+    router.push('/create/import-osm');
   };
 
   // Choose layout based on screen size
@@ -79,6 +84,31 @@ export default function CreateProviderPage() {
               onClick={handleQuickCreate}
             >
               Try Quick Import
+            </button>
+          </div>
+        )}
+
+        {/* OSM Import Option - Feature Flagged */}
+        {isOSMImportEnabled && (
+          <div className="w-full rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="rounded-full bg-primary/20 p-2">
+                <Icon className="h-5 w-5 text-primary" icon="mdi:map-marker" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-content-heading mb-1">
+                  {t('create.importOsm.title')} (Beta)
+                </h3>
+                <p className="text-sm text-content leading-relaxed">
+                  Search and import mosques, halal restaurants, and other Muslim places from OpenStreetMap
+                </p>
+              </div>
+            </div>
+            <button
+              className="w-full rounded-xl bg-primary hover:bg-primary-dark px-5 py-3 text-base font-medium text-white transition-colors"
+              onClick={handleOSMImport}
+            >
+              {t('create.importOsm.title')}
             </button>
           </div>
         )}

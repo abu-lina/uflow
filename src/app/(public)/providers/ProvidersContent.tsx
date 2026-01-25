@@ -224,6 +224,9 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
     }
 
     if (error) {
+      // Log error for debugging
+      console.error('[ProvidersContent] Search error:', error);
+      
       return (
         <EmptyState
           description={t('providers.errorLoading')}

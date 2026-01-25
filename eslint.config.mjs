@@ -1,30 +1,27 @@
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tseslintParser from '@typescript-eslint/parser';
+import nextPlugin from '@next/eslint-plugin-next';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import prettier from 'eslint-config-prettier';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
-
 const eslintConfig = [
   // Base JavaScript rules
   js.configs.recommended,
 
-  // Next.js configuration - explicitly extend next/core-web-vitals
-  ...compat.extends('next/core-web-vitals', 'next'),
+  // Next.js configuration (flat config)
+  {
+    plugins: {
+      '@next/next': nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+    },
+  },
 
   // TypeScript configuration
   {
@@ -48,6 +45,8 @@ const eslintConfig = [
     },
     plugins: {
       '@typescript-eslint': tseslint,
+      '@next/next': nextPlugin,
+      'react-hooks': reactHooks,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
@@ -64,6 +63,7 @@ const eslintConfig = [
   {
     files: ['**/*.tsx', '**/*.jsx'],
     plugins: {
+      '@next/next': nextPlugin,
       react,
       'react-hooks': reactHooks,
       'jsx-a11y': jsxA11y,

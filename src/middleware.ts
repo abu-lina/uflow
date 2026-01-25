@@ -78,13 +78,13 @@ export async function middleware(req: NextRequest) {
   const accessToken = req.cookies.get('sb-access-token')?.value;
   const waitlistToken = req.cookies.get('waitlist_token')?.value;
 
-  // Check app launch status and redirect to waitlist if needed
-  // This check runs before rate limiting to ensure waitlist is always accessible
+  // Check app launch status and redirect to providers if needed
+  // This check runs before rate limiting to ensure providers page is always accessible
   const isAppLaunched = getFeatureFlag('isAppLaunched');
   const needsRedirect = await shouldRedirectToWaitlist(pathname, isAppLaunched, accessToken, waitlistToken);
   
   if (needsRedirect) {
-    return NextResponse.redirect(new URL('/waitlist', req.url));
+    return NextResponse.redirect(new URL('/providers', req.url));
   }
 
   // Rate limiting for API routes

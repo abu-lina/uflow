@@ -248,6 +248,26 @@ export const ur = {
       backToOverview: "جائزے پر واپس",
       emailConsentText: "اپنا ای میل پتہ فراہم کرکے، آپ اس سفارش کے بارے میں فالو اپ حاصل کرنے کے لیے اسے محفوظ کرنے کی اجازت دیتے ہیں۔"
     },
+    importOsm: {
+      title: "OpenStreetMap سے درآمد کریں",
+      step1Title: "مسلم مقامات تلاش کریں",
+      cityLabel: "شہر",
+      cityPlaceholder: "تلاش کرنے کے لیے شہر درج کریں",
+      searchLabel: "مسلم مقامات تلاش کریں",
+      searchPlaceholder: "مساجد، حلال ریسٹورانٹس تلاش کریں...",
+      selectCityFirst: "براہ کرم پہلے ایک شہر منتخب کریں",
+      autoSelectedCategory: "خودکار طور پر منتخب",
+      typeToSearch: "تلاش کرنے کے لیے کم از کم 2 حروف ٹائپ کریں",
+      noResults: "اس شہر میں کوئی مسلم مقامات نہیں ملے",
+      importedFromOSM: "OpenStreetMap سے درآمد کیا گیا",
+      placeTypes: {
+        mosque: "مسجد",
+        islamicCenter: "اسلامی مرکز",
+        restaurant: "حلال ریسٹورانٹ",
+        fastFood: "حلال فاسٹ فوڈ",
+        shop: "حلال دکان"
+      }
+    },
     basics: {
       title: "پیشکش بنائیں",
       loginRequired: "لاگ ان ضروری",

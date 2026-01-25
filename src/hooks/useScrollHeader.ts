@@ -272,7 +272,6 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
         cleanupFn();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, scrollThreshold, minScrollDelta, velocityThreshold, showThreshold, bottomBuffer, ...dependencies]);
 
   return { isHeaderVisible };

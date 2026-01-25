@@ -198,10 +198,8 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       if (onSuccess) {
         onSuccess();
       } else {
-        // In recommendation mode, redirect to waitlist to show early access screen again
-        // This allows users to continue with other early access options
-        const isRecommendation = formData.creationMode === 'recommendation';
-        router.push(isRecommendation ? '/waitlist' : '/providers');
+        // Redirect to providers page (waitlist is disabled)
+        router.push('/providers');
       }
     } catch (error) {
       console.error('Error creating entity:', error);

@@ -235,6 +235,26 @@ export const tr = {
       backToOverview: "Genel bakışa dön",
       emailConsentText: "E-posta adresinizi sağlayarak, bu öneri hakkında takip almak için saklanmasına izin veriyorsunuz."
     },
+    importOsm: {
+      title: "OpenStreetMap'ten İçe Aktar",
+      step1Title: "Müslüman Yerler Ara",
+      cityLabel: "Şehir",
+      cityPlaceholder: "Aramak için şehir girin",
+      searchLabel: "Müslüman Yerler Ara",
+      searchPlaceholder: "Cami, helal restoran ara...",
+      selectCityFirst: "Lütfen önce bir şehir seçin",
+      autoSelectedCategory: "Otomatik seçildi",
+      typeToSearch: "Aramak için en az 2 karakter yazın",
+      noResults: "Bu şehirde Müslüman yeri bulunamadı",
+      importedFromOSM: "OpenStreetMap'ten içe aktarıldı",
+      placeTypes: {
+        mosque: "Cami",
+        islamicCenter: "İslam Merkezi",
+        restaurant: "Helal Restoran",
+        fastFood: "Helal Fast Food",
+        shop: "Helal Dükkan"
+      }
+    },
     basics: {
       title: "Teklif oluştur",
       loginRequired: "Giriş gerekli",

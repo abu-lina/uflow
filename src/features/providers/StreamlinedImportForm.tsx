@@ -18,16 +18,32 @@ import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScre
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
-import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 import type { OSMPlace } from '@/types/osm';
+import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 import { searchPlacesInCity } from '@/services/placeAutocompleteService';
 
-interface StreamlinedRecommendFormProps {
+interface NominatimCityResult {
+  place_id: number;
+  display_name: string;
+  name: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+    country?: string;
+    country_code?: string;
+  };
+  lat: string;
+  lon: string;
+}
+
+interface StreamlinedImportFormProps {
   onSuccess?: () => void;
   initialCity?: string;
 }
 
-// ContactCheckbox component - MUST be outside parent component for memo to work
+// ContactCheckbox component - reused from StreamlinedRecommendForm
 interface ContactCheckboxProps {
   label: string;
   checked: boolean;
@@ -51,7 +67,6 @@ const ContactCheckbox = memo(({
 }: ContactCheckboxProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input when checkbox is checked
   useEffect(() => {
     if (checked && inputRef.current) {
       inputRef.current.focus();
@@ -83,23 +98,18 @@ const ContactCheckbox = memo(({
       onKeyDown={handleKeyDown}
     >
       <div className="flex w-full flex-row items-center gap-2">
-        {/* Checkbox Icon */}
         <div className="flex-shrink-0">
           <Icon
             className="h-6 w-6 text-content"
             icon={checked ? 'lucide:square-check' : 'lucide:square'}
           />
         </div>
-
-        {/* Label + Input Container */}
         <div className="flex flex-1 flex-col gap-1">
           {checked ? (
             <>
-              {/* Small label when checked */}
               <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
                 {label}
               </label>
-              {/* Input field */}
               <input
                 ref={inputRef}
                 aria-label={label}
@@ -113,7 +123,6 @@ const ContactCheckbox = memo(({
               />
             </>
           ) : (
-            /* Large label when unchecked */
             <span className="font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
               {label}
             </span>
@@ -123,8 +132,6 @@ const ContactCheckbox = memo(({
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Return true if props are equal (skip re-render), false if different (re-render)
-  // Only re-render if relevant props changed
   if (prevProps.checked !== nextProps.checked) return false;
   if (prevProps.value !== nextProps.value) return false;
   if (prevProps.label !== nextProps.label) return false;
@@ -133,30 +140,32 @@ const ContactCheckbox = memo(({
   if (prevProps.onToggle !== nextProps.onToggle) return false;
   if (prevProps.onChange !== nextProps.onChange) return false;
   if (prevProps.autoFormat !== nextProps.autoFormat) return false;
-  // All props are equal, skip re-render
   return true;
 });
 
 ContactCheckbox.displayName = 'ContactCheckbox';
 
-interface RecommendFormData {
-  // Step 1: Basics (all required)
+interface ImportFormData {
   title: string;
   category: string;
   city: string;
+  street: string;
+  zip: string;
+  country: string;
   offers_ids: string[];
-  
-  // Step 2: Contact (at least one required)
   email: string;
   phone: string;
   website: string;
   instagram: string;
-  userEmail: string; // User's email for follow-up
-  message: string; // optional
+  userEmail: string;
+  message: string;
+  selectedPlace: OSMPlace | null;
 }
 
-interface SavedRecommendFormData {
-  formData: RecommendFormData;
+const IMPORT_FORM_STORAGE_KEY = 'importOsmFormData';
+
+interface SavedImportFormData {
+  formData: ImportFormData;
   selectedContacts: {
     email: boolean;
     phone: boolean;
@@ -164,8 +173,6 @@ interface SavedRecommendFormData {
     instagram: boolean;
   };
 }
-
-const RECOMMEND_FORM_STORAGE_KEY = 'recommendFormData';
 
 // Category mappings for OSM place types
 const PLACE_TYPE_TO_CATEGORY: Record<string, string> = {
@@ -233,23 +240,7 @@ function inferCategoryFromName(name: string): string {
   return '';
 }
 
-interface NominatimCityResult {
-  place_id: number;
-  display_name: string;
-  name: string;
-  address?: {
-    city?: string;
-    town?: string;
-    village?: string;
-    state?: string;
-    country?: string;
-    country_code?: string;
-  };
-  lat: string;
-  lon: string;
-}
-
-export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }: StreamlinedRecommendFormProps) {
+export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: StreamlinedImportFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { formData: contextFormData, updateFormData, setCreationMode } = useFormData();
@@ -261,13 +252,11 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const searchParams = useSearchParams();
   const showSuccess = searchParams.get('success') === 'true';
   const [categories, setCategories] = useState<Category[]>([]);
-  const userEmailInputRef = useRef<HTMLInputElement>(null);
-  const cityInputRef = useRef<HTMLInputElement>(null);
-  const cityDropdownRef = useRef<HTMLDivElement>(null);
-  const cityInitializedRef = useRef(false); // Track if initial city has been loaded
-  const formDataInitializedRef = useRef(false); // Track if form data has been loaded from storage
+  const [isCategoryAutoSelected, setIsCategoryAutoSelected] = useState(false);
   
   // City search state
+  const cityInputRef = useRef<HTMLInputElement>(null);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
   const [citySearchQuery, setCitySearchQuery] = useState('');
   const [citySearchResults, setCitySearchResults] = useState<NominatimCityResult[]>([]);
   const [isCitySearching, setIsCitySearching] = useState(false);
@@ -275,7 +264,8 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
   const citySearchAbortControllerRef = useRef<AbortController | null>(null);
   const [isCitySelected, setIsCitySelected] = useState(!!initialCity);
-  
+  const hasInitializedCityRef = useRef(false);
+
   // Provider name search state
   const providerNameInputRef = useRef<HTMLInputElement>(null);
   const providerNameDropdownRef = useRef<HTMLDivElement>(null);
@@ -285,61 +275,58 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const [showProviderNameDropdown, setShowProviderNameDropdown] = useState(false);
   const [selectedProviderNameIndex, setSelectedProviderNameIndex] = useState(-1);
   const providerNameSearchAbortControllerRef = useRef<AbortController | null>(null);
-  
-  // Category auto-selection state
-  const [isCategoryAutoSelected, setIsCategoryAutoSelected] = useState(false);
-  
-  // Initialize form state - use lazy initializer to check localStorage first
-  const [formData, setFormData] = useState<RecommendFormData>(() => {
+
+  const [formData, setFormData] = useState<ImportFormData>(() => {
     if (typeof window === 'undefined') {
       return {
-        title: contextFormData.title || '',
-        category: contextFormData.category || '',
+        title: '',
+        category: '',
         city: initialCity || '',
-        offers_ids: contextFormData.offers_ids || [],
-        email: contextFormData.email || '',
-        phone: contextFormData.phone || '',
-        website: contextFormData.website || '',
-        instagram: contextFormData.instagram || '',
+        street: '',
+        zip: '',
+        country: '',
+        offers_ids: [],
+        email: '',
+        phone: '',
+        website: '',
+        instagram: '',
         userEmail: '',
-        message: contextFormData.description || '',
+        message: '',
+        selectedPlace: null,
       };
     }
 
-    // Try to load from localStorage first
     try {
-      const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
+      const saved = localStorage.getItem(IMPORT_FORM_STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as SavedRecommendFormData;
-        // Prioritize contextFormData.category/offers if they exist (user just selected them)
+        const parsed = JSON.parse(saved) as SavedImportFormData;
         return {
           ...parsed.formData,
-          category: contextFormData.category || parsed.formData.category,
-          offers_ids: (contextFormData.offers_ids && contextFormData.offers_ids.length > 0)
-            ? contextFormData.offers_ids
-            : parsed.formData.offers_ids,
+          selectedPlace: null, // Don't persist OSM place object
         };
       }
     } catch (error) {
-      console.error('[StreamlinedRecommendForm] Error loading initial form data:', error);
+      console.error('[StreamlinedImportForm] Error loading form data:', error);
     }
 
-    // Fallback to contextFormData and initialCity
     return {
-      title: contextFormData.title || '',
-      category: contextFormData.category || '',
+      title: '',
+      category: '',
       city: initialCity || '',
-      offers_ids: contextFormData.offers_ids || [],
-      email: contextFormData.email || '',
-      phone: contextFormData.phone || '',
-      website: contextFormData.website || '',
-      instagram: contextFormData.instagram || '',
+      street: '',
+      zip: '',
+      country: '',
+      offers_ids: [],
+      email: '',
+      phone: '',
+      website: '',
+      instagram: '',
       userEmail: '',
-      message: contextFormData.description || '',
+      message: '',
+      selectedPlace: null,
     };
   });
 
-  // Initialize selected contacts - use lazy initializer to check localStorage first
   const [selectedContacts, setSelectedContacts] = useState<{
     email: boolean;
     phone: boolean;
@@ -347,163 +334,48 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     instagram: boolean;
   }>(() => {
     if (typeof window === 'undefined') {
-      return {
-        email: false,
-        phone: false,
-        website: false,
-        instagram: false,
-      };
+      return { email: false, phone: false, website: false, instagram: false };
     }
 
-    // Try to load from localStorage first
     try {
-      const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
+      const saved = localStorage.getItem(IMPORT_FORM_STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as SavedRecommendFormData;
+        const parsed = JSON.parse(saved) as SavedImportFormData;
         return parsed.selectedContacts;
       }
     } catch (error) {
-      console.error('[StreamlinedRecommendForm] Error loading initial contacts:', error);
+      console.error('[StreamlinedImportForm] Error loading contacts:', error);
     }
 
-    // Fallback: determine from formData if fields have values
-    // Note: This will use the formData from the useState above
-    try {
-      const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as SavedRecommendFormData;
-        return {
-          email: !!parsed.formData.email,
-          phone: !!parsed.formData.phone,
-          website: !!parsed.formData.website,
-          instagram: !!parsed.formData.instagram,
-        };
-      }
-    } catch {
-      // Ignore
-    }
-
-    return {
-      email: false,
-      phone: false,
-      website: false,
-      instagram: false,
-    };
+    return { email: false, phone: false, website: false, instagram: false };
   });
-  
-
-  // Helper function to load saved recommend form data
-  const loadSavedRecommendFormData = useCallback((): SavedRecommendFormData | null => {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved) as SavedRecommendFormData;
-      }
-    } catch (error) {
-      console.error('[StreamlinedRecommendForm] Error loading saved form data:', error);
-    }
-    return null;
-  }, []);
-
-  // Helper function to save recommend form data
-  const saveRecommendFormData = useCallback((data: RecommendFormData, contacts: typeof selectedContacts) => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const dataToSave: SavedRecommendFormData = {
-        formData: data,
-        selectedContacts: contacts,
-      };
-      localStorage.setItem(RECOMMEND_FORM_STORAGE_KEY, JSON.stringify(dataToSave));
-    } catch (error) {
-      console.error('[StreamlinedRecommendForm] Error saving form data:', error);
-    }
-  }, []);
-
-  // Helper function to clear saved recommend form data
-  const clearSavedRecommendFormData = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(RECOMMEND_FORM_STORAGE_KEY);
-  }, []);
 
   // Set creation mode to recommendation on mount
   useEffect(() => {
     setCreationMode('recommendation');
   }, [setCreationMode]);
 
-  // Load saved form data from localStorage on mount and sync with context
+  // Initialize city from initialCity prop
   useEffect(() => {
-    if (!formDataInitializedRef.current && typeof window !== 'undefined') {
-      formDataInitializedRef.current = true;
-      
-      const saved = loadSavedRecommendFormData();
-      if (saved) {
-        // Restore form data, but prioritize contextFormData.category/offers if they exist
-        // (user might have just selected them on sub-pages)
-        const restoredFormData = {
-          ...saved.formData,
-          // Use contextFormData category/offers if they exist (newly selected), otherwise use saved
-          category: contextFormData.category || saved.formData.category,
-          offers_ids: (contextFormData.offers_ids && contextFormData.offers_ids.length > 0) 
-            ? contextFormData.offers_ids 
-            : saved.formData.offers_ids,
-        };
-        setFormData(restoredFormData);
-        // Restore selected contacts - ensure checkboxes match field values
-        setSelectedContacts({
-          email: saved.selectedContacts.email || !!saved.formData.email,
-          phone: saved.selectedContacts.phone || !!saved.formData.phone,
-          website: saved.selectedContacts.website || !!saved.formData.website,
-          instagram: saved.selectedContacts.instagram || !!saved.formData.instagram,
-        });
-        // Sync with contextFormData to ensure all data is available in context
-        updateFormData({
-          title: restoredFormData.title,
-          category: restoredFormData.category,
-          city: restoredFormData.city,
-          offers_ids: restoredFormData.offers_ids,
-          email: restoredFormData.email,
-          phone: restoredFormData.phone,
-          website: restoredFormData.website,
-          instagram: restoredFormData.instagram,
-          description: restoredFormData.message,
-        });
-        // Mark city as initialized since we loaded it from saved data
-        cityInitializedRef.current = true;
-        // If city was saved, mark it as selected
-        if (restoredFormData.city) {
-          setIsCitySelected(true);
-        }
-      } else {
-        // No saved form data, so initialize from contextFormData or defaults
-        if (contextFormData.category) {
-          setFormData(prev => ({ ...prev, category: contextFormData.category }));
-        }
-        if (contextFormData.offers_ids && contextFormData.offers_ids.length > 0) {
-          setFormData(prev => ({ ...prev, offers_ids: contextFormData.offers_ids }));
-        }
-        // Initialize city from initialCity or localStorage
-        if (!cityInitializedRef.current) {
-          cityInitializedRef.current = true;
-          
-          // Use initialCity prop if provided and formData.city is empty
-          if (initialCity && !formData.city) {
-            setFormData(prev => ({ ...prev, city: initialCity }));
-            setIsCitySelected(true);
-          } else if (!formData.city) {
-            // Fallback to localStorage/sessionStorage
-            const savedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
-            if (savedCity) {
-              setFormData(prev => ({ ...prev, city: savedCity }));
-              setIsCitySelected(true);
-            }
-          }
-        }
+    if (!hasInitializedCityRef.current && initialCity && !formData.city) {
+      setFormData(prev => ({ ...prev, city: initialCity }));
+      setIsCitySelected(true);
+      hasInitializedCityRef.current = true;
+    }
+  }, [initialCity, formData.city]);
+
+  // Load categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const categoriesData = await getCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
       }
     }
-  }, [loadSavedRecommendFormData, initialCity, updateFormData, formData.city, contextFormData.category, contextFormData.offers_ids]);
+    void fetchCategories();
+  }, []);
 
   // City search function
   const searchCities = useCallback(async (query: string) => {
@@ -678,6 +550,24 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     }
   }, [showCityDropdown]);
 
+  // Save form data to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const dataToSave: SavedImportFormData = {
+          formData: {
+            ...formData,
+            selectedPlace: null, // Don't save OSM place object
+          },
+          selectedContacts,
+        };
+        localStorage.setItem(IMPORT_FORM_STORAGE_KEY, JSON.stringify(dataToSave));
+      } catch (error) {
+        console.error('[StreamlinedImportForm] Error saving form data:', error);
+      }
+    }
+  }, [formData, selectedContacts]);
+
   // Provider name search function
   const searchProviderNames = useCallback(async (query: string) => {
     // Cancel previous request
@@ -760,7 +650,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       ...prev,
       title: place.name,
       // Auto-select category if mapping exists
-      category: categoryId || prev.category,
+      category: categoryId,
       // Contact fields (auto-fill if available)
       phone: place.contact?.phone || prev.phone,
       email: place.contact?.email || prev.email,
@@ -792,7 +682,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       ...prev,
       title: value,
       // Clear category when user starts searching again or clears the field
-      category: trimmedValue.length === 0 ? '' : (prev.category || ''),
+      category: trimmedValue.length === 0 || prev.category ? '' : prev.category,
     }));
 
     if (trimmedValue.length === 0) {
@@ -863,41 +753,8 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     }
   }, [showProviderNameDropdown]);
 
-  // Load categories
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const categoriesData = await getCategories();
-        setCategories(categoriesData);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    }
-    void fetchCategories();
-  }, []);
 
-  // Sync with context formData when it changes (from navigation)
-  // This ensures that when user selects category/offers on sub-pages, it updates local formData
-  useEffect(() => {
-    // Always sync category if it exists in contextFormData (user just selected it)
-    if (contextFormData.category && contextFormData.category !== formData.category) {
-      setFormData(prev => ({ ...prev, category: contextFormData.category }));
-    }
-    // Always sync offers_ids if they exist in contextFormData (user just selected them)
-    if (contextFormData.offers_ids && contextFormData.offers_ids.length > 0 && 
-        JSON.stringify(contextFormData.offers_ids) !== JSON.stringify(formData.offers_ids)) {
-      setFormData(prev => ({ ...prev, offers_ids: contextFormData.offers_ids }));
-    }
-  }, [contextFormData.category, contextFormData.offers_ids, formData.category, formData.offers_ids]);
-
-  // Save form data to localStorage whenever it changes
-  useEffect(() => {
-    if (formDataInitializedRef.current) {
-      saveRecommendFormData(formData, selectedContacts);
-    }
-  }, [formData, selectedContacts, saveRecommendFormData]);
-
-  // Helper to get category name - memoized
+  // Get category name
   const getCategoryName = useCallback((categoryId: string) => {
     const category = categories.find(c => c.category_id === categoryId);
     if (!category) return '';
@@ -907,14 +764,12 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     return category.name_de || category.name_en || '';
   }, [categories, language]);
 
-  // Memoize category name display to prevent re-renders
-  // Use useState to avoid hydration mismatch (categories may not be loaded during SSR)
   const [categoryDisplayName, setCategoryDisplayName] = useState(() => {
-    // Initial value that's consistent between server and client
     return formData.category ? '' : t('create.recommend.selectCategory');
   });
 
-  // Update category display name when category or categories change
+  const showCityValidation = formData.city.trim().length > 0 && !isCitySelected;
+
   useEffect(() => {
     if (formData.category && categories.length > 0) {
       const name = getCategoryName(formData.category);
@@ -924,9 +779,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     }
   }, [formData.category, categories, getCategoryName, t]);
 
-  const showCityValidation = formData.city.trim().length > 0 && !isCitySelected;
-
-  // Validation - memoized to prevent unnecessary re-renders
+  // Validation
   const isFormValid = useMemo(() => {
     const hasBasics = !!formData.title && !!formData.category && isCitySelected;
     const hasContact = 
@@ -935,21 +788,21 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       (selectedContacts.website && formData.website.trim().length > 0) ||
       (selectedContacts.instagram && formData.instagram.trim().length > 0);
     return hasBasics && hasContact;
-  }, [formData.title, formData.category, formData.email, formData.phone, formData.website, formData.instagram, selectedContacts.email, selectedContacts.phone, selectedContacts.website, selectedContacts.instagram, isCitySelected]);
+  }, [formData.title, formData.category, formData.email, formData.phone, formData.website, formData.instagram, selectedContacts, isCitySelected]);
 
   const handleBack = useCallback(() => {
     router.push('/');
   }, [router]);
 
-  // Handle "Weiteren Anbieter empfehlen" - reset form and show form again
   const handleRecommendAnother = useCallback(() => {
-    // Remove success param from URL to show form again
-    router.replace('/create/recommend', { scroll: false });
-    // Reset form data
+    router.replace('/create/import-osm', { scroll: false });
     setFormData({
       title: '',
       category: '',
       city: initialCity || '',
+      street: '',
+      zip: '',
+      country: '',
       offers_ids: [],
       email: '',
       phone: '',
@@ -957,31 +810,14 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       instagram: '',
       userEmail: '',
       message: '',
+      selectedPlace: null,
     });
-    // Reset contact checkboxes
-    setSelectedContacts({
-      email: false,
-      phone: false,
-      website: false,
-      instagram: false,
-    });
-    // Clear context form data
-    updateFormData({
-      title: '',
-      category: '',
-      city: '',
-      offers_ids: [],
-      email: '',
-      phone: '',
-      website: '',
-      instagram: '',
-      description: '',
-    });
-    // Clear saved form data from localStorage
-    clearSavedRecommendFormData();
-  }, [initialCity, updateFormData, router, clearSavedRecommendFormData]);
+    setSelectedContacts({ email: false, phone: false, website: false, instagram: false });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(IMPORT_FORM_STORAGE_KEY);
+    }
+  }, [router, initialCity]);
 
-  // Handle "Zurück zur Übersicht" - navigate to home
   const handleGoBack = useCallback(() => {
     router.push('/');
   }, [router]);
@@ -991,9 +827,9 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     if (!isFormValid) {
       if (!formData.title) {
         toast.error(t('create.recommend.titleRequired'));
-      } else if (!formData.category) {
+    } else if (!formData.category) {
         toast.error(t('create.recommend.categoryRequired'));
-      } else if (!isCitySelected) {
+    } else if (!isCitySelected) {
         toast.error(t('create.recommend.cityRequired'));
       } else {
         toast.error(t('create.recommend.contactRequired'));
@@ -1001,12 +837,9 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       return;
     }
 
-
     try {
       setIsSubmitting(true);
 
-      // Prepare formData for service function
-      // Use authenticated user's email if available, otherwise use form input
       const userEmail = user?.email || formData.userEmail;
       
       const serviceFormData = {
@@ -1014,6 +847,9 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         title: formData.title,
         category: formData.category,
         city: formData.city,
+        street: formData.street,
+        zip: formData.zip,
+        country: formData.country,
         offers_ids: formData.offers_ids,
         email: formData.email,
         phone: formData.phone,
@@ -1024,10 +860,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
         isOnlineBusiness: false,
-        street: '',
-        zip: '',
-        country: '',
-        showAddress: false,
+        showAddress: !!formData.street,
         needs_ids: [],
         images: [],
         selectedCommunityServiceIds: [],
@@ -1039,11 +872,10 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
 
       await createProviderOrService(
         serviceFormData,
-        user || null, // Pass authenticated user if available, otherwise null for anonymous
-        true // Recommendation mode
+        user || null,
+        true
       );
 
-      // Clear form data
       updateFormData({
         title: '',
         category: '',
@@ -1055,35 +887,26 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         instagram: '',
         description: '',
       });
-      // Also clear local userEmail state
       setFormData(prev => ({ ...prev, userEmail: '' }));
-      // Clear selected contacts
-      setSelectedContacts({
-        email: false,
-        phone: false,
-        website: false,
-        instagram: false,
-      });
-      // Clear saved form data from localStorage
-      clearSavedRecommendFormData();
+      setSelectedContacts({ email: false, phone: false, website: false, instagram: false });
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(IMPORT_FORM_STORAGE_KEY);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['providers'] });
       queryClient.invalidateQueries({ queryKey: ['community-services'] });
 
-      // Show success screen by updating URL
-      router.replace('/create/recommend?success=true', { scroll: false });
+      router.replace('/create/import-osm?success=true', { scroll: false });
     } catch (error) {
       console.error('Error creating recommendation:', error);
       toast.error(t('create.recommend.error'));
     } finally {
       setIsSubmitting(false);
     }
-    }, [formData, isFormValid, contextFormData, isCitySelected, updateFormData, queryClient, router, t, clearSavedRecommendFormData, user]);
+  }, [formData, isFormValid, contextFormData, isCitySelected, updateFormData, queryClient, router, t, user]);
 
-  // Navigate to category selection
   const handleSelectCategory = useCallback(() => {
     setIsCategoryAutoSelected(false);
-    // Save current form state
     updateFormData({
       title: formData.title,
       city: formData.city,
@@ -1097,7 +920,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     router.push('/create/recommend/category');
   }, [formData, router, updateFormData]);
 
-  // Memoized handlers for ContactCheckbox components to prevent unnecessary re-renders
+  // Contact handlers
   const handleEmailChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, email: value }));
   }, []);
@@ -1141,7 +964,6 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, []);
 
   const handleInstagramChange = useCallback((value: string) => {
-    // Auto-add @ if user types without it
     let formattedValue = value;
     if (formattedValue && !formattedValue.startsWith('@')) {
       formattedValue = '@' + formattedValue;
@@ -1159,7 +981,6 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     });
   }, []);
 
-  // Memoize translation strings to prevent ContactCheckbox re-renders
   const emailLabel = useMemo(() => t('create.recommend.email'), [t]);
   const emailPlaceholder = useMemo(() => t('create.recommend.emailPlaceholder'), [t]);
   const websiteLabel = useMemo(() => t('create.recommend.website'), [t]);
@@ -1169,7 +990,6 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const instagramLabel = useMemo(() => t('create.recommend.instagram'), [t]);
   const instagramPlaceholder = useMemo(() => t('create.recommend.instagramPlaceholder'), [t]);
 
-  // Show success screen if submission was successful
   if (showSuccess) {
     return (
       <RecommendSuccessScreen
@@ -1180,17 +1000,15 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }
 
   return (
-    <div className={cn(
-      'flex flex-col gap-6',
-      // Add extra bottom padding on mobile to account for fixed FooterAction
-      isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8'
-    )}>
-      {/* Section 1: Basics */}
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.step1Title')}</h2>
-        
-        <div className="flex flex-col gap-3">
-          {/* City */}
+    <>
+      <div className={cn(
+        'flex flex-col gap-6',
+        isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8'
+      )}>
+        {/* Section 0: City Selection (Required First) */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.city')} *</h2>
+          
           <div className="relative">
             <div
               className={cn(
@@ -1293,331 +1111,323 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
               </div>
             )}
           </div>
+        </div>
 
-          {/* Provider Name (editable with autocomplete) */}
-          <div className="relative">
-            <div className="flex h-[56px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="text-xs leading-[15px] text-content-muted">
-                  {t('create.recommend.providerName')} *
-                </label>
-                <input
-                  ref={providerNameInputRef}
-                  aria-autocomplete="list"
-                  aria-controls="provider-name-search-results"
-                  aria-expanded={showProviderNameDropdown}
-                  aria-label={t('create.recommend.providerName')}
-                  className={cn(
-                    'h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0',
-                    !isCitySelected && 'opacity-50 cursor-not-allowed'
-                  )}
-                  placeholder={t('create.recommend.providerNamePlaceholder')}
-                  role="combobox"
-                  value={formData.title}
-                  onBlur={handleProviderNameInputBlur}
-                  onChange={handleProviderNameInputChange}
-                  onFocus={handleProviderNameInputFocus}
-                  onKeyDown={handleProviderNameInputKeyDown}
-                  {...(!isCitySelected && { disabled: true })}
-                />
-              </div>
-              {isProviderNameSearching && (
-                <Icon
-                  className="ml-2 h-5 w-5 animate-spin text-content-muted"
-                  icon="material-symbols:progress-activity"
-                />
-              )}
-            </div>
-            
-            {/* Provider Name Search Dropdown */}
-            {showProviderNameDropdown && (
-              <div
-                ref={providerNameDropdownRef}
-                className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
-                id="provider-name-search-results"
-                role="listbox"
-              >
-                {isProviderNameSearching ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Icon
-                      className="h-6 w-6 animate-spin text-primary"
-                      icon="material-symbols:progress-activity"
-                    />
-                  </div>
-                ) : providerNameSearchResults.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-sm text-content-muted">
-                    {providerNameSearchQuery.trim().length < 2
-                      ? t('create.importOsm.typeToSearch')
-                      : t('create.importOsm.noResults')}
-                  </div>
-                ) : (
-                  providerNameSearchResults.map((place, index) => {
-                    const isSelected = index === selectedProviderNameIndex;
-
-                    return (
-                      <button
-                        key={`${place.type}-${place.id}`}
-                        aria-selected={isSelected}
-                        className={cn(
-                          'w-full px-4 py-3 text-left transition-colors',
-                          'hover:bg-neutral-muted',
-                          isSelected && 'bg-primary/5'
-                        )}
-                        role="option"
-                        type="button"
-                        onClick={() => handleProviderNameSelect(place)}
-                        onMouseEnter={() => setSelectedProviderNameIndex(index)}
-                      >
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <Icon
-                              className={cn(
-                                'h-4 w-4 flex-shrink-0',
-                                place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'text-primary' : 'text-content-muted'
-                              )}
-                              icon={
-                                place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'mdi:mosque' :
-                                place.placeType === 'restaurant' ? 'mdi:silverware-fork-knife' :
-                                place.placeType === 'fast_food' ? 'mdi:food' :
-                                place.placeType === 'shop' ? 'mdi:store' :
-                                'mdi:map-marker'
-                              }
-                            />
-                            <span className="text-[15px] font-medium text-content-heading">
-                              {place.name}
-                            </span>
-                          </div>
-                          {place.address?.city && (
-                            <div className="flex items-center gap-1 pl-6">
-                              <span className="text-xs text-content-muted">{place.address.city}</span>
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })
+        {/* Section 1: Provider Information */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold text-content-heading">{t('create.importOsm.step1Title')}</h2>
+          
+          <div className="flex flex-col gap-3">
+            {/* Provider Name (editable with autocomplete) */}
+            <div className="relative">
+              <div className="flex h-[56px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
+                <div className="flex w-full flex-col gap-1">
+                  <label className="text-xs leading-[15px] text-content-muted">
+                    {t('create.recommend.providerName')} *
+                  </label>
+                  <input
+                    ref={providerNameInputRef}
+                    aria-autocomplete="list"
+                    aria-controls="provider-name-search-results"
+                    aria-expanded={showProviderNameDropdown}
+                    aria-label={t('create.recommend.providerName')}
+                    className={cn(
+                      'h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0',
+                      !isCitySelected && 'opacity-50 cursor-not-allowed'
+                    )}
+                    placeholder={t('create.recommend.providerNamePlaceholder')}
+                    role="combobox"
+                    value={formData.title}
+                    onBlur={handleProviderNameInputBlur}
+                    onChange={handleProviderNameInputChange}
+                    onFocus={handleProviderNameInputFocus}
+                    onKeyDown={handleProviderNameInputKeyDown}
+                    {...(!isCitySelected && { disabled: true })}
+                  />
+                </div>
+                {isProviderNameSearching && (
+                  <Icon
+                    className="ml-2 h-5 w-5 animate-spin text-content-muted"
+                    icon="material-symbols:progress-activity"
+                  />
                 )}
               </div>
-            )}
-            
-            {/* Helper text - show when city is not selected */}
-            {!isCitySelected && (
-              <div className="mt-1 text-xs text-content-muted">
-                {t('create.importOsm.selectCityFirst')}
-              </div>
-            )}
-          </div>
+              
+              {/* Provider Name Search Dropdown */}
+              {showProviderNameDropdown && (
+                <div
+                  ref={providerNameDropdownRef}
+                  className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+                  id="provider-name-search-results"
+                  role="listbox"
+                >
+                  {isProviderNameSearching ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Icon
+                        className="h-6 w-6 animate-spin text-primary"
+                        icon="material-symbols:progress-activity"
+                      />
+                    </div>
+                  ) : providerNameSearchResults.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-sm text-content-muted">
+                      {providerNameSearchQuery.trim().length < 2
+                        ? t('create.importOsm.typeToSearch')
+                        : t('create.importOsm.noResults')}
+                    </div>
+                  ) : (
+                    providerNameSearchResults.map((place, index) => {
+                      const isSelected = index === selectedProviderNameIndex;
 
-          {/* Category */}
-          <div 
-            aria-label={t('create.recommend.selectCategory')}
-            className="flex h-[56px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2 cursor-pointer relative"
-            role="button"
-            tabIndex={0}
-            onClick={handleSelectCategory}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleSelectCategory();
-              }
-            }}
-          >
-            <div className="flex h-[37px] w-full flex-col gap-1 pr-24">
-              <div className="flex w-full items-center">
-                <label className="text-xs leading-[15px] text-content-muted">
-                  {t('create.recommend.category')} *
-                </label>
+                      return (
+                        <button
+                          key={`${place.type}-${place.id}`}
+                          aria-selected={isSelected}
+                          className={cn(
+                            'w-full px-4 py-3 text-left transition-colors',
+                            'hover:bg-neutral-muted',
+                            isSelected && 'bg-primary/5'
+                          )}
+                          role="option"
+                          type="button"
+                          onClick={() => handleProviderNameSelect(place)}
+                          onMouseEnter={() => setSelectedProviderNameIndex(index)}
+                        >
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <Icon
+                                className={cn(
+                                  'h-4 w-4 flex-shrink-0',
+                                  place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'text-primary' : 'text-content-muted'
+                                )}
+                                icon={
+                                  place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'mdi:mosque' :
+                                  place.placeType === 'restaurant' ? 'mdi:silverware-fork-knife' :
+                                  place.placeType === 'fast_food' ? 'mdi:food' :
+                                  place.placeType === 'shop' ? 'mdi:store' :
+                                  'mdi:map-marker'
+                                }
+                              />
+                              <span className="text-[15px] font-medium text-content-heading">
+                                {place.name}
+                              </span>
+                            </div>
+                            {place.address?.city && (
+                              <div className="flex items-center gap-1 pl-6">
+                                <span className="text-xs text-content-muted">{place.address.city}</span>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+              
+              {/* Helper text - show when city is not selected */}
+              {!isCitySelected && (
+                <div className="mt-1 text-xs text-content-muted">
+                  {t('create.importOsm.selectCityFirst')}
+                </div>
+              )}
+            </div>
+
+            {/* Category */}
+            <div 
+              aria-label={t('create.recommend.selectCategory')}
+              className="flex h-[56px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2 cursor-pointer relative"
+              role="button"
+              tabIndex={0}
+              onClick={handleSelectCategory}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectCategory();
+                }
+              }}
+            >
+              <div className="flex h-[37px] w-full flex-col gap-1 pr-24">
+                <div className="flex w-full items-center">
+                  <label className="text-xs leading-[15px] text-content-muted">
+                    {t('create.recommend.category')} *
+                  </label>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
+                    {categoryDisplayName}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
-                  {categoryDisplayName}
+              {isCategoryAutoSelected && (
+                <span className="absolute right-12 top-1/2 inline-flex h-[15px] -translate-y-1/2 items-center rounded-full border border-info/20 bg-info-soft px-2 text-[11px] leading-[15px] text-info">
+                  {t('create.importOsm.autoSelectedCategory')}
                 </span>
+              )}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center flex-shrink-0">
+                <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
               </div>
-            </div>
-            {isCategoryAutoSelected && (
-              <span className="absolute right-12 top-1/2 inline-flex h-[15px] -translate-y-1/2 items-center rounded-full border border-info/20 bg-info-soft px-2 text-[11px] leading-[15px] text-info">
-                {t('create.importOsm.autoSelectedCategory')}
-              </span>
-            )}
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center flex-shrink-0">
-              <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Section 2: Contact */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.contactTitle')}</h3>
-          <p className="text-base text-content-muted">
-            {t('create.recommend.contactDescription')}
-          </p>
-        </div>
-
-        {/* Contact Checkboxes */}
-        <div className="flex flex-col gap-3">
-          <ContactCheckbox
-            checked={selectedContacts.email}
-            label={emailLabel}
-            placeholder={emailPlaceholder}
-            type="email"
-            value={formData.email}
-            onChange={handleEmailChange}
-            onToggle={handleEmailToggle}
-          />
-
-          <ContactCheckbox
-            checked={selectedContacts.website}
-            label={websiteLabel}
-            placeholder={websitePlaceholder}
-            type="url"
-            value={formData.website}
-            onChange={handleWebsiteChange}
-            onToggle={handleWebsiteToggle}
-          />
-
-          <ContactCheckbox
-            checked={selectedContacts.phone}
-            label={phoneLabel}
-            placeholder={phonePlaceholder}
-            type="tel"
-            value={formData.phone}
-            onChange={handlePhoneChange}
-            onToggle={handlePhoneToggle}
-          />
-
-          <ContactCheckbox
-            checked={selectedContacts.instagram}
-            label={instagramLabel}
-            placeholder={instagramPlaceholder}
-            type="text"
-            value={formData.instagram}
-            onChange={handleInstagramChange}
-            onToggle={handleInstagramToggle}
-          />
-        </div>
-      </div>
-
-      {/* Section 3: User Email - Only show for anonymous users */}
-      {!user && (
+        {/* Section 2: Contact */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h3>
+            <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.contactTitle')}</h3>
             <p className="text-base text-content-muted">
-              {t('create.recommend.userEmailDescription')}
+              {t('create.recommend.contactDescription')}
             </p>
           </div>
 
-          <div className="flex flex-col gap-0">
-            {/* User Email Input */}
-            <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
-                  {t('create.recommend.userEmailLabel')}
-                </label>
-                <input
-                  ref={userEmailInputRef}
-                  aria-label={t('create.recommend.userEmailLabel')}
-                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                  placeholder={t('create.recommend.userEmailPlaceholder')}
-                  type="email"
-                  value={formData.userEmail}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    const cursorPosition = e.target.selectionStart || newValue.length;
-                    setFormData(prev => ({ ...prev, userEmail: newValue }));
-                    // Maintain focus and cursor position after state update
-                    setTimeout(() => {
-                      if (userEmailInputRef.current) {
-                        userEmailInputRef.current.focus();
-                        userEmailInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
-                      }
-                    }, 0);
-                  }}
-                />
-              </div>
-            </div>
+          <div className="flex flex-col gap-3">
+            <ContactCheckbox
+              checked={selectedContacts.email}
+              label={emailLabel}
+              placeholder={emailPlaceholder}
+              type="email"
+              value={formData.email}
+              onChange={handleEmailChange}
+              onToggle={handleEmailToggle}
+            />
 
-            {/* Email Consent Text - Only show when email is provided */}
-            {formData.userEmail && (
-              <p className="mt-1 text-xs leading-[15px] text-content-muted">
-                {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
-                <Link className="underline hover:text-primary" href="/terms">
-                  {t('legal.termsOfService')}
-                </Link>
-                {' '}{t('legal.and')}{' '}
-                <Link className="underline hover:text-primary" href="/privacy-policy">
-                  {t('legal.privacyPolicy')}
-                </Link>
-                .
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+            <ContactCheckbox
+              checked={selectedContacts.website}
+              label={websiteLabel}
+              placeholder={websitePlaceholder}
+              type="url"
+              value={formData.website}
+              onChange={handleWebsiteChange}
+              onToggle={handleWebsiteToggle}
+            />
 
-      {/* Section 4: Message (Optional) */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.message')}</h3>
-          <p className="text-base text-content-muted">
-            {t('common.optional')}
-          </p>
-        </div>
+            <ContactCheckbox
+              checked={selectedContacts.phone}
+              label={phoneLabel}
+              placeholder={phonePlaceholder}
+              type="tel"
+              value={formData.phone}
+              onChange={handlePhoneChange}
+              onToggle={handlePhoneToggle}
+            />
 
-        <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-border bg-white px-3 py-2">
-          <div className="flex w-full flex-col gap-1">
-            <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
-              {t('create.recommend.message')} ({t('common.optional')})
-            </label>
-            <textarea
-              aria-label={t('create.recommend.message')}
-              className="min-h-[100px] w-full resize-none border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-              placeholder={t('create.recommend.messagePlaceholder')}
-              value={formData.message}
-              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+            <ContactCheckbox
+              checked={selectedContacts.instagram}
+              label={instagramLabel}
+              placeholder={instagramPlaceholder}
+              type="text"
+              value={formData.instagram}
+              onChange={handleInstagramChange}
+              onToggle={handleInstagramToggle}
             />
           </div>
         </div>
+
+        {/* Section 3: User Email - Only show for anonymous users */}
+        {!user && (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h3>
+              <p className="text-base text-content-muted">
+                {t('create.recommend.userEmailDescription')}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-0">
+              <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
+                <div className="flex w-full flex-col gap-1">
+                  <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+                    {t('create.recommend.userEmailLabel')}
+                  </label>
+                  <input
+                    aria-label={t('create.recommend.userEmailLabel')}
+                    className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                    placeholder={t('create.recommend.userEmailPlaceholder')}
+                    type="email"
+                    value={formData.userEmail}
+                    onChange={(e) => setFormData(prev => ({ ...prev, userEmail: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {formData.userEmail && (
+                <p className="mt-1 text-xs leading-[15px] text-content-muted">
+                  {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
+                  <Link className="underline hover:text-primary" href="/terms">
+                    {t('legal.termsOfService')}
+                  </Link>
+                  {' '}{t('legal.and')}{' '}
+                  <Link className="underline hover:text-primary" href="/privacy-policy">
+                    {t('legal.privacyPolicy')}
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Section 4: Message (Optional) */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.message')}</h3>
+            <p className="text-base text-content-muted">
+              {t('common.optional')}
+            </p>
+          </div>
+
+          <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-border bg-white px-3 py-2">
+            <div className="flex w-full flex-col gap-1">
+              <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+                {t('create.recommend.message')} ({t('common.optional')})
+              </label>
+              <textarea
+                aria-label={t('create.recommend.message')}
+                className="min-h-[100px] w-full resize-none border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                placeholder={t('create.recommend.messagePlaceholder')}
+                value={formData.message}
+                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        {isMobile && (
+          <FooterAction
+            actionButton={{
+              disabled: !isFormValid || isSubmitting,
+              label: isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit'),
+              loading: isSubmitting,
+              loadingText: t('create.recommend.submitting'),
+              onClick: handleSubmit,
+              variant: 'primary',
+            }}
+          />
+        )}
+
+        {/* Desktop Actions */}
+        {!isMobile && (
+          <div className="flex gap-4 pt-4">
+            <Button
+              disabled={isSubmitting}
+              variant="secondary"
+              onClick={handleBack}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              disabled={!isFormValid || isSubmitting}
+              loading={isSubmitting}
+              loadingText={t('create.recommend.submitting')}
+              variant="primary"
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit')}
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Footer Actions */}
-      {isMobile && (
-        <FooterAction
-          actionButton={{
-            disabled: !isFormValid || isSubmitting,
-            label: isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit'),
-            loading: isSubmitting,
-            loadingText: t('create.recommend.submitting'),
-            onClick: handleSubmit,
-            variant: 'primary',
-          }}
-        />
-      )}
-
-      {/* Desktop Actions */}
-      {!isMobile && (
-        <div className="flex gap-4 pt-4">
-          <Button
-            disabled={isSubmitting}
-            variant="secondary"
-            onClick={handleBack}
-          >
-            {t('common.cancel')}
-          </Button>
-          <Button
-            disabled={!isFormValid || isSubmitting}
-            loading={isSubmitting}
-            loadingText={t('create.recommend.submitting')}
-            variant="primary"
-            onClick={handleSubmit}
-          >
-            {isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit')}
-          </Button>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
-

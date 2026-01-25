@@ -125,8 +125,8 @@ export default function ContactPage() {
         queryClient.invalidateQueries({ queryKey: ['providers'] });
         queryClient.invalidateQueries({ queryKey: ['community-services'] });
 
-        // Redirect to waitlist to show early access screen again
-        router.push('/waitlist');
+        // Redirect to providers page (waitlist is disabled)
+        router.push('/providers');
       } catch (error) {
         console.error('Error creating entity:', error);
         toast.error(t('create.contact.errorCreating') || t('create.media.errorCreating'));

@@ -249,6 +249,26 @@ export const de = {
       backToOverview: "Zurück zur Übersicht",
       emailConsentText: "Durch die Angabe Ihrer E-Mail-Adresse stimmen Sie der Speicherung zu, um Nachfragen zu dieser Empfehlung zu erhalten."
     },
+    importOsm: {
+      title: "Von OpenStreetMap importieren",
+      step1Title: "Muslimische Orte suchen",
+      cityLabel: "Stadt",
+      cityPlaceholder: "Stadt zum Suchen eingeben",
+      searchLabel: "Muslimische Orte suchen",
+      searchPlaceholder: "Moscheen, Halal-Restaurants suchen...",
+      selectCityFirst: "Bitte wähle zuerst eine Stadt aus",
+      autoSelectedCategory: "Automatisch gewählt",
+      typeToSearch: "Mindestens 2 Zeichen eingeben, um zu suchen",
+      noResults: "Keine muslimischen Orte in dieser Stadt gefunden",
+      importedFromOSM: "Von OpenStreetMap importiert",
+      placeTypes: {
+        mosque: "Moschee",
+        islamicCenter: "Islamisches Zentrum",
+        restaurant: "Halal-Restaurant",
+        fastFood: "Halal Fast Food",
+        shop: "Halal-Laden"
+      }
+    },
     basics: {
       title: "Angebot erstellen",
       loginRequired: "Anmeldung erforderlich",

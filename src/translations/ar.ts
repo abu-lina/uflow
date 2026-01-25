@@ -235,6 +235,26 @@ export const ar = {
       backToOverview: "العودة إلى النظرة العامة",
       emailConsentText: "من خلال تقديم بريدك الإلكتروني، أنت توافق على تخزينه لتلقي متابعة حول هذه التوصية."
     },
+    importOsm: {
+      title: "استيراد من OpenStreetMap",
+      step1Title: "البحث عن الأماكن المسلمة",
+      cityLabel: "المدينة",
+      cityPlaceholder: "أدخل المدينة للبحث فيها",
+      searchLabel: "البحث عن الأماكن المسلمة",
+      searchPlaceholder: "البحث عن المساجد، المطاعم الحلال...",
+      selectCityFirst: "يرجى اختيار مدينة أولاً",
+      autoSelectedCategory: "تم الاختيار تلقائياً",
+      typeToSearch: "اكتب حرفين على الأقل للبحث",
+      noResults: "لم يتم العثور على أماكن مسلمة في هذه المدينة",
+      importedFromOSM: "مستورد من OpenStreetMap",
+      placeTypes: {
+        mosque: "مسجد",
+        islamicCenter: "مركز إسلامي",
+        restaurant: "مطعم حلال",
+        fastFood: "وجبات سريعة حلال",
+        shop: "متجر حلال"
+      }
+    },
     basics: {
       title: "إنشاء عرض",
       loginRequired: "تسجيل الدخول مطلوب",

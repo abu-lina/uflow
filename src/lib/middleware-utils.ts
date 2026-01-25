@@ -173,11 +173,11 @@ export async function shouldRedirectToWaitlist(
     return false; // Allow access, let page handle recommendation mode setup
   }
 
-  // Special case: Allow access to provider and community service detail pages in early access mode
-  // This allows Stage 2 users (who have completed onboarding) to view provider details
-  // even if they don't have a waitlist token cookie set. The page components will handle
-  // any necessary authentication/authorization checks.
+  // Special case: Allow access to /providers (list page) and provider/community service detail pages
+  // This allows users to access the providers page even when app is not launched (waitlist disabled)
+  // The page components will handle any necessary authentication/authorization checks.
   if (!isAppLaunched && (
+    pathname === '/providers' ||
     pathname.startsWith('/providers/') || 
     pathname.startsWith('/community-services/')
   )) {

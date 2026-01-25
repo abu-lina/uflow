@@ -13,6 +13,7 @@ export interface FeatureFlags {
   enableAddressVisibilityToggle: boolean;
   enableQuickImport: boolean;
   enableProviderSelectionModal: boolean;
+  enableOSMImport: boolean;
   
   // Development features
   enableDebugMode: boolean;
@@ -36,6 +37,7 @@ export const defaultFeatureFlags: FeatureFlags = {
   enableAddressVisibilityToggle: false, // Disabled by default
   enableQuickImport: false, // Disabled by default - Beta feature
   enableProviderSelectionModal: false, // Disabled by default - Skip provider question
+  enableOSMImport: true, // Enabled for testing - Beta feature
   
   // Development features - disabled by default
   enableDebugMode: false,
@@ -80,6 +82,7 @@ export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFl
     enableAddressVisibilityToggle: getFeatureFlag('enableAddressVisibilityToggle', overrides),
     enableQuickImport: getFeatureFlag('enableQuickImport', overrides),
     enableProviderSelectionModal: getFeatureFlag('enableProviderSelectionModal', overrides),
+    enableOSMImport: getFeatureFlag('enableOSMImport', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),
     isAppLaunched: getFeatureFlag('isAppLaunched', overrides),
     skipWaitlist: getFeatureFlag('skipWaitlist', overrides),

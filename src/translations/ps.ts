@@ -244,6 +244,26 @@ export const ps = {
       contactRequired: "مهرباني وکړئ لږترلږه یو د اړیکو طریقه وړاندې کړئ (بریښنالیک، تلیفون، وېب پاڼه، یا انسټاګرام)",
       emailConsentText: "ستاسو د بریښنالیک پته ورکولو سره، تاسو د دې وړاندیز په اړه تعقیب ترلاسه کولو لپاره د هغې ذخیره کولو سره موافقه کوئ."
     },
+    importOsm: {
+      title: "د OpenStreetMap څخه واردول",
+      step1Title: "مسلمان ځایونه لټون",
+      cityLabel: "ښار",
+      cityPlaceholder: "د لټون لپاره ښار داخل کړئ",
+      searchLabel: "مسلمان ځایونه لټون",
+      searchPlaceholder: "جوماتونه، حلال رستورانټونه لټون...",
+      selectCityFirst: "مهرباني وکړئ لومړی یو ښار غوره کړئ",
+      autoSelectedCategory: "په اوتومات ډول ټاکل شوی",
+      typeToSearch: "د لټون لپاره لږترلږه 2 توري ولیکئ",
+      noResults: "په دې ښار کې هیڅ مسلمان ځایونه ونه موندل شول",
+      importedFromOSM: "د OpenStreetMap څخه وارد شوی",
+      placeTypes: {
+        mosque: "جومات",
+        islamicCenter: "اسلامي مرکز",
+        restaurant: "حلال رستورانټ",
+        fastFood: "حلال فاسټ فوډ",
+        shop: "حلال پلورنځی"
+      }
+    },
     basics: {
       title: "وړاندیز جوړ کړئ",
       loginRequired: "ننوتل اړین دی",

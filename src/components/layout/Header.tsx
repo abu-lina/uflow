@@ -109,8 +109,8 @@ export function Header() {
           <nav className="flex h-20 w-full items-center justify-between">
             {/* Left */}
             <div className="flex flex-row items-center gap-16">
-              <Link aria-label="Zur Startseite" className="relative" href="/">
-                <Logo className="size-8 text-white" />
+              <Link aria-label="Zur Startseite" className="relative flex items-center justify-center flex-shrink-0" href="/">
+                <Logo className="size-8 text-white flex-shrink-0" height={32} width={32} />
               </Link>
               {!user && (
                 <Link

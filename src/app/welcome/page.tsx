@@ -40,7 +40,7 @@ export default function WelcomePage() {
 
   const handleContinueInBrowser = () => {
     // User chose to continue in browser instead of installing PWA
-    router.push('/waitlist');
+    router.push('/providers');
   };
 
   return (
