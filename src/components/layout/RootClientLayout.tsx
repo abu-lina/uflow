@@ -35,8 +35,14 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
     setIsMounted(true);
   }, []);
   
-  // Check feature flag synchronously on client-side (not in useEffect to avoid timing issues)
-  const isAppLaunched = typeof window !== 'undefined' ? getFeatureFlag('isAppLaunched') : false;
+  // Check feature flag on client-side only (use state to avoid webpack evaluation issues)
+  const [isAppLaunched, setIsAppLaunched] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsAppLaunched(getFeatureFlag('isAppLaunched'));
+    }
+  }, []);
 
   // Get app stage to determine navigation (Stage 3 can be from isAppLaunched or provider count >= 15)
   const { stage } = useAppStage();
@@ -84,14 +90,14 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
           </div>
         )}
         
-        <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto">
+        <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto min-h-0">
           <PageTransition key={pathname}>
             {children}
           </PageTransition>
         </main>
         
         {/* Desktop Footer */}
-        <div className="hidden md:block">
+        <div className="hidden md:block relative z-10 flex-shrink-0">
           <DesktopFooter />
         </div>
         

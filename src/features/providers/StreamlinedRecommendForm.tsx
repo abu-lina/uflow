@@ -787,21 +787,24 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const handleProviderNameInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const trimmedValue = value.trim();
+    const clearingProviderName = trimmedValue.length === 0;
 
     setFormData(prev => ({
       ...prev,
       title: value,
-      // Clear category when user starts searching again or clears the field
-      category: trimmedValue.length === 0 ? '' : (prev.category || ''),
+      // Clear category when user clears the field or edits (so auto-selected category doesn't stick)
+      category: clearingProviderName ? '' : (prev.category || ''),
     }));
 
-    if (trimmedValue.length === 0) {
+    if (clearingProviderName) {
       setIsCategoryAutoSelected(false);
+      // Clear category in context so the sync effect doesn't restore it
+      updateFormData({ category: '' });
     }
 
     setProviderNameSearchQuery(value);
     setSelectedProviderNameIndex(-1);
-  }, []);
+  }, [updateFormData]);
 
   // Handle provider name input focus
   const handleProviderNameInputFocus = useCallback(() => {

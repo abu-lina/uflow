@@ -5,11 +5,10 @@
  * Overpass API approach with name-based search.
  */
 
-import type { OSMPlace, OSMPlaceType, PhotonFeature, PhotonResponse, NominatimPOIResult, FoursquarePlace, FoursquareResponse } from '@/types/osm';
+import type { OSMPlace, OSMPlaceType, PhotonFeature, PhotonResponse, NominatimPOIResult, FoursquarePlace } from '@/types/osm';
 
 const PHOTON_API_URL = 'https://photon.komoot.io/api';
 const NOMINATIM_API_URL = 'https://nominatim.openstreetmap.org/search';
-const FOURSQUARE_API_URL = 'https://api.foursquare.com/v3/places/search';
 
 // Foursquare category IDs
 const FOURSQUARE_CATEGORY_MOSQUE = '5ef17a861a251a003bea905b';
@@ -409,11 +408,20 @@ function deduplicateResults(places: OSMPlace[]): OSMPlace[] {
   const seen = new Map<string, OSMPlace>();
 
   for (const place of places) {
+    const name = place.name;
+    if (name == null || typeof name !== 'string') {
+      continue;
+    }
+    const lat = place.lat;
+    const lon = place.lon;
+    if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+      continue;
+    }
     // Create a key based on normalized name and approximate location
-    const normalizedName = place.name.toLowerCase().trim();
+    const normalizedName = name.toLowerCase().trim();
     // Round coordinates to ~100m precision for deduplication
-    const latRounded = Math.round(place.lat * 1000) / 1000;
-    const lonRounded = Math.round(place.lon * 1000) / 1000;
+    const latRounded = Math.round(lat * 1000) / 1000;
+    const lonRounded = Math.round(lon * 1000) / 1000;
     const key = `${normalizedName}|${latRounded}|${lonRounded}`;
 
     const existing = seen.get(key);
@@ -477,9 +485,14 @@ function mapPhotonToOSMPlace(feature: PhotonFeature): OSMPlace | null {
     address.city,
   ].filter(Boolean);
   
-  const displayName = addressParts.length > 0 
-    ? `${props.name}, ${addressParts.join(', ')}`
-    : props.name;
+  const displayName = addressParts.length > 0
+    ? (props.name ? `${props.name}, ${addressParts.join(', ')}` : addressParts.join(', '))
+    : (props.name ?? '');
+
+  // Ensure name is always a string (Photon can return features without name)
+  const name = typeof props.name === 'string' && props.name.trim()
+    ? props.name
+    : (addressParts.length > 0 ? addressParts.join(', ') : 'Unnamed');
 
   // Map OSM type
   const osmTypeMap: Record<string, 'node' | 'way' | 'relation'> = {
@@ -492,7 +505,7 @@ function mapPhotonToOSMPlace(feature: PhotonFeature): OSMPlace | null {
     id: props.osm_id,
     type: osmTypeMap[props.osm_type] || 'node',
     placeType,
-    name: props.name,
+    name,
     lat,
     lon,
     address: Object.keys(address).some(k => address[k as keyof typeof address]) ? address : undefined,
@@ -509,7 +522,7 @@ function mapPhotonToOSMPlace(feature: PhotonFeature): OSMPlace | null {
  * Determine place type from Foursquare category
  */
 function getPlaceTypeFromFoursquare(place: FoursquarePlace): OSMPlaceType {
-  const categoryIds = place.categories.map(c => c.id.toString());
+  const categoryIds = place.categories.map(c => c.id); // Already strings in new API
   const categoryNames = place.categories.map(c => c.name.toLowerCase());
   const name = place.name.toLowerCase();
 
@@ -573,8 +586,8 @@ function getPlaceTypeFromFoursquare(place: FoursquarePlace): OSMPlaceType {
  * Map Foursquare place to OSMPlace
  */
 function mapFoursquareToOSMPlace(place: FoursquarePlace): OSMPlace {
-  const lat = place.geocodes.main.latitude;
-  const lon = place.geocodes.main.longitude;
+  const lat = place.latitude;
+  const lon = place.longitude;
   const placeType = getPlaceTypeFromFoursquare(place);
 
   // Parse address from location object
@@ -600,9 +613,9 @@ function mapFoursquareToOSMPlace(place: FoursquarePlace): OSMPlace {
     ? `${place.name}, ${addressPartsDisplay.join(', ')}`
     : place.name;
 
-  // Use a hash of fsq_id as numeric ID (for compatibility with OSMPlace interface)
+  // Use a hash of fsq_place_id as numeric ID (for compatibility with OSMPlace interface)
   // Foursquare IDs are strings, so we create a numeric hash
-  const idHash = place.fsq_id.split('').reduce((acc, char) => {
+  const idHash = place.fsq_place_id.split('').reduce((acc, char) => {
     return ((acc << 5) - acc) + char.charCodeAt(0);
   }, 0);
   const numericId = Math.abs(idHash);
@@ -627,7 +640,7 @@ function mapFoursquareToOSMPlace(place: FoursquarePlace): OSMPlace {
       instagram,
     } : undefined,
     tags: {
-      foursquare_id: place.fsq_id,
+      foursquare_id: place.fsq_place_id,
       rating: place.rating?.toString() || '',
       source: 'foursquare',
     },
@@ -636,7 +649,7 @@ function mapFoursquareToOSMPlace(place: FoursquarePlace): OSMPlace {
 }
 
 /**
- * Search places using Foursquare Places API
+ * Search places using Foursquare Places API (via our secure proxy)
  */
 async function searchFoursquare(
   query: string,
@@ -645,77 +658,33 @@ async function searchFoursquare(
     limit?: number;
   }
 ): Promise<OSMPlace[]> {
-  const apiKey = process.env.NEXT_PUBLIC_FOURSQUARE_API_KEY;
-  
-  // Skip if API key is not configured
-  if (!apiKey) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️ Foursquare API key not configured - add NEXT_PUBLIC_FOURSQUARE_API_KEY to .env.local');
-    }
-    return [];
-  }
-
-  // Validate API key format (basic check - Service API Keys are typically alphanumeric)
-  if (apiKey.length < 10) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️ Foursquare API key seems too short - make sure you copied the full Service API Key (not OAuth Client ID)');
-    }
-  }
-
   try {
-    // Search for both mosques and halal restaurants
-    const categories = `${FOURSQUARE_CATEGORY_MOSQUE},${FOURSQUARE_CATEGORY_HALAL_RESTAURANT}`;
-    
-  const params = new URLSearchParams({
-    query: query.trim(),
-    categories,
-    ll: `${cityCoords.lat},${cityCoords.lon}`,
-    radius: '5000', // 5km radius
-    limit: String(options?.limit ?? 10),
-    sort: 'DISTANCE',
-    fields: 'fsq_id,name,location,geocodes,categories,tel,website,email,social_media',
-  });
-
-    const response = await fetch(`${FOURSQUARE_API_URL}?${params.toString()}`, {
-      headers: {
-        'Authorization': apiKey,
-        'Accept': 'application/json',
-      },
+    // Call our secure server-side API route
+    const params = new URLSearchParams({
+      query: query.trim(),
+      lat: String(cityCoords.lat),
+      lon: String(cityCoords.lon),
+      limit: String(options?.limit ?? 10),
     });
 
+    const requestUrl = `/api/places/foursquare/search?${params.toString()}`;
+    const response = await fetch(requestUrl);
+
     if (!response.ok) {
-      // Log detailed error info in development
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
       if (process.env.NODE_ENV === 'development') {
-        const errorText = await response.text().catch(() => 'Unable to read error');
-        let errorMessage = 'Foursquare API error';
-        
-        if (response.status === 401) {
-          errorMessage = '❌ Foursquare Authentication Failed - Invalid API Key';
-          console.error(errorMessage, {
-            status: response.status,
-            error: errorText,
-            hint: 'Make sure you\'re using the Service API Key (not OAuth Client ID/Secret)',
-            hint2: 'Get it from: https://developer.foursquare.com/ → Your Project → Service API Keys',
-            hint3: 'Check that NEXT_PUBLIC_FOURSQUARE_API_KEY is set correctly in .env.local',
-          });
-        } else {
-          console.error('❌ Foursquare API error:', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorText,
-          });
-        }
-      }
-      // Don't log errors if it's just missing API key or rate limit (already logged above)
-      if (response.status !== 401 && response.status !== 429 && process.env.NODE_ENV !== 'development') {
-        console.error('Foursquare API error:', response.status, response.statusText);
+        console.error('❌ Foursquare API proxy error:', {
+          status: response.status,
+          error: errorData.error,
+        });
       }
       return [];
     }
 
-    const data: FoursquareResponse = await response.json();
+    const responseData = (await response.json()) as { data?: FoursquarePlace[] };
+    const data: FoursquarePlace[] = responseData.data || [];
 
-    if (!data.results || data.results.length === 0) {
+    if (!data || data.length === 0) {
       if (process.env.NODE_ENV === 'development') {
         console.log('ℹ️ Foursquare returned 0 results for query:', query);
       }
@@ -723,20 +692,19 @@ async function searchFoursquare(
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('📦 Foursquare raw results:', data.results.length, 'before filtering');
+      console.log('📦 Foursquare raw results:', data.length, 'before filtering');
     }
 
     // Filter results by query (Foursquare may return broader results)
-    // Note: For city-only queries, we might want to return all results in that city
     const searchQueryLower = query.trim().toLowerCase();
     const isCityOnlyQuery = searchQueryLower.length > 2 && !searchQueryLower.includes(' ') && 
                            (searchQueryLower.match(/^[a-zäöüß]+$/i) !== null);
     
-    let filteredResults = data.results;
+    let filteredResults = data;
     
     // Only filter if it's not just a city name (city names are usually single words)
     if (!isCityOnlyQuery) {
-      filteredResults = data.results.filter(place => {
+      filteredResults = data.filter((place: FoursquarePlace) => {
         const nameMatch = place.name.toLowerCase().includes(searchQueryLower);
         const addressMatch = place.location.address?.toLowerCase().includes(searchQueryLower);
         return nameMatch || addressMatch;
@@ -750,11 +718,11 @@ async function searchFoursquare(
     // Map Foursquare places to OSMPlace
     const places = filteredResults
       .map(mapFoursquareToOSMPlace)
-      .filter((place): place is OSMPlace => place !== null);
+      .filter((place: OSMPlace | null): place is OSMPlace => place !== null);
 
     // Console logging for debugging (dev only)
     if (process.env.NODE_ENV === 'development' && places.length > 0) {
-      console.log('✅ Foursquare returned', places.length, 'results:', places.map(p => p.name));
+      console.log('✅ Foursquare returned', places.length, 'results:', places.map((p) => p.name));
     }
 
     return places;

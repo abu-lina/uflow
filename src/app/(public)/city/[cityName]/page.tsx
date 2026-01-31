@@ -223,7 +223,9 @@ export default function CityPage() {
           country={cityData.country}
           onReceiveUpdates={handleReceiveUpdates}
         />
-        <CityEarlyAccessNavbar />
+        <div className="block md:hidden">
+          <CityEarlyAccessNavbar />
+        </div>
       </>
     );
   }
@@ -293,7 +295,9 @@ export default function CityPage() {
         country={cityData.country}
         onReceiveUpdates={handleReceiveUpdates}
       />
-      <CityEarlyAccessNavbar />
+      <div className="block md:hidden">
+        <CityEarlyAccessNavbar />
+      </div>
     </>
   );
 }

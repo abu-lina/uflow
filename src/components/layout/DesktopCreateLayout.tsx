@@ -72,6 +72,7 @@ export function DesktopCreateLayout({
         ref={scrollRef}
         className={cn(
           'absolute inset-0 overflow-y-auto',
+          'z-0', // Ensure it's below footer (footer has z-10)
           background,
           className
         )}

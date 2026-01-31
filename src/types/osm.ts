@@ -123,10 +123,10 @@ export interface NominatimPOIResult {
 }
 
 /**
- * Foursquare Places API response types
+ * Foursquare Places API response types (updated for 2025-06-17 API)
  */
 export interface FoursquarePlace {
-  fsq_id: string;
+  fsq_place_id: string; // Changed from fsq_id
   name: string;
   location: {
     address?: string;
@@ -134,14 +134,12 @@ export interface FoursquarePlace {
     postcode?: string;
     region?: string;
     country?: string;
-    lat: number;
-    lng: number;
   };
-  geocodes: {
-    main: { latitude: number; longitude: number };
-  };
+  // New field structure - geocodes replaced with latitude/longitude
+  latitude: number;
+  longitude: number;
   categories: Array<{
-    id: number;
+    id: string; // Changed from number to string (BSON category ID)
     name: string;
   }>;
   contact?: {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
@@ -22,16 +22,16 @@ export default function RecommendPage() {
   // Check if success screen should be shown from URL
   const showSuccessScreen = searchParams.get('success') === 'true';
 
+  // Initial city from storage: start as '' so server and first client paint match (avoids hydration mismatch)
+  const [initialCity, setInitialCity] = useState('');
+  useEffect(() => {
+    setInitialCity(localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity') || '');
+  }, []);
+
   // Set creation mode to recommendation on mount
   useEffect(() => {
     setCreationMode('recommendation');
   }, [setCreationMode]);
-
-  // Memoize initial city to prevent re-computation on every render
-  const initialCity = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity') || '';
-  }, []);
 
   // Memoize callbacks to prevent prop changes
   const handleBack = useCallback(() => {

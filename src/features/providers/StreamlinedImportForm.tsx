@@ -678,12 +678,17 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
     const value = e.target.value;
     const trimmedValue = value.trim();
 
-    setFormData(prev => ({
-      ...prev,
-      title: value,
-      // Clear category when user starts searching again or clears the field
-      category: trimmedValue.length === 0 || prev.category ? '' : prev.category,
-    }));
+    setFormData(prev => {
+      const next: typeof prev = { ...prev, title: value };
+      // Clear category when user clears the provider name (deletion logic)
+      if (trimmedValue.length === 0) {
+        next.category = '';
+      } else if (prev.category) {
+        // User edited the name; clear auto-selected category so they pick again
+        next.category = '';
+      }
+      return next;
+    });
 
     if (trimmedValue.length === 0) {
       setIsCategoryAutoSelected(false);

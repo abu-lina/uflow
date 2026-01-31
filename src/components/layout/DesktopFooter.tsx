@@ -7,7 +7,7 @@ export function DesktopFooter() {
   const { t } = useLanguage();
 
   return (
-    <footer className="hidden md:block border-t border-gray-200 bg-white mt-auto">
+    <footer className="hidden md:block border-t border-gray-200 bg-white mt-auto relative z-10">
       <div className="mx-auto w-full max-w-7xl px-4 py-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           {/* Copyright */}
