@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { 
-  checkRateLimit, 
-  getClientIdentifier 
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import {
+  checkRateLimit,
+  getClientIdentifier,
 } from '@/lib/rate-limit';
 import {
   getClientIP,
@@ -10,27 +11,6 @@ import {
   markSuspiciousIP,
   unblockIP,
 } from '@/utils/security';
-
-// Lazy initialization - only creates client when first accessed
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
-
-  return createClient(
-    supabaseUrl,
-    supabaseServiceKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
-}
 
 /**
  * Check if request is in test mode (bypasses rate limiting)
@@ -140,30 +120,8 @@ export async function POST(request: Request) {
     
     console.log('[LOGIN API] Received login request:', { email, isTest });
     
-    // Get Supabase credentials for sign-in
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('[LOGIN API] Missing Supabase environment variables');
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-    
-    // Create client for sign-in
-    const tempClient = createClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-    
+    const tempClient = createSupabaseServerClient();
+
     // Attempt to sign in - this will verify credentials
     const { data: sessionData, error: signInError } = await tempClient.auth.signInWithPassword({
       email,

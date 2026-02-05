@@ -14,10 +14,3 @@ export const waitlistUpdateSchema = z.object({
 });
 
 export type WaitlistInput = z.infer<typeof waitlistSchema>;
-
-
-
-
-
-
-

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudit';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
-import { providerReviewUpdateSchema } from '@/lib/validation/adminSchemas';
+import { providerReviewUpdateSchema } from '@/lib/validations/adminSchemas';
 import { updateProviderReview } from '@/services/admin/providers';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 import { sanitizeTextInput } from '@/utils/sanitizeInput';

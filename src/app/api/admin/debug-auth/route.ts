@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { cookies as nextCookies } from 'next/headers';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 
@@ -95,26 +95,15 @@ export async function GET() {
     let adminUserData = null;
     let adminError = null;
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      
-      if (supabaseUrl && supabaseServiceKey) {
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        });
-        
-        const { data, error } = await supabaseAdmin
-          .from('users')
-          .select('id, user_id, email, role, created_at')
-          .eq('user_id', user.id)
-          .single();
-        
-        adminUserData = data;
-        adminError = error;
-      }
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data, error } = await supabaseAdmin
+        .from('users')
+        .select('id, user_id, email, role, created_at')
+        .eq('user_id', user.id)
+        .single();
+
+      adminUserData = data;
+      adminError = error;
     } catch (e) {
       adminError = e instanceof Error ? e : new Error(String(e));
     }
@@ -122,25 +111,14 @@ export async function GET() {
     // Check all users with admin role (using admin client)
     let allAdmins = null;
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      
-      if (supabaseUrl && supabaseServiceKey) {
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        });
-        
-        const { data } = await supabaseAdmin
-          .from('users')
-          .select('id, user_id, email, role')
-          .in('role', ['admin', 'moderator'])
-          .limit(10);
-        
-        allAdmins = data;
-      }
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data } = await supabaseAdmin
+        .from('users')
+        .select('id, user_id, email, role')
+        .in('role', ['admin', 'moderator'])
+        .limit(10);
+
+      allAdmins = data;
     } catch {
       // Ignore errors for this check
     }

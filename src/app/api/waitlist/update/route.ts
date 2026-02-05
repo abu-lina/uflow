@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { waitlistUpdateSchema } from '@/lib/validation/waitlistSchemas';
+import { waitlistUpdateSchema } from '@/lib/validations/waitlistSchemas';
 
 /**
  * PATCH /api/waitlist/update

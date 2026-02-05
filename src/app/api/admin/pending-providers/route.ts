@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
-import { pendingProvidersQuerySchema } from '@/lib/validation/adminSchemas';
+import { pendingProvidersQuerySchema } from '@/lib/validations/adminSchemas';
 import { getPendingProviders } from '@/services/admin/providers';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 

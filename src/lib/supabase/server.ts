@@ -1,3 +1,4 @@
+import 'server-only';
 import { createServerClient } from '@supabase/ssr';
 
 import { cookieAdapter } from './cookieAdapter';

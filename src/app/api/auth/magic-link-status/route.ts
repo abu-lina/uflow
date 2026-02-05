@@ -1,34 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 /**
  * Check magic link status for a specific email
  * GET /api/auth/magic-link-status?email=user@example.com
- * 
+ *
  * Shows:
  * - Recent magic link tokens created
  * - Token status (used, expired, valid)
  * - Email sending status (if available)
  */
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
-
-  return createClient(
-    supabaseUrl,
-    supabaseServiceKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
-}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
