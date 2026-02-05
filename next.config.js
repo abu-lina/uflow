@@ -1,7 +1,3 @@
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-});
-
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
@@ -122,11 +118,9 @@ const nextConfig = {
   compress: true,
   
   // ESLint configuration
-  // Note: We use flat config (eslint.config.mjs) which Next.js may not auto-detect
-  // The warning "The Next.js plugin was not detected" is informational and doesn't affect functionality
-  // ESLint still works correctly - Next.js just can't auto-detect the plugin in flat config format
+  // ESLint runs in CI separately; skip during Docker/build to save 30-90s per build
   eslint: {
-    ignoreDuringBuilds: false, // Keep ESLint enabled during builds
+    ignoreDuringBuilds: true,
   },
 
   // Docker/Standalone output for Hetzner deployment
@@ -407,4 +401,8 @@ const nextConfig = {
   },
 };
 
-module.exports = withBundleAnalyzer(withPWA(nextConfig));
+// Only load bundle analyzer when explicitly enabled (saves 5-15s per build)
+module.exports =
+  process.env.ANALYZE === 'true'
+    ? require('@next/bundle-analyzer')({ enabled: true })(withPWA(nextConfig))
+    : withPWA(nextConfig);

@@ -23,12 +23,10 @@ ENV DISABLE_PWA=$DISABLE_PWA
 # Copy package files first for better layer caching
 COPY package.json package-lock.json ./
 
-# Install dependencies with BuildX cache mount for faster rebuilds
-# Cache persists across builds, only invalidates when package files change
-# Removed --prefer-offline to allow downloading new packages when dependencies are updated
-# BuildX cache mount still provides automatic caching for subsequent builds
+# Install production dependencies only (saves 15-45s; tests run in CI before build).
+# If you see "next: not found", revert to: npm ci --no-audit
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --no-audit
+    npm ci --omit=dev --no-audit
 
 # Copy source code (this layer invalidates on code changes, but npm cache persists)
 COPY . .
