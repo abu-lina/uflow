@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
+import { cleanupServiceWorkers } from '@/lib/pwa/serviceWorkerCleanup';
 import { AuthProvider } from '@/providers/auth-provider';
 import { AuthSyncer } from '@/providers/AuthSyncer';
 import { FilterProvider } from '@/providers/filter-provider';
@@ -52,6 +53,11 @@ function getQueryClient() {
 export function ClientProviders({ children, initialUser }: ClientProvidersProps) {
   // Use useState with lazy initialization to ensure QueryClient is only created once
   const [queryClient] = useState(() => getQueryClient());
+
+  // Run service worker cleanup on mount (once per session)
+  useEffect(() => {
+    cleanupServiceWorkers();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

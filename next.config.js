@@ -17,21 +17,9 @@ const withPWA = require('next-pwa')({
   fallbacks: {
     document: '/offline.html',
   },
+  // Do NOT add Supabase to runtimeCaching - pass-through to network only.
+  // Caching Supabase (e.g. NetworkFirst) can trigger fallback on failure and cause NetworkError.
   runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/.*\.supabase\.co\/.*$/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'supabase-cache',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
     {
       urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif)$/,
       handler: 'CacheFirst',
