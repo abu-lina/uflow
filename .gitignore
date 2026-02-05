@@ -112,3 +112,6 @@ tests/performance/reports/
 imports/**/*.backup
 imports/**/*.processed
 imports/**/*.tmp
+
+# Lottie conversion temporary files
+imports/lottie/.temp-gif-frames/

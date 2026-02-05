@@ -240,18 +240,20 @@ async function convertLottieToGif(
       })
       .toBuffer();
 
-    // Clean up temp files
+    // Clean up temp files and directory
     tempFiles.forEach((file) => {
       try {
         fs.unlinkSync(file);
       } catch (e) {
-        // Ignore errors
+        console.warn(`Warning: Could not delete temp file ${file}`);
       }
     });
+
+    // Remove temp directory recursively
     try {
-      fs.rmdirSync(tempDir);
+      fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (e) {
-      // Ignore errors
+      console.warn(`Warning: Could not delete temp directory ${tempDir}`);
     }
 
     // Write GIF file
