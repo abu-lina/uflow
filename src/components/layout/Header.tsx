@@ -101,7 +101,7 @@ export function Header() {
   return (
     <>
       <header
-        className={`header-gradient fixed left-0 right-0 top-0 z-50 w-full shadow-sm transition-all duration-300 ${
+        className={`header-gradient fixed left-0 right-0 top-0 z-50 w-full shadow-sm transition-all duration-300 pt-[calc(env(safe-area-inset-top)+16px)] ${
           isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >

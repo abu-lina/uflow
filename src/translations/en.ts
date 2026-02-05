@@ -707,7 +707,7 @@ export const en = {
     },
     cityEarlyAccess: {
       title: "{{city}} is currently being built.",
-      description: "First providers are already visible. With each recommendation, {{city}} continues to grow.",
+      description: "{{city}} grows in Early Access step by step together with the Ummah. Every recommendation helps make Muslim offerings visible.",
       suggestProvider: "Suggest provider",
       receiveUpdates: "Receive updates for {{city}}",
       subscribeSuccess: "You will be notified when {{city}} has more providers.",

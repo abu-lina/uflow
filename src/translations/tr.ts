@@ -686,7 +686,7 @@ export const tr = {
     },
     cityEarlyAccess: {
       title: "{{city}} şu anda inşa ediliyor.",
-      description: "Erken Erişim şehri olarak {{city}}, Ummah ile birlikte adım adım büyüyor. Her öneri, Müslüman tekliflerini görünür kılmaya yardımcı olur.",
+      description: "{{city}}, Erken Erişim'de Ummah ile birlikte adım adım büyüyor. Her öneri, Müslüman tekliflerini görünür kılmaya yardımcı olur.",
       suggestProvider: "Sağlayıcı öner",
       receiveUpdates: "{{city}} için güncellemeleri al",
       subscribeSuccess: "{{city}} daha fazla sağlayıcıya sahip olduğunda bilgilendirileceksiniz.",

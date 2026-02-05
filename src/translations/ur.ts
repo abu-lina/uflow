@@ -703,7 +703,7 @@ export const ur = {
     },
     cityEarlyAccess: {
       title: "{{city}} فی الحال بنایا جا رہا ہے۔",
-      description: "پہلے فراہم کنندگان پہلے سے ہی نظر آ رہے ہیں۔ ہر تجویز کے ساتھ، {{city}} بڑھتا رہتا ہے۔",
+      description: "{{city}} Early Access میں امت کے ساتھ قدم بہ قدم بڑھ رہا ہے۔ ہر تجویز مسلمان پیشکشوں کو نظر آنے میں مدد کرتی ہے۔",
       suggestProvider: "فراہم کنندہ تجویز کریں",
       receiveUpdates: "{{city}} کے لیے اپ ڈیٹس موصول کریں",
       subscribeSuccess: "جب {{city}} میں مزید فراہم کنندگان ہوں گے تو آپ کو مطلع کیا جائے گا۔",

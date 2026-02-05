@@ -699,7 +699,7 @@ export const ps = {
     },
     cityEarlyAccess: {
       title: "{{city}} اوس جوړیږي.",
-      description: "لومړني وړاندې کوونکي دمخه لیدل کیږي. د هر وړاندیز سره، {{city}} وده کوي.",
+      description: "{{city}} په Early Access کې له امت سره ګام په ګام وده کوي. هر وړاندیز مسلمان وړاندیزونه لیدل کېدل اسانه کوي.",
       suggestProvider: "وړاندې کوونکی وړاندیز کړئ",
       receiveUpdates: "د {{city}} لپاره تازه معلومات ترلاسه کړئ",
       subscribeSuccess: "کله چې {{city}} کې نور وړاندې کوونکي وي نو تاسو ته به خبر ورکړل شي.",
