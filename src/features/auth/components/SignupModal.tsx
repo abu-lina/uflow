@@ -91,10 +91,10 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
         {/* Right Section */}
         <div className="flex h-full w-[571px] flex-col justify-center rounded-tr-[48px] bg-white p-16">
           <div className="mb-8">
-            <h1 className="font-inter-tight text-3xl font-semibold text-[#232323]">
+            <h1 className="font-inter-tight text-3xl font-semibold text-content-heading">
               Willkommen bei Ummah Flow
             </h1>
-            <p className="mt-4 font-inter text-lg text-[#8C8C8C]">
+            <p className="mt-4 font-inter text-lg text-content-muted">
               Entdecke muslimische Angebote in deiner Nähe insha&apos;Allah.
             </p>
           </div>
@@ -140,7 +140,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
             {/* Error Message */}
             {error && (
               <div className="mt-2">
-                <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                <div className="rounded-2xl border border-danger/20 bg-danger-soft p-4 shadow-sm">
                   <p className="font-inter-tight text-sm leading-[19px] text-danger">
                     {error}
                   </p>
@@ -156,7 +156,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
                   aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
                   aria-required="true"
                   checked={termsAccepted && privacyAccepted}
-                  className="h-4 w-4 rounded border-gray-300 text-[#589D96] focus:ring-[#589D96] focus:ring-2 flex-shrink-0"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-2 flex-shrink-0"
                   disabled={isLoading}
                   type="checkbox"
                   onChange={(e) => {
@@ -164,13 +164,13 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
                     setPrivacyAccepted(e.target.checked);
                   }}
                 />
-                <span className="text-[11px] leading-[13px] text-[#7A7A7A]">
+                <span className="text-[11px] leading-[13px] text-content-muted">
                   {t('legal.acceptTermsText') || 'Ich akzeptiere die '}
-                  <Link className="underline hover:text-[#589D96]" href="/terms">
+                  <Link className="underline hover:text-primary" href="/terms">
                     {t('legal.termsOfService') || 'Allgemeinen Geschäftsbedingungen'}
                   </Link>
                   {' '}{t('legal.and') || 'und'}{' '}
-                  <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
+                  <Link className="underline hover:text-primary" href="/privacy-policy">
                     {t('legal.privacyPolicy') || 'Datenschutzrichtlinie'}
                   </Link>
                   . {t('legal.privacyStatement') || 'Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.'}

@@ -29,7 +29,7 @@ export function MobileHeader({
   };
 
   return (
-        <header className={`fixed top-0 left-0 right-0 z-50 w-full bg-white/34 backdrop-blur-sm border-b border-gray-200/30 pt-safe-top ${className}`}>
+        <header className={`fixed top-0 left-0 right-0 z-50 w-full bg-background/34 backdrop-blur-sm border-b border-border/30 pt-safe-top ${className}`}>
       <div className="flex items-center justify-center w-full h-16 px-6 sm:px-8">
         <div className="flex w-full max-w-[400px] items-center justify-center">
           {variant === 'splash' ? (
@@ -52,10 +52,10 @@ export function MobileHeader({
               {showBackButton && (
                 <button
                   aria-label="Zurück"
-                  className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-neutral-100 transition-colors"
                   onClick={handleBack}
                 >
-                  <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-left" />
+                  <Icon className="h-6 w-6 text-content-heading" icon="material-symbols:chevron-left" />
                 </button>
               )}
               {title && (

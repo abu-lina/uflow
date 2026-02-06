@@ -114,7 +114,7 @@ export function Header() {
               </Link>
               {!user && (
                 <Link
-                  className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-heading hover:bg-neutral-light hover:text-[#333333] focus:text-content-heading focus:outline-none active:text-content-heading"
+                  className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-heading hover:bg-neutral-light hover:text-content focus:text-content-heading focus:outline-none active:text-content-heading"
                   href="/about"
                   onClick={handleAboutClick}
                 >
@@ -137,11 +137,11 @@ export function Header() {
               {/* Language Switcher - visible to all users, compact variant for header */}
               <LanguageSwitcher className="flex" variant="compact" />
               {loading ? (
-                <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-gray-100" />
+                <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-neutral-100" />
               ) : user ? (
                 <>
                   <Button
-                    className="hidden md:flex h-10 w-[89px] px-[14px] rounded-xl border border-[#CDCDCD]"
+                    className="hidden md:flex h-10 w-[89px] px-[14px] rounded-xl border border-border"
                     variant="primary"
                     onClick={() => router.push('/create')}
                   >
@@ -162,7 +162,7 @@ export function Header() {
                     {dropdownOpen && (
                       <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
                         <button
-                          className="block w-full px-4 py-2 text-left text-base hover:bg-gray-50"
+                          className="block w-full px-4 py-2 text-left text-base hover:bg-neutral-50"
                           onClick={() => {
                             setDropdownOpen(false);
                             router.push('/profile');
@@ -171,7 +171,7 @@ export function Header() {
                           {t('profile.accountSettings')}
                         </button>
                         <button
-                          className="block w-full px-4 py-2 text-left text-base text-red-600 hover:bg-gray-50"
+                          className="block w-full px-4 py-2 text-left text-base text-danger hover:bg-neutral-50"
                           onClick={async () => {
                             setDropdownOpen(false);
                             await signOut();

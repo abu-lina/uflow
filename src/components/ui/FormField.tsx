@@ -19,11 +19,11 @@ interface TextareaFieldProps extends BaseFieldProps, TextareaHTMLAttributes<HTML
 
 const baseFieldStyles = {
   input:
-    'h-10 w-full rounded-[15px] border border-[#D4D4D4] bg-white px-4 font-inter text-[15px] text-content outline-none transition-colors focus:border-primary-light focus:ring-1 focus:ring-primary-light',
+    'h-10 w-full rounded-[15px] border border-border bg-background px-4 font-inter text-[15px] text-content outline-none transition-colors focus:border-primary-light focus:ring-1 focus:ring-primary-light',
   textarea:
-    'h-[160px] w-full rounded-[15px] border border-[#D4D4D4] bg-white p-4 font-inter text-[15px] text-content outline-none transition-colors focus:border-primary-light focus:ring-1 focus:ring-primary-light',
+    'h-[160px] w-full rounded-[15px] border border-border bg-background p-4 font-inter text-[15px] text-content outline-none transition-colors focus:border-primary-light focus:ring-1 focus:ring-primary-light',
   label: 'px-3 font-inter text-base text-content-muted',
-  error: 'mt-1 text-sm text-red-500',
+  error: 'mt-1 text-sm text-danger',
 };
 
 export const FormField = {
@@ -33,11 +33,11 @@ export const FormField = {
         <div className="flex w-full flex-col items-start gap-2">
           <label className={baseFieldStyles.label} htmlFor={id}>
             {label}
-            {required && <span className="ml-1 text-red-500">*</span>}
+            {required && <span className="ml-1 text-danger">*</span>}
           </label>
           <input
             ref={ref}
-            className={cn(baseFieldStyles.input, error && 'border-red-500', className)}
+            className={cn(baseFieldStyles.input, error && 'border-danger', className)}
             id={id}
             required={required}
             {...props}
@@ -54,11 +54,11 @@ export const FormField = {
         <div className="flex w-full flex-col items-start gap-2">
           <label className={baseFieldStyles.label} htmlFor={id}>
             {label}
-            {required && <span className="ml-1 text-red-500">*</span>}
+            {required && <span className="ml-1 text-danger">*</span>}
           </label>
           <textarea
             ref={ref}
-            className={cn(baseFieldStyles.textarea, error && 'border-red-500', className)}
+            className={cn(baseFieldStyles.textarea, error && 'border-danger', className)}
             id={id}
             required={required}
             {...props}

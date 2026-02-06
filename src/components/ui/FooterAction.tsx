@@ -124,7 +124,7 @@ export function FooterAction({
       return (
         <footer
           className={cn(
-            'fixed bottom-0 left-0 right-0 z-[60] w-full border-t border-gray-200/30',
+            'fixed bottom-0 left-0 right-0 z-[60] w-full border-t border-border/30',
             className
           )}
           style={{
@@ -162,7 +162,7 @@ export function FooterAction({
     return (
       <footer
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] backdrop-blur-[20px] border-t border-gray-200/30',
+          'fixed bottom-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px] border-t border-border/30',
           className
         )}
         style={{
@@ -199,7 +199,7 @@ export function FooterAction({
     return (
       <footer
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] backdrop-blur-[20px] border-t border-gray-200/30',
+          'fixed bottom-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px] border-t border-border/30',
           className
         )}
         style={{

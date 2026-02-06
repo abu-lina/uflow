@@ -56,16 +56,11 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/features/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/design-system/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  
+
   // Minimal safelist - only for truly dynamic classes that can't be detected
-  // Tailwind automatically detects classes in content files
   safelist: [
-    // Dynamic color classes (only if generated programmatically)
-    // Most classes should be auto-detected from content files
-    {
-      pattern: /^(text|bg|border)-(cod-gray|breaker-bay)-(50|100|200|300|400|500|600|700|800|900|950)$/,
-    },
     // Semantic status colors (with variants)
     'text-success',
     'bg-success-soft',
@@ -78,10 +73,13 @@ const config: Config = {
     'border-warning/20',
     'text-warning/90',
     // Semantic neutral colors
-    'bg-neutral',
-    'bg-neutral-light',
+    'bg-neutral-50',
+    'bg-neutral-100',
     'bg-neutral-muted',
     'text-neutral',
+    'text-text-primary',
+    'text-text-muted',
+    'bg-surface',
     // Custom utilities that might be generated dynamically
     'h-header-spacing',
     'h-header-spacing-sm',
@@ -188,114 +186,115 @@ const config: Config = {
       },
 
       // ============================================
-      // Colors
+      // Colors (CSS variables for runtime theme switching)
       // ============================================
       colors: {
-        // Base color palettes (Tailwind 4 style)
-        'cod-gray': {
-          50: '#f6f6f6',
-          100: '#e7e7e7',
-          200: '#d1d1d1',
-          300: '#b0b0b0',
-          400: '#888888',
-          500: '#6d6d6d',
-          600: '#5d5d5d',
-          700: '#4f4f4f',
-          800: '#454545',
-          900: '#3d3d3d', // Normal text
-          950: '#0b0b0b', // Titles and icons
-        },
-
-        'breaker-bay': {
-          50: '#f6f9f8',
-          100: '#dbebe8',
-          200: '#b8d6d2',
-          300: '#8cbab3',
-          400: '#589d96', // Primary brand color
-          500: '#438983',
-          600: '#356e6a',
-          700: '#2d5855',
-          800: '#274948',
-          900: '#243d3c',
-          950: '#102322',
-        },
-
-        // ============================================
-        // Semantic Color Tokens (Purpose-Based Naming)
-        // ============================================
-        
-        // Primary brand color
-        // State mapping: CSS pseudo-classes handle states, tokens provide colors
-        // - Default: bg-primary
-        // - Hover: hover:bg-primary-dark
-        // - Pressed: active:bg-primary-darker
-        // - Selected: bg-primary-light
+        // Brand colors
         primary: {
-          DEFAULT: '#589d96', // breaker-bay-400 (base/default)
-          light: '#b8d6d2',   // breaker-bay-200 (light backgrounds, selected states)
-          dark: '#438983',    // breaker-bay-500 (hover states)
-          darker: '#356e6a',  // breaker-bay-600 (pressed/clicked states)
+          DEFAULT: 'hsl(var(--color-primary))',
+          light: 'hsl(var(--color-primary-light))',
+          dark: 'hsl(var(--color-primary-dark))',
+          darker: 'hsl(var(--color-primary-darker))',
         },
 
-        // Background colors
+        secondary: {
+          DEFAULT: 'hsl(var(--color-secondary))',
+          light: 'hsl(var(--color-secondary-light))',
+          dark: 'hsl(var(--color-secondary-dark))',
+        },
+
+        // Semantic status colors
+        success: {
+          DEFAULT: 'hsl(var(--color-success))',
+          light: 'hsl(var(--color-success-light))',
+          dark: 'hsl(var(--color-success-dark))',
+          soft: 'hsl(var(--color-success-soft))',
+        },
+
+        warning: {
+          DEFAULT: 'hsl(var(--color-warning))',
+          light: 'hsl(var(--color-warning-light))',
+          dark: 'hsl(var(--color-warning-dark))',
+          soft: 'hsl(var(--color-warning-soft))',
+        },
+
+        danger: {
+          DEFAULT: 'hsl(var(--color-danger))',
+          light: 'hsl(var(--color-danger-light))',
+          dark: 'hsl(var(--color-danger-dark))',
+          soft: 'hsl(var(--color-danger-soft))',
+        },
+
+        info: {
+          DEFAULT: 'hsl(var(--color-info))',
+          light: 'hsl(var(--color-info-light))',
+          dark: 'hsl(var(--color-info-dark))',
+          soft: 'hsl(var(--color-info-soft))',
+        },
+
+        // Neutral palette
+        neutral: {
+          50: 'hsl(var(--color-neutral-50))',
+          100: 'hsl(var(--color-neutral-100))',
+          200: 'hsl(var(--color-neutral-200))',
+          300: 'hsl(var(--color-neutral-300))',
+          400: 'hsl(var(--color-neutral-400))',
+          500: 'hsl(var(--color-neutral-500))',
+          600: 'hsl(var(--color-neutral-600))',
+          700: 'hsl(var(--color-neutral-700))',
+          800: 'hsl(var(--color-neutral-800))',
+          900: 'hsl(var(--color-neutral-900))',
+          950: 'hsl(var(--color-neutral-950))',
+          DEFAULT: 'hsl(var(--color-neutral-300))',
+          light: 'hsl(var(--color-neutral-100))',
+          muted: 'hsl(var(--color-neutral-50))',
+        },
+
+        // Surface colors
         background: {
-          DEFAULT: '#FFFFFF',
-          dark: '#1F2937',
+          DEFAULT: 'hsl(var(--color-background))',
+          dark: 'hsl(var(--color-neutral-800))',
         },
 
-        // Content/text colors (semantic naming)
+        surface: 'hsl(var(--color-surface))',
+
+        // Text colors (semantic)
+        text: {
+          primary: 'hsl(var(--color-text-primary))',
+          secondary: 'hsl(var(--color-text-secondary))',
+          muted: 'hsl(var(--color-text-muted))',
+          inverse: 'hsl(var(--color-text-inverse))',
+        },
+
+        // Content (backward compatibility: alias for text)
         content: {
-          DEFAULT: '#3d3d3d', // cod-gray-900 (normal text)
-          heading: '#0b0b0b', // cod-gray-950 (headings and icons)
-          muted: '#888888',   // cod-gray-400 (secondary/subdued text)
+          DEFAULT: 'hsl(var(--color-text-primary))',
+          heading: 'hsl(var(--color-text-primary))',
+          muted: 'hsl(var(--color-text-muted))',
         },
 
         // Border colors
         border: {
-          DEFAULT: '#D4D4D4',
-          light: '#E7E7E7',   // cod-gray-100
-          muted: '#E7E7E7',   // Alias for light (semantic alternative)
+          DEFAULT: 'hsl(var(--color-border-default))',
+          light: 'hsl(var(--color-border-light))',
+          muted: 'hsl(var(--color-border-muted))',
         },
 
-        // Neutral/muted colors (semantic alternative to "grey")
-        neutral: {
-          DEFAULT: '#CDCDCD',  // cod-gray-300 (approximate)
-          light: '#EEEEEE',  // cod-gray-100 (approximate)
-          muted: '#F6F6F6',  // cod-gray-50 (subtle backgrounds)
+        // Card (backward compatibility)
+        card: {
+          DEFAULT: 'hsl(var(--color-surface))',
+          foreground: 'hsl(var(--color-text-primary))',
         },
 
-        // ============================================
-        // Semantic Status Colors (Consistent Variants)
-        // ============================================
-        
-        success: {
-          DEFAULT: '#4CA987',
-          light: '#7BC4A9',
-          dark: '#3D8A6D',
-          soft: '#E8F5F0',    // Light background variant
-        },
+        // Input (for form components)
+        input: 'hsl(var(--color-border-default))',
+        accent: 'hsl(var(--color-primary))',
+        'accent-foreground': 'hsl(var(--color-text-inverse))',
 
-        warning: {
-          DEFAULT: '#E6A94C',
-          light: '#EFBC73',
-          dark: '#C48A3A',
-          soft: '#FDF5E6',    // Light background variant
-        },
-
-        danger: {
-          DEFAULT: '#D86363',
-          light: '#E58989',
-          dark: '#B84F4F',
-          soft: '#FCE8E8',    // Light background variant
-        },
-
-        info: {
-          DEFAULT: '#4F9BAE',
-          light: '#7AB5C5',
-          dark: '#3F7C8B',
-          soft: '#E6F2F5',    // Light background variant
-        },
-
+        // Legacy aliases (prefer text-content-heading, text-content, text-content-muted)
+        uFlowText: 'hsl(var(--color-text-primary))',
+        uFlowText2: 'hsl(var(--color-text-muted))',
+        uFlowDarkGrey: 'hsl(var(--color-text-primary))',
       },
 
       // ============================================
@@ -367,11 +366,11 @@ const config: Config = {
         DEFAULT: {
           css: {
             maxWidth: '65ch',
-            color: 'hsl(var(--foreground))',
+            color: 'hsl(var(--color-text-primary))',
             a: {
-              color: 'rgb(88, 157, 150)', // primary.DEFAULT - using RGB for CSS-in-JS compatibility
+              color: 'hsl(var(--color-primary))',
               '&:hover': {
-                color: 'rgb(88, 157, 150)', // primary.DEFAULT
+                color: 'hsl(var(--color-primary-dark))',
               },
             },
           },

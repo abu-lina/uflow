@@ -37,7 +37,7 @@ interface DesktopCreateLayoutProps {
   
   /**
    * Background gradient classes
-   * @default 'bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]'
+   * @default 'bg-gradient-to-b from-neutral-50 to-neutral-50'
    */
   background?: string;
   
@@ -61,7 +61,7 @@ interface DesktopCreateLayoutProps {
  */
 export function DesktopCreateLayout({
   children,
-  background = 'bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]',
+  background = 'bg-gradient-to-b from-neutral-50 to-neutral-50',
   className,
 }: DesktopCreateLayoutProps) {
   const scrollRef = useRef<HTMLDivElement>(null);

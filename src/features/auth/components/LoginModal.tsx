@@ -159,10 +159,10 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
         {/* Right Section */}
         <div className="flex h-full w-[571px] flex-col justify-center rounded-tr-[48px] bg-white p-16 overflow-y-auto">
           <div className="mb-8">
-            <h1 className="font-inter-tight text-3xl font-semibold text-[#232323]">
+            <h1 className="font-inter-tight text-3xl font-semibold text-content-heading">
               Willkommen zurück
             </h1>
-            <p className="mt-4 font-inter text-lg text-[#8C8C8C]">
+            <p className="mt-4 font-inter text-lg text-content-muted">
               Melde dich an, um fortzufahren.
             </p>
           </div>
@@ -199,13 +199,13 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
                     onResend={handleResendConfirmation}
                   />
                 ) : (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                  <div className="rounded-2xl border border-danger/20 bg-danger-soft p-4 shadow-sm">
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
-                        <AlertCircle className="h-5 w-5 text-red-600" />
+                        <AlertCircle className="h-5 w-5 text-danger" />
                       </div>
                       <div className="ml-3 flex-1">
-                        <p className="font-inter-tight text-sm leading-[19px] text-red-600">
+                        <p className="font-inter-tight text-sm leading-[19px] text-danger">
                           {error}
                         </p>
                       </div>
@@ -224,7 +224,7 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
             </button>
           </form>
           <div className="mt-8 flex w-full flex-col items-center gap-3">
-            <p className="text-center text-[11px] leading-[13px] text-[#7A7A7A]">
+            <p className="text-center text-[11px] leading-[13px] text-content-muted">
               {t('legal.privacyStatement') || 'Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.'}
             </p>
             {onSwitchMode && (

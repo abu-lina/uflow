@@ -26,7 +26,7 @@ export const EmptyState = memo(function EmptyState({
       {icon && (
         <motion.div
           animate={{ scale: [1, 1.1, 1] }}
-          className="mb-4 text-gray-400"
+          className="mb-4 text-content-muted"
           transition={{ duration: 2, repeat: Infinity }}
         >
           {icon}

@@ -51,7 +51,7 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
  * 
  * **Before (Complex nested structure):**
  * ```tsx
- * <div className="relative flex h-screen w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl mx-auto flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+ * <div className="relative flex h-screen w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl mx-auto flex-col bg-gradient-to-b from-neutral-50 to-neutral-50">
  *   <PageHeader />
  *   <HeaderSpacer />
  *   <main className="flex flex-1 flex-col items-center justify-between px-4">
@@ -126,7 +126,7 @@ export const PageLayout = forwardRef<HTMLDivElement, PageLayoutProps>(
           // Height handling - flex-1 to fill available space in parent flex container
           fullHeight && 'flex-1',
           // Background handling
-          hasBackground && 'bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]',
+          hasBackground && 'bg-gradient-to-b from-neutral-50 to-neutral-50',
           className
         )}
         {...props}

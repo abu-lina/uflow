@@ -88,7 +88,7 @@ export function CityEarlyAccessEmptyState({
         {/* Info Icon - Opens legal links */}
         <button
           aria-label={t('legal.legalInfo') || 'Legal information'}
-          className="flex items-center justify-center p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="flex items-center justify-center p-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
           type="button"
           onClick={() => setShowLegalModal(true)}
         >

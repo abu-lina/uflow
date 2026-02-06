@@ -25,8 +25,8 @@ export function PWAStatusIndicator({ className }: PWAStatusIndicatorProps) {
   }
 
   return (
-    <div className={`flex items-center gap-2 text-sm text-gray-500 ${className}`}>
-      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+    <div className={`flex items-center gap-2 text-sm text-content-muted ${className}`}>
+      <div className="w-2 h-2 bg-neutral-400 rounded-full"></div>
       <span>Browser Mode</span>
     </div>
   );

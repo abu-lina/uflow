@@ -241,7 +241,7 @@ export const SearchResultsList = memo(function SearchResultsList({
           ) : error ? (
             // Error state with retry option (only time we show a button)
             <div className="flex flex-col items-center gap-4">
-              <p className="text-sm text-red-500">
+              <p className="text-sm text-danger">
                 Fehler beim Laden weiterer Ergebnisse
               </p>
               {onRetry && (

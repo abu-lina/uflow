@@ -303,7 +303,7 @@ export function OSMPlaceAutocomplete({
       {/* Suggestions dropdown */}
       {showSuggestions && (
         <div
-          className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+          className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-border bg-background shadow-lg"
           id="osm-place-suggestions"
           role="listbox"
         >

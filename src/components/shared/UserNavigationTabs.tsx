@@ -18,7 +18,7 @@ export interface UserNavigationTabsProps {
 const BUTTON_STYLES = {
   base: 'flex h-10 items-center justify-center rounded-xl transition-colors',
   active: 'bg-primary text-white',
-  inactive: 'hover:bg-gray-100 text-text-secondary',
+  inactive: 'hover:bg-neutral-100 text-text-secondary',
   icon: 'size-6',
   text: 'font-inter-tight text-base font-medium',
 } as const;
@@ -31,7 +31,7 @@ export function UserNavigationTabs({
   return (
     <div
       aria-label="User navigation"
-      className="box-border flex h-14 flex-row items-center justify-start rounded-[16.8px] border border-[#D4D4D4] bg-white px-2 backdrop-blur-sm"
+      className="box-border flex h-14 flex-row items-center justify-start rounded-[16.8px] border border-border bg-background px-2 backdrop-blur-sm"
       role="tablist"
       style={{
         position: 'sticky',

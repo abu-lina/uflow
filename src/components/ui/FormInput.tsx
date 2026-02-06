@@ -92,7 +92,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
 
     return (
       <div className={cn(
-        'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white py-2',
+        'flex h-[56px] w-full items-center rounded-2xl border border-border bg-background py-2',
         isWithIcon ? 'justify-between' : '',
         containerClassName
       )}>
@@ -107,7 +107,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
           <input
             ref={ref}
             className={cn(
-              'h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content placeholder:text-gray-300 focus:outline-none focus:ring-0',
+              'h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content placeholder:text-content-muted focus:outline-none focus:ring-0',
               inputClassName,
               className
             )}

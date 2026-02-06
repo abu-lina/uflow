@@ -11,30 +11,140 @@
 
 @layer base {
   :root {
-    --background: 180 24% 48%; /* primary */
-    --background-light: 180 24% 88%; /* primary-light */
-    --text: 0 0% 14%; /* text color */
-    --neutral: 0 0% 80%; /* neutral */
-    --neutral-light: 0 0% 93%; /* neutral-light */
-    --border: 0 0% 83%; /* border */
-    
+    /* ========== Design system: Brand colors ========== */
+    --color-primary: 180 24% 48%;
+    --color-primary-light: 180 24% 78%;
+    --color-primary-dark: 180 24% 38%;
+    --color-primary-darker: 180 24% 28%;
+
+    --color-secondary: 180 24% 38%;
+    --color-secondary-light: 180 24% 88%;
+    --color-secondary-dark: 180 24% 28%;
+
+    /* ========== Design system: Semantic colors ========== */
+    --color-success: 158 36% 48%;
+    --color-success-light: 158 36% 62%;
+    --color-success-dark: 158 38% 38%;
+    --color-success-soft: 158 40% 93%;
+
+    --color-warning: 38 76% 60%;
+    --color-warning-light: 38 80% 70%;
+    --color-warning-dark: 38 55% 50%;
+    --color-warning-soft: 38 85% 95%;
+
+    --color-danger: 0 52% 63%;
+    --color-danger-light: 0 65% 72%;
+    --color-danger-dark: 0 42% 51%;
+    --color-danger-soft: 0 75% 95%;
+
+    --color-info: 197 38% 50%;
+    --color-info-light: 197 38% 62%;
+    --color-info-dark: 197 38% 39%;
+    --color-info-soft: 197 45% 93%;
+
+    /* ========== Design system: Neutral palette ========== */
+    --color-neutral-50: 0 0% 96%;
+    --color-neutral-100: 0 0% 91%;
+    --color-neutral-200: 0 0% 82%;
+    --color-neutral-300: 0 0% 69%;
+    --color-neutral-400: 0 0% 53%;
+    --color-neutral-500: 0 0% 43%;
+    --color-neutral-600: 0 0% 36%;
+    --color-neutral-700: 0 0% 31%;
+    --color-neutral-800: 0 0% 27%;
+    --color-neutral-900: 0 0% 24%;
+    --color-neutral-950: 0 0% 4%;
+
+    /* ========== Design system: Surface colors ========== */
+    --color-background: 0 0% 100%;
+    --color-surface: 0 0% 98%;
+    --color-overlay: 0 0% 0%;
+
+    /* ========== Design system: Text colors ========== */
+    --color-text-primary: 0 0% 14%;
+    --color-text-secondary: 0 0% 33%;
+    --color-text-muted: 0 0% 53%;
+    --color-text-inverse: 0 0% 100%;
+
+    /* ========== Design system: Border colors ========== */
+    --color-border-default: 0 0% 83%;
+    --color-border-light: 0 0% 91%;
+    --color-border-muted: 0 0% 96%;
+
+    /* ========== Design system: State colors ========== */
+    --color-state-hover: 0 0% 96%;
+    --color-state-active: 0 0% 91%;
+    --color-state-disabled: 0 0% 80%;
+    --color-state-focus: 180 24% 48%;
+
+    /* ========== Design system: Typography ========== */
+    --font-family-base: 'Inter', sans-serif;
+    --font-family-heading: 'Inter Tight', sans-serif;
+
+    /* ========== Design system: Spacing (Rule of 8) ========== */
+    --spacing-1: 8px;
+    --spacing-2: 16px;
+    --spacing-3: 24px;
+    --spacing-4: 32px;
+    --spacing-6: 48px;
+    --spacing-8: 64px;
+
+    /* ========== Design system: Border radius ========== */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    /* ========== Legacy (backward compatibility during migration) ========== */
+    --background: var(--color-background);
+    --background-light: var(--color-primary-light);
+    --foreground: var(--color-text-primary);
+    --text: var(--color-text-primary);
+    --neutral: 0 0% 80%;
+    --neutral-light: 0 0% 93%;
+    --border: var(--color-border-default);
+
     /* Mobile navigation spacing */
-    --mobile-nav-height: 96px; /* Actual navbar: 80px container + 16px (pb-4) */
-    --mobile-nav-spacing: 32px; /* Desired gap between content and nav */
-    --mobile-nav-total: calc(var(--mobile-nav-height) + var(--mobile-nav-spacing)); /* 128px */
-    
+    --mobile-nav-height: 96px;
+    --mobile-nav-spacing: 32px;
+    --mobile-nav-total: calc(var(--mobile-nav-height) + var(--mobile-nav-spacing));
+
     /* Header system design tokens */
     --header-padding-mobile: 16px;
     --header-padding-desktop: 24px;
     --header-height-mobile: 40px;
     --header-height-tablet: 48px;
     --header-height-desktop: 56px;
-    --content-gap: 24px; /* Standard gap between header and content */
-    
+    --content-gap: 24px;
+
     /* Header total height calculations for spacer */
     --header-total-mobile: calc(var(--header-padding-mobile) + var(--header-height-mobile) + var(--content-gap));
     --header-total-tablet: calc(var(--header-padding-desktop) + var(--header-height-tablet) + var(--content-gap));
     --header-total-desktop: calc(var(--header-padding-desktop) + var(--header-height-desktop) + var(--content-gap));
+  }
+
+  /* Dark theme (runtime theme switching) */
+  [data-theme='dark'] {
+    --color-background: 0 0% 7%;
+    --color-surface: 0 0% 10%;
+    --color-text-primary: 0 0% 98%;
+    --color-text-secondary: 0 0% 85%;
+    --color-text-muted: 0 0% 65%;
+    --color-text-inverse: 0 0% 4%;
+    --color-border-default: 0 0% 20%;
+    --color-border-light: 0 0% 15%;
+    --color-border-muted: 0 0% 12%;
+    --color-neutral-50: 0 0% 12%;
+    --color-neutral-100: 0 0% 18%;
+    --color-neutral-200: 0 0% 25%;
+    --color-neutral-300: 0 0% 35%;
+    --color-neutral-400: 0 0% 50%;
+    --color-neutral-500: 0 0% 60%;
+    --color-neutral-600: 0 0% 70%;
+    --color-neutral-700: 0 0% 80%;
+    --color-neutral-800: 0 0% 88%;
+    --color-neutral-900: 0 0% 93%;
+    --color-neutral-950: 0 0% 98%;
   }
 
   html {

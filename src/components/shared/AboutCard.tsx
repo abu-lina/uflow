@@ -12,8 +12,8 @@ interface AboutCardProps {
 
 export function AboutCard({ quote, cardIndex }: AboutCardProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 w-full sm:gap-4 md:aspect-[3/4] md:justify-start md:overflow-hidden">
-      {/* Icon - Responsive ratio: current on mobile, 3:4 on larger devices */}
+    <div className="flex flex-col items-center gap-3 w-full sm:gap-4 md:justify-start">
+      {/* Icon */}
       <div className={`relative flex items-center justify-center flex-shrink-0 ${
         cardIndex === 0 
           ? 'h-[241px] w-[295px] sm:h-[241px] sm:w-[295px] md:h-[241px] md:w-[295px]' 
@@ -31,9 +31,9 @@ export function AboutCard({ quote, cardIndex }: AboutCardProps) {
       </div>
 
       {/* Text Content */}
-      <div className="flex w-full flex-col items-center flex-1 md:min-h-0 md:overflow-y-auto">
-        {/* Title - Responsive: 2xl (iPhone SE) → 3xl (phones 376+) → 4xl (tablets 640+) → 4xl (desktop 768+) */}
-        <h3 className="w-full text-center font-inter-tight text-2xl font-semibold text-[#232323] xs:text-3xl sm:text-4xl md:text-4xl break-words">
+      <div className="flex w-full flex-col items-center">
+        {/* Title - Responsive: xl (mobile) → 2xl (xs) → 3xl (sm/md) → 3xl (lg) → 4xl (xl) */}
+        <h3 className="w-full text-center font-inter-tight text-xl font-semibold text-[#232323] xs:text-2xl sm:text-3xl md:text-3xl lg:text-3xl xl:text-4xl break-words">
           {quote.heading}
         </h3>
         

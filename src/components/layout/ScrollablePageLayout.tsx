@@ -36,7 +36,7 @@ interface ScrollablePageLayoutProps {
   
   /**
    * Background gradient classes
-   * @default 'bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]'
+   * @default 'bg-gradient-to-b from-neutral-50 to-neutral-50'
    */
   background?: string;
   
@@ -65,7 +65,7 @@ export const ScrollContext = createContext<RefObject<HTMLDivElement> | null>(nul
  */
 export function ScrollablePageLayout({
   children,
-  background = 'bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]',
+  background = 'bg-gradient-to-b from-neutral-50 to-neutral-50',
   className,
 }: ScrollablePageLayoutProps) {
   const scrollRef = useRef<HTMLDivElement>(null);

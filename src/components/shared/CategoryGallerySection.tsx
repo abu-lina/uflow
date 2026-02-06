@@ -109,7 +109,7 @@ export function CategoryGallerySection() {
 
   if (error) {
     return (
-      <section className="w-full px-6 py-8 text-center text-red-500 lg:hidden">
+      <section className="w-full px-6 py-8 text-center text-danger lg:hidden">
         <p>{error}</p>
       </section>
     );

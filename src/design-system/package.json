@@ -1,0 +1,19 @@
+{
+  "name": "@uflow/design-system",
+  "version": "1.0.0",
+  "description": "uFlow design system - tokens, themes, ThemeProvider, ThemeSwitcher",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./tokens": "./tokens/index.ts",
+    "./themes": "./themes/index.ts",
+    "./components": "./components/index.ts"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "sideEffects": false
+}

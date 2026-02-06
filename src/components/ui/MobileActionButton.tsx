@@ -35,7 +35,7 @@ export function MobileActionButton({
   
   const variantClasses = {
     primary: "bg-primary hover:bg-primary-dark active:bg-primary-darker",
-    secondary: "bg-gray-500 hover:bg-gray-600 active:bg-gray-700"
+    secondary: "bg-neutral-500 hover:bg-neutral-600 active:bg-neutral-700"
   };
 
   const disabledClasses = disabled || loading 

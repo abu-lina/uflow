@@ -20,14 +20,14 @@ export function LoadingSpinner({ size = 'md', className = '', text }: LoadingSpi
       <motion.div
         animate={{ rotate: 360 }}
         aria-label="Loading"
-        className={`${sizeClasses[size]} rounded-full border-2 border-gray-200 border-t-blue-500`}
+        className={`${sizeClasses[size]} rounded-full border-2 border-neutral-200 border-t-primary`}
         role="status"
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
       />
       {text && (
         <motion.p
           animate={{ opacity: [0.5, 1, 0.5] }}
-          className="text-sm font-medium text-gray-600"
+          className="text-sm font-medium text-content-muted"
           transition={{ duration: 1.5, repeat: Infinity }}
         >
           {text}

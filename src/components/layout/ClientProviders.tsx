@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { ThemeProvider } from '@/design-system';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { cleanupServiceWorkers } from '@/lib/pwa/serviceWorkerCleanup';
 import { AuthProvider } from '@/providers/auth-provider';
@@ -61,23 +62,25 @@ export function ClientProviders({ children, initialUser }: ClientProvidersProps)
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <LanguageUpdater />
-        <AuthProvider initialUser={initialUser}>
-          <AuthSyncer />
-          <FormProvider>
-            <SplashProvider>
-              <SearchProvider>
-                <FilterProvider>
-                  {children}
-                  <Toaster position="top-center" />
-                  <PWAInstallPrompt />
-                </FilterProvider>
-              </SearchProvider>
-            </SplashProvider>
-          </FormProvider>
-        </AuthProvider>
-      </LanguageProvider>
+      <ThemeProvider defaultTheme="default">
+        <LanguageProvider>
+          <LanguageUpdater />
+          <AuthProvider initialUser={initialUser}>
+            <AuthSyncer />
+            <FormProvider>
+              <SplashProvider>
+                <SearchProvider>
+                  <FilterProvider>
+                    {children}
+                    <Toaster position="top-center" />
+                    <PWAInstallPrompt />
+                  </FilterProvider>
+                </SearchProvider>
+              </SplashProvider>
+            </FormProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

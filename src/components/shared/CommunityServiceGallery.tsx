@@ -144,7 +144,7 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className={`relative h-full w-1/3 animate-pulse overflow-hidden bg-gray-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 2 ? 'rounded-r-[29px]' : ''}`}
+              className={`relative h-full w-1/3 animate-pulse overflow-hidden bg-neutral-200 ${i === 0 ? 'rounded-l-[29px]' : ''} ${i === 2 ? 'rounded-r-[29px]' : ''}`}
             />
           ))}
         </div>
@@ -153,7 +153,7 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
   }
 
   if (error) {
-    return <div className="text-red-500 md:hidden">{error}</div>;
+    return <div className="text-danger md:hidden">{error}</div>;
   }
 
   return (

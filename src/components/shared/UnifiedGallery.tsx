@@ -36,7 +36,7 @@ export default function UnifiedGallery({
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
-            className={`relative h-full w-1/3 animate-pulse overflow-hidden border border-white bg-gray-200 ${
+            className={`relative h-full w-1/3 animate-pulse overflow-hidden border border-white bg-neutral-200 ${
               i === 0 ? 'rounded-l-[29px]' : ''
             } ${i === 2 ? 'rounded-r-[29px]' : ''}`}
           />
@@ -46,7 +46,7 @@ export default function UnifiedGallery({
   }
 
   if (error) {
-    return <div className="text-red-500 md:hidden">{error}</div>;
+    return <div className="text-danger md:hidden">{error}</div>;
   }
 
   return (

@@ -73,7 +73,7 @@ export function ScrollablePageHeader({
       className={`fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+24px)] ${className}`}
       style={{
         // Exact match with page background - no blur to ensure seamless integration
-        background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
+        background: 'linear-gradient(180deg, hsl(var(--color-neutral-50)) 0%, hsl(var(--color-neutral-50)) 100%)',
         backgroundAttachment: 'scroll',
       }}
     >
@@ -85,7 +85,7 @@ export function ScrollablePageHeader({
             className="flex items-center justify-center w-8 h-8 -ml-1"
             onClick={handleBack}
           >
-            <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
+            <Icon className="w-8 h-8 text-content" icon="material-symbols:chevron-left" />
           </button>
         )}
 

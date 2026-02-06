@@ -230,7 +230,7 @@ export function PushNotificationPrompt({
         className
       )}
     >
-      <div className="rounded-xl bg-white p-4 shadow-lg border border-gray-200">
+      <div className="rounded-xl bg-background p-4 shadow-lg border border-border">
         <div className="flex items-start gap-3">
           {/* Icon */}
           <div className="flex-shrink-0">

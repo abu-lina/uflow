@@ -125,13 +125,13 @@ export function PWAInstallPrompt({
                 width={32}
               />
             </div>
-            <span className="font-inter-tight text-lg font-semibold text-[#333]">
+            <span className="font-inter-tight text-lg font-semibold text-content">
               Installiere U-Flow
             </span>
           </div>
           <button
             aria-label="Schließen"
-            className="pwa-close-btn flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
+            className="pwa-close-btn flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-neutral-100"
             tabIndex={0}
             onClick={handleClose}
           >
@@ -140,23 +140,23 @@ export function PWAInstallPrompt({
         </div>
 
         {/* Divider */}
-        <div className="my-3 w-full border-t border-[#BBBBBB]" />
+        <div className="my-3 w-full border-t border-border" />
 
         {/* Description */}
-        <div className="text-[16px] leading-snug text-[#555]">
+        <div className="text-[16px] leading-snug text-content-muted">
           Installiere die App auf deinem Gerät,
           <br />
           um jederzeit schnell darauf zuzugreifen.
         </div>
 
         {/* Benefit */}
-        <div className="mb-2 mt-2 px-1 font-inter-tight text-[16px] font-bold text-[#111] flex items-center gap-2">
+        <div className="mb-2 mt-2 px-1 font-inter-tight text-[16px] font-bold text-content-heading flex items-center gap-2">
           <Rocket className="h-4 w-4" />
           Kein App Store. Kein Download. Einfach öffnen.
         </div>
 
         {/* Steps */}
-        <ol className="mt-3 flex flex-col gap-2 text-[16px] text-[#333]">
+        <ol className="mt-3 flex flex-col gap-2 text-[16px] text-content">
           <li className="flex items-center gap-2">
             <span>1. Tippe unten auf das Teilen-Symbol</span>
             <span className="flex h-[22px] w-[22px] items-center justify-center">
@@ -190,7 +190,7 @@ export function PWAInstallPrompt({
           </li>
           <li className="flex items-center gap-2">
             <span>2. Wähle</span>
-            <span className="flex items-center gap-1 rounded border border-[#999] bg-white px-2 py-1 text-[15px] font-medium">
+            <span className="flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-[15px] font-medium">
               Zum Homebildschirm
               <svg aria-label="Plus Symbol" fill="none" height="17" viewBox="0 0 24 24" width="17">
                 <rect height="20" rx="6" stroke="#333" strokeWidth="2" width="20" x="2" y="2" />

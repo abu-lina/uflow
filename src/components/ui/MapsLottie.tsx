@@ -34,7 +34,7 @@ export function MapsLottie({ className = '', height }: MapsLottieProps) {
         className={`flex items-center justify-center ${className}`}
         style={height ? { height: typeof height === 'number' ? `${height}px` : height } : undefined}
       >
-        <div className="h-12 w-12 animate-pulse rounded-full bg-gray-200" />
+        <div className="h-12 w-12 animate-pulse rounded-full bg-neutral-200" />
       </div>
     );
   }

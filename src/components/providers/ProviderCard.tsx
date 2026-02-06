@@ -295,7 +295,7 @@ export const ProviderCard = React.memo(
           ) : (
             <>
               {showSkeleton && (
-                <div className="absolute left-0 top-0 h-64 w-72 animate-pulse rounded-t-3xl bg-gray-200" />
+                <div className="absolute left-0 top-0 h-64 w-72 animate-pulse rounded-t-3xl bg-neutral-200" />
               )}
               <div className={`border-uFlowWhite absolute left-0 top-0 h-64 w-72 overflow-hidden rounded-t-3xl border ${showSkeleton ? 'opacity-0' : 'opacity-100'}`}>
                 <Image
@@ -313,8 +313,8 @@ export const ProviderCard = React.memo(
           )}
           {!showSkeleton && (
             <div className="absolute bottom-3 left-3">
-              <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-[#CDCDCD] bg-white/70 px-2 backdrop-blur-[1.50px]">
-                <div className="justify-center text-center font-inter-tight text-sm font-medium text-[#333333]">
+              <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px]">
+                <div className="justify-center text-center font-inter-tight text-sm font-medium text-content">
                   {categoryName}
                 </div>
               </div>
@@ -324,8 +324,8 @@ export const ProviderCard = React.memo(
         {showSkeleton ? (
           <div className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5 outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300">
             <div className="flex w-full flex-col items-start gap-3.5">
-              <div className="h-6 w-3/4 animate-pulse rounded bg-gray-200" />
-              <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200" />
+              <div className="h-6 w-3/4 animate-pulse rounded bg-neutral-200" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-neutral-200" />
             </div>
           </div>
         ) : (
@@ -336,7 +336,7 @@ export const ProviderCard = React.memo(
           <div className="flex w-full flex-col items-start gap-3.5">
             <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
               <span
-                className="w-full min-w-0 truncate font-inter-tight text-xl font-semibold text-[#333333]"
+                className="w-full min-w-0 truncate font-inter-tight text-xl font-semibold text-content"
                 title={provider_name}
               >
                 {provider_name}
@@ -366,8 +366,8 @@ export const ProviderCard = React.memo(
                     />
                   ))}
                   {badges.length > 3 && (
-                    <div className="flex h-6 shrink-0 items-center rounded-[3px] border border-[#CDCDCD] bg-white/80 px-1.5 backdrop-blur-sm">
-                      <span className="font-inter-tight text-sm font-medium text-[#232323]">
+                    <div className="flex h-6 shrink-0 items-center rounded-[3px] border border-[#CDCDCD] bg-background/80 px-1.5 backdrop-blur-sm">
+                      <span className="font-inter-tight text-sm font-medium text-content-heading">
                         +{badges.length - 3}
                       </span>
                     </div>
@@ -381,16 +381,16 @@ export const ProviderCard = React.memo(
                   {(barakah_effects || []).slice(0, 2).map((effect: string, index: number) => (
                     <div
                       key={index}
-                      className="flex shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-white/80 px-1 py-0.5 backdrop-blur-sm"
+                      className="flex shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-background/80 px-1 py-0.5 backdrop-blur-sm"
                     >
-                      <span className="font-inter-tight text-sm font-medium text-[#232323]">
+                      <span className="font-inter-tight text-sm font-medium text-content-heading">
                         {effect}
                       </span>
                     </div>
                   ))}
                   {barakah_effects && barakah_effects.length > 2 && (
-                    <div className="flex shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-white/80 px-1 py-0.5 backdrop-blur-sm">
-                      <span className="font-inter-tight text-sm font-medium text-[#232323]">
+                    <div className="flex shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-background/80 px-1 py-0.5 backdrop-blur-sm">
+                      <span className="font-inter-tight text-sm font-medium text-content-heading">
                         +{barakah_effects.length - 2}
                       </span>
                     </div>

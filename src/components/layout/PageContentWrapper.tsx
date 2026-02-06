@@ -159,7 +159,7 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
         // Max width constraint (only apply if not full) and center container
         maxWidthClass !== 'max-w-full' && [maxWidthClass, 'mx-auto'],
         // Apply background with proper margins (respects footer margins)
-        hasBackground && 'bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] rounded-t-2xl mx-6 sm:mx-8',
+        hasBackground && 'bg-gradient-to-b from-neutral-50 to-neutral-50 rounded-t-2xl mx-6 sm:mx-8',
         // Mobile navigation spacing (only when not centering vertically; when centering, footerPaddingClass handles spacing)
         includeMobileNavSpacing && !centerVertically && 'mobile-nav-spacing',
         // Custom class names

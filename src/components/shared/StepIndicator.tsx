@@ -14,7 +14,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
       <div className="relative w-full">
         {/* Base line - from center of first to center of last circle */}
         <div
-          className="absolute top-4 md:top-6 h-px md:h-0.5 bg-[#D7D7D7]"
+          className="absolute top-4 md:top-6 h-px md:h-0.5 bg-neutral-200"
           style={{
             left: `${(50 / steps.length)}%`,
             right: `${(50 / steps.length)}%`,
@@ -45,7 +45,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
                       ? 'border-primary bg-primary text-white'
                       : isCurrent
                       ? 'border-primary bg-white text-primary md:shadow-md'
-                      : 'border-[#999999] bg-[#D7D7D7] text-[#999999]',
+                      : 'border-border bg-neutral-200 text-content-muted',
                   ].join(' ')}
                 >
                   {isCompleted ? (
@@ -73,7 +73,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
               key={step.title}
               className={[
                 'mx-auto text-xs md:text-sm font-semibold text-center transition-colors duration-200',
-                (isCompleted || isCurrent) ? 'text-primary' : 'text-[#999999]'
+                (isCompleted || isCurrent) ? 'text-primary' : 'text-content-muted'
               ].join(' ')}
             >
               {step.title}

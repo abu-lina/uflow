@@ -269,7 +269,7 @@ export function AddressAutocomplete({
   return (
     <div className={`relative ${className}`}>
       {label && (
-        <label className="text-xs leading-[15px] text-[#999999] mb-1 block">
+        <label className="text-xs leading-[15px] text-content-muted mb-1 block">
           {label}
         </label>
       )}
@@ -277,8 +277,8 @@ export function AddressAutocomplete({
       <div className="relative">
         <input
           ref={inputRef}
-          className={`h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0 ${
-            error ? 'text-red-500' : ''
+          className={`h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0 ${
+            error ? 'text-danger' : ''
           }`}
           disabled={disabled}
           placeholder={placeholder || t('create.location.enterAddress')}
@@ -297,7 +297,7 @@ export function AddressAutocomplete({
         {displayLoading && (
           <div className="absolute right-0 top-0 flex items-center h-full pr-2">
             <Icon
-              className="h-4 w-4 text-[#999999] animate-spin"
+              className="h-4 w-4 text-content-muted animate-spin"
               icon="mdi:loading"
             />
           </div>
@@ -305,11 +305,11 @@ export function AddressAutocomplete({
 
         {/* Suggestions dropdown */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#D4D4D4] rounded-lg shadow-lg z-50 max-h-[200px] overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-[200px] overflow-y-auto">
             {suggestions.map((result) => (
               <button
                 key={result.place_id}
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm text-[#272727] border-b border-gray-100 last:border-b-0"
+                className="w-full text-left px-3 py-2 hover:bg-neutral-100 text-sm text-content border-b border-neutral-100 last:border-b-0"
                 type="button"
                 onClick={() => handleSuggestionClick(result)}
               >
@@ -322,7 +322,7 @@ export function AddressAutocomplete({
                     <div className="font-medium text-[13px] leading-[18px]">
                       {formatStreetAddress(result)}
                     </div>
-                    <div className="text-xs text-[#7A7A7A] truncate mt-0.5">
+                    <div className="text-xs text-content-muted truncate mt-0.5">
                       {result.display_name.split(',').slice(1).join(',').trim()}
                     </div>
                   </div>
@@ -335,7 +335,7 @@ export function AddressAutocomplete({
 
       {/* Error message */}
       {error && (
-        <div className="mt-1 text-xs text-red-500 flex items-center gap-1">
+        <div className="mt-1 text-xs text-danger flex items-center gap-1">
           <Icon className="h-3 w-3" icon="mdi:alert-circle" />
           <span>{error}</span>
         </div>
@@ -343,7 +343,7 @@ export function AddressAutocomplete({
 
       {/* Helper text */}
       {!error && inputValue.length > 0 && inputValue.length < 3 && (
-        <div className="mt-1 text-xs text-[#7A7A7A]">
+        <div className="mt-1 text-xs text-content-muted">
           {t('create.location.typeToSearch')}
         </div>
       )}

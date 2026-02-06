@@ -7,36 +7,36 @@ export function DesktopFooter() {
   const { t } = useLanguage();
 
   return (
-    <footer className="hidden md:block border-t border-gray-200 bg-white mt-auto relative z-10">
+    <footer className="hidden md:block border-t border-border bg-background mt-auto relative z-10">
       <div className="mx-auto w-full max-w-7xl px-4 py-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           {/* Copyright */}
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-content-muted">
             © {new Date().getFullYear()} Ummah Flow. All rights reserved.
           </div>
 
           {/* Legal Links */}
           <div className="flex items-center gap-6 text-sm">
             <Link
-              className="text-gray-600 hover:text-[#589D96] transition-colors"
+              className="text-content-muted hover:text-primary transition-colors"
               href="/privacy-policy"
             >
               {t('legal.privacyPolicy') || 'Privacy Policy'}
             </Link>
             <Link
-              className="text-gray-600 hover:text-[#589D96] transition-colors"
+              className="text-content-muted hover:text-primary transition-colors"
               href="/terms"
             >
               {t('legal.termsOfService') || 'Terms of Service'}
             </Link>
             <Link
-              className="text-gray-600 hover:text-[#589D96] transition-colors"
+              className="text-content-muted hover:text-primary transition-colors"
               href="/impressum"
             >
               {t('legal.impressum') || 'Impressum'}
             </Link>
             <Link
-              className="text-gray-600 hover:text-[#589D96] transition-colors"
+              className="text-content-muted hover:text-primary transition-colors"
               href="/about"
             >
               {t('navigation.about') || 'About'}
@@ -44,9 +44,9 @@ export function DesktopFooter() {
           </div>
 
           {/* Contact */}
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-content-muted">
             <a
-              className="hover:text-[#589D96] transition-colors"
+              className="hover:text-primary transition-colors"
               href="mailto:support@ummahflow.com"
             >
               support@ummahflow.com

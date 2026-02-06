@@ -98,7 +98,7 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
           <div
             ref={dropdownRef}
             aria-label={t('language.current')}
-            className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+            className="absolute right-0 top-full mt-1 w-40 bg-background rounded-lg shadow-lg border border-border z-50"
             dir={['ar', 'ur', 'ps'].includes(language) ? 'rtl' : 'ltr'}
             role="menu"
           >
@@ -106,8 +106,8 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
               <button
                 key={lang.code}
                 aria-label={lang.name}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg focus:outline-none focus:bg-gray-50 ${
-                  language === lang.code ? 'bg-primary/10 text-primary font-medium' : 'text-gray-700'
+                className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 transition-colors first:rounded-t-lg last:rounded-b-lg focus:outline-none focus:bg-neutral-50 ${
+                  language === lang.code ? 'bg-primary/10 text-primary font-medium' : 'text-content'
                 }`}
                 role="menuitem"
                 onClick={() => handleLanguageChange(lang.code)}
@@ -139,7 +139,7 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
     return (
       <button
         aria-label={`${t('language.switchTo')} ${nextLanguage.name}`}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ${className}`}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ${className}`}
         disabled={isChanging}
         onClick={() => handleLanguageChange(nextLanguage.code)}
       >
@@ -159,7 +159,7 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label={`${t('language.switchTo')} ${currentLanguage?.name || language}`}
-        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
         disabled={isChanging}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -188,15 +188,15 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
           <div
             ref={dropdownRef}
             aria-label={t('language.current')}
-            className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20"
+            className="absolute right-0 top-full mt-1 w-48 bg-background rounded-lg shadow-lg border border-border z-20"
             role="menu"
           >
             {languages.map((lang) => (
               <button
                 key={lang.code}
                 aria-label={lang.name}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg focus:outline-none focus:bg-gray-50 ${
-                  language === lang.code ? 'bg-primary/10 text-primary font-medium' : 'text-gray-700'
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 transition-colors first:rounded-t-lg last:rounded-b-lg focus:outline-none focus:bg-neutral-50 ${
+                  language === lang.code ? 'bg-primary/10 text-primary font-medium' : 'text-content'
                 }`}
                 role="menuitem"
                 onClick={() => handleLanguageChange(lang.code)}

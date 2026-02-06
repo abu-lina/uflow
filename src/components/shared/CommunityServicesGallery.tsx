@@ -48,7 +48,7 @@ export function CommunityServicesGallery() {
 
   if (error) {
     return (
-      <section className="w-full px-6 py-8 text-center text-red-500 lg:hidden">
+      <section className="w-full px-6 py-8 text-center text-danger lg:hidden">
         <p>{error}</p>
       </section>
     );
@@ -66,7 +66,7 @@ export function CommunityServicesGallery() {
             <div
               key={communityService.community_service_id}
               aria-label={`Community Services anzeigen`}
-              className="flex cursor-pointer flex-col rounded-lg p-2 transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
+              className="flex cursor-pointer flex-col rounded-lg p-2 transition-transform hover:scale-[1.02] hover:bg-neutral-50/50 active:scale-[0.98]"
               role="button"
               tabIndex={0}
               onClick={() => handleCommunityServiceClick(communityService.community_service_id)}
