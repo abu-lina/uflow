@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect, useRef } from 'react';
+import React, { forwardRef, useState, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -29,7 +29,8 @@ interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   loading?: 'eager' | 'lazy';
 }
 
-export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
+export const ProviderCard = React.memo(
+  forwardRef<HTMLDivElement, ProviderCardProps>(
   (
     {
       address_street,
@@ -607,6 +608,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       </div>
     );
   },
+  )
 );
 
 ProviderCard.displayName = 'ProviderCard';

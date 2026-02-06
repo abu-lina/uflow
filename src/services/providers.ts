@@ -5,7 +5,7 @@ import { searchNeeds } from './needs';
 import { logSupabaseError } from '@/utils/errorUtils';
 import type { ProviderBadgeWithType } from '@/types/badges';
 import { EntityType } from '@/types/badges';
-import { getBadgesForEntity } from './badges';
+import { getBadgesForEntities } from './badges';
 
 export interface Provider {
   provider_id: string;
@@ -508,25 +508,17 @@ export async function searchProviders(
     barakah_effects: provider.barakah_effects || [],
   }));
 
-  // Batch fetch badges for all providers to avoid N+1 query problem
-  const badgesPromises = data.map(provider => 
-    getBadgesForEntity(provider.provider_id, EntityType.PROVIDER).catch(error => {
-      // Handle errors gracefully - badges are optional, shouldn't break search
-      console.error(`Error fetching badges for provider ${provider.provider_id}:`, error);
-      return [] as ProviderBadgeWithType[];
-    })
-  );
-  const badgesResults = await Promise.allSettled(badgesPromises);
-  
-  // Create badges map for O(1) lookup
-  const badgesMap = new Map<string, ProviderBadgeWithType[]>();
-  badgesResults.forEach((result, index) => {
-    if (result.status === 'fulfilled') {
-      badgesMap.set(data[index].provider_id, result.value);
-    }
+  // Batch fetch badges for all providers in one query
+  const allProviderIds = data.map(p => p.provider_id);
+  const badgesMap = await getBadgesForEntities(
+    allProviderIds,
+    EntityType.PROVIDER
+  ).catch(error => {
+    console.error('Error fetching badges:', error);
+    return new Map<string, ProviderBadgeWithType[]>();
   });
 
-  // Add badges to providers
+  // Add badges to providers with O(1) lookup
   const providersWithBadges = providersWithOffersAndNeeds.map(provider => ({
     ...provider,
     badges: badgesMap.get(provider.provider_id) || [],

@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useCallback, memo } from 'react';
+import { useEffect, useRef, useCallback, memo, useMemo, useState } from 'react';
+import { FixedSizeList as List } from 'react-window';
 
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import { Button } from '@/components/ui/Button';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { usePrefetchProvider } from '@/hooks/useProvider';
 import type { SearchResult, Provider } from '@/services/providers';
+
+const VIRTUALIZATION_THRESHOLD = 50;
+const ESTIMATED_CARD_HEIGHT = 320;
 
 interface SearchResultsListProps {
   searchResults: SearchResult[];
@@ -73,36 +77,125 @@ export const SearchResultsList = memo(function SearchResultsList({
     };
   }, [hasNextPage, isFetchingNextPage, debouncedLoadMore]);
 
+  const filteredResults = useMemo(
+    () => searchResults.filter((result) => result != null && result.id != null),
+    [searchResults]
+  );
+
+  const useVirtualList = filteredResults.length > VIRTUALIZATION_THRESHOLD;
+
+  const searchResultToProvider = useCallback((result: SearchResult): Provider => ({
+    provider_id: result.id,
+    provider_name: result.name,
+    provider_images: result.images,
+    category_id: result.category_id,
+    address_city: result.address_city,
+    social_website: result.social_website,
+    social_instagram: result.social_instagram,
+    contact_email: result.contact_email,
+    contact_phone: result.contact_phone,
+    address_street: result.address_street,
+    address_country: result.address_country,
+    address_zip: result.address_zip,
+    location_latitude: result.location_latitude,
+    location_longitude: result.location_longitude,
+    created_at: result.created_at,
+    updated_at: result.updated_at,
+    barakah_effects: result.barakah_effects,
+    badges: result.badges,
+    offers_ids: result.offers_ids,
+    needs_ids: result.needs_ids,
+    category: result.category,
+    community_service_id: result.type === 'community_service' ? result.id : undefined,
+  }), []);
+
+  const [listHeight, setListHeight] = useState(600);
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!useVirtualList || !listContainerRef.current) return;
+    const el = listContainerRef.current;
+    setListHeight(el.getBoundingClientRect().height || 600);
+    const observer = new ResizeObserver((entries) => {
+      const { height } = entries[0]?.contentRect ?? {};
+      if (typeof height === 'number' && height > 0) {
+        setListHeight(height);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [useVirtualList]);
+
+  const VirtualRow = useCallback(
+    ({ index, style }: { index: number; style: React.CSSProperties }) => {
+      const result = filteredResults[index];
+      if (!result) return null;
+      const provider = searchResultToProvider(result);
+      return (
+        <div style={style} className="flex justify-center px-4 pb-4">
+          <div
+            className="w-full max-w-md cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+            role="button"
+            tabIndex={0}
+            onClick={() => onProviderClick(provider)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onProviderClick(provider);
+              }
+            }}
+            onMouseEnter={() => prefetchProvider(result.id)}
+          >
+            <ProviderCard
+              {...provider}
+              bookmarkableType={result.type}
+              hideWebsiteButton={true}
+              isBookmarked={bookmarkedProviderIds.includes(result.id)}
+              loading={index < 4 ? 'eager' : 'lazy'}
+              priority={index < 4}
+              onBookmarkChange={(isBookmarked: boolean) =>
+                onBookmarkChange(result.id, isBookmarked)
+              }
+            />
+          </div>
+        </div>
+      );
+    },
+    [
+      filteredResults,
+      searchResultToProvider,
+      onProviderClick,
+      onBookmarkChange,
+      bookmarkedProviderIds,
+      prefetchProvider,
+    ]
+  );
+
   return (
     <>
+    {useVirtualList ? (
+      <div ref={listContainerRef} className="w-full h-[70vh] min-h-[400px]">
+        <List
+          height={listHeight}
+          itemCount={filteredResults.length}
+          itemSize={ESTIMATED_CARD_HEIGHT}
+          width="100%"
+          overscanCount={3}
+          onScroll={({ scrollOffset }: { scrollOffset: number }) => {
+            const bottom = scrollOffset + listHeight;
+            const threshold = filteredResults.length * ESTIMATED_CARD_HEIGHT - listHeight - 400;
+            if (hasNextPage && !isFetchingNextPage && bottom > threshold) {
+              debouncedLoadMore();
+            }
+          }}
+        >
+          {VirtualRow}
+        </List>
+      </div>
+    ) : (
     <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
-      {searchResults.filter((result) => result != null && result.id != null).map((result, index) => {
-        // Convert SearchResult back to Provider format for compatibility
-        const provider: Provider = {
-          provider_id: result.id,
-          provider_name: result.name,
-          provider_images: result.images,
-          category_id: result.category_id,
-          address_city: result.address_city,
-          social_website: result.social_website,
-          social_instagram: result.social_instagram,
-          contact_email: result.contact_email,
-          contact_phone: result.contact_phone,
-          address_street: result.address_street,
-          address_country: result.address_country,
-          address_zip: result.address_zip,
-          location_latitude: result.location_latitude,
-          location_longitude: result.location_longitude,
-          created_at: result.created_at,
-          updated_at: result.updated_at,
-          barakah_effects: result.barakah_effects,
-          badges: result.badges,
-          offers_ids: result.offers_ids,
-          needs_ids: result.needs_ids,
-          category: result.category,
-          community_service_id: result.type === 'community_service' ? result.id : undefined,
-        };
-
+      {filteredResults.map((result, index) => {
+        const provider = searchResultToProvider(result);
         return (
           <div
             key={result.id}
@@ -116,10 +209,7 @@ export const SearchResultsList = memo(function SearchResultsList({
                 onProviderClick(provider);
               }
             }}
-            onMouseEnter={() => {
-              // Prefetch provider data on hover for instant navigation
-              prefetchProvider(result.id);
-            }}
+            onMouseEnter={() => prefetchProvider(result.id)}
           >
             <ProviderCard
               {...provider}
@@ -136,6 +226,7 @@ export const SearchResultsList = memo(function SearchResultsList({
         );
       })}
     </div>
+    )}
       
       {/* Infinite scroll trigger - auto-loads as user approaches bottom */}
       {hasNextPage && (

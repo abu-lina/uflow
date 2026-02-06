@@ -166,6 +166,53 @@ export async function getBadgesForEntity(
 }
 
 /**
+ * Batch fetch badges for multiple entities at once (eliminates N+1 query)
+ * @param entityIds - Array of entity IDs to fetch badges for
+ * @param entityType - The entity type (provider or community_service)
+ * @param client - Optional Supabase client (use server client for API routes)
+ */
+export async function getBadgesForEntities(
+  entityIds: string[],
+  entityType: EntityType,
+  client?: SupabaseClient
+): Promise<Map<string, ProviderBadgeWithType[]>> {
+  if (entityIds.length === 0) {
+    return new Map();
+  }
+
+  try {
+    const supabase = getSupabaseClient(client);
+    const { data, error } = await supabase
+      .from('provider_badges')
+      .select(`
+        *,
+        badge_type:badge_types(*)
+      `)
+      .in('entity_id', entityIds)
+      .eq('entity_type', entityType)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logSupabaseError('getBadgesForEntities', error);
+      throw error;
+    }
+
+    // Group badges by entity_id for O(1) lookup
+    const badgesByEntity = new Map<string, ProviderBadgeWithType[]>();
+    (data || []).forEach((badge: { entity_id: string }) => {
+      const badges = badgesByEntity.get(badge.entity_id) || [];
+      badges.push(badge as ProviderBadgeWithType);
+      badgesByEntity.set(badge.entity_id, badges);
+    });
+
+    return badgesByEntity;
+  } catch (error) {
+    console.error('Error in getBadgesForEntities:', error);
+    throw error;
+  }
+}
+
+/**
  * Get all badges for an entity with user confirmation status
  * @param entityId - The entity ID (provider_id or community_service_id)
  * @param entityType - The entity type
