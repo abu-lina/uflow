@@ -1452,7 +1452,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       {/* Section 2: Contact */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.contactTitle')}</h3>
+          <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.contactTitle')}</h2>
           <p className="text-base text-content-muted">
             {t('create.recommend.contactDescription')}
           </p>
@@ -1506,7 +1506,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       {!user && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h3>
+            <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h2>
             <p className="text-base text-content-muted">
               {t('create.recommend.userEmailDescription')}
             </p>
@@ -1563,7 +1563,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       {/* Section 4: Message (Optional) */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.message')}</h3>
+          <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.message')}</h2>
           <p className="text-base text-content-muted">
             {t('common.optional')}
           </p>

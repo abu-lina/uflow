@@ -158,15 +158,6 @@ export function ExploreSection() {
           })}
         </div>
       </motion.div>
-
-      {/* Floating Arrow Button */}
-      <button
-        aria-label="Nach oben scrollen"
-        className="absolute bottom-10 right-0 hidden size-10 items-center justify-center rounded-3xl bg-zinc-100/60 backdrop-blur-sm md:flex"
-        type="button"
-      >
-        <span aria-hidden="true" className="bg-uFlowText block h-5 w-2.5" />
-      </button>
     </section>
   );
 }

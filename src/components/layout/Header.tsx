@@ -150,13 +150,13 @@ export function Header() {
                   <div ref={dropdownRef} className="relative">
                     <button
                       aria-label="Profil Dropdown öffnen"
-                      className="flex items-center gap-1 rounded-full focus:outline-none"
+                      className="flex items-center gap-0 rounded-full focus:outline-none"
                       onClick={() => setDropdownOpen((open) => !open)}
                     >
                       <ProfileIcon className="shrink-0" isActive={dropdownOpen} />
                       <ChevronDown
                         aria-hidden="true"
-                        className={`size-6 text-content transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
+                        className={`size-6 text-content transition-transform duration-200 -ml-2 ${dropdownOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
                     {dropdownOpen && (
