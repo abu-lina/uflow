@@ -33,21 +33,14 @@ export function ThemeProvider({
     setMounted(true);
   }, []);
 
+  // Sync React state with DOM (theme already applied by blocking script in layout)
   useEffect(() => {
-    if (!mounted) return;
-    try {
-      const stored = localStorage.getItem(storageKey) as Theme | null;
-      if (stored) {
-        setThemeState(stored);
-        document.documentElement.setAttribute('data-theme', stored);
-      } else {
-        document.documentElement.setAttribute('data-theme', theme);
-      }
-    } catch {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-  }, [mounted, storageKey]);
+    if (!mounted || typeof document === 'undefined') return;
+    const applied = document.documentElement.getAttribute('data-theme') as Theme | null;
+    if (applied) setThemeState(applied);
+  }, [mounted]);
 
+  // When user changes theme via setTheme, keep DOM in sync
   useEffect(() => {
     if (!mounted) return;
     document.documentElement.setAttribute('data-theme', theme);

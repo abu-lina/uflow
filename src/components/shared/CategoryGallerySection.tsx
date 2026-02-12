@@ -1,11 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-
-import { motion } from 'motion/react';
 
 import { fetchUsedCategories, type Category } from '@/services/categories';
 import { formatAllahText } from '@/utils/textUtils';
@@ -15,17 +13,8 @@ import UnifiedGallery from './UnifiedGallery';
 import { getEntityTypeForCategory } from '@/utils/entityTypeUtils';
 
 export function CategoryGallerySection() {
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    // Check if we've already animated this session
-    const animated = sessionStorage.getItem('home-categories-animated');
-    if (animated) {
-      setHasAnimated(true);
-    } else {
-      sessionStorage.setItem('home-categories-animated', 'true');
-    }
-  }, []);
+  // Always use static section to prevent top-to-bottom ripple on reload (no motion.section)
+  const hasAnimated = true;
   
   const router = useRouter();
   
@@ -100,8 +89,8 @@ export function CategoryGallerySection() {
     return (
       <section className="w-full px-6 py-8 lg:hidden">
         <div className="flex flex-col gap-8">
-          <div className="bg-muted h-6 w-40 animate-pulse rounded" />
-          <div className="bg-muted h-[150px] w-[358px] animate-pulse rounded-[29px]" />
+          <div className="bg-muted h-6 w-40 rounded" />
+          <div className="bg-muted h-[150px] w-[358px] rounded-[29px]" />
         </div>
       </section>
     );
@@ -125,17 +114,8 @@ export function CategoryGallerySection() {
     return 0;
   });
 
-  const SectionComponent = hasAnimated ? 'section' : motion.section;
-
   return (
-    <SectionComponent
-      {...(!hasAnimated && {
-        animate: { opacity: 1, y: 0 },
-        initial: { opacity: 0, y: 20 },
-        transition: { duration: 0.8, ease: 'easeOut' },
-      })}
-      className="w-full pb-20 pt-0 lg:hidden"
-    >
+    <section className="w-full pb-20 pt-0 lg:hidden">
       <div className="flex flex-col gap-6">
         {sortedCategories.map((category) => {
           const categoryName = getCategoryName(category);
@@ -192,6 +172,6 @@ export function CategoryGallerySection() {
           );
         })}
       </div>
-    </SectionComponent>
+    </section>
   );
 }

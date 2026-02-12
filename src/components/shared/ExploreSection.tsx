@@ -5,8 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { motion } from 'motion/react';
-
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import { Button } from '@/components/ui/Button';
 import { usePinterestTicker } from '@/hooks/usePinterestTicker';
@@ -84,13 +82,7 @@ export function ExploreSection() {
       className="flex min-h-screen md:h-screen w-full flex-col items-center justify-center gap-12 px-4 py-8 md:pt-20 md:pb-8 sm:gap-20 sm:px-6 lg:px-8"
       id="explore"
     >
-      <motion.div
-        className="flex w-full max-w-screen-xl flex-col items-center gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        viewport={{ once: true }}
-        whileInView={{ opacity: 1, y: 0 }}
-      >
+      <div className="flex w-full max-w-screen-xl flex-col items-center gap-6">
         <div className="flex w-full justify-center px-6 sm:px-8">
           <h2
             className="text-uFlowText inline-block break-words text-center font-inter-tight text-2xl font-medium sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl"
@@ -109,18 +101,13 @@ export function ExploreSection() {
         >
           Entdecke deine Ummah
         </Button>
-      </motion.div>
+      </div>
 
-      {/* Pinterest-style Infinite Carousel */}
-      <motion.div
+      <div
         ref={carouselContainerRef}
         aria-label="Entdecke Angebote"
         className="w-screen overflow-hidden"
-        initial={{ opacity: 0, y: 20 }}
         role="region"
-        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
-        viewport={{ once: true }}
-        whileInView={{ opacity: 1, y: 0 }}
       >
         <div
           className="flex"
@@ -131,8 +118,6 @@ export function ExploreSection() {
           }}
         >
           {[...filteredProviders, ...filteredProviders, ...filteredProviders].map((provider, idx) => {
-            // Only load first 6 cards eagerly (2 sets of 3 visible cards)
-            // Rest use lazy loading for better performance
             const isVisible = idx < 6;
             return (
               <Link
@@ -149,15 +134,13 @@ export function ExploreSection() {
                   isBookmarked={false}
                   loading={isVisible ? 'eager' : 'lazy'}
                   priority={isVisible && idx < 3}
-                  onBookmarkChange={() => {
-                    // Non-actionable: bookmark button is shown but does nothing
-                  }}
+                  onBookmarkChange={() => {}}
                 />
               </Link>
             );
           })}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

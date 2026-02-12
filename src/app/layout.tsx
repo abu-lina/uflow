@@ -1,5 +1,6 @@
 // External dependencies
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 
 import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
@@ -12,10 +13,10 @@ import '@/styles/toast-custom.css';
 
 import type { Metadata, Viewport } from 'next';
 
-// Optimize font loading with display swap for better perceived performance
+// optional = no FOUT on slow connections (avoids text flicker when font loads on iOS)
 const inter = Inter({
   subsets: ['latin'],
-  display: 'swap',
+  display: 'optional',
   preload: true,
 });
 
@@ -75,9 +76,31 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     }
   }
 
+  const themeScript = `
+    (function() {
+      try {
+        var theme = localStorage.getItem('uflow-theme') || 'default';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  `;
+
   return (
-    <html dir={isRtl ? 'rtl' : 'ltr'} lang={language}>
-      <body className={`relative w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] min-h-[100dvh] m-0 p-0 ${inter.className}`}>
+    <html
+      dir={isRtl ? 'rtl' : 'ltr'}
+      lang={language}
+      suppressHydrationWarning
+      style={{ backgroundColor: '#f5f5f5' }}
+    >
+      <body
+        className={`relative w-full max-w-[100vw] overflow-x-hidden min-h-screen m-0 p-0 ${inter.className}`}
+        style={{
+          // Inline critical background so first paint matches (avoids white flash before CSS loads)
+          background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
+          minHeight: '100vh',
+        }}
+      >
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
         <ClientProviders initialUser={user}>
           {/* Desktop header only */}
           <div className="hidden md:block">

@@ -61,7 +61,7 @@ describe('ProviderDetailModal Component', () => {
       );
       
       const closeButtons = screen.getAllByRole('button', { name: /schließen/i });
-      expect(closeButtons).toHaveLength(2);
+      expect(closeButtons).toHaveLength(1);
     });
   });
 
@@ -507,7 +507,7 @@ describe('ProviderDetailModal Component', () => {
       expect(modals).toHaveLength(2); // Both div and section have role="dialog"
       
       const closeButtons = screen.getAllByRole('button', { name: /schließen/i });
-      expect(closeButtons).toHaveLength(2); // There are two close buttons
+      expect(closeButtons).toHaveLength(1);
       expect(closeButtons[0]).toHaveAttribute('aria-label', 'Schließen');
       
       // Navigation arrows only show when there are multiple images and not at boundaries
@@ -531,7 +531,7 @@ describe('ProviderDetailModal Component', () => {
       const closeButtons = screen.getAllByRole('button', { name: /schließen/i });
       const nextButton = screen.getByRole('button', { name: /nächstes bild/i });
       
-      expect(closeButtons).toHaveLength(2); // There are two close buttons
+      expect(closeButtons).toHaveLength(1);
       expect(nextButton).toBeInTheDocument();
       
       // Previous button should not be visible on first image

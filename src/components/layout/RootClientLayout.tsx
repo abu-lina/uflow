@@ -51,12 +51,13 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const pageType = getPageType(pathname);
   const { isLandingPage } = pageType;
   
-  // Determine what UI elements should be shown
-  // CRITICAL: Only calculate after mount to prevent hydration mismatch (isAppLaunched differs on server vs client)
-  const showMobileFooter = isMounted && shouldShowMobileFooter(pathname, isSplashVisible, user, isAppLaunched, stage);
-  // Only calculate showCityEarlyAccessNavbar after mount to prevent hydration mismatch
-  const showCityEarlyAccessNavbar = isMounted && shouldShowCityEarlyAccessNavbar(pathname, isAppLaunched, user, stage);
+  // Determine what UI elements should be shown (both computed always; slot is always in DOM to prevent layout shift)
+  const showMobileFooter = shouldShowMobileFooter(pathname, isSplashVisible, user, isAppLaunched, stage);
+  const showCityEarlyAccessNavbar = shouldShowCityEarlyAccessNavbar(pathname, isAppLaunched, user, stage);
   const showSubpageAction = shouldShowSubpageAction(pathname);
+
+  // When not yet mounted use 'none' so slot reserves space without showing wrong UI; after mount show correct one
+  const mobileUiMode = !isMounted ? 'none' : showMobileFooter ? 'footer' : showCityEarlyAccessNavbar ? 'navbar' : 'none';
 
   // Debug logging for footer visibility (development only)
   useEffect(() => {
@@ -101,19 +102,19 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
           <DesktopFooter />
         </div>
         
-        {/* Mobile Footer - Stage 3 (Full Access) */}
-        {showMobileFooter && (
-          <div className="block md:hidden" data-testid="mobile-footer-bar">
+        {/* Mobile bottom UI slot: always in DOM with reserved height to prevent layout shift; visibility controlled by CSS */}
+        <div
+          className="mobile-bottom-ui-slot block md:hidden"
+          data-mobile-ui={mobileUiMode}
+          data-testid="mobile-footer-bar"
+        >
+          <div className="mobile-footer-bar-wrapper">
             <MobileFooterBar />
           </div>
-        )}
-
-        {/* City Early Access Navbar - Stages 1 & 2 (Early Access) */}
-        {showCityEarlyAccessNavbar && (
-          <div className="block md:hidden">
+          <div className="city-navbar-wrapper">
             <CityEarlyAccessNavbar />
           </div>
-        )}
+        </div>
 
         {/* Action button for subpages */}
         {showSubpageAction && (

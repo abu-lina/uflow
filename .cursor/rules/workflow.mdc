@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+## Workflow checkpoint
+
+After each build chunk: review, then test, then **capture one learning**.
+
+- Run `@capture-learning.md` after review/test. The AI derives the learning from recent context (diffs, test results, review feedback); no paste required.
+- Persist the output: append the learning entry to `docs/ai/LEARNINGS.md` and apply any proposed diff to the right place (Notion task, rule, command, or agent) after you review it.
+- Do not consider the chunk done until at least one learning is captured and persisted (or explicitly "nothing to capture this time").

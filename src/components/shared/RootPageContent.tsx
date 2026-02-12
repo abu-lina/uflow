@@ -130,8 +130,8 @@ export function RootPageContent() {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-8 w-48" animate={false} />
+          <Skeleton className="h-4 w-32" animate={false} />
         </div>
       </div>
     );
@@ -182,7 +182,6 @@ export function RootPageContent() {
   // Mobile: Show stage-based content if onboarding complete, otherwise show waitlist
   const isAppLaunched = getFeatureFlag('isAppLaunched');
   const skipWaitlist = getFeatureFlag('skipWaitlist');
-  
   return (
     <>
       {/* Desktop Landing Content - Always shown for desktop users */}

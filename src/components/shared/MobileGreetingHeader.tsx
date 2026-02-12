@@ -77,14 +77,15 @@ export function MobileGreetingHeader({ className = '', cityName }: MobileGreetin
   const cityTextParts = cityName ? getCityTextParts() : null;
   const supportTextWithoutCity = t('common.supportYourUmmah');
 
-  const MotionDiv = hasAnimated ? 'div' : motion.div;
+  const useMotion = !hasAnimated;
+  const MotionDiv = useMotion ? motion.div : 'div';
 
   return (
     <div className={`w-full ${className}`}>
       {/* Main Header with staggered animation */}
       <div className="flex flex-col items-start gap-0">
         <MotionDiv
-          {...(!hasAnimated && {
+          {...(useMotion && {
             animate: { opacity: 1, x: 0 },
             initial: { opacity: 0, x: -20 },
             transition: { duration: 0.4, delay: 0.1 },
@@ -94,7 +95,7 @@ export function MobileGreetingHeader({ className = '', cityName }: MobileGreetin
           {user ? `${t('common.greeting')} ${firstName},` : `${t('common.greeting')},`}
         </MotionDiv>
         <MotionDiv
-          {...(!hasAnimated && {
+          {...(useMotion && {
             animate: { opacity: 1, x: 0 },
             initial: { opacity: 0, x: -20 },
             transition: { duration: 0.4, delay: 0.2 },

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Icon } from '@iconify/react';
-import { X, ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag, ChevronDown, X } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -316,15 +316,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         <div aria-atomic="true" aria-live="polite" className="sr-only">
           {!isLoading && 'Provider details loaded'}
         </div>
-        {/* Close Icon Top Right */}
-        <button
-          aria-label="Schließen"
-          className="absolute right-6 top-6 z-50 flex size-10 items-center justify-center rounded-full bg-white/80 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          type="button"
-          onClick={onClose}
-        >
-          <X className="text-uFlowText size-5" size={28} />
-        </button>
         {/* Left Section */}
         <div className="absolute left-0 top-0 inline-flex h-[900px] w-[704px] flex-col items-start justify-start gap-8 rounded-l-[48px] bg-white py-10 pl-12 pr-4">
           {/* Title & Subtitle */}
@@ -474,18 +465,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Close Button */}
           <button
             aria-label="Schließen"
-            className="absolute right-12 top-9 flex size-8 items-center justify-center rounded-full hover:bg-zinc-100"
+            className="absolute right-12 top-9 flex size-10 items-center justify-center rounded-full text-content transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             type="button"
             onClick={onClose}
           >
-            <span
-              className="bg-uFlowText absolute block h-0.5 w-6 rotate-45"
-              style={{ top: 18, left: 7 }}
-            />
-            <span
-              className="bg-uFlowText absolute block h-0.5 w-6 -rotate-45"
-              style={{ top: 18, left: 7 }}
-            />
+            <X aria-hidden className="size-5" />
           </button>
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
             {/* Barakah Effekt Section - with fade-in animation */}

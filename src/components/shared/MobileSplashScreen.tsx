@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { useWaitlistFlow } from '@/hooks/useWaitlistFlow';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { AboutPageContent } from '@/components/shared/AboutPageContent';
 import { SplashLayout } from '@/components/layout/SplashLayout';
 import { SplashContent } from '@/components/shared/SplashContent';
@@ -37,6 +38,9 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   // Mark component as mounted after hydration to prevent hydration mismatches
   useEffect(() => {
     setIsMounted(true);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'pre-fix',hypothesisId:'H7',location:'MobileSplashScreen.tsx:38',message:'mounted',data:{isMounted:true},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
   }, []);
 
   // REMOVED: City redirect logic - let RootPageContent handle routing
@@ -75,9 +79,21 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
     handleWaitlistComplete(token);
   };
 
+  useEffect(() => {
+    if (!isMounted || !isInitialized) return;
+    const useAnimatedWrapper = true;
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'pre-fix',hypothesisId:'H7',location:'MobileSplashScreen.tsx:73',message:'state render',data:{currentState,isMounted,isInitialized,showProviderModal,useAnimatedWrapper},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+  }, [currentState, isMounted, isInitialized, showProviderModal]);
+
 
   // During SSR and initial hydration, show consistent content to prevent hydration mismatch
   if (!isMounted || !isInitialized) {
+    const isPreHydration = true;
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'pre-fix',hypothesisId:'H7',location:'MobileSplashScreen.tsx:79',message:'pre-hydration splash render',data:{isMounted,isInitialized,currentState,isPreHydration},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     // Show splash layout during initial render to match server
     // This prevents hydration mismatch
     return (

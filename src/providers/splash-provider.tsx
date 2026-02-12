@@ -21,7 +21,6 @@ export function SplashProvider({ children }: SplashProviderProps) {
   const [isFirstVisit, setIsFirstVisit] = useState(false);
 
   useEffect(() => {
-    // Check if splash screen should be visible (first-time user)
     const firstVisit = !hasSeenSplashScreen();
     setIsFirstVisit(firstVisit);
     setIsSplashVisible(firstVisit);

@@ -46,7 +46,9 @@ Forwarding   https://abc123.ngrok.io -> http://localhost:3000
 
 1. **On your iPhone:**
    - Open Safari
-   - Go to the ngrok URL (e.g., `https://abc123.ngrok.io`)
+   - Go to the ngrok URL (e.g., `https://abc123.ngrok-free.app`). Get the full URL from the terminal or from the ngrok Web Interface: http://127.0.0.1:4040
+   - **If you're on office/corporate WiFi:** the network may block ngrok. Use **cellular data** (turn off WiFi on the phone) and open the ngrok URL; the tunnel from your Mac to ngrok still works, so the phone can reach your app via the internet.
+   - On first visit, ngrok free tier may show a "Visit Site" / "Continue" page; tap through to reach your app.
    - Wait for page to load (10 seconds)
 
 2. **Verify manifest:**
@@ -204,6 +206,25 @@ ls -lh public/manifest.json
 - Check ngrok URL is correct
 - Ensure iPhone has internet connection
 - Try refreshing the page
+
+### Issue: LAN URL doesn't load on iPhone (same WiFi)
+
+When opening `http://<your-mac-ip>:3000` on the phone, the page never loads (timeout or "can't connect").
+
+**Checks:**
+1. **Use the mobile dev server** so the app listens on all interfaces:
+   ```bash
+   npm run dev:mobile
+   ```
+   Use the **Network** URL shown in the terminal (e.g. `http://192.168.178.48:3000`). If your Mac's IP is different, use that IP on the phone.
+
+2. **Confirm the IP** – When you run `npm run dev` or `npm run dev:mobile`, Next.js prints a "Network:" line. That is the URL to open on the iPhone. If your router gave the Mac a new IP (e.g. after sleep), update `allowedDevOrigins` and `images.remotePatterns` in `next.config.js` to use the new IP, then restart the dev server.
+
+3. **macOS Firewall** – If the firewall is on, it may block incoming connections to port 3000:
+   - System Settings → Network → Firewall → Options
+   - Ensure "Block all incoming connections" is off, or add an allow rule for **Node** (or the terminal app you use to run `npm run dev:mobile`).
+
+4. **Restart after config changes** – After changing `next.config.js` (e.g. `allowedDevOrigins` or image hostname), stop the dev server (Ctrl+C) and run `npm run dev:mobile` again.
 
 ---
 

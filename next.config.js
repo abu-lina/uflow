@@ -111,6 +111,19 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Allow dev server to accept requests from:
+  // - LAN IP (iPhone on same WiFi); update IP if your Mac's address changes.
+  // - ngrok (tunnel URL on phone / office networks that block direct LAN).
+  ...(isDev ? {
+    allowedDevOrigins: [
+      'http://192.168.178.48:3000',
+      'https://*.ngrok-free.app',
+      'https://*.ngrok.io',
+      'http://*.ngrok-free.app',
+      'http://*.ngrok.io',
+    ],
+  } : {}),
+
   // Docker/Standalone output for Hetzner deployment
   // Only enable standalone when explicitly building for Docker (STANDALONE_BUILD=true)
   // This allows 'next start' to work for local production testing
@@ -164,6 +177,12 @@ const nextConfig = {
         hostname: 'localhost',
         port: '3000',
       },
+      // LAN IP for mobile testing (same WiFi). Update hostname if your Mac's IP changes.
+      ...(isDev ? [{
+        protocol: 'http',
+        hostname: '192.168.178.48',
+        port: '3000',
+      }] : []),
       {
         protocol: 'https',
         hostname: 'placehold.co',

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useRef, useEffect } from 'react';
 
 import { usePathname } from 'next/navigation';
 
@@ -26,6 +26,11 @@ function LoadingPlaceholder() {
 export function PageTransition({ children }: PageTransitionProps) {
   const { isPreloading } = useLoading();
   const pathname = usePathname();
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    isInitialMount.current = false;
+  }, []);
 
   return (
     <AnimatePresence mode="popLayout">
@@ -34,13 +39,13 @@ export function PageTransition({ children }: PageTransitionProps) {
         animate={{ opacity: 1 }}
         className="flex-1 flex flex-col"
         exit={{ opacity: 0 }}
-        initial={{ opacity: 1 }}
+        initial={isInitialMount.current ? false : { opacity: 1 }}
         style={{
           // Ensure backdrop-filter works on fixed headers by not creating a transform context
           // Only animate opacity, avoid any transform that creates stacking context
           willChange: 'opacity',
         }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
       >
         <Suspense fallback={<LoadingPlaceholder />}>
           {isPreloading ? <LoadingPlaceholder /> : children}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion } from 'motion/react';
 
 import { Bismillah } from '@/components/ui/Bismillah';
@@ -7,30 +8,53 @@ import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useSplash } from '@/providers/splash-provider';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 interface SplashContentProps {
   onContinue?: () => void;
 }
 
+let splashAnimationUsed = false;
+
 export function SplashContent({ onContinue }: SplashContentProps) {
   const { t, language } = useLanguage();
   const { isFirstVisit } = useSplash();
+  const reduceMotion = useReduceMotion();
+  const hasSessionFlag =
+    typeof window !== 'undefined' && sessionStorage.getItem('splash-animated') === 'true';
+  const shouldAnimate = !reduceMotion && !hasSessionFlag && !splashAnimationUsed;
+  if (!splashAnimationUsed && !hasSessionFlag) {
+    splashAnimationUsed = true;
+  }
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'pre-fix',hypothesisId:'H7',location:'SplashContent.tsx:15',message:'render',data:{isFirstVisit,language,hasContinue:!!onContinue,reduceMotion,hasSessionFlag,shouldAnimate},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!sessionStorage.getItem('splash-animated')) {
+      sessionStorage.setItem('splash-animated', 'true');
+    }
+  }, []);
   
   return (
     <motion.div
-      animate={{ opacity: 1 }}
       className="flex flex-col items-center w-full gap-16"
-      initial={{ opacity: 0 }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
+      {...(shouldAnimate && {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        transition: { duration: 0.8, ease: 'easeOut' },
+      })}
     >
       {/* Body Content */}
       <div className="flex flex-col items-center w-full gap-8">
         {/* Bismillah + Translation */}
         <motion.div 
-          animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center w-full gap-1 px-12"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+          {...(shouldAnimate && {
+            initial: { opacity: 0, y: 20 },
+            animate: { opacity: 1, y: 0 },
+            transition: { duration: 0.6, delay: 0.2, ease: 'easeOut' },
+          })}
         >
           {/* Arabic Calligraphy */}
           <Bismillah className="h-auto w-full max-w-[345px]" shouldAnimate={false} />
@@ -49,20 +73,24 @@ export function SplashContent({ onContinue }: SplashContentProps) {
         <div className="flex flex-col items-center w-full gap-8 max-w-[345px]">
           {/* Logo */}
           <motion.div
-            animate={{ opacity: 1, scale: 1 }}
             className="flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
+            {...(shouldAnimate && {
+              initial: { opacity: 0, scale: 0.9 },
+              animate: { opacity: 1, scale: 1 },
+              transition: { duration: 0.6, delay: 0.4, ease: 'easeOut' },
+            })}
           >
             <Logo className="h-24 w-24" height={96} width={96} />
           </motion.div>
 
           {/* Title + Subtitle */}
           <motion.div 
-            animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center w-full gap-2"
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.6, ease: 'easeOut' }}
+            {...(shouldAnimate && {
+              initial: { opacity: 0, y: 20 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.6, delay: 0.6, ease: 'easeOut' },
+            })}
           >
             {/* Title */}
             <h1 className="font-inter-tight text-3xl font-medium leading-[40px] text-center text-content-heading">
@@ -119,10 +147,12 @@ export function SplashContent({ onContinue }: SplashContentProps) {
 
           {/* CTA Button */}
           <motion.div
-            animate={{ opacity: 1, y: 0 }}
             className={isFirstVisit ? "flex w-full" : "flex justify-center"}
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.8, ease: 'easeOut' }}
+            {...(shouldAnimate && {
+              initial: { opacity: 0, y: 20 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.6, delay: 0.8, ease: 'easeOut' },
+            })}
           >
             <Button
               className="h-12 rounded-md w-full"

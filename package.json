@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:mobile": "next dev --hostname 0.0.0.0",
     "dev:uat": "bash scripts/switch-env.sh uat && npm run dev",
     "dev:prod": "bash scripts/switch-env.sh prod && npm run dev",
     "prebuild": "node scripts/generate-manifest.js",

@@ -7,6 +7,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 
 import { motion, AnimatePresence } from 'motion/react';
 
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { Button } from '@/components/ui/Button';
 import { Bismillah } from '@/components/ui/Bismillah';
 
@@ -51,10 +52,12 @@ const fadeInVariants = {
 export function LandingHero() {
   const router = useRouter();
   const { t } = useLanguage();
+  const reduceMotion = useReduceMotion();
   const translationText = t('landing.bismillah.translation');
   const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const typewriter = useTypewriter(translationText, 40, isFirstVisit === true && isReady);
+  const effectiveFirstVisit = isFirstVisit === true && !reduceMotion;
+  const typewriter = useTypewriter(translationText, 40, effectiveFirstVisit && isReady);
   const [showHeading, setShowHeading] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const bismillahRef = useRef<SVGSVGElement>(null);
@@ -86,43 +89,41 @@ export function LandingHero() {
       setIsFirstVisit(true);
     }
     setIsReady(true);
-  }, [isFirstVisit]);
+  }, []);
 
   // Show heading after typewriter is done (only on first visit)
   useEffect(() => {
-    if (isFirstVisit === true && typewriter.length === translationText.length) {
+    if (effectiveFirstVisit && typewriter.length === translationText.length) {
       const timer = setTimeout(() => {
         setShowHeading(true);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [typewriter, translationText, isFirstVisit]);
+  }, [typewriter, translationText, effectiveFirstVisit]);
 
   // Show button after heading animation (only on first visit)
   useEffect(() => {
-    if (isFirstVisit === true && showHeading) {
+    if (effectiveFirstVisit && showHeading) {
       const timer = setTimeout(() => {
         setShowButton(true);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [showHeading, isFirstVisit]);
+  }, [showHeading, effectiveFirstVisit]);
 
 
   // For translation text with a mobile-only line break after the comma
   const translationParts = translationText.split(',');
 
-  // Don't render anything until we know if it's first visit
-  if (isFirstVisit === null) {
-    return null;
-  }
+  const shouldRenderHeading = effectiveFirstVisit ? showHeading : true;
+  const shouldRenderButton = effectiveFirstVisit ? showButton : true;
 
   return (
     <section className="w-full px-6">
       <div className="flex min-h-[600px] md:h-screen md:pt-20 flex-col items-stretch justify-center gap-8 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
         {/* 1. Top: Calligraphy + roman text */}
         <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2 px-6">
-          {isFirstVisit ? (
+          {effectiveFirstVisit ? (
             <>
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
@@ -175,11 +176,11 @@ export function LandingHero() {
         {/* 2. Middle: Heading + Subtitle (centered) */}
         <div className="flex flex-col items-center justify-center">
           <AnimatePresence>
-            {showHeading && (
+            {shouldRenderHeading && (
               <motion.div
                 animate="visible"
                 className="flex flex-col items-center gap-2"
-                initial={isFirstVisit ? 'hidden' : 'visible'}
+                initial={effectiveFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >
                 <h1 
@@ -196,11 +197,11 @@ export function LandingHero() {
         {/* 3. Bottom: Action Button */}
         <div className="flex flex-col items-center">
           <AnimatePresence>
-            {showButton && (
+            {shouldRenderButton && (
               <motion.div
                 animate="visible"
                 className="flex justify-center"
-                initial={isFirstVisit ? 'hidden' : 'visible'}
+                initial={effectiveFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >
                 <Button
