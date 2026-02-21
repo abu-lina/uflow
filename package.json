@@ -1,6 +1,6 @@
 {
   "name": "ummah-flow",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "engines": {
     "node": ">=18.0.0",
@@ -8,7 +8,6 @@
   },
   "scripts": {
     "dev": "next dev",
-    "dev:mobile": "next dev --hostname 0.0.0.0",
     "dev:uat": "bash scripts/switch-env.sh uat && npm run dev",
     "dev:prod": "bash scripts/switch-env.sh prod && npm run dev",
     "prebuild": "node scripts/generate-manifest.js",
@@ -48,7 +47,6 @@
     "build:local": "export $(cat .env.local | xargs) && NODE_ENV=production next build",
     "refine-tasks-from-top-epic": "npx tsx scripts/refine-top-epic-tasks.ts",
     "remove-watermark": "tsx scripts/remove-lottie-watermark.ts",
-    "generate:providers": "npx tsx scripts/generate-fake-providers.ts",
     "perf:test": "bash tests/performance/run-tests.sh",
     "perf:baseline": "bash tests/performance/run-tests.sh baseline",
     "perf:load": "bash tests/performance/run-tests.sh load",
@@ -69,30 +67,25 @@
     "verify:snyk-pr": "bash scripts/verify-snyk-pr.sh"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@iconify/react": "^6.0.0",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.1.0",
-    "@supabase/ssr": "^0.8.0",
-    "@swc/helpers": "^0.5.18",
-    "@tanstack/react-query": "^5.90.12",
-    "@tanstack/react-query-devtools": "^5.90.12",
+    "@supabase/ssr": "^0.6.1",
+    "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-query-devtools": "^5.90.2",
     "class-variance-authority": "^0.7.1",
-    "cli": "^1.0.1",
     "clsx": "^2.1.1",
     "lottie-react": "^2.4.1",
-    "lucide-react": "^0.562.0",
+    "lucide-react": "^0.545.0",
     "motion": "^12.23.23",
     "next": "^15.5.9",
-    "next-intl": "^4.5.8",
-    "next-pwa": "^5.6.0",
-    "next-swagger-doc": "^0.4.1",
+    "next-intl": "^4.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-window": "^1.8.10",
     "resend": "^6.6.0",
     "server-only": "^0.0.1",
-    "sonner": "^2.0.7",
-    "swagger-ui-react": "^5.30.2",
+    "sonner": "^2.0.3",
     "tailwind-merge": "^3.3.1",
     "web-push": "^3.6.7",
     "zod": "^3.24.3"
@@ -100,7 +93,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.0.0",
     "@eslint/js": "^9.25.1",
-    "@faker-js/faker": "^10.2.0",
     "@next/bundle-analyzer": "^16.0.0",
     "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/forms": "^0.5.10",
@@ -112,8 +104,6 @@
     "@types/node": "^20.17.32",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
-    "@types/react-window": "^1.8.8",
-    "@types/swagger-ui-react": "^5.18.0",
     "@types/web-push": "^3.6.4",
     "@typescript-eslint/eslint-plugin": "^8.33.0",
     "@typescript-eslint/parser": "^8.33.0",
@@ -133,9 +123,8 @@
     "jsdom": "^27.0.1",
     "lint-staged": "^15.5.1",
     "postcss": "^8.4.35",
-    "prettier": "^3.5.3",
-    "puppeteer": "^24.34.0",
-    "sharp": "^0.34.5",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "5.5.4",
@@ -147,7 +136,8 @@
       "react": "^18.3.1",
       "react-dom": "^18.3.1"
     },
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.1.1",
+    "bn.js": ">=5.2.3"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
