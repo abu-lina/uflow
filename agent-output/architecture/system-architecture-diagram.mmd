@@ -1,0 +1,65 @@
+```mermaid
+flowchart TB
+  %% UFlow System Architecture (focus: Trust & Verification)
+
+  subgraph Client[Client]
+    Browser[Browser]
+    PWA[PWA]
+  end
+
+  subgraph Edge[Edge + Hosting]
+    CF[Cloudflare]
+    Nginx[Nginx]
+    Docker[Docker]
+  end
+
+  subgraph App[Next.js 15 Application]
+    UI[UI Pages / Components]
+    API[API Routes]
+    Services[src/services/*]
+  end
+
+  subgraph SB[Supabase]
+    Auth[Auth]
+    DB[(Postgres + RLS)]
+    Storage[Storage]
+  end
+
+  subgraph Trust[Trust & Verification Subsystem]
+    BadgeTypes[badge_types]
+    ProviderBadges[provider_badges]
+    Confirmations[badge_confirmations]
+    Verifications[badge_verifications]
+    Config[badge_system_config]
+    TrustSummary[[trust_summary view/materialized view]]
+  end
+
+  subgraph External[External Services]
+    Resend[Resend]
+    Maps[OSM / Nominatim]
+  end
+
+  Browser --> CF --> Nginx --> Docker --> UI
+  PWA --> CF
+
+  UI --> API
+  UI --> Services
+  API --> Services
+
+  Services --> Auth
+  Services --> DB
+  Services --> Storage
+
+  DB --> BadgeTypes
+  DB --> ProviderBadges
+  DB --> Confirmations
+  DB --> Verifications
+  DB --> Config
+  DB --> TrustSummary
+
+  API --> Resend
+  UI --> Maps
+
+  %% Notes
+  %% Public UI should read TrustSummary (aggregates), not raw Confirmations.
+```

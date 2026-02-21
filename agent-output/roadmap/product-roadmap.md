@@ -1,0 +1,837 @@
+# UFlow (Ummah Flow) - Product Roadmap
+
+**Last Updated**: 2026-01-27
+**Roadmap Owner**: roadmap agent
+**Current Version**: v0.1.0
+**Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
+
+## Change Log
+
+| Date & Time      | Change                                                             | Rationale                                                                                                 |
+| ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| 2026-01-27 14:00 | Initial roadmap creation                                           | Established strategic direction based on "strengthening Ummah" outcome with focus on growth and community |
+| 2026-01-27 15:30 | Epic 2.1 implementation plan created (Plan 001), validation passed | Detailed technical plan delivers all 5 acceptance criteria, ready for Architect/Security review           |
+| 2026-01-27 16:10 | Plan 001 revised for architecture gates                            | Implementation is gated by privacy-safe endorsements, unified role authority, and DB-side stable ranking  |
+
+---
+
+## 🎯 Master Product Objective
+
+**Make UFlow the first thought when any Muslim seeks a service or business.**
+
+When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted professional, or community support—UFlow should be their instinctive first choice. This creates a self-reinforcing cycle: seekers find what they need, providers gain visibility, and the Ummah strengthens through every connection.
+
+**Success Means**:
+
+- Muslims default to UFlow before Google or Instagram when seeking services
+- Muslim entrepreneurs list on UFlow as their primary visibility channel
+- Cities feel the economic and social impact of their Muslim community supporting each other
+- Trust and transparency (barakah) define every transaction
+
+---
+
+## Active Release Tracker
+
+**Current Working Release**: v0.2.0
+
+| Plan ID | Title                                | UAT Status | Committed |
+| ------- | ------------------------------------ | ---------- | --------- |
+| 001     | Provider Trust & Verification System | Pending    | ✗         |
+
+**Release Status**: 0 of 1 plans committed
+**Ready for Release**: No
+**Blocking Items**: Plan 001 pending Architect/Security review; implementation gated by architecture requirements (privacy-safe endorsement reads, unified roles, DB-side ranking)
+
+### Previous Releases
+
+| Version | Date    | Plans Included                                | Status   |
+| ------- | ------- | --------------------------------------------- | -------- |
+| v0.1.0  | 2025-Q4 | Initial launch, waitlist system, early access | Released |
+
+---
+
+## Release v0.2.0 - Community Trust Foundations
+
+**Target Date**: 2026-03-15
+**Strategic Goal**: Enable city-based communities to build trust through verified providers, authentic profiles, and social proof, creating the foundation for Ummah-first discovery.
+
+### Epic 2.1: Provider Trust & Verification System
+
+**Priority**: P0
+**Status**: Planned
+
+**User Story**:
+As a **service seeker**,
+I want to **see verified, trustworthy provider profiles with community endorsements**,
+So that **I feel confident supporting Muslim businesses and know I'm getting authentic halal/Islamic services**.
+
+**Business Value**:
+
+- Trust is the foundation of "Ummah first thought" - without it, users default to established platforms
+- Verification differentiates UFlow from generic directories
+- Community endorsements create network effects (trust breeds more trust)
+- Reduces friction in decision-making, leading to higher conversion from browse to contact/visit
+
+**Dependencies**:
+
+- Current provider listing system (✅ exists)
+- User authentication system (✅ exists)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Service seekers can instantly distinguish verified providers from unverified ones
+- [ ] Providers display community trust signals (verification badges, endorsement counts)
+- [ ] Users can endorse providers they've used (social proof mechanism)
+- [ ] Verification status visible in search results and provider cards
+- [ ] Trust metrics contribute to search ranking (verified providers surface higher)
+
+**Constraints**:
+
+- Verification process must be simple enough for small businesses (no complex bureaucracy)
+- Must respect privacy (no forced public reviews, optional endorsements)
+- Halal/Islamic authenticity verification requires community/scholar input (future epic)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined based on trust-first strategic priority
+- 2026-01-27: Implementation plan created (Plan 001), validation passed, pending Architect/Security review
+- 2026-01-27: Architecture assessment required gates (privacy-safe endorsement reads, unified role authority, DB-side ranking); Plan 001 updated accordingly
+
+---
+
+### Epic 2.2: City Community Pages & Discovery
+
+**Priority**: P0
+**Status**: Planned
+
+**User Story**:
+As a **Muslim in a specific city**,
+I want to **discover all halal businesses and community services in my area through a dedicated city page**,
+So that **I feel connected to my local Muslim community and can easily support local businesses**.
+
+**Business Value**:
+
+- City pages create geographic community hubs (sense of belonging)
+- Drives local engagement and repeat visits (users check "what's new in my city")
+- Enables city-based marketing and partnerships (mosque collaborations, community events)
+- Measurable: Track active cities, providers per city, user engagement per city
+
+**Dependencies**:
+
+- Basic provider listing and search (✅ exists)
+- City data structure (✅ partially exists from early access feature)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Each city has a dedicated landing page (`/city/[cityname]`) with all local providers
+- [ ] City pages show provider count, categories available, and featured businesses
+- [ ] Users can subscribe to city updates (new providers, community news)
+- [ ] City pages rank by provider density and community activity
+- [ ] "Coming Soon" cities show waitlist/interest capture for future expansion
+
+**Constraints**:
+
+- Must handle cities with zero providers gracefully (show "Be the first" CTA)
+- City name standardization (München vs Munich, Turkish city names in multiple languages)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined to leverage existing city-based architecture
+- Note: City selection feature already exists in early access flow, needs expansion
+
+---
+
+### Epic 2.3: Enhanced Provider Profiles with Rich Media
+
+**Priority**: P1
+**Status**: Planned
+
+**User Story**:
+As a **provider (business owner)**,
+I want to **showcase my business with photos, videos, detailed descriptions, and service highlights**,
+So that **seekers understand my offerings and feel excited to visit/contact me**.
+
+**Business Value**:
+
+- Increases provider satisfaction and retention (they see value in listing)
+- Drives user engagement (rich profiles = longer time on site, higher conversion)
+- Differentiates UFlow from simple directories (Instagram-like visual appeal)
+- Encourages providers to invest time in platform (sticky behavior)
+
+**Dependencies**:
+
+- Basic provider creation flow (✅ exists with Google/Instagram import)
+- Image storage infrastructure (✅ exists via Supabase Storage)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Providers can upload multiple photos (gallery view with swipe/arrows)
+- [ ] Providers can add video (embedded YouTube/Vimeo or direct upload)
+- [ ] Profile sections: About, Services, Hours, Special Features (halal cert, women-only, etc.)
+- [ ] "Barakah Tags" system for Islamic attributes (Halal, Zakat, Sunnah-based, etc.)
+- [ ] Mobile-first design with fast loading (optimized images, lazy load)
+
+**Constraints**:
+
+- Storage limits per provider tier (free vs future premium)
+- Video upload size limits (to control costs)
+- Image moderation (prevent inappropriate content)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined to build on existing quick import feature
+
+---
+
+### Epic 2.4: User Favorites & Personal Collections
+
+**Priority**: P1
+**Status**: Planned
+
+**User Story**:
+As a **service seeker**,
+I want to **save my favorite providers and organize them into collections**,
+So that **I can easily return to businesses I trust and share recommendations with family/friends**.
+
+**Business Value**:
+
+- Creates user lock-in (saved favorites = reason to return to UFlow)
+- Enables social sharing (collections = viral growth potential)
+- User engagement metric (favorites count = interest level)
+- Foundation for personalized recommendations (future epic)
+
+**Dependencies**:
+
+- User authentication (✅ exists)
+- Provider listing system (✅ exists)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Users can favorite any provider with one tap (heart icon)
+- [ ] Favorites accessible from user profile page
+- [ ] Users can create named collections ("Best Halal Restaurants", "Kids Activities", etc.)
+- [ ] Collections shareable via link (public/private toggle)
+- [ ] Providers see favorite count (social proof + provider motivation)
+
+**Constraints**:
+
+- Must work for non-authenticated users (localStorage until signup)
+- Collections sync across devices when logged in
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined based on existing UI (heart icon already in provider cards)
+
+---
+
+## Release v0.3.0 - Community Participation & Growth
+
+**Target Date**: 2026-05-15
+**Strategic Goal**: Activate the community to grow UFlow organically through recommendations, referrals, and city unlocking, making every user a contributor to Ummah strengthening.
+
+### Epic 3.1: Community-Driven Provider Recommendations
+
+**Priority**: P0
+**Status**: Planned
+
+**User Story**:
+As a **community member**,
+I want to **recommend Muslim businesses that aren't on UFlow yet**,
+So that **my community can discover them and the Ummah benefits from comprehensive coverage**.
+
+**Business Value**:
+
+- Scales provider acquisition without marketing spend (organic growth)
+- Community feels ownership (they built the platform)
+- Identifies high-demand categories/cities (where recommendations cluster)
+- Reduces admin workload (community does discovery work)
+
+**Dependencies**:
+
+- Basic provider creation flow (✅ exists)
+- Early access recommendation feature (✅ partially exists)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Any user can submit a provider recommendation (name, location, category, reason)
+- [ ] Recommended providers go into review queue (admin dashboard)
+- [ ] Recommenders get credit/badge when their suggestion goes live
+- [ ] Top recommenders featured on leaderboard (gamification)
+- [ ] Recommendations tracked by city (shows demand for city unlock)
+
+**Constraints**:
+
+- Must prevent spam/fake recommendations (rate limiting, verification)
+- Duplicate detection (don't recommend existing providers)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined to formalize existing early access recommendation feature
+
+---
+
+### Epic 3.2: City Unlock Campaign System
+
+**Priority**: P0
+**Status**: Planned
+
+**User Story**:
+As a **Muslim in a city not yet on UFlow**,
+I want to **rally my community to unlock our city by hitting provider/user thresholds**,
+So that **we get access to UFlow's benefits and strengthen our local Ummah**.
+
+**Business Value**:
+
+- Creates viral growth mechanism (users recruit others to unlock their city)
+- Builds anticipation and momentum (launches feel like events)
+- Pre-validates demand before expansion (ROI-focused growth)
+- Community ownership from day one (users fought to unlock it)
+
+**Dependencies**:
+
+- City data structure (✅ exists)
+- Recommendation system (Epic 3.1)
+- Email notification system (✅ exists via Resend)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] City unlock page shows progress (X providers needed, Y recommendations submitted)
+- [ ] Users can vote/signal interest in city unlock
+- [ ] Automated unlock when thresholds met (e.g., 10 providers + 50 interested users)
+- [ ] Email campaign to city participants when unlock happens
+- [ ] City unlock announcement on homepage (celebration, social proof)
+
+**Constraints**:
+
+- Thresholds must be achievable but meaningful (not too easy, not impossible)
+- Must handle overlapping cities (e.g., Berlin suburbs)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined based on city-focused community building strategy
+
+---
+
+### Epic 3.3: Referral & Share Features
+
+**Priority**: P1
+**Status**: Planned
+
+**User Story**:
+As a **satisfied UFlow user**,
+I want to **easily share providers, collections, and UFlow itself with friends/family**,
+So that **my Ummah can benefit from what I've discovered**.
+
+**Business Value**:
+
+- Viral growth loop (users recruit users)
+- Trust-based acquisition (friend referrals convert higher than ads)
+- Social proof (seeing friends use UFlow increases credibility)
+- Measurable via referral codes and share metrics
+
+**Dependencies**:
+
+- Provider pages (✅ exists)
+- Collections system (Epic 2.4)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] One-tap share for any provider (WhatsApp, Telegram, Twitter, copy link)
+- [ ] Shareable collection links with preview images (Open Graph meta tags)
+- [ ] Referral codes for user acquisition ("Join with my code, we both get X")
+- [ ] Share tracking (see which providers/collections go viral)
+- [ ] Pre-filled share messages optimized for Muslim audience ("Assalamu Alaikum, check out...")
+
+**Constraints**:
+
+- Privacy-first (no forced social logins, no spam)
+- Islamic etiquette in messaging (respectful language)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined to enable organic growth through existing network effects
+
+---
+
+### Epic 3.4: Basic User Profiles & Activity
+
+**Priority**: P2
+**Status**: Planned
+
+**User Story**:
+As a **UFlow user**,
+I want to **have a profile showing my contributions (recommendations, favorites, endorsements)**,
+So that **I feel recognized in the community and motivated to participate more**.
+
+**Business Value**:
+
+- Gamification drives engagement (people want badges, recognition)
+- Creates community leaders (top contributors become ambassadors)
+- Trust signal (profiles with activity = real users, not bots)
+- Foundation for future social features (following, messaging)
+
+**Dependencies**:
+
+- User authentication (✅ exists)
+- Favorites system (Epic 2.4)
+- Recommendation system (Epic 3.1)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] User profile page shows: favorites count, recommendations submitted, endorsements given
+- [ ] Badges/achievements for milestones (first recommendation, 10 favorites, etc.)
+- [ ] Public/private profile toggle
+- [ ] Profile accessible from recommendations/endorsements (attribution)
+- [ ] Basic profile customization (name, city, bio optional)
+
+**Constraints**:
+
+- Privacy-first (users control what's public)
+- No complex social features yet (keep simple for v0.3)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined as foundation for community engagement features
+
+---
+
+## Release v0.4.0 - Engagement & Transaction Enablement
+
+**Target Date**: 2026-07-30
+**Strategic Goal**: Enable seamless interaction between seekers and providers through bookings, inquiries, and reviews, creating a complete marketplace experience.
+
+### Epic 4.1: Direct Contact & Inquiry System
+
+**Priority**: P0
+**Status**: Planned
+
+**User Story**:
+As a **service seeker**,
+I want to **contact providers directly through UFlow (call, email, message)**,
+So that **I can ask questions and book services without leaving the platform**.
+
+**Business Value**:
+
+- Measurable conversion (contact = real intent)
+- Provider value proof (they see leads from UFlow)
+- Retention (users stay in UFlow ecosystem vs jumping to external sites)
+- Foundation for future monetization (charge for premium leads)
+
+**Dependencies**:
+
+- Provider contact information (✅ exists)
+- User authentication (✅ exists)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] One-tap call from provider page (mobile click-to-call)
+- [ ] In-app inquiry form (sends email to provider, CC to user)
+- [ ] WhatsApp direct message button (if provider provides WhatsApp number)
+- [ ] Inquiry tracking (users see sent inquiries in profile, providers see received)
+- [ ] Response rate metric for providers (social proof)
+
+**Constraints**:
+
+- Privacy (don't expose provider emails publicly, use proxy)
+- Spam prevention (rate limiting on inquiries)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined to enable measurable conversion tracking
+
+---
+
+### Epic 4.2: Simple Booking System (Calendar-based)
+
+**Priority**: P1
+**Status**: Planned
+
+**User Story**:
+As a **service seeker**,
+I want to **book appointments with providers through an integrated calendar**,
+So that **I can secure my time slot without phone tag or external booking tools**.
+
+**Business Value**:
+
+- Major provider value add (booking system = tangible business benefit)
+- Higher conversion (easier booking = more bookings)
+- Lock-in for providers (integrated calendar = dependency on UFlow)
+- Data insight (peak booking times, popular services)
+
+**Dependencies**:
+
+- Provider profiles with service offerings (Epic 2.3)
+- User authentication (✅ exists)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Providers can set available time slots (calendar integration or manual)
+- [ ] Users can book available slots with confirmation email/SMS
+- [ ] Booking confirmation with iCal attachment (add to Google Calendar, etc.)
+- [ ] Providers can manage bookings (accept/decline/reschedule)
+- [ ] Automated reminders (24h before appointment)
+
+**Constraints**:
+
+- Must integrate with provider's existing calendars (Google Calendar sync)
+- SMS notifications cost (limit free tier, charge for premium)
+- Cancellation policy (who controls cancellations, refund logic)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined as high-value provider feature
+- Note: Consider starting with simple time slot system before full calendar sync
+
+---
+
+### Epic 4.3: Review & Rating System
+
+**Priority**: P1
+**Status**: Planned
+
+**User Story**:
+As a **service seeker**,
+I want to **read authentic reviews from other Muslims who've used a provider**,
+So that **I can make informed decisions based on real experiences**.
+
+**Business Value**:
+
+- Trust amplification (reviews = social proof at scale)
+- Quality control (bad providers get flagged, good ones rise)
+- User engagement (people return to leave/read reviews)
+- SEO benefit (user-generated content)
+
+**Dependencies**:
+
+- User authentication (✅ exists)
+- Provider pages (✅ exists)
+- Contact/booking system (Epic 4.1/4.2 for verified interactions)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Users can leave reviews only after verified interaction (booking/contact)
+- [ ] Rating scale (1-5 stars) + optional text review
+- [ ] Islamic review guidelines (constructive feedback, no backbiting)
+- [ ] Provider response to reviews (engagement, accountability)
+- [ ] Review moderation (flag inappropriate content)
+
+**Constraints**:
+
+- Prevent fake reviews (only verified interactions can review)
+- Islamic ethics (no slandering, balanced feedback encouraged)
+- Provider protection (right to respond, dispute false reviews)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined as critical trust-building feature
+- Note: Consider "endorsement" model first (simpler than full reviews, less negative)
+
+---
+
+### Epic 4.4: Featured Listings & Provider Dashboard
+
+**Priority**: P2
+**Status**: Planned
+
+**User Story**:
+As a **provider (business owner)**,
+I want to **see analytics on my listing performance and upgrade to featured visibility**,
+So that **I can grow my business and justify investing in UFlow**.
+
+**Business Value**:
+
+- Revenue stream (featured listings = monetization)
+- Provider retention (analytics = perceived value)
+- Quality signal (providers who pay = serious businesses)
+- Funds platform sustainability
+
+**Dependencies**:
+
+- Provider profiles (✅ exists)
+- Contact/inquiry tracking (Epic 4.1)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Provider dashboard shows: profile views, favorites, inquiries, bookings (if applicable)
+- [ ] Featured listing option (prominent placement in search, city pages, homepage)
+- [ ] Payment integration for featured listings (Stripe or local payment)
+- [ ] Featured vs organic performance comparison (ROI proof)
+- [ ] Simple upgrade flow (free → featured with one click)
+
+**Constraints**:
+
+- Pricing must be accessible for small businesses (€5-20/month)
+- No "pay to win" (featured listings still need quality/relevance)
+- Transparent labeling (users know which are featured)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined as first monetization pathway
+- Note: Start with simple featured flag before complex bidding/auction
+
+---
+
+## Release v0.5.0 - Advanced Community & Islamic Features
+
+**Target Date**: 2026-10-15
+**Strategic Goal**: Deepen Islamic authenticity and community features that make UFlow uniquely valuable for Muslims (prayer times, Zakat, community events, halal verification).
+
+### Epic 5.1: Islamic Authenticity Verification (Halal, Zakat, Scholars)
+
+**Priority**: P0
+**Status**: Planned
+
+**User Story**:
+As a **service seeker**,
+I want to **know that providers are truly halal/Islamic through scholar verification or community consensus**,
+So that **I trust UFlow as a source of authentic halal services**.
+
+**Business Value**:
+
+- Ultimate differentiation (no other platform offers Islamic verification)
+- Trust at the deepest level (religious authenticity)
+- Attracts conservative/observant Muslims (underserved market)
+- Partnership with Islamic organizations (imams, halal certification bodies)
+
+**Dependencies**:
+
+- Provider verification system (Epic 2.1)
+- Scholar/organization onboarding process (new)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Halal certification upload and verification (for restaurants, food)
+- [ ] Scholar endorsement system (local imams can endorse providers)
+- [ ] Islamic service categories (halal, women-only, non-music environment, etc.)
+- [ ] Verification badge hierarchy (community verified, scholar verified, certified halal)
+- [ ] Transparency (users can see verification source)
+
+**Constraints**:
+
+- Must respect different Islamic schools of thought (Hanafi, Shafi, etc.)
+- Avoid religious disputes (clear criteria, no enforcement of one madhab)
+- Scholar onboarding requires trust (background checks, community reputation)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined as core Islamic value proposition
+- Note: Requires careful implementation with Islamic advisory board
+
+---
+
+### Epic 5.2: Integrated Prayer Times & Mosque Features
+
+**Priority**: P1
+**Status**: Planned
+
+**User Story**:
+As a **Muslim user**,
+I want to **see prayer times integrated into UFlow and find nearby mosques easily**,
+So that **UFlow becomes my daily Islamic companion, not just a business directory**.
+
+**Business Value**:
+
+- Daily engagement driver (prayer times = open app 5x/day)
+- Mosque partnerships (mosques promote UFlow to congregation)
+- Community hub positioning (beyond commerce → spiritual connection)
+- Unique value (no competitor combines marketplace + prayer times seamlessly)
+
+**Dependencies**:
+
+- Location services (✅ exists)
+- Mosque provider category (✅ exists)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Prayer times widget on homepage (automatic location detection)
+- [ ] Mosque finder with distance/directions (map integration)
+- [ ] Mosque detail pages (prayer times, services, events, contact)
+- [ ] Prayer time notifications (opt-in push notifications)
+- [ ] Calculation method preference (ISNA, MWL, etc.)
+
+**Constraints**:
+
+- Prayer time accuracy critical (test thoroughly, multiple calculation methods)
+- Offline support (prayer times cached for offline PWA use)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined to position UFlow as daily Islamic tool
+- Note: Consider partnership with existing prayer time APIs (e.g., Aladhan)
+
+---
+
+### Epic 5.3: Zakat & Charity Integration
+
+**Priority**: P2
+**Status**: Planned
+
+**User Story**:
+As a **Muslim user**,
+I want to **discover verified Zakat organizations and charitable initiatives through UFlow**,
+So that **I can fulfill my Islamic obligations with trusted, transparent organizations**.
+
+**Business Value**:
+
+- Deepens Islamic positioning (beyond commerce → religious duty)
+- Attracts high-intent users (people giving Zakat are engaged Muslims)
+- Partnership with Islamic charities (cross-promotion, credibility)
+- Social impact (measurable Zakat distributed through platform)
+
+**Dependencies**:
+
+- Provider categories (✅ exists, add "Charity/Zakat" category)
+- Verification system (Epic 5.1 for organization authenticity)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Zakat category with verified organizations
+- [ ] Zakat calculator tool (integrated into UFlow)
+- [ ] Transparent reporting (where donations go, impact metrics)
+- [ ] Recurring donation option (monthly Sadaqah)
+- [ ] Tax receipt generation (for countries with tax deduction)
+
+**Constraints**:
+
+- Must comply with charity regulations (varies by country)
+- Financial transparency required (no UFlow commission on donations)
+- Verification stringent (only trusted, registered charities)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined to serve Islamic social responsibility
+- Note: Start with directory, add transaction layer later (complex compliance)
+
+---
+
+### Epic 5.4: Community Events & Announcements
+
+**Priority**: P2
+**Status**: Planned
+
+**User Story**:
+As a **community member**,
+I want to **discover local Islamic events (Iftars, lectures, classes) and community announcements**,
+So that **I stay connected and active in my local Ummah**.
+
+**Business Value**:
+
+- Engagement driver (events = reason to return weekly)
+- Community hub positioning (central place for Muslim community life)
+- Provider value (mosques, schools can promote events)
+- Network effects (users invite friends to events → app growth)
+
+**Dependencies**:
+
+- Provider profiles (✅ exists, extend with event capability)
+- City pages (Epic 2.2 for city-based event discovery)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [ ] Event creation for providers (mosques, schools, organizations)
+- [ ] Event calendar view (city-wide, category filtered)
+- [ ] RSVP/registration for events (track attendance)
+- [ ] Event notifications (users can follow categories/organizations)
+- [ ] Past event archive (photos, recap, community memory)
+
+**Constraints**:
+
+- Free vs paid events (UFlow takes no cut initially, just facilitates)
+- Spam prevention (only verified providers can post events)
+- Capacity management (max attendees, waitlist)
+
+**Status Notes**:
+
+- 2026-01-27: Epic defined to build vibrant community engagement
+- Note: Simple MVP = event listing, advanced = ticketing/payment
+
+---
+
+## Backlog / Future Consideration
+
+### Epic 6.1: Multi-Language Quran Search Integration
+
+**Priority**: P3
+**Status**: Deferred
+
+Integrate Quran search and translation into UFlow as a spiritual companion feature. Users can search Quran by topic, copy ayahs to share with providers (e.g., "As-Salamu-Alaikum, I found this on UFlow..."), and deepen Islamic engagement.
+
+**Dependencies**: Prayer times integration (Epic 5.2), content moderation
+**Rationale for Deferral**: Core marketplace features take precedence, but represents long-term vision of UFlow as complete Islamic lifestyle platform
+
+---
+
+### Epic 6.2: Ummah Marketplace (P2P Services)
+
+**Priority**: P3
+**Status**: Deferred
+
+Enable peer-to-peer service exchange (e.g., "I can teach Quran, you can teach coding"). Creates community skill sharing beyond formal businesses.
+
+**Dependencies**: User profiles (Epic 3.4), trust/verification system (Epic 2.1)
+**Rationale for Deferral**: Requires strong community foundation first; P2P needs trust infrastructure
+
+---
+
+### Epic 6.3: Islamic Business Networking
+
+**Priority**: P3
+**Status**: Deferred
+
+LinkedIn-style networking for Muslim professionals and entrepreneurs. Connect providers with suppliers, investors, mentors within Ummah.
+
+**Dependencies**: User profiles (Epic 3.4), business verification
+**Rationale for Deferral**: Focus on B2C before B2B; complex feature requiring dedicated effort
+
+---
+
+### Epic 6.4: Mobile App (Native iOS/Android)
+
+**Priority**: P2
+**Status**: Deferred
+
+Native mobile apps with push notifications, offline support, camera integration for provider photo uploads.
+
+**Dependencies**: Core features stable, PWA performance benchmarked
+**Rationale for Deferral**: PWA currently covers 90% of use cases; native app when scale justifies investment
+**Note**: Current PWA strategy is cost-effective; revisit at 50k+ monthly active users
+
+---
+
+## Document Lifecycle
+
+**Status**: Active
+**Owner**: roadmap agent
+**Review Cycle**: Monthly (or when major releases complete)
+
+**Next Review**: 2026-02-27
+
+---
+
+## Notes
+
+### Strategic Principles
+
+1. **Ummah First**: Every feature should strengthen community bonds, not just facilitate transactions
+2. **Trust Over Growth**: Verification and authenticity before aggressive user acquisition
+3. **Islamic Values**: Transparency (no hidden fees), justice (fair to all parties), benefit (mutual gain)
+4. **Community-Driven**: Users build UFlow through recommendations, not top-down marketing
+5. **Sustainable Economics**: Monetization that doesn't compromise mission (featured listings, not transaction fees)
+
+### Success Metrics by Release
+
+- **v0.2 (Trust)**: Verified provider count, endorsement rate, trust badge visibility in search
+- **v0.3 (Growth)**: New providers from recommendations, city unlock rate, referral conversion
+- **v0.4 (Engagement)**: Inquiry/booking conversion, review submission rate, repeat user visits
+- **v0.5 (Islamic Depth)**: Halal-verified provider count, daily prayer time opens, Zakat referrals
+
+### Risk Management
+
+- **Community Moderation**: Rapid growth requires moderation capacity (consider volunteer moderator program)
+- **Islamic Authenticity**: Verification disputes could damage trust (establish clear, transparent criteria early)
+- **Provider Quality**: Bad experiences with providers hurt platform (need quality control mechanisms)
+- **Monetization Timing**: Too early = user backlash, too late = unsustainable (current plan: v0.4 featured listings)
+
+---
+
+**Alhamdulillah** - May this roadmap serve the Ummah and bring barakah to all who use and build UFlow.
