@@ -5,6 +5,19 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-02-21
+
+### Fixed
+- Fixed UAT Docker build failures caused by `npm ci` errors
+- Restored missing phantom dependencies (react-window, swagger-ui-react, next-swagger-doc)
+- Removed problematic bn.js override crossing major version boundary
+- Synchronized package-lock.json with package.json (resolved 9 spec mismatches)
+- Fixed PWA import in next.config.js to use @ducanh2912/next-pwa.default
+
+### Added
+- Added .nvmrc to pin Node.js 20 for contributor toolchain
+- Added pre-Docker npm ci validation step to UAT workflow for early failure detection
+
 ## [0.2.0] - 2026-02-21
 
 ### Fixed
