@@ -2,7 +2,7 @@
 ID: 006
 Origin: 006
 UUID: 8f3c1a2d
-Status: Active
+Status: Resolved
 ---
 
 # Process Improvement Analysis 006 — From Retro 005 (UAT Docker npm ci)
@@ -45,20 +45,20 @@ Status: Active
 
 ### Handoff Patterns Observed
 
-| Pattern | Frequency | Root Cause | Impact | Recommendation |
-|---|---:|---|---|---|
-| UAT artifact creation blocked | 1 | UAT agent lacks edit tools + tool availability issues | Delayed audit trail; blocked handoff | Add UAT doc-write capability + preflight check |
-| Document lifecycle metadata drift | 1+ | ID inheritance + status updates not consistently enforced at closure | Traceability degraded; harder automated closure | Add “Lifecycle invariants” checklist + closure normalization |
-| DevOps git preflight incomplete | 1 | Remote sync check exists, but upstream tracking not guaranteed | Late-stage fixups, wasted time | Add upstream-tracking check to DevOps Stage 2 |
-| Patch release not mirrored in roadmap tracker | 1 | Ownership unclear; no mandatory step in plan/DevOps/Roadmap chain | Release accounting drift | Add explicit tracker update responsibility |
+| Pattern                                       | Frequency | Root Cause                                                           | Impact                                          | Recommendation                                               |
+| --------------------------------------------- | --------: | -------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| UAT artifact creation blocked                 |         1 | UAT agent lacks edit tools + tool availability issues                | Delayed audit trail; blocked handoff            | Add UAT doc-write capability + preflight check               |
+| Document lifecycle metadata drift             |        1+ | ID inheritance + status updates not consistently enforced at closure | Traceability degraded; harder automated closure | Add “Lifecycle invariants” checklist + closure normalization |
+| DevOps git preflight incomplete               |         1 | Remote sync check exists, but upstream tracking not guaranteed       | Late-stage fixups, wasted time                  | Add upstream-tracking check to DevOps Stage 2                |
+| Patch release not mirrored in roadmap tracker |         1 | Ownership unclear; no mandatory step in plan/DevOps/Roadmap chain    | Release accounting drift                        | Add explicit tracker update responsibility                   |
 
 ### Efficiency Metrics (Plan 005)
 
-| Metric | Observed | Notes |
-|---|---|---|
-| Rework loops | Low | Minimal back-and-forth across phases |
-| Blocking issue surfaced late | Yes | Git upstream tracking discovered during DevOps Stage 2 |
-| Auditability break | Yes | UAT doc creation initially blocked |
+| Metric                       | Observed | Notes                                                  |
+| ---------------------------- | -------- | ------------------------------------------------------ |
+| Rework loops                 | Low      | Minimal back-and-forth across phases                   |
+| Blocking issue surfaced late | Yes      | Git upstream tracking discovered during DevOps Stage 2 |
+| Auditability break           | Yes      | UAT doc creation initially blocked                     |
 
 ---
 
@@ -80,16 +80,19 @@ Status: Active
 - **Risk**: MEDIUM (tool permission expansion); mitigated by strict constraints in the agent instructions.
 
 **Evidence of current mismatch (quote)**:
+
 - `.github/agents/uat.agent.md` tools list is read-only: `tools: ['read/problems', 'read/readFile', 'search', ...]` but Core Responsibilities include “Create UAT document”.
 
 **Implementation template (UAT agent tools + preflight)**
 
 In `.github/agents/uat.agent.md`:
+
 - Add edit tools (minimum set): `edit/createFile`, `edit/createDirectory`, `edit/editFiles` (optional), so UAT can create `agent-output/uat/...`.
 - Add section under **Workflow** step 0:
   - “Preflight: verify write tools enabled; if not, ask user to enable create/edit tools before proceeding.”
 
 In `.github/agents/qa.agent.md`:
+
 - Add a short preflight note in Phase 1:
   - “Preflight: ensure `agent-output/qa/` exists; ensure create/edit tools are enabled before starting doc.”
 
@@ -122,15 +125,18 @@ In `.github/agents/qa.agent.md`:
 **Implementation template (DevOps closure normalization)**
 
 In `.github/agents/devops.agent.md` Stage 1 step “Close committed documents”:
+
 - Add sub-steps:
   - “Verify each doc frontmatter matches plan’s `ID/Origin/UUID`.”
   - “Update doc Status to `Committed` (Stage 1) before moving to closed/.”
 
 In `.github/agents/implementer.agent.md`:
+
 - Add explicit instruction in “Implementation Doc Format” section header:
   - “Frontmatter MUST inherit `ID/Origin/UUID` from the plan (copy/paste).”
 
 In `.github/agents/code-reviewer.agent.md`:
+
 - Same: “Frontmatter MUST inherit `ID/Origin/UUID` from the plan.”
 
 ---
@@ -154,6 +160,7 @@ In `.github/agents/code-reviewer.agent.md`:
 **Implementation template (DevOps Stage 2)**
 
 In `.github/agents/devops.agent.md` Phase 2A (Release Readiness Verification), add:
+
 - “Upstream tracking check (MANDATORY): `git branch -vv` must show `main...origin/main`. If not, set upstream before continuing.”
 
 ---
@@ -175,16 +182,24 @@ In `.github/agents/devops.agent.md` Phase 2A (Release Readiness Verification), a
 **Implementation template (Option A)**
 
 In `.github/agents/devops.agent.md` Stage 1 step 10 and Stage 2 Post-Release step 4:
+
 - Add explicit requirement: “Send handoff to Roadmap agent to update Active Release Tracker + Previous Releases table.”
 
 ---
 
 ## Conflict Analysis
 
-| # | Recommendation | Conflicting Instruction / Evidence | Nature | Impact | Proposed Resolution | Resolved? |
-|---|---|---|---|---|---|---|
-| C1 | R1 (UAT must write docs) | `.github/agents/uat.agent.md` has read-only tools list but requires creating UAT doc | Direct contradiction | UAT can’t produce deliverable; workflow blocks | Add edit tools + strict scope constraint (“only create/modify `agent-output/uat/` + plan status”) | No |
-| C2 | R2 (IDs must be inherited) | Observed docs have `Origin: Orchestrator`, non-inherited UUID; Implementer/Reviewer instructions imply inheritance | Logical inconsistency between policy and artifacts | Traceability and automated closure become unreliable | Add explicit checklist + DevOps closure normalization for headers/status | No |
+| #   | Recommendation             | Conflicting Instruction / Evidence                                                                                 | Nature                                             | Impact                                               | Proposed Resolution                                                                               | Resolved? |
+| --- | -------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------- |
+| C1  | R1 (UAT must write docs)   | `.github/agents/uat.agent.md` has read-only tools list but requires creating UAT doc                               | Direct contradiction                               | UAT can’t produce deliverable; workflow blocks       | Add edit tools + strict scope constraint (“only create/modify `agent-output/uat/` + plan status”) | No        |
+| C2  | R2 (IDs must be inherited) | Observed docs have `Origin: Orchestrator`, non-inherited UUID; Implementer/Reviewer instructions imply inheritance | Logical inconsistency between policy and artifacts | Traceability and automated closure become unreliable | Add explicit checklist + DevOps closure normalization for headers/status                          | No        |
+
+Updated after implementation (Option 1):
+
+| #   | Recommendation             | Conflicting Instruction / Evidence                                                                                 | Nature                                             | Impact                                               | Proposed Resolution                                                                               | Resolved? |
+| --- | -------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------- |
+| C1  | R1 (UAT must write docs)   | `.github/agents/uat.agent.md` had read-only tools list but required creating UAT doc                               | Direct contradiction                               | UAT can’t produce deliverable; workflow blocks       | Added minimal edit tools + explicit edit-scope constraint + doc-tooling preflight                 | Yes       |
+| C2  | R2 (IDs must be inherited) | Observed docs had non-inherited `Origin/UUID`; closure semantics inconsistent                                       | Logical inconsistency between policy and artifacts | Traceability and automated closure become unreliable | Strengthened ID-inheritance guidance + added DevOps closure normalization checklist               | Yes       |
 
 ---
 
@@ -197,12 +212,12 @@ In `.github/agents/devops.agent.md` Stage 1 step 10 and Stage 2 Post-Release ste
 
 ## Risk Assessment
 
-| Recommendation | Risk | Rationale | Mitigation |
-|---|---|---|---|
-| R1 Doc tooling preflight + UAT write tools | MEDIUM | Expands tools; requires discipline | Add hard constraint limiting edits to `agent-output/uat/` + plan status only |
-| R2 Lifecycle invariants + closure normalization | LOW | Text-only checklist; minor edits to frontmatter | Limit changes to frontmatter + status; no content rewrites |
-| R3 DevOps upstream tracking check | LOW | Extra git command; no workflow change | Provide exact commands |
-| R4 Roadmap tracker update ownership | LOW–MEDIUM | Process overhead/duplication risk | Assign single owner; minimal required fields |
+| Recommendation                                  | Risk       | Rationale                                       | Mitigation                                                                   |
+| ----------------------------------------------- | ---------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| R1 Doc tooling preflight + UAT write tools      | MEDIUM     | Expands tools; requires discipline              | Add hard constraint limiting edits to `agent-output/uat/` + plan status only |
+| R2 Lifecycle invariants + closure normalization | LOW        | Text-only checklist; minor edits to frontmatter | Limit changes to frontmatter + status; no content rewrites                   |
+| R3 DevOps upstream tracking check               | LOW        | Extra git command; no workflow change           | Provide exact commands                                                       |
+| R4 Roadmap tracker update ownership             | LOW–MEDIUM | Process overhead/duplication risk               | Assign single owner; minimal required fields                                 |
 
 ---
 
@@ -223,30 +238,34 @@ In `.github/agents/devops.agent.md` Stage 1 step 10 and Stage 2 Post-Release ste
 
 ---
 
-## Suggested Agent Instruction Updates (Proposed; NOT YET APPLIED)
+## Agent Instruction Updates (APPLIED — Option 1)
 
-**Files likely to change (pending approval):**
+**Summary**: Implemented R1/R2/R3 as minimal, additive instruction updates. R4 is explicitly deferred pending owner decision.
+
+**Files updated**:
 
 - `.github/agents/uat.agent.md`
-  - Add minimal edit tools required to create UAT docs
-  - Add doc-tooling readiness preflight
-  - Add explicit hard constraint on what UAT may edit
+  - Added minimal edit tools (`edit/createDirectory`, `edit/createFile`, `edit/editFiles`)
+  - Added doc-tooling readiness preflight
+  - Added explicit edit-scope constraint to limit risk
 
 - `.github/agents/qa.agent.md`
-  - Add doc-tooling readiness preflight
+  - Added doc-tooling readiness preflight
 
 - `.github/agents/devops.agent.md`
-  - Add upstream tracking preflight
-  - Add closure normalization checklist for plan/impl/QA/UAT docs
-  - (If adopting Option A for R4) make Roadmap handoff mandatory in Stage 1 + Stage 2
+  - Added closure normalization checklist (frontmatter invariants + terminal Status) before moving docs to `closed/`
+  - Added upstream tracking check before remote sync check in Stage 2 Phase 2A
 
 - `.github/agents/implementer.agent.md`
-  - Add explicit doc-frontmatter inheritance checklist snippet
+  - Strengthened ID inheritance guidance (treat `ID/Origin/UUID` as immutable; stop if mismatch)
 
 - `.github/agents/code-reviewer.agent.md`
-  - Add explicit doc-frontmatter inheritance checklist snippet
+  - Strengthened ID inheritance guidance (treat `ID/Origin/UUID` as immutable; stop if mismatch)
+
+**Update summary doc**: `agent-output/process-improvement/006-agent-instruction-updates.md`
 
 **Validation plan (post-change):**
+
 1. Create a new plan and verify new docs inherit `ID/Origin/UUID` correctly.
 2. Run through QA → UAT: confirm doc creation is possible without tool churn.
 3. Run DevOps Stage 2 preflight: confirm upstream tracking and remote sync checks produce clear status output.
