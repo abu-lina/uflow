@@ -67,6 +67,14 @@ jobs:
           [[ ! "$UAT_KEY" =~ ^eyJ ]] && echo "❌ Invalid SUPABASE_ANON_KEY format" && exit 1
           echo "✅ Secrets validated"
       
+      - name: Validate npm ci (pre-Docker sanity check)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      
+      - name: Run npm ci
+        run: npm ci --no-audit
+      
       - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v5
         with:
