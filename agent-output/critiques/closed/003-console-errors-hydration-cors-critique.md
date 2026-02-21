@@ -2,7 +2,7 @@
 ID: 003
 Origin: 003
 UUID: b7e2a91f
-Status: OPEN
+Status: Committed
 ---
 
 # Critique: Plan 003 — Console Errors (Hydration + CORS)

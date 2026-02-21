@@ -2,7 +2,7 @@
 ID: 003
 Origin: 003
 UUID: b7e2a91f
-Status: QA Complete
+Status: Committed
 ---
 
 # QA Report: Fix Console Errors — Hydration Mismatch & Supabase CORS (Plan 003)
