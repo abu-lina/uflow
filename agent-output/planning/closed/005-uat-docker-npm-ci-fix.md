@@ -2,7 +2,7 @@
 ID: 5
 Origin: 5
 UUID: d7e2a91f
-Status: UAT Complete
+Status: Committed
 ---
 
 # Fix Plan: Restore UAT Docker Build (`npm ci` failure)
