@@ -320,6 +320,6 @@ Choose one:
 
 ## Changelog
 
-| Date       | Agent              | Change           | Notes              |
-| ---------- | ------------------ | ---------------- | ------------------ |
-| 2026-02-22 | ProcessImprovement | Document closed  | Status: Resolved   |
+| Date       | Agent              | Change          | Notes            |
+| ---------- | ------------------ | --------------- | ---------------- |
+| 2026-02-22 | ProcessImprovement | Document closed | Status: Resolved |

@@ -2,7 +2,7 @@
 ID: 007
 Origin: 007
 UUID: e7f4a31c
-Status: UAT Approved
+Status: Released
 ---
 
 # 007 — Performance Improvements Plan (v0.4.0)
@@ -18,6 +18,7 @@ Status: UAT Approved
 | 2026-02-22 | Code Reviewer | Status → Code Review Approved                    | APPROVED — No blocking findings. Handoff to QA.                                                   |
 | 2026-02-22 | QA            | Status → QA Complete                             | Automated QA gates PASS; UAT still required for DB `EXPLAIN` + Lighthouse comparison.             |
 | 2026-02-22 | UAT           | Status → UAT Approved                            | APPROVED FOR RELEASE — Value delivered: 85% bundle reduction + instant search. Handoff to DevOps. |
+| 2026-02-22 | DevOps        | Status → Released                                | v0.4.0 pushed to origin/main, tag v0.4.0 created. Migration 056 schema fix for prod applied.     |
 
 ## Target Release: v0.4.0
 

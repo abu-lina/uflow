@@ -17,6 +17,7 @@ Status: Committed
 | ---------- | ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-02-22 | Code Reviewer → QA | Execute QA for Plan 006 | Started QA: defined test strategy + began executing automated gates                                                                         |
 | 2026-02-22 | Implementer → QA   | Re-run QA after v2 fix  | Verified v2 `userToggledRef` fix closes programmatic focus gap; automated gates PASS (114 tests); Android manual matrix explicitly deferred |
+| 2026-02-22 | QA                 | Document closed         | Status: Committed                                                                                                                           |
 
 ## Timeline
 
