@@ -2,6 +2,9 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { afterAll, vi } from 'vitest';
 
+// Mock server-only module to allow importing server components in tests
+vi.mock('server-only', () => ({}));
+
 // Set up environment variables
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://mock-supabase-url.com';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'mock-anon-key';

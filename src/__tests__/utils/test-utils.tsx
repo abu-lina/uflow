@@ -16,19 +16,19 @@ let mockPathname = '/providers';
 let searchParamsListeners: Array<() => void> = [];
 
 const createMockRouter = () => ({
-    push: vi.fn(),
+  push: vi.fn(),
   replace: vi.fn((url: string) => {
     // Update mock search params when router.replace is called
     const urlObj = new URL(url, 'http://localhost');
     mockSearchParams = urlObj.searchParams;
     mockPathname = urlObj.pathname;
     // Notify listeners (simulate re-render)
-    searchParamsListeners.forEach(listener => listener());
+    searchParamsListeners.forEach((listener) => listener());
   }),
-    back: vi.fn(),
-    forward: vi.fn(),
-    refresh: vi.fn(),
-    prefetch: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  refresh: vi.fn(),
+  prefetch: vi.fn(),
 });
 
 // Mock Next.js router
@@ -42,19 +42,45 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock Next.js Image component
+// Filters non-DOM props and simulates onLoad for components with skeleton/loading states
 vi.mock('next/image', () => ({
-  default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) => {
+  default: function MockNextImage({
+    src,
+    alt,
+    onLoad,
+    fill: _fill,
+    priority: _priority,
+    sizes: _sizes,
+    quality: _quality,
+    placeholder: _placeholder,
+    blurDataURL: _blurDataURL,
+    onLoadingComplete: _onLoadingComplete,
+    loading: _loading,
+    ...props
+  }: Record<string, unknown>) {
+    React.useEffect(() => {
+      // Simulate image load in test environment so skeleton states resolve
+      if (typeof onLoad === 'function') {
+        (onLoad as () => void)();
+      }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={alt} {...props} />;
+    return <img src={String(src || '')} alt={String(alt || '')} {...props} />;
   },
 }));
 
 // Mock motion
 vi.mock('motion/react', () => ({
   motion: {
-    div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-    span: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <span {...props}>{children}</span>,
-    button: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <button {...props}>{children}</button>,
+    div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
+      <div {...props}>{children}</div>
+    ),
+    span: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
+      <span {...props}>{children}</span>
+    ),
+    button: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
+      <button {...props}>{children}</button>
+    ),
   },
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
@@ -74,7 +100,7 @@ vi.mock('@/lib/supabase/client', () => ({
   supabase: {
     auth: {
       onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } }
+        data: { subscription: { unsubscribe: vi.fn() } },
       })),
       getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
       getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null })),
@@ -100,7 +126,7 @@ vi.mock('@/lib/supabase/server', () => ({
   supabase: {
     auth: {
       onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } }
+        data: { subscription: { unsubscribe: vi.fn() } },
       })),
       getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
       getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null })),
@@ -136,7 +162,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 
 function customRender(
   ui: ReactElement,
-  options: CustomRenderOptions = {}
+  options: CustomRenderOptions = {},
 ): ReturnType<typeof render> {
   const {
     // authContext = mockAuthContext, // Unused for now
@@ -174,9 +200,7 @@ function customRender(
         <LanguageProvider>
           <AuthProvider>
             <SearchProvider>
-              <LoadingProvider>
-                {children}
-              </LoadingProvider>
+              <LoadingProvider>{children}</LoadingProvider>
             </SearchProvider>
           </AuthProvider>
         </LanguageProvider>
@@ -192,13 +216,13 @@ export * from '@testing-library/react';
 export { customRender as render };
 
 // Helper function to wait for async operations
-export const waitForAsync = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
+export const waitForAsync = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Helper function to mock window.matchMedia
 export const mockMatchMedia = (matches: boolean = false) => {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
-    value: vi.fn().mockImplementation(query => ({
+    value: vi.fn().mockImplementation((query) => ({
       matches,
       media: query,
       onchange: null,
@@ -214,7 +238,7 @@ export const mockMatchMedia = (matches: boolean = false) => {
 // Helper function to mock localStorage
 export const mockLocalStorage = () => {
   const store: Record<string, string> = {};
-  
+
   Object.defineProperty(window, 'localStorage', {
     writable: true,
     value: {
@@ -227,14 +251,14 @@ export const mockLocalStorage = () => {
         delete store[key];
       }),
       clear: vi.fn(() => {
-        Object.keys(store).forEach(key => {
+        Object.keys(store).forEach((key) => {
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete store[key];
         });
       }),
     },
   });
-  
+
   return store;
 };
 

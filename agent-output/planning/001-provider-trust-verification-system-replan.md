@@ -2,7 +2,7 @@
 ID: 001
 Origin: 001
 UUID: 3f8b1c2a
-Status: Active
+Status: UAT Approved
 ---
 
 # Implementation Plan (Replan): Provider Trust & Verification System
@@ -21,6 +21,10 @@ Status: Active
 | 2026-01-27 | planner | Added architecture gates F1–F4  | Required privacy/role/ranking constraints                                        |
 | 2026-02-21 | planner | Replan for deployment readiness | Convert plan into “remaining work” checklist + update target release per roadmap |
 | 2026-02-21 | planner | Quick revisions after critique  | Added architecture link + dependencies; resolved versioning question             |
+| 2026-02-22 | qa      | QA complete                     | All QA gates passed; see agent-output/qa/001-provider-trust-verification-system-qa.md |
+| 2026-02-22 | planner | Scope locked (Option A)         | UAT failed due to missing UI; user approved completing UI trust signals + endorsements for v0.3.0 |
+| 2026-02-22 | qa      | QA refresh after trust UI work  | Re-validated tests/type-check/build for v0.3.0 trust UI + endorsements; updated QA report evidence |
+| 2026-02-22 | uat     | UAT approved for release        | All UAT scenarios PASS; value statement delivered; trust badges + endorsement UI complete; APPROVED FOR RELEASE |
 
 ## Value Statement and Business Objective
 
@@ -34,6 +38,18 @@ Deliver the **user-visible trust system** end-to-end:
 - Authenticated users can endorse/unendorse badges.
 - Search ranking reliably benefits trusted providers.
 - Privacy posture stays strong: no public exposure of confirmer identities.
+
+## Scope Lock (Approved)
+
+UAT validation for Plan 001 failed because the **user-visible UI work** was not implemented (badges not shown on provider pages/cards; endorsement controls missing). The user approved **Option A**: complete the UI trust system and re-run UAT for **Target Release v0.3.0**.
+
+This plan is therefore explicitly responsible for delivering:
+
+- **Provider profile trust section** (badges + aggregate confirmation counts)
+- **Provider cards/search indicators** (compact trust signal)
+- **Endorse / unendorse interaction** for authenticated users
+
+Out of scope remains unchanged (admin verification UI, scholar processes, gamification).
 
 ## Non-Goals (Defer if needed)
 
@@ -120,6 +136,10 @@ Architecture constraints to preserve throughout UI work:
   - Confirmation counts shown only as aggregates.
   - Loading/empty/error states exist.
 
+  - Acceptance must be validated on:
+    - Provider detail page (trust section present)
+    - Any provider card/listing surfaces used for search results (compact indicator present)
+
 2. **Implement endorsement UX (confirm/unconfirm)**
 
 - Objective: authenticated users can endorse badges.
@@ -128,6 +148,10 @@ Architecture constraints to preserve throughout UI work:
   - “Login required” behavior is clear.
   - No public leakage of confirmer identities.
 
+  - Acceptance must include:
+    - Authenticated happy path (confirm + revoke)
+    - Unauthenticated path (clear login requirement)
+
 3. **Verify search ranking + pagination stability**
 
 - Objective: trusted providers surface higher without pagination instability.
@@ -135,12 +159,18 @@ Architecture constraints to preserve throughout UI work:
   - Ordering is deterministic across pages.
   - Ranking remains explainable and consistent.
 
+  - Note: Ranking is already DB-side (F3). This milestone focuses on ensuring the UI experience matches that contract and does not re-sort client-side.
+
 4. **Deploy-readiness hardening**
 
 - Objective: feature is stable under real use.
 - Acceptance:
   - No new console errors on key flows.
   - Performance remains acceptable (no obvious regressions).
+
+  - Explicitly confirm:
+    - No new N+1 badge fetch patterns introduced for card surfaces
+    - Public views only use aggregate badge data (F1 privacy posture preserved)
 
 5. **Version Management and Release Artifacts**
 
@@ -173,6 +203,9 @@ Architecture constraints to preserve throughout UI work:
   - Mitigation: minimal inline explanations/tooltips; keep copy short.
 - **Performance regression (MED)**: badge joins slow down listings.
   - Mitigation: avoid N+1; keep card display to aggregates.
+
+- **Scope creep risk (MED)**: adding UI embellishments not required for Epic AC.
+  - Mitigation: ship the smallest UI that satisfies AC1–AC4; defer tooltips/gamification/admin UX.
 
 ## Duration Estimates (Rough)
 

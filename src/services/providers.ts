@@ -5,7 +5,7 @@ import { searchNeeds } from './needs';
 import { logSupabaseError } from '@/utils/errorUtils';
 import type { ProviderBadgeWithType } from '@/types/badges';
 import { EntityType } from '@/types/badges';
-import { getBadgesForEntities } from './badges';
+import { getBadgesForEntities, getBadgesForEntity } from './badges';
 
 export interface Provider {
   provider_id: string;
@@ -372,8 +372,8 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
     // If found in providers table, process and return
     if (data) {
-      // Fetch offers and needs in parallel (not sequential) for better performance
-      const [offersResult, needsResult] = await Promise.all([
+      // Fetch offers, needs, and badges in parallel for better performance
+      const [offersResult, needsResult, badges] = await Promise.all([
         // Fetch offers if they exist
         data.offers_ids && data.offers_ids.length > 0
           ? supabase
@@ -389,6 +389,9 @@ export async function getProviderById(id: string): Promise<Provider | null> {
               .select('name_de')
               .in('need_id', data.needs_ids)
           : Promise.resolve({ data: [], error: null }),
+
+        // Fetch badges for the provider
+        getBadgesForEntity(id, EntityType.PROVIDER),
       ]);
 
       const offers = offersResult.data || [];
@@ -398,6 +401,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
         ...data,
         offers,
         needs,
+        badges,
       };
     }
 

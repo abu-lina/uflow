@@ -5,6 +5,20 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-22
+
+### Added
+
+- **Provider Trust & Verification System** (Plan 001)
+  - Trust badges displayed on provider detail pages with clear trust level distinction (Self-Declared, Community Confirmed, UmmahFlow Verified)
+  - Badge endorsement UX: authenticated users can confirm/revoke badge endorsements
+  - Aggregate confirmation counts shown on badges (privacy-safe — no individual confirmer identities exposed)
+  - Badge display on provider search result cards via existing BadgeLabel component
+  - TrustBadgesSection component with loading, empty, and populated states
+  - EndorseBadgeButton component with login-required flow for unauthenticated users
+  - Badges fetched in parallel with offers/needs in getProviderById (no N+1 patterns)
+  - Trust-based search ranking preserved from DB-side implementation (no client-side re-sorting)
+
 ## [0.2.1] - 2026-02-21
 
 ### Fixed

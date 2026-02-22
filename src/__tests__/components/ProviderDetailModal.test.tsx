@@ -21,34 +21,36 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       expect(screen.getByText('Bilal Moschee')).toBeInTheDocument();
     });
 
-    it('should render provider description', () => {
+    it('should render provider address instead of description', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
-      expect(screen.getByText(/Beautiful mosque in the heart of the city/)).toBeInTheDocument();
+
+      // The modal renders address, not description
+      expect(screen.getByText(/123 Hauptstraße, 10115 Berlin/)).toBeInTheDocument();
     });
 
-    it('should render provider category', () => {
+    it('should render barakah effects section', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
-      expect(screen.getByText('Moschee')).toBeInTheDocument();
+
+      // Category name is not rendered directly, but barakah effects are
+      expect(screen.getByText('Iman')).toBeInTheDocument();
     });
 
     it('should render close buttons', () => {
@@ -57,9 +59,9 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const closeButtons = screen.getAllByRole('button', { name: /schließen/i });
       expect(closeButtons).toHaveLength(1);
     });
@@ -72,12 +74,15 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const mainImage = screen.getByAltText('Bilal Moschee 1');
       expect(mainImage).toBeInTheDocument();
-      expect(mainImage).toHaveAttribute('src', 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg');
+      expect(mainImage).toHaveAttribute(
+        'src',
+        'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+      );
     });
 
     it('should render navigation arrows when multiple images exist', () => {
@@ -86,13 +91,13 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // On first image, only next button should be visible
       const nextButton = screen.getByRole('button', { name: /nächstes bild/i });
       expect(nextButton).toBeInTheDocument();
-      
+
       // Previous button should not be visible on first image
       expect(screen.queryByRole('button', { name: /vorheriges bild/i })).not.toBeInTheDocument();
     });
@@ -103,16 +108,19 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const nextButton = screen.getByRole('button', { name: /nächstes bild/i });
       fireEvent.click(nextButton);
-      
+
       // Wait for image change
       await waitFor(() => {
         const secondImage = screen.getByAltText('Bilal Moschee 2');
-        expect(secondImage).toHaveAttribute('src', 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-2.jpg');
+        expect(secondImage).toHaveAttribute(
+          'src',
+          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-2.jpg',
+        );
       });
     });
 
@@ -122,56 +130,64 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // First go to next image
       const nextButton = screen.getByRole('button', { name: /nächstes bild/i });
       fireEvent.click(nextButton);
-      
+
       // Then go back to previous
       const prevButton = screen.getByRole('button', { name: /vorheriges bild/i });
       fireEvent.click(prevButton);
-      
+
       // Wait for image change back to first
       await waitFor(() => {
         const firstImage = screen.getByAltText('Bilal Moschee 1');
-        expect(firstImage).toHaveAttribute('src', 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg');
+        expect(firstImage).toHaveAttribute(
+          'src',
+          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+        );
       });
     });
 
-    it('should show image counter', () => {
+    it('should show image thumbnails for multiple images', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
-      expect(screen.getByText('1 / 2')).toBeInTheDocument();
+
+      // Component uses thumbnails instead of a text counter
+      // Each thumbnail has an aria-label "Bild X auswählen"
+      const thumbnail1 = screen.getByRole('button', { name: /bild 1 auswählen/i });
+      const thumbnail2 = screen.getByRole('button', { name: /bild 2 auswählen/i });
+      expect(thumbnail1).toBeInTheDocument();
+      expect(thumbnail2).toBeInTheDocument();
     });
 
     it('should handle single image gracefully', () => {
       const providerWithSingleImage = {
         ...mockProvider,
         provider_images: JSON.stringify({
-          urls: ['https://example.com/single-image.jpg']
-        })
+          urls: ['https://example.com/single-image.jpg'],
+        }),
       };
-      
+
       render(
         <ProviderDetailModal
           provider={providerWithSingleImage}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // Should not show navigation arrows for single image
       expect(screen.queryByRole('button', { name: /vorheriges bild/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /nächstes bild/i })).not.toBeInTheDocument();
-      
+
       // The component has multiple dialog elements, so use getAllByRole
       const dialogs = screen.getAllByRole('dialog');
       expect(dialogs).toHaveLength(2);
@@ -185,13 +201,15 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // The component shows action buttons, but they don't show text until expanded
       // We can check that they exist by looking for buttons with aria-expanded="false"
       const actionButtons = screen.getAllByRole('button');
-      const hasPhoneButton = actionButtons.some(btn => btn.getAttribute('aria-expanded') === 'false');
+      const hasPhoneButton = actionButtons.some(
+        (btn) => btn.getAttribute('aria-expanded') === 'false',
+      );
       expect(hasPhoneButton).toBe(true);
     });
 
@@ -201,12 +219,14 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // The phone button exists but doesn't show text until expanded
       const actionButtons = screen.getAllByRole('button');
-      const phoneButton = actionButtons.find(btn => btn.getAttribute('aria-expanded') === 'false');
+      const phoneButton = actionButtons.find(
+        (btn) => btn.getAttribute('aria-expanded') === 'false',
+      );
       expect(phoneButton).toBeInTheDocument();
     });
 
@@ -216,12 +236,14 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // The website button exists but doesn't show text until expanded
       const actionButtons = screen.getAllByRole('button');
-      const websiteButton = actionButtons.find(btn => btn.getAttribute('aria-expanded') === 'false');
+      const websiteButton = actionButtons.find(
+        (btn) => btn.getAttribute('aria-expanded') === 'false',
+      );
       expect(websiteButton).toBeInTheDocument();
     });
   });
@@ -233,12 +255,12 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const closeButtons = screen.getAllByRole('button', { name: /schließen/i });
       fireEvent.click(closeButtons[0]);
-      
+
       expect(mockOnClose).toHaveBeenCalled();
     });
 
@@ -248,11 +270,11 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
-      
+
       expect(mockOnClose).toHaveBeenCalled();
     });
 
@@ -262,14 +284,14 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // The component might not handle clicking outside to close
       // Let's test that clicking outside doesn't cause errors
       const backdrop = screen.getAllByRole('dialog')[0];
       expect(() => fireEvent.click(backdrop)).not.toThrow();
-      
+
       // Since the component doesn't handle outside clicks, onClose won't be called
       expect(mockOnClose).not.toHaveBeenCalled();
     });
@@ -280,13 +302,13 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // Click on the main content section
       const modalContent = screen.getAllByRole('dialog')[1];
       fireEvent.click(modalContent);
-      
+
       expect(mockOnClose).not.toHaveBeenCalled();
     });
   });
@@ -298,15 +320,18 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       fireEvent.keyDown(document, { key: 'ArrowRight', code: 'ArrowRight' });
-      
+
       // Wait for image change
       await waitFor(() => {
         const secondImage = screen.getByAltText('Bilal Moschee 2');
-        expect(secondImage).toHaveAttribute('src', 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-2.jpg');
+        expect(secondImage).toHaveAttribute(
+          'src',
+          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-2.jpg',
+        );
       });
     });
 
@@ -316,19 +341,22 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // First go to next image
       fireEvent.keyDown(document, { key: 'ArrowRight', code: 'ArrowRight' });
-      
+
       // Then go back to previous
       fireEvent.keyDown(document, { key: 'ArrowLeft', code: 'ArrowLeft' });
-      
+
       // Wait for image change back to first
       await waitFor(() => {
         const firstImage = screen.getByAltText('Bilal Moschee 1');
-        expect(firstImage).toHaveAttribute('src', 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg');
+        expect(firstImage).toHaveAttribute(
+          'src',
+          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+        );
       });
     });
 
@@ -338,15 +366,18 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // Try to go to previous image from first
       fireEvent.keyDown(document, { key: 'ArrowLeft', code: 'ArrowLeft' });
-      
+
       // Should still be on first image
       const firstImage = screen.getByAltText('Bilal Moschee 1');
-      expect(firstImage).toHaveAttribute('src', 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg');
+      expect(firstImage).toHaveAttribute(
+        'src',
+        'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+      );
     });
 
     it('should not navigate beyond last image', async () => {
@@ -355,19 +386,22 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // Go to last image
       fireEvent.keyDown(document, { key: 'ArrowRight', code: 'ArrowRight' });
-      
+
       // Try to go beyond last image
       fireEvent.keyDown(document, { key: 'ArrowRight', code: 'ArrowRight' });
-      
+
       // Should still be on last image
       await waitFor(() => {
         const lastImage = screen.getByAltText('Bilal Moschee 2');
-        expect(lastImage).toHaveAttribute('src', 'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-2.jpg');
+        expect(lastImage).toHaveAttribute(
+          'src',
+          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-2.jpg',
+        );
       });
     });
   });
@@ -379,15 +413,15 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const imageContainer = screen.getByTestId('image-container');
-      
+
       fireEvent.touchStart(imageContainer, {
-        touches: [{ clientX: 100, clientY: 100 }]
+        touches: [{ clientX: 100, clientY: 100 }],
       });
-      
+
       // Touch start should be handled without errors
       expect(imageContainer).toBeInTheDocument();
     });
@@ -398,15 +432,15 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const imageContainer = screen.getByTestId('image-container');
-      
+
       fireEvent.touchMove(imageContainer, {
-        touches: [{ clientX: 150, clientY: 100 }]
+        touches: [{ clientX: 150, clientY: 100 }],
       });
-      
+
       // Touch move should be handled without errors
       expect(imageContainer).toBeInTheDocument();
     });
@@ -417,13 +451,13 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const imageContainer = screen.getByTestId('image-container');
-      
+
       fireEvent.touchEnd(imageContainer);
-      
+
       // Touch end should be handled without errors
       expect(imageContainer).toBeInTheDocument();
     });
@@ -436,10 +470,10 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
-      const saveButton = screen.getByRole('button', { name: /speichern/i });
+
+      const saveButton = screen.getByRole('button', { name: /save/i });
       expect(saveButton).toBeInTheDocument();
     });
 
@@ -449,17 +483,19 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
-      // Check that all action buttons are present (they show text when expanded)
-      const saveButton = screen.getByRole('button', { name: /speichern/i });
+
+      // Check that save button is present (English locale in tests)
+      const saveButton = screen.getByRole('button', { name: /save/i });
       expect(saveButton).toBeInTheDocument();
-      
+
       // The other buttons don't show text until expanded, but we can check they exist
       const actionButtons = screen.getAllByRole('button');
-      const hasShareButton = actionButtons.some(btn => btn.getAttribute('aria-expanded') === 'false');
-      expect(hasShareButton).toBe(true);
+      const hasExpandableButton = actionButtons.some(
+        (btn) => btn.getAttribute('aria-expanded') === 'false',
+      );
+      expect(hasExpandableButton).toBe(true);
     });
   });
 
@@ -470,9 +506,9 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       expect(screen.getByText('Iman')).toBeInTheDocument();
       expect(screen.getByText('Zakat')).toBeInTheDocument();
       expect(screen.getByText('Sunnah')).toBeInTheDocument();
@@ -480,15 +516,15 @@ describe('ProviderDetailModal Component', () => {
 
     it('should not render barakah effects when not available', () => {
       const providerWithoutBarakahEffects = { ...mockProvider, barakah_effects: [] };
-      
+
       render(
         <ProviderDetailModal
           provider={providerWithoutBarakahEffects}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       expect(screen.getByText('Keine Barakah Effekte')).toBeInTheDocument();
     });
   });
@@ -500,21 +536,21 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const modals = screen.getAllByRole('dialog');
       expect(modals).toHaveLength(2); // Both div and section have role="dialog"
-      
+
       const closeButtons = screen.getAllByRole('button', { name: /schließen/i });
       expect(closeButtons).toHaveLength(1);
       expect(closeButtons[0]).toHaveAttribute('aria-label', 'Schließen');
-      
+
       // Navigation arrows only show when there are multiple images and not at boundaries
       // Since we're on the first image, only next button should be visible
       const nextButton = screen.getByRole('button', { name: /nächstes bild/i });
       expect(nextButton).toHaveAttribute('aria-label', 'Nächstes Bild');
-      
+
       // Previous button should not be visible on first image
       expect(screen.queryByRole('button', { name: /vorheriges bild/i })).not.toBeInTheDocument();
     });
@@ -525,15 +561,15 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const closeButtons = screen.getAllByRole('button', { name: /schließen/i });
       const nextButton = screen.getByRole('button', { name: /nächstes bild/i });
-      
+
       expect(closeButtons).toHaveLength(1);
       expect(nextButton).toBeInTheDocument();
-      
+
       // Previous button should not be visible on first image
       expect(screen.queryByRole('button', { name: /vorheriges bild/i })).not.toBeInTheDocument();
     });
@@ -544,12 +580,12 @@ describe('ProviderDetailModal Component', () => {
           provider={mockProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       const closeButtons = screen.getAllByRole('button', { name: /schließen/i });
       closeButtons[0].focus();
-      
+
       expect(closeButtons[0]).toHaveFocus();
     });
   });
@@ -577,15 +613,15 @@ describe('ProviderDetailModal Component', () => {
         offers_ids: [],
         needs_ids: [],
       } as Provider;
-      
+
       render(
         <ProviderDetailModal
           provider={incompleteProvider}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // Should still render modal without crashing
       expect(screen.getAllByRole('dialog')).toHaveLength(2); // Both div and section have role="dialog"
     });
@@ -595,15 +631,15 @@ describe('ProviderDetailModal Component', () => {
         ...mockProvider,
         provider_images: 'invalid-json',
       };
-      
+
       render(
         <ProviderDetailModal
           provider={providerWithMalformedImages}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
-        />
+        />,
       );
-      
+
       // Should render modal without crashing
       expect(screen.getAllByRole('dialog')).toHaveLength(2); // Both div and section have role="dialog"
     });

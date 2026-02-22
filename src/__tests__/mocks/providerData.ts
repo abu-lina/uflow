@@ -19,8 +19,8 @@ export const mockProviders: Provider[] = [
     location_longitude: 13.4050,
     provider_images: JSON.stringify({
       urls: [
-        'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg',
-        'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/bilal-mosque-2.jpg'
+        'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+        'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-2.jpg'
       ]
     }),
     created_at: '2024-01-15T10:00:00Z',
@@ -49,7 +49,7 @@ export const mockProviders: Provider[] = [
     location_longitude: 13.4050,
     provider_images: JSON.stringify({
       urls: [
-        'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/islamic-center-1.jpg'
+        'https://mock-supabase-url.com/storage/v1/object/public/images/islamic-center-1.jpg'
       ]
     }),
     created_at: '2024-01-10T14:00:00Z',
@@ -78,7 +78,7 @@ export const mockProviders: Provider[] = [
     location_longitude: 9.9937,
     provider_images: JSON.stringify({
       urls: [
-        'https://pmbatjlosstytdmmqkky.supabase.co/storage/v1/object/public/images/restaurant-1.jpg'
+        'https://mock-supabase-url.com/storage/v1/object/public/images/restaurant-1.jpg'
       ]
     }),
     created_at: '2024-01-05T12:00:00Z',

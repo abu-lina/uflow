@@ -20,6 +20,11 @@ import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUrl, normalizeWebsiteUrl } from '@/utils/navigationUtils';
 import { getProvidersForCommunityService, type CommunityService } from '@/services/communityServices';
+import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
+import { EndorseBadgeButton } from '@/components/providers/EndorseBadgeButton';
+import { getBadgesForEntityWithConfirmationStatus } from '@/services/badges';
+import { EntityType } from '@/types/badges';
+import type { BadgeWithConfirmationStatus } from '@/types/badges';
 
 interface ProviderDetailPageProps {
   provider: Provider;
@@ -135,6 +140,26 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     data: communityServices = [], 
     isLoading: isLoadingCommunityServices
   } = useCommunityServicesForProvider(provider.provider_id, initialCommunityServices);
+
+  // Fetch badges with user confirmation status for endorsement UX
+  const entityId = isCommunityService ? provider.community_service_id : provider.provider_id;
+  const entityType = isCommunityService ? EntityType.COMMUNITY_SERVICE : EntityType.PROVIDER;
+  const {
+    data: badgesWithStatus = [],
+    isLoading: isLoadingBadges,
+    refetch: refetchBadges,
+  } = useQuery<BadgeWithConfirmationStatus[]>({
+    queryKey: ['badges', entityId, user?.id],
+    queryFn: () =>
+      getBadgesForEntityWithConfirmationStatus(
+        entityId || '',
+        entityType,
+        user?.id || null
+      ),
+    enabled: !!entityId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
+  });
 
   // Use React Query for providers supporting this community service (only for community services)
   const { data: supportingProviders = [] } = useQuery<Array<{ 
@@ -353,6 +378,22 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Trust & Verification Badges Section */}
+          <div className="mx-6 mt-4">
+            <TrustBadgesSection
+              badges={badgesWithStatus}
+              isLoading={isLoadingBadges}
+              renderEndorsement={(badge) => (
+                <EndorseBadgeButton
+                  badge={badge as BadgeWithConfirmationStatus}
+                  userId={user?.id || null}
+                  onEndorsementChange={() => void refetchBadges()}
+                  onLoginRequired={() => router.push('/auth/login')}
+                />
+              )}
+            />
           </div>
 
           {/* Barakah Effect Section */}
@@ -687,6 +728,20 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 )}
               </div>
             </div>
+
+            {/* Trust & Verification Badges Section */}
+            <TrustBadgesSection
+              badges={badgesWithStatus}
+              isLoading={isLoadingBadges}
+              renderEndorsement={(badge) => (
+                <EndorseBadgeButton
+                  badge={badge as BadgeWithConfirmationStatus}
+                  userId={user?.id || null}
+                  onEndorsementChange={() => void refetchBadges()}
+                  onLoginRequired={() => router.push('/auth/login')}
+                />
+              )}
+            />
 
             {/* Barakah Effect - Show loading state or content */}
             {isLoadingCommunityServices ? (

@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Mock Supabase Admin Client for API route testing
@@ -44,8 +45,9 @@ export interface MockSupabaseAdmin {
   from: (table: string) => MockQueryBuilder;
   auth: {
     admin: {
-      listUsers: () => Promise<{ data: { users: MockUser[] }; error: null }>;
-      updateUserById: (userId: string, updates: unknown) => Promise<{ error: null }>;
+      listUsers: () => Promise<{ data: { users: MockUser[] }; error: null | { message: string } }>;
+      getUserById: (userId: string) => Promise<{ data: { user: MockUser | null }; error: null | { message: string } }>;
+      updateUserById: (userId: string, updates: unknown) => Promise<{ error: null | { message: string } }>;
       generateLink: (options: {
         type: 'magiclink';
         email: string;
@@ -55,8 +57,8 @@ export interface MockSupabaseAdmin {
           properties: {
             hashed_token: string;
           };
-        };
-        error: null;
+        } | null;
+        error: null | { message: string };
       }>;
     };
   };
@@ -65,8 +67,9 @@ export interface MockSupabaseAdmin {
 export interface MockQueryBuilder {
   select: (columns?: string) => MockQueryBuilder;
   eq: (column: string, value: unknown) => MockQueryBuilder;
+  ilike: (column: string, value: unknown) => MockQueryBuilder;
   maybeSingle: () => Promise<{ data: MockTokenData | null; error: null | { message: string } }>;
-  update: (values: Partial<MockTokenData>) => MockQueryBuilder;
+  update: (values: Partial<MockTokenData>) => { eq: (column: string, value: unknown) => Promise<{ error: null | { message: string } }> };
 }
 
 /**
@@ -82,7 +85,7 @@ export function createMockSupabaseAdmin(
     generateLinkError?: { message: string } | null;
     hashedToken?: string;
   } = {}
-): MockSupabaseAdmin {
+): SupabaseClient {
   const {
     tokenData = null,
     tokenError = null,
@@ -103,6 +106,10 @@ export function createMockSupabaseAdmin(
     }),
     eq: vi.fn((column: string, value: unknown) => {
       queryChain.push({ method: 'eq', args: [column, value] });
+      return queryBuilder;
+    }),
+    ilike: vi.fn((column: string, value: unknown) => {
+      queryChain.push({ method: 'ilike', args: [column, value] });
       return queryBuilder;
     }),
     maybeSingle: vi.fn(async () => {
@@ -135,6 +142,13 @@ export function createMockSupabaseAdmin(
           }
           return { data: { users }, error: null };
         }),
+        getUserById: vi.fn(async (_userId: string) => {
+          if (userError) {
+            return { data: { user: null }, error: userError };
+          }
+          // Return first user from the users array, or null if empty
+          return { data: { user: users.length > 0 ? users[0] : null }, error: null };
+        }),
         updateUserById: vi.fn(async (_userId: string, _updates: unknown) => {
           return { error: null };
         }),
@@ -157,7 +171,8 @@ export function createMockSupabaseAdmin(
         }),
       },
     },
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
 }
 
 /**
