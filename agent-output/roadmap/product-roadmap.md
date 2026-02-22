@@ -38,11 +38,11 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 | Plan ID | Title                                | UAT Status | Committed |
 | ------- | ------------------------------------ | ---------- | --------- |
-| 001     | Provider Trust & Verification System | ✅ APPROVED | ⏳ Committing |
+| 001     | Provider Trust & Verification System | ✅ APPROVED | ✅ Yes (SHA 3dd36f1) |
 
-**Release Status**: 1 of 1 plans committed (Stage 1 in progress)
-**Ready for Release**: Yes (after Stage 1 commit completes)
-**Blocking Items**: None — UAT approved, DevOps Stage 1 (commit) executing
+**Release Status**: 1 of 1 plans committed
+**Ready for Release**: Yes — awaiting user approval for Stage 2 (push + deploy)
+**Blocking Items**: None
 
 ### Previous Releases
 

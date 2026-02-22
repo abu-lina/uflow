@@ -2,7 +2,7 @@
 ID: 001
 Origin: 001
 UUID: 3f8b1c2a
-Status: UAT Complete
+Status: Committed for Release v0.3.0
 ---
 
 # UAT Report: Provider Trust & Verification System

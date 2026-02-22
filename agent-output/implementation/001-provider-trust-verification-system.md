@@ -2,7 +2,7 @@
 ID: 001
 Origin: 001
 UUID: ab8a542e
-Status: Active
+Status: Committed for Release v0.3.0
 ---
 
 # Implementation: Provider Trust & Verification System (Plan 001)
