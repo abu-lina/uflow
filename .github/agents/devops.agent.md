@@ -87,15 +87,32 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 3. Read roadmap. Verify plan's target release version. Multiple plans may target same release.
 4. Check version consistency for target release per `release-procedures` skill.
 5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
-6. **Commit locally** with detailed message:
+6. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
 
    ```
-   Plan [ID] for v[X.Y.Z]: [summary]
+   <type>(<scope>): <subject>
 
-   - [Key change 1]
-   - [Key change 2]
+   <body explaining what and why>
 
-   UAT Approved: [date]
+   Refs PLAN-[ID]
+   Co-Authored-By: Claude <noreply@anthropic.com>
+   ```
+
+   **Commit message rules** (from `commit` skill):
+   - **Types**: `feat`, `fix`, `ref`, `perf`, `docs`, `test`, `build`, `ci`, `chore`, `style`, `meta`, `license`
+   - **Subject**: Imperative mood ("Add feature" not "Added"), capitalize first letter, no period, max 70 chars
+   - **Body**: Explain what and why, not how. Use imperative mood.
+   - **Footer**: `Refs PLAN-[ID]` to link plan, `Co-Authored-By` for AI attribution
+
+   **Example**:
+   ```
+   feat(auth): Add OAuth2 provider integration
+
+   Implement Google OAuth2 flow for user authentication. This replaces
+   the legacy session-based auth to improve security and UX.
+
+   Refs PLAN-042
+   Co-Authored-By: Claude <noreply@anthropic.com>
    ```
 
 7. **Do NOT push**. Changes stay local until release is approved.
@@ -207,7 +224,12 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 3. **Incorporate** the skill's instructions into your work for this task
 4. **UFlow skills** (`.github/skills/`): Always take priority over catalog skills
 5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
-6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `release-procedures`)
+6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `release-procedures`, `commit`)
+
+## Mandatory Skills for Stage 1 (Commit)
+
+**Always load before committing**:
+- `commit` skill from `.agent/skills/skills/commit/SKILL.md` — Sentry commit message conventions
 
 ---
 
