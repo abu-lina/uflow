@@ -157,6 +157,29 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 15. Retrieve/store Flowbaby memory.
 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
+### Schema Verification Gate (DB migrations) (MANDATORY)
+
+If you create or modify a migration that references **existing** tables/columns (not newly created in the same migration), you MUST verify the target schema *before* finalizing the DDL.
+
+- Run (or request the user/DevOps to run) a schema check against the deployment Supabase project:
+
+  - Column existence:
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = '<table_name>'
+      AND column_name IN ('<col_1>', '<col_2>');
+
+  - Function existence (for RPCs expected by the app):
+    SELECT p.proname, pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = '<function_name>';
+
+- If schema drift is detected, STOP and resolve (update migration, or align schemas) before handoff.
+- Document the verification evidence in the implementation doc.
+
 ## Constraints
 
 - No new planning or modifying planning artifacts (except Status field updates).
@@ -171,6 +194,16 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 - Respect repo standards, style, safety.
 
 ## Workflow
+
+### Memory Checkpoints (MANDATORY)
+
+Store Flowbaby memory at these moments (value boundaries):
+
+- After completing each plan milestone
+- After discovering a new constraint/gotcha (e.g., schema drift)
+- Before handing off to Code Review
+
+Each memory entry must include: plan ID, files touched, decisions made, and next step.
 
 1. Read complete plan from `agent-output/planning/` + analysis (if exists) in full. These—not chat—are authoritative.
 2. Read evaluation criteria: `~/.config/Code/User/prompts/qa.agent.md` + `~/.config/Code/User/prompts/uat.agent.md` to understand evaluation.

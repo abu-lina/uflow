@@ -105,6 +105,7 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
    - **Footer**: `Refs PLAN-[ID]` to link plan, `Co-Authored-By` for AI attribution
 
    **Example**:
+
    ```
    feat(auth): Add OAuth2 provider integration
 
@@ -126,6 +127,7 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 9. Update plan status to "Committed for Release [X.Y.Z]".
 10. Report to Roadmap agent (handoff): Plan committed, release tracker needs update.
 11. Inform user: "[Plan ID] committed locally for release [X.Y.Z]. [N] of [M] plans committed for this release."
+12. Store Flowbaby memory (MANDATORY): After Stage 1 local commit — what’s committed, what remains, next steps.
 
 ---
 
@@ -145,6 +147,11 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
    - If missing, set upstream before continuing (example): `git branch --set-upstream-to=origin/main main`
 7. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** tagging.
 8. Create deployment readiness doc listing ALL included plans.
+9. **Migration readiness check (MANDATORY)**:
+  - If the release includes migrations that add/modify RPC functions, verify the target Supabase schema has:
+    - the migration applied (or scheduled), and
+    - the required RPCs visible in schema cache.
+  - If any RPC referenced by the app is missing, block release until migration is applied.
 
 **Phase 2B: User Confirmation (MANDATORY)**
 
@@ -172,6 +179,7 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 3. Verify success (installable, version matches, no errors).
 4. Hand off to Roadmap: Release complete, update tracker.
 5. Hand off to Retrospective.
+6. Store Flowbaby memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
 
 Deployment Doc Format: `agent-output/deployment/[version].md` with: Plan Reference, Release Date, Release Summary (version/type/environment/epic), Pre-Release Verification (UAT/QA Approval, Version Consistency checklist, Packaging Integrity checklist, Gitignore Review checklist, Workspace Cleanliness checklist), User Confirmation (timestamp, summary presented, response/name/timestamp/decline reason), Release Execution (Git Tagging command/result/pushed, Package Publication registry/command/result/URL, Publication Verification checklist), Post-Release Status (status/timestamp, Known Issues, Rollback Plan), Deployment History Entry (JSON), Next Actions.
 
@@ -229,6 +237,7 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 ## Mandatory Skills for Stage 1 (Commit)
 
 **Always load before committing**:
+
 - `commit` skill from `.agent/skills/skills/commit/SKILL.md` — Sentry commit message conventions
 
 ---

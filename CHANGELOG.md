@@ -5,6 +5,18 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-02-22
+
+### Fixed (Plan 008)
+
+- **Fallback-on-empty bug removed**: `searchCommunityServices()` no longer falls back to ILIKE when the full-text search RPC returns an empty result set. Fallback now only triggers on RPC error or function-missing (code 42883).
+- **Fallback queries bounded**: ILIKE fallback in `searchNeeds()` and `searchOffers()` now uses explicit column selects (not `select('*')`) and `.limit(100)` aligned with the RPC limit.
+
+### Validated (Plan 008)
+
+- **GIN index usage confirmed**: `EXPLAIN (ANALYZE, BUFFERS)` validates that `idx_providers_name_search` and `idx_community_services_name_search` are used via Bitmap Index Scan (sub-millisecond execution times).
+- **Limit rationale documented**: All key query limits (100/200/500/1000) now have inline comments explaining the UX/safety rationale.
+
 ## [0.4.0] - 2026-02-22
 
 ### Performance (Plan 007)

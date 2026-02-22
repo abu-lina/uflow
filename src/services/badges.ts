@@ -49,7 +49,7 @@ export async function getBadgeTypes(client?: SupabaseClient): Promise<BadgeType[
       .select('*')
       .eq('is_active', true)
       .order('badge_key', { ascending: true })
-      .limit(100);
+      .limit(100); // Badge fetch cap — 100 badges per entity type is well above expected count
 
     if (error) {
       logSupabaseError('getBadgeTypes', error);
@@ -567,7 +567,7 @@ export async function getBadgeConfirmations(
       .select('*')
       .eq('provider_badge_id', badgeId)
       .order('confirmed_at', { ascending: false })
-      .limit(200);
+      .limit(200); // Confirmation history cap — 200 confirmations per badge is well above expected; prevents unbounded scan
 
     if (error) {
       logSupabaseError('getBadgeConfirmations', error);
@@ -704,7 +704,7 @@ export async function getBadgeVerifications(
       .select('*')
       .eq('provider_badge_id', badgeId)
       .order('verified_at', { ascending: false })
-      .limit(200);
+      .limit(200); // Verification history cap — 200 verifications per badge is well above expected; prevents unbounded scan
 
     if (error) {
       logSupabaseError('getBadgeVerifications', error);

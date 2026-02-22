@@ -109,17 +109,21 @@ export async function searchCommunityServices(
         search_query: query.trim(),
         category_filter: isValidCategoryId(category) ? category : null,
         city_filter: isValidLocation(location) ? location : null,
-        limit_count: limit || 1000,
+        limit_count: limit || 1000, // Default 1000 — paginated listing; higher than offers/needs because community services have richer browsing UX
         offset_count: offset || 0,
       });
 
-      // If no error and we have results, use the full-text search results
-      if (!rpcError && searchResults && Array.isArray(searchResults) && searchResults.length > 0) {
-        // Use the IDs from full-text search results
-        const serviceIds = searchResults.map((s: { community_service_id: string }) => s.community_service_id);
-        req = req.in('community_service_id', serviceIds);
+      // If RPC succeeded (no error), use the results — even if empty.
+      // Empty results from full-text search are valid (no matches), NOT a reason to fallback.
+      if (!rpcError && searchResults && Array.isArray(searchResults)) {
+        if (searchResults.length > 0) {
+          // Use the IDs from full-text search results
+          const serviceIds = searchResults.map((s: { community_service_id: string }) => s.community_service_id);
+          req = req.in('community_service_id', serviceIds);
+        }
+        // else: empty result set — no matches found, no fallback needed
       } else {
-        // Check if it's a function not found error
+        // RPC error occurred — fallback to ILIKE
         const isFunctionNotFound = 
           rpcError?.code === '42883' || 
           rpcError?.message?.includes('does not exist') ||
@@ -132,7 +136,7 @@ export async function searchCommunityServices(
           // Log other errors but still fallback
           console.warn('Error using full-text search, falling back to ILIKE:', rpcError);
         }
-        // Fallback to ILIKE if RPC fails or returns no results
+        // Fallback to ILIKE only on RPC error / function-missing
         req = req.or(`community_service_name.ilike.%${query.trim()}%,community_service_description.ilike.%${query.trim()}%`);
       }
     } catch (error) {

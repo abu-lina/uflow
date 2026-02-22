@@ -53,7 +53,7 @@ BEGIN
   WHERE p.review_status = 'approved'
     AND to_tsvector('german', p.provider_name)
         @@ plainto_tsquery('german', search_query)
-  LIMIT 500;
+  LIMIT 500; -- Safety cap for provider ID lookup — well above expected provider count; prevents runaway scans
 END;
 $$ LANGUAGE plpgsql STABLE;
 

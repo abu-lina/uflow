@@ -68,7 +68,7 @@ export async function searchOffers(query: string): Promise<Offer[]> {
   try {
     const { data, error } = await supabase.rpc('search_offers', {
       search_query: trimmedQuery,
-      limit_count: 100,
+      limit_count: 100, // Autocomplete UX — 100 results is more than sufficient for dropdown/typeahead
       offset_count: 0,
     });
 
@@ -108,11 +108,13 @@ export async function searchOffers(query: string): Promise<Offer[]> {
   }
 
   // Fallback to ILIKE if function doesn't exist yet (during migration) or on any error
+  // Uses explicit columns (not select('*')) and limit to bound payload size
   const { data: fallbackData, error: fallbackError } = await supabase
     .from('offers')
-    .select('*')
+    .select('offer_id, name_de, name_en, category_id, created_by, created_at')
     .or(`name_de.ilike.%${trimmedQuery}%,name_en.ilike.%${trimmedQuery}%`)
-    .order('name_de', { ascending: true });
+    .order('name_de', { ascending: true })
+    .limit(100); // Limit aligned with RPC limit_count (100) — sufficient for autocomplete UX
   
   if (fallbackError) {
     console.error('Error in fallback search:', fallbackError);
