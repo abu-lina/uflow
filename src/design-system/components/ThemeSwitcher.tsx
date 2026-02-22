@@ -15,20 +15,20 @@ export function ThemeSwitcher({ className = '' }: ThemeSwitcherProps) {
 
   return (
     <div
+      aria-label="Theme selection"
       className={`flex flex-wrap items-center gap-2 ${className}`}
       role="group"
-      aria-label="Theme selection"
     >
       {availableThemes.map((t) => (
         <button
           key={t}
-          type="button"
           aria-pressed={theme === t}
           className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
             theme === t
               ? 'border-primary bg-primary text-white'
               : 'border-border bg-background text-content hover:bg-neutral-50'
           }`}
+          type="button"
           onClick={() => setTheme(t)}
         >
           {t === 'default' ? 'Light' : t === 'dark' ? 'Dark' : t}

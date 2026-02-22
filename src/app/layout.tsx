@@ -87,9 +87,9 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 
   return (
     <html
+      suppressHydrationWarning
       dir={isRtl ? 'rtl' : 'ltr'}
       lang={language}
-      suppressHydrationWarning
       style={{ backgroundColor: '#f5f5f5' }}
     >
       <body
@@ -100,7 +100,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           minHeight: '100vh',
         }}
       >
-        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script dangerouslySetInnerHTML={{ __html: themeScript }} id="theme-init" strategy="beforeInteractive" />
         <ClientProviders initialUser={user}>
           {/* Desktop header only */}
           <div className="hidden md:block">

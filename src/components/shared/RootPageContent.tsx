@@ -130,8 +130,8 @@ export function RootPageContent() {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Skeleton className="h-8 w-48" animate={false} />
-          <Skeleton className="h-4 w-32" animate={false} />
+          <Skeleton animate={false} className="h-8 w-48" />
+          <Skeleton animate={false} className="h-4 w-32" />
         </div>
       </div>
     );

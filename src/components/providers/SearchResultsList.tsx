@@ -132,7 +132,7 @@ export const SearchResultsList = memo(function SearchResultsList({
       if (!result) return null;
       const provider = searchResultToProvider(result);
       return (
-        <div style={style} className="flex justify-center px-4 pb-4">
+        <div className="flex justify-center px-4 pb-4" style={style}>
           <div
             className="w-full max-w-md cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
             role="button"
@@ -179,8 +179,8 @@ export const SearchResultsList = memo(function SearchResultsList({
           height={listHeight}
           itemCount={filteredResults.length}
           itemSize={ESTIMATED_CARD_HEIGHT}
-          width="100%"
           overscanCount={3}
+          width="100%"
           onScroll={({ scrollOffset }: { scrollOffset: number }) => {
             const bottom = scrollOffset + listHeight;
             const threshold = filteredResults.length * ESTIMATED_CARD_HEIGHT - listHeight - 400;
