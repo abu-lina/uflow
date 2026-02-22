@@ -17,7 +17,9 @@ import { RootPageContent } from '@/components/shared/RootPageContent';
  * PWA users:
  *   - Use manifest start_url: / (root handles routing based on PWA state)
  */
-export const dynamic = 'force-dynamic'; // Always check feature flag on each request
+// Page is inherently dynamic because it awaits searchParams.
+// Removed force-dynamic — searchParams usage makes it dynamic automatically.
+// Plan 010 — P1b: Reduce force-dynamic blast radius
 
 export default async function Home({
   searchParams,

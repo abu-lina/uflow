@@ -26,16 +26,46 @@ const LegalLinksModal = dynamic(
   { ssr: false },
 );
 import { useSearch } from '@/providers/search-provider';
-import { searchProvidersAndCommunityServices, type Provider } from '@/services/providers';
+import type { Provider, SearchResult } from '@/services/providers';
+
+/**
+ * Fetch search results from the server-side route handler.
+ * Used for pagination after the initial server-rendered page.
+ *
+ * Plan 010 — P1a: Server boundary for pagination
+ */
+async function fetchProvidersFromAPI(
+  query: string,
+  category: string | null,
+  location: string,
+  page: number,
+  pageSize: number,
+): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+  const params = new URLSearchParams();
+  if (query) params.set('q', query);
+  if (category) params.set('category', category);
+  if (location) params.set('location', location);
+  params.set('page', String(page));
+  params.set('pageSize', String(pageSize));
+
+  const response = await fetch(`/api/providers/search?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Search API error: ${response.status}`);
+  }
+  return response.json();
+}
 
 interface ProvidersContentProps {
   defaultLocation?: string; // For Stage 2: render on root with city filter
   showGreeting?: boolean; // Show greeting header instead of search bar and category filter
+  /** Server-rendered initial data for the first page of results (Plan 010 P1a) */
+  initialData?: { results: SearchResult[]; hasMore: boolean };
 }
 
 export function ProvidersContent({
   defaultLocation,
   showGreeting = false,
+  initialData,
 }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -75,15 +105,16 @@ export function ProvidersContent({
     useInfiniteQuery({
       queryKey: ['providers', query, category || t('search.all'), location],
       queryFn: ({ pageParam = 0 }) =>
-        searchProvidersAndCommunityServices(
-          query,
-          category || t('search.all'),
-          location,
-          pageParam,
-          PAGE_SIZE,
-        ),
+        fetchProvidersFromAPI(query, category || t('search.all'), location, pageParam, PAGE_SIZE),
       getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
       initialPageParam: 0,
+      // Use server-rendered initial data when available (Plan 010 P1a)
+      ...(initialData && {
+        initialData: {
+          pages: [initialData],
+          pageParams: [0],
+        },
+      }),
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // Keep unused data for 10 min
       refetchOnWindowFocus: false, // Don't refetch on tab switch

@@ -26,19 +26,16 @@ export function SplashContent({ onContinue }: SplashContentProps) {
   if (!splashAnimationUsed && !hasSessionFlag) {
     splashAnimationUsed = true;
   }
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'pre-fix',hypothesisId:'H7',location:'SplashContent.tsx:15',message:'render',data:{isFirstVisit,language,hasContinue:!!onContinue,reduceMotion,hasSessionFlag,shouldAnimate},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!sessionStorage.getItem('splash-animated')) {
       sessionStorage.setItem('splash-animated', 'true');
     }
   }, []);
-  
+
   return (
     <motion.div
-      className="flex flex-col items-center w-full gap-16"
+      className="flex w-full flex-col items-center gap-16"
       {...(shouldAnimate && {
         initial: { opacity: 0 },
         animate: { opacity: 1 },
@@ -46,10 +43,10 @@ export function SplashContent({ onContinue }: SplashContentProps) {
       })}
     >
       {/* Body Content */}
-      <div className="flex flex-col items-center w-full gap-8">
+      <div className="flex w-full flex-col items-center gap-8">
         {/* Bismillah + Translation */}
-        <motion.div 
-          className="flex flex-col items-center w-full gap-1 px-12"
+        <motion.div
+          className="flex w-full flex-col items-center gap-1 px-12"
           {...(shouldAnimate && {
             initial: { opacity: 0, y: 20 },
             animate: { opacity: 1, y: 0 },
@@ -61,16 +58,14 @@ export function SplashContent({ onContinue }: SplashContentProps) {
 
           {/* Translation - Hidden for Arabic since the Arabic text is already shown above */}
           {language !== 'ar' && (
-            <p 
-              className="font-baskerville text-xs leading-[13px] text-center w-full bg-gold-gradient bg-clip-text text-transparent"
-            >
+            <p className="w-full bg-gold-gradient bg-clip-text text-center font-baskerville text-xs leading-[13px] text-transparent">
               {t('landing.bismillah.translation')}
             </p>
           )}
         </motion.div>
 
         {/* Logo + Text + CTA */}
-        <div className="flex flex-col items-center w-full gap-8 max-w-[345px]">
+        <div className="flex w-full max-w-[345px] flex-col items-center gap-8">
           {/* Logo */}
           <motion.div
             className="flex items-center justify-center"
@@ -84,8 +79,8 @@ export function SplashContent({ onContinue }: SplashContentProps) {
           </motion.div>
 
           {/* Title + Subtitle */}
-          <motion.div 
-            className="flex flex-col items-center w-full gap-2"
+          <motion.div
+            className="flex w-full flex-col items-center gap-2"
             {...(shouldAnimate && {
               initial: { opacity: 0, y: 20 },
               animate: { opacity: 1, y: 0 },
@@ -93,7 +88,7 @@ export function SplashContent({ onContinue }: SplashContentProps) {
             })}
           >
             {/* Title */}
-            <h1 className="font-inter-tight text-3xl font-medium leading-[40px] text-center text-content-heading">
+            <h1 className="text-center font-inter-tight text-3xl font-medium leading-[40px] text-content-heading">
               {(() => {
                 const title = t('splash.title');
                 // Parse title: highlight Muslim-related words and add line break after first Muslim word
@@ -101,31 +96,31 @@ export function SplashContent({ onContinue }: SplashContentProps) {
                 const result: React.ReactNode[] = [];
                 let key = 0;
                 let foundFirstMuslim = false;
-                
+
                 words.forEach((word, index) => {
                   const trimmed = word.trim();
                   if (!trimmed && word) {
                     result.push(word);
                     return;
                   }
-                  
+
                   if (!trimmed) return;
-                  
+
                   const lowerWord = trimmed.toLowerCase();
-                  const isMuslimWord = 
-                    lowerWord.includes('muslim') || 
-                    lowerWord.includes('مسلم') || 
+                  const isMuslimWord =
+                    lowerWord.includes('muslim') ||
+                    lowerWord.includes('مسلم') ||
                     lowerWord.includes('müslüman');
-                  
+
                   if (isMuslimWord) {
                     result.push(
                       <span key={key++} className="text-primary">
                         {trimmed}
-                      </span>
+                      </span>,
                     );
                     if (!foundFirstMuslim) {
                       foundFirstMuslim = true;
-                      const nextNonWhitespace = words.slice(index + 1).find(w => w.trim());
+                      const nextNonWhitespace = words.slice(index + 1).find((w) => w.trim());
                       if (nextNonWhitespace) {
                         result.push(<br key={key++} />);
                       }
@@ -134,20 +129,20 @@ export function SplashContent({ onContinue }: SplashContentProps) {
                     result.push(<span key={key++}>{word}</span>);
                   }
                 });
-                
+
                 return result;
               })()}
             </h1>
 
             {/* Subtitle */}
-            <p className="font-inter text-base font-normal leading-[19px] text-center text-content">
+            <p className="text-center font-inter text-base font-normal leading-[19px] text-content">
               {t('splash.subtitle')}
             </p>
           </motion.div>
 
           {/* CTA Button */}
           <motion.div
-            className={isFirstVisit ? "flex w-full" : "flex justify-center"}
+            className={isFirstVisit ? 'flex w-full' : 'flex justify-center'}
             {...(shouldAnimate && {
               initial: { opacity: 0, y: 20 },
               animate: { opacity: 1, y: 0 },
@@ -155,7 +150,7 @@ export function SplashContent({ onContinue }: SplashContentProps) {
             })}
           >
             <Button
-              className="h-12 rounded-md w-full"
+              className="h-12 w-full rounded-md"
               icon="lucide:store"
               variant="primary"
               onClick={onContinue}

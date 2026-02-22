@@ -39,11 +39,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return generateLocalizedMetadata(language, siteUrl);
 }
 
-// Force dynamic rendering to support:
-// 1. Server-side session check for initial user state (prevents flash of unauthenticated content)
-// 2. Dynamic language detection from cookies/headers
-// Note: revalidate is not needed here (it's for ISR, not layouts)
-export const dynamic = 'force-dynamic';
+// Layout is inherently dynamic because it calls headers() (language detection)
+// and cookies() (session check). Removed force-dynamic to allow child routes
+// to be independently cached when they don't use dynamic APIs.
+// Plan 010 — P1b: Reduce force-dynamic blast radius
 
 interface RootLayoutProps {
   children: React.ReactNode;

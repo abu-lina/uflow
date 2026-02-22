@@ -5,6 +5,23 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-02-23
+
+### Security (Plan 010 — P0)
+
+- **Removed localhost ingest calls**: All unguarded `fetch('http://127.0.0.1:7243/ingest/...')` debug/agent-log calls removed from `SplashContent.tsx` and `MobileSplashScreen.tsx`. These were production-risk calls that attempted to contact the user's own device.
+- **Safety regression test added**: `no-localhost-ingest.test.ts` prevents future localhost ingest calls from being shipped.
+
+### Performance (Plan 010 — P1a)
+
+- **Server-first Providers discovery**: `/providers` page now server-renders the initial page of search results, reducing time-to-content. Client component receives server-rendered initial data and handles pagination/interactivity.
+- **Server pagination boundary**: New route handler `GET /api/providers/search` serves as the canonical server boundary for search pagination with explicit caching headers (60s TTL for browse, `no-store` for free-text queries).
+- **Reduced client bundle coupling**: Providers search pagination now calls the API route handler instead of importing the search service directly into the client bundle.
+
+### Improved (Plan 010 — P1b)
+
+- **Reduced `force-dynamic` blast radius**: Removed explicit `force-dynamic` exports from root layout and root page. Routes remain dynamic via inherent API usage (`headers()`, `cookies()`, `searchParams`) but no longer explicitly suppress caching for all child routes.
+
 ## [0.4.1] - 2026-02-22
 
 ### Fixed (Plan 008)
