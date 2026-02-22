@@ -14,6 +14,7 @@
 | 2026-01-27 16:10 | Plan 001 revised for architecture gates                            | Implementation is gated by privacy-safe endorsements, unified role authority, and DB-side stable ranking  |
 | 2026-02-21 | Plan 003 released (v0.2.0): Console errors bugfix | Fixed hydration mismatch + diagnosed CORS NXDOMAIN; zero rework, exemplary workflow execution |
 | 2026-02-21 | Process improvements implemented (PI 004) | Added duration estimates requirement (Planner) + remote divergence preflight (DevOps Stage 2) |
+| 2026-02-22 | Plan 001 released (v0.3.0): Provider Trust & Verification System | Complete UI trust badges + endorsements, 109 tests passing, UAT approved, deployed to production |
 
 ---
 
@@ -34,20 +35,19 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.3.0 (next planned release)
+**Current Working Release**: v0.4.0 (next planned release)
 
-| Plan ID | Title                                | UAT Status | Committed |
-| ------- | ------------------------------------ | ---------- | --------- |
-| 001     | Provider Trust & Verification System | ✅ APPROVED | ✅ Yes (SHA 3dd36f1) |
+*No active plans — v0.3.0 deployed successfully*
 
-**Release Status**: 1 of 1 plans committed
-**Ready for Release**: Yes — awaiting user approval for Stage 2 (push + deploy)
+**Release Status**: Ready for new planning  
+**Ready for Release**: N/A  
 **Blocking Items**: None
 
 ### Previous Releases
 
 | Version | Date       | Plans Included                                    | Status   |
 | ------- | ---------- | ------------------------------------------------- | -------- |
+| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System)   | Released |
 | v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix)   | Released |
 | v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access     | Released |
 

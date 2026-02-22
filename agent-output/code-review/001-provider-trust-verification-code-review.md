@@ -2,7 +2,7 @@
 ID: 001
 Origin: 001
 UUID: ab8a542e
-Status: Committed for Release v0.3.0
+Status: Released
 ---
 
 # Code Review: Provider Trust & Verification System (QA Gate Fixes)
