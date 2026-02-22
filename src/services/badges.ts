@@ -48,7 +48,8 @@ export async function getBadgeTypes(client?: SupabaseClient): Promise<BadgeType[
       .from('badge_types')
       .select('*')
       .eq('is_active', true)
-      .order('badge_key', { ascending: true });
+      .order('badge_key', { ascending: true })
+      .limit(100);
 
     if (error) {
       logSupabaseError('getBadgeTypes', error);
@@ -565,7 +566,8 @@ export async function getBadgeConfirmations(
       .from('badge_confirmations')
       .select('*')
       .eq('provider_badge_id', badgeId)
-      .order('confirmed_at', { ascending: false });
+      .order('confirmed_at', { ascending: false })
+      .limit(200);
 
     if (error) {
       logSupabaseError('getBadgeConfirmations', error);
@@ -701,7 +703,8 @@ export async function getBadgeVerifications(
       .from('badge_verifications')
       .select('*')
       .eq('provider_badge_id', badgeId)
-      .order('verified_at', { ascending: false });
+      .order('verified_at', { ascending: false })
+      .limit(200);
 
     if (error) {
       logSupabaseError('getBadgeVerifications', error);

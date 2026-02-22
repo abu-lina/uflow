@@ -1,11 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { IOSInstallInstructionsModal } from '@/components/shared/IOSInstallInstructionsModal';
 import { cn } from '@/lib/utils';
+
+// Dynamic import for modal (Plan 007: reduce shared bundle)
+const IOSInstallInstructionsModal = dynamic(
+  () =>
+    import('@/components/shared/IOSInstallInstructionsModal').then((mod) => ({
+      default: mod.IOSInstallInstructionsModal,
+    })),
+  { ssr: false },
+);
 
 interface PWAInstallCTAProps {
   className?: string;
@@ -15,12 +24,12 @@ const PWA_DISMISSAL_KEY = 'pwa_install_dismissed';
 
 /**
  * PWA Install CTA Card Component
- * 
+ *
  * Displays a card with title, description, and CTAs for installing the PWA.
  * - Triggers native install prompt on supported browsers (Chrome/Edge)
  * - Opens iOS install instructions modal on iOS Safari
  * - Only renders if app is not already installed and installation is possible
- * 
+ *
  * Design tokens (from Figma):
  * - Card: white bg, border-border, rounded-[24px], p-4, gap-6
  * - Title: Inter, 500, 20px/24px, content-heading, centered
@@ -85,7 +94,7 @@ export function PWAInstallCTA({ className }: PWAInstallCTAProps) {
       <div
         className={cn(
           'flex w-full flex-col items-center gap-4 rounded-[24px] border border-border-light bg-neutral-muted p-4',
-          className
+          className,
         )}
       >
         {/* Title + Subtitle */}
@@ -132,7 +141,7 @@ export function PWAInstallCTA({ className }: PWAInstallCTAProps) {
               'h-12 rounded-sm font-inter-tight text-base font-medium',
               'bg-neutral-light text-content-muted',
               'shadow-[0px_8px_24px_rgba(238,238,238,0.25)]',
-              'hover:bg-neutral hover:text-content'
+              'hover:bg-neutral hover:text-content',
             )}
             variant="secondary"
             onClick={handleLaterClick}
@@ -143,10 +152,7 @@ export function PWAInstallCTA({ className }: PWAInstallCTAProps) {
       </div>
 
       {/* iOS Instructions Modal */}
-      <IOSInstallInstructionsModal
-        isOpen={showIOSModal}
-        onClose={handleIOSModalClose}
-      />
+      <IOSInstallInstructionsModal isOpen={showIOSModal} onClose={handleIOSModalClose} />
     </>
   );
 }

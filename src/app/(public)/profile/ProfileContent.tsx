@@ -5,8 +5,22 @@ import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Icon } from '@iconify/react';
-import { CircleHelp, LogOut, User, Lock, FileText, AlertTriangle, Heart, Download, Shield, Eye, EyeOff, Scale } from 'lucide-react';
+import {
+  CircleHelp,
+  LogOut,
+  User,
+  Lock,
+  FileText,
+  AlertTriangle,
+  Heart,
+  Download,
+  Shield,
+  Eye,
+  EyeOff,
+  Scale,
+} from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
@@ -24,15 +38,30 @@ import { BrokenHeartIcon } from '@/components/ui/BrokenHeartIcon';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconWithTitle } from '@/components/ui/IconWithTitle';
 import { SelectableCard } from '@/components/shared/SelectableCard';
-import { MobileAboutModal } from '@/components/shared/MobileAboutModal';
 import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProviderCard';
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
-import { getCreatedProviders, getAllBookmarkedItems, getRecommendations } from '@/services/providers';
-import { getCreatedCommunityServices, getRecommendedCommunityServices } from '@/services/communityServices';
+import {
+  getCreatedProviders,
+  getAllBookmarkedItems,
+  getRecommendations,
+} from '@/services/providers';
+import {
+  getCreatedCommunityServices,
+  getRecommendedCommunityServices,
+} from '@/services/communityServices';
+
+// Dynamic import for modal (Plan 007: reduce shared bundle)
+const MobileAboutModal = dynamic(
+  () =>
+    import('@/components/shared/MobileAboutModal').then((mod) => ({
+      default: mod.MobileAboutModal,
+    })),
+  { ssr: false },
+);
 import { authService } from '@/features/auth/services/authService';
 import { getFirstImageUrl } from '@/utils/imageUtils';
 import { dataExportService } from '@/services/dataExport';
@@ -52,7 +81,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  
+
   // Form state for profile tab
   interface FormData {
     firstName: string;
@@ -87,13 +116,16 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Helper function to get image URL for community services
   // Handles TEXT[] format from database (Supabase returns as array)
-  const getCommunityServiceImageUrl = (communityService: { 
+  const getCommunityServiceImageUrl = (communityService: {
     community_service_images?: string[] | null | unknown;
     community_service_name?: string;
   }) => {
     // Handle null or undefined
     if (!communityService.community_service_images) {
-      console.log('No community_service_images for:', communityService.community_service_name || 'unknown');
+      console.log(
+        'No community_service_images for:',
+        communityService.community_service_name || 'unknown',
+      );
       return '/images/placeholder.jpg';
     }
 
@@ -101,19 +133,38 @@ export function ProfileContent({ user }: ProfileContentProps) {
     if (Array.isArray(communityService.community_service_images)) {
       const images = communityService.community_service_images;
       if (images.length === 0) {
-        console.log('Empty images array for:', communityService.community_service_name || 'unknown');
+        console.log(
+          'Empty images array for:',
+          communityService.community_service_name || 'unknown',
+        );
         return '/images/placeholder.jpg';
       }
       // Get first image and validate it's a non-empty string
       const firstImage = images[0];
       if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
-        console.log('Found image URL:', firstImage, 'for:', communityService.community_service_name || 'unknown');
+        console.log(
+          'Found image URL:',
+          firstImage,
+          'for:',
+          communityService.community_service_name || 'unknown',
+        );
         return firstImage;
       }
-      console.log('Invalid first image:', firstImage, 'for:', communityService.community_service_name || 'unknown');
+      console.log(
+        'Invalid first image:',
+        firstImage,
+        'for:',
+        communityService.community_service_name || 'unknown',
+      );
     } else {
       // Log unexpected format
-      console.log('Unexpected images format:', typeof communityService.community_service_images, communityService.community_service_images, 'for:', communityService.community_service_name || 'unknown');
+      console.log(
+        'Unexpected images format:',
+        typeof communityService.community_service_images,
+        communityService.community_service_images,
+        'for:',
+        communityService.community_service_name || 'unknown',
+      );
     }
 
     // Fallback to placeholder
@@ -121,7 +172,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
   };
 
   // Helper function to get provider image URL using the utility function
-  const getProviderImageUrl = (provider: { provider_images?: string | null | { urls?: string[] } }) => {
+  const getProviderImageUrl = (provider: {
+    provider_images?: string | null | { urls?: string[] };
+  }) => {
     return getFirstImageUrl(provider.provider_images);
   };
 
@@ -155,23 +208,26 @@ export function ProfileContent({ user }: ProfileContentProps) {
     if (effectiveUser) {
       const fullName = effectiveUser.user_metadata?.full_name ?? '';
       const nameParts = fullName.split(' ');
-      
+
       const initialData: FormData = {
         firstName: nameParts[0] || '',
         lastName: nameParts.slice(1).join(' ') || '',
         email: effectiveUser.email || '',
         password: '',
       };
-      
+
       setFormData(initialData);
       setOriginalData(initialData);
     }
   }, [effectiveUser]);
 
-
   // Use React Query for created providers with caching
   // Show cached data immediately while refetching in background
-  const { data: createdProviders = [], isLoading: isLoadingCreated, error: createdError } = useQuery({
+  const {
+    data: createdProviders = [],
+    isLoading: isLoadingCreated,
+    error: createdError,
+  } = useQuery({
     queryKey: ['created-providers', effectiveUser?.id],
     queryFn: async () => {
       if (!effectiveUser) return [];
@@ -185,7 +241,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Use React Query for saved providers with caching
   // Show cached data immediately while refetching in background
-  const { data: savedProviders = [], isLoading: isLoadingSaved, error: savedError } = useQuery({
+  const {
+    data: savedProviders = [],
+    isLoading: isLoadingSaved,
+    error: savedError,
+  } = useQuery({
     queryKey: ['saved-providers', effectiveUser?.id],
     queryFn: async () => {
       if (!effectiveUser) return [];
@@ -198,7 +258,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
   });
 
   // Use React Query for recommendations with caching
-  const { data: recommendations = [], isLoading: isLoadingRecommendations, error: recommendationsError } = useQuery({
+  const {
+    data: recommendations = [],
+    isLoading: isLoadingRecommendations,
+    error: recommendationsError,
+  } = useQuery({
     queryKey: ['recommendations', effectiveUser?.id],
     queryFn: async () => {
       if (!effectiveUser) return [];
@@ -211,20 +275,27 @@ export function ProfileContent({ user }: ProfileContentProps) {
   });
 
   // Use React Query for created community services with caching
-  const { data: createdCommunityServices = [], isLoading: isLoadingCreatedCS, error: createdCSError } = useQuery({
+  const {
+    data: createdCommunityServices = [],
+    isLoading: isLoadingCreatedCS,
+    error: createdCSError,
+  } = useQuery({
     queryKey: ['created-community-services', effectiveUser?.id],
     queryFn: async () => {
       if (!effectiveUser) return [];
       const data = await getCreatedCommunityServices(effectiveUser.id);
       // Debug: Log the data structure to see what we're getting
       if (data && data.length > 0) {
-        console.log('Created community services data:', data.map(cs => ({
-          id: cs.community_service_id,
-          name: cs.community_service_name,
-          images: cs.community_service_images,
-          imagesType: typeof cs.community_service_images,
-          isArray: Array.isArray(cs.community_service_images),
-        })));
+        console.log(
+          'Created community services data:',
+          data.map((cs) => ({
+            id: cs.community_service_id,
+            name: cs.community_service_name,
+            images: cs.community_service_images,
+            imagesType: typeof cs.community_service_images,
+            isArray: Array.isArray(cs.community_service_images),
+          })),
+        );
       }
       return data ?? [];
     },
@@ -234,7 +305,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
   });
 
   // Use React Query for recommended community services with caching
-  const { data: recommendedCommunityServices = [], isLoading: isLoadingRecommendedCS, error: recommendedCSError } = useQuery({
+  const {
+    data: recommendedCommunityServices = [],
+    isLoading: isLoadingRecommendedCS,
+    error: recommendedCSError,
+  } = useQuery({
     queryKey: ['recommended-community-services', effectiveUser?.id],
     queryFn: async () => {
       if (!effectiveUser) return [];
@@ -246,19 +321,29 @@ export function ProfileContent({ user }: ProfileContentProps) {
     placeholderData: (previousData) => previousData,
   });
 
-  const isLoadingProviders = isLoadingCreated || isLoadingSaved || isLoadingRecommendations || isLoadingCreatedCS || isLoadingRecommendedCS;
-  const error = createdError || savedError || recommendationsError || createdCSError || recommendedCSError ? t('providers.errorLoading') : null;
+  const isLoadingProviders =
+    isLoadingCreated ||
+    isLoadingSaved ||
+    isLoadingRecommendations ||
+    isLoadingCreatedCS ||
+    isLoadingRecommendedCS;
+  const error =
+    createdError || savedError || recommendationsError || createdCSError || recommendedCSError
+      ? t('providers.errorLoading')
+      : null;
 
   // Handle removal from saved list (optimistic update)
-  const handleRemoveFromSaved = useCallback((removedId: string) => {
-    queryClient.setQueryData(['saved-providers', effectiveUser?.id], (old: unknown[] = []) => {
-      return old.filter((item: unknown) => {
-        const searchResult = item as { id?: string };
-        return searchResult.id !== removedId;
+  const handleRemoveFromSaved = useCallback(
+    (removedId: string) => {
+      queryClient.setQueryData(['saved-providers', effectiveUser?.id], (old: unknown[] = []) => {
+        return old.filter((item: unknown) => {
+          const searchResult = item as { id?: string };
+          return searchResult.id !== removedId;
+        });
       });
-    });
-  }, [queryClient, effectiveUser?.id]);
-
+    },
+    [queryClient, effectiveUser?.id],
+  );
 
   // Handle logout
   const handleLogout = async () => {
@@ -293,7 +378,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   if (loading) {
     return (
       <ScrollablePageLayout>
-        <PageContent className="flex items-center justify-center min-h-[60vh]">
+        <PageContent className="flex min-h-[60vh] items-center justify-center">
           <LoadingSpinner text={t('common.loading')} />
         </PageContent>
       </ScrollablePageLayout>
@@ -304,7 +389,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   if (!effectiveUser) {
     return (
       <ScrollablePageLayout>
-        <PageContent className="flex items-center justify-center min-h-[60vh]">
+        <PageContent className="flex min-h-[60vh] items-center justify-center">
           <IconWithTitle
             icon={<Lock className="h-16 w-16 text-primary" />}
             title={t('saved.loginRequired')}
@@ -318,7 +403,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Form handlers
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -327,7 +412,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
   // Check if form has changes
   const hasChanges = () => {
     if (!originalData) return false;
-    
+
     return (
       formData.firstName !== originalData.firstName ||
       formData.lastName !== originalData.lastName ||
@@ -345,7 +430,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
       // Update user metadata if name changed
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
       const currentFullName = effectiveUser?.user_metadata?.full_name ?? '';
-      
+
       if (fullName !== currentFullName) {
         await authService.updateUser({
           data: {
@@ -370,7 +455,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
       // Show success state
       setIsSaved(true);
-      
+
       // Update original data to current form data (excluding password)
       setOriginalData({
         firstName: formData.firstName,
@@ -378,13 +463,12 @@ export function ProfileContent({ user }: ProfileContentProps) {
         email: formData.email,
         password: '',
       });
-      
+
       // Clear password field after successful save
-      setFormData(prev => ({ ...prev, password: '' }));
-      
+      setFormData((prev) => ({ ...prev, password: '' }));
+
       // Refresh user data
       queryClient.invalidateQueries({ queryKey: ['user'] });
-      
     } catch (err) {
       console.error('Error updating profile:', err);
       setProfileError(t('profile.errorUpdatingProfile'));
@@ -400,15 +484,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
   // Mobile content - using proper layout components
   const mobileContent = (
     <ScrollablePageLayout>
-      <PageHeader 
-        title={t('navigation.profile')}
-        variant="title-only"
-      />
+      <PageHeader title={t('navigation.profile')} variant="title-only" />
 
-      <PageContent 
-        className="mobile-nav-spacing md:pb-8"
-        maxWidth="full"
-      >
+      <PageContent className="mobile-nav-spacing md:pb-8" maxWidth="full">
         {/* Error Message */}
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 p-4">
@@ -425,16 +503,22 @@ export function ProfileContent({ user }: ProfileContentProps) {
             >
               <div className="flex items-center gap-4">
                 {/* Avatar */}
-                <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-full bg-primary p-1">
+                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary p-1">
                   <User className="h-10 w-10 text-white" />
                 </div>
-                
+
                 {/* User Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-inter-tight text-lg font-semibold text-content-heading truncate" title={fullName}>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className="truncate font-inter-tight text-lg font-semibold text-content-heading"
+                    title={fullName}
+                  >
                     {fullName}
                   </div>
-                  <div className="font-inter text-sm text-content-muted truncate" title={effectiveUser.email}>
+                  <div
+                    className="truncate font-inter text-sm text-content-muted"
+                    title={effectiveUser.email}
+                  >
                     {effectiveUser.email}
                   </div>
                 </div>
@@ -446,10 +530,8 @@ export function ProfileContent({ user }: ProfileContentProps) {
         {/* Deine Inhalte Section */}
         <ContentSection className="mt-4">
           <div>
-            <SectionHeading>
-              {t('profile.yourContent')}
-            </SectionHeading>
-            
+            <SectionHeading>{t('profile.yourContent')}</SectionHeading>
+
             {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingProviders ? (
               <LoadingSpinner text={t('providers.loadingProviders')} />
@@ -474,7 +556,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     likes={0}
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
-                    onClick={() => router.push(`/community-services/${communityService.community_service_id}`)}
+                    onClick={() =>
+                      router.push(`/community-services/${communityService.community_service_id}`)
+                    }
                   />
                 ))}
               </div>
@@ -491,10 +575,8 @@ export function ProfileContent({ user }: ProfileContentProps) {
         {/* Recommendations Section */}
         <ContentSection className="mt-4">
           <div>
-            <SectionHeading>
-              {t('profile.recommendations')}
-            </SectionHeading>
-            
+            <SectionHeading>{t('profile.recommendations')}</SectionHeading>
+
             {/* Only show loading on true initial load - isLoading is true only when no cached data */}
             {isLoadingRecommendations || isLoadingRecommendedCS ? (
               <LoadingSpinner text={t('providers.loadingProviders')} />
@@ -519,7 +601,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     likes={0}
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
-                    onClick={() => router.push(`/community-services/${communityService.community_service_id}`)}
+                    onClick={() =>
+                      router.push(`/community-services/${communityService.community_service_id}`)
+                    }
                   />
                 ))}
               </div>
@@ -534,7 +618,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         </ContentSection>
 
         {/* Action Items */}
-        <ContentSection className="mt-4 mb-8 md:mb-6">
+        <ContentSection className="mb-8 mt-4 md:mb-6">
           <div>
             <div className="rounded-lg bg-white">
               {/* Über Uns */}
@@ -549,18 +633,22 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   src="/icons/icon-192x192.png"
                   width={24}
                 />
-                <span className="font-inter-tight font-semibold text-content-heading">{t('navigation.about')}</span>
+                <span className="font-inter-tight font-semibold text-content-heading">
+                  {t('navigation.about')}
+                </span>
               </button>
-              
+
               {/* Divider */}
               <div className="mx-4 h-px bg-gray-200" />
 
               {/* Support */}
               <button className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50">
                 <CircleHelp className="h-6 w-6 text-black" />
-                <span className="font-inter-tight font-semibold text-content-heading">{t('common.support') || 'Support'}</span>
+                <span className="font-inter-tight font-semibold text-content-heading">
+                  {t('common.support') || 'Support'}
+                </span>
               </button>
-              
+
               {/* Divider */}
               <div className="mx-4 h-px bg-gray-200" />
 
@@ -574,7 +662,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   {t('legal.privacyPolicy') || 'Privacy Policy'}
                 </span>
               </Link>
-              
+
               {/* Divider */}
               <div className="mx-4 h-px bg-gray-200" />
 
@@ -588,7 +676,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   {t('legal.termsOfService') || 'Terms of Service'}
                 </span>
               </Link>
-              
+
               {/* Divider */}
               <div className="mx-4 h-px bg-gray-200" />
 
@@ -602,7 +690,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   {t('legal.impressum') || 'Impressum'}
                 </span>
               </Link>
-              
+
               {/* Divider */}
               <div className="mx-4 h-px bg-gray-200" />
 
@@ -614,7 +702,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
               >
                 <Download className="h-6 w-6 text-black" />
                 <span className="font-inter-tight font-semibold text-content-heading">
-                  {isExporting ? t('common.loading') + '...' : t('legal.downloadData') || 'Download My Data'}
+                  {isExporting
+                    ? t('common.loading') + '...'
+                    : t('legal.downloadData') || 'Download My Data'}
                 </span>
               </button>
 
@@ -641,18 +731,18 @@ export function ProfileContent({ user }: ProfileContentProps) {
 
   // Desktop: tabbed view
   const desktopContent = (
-    <div className="flex min-h-full w-full flex-col items-center gap-8 sm:max-w-screen-xl sm:mx-auto md:pt-28 md:pb-8">
+    <div className="flex min-h-full w-full flex-col items-center gap-8 sm:mx-auto sm:max-w-screen-xl md:pb-8 md:pt-28">
       {/* Profile header (greeting, avatar, etc.) */}
       <div className="flex w-full flex-col items-center">
         <div className="flex w-full flex-row items-center justify-center">
-            <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-primary p-4">
-              <User className="h-10 w-10 text-white" />
-            </div>
+          <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-primary p-4">
+            <User className="h-10 w-10 text-white" />
+          </div>
           <div className="ml-6 flex flex-col items-start justify-center">
-            <div className="text-text-primary font-inter-tight text-3xl font-semibold">
+            <div className="font-inter-tight text-3xl font-semibold text-text-primary">
               {fullName}
             </div>
-            <div className="text-text-secondary font-inter text-base">{effectiveUser.email}</div>
+            <div className="font-inter text-base text-text-secondary">{effectiveUser.email}</div>
           </div>
         </div>
       </div>
@@ -664,9 +754,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
           icon={<AlertTriangle className="h-16 w-16 text-red-500" />}
           title={t('providers.errorTitle')}
         >
-          <p className="text-center text-red-600 mb-4">{error}</p>
+          <p className="mb-4 text-center text-red-600">{error}</p>
           <button
-            className="w-full rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition-colors"
+            className="w-full rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
             onClick={() => window.location.reload()}
           >
             {t('common.retry')}
@@ -675,7 +765,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
       )}
 
       <UserNavigationTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      
+
       <div className="mt-6 w-full">
         {activeTab === 'created' && (
           <div className="flex flex-wrap justify-center gap-8">
@@ -685,10 +775,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
             ) : createdProviders.length > 0 || createdCommunityServices.length > 0 ? (
               <>
                 {createdProviders.map((provider) => {
-                  const address = provider.address_street && provider.address_city
-                    ? `${provider.address_street}, ${provider.address_city}`
-                    : provider.address_street || provider.address_city || undefined;
-                  
+                  const address =
+                    provider.address_street && provider.address_city
+                      ? `${provider.address_street}, ${provider.address_city}`
+                      : provider.address_street || provider.address_city || undefined;
+
                   return (
                     <SelectableCard
                       key={provider.provider_id}
@@ -700,10 +791,13 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   );
                 })}
                 {createdCommunityServices.map((communityService) => {
-                  const address = communityService.address_street && communityService.address_city
-                    ? `${communityService.address_street}, ${communityService.address_city}`
-                    : communityService.address_street || communityService.address_city || undefined;
-                  
+                  const address =
+                    communityService.address_street && communityService.address_city
+                      ? `${communityService.address_street}, ${communityService.address_city}`
+                      : communityService.address_street ||
+                        communityService.address_city ||
+                        undefined;
+
                   return (
                     <SelectableCard
                       key={communityService.community_service_id}
@@ -711,7 +805,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       category={getCategoryName(communityService.category)}
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
-                      onClick={() => router.push(`/community-services/${communityService.community_service_id}`)}
+                      onClick={() =>
+                        router.push(`/community-services/${communityService.community_service_id}`)
+                      }
                     />
                   );
                 })}
@@ -732,10 +828,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
               <LoadingSpinner text={t('providers.loadingProviders')} />
             ) : savedProviders.length > 0 ? (
               savedProviders.map((provider) => {
-                const address = provider.address_street && provider.address_city
-                  ? `${provider.address_street}, ${provider.address_city}`
-                  : provider.address_street || provider.address_city || undefined;
-                
+                const address =
+                  provider.address_street && provider.address_city
+                    ? `${provider.address_street}, ${provider.address_city}`
+                    : provider.address_street || provider.address_city || undefined;
+
                 return (
                   <SelectableCard
                     key={provider.id}
@@ -773,10 +870,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
             ) : recommendations.length > 0 || recommendedCommunityServices.length > 0 ? (
               <>
                 {recommendations.map((provider) => {
-                  const address = provider.address_street && provider.address_city
-                    ? `${provider.address_street}, ${provider.address_city}`
-                    : provider.address_street || provider.address_city || undefined;
-                  
+                  const address =
+                    provider.address_street && provider.address_city
+                      ? `${provider.address_street}, ${provider.address_city}`
+                      : provider.address_street || provider.address_city || undefined;
+
                   return (
                     <SelectableCard
                       key={provider.provider_id}
@@ -789,10 +887,13 @@ export function ProfileContent({ user }: ProfileContentProps) {
                   );
                 })}
                 {recommendedCommunityServices.map((communityService) => {
-                  const address = communityService.address_street && communityService.address_city
-                    ? `${communityService.address_street}, ${communityService.address_city}`
-                    : communityService.address_street || communityService.address_city || undefined;
-                  
+                  const address =
+                    communityService.address_street && communityService.address_city
+                      ? `${communityService.address_street}, ${communityService.address_city}`
+                      : communityService.address_street ||
+                        communityService.address_city ||
+                        undefined;
+
                   return (
                     <SelectableCard
                       key={communityService.community_service_id}
@@ -800,7 +901,9 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       category={getCategoryName(communityService.category)}
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
-                      onClick={() => router.push(`/community-services/${communityService.community_service_id}`)}
+                      onClick={() =>
+                        router.push(`/community-services/${communityService.community_service_id}`)
+                      }
                     />
                   );
                 })}
@@ -820,7 +923,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
           </div>
         )}
         {activeTab === 'profile' && (
-          <div className="flex justify-center w-full">
+          <div className="flex w-full justify-center">
             <div className="w-full" style={{ maxWidth: '640px' }}>
               {/* Error Message */}
               {profileError && (
@@ -830,11 +933,15 @@ export function ProfileContent({ user }: ProfileContentProps) {
               )}
 
               {/* Personal Data Section */}
-              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); submitProfileForm(); }}>
-                <SectionHeading>
-                  {t('profile.personalData')}
-                </SectionHeading>
-              
+              <form
+                className="space-y-6"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitProfileForm();
+                }}
+              >
+                <SectionHeading>{t('profile.personalData')}</SectionHeading>
+
                 <div className="space-y-3">
                   {/* First Name */}
                   <FormInput
@@ -871,27 +978,25 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     <FormInput
                       label={t('profile.password')}
                       labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
-                      rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      rightIcon={
+                        showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />
+                      }
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       variant="with-icon"
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       onRightIconClick={() => setShowPassword(!showPassword)}
                     />
-                    <p className="pl-2 text-xs text-gray-500">
-                      {t('profile.passwordHint')}
-                    </p>
+                    <p className="pl-2 text-xs text-gray-500">{t('profile.passwordHint')}</p>
                   </div>
                 </div>
               </form>
 
               {/* Manage Account Section */}
-              <ContentSection className="mt-8 mb-6">
+              <ContentSection className="mb-6 mt-8">
                 <div>
-                  <SectionHeading>
-                    {t('profile.manageAccount')}
-                  </SectionHeading>
-                
+                  <SectionHeading>{t('profile.manageAccount')}</SectionHeading>
+
                   <button
                     className="flex h-[54px] w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
                     onClick={handleCloseAccount}
@@ -905,14 +1010,14 @@ export function ProfileContent({ user }: ProfileContentProps) {
               </ContentSection>
 
               {/* Save Button */}
-              <div className="mt-6 flex justify-center w-full">
+              <div className="mt-6 flex w-full justify-center">
                 <button
                   className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 transition-colors ${
-                    isSaved 
-                      ? 'bg-green-500 text-white' 
-                      : hasChanges() 
-                        ? 'bg-primary text-white hover:bg-primary/90' 
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    isSaved
+                      ? 'bg-green-500 text-white'
+                      : hasChanges()
+                        ? 'bg-primary text-white hover:bg-primary/90'
+                        : 'cursor-not-allowed bg-gray-300 text-gray-500'
                   }`}
                   disabled={isSaved || isSubmitting || !hasChanges()}
                   onClick={submitProfileForm}
@@ -933,11 +1038,13 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     </>
                   ) : (
                     <>
-                      <Icon 
-                        className={`h-5 w-5 ${hasChanges() ? 'text-white' : 'text-gray-500'}`} 
+                      <Icon
+                        className={`h-5 w-5 ${hasChanges() ? 'text-white' : 'text-gray-500'}`}
                         icon={hasChanges() ? 'lucide:save' : 'lucide:file-text'}
                       />
-                      <span className={`font-inter-tight text-base font-medium ${hasChanges() ? 'text-white' : 'text-gray-500'}`}>
+                      <span
+                        className={`font-inter-tight text-base font-medium ${hasChanges() ? 'text-white' : 'text-gray-500'}`}
+                      >
                         {hasChanges() ? t('actions.saveChanges') : t('actions.noChanges')}
                       </span>
                     </>

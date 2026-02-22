@@ -11,7 +11,7 @@ export interface Bookmark {
 export async function getBookmarkForProvider(providerId: string, userId: string): Promise<Bookmark | null> {
   const { data, error } = await supabase
     .from('bookmarks')
-    .select('*')
+    .select('id, bookmarkable_id, bookmarkable_type, user_id, created_at')
     .eq('bookmarkable_id', providerId)
     .eq('bookmarkable_type', 'provider')
     .eq('user_id', userId)

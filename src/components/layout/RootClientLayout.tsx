@@ -2,12 +2,16 @@
 
 import { ReactNode, useEffect, useRef, useState } from 'react';
 
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
 import { CityEarlyAccessNavbar } from '@/components/shared/CityEarlyAccessNavbar';
 import { DesktopFooter } from '@/components/layout/DesktopFooter';
 import { PageTransition } from '@/components/ui/PageTransition';
-import { FooterAction } from '@/components/ui/FooterAction';
+const FooterAction = dynamic(
+  () => import('@/components/ui/FooterAction').then((mod) => ({ default: mod.FooterAction })),
+  { ssr: false },
+);
 import { PushNotificationPrompt } from '@/components/ui/PushNotificationPrompt';
 import { LoadingProvider } from '@/providers/LoadingProvider';
 import { useSplash } from '@/providers/splash-provider';
@@ -15,7 +19,12 @@ import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAppStage } from '@/hooks/useAppStage';
-import { shouldShowMobileFooter, shouldShowCityEarlyAccessNavbar, shouldShowSubpageAction, getPageType } from '@/utils/navigationUtils';
+import {
+  shouldShowMobileFooter,
+  shouldShowCityEarlyAccessNavbar,
+  shouldShowSubpageAction,
+  getPageType,
+} from '@/utils/navigationUtils';
 
 interface RootClientLayoutProps {
   children: ReactNode;
@@ -29,15 +38,15 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const { t } = useLanguage();
   const mainRef = useRef<HTMLElement>(null);
   const [isMounted, setIsMounted] = useState(false);
-  
+
   // Track when component has mounted to prevent hydration mismatches
   useEffect(() => {
     setIsMounted(true);
   }, []);
-  
+
   // Check feature flag on client-side only (use state to avoid webpack evaluation issues)
   const [isAppLaunched, setIsAppLaunched] = useState(false);
-  
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsAppLaunched(getFeatureFlag('isAppLaunched'));
@@ -50,14 +59,31 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   // Use utility functions for cleaner logic
   const pageType = getPageType(pathname);
   const { isLandingPage } = pageType;
-  
+
   // Determine what UI elements should be shown (both computed always; slot is always in DOM to prevent layout shift)
-  const showMobileFooter = shouldShowMobileFooter(pathname, isSplashVisible, user, isAppLaunched, stage);
-  const showCityEarlyAccessNavbar = shouldShowCityEarlyAccessNavbar(pathname, isAppLaunched, user, stage);
+  const showMobileFooter = shouldShowMobileFooter(
+    pathname,
+    isSplashVisible,
+    user,
+    isAppLaunched,
+    stage,
+  );
+  const showCityEarlyAccessNavbar = shouldShowCityEarlyAccessNavbar(
+    pathname,
+    isAppLaunched,
+    user,
+    stage,
+  );
   const showSubpageAction = shouldShowSubpageAction(pathname);
 
   // When not yet mounted use 'none' so slot reserves space without showing wrong UI; after mount show correct one
-  const mobileUiMode = !isMounted ? 'none' : showMobileFooter ? 'footer' : showCityEarlyAccessNavbar ? 'navbar' : 'none';
+  const mobileUiMode = !isMounted
+    ? 'none'
+    : showMobileFooter
+      ? 'footer'
+      : showCityEarlyAccessNavbar
+        ? 'navbar'
+        : 'none';
 
   // Debug logging for footer visibility (development only)
   useEffect(() => {
@@ -75,13 +101,12 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
   return (
     <LoadingProvider>
-      <div className="page-background relative flex h-screen-fix flex-col">
+      <div className="page-background h-screen-fix relative flex flex-col">
         {/* Dev-only: ensure no service worker interferes with HMR/chunks (only on localhost) */}
-        {process.env.NODE_ENV === 'development' && 
-         typeof window !== 'undefined' && 
-         (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
-          <DevServiceWorkerReset />
-        )}
+        {process.env.NODE_ENV === 'development' &&
+          typeof window !== 'undefined' &&
+          (window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1') && <DevServiceWorkerReset />}
         {/* Auto-register service worker for PWA */}
         <ServiceWorkerRegistration />
         {/* Mobile Header - Above all content, edge-to-edge */}
@@ -90,18 +115,16 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
             {/* Header will be rendered by MobileSplashScreen or AboutPageContent */}
           </div>
         )}
-        
-        <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto min-h-0">
-          <PageTransition key={pathname}>
-            {children}
-          </PageTransition>
+
+        <main ref={mainRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <PageTransition key={pathname}>{children}</PageTransition>
         </main>
-        
+
         {/* Desktop Footer */}
-        <div className="hidden md:block relative z-10 flex-shrink-0">
+        <div className="relative z-10 hidden flex-shrink-0 md:block">
           <DesktopFooter />
         </div>
-        
+
         {/* Mobile bottom UI slot: always in DOM with reserved height to prevent layout shift; visibility controlled by CSS */}
         <div
           className="mobile-bottom-ui-slot block md:hidden"
@@ -120,27 +143,30 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         {showSubpageAction && (
           <FooterAction
             actionButton={{
-              label: pathname === '/signup/check-email' ? t('signup.afterConfirmationLogin') : t('common.next'),
+              label:
+                pathname === '/signup/check-email'
+                  ? t('signup.afterConfirmationLogin')
+                  : t('common.next'),
               icon: 'material-symbols:chevron-right',
               onClick: () => {
-                  if (pathname === '/signup/check-email') {
-                    router.push('/login');
-                  } else {
-                    router.back();
-                  }
+                if (pathname === '/signup/check-email') {
+                  router.push('/login');
+                } else {
+                  router.back();
+                }
               },
               variant: 'primary',
-              'aria-label': pathname === '/signup/check-email' ? t('signup.afterConfirmationLogin') : t('common.next'),
+              'aria-label':
+                pathname === '/signup/check-email'
+                  ? t('signup.afterConfirmationLogin')
+                  : t('common.next'),
             }}
           />
         )}
 
         {/* Push Notification Prompt */}
         {process.env.NODE_ENV === 'production' && (
-          <PushNotificationPrompt 
-            autoShow={true}
-            showDelay={5000}
-          />
+          <PushNotificationPrompt autoShow={true} showDelay={5000} />
         )}
       </div>
     </LoadingProvider>
@@ -150,12 +176,16 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 function DevServiceWorkerReset() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations()
+      navigator.serviceWorker
+        .getRegistrations()
         .then((regs) => Promise.all(regs.map((r) => r.unregister())))
         .catch(() => {});
       // Clear any runtime caches created by SW
       if ('caches' in window) {
-        caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+        caches
+          .keys()
+          .then((keys) => keys.forEach((k) => caches.delete(k)))
+          .catch(() => {});
       }
     }
   }, []);
@@ -175,24 +205,27 @@ function ServiceWorkerRegistration() {
       !window.location.hostname.includes('127.0.0.1')
     ) {
       // Check if already registered
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        if (registrations.length === 0) {
-          // Register service worker
-          navigator.serviceWorker
-            .register('/sw.js')
-            .then(() => {
-              // Service worker registered successfully
-            })
-            .catch((error) => {
-              // Log errors in all environments for debugging
-              console.error('❌ Service Worker registration failed:', error);
-              // Could integrate with error monitoring service here
-            });
-        }
-      }).catch((error) => {
-        // Handle errors when checking registrations
-        console.error('❌ Failed to check service worker registrations:', error);
-      });
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => {
+          if (registrations.length === 0) {
+            // Register service worker
+            navigator.serviceWorker
+              .register('/sw.js')
+              .then(() => {
+                // Service worker registered successfully
+              })
+              .catch((error) => {
+                // Log errors in all environments for debugging
+                console.error('❌ Service Worker registration failed:', error);
+                // Could integrate with error monitoring service here
+              });
+          }
+        })
+        .catch((error) => {
+          // Handle errors when checking registrations
+          console.error('❌ Failed to check service worker registrations:', error);
+        });
     }
   }, []);
   return null;

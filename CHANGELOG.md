@@ -5,6 +5,37 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-22
+
+### Performance (Plan 007)
+
+- **First Load JS: 687 kB → 105 kB** (85% reduction)
+  - Removed custom webpack `splitChunks` override that was leaking dynamically-imported modules (swagger-ui-react + 1.2 MB dependency tree) into the shared bundle
+  - Replaced `PageTransition` motion/react wrapper with CSS-only opacity transition, eliminating ~212 kB motion runtime from critical path
+  - Dynamically imported `FooterAction` in root layout to isolate `@iconify/react` (56 kB) from shared bundle
+  - Converted 8 modal components to dynamic imports across shell and page components
+  - Removed decorative `motion/react` from MobileHeader, MobileNavbar, MobileFooterBar (CSS `animate-fade-in` replacement)
+  - Removed dead `@iconify/react` import from MobileFooterBar (all nav items use function icons)
+
+- **Database Search Performance** (GIN indexes + ILIKE elimination)
+  - Created 4 GIN tsvector indexes for providers and community_services search
+  - Added 3 RPC helper functions for tsvector-based filtering: `search_provider_ids_by_name`, `get_filtered_cities_by_search`, `get_filtered_category_ids_by_search`
+  - Replaced 3 ILIKE violations in categories.ts and providers.ts with tsvector RPC calls
+  - Migration: `supabase/migrations/056_add_provider_community_service_search_indexes.sql`
+
+- **Data Fetch Optimization**
+  - Added `.limit()` bounds to unbounded queries: needs (500), badges (100/200), categories (200)
+  - Replaced `select('*')` with explicit column selects for needs and bookmarks services
+
+### Added
+
+- Custom `animate-fade-in` CSS animation in Tailwind config (keyframe + utility class)
+- 12 new service tests for ILIKE→tsvector migration (TDD: categories.test.ts, providers.test.ts)
+
+### Fixed
+
+- Cleaned up unused imports: `useReduceMotion` in MobileSplashScreen, `useState`/`hasAnimated` in CategoryGallerySection
+
 ## [0.3.1] - 2026-02-22
 
 ### Fixed

@@ -3,12 +3,21 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { FormInput } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
-import { ProviderSelectionModal } from '@/components/shared/ProviderSelectionModal';
 import { Icon } from '@iconify/react';
 import { useLanguage } from '@/providers/LanguageProvider';
+
+// Dynamic import for modal (Plan 007: reduce shared bundle)
+const ProviderSelectionModal = dynamic(
+  () =>
+    import('@/components/shared/ProviderSelectionModal').then((mod) => ({
+      default: mod.ProviderSelectionModal,
+    })),
+  { ssr: false },
+);
 
 export function DesktopWaitlistSection() {
   const { t } = useLanguage();
@@ -22,7 +31,7 @@ export function DesktopWaitlistSection() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Clear previous errors
     setError(null);
 
@@ -123,13 +132,15 @@ export function DesktopWaitlistSection() {
 
               {/* Consent Checkbox */}
               <div className="mt-2">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex cursor-pointer items-center gap-2">
                   <input
                     required
-                    aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
+                    aria-label={
+                      t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'
+                    }
                     aria-required="true"
                     checked={termsAccepted && privacyAccepted}
-                    className="h-4 w-4 rounded border text-primary focus:ring-primary focus:ring-2 flex-shrink-0"
+                    className="h-4 w-4 flex-shrink-0 rounded border text-primary focus:ring-2 focus:ring-primary"
                     disabled={isSubmitting}
                     type="checkbox"
                     onChange={(e) => {
@@ -188,10 +199,7 @@ export function DesktopWaitlistSection() {
               initial={{ scale: 0, opacity: 0 }}
               transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
             >
-              <Icon 
-                className="size-10 text-primary" 
-                icon="material-symbols:check-circle-rounded" 
-              />
+              <Icon className="size-10 text-primary" icon="material-symbols:check-circle-rounded" />
             </motion.div>
 
             {/* Success Message */}
@@ -234,4 +242,3 @@ export function DesktopWaitlistSection() {
     </section>
   );
 }
-

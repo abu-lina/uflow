@@ -4,8 +4,9 @@ import type { Need } from '@/types/offer';
 export async function getNeeds(): Promise<Need[]> {
   const { data, error } = await supabase
     .from('needs')
-    .select('*')
-    .order('name_de', { ascending: true });
+    .select('need_id, name_de, name_en, category_id, created_by, created_at')
+    .order('name_de', { ascending: true })
+    .limit(500);
 
   if (error) {
     console.error('Error fetching needs:', error);

@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/Button';
 
@@ -23,17 +22,15 @@ export function MobileNavbar({
   disabled = false,
   loading = false,
   className = '',
-  animationDelay = 0
 }: MobileNavbarProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 w-full bg-background/34 backdrop-blur-sm border-t border-border/30">
-      <div className="flex flex-row justify-center items-center w-full px-4 pt-4" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[345px]"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: animationDelay }}
-        >
+    <nav className="bg-background/34 fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 backdrop-blur-sm">
+      <div
+        className="flex w-full flex-row items-center justify-center px-4 pt-4"
+        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+      >
+        {/* Removed decorative motion slide-up animation (Plan 007) */}
+        <div className="animate-fade-in w-full max-w-[345px]">
           <Button
             fullWidth
             className={className}
@@ -45,12 +42,10 @@ export function MobileNavbar({
           >
             <span className="flex items-center gap-2 whitespace-nowrap">
               {text}
-              {!loading && icon && (
-                <Icon aria-hidden="true" className="h-6 w-6" icon={icon} />
-              )}
+              {!loading && icon && <Icon aria-hidden="true" className="h-6 w-6" icon={icon} />}
             </span>
           </Button>
-        </motion.div>
+        </div>
       </div>
     </nav>
   );

@@ -5,17 +5,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
-import { Icon } from '@iconify/react';
-import { motion } from 'motion/react';
-
 import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
 import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
-import { sharedTransition } from '@/components/ui/PageTransition';
 import { useAuth } from '@/providers/auth-provider';
-
 
 // Height is set to 72px for modern, touch-friendly, and visually balanced mobile nav bar.
 const navItems = [
@@ -59,7 +54,6 @@ export function MobileFooterBar() {
   const [isNavigating, setIsNavigating] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
-
   // Prefetch home route on mount to ensure it's available
   useEffect(() => {
     if (pathname !== '/') {
@@ -75,19 +69,18 @@ export function MobileFooterBar() {
 
       // Prefetch route (Next.js optimizes this)
       router.prefetch(href);
-      
+
       // Note: Data prefetching handled by React Query when page loads
       // This just prefetches the route code
     },
     [router, pathname, isNavigating],
   );
 
-
   return (
     <>
       <nav
         ref={navRef}
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center px-6 pt-footer-safe pb-safe border-t border-gray-200/30 sm:px-8"
+        className="pt-footer-safe pb-safe fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center border-t border-gray-200/30 px-6 sm:px-8"
         style={{
           // Solid opaque background - matches page gradient exactly
           background: 'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
@@ -98,16 +91,15 @@ export function MobileFooterBar() {
       >
         <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
           {navItems.map((item) => (
-            <motion.div
+            <div
               key={item.href}
-              className="flex flex-row items-center justify-center gap-2.5 p-1"
+              className="flex flex-row items-center justify-center gap-2.5 p-1 transition-transform active:scale-[0.99]"
               style={{ width: 40, height: 40 }}
-              whileTap={{ scale: 0.99 }}
             >
               <Link
                 aria-label={item.label}
                 className={`flex items-center justify-center transition-opacity duration-75 ${
-                  isNavigating ? 'opacity-50 pointer-events-none' : 'opacity-100'
+                  isNavigating ? 'pointer-events-none opacity-50' : 'opacity-100'
                 }`}
                 href={item.href === '/profile' && !user ? '/login' : item.href}
                 prefetch={true}
@@ -121,7 +113,7 @@ export function MobileFooterBar() {
                     setTimeout(() => setIsNavigating(false), 150);
                     return;
                   }
-                  
+
                   // For all routes including root, let Next.js Link handle navigation naturally
                   // Track navigation state for UI feedback only
                   if (pathname !== item.href && !isNavigating) {
@@ -133,56 +125,19 @@ export function MobileFooterBar() {
                 onMouseEnter={() => handleNavIntent(item.href)}
                 onTouchStart={() => handleNavIntent(item.href)}
               >
-                {typeof item.icon === 'function' ? (
+                {/* All nav items use function icons (custom SVGs) */}
+                {typeof item.icon === 'function' &&
                   item.icon(
-                    item.href === '/profile' 
-                      ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
+                    item.href === '/profile'
+                      ? pathname.startsWith('/profile') ||
+                          pathname === '/login' ||
+                          pathname === '/signup'
                       : item.href === '/create'
                         ? pathname.startsWith('/create') || pathname === '/create'
-                        : pathname === item.href
-                  )
-                ) : (
-                  <motion.div
-                    animate={{
-                      scale: (item.href === '/profile' 
-                        ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
-                        : item.href === '/create'
-                          ? pathname.startsWith('/create') || pathname === '/create'
-                          : pathname === item.href) ? 1.01 : 1,
-                      color: (item.href === '/profile' 
-                        ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
-                        : item.href === '/create'
-                          ? pathname.startsWith('/create') || pathname === '/create'
-                          : pathname === item.href) ? '#589D96' : '#555555',
-                    }}
-                    transition={sharedTransition}
-                  >
-                    <Icon
-                      height={24}
-                      icon={item.icon}
-                      style={
-                        item.noFrame
-                          ? undefined
-                          : {
-                              background: '#FFFFFF',
-                              border:
-                                (item.href === '/profile' 
-                                  ? pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup'
-                                  : item.href === '/create'
-                                    ? pathname.startsWith('/create') || pathname === '/create'
-                                    : pathname === item.href)
-                                  ? '1.6px solid #589D96'
-                                  : '0.5px solid #777777',
-                              borderRadius: 8,
-                              transition: 'border-color 0.08s ease',
-                            }
-                      }
-                      width={24}
-                    />
-                  </motion.div>
-                )}
+                        : pathname === item.href,
+                  )}
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       </nav>

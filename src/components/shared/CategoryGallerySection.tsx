@@ -1,31 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchUsedCategories, type Category } from '@/services/categories';
 import { formatAllahText } from '@/utils/textUtils';
-import { getLocalizedDescription, detectUserLanguage, getLocalizedName } from '@/utils/languageUtils';
+import {
+  getLocalizedDescription,
+  detectUserLanguage,
+  getLocalizedName,
+} from '@/utils/languageUtils';
 
 import UnifiedGallery from './UnifiedGallery';
 import { getEntityTypeForCategory } from '@/utils/entityTypeUtils';
 
 export function CategoryGallerySection() {
-  // Always use static section to prevent top-to-bottom ripple on reload (no motion.section)
-  const hasAnimated = true;
-  
   const router = useRouter();
-  
+
   // Use React Query to cache categories data and prevent refetching on navigation
-  const { data: categories = [], isLoading, error: queryError } = useQuery({
+  const {
+    data: categories = [],
+    isLoading,
+    error: queryError,
+  } = useQuery({
     queryKey: ['used-categories'],
     queryFn: fetchUsedCategories,
     staleTime: 10 * 60 * 1000, // 10 minutes - categories don't change often
     placeholderData: (previousData) => previousData, // Show cached data immediately
   });
-  
+
   const error = queryError ? 'Failed to load categories.' : null;
 
   const getCategorySubtitle = (category: Category): string => {
@@ -34,9 +37,9 @@ export function CategoryGallerySection() {
       category.description_de,
       category.description_en,
       // Fallback to hardcoded descriptions if database descriptions are not available
-      getHardcodedSubtitle(category.name_de)
+      getHardcodedSubtitle(category.name_de),
     );
-    
+
     return localizedDescription;
   };
 
@@ -124,18 +127,20 @@ export function CategoryGallerySection() {
           return (
             <div
               key={categoryId}
-              aria-label={detectUserLanguage() === 'en' 
-                ? `Show all providers in ${categoryName} category`
-                : `Alle Provider in der Kategorie ${categoryName} anzeigen`}
+              aria-label={
+                detectUserLanguage() === 'en'
+                  ? `Show all providers in ${categoryName} category`
+                  : `Alle Provider in der Kategorie ${categoryName} anzeigen`
+              }
               className="flex cursor-pointer flex-col rounded-lg transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
               role="button"
               tabIndex={0}
               onClick={() => handleCategoryClick(categoryId)}
               onKeyDown={(e) => handleKeyDown(e, categoryId)}
             >
-              <div className="flex w-full flex-row items-center pl-3 pt-3 pb-3">
-                <div className="flex flex-1 min-w-0 flex-col items-start justify-center pr-3">
-                  <div className="w-full font-inter text-sm font-normal leading-[140%] text-[#232323] break-words">
+              <div className="flex w-full flex-row items-center pb-3 pl-3 pt-3">
+                <div className="flex min-w-0 flex-1 flex-col items-start justify-center pr-3">
+                  <div className="w-full break-words font-inter text-sm font-normal leading-[140%] text-[#232323]">
                     {formatAllahText(getCategorySubtitle(category))}
                   </div>
                   <div className="w-full min-w-0 truncate font-inter text-xl font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
@@ -143,7 +148,7 @@ export function CategoryGallerySection() {
                   </div>
                 </div>
 
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center ml-auto">
+                <div className="ml-auto flex h-12 w-12 shrink-0 items-center justify-center">
                   <svg
                     className="text-[#232323]"
                     fill="none"
@@ -163,9 +168,9 @@ export function CategoryGallerySection() {
                 </div>
               </div>
 
-              <UnifiedGallery 
-                category={category} 
-                categoryId={categoryId} 
+              <UnifiedGallery
+                category={category}
+                categoryId={categoryId}
                 entityType={getEntityTypeForCategory(categoryId)}
               />
             </div>

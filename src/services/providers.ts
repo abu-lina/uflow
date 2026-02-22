@@ -433,23 +433,29 @@ export async function searchProviders(
   req = req.order('created_at', { ascending: false });
 
   if (query) {
-    // First, search for matching offers and needs using full-text search (tsvector)
-    // These now use GIN indexes for much faster searches
-    const [matchingOffers, matchingNeeds] = await Promise.all([
+    // First, search for matching offers, needs, and provider names using full-text search (tsvector)
+    // All three now use GIN indexes for fast searches (Plan 007: ILIKE removal)
+    const [matchingOffers, matchingNeeds, matchingProviderNames] = await Promise.all([
       searchOffers(query),
-      searchNeeds(query)
+      searchNeeds(query),
+      supabase.rpc('search_provider_ids_by_name', { search_query: query }),
     ]);
 
     const matchingOfferIds = matchingOffers.map(offer => offer.offer_id);
     const matchingNeedIds = matchingNeeds.map(need => need.need_id);
+    const matchingProviderIds = Array.isArray(matchingProviderNames.data)
+      ? matchingProviderNames.data.map((p: { provider_id: string }) => p.provider_id)
+      : [];
 
     // Build the search condition to include:
-    // 1. Provider name matches (using ILIKE - provider name search uses existing tsvector index via database function)
-    // 2. Provider offers any of the matching offers (now using fast tsvector search)
-    // 3. Provider fulfills any of the matching needs (now using fast tsvector search)
-    // Note: Provider name search could be improved to use RPC function, but ILIKE is acceptable
-    // since offers/needs matching is the more expensive operation and now uses tsvector
-    const searchConditions = [`provider_name.ilike.%${query}%`];
+    // 1. Provider name matches (using tsvector RPC — replaces previous ILIKE)
+    // 2. Provider offers any of the matching offers (tsvector search)
+    // 3. Provider fulfills any of the matching needs (tsvector search)
+    const searchConditions: string[] = [];
+
+    if (matchingProviderIds.length > 0) {
+      searchConditions.push(`provider_id.in.(${matchingProviderIds.join(',')})`);
+    }
 
     if (matchingOfferIds.length > 0) {
       searchConditions.push(`offers_ids.cs.{${matchingOfferIds.join(',')}}`);
@@ -459,7 +465,12 @@ export async function searchProviders(
       searchConditions.push(`needs_ids.cs.{${matchingNeedIds.join(',')}}`);
     }
 
-    req = req.or(searchConditions.join(','));
+    if (searchConditions.length > 0) {
+      req = req.or(searchConditions.join(','));
+    } else {
+      // No matches found for any search vector — return empty
+      return [];
+    }
   }
 
   if (isValidCategoryId(category)) {
@@ -585,29 +596,55 @@ export async function fetchProviderCities(): Promise<string[]> {
   }
 }
 
-// Fetch cities that have content based on current search filters
+// Fetch cities that have content based on current search filters.
+// Uses tsvector RPC search when a search query is provided (Plan 007:
+// replaces previous ILIKE usage to comply with Postgres-first search rules).
 export async function fetchFilteredCities(
   selectedCategory?: string | null,
   searchQuery?: string | null,
 ): Promise<string[]> {
   try {
-    // Build queries for both providers and community_services
+    const trimmedQuery = searchQuery?.trim() || '';
+
+    if (trimmedQuery) {
+      // Use RPC-based tsvector search — replaces previous ILIKE on provider_name / community_service_name
+      const categoryFilter = (selectedCategory && selectedCategory !== 'Alle')
+        ? selectedCategory
+        : null;
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'get_filtered_cities_by_search',
+        {
+          search_query: trimmedQuery,
+          category_filter: categoryFilter,
+        },
+      );
+
+      if (rpcError) {
+        throw rpcError;
+      }
+
+      const cities = Array.isArray(rpcData)
+        ? rpcData
+            .map((row: { city: string }) => row.city)
+            .filter((city: string): city is string =>
+              typeof city === 'string' && city.trim() !== '' && city !== 'null')
+        : [];
+
+      return cities.sort((a: string, b: string) => a.localeCompare(b, 'de'));
+    }
+
+    // No search query — use direct queries (no ILIKE needed)
     let providersReq = supabase.from('providers').select('address_city');
     let communityServicesReq = supabase
       .from('community_services')
       .select('address_city')
-      .eq('review_status', 'approved'); // Only include approved services
+      .eq('review_status', 'approved');
 
     // Apply category filter if specified
     if (selectedCategory && selectedCategory !== 'Alle') {
       providersReq = providersReq.eq('category_id', selectedCategory);
       communityServicesReq = communityServicesReq.eq('category_id', selectedCategory);
-    }
-
-    // Apply search query filter if specified
-    if (searchQuery && searchQuery.trim()) {
-      providersReq = providersReq.ilike('provider_name', `%${searchQuery.trim()}%`);
-      communityServicesReq = communityServicesReq.ilike('community_service_name', `%${searchQuery.trim()}%`);
     }
 
     // Execute both queries in parallel

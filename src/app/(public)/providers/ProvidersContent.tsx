@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -13,23 +14,29 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { MobileGreetingHeader } from '@/components/shared/MobileGreetingHeader';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
-import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
+
+// Dynamic import for modal (Plan 007: reduce shared bundle)
+const LegalLinksModal = dynamic(
+  () =>
+    import('@/components/shared/LegalLinksModal').then((mod) => ({ default: mod.LegalLinksModal })),
+  { ssr: false },
+);
 import { useSearch } from '@/providers/search-provider';
-import {
-  searchProvidersAndCommunityServices,
-  type Provider,
-} from '@/services/providers';
+import { searchProvidersAndCommunityServices, type Provider } from '@/services/providers';
 
 interface ProvidersContentProps {
   defaultLocation?: string; // For Stage 2: render on root with city filter
   showGreeting?: boolean; // Show greeting header instead of search bar and category filter
 }
 
-export function ProvidersContent({ defaultLocation, showGreeting = false }: ProvidersContentProps = {}) {
+export function ProvidersContent({
+  defaultLocation,
+  showGreeting = false,
+}: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isLoading: userLoading } = useAuth();
@@ -41,7 +48,7 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
   useEffect(() => {
     setIsMounted(true);
   }, []);
-  
+
   // Get search context to sync with URL parameters
   const {
     selectedCategory,
@@ -53,10 +60,8 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
   } = useSearch();
 
   // Priority: defaultLocation > URL param > context > fallback
-  const location = defaultLocation || 
-                   searchParams.get('location') || 
-                   selectedLocation || 
-                   t('search.everywhere');
+  const location =
+    defaultLocation || searchParams.get('location') || selectedLocation || t('search.everywhere');
   const query = searchParams.get('q') || '';
 
   // Use provider state for category, fallback to URL params
@@ -65,31 +70,29 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
   // Use React Query infinite query for paginated search results
   // Page size: 12 provides good balance between initial load and frequent pagination
   const PAGE_SIZE = 12;
-  
-  const {
-    data,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ['providers', query, category || t('search.all'), location],
-    queryFn: ({ pageParam = 0 }) => 
-      searchProvidersAndCommunityServices(query, category || t('search.all'), location, pageParam, PAGE_SIZE),
-    getNextPageParam: (lastPage, allPages) => 
-      lastPage.hasMore ? allPages.length : undefined,
-    initialPageParam: 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep unused data for 10 min
-    refetchOnWindowFocus: false, // Don't refetch on tab switch
-    refetchOnMount: false, // Use cached data if available
-    retry: 2, // Retry failed requests 2 times
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
-    // Show cached data immediately while refetching in background
-    placeholderData: (previousData) => previousData,
-  });
+
+  const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } =
+    useInfiniteQuery({
+      queryKey: ['providers', query, category || t('search.all'), location],
+      queryFn: ({ pageParam = 0 }) =>
+        searchProvidersAndCommunityServices(
+          query,
+          category || t('search.all'),
+          location,
+          pageParam,
+          PAGE_SIZE,
+        ),
+      getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
+      initialPageParam: 0,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // Keep unused data for 10 min
+      refetchOnWindowFocus: false, // Don't refetch on tab switch
+      refetchOnMount: false, // Use cached data if available
+      retry: 2, // Retry failed requests 2 times
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+      // Show cached data immediately while refetching in background
+      placeholderData: (previousData) => previousData,
+    });
 
   // Flatten all pages into a single array
   const searchResults = data?.pages.flatMap((page) => page.results) ?? [];
@@ -99,18 +102,18 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
     queryKey: ['bookmarks', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      
+
       // Fetch all bookmarks (providers and community services)
       const { data: bookmarks, error } = await supabase
         .from('bookmarks')
         .select('bookmarkable_id, bookmarkable_type')
         .eq('user_id', user.id);
-      
+
       if (error) {
         console.error('Error fetching bookmarks:', error);
         return [];
       }
-      
+
       // Return all bookmarkable IDs (both providers and community services)
       return bookmarks?.map((b) => b.bookmarkable_id) || [];
     },
@@ -119,42 +122,51 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
   });
 
   // Memoized event handlers with optimistic updates
-  const handleBookmarkChange = useCallback((providerId: string, isBookmarked: boolean) => {
-    // Optimistically update the cache
-    queryClient.setQueryData(['bookmarks', user?.id], (old: string[] = []) => {
-      if (isBookmarked) {
-        return [...old, providerId];
-      } else {
-        return old.filter((id) => id !== providerId);
-      }
-    });
-  }, [queryClient, user?.id]);
+  const handleBookmarkChange = useCallback(
+    (providerId: string, isBookmarked: boolean) => {
+      // Optimistically update the cache
+      queryClient.setQueryData(['bookmarks', user?.id], (old: string[] = []) => {
+        if (isBookmarked) {
+          return [...old, providerId];
+        } else {
+          return old.filter((id) => id !== providerId);
+        }
+      });
+    },
+    [queryClient, user?.id],
+  );
 
-  const handleProviderClick = useCallback((provider: Provider) => {
-    // Navigate to appropriate detail page based on type
-    if (provider.community_service_id) {
-      // This is a community service
-      router.push(`/community-services/${provider.community_service_id}`);
-    } else {
-      // This is a provider
-      router.push(`/providers/${provider.provider_id}`);
-    }
-  }, [router]);
+  const handleProviderClick = useCallback(
+    (provider: Provider) => {
+      // Navigate to appropriate detail page based on type
+      if (provider.community_service_id) {
+        // This is a community service
+        router.push(`/community-services/${provider.community_service_id}`);
+      } else {
+        // This is a provider
+        router.push(`/providers/${provider.provider_id}`);
+      }
+    },
+    [router],
+  );
 
   // Handle search submission - update URL with new parameters
-  const handleSearchSubmit = useCallback((query: string, category: string | null, location: string) => {
-    const params = new URLSearchParams();
-    if (query) {
-      params.set('q', query);
-    }
-    if (category) {
-      params.set('category', category);
-    }
-    if (location) {
-      params.set('location', location);
-    }
-    router.replace(`/providers?${params.toString()}`, { scroll: false });
-  }, [router]);
+  const handleSearchSubmit = useCallback(
+    (query: string, category: string | null, location: string) => {
+      const params = new URLSearchParams();
+      if (query) {
+        params.set('q', query);
+      }
+      if (category) {
+        params.set('category', category);
+      }
+      if (location) {
+        params.set('location', location);
+      }
+      router.replace(`/providers?${params.toString()}`, { scroll: false });
+    },
+    [router],
+  );
 
   // Handle clear search - remove query from URL
   const handleClearSearch = useCallback(() => {
@@ -164,22 +176,28 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
   }, [router]);
 
   // Handle category change - update URL with new category
-  const handleCategoryChange = useCallback((category: string | null) => {
-    const params = new URLSearchParams(window.location.search);
-    if (category) {
-      params.set('category', category);
-    } else {
-      params.delete('category');
-    }
-    router.replace(`/providers?${params.toString()}`, { scroll: false });
-  }, [router]);
+  const handleCategoryChange = useCallback(
+    (category: string | null) => {
+      const params = new URLSearchParams(window.location.search);
+      if (category) {
+        params.set('category', category);
+      } else {
+        params.delete('category');
+      }
+      router.replace(`/providers?${params.toString()}`, { scroll: false });
+    },
+    [router],
+  );
 
   // Handle location change - update URL with new location
-  const handleLocationChange = useCallback((location: string) => {
-    const params = new URLSearchParams(window.location.search);
-    params.set('location', location);
-    router.replace(`/providers?${params.toString()}`, { scroll: false });
-  }, [router]);
+  const handleLocationChange = useCallback(
+    (location: string) => {
+      const params = new URLSearchParams(window.location.search);
+      params.set('location', location);
+      router.replace(`/providers?${params.toString()}`, { scroll: false });
+    },
+    [router],
+  );
 
   // Sync location/category/query with search context - only when they actually change
   useEffect(() => {
@@ -226,12 +244,9 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
     if (error) {
       // Log error for debugging
       console.error('[ProvidersContent] Search error:', error);
-      
+
       return (
-        <EmptyState
-          description={t('providers.errorLoading')}
-          title={t('providers.errorTitle')}
-        />
+        <EmptyState description={t('providers.errorLoading')} title={t('providers.errorTitle')} />
       );
     }
 
@@ -264,39 +279,45 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
   // Info icon portal - render at document root to avoid clipping (only for Stage 2)
   // Positioned directly below the LanguageSwitcher on the right side (no gap), right-aligned
   // z-index lower than LanguageSwitcher to ensure dropdown appears above it
-  const infoIconPortal = showGreeting && isMounted && typeof document !== 'undefined' && document.body ? createPortal(
-    <div 
-      className="fixed top-10 right-2 z-[9998] sm:hidden" 
-      style={{ 
-        paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
-        paddingRight: 'max(env(safe-area-inset-right), 0.25rem)'
-      }}
-    >
-      <button
-        aria-label={t('legal.legalInfo') || 'Legal information'}
-        className="flex items-center justify-center p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ml-auto"
-        type="button"
-        onClick={() => setShowLegalModal(true)}
-      >
-        <Icon className="w-5 h-5 text-content-heading" icon="lucide:info" />
-      </button>
-    </div>,
-    document.body
-  ) : null;
+  const infoIconPortal =
+    showGreeting && isMounted && typeof document !== 'undefined' && document.body
+      ? createPortal(
+          <div
+            className="fixed right-2 top-10 z-[9998] sm:hidden"
+            style={{
+              paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
+              paddingRight: 'max(env(safe-area-inset-right), 0.25rem)',
+            }}
+          >
+            <button
+              aria-label={t('legal.legalInfo') || 'Legal information'}
+              className="ml-auto flex items-center justify-center rounded-lg bg-gray-100 p-1.5 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              type="button"
+              onClick={() => setShowLegalModal(true)}
+            >
+              <Icon className="h-5 w-5 text-content-heading" icon="lucide:info" />
+            </button>
+          </div>,
+          document.body,
+        )
+      : null;
 
   // Language switcher portal - render at document root to avoid clipping (only for Stage 2)
-  const languageSwitcherPortal = showGreeting && isMounted && typeof document !== 'undefined' && document.body ? createPortal(
-    <div 
-      className="fixed top-2 right-2 z-[9999] sm:hidden" 
-      style={{ 
-        paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
-        paddingRight: 'max(env(safe-area-inset-right), 0.25rem)'
-      }}
-    >
-      <LanguageSwitcher variant="dropdown" />
-    </div>,
-    document.body
-  ) : null;
+  const languageSwitcherPortal =
+    showGreeting && isMounted && typeof document !== 'undefined' && document.body
+      ? createPortal(
+          <div
+            className="fixed right-2 top-2 z-[9999] sm:hidden"
+            style={{
+              paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
+              paddingRight: 'max(env(safe-area-inset-right), 0.25rem)',
+            }}
+          >
+            <LanguageSwitcher variant="dropdown" />
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <>
@@ -305,11 +326,12 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
       <LegalLinksModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} />
       {showGreeting ? (
         // Fixed greeting header for Stage 2 (matches ProvidersPageHeader style)
-        <header 
+        <header
           className="fixed left-0 right-0 top-0 z-50 sm:hidden"
           style={{
             // Smooth transition for all properties including backdrop-filter
-            transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+            transition:
+              'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
             // Glassy blur effect - always applied for consistent visual effect
             background: 'rgba(255, 255, 255, 0.15)',
             backdropFilter: 'blur(20px) saturate(180%)',
@@ -322,7 +344,7 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
             paddingRight: '1px',
           }}
         >
-          <div 
+          <div
             className="px-4 py-4"
             style={{
               // Add safe area padding to content, not header background
@@ -330,7 +352,7 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
               paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
             }}
           >
-            <div className="max-w-72 mx-auto">
+            <div className="mx-auto max-w-72">
               <MobileGreetingHeader cityName={defaultLocation} />
             </div>
           </div>
@@ -345,11 +367,13 @@ export function ProvidersContent({ defaultLocation, showGreeting = false }: Prov
         />
       )}
 
-      <main className={`w-full mx-auto min-h-full max-w-screen-xl overflow-x-hidden mobile-nav-spacing ${
-        showGreeting 
-          ? 'pt-0 sm:pt-8 md:pt-28' // No top padding - CityCard pb-8 provides the gap, fixed header overlays
-          : 'pt-32 sm:pt-8 md:pt-28' // Full padding when fixed header is shown
-      }`}>
+      <main
+        className={`mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden ${
+          showGreeting
+            ? 'pt-0 sm:pt-8 md:pt-28' // No top padding - CityCard pb-8 provides the gap, fixed header overlays
+            : 'pt-32 sm:pt-8 md:pt-28' // Full padding when fixed header is shown
+        }`}
+      >
         {renderContent()}
       </main>
     </>

@@ -2,16 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import dynamic from 'next/dynamic';
 
 import { useWaitlistFlow } from '@/hooks/useWaitlistFlow';
-import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { AboutPageContent } from '@/components/shared/AboutPageContent';
 import { SplashLayout } from '@/components/layout/SplashLayout';
 import { SplashContent } from '@/components/shared/SplashContent';
 import { WaitlistScreen } from '@/components/shared/WaitlistScreen';
-import { ProviderSelectionModal } from '@/components/shared/ProviderSelectionModal';
 import { WaitlistSuccessScreen } from '@/components/shared/WaitlistSuccessScreen';
 import { EarlyAccessScreen } from '@/components/shared/EarlyAccessScreen';
+
+// Dynamic import for modal (Plan 007: reduce shared bundle)
+const ProviderSelectionModal = dynamic(
+  () =>
+    import('@/components/shared/ProviderSelectionModal').then((mod) => ({
+      default: mod.ProviderSelectionModal,
+    })),
+  { ssr: false },
+);
 
 interface MobileSplashScreenProps {
   onContinue?: () => void;
@@ -39,7 +47,18 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   useEffect(() => {
     setIsMounted(true);
     // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'pre-fix',hypothesisId:'H7',location:'MobileSplashScreen.tsx:38',message:'mounted',data:{isMounted:true},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        runId: 'pre-fix',
+        hypothesisId: 'H7',
+        location: 'MobileSplashScreen.tsx:38',
+        message: 'mounted',
+        data: { isMounted: true },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
     // #endregion
   }, []);
 
@@ -51,8 +70,8 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
   //
   //   // Only redirect if user is in early access state (has completed onboarding)
   //   if (currentState === 'earlyAccess') {
-  //     const selectedCity = 
-  //       typeof window !== 'undefined' 
+  //     const selectedCity =
+  //       typeof window !== 'undefined'
   //         ? localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity')
   //         : null;
   //
@@ -83,16 +102,37 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
     if (!isMounted || !isInitialized) return;
     const useAnimatedWrapper = true;
     // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'pre-fix',hypothesisId:'H7',location:'MobileSplashScreen.tsx:73',message:'state render',data:{currentState,isMounted,isInitialized,showProviderModal,useAnimatedWrapper},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        runId: 'pre-fix',
+        hypothesisId: 'H7',
+        location: 'MobileSplashScreen.tsx:73',
+        message: 'state render',
+        data: { currentState, isMounted, isInitialized, showProviderModal, useAnimatedWrapper },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
     // #endregion
   }, [currentState, isMounted, isInitialized, showProviderModal]);
-
 
   // During SSR and initial hydration, show consistent content to prevent hydration mismatch
   if (!isMounted || !isInitialized) {
     const isPreHydration = true;
     // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'pre-fix',hypothesisId:'H7',location:'MobileSplashScreen.tsx:79',message:'pre-hydration splash render',data:{isMounted,isInitialized,currentState,isPreHydration},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/4249d676-8d92-4f4e-ae7e-d21860c8f1e9', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        runId: 'pre-fix',
+        hypothesisId: 'H7',
+        location: 'MobileSplashScreen.tsx:79',
+        message: 'pre-hydration splash render',
+        data: { isMounted, isInitialized, currentState, isPreHydration },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
     // #endregion
     // Show splash layout during initial render to match server
     // This prevents hydration mismatch
@@ -105,7 +145,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
 
   // Render based on current state using state machine
   // Use AnimatePresence for smooth transitions between states
-  
+
   return (
     <AnimatePresence mode="wait">
       {currentState === 'loading' && (
@@ -153,7 +193,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
-          <WaitlistScreen 
+          <WaitlistScreen
             onProviderQuestion={handleProviderQuestionWithModal}
             onSuccess={handleWaitlistSuccess}
           />
@@ -173,10 +213,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
-          <WaitlistSuccessScreen 
-            autoDismiss={false}
-            onContinue={handleSuccessComplete}
-          />
+          <WaitlistSuccessScreen autoDismiss={false} onContinue={handleSuccessComplete} />
         </motion.div>
       )}
 
@@ -187,10 +224,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
-          <EarlyAccessScreen
-            email={flowData.email}
-            waitlistToken={flowData.waitlistToken || ''}
-          />
+          <EarlyAccessScreen email={flowData.email} waitlistToken={flowData.waitlistToken || ''} />
         </motion.div>
       )}
 
@@ -201,7 +235,10 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
-          <AboutPageContent showSplashHeader={true} onComplete={handleAboutCompleteFromEarlyAccess} />
+          <AboutPageContent
+            showSplashHeader={true}
+            onComplete={handleAboutCompleteFromEarlyAccess}
+          />
         </motion.div>
       )}
     </AnimatePresence>

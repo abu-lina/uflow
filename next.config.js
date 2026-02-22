@@ -9,10 +9,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   importScripts: ['/sw-push-handler.js'],
   // Exclude files that may not exist in standalone builds
   // These files are generated during build but may not exist in standalone output
-  buildExcludes: [
-    /app-build-manifest\.json$/,
-    /middleware-manifest\.json$/,
-  ],
+  buildExcludes: [/app-build-manifest\.json$/, /middleware-manifest\.json$/],
   // Don't fail on missing precache files
   fallbacks: {
     document: '/offline.html',
@@ -64,7 +61,7 @@ function buildCsp() {
   //
   // This approach is used by major production apps including GitHub and Cloudflare.
   // See docs/guides/CSP_HONEST_ASSESSMENT.md for full analysis.
-  
+
   const directives = [
     "default-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
@@ -104,7 +101,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
-  
+
   // ESLint configuration
   // ESLint runs in CI separately; skip during Docker/build to save 30-90s per build
   eslint: {
@@ -114,31 +111,35 @@ const nextConfig = {
   // Allow dev server to accept requests from:
   // - LAN IP (iPhone on same WiFi); update IP if your Mac's address changes.
   // - ngrok (tunnel URL on phone / office networks that block direct LAN).
-  ...(isDev ? {
-    allowedDevOrigins: [
-      'http://192.168.178.48:3000',
-      'https://*.ngrok-free.app',
-      'https://*.ngrok.io',
-      'http://*.ngrok-free.app',
-      'http://*.ngrok.io',
-    ],
-  } : {}),
+  ...(isDev
+    ? {
+        allowedDevOrigins: [
+          'http://192.168.178.48:3000',
+          'https://*.ngrok-free.app',
+          'https://*.ngrok.io',
+          'http://*.ngrok-free.app',
+          'http://*.ngrok.io',
+        ],
+      }
+    : {}),
 
   // Docker/Standalone output for Hetzner deployment
   // Only enable standalone when explicitly building for Docker (STANDALONE_BUILD=true)
   // This allows 'next start' to work for local production testing
-  ...(isStandaloneBuild ? {
-  output: 'standalone',
-  // Optimize file tracing for standalone builds
-  outputFileTracingIncludes: {
-    '/': ['./src/**/*', './public/**/*'],
-  },
-  // Skip file tracing for routes that may not generate client reference manifests
-  outputFileTracingExcludes: {
-    '*': ['./node_modules/@swc/core*/**/*'],
-  },
-  } : {}),
-  
+  ...(isStandaloneBuild
+    ? {
+        output: 'standalone',
+        // Optimize file tracing for standalone builds
+        outputFileTracingIncludes: {
+          '/': ['./src/**/*', './public/**/*'],
+        },
+        // Skip file tracing for routes that may not generate client reference manifests
+        outputFileTracingExcludes: {
+          '*': ['./node_modules/@swc/core*/**/*'],
+        },
+      }
+    : {}),
+
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
@@ -154,13 +155,13 @@ const nextConfig = {
     // Preload critical chunks
     webpackBuildWorker: true,
   },
-  
+
   // Turbopack configuration (migrated from experimental.turbo)
   turbopack: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
@@ -178,11 +179,15 @@ const nextConfig = {
         port: '3000',
       },
       // LAN IP for mobile testing (same WiFi). Update hostname if your Mac's IP changes.
-      ...(isDev ? [{
-        protocol: 'http',
-        hostname: '192.168.178.48',
-        port: '3000',
-      }] : []),
+      ...(isDev
+        ? [
+            {
+              protocol: 'http',
+              hostname: '192.168.178.48',
+              port: '3000',
+            },
+          ]
+        : []),
       {
         protocol: 'https',
         hostname: 'placehold.co',
@@ -249,51 +254,17 @@ const nextConfig = {
     pagesBufferLength: 2,
   },
 
-  // Webpack optimization for Cloudflare Pages
+  // Webpack optimization
   webpack: (config, { isServer }) => {
     // Exclude archive from compilation
     config.watchOptions = {
       ...config.watchOptions,
       ignored: ['**/node_modules/**', '**/.next/**', '**/docs/archive/**'],
     };
-    if (!isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        maxSize: 300000, // 300KB max chunk size (better balance)
-        minSize: 20000, // 20KB min chunk size (fewer small chunks)
-        cacheGroups: {
-          default: {
-            minChunks: 2,
-            priority: -20,
-            reuseExistingChunk: true,
-            maxSize: 300000,
-          },
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            priority: -10,
-            chunks: 'all',
-            maxSize: 300000,
-            minSize: 10000,
-          },
-          // Split large libraries into separate chunks
-          mui: {
-            test: /[\\/]node_modules[\\/]@mui[\\/]/,
-            name: 'mui',
-            chunks: 'all',
-            maxSize: 300000,
-            priority: 10,
-          },
-          framer: {
-            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-            name: 'framer',
-            chunks: 'all',
-            maxSize: 300000,
-            priority: 10,
-          },
-        },
-      };
-    }
+    // Let Next.js manage splitChunks with its own optimized defaults.
+    // The previous custom splitChunks config with chunks:'all' was pulling
+    // dynamically-imported modules (swagger-ui-react and its ~1.2MB dependency tree)
+    // into the shared bundle, inflating First Load JS from ~350kB to 687kB.
     return config;
   },
 

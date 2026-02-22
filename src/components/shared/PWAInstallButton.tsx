@@ -2,11 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import dynamic from 'next/dynamic';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { detectPWA } from '@/utils/pwaUtils';
-import { IOSInstallInstructionsModal } from '@/components/shared/IOSInstallInstructionsModal';
 import { Button } from '@/components/ui/Button';
+
+// Dynamic import for modal (Plan 007: reduce shared bundle)
+const IOSInstallInstructionsModal = dynamic(
+  () =>
+    import('@/components/shared/IOSInstallInstructionsModal').then((mod) => ({
+      default: mod.IOSInstallInstructionsModal,
+    })),
+  { ssr: false },
+);
 
 interface PWAInstallButtonProps {
   className?: string;
@@ -87,11 +96,7 @@ export function PWAInstallButton({ className }: PWAInstallButtonProps) {
       </motion.div>
 
       {/* iOS Instructions Modal */}
-      <IOSInstallInstructionsModal
-        isOpen={showIOSInstructions}
-        onClose={handleIOSModalClose}
-      />
+      <IOSInstallInstructionsModal isOpen={showIOSInstructions} onClose={handleIOSModalClose} />
     </>
   );
 }
-

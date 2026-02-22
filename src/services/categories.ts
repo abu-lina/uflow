@@ -65,42 +65,69 @@ export async function fetchUsedCategories(): Promise<Category[]> {
   return categoryResults;
 }
 
-// Fetch categories that have content based on current search filters
+// Fetch categories that have content based on current search filters.
+// Uses tsvector RPC search when a search query is provided (Plan 007:
+// replaces previous ILIKE usage to comply with Postgres-first search rules).
 export async function fetchFilteredCategories(
   selectedLocation?: string | null,
   searchQuery?: string | null,
 ): Promise<Category[]> {
-  let req = supabase
-    .from('providers')
-    .select('category_id')
-    .eq('review_status', 'approved');
+  let uniqueCategoryIds: string[];
 
-  // Apply location filter if specified
-  if (selectedLocation && selectedLocation !== 'Überall') {
-    req = req.eq('address_city', selectedLocation);
-  }
+  const trimmedQuery = searchQuery?.trim() || '';
 
-  // Apply search query filter if specified
-  if (searchQuery && searchQuery.trim()) {
-    req = req.ilike('provider_name', `%${searchQuery.trim()}%`);
-  }
+  if (trimmedQuery) {
+    // Use RPC-based tsvector search — replaces previous ILIKE on provider_name
+    const locationFilter = (selectedLocation && selectedLocation !== 'Überall')
+      ? selectedLocation
+      : null;
 
-  const { data: providers, error: providersError } = await req;
-  if (providersError) {
-    throw providersError;
-  }
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      'get_filtered_category_ids_by_search',
+      {
+        search_query: trimmedQuery,
+        location_filter: locationFilter,
+      },
+    );
 
-  // Only include valid, non-null, non-empty category_ids
-  const allCategoryIds = Array.isArray(providers)
-    ? providers.map((p: { category_id: string | null }) => p.category_id)
-    : [];
-  const uniqueCategoryIds = Array.from(
-    new Set(
-      allCategoryIds.filter(
-        (id): id is string => typeof id === 'string' && id !== 'null' && id !== '',
+    if (rpcError) {
+      throw rpcError;
+    }
+
+    uniqueCategoryIds = Array.isArray(rpcData)
+      ? Array.from(new Set(
+          rpcData
+            .map((row: { category_id: string }) => row.category_id)
+            .filter((id: string): id is string => typeof id === 'string' && id !== 'null' && id !== ''),
+        ))
+      : [];
+  } else {
+    // No search query — use direct query (no ILIKE needed)
+    let req = supabase
+      .from('providers')
+      .select('category_id')
+      .eq('review_status', 'approved');
+
+    if (selectedLocation && selectedLocation !== 'Überall') {
+      req = req.eq('address_city', selectedLocation);
+    }
+
+    const { data: providers, error: providersError } = await req;
+    if (providersError) {
+      throw providersError;
+    }
+
+    const allCategoryIds = Array.isArray(providers)
+      ? providers.map((p: { category_id: string | null }) => p.category_id)
+      : [];
+    uniqueCategoryIds = Array.from(
+      new Set(
+        allCategoryIds.filter(
+          (id): id is string => typeof id === 'string' && id !== 'null' && id !== '',
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   if (uniqueCategoryIds.length === 0) {
     return [];
@@ -124,6 +151,7 @@ export async function getCategories(): Promise<Category[]> {
     .from('categories')
     .select('*')
     .order('name_de', { ascending: true })
+    .limit(200)
     .returns<Category[]>();
   if (error) {
     throw error;

@@ -3,12 +3,19 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
+import dynamic from 'next/dynamic';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
-import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
+
+// Dynamic import for modal (Plan 007: reduce shared bundle)
+const LegalLinksModal = dynamic(
+  () =>
+    import('@/components/shared/LegalLinksModal').then((mod) => ({ default: mod.LegalLinksModal })),
+  { ssr: false },
+);
 
 interface CityEarlyAccessEmptyStateProps {
   cityName: string;
@@ -19,10 +26,10 @@ interface CityEarlyAccessEmptyStateProps {
 
 /**
  * City Early Access Empty State Screen (SCREEN 6)
- * 
+ *
  * Displays when a user selects a city with less than 6 providers.
  * Shows city name, Early Access badge, description, progress bar, and two CTAs.
- * 
+ *
  * Design tokens:
  * - Background: bg-uflow-light gradient
  * - Typography: Inter Tight (title), Inter (body)
@@ -40,8 +47,8 @@ export function CityEarlyAccessEmptyState({
   const [showLegalModal, setShowLegalModal] = useState(false);
 
   // Detect reduced motion preference
-  const prefersReducedMotion = typeof window !== 'undefined' && 
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Handle city selection navigation
   const handleCitySelect = () => {
@@ -77,22 +84,18 @@ export function CityEarlyAccessEmptyState({
   return (
     <div className="flex h-screen w-full flex-col items-center bg-uflow-light">
       {/* Header - 80px with safe area */}
-      <header 
-        className={cn(
-          'flex w-full items-center justify-between',
-          'h-20 px-6',
-          'pt-safe-top'
-        )}
+      <header
+        className={cn('flex w-full items-center justify-between', 'h-20 px-6', 'pt-safe-top')}
         role="banner"
       >
         {/* Info Icon - Opens legal links */}
         <button
           aria-label={t('legal.legalInfo') || 'Legal information'}
-          className="flex items-center justify-center p-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="flex items-center justify-center rounded-lg bg-neutral-100 p-1.5 transition-colors hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
           type="button"
           onClick={() => setShowLegalModal(true)}
         >
-          <Icon className="w-5 h-5 text-content-heading" icon="lucide:info" />
+          <Icon className="h-5 w-5 text-content-heading" icon="lucide:info" />
         </button>
 
         {/* Language Selector - Top Right */}
@@ -100,13 +103,13 @@ export function CityEarlyAccessEmptyState({
       </header>
 
       {/* Body - Centered content */}
-      <main 
+      <main
         className={cn(
           'flex flex-1 items-center justify-center',
           'w-full px-6',
           // Account for footer height: pt-footer-safe (8px min) + h-12 (48px) + pb-safe
           // pb-safe = max(12px, env(safe-area-inset-bottom)), so total = max(68px, 56px + env(safe-area-inset-bottom))
-          'pb-[max(68px,calc(56px+env(safe-area-inset-bottom)))]'
+          'pb-[max(68px,calc(56px+env(safe-area-inset-bottom)))]',
         )}
         role="main"
       >
@@ -121,7 +124,11 @@ export function CityEarlyAccessEmptyState({
             animate={{ opacity: 1, y: 0 }}
             className="flex w-full flex-col items-center gap-1"
             initial={{ opacity: 0, y: 20 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.4, delay: 0.1, ease: 'easeOut' }
+            }
           >
             {/* City Name - Inline with Edit Icon (matches Stage 2 pattern) */}
             <div className="flex w-full items-center justify-center gap-1">
@@ -130,13 +137,13 @@ export function CityEarlyAccessEmptyState({
               </h1>
               <button
                 aria-label={t('waitlist.cityEarlyAccess.changeCity')}
-                className="inline-flex items-center justify-center hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 rounded p-0.5"
+                className="inline-flex items-center justify-center rounded p-0.5 transition-opacity hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 type="button"
                 onClick={handleCitySelect}
               >
                 <Icon
                   aria-hidden="true"
-                  className="w-6 h-6 text-content-heading"
+                  className="h-6 w-6 text-content-heading"
                   icon="lucide:location-edit"
                 />
               </button>
@@ -144,11 +151,7 @@ export function CityEarlyAccessEmptyState({
 
             {/* Early Access Badge */}
             <div className="flex flex-row items-center gap-2 rounded-md border border-border bg-white px-3 py-2">
-              <Icon 
-                aria-hidden="true"
-                className="size-6 text-primary"
-                icon="lucide:bird"
-              />
+              <Icon aria-hidden="true" className="size-6 text-primary" icon="lucide:bird" />
               <span className="font-inter-tight text-base font-semibold text-primary">
                 {t('waitlist.earlyAccess.badge')}
               </span>
@@ -160,7 +163,11 @@ export function CityEarlyAccessEmptyState({
             animate={{ opacity: 1, y: 0 }}
             className="flex w-full flex-col items-start gap-2"
             initial={{ opacity: 0, y: 20 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.2, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.4, delay: 0.2, ease: 'easeOut' }
+            }
           >
             {/* Title */}
             <h2 className="w-full text-center font-inter text-xl font-medium leading-6 text-content-heading">
@@ -178,7 +185,11 @@ export function CityEarlyAccessEmptyState({
             animate={{ opacity: 1, y: 0 }}
             className="flex w-full flex-col gap-4"
             initial={{ opacity: 0, y: 20 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.4, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.4, delay: 0.4, ease: 'easeOut' }
+            }
           >
             {/* Primary CTA: Suggest Provider */}
             <Button
@@ -213,4 +224,3 @@ export function CityEarlyAccessEmptyState({
     </div>
   );
 }
-

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { ChevronDown } from 'lucide-react';
@@ -10,13 +11,23 @@ import { ChevronDown } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { Button } from '@/components/ui/Button';
-import { SignupModal } from '@/features/auth/components/SignupModal';
-import { LoginModal } from '@/features/auth/components/LoginModal';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useAuth } from '@/providers/auth-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
+
+// Dynamic imports for modals (Plan 007: reduce shared bundle)
+const SignupModal = dynamic(
+  () =>
+    import('@/features/auth/components/SignupModal').then((mod) => ({ default: mod.SignupModal })),
+  { ssr: false },
+);
+const LoginModal = dynamic(
+  () =>
+    import('@/features/auth/components/LoginModal').then((mod) => ({ default: mod.LoginModal })),
+  { ssr: false },
+);
 
 export function Header() {
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -101,7 +112,7 @@ export function Header() {
   return (
     <>
       <header
-        className={`header-gradient fixed left-0 right-0 top-0 z-50 w-full shadow-sm transition-all duration-300 pt-[calc(env(safe-area-inset-top)+16px)] ${
+        className={`header-gradient fixed left-0 right-0 top-0 z-50 w-full pt-[calc(env(safe-area-inset-top)+16px)] shadow-sm transition-all duration-300 ${
           isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
@@ -109,8 +120,12 @@ export function Header() {
           <nav className="flex h-20 w-full items-center justify-between">
             {/* Left */}
             <div className="flex flex-row items-center gap-16">
-              <Link aria-label="Zur Startseite" className="relative flex items-center justify-center flex-shrink-0" href="/">
-                <Logo className="size-8 text-white flex-shrink-0" height={32} width={32} />
+              <Link
+                aria-label="Zur Startseite"
+                className="relative flex flex-shrink-0 items-center justify-center"
+                href="/"
+              >
+                <Logo className="size-8 flex-shrink-0 text-white" height={32} width={32} />
               </Link>
               {!user && (
                 <Link
@@ -124,7 +139,7 @@ export function Header() {
             </div>
 
             {/* Search Bar */}
-            <SearchBar 
+            <SearchBar
               className="!w-[640px] !shadow-none"
               onCategoryChange={handleCategoryChange}
               onClearSearch={handleClearSearch}
@@ -141,7 +156,7 @@ export function Header() {
               ) : user ? (
                 <>
                   <Button
-                    className="hidden md:flex h-10 w-[89px] px-[14px] rounded-xl border border-border"
+                    className="hidden h-10 w-[89px] rounded-xl border border-border px-[14px] md:flex"
                     variant="primary"
                     onClick={() => router.push('/create')}
                   >
@@ -156,7 +171,7 @@ export function Header() {
                       <ProfileIcon className="shrink-0" isActive={dropdownOpen} />
                       <ChevronDown
                         aria-hidden="true"
-                        className={`size-6 text-content transition-transform duration-200 -ml-2 ${dropdownOpen ? 'rotate-180' : ''}`}
+                        className={`-ml-2 size-6 text-content transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
                     {dropdownOpen && (

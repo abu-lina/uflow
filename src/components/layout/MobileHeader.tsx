@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 
 import { Logo } from '@/components/ui/Logo';
@@ -13,12 +12,12 @@ interface MobileHeaderProps {
   className?: string;
 }
 
-export function MobileHeader({ 
-  variant, 
-  title, 
-  onBack, 
+export function MobileHeader({
+  variant,
+  title,
+  onBack,
   showBackButton = true,
-  className = '' 
+  className = '',
 }: MobileHeaderProps) {
   const handleBack = () => {
     if (onBack) {
@@ -29,68 +28,60 @@ export function MobileHeader({
   };
 
   return (
-        <header className={`fixed top-0 left-0 right-0 z-50 w-full bg-background/34 backdrop-blur-sm border-b border-border/30 pt-safe-top ${className}`}>
-      <div className="flex items-center justify-center w-full h-16 px-6 sm:px-8">
+    <header
+      className={`bg-background/34 fixed left-0 right-0 top-0 z-50 w-full border-b border-border/30 pt-safe-top backdrop-blur-sm ${className}`}
+    >
+      <div className="flex h-16 w-full items-center justify-center px-6 sm:px-8">
         <div className="flex w-full max-w-[400px] items-center justify-center">
           {variant === 'splash' ? (
-            /* Splash Header - Centered Logo */
-            <div className="flex flex-row justify-center items-center w-full">
-            <motion.div 
-              animate={{ opacity: 1, y: 0 }}
-              className="w-10 h-10"
-              initial={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-            >
-              <Logo className="w-10 h-10" height={40} width={40} />
-            </motion.div>
-          </div>
-        ) : variant === 'about' ? (
-          /* About Header - Back Button + Title + Logo */
-          <div className="flex flex-row justify-between items-center w-full gap-2">
-            {/* Left Side - Back Button + Title */}
-            <div className="flex flex-row items-center gap-2">
-              {showBackButton && (
-                <button
-                  aria-label="Zurück"
-                  className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-neutral-100 transition-colors"
-                  onClick={handleBack}
-                >
-                  <Icon className="h-6 w-6 text-content-heading" icon="material-symbols:chevron-left" />
-                </button>
-              )}
-              {title && (
-                <h1 className="text-xl font-semibold text-content-heading">
-                  {title}
-                </h1>
-              )}
-            </div>
-            
-            {/* Right Side - Logo */}
-            <div className="relative w-10 h-10 flex-shrink-0">
-              <Logo className="w-10 h-10" height={40} width={40} />
-            </div>
-          </div>
-        ) : (
-          /* Default Header - Logo + Optional Actions */
-          <div className="flex flex-row justify-between items-center w-full">
-            {/* Left Side - Logo */}
-            <div className="flex flex-row items-center gap-2">
-              <div className="w-10 h-10">
-                <Logo className="w-10 h-10" height={40} width={40} />
+            /* Splash Header - Centered Logo (removed decorative motion fade-in) */
+            <div className="flex w-full flex-row items-center justify-center">
+              <div className="animate-fade-in h-10 w-10">
+                <Logo className="h-10 w-10" height={40} width={40} />
               </div>
-              {title && (
-                <h1 className="text-xl font-semibold text-content-heading">
-                  {title}
-                </h1>
-              )}
             </div>
-            
-            {/* Right Side - Optional Actions */}
-            <div className="flex flex-row items-center gap-2">
-              {/* Add action buttons here if needed */}
+          ) : variant === 'about' ? (
+            /* About Header - Back Button + Title + Logo */
+            <div className="flex w-full flex-row items-center justify-between gap-2">
+              {/* Left Side - Back Button + Title */}
+              <div className="flex flex-row items-center gap-2">
+                {showBackButton && (
+                  <button
+                    aria-label="Zurück"
+                    className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-neutral-100"
+                    onClick={handleBack}
+                  >
+                    <Icon
+                      className="h-6 w-6 text-content-heading"
+                      icon="material-symbols:chevron-left"
+                    />
+                  </button>
+                )}
+                {title && <h1 className="text-xl font-semibold text-content-heading">{title}</h1>}
+              </div>
+
+              {/* Right Side - Logo */}
+              <div className="relative h-10 w-10 flex-shrink-0">
+                <Logo className="h-10 w-10" height={40} width={40} />
+              </div>
             </div>
-          </div>
-        )}
+          ) : (
+            /* Default Header - Logo + Optional Actions */
+            <div className="flex w-full flex-row items-center justify-between">
+              {/* Left Side - Logo */}
+              <div className="flex flex-row items-center gap-2">
+                <div className="h-10 w-10">
+                  <Logo className="h-10 w-10" height={40} width={40} />
+                </div>
+                {title && <h1 className="text-xl font-semibold text-content-heading">{title}</h1>}
+              </div>
+
+              {/* Right Side - Optional Actions */}
+              <div className="flex flex-row items-center gap-2">
+                {/* Add action buttons here if needed */}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
