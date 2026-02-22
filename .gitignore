@@ -115,3 +115,4 @@ imports/**/*.tmp
 
 # Lottie conversion temporary files
 imports/lottie/.temp-gif-frames/.flowbaby/
+.flowbaby/
