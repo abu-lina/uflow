@@ -2,7 +2,7 @@
 ID: 008
 Origin: 008
 UUID: 3c8f9a2d
-Status: Active
+Status: Committed
 ---
 
 # 008 — Search Index Validation & Fallback Guards — Implementation
