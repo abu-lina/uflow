@@ -50,20 +50,27 @@ const ContactCheckbox = memo(({
   autoFormat,
 }: ContactCheckboxProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const userToggledRef = useRef(false);
 
-  // Focus input when checkbox is checked
+  // Focus input only when the toggle was initiated by a user action inside this component
   useEffect(() => {
-    if (checked && inputRef.current) {
+    if (userToggledRef.current && checked && inputRef.current) {
       inputRef.current.focus();
     }
+    userToggledRef.current = false;
   }, [checked]);
+
+  const handleToggle = useCallback(() => {
+    userToggledRef.current = true;
+    onToggle();
+  }, [onToggle]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onToggle();
+      handleToggle();
     }
-  }, [onToggle]);
+  }, [handleToggle]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = autoFormat ? autoFormat(e.target.value) : e.target.value;
@@ -79,7 +86,7 @@ const ContactCheckbox = memo(({
       )}
       role="checkbox"
       tabIndex={0}
-      onClick={onToggle}
+      onClick={handleToggle}
       onKeyDown={handleKeyDown}
     >
       <div className="flex w-full flex-row items-center gap-2">
