@@ -75,17 +75,13 @@ const mockBadges: BadgeWithConfirmationStatus[] = [
 describe('TrustBadgesSection', () => {
   describe('Rendering with badges', () => {
     it('should render the section heading', () => {
-      render(
-        <TrustBadgesSection badges={mockBadges} isLoading={false} />,
-      );
+      render(<TrustBadgesSection badges={mockBadges} isLoading={false} />);
       // Heading should be present (de locale by default in test)
       expect(screen.getByText(/Trust|Vertrauen/i)).toBeInTheDocument();
     });
 
     it('should render all badge labels', () => {
-      render(
-        <TrustBadgesSection badges={mockBadges} isLoading={false} />,
-      );
+      render(<TrustBadgesSection badges={mockBadges} isLoading={false} />);
       // BadgeLabel renders uppercase short labels (de or en depending on detected locale)
       expect(screen.getByText('HALAL')).toBeInTheDocument();
       expect(screen.getByText('MUSLIM')).toBeInTheDocument();
@@ -94,9 +90,7 @@ describe('TrustBadgesSection', () => {
     });
 
     it('should show aggregate confirmation counts', () => {
-      render(
-        <TrustBadgesSection badges={mockBadges} isLoading={false} />,
-      );
+      render(<TrustBadgesSection badges={mockBadges} isLoading={false} />);
       // Should show confirmation counts as aggregates (not individual user data)
       // de: "Bestätigungen" / en: "confirmations"
       expect(screen.getByText(/5\s+(confirmation|Bestätigung)/)).toBeInTheDocument();
@@ -104,9 +98,7 @@ describe('TrustBadgesSection', () => {
     });
 
     it('should have proper ARIA roles for accessibility', () => {
-      render(
-        <TrustBadgesSection badges={mockBadges} isLoading={false} />,
-      );
+      render(<TrustBadgesSection badges={mockBadges} isLoading={false} />);
       // Each BadgeLabel has role="status"
       const statusElements = screen.getAllByRole('status');
       expect(statusElements.length).toBeGreaterThanOrEqual(3);
@@ -115,9 +107,7 @@ describe('TrustBadgesSection', () => {
 
   describe('Empty state', () => {
     it('should not render when no badges exist', () => {
-      const { container } = render(
-        <TrustBadgesSection badges={[]} isLoading={false} />,
-      );
+      const { container } = render(<TrustBadgesSection badges={[]} isLoading={false} />);
       // Should not render the section at all when there are no badges
       expect(container.firstChild).toBeNull();
     });
@@ -125,9 +115,7 @@ describe('TrustBadgesSection', () => {
 
   describe('Loading state', () => {
     it('should render loading skeleton when isLoading is true', () => {
-      render(
-        <TrustBadgesSection badges={[]} isLoading={true} />,
-      );
+      render(<TrustBadgesSection badges={[]} isLoading={true} />);
       // Should show loading indicator
       const loadingElement = screen.getByTestId('trust-badges-loading');
       expect(loadingElement).toBeInTheDocument();

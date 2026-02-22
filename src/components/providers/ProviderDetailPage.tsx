@@ -10,7 +10,11 @@ import { MobileProviderDetail } from '@/components/providers/MobileProviderDetai
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
-import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE, type CategoryImages } from '@/utils/imageUtils';
+import {
+  getAllTrustedImageUrlsWithFallback,
+  PLACEHOLDER_IMAGE,
+  type CategoryImages,
+} from '@/utils/imageUtils';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
@@ -18,8 +22,17 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import { useCommunityServicesForProvider } from '@/hooks/useCommunityServices';
-import { openNavigation, formatAddress, isAddressNavigable, normalizeInstagramUrl, normalizeWebsiteUrl } from '@/utils/navigationUtils';
-import { getProvidersForCommunityService, type CommunityService } from '@/services/communityServices';
+import {
+  openNavigation,
+  formatAddress,
+  isAddressNavigable,
+  normalizeInstagramUrl,
+  normalizeWebsiteUrl,
+} from '@/utils/navigationUtils';
+import {
+  getProvidersForCommunityService,
+  type CommunityService,
+} from '@/services/communityServices';
 import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
 import { EndorseBadgeButton } from '@/components/providers/EndorseBadgeButton';
 import { getBadgesForEntityWithConfirmationStatus } from '@/services/badges';
@@ -33,10 +46,15 @@ interface ProviderDetailPageProps {
   initialCommunityServices?: CommunityService[];
 }
 
-export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider, customActionButtons, backPath, initialCommunityServices }) => {
+export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
+  provider,
+  customActionButtons,
+  backPath,
+  initialCommunityServices,
+}) => {
   const router = useRouter();
   const { t, language } = useLanguage();
-  
+
   // Helper function to get category name based on language
   const getCategoryName = (category: { name_de?: string; name_en?: string } | undefined) => {
     if (!category) return t('providers.donations');
@@ -46,7 +64,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
       return category.name_de || category.name_en || t('providers.donations');
     }
   };
-  
+
   const handleBack = () => {
     if (backPath) {
       router.push(backPath);
@@ -56,11 +74,11 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   };
   const isMobile = useIsMobile();
   const { user } = useAuth();
-  
+
   // Process images using shared utility with category fallback
   const imageUrls = getAllTrustedImageUrlsWithFallback(
-    provider.provider_images, 
-    provider.category?.category_images
+    provider.provider_images,
+    provider.category?.category_images,
   );
   const allImageUrls = imageUrls.length > 0 ? imageUrls : [PLACEHOLDER_IMAGE];
 
@@ -87,7 +105,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
     minSwipeDistance: 30,
   });
 
-
   const [isSaved, setIsSaved] = useState(false);
   const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -95,13 +112,13 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const [isHovered, setIsHovered] = useState(false);
   const [shouldAnimateFill, setShouldAnimateFill] = useState(false);
   const [isTransiting, setIsTransiting] = useState(false);
-  
+
   // Refs to store timeout IDs for cleanup
   const timeoutRefs = useRef<{
     fillTimeout?: ReturnType<typeof setTimeout>;
     stateTimeout?: ReturnType<typeof setTimeout>;
   }>({});
-  
+
   // Cleanup timeouts on unmount
   useEffect(() => {
     const refs = timeoutRefs.current;
@@ -114,7 +131,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
       }
     };
   }, []);
-  
+
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
@@ -136,10 +153,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
   // Use React Query for caching community services (only for providers)
   // Use prefetched data from server to avoid client-side waterfall
-  const { 
-    data: communityServices = [], 
-    isLoading: isLoadingCommunityServices
-  } = useCommunityServicesForProvider(provider.provider_id, initialCommunityServices);
+  const { data: communityServices = [], isLoading: isLoadingCommunityServices } =
+    useCommunityServicesForProvider(provider.provider_id, initialCommunityServices);
 
   // Fetch badges with user confirmation status for endorsement UX
   const entityId = isCommunityService ? provider.community_service_id : provider.provider_id;
@@ -151,24 +166,22 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   } = useQuery<BadgeWithConfirmationStatus[]>({
     queryKey: ['badges', entityId, user?.id],
     queryFn: () =>
-      getBadgesForEntityWithConfirmationStatus(
-        entityId || '',
-        entityType,
-        user?.id || null
-      ),
+      getBadgesForEntityWithConfirmationStatus(entityId || '', entityType, user?.id || null),
     enabled: !!entityId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: false,
   });
 
   // Use React Query for providers supporting this community service (only for community services)
-  const { data: supportingProviders = [] } = useQuery<Array<{ 
-    provider_id: string; 
-    provider_name: string; 
-    provider_images?: string | null;
-    address_city?: string;
-    category?: { name_de?: string; name_en?: string; category_images?: unknown };
-  }>>({
+  const { data: supportingProviders = [] } = useQuery<
+    Array<{
+      provider_id: string;
+      provider_name: string;
+      provider_images?: string | null;
+      address_city?: string;
+      category?: { name_de?: string; name_en?: string; category_images?: unknown };
+    }>
+  >({
     queryKey: ['providers', 'community-service', provider.community_service_id],
     queryFn: () => {
       if (!provider.community_service_id) {
@@ -213,38 +226,38 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
   const handleBookmark = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    
+
     if (!user) {
       // Redirect to bookmark menu (saved page) when not authenticated
       router.push('/saved');
       return;
     }
-    
+
     if (isAnimating) return;
-    
+
     if (!isSaved) {
       setIsAnimating(true);
       setIsTransiting(true);
       setShowAllahumaBarik(true);
-      
+
       // Start bookmark action immediately (optimistic update happens first)
       const bookmarkStartTime = Date.now();
       const minDisplayTime = 800; // Minimum time to show "Allahuma Barik" (800ms)
-      
+
       try {
         // Perform the bookmark action (optimistic update happens immediately)
         await handleOptimisticBookmark();
-        
+
         // Calculate remaining time to show "Allahuma Barik"
         const elapsed = Date.now() - bookmarkStartTime;
         const remainingTime = Math.max(0, minDisplayTime - elapsed);
-        
+
         // Wait for minimum display time OR until request completes (whichever is longer)
         timeoutRefs.current.stateTimeout = setTimeout(() => {
           setShowAllahumaBarik(false);
           // Trigger fill animation when transitioning to saved
           setShouldAnimateFill(true);
-          
+
           setIsAnimating(false);
           // Reset animation flag after animation completes
           timeoutRefs.current.fillTimeout = setTimeout(() => {
@@ -267,7 +280,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
       try {
         await handleOptimisticBookmark();
         // Small delay to ensure state updates propagate
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       } catch (error) {
         console.error('Error toggling bookmark:', error);
       } finally {
@@ -281,7 +294,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   const handleBookmarkAction = (e?: React.MouseEvent) => {
     void handleBookmark(e);
   };
-  
+
   // Determine button state
   const getButtonState = (): 'idle' | 'loading' | 'saved' | 'barik' => {
     // Prioritize barik state - if showing barik, show it (even if animating)
@@ -294,11 +307,11 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
 
   const handleShareAction = () => {
     // Generate the correct URL based on type
-    const path = isCommunityService 
+    const path = isCommunityService
       ? `/community-services/${provider.community_service_id}`
       : `/providers/${provider.provider_id}`;
     const shareUrl = `${window.location.origin}${path}`;
-    
+
     if (navigator.share) {
       void navigator.share({
         title: provider.provider_name,
@@ -313,11 +326,11 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
   // Mobile version
   if (isMobile) {
     return (
-      <div className="h-screen bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb] overflow-y-auto">
+      <div className="h-screen overflow-y-auto bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
         {/* Mobile Content */}
         <div className="pb-24">
           <MobileProviderDetail provider={provider} onBack={handleBack} />
-          
+
           {/* Provider Info Card */}
           <div className="mx-6 mt-6 rounded-2xl bg-white p-4 shadow-sm">
             <h2 className="font-inter-tight text-xl font-semibold text-content-heading">
@@ -325,26 +338,40 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             </h2>
             {provider.address_city ? (
               <button
-                className="mt-1 text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline text-left"
-                disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                className="mt-1 text-left text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline"
+                disabled={
+                  !isAddressNavigable(
+                    provider.address_street ?? undefined,
+                    provider.address_zip ?? undefined,
+                    provider.address_city ?? undefined,
+                  )
+                }
                 title="Adresse antippen zum Navigieren"
                 onClick={() => {
-                  const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
-                  if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                  const address = formatAddress(
+                    provider.address_street ?? undefined,
+                    provider.address_zip ?? undefined,
+                    provider.address_city ?? undefined,
+                  );
+                  if (
+                    isAddressNavigable(
+                      provider.address_street ?? undefined,
+                      provider.address_zip ?? undefined,
+                      provider.address_city ?? undefined,
+                    )
+                  ) {
                     openNavigation(address);
                   }
                 }}
               >
-                {provider.address_street && provider.address_zip 
+                {provider.address_street && provider.address_zip
                   ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
                   : provider.address_city}
               </button>
             ) : (
-              <div className="mt-1 text-gray-600">
-                Online
-              </div>
+              <div className="mt-1 text-gray-600">Online</div>
             )}
-            
+
             {/* Contact Icons */}
             <div className="mt-4 flex items-center gap-4">
               {provider.social_website && (
@@ -400,80 +427,90 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           {isLoadingCommunityServices ? (
             <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
               <div className="animate-pulse">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-5 bg-gray-200 rounded w-40"></div>
-                  <div className="h-5 w-5 bg-gray-200 rounded"></div>
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="h-5 w-40 rounded bg-gray-200"></div>
+                  <div className="h-5 w-5 rounded bg-gray-200"></div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 bg-gray-200 rounded"></div>
+                    <div className="h-12 w-12 rounded bg-gray-200"></div>
                     <div className="flex-1">
-                      <div className="h-4 bg-gray-200 rounded w-28 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      <div className="mb-2 h-4 w-28 rounded bg-gray-200"></div>
+                      <div className="h-3 w-20 rounded bg-gray-200"></div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          ) : (communityServices && communityServices.length > 0) && (
-            <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
-              <button
-                className="flex w-full items-center justify-between"
-                onClick={() => setExpandedBarakah(!expandedBarakah)}
-              >
-                <div className="flex items-center gap-2">
-                  <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
-                    {t('providers.ourBarakahEffect')}
-                  </h3>
-                  <Icon className="h-4 w-4 text-gray-500" icon="material-symbols:info-outline" />
-                </div>
-                <ChevronDown 
-                  className={`h-6 w-6 text-gray-600 transition-transform ${
-                    expandedBarakah ? 'rotate-180' : ''
-                  }`} 
-                />
-              </button>
-              
-              {expandedBarakah && (
-                <div className="mt-4 space-y-3">
-                  {communityServices.map((service, index) => (
-                    <button
-                      key={index}
-                      className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
-                      onClick={() => router.push(`/community-services/${service.community_service_id}`)}
-                    >
-                      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
-                        <Image
-                          fill
-                          alt={service.community_service_name}
-                          className="object-cover"
-                          src={
-                            service.community_service_images && service.community_service_images.length > 0
-                              ? service.community_service_images[0]
-                              : PLACEHOLDER_IMAGE
-                          }
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-inter-tight font-medium text-content">
-                          {service.community_service_name}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {getCategoryName(service.category)}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? t('providers.initiativesSupported') : t('providers.donations')}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+          ) : (
+            communityServices &&
+            communityServices.length > 0 && (
+              <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
+                <button
+                  className="flex w-full items-center justify-between"
+                  onClick={() => setExpandedBarakah(!expandedBarakah)}
+                >
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
+                      {t('providers.ourBarakahEffect')}
+                    </h3>
+                    <Icon className="h-4 w-4 text-gray-500" icon="material-symbols:info-outline" />
+                  </div>
+                  <ChevronDown
+                    className={`h-6 w-6 text-gray-600 transition-transform ${
+                      expandedBarakah ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {expandedBarakah && (
+                  <div className="mt-4 space-y-3">
+                    {communityServices.map((service, index) => (
+                      <button
+                        key={index}
+                        className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                        onClick={() =>
+                          router.push(`/community-services/${service.community_service_id}`)
+                        }
+                      >
+                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
+                          <Image
+                            fill
+                            alt={service.community_service_name}
+                            className="object-cover"
+                            src={
+                              service.community_service_images &&
+                              service.community_service_images.length > 0
+                                ? service.community_service_images[0]
+                                : PLACEHOLDER_IMAGE
+                            }
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-inter-tight font-medium text-content">
+                            {service.community_service_name}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {getCategoryName(service.category)}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            +{service.donation_count || 10}{' '}
+                            {service.category?.name_de === 'Moschee'
+                              ? t('providers.initiativesSupported')
+                              : t('providers.donations')}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
           )}
 
           {/* Combined Offers & Needs Section */}
-          {((provider.offers && provider.offers.length > 0) || (provider.needs && provider.needs.length > 0)) && (
+          {((provider.offers && provider.offers.length > 0) ||
+            (provider.needs && provider.needs.length > 0)) && (
             <div className="mx-6 mt-4 rounded-2xl bg-white shadow-sm">
               {/* Offers Section */}
               {provider.offers && provider.offers.length > 0 && (
@@ -485,10 +522,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
                       {t('providers.weOffer')}
                     </h3>
-                    <ChevronDown 
+                    <ChevronDown
                       className={`h-6 w-6 text-gray-600 transition-transform ${
                         expandedOffers ? 'rotate-180' : ''
-                      }`} 
+                      }`}
                     />
                   </button>
                   {expandedOffers && (
@@ -509,9 +546,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               )}
 
               {/* Divider */}
-              {provider.offers && provider.offers.length > 0 && provider.needs && provider.needs.length > 0 && (
-                <hr className="mx-4 border-gray-200" />
-              )}
+              {provider.offers &&
+                provider.offers.length > 0 &&
+                provider.needs &&
+                provider.needs.length > 0 && <hr className="mx-4 border-gray-200" />}
 
               {/* Needs Section */}
               {provider.needs && provider.needs.length > 0 && (
@@ -523,10 +561,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
                       {t('providers.weAreLookingFor')}
                     </h3>
-                    <ChevronDown 
+                    <ChevronDown
                       className={`h-6 w-6 text-gray-600 transition-transform ${
                         expandedNeeds ? 'rotate-180' : ''
-                      }`} 
+                      }`}
                     />
                   </button>
                   {expandedNeeds && (
@@ -547,7 +585,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               )}
             </div>
           )}
-
         </div>
 
         {/* Mobile Action Buttons - Fixed at bottom */}
@@ -555,7 +592,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           // Custom action buttons (like FooterAction) handle their own styling
           customActionButtons
         ) : (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200/30 px-6 pt-4 pb-safe">
+          <div className="pb-safe fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/30 bg-white/95 px-6 pt-4 backdrop-blur-sm">
             <div className="flex w-full gap-3.5">
               {/* Save Button */}
               <BookmarkButton
@@ -582,7 +619,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             </div>
           </div>
         )}
-
       </div>
     );
   }
@@ -615,8 +651,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
           {/* Left Column - Images */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div 
-              className="relative h-[480px] w-full overflow-hidden rounded-3xl bg-gray-200 touch-pan-x cursor-grab active:cursor-grabbing"
+            <div
+              className="relative h-[480px] w-full cursor-grab touch-pan-x overflow-hidden rounded-3xl bg-gray-200 active:cursor-grabbing"
               style={{ touchAction: 'pan-x', userSelect: 'none' }}
               onMouseDown={handleMouseDown}
               onMouseLeave={handleMouseUp}
@@ -668,7 +704,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                   )}
                 </>
               )}
-
             </div>
 
             {/* Thumbnails */}
@@ -702,16 +737,16 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               <h2 className="font-inter-tight text-3xl font-bold text-content-heading">
                 {provider.provider_name}
               </h2>
-              <p className="mt-2 text-gray-600">
-                {getCategoryName(provider.category)}
-              </p>
-              
+              <p className="mt-2 text-gray-600">{getCategoryName(provider.category)}</p>
+
               {/* Contact Actions */}
               <div className="mt-6 flex items-center gap-4">
                 {provider.social_website && (
                   <button
                     className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                    onClick={() => provider.social_website && window.open(provider.social_website, '_blank')}
+                    onClick={() =>
+                      provider.social_website && window.open(provider.social_website, '_blank')
+                    }
                   >
                     <Icon className="h-4 w-4" icon="mdi:internet" />
                     Website
@@ -747,95 +782,109 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             {isLoadingCommunityServices ? (
               <div className="rounded-2xl bg-white p-6 shadow-sm">
                 <div className="animate-pulse">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="h-6 bg-gray-200 rounded w-48"></div>
-                    <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="h-6 w-48 rounded bg-gray-200"></div>
+                    <div className="h-6 w-6 rounded bg-gray-200"></div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center gap-4">
-                      <div className="h-16 w-16 bg-gray-200 rounded"></div>
+                      <div className="h-16 w-16 rounded bg-gray-200"></div>
                       <div className="flex-1">
-                        <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                        <div className="mb-2 h-4 w-32 rounded bg-gray-200"></div>
+                        <div className="h-3 w-24 rounded bg-gray-200"></div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            ) : (communityServices && communityServices.length > 0) && (
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <button
-                  className="flex w-full items-center justify-between"
-                  onClick={() => setExpandedBarakah(!expandedBarakah)}
-                >
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
-                      {t('providers.ourBarakahEffect')}
-                    </h3>
-                    <Icon className="h-5 w-5 text-gray-500" icon="material-symbols:info-outline" />
-                  </div>
-                  <ChevronDown 
-                    className={`h-7 w-7 text-gray-600 transition-transform ${
-                      expandedBarakah ? 'rotate-180' : ''
-                    }`} 
-                  />
-                </button>
-                {expandedBarakah && (
-                  <div className="mt-4 space-y-3">
-                    {communityServices.map((service, index) => {
-                      const firstImageUrl = service.community_service_images && service.community_service_images.length > 0
-                        ? service.community_service_images[0]
-                        : PLACEHOLDER_IMAGE;
-                      
-                      const handleMouseEnter = () => {
-                        // Prefetch the route
-                        router.prefetch(`/community-services/${service.community_service_id}`);
-                        // Prefetch the first image
-                        if (firstImageUrl && firstImageUrl !== PLACEHOLDER_IMAGE) {
-                          const link = document.createElement('link');
-                          link.rel = 'prefetch';
-                          link.as = 'image';
-                          link.href = firstImageUrl;
-                          document.head.appendChild(link);
-                        }
-                      };
+            ) : (
+              communityServices &&
+              communityServices.length > 0 && (
+                <div className="rounded-2xl bg-white p-6 shadow-sm">
+                  <button
+                    className="flex w-full items-center justify-between"
+                    onClick={() => setExpandedBarakah(!expandedBarakah)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
+                        {t('providers.ourBarakahEffect')}
+                      </h3>
+                      <Icon
+                        className="h-5 w-5 text-gray-500"
+                        icon="material-symbols:info-outline"
+                      />
+                    </div>
+                    <ChevronDown
+                      className={`h-7 w-7 text-gray-600 transition-transform ${
+                        expandedBarakah ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                  {expandedBarakah && (
+                    <div className="mt-4 space-y-3">
+                      {communityServices.map((service, index) => {
+                        const firstImageUrl =
+                          service.community_service_images &&
+                          service.community_service_images.length > 0
+                            ? service.community_service_images[0]
+                            : PLACEHOLDER_IMAGE;
 
-                      return (
-                      <button
-                        key={index}
-                        className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
-                        onClick={() => router.push(`/community-services/${service.community_service_id}`)}
-                        onMouseEnter={handleMouseEnter}
-                      >
-                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
-                          <Image
-                            fill
-                            alt={service.community_service_name}
-                            className="object-cover"
-                            src={
-                              service.community_service_images && service.community_service_images.length > 0
-                                ? service.community_service_images[0]
-                                : PLACEHOLDER_IMAGE
+                        const handleMouseEnter = () => {
+                          // Prefetch the route
+                          router.prefetch(`/community-services/${service.community_service_id}`);
+                          // Prefetch the first image
+                          if (firstImageUrl && firstImageUrl !== PLACEHOLDER_IMAGE) {
+                            const link = document.createElement('link');
+                            link.rel = 'prefetch';
+                            link.as = 'image';
+                            link.href = firstImageUrl;
+                            document.head.appendChild(link);
+                          }
+                        };
+
+                        return (
+                          <button
+                            key={index}
+                            className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                            onClick={() =>
+                              router.push(`/community-services/${service.community_service_id}`)
                             }
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-inter-tight font-semibold text-content">
-                            {service.community_service_name}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {getCategoryName(service.category)}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            +{service.donation_count || 10} {service.category?.name_de === 'Moschee' ? t('providers.initiativesSupported') : t('providers.donations')}
-                          </p>
-                        </div>
-                      </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                            onMouseEnter={handleMouseEnter}
+                          >
+                            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
+                              <Image
+                                fill
+                                alt={service.community_service_name}
+                                className="object-cover"
+                                src={
+                                  service.community_service_images &&
+                                  service.community_service_images.length > 0
+                                    ? service.community_service_images[0]
+                                    : PLACEHOLDER_IMAGE
+                                }
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-inter-tight font-semibold text-content">
+                                {service.community_service_name}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {getCategoryName(service.category)}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                +{service.donation_count || 10}{' '}
+                                {service.category?.name_de === 'Moschee'
+                                  ? t('providers.initiativesSupported')
+                                  : t('providers.donations')}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
             )}
 
             {/* Supporting Providers Section (only for community services) */}
@@ -848,10 +897,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                   <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
                     Supporters
                   </h3>
-                  <ChevronDown 
+                  <ChevronDown
                     className={`h-7 w-7 text-gray-600 transition-transform ${
                       expandedProviders ? 'rotate-180' : ''
-                    }`} 
+                    }`}
                   />
                 </button>
                 {expandedProviders && (
@@ -859,15 +908,18 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                     {supportingProviders.map((supportingProvider) => {
                       const providerImageUrls = getAllTrustedImageUrlsWithFallback(
                         supportingProvider.provider_images,
-                        supportingProvider.category?.category_images as CategoryImages
+                        supportingProvider.category?.category_images as CategoryImages,
                       );
-                      const providerImage = providerImageUrls.length > 0 ? providerImageUrls[0] : PLACEHOLDER_IMAGE;
-                      
+                      const providerImage =
+                        providerImageUrls.length > 0 ? providerImageUrls[0] : PLACEHOLDER_IMAGE;
+
                       return (
                         <button
                           key={supportingProvider.provider_id}
                           className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
-                          onClick={() => router.push(`/providers/${supportingProvider.provider_id}`)}
+                          onClick={() =>
+                            router.push(`/providers/${supportingProvider.provider_id}`)
+                          }
                         >
                           <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
                             <Image
@@ -877,7 +929,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                               src={providerImage}
                             />
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="font-inter-tight font-semibold text-content">
                               {supportingProvider.provider_name}
                             </p>
@@ -894,7 +946,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
             )}
 
             {/* Combined Offers & Needs Section */}
-            {((provider.offers && provider.offers.length > 0) || (provider.needs && provider.needs.length > 0)) && (
+            {((provider.offers && provider.offers.length > 0) ||
+              (provider.needs && provider.needs.length > 0)) && (
               <div className="rounded-2xl bg-white shadow-sm">
                 {/* Offers Section */}
                 {provider.offers && provider.offers.length > 0 && (
@@ -906,10 +959,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
                         {t('providers.weOffer')}
                       </h3>
-                      <ChevronDown 
+                      <ChevronDown
                         className={`h-7 w-7 text-gray-600 transition-transform ${
                           expandedOffers ? 'rotate-180' : ''
-                        }`} 
+                        }`}
                       />
                     </button>
                     {expandedOffers && (
@@ -930,9 +983,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                 )}
 
                 {/* Divider */}
-                {provider.offers && provider.offers.length > 0 && provider.needs && provider.needs.length > 0 && (
-                  <hr className="mx-4 border-gray-200" />
-                )}
+                {provider.offers &&
+                  provider.offers.length > 0 &&
+                  provider.needs &&
+                  provider.needs.length > 0 && <hr className="mx-4 border-gray-200" />}
 
                 {/* Needs Section */}
                 {provider.needs && provider.needs.length > 0 && (
@@ -944,10 +998,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                       <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
                         {t('providers.weAreLookingFor')}
                       </h3>
-                      <ChevronDown 
+                      <ChevronDown
                         className={`h-7 w-7 text-gray-600 transition-transform ${
                           expandedNeeds ? 'rotate-180' : ''
-                        }`} 
+                        }`}
                       />
                     </button>
                     {expandedNeeds && (
@@ -969,12 +1023,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
               </div>
             )}
 
-
             {/* Action Buttons */}
             {customActionButtons ? (
-              <div className="flex gap-4">
-                {customActionButtons}
-              </div>
+              <div className="flex gap-4">{customActionButtons}</div>
             ) : (
               <div className="flex gap-4">
                 <div className="flex-1">
@@ -993,7 +1044,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({ provider
                   />
                 </div>
                 <button
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 px-6 font-inter-tight font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 px-6 py-3 font-inter-tight font-medium text-gray-700 hover:bg-gray-50"
                   onClick={handleShareAction}
                 >
                   <Icon className="h-5 w-5" icon="material-symbols:share" />

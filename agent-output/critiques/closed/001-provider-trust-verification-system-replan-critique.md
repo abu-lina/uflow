@@ -14,10 +14,10 @@ Status: RESOLVED
 
 ## Change Log
 
-| Date       | Handoff/Request                                      | Summary                                                                               |
-| ---------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| 2026-02-21 | User requested replan critique before implementation | Initial critique of deployment-readiness replan                                       |
-| 2026-02-21 | Planner quick revisions                              | Addressed F1–F3; re-reviewed and approved                                             |
+| Date       | Handoff/Request                                      | Summary                                                                                        |
+| ---------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 2026-02-21 | User requested replan critique before implementation | Initial critique of deployment-readiness replan                                                |
+| 2026-02-21 | Planner quick revisions                              | Addressed F1–F3; re-reviewed and approved                                                      |
 | 2026-02-22 | Post-UAT scope lock (Option A)                       | Re-review after UAT failed; plan now explicitly commits to UI badges + endorsements for v0.3.0 |
 
 ---
@@ -59,8 +59,8 @@ This is a **well-structured, scope-locked plan** suitable for implementation han
 | Privacy constraint preserved     | ✅ "aggregates only" and "never reveal other confirmers" repeated | PASS               |
 | DB-side ranking referenced       | ✅ Milestone 3 covers ranking + pagination stability              | PASS               |
 | Architecture findings doc linked | ⚠️ Not explicitly linked in replan                                | ADDRESSED (see F1) |
-| N+1 avoidance                    | ✅ Milestone 4 explicitly confirms no N+1 badge fetch patterns     | PASS               |
-| Client-side re-sorting blocked   | ✅ Milestone 3 note confirms UI must not re-sort                   | PASS               |
+| N+1 avoidance                    | ✅ Milestone 4 explicitly confirms no N+1 badge fetch patterns    | PASS               |
+| Client-side re-sorting blocked   | ✅ Milestone 3 note confirms UI must not re-sort                  | PASS               |
 
 ---
 
@@ -178,6 +178,7 @@ All recommendations have been addressed:
 The Revision 2 replan addresses all critique findings and is significantly improved by the explicit **Scope Lock** section that commits the plan to delivering user-visible UI trust badges + endorsements for v0.3.0.
 
 Key improvements in this revision:
+
 - Scope Lock explicitly commits to UI delivery (eliminates prior ambiguity)
 - Status corrected to Active
 - Scope creep risk + mitigation added

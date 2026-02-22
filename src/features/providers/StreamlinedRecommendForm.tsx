@@ -39,110 +39,119 @@ interface ContactCheckboxProps {
   autoFormat?: (value: string) => string;
 }
 
-const ContactCheckbox = memo(({
-  label,
-  checked,
-  value,
-  placeholder,
-  type = 'text',
-  onToggle,
-  onChange,
-  autoFormat,
-}: ContactCheckboxProps) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const userToggledRef = useRef(false);
+const ContactCheckbox = memo(
+  ({
+    label,
+    checked,
+    value,
+    placeholder,
+    type = 'text',
+    onToggle,
+    onChange,
+    autoFormat,
+  }: ContactCheckboxProps) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const userToggledRef = useRef(false);
 
-  // Focus input only when the toggle was initiated by a user action inside this component
-  useEffect(() => {
-    if (userToggledRef.current && checked && inputRef.current) {
-      inputRef.current.focus();
-    }
-    userToggledRef.current = false;
-  }, [checked]);
+    // Focus input only when the toggle was initiated by a user action inside this component
+    useEffect(() => {
+      if (userToggledRef.current && checked && inputRef.current) {
+        inputRef.current.focus();
+      }
+      userToggledRef.current = false;
+    }, [checked]);
 
-  const handleToggle = useCallback(() => {
-    userToggledRef.current = true;
-    onToggle();
-  }, [onToggle]);
+    const handleToggle = useCallback(() => {
+      userToggledRef.current = true;
+      onToggle();
+    }, [onToggle]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleToggle();
-    }
-  }, [handleToggle]);
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleToggle();
+        }
+      },
+      [handleToggle],
+    );
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = autoFormat ? autoFormat(e.target.value) : e.target.value;
-    onChange(newValue);
-  }, [onChange, autoFormat]);
+    const handleInputChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = autoFormat ? autoFormat(e.target.value) : e.target.value;
+        onChange(newValue);
+      },
+      [onChange, autoFormat],
+    );
 
-  return (
-    <div
-      aria-checked={checked}
-      className={cn(
-        'flex w-full items-center rounded-2xl border border-border bg-white px-3 py-2 cursor-pointer transition-[height,min-height]',
-        checked ? 'min-h-[54px]' : 'h-[54px]'
-      )}
-      role="checkbox"
-      tabIndex={0}
-      onClick={handleToggle}
-      onKeyDown={handleKeyDown}
-    >
-      <div className="flex w-full flex-row items-center gap-2">
-        {/* Checkbox Icon */}
-        <div className="flex-shrink-0">
-          <Icon
-            className="h-6 w-6 text-content"
-            icon={checked ? 'lucide:square-check' : 'lucide:square'}
-          />
-        </div>
+    return (
+      <div
+        aria-checked={checked}
+        className={cn(
+          'flex w-full cursor-pointer items-center rounded-2xl border border-border bg-white px-3 py-2 transition-[height,min-height]',
+          checked ? 'min-h-[54px]' : 'h-[54px]',
+        )}
+        role="checkbox"
+        tabIndex={0}
+        onClick={handleToggle}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="flex w-full flex-row items-center gap-2">
+          {/* Checkbox Icon */}
+          <div className="flex-shrink-0">
+            <Icon
+              className="h-6 w-6 text-content"
+              icon={checked ? 'lucide:square-check' : 'lucide:square'}
+            />
+          </div>
 
-        {/* Label + Input Container */}
-        <div className="flex flex-1 flex-col gap-1">
-          {checked ? (
-            <>
-              {/* Small label when checked */}
-              <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+          {/* Label + Input Container */}
+          <div className="flex flex-1 flex-col gap-1">
+            {checked ? (
+              <>
+                {/* Small label when checked */}
+                <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+                  {label}
+                </label>
+                {/* Input field */}
+                <input
+                  ref={inputRef}
+                  aria-label={label}
+                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                  placeholder={placeholder}
+                  type={type}
+                  value={value}
+                  onChange={handleInputChange}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </>
+            ) : (
+              /* Large label when unchecked */
+              <span className="font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
                 {label}
-              </label>
-              {/* Input field */}
-              <input
-                ref={inputRef}
-                aria-label={label}
-                className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={placeholder}
-                type={type}
-                value={value}
-                onChange={handleInputChange}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              />
-            </>
-          ) : (
-            /* Large label when unchecked */
-            <span className="font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
-              {label}
-            </span>
-          )}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  // Return true if props are equal (skip re-render), false if different (re-render)
-  // Only re-render if relevant props changed
-  if (prevProps.checked !== nextProps.checked) return false;
-  if (prevProps.value !== nextProps.value) return false;
-  if (prevProps.label !== nextProps.label) return false;
-  if (prevProps.placeholder !== nextProps.placeholder) return false;
-  if (prevProps.type !== nextProps.type) return false;
-  if (prevProps.onToggle !== nextProps.onToggle) return false;
-  if (prevProps.onChange !== nextProps.onChange) return false;
-  if (prevProps.autoFormat !== nextProps.autoFormat) return false;
-  // All props are equal, skip re-render
-  return true;
-});
+    );
+  },
+  (prevProps, nextProps) => {
+    // Return true if props are equal (skip re-render), false if different (re-render)
+    // Only re-render if relevant props changed
+    if (prevProps.checked !== nextProps.checked) return false;
+    if (prevProps.value !== nextProps.value) return false;
+    if (prevProps.label !== nextProps.label) return false;
+    if (prevProps.placeholder !== nextProps.placeholder) return false;
+    if (prevProps.type !== nextProps.type) return false;
+    if (prevProps.onToggle !== nextProps.onToggle) return false;
+    if (prevProps.onChange !== nextProps.onChange) return false;
+    if (prevProps.autoFormat !== nextProps.autoFormat) return false;
+    // All props are equal, skip re-render
+    return true;
+  },
+);
 
 ContactCheckbox.displayName = 'ContactCheckbox';
 
@@ -152,7 +161,7 @@ interface RecommendFormData {
   category: string;
   city: string;
   offers_ids: string[];
-  
+
   // Step 2: Contact (at least one required)
   email: string;
   phone: string;
@@ -225,15 +234,15 @@ const ISLAMIC_CENTER_KEYWORDS = [
 function inferCategoryFromName(name: string): string {
   const lower = name.toLowerCase();
 
-  if (ISLAMIC_CENTER_KEYWORDS.some(keyword => lower.includes(keyword))) {
+  if (ISLAMIC_CENTER_KEYWORDS.some((keyword) => lower.includes(keyword))) {
     return PLACE_TYPE_TO_CATEGORY.islamic_center;
   }
 
-  if (MOSQUE_KEYWORDS.some(keyword => lower.includes(keyword))) {
+  if (MOSQUE_KEYWORDS.some((keyword) => lower.includes(keyword))) {
     return PLACE_TYPE_TO_CATEGORY.mosque;
   }
 
-  if (FOOD_KEYWORDS.some(keyword => lower.includes(keyword))) {
+  if (FOOD_KEYWORDS.some((keyword) => lower.includes(keyword))) {
     return PLACE_TYPE_TO_CATEGORY.restaurant;
   }
 
@@ -256,14 +265,17 @@ interface NominatimCityResult {
   lon: string;
 }
 
-export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }: StreamlinedRecommendFormProps) {
+export function StreamlinedRecommendForm({
+  onSuccess: _onSuccess,
+  initialCity,
+}: StreamlinedRecommendFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { formData: contextFormData, updateFormData, setCreationMode } = useFormData();
   const { t, language } = useLanguage();
   const isMobile = useIsSmallMobile();
   const { user } = useAuth();
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchParams = useSearchParams();
   const showSuccess = searchParams.get('success') === 'true';
@@ -273,7 +285,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const cityInitializedRef = useRef(false); // Track if initial city has been loaded
   const formDataInitializedRef = useRef(false); // Track if form data has been loaded from storage
-  
+
   // City search state
   const [citySearchQuery, setCitySearchQuery] = useState('');
   const [citySearchResults, setCitySearchResults] = useState<NominatimCityResult[]>([]);
@@ -282,7 +294,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
   const citySearchAbortControllerRef = useRef<AbortController | null>(null);
   const [isCitySelected, setIsCitySelected] = useState(!!initialCity);
-  
+
   // Provider name search state
   const providerNameInputRef = useRef<HTMLInputElement>(null);
   const providerNameDropdownRef = useRef<HTMLDivElement>(null);
@@ -292,10 +304,10 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   const [showProviderNameDropdown, setShowProviderNameDropdown] = useState(false);
   const [selectedProviderNameIndex, setSelectedProviderNameIndex] = useState(-1);
   const providerNameSearchAbortControllerRef = useRef<AbortController | null>(null);
-  
+
   // Category auto-selection state
   const [isCategoryAutoSelected, setIsCategoryAutoSelected] = useState(false);
-  
+
   // Initialize form state - use lazy initializer to check localStorage first
   const [formData, setFormData] = useState<RecommendFormData>(() => {
     if (typeof window === 'undefined') {
@@ -322,9 +334,10 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         return {
           ...parsed.formData,
           category: contextFormData.category || parsed.formData.category,
-          offers_ids: (contextFormData.offers_ids && contextFormData.offers_ids.length > 0)
-            ? contextFormData.offers_ids
-            : parsed.formData.offers_ids,
+          offers_ids:
+            contextFormData.offers_ids && contextFormData.offers_ids.length > 0
+              ? contextFormData.offers_ids
+              : parsed.formData.offers_ids,
         };
       }
     } catch (error) {
@@ -397,12 +410,11 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       instagram: false,
     };
   });
-  
 
   // Helper function to load saved recommend form data
   const loadSavedRecommendFormData = useCallback((): SavedRecommendFormData | null => {
     if (typeof window === 'undefined') return null;
-    
+
     try {
       const saved = localStorage.getItem(RECOMMEND_FORM_STORAGE_KEY);
       if (saved) {
@@ -415,19 +427,22 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, []);
 
   // Helper function to save recommend form data
-  const saveRecommendFormData = useCallback((data: RecommendFormData, contacts: typeof selectedContacts) => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const dataToSave: SavedRecommendFormData = {
-        formData: data,
-        selectedContacts: contacts,
-      };
-      localStorage.setItem(RECOMMEND_FORM_STORAGE_KEY, JSON.stringify(dataToSave));
-    } catch (error) {
-      console.error('[StreamlinedRecommendForm] Error saving form data:', error);
-    }
-  }, []);
+  const saveRecommendFormData = useCallback(
+    (data: RecommendFormData, contacts: typeof selectedContacts) => {
+      if (typeof window === 'undefined') return;
+
+      try {
+        const dataToSave: SavedRecommendFormData = {
+          formData: data,
+          selectedContacts: contacts,
+        };
+        localStorage.setItem(RECOMMEND_FORM_STORAGE_KEY, JSON.stringify(dataToSave));
+      } catch (error) {
+        console.error('[StreamlinedRecommendForm] Error saving form data:', error);
+      }
+    },
+    [],
+  );
 
   // Helper function to clear saved recommend form data
   const clearSavedRecommendFormData = useCallback(() => {
@@ -444,7 +459,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   useEffect(() => {
     if (!formDataInitializedRef.current && typeof window !== 'undefined') {
       formDataInitializedRef.current = true;
-      
+
       const saved = loadSavedRecommendFormData();
       if (saved) {
         // Restore form data, but prioritize contextFormData.category/offers if they exist
@@ -453,9 +468,10 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
           ...saved.formData,
           // Use contextFormData category/offers if they exist (newly selected), otherwise use saved
           category: contextFormData.category || saved.formData.category,
-          offers_ids: (contextFormData.offers_ids && contextFormData.offers_ids.length > 0) 
-            ? contextFormData.offers_ids 
-            : saved.formData.offers_ids,
+          offers_ids:
+            contextFormData.offers_ids && contextFormData.offers_ids.length > 0
+              ? contextFormData.offers_ids
+              : saved.formData.offers_ids,
         };
         setFormData(restoredFormData);
         // Restore selected contacts - ensure checkboxes match field values
@@ -486,31 +502,39 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       } else {
         // No saved form data, so initialize from contextFormData or defaults
         if (contextFormData.category) {
-          setFormData(prev => ({ ...prev, category: contextFormData.category }));
+          setFormData((prev) => ({ ...prev, category: contextFormData.category }));
         }
         if (contextFormData.offers_ids && contextFormData.offers_ids.length > 0) {
-          setFormData(prev => ({ ...prev, offers_ids: contextFormData.offers_ids }));
+          setFormData((prev) => ({ ...prev, offers_ids: contextFormData.offers_ids }));
         }
         // Initialize city from initialCity or localStorage
         if (!cityInitializedRef.current) {
           cityInitializedRef.current = true;
-          
+
           // Use initialCity prop if provided and formData.city is empty
           if (initialCity && !formData.city) {
-            setFormData(prev => ({ ...prev, city: initialCity }));
+            setFormData((prev) => ({ ...prev, city: initialCity }));
             setIsCitySelected(true);
           } else if (!formData.city) {
             // Fallback to localStorage/sessionStorage
-            const savedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
+            const savedCity =
+              localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
             if (savedCity) {
-              setFormData(prev => ({ ...prev, city: savedCity }));
+              setFormData((prev) => ({ ...prev, city: savedCity }));
               setIsCitySelected(true);
             }
           }
         }
       }
     }
-  }, [loadSavedRecommendFormData, initialCity, updateFormData, formData.city, contextFormData.category, contextFormData.offers_ids]);
+  }, [
+    loadSavedRecommendFormData,
+    initialCity,
+    updateFormData,
+    formData.city,
+    contextFormData.category,
+    contextFormData.offers_ids,
+  ]);
 
   // City search function
   const searchCities = useCallback(async (query: string) => {
@@ -536,19 +560,19 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       // Use Nominatim search API for cities
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
-        `format=json&` +
-        `q=${encodeURIComponent(query)}&` +
-        `addressdetails=1&` +
-        `limit=10&` +
-        `featuretype=city,town,village&` +
-        `countrycodes=`, // Empty = all countries
+          `format=json&` +
+          `q=${encodeURIComponent(query)}&` +
+          `addressdetails=1&` +
+          `limit=10&` +
+          `featuretype=city,town,village&` +
+          `countrycodes=`, // Empty = all countries
         {
           signal: citySearchAbortControllerRef.current.signal,
           headers: {
             'User-Agent': 'UmmahFlow/1.0', // Required by Nominatim ToS
             'Accept-Language': 'de,en', // Prefer German, fallback to English
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -556,7 +580,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       }
 
       const data: NominatimCityResult[] = await response.json();
-      
+
       // Filter and format results
       const formattedCities = data
         .filter((result) => {
@@ -607,7 +631,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   // Handle city selection from dropdown
   const handleCitySelect = useCallback((city: NominatimCityResult) => {
     const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
-    setFormData(prev => ({ ...prev, city: cityName }));
+    setFormData((prev) => ({ ...prev, city: cityName }));
     setIsCitySelected(true);
     setCitySearchQuery('');
     setCitySearchResults([]);
@@ -619,7 +643,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   // Handle city input change
   const handleCityInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setFormData(prev => ({ ...prev, city: value }));
+    setFormData((prev) => ({ ...prev, city: value }));
     setIsCitySelected(false);
     setCitySearchQuery(value);
     setSelectedCityIndex(-1);
@@ -642,27 +666,32 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, []);
 
   // Handle keyboard navigation for city dropdown
-  const handleCityInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showCityDropdown || citySearchResults.length === 0) {
-      return;
-    }
+  const handleCityInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!showCityDropdown || citySearchResults.length === 0) {
+        return;
+      }
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedCityIndex((prev) => 
-        prev < citySearchResults.length - 1 ? prev + 1 : prev
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedCityIndex((prev) => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === 'Enter' && selectedCityIndex >= 0 && citySearchResults[selectedCityIndex]) {
-      e.preventDefault();
-      handleCitySelect(citySearchResults[selectedCityIndex]);
-    } else if (e.key === 'Escape') {
-      setShowCityDropdown(false);
-      setSelectedCityIndex(-1);
-    }
-  }, [showCityDropdown, citySearchResults, selectedCityIndex, handleCitySelect]);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedCityIndex((prev) => (prev < citySearchResults.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedCityIndex((prev) => (prev > 0 ? prev - 1 : -1));
+      } else if (
+        e.key === 'Enter' &&
+        selectedCityIndex >= 0 &&
+        citySearchResults[selectedCityIndex]
+      ) {
+        e.preventDefault();
+        handleCitySelect(citySearchResults[selectedCityIndex]);
+      } else if (e.key === 'Escape') {
+        setShowCityDropdown(false);
+        setSelectedCityIndex(-1);
+      }
+    },
+    [showCityDropdown, citySearchResults, selectedCityIndex, handleCitySelect],
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -686,47 +715,50 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, [showCityDropdown]);
 
   // Provider name search function
-  const searchProviderNames = useCallback(async (query: string) => {
-    // Cancel previous request
-    if (providerNameSearchAbortControllerRef.current) {
-      providerNameSearchAbortControllerRef.current.abort();
-    }
+  const searchProviderNames = useCallback(
+    async (query: string) => {
+      // Cancel previous request
+      if (providerNameSearchAbortControllerRef.current) {
+        providerNameSearchAbortControllerRef.current.abort();
+      }
 
-    // Create new abort controller
-    providerNameSearchAbortControllerRef.current = new AbortController();
+      // Create new abort controller
+      providerNameSearchAbortControllerRef.current = new AbortController();
 
-    if (query.trim().length < 2) {
-      setProviderNameSearchResults([]);
-      setIsProviderNameSearching(false);
-      setShowProviderNameDropdown(false);
-      return;
-    }
-
-    if (!formData.city || !formData.city.trim() || !isCitySelected) {
-      setProviderNameSearchResults([]);
-      setIsProviderNameSearching(false);
-      setShowProviderNameDropdown(false);
-      return;
-    }
-
-    setIsProviderNameSearching(true);
-    setShowProviderNameDropdown(true);
-
-    try {
-      const places = await searchPlacesInCity(query, formData.city, { limit: 10 });
-      setProviderNameSearchResults(places);
-      setSelectedProviderNameIndex(-1);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        // Request was cancelled, ignore
+      if (query.trim().length < 2) {
+        setProviderNameSearchResults([]);
+        setIsProviderNameSearching(false);
+        setShowProviderNameDropdown(false);
         return;
       }
-      console.error('[Provider Name Search] Error fetching places:', error);
-      setProviderNameSearchResults([]);
-    } finally {
-      setIsProviderNameSearching(false);
-    }
-  }, [formData.city, isCitySelected]);
+
+      if (!formData.city || !formData.city.trim() || !isCitySelected) {
+        setProviderNameSearchResults([]);
+        setIsProviderNameSearching(false);
+        setShowProviderNameDropdown(false);
+        return;
+      }
+
+      setIsProviderNameSearching(true);
+      setShowProviderNameDropdown(true);
+
+      try {
+        const places = await searchPlacesInCity(query, formData.city, { limit: 10 });
+        setProviderNameSearchResults(places);
+        setSelectedProviderNameIndex(-1);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          // Request was cancelled, ignore
+          return;
+        }
+        console.error('[Provider Name Search] Error fetching places:', error);
+        setProviderNameSearchResults([]);
+      } finally {
+        setIsProviderNameSearching(false);
+      }
+    },
+    [formData.city, isCitySelected],
+  );
 
   // Debounced provider name search
   useEffect(() => {
@@ -756,14 +788,14 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     // Get category based on place type
     const categoryId = PLACE_TYPE_TO_CATEGORY[place.placeType] || inferCategoryFromName(place.name);
     setIsCategoryAutoSelected(!!categoryId);
-    
+
     // Format Instagram handle (add @ if not present)
     let instagramValue = place.contact?.instagram || '';
     if (instagramValue && !instagramValue.startsWith('@')) {
       instagramValue = '@' + instagramValue;
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       title: place.name,
       // Auto-select category if mapping exists
@@ -776,7 +808,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     }));
 
     // Auto-select contact checkboxes if data is available
-    setSelectedContacts(prev => ({
+    setSelectedContacts((prev) => ({
       email: !!place.contact?.email || prev.email,
       phone: !!place.contact?.phone || prev.phone,
       website: !!place.contact?.website || prev.website,
@@ -791,27 +823,30 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, []);
 
   // Handle provider name input change
-  const handleProviderNameInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const trimmedValue = value.trim();
-    const clearingProviderName = trimmedValue.length === 0;
+  const handleProviderNameInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      const trimmedValue = value.trim();
+      const clearingProviderName = trimmedValue.length === 0;
 
-    setFormData(prev => ({
-      ...prev,
-      title: value,
-      // Clear category when user clears the field or edits (so auto-selected category doesn't stick)
-      category: clearingProviderName ? '' : (prev.category || ''),
-    }));
+      setFormData((prev) => ({
+        ...prev,
+        title: value,
+        // Clear category when user clears the field or edits (so auto-selected category doesn't stick)
+        category: clearingProviderName ? '' : prev.category || '',
+      }));
 
-    if (clearingProviderName) {
-      setIsCategoryAutoSelected(false);
-      // Clear category in context so the sync effect doesn't restore it
-      updateFormData({ category: '' });
-    }
+      if (clearingProviderName) {
+        setIsCategoryAutoSelected(false);
+        // Clear category in context so the sync effect doesn't restore it
+        updateFormData({ category: '' });
+      }
 
-    setProviderNameSearchQuery(value);
-    setSelectedProviderNameIndex(-1);
-  }, [updateFormData]);
+      setProviderNameSearchQuery(value);
+      setSelectedProviderNameIndex(-1);
+    },
+    [updateFormData],
+  );
 
   // Handle provider name input focus
   const handleProviderNameInputFocus = useCallback(() => {
@@ -830,27 +865,39 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, []);
 
   // Handle keyboard navigation for provider name dropdown
-  const handleProviderNameInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showProviderNameDropdown || providerNameSearchResults.length === 0) {
-      return;
-    }
+  const handleProviderNameInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!showProviderNameDropdown || providerNameSearchResults.length === 0) {
+        return;
+      }
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedProviderNameIndex((prev) => 
-        prev < providerNameSearchResults.length - 1 ? prev + 1 : prev
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedProviderNameIndex((prev) => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === 'Enter' && selectedProviderNameIndex >= 0 && providerNameSearchResults[selectedProviderNameIndex]) {
-      e.preventDefault();
-      handleProviderNameSelect(providerNameSearchResults[selectedProviderNameIndex]);
-    } else if (e.key === 'Escape') {
-      setShowProviderNameDropdown(false);
-      setSelectedProviderNameIndex(-1);
-    }
-  }, [showProviderNameDropdown, providerNameSearchResults, selectedProviderNameIndex, handleProviderNameSelect]);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedProviderNameIndex((prev) =>
+          prev < providerNameSearchResults.length - 1 ? prev + 1 : prev,
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedProviderNameIndex((prev) => (prev > 0 ? prev - 1 : -1));
+      } else if (
+        e.key === 'Enter' &&
+        selectedProviderNameIndex >= 0 &&
+        providerNameSearchResults[selectedProviderNameIndex]
+      ) {
+        e.preventDefault();
+        handleProviderNameSelect(providerNameSearchResults[selectedProviderNameIndex]);
+      } else if (e.key === 'Escape') {
+        setShowProviderNameDropdown(false);
+        setSelectedProviderNameIndex(-1);
+      }
+    },
+    [
+      showProviderNameDropdown,
+      providerNameSearchResults,
+      selectedProviderNameIndex,
+      handleProviderNameSelect,
+    ],
+  );
 
   // Close provider name dropdown when clicking outside
   useEffect(() => {
@@ -891,14 +938,22 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   useEffect(() => {
     // Always sync category if it exists in contextFormData (user just selected it)
     if (contextFormData.category && contextFormData.category !== formData.category) {
-      setFormData(prev => ({ ...prev, category: contextFormData.category }));
+      setFormData((prev) => ({ ...prev, category: contextFormData.category }));
     }
     // Always sync offers_ids if they exist in contextFormData (user just selected them)
-    if (contextFormData.offers_ids && contextFormData.offers_ids.length > 0 && 
-        JSON.stringify(contextFormData.offers_ids) !== JSON.stringify(formData.offers_ids)) {
-      setFormData(prev => ({ ...prev, offers_ids: contextFormData.offers_ids }));
+    if (
+      contextFormData.offers_ids &&
+      contextFormData.offers_ids.length > 0 &&
+      JSON.stringify(contextFormData.offers_ids) !== JSON.stringify(formData.offers_ids)
+    ) {
+      setFormData((prev) => ({ ...prev, offers_ids: contextFormData.offers_ids }));
     }
-  }, [contextFormData.category, contextFormData.offers_ids, formData.category, formData.offers_ids]);
+  }, [
+    contextFormData.category,
+    contextFormData.offers_ids,
+    formData.category,
+    formData.offers_ids,
+  ]);
 
   // Save form data to localStorage whenever it changes
   useEffect(() => {
@@ -908,14 +963,17 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   }, [formData, selectedContacts, saveRecommendFormData]);
 
   // Helper to get category name - memoized
-  const getCategoryName = useCallback((categoryId: string) => {
-    const category = categories.find(c => c.category_id === categoryId);
-    if (!category) return '';
-    if (language === 'en') {
-      return category.name_en || category.name_de || '';
-    }
-    return category.name_de || category.name_en || '';
-  }, [categories, language]);
+  const getCategoryName = useCallback(
+    (categoryId: string) => {
+      const category = categories.find((c) => c.category_id === categoryId);
+      if (!category) return '';
+      if (language === 'en') {
+        return category.name_en || category.name_de || '';
+      }
+      return category.name_de || category.name_en || '';
+    },
+    [categories, language],
+  );
 
   // Memoize category name display to prevent re-renders
   // Use useState to avoid hydration mismatch (categories may not be loaded during SSR)
@@ -939,13 +997,25 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   // Validation - memoized to prevent unnecessary re-renders
   const isFormValid = useMemo(() => {
     const hasBasics = !!formData.title && !!formData.category && isCitySelected;
-    const hasContact = 
+    const hasContact =
       (selectedContacts.email && formData.email.trim().length > 0) ||
       (selectedContacts.phone && formData.phone.trim().length > 0) ||
       (selectedContacts.website && formData.website.trim().length > 0) ||
       (selectedContacts.instagram && formData.instagram.trim().length > 0);
     return hasBasics && hasContact;
-  }, [formData.title, formData.category, formData.email, formData.phone, formData.website, formData.instagram, selectedContacts.email, selectedContacts.phone, selectedContacts.website, selectedContacts.instagram, isCitySelected]);
+  }, [
+    formData.title,
+    formData.category,
+    formData.email,
+    formData.phone,
+    formData.website,
+    formData.instagram,
+    selectedContacts.email,
+    selectedContacts.phone,
+    selectedContacts.website,
+    selectedContacts.instagram,
+    isCitySelected,
+  ]);
 
   const handleBack = useCallback(() => {
     router.push('/');
@@ -1011,14 +1081,13 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       return;
     }
 
-
     try {
       setIsSubmitting(true);
 
       // Prepare formData for service function
       // Use authenticated user's email if available, otherwise use form input
       const userEmail = user?.email || formData.userEmail;
-      
+
       const serviceFormData = {
         ...contextFormData,
         title: formData.title,
@@ -1050,7 +1119,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       await createProviderOrService(
         serviceFormData,
         user || null, // Pass authenticated user if available, otherwise null for anonymous
-        true // Recommendation mode
+        true, // Recommendation mode
       );
 
       // Clear form data
@@ -1066,7 +1135,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
         description: '',
       });
       // Also clear local userEmail state
-      setFormData(prev => ({ ...prev, userEmail: '' }));
+      setFormData((prev) => ({ ...prev, userEmail: '' }));
       // Clear selected contacts
       setSelectedContacts({
         email: false,
@@ -1088,7 +1157,18 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     } finally {
       setIsSubmitting(false);
     }
-    }, [formData, isFormValid, contextFormData, isCitySelected, updateFormData, queryClient, router, t, clearSavedRecommendFormData, user]);
+  }, [
+    formData,
+    isFormValid,
+    contextFormData,
+    isCitySelected,
+    updateFormData,
+    queryClient,
+    router,
+    t,
+    clearSavedRecommendFormData,
+    user,
+  ]);
 
   // Navigate to category selection
   const handleSelectCategory = useCallback(() => {
@@ -1109,42 +1189,42 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
 
   // Memoized handlers for ContactCheckbox components to prevent unnecessary re-renders
   const handleEmailChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, email: value }));
+    setFormData((prev) => ({ ...prev, email: value }));
   }, []);
 
   const handleEmailToggle = useCallback(() => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const wasChecked = prev.email;
       if (wasChecked) {
-        setFormData(prevForm => ({ ...prevForm, email: '' }));
+        setFormData((prevForm) => ({ ...prevForm, email: '' }));
       }
       return { ...prev, email: !prev.email };
     });
   }, []);
 
   const handleWebsiteChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, website: value }));
+    setFormData((prev) => ({ ...prev, website: value }));
   }, []);
 
   const handleWebsiteToggle = useCallback(() => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const wasChecked = prev.website;
       if (wasChecked) {
-        setFormData(prevForm => ({ ...prevForm, website: '' }));
+        setFormData((prevForm) => ({ ...prevForm, website: '' }));
       }
       return { ...prev, website: !prev.website };
     });
   }, []);
 
   const handlePhoneChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, phone: value }));
+    setFormData((prev) => ({ ...prev, phone: value }));
   }, []);
 
   const handlePhoneToggle = useCallback(() => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const wasChecked = prev.phone;
       if (wasChecked) {
-        setFormData(prevForm => ({ ...prevForm, phone: '' }));
+        setFormData((prevForm) => ({ ...prevForm, phone: '' }));
       }
       return { ...prev, phone: !prev.phone };
     });
@@ -1156,14 +1236,14 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     if (formattedValue && !formattedValue.startsWith('@')) {
       formattedValue = '@' + formattedValue;
     }
-    setFormData(prev => ({ ...prev, instagram: formattedValue }));
+    setFormData((prev) => ({ ...prev, instagram: formattedValue }));
   }, []);
 
   const handleInstagramToggle = useCallback(() => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const wasChecked = prev.instagram;
       if (wasChecked) {
-        setFormData(prevForm => ({ ...prevForm, instagram: '' }));
+        setFormData((prevForm) => ({ ...prevForm, instagram: '' }));
       }
       return { ...prev, instagram: !prev.instagram };
     });
@@ -1182,30 +1262,31 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
   // Show success screen if submission was successful
   if (showSuccess) {
     return (
-      <RecommendSuccessScreen
-        onGoBack={handleGoBack}
-        onRecommendAnother={handleRecommendAnother}
-      />
+      <RecommendSuccessScreen onGoBack={handleGoBack} onRecommendAnother={handleRecommendAnother} />
     );
   }
 
   return (
-    <div className={cn(
-      'flex flex-col gap-6',
-      // Add extra bottom padding on mobile to account for fixed FooterAction
-      isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8'
-    )}>
+    <div
+      className={cn(
+        'flex flex-col gap-6',
+        // Add extra bottom padding on mobile to account for fixed FooterAction
+        isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8',
+      )}
+    >
       {/* Section 1: Basics */}
       <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.step1Title')}</h2>
-        
+        <h2 className="text-lg font-semibold text-content-heading">
+          {t('create.recommend.step1Title')}
+        </h2>
+
         <div className="flex flex-col gap-3">
           {/* City */}
           <div className="relative">
             <div
               className={cn(
-                'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 cursor-text',
-                showCityValidation && 'border-warning/40'
+                'flex h-[56px] w-full cursor-text items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+                showCityValidation && 'border-warning/40',
               )}
               role="presentation"
               onClick={() => cityInputRef.current?.focus()}
@@ -1237,12 +1318,12 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                 />
               )}
             </div>
-            
+
             {/* City Search Dropdown */}
             {showCityDropdown && (
               <div
                 ref={cityDropdownRef}
-                className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+                className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
                 id="city-search-results"
                 role="listbox"
               >
@@ -1261,7 +1342,11 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                   </div>
                 ) : (
                   citySearchResults.map((city, index) => {
-                    const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
+                    const cityName =
+                      city.address?.city ||
+                      city.address?.town ||
+                      city.address?.village ||
+                      city.name;
                     const country = normalizeCountryNameForDisplay(city.address?.country || '');
                     const isSelected = index === selectedCityIndex;
 
@@ -1272,7 +1357,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                         className={cn(
                           'w-full px-4 py-3 text-left transition-colors',
                           'hover:bg-neutral-muted',
-                          isSelected && 'bg-primary/5'
+                          isSelected && 'bg-primary/5',
                         )}
                         role="option"
                         type="button"
@@ -1283,9 +1368,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                           <span className="text-[15px] font-medium text-content-heading">
                             {cityName}
                           </span>
-                          {country && (
-                            <span className="text-xs text-content-muted">{country}</span>
-                          )}
+                          {country && <span className="text-xs text-content-muted">{country}</span>}
                         </div>
                       </button>
                     );
@@ -1319,7 +1402,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                   aria-label={t('create.recommend.providerName')}
                   className={cn(
                     'h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0',
-                    !isCitySelected && 'opacity-50 cursor-not-allowed'
+                    !isCitySelected && 'cursor-not-allowed opacity-50',
                   )}
                   placeholder={t('create.recommend.providerNamePlaceholder')}
                   role="combobox"
@@ -1338,12 +1421,12 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                 />
               )}
             </div>
-            
+
             {/* Provider Name Search Dropdown */}
             {showProviderNameDropdown && (
               <div
                 ref={providerNameDropdownRef}
-                className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+                className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
                 id="provider-name-search-results"
                 role="listbox"
               >
@@ -1371,7 +1454,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                         className={cn(
                           'w-full px-4 py-3 text-left transition-colors',
                           'hover:bg-neutral-muted',
-                          isSelected && 'bg-primary/5'
+                          isSelected && 'bg-primary/5',
                         )}
                         role="option"
                         type="button"
@@ -1383,14 +1466,20 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                             <Icon
                               className={cn(
                                 'h-4 w-4 flex-shrink-0',
-                                place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'text-primary' : 'text-content-muted'
+                                place.placeType === 'mosque' || place.placeType === 'islamic_center'
+                                  ? 'text-primary'
+                                  : 'text-content-muted',
                               )}
                               icon={
-                                place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'mdi:mosque' :
-                                place.placeType === 'restaurant' ? 'mdi:silverware-fork-knife' :
-                                place.placeType === 'fast_food' ? 'mdi:food' :
-                                place.placeType === 'shop' ? 'mdi:store' :
-                                'mdi:map-marker'
+                                place.placeType === 'mosque' || place.placeType === 'islamic_center'
+                                  ? 'mdi:mosque'
+                                  : place.placeType === 'restaurant'
+                                    ? 'mdi:silverware-fork-knife'
+                                    : place.placeType === 'fast_food'
+                                      ? 'mdi:food'
+                                      : place.placeType === 'shop'
+                                        ? 'mdi:store'
+                                        : 'mdi:map-marker'
                               }
                             />
                             <span className="text-[15px] font-medium text-content-heading">
@@ -1399,7 +1488,9 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                           </div>
                           {place.address?.city && (
                             <div className="flex items-center gap-1 pl-6">
-                              <span className="text-xs text-content-muted">{place.address.city}</span>
+                              <span className="text-xs text-content-muted">
+                                {place.address.city}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -1409,7 +1500,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                 )}
               </div>
             )}
-            
+
             {/* Helper text - show when city is not selected */}
             {!isCitySelected && (
               <div className="mt-1 text-xs text-content-muted">
@@ -1419,9 +1510,9 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
           </div>
 
           {/* Category */}
-          <div 
+          <div
             aria-label={t('create.recommend.selectCategory')}
-            className="flex h-[56px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2 cursor-pointer relative"
+            className="relative flex h-[56px] w-full cursor-pointer items-center rounded-2xl border border-border bg-white px-3 py-2"
             role="button"
             tabIndex={0}
             onClick={handleSelectCategory}
@@ -1449,7 +1540,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                 {t('create.importOsm.autoSelectedCategory')}
               </span>
             )}
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center flex-shrink-0">
+            <div className="absolute right-3 top-1/2 flex flex-shrink-0 -translate-y-1/2 items-center justify-center">
               <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
             </div>
           </div>
@@ -1459,10 +1550,10 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       {/* Section 2: Contact */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.contactTitle')}</h2>
-          <p className="text-base text-content-muted">
-            {t('create.recommend.contactDescription')}
-          </p>
+          <h2 className="text-lg font-semibold text-content-heading">
+            {t('create.recommend.contactTitle')}
+          </h2>
+          <p className="text-base text-content-muted">{t('create.recommend.contactDescription')}</p>
         </div>
 
         {/* Contact Checkboxes */}
@@ -1513,7 +1604,9 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       {!user && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h2>
+            <h2 className="text-lg font-semibold text-content-heading">
+              {t('create.recommend.userEmailTitle')}
+            </h2>
             <p className="text-base text-content-muted">
               {t('create.recommend.userEmailDescription')}
             </p>
@@ -1536,7 +1629,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                   onChange={(e) => {
                     const newValue = e.target.value;
                     const cursorPosition = e.target.selectionStart || newValue.length;
-                    setFormData(prev => ({ ...prev, userEmail: newValue }));
+                    setFormData((prev) => ({ ...prev, userEmail: newValue }));
                     // Maintain focus and cursor position after state update
                     setTimeout(() => {
                       if (userEmailInputRef.current) {
@@ -1555,8 +1648,8 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
                 {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
                 <Link className="underline hover:text-primary" href="/terms">
                   {t('legal.termsOfService')}
-                </Link>
-                {' '}{t('legal.and')}{' '}
+                </Link>{' '}
+                {t('legal.and')}{' '}
                 <Link className="underline hover:text-primary" href="/privacy-policy">
                   {t('legal.privacyPolicy')}
                 </Link>
@@ -1570,10 +1663,10 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       {/* Section 4: Message (Optional) */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.message')}</h2>
-          <p className="text-base text-content-muted">
-            {t('common.optional')}
-          </p>
+          <h2 className="text-lg font-semibold text-content-heading">
+            {t('create.recommend.message')}
+          </h2>
+          <p className="text-base text-content-muted">{t('common.optional')}</p>
         </div>
 
         <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-border bg-white px-3 py-2">
@@ -1586,7 +1679,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
               className="min-h-[100px] w-full resize-none border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
               placeholder={t('create.recommend.messagePlaceholder')}
               value={formData.message}
-              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
             />
           </div>
         </div>
@@ -1609,11 +1702,7 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
       {/* Desktop Actions */}
       {!isMobile && (
         <div className="flex gap-4 pt-4">
-          <Button
-            disabled={isSubmitting}
-            variant="secondary"
-            onClick={handleBack}
-          >
+          <Button disabled={isSubmitting} variant="secondary" onClick={handleBack}>
             {t('common.cancel')}
           </Button>
           <Button
@@ -1630,4 +1719,3 @@ export function StreamlinedRecommendForm({ onSuccess: _onSuccess, initialCity }:
     </div>
   );
 }
-

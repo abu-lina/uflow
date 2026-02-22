@@ -26,47 +26,44 @@ interface ContactCheckboxProps {
  * BuggyContactCheckbox — reproduces the broken behavior (auto-focus on mount).
  * This is used only in the "Red" phase to prove the test catches the bug.
  */
-const BuggyContactCheckbox = memo(({
-  label,
-  checked,
-  value,
-  placeholder,
-  type = 'text',
-  onToggle,
-  onChange,
-}: ContactCheckboxProps) => {
-  const inputRef = useRef<HTMLInputElement>(null);
+const BuggyContactCheckbox = memo(
+  ({
+    label,
+    checked,
+    value,
+    placeholder,
+    type = 'text',
+    onToggle,
+    onChange,
+  }: ContactCheckboxProps) => {
+    const inputRef = useRef<HTMLInputElement>(null);
 
-  // BUG: This fires on mount when checked is initially true (restored from localStorage)
-  useEffect(() => {
-    if (checked && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [checked]);
+    // BUG: This fires on mount when checked is initially true (restored from localStorage)
+    useEffect(() => {
+      if (checked && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [checked]);
 
-  return (
-    <div
-      aria-checked={checked}
-      role="checkbox"
-      tabIndex={0}
-      onClick={onToggle}
-    >
-      {checked ? (
-        <input
-          ref={inputRef}
-          aria-label={label}
-          placeholder={placeholder}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-        />
-      ) : (
-        <span>{label}</span>
-      )}
-    </div>
-  );
-});
+    return (
+      <div aria-checked={checked} role="checkbox" tabIndex={0} onClick={onToggle}>
+        {checked ? (
+          <input
+            ref={inputRef}
+            aria-label={label}
+            placeholder={placeholder}
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span>{label}</span>
+        )}
+      </div>
+    );
+  },
+);
 BuggyContactCheckbox.displayName = 'BuggyContactCheckbox';
 
 /**
@@ -75,54 +72,51 @@ BuggyContactCheckbox.displayName = 'BuggyContactCheckbox';
  * NOT on initial mount, programmatic state changes, or autocomplete auto-selection.
  * Uses a userToggledRef that is set only inside the component's own click/key handlers.
  */
-const FixedContactCheckbox = memo(({
-  label,
-  checked,
-  value,
-  placeholder,
-  type = 'text',
-  onToggle,
-  onChange,
-}: ContactCheckboxProps) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const userToggledRef = useRef(false);
+const FixedContactCheckbox = memo(
+  ({
+    label,
+    checked,
+    value,
+    placeholder,
+    type = 'text',
+    onToggle,
+    onChange,
+  }: ContactCheckboxProps) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const userToggledRef = useRef(false);
 
-  // Focus input only when the toggle was initiated by a user action inside this component
-  useEffect(() => {
-    if (userToggledRef.current && checked && inputRef.current) {
-      inputRef.current.focus();
-    }
-    userToggledRef.current = false;
-  }, [checked]);
+    // Focus input only when the toggle was initiated by a user action inside this component
+    useEffect(() => {
+      if (userToggledRef.current && checked && inputRef.current) {
+        inputRef.current.focus();
+      }
+      userToggledRef.current = false;
+    }, [checked]);
 
-  const handleToggle = useCallback(() => {
-    userToggledRef.current = true;
-    onToggle();
-  }, [onToggle]);
+    const handleToggle = useCallback(() => {
+      userToggledRef.current = true;
+      onToggle();
+    }, [onToggle]);
 
-  return (
-    <div
-      aria-checked={checked}
-      role="checkbox"
-      tabIndex={0}
-      onClick={handleToggle}
-    >
-      {checked ? (
-        <input
-          ref={inputRef}
-          aria-label={label}
-          placeholder={placeholder}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-        />
-      ) : (
-        <span>{label}</span>
-      )}
-    </div>
-  );
-});
+    return (
+      <div aria-checked={checked} role="checkbox" tabIndex={0} onClick={handleToggle}>
+        {checked ? (
+          <input
+            ref={inputRef}
+            aria-label={label}
+            placeholder={placeholder}
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span>{label}</span>
+        )}
+      </div>
+    );
+  },
+);
 FixedContactCheckbox.displayName = 'FixedContactCheckbox';
 
 // ---- Tests ----
@@ -139,18 +133,14 @@ describe('ContactCheckbox focus management', () => {
 
   describe('when mounted with checked=true (restored from localStorage)', () => {
     it('BuggyContactCheckbox auto-focuses on mount (proves the bug exists)', () => {
-      render(
-        <BuggyContactCheckbox {...defaultProps} checked={true} />
-      );
+      render(<BuggyContactCheckbox {...defaultProps} checked={true} />);
       const input = screen.getByRole('textbox', { name: 'Instagram' });
       // The buggy version DOES focus on mount — this is the behavior we want to eliminate
       expect(document.activeElement).toBe(input);
     });
 
     it('FixedContactCheckbox does NOT auto-focus on mount', () => {
-      render(
-        <FixedContactCheckbox {...defaultProps} checked={true} />
-      );
+      render(<FixedContactCheckbox {...defaultProps} checked={true} />);
       const input = screen.getByRole('textbox', { name: 'Instagram' });
       // The fixed version should NOT focus the input on initial render
       expect(document.activeElement).not.toBe(input);
@@ -223,9 +213,7 @@ describe('ContactCheckbox focus management', () => {
   describe('when re-rendered with checked=true (e.g., parent re-render)', () => {
     it('FixedContactCheckbox does NOT re-focus on subsequent re-renders', () => {
       // Render initially checked
-      const { rerender } = render(
-        <FixedContactCheckbox {...defaultProps} checked={true} />
-      );
+      const { rerender } = render(<FixedContactCheckbox {...defaultProps} checked={true} />);
       const input = screen.getByRole('textbox', { name: 'Instagram' });
 
       // Confirm no focus on mount
@@ -234,9 +222,7 @@ describe('ContactCheckbox focus management', () => {
       // Blur the input explicitly, then re-render with same props
       input.blur();
 
-      rerender(
-        <FixedContactCheckbox {...defaultProps} checked={true} />
-      );
+      rerender(<FixedContactCheckbox {...defaultProps} checked={true} />);
 
       // Should still not be focused after re-render with same checked value
       expect(document.activeElement).not.toBe(input);

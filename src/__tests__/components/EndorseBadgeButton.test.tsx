@@ -47,13 +47,7 @@ describe('EndorseBadgeButton', () => {
 
   describe('Unauthenticated user', () => {
     it('should render a confirm button that indicates login is required', () => {
-      render(
-        <EndorseBadgeButton
-          badge={mockBadge}
-          userId={null}
-          onEndorsementChange={vi.fn()}
-        />,
-      );
+      render(<EndorseBadgeButton badge={mockBadge} userId={null} onEndorsementChange={vi.fn()} />);
       const button = screen.getByRole('button', { name: /confirm|bestätigen/i });
       expect(button).toBeInTheDocument();
     });
@@ -62,11 +56,7 @@ describe('EndorseBadgeButton', () => {
   describe('Authenticated user - not yet confirmed', () => {
     it('should render confirm button', () => {
       render(
-        <EndorseBadgeButton
-          badge={mockBadge}
-          userId="user-123"
-          onEndorsementChange={vi.fn()}
-        />,
+        <EndorseBadgeButton badge={mockBadge} userId="user-123" onEndorsementChange={vi.fn()} />,
       );
       const button = screen.getByRole('button', { name: /confirm|bestätigen/i });
       expect(button).toBeInTheDocument();
@@ -92,11 +82,7 @@ describe('EndorseBadgeButton', () => {
   describe('Accessibility', () => {
     it('should have accessible label describing the action', () => {
       render(
-        <EndorseBadgeButton
-          badge={mockBadge}
-          userId="user-123"
-          onEndorsementChange={vi.fn()}
-        />,
+        <EndorseBadgeButton badge={mockBadge} userId="user-123" onEndorsementChange={vi.fn()} />,
       );
       const button = screen.getByRole('button');
       expect(button).toHaveAttribute('aria-label');

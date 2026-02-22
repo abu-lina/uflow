@@ -10,7 +10,9 @@ interface TrustBadgesSectionProps {
   badges: (BadgeWithConfirmationStatus | ProviderBadgeWithType)[];
   isLoading: boolean;
   /** Optional: render endorsement controls per badge */
-  renderEndorsement?: (badge: BadgeWithConfirmationStatus | ProviderBadgeWithType) => React.ReactNode;
+  renderEndorsement?: (
+    badge: BadgeWithConfirmationStatus | ProviderBadgeWithType,
+  ) => React.ReactNode;
 }
 
 /**
@@ -33,10 +35,7 @@ export function TrustBadgesSection({
   // Loading state
   if (isLoading) {
     return (
-      <div
-        className="rounded-2xl bg-white p-4 shadow-sm lg:p-6"
-        data-testid="trust-badges-loading"
-      >
+      <div className="rounded-2xl bg-white p-4 shadow-sm lg:p-6" data-testid="trust-badges-loading">
         <div className="animate-pulse">
           <div className="mb-4 h-6 w-48 rounded bg-gray-200" />
           <div className="flex flex-wrap gap-2">
@@ -62,7 +61,7 @@ export function TrustBadgesSection({
   };
 
   const sortedBadges = [...badges].sort(
-    (a, b) => (trustOrder[a.trust_level] ?? 3) - (trustOrder[b.trust_level] ?? 3)
+    (a, b) => (trustOrder[a.trust_level] ?? 3) - (trustOrder[b.trust_level] ?? 3),
   );
 
   return (
@@ -73,23 +72,20 @@ export function TrustBadgesSection({
 
       <div className="mt-3 space-y-3 lg:mt-4">
         {sortedBadges.map((badge) => (
-          <div
-            key={badge.id}
-            className="flex items-center justify-between gap-3"
-          >
+          <div key={badge.id} className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <BadgeLabel
-                badge={badge}
-                language={language === 'de' ? 'de' : 'en'}
-                size="md"
-              />
+              <BadgeLabel badge={badge} language={language === 'de' ? 'de' : 'en'} size="md" />
               {/* Aggregate confirmation count — privacy safe (no user identities) */}
               {badge.confirmation_count > 0 && (
                 <span className="text-sm text-gray-500">
                   {badge.confirmation_count}{' '}
                   {badge.confirmation_count === 1
-                    ? (language === 'en' ? 'confirmation' : 'Bestätigung')
-                    : (language === 'en' ? 'confirmations' : 'Bestätigungen')}
+                    ? language === 'en'
+                      ? 'confirmation'
+                      : 'Bestätigung'
+                    : language === 'en'
+                      ? 'confirmations'
+                      : 'Bestätigungen'}
                 </span>
               )}
             </div>

@@ -55,101 +55,110 @@ interface ContactCheckboxProps {
   autoFormat?: (value: string) => string;
 }
 
-const ContactCheckbox = memo(({
-  label,
-  checked,
-  value,
-  placeholder,
-  type = 'text',
-  onToggle,
-  onChange,
-  autoFormat,
-}: ContactCheckboxProps) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const userToggledRef = useRef(false);
+const ContactCheckbox = memo(
+  ({
+    label,
+    checked,
+    value,
+    placeholder,
+    type = 'text',
+    onToggle,
+    onChange,
+    autoFormat,
+  }: ContactCheckboxProps) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const userToggledRef = useRef(false);
 
-  // Focus input only when the toggle was initiated by a user action inside this component
-  useEffect(() => {
-    if (userToggledRef.current && checked && inputRef.current) {
-      inputRef.current.focus();
-    }
-    userToggledRef.current = false;
-  }, [checked]);
+    // Focus input only when the toggle was initiated by a user action inside this component
+    useEffect(() => {
+      if (userToggledRef.current && checked && inputRef.current) {
+        inputRef.current.focus();
+      }
+      userToggledRef.current = false;
+    }, [checked]);
 
-  const handleToggle = useCallback(() => {
-    userToggledRef.current = true;
-    onToggle();
-  }, [onToggle]);
+    const handleToggle = useCallback(() => {
+      userToggledRef.current = true;
+      onToggle();
+    }, [onToggle]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleToggle();
-    }
-  }, [handleToggle]);
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleToggle();
+        }
+      },
+      [handleToggle],
+    );
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = autoFormat ? autoFormat(e.target.value) : e.target.value;
-    onChange(newValue);
-  }, [onChange, autoFormat]);
+    const handleInputChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = autoFormat ? autoFormat(e.target.value) : e.target.value;
+        onChange(newValue);
+      },
+      [onChange, autoFormat],
+    );
 
-  return (
-    <div
-      aria-checked={checked}
-      className={cn(
-        'flex w-full items-center rounded-2xl border border-border bg-white px-3 py-2 cursor-pointer transition-[height,min-height]',
-        checked ? 'min-h-[54px]' : 'h-[54px]'
-      )}
-      role="checkbox"
-      tabIndex={0}
-      onClick={handleToggle}
-      onKeyDown={handleKeyDown}
-    >
-      <div className="flex w-full flex-row items-center gap-2">
-        <div className="flex-shrink-0">
-          <Icon
-            className="h-6 w-6 text-content"
-            icon={checked ? 'lucide:square-check' : 'lucide:square'}
-          />
-        </div>
-        <div className="flex flex-1 flex-col gap-1">
-          {checked ? (
-            <>
-              <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+    return (
+      <div
+        aria-checked={checked}
+        className={cn(
+          'flex w-full cursor-pointer items-center rounded-2xl border border-border bg-white px-3 py-2 transition-[height,min-height]',
+          checked ? 'min-h-[54px]' : 'h-[54px]',
+        )}
+        role="checkbox"
+        tabIndex={0}
+        onClick={handleToggle}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="flex w-full flex-row items-center gap-2">
+          <div className="flex-shrink-0">
+            <Icon
+              className="h-6 w-6 text-content"
+              icon={checked ? 'lucide:square-check' : 'lucide:square'}
+            />
+          </div>
+          <div className="flex flex-1 flex-col gap-1">
+            {checked ? (
+              <>
+                <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
+                  {label}
+                </label>
+                <input
+                  ref={inputRef}
+                  aria-label={label}
+                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
+                  placeholder={placeholder}
+                  type={type}
+                  value={value}
+                  onChange={handleInputChange}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </>
+            ) : (
+              <span className="font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
                 {label}
-              </label>
-              <input
-                ref={inputRef}
-                aria-label={label}
-                className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                placeholder={placeholder}
-                type={type}
-                value={value}
-                onChange={handleInputChange}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              />
-            </>
-          ) : (
-            <span className="font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
-              {label}
-            </span>
-          )}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  if (prevProps.checked !== nextProps.checked) return false;
-  if (prevProps.value !== nextProps.value) return false;
-  if (prevProps.label !== nextProps.label) return false;
-  if (prevProps.placeholder !== nextProps.placeholder) return false;
-  if (prevProps.type !== nextProps.type) return false;
-  if (prevProps.onToggle !== nextProps.onToggle) return false;
-  if (prevProps.onChange !== nextProps.onChange) return false;
-  if (prevProps.autoFormat !== nextProps.autoFormat) return false;
-  return true;
-});
+    );
+  },
+  (prevProps, nextProps) => {
+    if (prevProps.checked !== nextProps.checked) return false;
+    if (prevProps.value !== nextProps.value) return false;
+    if (prevProps.label !== nextProps.label) return false;
+    if (prevProps.placeholder !== nextProps.placeholder) return false;
+    if (prevProps.type !== nextProps.type) return false;
+    if (prevProps.onToggle !== nextProps.onToggle) return false;
+    if (prevProps.onChange !== nextProps.onChange) return false;
+    if (prevProps.autoFormat !== nextProps.autoFormat) return false;
+    return true;
+  },
+);
 
 ContactCheckbox.displayName = 'ContactCheckbox';
 
@@ -233,35 +242,38 @@ const ISLAMIC_CENTER_KEYWORDS = [
 function inferCategoryFromName(name: string): string {
   const lower = name.toLowerCase();
 
-  if (ISLAMIC_CENTER_KEYWORDS.some(keyword => lower.includes(keyword))) {
+  if (ISLAMIC_CENTER_KEYWORDS.some((keyword) => lower.includes(keyword))) {
     return PLACE_TYPE_TO_CATEGORY.islamic_center;
   }
 
-  if (MOSQUE_KEYWORDS.some(keyword => lower.includes(keyword))) {
+  if (MOSQUE_KEYWORDS.some((keyword) => lower.includes(keyword))) {
     return PLACE_TYPE_TO_CATEGORY.mosque;
   }
 
-  if (FOOD_KEYWORDS.some(keyword => lower.includes(keyword))) {
+  if (FOOD_KEYWORDS.some((keyword) => lower.includes(keyword))) {
     return PLACE_TYPE_TO_CATEGORY.restaurant;
   }
 
   return '';
 }
 
-export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: StreamlinedImportFormProps) {
+export function StreamlinedImportForm({
+  onSuccess: _onSuccess,
+  initialCity,
+}: StreamlinedImportFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { formData: contextFormData, updateFormData, setCreationMode } = useFormData();
   const { t, language } = useLanguage();
   const isMobile = useIsSmallMobile();
   const { user } = useAuth();
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchParams = useSearchParams();
   const showSuccess = searchParams.get('success') === 'true';
   const [categories, setCategories] = useState<Category[]>([]);
   const [isCategoryAutoSelected, setIsCategoryAutoSelected] = useState(false);
-  
+
   // City search state
   const cityInputRef = useRef<HTMLInputElement>(null);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
@@ -366,7 +378,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
   // Initialize city from initialCity prop
   useEffect(() => {
     if (!hasInitializedCityRef.current && initialCity && !formData.city) {
-      setFormData(prev => ({ ...prev, city: initialCity }));
+      setFormData((prev) => ({ ...prev, city: initialCity }));
       setIsCitySelected(true);
       hasInitializedCityRef.current = true;
     }
@@ -409,19 +421,19 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
       // Use Nominatim search API for cities
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
-        `format=json&` +
-        `q=${encodeURIComponent(query)}&` +
-        `addressdetails=1&` +
-        `limit=10&` +
-        `featuretype=city,town,village&` +
-        `countrycodes=`, // Empty = all countries
+          `format=json&` +
+          `q=${encodeURIComponent(query)}&` +
+          `addressdetails=1&` +
+          `limit=10&` +
+          `featuretype=city,town,village&` +
+          `countrycodes=`, // Empty = all countries
         {
           signal: citySearchAbortControllerRef.current.signal,
           headers: {
             'User-Agent': 'UmmahFlow/1.0', // Required by Nominatim ToS
             'Accept-Language': 'de,en', // Prefer German, fallback to English
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -429,7 +441,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
       }
 
       const data: NominatimCityResult[] = await response.json();
-      
+
       // Filter and format results
       const formattedCities = data
         .filter((result) => {
@@ -480,7 +492,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
   // Handle city selection from dropdown
   const handleCitySelect = useCallback((city: NominatimCityResult) => {
     const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
-    setFormData(prev => ({ ...prev, city: cityName }));
+    setFormData((prev) => ({ ...prev, city: cityName }));
     setIsCitySelected(true);
     setCitySearchQuery('');
     setCitySearchResults([]);
@@ -492,7 +504,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
   // Handle city input change
   const handleCityInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setFormData(prev => ({ ...prev, city: value }));
+    setFormData((prev) => ({ ...prev, city: value }));
     setIsCitySelected(false);
     setCitySearchQuery(value);
     setSelectedCityIndex(-1);
@@ -515,27 +527,32 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
   }, []);
 
   // Handle keyboard navigation for city dropdown
-  const handleCityInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showCityDropdown || citySearchResults.length === 0) {
-      return;
-    }
+  const handleCityInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!showCityDropdown || citySearchResults.length === 0) {
+        return;
+      }
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedCityIndex((prev) => 
-        prev < citySearchResults.length - 1 ? prev + 1 : prev
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedCityIndex((prev) => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === 'Enter' && selectedCityIndex >= 0 && citySearchResults[selectedCityIndex]) {
-      e.preventDefault();
-      handleCitySelect(citySearchResults[selectedCityIndex]);
-    } else if (e.key === 'Escape') {
-      setShowCityDropdown(false);
-      setSelectedCityIndex(-1);
-    }
-  }, [showCityDropdown, citySearchResults, selectedCityIndex, handleCitySelect]);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedCityIndex((prev) => (prev < citySearchResults.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedCityIndex((prev) => (prev > 0 ? prev - 1 : -1));
+      } else if (
+        e.key === 'Enter' &&
+        selectedCityIndex >= 0 &&
+        citySearchResults[selectedCityIndex]
+      ) {
+        e.preventDefault();
+        handleCitySelect(citySearchResults[selectedCityIndex]);
+      } else if (e.key === 'Escape') {
+        setShowCityDropdown(false);
+        setSelectedCityIndex(-1);
+      }
+    },
+    [showCityDropdown, citySearchResults, selectedCityIndex, handleCitySelect],
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -577,47 +594,50 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
   }, [formData, selectedContacts]);
 
   // Provider name search function
-  const searchProviderNames = useCallback(async (query: string) => {
-    // Cancel previous request
-    if (providerNameSearchAbortControllerRef.current) {
-      providerNameSearchAbortControllerRef.current.abort();
-    }
+  const searchProviderNames = useCallback(
+    async (query: string) => {
+      // Cancel previous request
+      if (providerNameSearchAbortControllerRef.current) {
+        providerNameSearchAbortControllerRef.current.abort();
+      }
 
-    // Create new abort controller
-    providerNameSearchAbortControllerRef.current = new AbortController();
+      // Create new abort controller
+      providerNameSearchAbortControllerRef.current = new AbortController();
 
-    if (query.trim().length < 2) {
-      setProviderNameSearchResults([]);
-      setIsProviderNameSearching(false);
-      setShowProviderNameDropdown(false);
-      return;
-    }
-
-    if (!formData.city || !formData.city.trim() || !isCitySelected) {
-      setProviderNameSearchResults([]);
-      setIsProviderNameSearching(false);
-      setShowProviderNameDropdown(false);
-      return;
-    }
-
-    setIsProviderNameSearching(true);
-    setShowProviderNameDropdown(true);
-
-    try {
-      const places = await searchPlacesInCity(query, formData.city, { limit: 10 });
-      setProviderNameSearchResults(places);
-      setSelectedProviderNameIndex(-1);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        // Request was cancelled, ignore
+      if (query.trim().length < 2) {
+        setProviderNameSearchResults([]);
+        setIsProviderNameSearching(false);
+        setShowProviderNameDropdown(false);
         return;
       }
-      console.error('[Provider Name Search] Error fetching places:', error);
-      setProviderNameSearchResults([]);
-    } finally {
-      setIsProviderNameSearching(false);
-    }
-  }, [formData.city, isCitySelected]);
+
+      if (!formData.city || !formData.city.trim() || !isCitySelected) {
+        setProviderNameSearchResults([]);
+        setIsProviderNameSearching(false);
+        setShowProviderNameDropdown(false);
+        return;
+      }
+
+      setIsProviderNameSearching(true);
+      setShowProviderNameDropdown(true);
+
+      try {
+        const places = await searchPlacesInCity(query, formData.city, { limit: 10 });
+        setProviderNameSearchResults(places);
+        setSelectedProviderNameIndex(-1);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          // Request was cancelled, ignore
+          return;
+        }
+        console.error('[Provider Name Search] Error fetching places:', error);
+        setProviderNameSearchResults([]);
+      } finally {
+        setIsProviderNameSearching(false);
+      }
+    },
+    [formData.city, isCitySelected],
+  );
 
   // Debounced provider name search
   useEffect(() => {
@@ -647,14 +667,14 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
     // Get category based on place type
     const categoryId = PLACE_TYPE_TO_CATEGORY[place.placeType] || inferCategoryFromName(place.name);
     setIsCategoryAutoSelected(!!categoryId);
-    
+
     // Format Instagram handle (add @ if not present)
     let instagramValue = place.contact?.instagram || '';
     if (instagramValue && !instagramValue.startsWith('@')) {
       instagramValue = '@' + instagramValue;
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       title: place.name,
       // Auto-select category if mapping exists
@@ -667,7 +687,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
     }));
 
     // Auto-select contact checkboxes if data is available
-    setSelectedContacts(prev => ({
+    setSelectedContacts((prev) => ({
       email: !!place.contact?.email || prev.email,
       phone: !!place.contact?.phone || prev.phone,
       website: !!place.contact?.website || prev.website,
@@ -686,7 +706,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
     const value = e.target.value;
     const trimmedValue = value.trim();
 
-    setFormData(prev => {
+    setFormData((prev) => {
       const next: typeof prev = { ...prev, title: value };
       // Clear category when user clears the provider name (deletion logic)
       if (trimmedValue.length === 0) {
@@ -723,27 +743,39 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
   }, []);
 
   // Handle keyboard navigation for provider name dropdown
-  const handleProviderNameInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showProviderNameDropdown || providerNameSearchResults.length === 0) {
-      return;
-    }
+  const handleProviderNameInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!showProviderNameDropdown || providerNameSearchResults.length === 0) {
+        return;
+      }
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedProviderNameIndex((prev) => 
-        prev < providerNameSearchResults.length - 1 ? prev + 1 : prev
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedProviderNameIndex((prev) => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === 'Enter' && selectedProviderNameIndex >= 0 && providerNameSearchResults[selectedProviderNameIndex]) {
-      e.preventDefault();
-      handleProviderNameSelect(providerNameSearchResults[selectedProviderNameIndex]);
-    } else if (e.key === 'Escape') {
-      setShowProviderNameDropdown(false);
-      setSelectedProviderNameIndex(-1);
-    }
-  }, [showProviderNameDropdown, providerNameSearchResults, selectedProviderNameIndex, handleProviderNameSelect]);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedProviderNameIndex((prev) =>
+          prev < providerNameSearchResults.length - 1 ? prev + 1 : prev,
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedProviderNameIndex((prev) => (prev > 0 ? prev - 1 : -1));
+      } else if (
+        e.key === 'Enter' &&
+        selectedProviderNameIndex >= 0 &&
+        providerNameSearchResults[selectedProviderNameIndex]
+      ) {
+        e.preventDefault();
+        handleProviderNameSelect(providerNameSearchResults[selectedProviderNameIndex]);
+      } else if (e.key === 'Escape') {
+        setShowProviderNameDropdown(false);
+        setSelectedProviderNameIndex(-1);
+      }
+    },
+    [
+      showProviderNameDropdown,
+      providerNameSearchResults,
+      selectedProviderNameIndex,
+      handleProviderNameSelect,
+    ],
+  );
 
   // Close provider name dropdown when clicking outside
   useEffect(() => {
@@ -766,16 +798,18 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
     }
   }, [showProviderNameDropdown]);
 
-
   // Get category name
-  const getCategoryName = useCallback((categoryId: string) => {
-    const category = categories.find(c => c.category_id === categoryId);
-    if (!category) return '';
-    if (language === 'en') {
-      return category.name_en || category.name_de || '';
-    }
-    return category.name_de || category.name_en || '';
-  }, [categories, language]);
+  const getCategoryName = useCallback(
+    (categoryId: string) => {
+      const category = categories.find((c) => c.category_id === categoryId);
+      if (!category) return '';
+      if (language === 'en') {
+        return category.name_en || category.name_de || '';
+      }
+      return category.name_de || category.name_en || '';
+    },
+    [categories, language],
+  );
 
   const [categoryDisplayName, setCategoryDisplayName] = useState(() => {
     return formData.category ? '' : t('create.recommend.selectCategory');
@@ -795,13 +829,22 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
   // Validation
   const isFormValid = useMemo(() => {
     const hasBasics = !!formData.title && !!formData.category && isCitySelected;
-    const hasContact = 
+    const hasContact =
       (selectedContacts.email && formData.email.trim().length > 0) ||
       (selectedContacts.phone && formData.phone.trim().length > 0) ||
       (selectedContacts.website && formData.website.trim().length > 0) ||
       (selectedContacts.instagram && formData.instagram.trim().length > 0);
     return hasBasics && hasContact;
-  }, [formData.title, formData.category, formData.email, formData.phone, formData.website, formData.instagram, selectedContacts, isCitySelected]);
+  }, [
+    formData.title,
+    formData.category,
+    formData.email,
+    formData.phone,
+    formData.website,
+    formData.instagram,
+    selectedContacts,
+    isCitySelected,
+  ]);
 
   const handleBack = useCallback(() => {
     router.push('/');
@@ -840,9 +883,9 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
     if (!isFormValid) {
       if (!formData.title) {
         toast.error(t('create.recommend.titleRequired'));
-    } else if (!formData.category) {
+      } else if (!formData.category) {
         toast.error(t('create.recommend.categoryRequired'));
-    } else if (!isCitySelected) {
+      } else if (!isCitySelected) {
         toast.error(t('create.recommend.cityRequired'));
       } else {
         toast.error(t('create.recommend.contactRequired'));
@@ -854,7 +897,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
       setIsSubmitting(true);
 
       const userEmail = user?.email || formData.userEmail;
-      
+
       const serviceFormData = {
         ...contextFormData,
         title: formData.title,
@@ -883,11 +926,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
         socialDescription: '',
       };
 
-      await createProviderOrService(
-        serviceFormData,
-        user || null,
-        true
-      );
+      await createProviderOrService(serviceFormData, user || null, true);
 
       updateFormData({
         title: '',
@@ -900,7 +939,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
         instagram: '',
         description: '',
       });
-      setFormData(prev => ({ ...prev, userEmail: '' }));
+      setFormData((prev) => ({ ...prev, userEmail: '' }));
       setSelectedContacts({ email: false, phone: false, website: false, instagram: false });
       if (typeof window !== 'undefined') {
         localStorage.removeItem(IMPORT_FORM_STORAGE_KEY);
@@ -916,7 +955,17 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, isFormValid, contextFormData, isCitySelected, updateFormData, queryClient, router, t, user]);
+  }, [
+    formData,
+    isFormValid,
+    contextFormData,
+    isCitySelected,
+    updateFormData,
+    queryClient,
+    router,
+    t,
+    user,
+  ]);
 
   const handleSelectCategory = useCallback(() => {
     setIsCategoryAutoSelected(false);
@@ -935,42 +984,42 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
 
   // Contact handlers
   const handleEmailChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, email: value }));
+    setFormData((prev) => ({ ...prev, email: value }));
   }, []);
 
   const handleEmailToggle = useCallback(() => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const wasChecked = prev.email;
       if (wasChecked) {
-        setFormData(prevForm => ({ ...prevForm, email: '' }));
+        setFormData((prevForm) => ({ ...prevForm, email: '' }));
       }
       return { ...prev, email: !prev.email };
     });
   }, []);
 
   const handleWebsiteChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, website: value }));
+    setFormData((prev) => ({ ...prev, website: value }));
   }, []);
 
   const handleWebsiteToggle = useCallback(() => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const wasChecked = prev.website;
       if (wasChecked) {
-        setFormData(prevForm => ({ ...prevForm, website: '' }));
+        setFormData((prevForm) => ({ ...prevForm, website: '' }));
       }
       return { ...prev, website: !prev.website };
     });
   }, []);
 
   const handlePhoneChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, phone: value }));
+    setFormData((prev) => ({ ...prev, phone: value }));
   }, []);
 
   const handlePhoneToggle = useCallback(() => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const wasChecked = prev.phone;
       if (wasChecked) {
-        setFormData(prevForm => ({ ...prevForm, phone: '' }));
+        setFormData((prevForm) => ({ ...prevForm, phone: '' }));
       }
       return { ...prev, phone: !prev.phone };
     });
@@ -981,14 +1030,14 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
     if (formattedValue && !formattedValue.startsWith('@')) {
       formattedValue = '@' + formattedValue;
     }
-    setFormData(prev => ({ ...prev, instagram: formattedValue }));
+    setFormData((prev) => ({ ...prev, instagram: formattedValue }));
   }, []);
 
   const handleInstagramToggle = useCallback(() => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const wasChecked = prev.instagram;
       if (wasChecked) {
-        setFormData(prevForm => ({ ...prevForm, instagram: '' }));
+        setFormData((prevForm) => ({ ...prevForm, instagram: '' }));
       }
       return { ...prev, instagram: !prev.instagram };
     });
@@ -1005,28 +1054,29 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
 
   if (showSuccess) {
     return (
-      <RecommendSuccessScreen
-        onGoBack={handleGoBack}
-        onRecommendAnother={handleRecommendAnother}
-      />
+      <RecommendSuccessScreen onGoBack={handleGoBack} onRecommendAnother={handleRecommendAnother} />
     );
   }
 
   return (
     <>
-      <div className={cn(
-        'flex flex-col gap-6',
-        isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8'
-      )}>
+      <div
+        className={cn(
+          'flex flex-col gap-6',
+          isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8',
+        )}
+      >
         {/* Section 0: City Selection (Required First) */}
         <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-content-heading">{t('create.recommend.city')} *</h2>
-          
+          <h2 className="text-lg font-semibold text-content-heading">
+            {t('create.recommend.city')} *
+          </h2>
+
           <div className="relative">
             <div
               className={cn(
-                'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2 cursor-text',
-                showCityValidation && 'border-warning/40'
+                'flex h-[56px] w-full cursor-text items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+                showCityValidation && 'border-warning/40',
               )}
               role="presentation"
               onClick={() => cityInputRef.current?.focus()}
@@ -1058,12 +1108,12 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                 />
               )}
             </div>
-            
+
             {/* City Search Dropdown */}
             {showCityDropdown && (
               <div
                 ref={cityDropdownRef}
-                className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+                className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
                 id="city-search-results"
                 role="listbox"
               >
@@ -1082,7 +1132,11 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                   </div>
                 ) : (
                   citySearchResults.map((city, index) => {
-                    const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
+                    const cityName =
+                      city.address?.city ||
+                      city.address?.town ||
+                      city.address?.village ||
+                      city.name;
                     const country = normalizeCountryNameForDisplay(city.address?.country || '');
                     const isSelected = index === selectedCityIndex;
 
@@ -1093,7 +1147,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                         className={cn(
                           'w-full px-4 py-3 text-left transition-colors',
                           'hover:bg-neutral-muted',
-                          isSelected && 'bg-primary/5'
+                          isSelected && 'bg-primary/5',
                         )}
                         role="option"
                         type="button"
@@ -1104,9 +1158,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                           <span className="text-[15px] font-medium text-content-heading">
                             {cityName}
                           </span>
-                          {country && (
-                            <span className="text-xs text-content-muted">{country}</span>
-                          )}
+                          {country && <span className="text-xs text-content-muted">{country}</span>}
                         </div>
                       </button>
                     );
@@ -1128,8 +1180,10 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
 
         {/* Section 1: Provider Information */}
         <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-content-heading">{t('create.importOsm.step1Title')}</h2>
-          
+          <h2 className="text-lg font-semibold text-content-heading">
+            {t('create.importOsm.step1Title')}
+          </h2>
+
           <div className="flex flex-col gap-3">
             {/* Provider Name (editable with autocomplete) */}
             <div className="relative">
@@ -1146,7 +1200,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                     aria-label={t('create.recommend.providerName')}
                     className={cn(
                       'h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0',
-                      !isCitySelected && 'opacity-50 cursor-not-allowed'
+                      !isCitySelected && 'cursor-not-allowed opacity-50',
                     )}
                     placeholder={t('create.recommend.providerNamePlaceholder')}
                     role="combobox"
@@ -1165,12 +1219,12 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                   />
                 )}
               </div>
-              
+
               {/* Provider Name Search Dropdown */}
               {showProviderNameDropdown && (
                 <div
                   ref={providerNameDropdownRef}
-                  className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+                  className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
                   id="provider-name-search-results"
                   role="listbox"
                 >
@@ -1198,7 +1252,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                           className={cn(
                             'w-full px-4 py-3 text-left transition-colors',
                             'hover:bg-neutral-muted',
-                            isSelected && 'bg-primary/5'
+                            isSelected && 'bg-primary/5',
                           )}
                           role="option"
                           type="button"
@@ -1210,14 +1264,22 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                               <Icon
                                 className={cn(
                                   'h-4 w-4 flex-shrink-0',
-                                  place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'text-primary' : 'text-content-muted'
+                                  place.placeType === 'mosque' ||
+                                    place.placeType === 'islamic_center'
+                                    ? 'text-primary'
+                                    : 'text-content-muted',
                                 )}
                                 icon={
-                                  place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'mdi:mosque' :
-                                  place.placeType === 'restaurant' ? 'mdi:silverware-fork-knife' :
-                                  place.placeType === 'fast_food' ? 'mdi:food' :
-                                  place.placeType === 'shop' ? 'mdi:store' :
-                                  'mdi:map-marker'
+                                  place.placeType === 'mosque' ||
+                                  place.placeType === 'islamic_center'
+                                    ? 'mdi:mosque'
+                                    : place.placeType === 'restaurant'
+                                      ? 'mdi:silverware-fork-knife'
+                                      : place.placeType === 'fast_food'
+                                        ? 'mdi:food'
+                                        : place.placeType === 'shop'
+                                          ? 'mdi:store'
+                                          : 'mdi:map-marker'
                                 }
                               />
                               <span className="text-[15px] font-medium text-content-heading">
@@ -1226,7 +1288,9 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                             </div>
                             {place.address?.city && (
                               <div className="flex items-center gap-1 pl-6">
-                                <span className="text-xs text-content-muted">{place.address.city}</span>
+                                <span className="text-xs text-content-muted">
+                                  {place.address.city}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -1236,7 +1300,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                   )}
                 </div>
               )}
-              
+
               {/* Helper text - show when city is not selected */}
               {!isCitySelected && (
                 <div className="mt-1 text-xs text-content-muted">
@@ -1246,9 +1310,9 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
             </div>
 
             {/* Category */}
-            <div 
+            <div
               aria-label={t('create.recommend.selectCategory')}
-              className="flex h-[56px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2 cursor-pointer relative"
+              className="relative flex h-[56px] w-full cursor-pointer items-center rounded-2xl border border-border bg-white px-3 py-2"
               role="button"
               tabIndex={0}
               onClick={handleSelectCategory}
@@ -1276,8 +1340,11 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                   {t('create.importOsm.autoSelectedCategory')}
                 </span>
               )}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center flex-shrink-0">
-                <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
+              <div className="absolute right-3 top-1/2 flex flex-shrink-0 -translate-y-1/2 items-center justify-center">
+                <Icon
+                  className="h-5 w-5 text-content-muted"
+                  icon="material-symbols:chevron-right"
+                />
               </div>
             </div>
           </div>
@@ -1286,7 +1353,9 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
         {/* Section 2: Contact */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.contactTitle')}</h3>
+            <h3 className="text-lg font-semibold text-content-heading">
+              {t('create.recommend.contactTitle')}
+            </h3>
             <p className="text-base text-content-muted">
               {t('create.recommend.contactDescription')}
             </p>
@@ -1339,7 +1408,9 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
         {!user && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.userEmailTitle')}</h3>
+              <h3 className="text-lg font-semibold text-content-heading">
+                {t('create.recommend.userEmailTitle')}
+              </h3>
               <p className="text-base text-content-muted">
                 {t('create.recommend.userEmailDescription')}
               </p>
@@ -1357,7 +1428,9 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                     placeholder={t('create.recommend.userEmailPlaceholder')}
                     type="email"
                     value={formData.userEmail}
-                    onChange={(e) => setFormData(prev => ({ ...prev, userEmail: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, userEmail: e.target.value }))
+                    }
                   />
                 </div>
               </div>
@@ -1367,8 +1440,8 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                   {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
                   <Link className="underline hover:text-primary" href="/terms">
                     {t('legal.termsOfService')}
-                  </Link>
-                  {' '}{t('legal.and')}{' '}
+                  </Link>{' '}
+                  {t('legal.and')}{' '}
                   <Link className="underline hover:text-primary" href="/privacy-policy">
                     {t('legal.privacyPolicy')}
                   </Link>
@@ -1382,10 +1455,10 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
         {/* Section 4: Message (Optional) */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-semibold text-content-heading">{t('create.recommend.message')}</h3>
-            <p className="text-base text-content-muted">
-              {t('common.optional')}
-            </p>
+            <h3 className="text-lg font-semibold text-content-heading">
+              {t('create.recommend.message')}
+            </h3>
+            <p className="text-base text-content-muted">{t('common.optional')}</p>
           </div>
 
           <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-border bg-white px-3 py-2">
@@ -1398,7 +1471,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
                 className="min-h-[100px] w-full resize-none border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.recommend.messagePlaceholder')}
                 value={formData.message}
-                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
               />
             </div>
           </div>
@@ -1421,11 +1494,7 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
         {/* Desktop Actions */}
         {!isMobile && (
           <div className="flex gap-4 pt-4">
-            <Button
-              disabled={isSubmitting}
-              variant="secondary"
-              onClick={handleBack}
-            >
+            <Button disabled={isSubmitting} variant="secondary" onClick={handleBack}>
               {t('common.cancel')}
             </Button>
             <Button
@@ -1440,7 +1509,6 @@ export function StreamlinedImportForm({ onSuccess: _onSuccess, initialCity }: St
           </div>
         )}
       </div>
-
     </>
   );
 }

@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-02-21
+**Last Updated**: 2026-02-22
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.2.0
+**Current Version**: v0.3.1
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -12,9 +12,11 @@
 | 2026-01-27 14:00 | Initial roadmap creation                                           | Established strategic direction based on "strengthening Ummah" outcome with focus on growth and community |
 | 2026-01-27 15:30 | Epic 2.1 implementation plan created (Plan 001), validation passed | Detailed technical plan delivers all 5 acceptance criteria, ready for Architect/Security review           |
 | 2026-01-27 16:10 | Plan 001 revised for architecture gates                            | Implementation is gated by privacy-safe endorsements, unified role authority, and DB-side stable ranking  |
-| 2026-02-21 | Plan 003 released (v0.2.0): Console errors bugfix | Fixed hydration mismatch + diagnosed CORS NXDOMAIN; zero rework, exemplary workflow execution |
-| 2026-02-21 | Process improvements implemented (PI 004) | Added duration estimates requirement (Planner) + remote divergence preflight (DevOps Stage 2) |
-| 2026-02-22 | Plan 001 released (v0.3.0): Provider Trust & Verification System | Complete UI trust badges + endorsements, 109 tests passing, UAT approved, deployed to production |
+| 2026-02-21       | Plan 003 released (v0.2.0): Console errors bugfix                  | Fixed hydration mismatch + diagnosed CORS NXDOMAIN; zero rework, exemplary workflow execution             |
+| 2026-02-21       | Process improvements implemented (PI 004)                          | Added duration estimates requirement (Planner) + remote divergence preflight (DevOps Stage 2)             |
+| 2026-02-22       | Plan 001 released (v0.3.0): Provider Trust & Verification System   | Complete UI trust badges + endorsements, 109 tests passing, UAT approved, deployed to production          |
+| 2026-02-22       | Plan 006 released (v0.3.1): Android Suggest Provider Form Bugfix   | Hotfix for Android UX regression; userToggledRef pattern prevents non-user focus triggers (Epic 3.1)      |
+| 2026-02-22       | Process improvements implemented (PI 007)                          | Focus/scroll checklist, UUID inheritance, critique closure rules, UTC timestamps, tool capability updates |
 
 ---
 
@@ -37,7 +39,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: v0.4.0 (next planned release)
 
-*No active plans — v0.3.0 deployed successfully*
+_No active plans — v0.3.0 deployed successfully_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -45,11 +47,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ### Previous Releases
 
-| Version | Date       | Plans Included                                    | Status   |
-| ------- | ---------- | ------------------------------------------------- | -------- |
-| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System)   | Released |
-| v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix)   | Released |
-| v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access     | Released |
+| Version | Date       | Plans Included                                  | Status   |
+| ------- | ---------- | ----------------------------------------------- | -------- |
+| v0.3.1  | 2026-02-22 | Plan 006 (Android Suggest Provider Form Bugfix) | Released |
+| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System) | Released |
+| v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix) | Released |
+| v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access   | Released |
 
 ---
 
@@ -235,7 +238,7 @@ So that **I can easily return to businesses I trust and share recommendations wi
 ### Epic 3.1: Community-Driven Provider Recommendations
 
 **Priority**: P0
-**Status**: Planned
+**Status**: In Progress
 
 **User Story**:
 As a **community member**,
@@ -256,9 +259,9 @@ So that **my community can discover them and the Ummah benefits from comprehensi
 
 **Acceptance Criteria** (outcome-focused):
 
-- [ ] Any user can submit a provider recommendation (name, location, category, reason)
+- [x] Any user can submit a provider recommendation (name, location, category, reason)
 - [ ] Recommended providers go into review queue (admin dashboard)
-- [ ] Recommenders get credit/badge when their suggestion goes live
+- [ ] Recommenders get credit/badge when their suggestion go live
 - [ ] Top recommenders featured on leaderboard (gamification)
 - [ ] Recommendations tracked by city (shows demand for city unlock)
 
@@ -270,6 +273,8 @@ So that **my community can discover them and the Ummah benefits from comprehensi
 **Status Notes**:
 
 - 2026-01-27: Epic defined to formalize existing early access recommendation feature
+- 2026-02-22: Plan 006 released (v0.3.1) — Fixed Android UX regression blocking recommend provider form; userToggledRef pattern prevents non-user focus triggers
+- 2026-02-22: First acceptance criterion (submit recommendation form) now functional on Android; remaining criteria (admin queue, credit badges, leaderboard) pending future plans
 
 ---
 

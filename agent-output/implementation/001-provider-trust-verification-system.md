@@ -20,13 +20,13 @@ Status: Released
 
 ## Changelog
 
-| Date       | Handoff/Request                                  | Summary                                                                              |
-| ---------- | ------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| 2026-01-27 | User approved plan + chose background mode       | Start implementation in git worktree; prioritize gates F1–F3                         |
-| 2026-01-27 | Open questions resolved                          | No default badges for new providers; proceed with plan recommendations for items 2–5 |
-| 2026-01-28 | Gates F1–F3 implemented                          | RLS hardening, unified role authority, DB-ranked unified search with trust scoring   |
-| 2026-02-22 | QA gate failed — 53 test failures, 169 TS errors | QA report flagged P0/P1/P2 issues blocking code review                               |
-| 2026-02-22 | QA gate fixes complete                           | All 99 tests pass (100%), 0 TS errors, build succeeds                                |
+| Date       | Handoff/Request                                  | Summary                                                                                                        |
+| ---------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| 2026-01-27 | User approved plan + chose background mode       | Start implementation in git worktree; prioritize gates F1–F3                                                   |
+| 2026-01-27 | Open questions resolved                          | No default badges for new providers; proceed with plan recommendations for items 2–5                           |
+| 2026-01-28 | Gates F1–F3 implemented                          | RLS hardening, unified role authority, DB-ranked unified search with trust scoring                             |
+| 2026-02-22 | QA gate failed — 53 test failures, 169 TS errors | QA report flagged P0/P1/P2 issues blocking code review                                                         |
+| 2026-02-22 | QA gate fixes complete                           | All 99 tests pass (100%), 0 TS errors, build succeeds                                                          |
 | 2026-02-22 | UI badges + endorsement implementation           | M1-M5 complete: TrustBadgesSection, EndorseBadgeButton, badge fetch in getProviderById, version bump to v0.3.0 |
 
 ## Implementation Summary
@@ -60,36 +60,36 @@ Status: Released
 
 ## Files Modified
 
-| Path                                                    | Change                                                                                                                                           | Lines |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| `src/services/badges.ts`                                | Added `getBadgesForEntityPublic()`, removed confirmation_count from all public selects, updated admin functions to use aggregate counts          | ~100  |
+| Path                                                    | Change                                                                                                                                                                        | Lines |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| `src/services/badges.ts`                                | Added `getBadgesForEntityPublic()`, removed confirmation_count from all public selects, updated admin functions to use aggregate counts                                       | ~100  |
 | `src/services/providers.ts`                             | Integrated unified search for 'both' strategy, replaced client-side sorting with DB-ranked results; added badge fetching to `getProviderById()` in parallel with offers/needs | ~60   |
-| `src/components/providers/ProviderDetailPage.tsx`       | Added TrustBadgesSection + EndorseBadgeButton integration (both mobile and desktop views), React Query for badge data with user confirmation status | ~30   |
-| `package.json`                                          | Version bump from 0.2.1 to 0.3.0                                                                                                                  | ~1    |
-| `CHANGELOG.md`                                          | Added v0.3.0 changelog entry for Provider Trust & Verification System                                                                              | ~12   |
-| `src/types/badges.ts`                                   | Made `confirmation_count` optional to reflect privacy contract                                                                                   | ~5    |
-| `src/__tests__/components/SearchBar.test.tsx`           | Full rewrite — tests now match actual component structure (no submit button, uses role='search', Enter key submit, aria-haspopup dropdowns)      | ~320  |
-| `src/__tests__/components/ProviderDetailModal.test.tsx` | Fixed 33 tests — corrected assertions (address not description, barakah effects not category, thumbnails not counter, English locale)            | ~50   |
-| `src/__tests__/components/ProviderCard.test.tsx`        | Fixed image URL assertion to use `mock-supabase-url.com` matching test env                                                                       | ~5    |
-| `src/__tests__/api/verify-magic-link.test.ts`           | Fixed 19 tests — added `setupMockClient` helper, removed read-only NODE_ENV assignment, fixed error message assertions, IP blocking expectations | ~80   |
-| `src/__tests__/mocks/providerData.ts`                   | Changed all mock image URLs from `pmbatjlosstytdmmqkky.supabase.co` to `mock-supabase-url.com`                                                   | ~30   |
-| `src/__tests__/utils/test-utils.tsx`                    | Fixed Image mock to trigger onLoad via useEffect; prefixed unused vars with underscore                                                           | ~20   |
-| `src/__tests__/setup.ts`                                | Added `vi.mock('server-only', () => ({}))` for server component imports in tests                                                                 | ~3    |
-| `src/__mocks__/supabase-admin.ts`                       | Added `ilike` to MockQueryBuilder, `getUserById` to auth.admin, fixed `update` return type, changed return cast to `as any`                      | ~40   |
+| `src/components/providers/ProviderDetailPage.tsx`       | Added TrustBadgesSection + EndorseBadgeButton integration (both mobile and desktop views), React Query for badge data with user confirmation status                           | ~30   |
+| `package.json`                                          | Version bump from 0.2.1 to 0.3.0                                                                                                                                              | ~1    |
+| `CHANGELOG.md`                                          | Added v0.3.0 changelog entry for Provider Trust & Verification System                                                                                                         | ~12   |
+| `src/types/badges.ts`                                   | Made `confirmation_count` optional to reflect privacy contract                                                                                                                | ~5    |
+| `src/__tests__/components/SearchBar.test.tsx`           | Full rewrite — tests now match actual component structure (no submit button, uses role='search', Enter key submit, aria-haspopup dropdowns)                                   | ~320  |
+| `src/__tests__/components/ProviderDetailModal.test.tsx` | Fixed 33 tests — corrected assertions (address not description, barakah effects not category, thumbnails not counter, English locale)                                         | ~50   |
+| `src/__tests__/components/ProviderCard.test.tsx`        | Fixed image URL assertion to use `mock-supabase-url.com` matching test env                                                                                                    | ~5    |
+| `src/__tests__/api/verify-magic-link.test.ts`           | Fixed 19 tests — added `setupMockClient` helper, removed read-only NODE_ENV assignment, fixed error message assertions, IP blocking expectations                              | ~80   |
+| `src/__tests__/mocks/providerData.ts`                   | Changed all mock image URLs from `pmbatjlosstytdmmqkky.supabase.co` to `mock-supabase-url.com`                                                                                | ~30   |
+| `src/__tests__/utils/test-utils.tsx`                    | Fixed Image mock to trigger onLoad via useEffect; prefixed unused vars with underscore                                                                                        | ~20   |
+| `src/__tests__/setup.ts`                                | Added `vi.mock('server-only', () => ({}))` for server component imports in tests                                                                                              | ~3    |
+| `src/__mocks__/supabase-admin.ts`                       | Added `ilike` to MockQueryBuilder, `getUserById` to auth.admin, fixed `update` return type, changed return cast to `as any`                                                   | ~40   |
 
 ## Files Created
 
-| Path                                                                 | Purpose                                                                        |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `supabase/migrations/027_unified_search_and_trust_privacy_gates.sql` | RLS hardening, role helper function, unified search RPC with trust scoring     |
-| `src/services/unifiedSearch.ts`                                      | Unified search service (DB-ranked), hydration function for full entity details |
-| `src/components/providers/TrustBadgesSection.tsx`                    | Trust badges section component for provider detail pages (loading/empty/populated states) |
-| `src/components/providers/EndorseBadgeButton.tsx`                    | Badge endorsement button with confirm/revoke toggle and login-required flow |
-| `src/__tests__/components/TrustBadgesSection.test.tsx`               | TDD tests for TrustBadgesSection (6 tests: rendering, empty state, loading state, accessibility) |
+| Path                                                                 | Purpose                                                                                                    |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/027_unified_search_and_trust_privacy_gates.sql` | RLS hardening, role helper function, unified search RPC with trust scoring                                 |
+| `src/services/unifiedSearch.ts`                                      | Unified search service (DB-ranked), hydration function for full entity details                             |
+| `src/components/providers/TrustBadgesSection.tsx`                    | Trust badges section component for provider detail pages (loading/empty/populated states)                  |
+| `src/components/providers/EndorseBadgeButton.tsx`                    | Badge endorsement button with confirm/revoke toggle and login-required flow                                |
+| `src/__tests__/components/TrustBadgesSection.test.tsx`               | TDD tests for TrustBadgesSection (6 tests: rendering, empty state, loading state, accessibility)           |
 | `src/__tests__/components/EndorseBadgeButton.test.tsx`               | TDD tests for EndorseBadgeButton (4 tests: unauthenticated, authenticated, confirmed state, accessibility) |
-| `src/__tests__/services/unifiedSearch.test.ts`                       | TDD test for unified search RPC integration                                    |
-| `src/__tests__/services/publicBadges.test.ts`                        | TDD test for privacy-safe badge fetch                                          |
-| `src/__tests__/services/hydrateSearch.test.ts`                       | Test for search result hydration with badges                                   |
+| `src/__tests__/services/unifiedSearch.test.ts`                       | TDD test for unified search RPC integration                                                                |
+| `src/__tests__/services/publicBadges.test.ts`                        | TDD test for privacy-safe badge fetch                                                                      |
+| `src/__tests__/services/hydrateSearch.test.ts`                       | Test for search result hydration with badges                                                               |
 
 ## Code Quality Validation
 
@@ -106,13 +106,13 @@ Status: Released
 
 ## TDD Compliance
 
-| Function/Class                     | Test File                                      | Test Written First? | Failure Verified? | Failure Reason                                 | Pass After Impl? |
-| ---------------------------------- | ---------------------------------------------- | ------------------- | ----------------- | ---------------------------------------------- | ---------------- |
-| `searchUnifiedEntitiesWithTrust()` | `src/__tests__/services/unifiedSearch.test.ts` | ✅ Yes              | ✅ Yes            | Vite import resolution failed (module missing) | ✅ Yes           |
-| `getBadgesForEntityPublic()`       | `src/__tests__/services/publicBadges.test.ts`  | ✅ Yes              | ✅ Yes            | TypeError: export not a function               | ✅ Yes           |
-| `hydrateUnifiedSearchResults()`    | `src/__tests__/services/hydrateSearch.test.ts` | ✅ Yes              | ✅ Yes            | Next.js cookie context error (test env)        | ✅ Yes           |
-| `TrustBadgesSection`               | `src/__tests__/components/TrustBadgesSection.test.tsx` | ✅ Yes     | ✅ Yes            | Failed to resolve import (module missing)      | ✅ Yes           |
-| `EndorseBadgeButton`               | `src/__tests__/components/EndorseBadgeButton.test.tsx` | ✅ Yes     | ✅ Yes            | Failed to resolve import (module missing)      | ✅ Yes           |
+| Function/Class                     | Test File                                              | Test Written First? | Failure Verified? | Failure Reason                                 | Pass After Impl? |
+| ---------------------------------- | ------------------------------------------------------ | ------------------- | ----------------- | ---------------------------------------------- | ---------------- |
+| `searchUnifiedEntitiesWithTrust()` | `src/__tests__/services/unifiedSearch.test.ts`         | ✅ Yes              | ✅ Yes            | Vite import resolution failed (module missing) | ✅ Yes           |
+| `getBadgesForEntityPublic()`       | `src/__tests__/services/publicBadges.test.ts`          | ✅ Yes              | ✅ Yes            | TypeError: export not a function               | ✅ Yes           |
+| `hydrateUnifiedSearchResults()`    | `src/__tests__/services/hydrateSearch.test.ts`         | ✅ Yes              | ✅ Yes            | Next.js cookie context error (test env)        | ✅ Yes           |
+| `TrustBadgesSection`               | `src/__tests__/components/TrustBadgesSection.test.tsx` | ✅ Yes              | ✅ Yes            | Failed to resolve import (module missing)      | ✅ Yes           |
+| `EndorseBadgeButton`               | `src/__tests__/components/EndorseBadgeButton.test.tsx` | ✅ Yes              | ✅ Yes            | Failed to resolve import (module missing)      | ✅ Yes           |
 
 ## Test Coverage
 
@@ -121,12 +121,12 @@ Status: Released
 
 ## Test Execution Results
 
-| Command                                                       | Result                                      |
-| ------------------------------------------------------------- | ------------------------------------------- |
-| `npx vitest run src/__tests__/services/ --reporter=dot --run` | ✅ 3 files, 4 tests passed                  |
+| Command                                                       | Result                                              |
+| ------------------------------------------------------------- | --------------------------------------------------- |
+| `npx vitest run src/__tests__/services/ --reporter=dot --run` | ✅ 3 files, 4 tests passed                          |
 | `npx vitest run` (full suite)                                 | ✅ 109 passed, 0 failed (8 files passed, 1 skipped) |
-| `npm run type-check`                                          | ✅ Pass (0 errors)                          |
-| `npm run lint`                                                | ✅ No new errors (pre-existing only)        |
+| `npm run type-check`                                          | ✅ Pass (0 errors)                                  |
+| `npm run lint`                                                | ✅ No new errors (pre-existing only)                |
 
 ### QA Gate Fix Details (2026-02-22)
 

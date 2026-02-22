@@ -62,16 +62,20 @@ export function EndorseBadgeButton({
   }, [userId, isLoading, isConfirmed, badge.id, onEndorsementChange, onLoginRequired]);
 
   const buttonLabel = isConfirmed
-    ? (language === 'en' ? 'Confirmed' : 'Bestätigt')
-    : (language === 'en' ? 'Confirm' : 'Bestätigen');
+    ? language === 'en'
+      ? 'Confirmed'
+      : 'Bestätigt'
+    : language === 'en'
+      ? 'Confirm'
+      : 'Bestätigen';
 
   const ariaLabel = isConfirmed
-    ? (language === 'en'
-        ? `Revoke confirmation for ${badge.badge_type?.labels?.en || badge.badge_type?.labels?.de || ''}`
-        : `Bestätigung widerrufen für ${badge.badge_type?.labels?.de || badge.badge_type?.labels?.en || ''}`)
-    : (language === 'en'
-        ? `Confirm ${badge.badge_type?.labels?.en || badge.badge_type?.labels?.de || ''}`
-        : `${badge.badge_type?.labels?.de || badge.badge_type?.labels?.en || ''} bestätigen`);
+    ? language === 'en'
+      ? `Revoke confirmation for ${badge.badge_type?.labels?.en || badge.badge_type?.labels?.de || ''}`
+      : `Bestätigung widerrufen für ${badge.badge_type?.labels?.de || badge.badge_type?.labels?.en || ''}`
+    : language === 'en'
+      ? `Confirm ${badge.badge_type?.labels?.en || badge.badge_type?.labels?.de || ''}`
+      : `${badge.badge_type?.labels?.de || badge.badge_type?.labels?.en || ''} bestätigen`;
 
   return (
     <button
@@ -79,9 +83,9 @@ export function EndorseBadgeButton({
       className={cn(
         'inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
         isConfirmed
-          ? 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20'
-          : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200',
-        isLoading && 'opacity-50 cursor-not-allowed',
+          ? 'border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20'
+          : 'border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200',
+        isLoading && 'cursor-not-allowed opacity-50',
         className,
       )}
       disabled={isLoading}
