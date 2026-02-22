@@ -5,6 +5,17 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-02-22
+
+### Fixed
+
+- **Android UX Regression**: Recommend provider form now displays all sections correctly on Android devices with saved draft state
+  - Fixed input auto-focus that opened keyboard and scrolled viewport on page load
+  - Implemented `userToggledRef` causal guard to prevent non-user-initiated focus triggers (mount, localStorage restore, autocomplete auto-selection)
+  - Focus preserved for user-initiated checkbox toggles (desired UX maintained)
+  - Added 5 unit tests with full TDD coverage (114 total tests passing)
+  - Impact: Community-driven provider recommendations (Epic 3.1) now functional on Android
+
 ## [0.3.0] - 2026-02-22
 
 ### Added
