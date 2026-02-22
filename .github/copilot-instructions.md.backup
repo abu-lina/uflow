@@ -1,0 +1,283 @@
+# Copilot Instructions - UFlow Platform
+
+## Project Overview
+
+UFlow is a Next.js 15 community services platform connecting service providers with users. Tech stack: **TypeScript**, **Next.js 15 App Router**, **Supabase** (auth/database/storage), **Tailwind CSS**, deployed to **Hetzner Cloud** via **GitHub Actions** with **Cloudflare** CDN.
+
+**Stack Philosophy**: "Start with Postgres. It can probably do more than you think." Use Postgres native features (full-text search with tsvector/GIN indexes, materialized views) before adding external services.
+
+## Architecture Quick Reference
+
+```
+User/PWA → Cloudflare (CDN/Security) → Nginx (reverse proxy) → Docker → Next.js (port 3000)
+                                                                              ↓
+                                                                        Supabase (Postgres)
+```
+
+- **Hosting**: Hetzner Cloud (EU, Ubuntu 22.04, Docker containers)
+- **Database**: PostgreSQL via Supabase with Row Level Security (RLS)
+- **Email**: Resend for transactional emails
+- **Build**: Docker multi-stage builds with Next.js standalone output
+- **SSL**: Cloudflare edge + Nginx (Let's Encrypt) → HTTP to Docker
+
+## Project Structure
+
+```
+src/
+├── app/              # Next.js App Router pages (file-based routing)
+│   ├── (public)/    # Public routes (landing, waitlist)
+│   ├── (dashboard)/ # Protected dashboard routes
+│   ├── api/         # API routes for server-side logic
+│   └── layout.tsx   # Root layout with providers
+├── components/       # Shared UI components
+├── features/         # Feature-based modules (auth, search, providers)
+│   └── {feature}/   # Each feature has components/, hooks/, utils/
+├── lib/             # Core utilities and configurations
+│   ├── supabase/    # Supabase client factories (client.ts, server.ts)
+│   ├── auth.ts      # Authentication utilities
+│   └── validation/  # Form validation schemas (Zod)
+├── services/        # Data access layer (Supabase queries)
+├── hooks/           # Shared React hooks
+├── types/           # TypeScript type definitions
+└── middleware.ts    # Edge middleware (auth, rate limiting)
+```
+
+**Key Patterns**:
+- Use `features/` for domain-specific code (e.g., `features/auth/`, `features/search/`)
+- Keep `components/` for truly shared UI components
+- All Supabase queries go in `services/` (never inline in components)
+- `lib/` contains non-feature-specific utilities
+
+## Supabase Client Usage
+
+**Critical**: Always use the correct Supabase client based on context.
+
+### Client Components (Interactive UI)
+```typescript
+import { supabase } from '@/lib/supabase/client';
+
+// Use for client-side data fetching, mutations, auth
+const { data } = await supabase.from('providers').select('*');
+```
+
+### Server Components (Default in Next.js 15)
+```typescript
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+export default async function Page() {
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase.from('providers').select('*');
+}
+```
+
+### API Routes
+```typescript
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+export async function GET() {
+  const supabase = createSupabaseServerClient();
+  // Query logic
+}
+```
+
+**Never** import the wrong client type. Server components require `createSupabaseServerClient()`, client components use the singleton `supabase` from `client.ts`.
+
+## Database & Services Layer
+
+All database interactions must go through `src/services/`:
+
+```typescript
+// ✅ Correct: services/providers.ts
+export async function getProviders(): Promise<Provider[]> {
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('providers')
+    .select('*, categories(id, name)')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data;
+}
+
+// ❌ Wrong: Inline queries in components
+const { data } = await supabase.from('providers').select('*'); // DON'T DO THIS
+```
+
+**Conventions**:
+- One file per entity (e.g., `providers.ts`, `categories.ts`, `matching.ts`)
+- Export async functions with proper TypeScript return types
+- Use Postgres full-text search: `textSearch` column (tsvector) + GIN index
+- Always handle errors explicitly (throw or return)
+
+## Environment Management
+
+Three environments with **two Supabase projects**:
+
+| Environment | File              | Supabase Project | Usage                    |
+|------------|-------------------|------------------|--------------------------|
+| Local      | `.env.local`      | DEV              | `npm run dev`            |
+| UAT        | `.env.uat`        | PROD             | `npm run dev:uat`        |
+| Production | `.env.production` | PROD             | `npm run build:prod`     |
+
+**Switching environments**:
+```bash
+./scripts/switch-env.sh uat     # Switch to UAT
+./scripts/switch-env.sh prod    # Switch to production
+./scripts/switch-env.sh local   # Back to local
+```
+
+**Critical env vars**:
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (server-side only, never expose to client)
+- `DISABLE_PWA=false` (UAT/prod), `DISABLE_PWA=true` (local)
+- `NEXT_PUBLIC_SITE_URL` (changes per environment)
+
+## Development Workflows
+
+### Local Development
+```bash
+npm install          # Install dependencies
+npm run dev          # Start dev server (port 3000)
+npm run lint         # Run ESLint
+npm run type-check   # TypeScript validation
+npm run test         # Run Vitest tests
+```
+
+### Testing
+- **Unit/Integration**: Vitest (config: `vitest.config.ts`)
+- **Performance**: k6 scripts in `tests/performance/`
+- Run performance tests: `npm run perf:baseline`, `perf:load`, `perf:stress`
+- UAT performance: `npm run perf:uat:all`
+
+### Deployment
+
+**Production** (manual via GitHub Actions):
+1. Push to `main` branch
+2. Go to Actions → "Deploy to Production" → Run workflow
+3. Type "deploy" to confirm
+4. Workflow: Build Docker → Upload to Hetzner → Deploy container → Health check
+
+**UAT** (automatic on `develop` branch):
+- Push to `develop` triggers `.github/workflows/deploy-uat.yml`
+
+**Critical deployment files**:
+- `Dockerfile` - Multi-stage build with standalone Next.js output
+- `nginx-template.conf` - Nginx configuration for reverse proxy
+- `.github/workflows/deploy-hetzner.yml` - Production deployment
+- `scripts/deploy-hetzner.sh` - Manual deployment script
+
+### Build Verification
+```bash
+npm run build        # Standard Next.js build
+npm run build:uat    # Build with UAT env
+npm run build:prod   # Build with production env
+```
+
+## Middleware & Authentication
+
+`src/middleware.ts` handles:
+- **Auth protection**: Redirects to `/auth` for protected routes
+- **Rate limiting**: 100 req/min (general), 30 req/min (API)
+- **Waitlist redirect**: If app not launched, redirect to `/waitlist`
+
+**Protected routes**: Routes under `(dashboard)/` require authentication.
+
+**Auth flow**:
+1. User signs up/in via Supabase Auth
+2. Email confirmation required (`email_confirmed_at` field)
+3. Session stored in cookies (`sb` cookie via `@supabase/ssr`)
+4. Middleware validates session on each request
+
+## Common Tasks
+
+### Add a new database table
+1. Create migration: `supabase/migrations/YYYYMMDDHHMMSS_table_name.sql`
+2. Add TypeScript types: `src/types/database.ts`
+3. Create service: `src/services/table_name.ts`
+4. Apply migration: Use Supabase dashboard or CLI
+
+### Add a new feature
+1. Create directory: `src/features/feature-name/`
+2. Add components: `src/features/feature-name/components/`
+3. Add hooks: `src/features/feature-name/hooks/`
+4. Add services: `src/services/feature-name.ts`
+5. Add route: `src/app/(dashboard)/feature-name/page.tsx`
+
+### Debug deployment issues
+```bash
+./scripts/check-deployment.sh           # Check production health
+./scripts/diagnose-uat-now.sh           # UAT diagnostics
+ssh root@91.98.207.106                  # SSH to production server
+docker logs uflow-app --tail 100        # Check container logs
+```
+
+## Code Conventions
+
+### TypeScript
+- Strict mode enabled (`tsconfig.json`)
+- Use path aliases: `@/` → `src/`, `@/lib/`, `@/services/`, etc.
+- Prefer named exports over default exports
+- Always type function parameters and return types
+
+### React/Next.js
+- Server Components by default (async components are server components)
+- Add `'use client'` only when needed (hooks, interactivity, browser APIs)
+- Use `useRouter` from `next/navigation` (not `next/router`)
+- Prefer Server Actions for mutations (export async functions from Server Components)
+
+### Styling
+- Tailwind CSS utility classes (config: `tailwind.config.ts`)
+- Use `clsx` or `cn()` helper for conditional classes
+- Custom color palette defined in `tailwind.config.ts`
+- Icons: `lucide-react` for UI icons, `@iconify/react` for brand icons
+
+### Error Handling
+```typescript
+// ✅ Services layer
+try {
+  const { data, error } = await supabase.from('table').select();
+  if (error) throw error;
+  return data;
+} catch (error) {
+  console.error('Error fetching data:', error);
+  throw error; // Let caller handle
+}
+
+// ✅ API routes
+try {
+  const data = await someService();
+  return NextResponse.json(data);
+} catch (error) {
+  return NextResponse.json({ error: 'Message' }, { status: 500 });
+}
+```
+
+## Documentation
+
+Comprehensive docs in `docs/`:
+- **Start here**: `docs/INDEX.md` (navigation hub)
+- **Architecture**: `docs/architecture/ARCHITECTURE_OVERVIEW.md`
+- **Deployment**: `docs/deployment/HETZNER_DEPLOYMENT_STEPS.md`
+- **Performance**: `docs/performance/PERFORMANCE_TESTING.md`
+
+Common references:
+- Environment setup: `docs/guides/ENVIRONMENT_SETUP_QUICK_START.md`
+- Email configuration: `docs/guides/EMAIL_SETUP.md`
+- Troubleshooting: `docs/troubleshooting/`
+
+## Common Pitfalls
+
+1. **Wrong Supabase client**: Server components need `createSupabaseServerClient()`, not the client singleton
+2. **Missing env vars**: Always check `.env.local` has all required vars (see templates)
+3. **PWA issues**: Set `DISABLE_PWA=true` for local dev, `false` for UAT/prod
+4. **Rate limiting**: Middleware rate limits can block rapid testing; check `src/middleware.ts`
+5. **Docker port conflicts**: Stop old containers before deploying: `docker stop uflow-app`
+6. **RLS policies**: Database queries may fail if Row Level Security policies aren't configured
+
+## Questions & Iteration
+
+If unclear about:
+- **Database schema**: Check `supabase/migrations/` or ask about specific tables
+- **Feature flags**: See `src/config/feature-flags.ts`
+- **Deployment secrets**: Check `docs/deployment/GITHUB_SECRETS_CHECKLIST.md`
+- **Performance benchmarks**: `docs/performance/` has test results and analysis

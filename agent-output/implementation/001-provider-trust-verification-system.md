@@ -9,9 +9,10 @@ Status: Active
 
 ## Plan Reference
 
-- Plan: agent-output/planning/001-provider-trust-verification-system.md
+- Active replan: agent-output/planning/001-provider-trust-verification-system-replan.md
+- Superseded plan (archived): agent-output/planning/closed/001-provider-trust-verification-system.md
 - Architecture gates: agent-output/architecture/001-provider-trust-verification-architecture-findings.md
-- Analysis: agent-output/analysis/001-epic-2-1-technical-unknowns-analysis.md
+- Analysis (archived): agent-output/analysis/closed/001-epic-2-1-technical-unknowns-analysis.md
 
 ## Date
 
@@ -75,11 +76,11 @@ Status: Active
 
 ## TDD Compliance
 
-| Function/Class                     | Test File                                                          | Test Written First? | Failure Verified? | Failure Reason                                 | Pass After Impl? |
-| ---------------------------------- | ------------------------------------------------------------------ | ------------------- | ----------------- | ---------------------------------------------- | ---------------- |
-| `searchUnifiedEntitiesWithTrust()` | `.worktrees/impl-001/src/__tests__/services/unifiedSearch.test.ts` | ✅ Yes              | ✅ Yes            | Vite import resolution failed (module missing) | ✅ Yes           |
-| `getBadgesForEntityPublic()`       | `.worktrees/impl-001/src/__tests__/services/publicBadges.test.ts`  | ✅ Yes              | ✅ Yes            | TypeError: export not a function               | ✅ Yes           |
-| `hydrateUnifiedSearchResults()`    | `.worktrees/impl-001/src/__tests__/services/hydrateSearch.test.ts` | ✅ Yes              | ✅ Yes            | Next.js cookie context error (test env)        | ✅ Yes           |
+| Function/Class                     | Test File                                      | Test Written First? | Failure Verified? | Failure Reason                                 | Pass After Impl? |
+| ---------------------------------- | ---------------------------------------------- | ------------------- | ----------------- | ---------------------------------------------- | ---------------- |
+| `searchUnifiedEntitiesWithTrust()` | `src/__tests__/services/unifiedSearch.test.ts` | ✅ Yes              | ✅ Yes            | Vite import resolution failed (module missing) | ✅ Yes           |
+| `getBadgesForEntityPublic()`       | `src/__tests__/services/publicBadges.test.ts`  | ✅ Yes              | ✅ Yes            | TypeError: export not a function               | ✅ Yes           |
+| `hydrateUnifiedSearchResults()`    | `src/__tests__/services/hydrateSearch.test.ts` | ✅ Yes              | ✅ Yes            | Next.js cookie context error (test env)        | ✅ Yes           |
 
 ## Test Coverage
 

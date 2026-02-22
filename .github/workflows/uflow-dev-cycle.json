@@ -1,0 +1,469 @@
+{
+  "id": "uflow-dev-cycle",
+  "name": "UFlow Development Cycle (PBRLL)",
+  "description": "Full development lifecycle for UFlow: Plan → Build → Review → Learn → Plan. Supports Feature, Bugfix, Refactor, Hotfix, Verification, and Security Audit task types with auto-skill routing.",
+  "category": "web",
+  "relatedBundles": ["core-dev", "security-core"],
+  "pipelines": {
+    "feature": {
+      "name": "Feature (Full Pipeline)",
+      "description": "Complete 10-phase pipeline for new capabilities.",
+      "phases": [
+        {
+          "order": 1,
+          "agent": "Planner",
+          "title": "Plan the work",
+          "goal": "Create implementation-ready plan with value statement, milestones, and acceptance criteria.",
+          "uflowSkills": [
+            "architecture-patterns",
+            "cross-repo-contract",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": ["concise-planning", "plan-writing", "planning-with-files"],
+          "gate": "Plan document exists in agent-output/planning/",
+          "notes": "Begin with Value Statement. Reference roadmap epic. Identify target release version. MUST hand off to Critic before implementation."
+        },
+        {
+          "order": 2,
+          "agent": "Analyst",
+          "title": "Investigate unknowns",
+          "goal": "Convert technical unknowns to knowns via research, POCs, and code-level investigation.",
+          "uflowSkills": ["analysis-methodology", "document-lifecycle", "memory-contract"],
+          "catalogSkills": ["systematic-debugging"],
+          "gate": "Analysis document exists in agent-output/analysis/ with confidence levels assigned",
+          "notes": "Only invoked if Planner identifies REQUIRES ANALYSIS items. Skip if no unknowns. Determinations over hypotheses."
+        },
+        {
+          "order": 3,
+          "agent": "Critic",
+          "title": "Review the plan",
+          "goal": "Stress-test plan for clarity, completeness, architectural alignment, and debt risks.",
+          "uflowSkills": [
+            "code-review-checklist",
+            "engineering-standards",
+            "cross-repo-contract",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Critique verdict is APPROVED (not REJECTED); no unresolved OPEN QUESTIONs",
+          "notes": "Pre-implementation review. Checks Value Statement, scope, fit. Can reject plans. Must check for unresolved OPEN QUESTIONs."
+        },
+        {
+          "order": 4,
+          "agent": "Architect",
+          "title": "Validate architecture",
+          "goal": "Ensure plan aligns with system architecture and doesn't introduce debt or anti-patterns.",
+          "uflowSkills": [
+            "architecture-patterns",
+            "engineering-standards",
+            "cross-repo-contract",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "No blocking architectural concerns documented",
+          "notes": "Consulted for architectural implications. Updates system-architecture.md if needed. Skip if Critic finds no architectural concerns."
+        },
+        {
+          "order": 5,
+          "agent": "Implementer",
+          "title": "Build with TDD",
+          "goal": "Implement approved plan using TDD-first methodology. Deliver production-quality code.",
+          "uflowSkills": [
+            "engineering-standards",
+            "testing-patterns",
+            "cross-repo-contract",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": ["senior-fullstack", "lint-and-validate", "git-pushing"],
+          "gate": "Implementation doc exists with TDD compliance table; all tests green",
+          "notes": "TDD is MANDATORY. Write failing test BEFORE implementation. Never edit agent-output/qa/ documents. Task-specific catalog skills auto-detected."
+        },
+        {
+          "order": 6,
+          "agent": "Code Reviewer",
+          "title": "Review code quality",
+          "goal": "Catch design flaws, anti-patterns, and quality issues before QA investment.",
+          "uflowSkills": [
+            "code-review-standards",
+            "engineering-standards",
+            "testing-patterns",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Verdict: APPROVED or APPROVED_WITH_COMMENTS",
+          "notes": "CAN REJECT implementation. Read-only — inspects code, doesn't modify. Checks SOLID, DRY, YAGNI, KISS compliance."
+        },
+        {
+          "order": 7,
+          "agent": "QA",
+          "title": "Verify implementation",
+          "goal": "Verify implementation works correctly for users in real scenarios. Tests are path to goal, not goal itself.",
+          "uflowSkills": ["testing-patterns", "document-lifecycle", "memory-contract"],
+          "catalogSkills": ["test-driven-development", "systematic-debugging"],
+          "gate": "QA doc status: QA Complete; all tests passing",
+          "notes": "Two phases: test strategy (pre-impl) + test execution (post-impl). TDD Compliance Gate — rejects without TDD table. CAN create test files."
+        },
+        {
+          "order": 8,
+          "agent": "UAT",
+          "title": "Validate value delivery",
+          "goal": "Product Owner sanity check — does implementation deliver the stated business value?",
+          "uflowSkills": ["document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "Verdict: APPROVED FOR RELEASE",
+          "notes": "Document-based review, not code inspection. Quick, high-level. Relies on Implementation, Code Review, and QA docs as evidence."
+        },
+        {
+          "order": 9,
+          "agent": "DevOps",
+          "title": "Package and release",
+          "goal": "Verify artifacts versioned/packaged correctly. Execute release with user confirmation.",
+          "uflowSkills": ["release-procedures", "document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "Status: Committed for Release or Released",
+          "notes": "Two-stage: commit locally on plan approval, push/deploy on release approval. Closes upstream docs after commit."
+        },
+        {
+          "order": 10,
+          "agent": "Retrospective",
+          "title": "Capture lessons learned",
+          "goal": "Identify repeatable process improvements. Focus on ways of working, not one-off technical details.",
+          "uflowSkills": ["document-lifecycle", "memory-contract"],
+          "catalogSkills": ["kaizen"],
+          "gate": "Retrospective document complete; systemic findings documented",
+          "notes": "Only invoked AFTER both QA Complete and UAT Complete. Analyzes handoff chains, timeline variances. Feeds into ProcessImprovement."
+        }
+      ]
+    },
+    "bugfix": {
+      "name": "Bugfix (Abbreviated Pipeline)",
+      "description": "Streamlined 6-phase pipeline for fixing existing bugs.",
+      "phases": [
+        {
+          "order": 1,
+          "agent": "Analyst",
+          "title": "Root cause analysis",
+          "goal": "Pinpoint the root cause of the bug through investigation and reproduction.",
+          "uflowSkills": ["analysis-methodology", "document-lifecycle", "memory-contract"],
+          "catalogSkills": ["systematic-debugging"],
+          "gate": "Root cause identified with confidence level",
+          "notes": "Bugs need root cause before planning. Determine actual behavior vs expected."
+        },
+        {
+          "order": 2,
+          "agent": "Planner",
+          "title": "Plan the fix",
+          "goal": "Create focused fix plan based on root cause analysis.",
+          "uflowSkills": ["document-lifecycle", "memory-contract"],
+          "catalogSkills": ["concise-planning"],
+          "gate": "Fix plan exists in agent-output/planning/",
+          "notes": "Small scope — single bug fix. Skip Critic for clear-cut fixes."
+        },
+        {
+          "order": 3,
+          "agent": "Implementer",
+          "title": "Implement the fix",
+          "goal": "Fix the bug with regression test coverage.",
+          "uflowSkills": [
+            "engineering-standards",
+            "testing-patterns",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": ["lint-and-validate"],
+          "gate": "Fix implemented with regression test; all tests green",
+          "notes": "TDD: write failing test that reproduces the bug FIRST, then fix."
+        },
+        {
+          "order": 4,
+          "agent": "Code Reviewer",
+          "title": "Review the fix",
+          "goal": "Verify fix quality and ensure no regressions introduced.",
+          "uflowSkills": [
+            "code-review-standards",
+            "engineering-standards",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Verdict: APPROVED or APPROVED_WITH_COMMENTS",
+          "notes": "Quick review focused on the fix scope. Check for side effects."
+        },
+        {
+          "order": 5,
+          "agent": "QA",
+          "title": "Verify the fix",
+          "goal": "Confirm bug is fixed and no regressions in related functionality.",
+          "uflowSkills": ["testing-patterns", "document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "QA doc status: QA Complete",
+          "notes": "Focus on regression testing. Verify the original bug report scenario."
+        },
+        {
+          "order": 6,
+          "agent": "DevOps",
+          "title": "Release the fix",
+          "goal": "Package and deploy the fix.",
+          "uflowSkills": ["release-procedures", "document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "Status: Committed or Released",
+          "notes": "Patch version bump. Fast-track if bundled with other fixes."
+        }
+      ]
+    },
+    "refactor": {
+      "name": "Refactor (Focused Pipeline)",
+      "description": "Architecture-first 6-phase pipeline for code restructuring.",
+      "phases": [
+        {
+          "order": 1,
+          "agent": "Architect",
+          "title": "Define refactor scope",
+          "goal": "Validate refactor approach against system architecture. Define boundaries.",
+          "uflowSkills": [
+            "architecture-patterns",
+            "engineering-standards",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Architectural approach documented; no anti-patterns introduced",
+          "notes": "Refactors need architectural validation first. Ensure alignment."
+        },
+        {
+          "order": 2,
+          "agent": "Planner",
+          "title": "Plan the refactor",
+          "goal": "Break refactor into safe, incremental steps with rollback points.",
+          "uflowSkills": ["engineering-standards", "document-lifecycle", "memory-contract"],
+          "catalogSkills": ["concise-planning"],
+          "gate": "Refactor plan exists in agent-output/planning/",
+          "notes": "Focus on preserving behavior while improving structure. Identify test coverage needed."
+        },
+        {
+          "order": 3,
+          "agent": "Critic",
+          "title": "Review refactor plan",
+          "goal": "Verify refactor scope is justified and incremental approach is sound.",
+          "uflowSkills": [
+            "code-review-checklist",
+            "engineering-standards",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Critique verdict: APPROVED",
+          "notes": "Pay special attention to scope creep. Refactors should be behavior-preserving."
+        },
+        {
+          "order": 4,
+          "agent": "Implementer",
+          "title": "Execute the refactor",
+          "goal": "Restructure code while maintaining all existing test coverage.",
+          "uflowSkills": [
+            "engineering-standards",
+            "testing-patterns",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": ["lint-and-validate"],
+          "gate": "Implementation doc exists; all existing tests still pass",
+          "notes": "Existing tests MUST stay green throughout. Add tests only for new structure boundaries."
+        },
+        {
+          "order": 5,
+          "agent": "Code Reviewer",
+          "title": "Review refactored code",
+          "goal": "Verify refactor achieves stated goals without behavior changes.",
+          "uflowSkills": [
+            "code-review-standards",
+            "engineering-standards",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Verdict: APPROVED",
+          "notes": "Focus on: Does the refactor actually improve the code? Are patterns applied correctly?"
+        },
+        {
+          "order": 6,
+          "agent": "QA",
+          "title": "Regression testing",
+          "goal": "Verify no behavioral regressions from the refactor.",
+          "uflowSkills": ["testing-patterns", "document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "QA doc status: QA Complete; no regressions",
+          "notes": "Pure regression testing. No new feature testing needed."
+        }
+      ]
+    },
+    "hotfix": {
+      "name": "Hotfix (Minimal Pipeline)",
+      "description": "Emergency 5-phase pipeline for production-critical issues.",
+      "phases": [
+        {
+          "order": 1,
+          "agent": "Analyst",
+          "title": "Identify root cause",
+          "goal": "Rapidly pinpoint the production issue. Speed over completeness.",
+          "uflowSkills": ["analysis-methodology", "document-lifecycle", "memory-contract"],
+          "catalogSkills": ["systematic-debugging"],
+          "gate": "Root cause identified OR best-effort mitigation path defined",
+          "notes": "Time-boxed investigation. If root cause elusive, define mitigation and investigate later."
+        },
+        {
+          "order": 2,
+          "agent": "Implementer",
+          "title": "Apply the fix",
+          "goal": "Minimal, targeted fix for the production issue.",
+          "uflowSkills": [
+            "engineering-standards",
+            "testing-patterns",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Fix applied with regression test",
+          "notes": "Smallest possible change. Must have regression test. No refactoring during hotfix."
+        },
+        {
+          "order": 3,
+          "agent": "Code Reviewer",
+          "title": "Quick review",
+          "goal": "Fast safety check — no regressions, no security issues.",
+          "uflowSkills": [
+            "code-review-standards",
+            "security-patterns",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Verdict: APPROVED",
+          "notes": "Streamlined review. Focus on safety, not style. Security check mandatory for hotfixes."
+        },
+        {
+          "order": 4,
+          "agent": "QA",
+          "title": "Smoke test",
+          "goal": "Verify fix works and critical paths aren't broken.",
+          "uflowSkills": ["testing-patterns", "document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "Smoke tests pass; fix verified",
+          "notes": "Reduced scope — smoke test critical paths only. Full regression can follow post-deploy."
+        },
+        {
+          "order": 5,
+          "agent": "DevOps",
+          "title": "Emergency deploy",
+          "goal": "Deploy hotfix to production immediately.",
+          "uflowSkills": ["release-procedures", "document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "Deployed to production",
+          "notes": "Patch version bump. Fast-track deployment. Schedule retrospective for later."
+        }
+      ]
+    },
+    "verification": {
+      "name": "Verification (QA-Direct Pipeline)",
+      "description": "Lightweight 3-phase pipeline for testing/validating existing functionality.",
+      "phases": [
+        {
+          "order": 1,
+          "agent": "QA",
+          "title": "Test the application",
+          "goal": "Run test strategy on specified scope. Execute existing tests, identify gaps, verify functionality works.",
+          "uflowSkills": ["testing-patterns", "document-lifecycle", "memory-contract"],
+          "catalogSkills": ["systematic-debugging", "test-driven-development"],
+          "gate": "QA doc status: QA Complete with pass/fail results",
+          "notes": "No planning or implementation needed. QA runs tests, reports results. Scope can be full app or targeted area."
+        },
+        {
+          "order": 2,
+          "agent": "Code Reviewer",
+          "title": "Review QA findings",
+          "goal": "If QA surfaces quality concerns, review the flagged code areas.",
+          "uflowSkills": [
+            "code-review-standards",
+            "engineering-standards",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "Code review complete or skipped (no issues found by QA)",
+          "notes": "Only invoked if QA finds code quality issues. Skip if all tests pass cleanly."
+        },
+        {
+          "order": 3,
+          "agent": "DevOps",
+          "title": "Deployment check (optional)",
+          "goal": "Verify deployment health if QA reveals deployment-related concerns.",
+          "uflowSkills": ["release-procedures", "document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "Deployment health confirmed or not applicable",
+          "notes": "Optional — only if QA reveals deployment/infra issues. Skip for pure code verification."
+        }
+      ]
+    },
+    "security-audit": {
+      "name": "Security Audit (Security-Direct Pipeline)",
+      "description": "Focused 2-phase pipeline for security reviews and audits.",
+      "phases": [
+        {
+          "order": 1,
+          "agent": "Security",
+          "title": "Conduct security audit",
+          "goal": "Review code, dependencies, and architecture for security vulnerabilities.",
+          "uflowSkills": ["security-patterns", "document-lifecycle", "memory-contract"],
+          "catalogSkills": [],
+          "gate": "Security audit report complete in agent-output/security/",
+          "notes": "Review mode depends on scope: Full 5-Phase Audit, Targeted Code Review, Dependency-Only, or Pre-Production Gate."
+        },
+        {
+          "order": 2,
+          "agent": "Implementer",
+          "title": "Remediate findings (if needed)",
+          "goal": "Fix security vulnerabilities identified in the audit.",
+          "uflowSkills": [
+            "engineering-standards",
+            "security-patterns",
+            "testing-patterns",
+            "document-lifecycle",
+            "memory-contract"
+          ],
+          "catalogSkills": [],
+          "gate": "All critical/high findings remediated; re-audit passed",
+          "notes": "Only invoked if Security finds actionable vulnerabilities. Skip if audit is clean."
+        }
+      ]
+    }
+  },
+  "securityOverride": {
+    "description": "For security-sensitive tasks, inject Security agent before DevOps in any pipeline.",
+    "agent": "Security",
+    "position": "before DevOps",
+    "uflowSkills": ["security-patterns"],
+    "triggers": [
+      "security",
+      "auth",
+      "vulnerability",
+      "CVE",
+      "secrets",
+      "credentials",
+      "OWASP",
+      "injection",
+      "XSS",
+      "CSRF"
+    ]
+  },
+  "feedbackLoop": {
+    "description": "After Retrospective, route to ProcessImprovement for systemic findings, then back to Planner.",
+    "chain": ["Retrospective", "ProcessImprovement", "Planner"],
+    "trigger": "Retrospective doc contains systemic findings (process patterns, repeated failures, communication gaps)",
+    "skipCondition": "If no systemic findings, route Retrospective → Roadmap → Planner directly"
+  }
+}

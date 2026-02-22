@@ -22,7 +22,7 @@ Status: Superseded
 | ---------- | ------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
 | 2026-01-27 | planner | Initial plan draft             | Created implementation plan from Epic 2.1                                                                                      |
 | 2026-01-27 | planner | Revised for architecture gates | Incorporate F1–F3 requirements (privacy-safe endorsement reads, unified role authority, DB-side ranking for stable pagination) |
-| 2026-02-21 | planner | Superseded by replan           | Replanned for deployment readiness; see agent-output/planning/001-provider-trust-verification-system-replan.md                 |
+| 2026-02-21 | planner | Superseded by replan           | Replanned for deployment readiness; see agent-output/planning/001-provider-trust-verification-system-replan.md                  |
 
 ---
 

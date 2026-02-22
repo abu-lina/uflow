@@ -1,15 +1,4 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -22,31 +11,65 @@
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "cSpell.words": [
+    "Bismillah"
+  ],
+  "deno.enablePaths": [
+    "supabase/functions"
+  ],
+  "deno.lint": true,
+  "deno.unstable": [
+    "bare-node-builtins",
+    "byonm",
+    "sloppy-imports",
+    "unsafe-proto",
+    "webgpu",
+    "broadcast-channel",
+    "worker-options",
+    "cron",
+    "kv",
+    "ffi",
+    "fs",
+    "http",
+    "net"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "headwind.classRegex": {
+    "javascript": "(?:className|class|tw)=\"([^\"]*)\"",
+    "javascriptreact": "(?:className|class|tw)=\"([^\"]*)\"",
+    "typescript": "(?:className|class|tw)=\"([^\"]*)\"",
+    "typescriptreact": "(?:className|class|tw)=\"([^\"]*)\""
+  },
+  "headwind.defaultSortOrder": "alphabetical",
+  "headwind.sortOnSave": true,
   "prettier.requireConfig": true,
   "prettier.useEditorConfig": true,
-  // Tailwind CSS settings
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "cva\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ],
+    [
+      "cn\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ]
+  ],
   "tailwindCSS.includeLanguages": {
     "typescript": "javascript",
     "typescriptreact": "javascript"
   },
-  "tailwindCSS.experimental.classRegex": [
-    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
-    ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
-  ],
-  "tailwindCSS.validate": true,
-  "editor.quickSuggestions": {
-    "strings": true
-  },
-  // Headwind settings
-  "headwind.defaultSortOrder": "alphabetical",
-  "headwind.classRegex": {
-    "typescriptreact": "(?:className|class|tw)=\"([^\"]*)\"",
-    "typescript": "(?:className|class|tw)=\"([^\"]*)\"",
-    "javascriptreact": "(?:className|class|tw)=\"([^\"]*)\"",
-    "javascript": "(?:className|class|tw)=\"([^\"]*)\""
-  },
-  "headwind.sortOnSave": true,
-  "cSpell.words": [
-    "Bismillah"
-  ]
+  "tailwindCSS.validate": true
 }

@@ -13,4 +13,3 @@ CREATE INDEX IF NOT EXISTS idx_providers_user_created_id ON providers(user_creat
 -- Add comment
 COMMENT ON INDEX idx_providers_review_status IS 'Index for filtering providers by review status (used in admin panel)';
 COMMENT ON INDEX idx_providers_review_status_created_at IS 'Composite index for common admin query: status filter + date sorting';
-

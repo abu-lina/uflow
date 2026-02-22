@@ -2,7 +2,7 @@
 ID: 5
 Origin: 5
 UUID: d7e2a91f
-Status: Released
+Status: UAT Complete
 ---
 
 # Fix Plan: Restore UAT Docker Build (`npm ci` failure)
@@ -18,11 +18,10 @@ Status: Released
 
 ## Change Log
 
-| Date       | Agent   | Change                               | Rationale                                                               |
-| ---------- | ------- | ------------------------------------ | ----------------------------------------------------------------------- |
-| 2026-02-21 | planner | Initial plan draft from Analysis 005 | Unblock UAT deployments by fixing deterministic `npm ci` failure        |
-| 2026-02-21 | qa      | QA complete                          | Verified `npm ci` + `build:standalone`; documented known test failures  |
-| 2026-02-21 | devops  | Released as v0.2.1                   | Pushed to origin/main, git tag v0.2.1 created, UAT deployment triggered |
+| Date       | Agent   | Change                               | Rationale                                                              |
+| ---------- | ------- | ------------------------------------ | ---------------------------------------------------------------------- |
+| 2026-02-21 | planner | Initial plan draft from Analysis 005 | Unblock UAT deployments by fixing deterministic `npm ci` failure       |
+| 2026-02-21 | qa      | QA complete                          | Verified `npm ci` + `build:standalone`; documented known test failures |
 
 ---
 

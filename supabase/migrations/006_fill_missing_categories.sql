@@ -33,8 +33,24 @@ AND EXISTS (
   WHERE csn.need_id = n.need_id
 );
 
--- Step 3: Assign remaining NULL values to "Sonstiges" category (existing category)
--- Using the known category_id for "Sonstiges" / "Other"
+-- Step 3: Ensure default "Sonstiges" category exists, then assign remaining NULL values
+-- We keep the well-known UUID so other environments/scripts can rely on it.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.categories
+    WHERE category_id = '5e5d910d-d790-4184-a061-9cd74d0950e8'
+  ) THEN
+    INSERT INTO public.categories (category_id, name, name_de, name_en)
+    VALUES (
+      '5e5d910d-d790-4184-a061-9cd74d0950e8',
+      'Sonstiges',
+      'Sonstiges',
+      'Other'
+    );
+  END IF;
+END $$;
+
 UPDATE public.offers
 SET category_id = '5e5d910d-d790-4184-a061-9cd74d0950e8'
 WHERE category_id IS NULL;
