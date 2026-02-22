@@ -2,7 +2,7 @@
 ID: 006
 Origin: 006
 UUID: 9c41e0ab
-Status: Committed
+Status: Released
 ---
 
 # Implementation Plan: Android Suggest Provider Form Bugfix
@@ -24,6 +24,7 @@ Status: Committed
 | 2026-02-22 | Implementer | v2 fix: `userToggledRef` pattern | Replaced `isInitialRender` with causal guard addressing QA-identified programmatic focus gap; 114 tests pass (5 ContactCheckbox tests); all automated gates green |
 | 2026-02-22 | QA | QA re-run complete | QA Complete: automated gates PASS; programmatic focus gap closed; Android manual matrix explicitly deferred with owner/rationale in QA report |
 | 2026-02-22 | UAT | Value validation complete | UAT Complete: APPROVED FOR RELEASE — implementation delivers stated value; all acceptance criteria met at code level; manual Android validation deferred (low-to-medium risk) |
+| 2026-02-22 | DevOps | Release v0.3.1 executed | Released: commits d50da77, 4cd3199, 267bcb2 pushed to origin/main; tag v0.3.1 created and pushed |
 
 ---
 
