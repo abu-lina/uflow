@@ -117,6 +117,31 @@ describe('categories service', () => {
       const result = await fetchFilteredCategories(null, 'nonexistent');
       expect(result).toEqual([]);
     });
+
+    // Plan 017 regression: empty string location = "all locations" (no filter)
+    it('treats empty string location as all locations (passes null to RPC)', async () => {
+      mockRpc.mockResolvedValueOnce({ data: [], error: null });
+
+      await fetchFilteredCategories('', 'test query');
+      expect(mockRpc).toHaveBeenCalledWith(
+        'get_filtered_category_ids_by_search',
+        expect.objectContaining({
+          search_query: 'test query',
+          location_filter: null,
+        }),
+      );
+    });
+
+    // Plan 017 regression: empty string location without search query skips location filter
+    it('does not apply location filter when location is empty string (no search query)', async () => {
+      mockFrom.mockReturnValue(createChainMock({ data: [], error: null }));
+
+      await fetchFilteredCategories('', null);
+      // Should NOT call RPC (no search query)
+      expect(mockRpc).not.toHaveBeenCalled();
+      // Should call .from('providers') but NOT chain .eq('address_city', ...)
+      expect(mockFrom).toHaveBeenCalledWith('providers');
+    });
   });
 
   describe('getCategories', () => {

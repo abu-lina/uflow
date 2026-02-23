@@ -118,10 +118,8 @@ export default function SavedProvidersPage() {
     }
 
     // Filter by location
-    // Handle both German ("Überall") and English ("Everywhere") for "all locations"
-    const isAllLocations = selectedLocation === 'Überall' || selectedLocation === 'Everywhere' || !selectedLocation;
-    
-    if (selectedLocation && !isAllLocations) {
+    // Empty string or falsy = "all locations" (canonical sentinel from search-provider)
+    if (selectedLocation) {
       if (selectedLocation === 'Online') {
         // Filter for online businesses (no city)
         filtered = filtered.filter((provider) => 

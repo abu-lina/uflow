@@ -8,7 +8,7 @@ import { useSearchParams, usePathname } from 'next/navigation';
 import { ChevronDown, Search, X } from 'lucide-react';
 
 // Local imports
-import { useSearch } from '@/providers/search-provider';
+import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { fetchUsedCategories, fetchFilteredCategories, type Category } from '@/services/categories';
 import { logSupabaseError } from '@/utils/errorUtils';
@@ -25,14 +25,14 @@ interface SearchBarProps {
   onLocationChange?: (location: string) => void;
 }
 
-function SearchBarContent({ 
-  className = '', 
-  hideCategoryFilter, 
+function SearchBarContent({
+  className = '',
+  hideCategoryFilter,
   customCities,
   onSearchSubmit,
   onClearSearch,
   onCategoryChange,
-  onLocationChange 
+  onLocationChange,
 }: SearchBarProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -51,7 +51,8 @@ function SearchBarContent({
   } = useSearch();
   const [categories, setCategories] = useState<Category[]>([]);
 
-  const [locations, setLocations] = useState<string[]>([t('search.everywhere')]);
+  // Locations array stores actual city names; LOCATION_ALL is added in the dropdown as first option
+  const [locations, setLocations] = useState<string[]>([]);
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
@@ -65,12 +66,12 @@ function SearchBarContent({
     if (language === 'en') {
       return category.name_en || category.name_de || category.category_id || t('search.unnamed');
     }
-    
+
     // For German, prefer German name
     if (language === 'de') {
       return category.name_de || category.name_en || category.category_id || t('search.unnamed');
     }
-    
+
     // For all other languages (ar, tr, ur, ps), prefer English over German
     // This provides better internationalization than showing German text
     return category.name_en || category.name_de || category.category_id || t('search.unnamed');
@@ -116,7 +117,8 @@ function SearchBarContent({
     async function fetchCategories() {
       try {
         // If we have location or search query filters, use filtered categories
-        if ((selectedLocation && selectedLocation !== t('search.everywhere')) || searchQuery.trim()) {
+        // Check against LOCATION_ALL (empty string) for "all locations" state
+        if ((selectedLocation && selectedLocation !== LOCATION_ALL) || searchQuery.trim()) {
           const filteredCategories = await fetchFilteredCategories(selectedLocation, searchQuery);
           setCategories(filteredCategories);
         } else {
@@ -144,7 +146,7 @@ function SearchBarContent({
       try {
         // If custom cities are provided, use them instead of fetching from database
         if (customCities) {
-          setLocations([t('search.everywhere'), ...customCities]);
+          setLocations(customCities);
           return;
         }
 
@@ -154,24 +156,24 @@ function SearchBarContent({
         // If we have category or search query filters, use filtered cities
         if (selectedCategory || searchQuery.trim()) {
           const filteredCities = await fetchFilteredCities(selectedCategory, searchQuery);
-          setLocations([t('search.everywhere'), ...filteredCities]);
+          setLocations(filteredCities);
         } else {
           // Otherwise, fetch all cities
           const allCities = await fetchProviderCities();
-          setLocations([t('search.everywhere'), ...allCities]);
+          setLocations(allCities);
         }
       } catch (error) {
         logSupabaseError('SearchBar.fetchCities', error);
-        // Set fallback to "everywhere" only, so the UI still works
-        setLocations([t('search.everywhere')]);
-        
+        // Set fallback to empty array, so the UI still works (just "Everywhere" option)
+        setLocations([]);
+
         // Don't re-throw - we've handled it gracefully
         // The error is already logged by logSupabaseError
         if (process.env.NODE_ENV === 'development') {
           console.warn(
             'Failed to fetch cities. Using fallback. ' +
-            'This is usually a network or configuration issue. ' +
-            'Check your .env.local and restart the dev server.'
+              'This is usually a network or configuration issue. ' +
+              'Check your .env.local and restart the dev server.',
           );
         }
       }
@@ -185,7 +187,11 @@ function SearchBarContent({
     if (!hasSyncedFromUrl.current) {
       const q = searchParams.get('q') || '';
       const category = searchParams.get('category') || null;
-      const location = searchParams.get('location') || t('search.everywhere');
+      // Map legacy translated values ("Überall", "Everywhere") to canonical sentinel
+      const locationParam = searchParams.get('location') || '';
+      const isAllLocations =
+        !locationParam || locationParam === 'Überall' || locationParam === 'Everywhere';
+      const location = isAllLocations ? LOCATION_ALL : locationParam;
       setSearchQuery(q);
       setSelectedCategory(category === t('search.all') ? null : category);
       setSelectedLocation(location);
@@ -354,7 +360,7 @@ function SearchBarContent({
               }}
             >
               <span className="text-base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
-                {selectedLocation}
+                {selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation}
               </span>
               <ChevronDown
                 aria-hidden="true"
@@ -368,6 +374,22 @@ function SearchBarContent({
                 ref={locationDropdownRef}
                 className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
               >
+                {/* "Everywhere" option using canonical sentinel */}
+                <button
+                  key="__everywhere__"
+                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                    selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
+                  }`}
+                  onClick={() => {
+                    setSelectedLocation(LOCATION_ALL);
+                    setIsLocationOpen(false);
+                    setIsCategoryOpen(false);
+                    onLocationChange?.(LOCATION_ALL);
+                  }}
+                >
+                  {t('search.everywhere')}
+                </button>
+                {/* City options */}
                 {locations.map((location) => (
                   <button
                     key={location}
@@ -378,7 +400,6 @@ function SearchBarContent({
                       setSelectedLocation(location);
                       setIsLocationOpen(false);
                       setIsCategoryOpen(false);
-                      // Call parent callback to handle location change
                       onLocationChange?.(location);
                     }}
                   >
@@ -399,10 +420,7 @@ export function SearchBar(props: SearchBarProps) {
     <Suspense
       fallback={
         <div
-          className={`
-            flex h-10 w-full flex-row items-center gap-4 rounded-lg bg-white px-2
-            ${props.className}
-          `}
+          className={`flex h-10 w-full flex-row items-center gap-4 rounded-lg bg-white px-2 ${props.className} `}
         >
           <div className="flex w-full flex-row items-center justify-between">
             <div className="relative flex flex-1 flex-row items-center gap-4">

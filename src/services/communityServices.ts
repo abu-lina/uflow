@@ -78,21 +78,20 @@ function isValidCategoryId(category: string | null | undefined): boolean {
 }
 
 /**
- * Check if a location value is a valid city name or a translated "everywhere" string
+ * Check if a location value is a valid city name (not empty/falsy)
+ * Empty string or falsy values represent "all locations" (no filter)
  */
 function isValidLocation(location: string | null | undefined): boolean {
+  // Empty string, null, undefined all mean "all locations"
   if (!location) return false;
-  
-  // Check if it's a known "everywhere" translation
-  const everywhereTranslations = ['Everywhere', 'Überall', 'في كل مكان', 'Her yerde'];
-  return !everywhereTranslations.includes(location);
+  return true;
 }
 
 // Search community services by name or description with pagination
 export async function searchCommunityServices(
   query: string, 
-  category: string = 'Alle', 
-  location: string = 'Überall',
+  category: string = '', 
+  location: string = '',
   limit?: number,
   offset?: number,
 ): Promise<CommunityService[]> {

@@ -205,13 +205,13 @@ export function Header() {
                     className="flex h-10 items-center rounded-xl border border-neutral px-3.5 text-base font-medium text-content"
                     onClick={() => setShowLoginModal(true)}
                   >
-                    Anmelden
+                    {t('navigation.login')}
                   </button>
                   <button
                     className="flex h-10 items-center rounded-xl bg-primary px-3.5 text-base font-medium text-white hover:bg-primary/90"
                     onClick={() => setShowSignupModal(true)}
                   >
-                    Registrieren
+                    {t('navigation.register')}
                   </button>
                 </>
               )}

@@ -13,10 +13,14 @@ export type SearchContextType = {
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
 
+// Canonical sentinel for "all locations" — empty string means no location filter.
+// UI components translate this to the user's language (e.g., "Everywhere" / "Überall").
+export const LOCATION_ALL = '';
+
 export function SearchProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState('Überall');
+  const [selectedLocation, setSelectedLocation] = useState(LOCATION_ALL);
 
   return (
     <SearchContext.Provider

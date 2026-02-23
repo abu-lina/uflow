@@ -78,9 +78,8 @@ export async function fetchFilteredCategories(
 
   if (trimmedQuery) {
     // Use RPC-based tsvector search — replaces previous ILIKE on provider_name
-    const locationFilter = (selectedLocation && selectedLocation !== 'Überall')
-      ? selectedLocation
-      : null;
+    // Treat empty string or falsy as "all locations" (no filter)
+    const locationFilter = selectedLocation || null;
 
     const { data: rpcData, error: rpcError } = await supabase.rpc(
       'get_filtered_category_ids_by_search',
@@ -108,7 +107,8 @@ export async function fetchFilteredCategories(
       .select('category_id')
       .eq('review_status', 'approved');
 
-    if (selectedLocation && selectedLocation !== 'Überall') {
+    // Treat empty string or falsy as "all locations" (no filter)
+    if (selectedLocation) {
       req = req.eq('address_city', selectedLocation);
     }
 

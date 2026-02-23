@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-02-23
+
+### Fixed
+
+**i18n Header Translation Bug (Plan 017)**: Fixed a bug where English users saw German text ("Anmelden", "Registrieren", "Überall") in the header navigation even when the language selector showed EN.
+
+- **Header buttons**: Replaced hardcoded German strings "Anmelden" and "Registrieren" with translation calls `t('navigation.login')` and `t('navigation.register')` in `Header.tsx`.
+- **Location sentinel**: Introduced canonical `LOCATION_ALL` constant (empty string) in `search-provider.tsx` to represent "all locations" in a language-agnostic way. Previously defaulted to hardcoded German "Überall".
+- **SearchBar display**: Updated `SearchBar.tsx` to display translated `t('search.everywhere')` when canonical sentinel is selected, and to map legacy URL params ("Überall", "Everywhere") to the canonical sentinel for backward compatibility.
+- **Service layer alignment**: Updated `categories.ts`, `providers.ts`, `communityServices.ts`, and `saved/page.tsx` to treat empty/falsy location values as "all locations" instead of comparing against hardcoded translated strings.
+
 ## [0.6.1] - 2026-02-23
 
 ### Fixed

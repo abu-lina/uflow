@@ -220,7 +220,7 @@ export const mockSearchContext = {
   setSelectedCategory: () => {},
   searchQuery: '',
   setSearchQuery: () => {},
-  selectedLocation: 'Überall',
+  selectedLocation: '',
   setSelectedLocation: () => {}
 };
 
