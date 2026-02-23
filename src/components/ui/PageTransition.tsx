@@ -17,13 +17,18 @@ function LoadingPlaceholder() {
  * Lightweight page wrapper that handles loading state.
  * Uses CSS-only opacity transition instead of motion/react to avoid
  * pulling the entire motion runtime (~212 kB) into the shared bundle.
+ *
+ * `relative` establishes a containing block so that child components using
+ * `absolute inset-0` (e.g. ScrollablePageLayout) resolve against this element
+ * rather than a distant ancestor. This prevents layout collapse on devices
+ * where the root viewport height may not propagate correctly (Plan 015).
  */
 export function PageTransition({ children }: PageTransitionProps) {
   const { isPreloading } = useLoading();
 
   return (
     <div
-      className="flex flex-1 flex-col transition-opacity duration-300 ease-out"
+      className="relative flex flex-1 flex-col transition-opacity duration-300 ease-out"
       style={{ opacity: isPreloading ? 0 : 1 }}
     >
       <Suspense fallback={<LoadingPlaceholder />}>

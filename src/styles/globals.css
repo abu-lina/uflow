@@ -410,7 +410,14 @@
   /* Page shell: gradient lives on body only to avoid repaints */
   .page-background {
     min-height: 100vh;
-    min-height: -webkit-fill-available;
+    min-height: 100dvh;
+  }
+
+  /* iOS Safari only: -webkit-fill-available is more accurate for min-height on iOS */
+  @supports (-webkit-touch-callout: none) {
+    .page-background {
+      min-height: -webkit-fill-available;
+    }
   }
 
   /* Mobile bottom UI slot: always in DOM to prevent layout shift; visibility by data-mobile-ui */
@@ -593,10 +600,30 @@
     text-wrap: balance;
   }
   
-  /* Safari mobile viewport fix utility class (avoid 100dvh to prevent iOS recalc flicker) */
+  /**
+   * Safe viewport-height utility.
+   *
+   * 100vh is the base fallback for all browsers.
+   * 100dvh (dynamic viewport height) handles mobile browser chrome correctly
+   * on modern browsers (Chrome 108+, Safari 15.4+, Firefox 94+).
+   *
+   * -webkit-fill-available is gated behind @supports (-webkit-touch-callout: none)
+   * so it ONLY applies on iOS Safari, where it fixes the classic iOS address-bar
+   * gap issue. On Android (MIUI WebView, Chrome), -webkit-fill-available can
+   * resolve to 0 in PWA standalone mode, collapsing the entire layout.
+   *
+   * Fix for: Plan 015 — Xiaomi 13T Pro PWA missing form fields.
+   */
   .h-screen-fix {
     height: 100vh;
-    height: -webkit-fill-available;
+    height: 100dvh;
+  }
+
+  /* iOS Safari only: -webkit-fill-available is more accurate than dvh on iOS */
+  @supports (-webkit-touch-callout: none) {
+    .h-screen-fix {
+      height: -webkit-fill-available;
+    }
   }
 
   /* Mobile navigation spacing utilities */

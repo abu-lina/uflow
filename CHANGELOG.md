@@ -5,23 +5,61 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Plan 011: Repo Structure Refactor
+## [Unreleased]
 
-### Changed
+## [0.6.1] - 2026-02-23
+
+### Fixed
+
+**PWA Form Rendering on MIUI/Xiaomi Devices (Plan 015)**: Fixed a bug where the "Anbieter empfehlen" (Recommend Provider) form displayed blank content on Xiaomi 13T Pro in PWA standalone mode. Only the "Basics" heading and submit button were visible; all input fields were hidden.
+
+- **Viewport height fix**: Updated `.h-screen-fix` CSS utility to use `100dvh` (dynamic viewport height) instead of unconditional `-webkit-fill-available`. The `-webkit-fill-available` value could resolve to 0 on MIUI WebView in PWA standalone mode, collapsing the root container. Now gated behind `@supports (-webkit-touch-callout: none)` so it only applies on iOS Safari where it's needed.
+- **Scroll container positioning**: Added `position: relative` to `PageTransition` component so that `ScrollablePageLayout`'s `absolute inset-0` resolves to its direct parent instead of a distant ancestor. This prevents layout collapse when viewport height propagation fails.
+- **Page background fix**: Applied same iOS-only gating to `.page-background` `min-height: -webkit-fill-available` to prevent height collapse on Android PWA.
+
+## [0.6.0] - 2026-02-23
+
+### Improved
+
+**Repository Structure Cleanup (Plans 011 + 012)**: Improved developer experience, contributor onboarding, and repository maintainability through folder structure clarification and root directory cleanup.
+
+#### Plan 011: Repo Structure Refactor (Documentation)
+
+**Changed**:
 
 - **Scripts consolidated**: Moved `src/scripts/*` to root `scripts/`; removed `src/scripts/` directory. Dev/ops scripts now have a single home. Fixed stale `tsconfig.json` reference to non-existent `bundle-icons.mts`.
 - **SQL folder clarified**: Updated `sql/README.md` to state that `supabase/migrations/` is the sole authoritative migration source. `sql/migrations/` is now labelled as historical/reference-only.
 - **Copilot instructions updated**: `.github/copilot-instructions.md` folder-structure section now distinguishes shared UI (`src/components/`) from domain UI (`src/features/<domain>/components/`), references the new placement rubric, and documents migration/script authority rules.
 
-### Added
+**Added**:
 
 - **Placement rubric**: New `docs/guides/PLACEMENT_RUBRIC.md` — a decision table covering 18 file categories (UI, hooks, services, types, migrations, scripts, tests, docs, etc.) to answer "where should I add this file?"
 - **Folder READMEs**: Added `src/components/README.md`, `src/features/README.md`, and `scripts/README.md` describing each folder's responsibility and what does/doesn't belong there.
 
-### Developer Notes
+#### Plan 012: Root-Level Files Placement Cleanup
 
-- Minor version bump rationale: this release changes developer-facing folder contracts (placement rules, migration authority, script location) even though there are no user-facing UX changes.
-- No runtime behavior changes; no database schema changes.
+**Changed**:
+
+- **Root directory cleaned**: Relocated 30 files from repository root to proper subdirectories. Root now contains only essential entrypoints (README, START_HERE, SECURITY, CHANGELOG) plus build configuration.
+- **Documentation organized**: 16 markdown documents moved to `docs/{summaries,reviews,fixes,guides,action-items}` following established taxonomy.
+- **Scripts relocated**: 8 shell scripts moved to `scripts/{db,debug}` for better discoverability.
+- **Infrastructure templates**: 2 nginx configuration templates moved to `deploy/nginx/`.
+- **Data artifacts**: CSV import data moved to `imports/`, SQL migration moved to `supabase/migrations/057_standardize_image_storage.sql`.
+- **Reference updates**: Updated 15 path references across 11 files (CI workflows, deployment scripts, documentation) to reflect new locations.
+- **Duplicate removed**: Deleted duplicate `PERFORMANCE_OPTIMIZATION_SUMMARY.md` from root (comprehensive version exists in `docs/performance/`).
+
+### Developer Impact
+
+- **Faster navigation**: Root clutter eliminated — contributors can scan the repository structure in seconds
+- **Clearer onboarding**: New contributors have obvious starting points and placement guidance
+- **Prevents drift**: 18-category placement rubric + folder READMEs establish clear boundaries for future contributions
+- **Improved velocity**: Less time spent asking "where should this go?" or hunting for files
+
+### Technical Notes
+
+- Minor version bump rationale: Changes developer-facing folder contracts (placement rules, migration authority, script location, root organization) even though there are no user-facing UX changes
+- No runtime behavior changes; no database schema changes; structure and documentation only
+- All automated validation passed: type-check ✓, 147 tests ✓, build ✓
 
 ## [0.5.0] - 2026-02-23
 
