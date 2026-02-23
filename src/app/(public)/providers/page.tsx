@@ -24,7 +24,11 @@ export default async function ProvidersPage({
   const params = await searchParams;
   const query = typeof params.q === 'string' ? params.q : '';
   const category = typeof params.category === 'string' ? params.category : null;
-  const location = typeof params.location === 'string' ? params.location : 'Everywhere';
+  // Map legacy "Everywhere" and "Überall" to empty string (LOCATION_ALL sentinel)
+  // Plan 017: Canonical sentinel for "all locations" is empty string
+  const locationParam = typeof params.location === 'string' ? params.location : '';
+  const isLegacyEverywhere = locationParam === 'Everywhere' || locationParam === 'Überall';
+  const location = isLegacyEverywhere ? '' : locationParam;
 
   // Server-side initial fetch — first page of results rendered into HTML
   let initialResults: SearchResult[] = [];

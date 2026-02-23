@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-02-23
+
+### Fixed
+
+**Providers Page Location Filter Bug (Hotfix)**: Fixed critical bug introduced in v0.6.2 where `/providers` page showed "No results found" because it was passing `'Everywhere'` as a literal city name instead of the canonical empty string sentinel for "all locations".
+
+- **Root cause**: Plan 017 introduced `LOCATION_ALL = ''` as canonical sentinel, but `providers/page.tsx` server component still defaulted to `'Everywhere'` string, causing service layer to filter for a non-existent city.
+- **Fix**: Updated `providers/page.tsx` to map legacy location values (`'Everywhere'`, `'Überall'`) to empty string, matching SearchBar client-side logic.
+- **Impact**: Providers page now correctly displays all providers by default when no location filter is specified.
+
 ## [0.6.2] - 2026-02-23
 
 ### Fixed
