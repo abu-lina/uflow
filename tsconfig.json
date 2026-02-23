@@ -41,8 +41,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/scripts/bundle-icons.mts"
+    "src/**/*.tsx"
   ],
   "exclude": ["node_modules", "supabase/functions/**/*", "docs/archive/nextjs-supabase-starter", "scripts/**/*.ts"]
 }

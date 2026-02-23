@@ -1,4 +1,4 @@
-import { transformSvgToComponent } from '../utils/svgToComponent';
+import { transformSvgToComponent } from '../src/utils/svgToComponent';
 
 async function main() {
   try {

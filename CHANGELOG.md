@@ -5,6 +5,24 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Plan 011: Repo Structure Refactor
+
+### Changed
+
+- **Scripts consolidated**: Moved `src/scripts/*` to root `scripts/`; removed `src/scripts/` directory. Dev/ops scripts now have a single home. Fixed stale `tsconfig.json` reference to non-existent `bundle-icons.mts`.
+- **SQL folder clarified**: Updated `sql/README.md` to state that `supabase/migrations/` is the sole authoritative migration source. `sql/migrations/` is now labelled as historical/reference-only.
+- **Copilot instructions updated**: `.github/copilot-instructions.md` folder-structure section now distinguishes shared UI (`src/components/`) from domain UI (`src/features/<domain>/components/`), references the new placement rubric, and documents migration/script authority rules.
+
+### Added
+
+- **Placement rubric**: New `docs/guides/PLACEMENT_RUBRIC.md` — a decision table covering 18 file categories (UI, hooks, services, types, migrations, scripts, tests, docs, etc.) to answer "where should I add this file?"
+- **Folder READMEs**: Added `src/components/README.md`, `src/features/README.md`, and `scripts/README.md` describing each folder's responsibility and what does/doesn't belong there.
+
+### Developer Notes
+
+- Minor version bump rationale: this release changes developer-facing folder contracts (placement rules, migration authority, script location) even though there are no user-facing UX changes.
+- No runtime behavior changes; no database schema changes.
+
 ## [0.5.0] - 2026-02-23
 
 ### Security (Plan 010 — P0)

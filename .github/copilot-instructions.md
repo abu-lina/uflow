@@ -40,18 +40,26 @@ src/
 │   ├── (public)/      # Public routes (auth, landing)
 │   ├── (dashboard)/   # Protected routes
 │   ├── api/           # API route handlers
-├── components/
+├── components/        # SHARED UI only (see README in folder)
 │   ├── ui/            # Atomic components (Button, Input)
 │   ├── shared/        # Shared blocks (cards, headers)
 │   ├── common/        # Small reusable components
 │   └── layout/        # Layout containers
-├── features/          # Feature modules (UI + hooks + services)
-├── services/          # Supabase API clients
-├── hooks/             # Custom React hooks
+├── features/          # Feature modules — domain-specific UI + hooks + services
+├── services/          # Supabase API clients (shared across features)
+├── hooks/             # Custom React hooks (shared)
 ├── lib/               # Utilities (Supabase client, PWA)
 ├── types/             # TypeScript types
 └── utils/             # Pure utility functions
 ```
+
+**Placement guidance**: See [`docs/guides/PLACEMENT_RUBRIC.md`](docs/guides/PLACEMENT_RUBRIC.md) for the full decision table.
+
+**Domain-specific UI** (e.g., provider cards, endorsement buttons) belongs in `src/features/<domain>/components/`, not `src/components/`. Existing domain folders under `src/components/` (providers, mosque, admin, etc.) are legacy placements — migrate them when you touch that code.
+
+**Database migrations** go in `supabase/migrations/` only. `sql/` is for reference/debug queries.
+
+**Dev scripts** go in root `scripts/` (never imported by runtime code).
 
 **ALWAYS** check if files/folders exist before creating. Move misplaced files to correct location.
 

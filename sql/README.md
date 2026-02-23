@@ -1,23 +1,29 @@
 # SQL Files
 
-Database queries and migrations for the uFlow project.
+Reference queries, seeds, and one-off scripts for the UFlow project.
+
+> **Authoritative migrations live in `supabase/migrations/`.**
+> Files in this folder are **not** applied automatically by CI/CD or any deployment pipeline.
+> Use them for manual debugging, data seeding, and historical reference only.
+> If you need to change the production schema, create a new migration in `supabase/migrations/`.
 
 ## 📁 Directory Structure
 
 ```
 sql/
-├── migrations/      # Database schema migrations
-├── queries/         # Utility and fix queries
+├── migrations/      # Historical / manual-only schema scripts (NOT authoritative)
+├── queries/         # Utility and fix queries (manual use)
 └── debug/           # Debugging and verification queries
 ```
 
 ---
 
-## 🔄 Migrations
+## 🔄 Migrations (Reference Only)
 
 **Location:** `sql/migrations/`
+**Status:** Historical — NOT executed in CI/CD. See `supabase/migrations/` for authoritative schema.
 
-Schema changes and setup scripts:
+Manual schema scripts and seeds:
 
 - **create-email-confirmation-tokens-table.sql** - Email confirmation system
 - **create-provider-social-projects-view.sql** - Provider social view
