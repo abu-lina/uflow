@@ -180,6 +180,15 @@ If you create or modify a migration that references **existing** tables/columns 
 - If schema drift is detected, STOP and resolve (update migration, or align schemas) before handoff.
 - Document the verification evidence in the implementation doc.
 
+### DB Plan Evidence Gate (Search) (MANDATORY WHEN APPLICABLE)
+
+If a plan adds/changes search-related indexes or RPCs, you MUST provide one of:
+
+- **Option A (preferred)**: `EXPLAIN (ANALYZE, BUFFERS)` evidence showing index usage on representative queries.
+- **Option B**: A documented reason EXPLAIN cannot be run (missing access/data) plus a follow-up action owner (QA/UAT/DevOps) and explicit risk note.
+
+Record evidence (or deferral rationale) in the implementation doc.
+
 ## Constraints
 
 - No new planning or modifying planning artifacts (except Status field updates).
@@ -204,6 +213,15 @@ Store Flowbaby memory at these moments (value boundaries):
 - Before handing off to Code Review
 
 Each memory entry must include: plan ID, files touched, decisions made, and next step.
+
+### Memory Retrieval Validation (MANDATORY)
+
+Immediately after storing a Flowbaby memory checkpoint, run a retrieval query that should match it.
+
+- Required: the retrieval returns ≥ 1 result.
+- If retrieval returns 0 results:
+  - Store a second memory entry with a clearer topic that includes: `Plan <ID>`, phase name, and 2–3 stable keywords (e.g., `migration`, `EXPLAIN`, `fallback`, `release`).
+  - Then re-run retrieval to confirm discoverability.
 
 1. Read complete plan from `agent-output/planning/` + analysis (if exists) in full. These—not chat—are authoritative.
 2. Read evaluation criteria: `~/.config/Code/User/prompts/qa.agent.md` + `~/.config/Code/User/prompts/uat.agent.md` to understand evaluation.

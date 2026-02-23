@@ -2,7 +2,7 @@
 ID: 008
 Origin: 008
 UUID: 3c8f9a2d
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Search Index Validation & Fallback Guards
@@ -13,15 +13,16 @@ Status: Committed
 
 ## Changelog
 
-| Date | Agent Handoff | Request | Summary |
-| --- | --- | --- | --- |
-| 2026-02-22T22:20Z | QA → UAT | All tests passing, ready for value validation | UAT Complete — implementation delivers stated value; index validation proves GIN effectiveness; fallback hardening eliminates unnecessary queries |
+| Date              | Agent Handoff | Request                                       | Summary                                                                                                                                           |
+| ----------------- | ------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-02-22T22:20Z | QA → UAT      | All tests passing, ready for value validation | UAT Complete — implementation delivers stated value; index validation proves GIN effectiveness; fallback hardening eliminates unnecessary queries |
 
 **Timestamp guidance (SHOULD)**: Use UTC and ISO-8601 when recording timestamps (example: `2026-02-22T17:30Z`).
 
 ## Value Statement Under Test
 
 **From Plan 008**:
+
 > As a **mobile service seeker**, I want **search to remain fast and consistent even under edge conditions**, so that **I can discover providers and community services without delays or surprising results**.
 
 ## UAT Scenarios
@@ -43,7 +44,7 @@ Status: Committed
 - **When**: Service layer processes the empty RPC response
 - **Then**: Service does NOT trigger ILIKE fallback; returns empty results to user
 - **Result**: PASS
-- **Evidence**: 
+- **Evidence**:
   - [Code changes](../../src/services/communityServices.ts): Changed condition from `searchResults.length > 0` guard to `!rpcError && searchResults && Array.isArray(searchResults)`
   - [Test coverage](../../src/__tests__/services/communityServices.test.ts): "returns empty array when RPC returns empty results (no ILIKE fallback)" test validates behavior
 
@@ -80,7 +81,7 @@ Status: Committed
 
 2. **"Consistent"**: Removing fallback-on-empty bug ensures search behavior is deterministic — RPC returning zero results means zero results, not "try again with ILIKE."
 
-3. **"Even under edge conditions"**: 
+3. **"Even under edge conditions"**:
    - Edge condition 1 (empty results): No longer triggers unexpected fallback
    - Edge condition 2 (missing RPC function): Bounded ILIKE fallback with explicit columns prevents performance cliff
    - Edge condition 3 (large result sets): Documented limits prevent unbounded fetches
@@ -98,6 +99,7 @@ Status: Committed
 ## Technical Compliance
 
 **Plan deliverables** (from Success Metrics):
+
 - ✅ PASS: Index usage proven (EXPLAIN ANALYZE in implementation doc)
 - ✅ PASS: No fallback-on-empty (code + tests verify behavior)
 - ✅ PASS: Fallback queries bounded (explicit selects + limits)
@@ -107,7 +109,8 @@ Status: Committed
 
 **Test coverage**: 13 new unit tests added (5 for communityServices, 4 each for needs/offers). All passing.
 
-**Known limitations**: 
+**Known limitations**:
+
 - EXPLAIN ANALYZE run on local Supabase with seeded data (not production-scale). Results are representative but may differ at production volume. This is acceptable per plan assumptions.
 
 ## Objective Alignment Assessment
@@ -115,6 +118,7 @@ Status: Committed
 **Does code meet original plan objective?**: YES
 
 **Evidence**: Plan Objective stated four goals:
+
 1. Prove GIN indexes work → M2 EXPLAIN results show Bitmap Index Scan
 2. Prevent unnecessary ILIKE fallbacks → M3 code changes + tests
 3. Reduce payload/scan risk → M4 explicit selects + limits
@@ -132,7 +136,8 @@ All four objectives delivered with concrete evidence in implementation doc.
 ## Release Decision
 
 **Final Status**: APPROVED FOR RELEASE
-**Rationale**: 
+**Rationale**:
+
 - All 4 plan objectives delivered with evidence
 - QA gates pass (139 tests, 0 failures)
 - Code Review APPROVED (0 critical/high/medium findings)
@@ -143,6 +148,7 @@ All four objectives delivered with concrete evidence in implementation doc.
 **Semver justification**: Backward-compatible bug fix (fallback-on-empty) + performance hardening (bounded fallbacks) + documentation (limit comments). No new features, no API changes.
 
 **Key Changes for Changelog** (already documented in CHANGELOG.md):
+
 - **Fixed**: Fallback-on-empty bug removed; ILIKE fallback now only on RPC error/function-missing
 - **Fixed**: Fallback queries bounded (explicit columns + `.limit(100)`)
 - **Validated**: GIN index usage confirmed via EXPLAIN ANALYZE (sub-millisecond)

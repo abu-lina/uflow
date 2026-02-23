@@ -2,19 +2,19 @@
 ID: 008
 Origin: 008
 UUID: 3c8f9a2d
-Status: Committed
+Status: Released
 ---
 
 # 008 — Search Index Validation & Fallback Guards
 
 ## Changelog
 
-| Date | Agent | Change | Rationale |
-| --- | --- | --- | --- |
-| 2026-02-22 | Planner | Plan created from Analysis 008 | Close remaining performance gaps: index validation + bounded fallbacks |
-| 2026-02-22 | Implementer | Status → In Progress | Beginning implementation. Version confirmed v0.4.1 by user. |
-| 2026-02-22T22:20Z | QA | Status → QA Complete | Automated gates pass; acceptance criteria met; ready for UAT |
-| 2026-02-22T22:20Z | UAT | Status → UAT Approved | APPROVED FOR RELEASE — implementation delivers stated value; index validation proves GIN effectiveness |
+| Date              | Agent       | Change                         | Rationale                                                                                              |
+| ----------------- | ----------- | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| 2026-02-22        | Planner     | Plan created from Analysis 008 | Close remaining performance gaps: index validation + bounded fallbacks                                 |
+| 2026-02-22        | Implementer | Status → In Progress           | Beginning implementation. Version confirmed v0.4.1 by user.                                            |
+| 2026-02-22T22:20Z | QA          | Status → QA Complete           | Automated gates pass; acceptance criteria met; ready for UAT                                           |
+| 2026-02-22T22:20Z | UAT         | Status → UAT Approved          | APPROVED FOR RELEASE — implementation delivers stated value; index validation proves GIN effectiveness |
 
 ## Target Release: v0.4.1 (tentative)
 
@@ -30,6 +30,7 @@ As a **mobile service seeker**, I want **search to remain fast and consistent ev
 ## Objective
 
 Close the remaining high-value performance gaps identified in Analysis 008:
+
 1. **Prove** GIN indexes are used (EXPLAIN ANALYZE)
 2. **Prevent unnecessary ILIKE fallbacks**, especially when RPC returns empty results
 3. Reduce payload/scan risk in fallbacks (explicit selects + limits)
@@ -38,6 +39,7 @@ Close the remaining high-value performance gaps identified in Analysis 008:
 ## Scope
 
 **In scope**
+
 - Database-side validation of the search indexes added in migration 056
 - Service-layer hardening for fallback logic and fallback query bounding:
   - `src/services/communityServices.ts`
@@ -47,6 +49,7 @@ Close the remaining high-value performance gaps identified in Analysis 008:
 - Version and release artifacts for the patch release
 
 **Out of scope**
+
 - Cursor-based pagination refactors (defer)
 - Broad replacement of `select('*')` across non-hot paths (defer)
 - Middleware size reduction work (defer)
@@ -85,10 +88,12 @@ Sequencing rule: DB validation should happen before code changes so fixes are dr
 **Objective**: Ensure we can run DB query-plan validation meaningfully.
 
 **Deliverables**
+
 - Confirm where EXPLAIN will be executed (Supabase SQL editor in UAT/staging, or local `supabase db` against a restored dataset).
 - Confirm approximate row counts for `providers` and `community_services` (document the numbers used for validation).
 
 **Acceptance**
+
 - A single place/process exists to run EXPLAIN for this plan.
 
 ### Milestone 2 — DB Index Validation (P0, Required)
@@ -96,12 +101,14 @@ Sequencing rule: DB validation should happen before code changes so fixes are dr
 **Objective**: Prove the indexes added in migration 056 are effective.
 
 **Deliverables**
+
 - Execute `EXPLAIN (ANALYZE, BUFFERS)` on representative queries matching:
   - provider-name full-text predicate used by `search_provider_ids_by_name`
   - community-services name+description full-text predicate used by `search_community_services_enhanced`
 - Record the resulting query-plan summary (index scan vs seq scan) and execution time.
 
 **Acceptance**
+
 - Query plans show index usage for full-text predicates on representative datasets.
 - If index usage is not observed: document the reason (e.g., too-small dataset, planner choice) and the required follow-up.
 
@@ -110,12 +117,14 @@ Sequencing rule: DB validation should happen before code changes so fixes are dr
 **Objective**: Prevent expensive and inconsistent fallback behaviors.
 
 **Deliverables**
+
 - Update community services search flow so that:
   - ILIKE fallback happens **only** on RPC error / function-missing
   - RPC returning an empty array results in an empty result set (no fallback query)
 - Ensure fallbacks are bounded and consistent with UX.
 
 **Acceptance**
+
 - No ILIKE query executes when RPC succeeds with an empty result set.
 
 ### Milestone 4 — Bound & Slim Fallback Queries (Required)
@@ -123,10 +132,12 @@ Sequencing rule: DB validation should happen before code changes so fixes are dr
 **Objective**: Reduce payload size and scan risk in the rare fallback path.
 
 **Deliverables**
+
 - Replace `select('*')` in needs/offers fallback queries with explicit columns.
 - Add explicit `.limit(...)` for fallback queries aligned with the RPC limit.
 
 **Acceptance**
+
 - Fallback queries cannot return unbounded rows.
 - Returned fields match what the UI needs.
 
@@ -135,9 +146,11 @@ Sequencing rule: DB validation should happen before code changes so fixes are dr
 **Objective**: Reduce maintenance ambiguity around limits.
 
 **Deliverables**
+
 - Add short comments near the key limits (100/500/1000) explaining rationale (UX, safety, load).
 
 **Acceptance**
+
 - A maintainer can quickly understand why each limit exists.
 
 ### Milestone 6 — Validation (Required)
@@ -145,9 +158,11 @@ Sequencing rule: DB validation should happen before code changes so fixes are dr
 **Objective**: Ensure the patch is safe and releasable.
 
 **Deliverables**
+
 - Run automated gates: tests, lint, type-check, production build.
 
 **Acceptance**
+
 - All gates pass.
 
 ### Milestone 7 — Version & Release Artifacts (Required)
@@ -155,6 +170,7 @@ Sequencing rule: DB validation should happen before code changes so fixes are dr
 **Objective**: Align artifacts with the target release.
 
 **Deliverables**
+
 - Bump version (expected: `0.4.1`).
 - Add CHANGELOG entry summarizing:
   - EXPLAIN validation executed and outcome
@@ -162,6 +178,7 @@ Sequencing rule: DB validation should happen before code changes so fixes are dr
   - fallback queries bounded and slimmed
 
 **Acceptance**
+
 - Version and changelog are consistent.
 
 ## Validation Notes (Non-QA)

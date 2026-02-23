@@ -1,6 +1,6 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-01-27
+**Last Updated**: 2026-02-22
 **Status**: Active
 
 ## Changelog
@@ -8,6 +8,7 @@
 | Date       | Change                                                 | Rationale                                                                 | Related             |
 | ---------- | ------------------------------------------------------ | ------------------------------------------------------------------------- | ------------------- |
 | 2026-01-27 | Initialized evergreen architecture doc in agent-output | Architect-mode requires a single source of truth for current system state | Plan 001 (Epic 2.1) |
+| 2026-02-22 | App Router best-practices audit findings captured      | Document current Next.js boundary/caching risks for planned refactor      | Arch 010            |
 
 ---
 
@@ -151,6 +152,9 @@ This is a known architecture risk; roles must be normalized behind a single auth
 1. **Role authority fragmentation**: multiple sources of truth for role checks across API/RLS.
 2. **Potential privacy leak risk**: public read access to confirmation rows can expose user IDs.
 3. **Ranking stability risk**: client-side ranking can break pagination consistency; prefer DB-side ordering.
+4. **App Router value leakage**: client-heavy data fetching and broad `'use client'` usage reduce streaming SSR and increase bundle/hydration costs.
+5. **Caching suppressed by global dynamism**: app-wide `force-dynamic` prevents most static/ISR benefits and increases per-request backend load.
+6. **Debug network calls in client code**: unguarded localhost ingest calls risk production noise/failures; debug telemetry must be opt-in.
 
 ---
 

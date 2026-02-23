@@ -2,7 +2,7 @@
 ID: 010
 Origin: 010
 UUID: 6c0d9f2a
-Status: QA Complete
+Status: Committed
 ---
 
 # QA Report: Next.js App Router Refactor (Best Practices)

@@ -57,16 +57,20 @@ Process:
 
 1. Acknowledge handoff: Plan ID, version, deployment outcome, scope
 2. Read all artifacts: planning, analysis, critique, implementation, architecture, QA, UAT, deployment, escalations
-3. Analyze changelog patterns: handoffs, requests, changes, gaps, excessive back-and-forth
-4. Review issues/blockers: Open Questions, Blockers, resolution status, escalation appropriateness, patterns
-5. Count substantive changes: update frequency, additions vs corrections, planning gaps indicators
-6. Review timeline: phase durations, delays
-7. Assess value delivery: objective achievement, cost
-8. Identify patterns: technical approaches, problem-solving, architectural decisions
-9. Note lessons learned: successes, failures, improvements
-10. Validate optional milestone decisions if applicable
-11. Recommend process improvements: agent instructions, workflow, communication, quality gates
-12. Create retrospective document in `agent-output/retrospectives/`
+3. Retrieve Flowbaby memory using at least 2 queries:
+  - "Plan <ID> release <version>" (phase summary)
+  - "Plan <ID> handoff issues" (process gaps)
+  If retrieval returns 0 results, document **NO-MEMORY MODE** and proceed artifact-first.
+4. Analyze changelog patterns: handoffs, requests, changes, gaps, excessive back-and-forth
+5. Review issues/blockers: Open Questions, Blockers, resolution status, escalation appropriateness, patterns
+6. Count substantive changes: update frequency, additions vs corrections, planning gaps indicators
+7. Review timeline: phase durations, delays
+8. Assess value delivery: objective achievement, cost
+9. Identify patterns: technical approaches, problem-solving, architectural decisions
+10. Note lessons learned: successes, failures, improvements
+11. Validate optional milestone decisions if applicable
+12. Recommend process improvements: agent instructions, workflow, communication, quality gates
+13. Create retrospective document in `agent-output/retrospectives/`
 
 Retrospective Document Format:
 

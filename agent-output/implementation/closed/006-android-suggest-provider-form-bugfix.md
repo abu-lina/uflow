@@ -13,10 +13,10 @@ Status: Committed
 
 ## Changelog
 
-| Date | Handoff | Request | Summary |
-|------|---------|---------|---------|
-| 2025-02-22 | Planner → Implementer | Implement Plan 006 | Initial implementation of ContactCheckbox focus guard (`isInitialRender` ref) |
-| 2025-02-22 | QA → Implementer | Fix programmatic focus gap | Replaced `isInitialRender` with `userToggledRef` pattern; added programmatic auto-select test; 114 tests pass |
+| Date       | Handoff               | Request                    | Summary                                                                                                       |
+| ---------- | --------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 2025-02-22 | Planner → Implementer | Implement Plan 006         | Initial implementation of ContactCheckbox focus guard (`isInitialRender` ref)                                 |
+| 2025-02-22 | QA → Implementer      | Fix programmatic focus gap | Replaced `isInitialRender` with `userToggledRef` pattern; added programmatic auto-select test; 114 tests pass |
 
 ## Implementation Summary
 
@@ -24,7 +24,7 @@ Status: Committed
 
 **How it delivers value**: The v1 fix (`isInitialRender`) only blocked mount-time focus, leaving a gap where programmatic state changes (e.g., autocomplete `handleProviderNameSelect` auto-selecting contacts) could still trigger `focus()` after mount. The v2 fix uses a causal guard: a `userToggledRef` ref is set to `true` **only** inside the component's own `handleToggle` callback (click/keydown), and the `useEffect([checked])` only calls `focus()` when `userToggledRef.current === true`, resetting it to `false` after each run. This ensures focus fires exclusively for user-initiated checkbox toggles — never for mount, localStorage restore, autocomplete auto-select, or any other programmatic state change.
 
-**Key insight**: `isInitialRender` was a *temporal* guard (blocks first render only); `userToggledRef` is a *causal* guard (blocks all non-user paths). The causal approach is strictly superior for this use case.
+**Key insight**: `isInitialRender` was a _temporal_ guard (blocks first render only); `userToggledRef` is a _causal_ guard (blocks all non-user paths). The causal approach is strictly superior for this use case.
 
 ## Milestones Completed
 
@@ -37,15 +37,15 @@ Status: Committed
 
 ## Files Modified
 
-| Path | Changes | Lines Changed |
-|------|---------|---------------|
-| `src/features/providers/StreamlinedRecommendForm.tsx` | Replaced `isInitialRender` ref guard with `userToggledRef` pattern + `handleToggle` callback; `onClick` and `onKeyDown` now call `handleToggle()` | ~15 lines (lines 53-89) |
-| `src/features/providers/StreamlinedImportForm.tsx` | Same `userToggledRef` + `handleToggle` pattern applied | ~15 lines (lines 69-105) |
+| Path                                                  | Changes                                                                                                                                           | Lines Changed            |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `src/features/providers/StreamlinedRecommendForm.tsx` | Replaced `isInitialRender` ref guard with `userToggledRef` pattern + `handleToggle` callback; `onClick` and `onKeyDown` now call `handleToggle()` | ~15 lines (lines 53-89)  |
+| `src/features/providers/StreamlinedImportForm.tsx`    | Same `userToggledRef` + `handleToggle` pattern applied                                                                                            | ~15 lines (lines 69-105) |
 
 ## Files Created
 
-| Path | Purpose |
-|------|---------|
+| Path                                                        | Purpose                                                  |
+| ----------------------------------------------------------- | -------------------------------------------------------- |
 | `src/features/providers/__tests__/ContactCheckbox.test.tsx` | Unit tests for ContactCheckbox focus management behavior |
 
 ## Code Quality Validation
@@ -64,11 +64,11 @@ Status: Committed
 
 ## TDD Compliance
 
-| Function/Class | Test File | Test Written First? | Failure Verified? | Failure Reason | Pass After Impl? |
-|----------------|-----------|---------------------|-------------------|----------------|------------------|
-| `FixedContactCheckbox` (ref guard pattern) | `ContactCheckbox.test.tsx` | ✅ Yes | ✅ Yes | N/A (test-local component) | ✅ Yes |
-| `BuggyContactCheckbox` (bug proof) | `ContactCheckbox.test.tsx` | ✅ Yes | ✅ Yes | N/A (proves bug exists) | ✅ Yes |
-| `FixedContactCheckbox` (programmatic focus gap) | `ContactCheckbox.test.tsx` | ✅ Yes | ✅ Yes | AssertionError (input was focused when it shouldn't be) | ✅ Yes |
+| Function/Class                                  | Test File                  | Test Written First? | Failure Verified? | Failure Reason                                          | Pass After Impl? |
+| ----------------------------------------------- | -------------------------- | ------------------- | ----------------- | ------------------------------------------------------- | ---------------- |
+| `FixedContactCheckbox` (ref guard pattern)      | `ContactCheckbox.test.tsx` | ✅ Yes              | ✅ Yes            | N/A (test-local component)                              | ✅ Yes           |
+| `BuggyContactCheckbox` (bug proof)              | `ContactCheckbox.test.tsx` | ✅ Yes              | ✅ Yes            | N/A (proves bug exists)                                 | ✅ Yes           |
+| `FixedContactCheckbox` (programmatic focus gap) | `ContactCheckbox.test.tsx` | ✅ Yes              | ✅ Yes            | AssertionError (input was focused when it shouldn't be) | ✅ Yes           |
 
 **Note**: The production `ContactCheckbox` is an inline `memo` component not exported from its module. Tests use a minimal reproduction of both the buggy and fixed patterns to validate the behavior contract. The production fix applies the exact same `userToggledRef` pattern validated by the `FixedContactCheckbox` tests.
 
@@ -89,6 +89,7 @@ Status: Committed
 **Command**: `npx vitest run`
 
 **Results**:
+
 ```
 Test Files  9 passed | 1 skipped (10)
 Tests       114 passed | 18 skipped (132)
@@ -96,6 +97,7 @@ Duration    2.45s
 ```
 
 **ContactCheckbox-specific**:
+
 ```
 ✓ src/features/providers/__tests__/ContactCheckbox.test.tsx (5 tests)
   ✓ BuggyContactCheckbox auto-focuses on mount (proves the bug exists)

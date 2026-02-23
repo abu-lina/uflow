@@ -2,7 +2,7 @@
 ID: 008
 Origin: 008
 UUID: 3c8f9a2d
-Status: Committed
+Status: Released
 ---
 
 # Critique: 008 — Search Index Validation & Fallback Guards
@@ -15,20 +15,20 @@ Status: Committed
 
 ## Changelog
 
-| Date | Handoff | Request | Summary |
-| --- | --- | --- | --- |
+| Date       | Handoff          | Request                               | Summary                  |
+| ---------- | ---------------- | ------------------------------------- | ------------------------ |
 | 2026-02-22 | Planner → Critic | Review Plan 008 before implementation | Initial review, APPROVED |
 
 ---
 
 ## Value Statement Assessment
 
-| Check | Assessment | Finding |
-|-------|------------|---------|
-| **Presence** | ✅ Present | User story format with "As a / I want / So that" |
-| **Clarity** | ✅ Clear | Outcome ("fast and consistent", "without delays or surprising results") is verifiable via response time and behavior consistency |
-| **Alignment** | ✅ Aligned | Supports Master Product Objective: fast discovery keeps UFlow the "first thought" |
-| **Directness** | ✅ Direct | Value delivered directly — index validation proves efficacy; fallback guards prevent regressions |
+| Check          | Assessment | Finding                                                                                                                          |
+| -------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Presence**   | ✅ Present | User story format with "As a / I want / So that"                                                                                 |
+| **Clarity**    | ✅ Clear   | Outcome ("fast and consistent", "without delays or surprising results") is verifiable via response time and behavior consistency |
+| **Alignment**  | ✅ Aligned | Supports Master Product Objective: fast discovery keeps UFlow the "first thought"                                                |
+| **Directness** | ✅ Direct  | Value delivered directly — index validation proves efficacy; fallback guards prevent regressions                                 |
 
 **Conclusion**: Value statement is complete and well-aligned. The plan directly addresses the deferred P3 item (EXPLAIN ANALYZE validation) from Retro 007.
 
@@ -37,6 +37,7 @@ Status: Committed
 ## Overview
 
 Plan 008 is a small, hotfix-sized plan to:
+
 1. Validate that GIN indexes from migration 056 are actually being used (EXPLAIN ANALYZE)
 2. Harden fallback logic so ILIKE doesn't run when RPC returns empty results
 3. Bound and slim fallback queries (explicit columns + limits)
@@ -48,12 +49,12 @@ The scope is tight and focused on closing the single HIGH-severity gap (index va
 
 ## Architectural Alignment
 
-| Check | Assessment |
-|-------|------------|
-| **Postgres-first** | ✅ Respects project rule — validates native Postgres indexes rather than adding external services |
-| **Service boundaries** | ✅ Changes are localized to `src/services/` layer |
-| **Migration pattern** | ✅ No new migrations expected; validates existing migration 056 |
-| **RLS/Security** | ✅ No security changes; existing RPC functions already respect RLS |
+| Check                  | Assessment                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| **Postgres-first**     | ✅ Respects project rule — validates native Postgres indexes rather than adding external services |
+| **Service boundaries** | ✅ Changes are localized to `src/services/` layer                                                 |
+| **Migration pattern**  | ✅ No new migrations expected; validates existing migration 056                                   |
+| **RLS/Security**       | ✅ No security changes; existing RPC functions already respect RLS                                |
 
 **Conclusion**: Plan aligns with system architecture and Postgres-first philosophy.
 
@@ -61,12 +62,12 @@ The scope is tight and focused on closing the single HIGH-severity gap (index va
 
 ## Scope Assessment
 
-| Aspect | Assessment |
-|--------|------------|
-| **Scope clarity** | ✅ Clear boundaries: 3 service files + documentation |
-| **Deliverables** | ✅ All 7 milestones have deliverables and acceptance criteria |
-| **Dependencies** | ✅ Sequenced correctly: DB validation before code changes |
-| **Deferrals** | ✅ Explicit: cursor pagination, middleware, broad SELECT * refactors |
+| Aspect            | Assessment                                                            |
+| ----------------- | --------------------------------------------------------------------- |
+| **Scope clarity** | ✅ Clear boundaries: 3 service files + documentation                  |
+| **Deliverables**  | ✅ All 7 milestones have deliverables and acceptance criteria         |
+| **Dependencies**  | ✅ Sequenced correctly: DB validation before code changes             |
+| **Deferrals**     | ✅ Explicit: cursor pagination, middleware, broad SELECT \* refactors |
 
 **Scope-to-value ratio**: High — small effort (~2-4 hours implementation) for meaningful risk reduction.
 
@@ -74,11 +75,11 @@ The scope is tight and focused on closing the single HIGH-severity gap (index va
 
 ## Technical Debt Risks
 
-| Risk | Assessment | Mitigation |
-|------|------------|------------|
-| **Fallback behavior change** | 🟡 Low | Only affects "no matches" edge case; plan acknowledges this |
-| **EXPLAIN results inconsistent** | 🟡 Low | Plan documents the escape hatch: "If index usage not observed, document why and follow-up" |
-| **Documentation-only milestone** | 🟢 Minimal | Milestone 5 (limit rationale) is low-effort, high-value |
+| Risk                             | Assessment | Mitigation                                                                                 |
+| -------------------------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| **Fallback behavior change**     | 🟡 Low     | Only affects "no matches" edge case; plan acknowledges this                                |
+| **EXPLAIN results inconsistent** | 🟡 Low     | Plan documents the escape hatch: "If index usage not observed, document why and follow-up" |
+| **Documentation-only milestone** | 🟢 Minimal | Milestone 5 (limit rationale) is low-effort, high-value                                    |
 
 **Conclusion**: No new technical debt introduced. Plan actively reduces existing debt (undocumented limits).
 
@@ -91,6 +92,7 @@ The scope is tight and focused on closing the single HIGH-severity gap (index va
 **Status**: OPEN  
 **Severity**: LOW  
 **Issue**: Plan contains 3 unresolved OPEN QUESTIONs:
+
 1. Target release version (v0.4.1 proposed)
 2. Where EXPLAIN ANALYZE will run (UAT Supabase vs local)
 3. Representative data volume availability
@@ -142,12 +144,12 @@ The plan contains 3 OPEN QUESTIONs:
 
 ## Risk Assessment
 
-| Category | Risk Level | Notes |
-|----------|------------|-------|
-| Scope creep | Low | Tight scope, explicit deferrals |
-| Technical risk | Low | Small, localized changes |
-| Schedule risk | Low-Medium | Depends on EXPLAIN access (Milestone 1 gates this) |
-| Regression risk | Low | Automated gates required; behavior change is intentional |
+| Category        | Risk Level | Notes                                                    |
+| --------------- | ---------- | -------------------------------------------------------- |
+| Scope creep     | Low        | Tight scope, explicit deferrals                          |
+| Technical risk  | Low        | Small, localized changes                                 |
+| Schedule risk   | Low-Medium | Depends on EXPLAIN access (Milestone 1 gates this)       |
+| Regression risk | Low        | Automated gates required; behavior change is intentional |
 
 **Overall**: **LOW RISK** — Well-structured plan with appropriate gates.
 
@@ -163,13 +165,13 @@ The plan contains 3 OPEN QUESTIONs:
 
 ## Summary
 
-| Criterion | Assessment |
-|-----------|------------|
-| Value Statement | ✅ Complete, clear, aligned |
-| Scope | ✅ Tight, focused, appropriate |
-| Architecture | ✅ Aligned with Postgres-first |
-| Risks | ✅ Low risk, mitigated |
-| Findings | 3 LOW (all acceptable) |
+| Criterion       | Assessment                     |
+| --------------- | ------------------------------ |
+| Value Statement | ✅ Complete, clear, aligned    |
+| Scope           | ✅ Tight, focused, appropriate |
+| Architecture    | ✅ Aligned with Postgres-first |
+| Risks           | ✅ Low risk, mitigated         |
+| Findings        | 3 LOW (all acceptable)         |
 
 **Verdict**: **APPROVED** — No blocking findings. Plan is ready for implementation.
 

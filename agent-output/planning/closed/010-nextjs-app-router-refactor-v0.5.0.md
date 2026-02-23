@@ -2,14 +2,14 @@
 ID: 010
 Origin: 010
 UUID: 6c0d9f2a
-Status: UAT Approved
+Status: Released
 ---
 
 # 010 - Next.js App Router Refactor (Best Practices)
 
 **Target Release**: v0.5.0
 **Epic Alignment**: Cross-cutting quality refactor supporting "trust-first discovery" reliability and performance (Architecture Findings: `agent-output/architecture/010-nextjs-app-router-best-practices-architecture-findings.md`)
-**Status**: UAT Approved
+**Status**: Committed for Release v0.5.0
 
 **Release Rationale**: v0.5.0 is chosen to align with the roadmap’s current working release and to group this meaningful App Router boundary/caching refactor into a single release train.
 
@@ -22,6 +22,8 @@ Status: UAT Approved
 | 2026-02-23 | code-reviewer | Status: Code Review Approved | All P0+P1 objectives met; 0 CRITICAL/HIGH findings; 2 MEDIUM optional improvements |
 | 2026-02-22 | qa | Status: QA Complete | Tests/type-check/delta-lint/build gates passed; ready for UAT value validation |
 | 2026-02-23 | uat | Status: UAT Approved | Value statement delivered; APPROVED FOR RELEASE (v0.5.0) |
+| 2026-02-23 | devops | Status: Committed | Commit 9316f72 created; documents closed; ready for release bundling |
+| 2026-02-23 | devops | Status: Released | v0.5.0 tagged and pushed; commit 9316f72 live on origin/main |
 
 ---
 

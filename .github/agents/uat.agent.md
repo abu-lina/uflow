@@ -56,6 +56,8 @@ Core Responsibilities:
 - Ensure `agent-output/uat/` exists (create it if missing)
 - If you cannot create/edit files, stop and ask the user to enable the required edit tools before proceeding
 
+**Self-check on start (MANDATORY)**: Before starting UAT, scan `agent-output/uat/` for docs with terminal Status (UAT Complete, Released, Abandoned, Deferred, Processed) outside `closed/`. Move them to `agent-output/uat/closed/` first.
+
 1. Read the plan's Value Statement—this is your primary source of truth
 2. Review Implementation doc from `agent-output/implementation/` for completion status
 3. Review Code Review doc from `agent-output/code-review/` for quality gate passage

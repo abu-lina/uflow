@@ -167,6 +167,8 @@ Process:
 - Ensure `agent-output/qa/` exists (create it if missing)
 - Confirm create/edit tools are enabled before starting QA documentation
 
+**Self-check on start (MANDATORY)**: Before starting QA, scan `agent-output/qa/` for docs with terminal Status (QA Complete, Released, Abandoned, Deferred, Processed) outside `closed/`. Move them to `agent-output/qa/closed/` first.
+
 1. Read plan from `agent-output/planning/`
 2. Consult Architect on integration points, failure modes
 3. Create QA doc in `agent-output/qa/` with status "Test Strategy Development"
@@ -187,10 +189,17 @@ Process:
 3. Identify code changes; inventory test coverage
 4. Map code changes to test cases; identify gaps
 5. Execute test suites (unit, integration, e2e); run `testing-patterns` skill scripts (`run-tests.sh`, `check-coverage.sh`) and capture outputs
-6. **Lint guidance (delta lint preferred)**:
 
-- Prefer linting only files changed by the plan (from the Implementation doc tables and/or `git diff --name-only`).
-- Record repo-wide lint failures as **informational** if they are clearly pre-existing and unrelated to the plan’s changes.
+**Shell safety (MANDATORY)**: Quote file paths in commands.
+
+- Always quote file paths passed to shell commands (especially paths containing parentheses like `src/app/(public)/...`).
+- Reason: zsh treats parentheses as glob patterns and may error with `zsh: no matches found`.
+
+6. **Lint guidance (delta lint default)**:
+
+- Default: lint only files changed by the plan (from the Implementation doc tables and/or `git diff --name-only`).
+- Treat repo-wide lint failures as **informational** unless the plan touches lint configuration or the user explicitly asks for repo-wide compliance.
+- If delta-lint passes but repo-wide lint is huge, record it as known debt (do not block the plan).
 
 7. Validate version artifacts: `package.json`, `CHANGELOG.md`, `README.md`
 8. Validate optional milestone deferrals if applicable

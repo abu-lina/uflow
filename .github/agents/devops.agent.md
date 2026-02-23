@@ -87,7 +87,18 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 3. Read roadmap. Verify plan's target release version. Multiple plans may target same release.
 4. Check version consistency for target release per `release-procedures` skill.
 5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
+
+**Shell safety (MANDATORY)**:
+
+- Always quote file paths passed to shell commands (especially App Router route-group paths like `src/app/(public)/...`).
+- Reason: zsh treats parentheses as glob patterns and may error with `zsh: no matches found`.
+
 6. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
+
+  **Commit message reliability note (RECOMMENDED)**:
+
+  - Prefer creating a temporary commit message file and using `git commit -F <path>` for multi-line commit messages.
+  - Avoid `git commit -m` when the message contains multiple paragraphs or quotes (shell quoting is fragile).
 
    ```
    <type>(<scope>): <subject>
@@ -128,6 +139,9 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 10. Report to Roadmap agent (handoff): Plan committed, release tracker needs update.
 11. Inform user: "[Plan ID] committed locally for release [X.Y.Z]. [N] of [M] plans committed for this release."
 12. Store Flowbaby memory (MANDATORY): After Stage 1 local commit — what’s committed, what remains, next steps.
+    - After storing Flowbaby memory, immediately retrieve using query:
+      "Plan <ID> DevOps Stage 1 <version>"
+      Confirm at least one result.
 
 ---
 
@@ -180,6 +194,9 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 4. Hand off to Roadmap: Release complete, update tracker.
 5. Hand off to Retrospective.
 6. Store Flowbaby memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
+   - After storing Flowbaby memory, immediately retrieve using query:
+     "Plan <ID> DevOps Stage 2 <version>"
+     Confirm at least one result.
 
 Deployment Doc Format: `agent-output/deployment/[version].md` with: Plan Reference, Release Date, Release Summary (version/type/environment/epic), Pre-Release Verification (UAT/QA Approval, Version Consistency checklist, Packaging Integrity checklist, Gitignore Review checklist, Workspace Cleanliness checklist), User Confirmation (timestamp, summary presented, response/name/timestamp/decline reason), Release Execution (Git Tagging command/result/pushed, Package Publication registry/command/result/URL, Publication Verification checklist), Post-Release Status (status/timestamp, Known Issues, Rollback Plan), Deployment History Entry (JSON), Next Actions.
 

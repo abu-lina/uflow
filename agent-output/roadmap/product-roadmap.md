@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-02-22
+**Last Updated**: 2026-02-23
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.3.1
+**Current Version**: v0.5.0
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -17,6 +17,12 @@
 | 2026-02-22       | Plan 001 released (v0.3.0): Provider Trust & Verification System   | Complete UI trust badges + endorsements, 109 tests passing, UAT approved, deployed to production          |
 | 2026-02-22       | Plan 006 released (v0.3.1): Android Suggest Provider Form Bugfix   | Hotfix for Android UX regression; userToggledRef pattern prevents non-user focus triggers (Epic 3.1)      |
 | 2026-02-22       | Process improvements implemented (PI 007)                          | Focus/scroll checklist, UUID inheritance, critique closure rules, UTC timestamps, tool capability updates |
+| 2026-02-22       | Plan 007 released (v0.4.0): Performance Improvements               | Bundle reduction 687kB→105kB (85%), tsvector search, GIN indexes; zero rejections, exceeded targets by 70% |
+| 2026-02-22       | Process improvements implemented (PI 008)                          | Schema verification gate for migrations + memory checkpoints at milestone boundaries (from Retro 007)      |
+| 2026-02-22       | Plan 008 released (v0.4.1): Search Index Validation & Fallbacks    | GIN indexes proven <1ms, fallback-on-empty fixed, bounded queries; zero rework, PI feedback loop validated |
+| 2026-02-23       | Plan 010 released (v0.5.0): Next.js App Router Refactor            | P0+P1 safety/alignment: removed localhost calls, server-first Providers discovery, caching discipline     |
+| 2026-02-23       | Process improvements implemented (PI 010)                          | Shell path quoting + commit message file guidance added to DevOps/QA instructions (from Retro 010)        |
+| 2026-02-23       | Orphan sweep: 11 terminal docs moved to closed/                    | Cleaned deployment/implementation/code-review/uat domains per document lifecycle                          |
 
 ---
 
@@ -37,9 +43,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.4.0 (next planned release)
+**Current Working Release**: v0.6.0 (next planned release)
 
-_No active plans — v0.3.0 deployed successfully_
+_No active plans — v0.5.0 deployed successfully_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -47,12 +53,15 @@ _No active plans — v0.3.0 deployed successfully_
 
 ### Previous Releases
 
-| Version | Date       | Plans Included                                  | Status   |
-| ------- | ---------- | ----------------------------------------------- | -------- |
-| v0.3.1  | 2026-02-22 | Plan 006 (Android Suggest Provider Form Bugfix) | Released |
-| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System) | Released |
-| v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix) | Released |
-| v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access   | Released |
+| Version | Date       | Plans Included                                          | Status   |
+| ------- | ---------- | ------------------------------------------------------- | -------- |
+| v0.5.0  | 2026-02-23 | Plan 010 (Next.js App Router Refactor)                  | Released |
+| v0.4.1  | 2026-02-22 | Plan 008 (Search Index Validation & Fallback Guards)    | Released |
+| v0.4.0  | 2026-02-22 | Plan 007 (Performance Improvements)                     | Released |
+| v0.3.1  | 2026-02-22 | Plan 006 (Android Suggest Provider Form Bugfix)         | Released |
+| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System)         | Released |
+| v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix)         | Released |
+| v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access           | Released |
 
 ---
 
@@ -579,12 +588,61 @@ So that **I can grow my business and justify investing in UFlow**.
 
 ---
 
-## Release v0.5.0 - Advanced Community & Islamic Features
+## Release v0.5.0 - Technical Foundation & Reliability
+
+**Release Date**: 2026-02-23
+**Strategic Goal**: Cross-cutting technical refactor to improve App Router alignment, safety, and caching discipline—ensuring UFlow's discovery features remain fast, reliable, and maintainable.
+
+### Plan 010: Next.js App Router Refactor (Best Practices)
+
+**Priority**: P0 (Technical Foundation)
+**Status**: Delivered
+
+**User Story**:
+As a **UFlow service seeker**,
+I want **faster and more reliable discovery pages (especially Providers search) with fewer client-side failures**,
+So that **I can find halal services quickly and trust the app to work consistently across devices and network conditions**.
+
+**Business Value**:
+
+- Improves platform reliability and user trust
+- Reduces technical debt and maintenance burden
+- Enables faster feature development on solid foundations
+- Better performance = better SEO and user retention
+
+**Dependencies**:
+
+- Existing Providers search with tsvector full-text search (✅ exists)
+- Supabase RLS and session context (✅ exists)
+
+**Acceptance Criteria** (outcome-focused):
+
+- [x] No localhost agent log calls reach production (P0 safety)
+- [x] Providers discovery uses server-first rendering (P1 App Router alignment)
+- [x] Caching discipline: `force-dynamic` only where truly needed (P1 optimization)
+- [x] All tests passing, build succeeds, no hydration mismatches
+- [x] Deployed to production without user-facing changes
+
+**Constraints**:
+
+- No UX changes (refactor only)
+- Must preserve bookmark functionality with RLS
+- Postgres-first philosophy maintained (no Redis/Elastic)
+
+**Status Notes**:
+
+- 2026-02-23: Plan created, critiqued, implemented, QA passed, UAT approved for release
+- 2026-02-23: Released as v0.5.0 (commit 9316f72) - zero rework, exemplary TDD execution
+- 2026-02-23: Retrospective completed; PI 010 implemented (shell quoting + commit message guidance)
+
+---
+
+## Release v0.6.0 - Advanced Community & Islamic Features (Planned)
 
 **Target Date**: 2026-10-15
 **Strategic Goal**: Deepen Islamic authenticity and community features that make UFlow uniquely valuable for Muslims (prayer times, Zakat, community events, halal verification).
 
-### Epic 5.1: Islamic Authenticity Verification (Halal, Zakat, Scholars)
+### Epic 6.1: Islamic Authenticity Verification (Halal, Zakat, Scholars)
 
 **Priority**: P0
 **Status**: Planned
@@ -627,7 +685,7 @@ So that **I trust UFlow as a source of authentic halal services**.
 
 ---
 
-### Epic 5.2: Integrated Prayer Times & Mosque Features
+### Epic 6.2: Integrated Prayer Times & Mosque Features
 
 **Priority**: P1
 **Status**: Planned
@@ -669,7 +727,7 @@ So that **UFlow becomes my daily Islamic companion, not just a business director
 
 ---
 
-### Epic 5.3: Zakat & Charity Integration
+### Epic 6.3: Zakat & Charity Integration
 
 **Priority**: P2
 **Status**: Planned
@@ -689,7 +747,7 @@ So that **I can fulfill my Islamic obligations with trusted, transparent organiz
 **Dependencies**:
 
 - Provider categories (✅ exists, add "Charity/Zakat" category)
-- Verification system (Epic 5.1 for organization authenticity)
+- Verification system (Epic 6.1 for organization authenticity)
 
 **Acceptance Criteria** (outcome-focused):
 
@@ -712,7 +770,7 @@ So that **I can fulfill my Islamic obligations with trusted, transparent organiz
 
 ---
 
-### Epic 5.4: Community Events & Announcements
+### Epic 6.4: Community Events & Announcements
 
 **Priority**: P2
 **Status**: Planned
@@ -757,19 +815,19 @@ So that **I stay connected and active in my local Ummah**.
 
 ## Backlog / Future Consideration
 
-### Epic 6.1: Multi-Language Quran Search Integration
+### Epic 7.1: Multi-Language Quran Search Integration
 
 **Priority**: P3
 **Status**: Deferred
 
 Integrate Quran search and translation into UFlow as a spiritual companion feature. Users can search Quran by topic, copy ayahs to share with providers (e.g., "As-Salamu-Alaikum, I found this on UFlow..."), and deepen Islamic engagement.
 
-**Dependencies**: Prayer times integration (Epic 5.2), content moderation
+**Dependencies**: Prayer times integration (Epic 6.2), content moderation
 **Rationale for Deferral**: Core marketplace features take precedence, but represents long-term vision of UFlow as complete Islamic lifestyle platform
 
 ---
 
-### Epic 6.2: Ummah Marketplace (P2P Services)
+### Epic 7.2: Ummah Marketplace (P2P Services)
 
 **Priority**: P3
 **Status**: Deferred
@@ -781,7 +839,7 @@ Enable peer-to-peer service exchange (e.g., "I can teach Quran, you can teach co
 
 ---
 
-### Epic 6.3: Islamic Business Networking
+### Epic 7.3: Islamic Business Networking
 
 **Priority**: P3
 **Status**: Deferred
@@ -793,7 +851,7 @@ LinkedIn-style networking for Muslim professionals and entrepreneurs. Connect pr
 
 ---
 
-### Epic 6.4: Mobile App (Native iOS/Android)
+### Epic 7.4: Mobile App (Native iOS/Android)
 
 **Priority**: P2
 **Status**: Deferred
@@ -831,7 +889,8 @@ Native mobile apps with push notifications, offline support, camera integration 
 - **v0.2 (Trust)**: Verified provider count, endorsement rate, trust badge visibility in search
 - **v0.3 (Growth)**: New providers from recommendations, city unlock rate, referral conversion
 - **v0.4 (Engagement)**: Inquiry/booking conversion, review submission rate, repeat user visits
-- **v0.5 (Islamic Depth)**: Halal-verified provider count, daily prayer time opens, Zakat referrals
+- **v0.5 (Technical Foundation)**: Page load performance, zero production errors, caching hit rate
+- **v0.6 (Islamic Depth)**: Halal-verified provider count, daily prayer time opens, Zakat referrals
 
 ### Risk Management
 
