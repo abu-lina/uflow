@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.6] - 2026-02-24
+
+### Fixed
+
+**Remaining iPhone Safari Viewport Overlap v3 (Plan 021)**: Fixed CTA buttons still being clipped/hidden on onboarding slides and city-selection page after Plan 020 only fixed the landing splash. Real-device UAT on iPhone SE Safari confirmed the remaining issue.
+
+- **Root cause**: The `mobile-bottom-ui-slot` CSS reserved 128px (`var(--mobile-nav-total)`) via `min-height` even when `data-mobile-ui="none"` (no bottom UI visible). During onboarding, this created 128px of dead space that reduced `<main>` height from ~559px to ~431px, pushing taller content (onboarding slides ~500px, city-selection ~530px) below the visible area.
+- **Primary fix**: Added CSS rule to collapse the bottom slot when no bottom UI is present: `.mobile-bottom-ui-slot[data-mobile-ui='none'] { min-height: 0; }`. This reclaims the full viewport height for onboarding content.
+- **Hydration shift mitigation**: Added `transition: min-height 0.15s ease-out` to smooth the slot height change when transitioning from onboarding (slot collapsed) to post-onboarding pages (slot expanded for footer/navbar).
+- **Secondary sweep**: Replaced remaining nested `h-screen-fix` → `h-full` in waitlist flow screens (`WaitlistScreen.tsx`, `WaitlistSuccessScreen.tsx`) and `HomePageShell.tsx` loading/error states.
+- **Affected screens**: Onboarding slides ("Weiter >", "Entdecke deine Ummah >"), city selection (`/city-selection`), waitlist screens.
+- **Files changed**: `globals.css` (CSS rule + transition), `WaitlistScreen.tsx`, `WaitlistSuccessScreen.tsx`, `HomePageShell.tsx`.
+- **Architectural principle**: Extended from Plan 020 — not only should children avoid claiming viewport height, but the layout should also avoid reserving space for UI that isn't visible.
+
 ## [0.6.5] - 2026-02-24
 
 ### Fixed

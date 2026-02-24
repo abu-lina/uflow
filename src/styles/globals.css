@@ -425,6 +425,13 @@
     position: relative;
     min-height: var(--mobile-nav-total);
     flex-shrink: 0;
+    /* Smooth transition for slot height change (mitigates hydration layout shift) */
+    transition: min-height 0.15s ease-out;
+  }
+
+  /* Collapse the slot when no bottom UI is visible (reclaims 128px for content) */
+  .mobile-bottom-ui-slot[data-mobile-ui='none'] {
+    min-height: 0;
   }
 
   .mobile-bottom-ui-slot .mobile-footer-bar-wrapper,

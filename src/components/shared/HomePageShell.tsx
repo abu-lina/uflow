@@ -10,32 +10,32 @@ import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
 /**
  * Stage2ProvidersContent Wrapper Component
- * 
+ *
  * Initializes search context with city location for Stage 2.
  * This ensures the search bar and filters show the correct city.
  */
 function Stage2ProvidersContent({ cityName }: { cityName: string }) {
   const { setSelectedLocation } = useSearch();
-  
+
   useEffect(() => {
     // Initialize search context with city location
     setSelectedLocation(cityName);
   }, [cityName, setSelectedLocation]);
-  
+
   return <ProvidersContent defaultLocation={cityName} />;
 }
 
 /**
  * HomePageShell Component
- * 
+ *
  * @deprecated This component is no longer used in the main routing flow.
  * City content is now rendered directly in RootPageContent.
- * 
+ *
  * Previously handled different home experiences based on app stage:
  * - Stage 1: City early access empty state (no providers)
  * - Stage 2: Providers listing filtered by city (rendered on root, no redirect)
  * - Stage 3: Category gallery (full access)
- * 
+ *
  * Keep this file for now as reference or potential future use.
  */
 export function HomePageShell() {
@@ -44,7 +44,7 @@ export function HomePageShell() {
   // Loading state
   if (isLoading || stage === 'loading') {
     return (
-      <div className="flex h-screen-fix w-full flex-col items-center justify-center bg-uflow-light">
+      <div className="h-full flex w-full flex-col items-center justify-center bg-uflow-light">
         <div className="flex flex-col items-center gap-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
@@ -56,7 +56,7 @@ export function HomePageShell() {
   // Error state
   if (error) {
     return (
-      <div className="flex h-screen-fix w-full flex-col items-center justify-center bg-uflow-light">
+      <div className="h-full flex w-full flex-col items-center justify-center bg-uflow-light">
         <div className="text-content-heading">{error}</div>
       </div>
     );
@@ -76,9 +76,10 @@ export function HomePageShell() {
         onReceiveUpdates={async () => {
           // Handle subscribe to updates
           try {
-            const onboardingState = typeof window !== 'undefined'
-              ? await import('@/lib/utils/onboarding-state').then(m => m.getOnboardingState())
-              : null;
+            const onboardingState =
+              typeof window !== 'undefined'
+                ? await import('@/lib/utils/onboarding-state').then((m) => m.getOnboardingState())
+                : null;
             const email = onboardingState?.email || '';
             const waitlistToken = onboardingState?.waitlistToken || '';
 
@@ -108,7 +109,7 @@ export function HomePageShell() {
             if (typeof window !== 'undefined') {
               sessionStorage.setItem('selectedCity', cityName);
               localStorage.setItem('selectedCity', cityName);
-              
+
               // Dispatch custom event to notify useAppStage hook immediately
               window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName } }));
             }
@@ -142,4 +143,3 @@ export function HomePageShell() {
   // Onboarding or unknown stage - return null (parent will handle)
   return null;
 }
-

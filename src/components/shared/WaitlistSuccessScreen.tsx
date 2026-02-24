@@ -12,13 +12,13 @@ interface WaitlistSuccessScreenProps {
   autoDismissDelay?: number;
 }
 
-export function WaitlistSuccessScreen({ 
-  onContinue, 
+export function WaitlistSuccessScreen({
+  onContinue,
   autoDismiss = false,
-  autoDismissDelay = 5000 
+  autoDismissDelay = 5000,
 }: WaitlistSuccessScreenProps) {
   const { t } = useLanguage();
-  
+
   // Auto-dismiss after delay if enabled
   useEffect(() => {
     if (autoDismiss) {
@@ -31,7 +31,7 @@ export function WaitlistSuccessScreen({
   }, [autoDismiss, autoDismissDelay, onContinue]);
 
   return (
-    <div className="flex h-screen-fix w-full items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="h-full flex w-full items-center justify-center px-4 sm:px-6 lg:px-8">
       <motion.div
         animate={{ opacity: 1, scale: 1 }}
         className="flex w-full max-w-md flex-col items-center gap-8"
@@ -45,10 +45,7 @@ export function WaitlistSuccessScreen({
           initial={{ scale: 0, opacity: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
         >
-          <Icon 
-            className="size-10 text-primary" 
-            icon="material-symbols:check-circle-rounded" 
-          />
+          <Icon className="size-10 text-primary" icon="material-symbols:check-circle-rounded" />
         </motion.div>
 
         {/* Heading */}
@@ -116,11 +113,13 @@ export function WaitlistSuccessScreen({
             initial={{ opacity: 0 }}
             transition={{ duration: 0.3, delay: 0.8 }}
           >
-            {t('waitlist.successAutoDismiss').replace('{{seconds}}', String(autoDismissDelay / 1000))}
+            {t('waitlist.successAutoDismiss').replace(
+              '{{seconds}}',
+              String(autoDismissDelay / 1000),
+            )}
           </motion.p>
         )}
       </motion.div>
     </div>
   );
 }
-
