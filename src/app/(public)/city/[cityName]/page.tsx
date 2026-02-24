@@ -183,7 +183,7 @@ export default function CityPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-uflow-light">
+      <div className="flex h-screen-fix w-full items-center justify-center bg-uflow-light">
         <div className="text-content-muted">Loading...</div>
       </div>
     );
@@ -192,7 +192,7 @@ export default function CityPage() {
   // Error state - only show if there's a critical error (not just city not found)
   if (error && !cityData) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-uflow-light">
+      <div className="flex h-screen-fix w-full flex-col items-center justify-center bg-uflow-light">
         <div className="text-content-heading">{error}</div>
         <button
           className="mt-4 text-primary hover:underline"
@@ -207,7 +207,7 @@ export default function CityPage() {
   // If no city data but no error, show loading (shouldn't happen, but safe fallback)
   if (!cityData) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-uflow-light">
+      <div className="flex h-screen-fix w-full items-center justify-center bg-uflow-light">
         <div className="text-content-muted">Loading...</div>
       </div>
     );

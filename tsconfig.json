@@ -43,5 +43,10 @@
     "src/**/*.ts",
     "src/**/*.tsx"
   ],
-  "exclude": ["node_modules", "supabase/functions/**/*", "docs/archive/nextjs-supabase-starter", "scripts/**/*.ts"]
+  "exclude": [
+    "node_modules",
+    "supabase/functions/**/*",
+    "docs/archive/nextjs-supabase-starter",
+    "scripts/**/*.ts"
+  ]
 }

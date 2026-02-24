@@ -161,7 +161,7 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
   return (
     <>
       {languageSwitcherPortal}
-      <div className="relative flex h-screen w-full items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="relative flex h-screen-fix w-full items-center justify-center px-4 sm:px-6 lg:px-8">
 
       <motion.div
         animate={{ opacity: 1, y: 0 }}

@@ -25,16 +25,16 @@ fi
 echo "📋 Backing up current Nginx configuration..."
 sudo cp /etc/nginx/sites-available/uat-ummahflow /etc/nginx/sites-available/uat-ummahflow.backup.$(date +%Y%m%d_%H%M%S)
 
-# Check if nginx-uat-template.conf exists in current directory
-if [ ! -f "nginx-uat-template.conf" ]; then
-    echo -e "${RED}❌ nginx-uat-template.conf not found in current directory${NC}"
+# Check if nginx-uat-template.conf exists
+if [ ! -f "deploy/nginx/nginx-uat-template.conf" ]; then
+    echo -e "${RED}❌ deploy/nginx/nginx-uat-template.conf not found${NC}"
     echo "Please run this script from the project root directory."
     exit 1
 fi
 
 # Copy updated config
 echo "📝 Copying updated Nginx configuration..."
-sudo cp nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
+sudo cp deploy/nginx/nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
 
 # Ensure symlink exists
 sudo ln -sf /etc/nginx/sites-available/uat-ummahflow /etc/nginx/sites-enabled/uat-ummahflow

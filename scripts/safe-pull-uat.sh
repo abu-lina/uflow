@@ -23,7 +23,7 @@ echo -e "${YELLOW}Backing up conflicting files to $BACKUP_DIR/${NC}"
 # Files that might conflict
 FILES=(
     "env.uat.template"
-    "nginx-uat-template.conf"
+    "deploy/nginx/nginx-uat-template.conf"
     "scripts/deploy-uat.sh"
     "scripts/setup-uat-ssl.sh"
 )

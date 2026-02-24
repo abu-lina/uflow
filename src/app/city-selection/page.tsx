@@ -453,7 +453,7 @@ export default function CitySelectionPage() {
   }, [cities, selectedCityId, isLoading, prefersReducedMotion, hasAnimated, handleCitySelect]);
 
   return (
-    <div className="flex h-screen w-full flex-col items-center bg-uflow-light">
+    <div className="flex h-screen-fix w-full flex-col items-center bg-uflow-light">
       {/* Header - 80px with safe area */}
       <header 
         className={cn(

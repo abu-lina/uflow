@@ -107,11 +107,11 @@ done
 
 # Update Nginx configuration for UAT
 echo "🌐 Updating Nginx configuration for UAT..."
-if [ -f "nginx-uat-template.conf" ]; then
-    sudo cp nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
+if [ -f "deploy/nginx/nginx-uat-template.conf" ]; then
+    sudo cp deploy/nginx/nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
     sudo ln -sf /etc/nginx/sites-available/uat-ummahflow /etc/nginx/sites-enabled/uat-ummahflow
 else
-    echo -e "${RED}❌ nginx-uat-template.conf not found${NC}"
+    echo -e "${RED}❌ deploy/nginx/nginx-uat-template.conf not found${NC}"
     exit 1
 fi
 

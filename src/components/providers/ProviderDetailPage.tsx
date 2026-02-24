@@ -326,7 +326,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   // Mobile version
   if (isMobile) {
     return (
-      <div className="h-screen overflow-y-auto bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+      <div className="h-screen-fix overflow-y-auto bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
         {/* Mobile Content */}
         <div className="pb-24">
           <MobileProviderDetail provider={provider} onBack={handleBack} />

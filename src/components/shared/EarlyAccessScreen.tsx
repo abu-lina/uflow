@@ -61,7 +61,7 @@ export function EarlyAccessScreen({
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-uflow-light">
+    <div className="flex h-screen-fix w-full items-center justify-center bg-uflow-light">
       {/* Body - Centered content */}
       <main 
         className={cn(

@@ -20,13 +20,13 @@ jobs:
       contents: read
       packages: write
     # Production deployments are always manual (works on GitHub Free tier)
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      
+
       - name: Check nginx config changed
         id: nginx-check
         run: |
@@ -34,13 +34,13 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
-            if git diff --name-only HEAD~1 HEAD | grep -q 'nginx-template.conf'; then
+            if git diff --name-only HEAD~1 HEAD | grep -q 'deploy/nginx/nginx-template.conf'; then
               echo "changed=true" >> $GITHUB_OUTPUT
             else
               echo "changed=false" >> $GITHUB_OUTPUT
             fi
           fi
-      
+
       - name: Upload Nginx config to Hetzner
         if: steps.nginx-check.outputs.changed == 'true'
         uses: appleboy/scp-action@v0.1.7
@@ -48,9 +48,9 @@ jobs:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
           key: ${{ secrets.HETZNER_SSH_KEY }}
-          source: "nginx-template.conf"
-          target: "/tmp/"
-      
+          source: 'deploy/nginx/nginx-template.conf'
+          target: '/tmp/'
+
       - name: Verify deployment confirmation
         run: |
           if [ "${{ github.event.inputs.confirm_deploy }}" != "deploy" ]; then
@@ -59,17 +59,17 @@ jobs:
             exit 1
           fi
           echo "✅ Deployment confirmed - proceeding with production deployment"
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v5
         with:
@@ -86,7 +86,7 @@ jobs:
             NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED=${{ secrets.NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED }}
             DISABLE_PWA=false
           platforms: linux/amd64
-      
+
       - name: Deploy to Hetzner
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -96,13 +96,13 @@ jobs:
           script: |
             set -e
             cd /tmp
-            
+
             # Blue-green deployment: Start new container on temp port, verify, then swap
             OLD_CONTAINER=$(docker ps -q -f name=uflow-app) || true
-            
+
             echo "📦 Pulling new image from GHCR..."
             IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/uflow:latest"
-            
+
             # Use PAT if available, otherwise try GITHUB_TOKEN (may need package:read permission)
             if [ -n "${{ secrets.GHCR_PAT }}" ]; then
               echo "🔐 Logging in to GHCR with PAT..."
@@ -111,7 +111,7 @@ jobs:
               echo "⚠️ GHCR_PAT not found, trying GITHUB_TOKEN (may not work for private repos)"
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
             fi
-            
+
             echo "🔍 Attempting to pull: $IMAGE_NAME"
             if ! docker pull "$IMAGE_NAME"; then
               echo ""
@@ -131,7 +131,7 @@ jobs:
               exit 1
             fi
             echo "✅ Image pulled successfully"
-            
+
             echo "🚀 Starting new container on temporary port 3002 (blue-green deployment)..."
             NEW_CONTAINER=$(docker run -d -p 3002:3000 \
               -e NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
@@ -145,10 +145,10 @@ jobs:
               --name uflow-new \
               --restart unless-stopped \
               ghcr.io/${{ github.repository_owner }}/uflow:latest)
-            
+
             echo "⏳ Waiting for new container to start..."
             sleep 3
-            
+
             echo "🏥 Health check on new container (port 3002)..."
             HEALTH_CHECK_FAILED=true
             for i in {1..20}; do
@@ -160,7 +160,7 @@ jobs:
                 echo "Health check attempt $i/20..."
                 sleep 1
             done
-            
+
             if [ "$HEALTH_CHECK_FAILED" = "true" ]; then
                 echo "❌ Health check failed on new container - cleaning up..."
                 docker logs --tail 50 uflow-new
@@ -168,7 +168,7 @@ jobs:
                 docker rm uflow-new || true
                 exit 1
             fi
-            
+
             echo "🔄 Swapping containers (zero-downtime deployment)..."
             # Stop old container
             if [ -n "$OLD_CONTAINER" ]; then
@@ -176,12 +176,12 @@ jobs:
                 docker stop uflow-app || true
                 docker rm uflow-app || true
             fi
-            
+
             # Stop new container and restart on production port
             echo "🔄 Moving new container to production port 3000..."
             docker stop uflow-new || true
             docker rm uflow-new || true
-            
+
             # Start on production port
             docker run -d -p 3000:3000 \
               -e NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
@@ -195,12 +195,12 @@ jobs:
               --name uflow-app \
               --restart unless-stopped \
               ghcr.io/${{ github.repository_owner }}/uflow:latest
-            
+
             echo "✅ Container swap complete"
-            
+
             echo "🔧 Updating Nginx..."
             sed "s/{{DOMAIN}}/ummahflow.com/g" /tmp/nginx-template.conf > /etc/nginx/sites-available/ummahflow
-            
+
             echo "🧪 Testing Nginx config..."
             if nginx -t; then
                 systemctl reload nginx
@@ -209,7 +209,7 @@ jobs:
                 echo "❌ Nginx config invalid"
                 exit 1
             fi
-            
+
             echo "🌐 Verifying deployment..."
             sleep 3
             if curl -f https://ummahflow.com/api/health > /dev/null 2>&1; then
@@ -217,9 +217,9 @@ jobs:
             else
                 echo "⚠️ Health check through domain failed (may need DNS propagation)"
             fi
-            
+
             echo "🎉 Deployment complete!"
-      
+
       - name: Deployment summary
         if: success()
         run: |

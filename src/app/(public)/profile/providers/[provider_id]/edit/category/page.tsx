@@ -132,7 +132,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ provide
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <div className="flex h-screen-fix flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       {/* Header */}
       <header
         className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out ${

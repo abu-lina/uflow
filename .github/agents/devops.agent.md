@@ -88,6 +88,13 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 4. Check version consistency for target release per `release-procedures` skill.
 5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
 
+**Stage 1 evidence block (RECOMMENDED)**:
+
+- Capture (and paste into the Stage 1 deployment doc):
+  - `git status`
+  - `git diff --name-only` (before commit) or commit hash (after commit)
+  - `git log --max-count 10 --date=iso-strict`
+
 **Shell safety (MANDATORY)**:
 
 - Always quote file paths passed to shell commands (especially App Router route-group paths like `src/app/(public)/...`).
@@ -95,37 +102,38 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 
 6. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
 
-  **Commit message reliability note (RECOMMENDED)**:
+   **Commit message reliability note (RECOMMENDED)**:
 
-  - Prefer creating a temporary commit message file and using `git commit -F <path>` for multi-line commit messages.
-  - Avoid `git commit -m` when the message contains multiple paragraphs or quotes (shell quoting is fragile).
+- Prefer creating a temporary commit message file and using `git commit -F <path>` for multi-line commit messages.
+- Avoid `git commit -m` when the message contains multiple paragraphs or quotes (shell quoting is fragile).
 
-   ```
-   <type>(<scope>): <subject>
+```
+<type>(<scope>): <subject>
 
-   <body explaining what and why>
+<body explaining what and why>
 
-   Refs PLAN-[ID]
-   Co-Authored-By: Claude <noreply@anthropic.com>
-   ```
+Refs PLAN-[ID]
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
 
-   **Commit message rules** (from `commit` skill):
-   - **Types**: `feat`, `fix`, `ref`, `perf`, `docs`, `test`, `build`, `ci`, `chore`, `style`, `meta`, `license`
-   - **Subject**: Imperative mood ("Add feature" not "Added"), capitalize first letter, no period, max 70 chars
-   - **Body**: Explain what and why, not how. Use imperative mood.
-   - **Footer**: `Refs PLAN-[ID]` to link plan, `Co-Authored-By` for AI attribution
+**Commit message rules** (from `commit` skill):
 
-   **Example**:
+- **Types**: `feat`, `fix`, `ref`, `perf`, `docs`, `test`, `build`, `ci`, `chore`, `style`, `meta`, `license`
+- **Subject**: Imperative mood ("Add feature" not "Added"), capitalize first letter, no period, max 70 chars
+- **Body**: Explain what and why, not how. Use imperative mood.
+- **Footer**: `Refs PLAN-[ID]` to link plan, `Co-Authored-By` for AI attribution
 
-   ```
-   feat(auth): Add OAuth2 provider integration
+**Example**:
 
-   Implement Google OAuth2 flow for user authentication. This replaces
-   the legacy session-based auth to improve security and UX.
+```
+feat(auth): Add OAuth2 provider integration
 
-   Refs PLAN-042
-   Co-Authored-By: Claude <noreply@anthropic.com>
-   ```
+Implement Google OAuth2 flow for user authentication. This replaces
+the legacy session-based auth to improve security and UX.
+
+Refs PLAN-042
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
 
 7. **Do NOT push**. Changes stay local until release is approved.
 8. **Close committed documents** (per `document-lifecycle` skill):
@@ -160,12 +168,28 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
    - Run `git branch -vv` and verify the tracking info is present
    - If missing, set upstream before continuing (example): `git branch --set-upstream-to=origin/main main`
 7. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** tagging.
+   7b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
+
+- `git status`
+- `git branch -vv`
+- `git fetch origin --prune --tags`
+- `git log --max-count 20 --date=iso-strict`
+- If you observe signs a push occurred earlier than expected, explicitly document: what you observed, likely explanation (manual vs automation), and whether it violates the “no push without approval” rule.
+
+**Stage 2 evidence block (RECOMMENDED formatting)**:
+
+- Use a dedicated “Evidence” subsection in the readiness doc and paste the outputs (trim if huge). Prefer showing:
+  - branch tracking + ahead/behind state
+  - tag list deltas (if relevant)
+  - recent commit ordering
+
 8. Create deployment readiness doc listing ALL included plans.
 9. **Migration readiness check (MANDATORY)**:
-  - If the release includes migrations that add/modify RPC functions, verify the target Supabase schema has:
-    - the migration applied (or scheduled), and
-    - the required RPCs visible in schema cache.
-  - If any RPC referenced by the app is missing, block release until migration is applied.
+
+- If the release includes migrations that add/modify RPC functions, verify the target Supabase schema has:
+  - the migration applied (or scheduled), and
+  - the required RPCs visible in schema cache.
+- If any RPC referenced by the app is missing, block release until migration is applied.
 
 **Phase 2B: User Confirmation (MANDATORY)**
 
@@ -191,6 +215,14 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 1. Update ALL included plans' status to "Released".
 2. Record metadata (version, environment, timestamp, URLs, authorizer, included plans).
 3. Verify success (installable, version matches, no errors).
+3b. **Functional Smoke Tests (MANDATORY)**: After deployment reports success (and before declaring Stage 2 complete), run a minimal set of functional smoke checks that cover server-rendered defaults:
+
+- Visit `/providers` with **no query params** and confirm results render (not “No results found”).
+- Visit `/` and confirm the primary search UI renders.
+
+Manual browser verification is acceptable. If using `curl`, document the exact commands and what you checked for in the response.
+
+If any smoke check fails: stop and treat as a release failure. Coordinate rollback or hotfix before marking Stage 2 complete.
 4. Hand off to Roadmap: Release complete, update tracker.
 5. Hand off to Retrospective.
 6. Store Flowbaby memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.

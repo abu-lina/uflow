@@ -81,7 +81,7 @@ export default function QuickCreatePage() {
   // Desktop redirect
   if (!isMobile) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen-fix items-center justify-center">
         <span className="text-lg text-gray-500">
           {t('create.basics.desktopMessage')}
         </span>

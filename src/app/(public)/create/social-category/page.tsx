@@ -73,7 +73,7 @@ export default function SelectSocialCategoryPage() {
   // Desktop redirect - preserve existing behavior
   if (!isMobile) {
     router.push('/profile');
-    return <div className="flex h-screen w-full items-center justify-center">{t('create.category.redirecting')}</div>;
+    return <div className="flex h-screen-fix w-full items-center justify-center">{t('create.category.redirecting')}</div>;
   }
 
   return (

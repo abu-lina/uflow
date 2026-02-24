@@ -2,7 +2,7 @@
 ID: 015
 Origin: 015
 UUID: 7b2f3c1a
-Status: QA Complete
+Status: Released
 ---
 
 # QA Report: Plan 015 — PWA “Anbieter empfehlen” missing input fields (Xiaomi 13T Pro)
@@ -13,11 +13,11 @@ Status: QA Complete
 
 ## Changelog
 
-| Date (UTC) | Agent Handoff | Request | Summary |
-| --- | --- | --- | --- |
-| 2026-02-23T12:25Z | Code Review → QA | Execute QA for Plan 015 | Created QA strategy; awaiting test execution evidence |
-| 2026-02-23T12:27Z | QA | Begin verification run | Captured environment + commit under test; started automated gates |
-| 2026-02-23T12:51Z | QA | QA verdict | Automated gates pass in CI-mode; manual device validation still required |
+| Date (UTC)        | Agent Handoff    | Request                 | Summary                                                                  |
+| ----------------- | ---------------- | ----------------------- | ------------------------------------------------------------------------ |
+| 2026-02-23T12:25Z | Code Review → QA | Execute QA for Plan 015 | Created QA strategy; awaiting test execution evidence                    |
+| 2026-02-23T12:27Z | QA               | Begin verification run  | Captured environment + commit under test; started automated gates        |
+| 2026-02-23T12:51Z | QA               | QA verdict              | Automated gates pass in CI-mode; manual device validation still required |
 
 ## Timeline
 
@@ -51,18 +51,23 @@ This is a layout/CSS correctness fix targeting a specific Android PWA standalone
 ### Testing Infrastructure Requirements
 
 **Test Frameworks Needed**:
+
 - Vitest (existing)
 
 **Testing Libraries Needed**:
+
 - React Testing Library (existing)
 
 **Configuration Files Needed**:
+
 - None
 
 **Build Tooling Changes Needed**:
+
 - None
 
 **Dependencies to Install**:
+
 - None
 
 ### Required Unit Tests

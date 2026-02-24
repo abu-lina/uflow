@@ -98,6 +98,10 @@ Response Style:
 
 Critique Doc Format: `agent-output/critiques/Name-critique.md` with: Artifact path, Analysis (if applicable), Date, Status (Initial/Revision N), Changelog table (date/handoff/request/summary), Value Statement/Context Assessment, Overview, Architectural Alignment, Scope Assessment, Technical Debt Risks, Findings (Critical/Medium/Low with Issue Title/Status/Description/Impact/Recommendation), Questions, Risk Assessment, Recommendations, Revision History (artifact changes, findings addressed, new findings, status changes).
 
+**Timestamp guidance (SHOULD)**:
+
+- Use UTC and ISO-8601 when recording timestamps in changelog/timeline entries (example: `2026-02-23T17:30Z`).
+
 Agent Workflow:
 
 - **Reviews planner's output**: Clarity, completeness, fit, scope, debt.

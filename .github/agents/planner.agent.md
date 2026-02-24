@@ -57,6 +57,8 @@ Produce implementation-ready plans translating roadmap epics into actionable, ve
 3. Reference roadmap epic. Deliver outcome-focused epic.
 4. Reference architecture guidance (Section 10). Consult approach, modules, integration points, design constraints.
 5. **CRITICAL**: Identify target release version from roadmap (e.g., v0.6.2). This version groups plans—multiple plans may share the same target release. Document in plan header as "Target Release: vX.Y.Z". If release target changes, update plan and notify Roadmap agent.
+   5b. **Release bundling check (MANDATORY)**: When setting `Target Release: vX.Y.Z`, scan `agent-output/planning/` for other non-closed plans targeting the same version. If found, add a short `## Release Strategy` section (e.g., “Bundled with: Plan NNN …” + sequencing notes). If none found, explicitly state “Release Strategy: Standalone (no other known plans for this version).”
+   5c. **Related issues linking (REQUIRED)**: If the work originated from a GitHub issue, Jira ticket, customer report, or support thread, include a **Related Issues** line in the plan header with links/IDs. If none exist, explicitly write “Related Issues: None”.
 6. Gather requirements, repository context, constraints.
 7. Begin every plan with "Value Statement and Business Objective": "As a [user/customer/agent], I want to [objective], so that [value]". Align with roadmap epic.
 8. Break work into discrete tasks with objectives, acceptance criteria, dependencies, owners.
@@ -109,6 +111,8 @@ Prefer small, focused scopes delivering value quickly.
 2. Get User Approval. Present user story, wait for explicit approval before planning.
 3. Summarize objective, known context.
 4. Identify target release version. Check current version, consult roadmap, ensure valid increment. Document target version and rationale in plan header.
+   4b. Run the **Release bundling check** and document `## Release Strategy` accordingly.
+   4c. Add **Related Issues** links/IDs to the plan header (or “None”).
 5. Enumerate assumptions, open questions. Resolve before finalizing.
 6. Outline milestones, break into numbered steps with implementer-ready detail.
 7. Include version management as final milestone (CHANGELOG, package.json, setup.py, etc.).
@@ -129,7 +133,7 @@ Require an explicit user selection and record: `| YYYY-MM-DD | planner | Scope l
 
 ## Response Style
 
-- **Plan header with changelog**: Plan ID, **Target Release** (e.g., v0.6.2—multiple plans may share this), Epic Alignment, Status. Document when target release changes in changelog.
+- **Plan header with changelog**: Plan ID, **Target Release** (e.g., v0.6.2—multiple plans may share this), Epic Alignment, Status, **Related Issues**. Document when target release changes in changelog.
 - **Start with "Value Statement and Business Objective"**: Outcome-focused user story format.
 - **Measurable success criteria when possible**: Quantifiable metrics enable UAT validation (e.g., "≥1000 chars retrieved memory", "reduce time 10min→<2min"). Don't force quantification for qualitative value (UX, clarity, confidence).
 - **Duration Estimates (REQUIRED)**: Provide rough phase-level ranges and note key uncertainty drivers.
@@ -137,6 +141,10 @@ Require an explicit user selection and record: `| YYYY-MM-DD | planner | Scope l
 - **Concise section headings**: Value Statement, Objective, Assumptions, Plan, Testing Strategy, Validation, Risks.
 - **"Testing Strategy" section**: Expected test types (unit/integration/e2e), coverage expectations, critical scenarios at high level. NO specific test cases.
 - Ordered lists for steps. Reference file paths, commands explicitly.
+
+**Timestamp guidance (SHOULD)**:
+
+- Use UTC and ISO-8601 when recording timestamps (example: `2026-02-23T17:30Z`).
 - Bold `OPEN QUESTION` for blocking issues. Mark resolved questions as `OPEN QUESTION [RESOLVED]: ...` or `OPEN QUESTION [CLOSED]: ...`.
 - **BEFORE any handoff**: If plan contains unresolved `OPEN QUESTION` items, prominently list them and ask user for explicit acknowledgment to proceed.
 - **NO implementation code/snippets/file contents**. Describe WHAT, WHERE, WHY—never HOW.

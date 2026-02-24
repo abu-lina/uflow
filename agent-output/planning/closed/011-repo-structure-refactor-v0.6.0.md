@@ -2,25 +2,27 @@
 ID: 011
 Origin: 011
 UUID: 9a41b0ef
-Status: Active
+Status: Released
 ---
 
 # Plan 011 — Repo Structure Refactor (No UX Change)
 
 **Target Release**: v0.6.0
 **Epic Alignment**: Platform maintainability / contributor velocity (supports Master Product Objective)
-**Status**: UAT Approved — Ready for Release (v0.6.0)
+**Status**: Released (v0.6.0, 2026-02-23)
 
 ## Changelog
 
-| Date | Agent | Change | Rationale |
-| --- | --- | --- | --- |
-| 2026-02-23 | planner | Initial plan created | Turn Arch 011 findings into scoped, incremental refactor work |
-| 2026-02-23 | implementer | Status → In Progress | Implementation started; OPEN QUESTION resolved (sql/migrations is archival only) |
-| 2026-02-23 | implementer | Status → Implementation Complete | All 5 milestones done; validation passed (type-check, lint, tests, build) |
-| 2026-02-23 | code-reviewer | Status → Code Review Approved | 0 findings (CRIT/HIGH/MEDIUM); validation clean; documentation quality exceeds expectations |
-| 2026-02-23 | qa | Status → QA Complete (PASS_WITH_NOTES) | Type-check/tests/build pass; follow-ups: update setup-uat DB doc + add Plan 011 to roadmap v0.6.0 tracker |
-| 2026-02-23 | uat | Status → UAT Approved | Value delivered: placement rubric + folder READMEs eliminate "where should this go?" ambiguity; APPROVED FOR RELEASE |
+| Date       | Agent         | Change                                 | Rationale                                                                                                            |
+| ---------- | ------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 2026-02-23 | planner       | Initial plan created                   | Turn Arch 011 findings into scoped, incremental refactor work                                                        |
+| 2026-02-23 | implementer   | Status → In Progress                   | Implementation started; OPEN QUESTION resolved (sql/migrations is archival only)                                     |
+| 2026-02-23 | implementer   | Status → Implementation Complete       | All 5 milestones done; validation passed (type-check, lint, tests, build)                                            |
+| 2026-02-23 | code-reviewer | Status → Code Review Approved          | 0 findings (CRIT/HIGH/MEDIUM); validation clean; documentation quality exceeds expectations                          |
+| 2026-02-23 | qa            | Status → QA Complete (PASS_WITH_NOTES) | Type-check/tests/build pass; follow-ups: update setup-uat DB doc + add Plan 011 to roadmap v0.6.0 tracker            |
+| 2026-02-23 | uat           | Status → UAT Approved                  | Value delivered: placement rubric + folder READMEs eliminate "where should this go?" ambiguity; APPROVED FOR RELEASE |
+| 2026-02-23 | devops        | Status → Committed for Release v0.6.0  | Local commit 42eab19; 23 files (1350 ins, 175 del); docs-only changes; awaiting release bundle                       |
+| 2026-02-23 | devops        | Status → Released                      | Stage 2: v0.6.0 released (bundled with Plan 012); CHANGELOG updated, tag created/pushed                              |
 
 ## Value Statement and Business Objective
 
@@ -47,10 +49,10 @@ Deliver a small, low-risk structure cleanup that:
 
 ### In Scope
 
-1) Make folder responsibilities explicit (short READMEs / notes where contributors look first)
-2) Consolidate scripts location (remove `src/scripts/` by moving its contents to root `scripts/`)
-3) Clarify “authoritative” database migration location (Supabase migrations are canonical)
-4) Add a small set of guardrails in docs to prevent boundary drift recurring
+1. Make folder responsibilities explicit (short READMEs / notes where contributors look first)
+2. Consolidate scripts location (remove `src/scripts/` by moving its contents to root `scripts/`)
+3. Clarify “authoritative” database migration location (Supabase migrations are canonical)
+4. Add a small set of guardrails in docs to prevent boundary drift recurring
 
 ### Out of Scope (Explicit)
 
@@ -67,7 +69,7 @@ Deliver a small, low-risk structure cleanup that:
 
 ## OPEN QUESTION (Requires confirmation before implementation)
 
-1) Is anything in `sql/migrations/` currently executed as part of UAT/prod setup scripts?
+1. Is anything in `sql/migrations/` currently executed as part of UAT/prod setup scripts?
    - If **yes**, we must either (a) migrate those SQL files into `supabase/migrations/`, or (b) explicitly document and gate the execution path.
    - If **no**, we can safely re-label/re-home `sql/migrations/` as non-authoritative reference.
 
@@ -123,7 +125,7 @@ Sequencing rule: documentation and small moves can proceed immediately after SQL
 
 - Tasks
   - Add/update a short README in `sql/` describing what belongs there (debug queries, exports, one-offs) and what does not (authoritative migrations).
-  - If `sql/migrations/` remains, re-label it as `sql/archive/migrations/` (or similar) *only if* it is confirmed not to be executed.
+  - If `sql/migrations/` remains, re-label it as `sql/archive/migrations/` (or similar) _only if_ it is confirmed not to be executed.
 
 - Acceptance Criteria
   - A contributor can tell in <30 seconds where schema changes go.

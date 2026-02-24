@@ -52,6 +52,10 @@ Core Responsibilities:
 4. Read Architect's `system-architecture.md` and any plan-specific findings as source of truth
 5. Read Implementation doc from `agent-output/implementation/` for context
 6. Review ALL modified/created files listed in the Implementation doc
+6b. **Path Refactor / File-Move Checklist (MANDATORY when applicable)**:
+  - If the Implementation includes file moves/renames or path updates, run a repo search for the **old** path(s) in high-risk areas: `scripts/`, `.github/workflows/`, `deploy/`, and `docs/`.
+  - If you find **one** stale reference, assume there may be more: recommend/require an exhaustive search before approval.
+  - Record the search terms used and files checked in the Code Review doc.
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions

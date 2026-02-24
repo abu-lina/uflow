@@ -2,7 +2,7 @@
 ID: 015
 Origin: 015
 UUID: 7b2f3c1a
-Status: Active
+Status: Released
 ---
 
 # Implementation — Plan 015: PWA "Anbieter empfehlen" missing input fields
@@ -13,8 +13,8 @@ Status: Active
 
 ## Changelog
 
-| Date (UTC) | Handoff From | Request | Summary |
-| --- | --- | --- | --- |
+| Date (UTC)        | Handoff From      | Request            | Summary                                             |
+| ----------------- | ----------------- | ------------------ | --------------------------------------------------- |
 | 2026-02-23T12:45Z | Critic (APPROVED) | Implement Plan 015 | CSS viewport fix + scroll container positioning fix |
 
 ---
@@ -44,20 +44,20 @@ Both fixes are minimal, reversible, and scoped to avoid regressions on iOS Safar
 
 ## Files Modified
 
-| Path | Changes | Lines Changed |
-| --- | --- | --- |
-| `src/styles/globals.css` | Updated `.h-screen-fix` to use `100dvh` + iOS-gated `-webkit-fill-available`; same treatment for `.page-background` `min-height` | ~25 |
-| `src/components/ui/PageTransition.tsx` | Added `relative` class to wrapper div; updated JSDoc | ~10 |
-| `CHANGELOG.md` | Added v0.6.1 release entry | ~10 |
-| `package.json` | Bumped version 0.5.0 → 0.6.1 | 1 |
-| `agent-output/planning/015-pwa-recommend-form-missing-fields.md` | Updated Status to "In Progress" | 1 |
+| Path                                                             | Changes                                                                                                                          | Lines Changed |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `src/styles/globals.css`                                         | Updated `.h-screen-fix` to use `100dvh` + iOS-gated `-webkit-fill-available`; same treatment for `.page-background` `min-height` | ~25           |
+| `src/components/ui/PageTransition.tsx`                           | Added `relative` class to wrapper div; updated JSDoc                                                                             | ~10           |
+| `CHANGELOG.md`                                                   | Added v0.6.1 release entry                                                                                                       | ~10           |
+| `package.json`                                                   | Bumped version 0.5.0 → 0.6.1                                                                                                     | 1             |
+| `agent-output/planning/015-pwa-recommend-form-missing-fields.md` | Updated Status to "In Progress"                                                                                                  | 1             |
 
 ## Files Created
 
-| Path | Purpose |
-| --- | --- |
-| `src/__tests__/components/PageTransition.test.tsx` | Unit tests for PageTransition: verifies `relative` class, flex layout, child rendering |
-| `agent-output/implementation/015-pwa-recommend-form-missing-fields.md` | This implementation doc |
+| Path                                                                   | Purpose                                                                                |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/__tests__/components/PageTransition.test.tsx`                     | Unit tests for PageTransition: verifies `relative` class, flex layout, child rendering |
+| `agent-output/implementation/015-pwa-recommend-form-missing-fields.md` | This implementation doc                                                                |
 
 ---
 
@@ -81,10 +81,10 @@ Both fixes are minimal, reversible, and scoped to avoid regressions on iOS Safar
 
 ## TDD Compliance
 
-| Function/Class | Test File | Test Written First? | Failure Verified? | Failure Reason | Pass After Impl? |
-| --- | --- | --- | --- | --- | --- |
-| N/A — CSS utility changes | N/A | N/A | N/A | CSS changes not unit-testable | N/A |
-| `PageTransition` (relative class) | `src/__tests__/components/PageTransition.test.tsx` | ✅ Yes (class assertion) | ✅ Yes (verified class present) | N/A — behavioral test on existing component | ✅ Yes |
+| Function/Class                    | Test File                                          | Test Written First?      | Failure Verified?               | Failure Reason                              | Pass After Impl? |
+| --------------------------------- | -------------------------------------------------- | ------------------------ | ------------------------------- | ------------------------------------------- | ---------------- |
+| N/A — CSS utility changes         | N/A                                                | N/A                      | N/A                             | CSS changes not unit-testable               | N/A              |
+| `PageTransition` (relative class) | `src/__tests__/components/PageTransition.test.tsx` | ✅ Yes (class assertion) | ✅ Yes (verified class present) | N/A — behavioral test on existing component | ✅ Yes           |
 
 **Note**: This is a CSS/layout bugfix. The plan states "Unit-level: minimal/no new unit tests expected (CSS/layout)." The PageTransition test verifies the structural DOM change. CSS computed-style testing requires a browser environment (covered by manual QA/UAT).
 
@@ -150,11 +150,11 @@ Both fixes are minimal, reversible, and scoped to avoid regressions on iOS Safar
 
 ## Outstanding Items
 
-| Item | Status | Notes |
-| --- | --- | --- |
-| Device testing on Xiaomi 13T Pro | Deferred to QA | Cannot reproduce without physical device |
-| iOS Safari regression check | Deferred to QA | iOS-gated code should be safe but needs manual verification |
-| `100dvh` browser compat | Low risk | Supported by Chrome 108+, Safari 15.4+, Firefox 94+; 100vh is fallback |
+| Item                             | Status         | Notes                                                                  |
+| -------------------------------- | -------------- | ---------------------------------------------------------------------- |
+| Device testing on Xiaomi 13T Pro | Deferred to QA | Cannot reproduce without physical device                               |
+| iOS Safari regression check      | Deferred to QA | iOS-gated code should be safe but needs manual verification            |
+| `100dvh` browser compat          | Low risk       | Supported by Chrome 108+, Safari 15.4+, Firefox 94+; 100vh is fallback |
 
 ---
 

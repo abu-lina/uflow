@@ -56,7 +56,7 @@ export default async function CommunityServiceDetailPage({
   return (
     <>
       <ImagePreloader imageUrl={firstImageUrl} />
-      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+      <Suspense fallback={<div className="flex h-screen-fix items-center justify-center">Loading...</div>}>
         <CommunityServiceDetailPageClient communityService={communityService} />
       </Suspense>
     </>

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-02-23
+
+### Fixed
+
+**iPhone SE Safari Viewport Overlap (Plan 019)**: Fixed content being hidden behind fixed headers/footers on iPhone SE Safari by replacing `h-screen` (100vh) with the project's `h-screen-fix` utility (dvh + iOS -webkit-fill-available) across all mobile full-height page wrappers.
+
+- **Root cause**: iOS Safari's `100vh` includes browser chrome height, causing fixed headers/footers to overlap page content on small screens like iPhone SE.
+- **Fix**: Swept 24 files replacing `h-screen` with `h-screen-fix` on all page/screen viewport wrappers. Left `min-h-screen` (allows content growth) and `md:h-screen` (desktop-only) unchanged.
+- **Scope**: Layout wrappers, onboarding screens, provider edit pages, city pages, loading/error states.
+- **Impact**: All mobile screens now use iOS-safe viewport height, preventing content from being hidden behind browser chrome.
+
 ## [0.6.3] - 2026-02-23
 
 ### Fixed

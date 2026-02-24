@@ -2,7 +2,7 @@
 ID: 011
 Origin: 011
 UUID: 3c8f1d7a
-Status: OPEN
+Status: Committed
 ---
 
 # Critique: Plan 011 — Repo Structure Refactor (v0.6.0)

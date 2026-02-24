@@ -23,7 +23,7 @@ export default function RecommendProviderPage() {
 
   // Show a loading state while redirecting
   return (
-    <div className="flex h-screen items-center justify-center">
+    <div className="flex h-screen-fix items-center justify-center">
       <span className="text-lg text-gray-500">
         Weiterleitung...
       </span>

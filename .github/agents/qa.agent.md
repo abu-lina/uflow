@@ -76,6 +76,35 @@ If the change uses `focus()` (or can indirectly trigger input focus/keyboard beh
 
 If manual mobile validation is deferred, QA MUST document: owner, rationale, severity, and fallback execution path.
 
+### CSS/Layout-Only Changes (WHEN APPLICABLE)
+
+If the change is **CSS/layout-only** (no TS/JS runtime behavior changes), QA SHOULD treat automated gates as the primary evidence and avoid forcing unit tests that cannot validate the behavior in jsdom.
+
+Minimum expectations (unless the plan explicitly states otherwise):
+
+- Run the usual automated gates (type-check, tests, build, delta lint)
+- Document any testability limitation explicitly (why a unit test would be meaningless)
+- Record manual validation status as **executed** or **deferred**
+  - If deferred: owner, rationale, severity, and fallback execution path
+
+### SSR / Server-Defaults Check (MANDATORY when applicable)
+
+If the change touches URL param parsing, “sentinel” values (e.g., *all locations*), or any Next.js Server Component page that reads `searchParams`, QA MUST validate:
+
+- The page with **no URL params** (server defaults apply)
+- The page with URL params (expected behavior)
+- The normal UI path (client-side behavior, if applicable)
+
+Document the exact URLs/inputs tested.
+
+### Sentinel Refactor Checklist (WHEN APPLICABLE)
+
+If the change replaces a canonical sentinel value (example: “Everywhere/Überall” → `''`), QA MUST verify:
+
+- Backward-compat mapping exists at **every entry point** (SSR pages, client components, service layer)
+- A regression test exists for the highest-risk path (typically **no-param SSR default**)
+- A structured search was performed for the old sentinel and key assignment sites (document the terms used)
+
 Diagnosability & Telemetry Responsibilities (MANDATORY for incident/bug work):
 
 - If a root cause cannot be proven, require evidence that the change improves diagnosability (added log markers, structured context, correlation IDs, or other telemetry).
@@ -150,7 +179,10 @@ If implementation arrives without tests:
 2. Search for the "TDD Compliance" section
 3. Verify the table exists and has rows for ALL new functions/classes
 4. Check each row:
-   - "Test Written First?" must be ✅ Yes
+  - "Test Written First?" must be ✅ Yes
+  - **Bugfix regression exception (ALLOWED only when applicable):** If the change is a bugfix/refactor with **no new API surface** and no new functions/classes, this column MAY be `⚠️ Post-fix (bugfix regression)` *only if*:
+    - “Failure Reason” clearly describes how/why the pre-fix code would fail, and
+    - A regression test exists and meaningfully exercises the bug (not a trivial assertion)
    - "Failure Verified?" must be ✅ Yes with a valid failure reason
    - "Pass After Impl?" must be ✅ Yes
 
@@ -186,7 +218,16 @@ Process:
    - Verify "TDD Compliance" table exists with rows for all new functions/classes
    - If missing or incomplete: **REJECT IMMEDIATELY** — do not proceed to testing
    - If valid: proceed to step 3
+     2b. **CSS/layout-only exception note (WHEN APPLICABLE)**:
+
+- If the implementation is CSS/layout-only and introduces no new functions/classes, the TDD table may contain a documented exception (e.g., “Not unit-testable (CSS-only)”). QA MUST verify the exception is explicit and reasonable.
+
 3. Identify code changes; inventory test coverage
+   3b. **Path regression check (MANDATORY when applicable)**:
+
+- If the plan includes file moves/renames or path updates, run a repo search for the **old** path(s) in `scripts/`, `.github/workflows/`, and `deploy/`.
+- Document search terms/commands used and results (including any fixes required) in the QA report.
+
 4. Map code changes to test cases; identify gaps
 5. Execute test suites (unit, integration, e2e); run `testing-patterns` skill scripts (`run-tests.sh`, `check-coverage.sh`) and capture outputs
 

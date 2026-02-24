@@ -33,6 +33,6 @@ WHERE schemaname = 'public'
 NOTIFY pgrst, 'reload schema';
 
 -- =====================================================
--- NOW TEST: If ./test-direct-postgrest.sh STILL fails
+-- NOW TEST: If ./scripts/db/test-direct-postgrest.sh STILL fails
 -- with this policy, the issue is NOT RLS logic
 -- =====================================================

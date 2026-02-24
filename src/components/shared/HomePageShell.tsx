@@ -44,7 +44,7 @@ export function HomePageShell() {
   // Loading state
   if (isLoading || stage === 'loading') {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-uflow-light">
+      <div className="flex h-screen-fix w-full flex-col items-center justify-center bg-uflow-light">
         <div className="flex flex-col items-center gap-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
@@ -56,7 +56,7 @@ export function HomePageShell() {
   // Error state
   if (error) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-uflow-light">
+      <div className="flex h-screen-fix w-full flex-col items-center justify-center bg-uflow-light">
         <div className="text-content-heading">{error}</div>
       </div>
     );

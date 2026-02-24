@@ -2,27 +2,31 @@
 
 **Last Updated**: 2026-02-23
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.5.0
+**Current Version**: v0.6.1
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
 
-| Date & Time      | Change                                                             | Rationale                                                                                                 |
-| ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| 2026-01-27 14:00 | Initial roadmap creation                                           | Established strategic direction based on "strengthening Ummah" outcome with focus on growth and community |
-| 2026-01-27 15:30 | Epic 2.1 implementation plan created (Plan 001), validation passed | Detailed technical plan delivers all 5 acceptance criteria, ready for Architect/Security review           |
-| 2026-01-27 16:10 | Plan 001 revised for architecture gates                            | Implementation is gated by privacy-safe endorsements, unified role authority, and DB-side stable ranking  |
-| 2026-02-21       | Plan 003 released (v0.2.0): Console errors bugfix                  | Fixed hydration mismatch + diagnosed CORS NXDOMAIN; zero rework, exemplary workflow execution             |
-| 2026-02-21       | Process improvements implemented (PI 004)                          | Added duration estimates requirement (Planner) + remote divergence preflight (DevOps Stage 2)             |
-| 2026-02-22       | Plan 001 released (v0.3.0): Provider Trust & Verification System   | Complete UI trust badges + endorsements, 109 tests passing, UAT approved, deployed to production          |
-| 2026-02-22       | Plan 006 released (v0.3.1): Android Suggest Provider Form Bugfix   | Hotfix for Android UX regression; userToggledRef pattern prevents non-user focus triggers (Epic 3.1)      |
-| 2026-02-22       | Process improvements implemented (PI 007)                          | Focus/scroll checklist, UUID inheritance, critique closure rules, UTC timestamps, tool capability updates |
-| 2026-02-22       | Plan 007 released (v0.4.0): Performance Improvements               | Bundle reduction 687kB→105kB (85%), tsvector search, GIN indexes; zero rejections, exceeded targets by 70% |
-| 2026-02-22       | Process improvements implemented (PI 008)                          | Schema verification gate for migrations + memory checkpoints at milestone boundaries (from Retro 007)      |
-| 2026-02-22       | Plan 008 released (v0.4.1): Search Index Validation & Fallbacks    | GIN indexes proven <1ms, fallback-on-empty fixed, bounded queries; zero rework, PI feedback loop validated |
-| 2026-02-23       | Plan 010 released (v0.5.0): Next.js App Router Refactor            | P0+P1 safety/alignment: removed localhost calls, server-first Providers discovery, caching discipline     |
-| 2026-02-23       | Process improvements implemented (PI 010)                          | Shell path quoting + commit message file guidance added to DevOps/QA instructions (from Retro 010)        |
-| 2026-02-23       | Orphan sweep: 11 terminal docs moved to closed/                    | Cleaned deployment/implementation/code-review/uat domains per document lifecycle                          |
+| Date & Time      | Change                                                             | Rationale                                                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-27 14:00 | Initial roadmap creation                                           | Established strategic direction based on "strengthening Ummah" outcome with focus on growth and community                                                 |
+| 2026-01-27 15:30 | Epic 2.1 implementation plan created (Plan 001), validation passed | Detailed technical plan delivers all 5 acceptance criteria, ready for Architect/Security review                                                           |
+| 2026-01-27 16:10 | Plan 001 revised for architecture gates                            | Implementation is gated by privacy-safe endorsements, unified role authority, and DB-side stable ranking                                                  |
+| 2026-02-21       | Plan 003 released (v0.2.0): Console errors bugfix                  | Fixed hydration mismatch + diagnosed CORS NXDOMAIN; zero rework, exemplary workflow execution                                                             |
+| 2026-02-21       | Process improvements implemented (PI 004)                          | Added duration estimates requirement (Planner) + remote divergence preflight (DevOps Stage 2)                                                             |
+| 2026-02-22       | Plan 001 released (v0.3.0): Provider Trust & Verification System   | Complete UI trust badges + endorsements, 109 tests passing, UAT approved, deployed to production                                                          |
+| 2026-02-22       | Plan 006 released (v0.3.1): Android Suggest Provider Form Bugfix   | Hotfix for Android UX regression; userToggledRef pattern prevents non-user focus triggers (Epic 3.1)                                                      |
+| 2026-02-22       | Process improvements implemented (PI 007)                          | Focus/scroll checklist, UUID inheritance, critique closure rules, UTC timestamps, tool capability updates                                                 |
+| 2026-02-22       | Plan 007 released (v0.4.0): Performance Improvements               | Bundle reduction 687kB→105kB (85%), tsvector search, GIN indexes; zero rejections, exceeded targets by 70%                                                |
+| 2026-02-22       | Process improvements implemented (PI 008)                          | Schema verification gate for migrations + memory checkpoints at milestone boundaries (from Retro 007)                                                     |
+| 2026-02-22       | Plan 008 released (v0.4.1): Search Index Validation & Fallbacks    | GIN indexes proven <1ms, fallback-on-empty fixed, bounded queries; zero rework, PI feedback loop validated                                                |
+| 2026-02-23       | Plan 010 released (v0.5.0): Next.js App Router Refactor            | P0+P1 safety/alignment: removed localhost calls, server-first Providers discovery, caching discipline                                                     |
+| 2026-02-23       | Process improvements implemented (PI 010)                          | Shell path quoting + commit message file guidance added to DevOps/QA instructions (from Retro 010)                                                        |
+| 2026-02-23       | Orphan sweep: 11 terminal docs moved to closed/                    | Cleaned deployment/implementation/code-review/uat domains per document lifecycle                                                                          |
+| 2026-02-23       | Plans 011+012 released (v0.6.0): Repository Structure Refactor     | Plan 011: placement rubric + folder READMEs; Plan 012: 30 root files moved; multi-plan bundle validated                                                   |
+| 2026-02-23       | Process improvements implemented (PI 014)                          | Code Review file-move checklist, QA path regression check, Planner release bundling scan, DevOps stage evidence (from Retro 013)                          |
+| 2026-02-23       | Plan 015 released (v0.6.1): MIUI PWA form rendering fix            | Unblocked Xiaomi/MIUI PWA users from blank recommend form via defensive viewport + layout containment fixes                                               |
+| 2026-02-23       | Process improvements identified (Retro 015)                        | Pending codification: design-review UAT for CSS fixes, automated-first QA for CSS, DevOps evidence template reuse, UTC timestamps, related-issues linking |
 
 ---
 
@@ -43,9 +47,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.6.0 (next planned release)
+**Current Working Release**: (none — ready for next cycle)
 
-_No active plans — v0.5.0 deployed successfully_
+_v0.6.1 released successfully — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -53,15 +57,17 @@ _No active plans — v0.5.0 deployed successfully_
 
 ### Previous Releases
 
-| Version | Date       | Plans Included                                          | Status   |
-| ------- | ---------- | ------------------------------------------------------- | -------- |
-| v0.5.0  | 2026-02-23 | Plan 010 (Next.js App Router Refactor)                  | Released |
-| v0.4.1  | 2026-02-22 | Plan 008 (Search Index Validation & Fallback Guards)    | Released |
-| v0.4.0  | 2026-02-22 | Plan 007 (Performance Improvements)                     | Released |
-| v0.3.1  | 2026-02-22 | Plan 006 (Android Suggest Provider Form Bugfix)         | Released |
-| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System)         | Released |
-| v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix)         | Released |
-| v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access           | Released |
+| Version | Date       | Plans Included                                       | Status   |
+| ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.6.1  | 2026-02-23 | Plan 015 (PWA MIUI form rendering fix)               | Released |
+| v0.6.0  | 2026-02-23 | Plans 011+012 (Repository Structure Refactor)        | Released |
+| v0.5.0  | 2026-02-23 | Plan 010 (Next.js App Router Refactor)               | Released |
+| v0.4.1  | 2026-02-22 | Plan 008 (Search Index Validation & Fallback Guards) | Released |
+| v0.4.0  | 2026-02-22 | Plan 007 (Performance Improvements)                  | Released |
+| v0.3.1  | 2026-02-22 | Plan 006 (Android Suggest Provider Form Bugfix)      | Released |
+| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System)      | Released |
+| v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix)      | Released |
+| v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access        | Released |
 
 ---
 

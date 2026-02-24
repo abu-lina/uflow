@@ -49,7 +49,7 @@ Manual schema scripts and seeds:
 Utility and fix queries:
 
 - **fix-confirmed-user-login.sql** - Fix stuck email confirmation
-- **fix-provider-*.sql** - Provider-related fixes
+- **fix-provider-\*.sql** - Provider-related fixes
 - **fix-rls-policies.sql** - RLS policy fixes
 - **delete-user-account.sql** - User deletion
 - **supabase-schema.sql** - Full schema
@@ -77,7 +77,7 @@ Debugging and verification queries:
 
 ```sql
 -- Use sql/debug/check-specific-token.sql
-SELECT * FROM email_confirmation_tokens 
+SELECT * FROM email_confirmation_tokens
 WHERE email = 'user@example.com';
 ```
 
@@ -85,9 +85,9 @@ WHERE email = 'user@example.com';
 
 ```sql
 -- Use sql/queries/fix-confirmed-user-login.sql
-UPDATE auth.users 
+UPDATE auth.users
 SET email_confirmed_at = NOW()
-WHERE email = 'user@example.com' 
+WHERE email = 'user@example.com'
   AND email_confirmed_at IS NULL;
 ```
 
@@ -122,4 +122,3 @@ CREATE TABLE IF NOT EXISTS public.email_confirmation_tokens (
 ---
 
 Last updated: October 17, 2025
-

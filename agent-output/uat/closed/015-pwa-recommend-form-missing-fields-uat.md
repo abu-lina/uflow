@@ -2,7 +2,7 @@
 ID: 015
 Origin: 015
 UUID: 7b2f3c1a
-Status: Active
+Status: Released
 ---
 
 # UAT Report: Plan 015 — PWA "Anbieter empfehlen" missing input fields (Xiaomi 13T Pro)
@@ -13,15 +13,16 @@ Status: Active
 
 ## Changelog
 
-| Date | Agent Handoff | Request | Summary |
-| --- | --- | --- | --- |
-| 2026-02-23T12:55Z | QA → UAT | Value validation for Plan 015 | UAT in progress; assessing value delivery against MIUI PWA form visibility objective |
+| Date              | Agent Handoff | Request                       | Summary                                                                              |
+| ----------------- | ------------- | ----------------------------- | ------------------------------------------------------------------------------------ |
+| 2026-02-23T12:55Z | QA → UAT      | Value validation for Plan 015 | UAT in progress; assessing value delivery against MIUI PWA form visibility objective |
 
 **Timestamp guidance (SHOULD)**: Use UTC and ISO-8601 when recording timestamps.
 
 ## Value Statement Under Test
 
 **Original Value Statement**:
+
 > As a **PWA user on Android (MIUI/Xiaomi)**, I want the **"Anbieter empfehlen" form to reliably display all input fields**, so that I can **recommend a provider without being blocked by a blank screen**, increasing successful submissions and trust in the app.
 
 **User Outcome Expected**: Form fields are visible and usable on Xiaomi 13T Pro in PWA standalone mode.
@@ -34,7 +35,7 @@ Status: Active
 - **When**: The page layout is rendered using `.h-screen-fix` utility
 - **Then**: The root container has non-zero height, allowing child content to render
 - **Result**: ✅ **PASS (by design verification)**
-- **Evidence**: 
+- **Evidence**:
   - Implementation modified `src/styles/globals.css` to use `100dvh` with `100vh` fallback
   - `-webkit-fill-available` gated behind `@supports (-webkit-touch-callout: none)` (iOS Safari only)
   - MIUI WebView (Android/Chrome) will use `100dvh` or fallback to `100vh`, both stable values
@@ -91,15 +92,17 @@ Status: Active
 
 **QA Report Reference**: `agent-output/qa/015-pwa-recommend-form-missing-fields-qa.md`  
 **QA Status**: QA Complete  
-**QA Findings Alignment**: 
+**QA Findings Alignment**:
 
 QA confirmed all automated gates pass:
+
 - ✅ Type-check: exit 0
 - ✅ Tests (CI mode): 151 passed, 18 skipped, 0 failures
 - ✅ Build: exit 0 (production build succeeds)
 - ✅ Delta lint: exit 0 (no new lint errors on changed files)
 
 QA noted:
+
 - Manual device validation (Xiaomi/MIUI PWA + iOS Safari regression) not executed
 - Watch-mode test had post-teardown exceptions (unrelated to this change; pre-existing flakiness in `ProviderDetailModal` tests)
 
@@ -144,14 +147,14 @@ The implementation addresses the exact technical root causes that would produce 
 
 **Plan Deliverables** (from Plan 015):
 
-| Milestone | Status | Evidence |
-| --- | --- | --- |
-| M1: Reproduce + capture evidence | ✅ COMPLETE | Root cause confirmed via code analysis; implementation doc documents reasoning |
-| M2: Fix viewport height utility | ✅ COMPLETE | `src/styles/globals.css` updated with `100dvh` + iOS-only gating |
-| M3: Reduce scroll-container ambiguity | ✅ COMPLETE | `src/components/ui/PageTransition.tsx` now uses `relative` positioning |
-| M4: Service worker/cache sanity check | ✅ COMPLETE | Implementation doc confirms `skipWaiting()` + content-hash URLs |
-| M5: Regression verification | ✅ COMPLETE | QA executed type-check/tests/build; all pass |
-| M6: Update version and release artifacts | ✅ COMPLETE | `package.json` → 0.6.1; `CHANGELOG.md` updated |
+| Milestone                                | Status      | Evidence                                                                       |
+| ---------------------------------------- | ----------- | ------------------------------------------------------------------------------ |
+| M1: Reproduce + capture evidence         | ✅ COMPLETE | Root cause confirmed via code analysis; implementation doc documents reasoning |
+| M2: Fix viewport height utility          | ✅ COMPLETE | `src/styles/globals.css` updated with `100dvh` + iOS-only gating               |
+| M3: Reduce scroll-container ambiguity    | ✅ COMPLETE | `src/components/ui/PageTransition.tsx` now uses `relative` positioning         |
+| M4: Service worker/cache sanity check    | ✅ COMPLETE | Implementation doc confirms `skipWaiting()` + content-hash URLs                |
+| M5: Regression verification              | ✅ COMPLETE | QA executed type-check/tests/build; all pass                                   |
+| M6: Update version and release artifacts | ✅ COMPLETE | `package.json` → 0.6.1; `CHANGELOG.md` updated                                 |
 
 **Test Coverage**: QA report confirms 151 tests passed; new test added for `PageTransition` component.
 
@@ -180,6 +183,7 @@ Implementation precisely followed the plan. All 6 milestones completed. Code Rev
 **Status**: ✅ **UAT Complete**
 
 **Rationale**:
+
 - **Value statement fully delivered**: Implementation addresses both identified root causes (viewport height collapse + missing positioned ancestor)
 - **All 5 UAT scenarios pass**: Design review confirms technical correctness
 - **QA technical gates passed**: type-check, tests, build all exit 0
@@ -188,6 +192,7 @@ Implementation precisely followed the plan. All 6 milestones completed. Code Rev
 - **Risk level: VERY LOW**: CSS/layout changes are minimal, defensive, and cross-browser safe
 
 **Caveats**:
+
 - Real-world device validation not executed during this workflow
 - Post-deployment verification on Xiaomi 13T Pro recommended to close the loop
 - iOS Safari regression check recommended (though design review confirms safety)
@@ -197,6 +202,7 @@ Implementation precisely followed the plan. All 6 milestones completed. Code Rev
 **Final Status**: ✅ **APPROVED FOR RELEASE**
 
 **Rationale**:
+
 - ✅ Value delivered completely (no deferred value)
 - ✅ Root causes of reported bug addressed via design review
 - ✅ Technical quality verified (Code Review APPROVED + QA Complete)
@@ -210,22 +216,26 @@ Implementation precisely followed the plan. All 6 milestones completed. Code Rev
 **Key Changes for Changelog** (already present in `CHANGELOG.md`):
 
 ### Fixed
+
 - PWA form rendering on Xiaomi/MIUI devices: "Anbieter empfehlen" form fields now display correctly in PWA standalone mode on MIUI WebView. Fixed CSS viewport height collapse and scroll container positioning issues.
 
 ## Next Actions
 
 **For DevOps Agent (⑨)**:
+
 1. Deploy v0.6.1 to production
 2. Monitor deployment success
 3. Update Plan 015 status to "Released" after successful deployment
 
 **For Post-Deployment Validation** (optional, recommended):
+
 1. Test on actual Xiaomi 13T Pro device in PWA standalone mode
 2. Verify `/create/recommend` shows all form fields
 3. Confirm scrolling and input interaction work correctly
 4. Check iOS Safari/PWA for any unexpected regressions (low probability)
 
 **For Retrospective (⑩)**:
+
 - This plan demonstrates effective remote debugging: root causes identified and fixed via code analysis without physical device access
 - Design review-based UAT proved sufficient for CSS/layout fixes with clear hypotheses
 - Consider documenting MIUI WebView quirks for future reference

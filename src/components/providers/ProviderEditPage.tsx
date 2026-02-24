@@ -19,7 +19,7 @@ export function ProviderEditPage({ provider }: ProviderEditPageProps) {
   };
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen-fix flex-col">
       {/* Header */}
       <PageHeader
         title={t('editProvider.title')}

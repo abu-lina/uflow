@@ -20,8 +20,8 @@ NGINX_CONFIG_PATH="/etc/nginx/sites-available/uat-ummahflow"
 echo -e "${BLUE}🌐 Applying nginx MIME type fix to UAT server...${NC}"
 
 # Check if nginx-uat-template.conf exists
-if [ ! -f "nginx-uat-template.conf" ]; then
-    echo -e "${RED}❌ nginx-uat-template.conf not found in current directory${NC}"
+if [ ! -f "deploy/nginx/nginx-uat-template.conf" ]; then
+    echo -e "${RED}❌ deploy/nginx/nginx-uat-template.conf not found${NC}"
     echo "Please run this script from the project root directory."
     exit 1
 fi
@@ -33,7 +33,7 @@ if ! command -v ssh &> /dev/null; then
 fi
 
 echo "📋 Copying updated nginx configuration to server..."
-scp nginx-uat-template.conf ${SERVER_USER}@${SERVER_IP}:~/nginx-uat-template.conf
+scp deploy/nginx/nginx-uat-template.conf ${SERVER_USER}@${SERVER_IP}:~/nginx-uat-template.conf
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Failed to copy file to server${NC}"

@@ -2,7 +2,7 @@
 ID: 015
 Origin: 015
 UUID: 7b2f3c1a
-Status: Approved
+Status: Released
 ---
 
 # Code Review: Plan 015 — PWA "Anbieter empfehlen" missing input fields
@@ -14,9 +14,9 @@ Status: Approved
 
 ## Changelog
 
-| Date (UTC) | Agent Handoff | Request | Summary |
-|------|---------------|---------|---------|
-| 2026-02-23T13:00Z | Implementer | Review Plan 015 implementation | Reviewed CSS viewport fix + scroll container positioning |
+| Date (UTC)        | Agent Handoff | Request                        | Summary                                                  |
+| ----------------- | ------------- | ------------------------------ | -------------------------------------------------------- |
+| 2026-02-23T13:00Z | Implementer   | Review Plan 015 implementation | Reviewed CSS viewport fix + scroll container positioning |
 
 ---
 
@@ -46,6 +46,7 @@ The implementation addresses a mobile PWA rendering bug with surgical, minimal c
 The implementation correctly documents that CSS utility changes are not unit-testable via jsdom. The PageTransition component change has appropriate structural tests verifying the `relative` class is present. This aligns with the plan's statement: "Unit-level: minimal/no new unit tests expected (CSS/layout)."
 
 The test strategy is pragmatic:
+
 - Unit tests verify DOM structure (presence of `relative` class)
 - CSS computed styles deferred to manual QA (browser environment required)
 - Build validation confirms CSS compilation
@@ -62,17 +63,21 @@ The test strategy is pragmatic:
 ## Findings
 
 ### Critical
+
 **None**
 
 ### High
+
 **None**
 
 ### Medium
+
 **None**
 
 ### Low/Info
 
 **[LOW] Documentation**: Version discrepancy noted but handled correctly
+
 - **Location**: `package.json:L2` (version), implementation doc notes
 - **Issue**: `package.json` was at `0.5.0` while `CHANGELOG.md` had `[0.6.0]` as latest. The implementation bumped to `0.6.1` directly. This discrepancy predates this PR.
 - **Assessment**: Implementer correctly noted this in the implementation doc as a pre-existing issue. The bump to `0.6.1` is appropriate for this patch release. DevOps should confirm version source of truth.
@@ -80,6 +85,7 @@ The test strategy is pragmatic:
 - **Recommendation**: Accept as-is. DevOps to audit version management process.
 
 **[INFO] Test Coverage**: Manual device testing required
+
 - **Location**: Implementation doc — Outstanding Items section
 - **Issue**: The fix cannot be fully validated without physical device testing on MIUI/Xiaomi hardware.
 - **Assessment**: This is correctly documented and deferred to QA. The implementation is defensively coded with fallbacks (`100vh` → `100dvh` → iOS-gated `-webkit-fill-available`).
@@ -101,13 +107,16 @@ The test strategy is pragmatic:
 2. **Minimal, surgical changes**: Only 2 files modified (plus test + version artifacts). No scope creep, no refactoring beyond the necessary fix.
 
 3. **Defensive coding**: The CSS fix uses progressive enhancement:
+
    ```css
-   height: 100vh;           /* Base fallback */
-   height: 100dvh;          /* Modern browsers */
-   @supports (...) {         /* iOS Safari only */
+   height: 100vh; /* Base fallback */
+   height: 100dvh; /* Modern browsers */
+   @supports (...) {
+     /* iOS Safari only */
      height: -webkit-fill-available;
    }
    ```
+
    This ensures the fix doesn't break any existing platform.
 
 4. **Clear test intent**: The PageTransition test explicitly documents why `position: relative` is required, referencing Plan 015 in the test comment.
@@ -118,7 +127,7 @@ The test strategy is pragmatic:
    - Validation steps (all passed)
    - Outstanding items (device testing deferred to QA)
 
-6. **No code smells**: 
+6. **No code smells**:
    - No long methods (CSS utilities, small component)
    - No duplication (single utility fix, single component fix)
    - No speculative generalization (fixes only the reported issue)
@@ -131,37 +140,43 @@ The test strategy is pragmatic:
 ## Code Quality Assessment
 
 ### SOLID Principles
+
 - **SRP**: ✅ Each change has a single responsibility (viewport height fix, positioning fix)
 - **OCP/LSP/ISP/DIP**: Not applicable (CSS utilities and layout primitives)
 
 ### DRY
+
 ✅ The iOS-gating pattern is used consistently for both `.h-screen-fix` and `.page-background`. If this pattern is needed for more utilities in the future, consider extracting to a CSS mixin, but current duplication (2 occurrences) is acceptable.
 
 ### YAGNI
+
 ✅ Implementation fixes only the reported issue. No speculative features, no unused parameters, no premature abstraction.
 
 ### KISS
+
 ✅ The fix is as simple as possible:
+
 - CSS fallback chain (3 declarations)
 - Single class addition to React component (`relative`)
 - No framework changes, no architectural shifts
 
 ### Code Smells
+
 ✅ None detected. The code is clean, well-documented, and appropriately scoped.
 
 ---
 
 ## Verification Checklist
 
-| Check | Status | Notes |
-|-------|--------|-------|
-| Compilation | ✅ Pass | `npm run type-check` exits 0 |
-| Linter | ✅ Pass | No new errors on modified files |
-| Tests | ✅ Pass | 151 passed, 0 failures |
-| Build | ✅ Pass | Production build succeeds |
-| Plan alignment | ✅ Pass | All 6 plan steps completed |
-| TDD compliance | ✅ Pass | Table present, acceptable exceptions documented |
-| Documentation | ✅ Pass | Code comments, CHANGELOG, implementation doc all clear |
+| Check          | Status  | Notes                                                  |
+| -------------- | ------- | ------------------------------------------------------ |
+| Compilation    | ✅ Pass | `npm run type-check` exits 0                           |
+| Linter         | ✅ Pass | No new errors on modified files                        |
+| Tests          | ✅ Pass | 151 passed, 0 failures                                 |
+| Build          | ✅ Pass | Production build succeeds                              |
+| Plan alignment | ✅ Pass | All 6 plan steps completed                             |
+| TDD compliance | ✅ Pass | Table present, acceptable exceptions documented        |
+| Documentation  | ✅ Pass | Code comments, CHANGELOG, implementation doc all clear |
 
 ---
 
@@ -195,6 +210,7 @@ No blockers. Ready for QA validation.
 ## Optional Improvements (Future Considerations)
 
 1. **CSS Mixin for iOS Gating** (if pattern repeats 3+ times):
+
    ```css
    @define-mixin ios-only {
      @supports (-webkit-touch-callout: none) {
@@ -202,6 +218,7 @@ No blockers. Ready for QA validation.
      }
    }
    ```
+
    Current duplication (2 occurrences) is acceptable; consider if this pattern appears again.
 
 2. **Version Management Audit** (DevOps):
@@ -219,12 +236,14 @@ No blockers. Ready for QA validation.
 **Handoff to QA Agent**
 
 QA must validate:
+
 1. ✅ **Device testing**: Android PWA standalone on Xiaomi/MIUI device — verify form fields render
 2. ✅ **Regression testing**: iOS Safari/PWA — verify no layout issues
 3. ✅ **Cross-browser**: Desktop Chrome, Firefox, Safari — verify no regressions
 4. ✅ **Functional**: Form submission still works after layout fixes
 
 **Success Criteria for QA**:
+
 - All input fields visible on Xiaomi 13T Pro PWA
 - No layout collapse on any tested platform
 - Form submission completes successfully

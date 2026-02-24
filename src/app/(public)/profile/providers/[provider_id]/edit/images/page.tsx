@@ -142,7 +142,7 @@ export default function EditImagesPage({ params }: { params: Promise<{ provider_
   ];
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <div className="flex h-screen-fix flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       <PageHeader title={t('editProvider.editImages.title')} variant="back-and-title" onBack={() => router.back()} />
       <HeaderSpacer />
 

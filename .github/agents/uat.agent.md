@@ -80,6 +80,17 @@ If the change can affect mobile input focus/keyboard/scroll behavior (direct `fo
 
 If manual mobile validation is deferred, UAT MUST document: owner, rationale, severity, and fallback execution path.
 
+### Design-Review UAT for CSS/Layout-Only Changes (CONDITIONALLY ALLOWED)
+
+If the change is **CSS/layout-only** (no TS/JS runtime behavior changes), UAT MAY rely primarily on doc/design verification **only when all of the following are true**:
+
+- QA status is **QA Complete** and includes automated gate evidence (tests + build)
+- Code Review verdict is **APPROVED**
+- The change is defensive and includes safe fallbacks (progressive enhancement)
+- The UAT report explicitly records residual risk and whether manual device validation was executed vs deferred
+
+If any of these are not satisfied, UAT MUST treat the missing evidence as a finding and record a NOT APPROVED decision or a conditional approval with explicit next actions (based on risk).
+
 Constraints:
 
 - Don't request new features or scope changes; focus on plan compliance

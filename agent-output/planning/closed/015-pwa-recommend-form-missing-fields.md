@@ -2,7 +2,7 @@
 ID: 015
 Origin: 015
 UUID: 7b2f3c1a
-Status: UAT Approved
+Status: Released
 ---
 
 # Plan 015 — PWA "Anbieter empfehlen" missing input fields (Xiaomi 13T Pro)
@@ -13,11 +13,11 @@ Status: UAT Approved
 
 ## Change Log
 
-| Date (UTC) | Agent | Change | Rationale |
-| --- | --- | --- | --- |
-| 2026-02-23 | planner | Plan created | Address Xiaomi/MIUI PWA rendering bug with minimal, safe CSS/layout changes |
-| 2026-02-23 | code-reviewer | Status updated to Code Review Approved | Implementation reviewed — APPROVED, ready for QA |
-| 2026-02-23T12:55Z | uat | Status updated to UAT Approved | UAT Complete — implementation delivers stated value, CSS viewport + layout fixes address root causes, APPROVED FOR RELEASE as v0.6.1 |
+| Date (UTC)        | Agent         | Change                                 | Rationale                                                                                                                            |
+| ----------------- | ------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-02-23        | planner       | Plan created                           | Address Xiaomi/MIUI PWA rendering bug with minimal, safe CSS/layout changes                                                          |
+| 2026-02-23        | code-reviewer | Status updated to Code Review Approved | Implementation reviewed — APPROVED, ready for QA                                                                                     |
+| 2026-02-23T12:55Z | uat           | Status updated to UAT Approved         | UAT Complete — implementation delivers stated value, CSS viewport + layout fixes address root causes, APPROVED FOR RELEASE as v0.6.1 |
 
 ## Value Statement and Business Objective
 

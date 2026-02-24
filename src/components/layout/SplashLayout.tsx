@@ -50,7 +50,7 @@ function SplashLayout({
   return (
     <>
       {languageSwitcherPortal}
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col h-screen-fix">
         {/* HEADER SECTION - Only render if there's visible content */}
         {hasHeaderContent && (
           <>

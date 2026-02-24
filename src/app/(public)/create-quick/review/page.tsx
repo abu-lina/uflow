@@ -128,7 +128,7 @@ function ReviewPageContent() {
 
   if (!isMobile) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen-fix items-center justify-center">
         <span className="text-lg text-gray-500">
           Please use mobile view to review your business
         </span>

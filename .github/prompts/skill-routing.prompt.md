@@ -48,14 +48,14 @@ Search `skills/data/catalog.json` (883 skills) for additional matches:
 
 When the task falls into a known domain, always include these skills:
 
-| Domain      | Signal Tokens                                                   | Always Include          | Search Catalog For                                                                       |
-| ----------- | --------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------- |
+| Domain      | Signal Tokens                                                   | Always Include          | Search Catalog For                                                                          |
+| ----------- | --------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------- |
 | Database    | database, schema, migration, table, query, index, RLS, postgres | `architecture-patterns` | `database-design`, `postgres-best-practices`, `nextjs-supabase-auth`, `supabase-automation` |
-| Auth        | auth, login, signup, session, JWT, password, OAuth              | `security-patterns`     | `auth-implementation-patterns`, `nextjs-supabase-auth`                                   |
-| API         | API, endpoint, route, REST, handler                             | `cross-repo-contract`   | `api-patterns`, `api-design-principles`                                                  |
+| Auth        | auth, login, signup, session, JWT, password, OAuth              | `security-patterns`     | `auth-implementation-patterns`, `nextjs-supabase-auth`                                      |
+| API         | API, endpoint, route, REST, handler                             | `cross-repo-contract`   | `api-patterns`, `api-design-principles`                                                     |
 | UI          | component, page, form, modal, UI, UX, responsive                | _(none mandatory)_      | `react-best-practices`, `frontend-developer`, `tailwind-design-system`, `tailwind-patterns` |
-| Performance | slow, optimize, cache, latency, performance                     | _(none mandatory)_      | `web-performance-optimization`, `performance-profiling`, `performance-engineer`          |
-| Testing     | test, coverage, TDD, mock, fixture                              | `testing-patterns`      | `test-driven-development`                                                                |
+| Performance | slow, optimize, cache, latency, performance                     | _(none mandatory)_      | `web-performance-optimization`, `performance-profiling`, `performance-engineer`             |
+| Testing     | test, coverage, TDD, mock, fixture                              | `testing-patterns`      | `test-driven-development`                                                                   |
 
 ### Output Format
 

@@ -15,15 +15,15 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}🌐 Updating Nginx configuration for UAT...${NC}"
 
 # Check if nginx-uat-template.conf exists
-if [ ! -f "nginx-uat-template.conf" ]; then
-    echo -e "${RED}❌ nginx-uat-template.conf not found in current directory${NC}"
+if [ ! -f "deploy/nginx/nginx-uat-template.conf" ]; then
+    echo -e "${RED}❌ deploy/nginx/nginx-uat-template.conf not found${NC}"
     echo "Please run this script from the project root directory."
     exit 1
 fi
 
 # Copy updated config
 echo "📋 Copying updated nginx configuration..."
-sudo cp nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
+sudo cp deploy/nginx/nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
 
 # Ensure symlink exists
 echo "🔗 Ensuring symlink is in place..."

@@ -66,7 +66,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
 
   if (!isMobile) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen-fix items-center justify-center">
         <span className="text-lg text-gray-500">
           Bitte nutze die Mobile-Ansicht für die Detailansicht.
         </span>
@@ -75,7 +75,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
   }
 
   return (
-    <div className="relative flex h-screen w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <div className="relative flex h-screen-fix w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       {/* Header */}
       <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)]">
         <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">

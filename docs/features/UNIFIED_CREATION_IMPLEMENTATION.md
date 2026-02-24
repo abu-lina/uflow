@@ -1,6 +1,7 @@
 # Unified Provider/Community Service Creation Implementation
 
 ## 🎯 **Overview**
+
 This implementation allows users to create both providers and community services through a unified form, with the entity type determined by the selected category.
 
 ## 📋 **Implementation Steps**
@@ -10,13 +11,15 @@ This implementation allows users to create both providers and community services
 Run these SQL scripts in order:
 
 #### **A. Standardize Image Storage**
+
 ```sql
--- File: standardize-image-storage.sql
+-- File: supabase/migrations/057_standardize_image_storage.sql
 -- Converts community_services.community_service_images from text[] to jsonb
 -- This ensures consistency with providers.provider_images
 ```
 
 #### **B. Add Missing Fields to Community Services**
+
 ```sql
 -- File: add-missing-fields-community-services.sql
 -- Adds offers_ids, needs_ids, show_address, user_created_id to community_services
@@ -26,21 +29,25 @@ Run these SQL scripts in order:
 ### **2. Code Changes** ✅ **COMPLETED**
 
 #### **A. New Utility Functions**
+
 - **File**: `src/utils/categoryUtils.ts`
 - **Purpose**: Detects if a category should create community services
 - **Key Function**: `shouldCreateCommunityService(categoryId)`
 
 #### **B. Updated Form Provider**
+
 - **File**: `src/providers/form-provider.tsx`
 - **Changes**: Added `entityType: 'provider' | 'community_service'` field
 - **Purpose**: Tracks whether to create provider or community service
 
 #### **C. Updated Category Selection**
+
 - **File**: `src/app/(public)/create/basics/category/page.tsx`
 - **Changes**: Automatically sets `entityType` based on selected category
 - **Logic**: "Gemeinschaft & Spenden" → `community_service`, others → `provider`
 
 #### **D. Updated Media Upload Page**
+
 - **File**: `src/app/(public)/create/media/page-new.tsx`
 - **Changes**: Handles both entity types in creation logic
 - **Features**:
@@ -52,11 +59,14 @@ Run these SQL scripts in order:
 ## 🔧 **Key Features**
 
 ### **Category-Based Entity Detection**
+
 - **"Gemeinschaft & Spenden"** (ID: `4470c3e0-458f-40a6-a96e-ca0fbdf145d7`) → Creates `community_service`
 - **All other categories** → Creates `provider`
 
 ### **Unified Form Fields**
+
 Both entity types use the same form fields:
+
 - Title/Name
 - Description
 - Location (street, zip, city, country)
@@ -66,19 +76,22 @@ Both entity types use the same form fields:
 - Tags (barakah_effects)
 
 ### **Differentiated Behavior**
+
 - **Community Services**: Auto-approved, different image bucket, no community services selection
 - **Providers**: Manual approval, different image bucket, community services selection available
 
 ## 🚀 **Deployment Steps**
 
 ### **1. Database Migration**
+
 ```bash
 # Run in Supabase SQL Editor
-1. Execute standardize-image-storage.sql
+1. Execute supabase/migrations/057_standardize_image_storage.sql
 2. Execute add-missing-fields-community-services.sql
 ```
 
 ### **2. Code Deployment**
+
 ```bash
 # Replace the media page
 mv src/app/(public)/create/media/page.tsx src/app/(public)/create/media/page-old.tsx
@@ -86,7 +99,9 @@ mv src/app/(public)/create/media/page-new.tsx src/app/(public)/create/media/page
 ```
 
 ### **3. Update TypeScript Interfaces**
+
 Update `src/services/community_services.ts`:
+
 ```typescript
 // Change from:
 community_service_images?: string[];
@@ -97,6 +112,7 @@ community_service_images?: Record<string, unknown>;
 ## 🧪 **Testing**
 
 ### **Test Cases**
+
 1. **Provider Creation**: Select any category except "Gemeinschaft & Spenden"
    - Should create in `providers` table
    - Should show community services selection
@@ -109,6 +125,7 @@ community_service_images?: Record<string, unknown>;
    - Should be auto-approved
 
 ### **Verification**
+
 - Check database tables for correct data insertion
 - Verify image uploads go to correct buckets
 - Confirm form behavior changes based on category selection
@@ -116,14 +133,18 @@ community_service_images?: Record<string, unknown>;
 ## 🔄 **Future Enhancements**
 
 ### **Dynamic Category Detection**
+
 Instead of hardcoded category ID, use database field:
+
 ```sql
 ALTER TABLE categories ADD COLUMN entity_type VARCHAR(20) DEFAULT 'provider';
 UPDATE categories SET entity_type = 'community_service' WHERE category_id = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
 ```
 
 ### **Category-Specific Fields**
+
 Add category-specific form fields:
+
 - Community services: donation goals, verification status
 - Providers: business hours, service areas
 

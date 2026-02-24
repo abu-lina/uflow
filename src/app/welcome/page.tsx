@@ -44,7 +44,7 @@ export default function WelcomePage() {
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center p-6 bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+    <div className="flex h-screen-fix w-full items-center justify-center p-6 bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
       <div className="max-w-md w-full text-center">
         {/* Logo */}
         <div className="mb-6 flex justify-center">

@@ -21,8 +21,8 @@ NGINX_CONFIG_PATH="/etc/nginx/sites-available/ummahflow"
 echo -e "${BLUE}🌐 Applying nginx MIME type fix to Hetzner production server...${NC}"
 
 # Check if nginx-template.conf exists
-if [ ! -f "nginx-template.conf" ]; then
-    echo -e "${RED}❌ nginx-template.conf not found in current directory${NC}"
+if [ ! -f "deploy/nginx/nginx-template.conf" ]; then
+    echo -e "${RED}❌ deploy/nginx/nginx-template.conf not found${NC}"
     echo "Please run this script from the project root directory."
     exit 1
 fi
@@ -34,7 +34,7 @@ if ! command -v ssh &> /dev/null; then
 fi
 
 echo "📋 Copying updated nginx configuration to server..."
-scp nginx-template.conf ${SERVER_USER}@${SERVER_IP}:~/nginx-template.conf
+scp deploy/nginx/nginx-template.conf ${SERVER_USER}@${SERVER_IP}:~/nginx-template.conf
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Failed to copy file to server${NC}"

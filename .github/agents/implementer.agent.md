@@ -157,25 +157,35 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 15. Retrieve/store Flowbaby memory.
 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
+### Sentinel Refactor Checklist (WHEN APPLICABLE)
+
+If you change a canonical sentinel value (example: “Everywhere/Überall” → `''`), you MUST:
+
+- Identify all entry points that set/default this value (SSR pages, client components, service layer)
+- Add backward-compat mapping at every entry point that can receive legacy values (e.g., URL params)
+- Run structured searches for both:
+  - old string literals (e.g., `Everywhere`, `Überall`)
+  - assignment/param parsing sites (`searchParams`, `selectedLocation`, `location =`)
+- Add at least one regression test covering the highest-risk path (typically **no-param SSR default**)
+
 ### Schema Verification Gate (DB migrations) (MANDATORY)
 
-If you create or modify a migration that references **existing** tables/columns (not newly created in the same migration), you MUST verify the target schema *before* finalizing the DDL.
+If you create or modify a migration that references **existing** tables/columns (not newly created in the same migration), you MUST verify the target schema _before_ finalizing the DDL.
 
 - Run (or request the user/DevOps to run) a schema check against the deployment Supabase project:
-
   - Column existence:
     SELECT column_name
     FROM information_schema.columns
     WHERE table_schema = 'public'
-      AND table_name = '<table_name>'
-      AND column_name IN ('<col_1>', '<col_2>');
+    AND table_name = '<table_name>'
+    AND column_name IN ('<col_1>', '<col_2>');
 
   - Function existence (for RPCs expected by the app):
     SELECT p.proname, pg_get_function_identity_arguments(p.oid) AS args
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public'
-      AND p.proname = '<function_name>';
+    AND p.proname = '<function_name>';
 
 - If schema drift is detected, STOP and resolve (update migration, or align schemas) before handoff.
 - Document the verification evidence in the implementation doc.
@@ -317,7 +327,10 @@ Required sections:
 **Compliance rules:**
 
 - Every new function/class MUST have a row in this table
-- "Test Written First?" must be ✅ Yes for all rows
+- Default: "Test Written First?" must be ✅ Yes for all rows
+- **Bugfix regression exception (ALLOWED only when applicable):** If the change is a bugfix/refactor with **no new API surface** and no new functions/classes, this column MAY be `⚠️ Post-fix (bugfix regression)` *only if*:
+  - “Failure Reason” clearly describes how/why the pre-fix code would fail, and
+  - A regression test exists and meaningfully exercises the bug (not a trivial assertion)
 - "Failure Verified?" must be ✅ Yes with a valid failure reason
 - "Pass After Impl?" must be ✅ Yes
 - ❌ Any row with "No" or missing = **TDD violation, implementation incomplete**

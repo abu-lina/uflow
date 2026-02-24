@@ -4,12 +4,12 @@ Each subfolder groups **all code that belongs to a single product domain**: UI c
 
 ## Current features
 
-| Feature | Contents |
-| --- | --- |
-| `about/` | About page UI |
-| `auth/` | Authentication flows |
+| Feature      | Contents                |
+| ------------ | ----------------------- |
+| `about/`     | About page UI           |
+| `auth/`      | Authentication flows    |
 | `providers/` | Provider creation forms |
-| `search/` | Search-specific logic |
+| `search/`    | Search-specific logic   |
 
 ## Structure convention
 

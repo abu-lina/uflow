@@ -92,14 +92,18 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       style={{ backgroundColor: '#f5f5f5' }}
     >
       <body
-        className={`relative w-full max-w-[100vw] overflow-x-hidden min-h-screen m-0 p-0 ${inter.className}`}
+        className={`relative m-0 min-h-screen w-full max-w-[100vw] overflow-x-hidden p-0 ${inter.className}`}
         style={{
           // Inline critical background so first paint matches (avoids white flash before CSS loads)
           background: 'linear-gradient(180deg, #f5f5f5 0%, #fbfbfb 100%)',
           minHeight: '100vh',
         }}
       >
-        <Script dangerouslySetInnerHTML={{ __html: themeScript }} id="theme-init" strategy="beforeInteractive" />
+        <Script
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+          id="theme-init"
+          strategy="beforeInteractive"
+        />
         <ClientProviders initialUser={user}>
           {/* Desktop header only */}
           <div className="hidden md:block">

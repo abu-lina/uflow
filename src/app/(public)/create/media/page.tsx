@@ -62,7 +62,7 @@ export default function MediaUploadPage() {
   // Show loading state while form data is being restored
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen-fix items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">{t('create.media.loadingFormData')}</p>
@@ -76,7 +76,7 @@ export default function MediaUploadPage() {
   if (isRecommendationMode) {
     router.replace('/create/contact');
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen-fix items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-600">{t('common.loading')}</p>

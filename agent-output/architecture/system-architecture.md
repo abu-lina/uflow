@@ -1,6 +1,6 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-02-22
+**Last Updated**: 2026-02-23
 **Status**: Active
 
 ## Changelog
@@ -10,6 +10,7 @@
 | 2026-01-27 | Initialized evergreen architecture doc in agent-output | Architect-mode requires a single source of truth for current system state | Plan 001 (Epic 2.1) |
 | 2026-02-22 | App Router best-practices audit findings captured      | Document current Next.js boundary/caching risks for planned refactor      | Arch 010            |
 | 2026-02-23 | Repo-structure review findings captured                | Reduce boundary drift; keep folder responsibilities crisp                 | Arch 011            |
+| 2026-02-23 | Root-level file placement guidance captured            | Reduce root clutter; align files to docs/scripts/sql/imports conventions  | Arch 012            |
 
 ---
 

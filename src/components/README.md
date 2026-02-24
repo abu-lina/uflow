@@ -4,12 +4,12 @@ This folder contains **shared, domain-agnostic** UI components used across multi
 
 ## Subfolders
 
-| Folder | Purpose | Examples |
-| --- | --- | --- |
-| `ui/` | Atomic primitives (buttons, inputs, modals, badges) | `Button.tsx`, `Input.tsx`, `Modal.tsx` |
-| `common/` | Small reusable components used in multiple pages | `Card.tsx`, `ErrorMessage.tsx` |
-| `shared/` | Larger shared blocks (page headers, card groups) | `SplashContent.tsx`, `MobileSplashScreen.tsx` |
-| `layout/` | Layout containers and wrappers | `RootClientLayout.tsx`, `Sidebar.tsx` |
+| Folder    | Purpose                                             | Examples                                      |
+| --------- | --------------------------------------------------- | --------------------------------------------- |
+| `ui/`     | Atomic primitives (buttons, inputs, modals, badges) | `Button.tsx`, `Input.tsx`, `Modal.tsx`        |
+| `common/` | Small reusable components used in multiple pages    | `Card.tsx`, `ErrorMessage.tsx`                |
+| `shared/` | Larger shared blocks (page headers, card groups)    | `SplashContent.tsx`, `MobileSplashScreen.tsx` |
+| `layout/` | Layout containers and wrappers                      | `RootClientLayout.tsx`, `Sidebar.tsx`         |
 
 ## What belongs here
 

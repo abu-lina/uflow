@@ -31,7 +31,7 @@ export function WaitlistSuccessScreen({
   }, [autoDismiss, autoDismissDelay, onContinue]);
 
   return (
-    <div className="flex h-screen w-full items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="flex h-screen-fix w-full items-center justify-center px-4 sm:px-6 lg:px-8">
       <motion.div
         animate={{ opacity: 1, scale: 1 }}
         className="flex w-full max-w-md flex-col items-center gap-8"
