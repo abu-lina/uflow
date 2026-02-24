@@ -44,10 +44,10 @@ interface NominatimCityResult {
 
 /**
  * City Selection Page - Simplified Design with Inline Search
- * 
+ *
  * Fixed layout showing top 3 cities with inline search input and discover CTA.
  * No scrolling, clean centered design matching Early Access screen.
- * 
+ *
  * Features:
  * - Shows top 3 cities by interest/provider count
  * - Inline search input (expands on button click)
@@ -62,33 +62,37 @@ export default function CitySelectionPage() {
   const { t } = useLanguage();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [selectedCityName, setSelectedCityName] = useState<string | null>(null);
-  
+
   // Inline search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NominatimCityResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
-  
+
   // Track if initial animation has completed to prevent re-animation on re-renders
   // Use state instead of ref so useMemo recalculates when animation completes
   const [hasAnimated, setHasAnimated] = useState(false);
   // Store latest t function for use in error handlers
   const tRef = useRef(t);
-  
+
   // Update t ref whenever t changes
   useEffect(() => {
     tRef.current = t;
   }, [t]);
-  
+
   // Detect reduced motion preference
-  const prefersReducedMotion = typeof window !== 'undefined' && 
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Fetch cities using React Query with caching
-  const { data: allCitiesData, isLoading, error: citiesError } = useQuery({
+  const {
+    data: allCitiesData,
+    isLoading,
+    error: citiesError,
+  } = useQuery({
     queryKey: ['cities'],
     queryFn: async (): Promise<CityData[]> => {
       const response = await fetch('/api/cities');
@@ -110,10 +114,10 @@ export default function CitySelectionPage() {
   // Process cities data: Always show Berlin, Frankfurt, and Stuttgart in that order
   const cities = useMemo(() => {
     if (!allCitiesData) return [];
-    
+
     const targetCities = ['Berlin', 'Frankfurt', 'Stuttgart'];
     const result: CityData[] = [];
-    
+
     for (const cityName of targetCities) {
       const found = allCitiesData.find((city) => city.city_name === cityName);
       if (found) {
@@ -130,7 +134,7 @@ export default function CitySelectionPage() {
         });
       }
     }
-    
+
     return result;
   }, [allCitiesData]);
 
@@ -146,14 +150,16 @@ export default function CitySelectionPage() {
   useEffect(() => {
     if (!isLoading && cities.length > 0 && !hasAnimated) {
       const animationDuration = prefersReducedMotion ? 0 : 0.3 + (cities.length - 1) * 0.05;
-      const timer = setTimeout(() => {
-        setHasAnimated(true);
-      }, (animationDuration + 0.1) * 1000); // Add small buffer
+      const timer = setTimeout(
+        () => {
+          setHasAnimated(true);
+        },
+        (animationDuration + 0.1) * 1000,
+      ); // Add small buffer
 
       return () => clearTimeout(timer);
     }
   }, [isLoading, cities.length, prefersReducedMotion, hasAnimated]);
-
 
   // Search cities using Nominatim API
   const searchCities = useCallback(async (query: string) => {
@@ -178,19 +184,19 @@ export default function CitySelectionPage() {
       // Use Nominatim search API for cities
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
-        `format=json&` +
-        `q=${encodeURIComponent(query)}&` +
-        `addressdetails=1&` +
-        `limit=10&` +
-        `featuretype=city,town,village&` +
-        `countrycodes=`, // Empty = all countries
+          `format=json&` +
+          `q=${encodeURIComponent(query)}&` +
+          `addressdetails=1&` +
+          `limit=10&` +
+          `featuretype=city,town,village&` +
+          `countrycodes=`, // Empty = all countries
         {
           signal: abortControllerRef.current.signal,
           headers: {
             'User-Agent': 'UmmahFlow/1.0', // Required by Nominatim ToS
             'Accept-Language': 'de,en', // Prefer German, fallback to English
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -198,7 +204,7 @@ export default function CitySelectionPage() {
       }
 
       const data: NominatimCityResult[] = await response.json();
-      
+
       // Filter and format results, replacing Israel with Palestine
       const formattedCities = data
         .filter((result) => {
@@ -247,15 +253,17 @@ export default function CitySelectionPage() {
   const handleCitySelect = useCallback((city: CityData) => {
     setSelectedCityId(city.id);
     setSelectedCityName(city.city_name);
-    
+
     // Store selected city with verification
     try {
       sessionStorage.setItem('selectedCity', city.city_name);
       localStorage.setItem('selectedCity', city.city_name);
-      
+
       // Dispatch custom event to notify useAppStage hook immediately
-      window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName: city.city_name } }));
-      
+      window.dispatchEvent(
+        new CustomEvent('city-selected', { detail: { cityName: city.city_name } }),
+      );
+
       // Verify persistence
       const verified = localStorage.getItem('selectedCity');
       if (!verified) {
@@ -268,13 +276,15 @@ export default function CitySelectionPage() {
       toast.error('Failed to save city. Check browser settings.');
       return;
     }
-    
+
     // CRITICAL: Ensure onboarding state exists when city is selected
     // Always create onboarding state, even without email (for pre-launch flow)
-    const email = sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
-    const waitlistToken = sessionStorage.getItem('waitlistToken') || localStorage.getItem('waitlistToken') || '';
+    const email =
+      sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
+    const waitlistToken =
+      sessionStorage.getItem('waitlistToken') || localStorage.getItem('waitlistToken') || '';
     const onboardingState = getOnboardingState();
-    
+
     if (!onboardingState) {
       // Create onboarding state (with or without email)
       setOnboardingState({
@@ -285,34 +295,36 @@ export default function CitySelectionPage() {
         waitlistToken: waitlistToken || undefined,
       });
     }
-    
+
     // Try to update waitlist if email/token available (for future compatibility)
     if (email) {
       updateWaitlistCity(email, waitlistToken, city.city_name);
     }
-    
+
     // DO NOT auto-forward - user must explicitly tap CTA button
   }, []); // Empty deps - uses state setters and refs which are stable
 
   // Handle city selection from search results
   const handleSearchCitySelect = async (city: NominatimCityResult) => {
     const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
-    
+
     setSelectedCityId(null); // Clear top 3 selection
     setSelectedCityName(cityName);
-    
+
     // Store selected city
     sessionStorage.setItem('selectedCity', cityName);
     localStorage.setItem('selectedCity', cityName);
-    
+
     // Dispatch custom event to notify useAppStage hook immediately
     window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName } }));
-    
+
     // CRITICAL: Ensure onboarding state exists when city is selected
-    const email = sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
-    const waitlistToken = sessionStorage.getItem('waitlistToken') || localStorage.getItem('waitlistToken') || '';
+    const email =
+      sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
+    const waitlistToken =
+      sessionStorage.getItem('waitlistToken') || localStorage.getItem('waitlistToken') || '';
     const onboardingState = getOnboardingState();
-    
+
     if (!onboardingState) {
       setOnboardingState({
         email: email || '',
@@ -322,16 +334,16 @@ export default function CitySelectionPage() {
         waitlistToken: waitlistToken || undefined,
       });
     }
-    
+
     // Try to update waitlist if email/token available
     if (email) {
       await updateWaitlistCity(email, waitlistToken, cityName);
     }
-    
+
     // DO NOT clear search query/results - keep them visible so user can select another city
     // Only reset the selected result index
     setSelectedResultIndex(-1);
-    
+
     // DO NOT auto-forward - user must explicitly tap CTA button
   };
 
@@ -342,11 +354,11 @@ export default function CitySelectionPage() {
         email: email.trim(),
         selected_city: cityName,
       };
-      
+
       if (waitlistToken) {
         body.waitlistToken = waitlistToken.trim();
       }
-      
+
       await fetch('/api/waitlist/update', {
         method: 'PATCH',
         headers: {
@@ -374,15 +386,15 @@ export default function CitySelectionPage() {
       handleClearSearch();
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedResultIndex((prev) => 
-        prev < searchResults.length - 1 ? prev + 1 : 0
-      );
+      setSelectedResultIndex((prev) => (prev < searchResults.length - 1 ? prev + 1 : 0));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedResultIndex((prev) => 
-        prev > 0 ? prev - 1 : searchResults.length - 1
-      );
-    } else if (e.key === 'Enter' && selectedResultIndex >= 0 && searchResults[selectedResultIndex]) {
+      setSelectedResultIndex((prev) => (prev > 0 ? prev - 1 : searchResults.length - 1));
+    } else if (
+      e.key === 'Enter' &&
+      selectedResultIndex >= 0 &&
+      searchResults[selectedResultIndex]
+    ) {
       e.preventDefault();
       handleSearchCitySelect(searchResults[selectedResultIndex]);
     }
@@ -402,7 +414,7 @@ export default function CitySelectionPage() {
     return cities.map((city, index) => {
       // Only animate on initial mount, not on re-renders
       const shouldAnimate = !hasAnimated && !isLoading;
-      
+
       // Always use motion.button but conditionally control animation props
       // This prevents React from unmounting/remounting when switching component types
       const buttonClassName = cn(
@@ -410,23 +422,28 @@ export default function CitySelectionPage() {
         'transition-all duration-150',
         'hover:bg-neutral-muted hover:border-primary',
         'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-        selectedCityId === city.id && 'border-primary bg-primary/5'
+        selectedCityId === city.id && 'border-primary bg-primary/5',
       );
-      const buttonAriaLabel = city.provider_count > 0
-        ? `${city.city_name}, ${tRef.current('waitlist.citySelection.providerCount_other').replace('{{count}}', String(city.provider_count))}`
-        : city.city_name;
-      
+      const buttonAriaLabel =
+        city.provider_count > 0
+          ? `${city.city_name}, ${tRef.current('waitlist.citySelection.providerCount_other').replace('{{count}}', String(city.provider_count))}`
+          : city.city_name;
+
       // Conditionally include animation props only when shouldAnimate is true
       // When false, explicitly set initial={false} to disable all Framer Motion processing
-      const motionProps = shouldAnimate ? {
-        animate: { opacity: 1, x: 0 },
-        initial: { opacity: 0, x: -20 },
-        transition: prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: index * 0.05 },
-      } : {
-        initial: false, // Explicitly disable Framer Motion processing
-        animate: false, // Explicitly disable animation
-      };
-      
+      const motionProps = shouldAnimate
+        ? {
+            animate: { opacity: 1, x: 0 },
+            initial: { opacity: 0, x: -20 },
+            transition: prefersReducedMotion
+              ? { duration: 0 }
+              : { duration: 0.3, delay: index * 0.05 },
+          }
+        : {
+            initial: false, // Explicitly disable Framer Motion processing
+            animate: false, // Explicitly disable animation
+          };
+
       return (
         <motion.button
           key={city.id}
@@ -442,10 +459,14 @@ export default function CitySelectionPage() {
               {city.city_name}
             </span>
           </div>
-          <Icon 
+          <Icon
             aria-hidden="true"
             className="size-6 text-content-heading"
-            icon={selectedCityId === city.id ? "material-symbols:radio-button-checked" : "material-symbols:radio-button-unchecked"}
+            icon={
+              selectedCityId === city.id
+                ? 'material-symbols:radio-button-checked'
+                : 'material-symbols:radio-button-unchecked'
+            }
           />
         </motion.button>
       );
@@ -453,27 +474,17 @@ export default function CitySelectionPage() {
   }, [cities, selectedCityId, isLoading, prefersReducedMotion, hasAnimated, handleCitySelect]);
 
   return (
-    <div className="flex h-screen-fix w-full flex-col items-center bg-uflow-light">
+    <div className="flex h-full w-full flex-col items-center bg-uflow-light">
       {/* Header - 80px with safe area */}
-      <header 
-        className={cn(
-          'flex w-full items-center justify-center',
-          'h-20 px-6',
-          'pt-safe-top'
-        )}
+      <header
+        className={cn('flex w-full items-center justify-center', 'h-20 px-6', 'pt-safe-top')}
         role="banner"
       >
         {/* Reserved for future header content */}
       </header>
 
       {/* Body - Centered content */}
-      <main 
-        className={cn(
-          'flex flex-1 items-center justify-center',
-          'w-full px-6'
-        )}
-        role="main"
-      >
+      <main className={cn('flex flex-1 items-center justify-center', 'w-full px-6')} role="main">
         <motion.div
           animate={{ opacity: 1, y: 0 }}
           className="flex w-full max-w-[345px] flex-col gap-8"
@@ -487,7 +498,11 @@ export default function CitySelectionPage() {
             className="flex w-full flex-col gap-4"
             initial={{ opacity: 0, y: 20 }}
             layout={false}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.4, delay: 0.1, ease: 'easeOut' }
+            }
           >
             {/* Title */}
             <h1 className="w-full text-center font-inter-tight text-3xl font-semibold leading-[40px] text-content-heading">
@@ -506,7 +521,11 @@ export default function CitySelectionPage() {
             className="flex w-full flex-col gap-3"
             initial={{ opacity: 0, y: 20 }}
             layout={false}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.2, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.4, delay: 0.2, ease: 'easeOut' }
+            }
           >
             {isLoading ? (
               // Loading skeleton
@@ -514,18 +533,18 @@ export default function CitySelectionPage() {
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="flex h-[54px] items-center justify-between rounded-sm border border-border bg-white p-4 animate-pulse"
+                    className="flex h-[54px] animate-pulse items-center justify-between rounded-sm border border-border bg-white p-4"
                   >
                     <div className="flex items-center gap-2">
-                      <div className="h-[19px] w-16 bg-neutral-light rounded" />
-                      <div className="h-[19px] w-20 bg-neutral-light rounded" />
+                      <div className="h-[19px] w-16 rounded bg-neutral-light" />
+                      <div className="h-[19px] w-20 rounded bg-neutral-light" />
                     </div>
-                    <div className="size-6 bg-neutral-light rounded-full" />
+                    <div className="size-6 rounded-full bg-neutral-light" />
                   </div>
                 ))}
-                <div className="flex h-[54px] items-center gap-3 rounded-sm border border-border bg-white p-4 animate-pulse">
-                  <div className="size-6 bg-neutral-light rounded" />
-                  <div className="h-[19px] w-32 bg-neutral-light rounded" />
+                <div className="flex h-[54px] animate-pulse items-center gap-3 rounded-sm border border-border bg-white p-4">
+                  <div className="size-6 rounded bg-neutral-light" />
+                  <div className="h-[19px] w-32 rounded bg-neutral-light" />
                 </div>
               </>
             ) : (
@@ -537,29 +556,27 @@ export default function CitySelectionPage() {
                 <motion.div
                   animate={!hasAnimated && !isLoading ? { opacity: 1, x: 0 } : false}
                   className="flex flex-col gap-2"
-                  initial={!hasAnimated && !isLoading ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }}
+                  initial={
+                    !hasAnimated && !isLoading ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }
+                  }
                   layout={false}
-                  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: 0.15 }}
+                  transition={
+                    prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: 0.15 }
+                  }
                 >
                   {/* Search Input */}
                   <div className="relative">
-                    <label
-                      className="sr-only"
-                      htmlFor="city-search-input"
-                    >
+                    <label className="sr-only" htmlFor="city-search-input">
                       {t('waitlist.citySelection.searchPlaceholder')}
                     </label>
                     <div className="flex h-[54px] items-center gap-1 rounded-sm border border-border bg-white px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
-                      <Search
-                        aria-hidden="true"
-                        className="size-6 shrink-0 text-content-muted"
-                      />
+                      <Search aria-hidden="true" className="size-6 shrink-0 text-content-muted" />
                       <input
                         ref={searchInputRef}
                         aria-controls="city-search-results"
                         aria-describedby="search-results-description"
                         aria-label={t('waitlist.citySelection.searchPlaceholder')}
-                        className="flex-1 border-0 bg-transparent text-base font-normal text-content-heading outline-none placeholder:text-content-muted focus:ring-0 pl-0"
+                        className="flex-1 border-0 bg-transparent pl-0 text-base font-normal text-content-heading outline-none placeholder:text-content-muted focus:ring-0"
                         id="city-search-input"
                         name="city-search"
                         placeholder={t('waitlist.citySelection.searchButton')}
@@ -582,11 +599,15 @@ export default function CitySelectionPage() {
                         {searchQuery && !isSearching && (
                           <button
                             aria-label={t('common.delete')}
-                            className="flex items-center justify-center p-1 rounded hover:bg-neutral-light focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="flex items-center justify-center rounded p-1 hover:bg-neutral-light focus:outline-none focus:ring-2 focus:ring-primary"
                             type="button"
                             onClick={handleClearSearch}
                           >
-                            <Icon aria-hidden="true" className="size-4 text-content-muted" icon="lucide:x" />
+                            <Icon
+                              aria-hidden="true"
+                              className="size-4 text-content-muted"
+                              icon="lucide:x"
+                            />
                           </button>
                         )}
                       </div>
@@ -607,7 +628,7 @@ export default function CitySelectionPage() {
                         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
                       >
                         {searchQuery.trim().length < 2 ? (
-                          <p 
+                          <p
                             className="py-4 text-center text-sm text-content-muted"
                             id="search-results-description"
                           >
@@ -622,7 +643,7 @@ export default function CitySelectionPage() {
                             />
                           </div>
                         ) : searchResults.length === 0 ? (
-                          <p 
+                          <p
                             className="py-4 text-center text-sm text-content-muted"
                             id="search-results-description"
                           >
@@ -630,15 +651,19 @@ export default function CitySelectionPage() {
                           </p>
                         ) : (
                           <>
-                            <p 
-                              className="sr-only"
-                              id="search-results-description"
-                            >
-                              {t('waitlist.citySelection.searchButton')}: {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
+                            <p className="sr-only" id="search-results-description">
+                              {t('waitlist.citySelection.searchButton')}: {searchResults.length}{' '}
+                              {searchResults.length === 1 ? 'result' : 'results'} found
                             </p>
                             {searchResults.map((city, index) => {
-                              const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
-                              const country = normalizeCountryNameForDisplay(city.address?.country || '');
+                              const cityName =
+                                city.address?.city ||
+                                city.address?.town ||
+                                city.address?.village ||
+                                city.name;
+                              const country = normalizeCountryNameForDisplay(
+                                city.address?.country || '',
+                              );
                               const isHovered = index === selectedResultIndex;
                               const isCurrentlySelected = selectedCityName === cityName;
 
@@ -650,14 +675,19 @@ export default function CitySelectionPage() {
                                   aria-selected={isCurrentlySelected || isHovered}
                                   className={cn(
                                     'flex h-[54px] items-center justify-between rounded-sm border border-border bg-white p-4 text-left transition-all duration-150',
-                                    'hover:bg-neutral-muted hover:border-primary',
+                                    'hover:border-primary hover:bg-neutral-muted',
                                     'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                                    (isHovered || isCurrentlySelected) && 'bg-primary/5 border-primary'
+                                    (isHovered || isCurrentlySelected) &&
+                                      'border-primary bg-primary/5',
                                   )}
                                   initial={{ opacity: 0, x: -20 }}
                                   layout={false}
                                   role="option"
-                                  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, delay: index * 0.03 }}
+                                  transition={
+                                    prefersReducedMotion
+                                      ? { duration: 0 }
+                                      : { duration: 0.2, delay: index * 0.03 }
+                                  }
                                   type="button"
                                   onClick={() => handleSearchCitySelect(city)}
                                   onMouseEnter={() => setSelectedResultIndex(index)}
@@ -673,7 +703,11 @@ export default function CitySelectionPage() {
                                   <Icon
                                     aria-hidden="true"
                                     className="size-6 text-content-heading"
-                                    icon={isCurrentlySelected ? "material-symbols:radio-button-checked" : "material-symbols:radio-button-unchecked"}
+                                    icon={
+                                      isCurrentlySelected
+                                        ? 'material-symbols:radio-button-checked'
+                                        : 'material-symbols:radio-button-unchecked'
+                                    }
                                   />
                                 </motion.button>
                               );
@@ -694,15 +728,19 @@ export default function CitySelectionPage() {
             className="w-full"
             initial={{ opacity: 0, y: 20 }}
             layout={false}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.3, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.4, delay: 0.3, ease: 'easeOut' }
+            }
           >
             <button
               aria-label={t('waitlist.citySelection.discoverButton')}
               className={cn(
-                "flex h-12 w-full items-center justify-center gap-2 rounded-sm font-inter-tight text-base font-medium text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                selectedCityName 
-                  ? "bg-primary hover:bg-primary-dark" 
-                  : "bg-primary/50 cursor-not-allowed"
+                'flex h-12 w-full items-center justify-center gap-2 rounded-sm font-inter-tight text-base font-medium text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                selectedCityName
+                  ? 'bg-primary hover:bg-primary-dark'
+                  : 'cursor-not-allowed bg-primary/50',
               )}
               disabled={!selectedCityName}
               type="button"
@@ -716,12 +754,12 @@ export default function CitySelectionPage() {
       </main>
 
       {/* Navbar - 80px with safe area (hidden) */}
-      <nav 
+      <nav
         className={cn(
           'flex w-full items-center justify-between',
           'h-20 px-6',
           'pb-safe-bottom',
-          'hidden' // Hidden as specified in design
+          'hidden', // Hidden as specified in design
         )}
         role="navigation"
       >

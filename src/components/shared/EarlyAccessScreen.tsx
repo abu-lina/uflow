@@ -14,10 +14,10 @@ interface EarlyAccessScreenProps {
 
 /**
  * Early Access Home Screen (SCREEN 4)
- * 
+ *
  * Simplified early access screen that directs users to city selection.
  * Follows Tailwind semantic tokens and frontend best practices.
- * 
+ *
  * Features:
  * - Bird icon (lucide:bird)
  * - Title and description
@@ -25,29 +25,26 @@ interface EarlyAccessScreenProps {
  * - Safe area handling
  * - Reduced motion support
  * - Accessibility (ARIA labels, keyboard navigation)
- * 
+ *
  * Design tokens:
  * - Background: bg-uflow-light gradient
  * - Typography: Inter Tight (title), Inter (body)
  * - Colors: semantic tokens (content-heading, content-muted, primary)
  * - Spacing: 8-point grid system
  */
-export function EarlyAccessScreen({
-  email = '',
-  waitlistToken = '',
-}: EarlyAccessScreenProps) {
+export function EarlyAccessScreen({ email = '', waitlistToken = '' }: EarlyAccessScreenProps) {
   const { t } = useLanguage();
   const router = useRouter();
 
   // Detect reduced motion preference
-  const prefersReducedMotion = typeof window !== 'undefined' && 
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Handle city selection navigation - store data before navigation
   const handleSelectCityClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Store email and token in sessionStorage for city selection page (if available)
     if (email) {
       sessionStorage.setItem('waitlistEmail', email);
@@ -55,21 +52,15 @@ export function EarlyAccessScreen({
     if (waitlistToken) {
       sessionStorage.setItem('waitlistToken', waitlistToken);
     }
-    
+
     // Use router.push directly instead of Link to ensure navigation works
     router.push('/city-selection');
   };
 
   return (
-    <div className="flex h-screen-fix w-full items-center justify-center bg-uflow-light">
+    <div className="flex h-full w-full items-center justify-center bg-uflow-light">
       {/* Body - Centered content */}
-      <main 
-        className={cn(
-          'flex items-center justify-center',
-          'w-full px-6'
-        )}
-        role="main"
-      >
+      <main className={cn('flex items-center justify-center', 'w-full px-6')} role="main">
         <motion.div
           animate={{ opacity: 1, y: 0 }}
           className="flex w-full max-w-[345px] flex-col items-center gap-8"
@@ -81,21 +72,24 @@ export function EarlyAccessScreen({
             animate={{ opacity: 1, y: 0 }}
             className="flex w-full flex-col items-center gap-8"
             initial={{ opacity: 0, y: 20 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.4, delay: 0.1, ease: 'easeOut' }
+            }
           >
             {/* Bird Icon */}
             <motion.div
               animate={{ scale: 1, opacity: 1 }}
               className="flex items-center justify-center"
               initial={{ scale: 0.8, opacity: 0 }}
-              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.2, ease: 'easeOut' }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { duration: 0.5, delay: 0.2, ease: 'easeOut' }
+              }
             >
-              <Icon 
-                className="text-content-heading"
-                height={96}
-                icon="lucide:bird"
-                width={96}
-              />
+              <Icon className="text-content-heading" height={96} icon="lucide:bird" width={96} />
             </motion.div>
 
             {/* Title + Subtitle */}
@@ -106,7 +100,7 @@ export function EarlyAccessScreen({
               </h1>
 
               {/* Subtitle */}
-              <p className="w-full text-center font-inter text-base leading-[19px] text-content-muted whitespace-pre-line">
+              <p className="w-full whitespace-pre-line text-center font-inter text-base leading-[19px] text-content-muted">
                 {t('waitlist.earlyAccess.homeDescription')}
               </p>
             </div>
@@ -115,15 +109,19 @@ export function EarlyAccessScreen({
           {/* CTA Button */}
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="w-full relative z-10"
+            className="relative z-10 w-full"
             initial={{ opacity: 0, y: 20 }}
             style={{ pointerEvents: 'auto' }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay: 0.3, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { duration: 0.4, delay: 0.3, ease: 'easeOut' }
+            }
           >
             <Button
               fullWidth
               aria-label={t('waitlist.earlyAccess.selectCityButton')}
-              className="h-12 justify-center rounded-sm font-inter-tight text-base font-medium relative z-10 w-full"
+              className="relative z-10 h-12 w-full justify-center rounded-sm font-inter-tight text-base font-medium"
               size="lg"
               type="button"
               variant="primary"

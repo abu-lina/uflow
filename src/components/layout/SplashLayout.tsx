@@ -15,11 +15,11 @@ interface SplashLayoutProps {
   animationDelay?: number;
 }
 
-function SplashLayout({ 
-  children, 
-  onContinue, 
+function SplashLayout({
+  children,
+  onContinue,
   continueText: _continueText,
-  animationDelay: _animationDelay = 0 
+  animationDelay: _animationDelay = 0,
 }: SplashLayoutProps) {
   const { t } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
@@ -29,18 +29,21 @@ function SplashLayout({
   }, []);
 
   // Language switcher portal - render at document root to avoid clipping
-  const languageSwitcherPortal = isMounted && typeof document !== 'undefined' && document.body ? createPortal(
-    <div 
-      className="fixed top-2 right-2 z-[9999] md:top-3 md:right-3" 
-      style={{ 
-        paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
-        paddingRight: 'max(env(safe-area-inset-right), 0.25rem)'
-      }}
-    >
-      <LanguageSwitcher variant="dropdown" />
-    </div>,
-    document.body
-  ) : null;
+  const languageSwitcherPortal =
+    isMounted && typeof document !== 'undefined' && document.body
+      ? createPortal(
+          <div
+            className="fixed right-2 top-2 z-[9999] md:right-3 md:top-3"
+            style={{
+              paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
+              paddingRight: 'max(env(safe-area-inset-right), 0.25rem)',
+            }}
+          >
+            <LanguageSwitcher variant="dropdown" />
+          </div>,
+          document.body,
+        )
+      : null;
 
   // Check if header has visible content (empty title means no visible header)
   const hasHeaderContent = false; // PageHeader with empty title has no visible content
@@ -50,20 +53,17 @@ function SplashLayout({
   return (
     <>
       {languageSwitcherPortal}
-      <div className="flex flex-col h-screen-fix">
+      <div className="flex h-full flex-col">
         {/* HEADER SECTION - Only render if there's visible content */}
         {hasHeaderContent && (
           <>
-            <PageHeader 
-              title=""
-              variant="title-only"
-            />
+            <PageHeader title="" variant="title-only" />
             <HeaderSpacer />
           </>
         )}
 
         {/* CONTENT SECTION - Always centered */}
-        <div className="flex-1 w-full px-6 flex items-center justify-center">
+        <div className="flex w-full flex-1 items-center justify-center px-6">
           {isValidElement(children) && children.type
             ? cloneElement(children, { onContinue } as { onContinue: () => void })
             : children}
@@ -71,8 +71,8 @@ function SplashLayout({
 
         {/* FOOTER SECTION - Only render if there's content */}
         {hasFooterContent && (
-          <footer className="w-full py-4 px-6 flex-shrink-0">
-            <p className="font-inter text-xs font-light leading-[13px] text-center text-content-muted">
+          <footer className="w-full flex-shrink-0 px-6 py-4">
+            <p className="text-center font-inter text-xs font-light leading-[13px] text-content-muted">
               {footerText}
             </p>
           </footer>

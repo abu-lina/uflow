@@ -21,19 +21,19 @@ type AppStage = 'stage1' | 'stage2' | 'stage3';
 
 /**
  * City Page - Stage-Based Content Rendering
- * 
+ *
  * Displays content based on provider count:
  * - Stage 1 (0-5 providers): CityEarlyAccessEmptyState
  * - Stage 2 (6-14 providers): Stage2Content
  * - Stage 3 (15+ providers): CategoryGallerySection with header
- * 
+ *
  * For cities not found in database, queries providers directly and defaults to Stage 1.
  */
 export default function CityPage() {
   const params = useParams();
   const router = useRouter();
   const cityName = decodeURIComponent(params.cityName as string);
-  
+
   const [cityData, setCityData] = useState<CityData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export default function CityPage() {
       try {
         sessionStorage.setItem('selectedCity', cityName);
         localStorage.setItem('selectedCity', cityName);
-        
+
         // Dispatch custom event to notify useAppStage hook immediately
         window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName } }));
       } catch (err) {
@@ -91,11 +91,14 @@ export default function CityPage() {
         // Get provider count for this city (query providers table directly)
         // Use RPC function for case-insensitive matching if available, otherwise fallback
         let providerCount = 0;
-        
+
         try {
-          const { data: rpcData, error: rpcError } = await supabase.rpc('get_provider_count_by_city', {
-            city_name: cityName.trim(),
-          });
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'get_provider_count_by_city',
+            {
+              city_name: cityName.trim(),
+            },
+          );
 
           if (!rpcError && typeof rpcData === 'number') {
             providerCount = rpcData;
@@ -150,8 +153,10 @@ export default function CityPage() {
   // Handle subscribe to updates
   const handleReceiveUpdates = async () => {
     try {
-      const email = sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
-      const waitlistToken = sessionStorage.getItem('waitlistToken') || localStorage.getItem('waitlistToken') || '';
+      const email =
+        sessionStorage.getItem('waitlistEmail') || localStorage.getItem('waitlistEmail') || '';
+      const waitlistToken =
+        sessionStorage.getItem('waitlistToken') || localStorage.getItem('waitlistToken') || '';
 
       if (!email) {
         throw new Error('Email not found');
@@ -183,7 +188,7 @@ export default function CityPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex h-screen-fix w-full items-center justify-center bg-uflow-light">
+      <div className="flex h-full w-full items-center justify-center bg-uflow-light">
         <div className="text-content-muted">Loading...</div>
       </div>
     );
@@ -192,7 +197,7 @@ export default function CityPage() {
   // Error state - only show if there's a critical error (not just city not found)
   if (error && !cityData) {
     return (
-      <div className="flex h-screen-fix w-full flex-col items-center justify-center bg-uflow-light">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-uflow-light">
         <div className="text-content-heading">{error}</div>
         <button
           className="mt-4 text-primary hover:underline"
@@ -207,7 +212,7 @@ export default function CityPage() {
   // If no city data but no error, show loading (shouldn't happen, but safe fallback)
   if (!cityData) {
     return (
-      <div className="flex h-screen-fix w-full items-center justify-center bg-uflow-light">
+      <div className="flex h-full w-full items-center justify-center bg-uflow-light">
         <div className="text-content-muted">Loading...</div>
       </div>
     );
@@ -240,11 +245,12 @@ export default function CityPage() {
     return (
       <div className="flex min-h-screen w-full flex-col bg-uflow-light">
         {/* Greeting Header - Fixed at top (matches Stage 2 style) */}
-        <header 
+        <header
           className="fixed left-0 right-0 top-0 z-50 sm:hidden"
           style={{
             // Smooth transition for all properties including backdrop-filter
-            transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+            transition:
+              'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
             // Glassy blur effect - always applied for consistent visual effect
             background: 'rgba(255, 255, 255, 0.15)',
             backdropFilter: 'blur(20px) saturate(180%)',
@@ -257,7 +263,7 @@ export default function CityPage() {
             paddingRight: '1px',
           }}
         >
-          <div 
+          <div
             className="px-6 py-4 text-left"
             style={{
               // Add safe area padding to content, not header background
@@ -280,7 +286,7 @@ export default function CityPage() {
           - Visual gap: 32px
           Using max() to ensure minimum 141px for devices without safe area
         */}
-        <div className="w-full pt-[max(141px,calc(env(safe-area-inset-top)+141px))] px-6">
+        <div className="w-full px-6 pt-[max(141px,calc(env(safe-area-inset-top)+141px))]">
           <CategoryGallerySection />
         </div>
       </div>
@@ -301,4 +307,3 @@ export default function CityPage() {
     </>
   );
 }
-

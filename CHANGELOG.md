@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-02-24
+
+### Fixed
+
+**iPhone SE Viewport Overlap v2 (Plan 020)**: Fixed content (CTA buttons, map) being hidden behind bottom navigation on iPhone SE Safari. Plan 019 (v0.6.4) correctly replaced `h-screen` with `h-screen-fix` (dvh) but the true root cause was a **nested viewport-height conflict**: child screens claimed `100dvh` inside `<main>` which only had `100dvh - 128px` available (due to the always-reserved `mobile-bottom-ui-slot`).
+
+- **Root cause**: 6 child screens used `h-screen-fix` (100dvh) inside the root layout's `<main>` container, which is already constrained to `100dvh - 128px` by the bottom UI slot reservation. The 128px overflow pushed CTAs below the visible area.
+- **Fix**: Removed nested `h-screen-fix` from all primary onboarding funnel screens. Child screens now use `flex h-full` to fill the available parent space instead of independently claiming viewport height.
+- **Affected screens**: Landing page (`/`), city selection (`/city-selection`), city page (`/city/[cityName]`) loading/error states.
+- **Files changed**: `SplashLayout.tsx`, `MobileSplashScreen.tsx`, `EarlyAccessScreen.tsx`, `CityEarlyAccessEmptyState.tsx`, `city-selection/page.tsx`, `city/[cityName]/page.tsx`.
+- **Architectural principle**: Single source of viewport height truth — only `RootClientLayout` should set `h-screen-fix`; children fill available space.
+
 ## [0.6.4] - 2026-02-23
 
 ### Fixed
