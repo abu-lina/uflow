@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.8] - 2026-02-25
+
+### Security
+
+**Supply Chain Hardening (Plan 024)**: Implemented defense-in-depth controls against active Shai-Hulud NPM supply chain worm campaign and AI toolchain poisoning.
+
+- **Threat context**: Active campaign targeting JavaScript projects via 23 malicious/sleeper NPM packages (typosquatting), malicious GitHub Actions, and AI assistant MCP server poisoning
+- **IOC Scanner (CI gate)**: Added `scripts/security/ioc-scan.sh` scanning for known malicious packages and GitHub Actions; integrated as first job in CI pipeline (`supply-chain-ioc-scan`) gating all downstream jobs (lint, test, build, security)
+- **Dependency Review (PR gate)**: Added `dependency-review.yml` workflow (SHA-pinned to v4.6.0) blocking PRs that introduce dependencies with high+ CVE severity
+- **MCP Config Auditor**: Added `scripts/security/audit-mcp-configs.sh` with JSON output support for local developer toolchain verification; checks Cursor, Claude, Continue, and Windsurf MCP configs against allowlist (`mcp-allowlist.json`) with prefix matching
+- **Documentation**: Comprehensive hardening guide at `docs/security/supply-chain-hardening.md` with quarterly maintenance cadences
+- **QA Fixes**: Fixed ESLint ignores for `docs/implementation/**`, `.flowbaby/`, and `public/fallback-*.js` to prevent CI lint blocking
+- **Files changed**: `scripts/security/{ioc-scan.sh,audit-mcp-configs.sh,mcp-allowlist.json}`, `.github/workflows/{ci.yml,dependency-review.yml}`, `docs/security/supply-chain-hardening.md`, `eslint.config.mjs`
+- **Architectural principle**: Defense-in-depth — layer automated CI gates, PR review workflows, and local developer tools to detect supply chain threats before they reach production
+
+## [0.6.7] - 2026-02-24
+
+### Fixed
+
+**Blurred Header Overlay on Onboarding Slide 1 (Plan 022)**: Removed the frosted/blurred header overlay that was covering the map illustration on the onboarding "About" screen on iPhone Safari.
+
+- **Root cause**: `AboutPageContent` always rendered a fixed `PageHeader` + `HeaderSpacer` even when in splash/onboarding mode (`showSplashHeader=true`). The header had no visible content (empty title, no back button, no icon) but still applied `backdrop-filter: blur()` when `isScrolled` became true, creating a frosted overlay that obscured the `MapIllustration`.
+- **Fix**: Conditionally skip rendering `PageHeader` and `HeaderSpacer` when `showSplashHeader=true`. The language switcher remains accessible via its existing portal to `document.body`.
+- **Affected screens**: Onboarding "About" screen (map illustration slide).
+- **Files changed**: `AboutPageContent.tsx`.
+- **Architectural principle**: Do not render empty fixed header layers that only contribute visual artifacts (blur) without functional UI.
+
 ## [0.6.6] - 2026-02-24
 
 ### Fixed

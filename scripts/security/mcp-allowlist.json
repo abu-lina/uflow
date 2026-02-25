@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Allowlist of legitimate MCP servers for AI coding assistants",
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-25",
+  "allowlist": {
+    "urls": [
+      {
+        "pattern": "https://mcp.notion.com/",
+        "description": "Notion official MCP server",
+        "matchType": "prefix"
+      },
+      {
+        "pattern": "https://mcp.supabase.com/",
+        "description": "Supabase official MCP server (includes project refs)",
+        "matchType": "prefix"
+      }
+    ],
+    "npxPackages": [
+      {
+        "pattern": "@upstash/context7-mcp",
+        "description": "Upstash Context7 MCP (used for documentation retrieval)",
+        "matchType": "exact"
+      }
+    ],
+    "localCommands": [
+      {
+        "pattern": "npx",
+        "description": "npx-based MCP servers (verified via npxPackages list)",
+        "matchType": "exact"
+      },
+      {
+        "pattern": "node",
+        "description": "Local node scripts (review manually if flagged)",
+        "matchType": "exact"
+      }
+    ]
+  },
+  "updateGuidance": "Review and update this allowlist when: (1) team adds new legitimate MCP servers, (2) new supply-chain advisories identify malicious MCP patterns, (3) quarterly review at minimum."
+}

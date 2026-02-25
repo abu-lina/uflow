@@ -132,6 +132,7 @@ const eslintConfig = [
       'node_modules/',
       '.next/',
       '.open-next/',
+      '.flowbaby/', // Local Flowbaby memory system (gitignored)
       'out/',
       'dist/',
       'coverage/',
@@ -141,11 +142,13 @@ const eslintConfig = [
       'public/sw.js',
       'public/sw-push-handler.js',
       'public/workbox-*.js',
+      'public/fallback-*.js', // Next.js PWA fallback (generated)
       'scripts/**/*.js',
       'scripts/**/*.ts',
       'supabase/functions/**',
       'next-env.d.ts', // Next.js generated file
       'docs/archive/**', // Archived starter template and other reference material
+      'docs/implementation/**', // Implementation reference scripts (browser context)
       'tests/**', // Performance and integration tests (k6, etc.)
     ],
   },
