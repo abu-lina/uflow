@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.9] - 2026-02-24
+
+### Fixed
+
+**Blurred Header Overlay on Onboarding Slide 1 (Plan 022)**: Removed the frosted/blurred header overlay that was covering the map illustration on the onboarding "About" screen on iPhone Safari.
+
+- **Root cause**: `AboutPageContent` always rendered a fixed `PageHeader` + `HeaderSpacer` even when in splash/onboarding mode (`showSplashHeader=true`). The header had no visible content (empty title, no back button, no icon) but still applied `backdrop-filter: blur()` when `isScrolled` became true, creating a frosted overlay that obscured the `MapIllustration`.
+- **Fix**: Conditionally skip rendering `PageHeader` and `HeaderSpacer` when `showSplashHeader=true`. The language switcher remains accessible via its existing portal to `document.body`.
+- **Affected screens**: Onboarding "About" screen (map illustration slide).
+- **Files changed**: `AboutPageContent.tsx`.
+- **Architectural principle**: Do not render empty fixed header layers that only contribute visual artifacts (blur) without functional UI.
+
 ## [0.6.8] - 2026-02-25
 
 ### Security

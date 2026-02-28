@@ -22,7 +22,7 @@ interface AboutPageContentProps {
 export function AboutPageContent({ onComplete, showSplashHeader = false }: AboutPageContentProps) {
   const router = useRouter();
   const { t } = useLanguage();
-  
+
   // Get translated quotes
   const translatedQuotes = [
     {
@@ -55,7 +55,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
 
   const handleTouchEnd = () => {
     if (!touchStartX.current || !touchEndX.current) return;
-    
+
     const distance = touchStartX.current - touchEndX.current;
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
@@ -87,89 +87,98 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
   }, [isTransitioning]);
 
   // Language switcher portal - render at document root to avoid clipping
-  const languageSwitcherPortal = isMounted && typeof document !== 'undefined' && document.body ? createPortal(
-    <div 
-      className="fixed top-2 right-2 z-[9999] md:top-3 md:right-3" 
-      style={{ 
-        paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
-        paddingRight: 'max(env(safe-area-inset-right), 0.25rem)'
-      }}
-    >
-      <LanguageSwitcher variant="dropdown" />
-    </div>,
-    document.body
-  ) : null;
+  const languageSwitcherPortal =
+    isMounted && typeof document !== 'undefined' && document.body
+      ? createPortal(
+          <div
+            className="fixed right-2 top-2 z-[9999] md:right-3 md:top-3"
+            style={{
+              paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
+              paddingRight: 'max(env(safe-area-inset-right), 0.25rem)',
+            }}
+          >
+            <LanguageSwitcher variant="dropdown" />
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <>
       {languageSwitcherPortal}
       <PageLayout hasBackground={false} maxWidth="full">
-      {/* HEADER SECTION - Fixed at top using reusable header */}
-      <PageHeader 
-        rightIcon={
-          <Image
-            alt="UFlow Logo"
-            className="h-12 w-12 rounded-full"
-            height={48}
-            src="/icons/icon-round-512.png"
-            width={48}
-          />
-        }
-        title={showSplashHeader ? '' : t('about.title')}
-        variant={showSplashHeader ? 'title-only' : 'back-title-icon'}
-        onBack={showSplashHeader ? undefined : () => router.back()}
-      />
-
-      <HeaderSpacer />
-
-      {/* CONTENT SECTION - Flexible middle area with proper centering */}
-      <PageContentWrapper 
-        centerVertically={true}
-        contentClassName="flex flex-col items-center gap-8 pb-8"
-        includeMobileNavSpacing={false}
-        maxWidth="full"
-        padding="lg-safe"
-      >
-        {/* Card Container */}
-        <div
-          ref={containerRef}
-          className="w-full flex justify-center transition-all duration-300 ease-in-out"
-          onTouchEnd={handleTouchEnd}
-          onTouchMove={handleTouchMove}
-          onTouchStart={handleTouchStart}
-        >
-          <div 
-            className={`transform transition-all duration-300 ease-in-out ${
-              isTransitioning ? 'scale-95 opacity-80' : 'scale-100 opacity-100'
-            }`}
-          >
-            <AboutCard cardIndex={currentCardIndex} quote={translatedQuotes[currentCardIndex]} />
-          </div>
-        </div>
-
-        {/* CTA Button - 32px below content (gap-8 = 32px) */}
-        <Button
-          fullWidth
-          trailingIcon="material-symbols:chevron-right"
-          variant="primary"
-          onClick={() => {
-            if (currentCardIndex < translatedQuotes.length - 1) {
-              changeCard(currentCardIndex + 1);
-            } else {
-              if (onComplete) {
-                onComplete();
-              } else {
-                router.push('/');
+        {/* HEADER SECTION - Only render when NOT in splash/onboarding mode
+          In splash mode (showSplashHeader=true), no header is rendered to avoid
+          the frosted/blurred overlay covering the map illustration (Plan 022).
+          The language switcher is already rendered via portal above. */}
+        {!showSplashHeader && (
+          <>
+            <PageHeader
+              rightIcon={
+                <Image
+                  alt="UFlow Logo"
+                  className="h-12 w-12 rounded-full"
+                  height={48}
+                  src="/icons/icon-round-512.png"
+                  width={48}
+                />
               }
-            }
-          }}
+              title={t('about.title')}
+              variant="back-title-icon"
+              onBack={() => router.back()}
+            />
+            <HeaderSpacer />
+          </>
+        )}
+
+        {/* CONTENT SECTION - Flexible middle area with proper centering */}
+        <PageContentWrapper
+          centerVertically={true}
+          contentClassName="flex flex-col items-center gap-8 pb-8"
+          includeMobileNavSpacing={false}
+          maxWidth="full"
+          padding="lg-safe"
         >
-          {currentCardIndex < translatedQuotes.length - 1 ? t('about.continue') : t('about.discover')}
-        </Button>
-      </PageContentWrapper>
+          {/* Card Container */}
+          <div
+            ref={containerRef}
+            className="flex w-full justify-center transition-all duration-300 ease-in-out"
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchMove}
+            onTouchStart={handleTouchStart}
+          >
+            <div
+              className={`transform transition-all duration-300 ease-in-out ${
+                isTransitioning ? 'scale-95 opacity-80' : 'scale-100 opacity-100'
+              }`}
+            >
+              <AboutCard cardIndex={currentCardIndex} quote={translatedQuotes[currentCardIndex]} />
+            </div>
+          </div>
+
+          {/* CTA Button - 32px below content (gap-8 = 32px) */}
+          <Button
+            fullWidth
+            trailingIcon="material-symbols:chevron-right"
+            variant="primary"
+            onClick={() => {
+              if (currentCardIndex < translatedQuotes.length - 1) {
+                changeCard(currentCardIndex + 1);
+              } else {
+                if (onComplete) {
+                  onComplete();
+                } else {
+                  router.push('/');
+                }
+              }
+            }}
+          >
+            {currentCardIndex < translatedQuotes.length - 1
+              ? t('about.continue')
+              : t('about.discover')}
+          </Button>
+        </PageContentWrapper>
       </PageLayout>
     </>
   );
 }
-
-
