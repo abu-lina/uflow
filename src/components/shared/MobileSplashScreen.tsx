@@ -108,7 +108,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="loading"
           animate={{ opacity: 1 }}
-          className="flex h-full w-full items-center justify-center"
+          className="flex flex-1 w-full"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
@@ -122,6 +122,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="splash"
           animate={{ opacity: 1 }}
+          className="flex flex-1 w-full"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >

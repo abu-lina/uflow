@@ -194,7 +194,8 @@ export function RootPageContent() {
       </div>
 
       {/* Mobile Content - Stage-based or waitlist based on onboarding state */}
-      <div className="md:hidden">
+      {/* flex flex-1 flex-col: propagate height from PageTransition so splash centering works (Plan 028) */}
+      <div className="flex flex-1 flex-col md:hidden">
         {shouldShowCityContent && displayCity ? (
           // Mobile: Show stage-based content when onboarding is complete
           <>
