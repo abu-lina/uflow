@@ -162,6 +162,7 @@ Single entry point for all development work. When invoked with a task descriptio
 2. Retrieve Flowbaby memory for prior workflow context
 3. Read `agent-output/.next-id` to understand current document state
 4. Scan `agent-output/` subdirectories for in-progress work
+5. **Release-ready stall detection (MANDATORY)**: Identify any plans with Status `UAT Approved` that are not yet `Committed`/`Released`. Surface them explicitly as “Ready for DevOps” and suggest handoff to `⑨ DevOps`. Note: long delays increase version drift and coordination cost.
 5. If resuming an existing workflow, display the current Workflow Card with updated status
 6. If starting fresh, proceed to Task Classification
 
@@ -292,9 +293,21 @@ Reference: See the skill-to-agent mapping in each agent's `.agent.md` file.
 
 ### Layer 3 — General Catalog Skills (Supplement)
 
-Search the general skills catalog at `skills/data/catalog.json` (883 skills) for additional matches.
+The general skills catalog (~950 skills) provides task-specific guidance beyond the UFlow baseline.
 
-**Matching Algorithm**:
+#### Step 1: Discover the Catalog (MANDATORY)
+
+Before selecting Layer 3 skills, you **MUST** locate the catalog file:
+
+1. **Search** the workspace for `catalog.json` using the `search` tool (query: `catalog.json` in `**/data/catalog.json`).
+2. If found, read the file to access the `skills[]` array. Note the resolved path for the Workflow Card.
+3. **If NOT found**: Print a warning in the Workflow Card: `⚠️ Catalog not found — proceeding with UFlow skills only (Layer 1). To enable dynamic skills, ensure the .agent skills workspace is open.` Then skip Layer 3 entirely.
+
+**Common locations** (for reference, but always use search — never hard-code):
+- Multi-root workspace: `.agent/skills/data/catalog.json`
+- The catalog `skills[].path` values are relative to the `.agent/skills/` root (e.g., `skills/react-best-practices/SKILL.md`)
+
+#### Step 2: Match and Score
 
 1. Tokenize task description into keywords (lowercase, remove punctuation, filter words < 3 chars)
 2. For each skill in catalog, compare tokens against `triggers[]` array
@@ -305,19 +318,37 @@ Search the general skills catalog at `skills/data/catalog.json` (883 skills) for
    - Build/Implement phases: `development`, `data-ai`, `infrastructure`
    - Review/QA phases: `testing`, `security`
    - Learn/Retro phases: `workflow`
-6. Take top 3 matches per phase (avoid overloading agents with too many skills)
+6. Take top 1–3 matches per phase (avoid overloading agents with too many skills)
 7. **Dedup**: If a general catalog skill overlaps with a UFlow skill, keep only the UFlow skill
+8. **Load SKILL.md only** (i.e., the catalog `path` field). If the skill folder also contains `AGENTS.md`, downstream agents may consult it for deeper guidance — but Orchestrator routes only the `SKILL.md`.
 
-**Output format per skill**: `Load skill '{skill-name}' from '{path}' — {one-line reason why it's relevant}`
+#### Step 3: Emit Evidence (MANDATORY)
+
+For every Layer 3 skill selected, emit a directive in the Workflow Card and handoff prompt:
+
+```
+Load skill '{skill-name}' from '{resolved-path-to-SKILL.md}' — {one-line reason}
+```
+
+The Workflow Card **MUST** always include the `Catalog:` line — either with matched skills or `(none — no matches above threshold)` or the catalog-not-found warning.
 
 ### Skill Selection Heuristics
 
-- **Database task** (tokens: database, schema, migration, table, query, index, RLS, postgres): Always include `architecture-patterns`, search catalog for `database-design`, `postgres-best-practices`, `nextjs-supabase-auth`, `supabase-automation`
-- **Auth task** (tokens: auth, login, signup, session, JWT, password, OAuth): Always include `security-patterns`, search catalog for `auth-implementation-patterns`, `nextjs-supabase-auth`
-- **API task** (tokens: API, endpoint, route, REST, handler): Include `cross-repo-contract`, search catalog for `api-patterns`, `api-design-principles`
-- **UI task** (tokens: component, page, form, modal, UI, UX, responsive): Search catalog for `react-best-practices`, `frontend-developer`, `tailwind-design-system`, `tailwind-patterns`
-- **Performance task** (tokens: slow, optimize, cache, latency, performance): Search catalog for `web-performance-optimization`, `performance-profiling`, `performance-engineer`
-- **Testing task** (tokens: test, coverage, TDD, mock, fixture): Always include `testing-patterns`
+When the task matches one of these categories, **you MUST include the listed UFlow skill AND search the catalog for the listed catalog candidates**. List at least one catalog skill in the Workflow Card if the catalog is available.
+
+| Category | Token triggers | UFlow skill (Layer 1) | Catalog candidates (Layer 3) — search by ID |
+|----------|---------------|----------------------|---------------------------------------------|
+| **Database** | database, schema, migration, table, query, index, RLS, postgres | `architecture-patterns` | `postgres-best-practices`, `postgresql`, `postgresql-optimization`, `sql-optimization-patterns`, `supabase-automation`, `nextjs-supabase-auth`, `neon-postgres` |
+| **Auth** | auth, login, signup, session, JWT, password, OAuth | `security-patterns` | `auth-implementation-patterns`, `nextjs-supabase-auth`, `clerk-auth`, `broken-authentication` |
+| **API** | API, endpoint, route, REST, handler | `cross-repo-contract` | `api-patterns`, `api-design-principles`, `api-documentation`, `api-security-best-practices` |
+| **UI** | component, page, form, modal, UI, UX, responsive, tailwind | (none specific) | `react-best-practices`, `react-patterns`, `react-ui-patterns`, `tailwind-design-system`, `tailwind-patterns`, `cc-skill-frontend-patterns`, `nextjs-app-router-patterns` |
+| **Performance** | slow, optimize, cache, latency, performance | (none specific) | `web-performance-optimization`, `performance-profiling`, `performance-engineer`, `application-performance-performance-optimization` |
+| **Testing** | test, coverage, TDD, mock, fixture, vitest | `testing-patterns` | `javascript-testing-patterns` |
+| **TypeScript** | typescript, types, generics, type-safe | (none specific) | `typescript-advanced-types`, `typescript-expert`, `typescript-pro` |
+| **Docker/Infra** | docker, container, deploy, CI, CD, nginx | (none specific) | `docker-expert`, `vercel-deployment`, `cdk-patterns` |
+| **Next.js** | nextjs, app router, server component, RSC, middleware | (none specific) | `nextjs-best-practices`, `nextjs-app-router-patterns`, `react-nextjs-development` |
+
+**If none of the above categories match**, still run the general scoring algorithm (Step 2) against the full catalog. Only skip Layer 3 if the catalog was not found.
 
 ---
 
@@ -363,7 +394,10 @@ At the start of every workflow and at each phase transition, produce a Workflow 
 When handing off to the next agent, include in the handoff message:
 
 1. The Workflow Card (updated)
-2. Skill loading instructions: "Load these additional skills: {list}"
+2. **Skill loading instructions** (MANDATORY when Layer 3 skills were selected):
+   - For each Layer 3 skill, include a concrete line: `Load skill '{name}' from '{resolved-path}' — {reason}`
+   - The path must resolve to an actual `SKILL.md` file in the workspace (e.g., `.agent/skills/skills/react-best-practices/SKILL.md`)
+   - If no Layer 3 skills were selected, state: "No additional catalog skills for this phase."
 3. Document ID to inherit: "Continue work chain #{ID}"
 4. Gate condition for the NEXT transition: "After you complete, the gate for {next phase} requires: {condition}"
 
@@ -468,6 +502,22 @@ This allows the Orchestrator to pick up any workflow regardless of whether previ
 - **Actionable handoff instructions** — tell the user exactly which agent to invoke next and what to say
 - **No lengthy analysis** — the Orchestrator routes, it doesn't research
 - **Flag concerns proactively** — if the task seems misclassified, say so before proceeding
+
+---
+
+## Verifying Dynamic Skill Selection
+
+To confirm the Orchestrator is correctly using catalog skills:
+
+1. **Run 2–3 prompts** from different domains (e.g., "Add RLS policies to providers table", "Optimize the provider search page", "Fix the auth session refresh").
+2. **Check each Workflow Card** for:
+   - A `Catalog:` line with ≥1 skill name and score (not `(none)` or a warning)
+   - `INSTRUCTIONS FOR @{agent}` section containing `Load skill '...' from '...'` directives
+3. **If `Catalog:` is always empty or shows a warning**:
+   - Verify the `.agent` skills workspace folder is open in VS Code
+   - Check that `skills/data/catalog.json` exists under that workspace root
+   - If the catalog exists but isn't found, the search tool may not be indexing that workspace — try reopening VS Code
+4. **Fallback mode** (expected when catalog is absent): The Orchestrator uses UFlow skills only (Layer 1 + Layer 2). This is safe but less targeted.
 
 ---
 
