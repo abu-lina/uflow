@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.10] - 2026-03-01
+
+### Fixed
+
+**Mobile Onboarding Vertical Centering (Plans 028 + 029)**: Fixed vertical centering for all 7 mobile onboarding screens (loading, splash, about, waitlist, success, earlyAccess, aboutFromEarlyAccess) on iOS Safari.
+
+- **Root cause**: `height: 100%` (`h-full` Tailwind class) fails to resolve correctly when parent height is determined by `flex-1` (flex sizing). iOS Safari is particularly sensitive to this pattern, causing layout jumps when the address bar shows/hides.
+- **Fix**: Changed pattern from `h-full` to `min-h-full` in 6 components (SplashLayout, MobileSplashScreen, RootPageContent, EarlyAccessScreen, WaitlistScreen, WaitlistSuccessScreen). The `min-height: 100%` approach sets a floor that works correctly in flex-sized parents.
+- **Pattern**: `flex min-h-full flex-1 flex-col` — proven solution for flex-based layouts.
+- **Device validation**: User confirmed all states vertically centered on iPhone Safari without layout jumps.
+- **Affected screens**: All mobile onboarding state transitions.
+- **Files changed**: `SplashLayout.tsx`, `MobileSplashScreen.tsx`, `RootPageContent.tsx`, `EarlyAccessScreen.tsx`, `WaitlistScreen.tsx`, `WaitlistSuccessScreen.tsx`.
+- **Architectural principle**: Use `min-height` instead of `height` in flex-sized parents to ensure reliable layout behavior across browsers.
+
 ## [0.6.9] - 2026-02-24
 
 ### Fixed
