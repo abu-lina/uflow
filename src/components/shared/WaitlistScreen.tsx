@@ -164,7 +164,8 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
   return (
     <>
       {languageSwitcherPortal}
-      <div className="h-full relative flex w-full items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="relative flex min-h-full flex-1 flex-col px-4 sm:px-6 lg:px-8">
+        <div className="flex w-full flex-1 items-center justify-center">
         <motion.div
           animate={{ opacity: 1, y: 0 }}
           className="flex w-full max-w-md flex-col items-center gap-8"
@@ -280,6 +281,7 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
             {t('waitlist.privacyNotice')}
           </p>
         </motion.div>
+        </div>
       </div>
     </>
   );

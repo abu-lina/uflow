@@ -5,7 +5,6 @@ import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { cn } from '@/lib/utils';
 
 interface EarlyAccessScreenProps {
   email?: string; // Optional - not required when waitlist is skipped
@@ -58,9 +57,9 @@ export function EarlyAccessScreen({ email = '', waitlistToken = '' }: EarlyAcces
   };
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-uflow-light">
+    <div className="flex min-h-full flex-1 flex-col bg-uflow-light">
       {/* Body - Centered content */}
-      <main className={cn('flex items-center justify-center', 'w-full px-6')} role="main">
+      <main className="flex w-full flex-1 items-center justify-center px-6" role="main">
         <motion.div
           animate={{ opacity: 1, y: 0 }}
           className="flex w-full max-w-[345px] flex-col items-center gap-8"
