@@ -106,6 +106,17 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
+// Mock @iconify/react to prevent async timer issues after test teardown
+// The Icon component schedules async operations that fire after environment cleanup
+vi.mock('@iconify/react', () => ({
+  Icon: ({ icon, className }: { icon: string; className?: string }) =>
+    React.createElement('span', {
+      className,
+      'data-testid': 'iconify-mock',
+      'data-icon': icon,
+    }),
+}));
+
 // Mock components
 vi.mock('@/components/ui/skeleton/Skeleton', () => ({
   Skeleton: ({ children, className }: { children?: React.ReactNode; className?: string }) =>

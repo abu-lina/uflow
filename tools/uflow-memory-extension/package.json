@@ -1,0 +1,150 @@
+{
+  "name": "uflow-memory",
+  "displayName": "UFlow Memory",
+  "description": "Local-first agent memory for GitHub Copilot — reliable, multi-window safe, no cloud required.",
+  "version": "0.1.0",
+  "publisher": "uflow",
+  "engines": {
+    "vscode": "^1.106.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Other"
+  ],
+  "keywords": [
+    "copilot",
+    "github copilot",
+    "memory",
+    "agent",
+    "local-first"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "uflowMemory.showStatus",
+        "title": "UFlow Memory: Show Status",
+        "category": "UFlow Memory"
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "flowbaby_storeMemory",
+        "displayName": "Store Memory",
+        "toolReferenceName": "flowbabyStoreSummary",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(database)",
+        "modelDescription": "Store a structured summary into local workspace memory. Use after meaningful progress, after decisions, or at task boundaries. Summaries should be 300–1500 characters describing goals, findings, decisions, and reasoning. Data stays local in this workspace.",
+        "userDescription": "Store a structured work summary into local workspace memory for future retrieval. Data stays in this workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "topic": {
+              "type": "string",
+              "description": "Short 3–7 word title for this memory (e.g., 'Redis caching implementation plan')."
+            },
+            "context": {
+              "type": "string",
+              "description": "Rich 300–1500 character summary describing the goal, work done, key details, and reasoning."
+            },
+            "decisions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list (0–5) of durable decisions made."
+            },
+            "rationale": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list (0–5) explaining why decisions were made."
+            },
+            "metadata": {
+              "type": "object",
+              "properties": {
+                "plan_id": {
+                  "type": "string",
+                  "description": "Optional identifier to group related memories."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "Active",
+                    "Superseded",
+                    "DecisionRecord"
+                  ],
+                  "description": "Memory status: Active (current), Superseded (replaced), DecisionRecord (stable)."
+                }
+              }
+            }
+          },
+          "required": [
+            "topic",
+            "context"
+          ]
+        },
+        "tags": [
+          "memory",
+          "persistence",
+          "local-first"
+        ]
+      },
+      {
+        "name": "flowbaby_retrieveMemory",
+        "displayName": "Retrieve Memory",
+        "toolReferenceName": "flowbabyRetrieveMemory",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(search)",
+        "modelDescription": "Retrieve relevant past context, decisions, and implementation details from local workspace memory. Use at the start of turns where prior context may matter, or before planning and strategic recommendations. Queries should be natural language describing the intent. Data stays local in this workspace.",
+        "userDescription": "Search local workspace memory for relevant stored summaries and decisions. Data stays in this workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Natural-language description of what to recall (e.g., 'Previous decisions about authentication strategy')."
+            },
+            "maxResults": {
+              "type": "number",
+              "description": "Maximum results to return (default: 3, max: 10).",
+              "default": 3,
+              "minimum": 1,
+              "maximum": 10
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "tags": [
+          "memory",
+          "search",
+          "retrieval",
+          "local-first"
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.106.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "uuid": "^9.0.0"
+  }
+}

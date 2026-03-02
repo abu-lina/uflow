@@ -47,6 +47,7 @@
     "node_modules",
     "supabase/functions/**/*",
     "docs/archive/nextjs-supabase-starter",
-    "scripts/**/*.ts"
+    "scripts/**/*.ts",
+    "tools/**/*"
   ]
 }

@@ -11,6 +11,7 @@
 | 2026-02-22 | App Router best-practices audit findings captured      | Document current Next.js boundary/caching risks for planned refactor      | Arch 010            |
 | 2026-02-23 | Repo-structure review findings captured                | Reduce boundary drift; keep folder responsibilities crisp                 | Arch 011            |
 | 2026-02-23 | Root-level file placement guidance captured            | Reduce root clutter; align files to docs/scripts/sql/imports conventions  | Arch 012            |
+| 2026-03-02 | Agent memory tooling decision captured                | Flowbaby reliability issues; record local-first replacement direction     | Arch 032            |
 
 ---
 
@@ -157,6 +158,7 @@ This is a known architecture risk; roles must be normalized behind a single auth
 4. **App Router value leakage**: client-heavy data fetching and broad `'use client'` usage reduce streaming SSR and increase bundle/hydration costs.
 5. **Caching suppressed by global dynamism**: app-wide `force-dynamic` prevents most static/ISR benefits and increases per-request backend load.
 6. **Debug network calls in client code**: unguarded localhost ingest calls risk production noise/failures; debug telemetry must be opt-in.
+7. **Agent memory tooling reliability**: Flowbaby memory tools frequently fail due to multi-window daemon ownership/lock contention, forcing NO-MEMORY MODE and reducing workflow quality.
 
 ---
 
@@ -182,6 +184,17 @@ This is a known architecture risk; roles must be normalized behind a single auth
 - **Consequences**:
   - Requires DB function/view/index support
   - Clearer performance characteristics
+
+### ADR-003: Agent memory should be local-first and multi-window safe
+
+- **Context**: The current agent memory system (Flowbaby) is frequently unavailable due to VS Code multi-window daemon ownership/lock contention, plus cloud authentication coupling. This forces frequent NO-MEMORY MODE operation and leads to repeated decisions and lower-quality output.
+- **Choice**: Adopt a local-first agent memory backend that avoids single-owner daemon locks and supports concurrent access from multiple VS Code windows.
+- **Alternatives**:
+  - Keep Flowbaby and “just fix the lock” (rejected: still couples us to heavy dependencies and cloud auth; high regression risk).
+  - Full knowledge-graph rebuild (rejected: overengineered for structured summary storage; violates KISS/YAGNI).
+- **Consequences**:
+  - Requires a small, maintained tooling extension/library.
+  - Improves workflow reliability and reduces repeated work across sessions.
 
 ---
 
