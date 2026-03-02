@@ -2,7 +2,7 @@
   "name": "uflow-memory",
   "displayName": "UFlow Memory",
   "description": "Local-first agent memory for GitHub Copilot — reliable, multi-window safe, no cloud required.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "uflow",
   "engines": {
     "vscode": "^1.106.0"
@@ -138,13 +138,14 @@
     "package": "vsce package"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.106.0",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "better-sqlite3": "^11.0.0",
+    "better-sqlite3": "^12.6.2",
     "uuid": "^9.0.0"
   }
 }

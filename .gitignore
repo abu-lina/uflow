@@ -116,3 +116,9 @@ imports/**/*.tmp
 # Lottie conversion temporary files
 imports/lottie/.temp-gif-frames/.flowbaby/
 .flowbaby/
+
+# UFlow Memory (local-first agent memory store)
+.uflow-memory/
+
+# VS Code extension packages
+*.vsix
