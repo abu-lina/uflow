@@ -2,7 +2,7 @@
 ID: 032
 Origin: 032
 UUID: b7e3a1f9
-Status: UAT Approved
+Status: Committed for Release memory-extension-v0.1.0
 ---
 
 # Plan 032 — DIY Agent Memory System (Replace Flowbaby Backend)
@@ -11,6 +11,7 @@ Status: UAT Approved
 
 | Date (UTC) | Agent | Change | Rationale |
 |---|---|---|---|
+| 2026-03-02T11:15Z | devops | Status updated to "Committed for Release memory-extension-v0.1.0" | Stage 1 complete — committed locally (cec74f7), all plan changes staged for tooling release v0.1.0 |
 | 2026-03-02T11:00Z | uat | Status updated to "UAT Approved" | UAT Complete — implementation delivers stated value (eliminates daemon lock root cause), multi-window safety validated, all success metrics met, APPROVED FOR RELEASE |
 | 2026-03-02T10:45Z | implementer | Status updated to "QA Complete" | Fixed failing test gate by adding `@iconify/react` mock in test setup; all automated gates now pass |
 | 2026-03-02T10:20Z | qa | Status updated to "QA Failed" | Automated gates: backend + extension PASS; main repo tests FAIL due to Vitest unhandled errors (`window is not defined`), requiring fix before proceeding |

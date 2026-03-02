@@ -102,10 +102,10 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 
 6. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
 
-   **Commit message reliability note (RECOMMENDED)**:
+  **Commit message reliability (MANDATORY when multi-line)**:
 
-- Prefer creating a temporary commit message file and using `git commit -F <path>` for multi-line commit messages.
-- Avoid `git commit -m` when the message contains multiple paragraphs or quotes (shell quoting is fragile).
+- Create a temporary commit message file using the editor tools (e.g., `create_file`), then run `git commit -F <path>`.
+- Do NOT use heredocs or multi-paragraph `git commit -m ...` (shell quoting is fragile).
 
 ```
 <type>(<scope>): <subject>

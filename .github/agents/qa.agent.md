@@ -87,6 +87,19 @@ Minimum expectations (unless the plan explicitly states otherwise):
 - Record manual validation status as **executed** or **deferred**
   - If deferred: owner, rationale, severity, and fallback execution path
 
+### Workflow-Only / Agent Instruction Changes (WHEN APPLICABLE)
+
+If the plan is **workflow-only** (agent specs or `agent-output/` docs; **no runtime code changes**), QA SHOULD treat this as **document/spec QA** rather than forcing unit tests.
+
+Minimum expectations:
+
+- Validate the changed spec is internally consistent (examples match rules; no contradictory guidance).
+- Validate any referenced file paths/tools exist **or** the spec provides an explicit fallback (especially cross-workspace paths like `.agent/...`).
+- If `.github/agents/*` changed: confirm `exports/generic-workflow/.github/agents/*` mirrors are updated.
+- Confirm plan-chain Status fields are correct for the phase (so downstream gates can rely on them).
+
+If interactive validation is required but not automatable, record it explicitly as `DEFERRED` with owner + deadline window + fallback execution path.
+
 ### SSR / Server-Defaults Check (MANDATORY when applicable)
 
 If the change touches URL param parsing, “sentinel” values (e.g., *all locations*), or any Next.js Server Component page that reads `searchParams`, QA MUST validate:

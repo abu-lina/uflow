@@ -30,7 +30,7 @@ Each agent already loads skills defined in its `.agent.md` file. Do NOT duplicat
 
 ### Layer 3 — General Catalog (Supplement)
 
-Search `skills/data/catalog.json` (883 skills) for additional matches:
+Search the workspace for the skills catalog file (often `.agent/skills/data/catalog.json` in a multi-root workspace) for additional matches:
 
 1. **Tokenize** task description: lowercase, remove punctuation, filter words < 3 characters
 2. **Score** each catalog skill: compare tokens to its `triggers[]` array

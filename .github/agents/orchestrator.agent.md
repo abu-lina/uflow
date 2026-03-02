@@ -105,6 +105,15 @@ handoffs:
 
 ---
 
+## Memory Health Check (MANDATORY)
+
+At the start of every session (before the first Workflow Card), run **one** `flowbabyRetrieveMemory` query.
+
+- If retrieval errors (e.g., daemon lock by another VS Code window), explicitly declare: **NO-MEMORY MODE** and proceed artifact-first for this entire session.
+- Do not wait until later phases to discover memory is unavailable.
+
+---
+
 ## Canonical Agent & Skill Names
 
 **CRITICAL**: Always use EXACT names below when referencing agents in `@mentions`, Workflow Cards, and handoff prompts. Wrong casing = broken handoffs.
@@ -515,7 +524,7 @@ To confirm the Orchestrator is correctly using catalog skills:
    - `INSTRUCTIONS FOR @{agent}` section containing `Load skill '...' from '...'` directives
 3. **If `Catalog:` is always empty or shows a warning**:
    - Verify the `.agent` skills workspace folder is open in VS Code
-   - Check that `skills/data/catalog.json` exists under that workspace root
+  - Search the workspace for `catalog.json` and confirm the resolved path points to the expected catalog file (commonly `.agent/skills/data/catalog.json` in a multi-root workspace)
    - If the catalog exists but isn't found, the search tool may not be indexing that workspace — try reopening VS Code
 4. **Fallback mode** (expected when catalog is absent): The Orchestrator uses UFlow skills only (Layer 1 + Layer 2). This is safe but less targeted.
 

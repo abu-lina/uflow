@@ -57,6 +57,9 @@ Process:
 
 1. Acknowledge handoff: Plan ID, version, deployment outcome, scope
 2. Read all artifacts: planning, analysis, critique, implementation, architecture, QA, UAT, deployment, escalations
+2b. **Memory health check (MANDATORY)**: Run **one** `flowbabyRetrieveMemory` query.
+  - If it errors (e.g., daemon lock), explicitly document **NO-MEMORY MODE** and proceed artifact-first.
+  - Do not repeatedly retry memory tools if the first call errors.
 3. Retrieve Flowbaby memory using at least 2 queries:
   - "Plan <ID> release <version>" (phase summary)
   - "Plan <ID> handoff issues" (process gaps)

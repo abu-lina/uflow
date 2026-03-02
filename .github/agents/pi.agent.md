@@ -41,6 +41,13 @@ Review retrospectives to identify repeatable process improvements, validate agai
 
 ## Process
 
+### Memory Health Check (MANDATORY)
+
+Before doing any analysis work, run **one** `flowbabyRetrieveMemory` query.
+
+- If it errors (e.g., daemon lock by another VS Code window), explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
+- Do not wait until mid-task to discover memory is unavailable.
+
 ### Phase 1: Retrospective Analysis
 
 1. Read retrospective from `agent-output/retrospectives/`

@@ -56,6 +56,11 @@ Core Responsibilities:
   - If the Implementation includes file moves/renames or path updates, run a repo search for the **old** path(s) in high-risk areas: `scripts/`, `.github/workflows/`, `deploy/`, and `docs/`.
   - If you find **one** stale reference, assume there may be more: recommend/require an exhaustive search before approval.
   - Record the search terms used and files checked in the Code Review doc.
+6c. **Agent Spec / Cross-Workspace Path Checklist (MANDATORY when applicable)**:
+  - If any modified file is `.github/agents/*.agent.md` OR the change introduces/updates references to file paths (catalogs, skills, workspace roots):
+    - Verify each referenced path is valid in the intended workspace root(s).
+    - If a path is cross-root (e.g., `.agent/...`), verify the spec includes an explicit fallback for when the other workspace root is not open.
+    - Record what you checked (paths + method) in the Code Review doc.
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions
