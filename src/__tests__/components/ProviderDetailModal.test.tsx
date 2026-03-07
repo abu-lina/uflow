@@ -85,6 +85,19 @@ describe('ProviderDetailModal Component', () => {
       );
     });
 
+    it('should set sizes attribute on hero image to match 640px container', () => {
+      render(
+        <ProviderDetailModal
+          provider={mockProvider}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      const mainImage = screen.getByAltText('Bilal Moschee 1');
+      expect(mainImage).toHaveAttribute('sizes', '640px');
+    });
+
     it('should render navigation arrows when multiple images exist', () => {
       render(
         <ProviderDetailModal

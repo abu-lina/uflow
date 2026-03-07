@@ -677,6 +677,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                       fill
                       alt={`${provider.provider_name} ${index + 1}`}
                       className="object-cover"
+                      priority={index === 0}
+                      sizes="(min-width: 1024px) 50vw, 100vw"
                       src={imageUrl}
                     />
                   </div>

@@ -84,6 +84,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 # Copy static files to the standalone directory structure
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Create persistent image cache directory with correct ownership
+RUN mkdir -p .next/cache/images && chown nextjs:nodejs .next/cache/images
+
 # Verify files are in place
 RUN ls -la .next/static/ && \
     echo "Static files copied successfully"

@@ -5,7 +5,16 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Icon } from '@iconify/react';
-import { ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag, ChevronDown, X } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Moon,
+  Building2,
+  Tag,
+  ChevronDown,
+  X,
+} from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -17,8 +26,16 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import { useQuery } from '@tanstack/react-query';
 import type { Provider } from '@/services/providers';
-import { getCommunityServicesForProvider, type CommunityService } from '@/services/communityServices';
-import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
+import {
+  getCommunityServicesForProvider,
+  type CommunityService,
+} from '@/services/communityServices';
+import {
+  openNavigation,
+  formatAddress,
+  isAddressNavigable,
+  normalizeWebsiteUrl,
+} from '@/utils/navigationUtils';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
 interface ProviderDetailModalProps {
@@ -37,7 +54,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const router = useRouter();
   const isMobile = useIsMobile();
   const { t } = useLanguage();
-  
+
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: provider.provider_id,
@@ -137,7 +154,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
-  
+
   // Track image loading states for skeleton display
   const [mainImagesLoaded, setMainImagesLoaded] = useState<Record<number, boolean>>({});
   const [communityImageLoaded, setCommunityImageLoaded] = useState(false);
@@ -203,7 +220,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       // Show login prompt
       return;
     }
-    
+
     try {
       await handleOptimisticBookmark();
     } catch (error) {
@@ -219,7 +236,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     }
     if (action === 'share') {
       const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
-      
+
       if (navigator.share) {
         try {
           await navigator.share({
@@ -248,17 +265,17 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         toast.error('Keine Telefonnummer verfügbar');
         return;
       }
-      
+
       const phoneNumber = provider.contact_phone.trim();
       const telUrl = `tel:${phoneNumber}`;
-      
+
       // Create a temporary anchor element to trigger tel: link
       // This works more reliably than window.open or window.location.href
       const link = document.createElement('a');
       link.href = telUrl;
       link.style.display = 'none';
       document.body.appendChild(link);
-      
+
       try {
         link.click();
         // Clean up after a short delay
@@ -271,7 +288,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           document.body.removeChild(link);
         }
         console.error('Failed to open tel link:', error);
-        
+
         // Fallback: Copy phone number to clipboard on desktop
         try {
           await navigator.clipboard.writeText(phoneNumber);
@@ -302,7 +319,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const isLoading = isLoadingCommunityServices || !mainImagesLoaded[selectedImageIdx];
 
   return (
-    <Modal isOpen={true} title={communityServices[0]?.community_service_name || provider.provider_name} onClose={onClose}>
+    <Modal
+      isOpen={true}
+      title={communityServices[0]?.community_service_name || provider.provider_name}
+      onClose={onClose}
+    >
       <section
         aria-busy={isLoading}
         aria-label="Provider details"
@@ -321,26 +342,50 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Title & Subtitle */}
           <div className="flex flex-col items-start justify-start gap-2 self-stretch">
             <div className="inline-flex items-center justify-start gap-8 self-stretch">
-              <div className="text-uFlowText justify-start font-inter-tight text-3xl font-bold">
+              <div className="justify-start font-inter-tight text-3xl font-bold text-uFlowText">
                 {provider.provider_name}
               </div>
             </div>
-            {formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined) ? (
+            {formatAddress(
+              provider.address_street ?? undefined,
+              provider.address_zip ?? undefined,
+              provider.address_city ?? undefined,
+            ) ? (
               <button
-                className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left"
-                disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                className="justify-start self-stretch text-left font-inter text-base font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline"
+                disabled={
+                  !isAddressNavigable(
+                    provider.address_street ?? undefined,
+                    provider.address_zip ?? undefined,
+                    provider.address_city ?? undefined,
+                  )
+                }
                 title="Adresse antippen zum Navigieren"
                 onClick={() => {
-                  const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
-                  if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                  const address = formatAddress(
+                    provider.address_street ?? undefined,
+                    provider.address_zip ?? undefined,
+                    provider.address_city ?? undefined,
+                  );
+                  if (
+                    isAddressNavigable(
+                      provider.address_street ?? undefined,
+                      provider.address_zip ?? undefined,
+                      provider.address_city ?? undefined,
+                    )
+                  ) {
                     openNavigation(address);
                   }
                 }}
               >
-                {formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
+                {formatAddress(
+                  provider.address_street ?? undefined,
+                  provider.address_zip ?? undefined,
+                  provider.address_city ?? undefined,
+                )}
               </button>
             ) : (
-              <div className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal">
+              <div className="justify-start self-stretch font-inter text-base font-normal text-uFlowText2">
                 {provider.category?.name_de || ''}
               </div>
             )}
@@ -359,10 +404,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 onTouchStart={handleTouchStart}
               >
                 {/* Image Carousel Container */}
-                <div
-                  className="flex h-full w-full"
-                  style={getTransformStyle()}
-                >
+                <div className="flex h-full w-full" style={getTransformStyle()}>
                   {allImageUrls.map((imageUrl, index) => (
                     <div
                       key={index}
@@ -379,10 +421,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                         className={`rounded-[32px] object-cover transition-opacity duration-300 ${
                           mainImagesLoaded[index] ? 'opacity-100' : 'opacity-0'
                         }`}
-                        priority={index === 0} // Prioritize first image
+                        priority={index === 0}
+                        sizes="640px"
                         src={imageUrl}
                         onLoad={() => {
-                          setMainImagesLoaded(prev => ({ ...prev, [index]: true }));
+                          setMainImagesLoaded((prev) => ({ ...prev, [index]: true }));
                         }}
                       />
                     </div>
@@ -420,7 +463,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     )}
                   </>
                 )}
-
               </div>
             </div>
 
@@ -451,7 +493,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                       loading="lazy"
                       src={img}
                       onLoad={() => {
-                        setThumbnailsLoaded(prev => ({ ...prev, [i]: true }));
+                        setThumbnailsLoaded((prev) => ({ ...prev, [i]: true }));
                       }}
                     />
                   </button>
@@ -473,9 +515,12 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           </button>
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
             {/* Barakah Effekt Section - with fade-in animation */}
-            <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100 animate-fadeIn" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+            <div
+              className="animate-fadeIn flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100"
+              style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
+            >
               <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
+                <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
                   {t('providers.ourBarakahEffect')}:
                 </div>
                 <div className="flex w-full flex-row items-start gap-6">
@@ -485,7 +530,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     onClick={() => {
                       onClose();
                       if (communityServices[0]?.community_service_id) {
-                        router.push(`/community-services/${communityServices[0].community_service_id}`);
+                        router.push(
+                          `/community-services/${communityServices[0].community_service_id}`,
+                        );
                       }
                     }}
                   >
@@ -502,23 +549,25 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                         }`}
                         loading="lazy"
                         src={
-                          communityServices[0]?.community_service_images && communityServices[0].community_service_images.length > 0
+                          communityServices[0]?.community_service_images &&
+                          communityServices[0].community_service_images.length > 0
                             ? communityServices[0].community_service_images[0]
                             : PLACEHOLDER_IMAGE
                         }
                         onLoad={() => setCommunityImageLoaded(true)}
                       />
                     </div>
-                    <div className="text-uFlowText mb-0.5 font-inter-tight text-lg font-semibold">
+                    <div className="mb-0.5 font-inter-tight text-lg font-semibold text-uFlowText">
                       {communityServices[0]?.community_service_name}
                     </div>
-                    <div className="text-uFlowText2 font-inter-tight text-base">Hatem Ipsum</div>
+                    <div className="font-inter-tight text-base text-uFlowText2">Hatem Ipsum</div>
                   </button>
                   {/* Divider */}
                   <div className="mx-4 h-[120px] w-px bg-zinc-200" />
                   {/* Right: Barakah labels */}
                   <div className="flex min-h-[120px] flex-col flex-wrap items-start gap-2">
-                    {Array.isArray(provider.barakah_effects) && provider.barakah_effects.length > 0 ? (
+                    {Array.isArray(provider.barakah_effects) &&
+                    provider.barakah_effects.length > 0 ? (
                       <div className="flex flex-col gap-2">
                         {provider.barakah_effects.map((effect, idx) => (
                           <span
@@ -537,7 +586,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                         ))}
                       </div>
                     ) : (
-                      <span className="text-uFlowText2 font-inter text-base">
+                      <span className="font-inter text-base text-uFlowText2">
                         Keine Barakah Effekte
                       </span>
                     )}
@@ -546,8 +595,12 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               </div>
             </div>
             {/* Offers & Needs Section - with fade-in animation */}
-            {((provider.offers && provider.offers.length > 0) || (provider.needs && provider.needs.length > 0)) && (
-              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100 animate-fadeIn" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+            {((provider.offers && provider.offers.length > 0) ||
+              (provider.needs && provider.needs.length > 0)) && (
+              <div
+                className="animate-fadeIn flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100"
+                style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}
+              >
                 <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
                   {/* Offers Section */}
                   {provider.offers && provider.offers.length > 0 && (
@@ -556,13 +609,13 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                         className="flex w-full items-center justify-between"
                         onClick={() => setExpandedOffers(!expandedOffers)}
                       >
-                        <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
+                        <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
                           {t('providers.weOffer')}
                         </div>
-                        <ChevronDown 
+                        <ChevronDown
                           className={`h-6 w-6 text-gray-600 transition-transform ${
                             expandedOffers ? 'rotate-180' : ''
-                          }`} 
+                          }`}
                         />
                       </button>
                       {expandedOffers && (
@@ -583,9 +636,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   )}
 
                   {/* Divider */}
-                  {provider.offers && provider.offers.length > 0 && provider.needs && provider.needs.length > 0 && (
-                    <hr className="w-full border-gray-200" />
-                  )}
+                  {provider.offers &&
+                    provider.offers.length > 0 &&
+                    provider.needs &&
+                    provider.needs.length > 0 && <hr className="w-full border-gray-200" />}
 
                   {/* Needs Section */}
                   {provider.needs && provider.needs.length > 0 && (
@@ -594,13 +648,13 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                         className="flex w-full items-center justify-between"
                         onClick={() => setExpandedNeeds(!expandedNeeds)}
                       >
-                        <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
+                        <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
                           {t('providers.weAreLookingFor')}
                         </div>
-                        <ChevronDown 
+                        <ChevronDown
                           className={`h-6 w-6 text-gray-600 transition-transform ${
                             expandedNeeds ? 'rotate-180' : ''
-                          }`} 
+                          }`}
                         />
                       </button>
                       {expandedNeeds && (
@@ -629,7 +683,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Save Button */}
           <button
             aria-expanded={expandedAction === 'save'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('save')}
           >
@@ -662,7 +716,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Share Button */}
           <button
             aria-expanded={expandedAction === 'share'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('share')}
           >
@@ -683,7 +737,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Phone Button */}
           <button
             aria-expanded={expandedAction === 'call'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('call')}
           >
@@ -704,7 +758,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           {/* Website Button */}
           <button
             aria-expanded={expandedAction === 'website'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('website')}
           >

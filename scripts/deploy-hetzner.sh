@@ -87,6 +87,7 @@ docker run -d \
   --restart unless-stopped \
   -p 3000:3000 \
   --env-file .env.production \
+  -v uflow-image-cache:/app/.next/cache/images \
   uflow
 
 # Wait for container to start

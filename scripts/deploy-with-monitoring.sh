@@ -64,7 +64,7 @@ docker load < uflow.tar.gz
 
 # Start new container
 echo "Starting new container..."
-docker run -d -p 3000:3000 --name uflow-app uflow:latest
+docker run -d -p 3000:3000 --name uflow-app -v uflow-image-cache:/app/.next/cache/images uflow:latest
 
 # Wait for container to start
 echo "Waiting for container to start..."

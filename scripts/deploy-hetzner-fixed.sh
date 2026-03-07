@@ -59,7 +59,7 @@ docker rm uflow-app || true
 echo "Loading new image..."
 docker load < uflow.tar.gz
 echo "Starting new container..."
-docker run -d -p 3000:3000 --name uflow-app uflow:latest
+docker run -d -p 3000:3000 --name uflow-app -v uflow-image-cache:/app/.next/cache/images uflow:latest
 echo "Reloading Nginx..."
 systemctl reload nginx
 echo "Cleaning up..."

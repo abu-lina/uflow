@@ -83,6 +83,7 @@ docker run -d \
     --restart unless-stopped \
     -p 3001:3000 \
     --env-file .env.uat \
+    -v uflow-uat-image-cache:/app/.next/cache/images \
     uflow-uat:latest
 
 # Wait for container to start

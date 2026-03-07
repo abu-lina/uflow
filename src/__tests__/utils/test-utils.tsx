@@ -49,8 +49,8 @@ vi.mock('next/image', () => ({
     alt,
     onLoad,
     fill: _fill,
-    priority: _priority,
-    sizes: _sizes,
+    priority,
+    sizes,
     quality: _quality,
     placeholder: _placeholder,
     blurDataURL: _blurDataURL,
@@ -65,7 +65,15 @@ vi.mock('next/image', () => ({
       }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={String(src || '')} alt={String(alt || '')} {...props} />;
+    return (
+      <img
+        src={String(src || '')}
+        alt={String(alt || '')}
+        {...(sizes ? { sizes: String(sizes) } : {})}
+        {...(priority ? { 'data-priority': 'true' } : {})}
+        {...props}
+      />
+    );
   },
 }));
 

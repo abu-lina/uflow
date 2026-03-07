@@ -142,6 +142,7 @@ jobs:
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
               -e DISABLE_PWA=false \
+              -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-new \
               --restart unless-stopped \
               ghcr.io/${{ github.repository_owner }}/uflow:latest)
@@ -192,6 +193,7 @@ jobs:
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
               -e DISABLE_PWA=false \
+              -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-app \
               --restart unless-stopped \
               ghcr.io/${{ github.repository_owner }}/uflow:latest

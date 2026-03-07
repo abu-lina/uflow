@@ -148,6 +148,7 @@ jobs:
               -e TURNSTILE_SECRET_KEY="${{ secrets.UAT_TURNSTILE_SECRET_KEY || secrets.TURNSTILE_SECRET_KEY }}" \
               -e TEST_API_KEY="${{ secrets.UAT_TEST_API_KEY || secrets.TEST_API_KEY }}" \
               -e DISABLE_PWA=false \
+              -v uflow-uat-image-cache:/app/.next/cache/images \
               --name uflow-uat-new \
               --restart unless-stopped \
               ghcr.io/${{ github.repository_owner }}/uflow-uat:latest)
@@ -199,6 +200,7 @@ jobs:
               -e TURNSTILE_SECRET_KEY="${{ secrets.UAT_TURNSTILE_SECRET_KEY || secrets.TURNSTILE_SECRET_KEY }}" \
               -e TEST_API_KEY="${{ secrets.UAT_TEST_API_KEY || secrets.TEST_API_KEY }}" \
               -e DISABLE_PWA=false \
+              -v uflow-uat-image-cache:/app/.next/cache/images \
               --name uflow-uat \
               --restart unless-stopped \
               ghcr.io/${{ github.repository_owner }}/uflow-uat:latest

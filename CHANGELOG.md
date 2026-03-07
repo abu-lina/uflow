@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.12] - 2026-03-07
+
+### Fixed
+
+**Provider Image Load Performance (Plan 034)**: Eliminates multi-second hero image load latency on provider detail pages.
+
+- **WebP-only format**: Changed `next.config.js` image `formats` from `['image/avif', 'image/webp']` to `['image/webp']`, eliminating AVIF cold-encode latency (5–15s) on Hetzner VPS. WebP encode is ~100ms vs multi-second AVIF.
+- **Correct `sizes` attribute**: Added `sizes="640px"` to `ProviderDetailModal.tsx` hero image (desktop, fixed 640px container) and `sizes="(min-width: 1024px) 50vw, 100vw"` to `ProviderDetailPage.tsx` hero image (responsive layout). Prevents Next.js from requesting oversized `w=3840` images when 640px suffices.
+- **Missing `priority` on mobile**: Added `priority={index === 0}` to `ProviderDetailPage.tsx` hero image so the first image gets a fetchpriority hint.
+- **Persistent image cache**: Updated Dockerfile to create `.next/cache/images/` with correct ownership, and all deploy scripts to mount a named Docker volume (`uflow-image-cache` / `uflow-uat-image-cache`), so optimized images survive container restarts and deployments.
+- **Files changed**: `next.config.js`, `src/components/providers/ProviderDetailModal.tsx`, `src/components/providers/ProviderDetailPage.tsx`, `Dockerfile`, `scripts/deploy-uat.sh`, `scripts/deploy-hetzner.sh`, `scripts/deploy-hetzner-fixed.sh`, `scripts/deploy-with-monitoring.sh`
+- **Measurable targets**: Cold load < 500ms, warm load < 200ms for typical provider hero images.
+
 ## [0.6.11] - 2026-03-07
 
 ### Changed

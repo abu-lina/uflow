@@ -227,7 +227,7 @@ const nextConfig = {
         hostname: 'lh3.googleusercontent.com',
       },
     ],
-    formats: ['image/avif', 'image/webp'],
+    formats: ['image/webp'],
     minimumCacheTTL: 3600,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
