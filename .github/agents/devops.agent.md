@@ -15,8 +15,8 @@ tools:
     'edit/createFile',
     'edit/editFiles',
     'search',
-    'flowbaby.flowbaby/flowbabyStoreSummary',
-    'flowbaby.flowbaby/flowbabyRetrieveMemory',
+    'flowbaby_storeMemory',
+    'flowbaby_retrieveMemory',
     'todo',
   ]
 model: Gemini 3 Flash (Preview)
@@ -56,7 +56,7 @@ Core Responsibilities:
 7. Execute release (tag, push, publish, update log).
 8. Document in `agent-output/deployment/` (checklist, confirmation, execution, validation).
 9. Maintain deployment history.
-10. Retrieve/store Flowbaby memory.
+10. Retrieve/store memory.
 11. **Status tracking**: After successful git push, update all included plans' Status field to "Released" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 12. **Commit on plan approval**: After UAT approves a plan, commit all plan changes locally with detailed message referencing plan ID and target release. Do NOT push yet.
 13. **Track release readiness**: Monitor which plans are committed locally for the current target release. Coordinate with Roadmap agent to maintain accurate release→plan mappings.
@@ -102,7 +102,7 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 
 6. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
 
-  **Commit message reliability (MANDATORY when multi-line)**:
+   **Commit message reliability (MANDATORY when multi-line)**:
 
 - Create a temporary commit message file using the editor tools (e.g., `create_file`), then run `git commit -F <path>`.
 - Do NOT use heredocs or multi-paragraph `git commit -m ...` (shell quoting is fragile).
@@ -146,8 +146,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 9. Update plan status to "Committed for Release [X.Y.Z]".
 10. Report to Roadmap agent (handoff): Plan committed, release tracker needs update.
 11. Inform user: "[Plan ID] committed locally for release [X.Y.Z]. [N] of [M] plans committed for this release."
-12. Store Flowbaby memory (MANDATORY): After Stage 1 local commit — what’s committed, what remains, next steps.
-    - After storing Flowbaby memory, immediately retrieve using query:
+12. Store memory (MANDATORY): After Stage 1 local commit — what's committed, what remains, next steps.
+    - After storing memory, immediately retrieve using query:
       "Plan <ID> DevOps Stage 1 <version>"
       Confirm at least one result.
 
@@ -215,7 +215,7 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 1. Update ALL included plans' status to "Released".
 2. Record metadata (version, environment, timestamp, URLs, authorizer, included plans).
 3. Verify success (installable, version matches, no errors).
-3b. **Functional Smoke Tests (MANDATORY)**: After deployment reports success (and before declaring Stage 2 complete), run a minimal set of functional smoke checks that cover server-rendered defaults:
+   3b. **Functional Smoke Tests (MANDATORY)**: After deployment reports success (and before declaring Stage 2 complete), run a minimal set of functional smoke checks that cover server-rendered defaults:
 
 - Visit `/providers` with **no query params** and confirm results render (not “No results found”).
 - Visit `/` and confirm the primary search UI renders.
@@ -223,12 +223,24 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 Manual browser verification is acceptable. If using `curl`, document the exact commands and what you checked for in the response.
 
 If any smoke check fails: stop and treat as a release failure. Coordinate rollback or hotfix before marking Stage 2 complete.
+
+3c. **Deferred validation follow-ups (MANDATORY when applicable)**:
+
+- If the UAT report records any **DEFERRED** measurable performance targets (timing gates), capture the follow-up evidence post-deploy (or explicitly assign and timebox an owner) before declaring the release fully complete.
+- Document: what was measured, where, numbers observed, and any rollback trigger if targets are missed.
+
+3d. **Release hygiene: orphan sweep (RECOMMENDED, docs-only)**:
+
+- Coordinate with the Roadmap agent’s orphan sweep policy. If orphaned terminal-status docs are found outside `closed/`, move them to the appropriate `closed/` folders.
+- Do NOT mix orphan cleanup with a plan’s Stage 1 commit. If cleanup produces git changes, make a dedicated **docs-only** commit (e.g., `chore(docs): close orphaned agent-output documents`) so plan commits remain scoped.
+
 4. Hand off to Roadmap: Release complete, update tracker.
 5. Hand off to Retrospective.
-6. Store Flowbaby memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
-   - After storing Flowbaby memory, immediately retrieve using query:
-     "Plan <ID> DevOps Stage 2 <version>"
-     Confirm at least one result.
+6. Store memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
+
+- After storing memory, immediately retrieve using query:
+  "Plan <ID> DevOps Stage 2 <version>"
+  Confirm at least one result.
 
 Deployment Doc Format: `agent-output/deployment/[version].md` with: Plan Reference, Release Date, Release Summary (version/type/environment/epic), Pre-Release Verification (UAT/QA Approval, Version Consistency checklist, Packaging Integrity checklist, Gitignore Review checklist, Workspace Cleanliness checklist), User Confirmation (timestamp, summary presented, response/name/timestamp/decline reason), Release Execution (Git Tagging command/result/pushed, Package Publication registry/command/result/URL, Publication Verification checklist), Post-Release Status (status/timestamp, Known Issues, Rollback Plan), Deployment History Entry (JSON), Next Actions.
 
@@ -323,8 +335,8 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 
 **Quick reference:**
 
-- Retrieve: `#flowbabyRetrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbabyStoreSummary { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 

@@ -11,8 +11,8 @@ tools:
     'edit',
     'search',
     'web',
-    'flowbaby.flowbaby/flowbabyStoreSummary',
-    'flowbaby.flowbaby/flowbabyRetrieveMemory',
+    'flowbaby_storeMemory',
+    'flowbaby_retrieveMemory',
     'ms-python.python/getPythonEnvironmentInfo',
     'ms-python.python/getPythonExecutableCommand',
     'ms-python.python/installPythonPackage',
@@ -154,7 +154,7 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 12. Validate implementation delivers value statement before complete.
 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
 14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly.
-15. Retrieve/store Flowbaby memory.
+15. Retrieve/store memory.
 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
 ### Sentinel Refactor Checklist (WHEN APPLICABLE)
@@ -216,7 +216,7 @@ Record evidence (or deferral rationale) in the implementation doc.
 
 ### Memory Checkpoints (MANDATORY)
 
-Store Flowbaby memory at these moments (value boundaries):
+Store memory at these moments (value boundaries):
 
 - After completing each plan milestone
 - After discovering a new constraint/gotcha (e.g., schema drift)
@@ -226,7 +226,7 @@ Each memory entry must include: plan ID, files touched, decisions made, and next
 
 ### Memory Retrieval Validation (MANDATORY)
 
-Immediately after storing a Flowbaby memory checkpoint, run a retrieval query that should match it.
+Immediately after storing a memory checkpoint, run a retrieval query that should match it.
 
 - Required: the retrieval returns ≥ 1 result.
 - If retrieval returns 0 results:
@@ -275,6 +275,20 @@ Before handing off to **Code Reviewer** or **QA**, you MUST complete this checkl
 
 If any item fails: STOP, fix, re-run. Do not hand off.
 
+### Deployment Path Audit (MANDATORY when applicable)
+
+If your change touches deployment surface area (examples: `Dockerfile`, `scripts/deploy-*`, `.github/workflows/deploy-*`, `deploy/nginx`, env vars, ports, volume mounts, image cache paths), you MUST perform and document a deployment path audit in your Implementation doc.
+
+Minimum expectations:
+
+- Run a repo search for deploy entrypoints:
+  - `grep -R "docker run" .github/workflows scripts deploy -n`
+  - `grep -R "--volume\|-v\|--mount" .github/workflows scripts deploy -n`
+- Enumerate **every** deployment path you verified (GitHub Actions workflows + shell scripts + any other entrypoints you found)
+- Confirm parity: each invocation reflects the intended change (e.g., volume mounts exist everywhere)
+
+If you cannot verify a deployment path (missing access / unclear ownership), STOP and request clarification from Planner/DevOps rather than assuming.
+
 ### Local vs Background Mode
 
 - For small, low-risk changes, run as a local chat session in the current workspace.
@@ -295,9 +309,11 @@ Required sections:
 - Date
 - Changelog table (date/handoff/request/summary example)
 - Implementation Summary (what + how delivers value)
+- Baseline & Measurements (WHEN APPLICABLE — see below)
 - Milestones Completed checklist
 - Files Modified table (path/changes/lines)
 - Files Created table (path/purpose)
+- Deployment Path Audit (WHEN APPLICABLE — see above)
 - Code Quality Validation checklist (compilation/linter/tests/compatibility)
 - Value Statement Validation (original + implementation delivers)
 - **TDD Compliance Checklist** (MANDATORY — see below)
@@ -305,6 +321,15 @@ Required sections:
 - Test Execution Results (command/results/issues/coverage - NOT in QA docs)
 - Outstanding Items (incomplete/issues/deferred/failures/missing coverage)
 - Next Steps (QA then UAT)
+
+### Baseline & Measurements (WHEN APPLICABLE)
+
+If the plan includes any baseline/measurement milestone or measurable performance targets, your Implementation doc MUST include one of:
+
+- **Baseline captured**: numbers + environment (local/UAT/prod-like) + command/tool used, OR
+- **Baseline deferred**: explicit deferral with owner + when it will be measured + why it could not be captured now.
+
+Silent drops are not allowed: if measurement work is not done, it must be explicitly deferred.
 
 **Timestamp guidance (SHOULD)**:
 
@@ -436,8 +461,8 @@ Status: Active
 
 **Quick reference:**
 
-- Retrieve: `#flowbabyRetrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbabyStoreSummary { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 

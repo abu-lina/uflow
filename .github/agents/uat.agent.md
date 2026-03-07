@@ -11,8 +11,8 @@ tools:
     'edit/createDirectory',
     'edit/createFile',
     'edit/editFiles',
-    'flowbaby.flowbaby/flowbabyStoreSummary',
-    'flowbaby.flowbaby/flowbabyRetrieveMemory',
+    'flowbaby_storeMemory',
+    'flowbaby_retrieveMemory',
     'todo',
   ]
 model: Claude Sonnet 4.5
@@ -67,7 +67,7 @@ Core Responsibilities:
 7. Mark "UAT Complete" or "UAT Failed" with rationale based on doc evidence
 8. Synthesize final release decision: "APPROVED FOR RELEASE" or "NOT APPROVED"
 9. Recommend versioning and release notes
-10. Use Flowbaby memory for continuity
+10. Use memory for continuity
 11. **Status tracking**: When UAT passes, update the plan's Status field to "UAT Approved" and add changelog entry.
 
 ### Focus/Scroll Side-Effects Scenarios (WHEN APPLICABLE)
@@ -90,6 +90,18 @@ If the change is **CSS/layout-only** (no TS/JS runtime behavior changes), UAT MA
 - The UAT report explicitly records residual risk and whether manual device validation was executed vs deferred
 
 If any of these are not satisfied, UAT MUST treat the missing evidence as a finding and record a NOT APPROVED decision or a conditional approval with explicit next actions (based on risk).
+
+### Performance Timing Gate (WHEN APPLICABLE)
+
+If the plan includes measurable performance targets (example: latency thresholds like “cold < 500ms / warm < 200ms”), UAT MUST include a dedicated timing gate in the UAT scenarios and record one of:
+
+- **PASS**: provide evidence (where measured, how measured, numbers)
+- **DEFERRED**: only allowed when live measurement is infeasible at UAT time (e.g., deployment not completed). If deferred, you MUST document:
+  - owner (DevOps or named operator)
+  - when it will be measured (timebox/window)
+  - fallback/rollback trigger if the target is not met
+
+Additionally, verify the Implementation doc contains either baseline numbers or an explicit baseline deferral when the plan promised measurement milestones. Missing baseline evidence/deferral is a UAT finding (even if the code changes look correct).
 
 Constraints:
 
@@ -277,8 +289,8 @@ Status: Active
 
 **Quick reference:**
 
-- Retrieve: `#flowbabyRetrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbabyStoreSummary { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 
