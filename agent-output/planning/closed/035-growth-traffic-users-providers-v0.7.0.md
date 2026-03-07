@@ -2,7 +2,7 @@
 ID: 035
 Origin: 035
 UUID: 10b4766e
-Status: Committed
+Status: Released
 ---
 
 # Plan 035 — Growth: More Traffic, Users, and Providers
@@ -13,7 +13,7 @@ Status: Committed
 - **Epic Alignment**:
   - Master Product Objective: “Make UFlow the first thought when any Muslim seeks a service or business.”
   - Roadmap Epics leveraged for growth: **Epic 2.2 (City Community Pages & Discovery)** and (optional) **Epic 2.3 (Enhanced Provider Profiles with Rich Media)**
-- **Status**: Committed for Release v0.7.0
+- **Status**: Released v0.7.0
 - **Related Issues**: None
 
 ### Changelog
@@ -26,6 +26,7 @@ Status: Committed
 | 2026-03-07T23:35Z | qa | QA Complete | QA gates pass (type-check, lint, tests, build). QA report: `agent-output/qa/035-growth-traffic-users-providers-qa.md`. |
 | 2026-03-07T23:50Z | uat | UAT Approved | APPROVED FOR RELEASE. M1+M2 deliver indexable city pages + Plausible analytics. All gates pass. UAT report: `agent-output/uat/035-growth-traffic-users-providers-uat.md`. |
 | 2026-03-07T23:55Z | devops | Committed for v0.7.0 | Stage 1 complete. All Plan 035 changes staged and committed locally. Version bumped to 0.7.0. Documents moved to closed/. |
+| 2026-03-08T00:05Z | devops | Released v0.7.0 | Stage 2 complete. Tag v0.7.0 pushed to origin. Smoke tests pass. |
 
 ## Value Statement and Business Objective
 

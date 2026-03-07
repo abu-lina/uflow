@@ -2,7 +2,7 @@
 ID: 035
 Origin: 035
 UUID: 10b4766e
-Status: Committed
+Status: Released
 ---
 
 # 035 — Growth (v0.7.0): Architecture Findings (City SSR/ISR, Plausible, UTMs)
