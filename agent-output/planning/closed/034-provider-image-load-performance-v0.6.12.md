@@ -2,7 +2,7 @@
 ID: 34
 Origin: 34
 UUID: 9f3a1e7c
-Status: Committed
+Status: Released
 ---
 
 # Plan 034: Fix Provider Detail Page Image Load Latency
@@ -10,11 +10,12 @@ Status: Committed
 **Target Release**: v0.6.12 (patch)  
 **Epic Alignment**: Performance + Trust-first discovery (provider profile credibility)  
 **Related Issues**: None  
-**Status**: Committed  
+**Status**: Released  
 **Source Analysis**: `agent-output/analysis/034-provider-image-loading-analysis.md`
 
 **Changelog**:
 
+- 2026-03-07 | devops | Status → Released | Stage 2 release — tag v0.6.12 pushed to origin/main, commit af5e6cc |
 - 2026-03-07 | devops | Status → Committed | Stage 1 commit — all Plan 034 changes committed locally for release v0.6.12; documents closed |
 - 2026-03-07 | uat | Status → UAT Approved | APPROVED FOR RELEASE — value delivered; cold load latency eliminated by design; timing targets deferred to post-deploy smoke test |
 - 2026-03-07 | qa | Status → QA Complete | Automated gates pass; ready for UAT validation |

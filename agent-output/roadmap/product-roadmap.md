@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-02-23
+**Last Updated**: 2026-03-07
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.6.1
+**Current Version**: v0.6.12
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -27,6 +27,10 @@
 | 2026-02-23       | Process improvements implemented (PI 014)                          | Code Review file-move checklist, QA path regression check, Planner release bundling scan, DevOps stage evidence (from Retro 013)                          |
 | 2026-02-23       | Plan 015 released (v0.6.1): MIUI PWA form rendering fix            | Unblocked Xiaomi/MIUI PWA users from blank recommend form via defensive viewport + layout containment fixes                                               |
 | 2026-02-23       | Process improvements identified (Retro 015)                        | Pending codification: design-review UAT for CSS fixes, automated-first QA for CSS, DevOps evidence template reuse, UTC timestamps, related-issues linking |
+| 2026-03-02       | Plan 032 released: DIY Agent Memory System (tooling)               | Standalone tooling release — memory-extension-v0.1.0 replaces Flowbaby backend, eliminates daemon lock failures, local-first SQLite WAL                   |
+| 2026-03-03       | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                |
+| 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
+| 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |
 
 ---
 
@@ -49,7 +53,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.6.1 released successfully — ready for new planning_
+_v0.6.12 released successfully — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -59,6 +63,17 @@ _v0.6.1 released successfully — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.6.12 | 2026-03-07 | Plan 034 (Provider image load performance fix)       | Released |
+| v0.6.11 | 2026-03-07 | Plan 033 (Performance optimization guardrails)       | Released |
+| v0.6.10 | 2026-03-01 | Plans 028+029 (Mobile onboarding vertical centering) | Released |
+| v0.6.9  | 2026-02-24 | Plan 022 (Blurred header overlay on onboarding)      | Released |
+| v0.6.8  | 2026-02-25 | Plan 024 (Supply chain hardening)                    | Released |
+| v0.6.7  | 2026-02-24 | Plan 022 (Blurred header overlay - duplicate tag)    | Released |
+| v0.6.6  | 2026-02-24 | Plan 021 (iPhone Safari viewport overlap v3)         | Released |
+| v0.6.5  | 2026-02-24 | Plan 020 (iPhone Safari viewport overlap v2)         | Released |
+| v0.6.4  | 2026-02-23 | Plan 019 (iPhone Safari viewport overlap)            | Released |
+| v0.6.3  | 2026-02-23 | Hotfix (Early access scroll + manifest icon)         | Released |
+| v0.6.2  | 2026-02-23 | Plan 017 (Early access notification module)          | Released |
 | v0.6.1  | 2026-02-23 | Plan 015 (PWA MIUI form rendering fix)               | Released |
 | v0.6.0  | 2026-02-23 | Plans 011+012 (Repository Structure Refactor)        | Released |
 | v0.5.0  | 2026-02-23 | Plan 010 (Next.js App Router Refactor)               | Released |
@@ -68,6 +83,25 @@ _v0.6.1 released successfully — ready for new planning_
 | v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System)      | Released |
 | v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix)      | Released |
 | v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access        | Released |
+
+**Note on v0.6.2–v0.6.11 Backfill**: These 10 patch releases were deployed between 2026-02-23 and 2026-03-07 before the roadmap agent workflow was fully established. Each release has detailed changelogs documenting fixes, features, and rationale. See [CHANGELOG.md](../../CHANGELOG.md) for complete release notes. Key themes across these versions: mobile PWA UX refinements (viewport overlap, onboarding layout), supply chain security hardening, and performance guardrails (Cache-Control alignment, budgets, telemetry).
+
+### Standalone Tooling Releases
+
+Workflow and development tooling releases — versioned independently from main product.
+
+| Package                | Version | Date       | Plan     | Description                                                                        | Status   |
+| ---------------------- | ------- | ---------- | -------- | ---------------------------------------------------------------------------------- | -------- |
+| uflow-memory-extension | v0.1.1  | 2026-03-03 | Plan 032 | **Hotfix**: Multi-root workspace detection, OutputChannel, Electron ABI rebuild    | Released |
+| uflow-memory-extension | v0.1.0  | 2026-03-02 | Plan 032 | Local-first agent memory system replacing Flowbaby (SQLite WAL, multi-window safe) | Released |
+
+**Key Features**:
+
+- Zero-config SQLite WAL backend — no daemon, no cloud dependencies
+- Multi-window concurrent access without lock contention
+- Drop-in replacement for Flowbaby tools (`flowbabyStoreSummary`, `flowbabyRetrieveMemory`)
+- Sub-millisecond store/retrieve performance (0.4–0.7ms typical)
+- Workspace-local storage at `.uflow-memory/memories.db`
 
 ---
 

@@ -17,10 +17,10 @@ Status: Resolved
 
 ## Changelog
 
-| Date              | Handoff               | Request              | Summary                                                                           |
-| ----------------- | --------------------- | -------------------- | --------------------------------------------------------------------------------- |
-| 2026-03-07T10:15Z | Planner → Critic      | Review Plan 033      | Initial critique completed; 1 unresolved open question requires user confirmation |
-| 2026-03-07T10:20Z | User → Critic         | Confirm v0.6.11      | User confirmed v0.6.11 is correct; F1 RESOLVED; critique closed                   |
+| Date              | Handoff          | Request         | Summary                                                                           |
+| ----------------- | ---------------- | --------------- | --------------------------------------------------------------------------------- |
+| 2026-03-07T10:15Z | Planner → Critic | Review Plan 033 | Initial critique completed; 1 unresolved open question requires user confirmation |
+| 2026-03-07T10:20Z | User → Critic    | Confirm v0.6.11 | User confirmed v0.6.11 is correct; F1 RESOLVED; critique closed                   |
 
 ---
 
