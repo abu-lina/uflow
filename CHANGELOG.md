@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.11] - 2026-03-07
+
+### Changed
+
+**Performance Optimization Guardrails + Caching Alignment (Plan 033)**: Establishes measurable, durable performance guardrails for UFlow discovery flows.
+
+- **Cache-Control precedence fix (ADR-004)**: Removed global `/api/:path*` Cache-Control override from `next.config.js`. Route handlers now own Cache-Control for `/api/*` routes, allowing `/api/providers/search` to set cacheable headers for browse (no query) and `no-store` for free-text search as intended.
+- **Performance budgets**: Added `scripts/perf/budgets.json` with First Load JS thresholds for critical routes (`/providers`: 350kB, `/providers/[provider_id]`: 220kB, shared: 120kB). Added `scripts/perf/check-budgets.js` budget checker integrated into CI build job.
+- **Performance telemetry**: Added `src/lib/telemetry/perf-telemetry.ts` with minimal always-on request timing and dependency timing for route handlers. Instrumented `/api/providers/search` with correlation IDs, handler duration, and Supabase call timing. No PII logged by default.
+- **CI integration**: Updated `.github/workflows/ci.yml` to capture build output and run budget checks as part of the build job.
+- **Optimization audit**: LCP image optimization already in place (first 4 cards get `priority={true}` and `loading="eager"`). Bundle sizes within budget (all routes <90% of threshold).
+- **Files changed**: `next.config.js`, `package.json`, `scripts/perf/{budgets.json,check-budgets.js}`, `src/lib/telemetry/perf-telemetry.ts`, `src/app/api/providers/search/route.ts`, `.github/workflows/ci.yml`
+- **Architectural principle**: Make performance observable and enforceable — budgets prevent regression, telemetry enables diagnosis, ADR-004 ensures caching intent is respected.
+
 ## [0.6.10] - 2026-03-01
 
 ### Fixed

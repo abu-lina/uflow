@@ -1,17 +1,18 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-02-23
+**Last Updated**: 2026-03-07
 **Status**: Active
 
 ## Changelog
 
-| Date       | Change                                                 | Rationale                                                                 | Related             |
-| ---------- | ------------------------------------------------------ | ------------------------------------------------------------------------- | ------------------- |
-| 2026-01-27 | Initialized evergreen architecture doc in agent-output | Architect-mode requires a single source of truth for current system state | Plan 001 (Epic 2.1) |
-| 2026-02-22 | App Router best-practices audit findings captured      | Document current Next.js boundary/caching risks for planned refactor      | Arch 010            |
-| 2026-02-23 | Repo-structure review findings captured                | Reduce boundary drift; keep folder responsibilities crisp                 | Arch 011            |
-| 2026-02-23 | Root-level file placement guidance captured            | Reduce root clutter; align files to docs/scripts/sql/imports conventions  | Arch 012            |
-| 2026-03-02 | Agent memory tooling decision captured                | Flowbaby reliability issues; record local-first replacement direction     | Arch 032            |
+| Date       | Change                                                  | Rationale                                                                 | Related             |
+| ---------- | ------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------- |
+| 2026-01-27 | Initialized evergreen architecture doc in agent-output  | Architect-mode requires a single source of truth for current system state | Plan 001 (Epic 2.1) |
+| 2026-02-22 | App Router best-practices audit findings captured       | Document current Next.js boundary/caching risks for planned refactor      | Arch 010            |
+| 2026-02-23 | Repo-structure review findings captured                 | Reduce boundary drift; keep folder responsibilities crisp                 | Arch 011            |
+| 2026-02-23 | Root-level file placement guidance captured             | Reduce root clutter; align files to docs/scripts/sql/imports conventions  | Arch 012            |
+| 2026-03-02 | Agent memory tooling decision captured                  | Flowbaby reliability issues; record local-first replacement direction     | Arch 032            |
+| 2026-03-07 | Performance optimization architecture findings captured | Align caching, rendering, and telemetry for durable performance wins      | Arch 033            |
 
 ---
 
@@ -126,6 +127,7 @@ This is a known architecture risk; roles must be normalized behind a single auth
 ### Normal (Always-on, low volume)
 
 - Correlation IDs on API routes
+- Performance request timing for key routes (TTFB/handler duration) and key API reads
 - Trust workflow state transitions:
   - `badge.confirmation.create` (success/fail)
   - `badge.confirmation.delete` (success/fail)
@@ -156,8 +158,8 @@ This is a known architecture risk; roles must be normalized behind a single auth
 2. **Potential privacy leak risk**: public read access to confirmation rows can expose user IDs.
 3. **Ranking stability risk**: client-side ranking can break pagination consistency; prefer DB-side ordering.
 4. **App Router value leakage**: client-heavy data fetching and broad `'use client'` usage reduce streaming SSR and increase bundle/hydration costs.
-5. **Caching suppressed by global dynamism**: app-wide `force-dynamic` prevents most static/ISR benefits and increases per-request backend load.
-6. **Debug network calls in client code**: unguarded localhost ingest calls risk production noise/failures; debug telemetry must be opt-in.
+5. **Caching policy inconsistency**: global header defaults (e.g., broad `/api/*` no-store) can silently override route-level caching intent.
+6. **Telemetry guardrails**: debug telemetry must remain opt-in; keep safety checks to prevent reintroducing localhost/unsafe endpoints.
 7. **Agent memory tooling reliability**: Flowbaby memory tools frequently fail due to multi-window daemon ownership/lock contention, forcing NO-MEMORY MODE and reducing workflow quality.
 
 ---
@@ -195,6 +197,16 @@ This is a known architecture risk; roles must be normalized behind a single auth
 - **Consequences**:
   - Requires a small, maintained tooling extension/library.
   - Improves workflow reliability and reduces repeated work across sessions.
+
+  ### ADR-004: Cache-Control ownership is per-route (avoid global overrides)
+  - **Context**: UFlow uses multiple caching layers (browser/PWA, Cloudflare, Nginx, Next.js). Broad defaults like `Cache-Control: no-store` on all `/api/*` can conflict with intentional per-endpoint caching (e.g., public browse endpoints) and are difficult to reason about.
+  - **Choice**: Treat **route handlers** as the single source of truth for Cache-Control on `/api/*` responses. Global header rules should avoid setting Cache-Control for all API routes; instead, only set it for specific endpoints where required (e.g., `/api/manifest`).
+  - **Alternatives**:
+    - Keep global `/api/*` no-store (rejected: overrides intended cacheable public reads; increases origin load).
+    - Cache all API reads at CDN by default (rejected: risks caching user-specific responses and unbounded keys).
+  - **Consequences**:
+    - Requires explicit Cache-Control on any cacheable API routes.
+    - Makes caching behavior inspectable and debuggable at the endpoint boundary.
 
 ---
 

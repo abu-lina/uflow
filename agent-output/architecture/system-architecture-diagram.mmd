@@ -1,10 +1,11 @@
 ```mermaid
 flowchart TB
-  %% UFlow System Architecture (focus: Trust & Verification)
+  %% UFlow System Architecture (focus: Trust & Verification + Performance Caching Layers)
 
   subgraph Client[Client]
     Browser[Browser]
     PWA[PWA]
+    SW[Service Worker (next-pwa)]
   end
 
   subgraph Edge[Edge + Hosting]
@@ -39,8 +40,9 @@ flowchart TB
     Maps[OSM / Nominatim]
   end
 
-  Browser --> CF --> Nginx --> Docker --> UI
-  PWA --> CF
+  Browser --> SW --> CF --> Nginx --> Docker --> UI
+  PWA --> SW
+  SW --> CF
 
   UI --> API
   UI --> Services

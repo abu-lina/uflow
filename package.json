@@ -1,6 +1,6 @@
 {
   "name": "ummah-flow",
-  "version": "0.6.10",
+  "version": "0.6.11",
   "private": true,
   "engines": {
     "node": ">=18.0.0",
@@ -64,6 +64,7 @@
     "perf:uat:all": "BASE_URL=https://uat.ummahflow.com ENV=uat bash tests/performance/run-tests.sh all",
     "perf:uat:setup": "node tests/performance/setup-test-data.mjs",
     "perf:uat:cleanup": "node tests/performance/setup-test-data.mjs --cleanup",
+    "perf:check-budgets": "node scripts/perf/check-budgets.js",
     "verify:snyk-pr": "bash scripts/verify-snyk-pr.sh"
   },
   "dependencies": {

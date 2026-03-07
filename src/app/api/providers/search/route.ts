@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 
+import {
+  createRequestContext,
+  measureDependency,
+  logRequestTiming,
+} from '@/lib/telemetry/perf-telemetry';
 import { searchProvidersAndCommunityServices } from '@/services/providers';
 
 /**
@@ -20,9 +25,15 @@ import { searchProvidersAndCommunityServices } from '@/services/providers';
  *   - Default browse (no q): public, 60s TTL, 30s stale-while-revalidate
  *   - Free-text query (q present): no-store (avoid unbounded cache keys)
  *
+ * Performance telemetry (Plan 033):
+ *   - Always-on request timing with correlation ID
+ *   - Dependency timing for Supabase calls
+ *
  * Plan 010 — P1a: Server-first Providers discovery
  */
 export async function GET(request: Request): Promise<NextResponse> {
+  const ctx = createRequestContext('/api/providers/search');
+
   try {
     const { searchParams } = new URL(request.url);
 
@@ -32,12 +43,17 @@ export async function GET(request: Request): Promise<NextResponse> {
     const page = parseInt(searchParams.get('page') || '0', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '12', 10);
 
-    const data = await searchProvidersAndCommunityServices(
-      query,
-      category,
-      location,
-      page,
-      pageSize,
+    const data = await measureDependency(
+      ctx,
+      'supabase.providers.search',
+      () =>
+        searchProvidersAndCommunityServices(
+          query,
+          category,
+          location,
+          page,
+          pageSize,
+        ),
     );
 
     // Apply caching headers per Plan 010 caching semantics
@@ -45,16 +61,20 @@ export async function GET(request: Request): Promise<NextResponse> {
       ? 'no-store'
       : 'public, s-maxage=60, stale-while-revalidate=30';
 
+    logRequestTiming(ctx);
+
     return NextResponse.json(data, {
       headers: {
         'Cache-Control': cacheControl,
+        'X-Correlation-ID': ctx.correlationId,
       },
     });
   } catch (error) {
+    logRequestTiming(ctx);
     console.error('[API /providers/search] Error:', error);
     return NextResponse.json(
       { error: 'Failed to search providers' },
-      { status: 500 },
+      { status: 500, headers: { 'X-Correlation-ID': ctx.correlationId } },
     );
   }
 }

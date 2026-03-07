@@ -1,0 +1,50 @@
+{
+  "$schema": "./budgets.schema.json",
+  "description": "Performance budgets for UFlow critical routes (Plan 033)",
+  "thresholds": {
+    "firstLoadJS": {
+      "providers": {
+        "max": 350000,
+        "description": "First Load JS for /providers (browse)"
+      },
+      "providersDetail": {
+        "max": 220000,
+        "description": "First Load JS for /providers/[provider_id]"
+      },
+      "shared": {
+        "max": 120000,
+        "description": "Shared JS (common chunks)"
+      }
+    },
+    "lighthouse": {
+      "lcp": {
+        "max": 2500,
+        "unit": "ms",
+        "description": "Largest Contentful Paint (p75 target)"
+      },
+      "cls": {
+        "max": 0.1,
+        "description": "Cumulative Layout Shift (p75 target)"
+      },
+      "inp": {
+        "max": 200,
+        "unit": "ms",
+        "description": "Interaction to Next Paint (p75 target)"
+      },
+      "performance": {
+        "min": 70,
+        "description": "Lighthouse performance score (mobile)"
+      }
+    }
+  },
+  "routes": {
+    "/providers": {
+      "budgetKey": "providers",
+      "critical": true
+    },
+    "/providers/[provider_id]": {
+      "budgetKey": "providersDetail",
+      "critical": true
+    }
+  }
+}

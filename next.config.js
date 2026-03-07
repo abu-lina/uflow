@@ -307,22 +307,16 @@ const nextConfig = {
           // See docs/guides/CSP_REMOVED.md for details
         ],
       },
-      // Manifest route needs caching for PWA - must come BEFORE general API rule
+      // ADR-004 (Plan 033): Route handlers own Cache-Control for /api/* routes.
+      // We no longer set a global Cache-Control for all APIs.
+      // Specific routes like /api/manifest can still have explicit headers here.
+      // Other API routes (e.g., /api/providers/search) set Cache-Control in their handlers.
       {
         source: '/api/manifest',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, max-age=3600, must-revalidate',
-          },
-        ],
-      },
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, max-age=0',
           },
         ],
       },

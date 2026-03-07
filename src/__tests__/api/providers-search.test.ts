@@ -21,6 +21,15 @@ vi.mock('@/services/providers', () => ({
 // Import after mocking
 import { GET } from '@/app/api/providers/search/route';
 
+function expectCorrelationIdHeader(response: Response): void {
+  const correlationId = response.headers.get('X-Correlation-ID');
+
+  expect(correlationId).toBeTruthy();
+  expect(correlationId).toMatch(
+    /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|local-\d+-\d+)$/i,
+  );
+}
+
 describe('GET /api/providers/search', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,6 +55,7 @@ describe('GET /api/providers/search', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    expectCorrelationIdHeader(response);
     expect(data).toEqual(mockResults);
     expect(mockSearch).toHaveBeenCalledWith('test', null, 'Everywhere', 0, 12);
   });
@@ -101,6 +111,7 @@ describe('GET /api/providers/search', () => {
     const response = await GET(request);
 
     expect(response.status).toBe(500);
+    expectCorrelationIdHeader(response);
     const data = await response.json();
     expect(data).toHaveProperty('error');
   });

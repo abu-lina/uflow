@@ -104,7 +104,7 @@ jobs:
         run: npm ci --prefer-offline
 
       - name: Build application
-        run: npx next build
+        run: npx next build 2>&1 | tee .next-build-output.txt
 
       - name: Check build output
         run: |
@@ -112,7 +112,13 @@ jobs:
             echo "❌ Build failed - .next directory not found"
             exit 1
           fi
+          # Save build output for budget checker
+          mkdir -p .next
+          mv .next-build-output.txt .next/BUILD_OUTPUT.txt
           echo "✅ Build completed successfully"
+
+      - name: Check performance budgets
+        run: npm run perf:check-budgets
 
   # Security audit (basic, fast)
   security:
