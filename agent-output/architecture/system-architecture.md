@@ -13,6 +13,7 @@
 | 2026-02-23 | Root-level file placement guidance captured             | Reduce root clutter; align files to docs/scripts/sql/imports conventions  | Arch 012            |
 | 2026-03-02 | Agent memory tooling decision captured                  | Flowbaby reliability issues; record local-first replacement direction     | Arch 032            |
 | 2026-03-07 | Performance optimization architecture findings captured | Align caching, rendering, and telemetry for durable performance wins      | Arch 033            |
+| 2026-03-07 | Growth plan (city pages + analytics) architecture decisions captured | Establish ISR-first city acquisition pages, UTM canonicalization, and analytics guardrails | Arch 035            |
 
 ---
 
@@ -198,15 +199,30 @@ This is a known architecture risk; roles must be normalized behind a single auth
   - Requires a small, maintained tooling extension/library.
   - Improves workflow reliability and reduces repeated work across sessions.
 
-  ### ADR-004: Cache-Control ownership is per-route (avoid global overrides)
-  - **Context**: UFlow uses multiple caching layers (browser/PWA, Cloudflare, Nginx, Next.js). Broad defaults like `Cache-Control: no-store` on all `/api/*` can conflict with intentional per-endpoint caching (e.g., public browse endpoints) and are difficult to reason about.
-  - **Choice**: Treat **route handlers** as the single source of truth for Cache-Control on `/api/*` responses. Global header rules should avoid setting Cache-Control for all API routes; instead, only set it for specific endpoints where required (e.g., `/api/manifest`).
-  - **Alternatives**:
-    - Keep global `/api/*` no-store (rejected: overrides intended cacheable public reads; increases origin load).
-    - Cache all API reads at CDN by default (rejected: risks caching user-specific responses and unbounded keys).
-  - **Consequences**:
-    - Requires explicit Cache-Control on any cacheable API routes.
-    - Makes caching behavior inspectable and debuggable at the endpoint boundary.
+### ADR-004: Cache-Control ownership is per-route (avoid global overrides)
+
+- **Context**: UFlow uses multiple caching layers (browser/PWA, Cloudflare, Nginx, Next.js). Broad defaults like `Cache-Control: no-store` on all `/api/*` can conflict with intentional per-endpoint caching (e.g., public browse endpoints) and are difficult to reason about.
+- **Choice**: Treat **route handlers** as the single source of truth for Cache-Control on `/api/*` responses. Global header rules should avoid setting Cache-Control for all API routes; instead, only set it for specific endpoints where required (e.g., `/api/manifest`).
+- **Alternatives**:
+  - Keep global `/api/*` no-store (rejected: overrides intended cacheable public reads; increases origin load).
+  - Cache all API reads at CDN by default (rejected: risks caching user-specific responses and unbounded keys).
+- **Consequences**:
+  - Requires explicit Cache-Control on any cacheable API routes.
+  - Makes caching behavior inspectable and debuggable at the endpoint boundary.
+
+### ADR-005: Public acquisition pages use ISR; UTMs must not create duplicates
+
+- **Context**: UFlow’s primary acquisition surfaces (e.g., `/city/[cityName]`) must be indexable and fast. Query strings like `utm_*` are required for attribution but can create duplicate URLs (SEO) and cache fragmentation (if edge caching is enabled later). City/provider data changes slowly enough that rebuild-on-every-request SSR is unnecessary.
+- **Choice**:
+  - Implement public acquisition pages as **Server Components** with **ISR** (segment-level `revalidate`) where feasible.
+  - Avoid `searchParams` reads in those routes to prevent accidental dynamic rendering.
+  - Emit canonical metadata that strips `utm_*` (and all query strings) from indexable pages.
+- **Alternatives**:
+  - Force dynamic SSR for all acquisition pages (rejected: higher origin load and tail latency risk).
+  - Pure static without revalidation (rejected: pages become stale during growth campaigns).
+- **Consequences**:
+  - Requires explicit segment-level caching decisions per acquisition route.
+  - Keeps UTMs usable for analytics without polluting SEO/caching.
 
 ---
 

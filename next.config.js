@@ -65,7 +65,7 @@ function buildCsp() {
   const directives = [
     "default-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com https://*.supabase.co",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "script-src-elem 'self' 'unsafe-inline'",
+    `script-src-elem 'self' 'unsafe-inline' ${process.env.NEXT_PUBLIC_PLAUSIBLE_HOST || 'https://plausible.io'}`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
     "img-src 'self' data: https: blob:",
@@ -81,6 +81,7 @@ function buildCsp() {
       'https://photon.komoot.io',
       'https://api.foursquare.com',
       process.env.NEXT_PUBLIC_MAWAQIT_API_URL || 'https://api.mawaqit.net',
+      process.env.NEXT_PUBLIC_PLAUSIBLE_HOST || 'https://plausible.io',
       isDev ? 'http://localhost:*' : null,
       isDev ? 'http://127.0.0.1:*' : null,
       isDev ? 'ws://localhost:*' : null,

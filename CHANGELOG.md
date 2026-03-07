@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.12] - 2026-03-07
+## [0.7.0] - 2026-03-07
+
+### Added
+
+**Growth: Indexable City Pages + Plausible Analytics (Plan 035 M1 + M2)**
+
+- **ISR city pages**: `/city/[cityName]` converted from `'use client'` route to Server Component with ISR (`revalidate = 300`). Pages are now fully indexable by search engines. `generateStaticParams()` pre-renders Berlin, Hamburg, München at build time.
+- **UTM-stripped canonical URLs**: `generateMetadata()` emits canonical URLs that strip all `utm_*` params (ADR-005). Social shares with UTM-tagged links no longer create duplicate crawlable URLs.
+- **OG tags on city pages**: Title, description, URL, and site name set for social share previews.
+- **Plausible Analytics**: Cookie-free, GDPR-compliant analytics integrated via conditional `<Script>` in root layout. Activates when `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` env var is set — safe no-op otherwise (no consent banner required).
+- **`trackEvent()` utility**: SSR-safe Plausible wrapper at `src/lib/analytics/plausible.ts`. Guards against SSR (`typeof window`) and script-not-loaded (`typeof window.plausible`) contexts.
+- **CSP allowlist**: `script-src-elem` and `connect-src` updated atomically to permit Plausible script and beacon hosts.
+- **`createSupabaseStaticClient()`**: Cookie-free Supabase client at `src/lib/supabase/static.ts` enabling ISR on acquisition pages without triggering Next.js dynamic-server-usage errors.
+- **Client islands**: `CityPageClientEffects` (localStorage/sessionStorage sync, null-render) and `CityStage1Content` (wraps early-access subscribe flow) extracted from city page to preserve ISR boundary.
+- **Server-side RPC error logging**: `get_provider_count_by_city` RPC failures are now logged (`console.error`) on the server instead of silently falling back to Stage 1.
+- **Env templates**: `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` and `NEXT_PUBLIC_PLAUSIBLE_HOST` added to all four env templates.
+
 
 ### Fixed
 

@@ -104,6 +104,16 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           id="theme-init"
           strategy="beforeInteractive"
         />
+        {/* Plausible Analytics — cookie-free, GDPR-compliant (Plan 035 M1) */}
+        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
+          <Script
+            defer
+            data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+            id="plausible-analytics"
+            src={`${process.env.NEXT_PUBLIC_PLAUSIBLE_HOST || 'https://plausible.io'}/js/script.js`}
+            strategy="afterInteractive"
+          />
+        )}
         <ClientProviders initialUser={user}>
           {/* Desktop header only */}
           <div className="hidden md:block">
