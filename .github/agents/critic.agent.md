@@ -86,6 +86,9 @@ Review Method:
    - List them prominently in critique under "Unresolved Open Questions" section.
    - **Ask user explicitly**: "This plan has X unresolved open questions. Do you want to approve for implementation with these unresolved, or should Planner address them first?"
    - Do NOT silently approve plans with unresolved open questions.
+7. **DECISION RECORD CHECK (if present)**: If the plan contains a `## Decision Record` section:
+  - Verify there are **no** decisions marked `[OPEN]`.
+  - If any decisions are marked `[DEFERRED: ...]`, require explicit user acknowledgement that the plan proceeds with those deferrals.
 7. Document: Create/update `agent-output/critiques/Name-critique.md`. Track status (OPEN/ADDRESSED/RESOLVED/DEFERRED).
 
 Response Style:
