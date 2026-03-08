@@ -2,7 +2,7 @@
 ID: 036
 Origin: 036
 UUID: c2f1a9d4
-Status: QA Complete
+Status: Released
 ---
 
 # QA Report: Plan 036 — Analytics Activation & Event Instrumentation (v0.7.1)

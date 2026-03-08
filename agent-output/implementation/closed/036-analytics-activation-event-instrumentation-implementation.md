@@ -1,8 +1,8 @@
 ---
 ID: 036
-Origin: Planner
-UUID: plan-036-analytics-activation-event-instrumentation
-Status: Active
+Origin: 036
+UUID: c2f1a9d4
+Status: Released
 ---
 
 # Implementation: Plan 036 — Analytics Activation & Event Instrumentation (v0.7.1)

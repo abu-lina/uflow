@@ -2,7 +2,7 @@
 ID: 036
 Origin: 036
 UUID: c2f1a9d4
-Status: UAT Approved
+Status: Released
 ---
 
 # Plan 036 — Analytics Activation & Event Instrumentation
@@ -13,7 +13,7 @@ Status: UAT Approved
 - **Epic Alignment**:
   - Follow-up to Plan 035 (v0.7.0): measurement foundation shipped (Plausible wrapper + conditional script + CSP allowlist + ISR city pages)
   - Roadmap alignment: Growth measurement + activation funnels (seekers + providers)
-- **Status**: UAT Approved
+- **Status**: Released (v0.7.1)
 - **Related Issues**: None
 
 ### Changelog
@@ -25,6 +25,8 @@ Status: UAT Approved
 | 2026-03-08T08:35Z | code-reviewer | Status: Active → Code Review Approved | Implementation reviewed — APPROVED WITH COMMENTS. Code quality excellent, TDD exemplary, architecture aligned. One LOW finding (optional inline comments for event placement documentation). Ready for QA. |
 | 2026-03-08T09:45Z | qa | Status: Code Review Approved → QA Complete | QA gates executed: `npm run type-check` (EXIT:0), `npx vitest run` (EXIT:0; 198 passed), `npm run build` (EXIT:0). QA report created and marked QA Complete. |
 | 2026-03-08T10:00Z | uat | Status: QA Complete → UAT Approved | UAT Complete — all value delivered. Implementation delivers privacy-respecting analytics activation with north-star event instrumentation. M3 (dashboard validation) deferred to post-deployment verification. Verdict: APPROVED FOR RELEASE (v0.7.1). |
+| 2026-03-08T10:15Z | devops | Status: UAT Approved → Committed for Release v0.7.1 | Stage 1 complete. Commit 80fd2e4 on main. 22 files, 2147 insertions. All lifecycle invariants normalized. Documents moved to closed/. Ready for Stage 2 release. |
+| 2026-03-08T10:20Z | devops | Status: Committed → Released | Stage 2 complete. Tag v0.7.1 created at 73cfe52 and pushed to origin/main. Branch synchronized. Smoke tests: / (200 ✅), /providers (200, 11 content matches ✅). Dependabot: 11 pre-existing vulnerabilities (not introduced by this plan). |
 ## Value Statement and Business Objective
 
 As a **UFlow operator and product team**, I want to **activate privacy-respecting analytics and instrument the north-star activation events**, so that **we can measure acquisition/activation and iterate confidently without adding user friction (no cookie banner, no PII)**.
