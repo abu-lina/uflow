@@ -33,13 +33,13 @@ Status: Active
 
 ### Handoff / failure patterns
 
-| Pattern | Frequency | Root cause | Impact | Recommendation |
-| --- | --- | --- | --- | --- |
-| Deploy-path changes missed in CI/CD workflows | Recurring risk | Mental model: “deploy = scripts/” not “CI/CD = workflows” | Silent production regressions (HIGH) | R1 deployment path audit (implementer + reviewer) |
-| Baseline measurement milestone silently dropped | Occasional | No enforcement between plan → implementation | Measurable acceptance criteria not actually validated | R2 baseline checkpoint + required explicit deferral |
-| Orphaned terminal-status docs outside `closed/` | Recurring | Inconsistent terminal statuses + no cross-domain sweep in most agents | Stale state, low trust in tracker | R3 expanded orphan sweep patterns + ownership |
-| Fix-in-review used but undocumented | Occasional | Reviewer policy prohibits fixes, but practice did it | Ambiguity on ownership; inconsistent behavior | R4 fix-in-review protocol with boundaries |
-| Performance timing targets approved without live evidence | Occasional | Live validation sometimes infeasible pre-release | Criteria become aspirational | R5 explicit “Timing Gate” and deferred-owner workflow |
+| Pattern                                                   | Frequency      | Root cause                                                            | Impact                                                | Recommendation                                        |
+| --------------------------------------------------------- | -------------- | --------------------------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| Deploy-path changes missed in CI/CD workflows             | Recurring risk | Mental model: “deploy = scripts/” not “CI/CD = workflows”             | Silent production regressions (HIGH)                  | R1 deployment path audit (implementer + reviewer)     |
+| Baseline measurement milestone silently dropped           | Occasional     | No enforcement between plan → implementation                          | Measurable acceptance criteria not actually validated | R2 baseline checkpoint + required explicit deferral   |
+| Orphaned terminal-status docs outside `closed/`           | Recurring      | Inconsistent terminal statuses + no cross-domain sweep in most agents | Stale state, low trust in tracker                     | R3 expanded orphan sweep patterns + ownership         |
+| Fix-in-review used but undocumented                       | Occasional     | Reviewer policy prohibits fixes, but practice did it                  | Ambiguity on ownership; inconsistent behavior         | R4 fix-in-review protocol with boundaries             |
+| Performance timing targets approved without live evidence | Occasional     | Live validation sometimes infeasible pre-release                      | Criteria become aspirational                          | R5 explicit “Timing Gate” and deferred-owner workflow |
 
 ## Recommendation Analysis
 
@@ -122,10 +122,10 @@ Status: Active
 
 ## Conflict Analysis
 
-| Conflict | Conflicting text | Nature | Impact | Proposed resolution | Resolved? |
-| --- | --- | --- | --- | --- | --- |
-| R4 vs Code Reviewer constraints | “Don’t write production code or fix bugs” | Direct contradiction | Review fixes become “rule-breaking,” inconsistent behavior | Amend constraints: allow bounded fix-in-review with strict criteria | Pending |
-| R3 vs DevOps selective staging | Stage 1 commits only plan files | Workflow tension | Orphan cleanup can pollute plan commits | Require docs-only cleanup in separate commit, preferably after release | Pending |
+| Conflict                        | Conflicting text                          | Nature               | Impact                                                     | Proposed resolution                                                    | Resolved? |
+| ------------------------------- | ----------------------------------------- | -------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------- | --------- |
+| R4 vs Code Reviewer constraints | “Don’t write production code or fix bugs” | Direct contradiction | Review fixes become “rule-breaking,” inconsistent behavior | Amend constraints: allow bounded fix-in-review with strict criteria    | Pending   |
+| R3 vs DevOps selective staging  | Stage 1 commits only plan files           | Workflow tension     | Orphan cleanup can pollute plan commits                    | Require docs-only cleanup in separate commit, preferably after release | Pending   |
 
 ## Logical Challenges
 
@@ -137,13 +137,13 @@ Status: Active
 
 ## Risk Assessment
 
-| Recommendation | Risk | Rationale | Mitigation |
-| --- | --- | --- | --- |
-| R1 Deployment path audit | LOW | Checklist-only | Narrow trigger conditions; require evidence section |
-| R2 Baseline checkpoint | LOW–MEDIUM | Adds small overhead when metrics exist | Allow explicit deferral with owner + rationale |
-| R3 Orphan cleanup | MEDIUM | Can create extra commits and noise | Docs-only separate commit rule; road-map owned sweep |
-| R4 Fix-in-review | MEDIUM | Expands reviewer authority | Strict bounds + mandatory documentation |
-| R5 Timing gate | LOW | Mostly documentation discipline | Clear PASS/DEFERRED format |
+| Recommendation           | Risk       | Rationale                              | Mitigation                                           |
+| ------------------------ | ---------- | -------------------------------------- | ---------------------------------------------------- |
+| R1 Deployment path audit | LOW        | Checklist-only                         | Narrow trigger conditions; require evidence section  |
+| R2 Baseline checkpoint   | LOW–MEDIUM | Adds small overhead when metrics exist | Allow explicit deferral with owner + rationale       |
+| R3 Orphan cleanup        | MEDIUM     | Can create extra commits and noise     | Docs-only separate commit rule; road-map owned sweep |
+| R4 Fix-in-review         | MEDIUM     | Expands reviewer authority             | Strict bounds + mandatory documentation              |
+| R5 Timing gate           | LOW        | Mostly documentation discipline        | Clear PASS/DEFERRED format                           |
 
 ## Implementation Recommendations
 

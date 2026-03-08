@@ -353,7 +353,7 @@ Silent drops are not allowed: if measurement work is not done, it must be explic
 
 - Every new function/class MUST have a row in this table
 - Default: "Test Written First?" must be ✅ Yes for all rows
-- **Bugfix regression exception (ALLOWED only when applicable):** If the change is a bugfix/refactor with **no new API surface** and no new functions/classes, this column MAY be `⚠️ Post-fix (bugfix regression)` *only if*:
+- **Bugfix regression exception (ALLOWED only when applicable):** If the change is a bugfix/refactor with **no new API surface** and no new functions/classes, this column MAY be `⚠️ Post-fix (bugfix regression)` _only if_:
   - “Failure Reason” clearly describes how/why the pre-fix code would fail, and
   - A regression test exists and meaningfully exercises the bug (not a trivial assertion)
 - "Failure Verified?" must be ✅ Yes with a valid failure reason

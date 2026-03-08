@@ -12,6 +12,7 @@ Status: Committed
 **Date**: 2026-03-07  
 **Analyst**: @Analyst  
 **Changelog**:
+
 - 2026-03-07: Initial investigation, all root causes confirmed
 
 ---
@@ -50,6 +51,7 @@ Status: Committed
 ### F-1: AVIF cold encoding on Hetzner — **VERIFIED** (primary cause)
 
 `next.config.js`:
+
 ```js
 images: {
   formats: ['image/avif', 'image/webp'],  // AVIF is tried first
@@ -65,6 +67,7 @@ images: {
 - **This is the dominant cause of the >10s delay**
 
 Evidence:
+
 - `next.config.js` line 230: `formats: ['image/avif', 'image/webp']`
 - No `sizes` on hero images → browser requests `100vw` → Next.js serves `w=3840` default
 - Zero-cost reproduction: first request to any new provider image URL in a clean container
@@ -74,6 +77,7 @@ Evidence:
 ### F-2: Image cache not persisted across Docker deployments — **VERIFIED** (compounds F-1)
 
 **Dockerfile runner stage** only copies:
+
 ```dockerfile
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
@@ -89,6 +93,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 ### F-3: No `sizes` attribute on hero images in both desktop and mobile components — **VERIFIED**
 
 **`ProviderDetailModal.tsx`** (desktop hero, line 376–393):
+
 ```jsx
 <Image
   fill
@@ -101,6 +106,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 ```
 
 **`ProviderDetailPage.tsx`** (mobile hero, line 676–684):
+
 ```jsx
 <Image
   fill
@@ -116,13 +122,14 @@ Without `sizes`, `<Image fill>` defaults to `100vw` width hint. On a desktop vie
 
 Impact: The image requested is **2.7–5.5× larger** than needed → encode job is proportionally slower → file size is proportionally larger → transfer time longer.
 
-Additional: `ProviderDetailPage.tsx` hero (mobile view) is also missing `priority` prop entirely. Plan 033 confirmed `priority` on the list page, but the full-page mobile detail view (line 676) has no `priority`. This is a secondary issue (mobile users). 
+Additional: `ProviderDetailPage.tsx` hero (mobile view) is also missing `priority` prop entirely. Plan 033 confirmed `priority` on the list page, but the full-page mobile detail view (line 676) has no `priority`. This is a secondary issue (mobile users).
 
 ---
 
 ### F-4: `ssr: false` on `ProviderDetailModal` — no image preload hint in initial HTML — **VERIFIED**
 
 `ProviderDetailPageClient.tsx`:
+
 ```tsx
 const ProviderDetailModal = dynamic(
   () => import('@/components/providers/ProviderDetailModal')
@@ -136,7 +143,7 @@ const ProviderDetailModal = dynamic(
 
 - With `ssr: false`, the server-rendered HTML contains no `<img>` or `<link rel="preload">` for the provider image
 - Confirmed by probing the page HTML: only icon images appear in SSR output; provider content has 2 `"provider"` mentions in 59KB of JS-shell HTML
-- Image request chain: `HTML parsed → JS hydrates → isMobile effect fires → modal chunk downloads → component mounts → priority hint fires` 
+- Image request chain: `HTML parsed → JS hydrates → isMobile effect fires → modal chunk downloads → component mounts → priority hint fires`
 - Even with `priority={index === 0}` inside the modal, `fetchpriority="high"` is only injected after the modal component mounts — typically **2–4 seconds** after the initial HTML arrives
 - This delay stacks on top of the AVIF encode latency (F-1)
 
@@ -145,12 +152,14 @@ const ProviderDetailModal = dynamic(
 ### F-5: Cloudflare not caching `/_next/image` responses — **VERIFIED**
 
 Response headers for page:
+
 ```
 CF-Cache-Status: DYNAMIC
 cache-control: private, no-cache, no-store, max-age=0, must-revalidate
 ```
 
 Nginx `nginx-uat-template.conf` has no `location /_next/image` block — image optimization requests fall through to the general `location /` block:
+
 ```nginx
 location / {
     proxy_pass http://localhost:3001;
@@ -167,6 +176,7 @@ Result: Every image request — even for previously-encoded images (within the 3
 ### F-6: Raw image upload — no resize at upload time — **VERIFIED** (contributing factor)
 
 `ProviderCreateForm.tsx` line 183–196:
+
 ```ts
 await supabase.storage.from('provider-images').upload(filePath, file);
 const { data: publicUrlData } = supabase.storage.from('provider-images').getPublicUrl(filePath);
@@ -201,28 +211,31 @@ const { data: publicUrlData } = supabase.storage.from('provider-images').getPubl
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-| ID | Root Cause | Confidence | Impact on latency |
-|----|-----------|------------|-------------------|
-| RC-1 | AVIF cold encoding on Hetzner VPS | **Verified** | 5–15s |
-| RC-2 | No Docker volume for `.next/cache/images/` | **Verified** | Turns RC-1 permanent after each deploy |
-| RC-3 | No `sizes` on `fill` images → requests `w=3840` | **Verified** | Amplifies RC-1 by 2.7–5.5× |
-| RC-4 | `ssr: false` → no preload in HTML → image starts late | **Verified** | +2–4s added before encode even starts |
-| RC-5 | Cloudflare not caching `/_next/image` | **Verified** | Warm: +50–200ms round-trip to Hetzner |
-| RC-6 | No image resize at upload time | **Verified** | Amplifies RC-1 via large originals |
+| ID   | Root Cause                                            | Confidence   | Impact on latency                      |
+| ---- | ----------------------------------------------------- | ------------ | -------------------------------------- |
+| RC-1 | AVIF cold encoding on Hetzner VPS                     | **Verified** | 5–15s                                  |
+| RC-2 | No Docker volume for `.next/cache/images/`            | **Verified** | Turns RC-1 permanent after each deploy |
+| RC-3 | No `sizes` on `fill` images → requests `w=3840`       | **Verified** | Amplifies RC-1 by 2.7–5.5×             |
+| RC-4 | `ssr: false` → no preload in HTML → image starts late | **Verified** | +2–4s added before encode even starts  |
+| RC-5 | Cloudflare not caching `/_next/image`                 | **Verified** | Warm: +50–200ms round-trip to Hetzner  |
+| RC-6 | No image resize at upload time                        | **Verified** | Amplifies RC-1 via large originals     |
 
 ---
 
 ## System Weaknesses (Architecture / Code / Process)
 
 ### Architecture
+
 - **No CDN image proxy**: Relying on `/_next/image` on a single VPS as the sole image optimization layer is fragile. Supabase Storage has its own transformation API (not used) and Cloudflare has image resizing. Both bypass VPS CPU for encode.
 - **Stateless container + stateful image cache**: The image cache lives in the container filesystem without a persistence strategy. This is a design mismatch.
 
 ### Code
+
 - **`ssr: false` for above-fold content**: The provider modal IS the above-fold content on desktop. A component rendered `ssr: false` disables all server-side performance optimization for the page's main UI.
 - **Missing `sizes` on all `fill` images**: Project-wide pattern — affects both detail components and card components. No automated check enforces this.
 
 ### Process
+
 - **No image format verification in CI**: Plan 033 added bundle budgets but no LCP image delivery metrics. A performance regression in image format config has no automated gate.
 - **No LCP tracking in telemetry**: `perf-telemetry.ts` tracks TTFB but LCP image delivery is not captured as a named metric.
 
@@ -230,13 +243,13 @@ const { data: publicUrlData } = supabase.storage.from('provider-images').getPubl
 
 ## Instrumentation Gaps
 
-| Gap | Type | Measure |
-|-----|------|---------|
-| `/_next/image` response time per URL | **Normal** | Add timing log in custom image loader or middleware |
-| AVIF vs WebP encode time | **Debug** | Log encode start/end to Next.js image handler (opt-in flag) |
+| Gap                                   | Type       | Measure                                                              |
+| ------------------------------------- | ---------- | -------------------------------------------------------------------- |
+| `/_next/image` response time per URL  | **Normal** | Add timing log in custom image loader or middleware                  |
+| AVIF vs WebP encode time              | **Debug**  | Log encode start/end to Next.js image handler (opt-in flag)          |
 | LCP image URL on provider detail page | **Normal** | Add `web-vitals` `onLCP` event to `perf-telemetry.ts` with image URL |
-| CF-Cache-Status for `/_next/image` | **Normal** | Log CF-Cache-Status header value from Cloudflare analytics |
-| Cold vs warm image hit rate | **Normal** | Track `.next/cache/images/` hit/miss via health endpoint or metrics |
+| CF-Cache-Status for `/_next/image`    | **Normal** | Log CF-Cache-Status header value from Cloudflare analytics           |
+| Cold vs warm image hit rate           | **Normal** | Track `.next/cache/images/` hit/miss via health endpoint or metrics  |
 
 ---
 
@@ -258,19 +271,19 @@ const { data: publicUrlData } = supabase.storage.from('provider-images').getPubl
 
 ## Fix Hypotheses
 
-| # | Hypothesis | Confidence | Risk | Fastest disconfirm test |
-|---|-----------|------------|------|------------------------|
-| H-1 | Switching `formats` to `['image/webp']` eliminates the >10s cold encode | **High** | Low | Time `/_next/image` encode locally AVIF vs WebP |
-| H-2 | Adding `sizes="704px"` to modal hero reduces encode time ≥ 3× | **High** | Low | Compare encode time `w=3840` vs `w=704` |
-| H-3 | Adding Docker volume mount for `.next/cache/images/` prevents post-deploy cold start | **High** | Medium | Deploy UAT, check if second visit to same provider is instant |
-| H-4 | Cloudflare Cache Rule for `/_next/image` serves warm images from edge (eliminating Hetzner round-trip) | **Medium** | Low | Add CF rule, verify CF-Cache-Status: HIT |
-| H-5 | Removing `ssr: false` from ProviderDetailModal (or adding server-side `<link rel="preload">`) reduces LCP by 2–4s | **High** | Medium | Lighthouse LCP measurement before/after |
+| #   | Hypothesis                                                                                                        | Confidence | Risk   | Fastest disconfirm test                                       |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------- |
+| H-1 | Switching `formats` to `['image/webp']` eliminates the >10s cold encode                                           | **High**   | Low    | Time `/_next/image` encode locally AVIF vs WebP               |
+| H-2 | Adding `sizes="704px"` to modal hero reduces encode time ≥ 3×                                                     | **High**   | Low    | Compare encode time `w=3840` vs `w=704`                       |
+| H-3 | Adding Docker volume mount for `.next/cache/images/` prevents post-deploy cold start                              | **High**   | Medium | Deploy UAT, check if second visit to same provider is instant |
+| H-4 | Cloudflare Cache Rule for `/_next/image` serves warm images from edge (eliminating Hetzner round-trip)            | **Medium** | Low    | Add CF rule, verify CF-Cache-Status: HIT                      |
+| H-5 | Removing `ssr: false` from ProviderDetailModal (or adding server-side `<link rel="preload">`) reduces LCP by 2–4s | **High**   | Medium | Lighthouse LCP measurement before/after                       |
 
 ---
 
 ## Open Questions
 
-1. What is the Hetzner VPS spec (CPU cores, RAM)?  A 2-core/4GB machine will have 5× more latency than 4-core/8GB for AVIF encoding. The fix priority changes slightly based on machine size.
+1. What is the Hetzner VPS spec (CPU cores, RAM)? A 2-core/4GB machine will have 5× more latency than 4-core/8GB for AVIF encoding. The fix priority changes slightly based on machine size.
 2. Is Supabase Image Transformation API enabled for the UAT project? If yes, H-3/H-4 (CDN direct) become higher-priority than fixing `/_next/image` locally.
 3. What image formats/sizes do users typically upload? (HEIC from iPhone is 3–8 MB; WhatsApp-shared photos ~200 KB.) If most uploads are small, RC-1 is less severe.
 4. Does the production Hetzner server share CPU with other workloads? AVIF encoding is single-threaded and blocking; concurrent encodes starve each other.
@@ -287,6 +300,4 @@ Three independent fixes will eliminate the >10s delay **without architectural ch
 
 These three together should reduce cold image load from >10s to <500ms (WebP encode at 704px: ~30–80ms on the same hardware).
 
-Two additional improvements address warm-path performance and require more effort:
-4. **Cloudflare Cache Rule** for `/_next/image` — edge caches warm images globally
-5. **Server-side `<link rel="preload">`** for hero image — eliminates the 2–4s JS waterfall delay before image request starts
+Two additional improvements address warm-path performance and require more effort: 4. **Cloudflare Cache Rule** for `/_next/image` — edge caches warm images globally 5. **Server-side `<link rel="preload">`** for hero image — eliminates the 2–4s JS waterfall delay before image request starts
