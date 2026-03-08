@@ -37,6 +37,7 @@ import {
   normalizeWebsiteUrl,
 } from '@/utils/navigationUtils';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
+import { trackEvent } from '@/lib/analytics/plausible';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -266,6 +267,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         return;
       }
 
+      trackEvent('contact_intent_triggered', {
+        contact_type: 'call',
+        city: provider.address_city ?? '',
+      });
+
       const phoneNumber = provider.contact_phone.trim();
       const telUrl = `tel:${phoneNumber}`;
 
@@ -300,7 +306,13 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       }
     } else if (action === 'website' && provider.social_website) {
       const url = normalizeWebsiteUrl(provider.social_website);
-      if (url) window.open(url, '_blank');
+      if (url) {
+        trackEvent('contact_intent_triggered', {
+          contact_type: 'website',
+          city: provider.address_city ?? '',
+        });
+        window.open(url, '_blank');
+      }
     }
   };
 

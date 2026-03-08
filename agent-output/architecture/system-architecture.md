@@ -14,6 +14,7 @@
 | 2026-03-02 | Agent memory tooling decision captured                  | Flowbaby reliability issues; record local-first replacement direction     | Arch 032            |
 | 2026-03-07 | Performance optimization architecture findings captured | Align caching, rendering, and telemetry for durable performance wins      | Arch 033            |
 | 2026-03-07 | Growth plan (city pages + analytics) architecture decisions captured | Establish ISR-first city acquisition pages, UTM canonicalization, and analytics guardrails | Arch 035            |
+| 2026-03-08 | Captured Plausible analytics ADR | Make analytics deployment + privacy guardrails explicit for upcoming activation/instrumentation work | Arch 035 / Plan 036 |
 
 ---
 
@@ -223,6 +224,29 @@ This is a known architecture risk; roles must be normalized behind a single auth
 - **Consequences**:
   - Requires explicit segment-level caching decisions per acquisition route.
   - Keeps UTMs usable for analytics without polluting SEO/caching.
+
+---
+
+### ADR-006: Analytics uses Plausible (GDPR-aligned, no PII)
+
+- **Context**: UFlow needs decision-grade acquisition and activation signals without adding cookie banners or collecting PII. Analytics must not break the app if unavailable.
+- **Choice**:
+  - Use **Plausible Analytics** for cookie-free, GDPR-aligned measurement.
+  - Preferred operational mode: **Plausible Cloud (EU region)**.
+  - Acceptable operational mode: **self-host Plausible CE on Hetzner** as a separate container stack, provided guardrails are met:
+    - persistent volumes (Postgres + ClickHouse)
+    - health checks + restart policies
+    - backups + basic disk monitoring (ClickHouse growth)
+    - admin access controls (strong credentials; ideally IP allowlist and/or reverse-proxy auth)
+  - Client integration must be **non-fatal**: analytics script is conditionally loaded and event emission is a safe no-op when the script is absent.
+  - Event properties MUST remain **non-PII** and **low-cardinality** (enums/booleans/city), never provider IDs, emails, phone numbers, or URLs.
+- **Alternatives**:
+  - GA4 or other cookie-based analytics (rejected: requires consent banner; higher GDPR/legal overhead).
+  - Session replay / user-ID tools (rejected for now: consent + privacy posture not ready).
+- **Consequences**:
+  - Requires clear governance for event naming and allowed properties.
+  - Requires ops ownership if self-hosting (backups/monitoring/access controls).
+  - Preserves UX (no cookie banner) and privacy-first brand posture.
 
 ---
 

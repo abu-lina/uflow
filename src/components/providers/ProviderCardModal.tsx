@@ -9,6 +9,7 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 import { ProviderActionBar } from '@/components/providers/ProviderActionBar';
+import { trackEvent } from '@/lib/analytics/plausible';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
@@ -444,6 +445,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
   // Call handler
   const handleCall = () => {
     if (provider.contact_phone) {
+      trackEvent('contact_intent_triggered', {
+        contact_type: 'call',
+        city: provider.address_city ?? '',
+      });
       window.open(`tel:${provider.contact_phone}`);
     }
   };
@@ -452,7 +457,13 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
   const handleWebsite = () => {
     if (provider.social_website) {
       const url = normalizeWebsiteUrl(provider.social_website);
-      if (url) window.open(url, '_blank');
+      if (url) {
+        trackEvent('contact_intent_triggered', {
+          contact_type: 'website',
+          city: provider.address_city ?? '',
+        });
+        window.open(url, '_blank');
+      }
     }
   };
 

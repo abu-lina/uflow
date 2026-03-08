@@ -12,6 +12,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useAuth } from '@/providers/auth-provider';
 import { createProviderOrService } from '@/services/providerService';
+import { trackEvent } from '@/lib/analytics/plausible';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
 import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScreen';
@@ -1121,6 +1122,12 @@ export function StreamlinedRecommendForm({
         user || null, // Pass authenticated user if available, otherwise null for anonymous
         true, // Recommendation mode
       );
+
+      trackEvent('provider_profile_completed', {
+        city: formData.city,
+        has_phone: !!formData.phone,
+        has_website: !!formData.website,
+      });
 
       // Clear form data
       updateFormData({

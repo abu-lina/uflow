@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.0] - 2026-03-07
+## [0.7.1] - 2026-05-27
+
+### Added
+
+**Analytics Activation & Event Instrumentation (Plan 036)**
+
+- **`contact_intent_triggered` events wired**: `trackEvent('contact_intent_triggered', { contact_type: 'call'|'website', city })` now fires in `ProviderCardModal` (`handleCall`/`handleWebsite`) and `ProviderDetailModal` (`handleExpand` for `'call'`/`'website'`). Email intent intentionally omitted — no email CTA handlers exist in current UI.
+- **`provider_profile_completed` events wired**: `trackEvent('provider_profile_completed', { city, has_phone, has_website })` now fires after successful `createProviderOrService` in both `StreamlinedRecommendForm` and `StreamlinedImportForm`.
+- **Plausible CE Docker Compose**: `infra/plausible/docker-compose.yml` — self-hosted Plausible Community Edition stack (Postgres 16 + ClickHouse 24 + Plausible v2.1.4) with healthchecks, named volumes, and localhost-only port binding. Setup guide in `infra/plausible/README.md`.
+- **ADR-006 codified**: Analytics governance rules (non-fatal, GDPR-aligned, non-PII props, separate stack) recorded in `agent-output/architecture/system-architecture.md`.
+
+### Changed
+
+- `ProviderCardModal`: imports `trackEvent` from `@/lib/analytics/plausible`; handlers now fire event before opening tel:/website URL.
+- `ProviderDetailModal`: imports `trackEvent`; `handleExpand` fires event before tel: link click / `window.open` for website.
+- `StreamlinedRecommendForm`: imports `trackEvent`; fires `provider_profile_completed` inside `handleSubmit` immediately after `await createProviderOrService(...)` resolves.
+- `StreamlinedImportForm`: same pattern as above.
+
+### Tests
+
+- `src/__tests__/components/providers/contact-intent-tracking.test.tsx`: TDD tests (9) for M2 event wiring — ProviderDetailModal call/website buttons + ProviderCardModal call/website links.
+- `src/__tests__/features/providers/provider-profile-completed-tracking.test.tsx`: TDD tests (3) for M2b event wiring — StreamlinedRecommendForm + StreamlinedImportForm submit flows.
+
 
 ### Added
 
