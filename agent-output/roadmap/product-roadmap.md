@@ -31,6 +31,7 @@
 | 2026-03-03       | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                |
 | 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
 | 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |
+| 2026-03-08       | Plan 037 released (v0.7.2): npm dependency security remediation    | Eliminated all 10 npm vulnerabilities (8 high, 2 moderate) via package overrides; 0 vulnerabilities confirmed; zero application code changes               |
 
 ---
 
@@ -53,7 +54,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.6.12 released successfully — ready for new planning_
+_v0.7.2 released successfully (2026-03-08) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -63,6 +64,9 @@ _v0.6.12 released successfully — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.7.2  | 2026-03-08 | Plan 037 (npm dependency security remediation)       | Released |
+| v0.7.1  | 2026-03-07 | Plan 036 (Analytics activation + event instrumentation) | Released |
+| v0.7.0  | 2026-03-07 | Plan 035 (Growth: indexable city pages + Plausible)  | Released |
 | v0.6.12 | 2026-03-07 | Plan 034 (Provider image load performance fix)       | Released |
 | v0.6.11 | 2026-03-07 | Plan 033 (Performance optimization guardrails)       | Released |
 | v0.6.10 | 2026-03-01 | Plans 028+029 (Mobile onboarding vertical centering) | Released |
