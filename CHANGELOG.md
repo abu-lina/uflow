@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-03-08
+
+### Security
+
+- **Fixed**: Eliminated all 10 npm dependency vulnerabilities (8 high, 2 moderate) via package overrides
+  - Resolved serialize-javascript RCE (CVSS 8.1): override `>=7.0.4` via `@ducanh2912/next-pwa` → workbox chain
+  - Resolved immutable prototype pollution: override `^3.8.3` via `swagger-ui-react`
+  - Resolved minimatch ReDoS (CVSS 7.5): override `>=3.1.5` across eslint/typescript/vitest/workbox tooling
+  - Resolved dompurify XSS (CVSS 6.1, 2 advisories): override `^3.3.2` via `swagger-ui-react`
+- **Impact**: `npm audit` reports 0 vulnerabilities (down from 10); no functional or API changes
+
+### Changed
+
+- Updated `package.json` overrides to pin patched transitive dependency versions
+- Regenerated `package-lock.json` with patched dependency tree
+
 ## [0.7.1] - 2026-05-27
 
 ### Added
