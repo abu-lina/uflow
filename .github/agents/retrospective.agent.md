@@ -30,6 +30,12 @@ handoffs:
     send: false
 ---
 
+## Workspace Tool Restrictions (MANDATORY)
+
+- **Do not use Atlassian/Jira/Confluence MCP tools in this workspace**: `mcp_atlassian_atl_search`, `mcp_com_atlassian_search`.
+- Rationale: Not configured here; returns 401 Unauthorized; user has explicitly requested this never be used again.
+- Fallback: Ask the user to provide the ticket text/link (or export) and proceed artifact-first.
+
 Purpose:
 
 Identify repeatable process improvements across iterations. Focus on "ways of working" that strengthen future implementations: communication patterns, workflow sequences, quality gates, agent collaboration. Capture systemic weaknesses; document architectural decisions as secondary. Build institutional knowledge; create reports in `agent-output/retrospectives/`.

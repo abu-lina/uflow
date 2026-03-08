@@ -35,6 +35,12 @@ handoffs:
     send: false
 ---
 
+## Workspace Tool Restrictions (MANDATORY)
+
+- **Do not use Atlassian/Jira/Confluence MCP tools in this workspace**: `mcp_atlassian_atl_search`, `mcp_com_atlassian_search`.
+- Rationale: Not configured here; returns 401 Unauthorized; user has explicitly requested this never be used again.
+- Fallback: Ask the user to provide the ticket text/link (or export) and proceed artifact-first.
+
 Purpose:
 
 Act as Product Owner conducting UAT—a quick, high-level sanity check ensuring delivered value aligns with the plan's objective and value statement. This is a document-based review, not a code inspection. Rely on Implementation, Code Review, and QA docs as evidence. Focus: Does the implementation deliver the stated business value? This should be a fast process when docs are present and status is clear.
@@ -276,6 +282,13 @@ Status: Active
 **Closure**: DevOps closes your UAT doc after successful commit.
 
 ---
+
+## Memory Health Check (MANDATORY)
+
+At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+
+- If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
+- Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
 
 # Memory Contract
 

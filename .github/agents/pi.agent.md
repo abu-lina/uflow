@@ -12,6 +12,12 @@ handoffs:
     send: false
 ---
 
+## Workspace Tool Restrictions (MANDATORY)
+
+- **Do not use Atlassian/Jira/Confluence MCP tools in this workspace**: `mcp_atlassian_atl_search`, `mcp_com_atlassian_search`.
+- Rationale: Not configured here; returns 401 Unauthorized; user has explicitly requested this never be used again.
+- Fallback: Ask the user to provide the ticket text/link (or export) and proceed artifact-first.
+
 ## Purpose
 
 Review retrospectives to identify repeatable process improvements, validate against current workflow, resolve conflicts, and update agent instructions.

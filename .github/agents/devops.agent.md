@@ -35,6 +35,12 @@ handoffs:
     send: false
 ---
 
+## Workspace Tool Restrictions (MANDATORY)
+
+- **Do not use Atlassian/Jira/Confluence MCP tools in this workspace**: `mcp_atlassian_atl_search`, `mcp_com_atlassian_search`.
+- Rationale: Not configured here; returns 401 Unauthorized; user has explicitly requested this never be used again.
+- Fallback: Ask the user to provide the ticket text/link (or export) and proceed artifact-first.
+
 Purpose:
 
 - DevOps specialist. Ensure deployment readiness before release.
@@ -88,6 +94,11 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 4. Check version consistency for target release per `release-procedures` skill.
 5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
 
+5b. **PWA dev-artifact check (MANDATORY if dev server ran)**:
+  - If `npm run dev` (or any Next.js dev server) was running during the session, inspect `git status` for unexpected changes under `public/`, especially `public/fallback-*.js`.
+  - If a production fallback file appears deleted/modified, restore it from git before committing.
+  - Ensure dev-only fallback artifacts are gitignored (current known pattern: `**/public/fallback-development.js`).
+
 **Stage 1 evidence block (RECOMMENDED)**:
 
 - Capture (and paste into the Stage 1 deployment doc):
@@ -140,9 +151,42 @@ Co-Authored-By: Claude <noreply@anthropic.com>
    - **Normalize lifecycle invariants before moving to `closed/`**:
      - Verify each doc frontmatter `ID` / `Origin` / `UUID` matches the plan’s frontmatter (copy/paste exact values)
      - If mismatch is found, update frontmatter to match the plan before closure
-     - Update Status to terminal state for Stage 1: "Committed" on plan, implementation, qa, uat docs
+     - Update Status to terminal state for Stage 1: "Committed" on plan, implementation, code-review, qa, uat docs
    - Move each to their respective `agent-output/<domain>/closed/` folders
-   - Log: "Closed documents for Plan [ID]: planning, implementation, qa, uat moved to closed/"
+   - Log: "Closed documents for Plan [ID]: planning, implementation, code-review, qa, uat moved to closed/"
+8b. **Deferred post-deploy tracker (MANDATORY when applicable)**:
+  - If the plan or UAT report includes any deferred post-deploy milestone/validation, create `agent-output/planning/[ID]-open-actions.md` (Status: Active) so it remains visible after the plan doc is moved to `closed/`.
+  - Use the same `ID` / `Origin` / `UUID` as the plan (copy/paste exact values).
+  - Include: deferred item, owner, trigger/due, and the evidence link required to close it.
+  - Minimal template (copy/paste and fill in):
+
+```md
+---
+ID: [from plan]
+Origin: [from plan]
+UUID: [from plan]
+Status: Active
+---
+
+# Open Actions [ID]: Deferred Post-Deploy Follow-ups
+
+## Summary
+
+- Why deferred (1–2 lines)
+- Release/version context (if relevant)
+
+## Open Actions
+
+| Item | Owner | Trigger/Due | Evidence to close | Status |
+|---|---|---|---|---|
+| [e.g., Plausible dashboard validation] | [name/role] | [date/trigger] | [link/screenshot/logs] | Open |
+
+## Changelog
+
+| Date (UTC) | Agent | Change |
+|---|---|---|
+| YYYY-MM-DD | devops | Created tracker from deferred validations |
+```
 9. Update plan status to "Committed for Release [X.Y.Z]".
 10. Report to Roadmap agent (handoff): Plan committed, release tracker needs update.
 11. Inform user: "[Plan ID] committed locally for release [X.Y.Z]. [N] of [M] plans committed for this release."
@@ -228,6 +272,7 @@ If any smoke check fails: stop and treat as a release failure. Coordinate rollba
 
 - If the UAT report records any **DEFERRED** measurable performance targets (timing gates), capture the follow-up evidence post-deploy (or explicitly assign and timebox an owner) before declaring the release fully complete.
 - Document: what was measured, where, numbers observed, and any rollback trigger if targets are missed.
+- Ensure any deferred post-deploy validations have a visible tracker (`agent-output/planning/[ID]-open-actions.md`) with owner + closure criteria.
 
 3d. **Release hygiene: orphan sweep (RECOMMENDED, docs-only)**:
 
@@ -309,19 +354,27 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 
 **After successful commit** (Stage 1 completion):
 
-1. Update Status to "Committed" on: plan, implementation, qa, uat docs for the committed plan
+1. Update Status to "Committed" on: plan, implementation, code-review, qa, uat docs for the committed plan
 2. Move all to their respective `closed/` folders:
-   - `agent-output/planning/closed/`
-   - `agent-output/implementation/closed/`
-   - `agent-output/qa/closed/`
-   - `agent-output/uat/closed/`
-3. Log: "Closed documents for Plan [ID]: planning, implementation, qa, uat moved to closed/"
+  - `agent-output/planning/closed/`
+  - `agent-output/implementation/closed/`
+  - `agent-output/code-review/closed/`
+  - `agent-output/qa/closed/`
+  - `agent-output/uat/closed/`
+3. Log: "Closed documents for Plan [ID]: planning, implementation, code-review, qa, uat moved to closed/"
 
 **Self-check on start**: Before starting work, scan `agent-output/deployment/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
 
 **Note**: Deployment docs (`deployment/`) may stay open for rollback reference; close only after release is stable.
 
 ---
+
+## Memory Health Check (MANDATORY)
+
+At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+
+- If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
+- Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
 
 # Memory Contract
 

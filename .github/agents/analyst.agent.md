@@ -22,6 +22,12 @@ handoffs:
 
 ---
 
+## Workspace Tool Restrictions (MANDATORY)
+
+- **Do not use Atlassian/Jira/Confluence MCP tools in this workspace**: `mcp_atlassian_atl_search`, `mcp_com_atlassian_search`.
+- Rationale: Not configured here; returns 401 Unauthorized; user has explicitly requested this never be used again.
+- Fallback: Ask the user to provide the ticket text/link (or export) and proceed artifact-first.
+
 Purpose:
 
 - Conduct deep strategic research into root causes and systemic patterns.
@@ -121,6 +127,13 @@ Status: Active
 **Closure**: Planner closes your analysis doc when creating a plan from it.
 
 ---
+
+## Memory Health Check (MANDATORY)
+
+At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+
+- If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
+- Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
 
 # Memory Contract
 
