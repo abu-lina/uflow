@@ -2,7 +2,7 @@
 ID: 038
 Origin: 038
 UUID: a8d0f3c1
-Status: Committed
+Status: Released
 ---
 
 # Plan 038 — Provider Owner Outreach & Claim System
@@ -24,6 +24,7 @@ Status: Committed
 | 2026-03-12T23:59Z | qa            | Status → QA Complete                 | Re-validated the signup claim handoff fix; regression test, full suite, type-check, and build all passed.                                                                                        |
 | 2026-03-13T00:05Z | uat           | Status → UAT Approved                | UAT Complete — all AC1–AC5 met, claim journey end-to-end, APPROVED FOR RELEASE. Two medium pre-operation items documented (provider name enrichment, WhatsApp number config).                  |
 | 2026-03-13T00:10Z | devops        | Status → Committed                   | Stage 1 complete: locally committed as b384e5a for release v0.8.0. Document moved to closed/.                                                                                                 |
+| 2026-03-13T00:15Z | devops        | Status → Released                    | Stage 2 complete: tag v0.8.0 created and pushed, main pushed to origin. CI/CD triggered. |
 
 ## Release Strategy
 

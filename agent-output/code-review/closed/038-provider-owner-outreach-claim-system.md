@@ -2,7 +2,7 @@
 ID: 038
 Origin: 038
 UUID: a8d0f3c1
-Status: Committed
+Status: Released
 ---
 
 # Code Review: Provider Owner Outreach & Claim System
