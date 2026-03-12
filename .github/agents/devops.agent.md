@@ -92,6 +92,10 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 2. Confirm UAT "APPROVED FOR RELEASE", QA "QA Complete" for this plan.
 3. Read roadmap. Verify plan's target release version. Multiple plans may target same release.
 4. Check version consistency for target release per `release-procedures` skill.
+  4b. **CHANGELOG date sanity-check (MANDATORY)**:
+    - If the latest `CHANGELOG.md` entry includes a date, verify it matches the actual release day.
+    - Preferred check: compare against `date -u +%Y-%m-%d` and correct obvious mismatches before committing.
+    - If you intentionally do not correct it, record rationale in the Stage 1 deployment doc.
 5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
 
 5b. **PWA dev-artifact check (MANDATORY if dev server ran)**:
@@ -157,6 +161,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
    - Log: "Closed documents for Plan [ID]: planning, implementation, code-review, qa, uat moved to closed/"
 8b. **Deferred post-deploy tracker (MANDATORY when applicable)**:
   - If the plan or UAT report includes any deferred post-deploy milestone/validation, create `agent-output/planning/[ID]-open-actions.md` (Status: Active) so it remains visible after the plan doc is moved to `closed/`.
+  - If the deployment doc contains any **Known Limitations (pre-operation)** items that MUST be completed before first real-world operation, create the same tracker and record those items with owner + trigger + evidence-to-close.
   - Use the same `ID` / `Origin` / `UUID` as the plan (copy/paste exact values).
   - Include: deferred item, owner, trigger/due, and the evidence link required to close it.
   - Minimal template (copy/paste and fill in):
@@ -207,6 +212,10 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 1. Query Roadmap for release status: All plans for target version must be "Committed".
 2. If any plans incomplete: Report status, list pending plans, await further commits.
 3. Verify version consistency across ALL committed changes.
+  3b. **Security audit evidence (MANDATORY)**:
+    - Run `npm audit` (or an equivalent audit command agreed for this repo).
+    - Record whether any **new** HIGH/CRITICAL vulnerabilities appear compared to the start of Stage 2.
+    - If new HIGH/CRITICAL vulnerabilities are introduced by this release work, treat as a blocker unless the user explicitly accepts the risk.
 4. Validate packaging: Build, package, verify all bundled changes.
 5. Check workspace: All plan commits present, no uncommitted changes.
 6. **Upstream tracking check (MANDATORY)**: Confirm the current branch tracks the expected remote branch (typically `main...origin/main`).

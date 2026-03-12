@@ -280,6 +280,24 @@ Immediately after storing a memory checkpoint, run a retrieval query that should
 18. Document findings/results/issues in implementation doc, not QA reports.
 19. Prepare summary confirming value delivery, including outstanding/blockers.
 
+### Cross-Layer Integration Self-Check (MANDATORY)
+
+When you add or modify ANY of the following:
+
+- a new API route (`src/app/api/**/route.ts`)
+- a new RPC/service function intended to be called by UI
+- a redirect/link that includes query params (e.g., `?token=...`, `?claim=...`, `?returnUrl=...`)
+
+You MUST verify **“caller exists”** and **“parameter is consumed”** before handing off:
+
+- For each new API route: identify at least one production call site (UI, server action, cron, or another route) and trace the path end-to-end.
+- For each emitted query param: open the receiving page/component and confirm it reads AND acts on the param.
+
+If the caller is intentionally deferred (rare):
+
+- Document the deferral explicitly in the Implementation doc (owner + trigger + evidence to close).
+- Do NOT claim the milestone is complete unless the plan explicitly allows deferral.
+
 ### Pre-Handoff QA Gate (MANDATORY)
 
 Before handing off to **Code Reviewer** or **QA**, you MUST complete this checklist:

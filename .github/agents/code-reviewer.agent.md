@@ -79,6 +79,17 @@ Core Responsibilities:
 - If you find one missed path, treat as high suspicion and require an exhaustive sweep before approval.
 - Record search terms and files inspected in the Code Review doc.
 
+  6e. **Outbound Data-Flow Cross-Trace Checklist (MANDATORY when applicable)**:
+
+- Trigger when the implementation includes:
+  - `router.push(...)` / `router.replace(...)` with query params
+  - `Link href` / anchor href that includes query params
+  - new API routes intended to be called by UI (`src/app/api/**/route.ts`)
+- For each outbound param (e.g., `?claim=...`, `?token=...`, `?returnUrl=...`):
+  - Locate the receiving page/component.
+  - Confirm it reads the param and applies the intended behavior.
+  - If not, record a finding (usually MEDIUM, sometimes HIGH if it breaks a core journey).
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions

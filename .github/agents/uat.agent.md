@@ -196,6 +196,8 @@ Create markdown in `agent-output/uat/` matching plan name:
 **QA Status**: [QA Complete / QA Failed]
 **QA Findings Alignment**: [Confirm technical quality issues identified by QA were addressed]
 
+**Remediation Review (WHEN APPLICABLE)**: If QA previously failed and the Implementer remediated, note whether you reviewed the fix directly (YES/NO). If NO, explicitly state you relied on QA regression evidence.
+
 ## Technical Compliance
 
 - Plan deliverables: [list with PASS/FAIL status]
