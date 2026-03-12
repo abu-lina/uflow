@@ -120,8 +120,16 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 
    **Commit message reliability (MANDATORY when multi-line)**:
 
-- Create a temporary commit message file using the editor tools (e.g., `create_file`), then run `git commit -F <path>`.
+- Create a temporary commit message file, then run `git commit -F <path>`.
 - Do NOT use heredocs or multi-paragraph `git commit -m ...` (shell quoting is fragile).
+
+  **Temp commit message file safety (MANDATORY)**:
+
+  - Prefer creating the message file outside the repo (example: `/tmp/uflow-commit-msg-<id>.txt`) so it cannot be staged or committed accidentally.
+  - If you create the message file inside the repo for any reason:
+    - Stage changes using an explicit allowlist of paths (avoid `git add -A`).
+    - Verify the staged set does NOT include the message file (example: `git diff --cached --name-only`).
+    - Delete the message file immediately after the commit.
 
 ```
 <type>(<scope>): <subject>

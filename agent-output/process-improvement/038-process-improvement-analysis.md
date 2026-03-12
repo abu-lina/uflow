@@ -158,6 +158,18 @@ For each outbound param (e.g., `?claim=TOKEN`, `?token=...`, `?returnUrl=...`):
 - **Proposed change** (optional): Add a 1–2 line requirement in UAT doc template: “Remediation reviewed: YES/NO (if NO, rely on QA evidence).”
 - **Risk**: LOW
 
+---
+
+### PI-7 — DevOps: prevent committing temp commit-message files (LOW)
+
+- **Source**: Follow-up improvement from PI 038 implementation work (observed failure mode: staging the temp message file).
+- **Current state**: DevOps requires `git commit -F <path>`, but does not explicitly prevent the commit-message file from being staged/committed.
+- **Proposed change**: Add a mandatory safety rule:
+  - Prefer `/tmp/...` message files.
+  - If message file is inside repo, use `git diff --cached --name-only` to verify it is not staged.
+- **Affected agent**: DevOps
+- **Risk level**: LOW
+
 ## Conflict Analysis
 
 | Conflict | Recommendation | Conflicting instruction | Nature | Impact | Proposed resolution | Resolved? |

@@ -13,7 +13,7 @@ Status: Active
 
 ## Summary
 
-- **Recommendations implemented**: 6 (PI-1..PI-6)
+- **Recommendations implemented**: 7 (PI-1..PI-7)
 - **Files updated**: 4 agent instruction files
 - **Net effect**: Prevents “API exists but no caller” integration misses; forces reviewers to cross-trace redirects/query params; strengthens DevOps release evidence on changelog-date correctness + vulnerability deltas; ensures UAT documents whether remediation fixes were inspected vs relying on QA-only evidence.
 
@@ -29,6 +29,7 @@ Status: Active
   - Added **CHANGELOG date sanity-check** to Stage 1 version verification (PI-3)
   - Added **Stage 2 audit evidence** requirement + “new HIGH/CRITICAL = blocker unless accepted” rule (PI-4)
   - Extended **open-actions tracker** trigger to include deployment “Known Limitations (pre-operation)” items (PI-5)
+  - Added **temp commit-message file safety** guidance (prefer `/tmp`, verify staged set) (PI-7)
 
 - `.github/agents/uat.agent.md`
   - Added **Remediation Review (WHEN APPLICABLE)** note in UAT template (PI-6)
@@ -41,6 +42,7 @@ Status: Active
 - **PI-4 DevOps `npm audit` evidence + new HIGH/CRITICAL handling**: ✅ Implemented
 - **PI-5 Pre-operation items must produce an open-actions tracker**: ✅ Implemented
 - **PI-6 UAT remediation inspection note**: ✅ Implemented
+- **PI-7 DevOps temp commit-message file safety**: ✅ Implemented
 
 ## Validation Plan
 
