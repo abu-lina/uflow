@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-08
+
+### Added
+
+**Provider Owner Outreach & Claim System (Plan 038)**
+
+- **Outreach Database Model**: New tables `provider_owner_outreach`, `provider_owner_action_tokens`, and `provider_outreach_tasks` for tracking outreach campaigns, secure one-time tokens, and manual tasks (phone/Instagram outreach).
+- **Auto-enqueue Trigger**: Postgres trigger automatically creates outreach queue entries when unclaimed providers (with contact info) are inserted.
+- **Multi-Channel Dispatcher**: Service to process outreach queue via email (automated) or manual tasks (phone/Instagram). Includes configurable German/English email templates with WhatsApp contact option.
+- **Secure Token System**: SHA-256 hashed tokens with 7-day expiry, single-use enforcement, and scope-specific actions (keep/claim/remove).
+- **Owner Decision Landing Page**: German-first `/owner-decision` page where external owners can validate their listing or request removal. Responsive UI with loading, error, and success states.
+- **Claim Provider Flow**: API endpoint for authenticated users to claim ownership of a provider listing via secure token.
+- **Remove by Owner**: New `removed_by_owner` review status for providers whose owners request removal. Listings with this status are excluded from public search.
+- **Observability Queries**: SQL monitoring queries for unclaimed provider counts, channel performance, decision rates, and daily dashboard metrics.
+- **34 TDD Tests**: Comprehensive test coverage for outreach service (14 tests), dispatcher (12 tests), and landing page (8 tests).
+
+### Changed
+
+- Extended `review_status` enum to include `removed_by_owner` value.
+- Updated TypeScript types in `providers.ts` and `communityServices.ts` for new review status.
+
 ## [0.7.2] - 2026-03-08
 
 ### Security
@@ -46,7 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/__tests__/components/providers/contact-intent-tracking.test.tsx`: TDD tests (9) for M2 event wiring — ProviderDetailModal call/website buttons + ProviderCardModal call/website links.
 - `src/__tests__/features/providers/provider-profile-completed-tracking.test.tsx`: TDD tests (3) for M2b event wiring — StreamlinedRecommendForm + StreamlinedImportForm submit flows.
 
-
 ### Added
 
 **Growth: Indexable City Pages + Plausible Analytics (Plan 035 M1 + M2)**
@@ -61,7 +81,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Client islands**: `CityPageClientEffects` (localStorage/sessionStorage sync, null-render) and `CityStage1Content` (wraps early-access subscribe flow) extracted from city page to preserve ISR boundary.
 - **Server-side RPC error logging**: `get_provider_count_by_city` RPC failures are now logged (`console.error`) on the server instead of silently falling back to Stage 1.
 - **Env templates**: `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` and `NEXT_PUBLIC_PLAUSIBLE_HOST` added to all four env templates.
-
 
 ### Fixed
 

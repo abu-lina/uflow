@@ -52,14 +52,29 @@ export function SignupPageContent() {
     }));
   }, []);
 
-  // Redirect if already logged in
+  // Redirect if already logged in; complete provider claim if claim token is present
   useEffect(() => {
     if (user) {
-      const returnUrl = searchParams.get('returnUrl');
-      if (returnUrl) {
-        router.replace(decodeURIComponent(returnUrl));
+      const claimToken = searchParams.get('claim');
+      if (claimToken) {
+        fetch('/api/outreach/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: claimToken }),
+        })
+          .catch(() => {
+            // Claim request failed — redirect to profile regardless
+          })
+          .finally(() => {
+            router.replace('/profile');
+          });
       } else {
-        router.replace('/profile');
+        const returnUrl = searchParams.get('returnUrl');
+        if (returnUrl) {
+          router.replace(decodeURIComponent(returnUrl));
+        } else {
+          router.replace('/profile');
+        }
       }
     }
   }, [user, router, searchParams]);

@@ -30,7 +30,7 @@ export interface CommunityService {
   address_country?: string;
   location_latitude?: number;
   location_longitude?: number;
-  review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision';
+  review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   review_feedback?: string;
   barakah_effects?: string[];
   offers_ids?: string[];

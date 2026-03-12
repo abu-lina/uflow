@@ -40,7 +40,7 @@ export interface Provider {
   bookmark_count?: number;
   provider_owner_id?: string | null;
   user_created_id?: string | null;
-  review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision';
+  review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   review_feedback?: string | null;
   badges?: ProviderBadgeWithType[];
 }
