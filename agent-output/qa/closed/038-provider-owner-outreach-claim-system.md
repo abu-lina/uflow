@@ -2,7 +2,7 @@
 ID: 038
 Origin: 038
 UUID: a8d0f3c1
-Status: QA Complete
+Status: Committed
 ---
 
 # QA Report: Provider Owner Outreach & Claim System
