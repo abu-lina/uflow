@@ -80,6 +80,14 @@ Before starting any review, classify the request into one of these modes:
    - **When**: Dependency upgrades, new libraries, or supply-chain concerns (e.g., "we bumped package X", "audit dependencies").
    - **What**: Focus on **Phase 3 (Dependency & Supply Chain Security)**.
 
+   **Dependency override guardrails (when remediation uses `package.json` `overrides`)**:
+   - Prefer **caret-major-lock** constraints (`^x.y.z`) when you intend to stay within a major line.
+   - Avoid `>=x.y.z` unless intentionally permitting a future major bump; if you do, explicitly document that risk/tradeoff.
+   - Verification should consider **both** sources when available:
+     - `npm audit` (npm advisory DB)
+     - GitHub Dependabot alerts (GitHub advisory DB)
+     - Document any variance explicitly; “0 in npm audit” does not necessarily imply “0 in Dependabot”.
+
 4. **Pre-Production Gate**
    - **When**: Imminent release or go-live (e.g., "before production", "pre-release security gate").
    - **What**: Verify that previous findings are addressed and run a risk-focused pass across all relevant phases.

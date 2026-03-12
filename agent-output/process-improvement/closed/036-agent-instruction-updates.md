@@ -8,7 +8,7 @@ Status: Implemented
 # Agent Instruction Updates 036: Atlassian MCP Ban + DevOps Stage 1 Guardrails
 
 **Source Retrospective**: `agent-output/retrospectives/closed/036-analytics-activation-event-instrumentation-retrospective.md`  
-**Source PI Analysis**: `agent-output/process-improvement/036-process-improvement-analysis.md`  
+**Source PI Analysis**: `agent-output/process-improvement/closed/036-process-improvement-analysis.md`  
 **Date**: 2026-03-08
 
 ## Summary

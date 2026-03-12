@@ -163,6 +163,16 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 15. Retrieve/store memory.
 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
+### Dependency Override Guardrails (MANDATORY when applicable)
+
+If you modify `package.json` dependencies, `overrides`, or regenerate a lockfile:
+
+- **Semver safety (override constraints)**:
+  - If you intend to remain within a major line, use **caret-major-lock**: `^x.y.z`.
+  - Avoid `>=x.y.z` unless you are **explicitly** allowing future major versions (call this out in the implementation doc).
+- **Impact mapping**: Identify which direct dependency/features consume the overridden package (e.g., Swagger UI → `/api-docs`).
+- **Dev-mode smoke (not just HTTP 200)**: Run the dev server and validate the impacted pages/flows **and** check server compilation output for import/compile errors.
+
 ### Sentinel Refactor Checklist (WHEN APPLICABLE)
 
 If you change a canonical sentinel value (example: “Everywhere/Überall” → `''`), you MUST:

@@ -93,6 +93,16 @@ Minimum expectations (unless the plan explicitly states otherwise):
 - Record manual validation status as **executed** or **deferred**
   - If deferred: owner, rationale, severity, and fallback execution path
 
+### Dependency Override / Lockfile Changes (WHEN APPLICABLE)
+
+If the change is primarily dependency-related (e.g., `package.json` `overrides`, lockfile regen, transitive patching):
+
+- Run the usual automated gates (type-check, tests, build).
+- **Don’t rely on route HTTP status alone**. Validate any impacted dev-tool / secondary routes (example: `/api-docs`) and inspect dev server logs for:
+  - import errors (e.g., “Attempted import error …”)
+  - compilation failures/warnings that indicate broken client bundles
+- If the overridden dependency is only used by a dev-only page/tool, QA still treats that as in-scope when it’s part of the repo’s workflow.
+
 ### Workflow-Only / Agent Instruction Changes (WHEN APPLICABLE)
 
 If the plan is **workflow-only** (agent specs or `agent-output/` docs; **no runtime code changes**), QA SHOULD treat this as **document/spec QA** rather than forcing unit tests.

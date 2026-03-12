@@ -97,6 +97,7 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 5b. **PWA dev-artifact check (MANDATORY if dev server ran)**:
   - If `npm run dev` (or any Next.js dev server) was running during the session, inspect `git status` for unexpected changes under `public/`, especially `public/fallback-*.js`.
   - If a production fallback file appears deleted/modified, restore it from git before committing.
+  - Canonical restore command: `git checkout -- public/fallback-*.js` (production hash-suffixed fallback) — ensure `public/fallback-development.js` remains dev-only/ignored.
   - Ensure dev-only fallback artifacts are gitignored (current known pattern: `**/public/fallback-development.js`).
 
 **Stage 1 evidence block (RECOMMENDED)**:
