@@ -2,14 +2,14 @@
 ID: 039
 Origin: 039
 UUID: d480d9b0
-Status: UAT Approved
+Status: Committed for Release v0.8.1
 ---
 
 # Plan 039: Replace Provider Name Placeholder in Outreach Emails
 
 **Target Release**: v0.8.1  
 **Epic Alignment**: Plan 038 follow-up — outreach quality + trust (provider acquisition / supply integrity)  
-**Status**: UAT Approved  
+**Status**: Committed for Release v0.8.1  
 **Related Issues**: None  
 
 ## Changelog
@@ -18,7 +18,8 @@ Status: UAT Approved
 |------|--------|-------|-------|
 | 2026-03-13T07:40Z | Status: Active → Code Review Approved | Code Reviewer | Review verdict: APPROVED WITH COMMENTS; 1 LOW finding (non-blocking) |  
 | 2026-03-13T07:50Z | Status: Code Review Approved → QA Complete | QA | Tests PASS (focused + full suite), type-check PASS, build PASS, delta-lint PASS |
-| 2026-03-13T08:00Z | Status: QA Complete → UAT Approved | UAT | Value delivered: provider emails now personalized; APPROVED FOR RELEASE (v0.8.1 patch) | 
+| 2026-03-13T08:00Z | Status: QA Complete → UAT Approved | UAT | Value delivered: provider emails now personalized; APPROVED FOR RELEASE (v0.8.1 patch) |
+| 2026-03-13T08:10Z | Status: UAT Approved → Committed for Release v0.8.1 | DevOps | Stage 1 complete: commit 4d76fd6 (local only, no push); ready for Stage 2 release approval | 
 
 ## Value Statement and Business Objective
 
