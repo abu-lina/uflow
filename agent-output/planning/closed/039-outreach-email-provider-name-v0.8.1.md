@@ -2,7 +2,7 @@
 ID: 039
 Origin: 039
 UUID: d480d9b0
-Status: Committed for Release v0.8.1
+Status: Released v0.8.1
 ---
 
 # Plan 039: Replace Provider Name Placeholder in Outreach Emails

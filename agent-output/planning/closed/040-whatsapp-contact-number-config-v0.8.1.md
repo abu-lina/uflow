@@ -2,7 +2,7 @@
 ID: 040
 Origin: 040
 UUID: a4c19f2e
-Status: Committed for Release v0.8.1
+Status: Released v0.8.1
 ---
 
 # Plan 040: Replace Hardcoded WhatsApp Number with WHATSAPP_CONTACT_NUMBER
