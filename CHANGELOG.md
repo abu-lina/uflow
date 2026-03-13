@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Outreach emails now include real provider name (Plan 039)**: Replaced hardcoded `'Your business'` / `'Provider'` placeholders with the provider's actual display name fetched from the database (`providers.provider_name`). Both the email template and the token snapshot (`provider_name_snapshot`) now use the real name. A language-appropriate fallback (`'Ihr Unternehmen'` / `'Your business'`) is applied when the DB lookup returns no result, so dispatch is never blocked.
 
+### Changed
+
+- **WhatsApp contact number is now configurable (Plan 040)**: Replaced hardcoded `4915123456789` placeholder with `WHATSAPP_CONTACT_NUMBER` environment variable. New `getWhatsAppContactUrl()` utility reads the server-side env var, strips non-digit characters, and returns a `wa.me` link (or `null` when unconfigured). Both outreach email templates (DE/EN) and the owner-decision landing page conditionally render the WhatsApp CTA only when a number is configured.
+
 ## [0.8.0] - 2026-06-08
 
 ### Added

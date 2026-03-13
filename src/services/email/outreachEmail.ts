@@ -38,13 +38,47 @@ export interface OutreachEmailResult {
 }
 
 // ============================================================================
+// WhatsApp Contact Configuration (Plan 040)
+// ============================================================================
+
+/**
+ * Returns the WhatsApp contact URL derived from WHATSAPP_CONTACT_NUMBER,
+ * or null if the env var is missing/blank. Non-digit characters are stripped.
+ */
+export function getWhatsAppContactUrl(): string | null {
+  const raw = process.env.WHATSAPP_CONTACT_NUMBER;
+  if (!raw || !raw.trim()) return null;
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+  return `https://wa.me/${digits}`;
+}
+
+/**
+ * Render outreach email HTML for a given language, with optional WhatsApp CTA.
+ * Reads WHATSAPP_CONTACT_NUMBER from the environment at call time.
+ */
+export function getOutreachEmailHtml(params: {
+  language: 'de' | 'en';
+  tokenUrl: string;
+  providerName: string;
+}): string {
+  const template = templates[params.language] || templates.de;
+  const whatsappUrl = getWhatsAppContactUrl();
+  return template.getHtml({
+    tokenUrl: params.tokenUrl,
+    providerName: params.providerName,
+    whatsappUrl,
+  });
+}
+
+// ============================================================================
 // Email Templates
 // ============================================================================
 
 const templates = {
   de: {
     subject: 'Ihr Unternehmen auf Ummah Flow – Bitte überprüfen',
-    getHtml: (params: { tokenUrl: string; providerName: string }) => `<!DOCTYPE html>
+    getHtml: (params: { tokenUrl: string; providerName: string; whatsappUrl: string | null }) => `<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
@@ -97,16 +131,16 @@ const templates = {
       </p>
     </div>
     
-    <!-- WhatsApp Contact Option -->
+    ${params.whatsappUrl ? `<!-- WhatsApp Contact Option -->
     <div style="background: #F5F5F5; padding: 24px 32px; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 12px 0; font-size: 14px; color: #555555;">
         <strong style="color: #232323;">Kontaktieren Sie uns auch per WhatsApp:</strong>
       </p>
-      <a href="https://wa.me/4915123456789" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #25D366; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500;">
+      <a href="${params.whatsappUrl}" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #25D366; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500;">
         <span>📱</span>
         <span>WhatsApp öffnen</span>
       </a>
-    </div>
+    </div>` : ''}
     
     <!-- Footer -->
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
@@ -132,7 +166,7 @@ const templates = {
   },
   en: {
     subject: 'Your Business on Ummah Flow – Please Review',
-    getHtml: (params: { tokenUrl: string; providerName: string }) => `<!DOCTYPE html>
+    getHtml: (params: { tokenUrl: string; providerName: string; whatsappUrl: string | null }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -185,16 +219,16 @@ const templates = {
       </p>
     </div>
     
-    <!-- WhatsApp Contact Option -->
+    ${params.whatsappUrl ? `<!-- WhatsApp Contact Option -->
     <div style="background: #F5F5F5; padding: 24px 32px; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 12px 0; font-size: 14px; color: #555555;">
         <strong style="color: #232323;">You can also contact us via WhatsApp:</strong>
       </p>
-      <a href="https://wa.me/4915123456789" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #25D366; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500;">
+      <a href="${params.whatsappUrl}" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #25D366; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500;">
         <span>📱</span>
         <span>Open WhatsApp</span>
       </a>
-    </div>
+    </div>` : ''}
     
     <!-- Footer -->
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
@@ -240,7 +274,8 @@ export async function sendProviderOutreachEmail(
       from: fromEmail,
       to: params.to,
       subject: template.subject,
-      html: template.getHtml({
+      html: getOutreachEmailHtml({
+        language: params.language,
         tokenUrl: params.tokenUrl,
         providerName: params.providerName,
       }),

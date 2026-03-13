@@ -13,7 +13,11 @@ interface TokenInfo {
   actionScope: string;
 }
 
-export function OwnerDecisionContent() {
+interface OwnerDecisionContentProps {
+  whatsappUrl: string | null;
+}
+
+export function OwnerDecisionContent({ whatsappUrl }: OwnerDecisionContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -310,16 +314,18 @@ export function OwnerDecisionContent() {
         </div>
 
         {/* Footer with WhatsApp */}
+        {whatsappUrl && (
         <div className="border-t border-neutral-200 bg-neutral-50 px-8 py-6">
           <p className="mb-3 text-sm text-neutral-600">Haben Sie Fragen? Kontaktieren Sie uns:</p>
           <a
             className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600"
-            href="https://wa.me/4915123456789"
+            href={whatsappUrl}
           >
             <span>📱</span>
             <span>WhatsApp öffnen</span>
           </a>
         </div>
+        )}
       </div>
     </div>
   );

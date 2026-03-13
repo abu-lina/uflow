@@ -52,7 +52,7 @@ describe('OwnerDecisionContent', () => {
       () => new Promise(() => {}), // Never resolves
     );
 
-    render(<OwnerDecisionContent />);
+    render(<OwnerDecisionContent whatsappUrl="https://wa.me/4915123456789" />);
 
     expect(screen.getByText(/laden|loading/i)).toBeInTheDocument();
   });
@@ -62,7 +62,7 @@ describe('OwnerDecisionContent', () => {
       get: vi.fn().mockReturnValue(null),
     } as never);
 
-    render(<OwnerDecisionContent />);
+    render(<OwnerDecisionContent whatsappUrl="https://wa.me/4915123456789" />);
 
     await waitFor(() => {
       expect(screen.getByText(/ungültig|invalid|fehlt|missing/i)).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('OwnerDecisionContent', () => {
       errorMessage: 'Token expired',
     });
 
-    render(<OwnerDecisionContent />);
+    render(<OwnerDecisionContent whatsappUrl="https://wa.me/4915123456789" />);
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /ungültig|invalid/i })).toBeInTheDocument();
@@ -96,7 +96,7 @@ describe('OwnerDecisionContent', () => {
       actionScope: 'decision',
     });
 
-    render(<OwnerDecisionContent />);
+    render(<OwnerDecisionContent whatsappUrl="https://wa.me/4915123456789" />);
 
     await waitFor(() => {
       expect(screen.getByText('Test Business')).toBeInTheDocument();
@@ -108,6 +108,26 @@ describe('OwnerDecisionContent', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /beanspruchen|claim/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /entfernen|remove/i })).toBeInTheDocument();
+  });
+
+  it('hides WhatsApp footer when whatsappUrl is null', async () => {
+    vi.mocked(useSearchParams).mockReturnValue({
+      get: vi.fn().mockReturnValue('valid-token'),
+    } as never);
+    vi.mocked(validateOutreachToken).mockResolvedValue({
+      isValid: true,
+      providerId: 'provider-123',
+      providerName: 'Test Business',
+      actionScope: 'decision',
+    });
+
+    render(<OwnerDecisionContent whatsappUrl={null} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Business')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(/WhatsApp öffnen/i)).not.toBeInTheDocument();
   });
 
   it('handles "stay listed" action', async () => {
@@ -127,7 +147,7 @@ describe('OwnerDecisionContent', () => {
       json: () => Promise.resolve({ success: true }),
     });
 
-    render(<OwnerDecisionContent />);
+    render(<OwnerDecisionContent whatsappUrl="https://wa.me/4915123456789" />);
 
     await waitFor(() => {
       expect(screen.getByText('Test Business')).toBeInTheDocument();
@@ -158,7 +178,7 @@ describe('OwnerDecisionContent', () => {
       actionScope: 'decision',
     });
 
-    render(<OwnerDecisionContent />);
+    render(<OwnerDecisionContent whatsappUrl="https://wa.me/4915123456789" />);
 
     await waitFor(() => {
       expect(screen.getByText('Test Business')).toBeInTheDocument();
@@ -189,7 +209,7 @@ describe('OwnerDecisionContent', () => {
       json: () => Promise.resolve({ success: true }),
     });
 
-    render(<OwnerDecisionContent />);
+    render(<OwnerDecisionContent whatsappUrl="https://wa.me/4915123456789" />);
 
     await waitFor(() => {
       expect(screen.getByText('Test Business')).toBeInTheDocument();
@@ -225,7 +245,7 @@ describe('OwnerDecisionContent', () => {
       json: () => Promise.resolve({ success: true }),
     });
 
-    render(<OwnerDecisionContent />);
+    render(<OwnerDecisionContent whatsappUrl="https://wa.me/4915123456789" />);
 
     await waitFor(() => {
       expect(screen.getByText('Test Business')).toBeInTheDocument();

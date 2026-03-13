@@ -1,4 +1,5 @@
 import { OwnerDecisionContent } from './OwnerDecisionContent';
+import { getWhatsAppContactUrl } from '@/services/email/outreachEmail';
 
 export const metadata = {
   title: 'Ihr Eintrag | Ummah Flow',
@@ -6,5 +7,6 @@ export const metadata = {
 };
 
 export default function OwnerDecisionPage() {
-  return <OwnerDecisionContent />;
+  const whatsappUrl = getWhatsAppContactUrl();
+  return <OwnerDecisionContent whatsappUrl={whatsappUrl} />;
 }
