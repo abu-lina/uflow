@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-03-13
+
+### Fixed
+
+- **Outreach emails now include real provider name (Plan 039)**: Replaced hardcoded `'Your business'` / `'Provider'` placeholders with the provider's actual display name fetched from the database (`providers.provider_name`). Both the email template and the token snapshot (`provider_name_snapshot`) now use the real name. A language-appropriate fallback (`'Ihr Unternehmen'` / `'Your business'`) is applied when the DB lookup returns no result, so dispatch is never blocked.
+
 ## [0.8.0] - 2026-06-08
 
 ### Added

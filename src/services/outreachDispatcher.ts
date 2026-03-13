@@ -10,6 +10,7 @@ import {
   createOutreachToken,
   recordDispatchAttempt,
   createOutreachTask,
+  getProviderName,
   type ProviderOutreach,
   type OutreachChannel,
 } from '@/services/outreach';
@@ -138,11 +139,20 @@ async function dispatchEmail(
   const { id, providerId, language } = outreach;
 
   try {
+    // Fetch provider name for personalisation; fall back gracefully if unavailable
+    let nameFromDb: string | null = null;
+    try {
+      nameFromDb = await getProviderName(providerId);
+    } catch {
+      // Name load failure is non-fatal; dispatch continues with language-appropriate fallback
+    }
+    const providerName = nameFromDb ?? (language === 'de' ? 'Ihr Unternehmen' : 'Your business');
+
     // Create token for landing page link
     const { rawToken } = await createOutreachToken({
       providerId,
       outreachId: id,
-      providerName: 'Provider', // Will be populated from DB in real implementation
+      providerName,
       actionScope: 'decision',
     });
 
@@ -154,7 +164,7 @@ async function dispatchEmail(
       to: email,
       language: language as 'de' | 'en',
       tokenUrl,
-      providerName: 'Your business', // Placeholder - will be populated from DB
+      providerName,
     });
 
     // Record result

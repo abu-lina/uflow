@@ -431,6 +431,29 @@ export async function getPendingTasks(
 }
 
 // ============================================================================
+// Provider Lookups (used by dispatcher for email personalisation)
+// ============================================================================
+
+/**
+ * Fetch the display name for a provider by ID.
+ * Returns null if the provider is not found or on query error,
+ * so the caller can apply a safe fallback without breaking dispatch.
+ */
+export async function getProviderName(providerId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('providers')
+    .select('provider_name')
+    .eq('provider_id', providerId)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data.provider_name ?? null;
+}
+
+// ============================================================================
 // Helpers
 // ============================================================================
 

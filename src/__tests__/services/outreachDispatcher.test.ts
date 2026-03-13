@@ -14,6 +14,7 @@ vi.mock('@/services/outreach', () => ({
   createOutreachTask: vi.fn(),
   getOutreachById: vi.fn(),
   hashToken: vi.fn((t) => `hashed-${t}`),
+  getProviderName: vi.fn(),
 }));
 
 // Mock email service
@@ -33,6 +34,7 @@ import {
   createOutreachToken,
   recordDispatchAttempt,
   createOutreachTask,
+  getProviderName,
 } from '@/services/outreach';
 
 import { sendProviderOutreachEmail } from '@/services/email/outreachEmail';
@@ -295,6 +297,73 @@ describe('outreachDispatcher', () => {
         'outreach-4',
         false,
         'Email delivery failed'
+      );
+    });
+
+    it('uses real provider name from DB in email and token', async () => {
+      const outreach = {
+        id: 'outreach-6',
+        providerId: 'provider-6',
+        candidateEmail: 'owner@example.com',
+        candidatePhone: null,
+        candidateInstagram: null,
+        selectedChannel: 'email' as const,
+        language: 'de',
+        status: 'approved' as const,
+        attemptCount: 0,
+        createdAt: '2026-03-13T00:00:00Z',
+      };
+
+      vi.mocked(getProviderName).mockResolvedValueOnce('Bilal Moschee');
+      vi.mocked(createOutreachToken).mockResolvedValueOnce({
+        tokenId: 'token-id',
+        rawToken: 'raw-token',
+      });
+      vi.mocked(sendProviderOutreachEmail).mockResolvedValueOnce({ success: true });
+      vi.mocked(recordDispatchAttempt).mockResolvedValueOnce({} as never);
+
+      await dispatchSingleOutreach(outreach);
+
+      expect(createOutreachToken).toHaveBeenCalledWith(
+        expect.objectContaining({ providerName: 'Bilal Moschee' })
+      );
+      expect(sendProviderOutreachEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ providerName: 'Bilal Moschee' })
+      );
+    });
+
+    it('falls back gracefully when provider name is unavailable', async () => {
+      const outreach = {
+        id: 'outreach-7',
+        providerId: 'provider-7',
+        candidateEmail: 'owner@example.com',
+        candidatePhone: null,
+        candidateInstagram: null,
+        selectedChannel: 'email' as const,
+        language: 'de',
+        status: 'approved' as const,
+        attemptCount: 0,
+        createdAt: '2026-03-13T00:00:00Z',
+      };
+
+      vi.mocked(getProviderName).mockResolvedValueOnce(null);
+      vi.mocked(createOutreachToken).mockResolvedValueOnce({
+        tokenId: 'token-id',
+        rawToken: 'raw-token',
+      });
+      vi.mocked(sendProviderOutreachEmail).mockResolvedValueOnce({ success: true });
+      vi.mocked(recordDispatchAttempt).mockResolvedValueOnce({} as never);
+
+      const result = await dispatchSingleOutreach(outreach);
+
+      // Dispatch must succeed — missing name is not fatal
+      expect(result.success).toBe(true);
+      // Must not use either of the old hardcoded placeholders
+      expect(createOutreachToken).not.toHaveBeenCalledWith(
+        expect.objectContaining({ providerName: 'Provider' })
+      );
+      expect(sendProviderOutreachEmail).not.toHaveBeenCalledWith(
+        expect.objectContaining({ providerName: 'Your business' })
       );
     });
 
