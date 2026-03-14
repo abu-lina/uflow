@@ -226,6 +226,7 @@ Detailed expert rules exist in `.cursor/rules/`:
 4. **PWA**: Don't disable PWA in production (use `DISABLE_PWA=true` for local dev only)
 5. **Environment Variables**: All Supabase vars are in `.env.local` (never commit)
 6. **Premature Optimization**: Don't add Redis/queues before proving Postgres can't handle it
+7. **Parallel Sessions**: When a Session Context Header is provided, do not allocate new Plan IDs, do not edit `agent-output/.next-id`, and do not read/write outside the declared worktree root and `.agent` root. See `docs/ai/parallel-sessions.md`.
 
 ## Quick Reference
 

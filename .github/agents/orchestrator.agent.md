@@ -178,8 +178,46 @@ Single entry point for all development work. When invoked with a task descriptio
 3. Read `agent-output/.next-id` to understand current document state
 4. Scan `agent-output/` subdirectories for in-progress work
 5. **Release-ready stall detection (MANDATORY)**: Identify any plans with Status `UAT Approved` that are not yet `Committed`/`Released`. Surface them explicitly as “Ready for DevOps” and suggest handoff to `⑨ DevOps`. Note: long delays increase version drift and coordination cost.
-5. If resuming an existing workflow, display the current Workflow Card with updated status
-6. If starting fresh, proceed to Task Classification
+6. If resuming an existing workflow, display the current Workflow Card with updated status
+7. If starting fresh, proceed to Task Classification
+
+---
+
+## Parallel Session Awareness (Plan 042)
+
+When operating inside a **parallel worker session** (a git worktree opened in a separate VS Code window), the following guardrails apply:
+
+### Detecting a Worker Session
+
+- If the user provides a **Session Context Header** (begins with `Session: S<id>-<topic>`), you are in a worker session.
+- If the workspace root differs from the canonical `uflow/` checkout, you are likely in a worktree.
+
+### Worker Session Constraints
+
+- **Do NOT allocate new Plan IDs** — the control window owns `agent-output/.next-id`.
+- **Do NOT create or transition lifecycle documents** under `agent-output/` unless the Session Context Header explicitly authorizes it and provides the pre-assigned Plan ID.
+- **Do NOT read/write outside the declared worktree root** and the shared `.agent` root.
+- **Include the Session Context Header** in every handoff prompt to downstream agents so they inherit the same constraints.
+
+### Session Context Header Format
+
+When present, relay this header verbatim in every handoff:
+
+```
+Session: S<plan-id>-<topic>
+Root: <absolute path to worktree>
+Workspace: <worktree root> + <shared .agent root>
+Branch: session/<plan-id>-<topic>
+Artifacts: agent-output/<domain>/<plan-id>-...
+Scope: Do not read/write outside this worktree and referenced artifacts.
+Lifecycle: Do not allocate new IDs or update agent-output/.next-id outside the control window.
+```
+
+### Control Window Behavior
+
+If no Session Context Header is present and the workspace is the canonical `uflow/` checkout, you are in the **control window**. Normal lifecycle operations (ID allocation, artifact creation, status transitions) proceed as usual.
+
+See `docs/ai/parallel-sessions.md` for the full operator guide.
 
 ---
 
@@ -319,6 +357,7 @@ Before selecting Layer 3 skills, you **MUST** locate the catalog file:
 3. **If NOT found**: Print a warning in the Workflow Card: `⚠️ Catalog not found — proceeding with UFlow skills only (Layer 1). To enable dynamic skills, ensure the .agent skills workspace is open.` Then skip Layer 3 entirely.
 
 **Common locations** (for reference, but always use search — never hard-code):
+
 - Multi-root workspace: `.agent/skills/data/catalog.json`
 - The catalog `skills[].path` values are relative to the `.agent/skills/` root (e.g., `skills/react-best-practices/SKILL.md`)
 
@@ -351,17 +390,17 @@ The Workflow Card **MUST** always include the `Catalog:` line — either with ma
 
 When the task matches one of these categories, **you MUST include the listed UFlow skill AND search the catalog for the listed catalog candidates**. List at least one catalog skill in the Workflow Card if the catalog is available.
 
-| Category | Token triggers | UFlow skill (Layer 1) | Catalog candidates (Layer 3) — search by ID |
-|----------|---------------|----------------------|---------------------------------------------|
-| **Database** | database, schema, migration, table, query, index, RLS, postgres | `architecture-patterns` | `postgres-best-practices`, `postgresql`, `postgresql-optimization`, `sql-optimization-patterns`, `supabase-automation`, `nextjs-supabase-auth`, `neon-postgres` |
-| **Auth** | auth, login, signup, session, JWT, password, OAuth | `security-patterns` | `auth-implementation-patterns`, `nextjs-supabase-auth`, `clerk-auth`, `broken-authentication` |
-| **API** | API, endpoint, route, REST, handler | `cross-repo-contract` | `api-patterns`, `api-design-principles`, `api-documentation`, `api-security-best-practices` |
-| **UI** | component, page, form, modal, UI, UX, responsive, tailwind | (none specific) | `react-best-practices`, `react-patterns`, `react-ui-patterns`, `tailwind-design-system`, `tailwind-patterns`, `cc-skill-frontend-patterns`, `nextjs-app-router-patterns` |
-| **Performance** | slow, optimize, cache, latency, performance | (none specific) | `web-performance-optimization`, `performance-profiling`, `performance-engineer`, `application-performance-performance-optimization` |
-| **Testing** | test, coverage, TDD, mock, fixture, vitest | `testing-patterns` | `javascript-testing-patterns` |
-| **TypeScript** | typescript, types, generics, type-safe | (none specific) | `typescript-advanced-types`, `typescript-expert`, `typescript-pro` |
-| **Docker/Infra** | docker, container, deploy, CI, CD, nginx | (none specific) | `docker-expert`, `vercel-deployment`, `cdk-patterns` |
-| **Next.js** | nextjs, app router, server component, RSC, middleware | (none specific) | `nextjs-best-practices`, `nextjs-app-router-patterns`, `react-nextjs-development` |
+| Category         | Token triggers                                                  | UFlow skill (Layer 1)   | Catalog candidates (Layer 3) — search by ID                                                                                                                              |
+| ---------------- | --------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Database**     | database, schema, migration, table, query, index, RLS, postgres | `architecture-patterns` | `postgres-best-practices`, `postgresql`, `postgresql-optimization`, `sql-optimization-patterns`, `supabase-automation`, `nextjs-supabase-auth`, `neon-postgres`          |
+| **Auth**         | auth, login, signup, session, JWT, password, OAuth              | `security-patterns`     | `auth-implementation-patterns`, `nextjs-supabase-auth`, `clerk-auth`, `broken-authentication`                                                                            |
+| **API**          | API, endpoint, route, REST, handler                             | `cross-repo-contract`   | `api-patterns`, `api-design-principles`, `api-documentation`, `api-security-best-practices`                                                                              |
+| **UI**           | component, page, form, modal, UI, UX, responsive, tailwind      | (none specific)         | `react-best-practices`, `react-patterns`, `react-ui-patterns`, `tailwind-design-system`, `tailwind-patterns`, `cc-skill-frontend-patterns`, `nextjs-app-router-patterns` |
+| **Performance**  | slow, optimize, cache, latency, performance                     | (none specific)         | `web-performance-optimization`, `performance-profiling`, `performance-engineer`, `application-performance-performance-optimization`                                      |
+| **Testing**      | test, coverage, TDD, mock, fixture, vitest                      | `testing-patterns`      | `javascript-testing-patterns`                                                                                                                                            |
+| **TypeScript**   | typescript, types, generics, type-safe                          | (none specific)         | `typescript-advanced-types`, `typescript-expert`, `typescript-pro`                                                                                                       |
+| **Docker/Infra** | docker, container, deploy, CI, CD, nginx                        | (none specific)         | `docker-expert`, `vercel-deployment`, `cdk-patterns`                                                                                                                     |
+| **Next.js**      | nextjs, app router, server component, RSC, middleware           | (none specific)         | `nextjs-best-practices`, `nextjs-app-router-patterns`, `react-nextjs-development`                                                                                        |
 
 **If none of the above categories match**, still run the general scoring algorithm (Step 2) against the full catalog. Only skip Layer 3 if the catalog was not found.
 
@@ -530,8 +569,10 @@ To confirm the Orchestrator is correctly using catalog skills:
    - `INSTRUCTIONS FOR @{agent}` section containing `Load skill '...' from '...'` directives
 3. **If `Catalog:` is always empty or shows a warning**:
    - Verify the `.agent` skills workspace folder is open in VS Code
-  - Search the workspace for `catalog.json` and confirm the resolved path points to the expected catalog file (commonly `.agent/skills/data/catalog.json` in a multi-root workspace)
-   - If the catalog exists but isn't found, the search tool may not be indexing that workspace — try reopening VS Code
+
+- Search the workspace for `catalog.json` and confirm the resolved path points to the expected catalog file (commonly `.agent/skills/data/catalog.json` in a multi-root workspace)
+- If the catalog exists but isn't found, the search tool may not be indexing that workspace — try reopening VS Code
+
 4. **Fallback mode** (expected when catalog is absent): The Orchestrator uses UFlow skills only (Layer 1 + Layer 2). This is safe but less targeted.
 
 ---
