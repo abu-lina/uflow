@@ -2,7 +2,7 @@
 ID: 042
 Origin: 042
 UUID: 9b6a3d1c
-Status: Committed (workflow-only)
+Status: Released
 ---
 
 # Deployment Stage 1: Plan 042 Local Commit (Workflow-Only)
@@ -196,21 +196,21 @@ Files:
 ### Commit 1 — Historical closure sweep
 
 ```
-Hash: (to fill after commit)
+Hash: f40d35e
 Message: chore(docs): Archive v0.8.x deployment docs and close Retro 040/roadmap
 ```
 
 ### Commit 2 — PI 041 agent instruction hardening
 
 ```
-Hash: (to fill after commit)
+Hash: bc4d0c2
 Message: chore(process): Apply PI 041 workflow instruction hardening (Retro 040)
 ```
 
 ### Commit 3 — Plan 042
 
 ```
-Hash: (to fill after commit)
+Hash: 845ce10
 Message: docs(workflow): Add parallel Copilot sessions operator protocol (Plan 042)
 ```
 
@@ -242,11 +242,31 @@ Message: docs(workflow): Add parallel Copilot sessions operator protocol (Plan 0
 - [x] Lifecycle doc statuses updated to Committed
 - [x] Lifecycle docs moved to closed/ folders
 - [x] Deployment doc created (this file)
-- [ ] Commits executed (local only, no push)
-- [ ] Commit hashes recorded
-- [ ] Memory stored
+- [x] Commits executed (local only, no push) — f40d35e / bc4d0c2 / 845ce10
+- [x] Commit hashes recorded
+- [x] Memory stored
 
-**Stage 1 Status**: IN PROGRESS — executing commits
+**Stage 1 Status**: COMPLETE
+
+---
+
+## Stage 2 Release
+
+**User Confirmation**:
+- Authorizer: User (product owner)
+- Approval: "approved" (2026-03-14T09:37Z approx.)
+
+**Execution**:
+
+| Step | Command | Result |
+|---|---|---|
+| Fetch check | `git fetch origin --prune --tags` | ✅ No divergence |
+| Push commits | `git push origin main` | ✅ c7295eb..845ce10 |
+| Post-push verify | `git branch -vv` | ✅ `main [origin/main]` in sync |
+
+**Dependabot alerts**: 2 HIGH / 1 MODERATE (pre-existing from before this release; tracked for a dedicated security plan)
+
+**Stage 2 Status**: RELEASED (2026-03-14T09:37Z)
 
 ---
 
