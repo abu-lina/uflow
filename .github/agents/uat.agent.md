@@ -76,6 +76,17 @@ Core Responsibilities:
 10. Use memory for continuity
 11. **Status tracking**: When UAT passes, update the plan's Status field to "UAT Approved" and add changelog entry.
 
+### Deferred Follow-ups (MANDATORY when applicable)
+
+If UAT approves release with any non-blocking residual risk, you MUST record:
+
+- owner
+- trigger/due window
+- evidence required to close
+- recommended next-plan or tracker destination
+
+If this is not recorded, do not describe the item as merely "post-release" or "future work".
+
 ### Focus/Scroll Side-Effects Scenarios (WHEN APPLICABLE)
 
 If the change can affect mobile input focus/keyboard/scroll behavior (direct `focus()` calls or equivalent effects), UAT MUST include scenarios for:
@@ -168,6 +179,13 @@ Create markdown in `agent-output/uat/` matching plan name:
 
 - Use UTC and ISO-8601 when recording timestamps (example: `2026-02-22T17:30Z`).
 
+### Timestamp Discipline (MANDATORY)
+
+- At phase start, capture the current UTC time and use it as the initial changelog or timeline timestamp.
+- For each later status transition, record the actual event time in UTC ISO-8601 (`YYYY-MM-DDTHH:MMZ`).
+- Do not estimate or copy-forward prior timestamps without marking them `approx.`.
+- Before finalizing the UAT report, sanity-check that timestamps are chronologically consistent with the documented handoff order.
+
 **Example**: `2025-11-22 | QA | All tests passing, ready for value validation | UAT Complete - implementation delivers stated value, async ingestion working <10s`
 
 ## Value Statement Under Test
@@ -228,6 +246,8 @@ Create markdown in `agent-output/uat/` matching plan name:
 ## Next Actions
 
 [If UAT failed: required fixes; If UAT passed: none or future enhancements]
+
+If UAT passed with deferred non-blocking follow-ups, list owner, trigger/due window, evidence to close, and the recommended next-plan or tracker destination.
 ```
 
 Agent Workflow:

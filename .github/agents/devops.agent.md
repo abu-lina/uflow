@@ -88,6 +88,15 @@ Deployment Workflow:
 
 _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 
+**Phase-start skill preflight (MANDATORY)**:
+
+- Before any git, deployment, or document work, load all mandatory skills for the phase in the first read-only batch.
+- For Stage 1, this means at minimum: `memory-contract`, `document-lifecycle`, and `commit`.
+- If a skill path is uncertain or copied from prior context, resolve it before reading.
+  - Prefer the canonical UFlow path: `.github/skills/<name>/SKILL.md`
+  - If still uncertain, locate the file first, then read it.
+- Do not defer mandatory skill loads until mid-phase.
+
 1. **Acknowledge handoff**: Plan ID, target release version (e.g., v0.6.2), UAT decision.
 2. Confirm UAT "APPROVED FOR RELEASE", QA "QA Complete" for this plan.
 3. Read roadmap. Verify plan's target release version. Multiple plans may target same release.
@@ -116,7 +125,13 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 - Always quote file paths passed to shell commands (especially App Router route-group paths like `src/app/(public)/...`).
 - Reason: zsh treats parentheses as glob patterns and may error with `zsh: no matches found`.
 
-6. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
+6. **Prepare Stage 1 closure before the final commit**:
+  - Create or update the Stage 1 deployment doc before the final `git add` / `git commit` step.
+  - For the current plan, update lifecycle statuses and move the plan's docs to `closed/` before the final staged-set verification.
+  - Verify the staged set includes the plan changes, the deployment doc, and the lifecycle doc moves for that same plan.
+  - Exception: if you discover unrelated orphaned documents from older plans, keep those in a separate docs-only commit.
+
+7. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
 
    **Commit message reliability (MANDATORY when multi-line)**:
 
@@ -159,16 +174,16 @@ Refs PLAN-042
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-7. **Do NOT push**. Changes stay local until release is approved.
-8. **Close committed documents** (per `document-lifecycle` skill):
+8. **Do NOT push**. Changes stay local until release is approved.
+9. **Close committed documents** (per `document-lifecycle` skill):
    - **Normalize lifecycle invariants before moving to `closed/`**:
      - Verify each doc frontmatter `ID` / `Origin` / `UUID` matches the plan’s frontmatter (copy/paste exact values)
      - If mismatch is found, update frontmatter to match the plan before closure
      - Update Status to terminal state for Stage 1: "Committed" on plan, implementation, code-review, qa, uat docs
    - Move each to their respective `agent-output/<domain>/closed/` folders
    - Log: "Closed documents for Plan [ID]: planning, implementation, code-review, qa, uat moved to closed/"
-8b. **Deferred post-deploy tracker (MANDATORY when applicable)**:
-  - If the plan or UAT report includes any deferred post-deploy milestone/validation, create `agent-output/planning/[ID]-open-actions.md` (Status: Active) so it remains visible after the plan doc is moved to `closed/`.
+9b. **Deferred post-deploy tracker (MANDATORY when applicable)**:
+  - If the plan or UAT report includes any deferred post-deploy milestone/validation, or any UAT residual risk labeled deferred / post-release / follow-up required, create `agent-output/planning/[ID]-open-actions.md` (Status: Active) so it remains visible after the plan doc is moved to `closed/`.
   - If the deployment doc contains any **Known Limitations (pre-operation)** items that MUST be completed before first real-world operation, create the same tracker and record those items with owner + trigger + evidence-to-close.
   - Use the same `ID` / `Origin` / `UUID` as the plan (copy/paste exact values).
   - Include: deferred item, owner, trigger/due, and the evidence link required to close it.
@@ -201,10 +216,10 @@ Status: Active
 |---|---|---|
 | YYYY-MM-DD | devops | Created tracker from deferred validations |
 ```
-9. Update plan status to "Committed for Release [X.Y.Z]".
-10. Report to Roadmap agent (handoff): Plan committed, release tracker needs update.
-11. Inform user: "[Plan ID] committed locally for release [X.Y.Z]. [N] of [M] plans committed for this release."
-12. Store memory (MANDATORY): After Stage 1 local commit — what's committed, what remains, next steps.
+10. Update plan status to "Committed for Release [X.Y.Z]".
+11. Report to Roadmap agent (handoff): Plan committed, release tracker needs update.
+12. Inform user: "[Plan ID] committed locally for release [X.Y.Z]. [N] of [M] plans committed for this release."
+13. Store memory (MANDATORY): After Stage 1 local commit — what's committed, what remains, next steps.
     - After storing memory, immediately retrieve using query:
       "Plan <ID> DevOps Stage 1 <version>"
       Confirm at least one result.
@@ -358,10 +373,18 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
 6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `release-procedures`, `commit`)
 
+If a referenced skill path is missing or appears stale:
+
+- Prefer the canonical UFlow path pattern: `.github/skills/<name>/SKILL.md`
+- If the path is still uncertain, locate the file first and only then read it
+- Do not guess alternate paths under `agent-output/`
+
 ## Mandatory Skills for Stage 1 (Commit)
 
 **Always load before committing**:
 
+- `memory-contract` skill from `.github/skills/memory-contract/SKILL.md` — retrieval/store discipline
+- `document-lifecycle` skill from `.github/skills/document-lifecycle/SKILL.md` — lifecycle closure rules
 - `commit` skill from `.agent/skills/skills/commit/SKILL.md` — Sentry commit message conventions
 
 ---
@@ -370,7 +393,7 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 
 **MANDATORY**: Load `document-lifecycle` skill. You **trigger closure** on commit.
 
-**After successful commit** (Stage 1 completion):
+**Before the final Stage 1 commit** (for the plan currently being committed):
 
 1. Update Status to "Committed" on: plan, implementation, code-review, qa, uat docs for the committed plan
 2. Move all to their respective `closed/` folders:
@@ -379,7 +402,8 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
   - `agent-output/code-review/closed/`
   - `agent-output/qa/closed/`
   - `agent-output/uat/closed/`
-3. Log: "Closed documents for Plan [ID]: planning, implementation, code-review, qa, uat moved to closed/"
+3. Verify the final staged set includes these lifecycle moves together with the plan changes and Stage 1 deployment doc.
+4. Log: "Closed documents for Plan [ID]: planning, implementation, code-review, qa, uat moved to closed/"
 
 **Self-check on start**: Before starting work, scan `agent-output/deployment/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
 
@@ -410,6 +434,13 @@ At the start of work (before substantive decisions), run **one** Flowbaby retrie
 - Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
+
+### Timestamp Discipline (MANDATORY)
+
+- At phase start, capture the current UTC time and use it as the initial changelog or evidence timestamp.
+- For each later status transition, record the actual event time in UTC ISO-8601 (`YYYY-MM-DDTHH:MMZ`).
+- Do not estimate or copy-forward prior timestamps without marking them `approx.`.
+- Before finalizing the document, sanity-check that timestamps are chronologically consistent with the documented handoff order.
 
 ---
 

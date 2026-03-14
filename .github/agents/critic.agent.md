@@ -111,6 +111,13 @@ Critique Doc Format: `agent-output/critiques/Name-critique.md` with: Artifact pa
 
 - Use UTC and ISO-8601 when recording timestamps in changelog/timeline entries (example: `2026-02-23T17:30Z`).
 
+### Timestamp Discipline (MANDATORY)
+
+- At phase start, capture the current UTC time and use it as the initial changelog or timeline timestamp.
+- For each later status transition, record the actual event time in UTC ISO-8601 (`YYYY-MM-DDTHH:MMZ`).
+- Do not estimate or copy-forward prior timestamps without marking them `approx.`.
+- Before finalizing the critique, sanity-check that timestamps are chronologically consistent with the documented handoff order.
+
 Agent Workflow:
 
 - **Reviews planner's output**: Clarity, completeness, fit, scope, debt.
