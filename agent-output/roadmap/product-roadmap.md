@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-03-07
+**Last Updated**: 2026-03-13
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.6.12
+**Current Version**: v0.8.1
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -32,6 +32,8 @@
 | 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
 | 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |
 | 2026-03-08       | Plan 037 released (v0.7.2): npm dependency security remediation    | Eliminated all 10 npm vulnerabilities (8 high, 2 moderate) via package overrides; 0 vulnerabilities confirmed; zero application code changes               |
+| 2026-03-13       | Plans 039+040 released (v0.8.1): Provider outreach improvements    | Plan 039: personalized provider names in outreach emails; Plan 040: WhatsApp config. Bundled release. Retrospective 040 + ProcessImprovement 041 completed |
+| 2026-03-13       | Process improvements implemented (PI 041)                          | DevOps phase-start skill preflight, Stage 1 sequencing fixes, timestamp discipline mandate, UAT deferred-risk structured tracking (from Retro 040)          |
 
 ---
 
@@ -54,7 +56,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.7.2 released successfully (2026-03-08) — ready for new planning_
+_v0.8.1 released successfully (2026-03-13) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -64,6 +66,8 @@ _v0.7.2 released successfully (2026-03-08) — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.8.1  | 2026-03-13 | Plans 039+040 (Provider outreach improvements)      | Released |
+| v0.8.0  | 2026-03-13 | Plan 038 (Provider owner outreach & claim system)    | Released |
 | v0.7.2  | 2026-03-08 | Plan 037 (npm dependency security remediation)       | Released |
 | v0.7.1  | 2026-03-07 | Plan 036 (Analytics activation + event instrumentation) | Released |
 | v0.7.0  | 2026-03-07 | Plan 035 (Growth: indexable city pages + Plausible)  | Released |
