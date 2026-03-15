@@ -4,11 +4,49 @@
 
 ## TL;DR
 
-Run multiple topics at once by giving each its own **VS Code window + git worktree + pre-assigned Plan ID**. One "control window" on the canonical repo owns lifecycle state; worker windows do topic work only.
+Run multiple topics at once by giving each its own **VS Code window + git worktree + pre-assigned Plan ID**. Start in the **Orchestrator** from the canonical repo's control window, let it emit a **Session Bootstrap** block, then open each worker session in its own worktree.
 
 ---
 
-## Quick Start (<2 minutes per session)
+## Default Workflow (Orchestrator-First)
+
+Use this as the standard entry path.
+
+### 1. In the control window, ask Orchestrator for a bootstrap block
+
+Single stream:
+
+```text
+I want to work on this in a parallel session from the control window.
+Topic: <short-topic>
+Please output a Session Bootstrap block only.
+Do not execute commands.
+```
+
+Multiple streams:
+
+```text
+I want to split this into parallel workstreams from the control window.
+Streams:
+1. <stream-one>
+2. <stream-two>
+Please output one Session Bootstrap block per stream.
+Do not execute commands.
+```
+
+### 2. Run the emitted bootstrap block in the control window
+
+The block should allocate the Plan ID, create the worktree and branch, write the multi-root workspace file, print the `code ...` command, and include the Session Context Header.
+
+### 3. Open the new VS Code window and paste the Session Context Header first
+
+Start the worker session by pasting the emitted Session Context Header as the first prompt. Then continue with Orchestrator or the specific downstream agent for that stream.
+
+---
+
+## Manual Bootstrap Reference (<2 minutes per session)
+
+Use this if you want to run the bootstrap steps yourself instead of having Orchestrator print them for you.
 
 ### 1. Allocate a Plan ID (control window only)
 
@@ -51,7 +89,7 @@ EOF
 code "../uflow-wt/${SESSION}/${SESSION}.code-workspace"
 ```
 
-### 5. Paste the Session Context Header in your first prompt
+### 5. Paste the Session Context Header in your first worker prompt
 
 ```
 Session: S<plan-id>-<topic>
@@ -61,6 +99,21 @@ Branch: session/<plan-id>-<topic>
 Artifacts: agent-output/<domain>/<plan-id>-...
 Scope: Do not read/write outside this worktree and referenced artifacts.
 Lifecycle: Do not allocate new IDs or update agent-output/.next-id outside the control window.
+```
+
+Recommended first worker prompt:
+
+```text
+Session: S<plan-id>-<topic>
+Root: /path/to/uflow-wt/S<plan-id>-<topic>
+Workspace: <worktree root> + <shared .agent root>
+Branch: session/<plan-id>-<topic>
+Artifacts: agent-output/<domain>/<plan-id>-...
+Scope: Do not read/write outside this worktree and referenced artifacts.
+Lifecycle: Do not allocate new IDs or update agent-output/.next-id outside the control window.
+
+Use Orchestrator to continue this stream.
+Task: <what this session should do>
 ```
 
 ---
