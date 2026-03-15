@@ -221,6 +221,69 @@ See `docs/ai/parallel-sessions.md` for the full operator guide.
 
 ---
 
+## Session Bootstrap (Control Window Only)
+
+If (and only if) you are in the **control window** and the task would benefit from **parallel workstreams**, you SHOULD propose creating one or more **worker sessions**.
+
+### When to Propose a Worker Session
+
+- The user explicitly asks for parallel work (multiple topics at once).
+- The task naturally splits into independent streams (e.g., “bugfix + docs”, “refactor + tests”, “investigate + implement”).
+
+### What to Output (Do Not Execute Automatically)
+
+The Orchestrator MUST output a **Session Bootstrap block** the operator can run. Do **NOT** run git or filesystem commands unless the user explicitly asks you to.
+
+The block MUST:
+
+- Allocate a Plan ID (control window owns `agent-output/.next-id`).
+- Create a **git worktree + branch** for the session.
+- Create a **multi-root** `.code-workspace` file (worktree + shared `.agent` root).
+- Provide the `code ...` command to open a **new VS Code window**.
+- Provide the **Session Context Header** to paste as the first prompt in the worker window.
+
+**Template (operator-run):**
+
+```bash
+# Control window only
+NEXT_ID=$(cat agent-output/.next-id)
+echo $((NEXT_ID + 1)) > agent-output/.next-id
+
+SESSION="S${NEXT_ID}-<short-topic>"   # e.g. S044-auth-fix
+AGENT_ROOT="/Users/NARAFIQ/01 Personal/Projects/.agent"  # adjust if needed
+
+mkdir -p ../uflow-wt
+git worktree add "../uflow-wt/${SESSION}" -b "session/${NEXT_ID}-<short-topic>"
+
+cat > "../uflow-wt/${SESSION}/${SESSION}.code-workspace" << EOF
+{
+  "folders": [
+    { "path": "." },
+    { "path": "${AGENT_ROOT}" }
+  ],
+  "settings": {
+    "window.title": "${SESSION} — \\${activeEditorShort}"
+  }
+}
+EOF
+
+code "../uflow-wt/${SESSION}/${SESSION}.code-workspace"
+```
+
+Then output the Session Context Header:
+
+```
+Session: S<plan-id>-<topic>
+Root: <absolute path to worktree>
+Workspace: <worktree root> + <shared .agent root>
+Branch: session/<plan-id>-<topic>
+Artifacts: agent-output/<domain>/<plan-id>-...
+Scope: Do not read/write outside this worktree and referenced artifacts.
+Lifecycle: Do not allocate new IDs or update agent-output/.next-id outside the control window.
+```
+
+---
+
 ## Phase 1: Task Classification
 
 Analyze the task description to determine type. Use keyword signals AND semantic intent.
