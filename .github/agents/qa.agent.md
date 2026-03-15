@@ -428,6 +428,11 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 
 **ID inheritance**: When creating QA doc, copy ID, Origin, UUID from the plan you are testing.
 
+**Chain invariant check (MANDATORY)**:
+
+- If an analysis doc exists for this plan (same ID under `agent-output/analysis/`), verify its frontmatter `ID`, `Origin`, and `UUID` match the plan.
+- If mismatch is found, update the analysis doc to match the plan before finalizing QA.
+
 **Document header**:
 
 ```yaml

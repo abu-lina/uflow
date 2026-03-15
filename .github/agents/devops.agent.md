@@ -136,6 +136,7 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
    **Commit message reliability (MANDATORY when multi-line)**:
 
 - Create a temporary commit message file, then run `git commit -F <path>`.
+  - Prefer creating the message file via a tool-based file write (for example `create_file`) or a small Python one-liner; avoid shell heredocs in this environment.
 - Do NOT use heredocs or multi-paragraph `git commit -m ...` (shell quoting is fragile).
 
   **Temp commit message file safety (MANDATORY)**:
