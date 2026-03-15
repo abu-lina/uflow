@@ -12,7 +12,7 @@ Run multiple topics at once by giving each its own **VS Code window + git worktr
 
 Use this as the standard entry path.
 
-### 1. In the control window, ask Orchestrator for a bootstrap block
+### 1. In the control window, ask Orchestrator to preview or create the session
 
 Single stream:
 
@@ -21,6 +21,16 @@ I want to work on this in a parallel session from the control window.
 Topic: <short-topic>
 Please output a Session Bootstrap block only.
 Do not execute commands.
+```
+
+Single stream with explicit setup:
+
+```text
+I want to work on this in a parallel session from the control window.
+Topic: <short-topic>
+Please create the parallel workstream for me now.
+Set up the worktree, branch, and multi-root workspace.
+Then give me the Initial Worker Prompt to paste into the new window.
 ```
 
 Multiple streams:
@@ -38,9 +48,15 @@ Do not execute commands.
 
 The block should allocate the Plan ID, create the worktree and branch, write the multi-root workspace file, print the `code ...` command, and include the Session Context Header.
 
+If you explicitly asked Orchestrator to create the session, it should execute those setup steps in the control window and return the created paths plus the Initial Worker Prompt.
+
 ### 3. Open the new VS Code window and paste the Session Context Header first
 
-Start the worker session by pasting the emitted Session Context Header as the first prompt. Then continue with Orchestrator or the specific downstream agent for that stream.
+Start the worker session by pasting the emitted Initial Worker Prompt as the first prompt. Then continue with Orchestrator or the specific downstream agent for that stream.
+
+### 4. Repeat for the next topic
+
+Once the first worker session is created, you can stay in the control window and ask Orchestrator to create the next parallel workstream. Each stream gets its own worktree, branch, and worker prompt.
 
 ---
 
@@ -114,6 +130,14 @@ Lifecycle: Do not allocate new IDs or update agent-output/.next-id outside the c
 
 Use Orchestrator to continue this stream.
 Task: <what this session should do>
+```
+
+If the control-window request included screenshots, logs, or other attachments, add a short digest because those attachments do not automatically exist in the new worker conversation:
+
+```text
+Attachment Digest:
+- Screenshot 1: <what it shows>
+- Screenshot 2: <what it highlights>
 ```
 
 ---
