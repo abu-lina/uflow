@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-03-15
+
+### Fixed
+
+- **Mobile footer overlay no longer blocks content interaction (Plan 044)**: Invisible wrapper elements in the mobile bottom UI slot were intercepting touch events above the footer, preventing users from tapping buttons and links near the bottom of the screen. Added `pointer-events: none` to the structural wrapper layers and `pointer-events: auto` to the interactive footer/navbar components, restoring full touch access to page content on all mobile routes.
+
 ## [0.8.1] - 2026-03-13
 
 ### Fixed

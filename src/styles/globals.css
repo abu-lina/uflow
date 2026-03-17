@@ -420,16 +420,19 @@
     }
   }
 
-  /* Mobile bottom UI slot: always in DOM to prevent layout shift; visibility by data-mobile-ui */
+  /* Mobile bottom UI slot: always in DOM for positioning context; navs are fixed-position so
+     no document-flow reservation is needed. Scroll clearance comes from mobile-nav-spacing
+     padding-bottom inside content areas. */
   .mobile-bottom-ui-slot {
     position: relative;
-    min-height: var(--mobile-nav-total);
+    /* No min-height — fixed navs don't need document flow space; padding-bottom handles clearance */
+    min-height: 0;
     flex-shrink: 0;
-    /* Smooth transition for slot height change (mitigates hydration layout shift) */
-    transition: min-height 0.15s ease-out;
+    /* Slot is a structural container only; interactive children restore pointer-events-auto */
+    pointer-events: none;
   }
 
-  /* Collapse the slot when no bottom UI is visible (reclaims 128px for content) */
+  /* Keep collapse rule for consistency (already 0, but explicit) */
   .mobile-bottom-ui-slot[data-mobile-ui='none'] {
     min-height: 0;
   }
@@ -441,6 +444,7 @@
     left: 0;
     right: 0;
     visibility: hidden;
+    pointer-events: none;
   }
 
   .mobile-bottom-ui-slot[data-mobile-ui='footer'] .mobile-footer-bar-wrapper {

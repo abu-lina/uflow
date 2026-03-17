@@ -57,7 +57,7 @@ export function CityEarlyAccessNavbar() {
   return (
     <nav
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-50',
+        'pointer-events-auto fixed bottom-0 left-0 right-0 z-50',
         'flex w-full items-center justify-center',
         'px-6 pt-footer-safe pb-safe',
         'border-t border-gray-200/30',

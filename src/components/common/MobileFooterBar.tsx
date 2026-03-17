@@ -80,7 +80,7 @@ export function MobileFooterBar() {
     <>
       <nav
         ref={navRef}
-        className="pt-footer-safe pb-safe fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center border-t border-gray-200/30 px-6 sm:px-8"
+        className="pointer-events-auto pt-footer-safe pb-safe fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center border-t border-gray-200/30 px-6 sm:px-8"
         style={{
           // Solid opaque background - matches page gradient exactly
           background: 'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
