@@ -2,7 +2,7 @@
 ID: 044
 Origin: 044
 UUID: f7a92c3d
-Status: Committed
+Status: Released
 ---
 
 # Implementation 044 — Mobile Footer Overlay Layer Bugfix (v0.8.2)
