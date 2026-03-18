@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-03-18
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.8.3
+**Current Version**: v0.8.2
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -34,8 +34,10 @@
 | 2026-03-08       | Plan 037 released (v0.7.2): npm dependency security remediation    | Eliminated all 10 npm vulnerabilities (8 high, 2 moderate) via package overrides; 0 vulnerabilities confirmed; zero application code changes               |
 | 2026-03-13       | Plans 039+040 released (v0.8.1): Provider outreach improvements    | Plan 039: personalized provider names in outreach emails; Plan 040: WhatsApp config. Bundled release. Retrospective 040 + ProcessImprovement 041 completed |
 | 2026-03-13       | Process improvements implemented (PI 041)                          | DevOps phase-start skill preflight, Stage 1 sequencing fixes, timestamp discipline mandate, UAT deferred-risk structured tracking (from Retro 040)          |
-| 2026-03-17       | Plan 044 released (v0.8.2): Mobile footer overlay blocking fix     | Invisible wrapper elements intercepted touch events above footer on mobile; fixed with pointer-events discipline                                            |
-| 2026-03-18       | Plan 044 released (v0.8.3): Providers location empty-filter bugfix | Empty ?location= param now correctly shows all providers; infinite scroll restored; legacy Everywhere/Überall URLs normalized                                |
+| 2026-03-14       | Plan 042 released: Parallel Copilot Sessions (workflow-only)       | Operator protocol for parallel development workflows; no product version bump; 3 local commits pushed (f40d35e, bc4d0c2, 845ce10)                           |
+| 2026-03-18       | Plan 044 released (v0.8.2): Mobile footer overlay layer bugfix     | Fixed invisible tap interceptor blocking mobile footer interactions via z-index/pointer-events fixes                                                        |
+| 2026-03-18       | Process improvements implemented (PI 044)                          | Local UI verification gate pre-UAT, interaction-layer audit checklist, post-UAT delta protocol, invisible interceptor bug heuristic (from Retro 044)        |
+| 2026-03-18       | Orphan sweep: 4 terminal docs moved to closed/                     | Cleaned deployment (042, v0.8.2) and process-improvement (044 analysis + updates) per document lifecycle                                                    |
 
 ---
 
@@ -58,7 +60,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.8.3 released successfully (2026-03-18) — ready for new planning_
+_v0.8.2 released successfully (2026-03-18) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -68,8 +70,7 @@ _v0.8.3 released successfully (2026-03-18) — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
-| v0.8.3  | 2026-03-18 | Plan 044 (Providers location empty-filter bugfix)   | Released |
-| v0.8.2  | 2026-03-17 | Plan 044 (Mobile footer overlay blocking fix)        | Released |
+| v0.8.2  | 2026-03-18 | Plan 044 (Mobile footer overlay layer bugfix)       | Released |
 | v0.8.1  | 2026-03-13 | Plans 039+040 (Provider outreach improvements)      | Released |
 | v0.8.0  | 2026-03-13 | Plan 038 (Provider owner outreach & claim system)    | Released |
 | v0.7.2  | 2026-03-08 | Plan 037 (npm dependency security remediation)       | Released |
@@ -114,6 +115,21 @@ Workflow and development tooling releases — versioned independently from main 
 - Drop-in replacement for Flowbaby tools (`flowbabyStoreSummary`, `flowbabyRetrieveMemory`)
 - Sub-millisecond store/retrieve performance (0.4–0.7ms typical)
 - Workspace-local storage at `.uflow-memory/memories.db`
+
+### Workflow Releases
+
+Agent workflow improvements — no product version bump, documentation and instruction updates only.
+
+| Plan    | Date       | Description                                                                                      | Status   |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------ | -------- |
+| Plan 042 | 2026-03-14 | Parallel Copilot Sessions Operator Protocol — multi-window development workflow, session isolation | Released |
+
+**Key Deliverables (Plan 042)**:
+
+- Parallel sessions operator guide (`docs/ai/parallel-sessions.md`)
+- Orchestrator Session Context Header awareness (control vs worker windows)
+- Agent instruction guardrails (ID allocation prohibition in worker windows)
+- Copilot instructions pitfall #7 (parallel sessions workflow)
 
 ---
 
