@@ -89,9 +89,20 @@ export function ProvidersContent({
     setSelectedLocation,
   } = useSearch();
 
-  // Priority: defaultLocation > URL param > context > fallback
-  const location =
-    defaultLocation || searchParams.get('location') || selectedLocation || t('search.everywhere');
+  // Resolve the location for use as a query transport value (not for display).
+  // searchParams.get('location') returns null when absent, '' when ?location= is present.
+  // We must NOT use || here because '' is a valid sentinel (LOCATION_ALL) and would be
+  // discarded as falsy, causing it to fall through to a localized display label.
+  // Mirror the same normalization that page.tsx applies server-side (Plan 044).
+  const rawLocationParam = searchParams.get('location'); // null | string
+  const normalizedUrlLocation =
+    rawLocationParam === null
+      ? null // param absent — fall through to context
+      : rawLocationParam === 'Everywhere' || rawLocationParam === 'Überall'
+        ? '' // legacy all-locations labels → LOCATION_ALL sentinel
+        : rawLocationParam; // real city name or '' (LOCATION_ALL)
+  // Priority: defaultLocation > URL param ('' preserved) > context > LOCATION_ALL ('')
+  const location = defaultLocation ?? normalizedUrlLocation ?? selectedLocation ?? '';
   const query = searchParams.get('q') || '';
 
   // Use provider state for category, fallback to URL params
@@ -240,10 +251,12 @@ export function ProvidersContent({
     if (query !== searchQuery) {
       setSearchQuery(query);
     }
-    // Sync location: if defaultLocation is provided, use it; otherwise use URL param or context
-    const locationToSync = defaultLocation || searchParams.get('location') || selectedLocation;
-    if (locationToSync && locationToSync !== selectedLocation) {
-      setSelectedLocation(locationToSync);
+    // Sync location using the already-resolved `location` value (resolved via ?? chain above:
+    // defaultLocation ?? normalizedUrlLocation ?? selectedLocation ?? LOCATION_ALL).
+    // Using `??` semantics here ensures an empty-string LOCATION_ALL is respected rather than
+    // discarded — the same pattern applied in the RC-1 fix (Plan 044).
+    if (location !== selectedLocation) {
+      setSelectedLocation(location);
     }
     // ESLint warning is intentionally ignored here to prevent infinite loops
     // The setter functions are stable and don't need to be in dependencies

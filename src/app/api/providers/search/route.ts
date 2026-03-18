@@ -17,7 +17,8 @@ import { searchProvidersAndCommunityServices } from '@/services/providers';
  * Query params:
  *   q         - free-text search query (optional)
  *   category  - category UUID filter (optional)
- *   location  - city name filter (optional, defaults to "Everywhere")
+ *   location  - city name filter (optional); absent, empty, "Everywhere", and "Überall" all mean
+ *               no city filter (LOCATION_ALL = ''). Mirror normalization from page.tsx (Plan 044).
  *   page      - page number, 0-indexed (optional, defaults to 0)
  *   pageSize  - results per page (optional, defaults to 12)
  *
@@ -39,7 +40,12 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     const query = searchParams.get('q') || '';
     const category = searchParams.get('category') || null;
-    const location = searchParams.get('location') || 'Everywhere';
+    // Normalize location: absent (null) and empty string both mean LOCATION_ALL ('').
+    // Legacy localized labels from old links/bookmarks are also mapped to ''.
+    // Using ?? instead of || preserves '' as a valid sentinel value (Plan 044).
+    const rawLocation = searchParams.get('location') ?? '';
+    const location =
+      rawLocation === 'Everywhere' || rawLocation === 'Überall' ? '' : rawLocation;
     const page = parseInt(searchParams.get('page') || '0', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '12', 10);
 

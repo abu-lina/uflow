@@ -123,3 +123,6 @@ imports/lottie/.temp-gif-frames/.flowbaby/
 
 # VS Code extension packages
 *.vsix
+
+# VS Code workspace files (worktree-specific, not shared)
+*.code-workspace

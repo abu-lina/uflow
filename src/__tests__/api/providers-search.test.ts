@@ -57,7 +57,7 @@ describe('GET /api/providers/search', () => {
     expect(response.status).toBe(200);
     expectCorrelationIdHeader(response);
     expect(data).toEqual(mockResults);
-    expect(mockSearch).toHaveBeenCalledWith('test', null, 'Everywhere', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('test', null, '', 0, 12);
   });
 
   it('should apply Cache-Control: no-store when free-text query is present', async () => {
@@ -90,7 +90,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, 'Everywhere', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
   });
 
   it('should pass category and location params to search', async () => {
@@ -102,6 +102,51 @@ describe('GET /api/providers/search', () => {
     await GET(request);
 
     expect(mockSearch).toHaveBeenCalledWith('', 'cat-1', 'Berlin', 0, 12);
+  });
+
+  // --- Plan 044: location normalization regression tests ---
+  // RC-2: missing location param must not default to 'Everywhere' city name
+  it('should treat missing location param as all-locations (empty string)', async () => {
+    mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+    const request = new Request('http://localhost:3000/api/providers/search');
+    await GET(request);
+
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
+  });
+
+  // RC-2/RC-3: empty location param must preserve the LOCATION_ALL sentinel
+  it('should treat empty location param as all-locations (empty string)', async () => {
+    mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+    const request = new Request('http://localhost:3000/api/providers/search?location=');
+    await GET(request);
+
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
+  });
+
+  // RC-3: legacy 'Everywhere' label must normalise to empty string, not filter by city name
+  it('should normalise legacy "Everywhere" location to empty string', async () => {
+    mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+    const request = new Request(
+      'http://localhost:3000/api/providers/search?location=Everywhere',
+    );
+    await GET(request);
+
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
+  });
+
+  // RC-3: legacy 'Überall' label must normalise to empty string, not filter by city name
+  it('should normalise legacy "Überall" location to empty string', async () => {
+    mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+    const request = new Request(
+      'http://localhost:3000/api/providers/search?location=%C3%9Cberall',
+    );
+    await GET(request);
+
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
   });
 
   it('should return 500 on search failure', async () => {

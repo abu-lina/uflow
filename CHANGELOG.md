@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-03-18
+
+### Fixed
+
+- **Providers discovery now shows all providers when `?location=` is empty or absent (Plan 044)**: Navigating to `/providers?location=` or any URL with a missing/empty location param silently showed only the first server-rendered page and blocked infinite scroll. Root cause: the client-side location resolver used JavaScript `||` which discarded the empty-string `LOCATION_ALL` sentinel and fell through to a localised display label (`Überall`/`Everywhere`), which was then sent to the API as a real city name, causing `WHERE address_city = 'Überall'` to match zero rows. Fixed by switching to nullish-coalescing (`??`) in `ProvidersContent` and replacing the `|| 'Everywhere'` default in the API route with proper sentinel normalization (matching the existing server-component logic). Legacy `location=Everywhere` and `location=Überall` URL params are also mapped to the all-locations sentinel.
+
 ## [0.8.2] - 2026-03-15
 
 ### Fixed
