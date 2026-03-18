@@ -48,6 +48,19 @@ Core Responsibilities:
 7. **Status tracking**: Keep own analysis doc's Status current (Active, Planned, Implemented). Other agents and users rely on accurate status at a glance.
 8. **Surface remaining gaps**: Always clearly identify unaddressed parts of the requested analysis—in both the document and directly to the user in chat. If an unknown cannot be resolved, explain why and what is needed to close it.
 
+### Invisible Interceptor Bug Heuristic (WHEN APPLICABLE)
+
+For bugs where a visible control appears blocked by an invisible layer (examples: untappable button, dead zone above footer, overlay hit-testing issue), do not stop at the first suspicious wrapper.
+
+Trace outward from the blocked target to the highest relevant layout ancestor and document all candidate interceptors, including:
+
+- positioned wrappers (`absolute`, `fixed`, `sticky`)
+- containers using `visibility` / `display` toggles
+- shells/slots reserving layout space for fixed-position children
+- any ancestor missing explicit pass-through behavior (`pointer-events: none`) when appropriate
+
+Classify findings by confidence and clearly separate proven blockers from plausible secondary contributors.
+
 Constraints:
 
 - Read-only on production code/config.

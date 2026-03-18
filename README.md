@@ -19,6 +19,19 @@ npm install
 npm run dev
 ```
 
+### First-Time / Fresh Worktree Setup
+
+```bash
+# Copy the local env template
+cp env.local.template .env.local
+
+# Start the app
+npm run dev
+```
+
+- Add required local credentials to `.env.local`
+- If setup is incomplete or blocked, continue with [docs/guides/ENVIRONMENT_SETUP_QUICK_START.md](docs/guides/ENVIRONMENT_SETUP_QUICK_START.md)
+
 ### Deployment
 - **Production (Automatic):** Push to `main` branch triggers deployment with health checks
 - **Production (Manual):** Run `./deploy-with-monitoring.sh` for manual deployment with monitoring

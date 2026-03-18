@@ -99,6 +99,12 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 
 1. **Acknowledge handoff**: Plan ID, target release version (e.g., v0.6.2), UAT decision.
 2. Confirm UAT "APPROVED FOR RELEASE", QA "QA Complete" for this plan.
+  2b. **Post-UAT delta check (MANDATORY)**:
+    - Inspect the Implementation doc changelog and completion notes for any code changes made after UAT approval.
+    - If post-UAT code changes exist, require one of:
+      - fresh Code Review / QA evidence, or
+      - a documented `Post-UAT Delta Review` that satisfies the narrow self-review criteria.
+    - If neither exists, block Stage 1 and hand back to Implementer.
 3. Read roadmap. Verify plan's target release version. Multiple plans may target same release.
 4. Check version consistency for target release per `release-procedures` skill.
   4b. **CHANGELOG date sanity-check (MANDATORY)**:

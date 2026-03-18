@@ -104,6 +104,9 @@ If the change is **CSS/layout-only** (no TS/JS runtime behavior changes), UAT MA
 - QA status is **QA Complete** and includes automated gate evidence (tests + build)
 - Code Review verdict is **APPROVED**
 - The change is defensive and includes safe fallbacks (progressive enhancement)
+- The Implementation doc records local verification as either:
+  - `✅ Executed`, with route/flow evidence, or
+  - `⚠️ Blocked`, with an explicit blocker and reduced-confidence release recommendation
 - The UAT report explicitly records residual risk and whether manual device validation was executed vs deferred
 
 If any of these are not satisfied, UAT MUST treat the missing evidence as a finding and record a NOT APPROVED decision or a conditional approval with explicit next actions (based on risk).

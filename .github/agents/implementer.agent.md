@@ -298,6 +298,50 @@ If the caller is intentionally deferred (rare):
 - Document the deferral explicitly in the Implementation doc (owner + trigger + evidence to close).
 - Do NOT claim the milestone is complete unless the plan explicitly allows deferral.
 
+### Local Verification Gate (MANDATORY when applicable)
+
+If the change is user-visible and primarily affects UI, CSS, layout, interaction, hit-testing, scroll behavior, or responsive/mobile behavior, you MUST record local verification evidence before handoff.
+
+- Start the relevant dev environment (`npm run dev`, `npm run dev:uat`, or the plan-specified equivalent).
+- Verify the changed flow in a browser.
+- Record one of the following in the Implementation doc:
+  - `Local verification: ✅ Executed` — include route/flow checked and outcome
+  - `Local verification: ⚠️ Blocked` — include exact blocker (for example: missing `.env.local`, missing credentials, unreproducible environment)
+
+If blocked, do NOT present the implementation as fully verified. Surface the blocker clearly for QA/UAT.
+
+### Interaction-Layer Audit Checklist (MANDATORY when applicable)
+
+Trigger when fixing bugs involving:
+
+- `pointer-events`
+- `visibility` / `display`
+- absolute/fixed/sticky positioned wrappers
+- overlays, shells, or hit-testing/interception issues
+
+Before handoff, verify and document:
+
+- the intended interactive element
+- every ancestor container up to the nearest layout boundary that could intercept events
+- whether any fixed-position child requires explicit `pointer-events: auto`
+- whether any parent container is reserving unnecessary document-flow height for fixed children
+
+Do not stop at the first suspicious wrapper if a higher container can still intercept events.
+
+### Post-UAT Delta Protocol (MANDATORY when applicable)
+
+If you modify code after UAT approval and before DevOps handoff, record a `Post-UAT Delta Review` section in the Implementation doc.
+
+You may use self-review only when ALL are true:
+
+- change is <= 20 lines net
+- no new files or dependencies
+- no route-gating, auth, data, or API changes
+- existing relevant tests were rerun and still pass
+- local verification was rerun if the change is user-visible
+
+Otherwise, return to Code Reviewer (and QA when applicable) before DevOps.
+
 ### Pre-Handoff QA Gate (MANDATORY)
 
 Before handing off to **Code Reviewer** or **QA**, you MUST complete this checklist:

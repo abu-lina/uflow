@@ -90,6 +90,18 @@ Core Responsibilities:
   - Confirm it reads the param and applies the intended behavior.
   - If not, record a finding (usually MEDIUM, sometimes HIGH if it breaks a core journey).
 
+  6f. **Interaction-Layer Audit Checklist (MANDATORY when applicable)**:
+
+- Trigger when the change touches `pointer-events`, `visibility`, `display`, overlay wrappers, or absolute/fixed/sticky positioned containers.
+
+- For each affected interaction surface:
+  - Identify the user-targeted interactive element.
+  - Verify the outermost relevant ancestor container is not still intercepting events.
+  - Verify any fixed-position interactive child explicitly restores interactivity when inheritance could disable it.
+  - Verify any layout shell/container is not reserving unnecessary height for fixed-position children.
+
+- If the implementation fixes an inner wrapper but leaves a higher blocking container unreviewed, record a finding.
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions
