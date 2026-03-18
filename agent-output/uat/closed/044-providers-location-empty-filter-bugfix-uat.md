@@ -2,7 +2,7 @@
 ID: 44
 Origin: 44
 UUID: b7e3a921
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Providers Location Empty-Filter Bugfix

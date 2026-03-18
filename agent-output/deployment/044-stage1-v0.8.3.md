@@ -2,7 +2,7 @@
 ID: 44
 Origin: 44
 UUID: b7e3a921
-Status: Active
+Status: Released
 ---
 
 # Deployment Stage 1: Plan 044 Local Commit — v0.8.3
