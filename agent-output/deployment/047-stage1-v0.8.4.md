@@ -136,11 +136,18 @@ All files to be included in the Stage 1 commit:
 
 ### Commit Hash
 
-Populated after `git commit`.
+`62f2051` — `feat(import): Add JoinHalal provider data ingestion pipeline`
 
 ### git log (post-commit)
 
-Populated after `git commit`.
+```
+62f2051 2026-03-19T14:37:51+01:00 feat(import): Add JoinHalal provider data ingestion pipeline
+a15d4f8 2026-03-18T20:39:04+01:00 chore: move closed lifecycle docs, update .next-id to 45
+fa6e4ff 2026-03-18T18:14:05+01:00 docs(release): update Plan 044 documents to Released status for v0.8.3
+e88cd0b 2026-03-18T17:21:48+01:00 fix(providers): Restore all-locations browse behavior for empty location param
+9a2dbcc 2026-03-18T17:19:39+01:00 chore(docs): close orphaned terminal-status deployment documents
+36af924 2026-03-18T12:53:57+01:00 chore(process): harden UI interaction bugfix gates (PI-044)
+```
 
 ---
 
