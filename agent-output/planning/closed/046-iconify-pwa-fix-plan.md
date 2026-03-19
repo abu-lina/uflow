@@ -2,14 +2,14 @@
 ID: 046
 Origin: 046
 UUID: 3a7f1c2e
-Status: Committed
+Status: Released
 ---
 
 # Plan 046 — Iconify PWA service-worker intercept fix
 
 **Target Release**: v0.8.6
 **Epic Alignment**: Technical Foundation & Reliability; provider detail discovery/contact/share reliability
-**Status**: Committed
+**Status**: Released
 **Related Issues**: Session S046 (`046-iconify-pwa-fix`), provider detail page icon rendering defect on `/providers/[id]`
 
 ## Release Strategy
@@ -29,6 +29,7 @@ Standalone (no other known active plans targeting v0.8.4 in `agent-output/planni
 | 2026-03-19 | qa | Status → QA Complete | Re-tested the fixed lockfile; release artifacts now align to 0.8.4; browser-backed PWA validation remains deferred to UAT |
 | 2026-03-19T11:30Z | uat | Status → UAT Approved | APPROVED FOR RELEASE — all automated gates pass; SW artifact confirms failure chain broken; 5 deferred follow-ups (DF-1–5) documented with owner and trigger |
 | 2026-03-19T11:35Z | devops | Status → Committed | Stage 1 committed locally for v0.8.4; lifecycle docs closed |
+| 2026-03-19T11:55Z | devops | Status → Released | v0.8.6 pushed + tagged; branch pushed to origin |
 
 ## Value Statement and Business Objective
 

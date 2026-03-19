@@ -2,7 +2,7 @@
 ID: 046
 Origin: 046
 UUID: 3a7f1c2e
-Status: Active
+Status: Released
 ---
 
 # Deployment Stage 1: Plan 046 Local Commit — v0.8.6
@@ -21,6 +21,7 @@ Status: Active
 | 2026-03-19T11:35Z | devops | Stage 1: Plan 046 committed locally for v0.8.4 |
 | 2026-03-19T11:45Z | devops | Version bump: v0.8.4 → v0.8.5 (v0.8.4 taken by Plan 045 in S045 worktree) |
 | 2026-03-19T11:50Z | devops | Version bump: v0.8.5 → v0.8.6 (v0.8.5 claimed by security fix flatted/GHSA-25h7 on origin/main, no tag yet) |
+| 2026-03-19T11:55Z | devops | Stage 2: v0.8.6 released — branch pushed, tag v0.8.6 created and pushed |
 
 ---
 
@@ -223,7 +224,11 @@ Deferred post-deploy open-actions tracker created (stays in active location):
 
 ## Post-Release Status
 
-**Status**: Committed (awaiting Stage 2)
+**Status**: Released
+**Tag**: `v0.8.6`
+**Branch**: `session/046-iconify-pwa-fix` pushed to `origin`
+**Timestamp**: 2026-03-19T11:55Z
+**Authorizer**: User explicit approval ("approved", 2026-03-19)
 
 Plan 046 changes committed locally on `session/046-iconify-pwa-fix`. Branch `main` is `[origin/main: behind 5]` — Stage 2 reconciles by rebasing onto `origin/main`.
 
