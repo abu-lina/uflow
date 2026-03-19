@@ -1,45 +1,66 @@
 const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
   register: true,
-  skipWaiting: true,
   // Disable PWA based on explicit environment variable
   // Set DISABLE_PWA=true for local development, false for UAT/production
   disable: process.env.DISABLE_PWA === 'true',
-  // Import custom push notification handler
-  importScripts: ['/sw-push-handler.js'],
-  // Exclude files that may not exist in standalone builds
-  // These files are generated during build but may not exist in standalone output
-  buildExcludes: [/app-build-manifest\.json$/, /middleware-manifest\.json$/],
   // Don't fail on missing precache files
   fallbacks: {
     document: '/offline.html',
   },
-  // Do NOT add Supabase to runtimeCaching - pass-through to network only.
-  // Caching Supabase (e.g. NetworkFirst) can trigger fallback on failure and cause NetworkError.
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif)$/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'images-cache',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+  // Workbox options — MUST be nested here for @ducanh2912/next-pwa@10.x.
+  // In v10 the library changed its API: workbox-specific options (runtimeCaching,
+  // importScripts, exclude, skipWaiting) must live inside workboxOptions: { ... }.
+  // Placing them at the top level (the pre-v10 / shadowwalker shape) causes them to
+  // be silently ignored, which activates the built-in default cache.  The default
+  // cache includes a `!sameOrigin` NetworkFirst catch-all that intercepts Iconify
+  // CDN API requests; combined with the fallbacks.document handlerDidError callback,
+  // this returns Response.error() for all generic fetch requests, producing the
+  // "CORS request did not succeed (status null)" errors on /providers/[id].
+  // See: agent-output/analysis/closed/046-iconify-pwa-analysis.md
+  workboxOptions: {
+    skipWaiting: true,
+    // Import custom push notification handler into the generated service worker
+    importScripts: ['/sw-push-handler.js'],
+    // Exclude files that may not exist in standalone builds from precaching
+    exclude: [/app-build-manifest\.json$/, /middleware-manifest\.json$/],
+    runtimeCaching: [
+      // IMPORTANT: Iconify CDN APIs must bypass the service worker entirely.
+      // @iconify/react makes runtime fetch() calls to these JSON endpoints to load
+      // icon sets (e.g. lucide.json?icons=share-2, mdi.json?icons=instagram).
+      // Any SW interception + cache miss triggers handlerDidError → Response.error()
+      // → "ServiceWorker passed an Error Response to FetchEvent.respondWith()".
+      // This rule MUST appear first to take precedence over broader patterns below.
+      {
+        urlPattern: /^https:\/\/(api\.iconify\.design|api\.unisvg\.com|api\.simplesvg\.com)\//,
+        handler: 'NetworkOnly',
+      },
+      // Cross-origin image assets (e.g. Supabase Storage provider photos).
+      // Do NOT add Supabase API calls here — only static image assets.
+      {
+        urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif)$/,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'images-cache',
+          expiration: {
+            maxEntries: 100,
+            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+          },
         },
       },
-    },
-    {
-      urlPattern: /^https:\/\/.*\.(?:js|css)$/,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-resources',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+      {
+        urlPattern: /^https:\/\/.*\.(?:js|css)$/,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'static-resources',
+          expiration: {
+            maxEntries: 100,
+            maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+          },
         },
       },
-    },
-  ],
+    ],
+  },
 });
 
 const isDev = process.env.NODE_ENV === 'development';
