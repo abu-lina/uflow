@@ -2,7 +2,7 @@
 ID: 45
 Origin: 45
 UUID: 3f9a2c1d
-Status: Committed
+Status: Released
 ---
 
 # Deployment Stage 1: Plan 045 Local Commit — v0.8.4

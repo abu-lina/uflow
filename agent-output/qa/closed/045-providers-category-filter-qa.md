@@ -2,7 +2,7 @@
 ID: 45
 Origin: 45
 UUID: 3f9a2c1d
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 045 — Providers Category Filter Bugfix

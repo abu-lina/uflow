@@ -2,7 +2,7 @@
 ID: 45
 Origin: 45
 UUID: 3f9a2c1d
-Status: Committed
+Status: Released
 ---
 
 # 045 – Providers Category Filter: Wrong Results for "Gesundheit & Sport"
