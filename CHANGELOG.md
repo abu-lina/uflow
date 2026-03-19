@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.5] - 2026-03-19
+
+### Security
+
+- **Remediate flatted HIGH vulnerability (GHSA-25h7-pfq9-p65f)**: `flatted` transitive dependency bumped from 3.3.3 to 3.4.2 via `package-lock.json` update. Fixes unbounded recursion DoS in `parse()` revive phase. `npm audit --audit-level=high` now exits 0. Remaining advisory: Next.js moderate (GHSA-3x4c-7xq6-9pq8) deferred — fix requires breaking upgrade to Next.js 16.x.
+
 ## [0.8.4] - 2026-03-19
 
 ### Fixed
