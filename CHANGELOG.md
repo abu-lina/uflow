@@ -7,11 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.4] - 2026-03-19
+## [0.8.7] - 2026-03-19
 
 ### Added
 
 - **JoinHalal provider data import pipeline (Plan 047)**: A new admin-only import script (`scripts/import-joinhalal.ts`) that fetches public halal business listings from joinhalal.com and bulk-upserts them into the UFlow providers database. The script scrapes Schema.org JSON-LD structured data from each listing page (server-side, no JS rendering required), normalises addresses, resolves UFlow category IDs, and writes via service-role access. A `--dry-run` mode generates a full import plan without writing data. All imported rows default to `review_status = 'pending'` and are traceable via `user_created_id = '<import-bot-uuid>'`. The outreach trigger is safely bypassed by the non-null `user_created_id` sentinel. A pure parser utility module (`src/utils/joinhalal-parser.ts`) backs the scraping logic with 27 unit tests.
+
+## [0.8.6] - 2026-03-19
+
+### Fixed
+
+- **Iconify icons (share, Instagram, web, phone) now render correctly on provider detail pages when the PWA service worker is active (Plan 046)**: Icons were blank on `/providers/[id]` pages. Root cause: `next.config.js` used the pre-v10 `shadowwalker/next-pwa` API shape, placing Workbox options at the top level. `@ducanh2912/next-pwa@10.x` silently ignores all top-level Workbox options, activating the default cache which intercepted all Iconify CDN API requests. Fixed by moving all Workbox-specific options into `workboxOptions: { ... }` as required by v10, and adding an explicit `NetworkOnly` bypass rule for Iconify CDN endpoints as defence-in-depth.
+
+## [0.8.5] - 2026-03-19
+
+### Security
+
+- **Remediate flatted HIGH vulnerability (GHSA-25h7-pfq9-p65f)**: `flatted` transitive dependency bumped from 3.3.3 to 3.4.2 via `package-lock.json` update. Fixes unbounded recursion DoS in `parse()` revive phase. `npm audit --audit-level=high` now exits 0. Remaining advisory: Next.js moderate (GHSA-3x4c-7xq6-9pq8) deferred — fix requires breaking upgrade to Next.js 16.x.
+
+## [0.8.4] - 2026-03-19
+
+### Fixed
+
+- **Category filter now respects URL parameter as canonical source (Plan 045)**: Navigating to `/providers?category=<uuid>` after previously selecting a different category chip silently displayed the wrong category's results. Root cause: the client-side category resolver used `selectedCategory ?? searchParams.get('category')`, giving stale React context higher priority than the URL param. Fixed by inverting operand order to `(searchParams.get('category') || null) ?? selectedCategory` so the URL param is always canonical and context is only used as a fallback when no URL param is present.
+
+- **No-category provider browse now works correctly for all locales (Plan 045)**: Arabic, Turkish, Urdu, and Pashto users on the no-category browse path had all community services hidden because `t('search.all')` locale labels (`الكل`, `Tümü`, `سب`, `ټول`) were injected into the API `category` transport value. Only `'Alle'` and `'All'` were recognised by `getSearchStrategy`; all other locale labels fell through to `'providers_only'` instead of `'both'`. Fixed by passing `null` directly when no category is selected; `null` already routes to the `'both'` strategy throughout the service layer.
+
+### Changed
+
+- **Removed debug `console.log` calls from provider discovery components (Plan 045)**: Seven development-only `console.log` calls were removed from `ProviderCardModal`, `ProviderDetailModal`, `ProfileProviderDetailPage`, and `ProfileProviderDetailButtons`. A share-cancel failure log was also upgraded from `console.log` to `console.error` in `ProviderDetailModal`.
 
 ## [0.8.3] - 2026-03-18
 

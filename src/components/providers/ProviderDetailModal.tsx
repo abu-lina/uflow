@@ -137,16 +137,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     minSwipeDistance: 30,
   });
 
-  // Debug selected image changes
-  useEffect(() => {
-    console.log(
-      'Selected image changed to:',
-      selectedImageIdx,
-      'URL:',
-      allImageUrls[selectedImageIdx],
-    );
-  }, [selectedImageIdx, allImageUrls]);
-
   const [expandedAction, setExpandedAction] = useState<'save' | 'share' | 'call' | 'website'>(
     'save',
   );
@@ -246,9 +236,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             url: shareUrl,
           });
         } catch (error) {
-          // User cancelled or share failed - don't show error for cancellation
+          // User cancelled or share failed — AbortError means user cancelled (not an error)
           if ((error as Error).name !== 'AbortError') {
-            console.log('Share cancelled or failed:', error);
+            console.error('Share failed:', error);
           }
         }
       } else {
@@ -410,7 +400,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 ref={imageContainerRef}
                 className="bg-uFlowAccent relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
                 data-testid="image-container"
-                onClick={() => console.log('Image container clicked')}
                 onTouchEnd={handleTouchEnd}
                 onTouchMove={handleTouchMove}
                 onTouchStart={handleTouchStart}

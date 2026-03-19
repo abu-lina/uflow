@@ -30,7 +30,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
 
   useEffect(() => {
     setMounted(true);
-    
+
     // Cleanup function to clear any pending animations on unmount
     return () => {
       setIsClosing(false);
@@ -45,7 +45,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
     } else {
       document.body.style.overflow = '';
     }
-    
+
     return () => {
       document.body.style.overflow = '';
     };
@@ -69,16 +69,16 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    
+
     // Prevent default to stop background scrolling
     e.preventDefault();
-    
+
     const touch = e.touches[0];
     if (!touch) return;
-    
+
     const currentY = touch.clientY;
     const diff = currentY - startY;
-    
+
     // Only allow dragging down
     if (diff > 0) {
       setDragY(diff);
@@ -88,7 +88,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
   const handleTouchEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    
+
     // If dragged down more than 100px, close the menu
     if (dragY > 100) {
       closeActionsMenu();
@@ -96,7 +96,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
       // Snap back to position
       setDragY(0);
     }
-    
+
     setStartY(0);
   };
 
@@ -106,9 +106,9 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
 
   const handleShareAction = async () => {
     closeActionsMenu();
-    
+
     const shareUrl = `${window.location.origin}/providers/${providerId}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -116,8 +116,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
           url: shareUrl,
         });
       } catch (error) {
-        // User cancelled or share failed
-        console.log('Share cancelled:', error);
+        // User cancelled — AbortError is an expected outcome, not a failure
       }
     } else {
       // Fallback: Copy to clipboard
@@ -142,10 +141,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
     setIsDeleting(true);
     try {
       // Delete provider from database
-      const { error } = await supabase
-        .from('providers')
-        .delete()
-        .eq('provider_id', providerId);
+      const { error } = await supabase.from('providers').delete().eq('provider_id', providerId);
 
       if (error) throw error;
 
@@ -187,97 +183,100 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
         />
 
         {/* Actions Menu Modal - Rendered via Portal */}
-        {mounted && showActionsMenu && createPortal(
-          <div 
-            className={`fixed inset-0 z-[9999] bg-black/40 flex items-end transition-opacity duration-300 ${
-              isClosing ? 'opacity-0' : 'opacity-100'
-            }`}
-            onClick={closeActionsMenu}
-          >
-            <div 
-              className="w-full bg-white rounded-t-2xl pb-safe-bottom relative z-[10000]"
-              style={{
-                transform: isClosing 
-                  ? 'translateY(100%)' 
-                  : dragY > 0 
-                    ? `translateY(${dragY}px)` 
-                    : 'translateY(0)',
-                transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onTouchEnd={handleTouchEnd}
-              onTouchMove={handleTouchMove}
-              onTouchStart={handleTouchStart}
+        {mounted &&
+          showActionsMenu &&
+          createPortal(
+            <div
+              className={`fixed inset-0 z-[9999] flex items-end bg-black/40 transition-opacity duration-300 ${
+                isClosing ? 'opacity-0' : 'opacity-100'
+              }`}
+              onClick={closeActionsMenu}
             >
-              {/* Swipe Handle */}
-              <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
-                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              <div
+                className="relative z-[10000] w-full rounded-t-2xl bg-white pb-safe-bottom"
+                style={{
+                  transform: isClosing
+                    ? 'translateY(100%)'
+                    : dragY > 0
+                      ? `translateY(${dragY}px)`
+                      : 'translateY(0)',
+                  transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchMove}
+                onTouchStart={handleTouchStart}
+              >
+                {/* Swipe Handle */}
+                <div className="flex cursor-grab justify-center pb-2 pt-3 active:cursor-grabbing">
+                  <div className="h-1 w-10 rounded-full bg-gray-300" />
+                </div>
+
+                <div className="flex flex-col p-4 pt-2">
+                  {/* Share Action */}
+                  <button
+                    className="flex w-full items-center gap-3 rounded-lg p-4 transition-colors hover:bg-gray-50"
+                    onClick={handleShareAction}
+                  >
+                    <Icon className="h-6 w-6 text-primary" icon="lucide:share-2" />
+                    <span className="text-base font-medium text-[#232323]">Teilen</span>
+                  </button>
+
+                  {/* Divider */}
+                  <div className="h-px w-full bg-gray-200" />
+
+                  {/* Delete Action */}
+                  <button
+                    className="flex w-full items-center gap-3 rounded-lg p-4 transition-colors hover:bg-red-50"
+                    onClick={handleDeleteAction}
+                  >
+                    <Icon className="h-6 w-6 text-red-500" icon="material-symbols:delete-outline" />
+                    <span className="text-base font-medium text-red-500">Löschen</span>
+                  </button>
+                </div>
               </div>
-
-              <div className="flex flex-col p-4 pt-2">
-                {/* Share Action */}
-                <button
-                  className="flex items-center gap-3 w-full p-4 rounded-lg hover:bg-gray-50 transition-colors"
-                  onClick={handleShareAction}
-                >
-                  <Icon className="h-6 w-6 text-primary" icon="lucide:share-2" />
-                  <span className="text-base font-medium text-[#232323]">Teilen</span>
-                </button>
-
-                {/* Divider */}
-                <div className="w-full h-px bg-gray-200" />
-
-                {/* Delete Action */}
-                <button
-                  className="flex items-center gap-3 w-full p-4 rounded-lg hover:bg-red-50 transition-colors"
-                  onClick={handleDeleteAction}
-                >
-                  <Icon className="h-6 w-6 text-red-500" icon="material-symbols:delete-outline" />
-                  <span className="text-base font-medium text-red-500">Löschen</span>
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+            </div>,
+            document.body,
+          )}
 
         {/* Delete Confirmation Modal - Rendered via Portal */}
-        {mounted && showDeleteConfirm && createPortal(
-          <div 
-            className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-[8px] flex items-center justify-center p-4"
-            onClick={cancelDelete}
-          >
-            <div 
-              className="w-full max-w-sm bg-white rounded-2xl p-6 relative z-[10000]"
-              onClick={(e) => e.stopPropagation()}
+        {mounted &&
+          showDeleteConfirm &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[8px]"
+              onClick={cancelDelete}
             >
-              <h3 className="text-lg font-semibold text-[#232323] mb-2">
-                Provider löschen?
-              </h3>
-              <p className="text-sm text-gray-600 mb-6">
-                Bist du sicher, dass du diesen Provider löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  className="flex-1 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                  onClick={cancelDelete}
-                >
-                  <span className="text-base font-medium text-content">Abbrechen</span>
-                </button>
-                <button
-                  className="flex-1 py-3 rounded-lg bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
-                  disabled={isDeleting}
-                  onClick={confirmDelete}
-                >
-                  <span className="text-base font-medium text-white">
-                    {isDeleting ? 'Löschen...' : 'Löschen'}
-                  </span>
-                </button>
+              <div
+                className="relative z-[10000] w-full max-w-sm rounded-2xl bg-white p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="mb-2 text-lg font-semibold text-[#232323]">Provider löschen?</h3>
+                <p className="mb-6 text-sm text-gray-600">
+                  Bist du sicher, dass du diesen Provider löschen möchtest? Diese Aktion kann nicht
+                  rückgängig gemacht werden.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    className="flex-1 rounded-lg border border-gray-200 py-3 transition-colors hover:bg-gray-50"
+                    onClick={cancelDelete}
+                  >
+                    <span className="text-base font-medium text-content">Abbrechen</span>
+                  </button>
+                  <button
+                    className="flex-1 rounded-lg bg-red-500 py-3 transition-colors hover:bg-red-600 disabled:opacity-50"
+                    disabled={isDeleting}
+                    onClick={confirmDelete}
+                  >
+                    <span className="text-base font-medium text-white">
+                      {isDeleting ? 'Löschen...' : 'Löschen'}
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>,
-          document.body
-        )}
+            </div>,
+            document.body,
+          )}
       </>
     );
   }
@@ -301,79 +300,81 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
 
       {/* Desktop More Actions Menu Container */}
       <div className="relative flex-1">
-
         {/* Desktop Actions Menu */}
-        {mounted && showActionsMenu && createPortal(
-          <>
-            <div 
-              className="fixed inset-0 z-[9999] bg-black/40"
-              onClick={() => setShowActionsMenu(false)}
-            />
-            <div className="fixed right-4 bottom-24 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[10000]">
-              <div className="py-2">
-                {/* Share Action */}
-                <button
-                  className="flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors"
-                  onClick={handleShareAction}
-                >
-                  <Icon className="h-5 w-5 text-primary" icon="lucide:share-2" />
-                  <span className="text-sm font-medium text-[#232323]">Teilen</span>
-                </button>
+        {mounted &&
+          showActionsMenu &&
+          createPortal(
+            <>
+              <div
+                className="fixed inset-0 z-[9999] bg-black/40"
+                onClick={() => setShowActionsMenu(false)}
+              />
+              <div className="fixed bottom-24 right-4 z-[10000] w-56 rounded-lg border border-gray-200 bg-white shadow-lg">
+                <div className="py-2">
+                  {/* Share Action */}
+                  <button
+                    className="flex w-full items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50"
+                    onClick={handleShareAction}
+                  >
+                    <Icon className="h-5 w-5 text-primary" icon="lucide:share-2" />
+                    <span className="text-sm font-medium text-[#232323]">Teilen</span>
+                  </button>
 
-                {/* Divider */}
-                <div className="w-full h-px bg-gray-200 my-1" />
+                  {/* Divider */}
+                  <div className="my-1 h-px w-full bg-gray-200" />
 
-                {/* Delete Action */}
-                <button
-                  className="flex items-center gap-3 w-full px-4 py-3 hover:bg-red-50 transition-colors"
-                  onClick={handleDeleteAction}
-                >
-                  <Icon className="h-5 w-5 text-red-500" icon="material-symbols:delete-outline" />
-                  <span className="text-sm font-medium text-red-500">Löschen</span>
-                </button>
+                  {/* Delete Action */}
+                  <button
+                    className="flex w-full items-center gap-3 px-4 py-3 transition-colors hover:bg-red-50"
+                    onClick={handleDeleteAction}
+                  >
+                    <Icon className="h-5 w-5 text-red-500" icon="material-symbols:delete-outline" />
+                    <span className="text-sm font-medium text-red-500">Löschen</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          </>,
-          document.body
-        )}
+            </>,
+            document.body,
+          )}
 
         {/* Desktop Delete Confirmation Modal - Rendered via Portal */}
-        {mounted && showDeleteConfirm && createPortal(
-          <div 
-            className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-[8px] flex items-center justify-center p-4"
-            onClick={cancelDelete}
-          >
-            <div 
-              className="w-full max-w-md bg-white rounded-2xl p-6 relative z-[10000]"
-              onClick={(e) => e.stopPropagation()}
+        {mounted &&
+          showDeleteConfirm &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[8px]"
+              onClick={cancelDelete}
             >
-              <h3 className="text-xl font-semibold text-[#232323] mb-2">
-                Provider löschen?
-              </h3>
-              <p className="text-sm text-gray-600 mb-6">
-                Bist du sicher, dass du diesen Provider löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  className="flex-1 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                  onClick={cancelDelete}
-                >
-                  <span className="text-base font-medium text-content">Abbrechen</span>
-                </button>
-                <button
-                  className="flex-1 py-3 rounded-lg bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
-                  disabled={isDeleting}
-                  onClick={confirmDelete}
-                >
-                  <span className="text-base font-medium text-white">
-                    {isDeleting ? 'Löschen...' : 'Löschen'}
-                  </span>
-                </button>
+              <div
+                className="relative z-[10000] w-full max-w-md rounded-2xl bg-white p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="mb-2 text-xl font-semibold text-[#232323]">Provider löschen?</h3>
+                <p className="mb-6 text-sm text-gray-600">
+                  Bist du sicher, dass du diesen Provider löschen möchtest? Diese Aktion kann nicht
+                  rückgängig gemacht werden.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    className="flex-1 rounded-lg border border-gray-200 py-3 transition-colors hover:bg-gray-50"
+                    onClick={cancelDelete}
+                  >
+                    <span className="text-base font-medium text-content">Abbrechen</span>
+                  </button>
+                  <button
+                    className="flex-1 rounded-lg bg-red-500 py-3 transition-colors hover:bg-red-600 disabled:opacity-50"
+                    disabled={isDeleting}
+                    onClick={confirmDelete}
+                  >
+                    <span className="text-base font-medium text-white">
+                      {isDeleting ? 'Löschen...' : 'Löschen'}
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>,
-          document.body
-        )}
+            </div>,
+            document.body,
+          )}
       </div>
     </>
   );

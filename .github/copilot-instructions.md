@@ -172,6 +172,27 @@ describe('Component', () => {
 });
 ```
 
+### Bugfix Handoff Completeness
+
+For bugfix work, do not hand off to QA until all of the following exist when applicable:
+
+- `agent-output/implementation/<ID>-*.md` created and populated
+- TDD Compliance table completed
+- Regression tests added for the actual bug path, not only adjacent behavior
+- Test evidence recorded (`vitest`, `tsc`, and any other relevant gate)
+
+Keep this scoped to handoff completeness and regression adequacy. Manual browser validation remains a QA/UAT responsibility unless the plan explicitly requires local verification.
+
+#### Client-State Precedence Regression Pattern
+
+When a bug is caused by client-side state precedence, stale context, URL-param resolution, or other React-side value selection bugs:
+
+- Do not rely on SSR/page tests alone
+- Write focused logic tests that mirror the exact pre-fix and post-fix expressions
+- Make the bug visible in the test naming, for example `[pre-fix FAILS]` and `[post-fix PASSES]`
+
+Use SSR or integration tests only as supplementary coverage when they actually exercise the bug path.
+
 ## Code Conventions
 
 ### TypeScript
