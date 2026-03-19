@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-03-19
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.8.4
+**Current Version**: v0.8.5
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -41,6 +41,7 @@
 | 2026-03-19 09:00 | Plan 045 released (v0.8.4): Providers category filter bugfix       | BUG-1: URL param now takes precedence over stale React context; BUG-2: non-DE/EN locale browse (Arabic/Turkish/Urdu/Pashto) fixed; debug log cleanup        |
 | 2026-03-19       | Process improvements implemented (PI 045)                          | Bugfix handoff completeness checklist + client-state precedence regression test pattern added to `.github/copilot-instructions.md` (from Retro 045)         |
 | 2026-03-19       | Roadmap updated with v0.8.4 and deferred open actions              | Post-release housekeeping: version tracking, deferred open actions surfaced as blocking items                                                                |
+| 2026-03-19       | Plan 046-OA-2 resolved: flatted HIGH vuln fixed in v0.8.5          | flatted 3.3.3→3.4.2 via package-lock.json update; `npm audit --audit-level=high` EXIT 0; 267 tests pass; released as v0.8.5                                  |
 
 ---
 
@@ -63,22 +64,23 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.8.4 released successfully (2026-03-19) — ready for new planning_
+_v0.8.5 released successfully (2026-03-19) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
-- **045-OA-2**: `npm audit fix` for `flatted` HIGH vulnerability (Owner: Implementer — before v0.8.5)
 - **045-OA-3**: E2E browser tests for category filter — direct URL nav + SPA nav + back-button (Owner: QA/Implementer — next sprint)
+- **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
 
-See [planning/045-open-actions.md](../planning/045-open-actions.md) for full tracker.
+✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
 
 ### Previous Releases
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.8.5  | 2026-03-19 | 045-OA-2 (flatted HIGH vuln fix)                    | Released |
 | v0.8.4  | 2026-03-19 | Plan 045 (Providers category filter bugfix)          | Released |
 | v0.8.2  | 2026-03-18 | Plan 044 (Mobile footer overlay layer bugfix)       | Released |
 | v0.8.1  | 2026-03-13 | Plans 039+040 (Provider outreach improvements)      | Released |
