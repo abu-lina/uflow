@@ -21,7 +21,7 @@ Status: Active
 | DF-2: Provider image CacheFirst regression check | DevOps / QA | First UAT deploy of v0.8.4 (same cycle) | Provider avatars/banners visible on detail pages; no 4xx errors for Supabase Storage CDN in network tab | Open |
 | DF-3: Push notification handler smoke test | QA | Within 1 sprint of v0.8.4 UAT deploy | Push subscription completes; test notification received in browser; console confirms `sw-push-handler.js` executed | Open |
 | DF-4: Full production build with valid env vars (CI) | DevOps | CI run triggered by merge or release tag for v0.8.4 | CI build exits 0; `public/sw.js` present in build output; no page-data collection errors for `/api/admin/badges/verify` or other API routes | Open |
-| DF-5: Roadmap version bookkeeping (Current Version v0.8.2 → v0.8.4) | DevOps / Planner | Release preparation for v0.8.4 | `agent-output/roadmap/product-roadmap.md` `Current Version` updated to `v0.8.4`; `Current Working Release` reflects current development state | Open |
+| DF-5: Roadmap version bookkeeping (Current Version v0.8.2 → v0.8.6) | DevOps / Planner | Release preparation for v0.8.6 | `agent-output/roadmap/product-roadmap.md` `Current Version` updated to `v0.8.6` | Closed 2026-03-19 |
 
 ## Changelog
 
