@@ -19,6 +19,12 @@ export default async function DashboardPage() {
             <p className="text-gray-600 text-sm">Review and approve provider applications</p>
           </div>
         </Link>
+        <Link href="/dashboard/import">
+          <div className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <h2 className="text-xl font-semibold mb-2">JoinHalal Import</h2>
+            <p className="text-gray-600 text-sm">Preview a dry-run import from JoinHalal listings</p>
+          </div>
+        </Link>
       </div>
     </div>
   );

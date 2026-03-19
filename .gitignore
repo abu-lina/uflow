@@ -109,6 +109,9 @@ storybook-static
 tests/performance/reports/
 *.k6.json
 
+# Agent memory store (local-only, never commit)
+memories/
+
 # Imports - ignore backup/processed files, keep source files
 imports/**/*.backup
 imports/**/*.processed

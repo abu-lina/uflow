@@ -41,6 +41,17 @@ import {
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
 } from '../src/utils/joinhalal-parser';
+import {
+  runJoinHalalDryRun,
+  makeProviderKey,
+  resolveCategoryId,
+  buildCliWriteCommand,
+  IMPORT_BOT_UUID,
+  DEFAULT_SITEMAPS,
+  type ImportLimit,
+  type Category,
+  type DryRunResult,
+} from '../src/lib/import/joinhalal';
 
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
@@ -70,18 +81,7 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
  *   2. Provides a stable, queryable provenance marker:
  *        SELECT * FROM providers WHERE user_created_id = '<this UUID>';
  */
-const IMPORT_BOT_UUID = '00000000-0000-0000-0000-000047000001';
 const IMPORT_BOT_EMAIL = 'import-bot-joinhalal@system.internal';
-
-/** Base URL for all sitemaps */
-const SITEMAP_BASE = 'https://joinhalal.com';
-const DEFAULT_SITEMAPS = [
-  `${SITEMAP_BASE}/locations-sitemap1.xml`,
-  `${SITEMAP_BASE}/locations-sitemap2.xml`,
-  `${SITEMAP_BASE}/locations-sitemap3.xml`,
-  `${SITEMAP_BASE}/locations-sitemap4.xml`,
-  `${SITEMAP_BASE}/locations-sitemap5.xml`,
-];
 
 /** Polite delay between page fetches (ms) */
 const FETCH_DELAY_MS = 250;
@@ -93,11 +93,6 @@ const BATCH_SIZE = 50;
 const USER_AGENT = 'UFlow-Import/1.0 (+https://ummahflow.com/import)';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Category {
-  category_id: string;
-  name_de: string;
-}
 
 interface ProviderUpsert {
   provider_name: string;
@@ -122,15 +117,14 @@ interface ProviderUpsert {
   import_source_url: string | null;
 }
 
-interface ImportStats {
+interface WriteStats {
   total: number;
   parsed: number;
   mapped: number;
   unmapped: number;
   skipped: number;
   failed: number;
-  inserted?: number;
-  updated?: number;
+  inserted: number;
 }
 
 interface UnmappedEntry {
@@ -138,26 +132,6 @@ interface UnmappedEntry {
   name: string;
   url: string;
 }
-
-// ─── Category mapping ─────────────────────────────────────────────────────────
-
-/**
- * Maps JoinHalal URL category slugs to UFlow category name (German).
- * These are then resolved against the live categories table.
- *
- * Only categories with a clear UFlow counterpart are mapped.
- * Unknown slugs result in category_id = null and are reported as unmapped.
- */
-const CATEGORY_SLUG_MAP: Record<string, string> = {
-  restaurant: 'Restaurant',
-  'food-truck': 'Imbiss',
-  metzgerei: 'Metzgerei',
-  imbiss: 'Imbiss',
-  cafe: 'Café',
-  baeckerei: 'Bäckerei',
-  supermarkt: 'Supermarkt',
-  moschee: 'Moschee',
-};
 
 // ─── Supabase client ──────────────────────────────────────────────────────────
 
@@ -237,25 +211,6 @@ async function loadCategories(): Promise<Category[]> {
     throw new Error(`Failed to load categories: ${error.message}`);
   }
   return (data ?? []) as Category[];
-}
-
-/**
- * Resolves a JoinHalal URL category slug to a UFlow category_id.
- * Returns null for unmapped categories.
- */
-function resolveCategoryId(
-  slug: string | null,
-  categories: Category[]
-): string | null {
-  if (!slug) return null;
-
-  const targetName = CATEGORY_SLUG_MAP[slug.toLowerCase()];
-  if (!targetName) return null;
-
-  const match = categories.find(
-    (c) => c.name_de.toLowerCase() === targetName.toLowerCase()
-  );
-  return match?.category_id ?? null;
 }
 
 // ─── HTTP helpers ──────────────────────────────────────────────────────────────
@@ -431,8 +386,12 @@ async function loadExistingProviderKeys(): Promise<Set<string>> {
     if (!data || data.length === 0) break;
 
     for (const row of data) {
-      const key = `${(row.provider_name ?? '').toLowerCase().trim()}|${(row.address_city ?? '').toLowerCase().trim()}`;
-      existing.add(key);
+      existing.add(
+        makeProviderKey(
+          (row.provider_name ?? '') as string,
+          (row.address_city ?? null) as string | null
+        )
+      );
     }
 
     if (data.length < pageSize) break;
@@ -442,17 +401,10 @@ async function loadExistingProviderKeys(): Promise<Set<string>> {
   return existing;
 }
 
-function makeProviderKey(record: ProviderUpsert): string {
-  return `${(record.provider_name ?? '').toLowerCase().trim()}|${(record.address_city ?? '').toLowerCase().trim()}`;
-}
-
 // ─── Reporting ────────────────────────────────────────────────────────────────
 
-function printDryRunReport(
-  stats: ImportStats,
-  unmapped: UnmappedEntry[],
-  samples: ProviderUpsert[]
-) {
+function printDryRunReport(result: DryRunResult, limit: ImportLimit) {
+  const { stats, unmappedGroups, samples } = result;
   console.log('\n════════════════════════════════════════════════════════');
   console.log('  DRY-RUN REPORT — no data was written');
   console.log('════════════════════════════════════════════════════════');
@@ -462,25 +414,18 @@ function printDryRunReport(
   console.log(`  Unmapped category    : ${stats.unmapped}`);
   console.log(`  Skipped (duplicate)  : ${stats.skipped}`);
   console.log(`  Parse failures       : ${stats.failed}`);
-  console.log(`  Would INSERT         : ${stats.parsed - stats.skipped - stats.unmapped}`);
+  console.log(`  Would INSERT         : ${stats.wouldInsert}`);
 
-  if (unmapped.length > 0) {
+  if (unmappedGroups.length > 0) {
     console.log('\n  Unmapped categories (top 10):');
-    const grouped = unmapped.reduce<Record<string, string[]>>((acc, e) => {
-      acc[e.sourceCategory] = acc[e.sourceCategory] ?? [];
-      acc[e.sourceCategory].push(e.name);
-      return acc;
-    }, {});
-    Object.entries(grouped)
-      .slice(0, 10)
-      .forEach(([cat, names]) => {
-        console.log(`    "${cat}" (${names.length} entries) — example: "${names[0]}"`);
-      });
+    unmappedGroups.slice(0, 10).forEach(({ sourceCategory, count, example }) => {
+      console.log(`    "${sourceCategory}" (${count} entries) — example: "${example}"`);
+    });
   }
 
   if (samples.length > 0) {
     console.log('\n  Sample records (first 3):');
-    samples.slice(0, 3).forEach((r, i) => {
+    samples.forEach((r, i) => {
       console.log(`\n  [${i + 1}] ${r.provider_name}`);
       console.log(`      city     : ${r.address_city ?? '—'}`);
       console.log(`      category : ${r.category_id ?? 'UNMAPPED'}`);
@@ -490,18 +435,18 @@ function printDryRunReport(
     });
   }
 
-  console.log('\n  To execute the import, run:');
-  console.log('    npx tsx scripts/import-joinhalal.ts --write [--limit N]');
+  console.log(`\n  To execute the import, run:`);
+  console.log(`    ${buildCliWriteCommand(limit)}`);
   console.log('════════════════════════════════════════════════════════\n');
 }
 
-function printWriteReport(stats: ImportStats) {
+function printWriteReport(stats: WriteStats) {
   console.log('\n════════════════════════════════════════════════════════');
   console.log('  WRITE REPORT');
   console.log('════════════════════════════════════════════════════════');
   console.log(`  URLs processed       : ${stats.total}`);
   console.log(`  Successfully parsed  : ${stats.parsed}`);
-  console.log(`  Inserted             : ${stats.inserted ?? 0}`);
+  console.log(`  Inserted             : ${stats.inserted}`);
   console.log(`  Skipped (duplicate)  : ${stats.skipped}`);
   console.log(`  Unmapped category    : ${stats.unmapped}`);
   console.log(`  Parse failures       : ${stats.failed}`);
@@ -517,19 +462,36 @@ async function main() {
   const args = process.argv.slice(2);
   const isDryRun = args.includes('--dry-run') || !args.includes('--write');
   const limitFlag = args.findIndex((a) => a === '--limit');
-  const limit = limitFlag >= 0 ? parseInt(args[limitFlag + 1], 10) : null;
+  const limitRaw = limitFlag >= 0 ? parseInt(args[limitFlag + 1], 10) : null;
+  const limit: ImportLimit =
+    limitRaw === 10 || limitRaw === 50 || limitRaw === 100 ? limitRaw : 'all';
   const sitemapFlag = args.findIndex((a) => a === '--sitemap');
   const sitemapUrls =
     sitemapFlag >= 0 ? [args[sitemapFlag + 1]] : DEFAULT_SITEMAPS;
 
   console.log('\n╔══════════════════════════════════════════════════════╗');
-  console.log('║   UFlow — JoinHalal Provider Import (Plan 047)       ║');
+  console.log('║   UFlow — JoinHalal Provider Import (Plan 047/048)   ║');
   console.log('╚══════════════════════════════════════════════════════╝');
   console.log(`  Mode       : ${isDryRun ? '🔍 DRY-RUN (no writes)' : '✍️  WRITE'}`);
-  console.log(`  Limit      : ${limit !== null ? limit : 'all'}`);
+  console.log(`  Limit      : ${limit}`);
   console.log(`  Sitemaps   : ${sitemapUrls.length} file(s)\n`);
 
-  // ─ Load categories
+  // ─── DRY-RUN: delegate to shared import core ─────────────────────────────
+  if (isDryRun) {
+    console.log('▶ Running dry-run via shared import core...');
+    try {
+      const result = await runJoinHalalDryRun({ supabase, limit, sitemapUrls });
+      printDryRunReport(result, limit);
+    } catch (err) {
+      console.error(`❌ Dry-run failed: ${err instanceof Error ? err.message : String(err)}`);
+      process.exit(1);
+    }
+    return;
+  }
+
+  // ─── WRITE MODE ────────────────────────────────────────────────────────────
+
+  // Load categories
   console.log('▶ Loading categories from Supabase...');
   const categories = await loadCategories();
   console.log(`  ✓ Loaded ${categories.length} categories`);
@@ -538,28 +500,25 @@ async function main() {
     process.exit(1);
   }
 
-  // ─ Check provider_description column availability
+  // Check provider_description column availability
   console.log('▶ Checking provider_description column availability...');
   const hasDescriptionColumn = await checkProviderDescriptionExists();
   console.log(
     `  ${hasDescriptionColumn ? '✓ Column available' : '⚠ Column absent — description mapping skipped'}`
   );
 
-  // ─ Ensure import-bot user exists (required for FK constraint)
-  if (!isDryRun) {
-    console.log('▶ Ensuring import-bot user exists in auth.users...');
-    const botOk = await ensureImportBotUser();
-    if (!botOk) {
-      console.error('  ❌ Cannot proceed without import-bot user. Aborting.');
-      process.exit(1);
-    }
-  } else {
-    console.log('▶ Skipping import-bot user setup (dry-run mode)');
+  // Ensure import-bot user exists (required for FK constraint)
+  console.log('▶ Ensuring import-bot user exists in auth.users...');
+  const botOk = await ensureImportBotUser();
+  if (!botOk) {
+    console.error('  ❌ Cannot proceed without import-bot user. Aborting.');
+    process.exit(1);
   }
 
-  // ─ Collect URLs from sitemaps
+  // Collect URLs from sitemaps
+  const numericLimit = limit === 'all' ? null : limit;
   console.log('\n▶ Collecting location URLs from sitemaps...');
-  const locationUrls = await collectLocationUrls(sitemapUrls, limit);
+  const locationUrls = await collectLocationUrls(sitemapUrls, numericLimit);
   console.log(`  ✓ Total URLs to process: ${locationUrls.length}`);
 
   if (locationUrls.length === 0) {
@@ -567,18 +526,14 @@ async function main() {
     process.exit(1);
   }
 
-  // ─ Load existing providers for duplicate detection (both modes)
-  // Dry-run loads real DB keys so the "Would INSERT" count is accurate.
+  // Load existing providers for deduplication
   console.log('\n▶ Loading existing provider keys for deduplication...');
   const existingKeys = await loadExistingProviderKeys();
   console.log(`  ✓ Loaded ${existingKeys.size} existing providers`);
-  if (isDryRun) {
-    console.log('  ℹ Dry-run: deduplication counts reflect actual DB state.');
-  }
 
-  // ─ Process each URL
+  // Process each URL
   console.log('\n▶ Processing location pages...');
-  const stats: ImportStats = {
+  const stats: WriteStats = {
     total: locationUrls.length,
     parsed: 0,
     mapped: 0,
@@ -590,7 +545,6 @@ async function main() {
 
   const unmappedEntries: UnmappedEntry[] = [];
   const toInsert: ProviderUpsert[] = [];
-  const sampleRecords: ProviderUpsert[] = [];
 
   for (let i = 0; i < locationUrls.length; i++) {
     const url = locationUrls[i];
@@ -628,25 +582,16 @@ async function main() {
       stats.mapped++;
     }
 
-    // Deduplication: check against DB-loaded keys (both modes)
-    const providerKey = makeProviderKey(record);
+    const providerKey = makeProviderKey(record.provider_name, record.address_city);
     if (existingKeys.has(providerKey)) {
       stats.skipped++;
       continue;
     }
-    // Track in-batch duplicates for the current run
     existingKeys.add(providerKey);
 
     toInsert.push(record);
-    if (sampleRecords.length < 3) sampleRecords.push(record);
 
     await sleep(FETCH_DELAY_MS);
-  }
-
-  // ─ Write or report
-  if (isDryRun) {
-    printDryRunReport(stats, unmappedEntries, sampleRecords);
-    return;
   }
 
   // ─ Bulk upsert in batches
@@ -677,7 +622,7 @@ async function main() {
       continue;
     }
 
-    stats.inserted = (stats.inserted ?? 0) + batch.length;
+    stats.inserted += batch.length;
     console.log(
       `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
     );
