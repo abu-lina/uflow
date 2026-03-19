@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-03-18
+**Last Updated**: 2026-03-19
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.8.2
+**Current Version**: v0.8.4
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -38,6 +38,9 @@
 | 2026-03-18       | Plan 044 released (v0.8.2): Mobile footer overlay layer bugfix     | Fixed invisible tap interceptor blocking mobile footer interactions via z-index/pointer-events fixes                                                        |
 | 2026-03-18       | Process improvements implemented (PI 044)                          | Local UI verification gate pre-UAT, interaction-layer audit checklist, post-UAT delta protocol, invisible interceptor bug heuristic (from Retro 044)        |
 | 2026-03-18       | Orphan sweep: 4 terminal docs moved to closed/                     | Cleaned deployment (042, v0.8.2) and process-improvement (044 analysis + updates) per document lifecycle                                                    |
+| 2026-03-19 09:00 | Plan 045 released (v0.8.4): Providers category filter bugfix       | BUG-1: URL param now takes precedence over stale React context; BUG-2: non-DE/EN locale browse (Arabic/Turkish/Urdu/Pashto) fixed; debug log cleanup        |
+| 2026-03-19       | Process improvements implemented (PI 045)                          | Bugfix handoff completeness checklist + client-state precedence regression test pattern added to `.github/copilot-instructions.md` (from Retro 045)         |
+| 2026-03-19       | Roadmap updated with v0.8.4 and deferred open actions              | Post-release housekeeping: version tracking, deferred open actions surfaced as blocking items                                                                |
 
 ---
 
@@ -60,16 +63,23 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.8.2 released successfully (2026-03-18) — ready for new planning_
+_v0.8.4 released successfully (2026-03-19) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
-**Blocking Items**: None
+**Blocking Items**:
+
+- **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
+- **045-OA-2**: `npm audit fix` for `flatted` HIGH vulnerability (Owner: Implementer — before v0.8.5)
+- **045-OA-3**: E2E browser tests for category filter — direct URL nav + SPA nav + back-button (Owner: QA/Implementer — next sprint)
+
+See [planning/045-open-actions.md](../planning/045-open-actions.md) for full tracker.
 
 ### Previous Releases
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.8.4  | 2026-03-19 | Plan 045 (Providers category filter bugfix)          | Released |
 | v0.8.2  | 2026-03-18 | Plan 044 (Mobile footer overlay layer bugfix)       | Released |
 | v0.8.1  | 2026-03-13 | Plans 039+040 (Provider outreach improvements)      | Released |
 | v0.8.0  | 2026-03-13 | Plan 038 (Provider owner outreach & claim system)    | Released |

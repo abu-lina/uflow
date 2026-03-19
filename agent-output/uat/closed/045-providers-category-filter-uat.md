@@ -15,13 +15,13 @@ Status: Released
 
 ## Changelog
 
-| Date (UTC) | Agent Handoff | Request | Summary |
-|---|---|---|---|
-| 2026-03-19T10:35Z | QA | All automated gates passed, ready for value validation | UAT Complete - implementation delivers stated value; category filter now reliable for direct navigation and non-DE/EN locales |
+| Date (UTC)        | Agent Handoff | Request                                                | Summary                                                                                                                       |
+| ----------------- | ------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-19T10:35Z | QA            | All automated gates passed, ready for value validation | UAT Complete - implementation delivers stated value; category filter now reliable for direct navigation and non-DE/EN locales |
 
 ## Value Statement Under Test
 
-> *"The `/providers` page category filter is a primary discovery mechanism. When the filter returns wrong results, users cannot find relevant providers. The "Gesundheit & Sport" category (`df8e549d-54c4-48ef-8e0b-c5a6646fcb7d`) is broken for at least some navigation paths, reducing trust and discoverability."*
+> _"The `/providers` page category filter is a primary discovery mechanism. When the filter returns wrong results, users cannot find relevant providers. The "Gesundheit & Sport" category (`df8e549d-54c4-48ef-8e0b-c5a6646fcb7d`) is broken for at least some navigation paths, reducing trust and discoverability."_
 
 **Target Outcome**: Category filter must return correct results regardless of prior browser session state, and must work correctly for all 6 supported locales (de, en, ar, tr, ur, ps).
 
@@ -35,9 +35,9 @@ Status: Released
 
 Two critical bugs that broke the category filter are now fixed:
 
-1. **BUG-1 (Stale Context Override)**: URL param `?category=<uuid>` was being silently overridden by stale `selectedCategory` from React context. This broke direct navigation, bookmarks, and back-button flows. 
+1. **BUG-1 (Stale Context Override)**: URL param `?category=<uuid>` was being silently overridden by stale `selectedCategory` from React context. This broke direct navigation, bookmarks, and back-button flows.
    - **Fixed**: URL param is now canonical; context is fallback only when URL has no category param
-   - **Evidence**: Code review confirms `(searchParams.get('category') || null) ?? selectedCategory` in [ProvidersContent.tsx](../../../src/app/(public)/providers/ProvidersContent.tsx#L111)
+   - **Evidence**: Code review confirms `(searchParams.get('category') || null) ?? selectedCategory` in [ProvidersContent.tsx](<../../../src/app/(public)/providers/ProvidersContent.tsx#L111>)
    - **Regression coverage**: 5 unit tests in [plan045-category-filter-regression.test.ts](../../../src/__tests__/regression/plan045-category-filter-regression.test.ts#L34-L76) validate precedence logic
 
 2. **BUG-2 (Localized "All" Strings Breaking No-Category Browse)**: Arabic, Turkish, Urdu, and Pashto users on the no-category browse path got `'الكل'`, `'Tümü'`, `'سب'`, `'ټول'` sent as the category value, which `getSearchStrategy` didn't recognize → fell through to `'providers_only'` instead of `'both'`, hiding all community services.
@@ -48,16 +48,19 @@ Two critical bugs that broke the category filter are now fixed:
 ### User Impact: Trust & Discoverability Restored
 
 **Scenario 1: Direct URL Navigation**
+
 - **Before**: `/providers?category=df8e549d-...` could show wrong category if user previously clicked a category chip
 - **After**: URL param always wins → correct results displayed
 - **Evidence**: Logic unit test `[post-fix PASSES] URL param wins over stale context`
 
 **Scenario 2: Non-DE/EN Locale No-Category Browse**
+
 - **Before**: Arabic/Turkish/Urdu/Pashto users saw only providers, no community services
 - **After**: All locales correctly show both providers and community services on no-category browse
 - **Evidence**: Logic unit test `[post-fix PASSES] null is recognised as "all categories" and returns both strategy`
 
 **Scenario 3: SPA Navigation (Category A → Category B)**
+
 - **Before**: Stale context could persist, showing Category A results even when URL says `?category=B`
 - **After**: URL param is canonical → Category B results displayed correctly
 - **Evidence**: Logic unit test documents pre-fix failure: `preFixCategory('df8e549d-...', 'bildung-uuid')` returns `'bildung-uuid'` (wrong)
@@ -72,7 +75,7 @@ Two critical bugs that broke the category filter are now fixed:
 - **When**: User navigates to `/providers?category=df8e549d-54c4-48ef-8e0b-c5a6646fcb7d`
 - **Then**: Gesundheit & Sport providers are displayed (not providers from a previously selected category)
 - **Result**: ✅ PASS (by code review + regression test evidence)
-- **Evidence**: 
+- **Evidence**:
   - Code: `(searchParams.get('category') || null) ?? selectedCategory` ensures URL wins
   - Test: `plan045-category-filter-regression.test.ts` validates precedence
 
@@ -82,7 +85,7 @@ Two critical bugs that broke the category filter are now fixed:
 - **When**: User navigates to `/providers?category=df8e549d-...` (Gesundheit & Sport) via link or back button
 - **Then**: Gesundheit & Sport providers are displayed (not Bildung)
 - **Result**: ✅ PASS (by code review + regression test evidence)
-- **Evidence**: 
+- **Evidence**:
   - Regression test documents old behavior: `preFixCategory(url, stale)` returned stale
   - Regression test validates new behavior: `postFixCategory(url, stale)` returns url
 
@@ -92,7 +95,7 @@ Two critical bugs that broke the category filter are now fixed:
 - **When**: User visits `/providers` (no category param)
 - **Then**: Both providers AND community services are displayed
 - **Result**: ✅ PASS (by code review + regression test evidence)
-- **Evidence**: 
+- **Evidence**:
   - Code: `category` is `null`, not `'الكل'`
   - queryKey: `['providers', query, category, location]` - no locale string injection
   - Test: `[pre-fix FAILS] localized "all" strings fall through to providers_only (not both)` documents old bug
@@ -104,7 +107,7 @@ Two critical bugs that broke the category filter are now fixed:
 - **When**: User navigates carousel images, clicks share/more-actions, etc.
 - **Then**: No debug `console.log` output appears in browser console
 - **Result**: ✅ PASS (by code review)
-- **Evidence**: 
+- **Evidence**:
   - QA grep search found only 1 commented-out log (not executable)
   - Code review confirms 7 `console.log` calls removed across 4 files
   - Share-cancel error upgraded from `console.log` to `console.error` (correct for actual errors)
@@ -115,9 +118,10 @@ Two critical bugs that broke the category filter are now fixed:
 
 **QA Report Reference**: [agent-output/qa/045-providers-category-filter-qa.md](../qa/045-providers-category-filter-qa.md)  
 **QA Status**: QA Complete  
-**QA Findings Alignment**: 
+**QA Findings Alignment**:
 
 QA identified:
+
 - Medium: Build gate blocked by missing Supabase env for unrelated admin route ✅ Acknowledged as environment issue, not Plan 045 regression
 - Low: Residual manual risk on live client navigation and page-2 pagination ✅ Acceptable for bugfix with regression coverage
 
@@ -127,22 +131,24 @@ QA identified:
 
 ### Plan Deliverables
 
-| Deliverable | Expected | Actual | Status |
-|---|---|---|---|
-| BUG-1: URL param precedence fixed | URL wins over context | `(url \|\| null) ?? context` | ✅ PASS |
-| BUG-2: No localized labels in category transport | `null` for no-category | queryKey/queryFn pass `category` directly | ✅ PASS |
-| CLEAN-1: Debug logs removed | 0 debug `console.log` in changed files | 7 removed, 1 commented (non-executable) | ✅ PASS |
-| Regression coverage | Tests for both bugs | 11 tests, 3 suites, all passing | ✅ PASS |
+| Deliverable                                      | Expected                               | Actual                                    | Status  |
+| ------------------------------------------------ | -------------------------------------- | ----------------------------------------- | ------- |
+| BUG-1: URL param precedence fixed                | URL wins over context                  | `(url \|\| null) ?? context`              | ✅ PASS |
+| BUG-2: No localized labels in category transport | `null` for no-category                 | queryKey/queryFn pass `category` directly | ✅ PASS |
+| CLEAN-1: Debug logs removed                      | 0 debug `console.log` in changed files | 7 removed, 1 commented (non-executable)   | ✅ PASS |
+| Regression coverage                              | Tests for both bugs                    | 11 tests, 3 suites, all passing           | ✅ PASS |
 
 ### Test Coverage
 
 **QA Evidence**:
+
 - Plan-specific regression suite: 11/11 passed
 - Full test suite: 267 passed, 18 skipped, 0 failed
 - Type-check: Exit 0
 - Build: Compilation passed; page-data collection blocked on unrelated missing Supabase env
 
-**Coverage Assessment**: 
+**Coverage Assessment**:
+
 - Logic bugs are fully covered by unit tests
 - No browser-level automated test exercises the full SPA navigation flow with live SearchProvider context
 - Acceptable for a surgical bugfix with clear root cause
@@ -161,17 +167,19 @@ QA identified:
 
 **Does code meet original plan objective?**: YES
 
-**Evidence**: 
+**Evidence**:
 
-The analysis stated: *"The `/providers` page category filter is a primary discovery mechanism. When the filter returns wrong results, users cannot find relevant providers."*
+The analysis stated: _"The `/providers` page category filter is a primary discovery mechanism. When the filter returns wrong results, users cannot find relevant providers."_
 
 The implementation delivers:
+
 1. Category filter now returns correct results for direct URL navigation ✅
 2. Category filter now returns correct results regardless of stale session state ✅
 3. No-category browse now works correctly for all 6 supported locales ✅
 4. Debug artifacts removed from user-facing discovery surface ✅
 
 **Drift Detected**: None. The implementation is a surgical fix matching the analysis recommendations exactly:
+
 - Analysis recommended: `(searchParams.get('category') || null) ?? selectedCategory`
 - Implementation: `(searchParams.get('category') || null) ?? selectedCategory`
 - Analysis recommended: Remove `|| t('search.all')` from queryKey and queryFn
@@ -182,9 +190,10 @@ The implementation delivers:
 ## UAT Status
 
 **Status**: UAT Complete  
-**Rationale**: 
+**Rationale**:
 
 This is a surgical bugfix with:
+
 - Clear root cause documented in analysis
 - Minimal, precise code changes (2 one-line fixes in `ProvidersContent.tsx`)
 - 11 regression tests meaningfully covering both bugs
@@ -194,6 +203,7 @@ This is a surgical bugfix with:
 The implementation strictly follows the analysis recommendations and delivers the stated value: category filter reliability restored for direct navigation and all supported locales.
 
 Residual risk is limited to:
+
 - Live browser validation of SPA navigation with persistent context (acceptable for bugfix with logic coverage)
 - Infinite-scroll follow-up under category filter (acceptable, same pattern as Plan 044)
 
@@ -203,9 +213,10 @@ Residual risk is limited to:
 
 **Final Status**: ✅ **APPROVED FOR RELEASE**
 
-**Rationale**: 
+**Rationale**:
 
 Value delivery confirmed:
+
 - BUG-1 (stale context override) is fixed ✅
 - BUG-2 (localized "all" strings breaking non-DE/EN browse) is fixed ✅
 - Debug logging removed ✅
@@ -213,6 +224,7 @@ Value delivery confirmed:
 - No regressions detected in 267-test full suite ✅
 
 Technical quality validated:
+
 - Type-check: PASS
 - Automated test suite: PASS
 - Code review: Changes match analysis recommendations exactly
@@ -223,6 +235,7 @@ Technical quality validated:
 This is a bugfix with no new features, no breaking changes, and no API surface changes.
 
 **Key Changes for Changelog**:
+
 - Fixed: Category filter now respects URL parameter as canonical source, preventing stale session state from overriding user navigation
 - Fixed: No-category provider browse now works correctly for Arabic, Turkish, Urdu, and Pashto locales (was hiding all community services)
 - Chore: Removed debug `console.log` calls from provider discovery components
@@ -232,6 +245,7 @@ This is a bugfix with no new features, no breaking changes, and no API surface c
 ## Deferred Follow-ups
 
 **1. Live UAT Validation in Proper UAT Environment**
+
 - **Owner**: DevOps / QA Lead
 - **Trigger**: Post-deploy to UAT environment with Supabase credentials
 - **Evidence Required**: Manual validation of:
@@ -243,6 +257,7 @@ This is a bugfix with no new features, no breaking changes, and no API surface c
 - **Severity**: Low (automated coverage is strong; live validation is confirmation)
 
 **2. Browser-Level E2E Test for Category Filter**
+
 - **Owner**: QA / Implementer
 - **Trigger**: Next E2E test sprint (not blocking this release)
 - **Scope**: Add Playwright/Cypress test covering:

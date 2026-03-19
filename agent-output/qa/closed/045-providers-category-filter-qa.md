@@ -13,10 +13,10 @@ Status: Released
 
 ## Changelog
 
-| Date | Agent Handoff | Request | Summary |
-| ---------- | ---------------- | -------------------- | ----------------------------------- |
-| 2026-03-19 | Analyst + Implementer | Execute QA for category filter bugfix | Created QA report, verified changed-file surface, rejected at mandatory TDD gate because no 045 implementation doc exists |
-| 2026-03-19 | Implementer | Re-run QA after implementation doc + regression tests | TDD gate cleared; executed regression suite, full test suite, type-check, and build attempt; issuing QA Complete with environment-blocked build note |
+| Date       | Agent Handoff         | Request                                               | Summary                                                                                                                                              |
+| ---------- | --------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-19 | Analyst + Implementer | Execute QA for category filter bugfix                 | Created QA report, verified changed-file surface, rejected at mandatory TDD gate because no 045 implementation doc exists                            |
+| 2026-03-19 | Implementer           | Re-run QA after implementation doc + regression tests | TDD gate cleared; executed regression suite, full test suite, type-check, and build attempt; issuing QA Complete with environment-blocked build note |
 
 ## Timeline
 
@@ -128,15 +128,15 @@ Observed changed files in the worktree:
 
 ### New/Modified Code
 
-| File | Function/Class | Test File | Test Case | Coverage Status |
-| --------------- | -------------- | ------------ | ------------------ | ----------------- |
-| src/app/(public)/providers/ProvidersContent.tsx | category resolution | src/__tests__/regression/plan045-category-filter-regression.test.ts | stale context vs URL category precedence | COVERED |
-| src/app/(public)/providers/ProvidersContent.tsx | no-category transport | src/__tests__/regression/plan045-category-filter-regression.test.ts | localized `search.all` must not enter query transport | COVERED |
-| src/app/api/providers/search/route.ts | category pass-through | src/__tests__/regression/plan045-category-filter-regression.test.ts | UUID forwarded; missing param stays null | COVERED |
-| src/components/providers/ProviderCardModal.tsx | debug-log removal | no runtime test required | static changed-file review only | COVERED BY REVIEW |
-| src/components/providers/ProviderDetailModal.tsx | debug-log removal | no runtime test required | static changed-file review only | COVERED BY REVIEW |
-| src/components/providers/ProfileProviderDetailPage.tsx | debug-log removal | no runtime test required | static changed-file review only | COVERED BY REVIEW |
-| src/components/providers/ProfileProviderDetailButtons.tsx | debug-log removal | no runtime test required | static changed-file review only | COVERED BY REVIEW |
+| File                                                      | Function/Class        | Test File                                                           | Test Case                                             | Coverage Status   |
+| --------------------------------------------------------- | --------------------- | ------------------------------------------------------------------- | ----------------------------------------------------- | ----------------- |
+| src/app/(public)/providers/ProvidersContent.tsx           | category resolution   | src/**tests**/regression/plan045-category-filter-regression.test.ts | stale context vs URL category precedence              | COVERED           |
+| src/app/(public)/providers/ProvidersContent.tsx           | no-category transport | src/**tests**/regression/plan045-category-filter-regression.test.ts | localized `search.all` must not enter query transport | COVERED           |
+| src/app/api/providers/search/route.ts                     | category pass-through | src/**tests**/regression/plan045-category-filter-regression.test.ts | UUID forwarded; missing param stays null              | COVERED           |
+| src/components/providers/ProviderCardModal.tsx            | debug-log removal     | no runtime test required                                            | static changed-file review only                       | COVERED BY REVIEW |
+| src/components/providers/ProviderDetailModal.tsx          | debug-log removal     | no runtime test required                                            | static changed-file review only                       | COVERED BY REVIEW |
+| src/components/providers/ProfileProviderDetailPage.tsx    | debug-log removal     | no runtime test required                                            | static changed-file review only                       | COVERED BY REVIEW |
+| src/components/providers/ProfileProviderDetailButtons.tsx | debug-log removal     | no runtime test required                                            | static changed-file review only                       | COVERED BY REVIEW |
 
 ### Coverage Gaps
 

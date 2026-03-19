@@ -15,15 +15,15 @@ Status: Active
 
 ## Open Actions
 
-| Item | Owner | Trigger/Due | Evidence to close | Status |
-|---|---|---|---|---|
-| Live UAT validation — direct URL nav, SPA A→B nav, Arabic no-category browse | QA Lead / DevOps | Post-deploy to UAT/Production env | Manual browser test notes or screenshot | Open |
-| Live UAT validation — page-2 pagination under category filter | QA Lead | Same session as above | Confirmed 2nd page loads with correct category | Open |
-| `flatted` npm HIGH vulnerability fix (`npm audit fix`) | Implementer | Next maintenance window / before v0.8.5 | `npm audit --audit-level=high` returns 0 HIGH | Open |
-| E2E browser tests for category filter (Playwright/Cypress) | QA / Implementer | Next sprint planning | Test file added covering direct URL nav + SPA nav + back-button | Open |
+| Item                                                                         | Owner            | Trigger/Due                             | Evidence to close                                               | Status |
+| ---------------------------------------------------------------------------- | ---------------- | --------------------------------------- | --------------------------------------------------------------- | ------ |
+| Live UAT validation — direct URL nav, SPA A→B nav, Arabic no-category browse | QA Lead / DevOps | Post-deploy to UAT/Production env       | Manual browser test notes or screenshot                         | Open   |
+| Live UAT validation — page-2 pagination under category filter                | QA Lead          | Same session as above                   | Confirmed 2nd page loads with correct category                  | Open   |
+| `flatted` npm HIGH vulnerability fix (`npm audit fix`)                       | Implementer      | Next maintenance window / before v0.8.5 | `npm audit --audit-level=high` returns 0 HIGH                   | Open   |
+| E2E browser tests for category filter (Playwright/Cypress)                   | QA / Implementer | Next sprint planning                    | Test file added covering direct URL nav + SPA nav + back-button | Open   |
 
 ## Changelog
 
-| Date (UTC) | Agent | Change |
-|---|---|---|
+| Date (UTC)        | Agent  | Change                                                                       |
+| ----------------- | ------ | ---------------------------------------------------------------------------- |
 | 2026-03-19T09:48Z | devops | Created tracker from deferred UAT validations and pre-existing audit finding |

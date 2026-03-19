@@ -17,10 +17,12 @@ interface ProfileProviderDetailPageProps {
   provider: Provider;
 }
 
-export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps> = ({ provider }) => {
+export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps> = ({
+  provider,
+}) => {
   const router = useRouter();
   const isMobile = useIsMobile();
-  
+
   // Process images using shared utility
   const allImageUrls = getAllTrustedImageUrls(provider.provider_images);
 
@@ -52,8 +54,6 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
   // Load community services for this provider
   const { data: communityServices } = useCommunityServicesForProvider(provider.provider_id);
 
-
-
   const handleEditAction = () => {
     // Navigate to edit page or open edit modal
     router.push(`/profile/providers/${provider.provider_id}/edit`);
@@ -65,7 +65,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
 
   if (!isMobile) {
     return (
-      <div className="flex h-screen-fix items-center justify-center">
+      <div className="h-screen-fix flex items-center justify-center">
         <span className="text-lg text-gray-500">
           Bitte nutze die Mobile-Ansicht für die Detailansicht.
         </span>
@@ -74,23 +74,21 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
   }
 
   return (
-    <div className="relative flex h-screen-fix w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <div className="h-screen-fix relative flex w-full flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       {/* Header */}
-      <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)]">
-        <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">
+      <div className="fixed left-0 right-0 top-0 z-50 bg-white/10 pt-[calc(env(safe-area-inset-top)+24px)] backdrop-blur-3xl">
+        <div className="mx-auto flex h-10 w-full max-w-[393px] items-start pl-7 pr-4">
           {/* Back Button */}
           <button
             aria-label="Zurück"
-            className="flex items-center justify-center w-8 h-8 -ml-1"
+            className="-ml-1 flex h-8 w-8 items-center justify-center"
             onClick={() => router.back()}
           >
-            <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
+            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
 
           {/* Title */}
-          <h1 className="text-xl font-semibold text-content-heading">
-            {provider.provider_name}
-          </h1>
+          <h1 className="text-xl font-semibold text-content-heading">{provider.provider_name}</h1>
         </div>
       </div>
 
@@ -119,7 +117,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                   style={getTransformStyle()}
                 >
                   {allImageUrls.map((imageUrl, index) => (
-                    <div key={index} className="relative flex-shrink-0 w-full h-full">
+                    <div key={index} className="relative h-full w-full flex-shrink-0">
                       <Image
                         fill
                         alt={`${provider.provider_name} ${index + 1}`}
@@ -134,14 +132,14 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                 {allImageUrls.length > 1 && (
                   <>
                     <button
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
                       disabled={selectedImageIdx === 0}
                       onClick={goToPrevious}
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </button>
                     <button
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
                       disabled={selectedImageIdx === allImageUrls.length - 1}
                       onClick={goToNext}
                     >
@@ -152,7 +150,7 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
 
                 {/* Image Indicators */}
                 {allImageUrls.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                  <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
                     {allImageUrls.map((_, index) => (
                       <button
                         key={index}
@@ -176,20 +174,23 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
             {/* Community Services */}
             {communityServices && communityServices.length > 0 && (
               <div className="mt-6">
-                <h3 className="mb-3 text-lg font-semibold text-[#232323]">Verknüpfte Initiativen</h3>
+                <h3 className="mb-3 text-lg font-semibold text-[#232323]">
+                  Verknüpfte Initiativen
+                </h3>
                 <div className="space-y-3">
                   {communityServices.map((service) => {
-                    const firstImageUrl = service.community_service_images ? 
-                      (() => {
-                        try {
-                          const imagesData = typeof service.community_service_images === 'string' 
-                            ? JSON.parse(service.community_service_images)
-                            : service.community_service_images;
-                          return imagesData.urls?.[0] || PLACEHOLDER_IMAGE;
-                        } catch {
-                          return PLACEHOLDER_IMAGE;
-                        }
-                      })() 
+                    const firstImageUrl = service.community_service_images
+                      ? (() => {
+                          try {
+                            const imagesData =
+                              typeof service.community_service_images === 'string'
+                                ? JSON.parse(service.community_service_images)
+                                : service.community_service_images;
+                            return imagesData.urls?.[0] || PLACEHOLDER_IMAGE;
+                          } catch {
+                            return PLACEHOLDER_IMAGE;
+                          }
+                        })()
                       : PLACEHOLDER_IMAGE;
 
                     const handleMouseEnter = () => {
@@ -209,7 +210,9 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                       <button
                         key={service.community_service_id}
                         className="flex w-full items-center gap-3 rounded-lg bg-white p-3 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
-                        onClick={() => router.push(`/community-services/${service.community_service_id}`)}
+                        onClick={() =>
+                          router.push(`/community-services/${service.community_service_id}`)
+                        }
                         onMouseEnter={handleMouseEnter}
                       >
                         <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg">
@@ -222,8 +225,12 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                           />
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-[#232323]">{service.community_service_name}</h4>
-                          <p className="text-sm text-[#666]">{service.community_service_description}</p>
+                          <h4 className="font-medium text-[#232323]">
+                            {service.community_service_name}
+                          </h4>
+                          <p className="text-sm text-[#666]">
+                            {service.community_service_description}
+                          </p>
                         </div>
                       </button>
                     );
@@ -242,10 +249,10 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                   <span className="font-medium text-[#232323]">
                     Angebote ({provider.offers.length})
                   </span>
-                  <ChevronDown 
+                  <ChevronDown
                     className={`h-7 w-7 text-gray-600 transition-transform ${
                       expandedOffers ? 'rotate-180' : ''
-                    }`} 
+                    }`}
                   />
                 </button>
                 {expandedOffers && (
@@ -275,10 +282,10 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
                   <span className="font-medium text-[#232323]">
                     Gesucht ({provider.needs.length})
                   </span>
-                  <ChevronDown 
+                  <ChevronDown
                     className={`h-7 w-7 text-gray-600 transition-transform ${
                       expandedNeeds ? 'rotate-180' : ''
-                    }`} 
+                    }`}
                   />
                 </button>
                 {expandedNeeds && (
@@ -301,14 +308,14 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
             {/* Profile-specific Action Buttons */}
             <div className="mt-8 flex gap-4">
               <button
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 px-6 font-inter-tight font-medium text-white hover:bg-primary-dark active:bg-primary-darker transition-colors"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-inter-tight font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-darker"
                 onClick={handleEditAction}
               >
                 <Icon className="h-5 w-5" icon="material-symbols:edit" />
                 Bearbeiten
               </button>
               <button
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 py-3 px-6 font-inter-tight font-medium text-content hover:bg-gray-50 transition-colors"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 px-6 py-3 font-inter-tight font-medium text-content transition-colors hover:bg-gray-50"
                 onClick={handleMoreActions}
               >
                 <Icon className="h-5 w-5" icon="material-symbols:more-horiz" />

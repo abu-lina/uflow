@@ -15,7 +15,12 @@ import { useAuth } from '@/providers/auth-provider';
 import { useBookmarkWithAuth } from '@/hooks/useBookmarkWithAuth';
 import { useQuery } from '@tanstack/react-query';
 import { getCommunityServicesForProvider } from '@/services/communityServices';
-import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
+import {
+  openNavigation,
+  formatAddress,
+  isAddressNavigable,
+  normalizeWebsiteUrl,
+} from '@/utils/navigationUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
@@ -39,31 +44,31 @@ interface ProviderCardModalProps {
 export function ProviderCardModal({ open, onClose, provider }: ProviderCardModalProps) {
   const router = useRouter();
   const { t, language } = useLanguage();
-  
+
   // Get category name based on current language
   // Categories are stored in DE/EN only, so we use English for non-German languages when available
   const getCategoryName = () => {
     if (!provider.category) return t('search.unnamed');
-    
+
     const category = provider.category as { name_de?: string; name_en?: string };
-    
+
     // For English, prefer English name
     if (language === 'en') {
       return category.name_en || category.name_de || t('search.unnamed');
     }
-    
+
     // For German, prefer German name
     if (language === 'de') {
       return category.name_de || category.name_en || t('search.unnamed');
     }
-    
+
     // For all other languages (ar, tr, ur, ps), prefer English over German
     // This provides better internationalization than showing German text
     return category.name_en || category.name_de || t('search.unnamed');
   };
-  
+
   const categoryName = getCategoryName();
-  
+
   // Use the new bookmark hook with authentication
   const { handleBookmarkAction: checkAuthBeforeBookmark } = useBookmarkWithAuth({
     bookmarkableId: provider.provider_id,
@@ -342,7 +347,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
 
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
-  
+
   // Track image loading states for skeleton display
   const [mainImagesLoaded, setMainImagesLoaded] = useState<Record<number, boolean>>({});
   const [communityImageLoaded, setCommunityImageLoaded] = useState(false);
@@ -381,7 +386,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
     if (!canProceed) {
       return;
     }
-    
+
     try {
       const { data: existingBookmark, error: fetchError } = await supabase
         .from('bookmarks')
@@ -537,7 +542,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                       src={imageUrl}
                       unselectable="on"
                       onLoad={() => {
-                        setMainImagesLoaded(prev => ({ ...prev, [index]: true }));
+                        setMainImagesLoaded((prev) => ({ ...prev, [index]: true }));
                       }}
                     />
                   </div>
@@ -575,13 +580,12 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                   )}
                 </>
               )}
-
             </div>
 
             {/* Drag handle for swipe-to-close - positioned on top of image */}
             <div className="absolute left-1/2 top-2 z-10 h-2 w-16 -translate-x-1/2 rounded-full bg-gray-500 opacity-90 shadow-lg" />
             <div className="absolute bottom-0 left-0 right-0 flex flex-col items-start justify-end p-4">
-              <div className="outline-uFlowDarkGrey inline-flex h-8 items-center justify-center overflow-hidden rounded-[9.54px] bg-white/70 px-2.5 outline outline-[0.79px] outline-offset-[-0.40px] backdrop-blur-[1.99px]">
+              <div className="inline-flex h-8 items-center justify-center overflow-hidden rounded-[9.54px] bg-white/70 px-2.5 outline outline-[0.79px] outline-offset-[-0.40px] outline-uFlowDarkGrey backdrop-blur-[1.99px]">
                 <div className="justify-center text-center font-inter-tight text-sm font-medium text-black">
                   {provider.category?.name_de || ''}
                 </div>
@@ -621,19 +625,40 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
           <div className="mx-auto flex w-[353px] flex-col items-start gap-5 overflow-x-hidden px-3 pb-20 pt-8 sm:hidden sm:pb-6">
             {/* Title */}
             <div className="flex w-full flex-col items-start gap-1">
-              <div className="w-full min-w-0 truncate font-inter-tight text-2xl font-semibold text-[#232323]" title={provider.provider_name}>
+              <div
+                className="w-full min-w-0 truncate font-inter-tight text-2xl font-semibold text-[#232323]"
+                title={provider.provider_name}
+              >
                 {provider.provider_name}
               </div>
               {provider.address_city ? (
                 <button
-                  className="w-full min-w-0 truncate font-inter text-base text-[#7A7A7A] hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-[#7A7A7A] disabled:hover:no-underline text-left"
-                  disabled={!isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)}
-                  title={provider.address_street && provider.address_zip && provider.address_city
-                    ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city} - Adresse antippen zum Navigieren`
-                    : ''}
+                  className="w-full min-w-0 truncate text-left font-inter text-base text-[#7A7A7A] hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-[#7A7A7A] disabled:hover:no-underline"
+                  disabled={
+                    !isAddressNavigable(
+                      provider.address_street ?? undefined,
+                      provider.address_zip ?? undefined,
+                      provider.address_city ?? undefined,
+                    )
+                  }
+                  title={
+                    provider.address_street && provider.address_zip && provider.address_city
+                      ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city} - Adresse antippen zum Navigieren`
+                      : ''
+                  }
                   onClick={() => {
-                    const address = formatAddress(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined);
-                    if (isAddressNavigable(provider.address_street ?? undefined, provider.address_zip ?? undefined, provider.address_city ?? undefined)) {
+                    const address = formatAddress(
+                      provider.address_street ?? undefined,
+                      provider.address_zip ?? undefined,
+                      provider.address_city ?? undefined,
+                    );
+                    if (
+                      isAddressNavigable(
+                        provider.address_street ?? undefined,
+                        provider.address_zip ?? undefined,
+                        provider.address_city ?? undefined,
+                      )
+                    ) {
                       openNavigation(address);
                     }
                   }}
@@ -650,7 +675,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             </div>
             {/* Barakah Section (only if zakat project exists) - with fade-in animation */}
             {communityServices.length > 0 && (
-              <div className="flex w-full flex-col items-start gap-2 animate-fadeIn" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+              <div
+                className="animate-fadeIn flex w-full flex-col items-start gap-2"
+                style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
+              >
                 <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
                   {t('providers.ourBarakahEffect')}:
                 </div>
@@ -675,7 +703,8 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                     loading="lazy"
                     sizes="(max-width: 768px) 100vw, 50vw"
                     src={
-                      communityServices[0].community_service_images && communityServices[0].community_service_images.length > 0
+                      communityServices[0].community_service_images &&
+                      communityServices[0].community_service_images.length > 0
                         ? communityServices[0].community_service_images[0]
                         : '/images/placeholder.jpg'
                     }
@@ -709,7 +738,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             {communityServices.length === 0 &&
               Array.isArray(provider.barakah_effects) &&
               provider.barakah_effects.length > 0 && (
-                <div className="flex w-full flex-col items-start gap-2 animate-fadeIn" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+                <div
+                  className="animate-fadeIn flex w-full flex-col items-start gap-2"
+                  style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
+                >
                   <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
                     {t('providers.ourBarakahEffect')}:
                   </div>
@@ -729,7 +761,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               )}
 
             {/* Opening Hours Section - with fade-in animation */}
-            <div className="flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4 animate-fadeIn" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+            <div
+              className="animate-fadeIn flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4"
+              style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}
+            >
               <div className="font-inter-tight text-[20px] font-semibold text-[#232323]">
                 Öffnungszeiten:
               </div>
@@ -742,11 +777,15 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             </div>
           </div>
           {/* Sticky ProviderActionBar at the bottom on mobile */}
-          <div className="fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-6 pt-4 pb-safe sm:hidden">
+          <div className="pb-safe fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-6 pt-4 sm:hidden">
             <ProviderActionBar
               isSaved={isSaved}
               phoneNumber={provider.contact_phone || undefined}
-              websiteUrl={provider.social_website ? normalizeWebsiteUrl(provider.social_website) || undefined : undefined}
+              websiteUrl={
+                provider.social_website
+                  ? normalizeWebsiteUrl(provider.social_website) || undefined
+                  : undefined
+              }
               onCall={handleCall}
               onSave={handleSave}
               onShare={handleShare}

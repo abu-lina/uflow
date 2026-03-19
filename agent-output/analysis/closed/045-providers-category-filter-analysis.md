@@ -32,8 +32,8 @@ The `/providers` page category filter is a primary discovery mechanism. When the
 ## Methodology
 
 - Read-only trace of: `ProvidersContent.tsx` → `fetchProvidersFromAPI` → `GET /api/providers/search` → `searchProvidersAndCommunityServices` → `searchProviders`
-- Inspected context provider (`SearchProvider`) initialization  
-- Verified `getSearchStrategy` handling for all locales  
+- Inspected context provider (`SearchProvider`) initialization
+- Verified `getSearchStrategy` handling for all locales
 - Searched all provider-related files for `console.log` and debug artifacts
 
 ---
@@ -52,6 +52,7 @@ const category = selectedCategory ?? (searchParams.get('category') || null);
 The `??` (nullish coalescing) operator gives `selectedCategory` from `SearchProvider` context **higher priority** than the URL param. The context persists for the lifetime of the browser session (it lives in the layout, not destroyed on page navigation).
 
 **Reproduction path:**
+
 1. User is on `/providers` and clicks category chip "Bildung" → `setSelectedCategory('bildung-uuid')` is called; URL = `?category=bildung-uuid`
 2. User navigates to `/providers?category=df8e549d-...` (Gesundheit & Sport) via a link/bookmark/back-button
 3. At this point: `selectedCategory = 'bildung-uuid'` (stale), `searchParams.get('category') = 'df8e549d-...'`
@@ -59,12 +60,14 @@ The `??` (nullish coalescing) operator gives `selectedCategory` from `SearchProv
 5. Query key and query function both use `'bildung-uuid'`; results show Bildung providers, not Gesundheit & Sport
 
 The `useEffect` sync does NOT fix this because:
+
 ```typescript
 useEffect(() => {
   if (category !== selectedCategory) { setSelectedCategory(category); }
   // category = 'bildung-uuid', selectedCategory = 'bildung-uuid' → no-op
 }, [category, ...]);
 ```
+
 It's a self-reinforcing cycle.
 
 **Confidence: Verified** — deterministic code path, no environmental variable.
@@ -84,16 +87,17 @@ queryFn: ({ pageParam = 0 }) =>
 
 When `category = null` (no filter selected), `t('search.all')` is passed as the category value. Observed locale values:
 
-| Locale | `t('search.all')` |
-|--------|-------------------|
-| de     | `"Alle"` ✅ handled |
-| en     | `"All"` ✅ handled |
+| Locale | `t('search.all')`       |
+| ------ | ----------------------- |
+| de     | `"Alle"` ✅ handled     |
+| en     | `"All"` ✅ handled      |
 | ar     | `"الكل"` ❌ NOT handled |
 | tr     | `"Tümü"` ❌ NOT handled |
-| ur     | `"سب"` ❌ NOT handled |
-| ps     | `"ټول"` ❌ NOT handled |
+| ur     | `"سب"` ❌ NOT handled   |
+| ps     | `"ټول"` ❌ NOT handled  |
 
 `getSearchStrategy` in `services/providers.ts` only recognizes `'Alle'` and `'All'`. For Arabic, Turkish, Urdu, and Pashto users:
+
 - `getSearchStrategy('الكل')` → `'providers_only'` (should be `'both'`)
 - Community services are hidden on the "all categories" browse view
 - Also: different query cache keys per locale for the same data (cache fragmentation)
@@ -106,15 +110,15 @@ When `category = null` (no filter selected), `t('search.all')` is passed as the 
 
 Files with debug-level `console.log` calls (not error handling):
 
-| File | Line(s) | Content |
-|------|---------|---------|
-| `src/components/providers/ProviderCardModal.tsx` | 170-175 | `useEffect` "Debug selected image changes" |
-| `src/components/providers/ProviderCardModal.tsx` | 181, 189 | `goToNext`/`goToPrevious` button logs |
-| `src/components/providers/ProviderDetailModal.tsx` | 142-148 | `useEffect` "Debug selected image changes" |
-| `src/components/providers/ProviderDetailModal.tsx` | 413 | `onClick={() => console.log('Image container clicked')}` |
-| `src/components/providers/ProviderDetailModal.tsx` | 251 | `console.log('Share cancelled or failed:', error)` |
-| `src/components/providers/ProfileProviderDetailPage.tsx` | 64 | `console.log('More actions clicked')` |
-| `src/components/providers/ProfileProviderDetailButtons.tsx` | 120 | `console.log('Share cancelled:', error)` |
+| File                                                        | Line(s)  | Content                                                  |
+| ----------------------------------------------------------- | -------- | -------------------------------------------------------- |
+| `src/components/providers/ProviderCardModal.tsx`            | 170-175  | `useEffect` "Debug selected image changes"               |
+| `src/components/providers/ProviderCardModal.tsx`            | 181, 189 | `goToNext`/`goToPrevious` button logs                    |
+| `src/components/providers/ProviderDetailModal.tsx`          | 142-148  | `useEffect` "Debug selected image changes"               |
+| `src/components/providers/ProviderDetailModal.tsx`          | 413      | `onClick={() => console.log('Image container clicked')}` |
+| `src/components/providers/ProviderDetailModal.tsx`          | 251      | `console.log('Share cancelled or failed:', error)`       |
+| `src/components/providers/ProfileProviderDetailPage.tsx`    | 64       | `console.log('More actions clicked')`                    |
+| `src/components/providers/ProfileProviderDetailButtons.tsx` | 120      | `console.log('Share cancelled:', error)`                 |
 
 ---
 
@@ -137,6 +141,7 @@ Files with debug-level `console.log` calls (not error handling):
 ## Recommended Fixes (Analysis-scoped)
 
 1. **Invert priority in category resolution** — URL param must be primary; context falls back only when URL is absent:
+
    ```typescript
    // Before (wrong):
    const category = selectedCategory ?? (searchParams.get('category') || null);
@@ -145,6 +150,7 @@ Files with debug-level `console.log` calls (not error handling):
    ```
 
 2. **Remove `|| t('search.all')` from queryKey and queryFn** — pass `null` directly when no category; the API already handles `null` correctly via `getSearchStrategy(null) → 'both'`:
+
    ```typescript
    // Before:
    queryKey: ['providers', query, category || t('search.all'), location],
