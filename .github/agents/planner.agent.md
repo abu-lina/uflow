@@ -71,6 +71,15 @@ Produce implementation-ready plans translating roadmap epics into actionable, ve
 - `[DEFERRED: owner + reason + target plan/version]`
 
 `[OPEN]` decisions are not allowed at handoff to `@Critic`.
+  5e. **Version Pre-Flight (MANDATORY for any release/patch plan)**: Before committing to a specific version number, run:
+
+```
+git fetch origin --tags
+git tag --list "v*" | sort -V | tail -5
+git show origin/main:package.json | grep '"version"'
+```
+
+State the target version as: _"next available patch after current `origin/main` version; confirm at DevOps Stage 1"_ rather than a hard-coded number. Fill in the exact version at DevOps Stage 1 only once `git fetch --tags` confirms no collision.
 6. Gather requirements, repository context, constraints.
 7. Begin every plan with "Value Statement and Business Objective": "As a [user/customer/agent], I want to [objective], so that [value]". Align with roadmap epic.
 8. Break work into discrete tasks with objectives, acceptance criteria, dependencies, owners.
@@ -136,7 +145,7 @@ Prefer small, focused scopes delivering value quickly.
 1. Start with "Value Statement and Business Objective": "As a [user/customer/agent], I want to [objective], so that [value]"
 2. Get User Approval. Present user story, wait for explicit approval before planning.
 3. Summarize objective, known context.
-4. Identify target release version. Check current version, consult roadmap, ensure valid increment. Document target version and rationale in plan header.
+4. Identify target release version. Check current version, consult roadmap, ensure valid increment. Run version pre-flight (see Core Responsibility 5e). State version conservatively as "next available after current origin/main version; confirm at DevOps Stage 1" and document the rationale in the plan header. Update the actual version number when DevOps Stage 1 confirms availability.
    4b. Run the **Release bundling check** and document `## Release Strategy` accordingly.
    4c. Add **Related Issues** links/IDs to the plan header (or “None”).
 5. Enumerate assumptions, open questions. Resolve before finalizing.
@@ -190,6 +199,16 @@ Require an explicit user selection and record: `| YYYY-MM-DD | planner | Scope l
 - Trust implementer for optimal technical decisions.
 
 ## Version Management
+
+**Version Authoritative Source (MANDATORY)**:
+
+| Source | When to use | Notes |
+|---|---|---|
+| `git tag --list --sort=version:refname \| tail -1` | Latest released version | Git tag is authoritative for released state |
+| `git show origin/main:package.json \| grep '"version"'` | Current development version | What the next release targets |
+| Roadmap `Current Version` | Informational only | May lag by 1–3 releases; do NOT use for version targeting |
+
+When in doubt: git tag = released; `origin/main:package.json` = development head. The roadmap is documentation, not source of truth for version assignment.
 
 Every plan MUST include final milestone for updating version artifacts to match roadmap target.
 

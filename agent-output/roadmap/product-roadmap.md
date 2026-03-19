@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-03-19
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.8.5
+**Current Version**: v0.8.6
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log

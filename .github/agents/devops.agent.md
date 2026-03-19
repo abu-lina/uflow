@@ -55,7 +55,7 @@ Core Responsibilities:
 
 1. Read roadmap BEFORE deployment. Confirm release aligns with milestones/epic targets.
 2. Read UAT BEFORE deployment. Verify "APPROVED FOR RELEASE".
-3. Verify version consistency per `release-procedures` skill (package.json, CHANGELOG, README, config, git tags).
+3. Verify version consistency per `release-procedures` skill (package.json, CHANGELOG, README, config, git tags). **Version source**: `git tag --sort=version:refname | tail -1` = latest released. `git show origin/main:package.json | grep '"version"'` = development version. Roadmap `Current Version` is informational only and may lag. Use git tag + package.json for all version decisions.
 4. Validate packaging integrity (build, package scripts, required assets, verification, filename).
 5. Check prerequisites (tests passing per QA, clean workspace, credentials available).
 6. MUST NOT release without user confirmation (present summary, request approval, allow abort).
@@ -106,6 +106,15 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
       - a documented `Post-UAT Delta Review` that satisfies the narrow self-review criteria.
     - If neither exists, block Stage 1 and hand back to Implementer.
 3. Read roadmap. Verify plan's target release version. Multiple plans may target same release.
+   **Version pre-flight (MANDATORY)**: Before accepting the plan's target version as final, run:
+
+```
+git fetch origin --tags
+git tag --list "v*" | sort -V | tail -5
+git show origin/main:package.json | grep '"version"'
+```
+
+   If the target version tag already exists, increment and update the plan's `Target Release` field before continuing. Document the adjustment in the Stage 1 deployment doc.
 4. Check version consistency for target release per `release-procedures` skill.
   4b. **CHANGELOG date sanity-check (MANDATORY)**:
     - If the latest `CHANGELOG.md` entry includes a date, verify it matches the actual release day.
@@ -247,6 +256,19 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
     - Record whether any **new** HIGH/CRITICAL vulnerabilities appear compared to the start of Stage 2.
     - If new HIGH/CRITICAL vulnerabilities are introduced by this release work, treat as a blocker unless the user explicitly accepts the risk.
 4. Validate packaging: Build, package, verify all bundled changes.
+  4b. **PWA Browser Verification Requirements (MANDATORY when plan touches PWA surface area)**:
+    PWA surface area includes: `next.config.js` (workboxOptions), service worker routes, offline fallback, push notification handlers, or any file under `lib/pwa/`.
+
+    If the plan touched any of these areas, include the following in the release readiness summary presented to the user (Phase 2B). These items can be deferred with user acknowledgment, but they MUST be visible — not silently omitted:
+
+    Required manual validations before production promotion:
+    □ DevTools → Application → Service Workers: SW active, version matches build
+    □ Icon pages (e.g., `/providers/[id]`): icons render; no SW console errors
+    □ Network tab: CDN icon requests not intercepted by SW (status 200 from CDN, not SW)
+    □ Offline mode: `/offline.html` fallback served correctly
+    □ Push (only if push handler was changed): test notification delivered
+
+    If these are already tracked as deferred DF-N items in the open-actions tracker, reference them explicitly in the release summary with their status. Do not create duplicate trackers.
 5. Check workspace: All plan commits present, no uncommitted changes.
 6. **Upstream tracking check (MANDATORY)**: Confirm the current branch tracks the expected remote branch (typically `main...origin/main`).
    - Run `git branch -vv` and verify the tracking info is present
@@ -259,6 +281,18 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 - `git fetch origin --prune --tags`
 - `git log --max-count 20 --date=iso-strict`
 - If you observe signs a push occurred earlier than expected, explicitly document: what you observed, likely explanation (manual vs automation), and whether it violates the “no push without approval” rule.
+
+  7c. **Version collision resolution (IF target tag already exists after `git fetch --tags`)**:
+    If the intended version tag is already present on `origin`:
+    1. `git rebase --abort` (only if a rebase is currently in progress)
+    2. Bump version in `package.json` and `CHANGELOG.md` to next patch
+    3. Run `npm install --package-lock-only`
+    4. Rename and update Stage 1 deployment doc to reflect new version
+    5. Update plan's `Target Release` field and all changelog references
+    6. `git commit --amend` to fold the version bump into the fix commit (squash one layer only)
+    7. Resume rebase
+    Document the collision source, bumped version, and resolution steps in the deployment doc.
+    Limit to 2 bump cycles. If a third collision occurs, pause and involve user.
 
 **Stage 2 evidence block (RECOMMENDED formatting)**:
 
