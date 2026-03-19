@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.7] - 2026-03-19
+## [0.8.8] - 2026-03-19
+
+### Added
+
+- **JoinHalal admin dry-run dashboard UI (Plan 048)**: A new admin-only dashboard page at `/dashboard/import` that lets operators run a JoinHalal import dry-run preview directly from the browser without needing terminal access. Introduces a shared server-safe import core (`src/lib/import/joinhalal.ts`) consumed by both the CLI script and a new authenticated admin API route (`POST /api/admin/import-joinhalal/dry-run`). The dashboard page displays import counts, unmapped category groups, sample records, and a copyable CLI write command for when the operator is ready to write. Actual database writes remain CLI-only in v1. Auth is enforced at both the dashboard layout boundary and the API route level (admin/moderator only).
+
 
 ### Added
 
