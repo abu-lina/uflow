@@ -2,7 +2,7 @@
 ID: 048
 Origin: 048
 UUID: 7a13d4ef
-Status: Committed
+Status: Released
 ---
 
 # Plan 048 — JoinHalal Admin Dry-Run Dashboard UI
@@ -11,7 +11,7 @@ Status: Committed
 
 - **Target Release**: next available patch after current `origin/main` version (currently `v0.8.7`; provisional `v0.8.8`, confirm exact tag at DevOps Stage 1)
 - **Epic Alignment**: Provider supply growth / admin operations usability / faster operator review workflow
-- **Status**: Committed
+- **Status**: Released
 - **Related Issues**: None
 
 ## Changelog
@@ -23,6 +23,7 @@ Status: Committed
 | 2026-03-19T15:59Z | QA failed | qa | Preview count correctness gap: `wouldInsert` can be wrong for duplicate+unmapped overlap; rework required before UAT |
 | 2026-03-19T17:14Z | Status updated to QA Complete | qa | QA-1 and QA-2 resolved; fresh tests/type-check/delta-lint pass; unrelated local env build failure remains informational |
 | 2026-03-19T17:30Z | Status updated to UAT Approved | uat | APPROVED FOR RELEASE v0.8.8 — all 8 UAT scenarios PASS; value statement satisfied; 4 deferred LOW follow-ups recorded with owners; handing off to DevOps |
+| 2026-03-19T17:55Z | Status updated to Released | devops | Commit 8872fbe tagged v0.8.8 and pushed to origin/session/047-joinhalal-data-import |
 
 ## Release Strategy
 

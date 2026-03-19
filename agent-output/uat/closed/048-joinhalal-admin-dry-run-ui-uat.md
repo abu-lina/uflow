@@ -2,7 +2,7 @@
 ID: 048
 Origin: 048
 UUID: 7a13d4ef
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 048 — JoinHalal Admin Dry-Run Dashboard UI
