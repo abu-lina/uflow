@@ -165,20 +165,9 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
 
   const mainImageUrl = allImageUrls[selectedImageIdx] || PLACEHOLDER_IMAGE;
 
-  // Debug selected image changes
-  useEffect(() => {
-    console.log(
-      'Selected image changed to:',
-      selectedImageIdx,
-      'URL:',
-      allImageUrls[selectedImageIdx],
-    );
-  }, [selectedImageIdx, allImageUrls]);
-
   // Image carousel navigation functions
   const goToNext = () => {
     if (isTransitioning || allImageUrls.length <= 1) return;
-    console.log('Next clicked - current:', selectedImageIdx, 'total:', allImageUrls.length);
     setIsTransitioning(true);
     setSelectedImageIdx((prev) => (prev + 1) % allImageUrls.length);
     setTimeout(() => setIsTransitioning(false), 300);
@@ -186,7 +175,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
 
   const goToPrevious = () => {
     if (isTransitioning || allImageUrls.length <= 1) return;
-    console.log('Previous clicked - current:', selectedImageIdx, 'total:', allImageUrls.length);
     setIsTransitioning(true);
     setSelectedImageIdx((prev) => (prev - 1 + allImageUrls.length) % allImageUrls.length);
     setTimeout(() => setIsTransitioning(false), 300);

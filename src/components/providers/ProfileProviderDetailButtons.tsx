@@ -116,8 +116,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
           url: shareUrl,
         });
       } catch (error) {
-        // User cancelled or share failed
-        console.log('Share cancelled:', error);
+        // User cancelled — AbortError is an expected outcome, not a failure
       }
     } else {
       // Fallback: Copy to clipboard

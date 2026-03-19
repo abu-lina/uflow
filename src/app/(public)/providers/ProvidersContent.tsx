@@ -105,8 +105,10 @@ export function ProvidersContent({
   const location = defaultLocation ?? normalizedUrlLocation ?? selectedLocation ?? '';
   const query = searchParams.get('q') || '';
 
-  // Use provider state for category, fallback to URL params
-  const category = selectedCategory ?? (searchParams.get('category') || null);
+  // URL param is the canonical source of truth for category filter.
+  // Context (selectedCategory) is only used as fallback when the URL param is absent,
+  // preventing stale context from overriding navigation to a different category UUID.
+  const category = (searchParams.get('category') || null) ?? selectedCategory;
 
   // Use React Query infinite query for paginated search results
   // Page size: 12 provides good balance between initial load and frequent pagination
@@ -114,9 +116,9 @@ export function ProvidersContent({
 
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } =
     useInfiniteQuery({
-      queryKey: ['providers', query, category || t('search.all'), location],
+      queryKey: ['providers', query, category, location],
       queryFn: ({ pageParam = 0 }) =>
-        fetchProvidersFromAPI(query, category || t('search.all'), location, pageParam, PAGE_SIZE),
+        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE),
       getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
       initialPageParam: 0,
       // Use server-rendered initial data when available (Plan 010 P1a)

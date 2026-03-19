@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-03-19
+
+### Fixed
+
+- **Category filter now respects URL parameter as canonical source (Plan 045)**: Navigating to `/providers?category=<uuid>` after previously selecting a different category chip silently displayed the wrong category's results. Root cause: the client-side category resolver used `selectedCategory ?? searchParams.get('category')`, giving stale React context higher priority than the URL param. Fixed by inverting operand order to `(searchParams.get('category') || null) ?? selectedCategory` so the URL param is always canonical and context is only used as a fallback when no URL param is present.
+
+- **No-category provider browse now works correctly for all locales (Plan 045)**: Arabic, Turkish, Urdu, and Pashto users on the no-category browse path had all community services hidden because `t('search.all')` locale labels (`الكل`, `Tümü`, `سب`, `ټول`) were injected into the API `category` transport value. Only `'Alle'` and `'All'` were recognised by `getSearchStrategy`; all other locale labels fell through to `'providers_only'` instead of `'both'`. Fixed by passing `null` directly when no category is selected; `null` already routes to the `'both'` strategy throughout the service layer.
+
+### Changed
+
+- **Removed debug `console.log` calls from provider discovery components (Plan 045)**: Seven development-only `console.log` calls were removed from `ProviderCardModal`, `ProviderDetailModal`, `ProfileProviderDetailPage`, and `ProfileProviderDetailButtons`. A share-cancel failure log was also upgraded from `console.log` to `console.error` in `ProviderDetailModal`.
+
 ## [0.8.3] - 2026-03-18
 
 ### Fixed

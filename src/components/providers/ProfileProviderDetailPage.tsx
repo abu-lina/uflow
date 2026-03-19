@@ -61,7 +61,6 @@ export const ProfileProviderDetailPage: React.FC<ProfileProviderDetailPageProps>
 
   const handleMoreActions = () => {
     // Open more actions menu or modal
-    console.log('More actions clicked');
   };
 
   if (!isMobile) {
