@@ -2,7 +2,7 @@
 ID: 047
 Origin: 047
 UUID: 6c8f14ab
-Status: Committed
+Status: Released
 ---
 
 # Code Review: 047 — JoinHalal Provider Data Ingestion Pipeline
