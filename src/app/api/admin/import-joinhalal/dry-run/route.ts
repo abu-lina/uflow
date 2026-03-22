@@ -12,6 +12,9 @@ import type { ImportLimit } from '@/lib/import/joinhalal';
  *
  * Does NOT write any data to the database.
  *
+ * Enforces a 90-second application-level timeout guard to ensure the
+ * response completes before the Nginx (95s) and Cloudflare (100s) ceilings.
+ *
  * Request body:
  * {
  *   limit: 10 | 50 | 100 | "all"  (required)
@@ -19,6 +22,9 @@ import type { ImportLimit } from '@/lib/import/joinhalal';
  *
  * Access: admin and moderator roles only.
  */
+
+/** Application-level timeout budget in ms. Must be < Nginx (95s) < Cloudflare (100s). */
+const ROUTE_TIMEOUT_MS = 90_000;
 
 const VALID_LIMITS = new Set<ImportLimit | number | string>([10, 50, 100, 'all']);
 
@@ -76,15 +82,32 @@ export async function POST(request: Request) {
     auth: { persistSession: false },
   });
 
-  // ─ Execute dry-run
+  // ─ Execute dry-run with timeout guard
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ROUTE_TIMEOUT_MS);
+
   try {
     const result = await runJoinHalalDryRun({
       supabase,
       limit: limit as ImportLimit,
+      signal: controller.signal,
     });
 
+    clearTimeout(timeout);
     return NextResponse.json(result);
   } catch (err) {
+    clearTimeout(timeout);
+
+    if (controller.signal.aborted) {
+      return NextResponse.json(
+        {
+          error: 'Dry-run timed out',
+          detail: `The operation exceeded the ${ROUTE_TIMEOUT_MS / 1000}s route budget. Try a smaller limit or use the CLI for large imports.`,
+        },
+        { status: 504 }
+      );
+    }
+
     const message = err instanceof Error ? err.message : 'Dry-run failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }
