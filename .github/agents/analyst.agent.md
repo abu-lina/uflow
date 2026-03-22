@@ -121,8 +121,10 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 **Creating new documents**:
 
 1. Read `agent-output/.next-id` (create with value `1` if missing)
-2. Use that value as your document ID
-3. Increment and write back: `echo $((ID + 1)) > agent-output/.next-id`
+2. Verify the candidate ID is unused anywhere under `agent-output/`, including `closed/`: `find agent-output/ -name "${ID}-*" -type f 2>/dev/null`
+3. If matches exist, increment and re-check until the ID is unused
+4. Use that value as your document ID
+5. Increment and write back the next available value: `echo $((ID + 1)) > agent-output/.next-id`
 
 **Document header** (required for all new documents):
 
