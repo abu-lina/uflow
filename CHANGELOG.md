@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.13] - 2026-03-22
+
+### Fixed
+
+- **JoinHalal vxconfig parser fix (Plan 053)**: The `parseVxConfig()` function previously used `html.match()` which only returned the first vxconfig `<script>` block on JoinHalal pages. Real pages contain 3 blocks, and only the last one holds the authoritative `current_post` data (post ID and display name). The parser now iterates all vxconfig blocks using a `RegExp.exec()` loop and returns the first block containing `current_post`. This restores correct `import_source_id` extraction so providers are keyed for upsert rather than falling into the insert-only fallback path.
+
+### Added
+
+- **Offer auto-creation for unmatched Speisen (Plan 053)**: The import pipeline no longer silently drops unmatched Speisen food terms. A new `createMissingOffers()` function auto-creates missing offers in the `offers` table during import execution, assigns them to the "Essen & Trinken" category (`20c10efe-404b-4a39-bb81-5089a0332d78`), and uses `ON CONFLICT (name_de) DO NOTHING` for idempotency. Created offer IDs are merged into provider `offers_ids` before the provider upsert, ensuring every Speisen term is represented. The write report now shows `Offers matched`, `Offers auto-created`, and `Offers create failed` counts so operators have full visibility into offer-mapping behavior.
+
+### Operator Notes
+
+- **Remediation for pre-fix imports**: Providers imported before this fix may have `import_source_id = NULL` due to the parser bug. Before running a corrected re-import, operators should either: (a) delete providers with `import_source IS NULL AND user_created_id = '00000000-0000-0000-0000-000047000001'` to allow clean re-import, or (b) run a targeted update to backfill `import_source_id` from the source pages. Without remediation, the first corrected import may create duplicate rows for providers that previously lacked a post ID.
+
 ## [0.8.12] - 2026-03-22
 
 ### Added
