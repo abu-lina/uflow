@@ -1,7 +1,8 @@
+---
 ID: 053
 Origin: 053
 UUID: b7e4a1c9
-Status: Committed
+Status: Released
 ---
 
 # Implementation 053 — JoinHalal vxconfig Fix and Offer Auto-Creation
@@ -20,6 +21,7 @@ Status: Committed
 |---|---|---|---|
 | 2026-03-22T21:00Z | Implementer | Plan 053 execution | Implemented all 6 milestones: vxconfig parser fix, offer auto-creation, write-path wiring, reporting, regression tests, version bump to 0.8.13 |
 | 2026-03-22T20:24Z | DevOps | Stage 1 closure | Marked implementation committed and archived for release `v0.8.13` |
+| 2026-03-22T20:36Z | DevOps | Stage 2 release | Release tag `v0.8.13` pushed and implementation lifecycle moved to Released |
 
 ## Implementation Summary
 

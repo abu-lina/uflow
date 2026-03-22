@@ -1,31 +1,34 @@
+---
 ID: 053
 Origin: 053
 UUID: b7e4a1c9
-Status: UAT Approved
+Status: Released
+---
 
 # Plan 053 — JoinHalal vxconfig Fix and Offer Auto-Creation
 
-Status: Committed
-
-- **Target Release**: next available patch after current `origin/main` version `0.8.12`; confirm exact version at DevOps Stage 1 after tag pre-flight
-- **Epic Alignment**: Provider discovery data integrity and import reliability, supporting the Master Product Objective by keeping halal business listings complete, deduplicated, and trustworthy
-- **Status**: UAT Approved
-- **Related Issues**: None
+## Plan Header
 
 - **Target Release**: `v0.8.13`
+- **Epic Alignment**: Provider discovery data integrity and import reliability, supporting the Master Product Objective by keeping halal business listings complete, deduplicated, and trustworthy
+- **Status**: Released
+- **Related Issues**: None
 
-- **Status**: Committed for Release `v0.8.13`
+### Changelog
+
+| Date (UTC) | Author | Change | Rationale |
 |---|---|---|---|
 | 2026-03-22T19:10Z | planner | Created plan | Convert Analysis 053 into implementation-ready work covering vxconfig parsing, auto-created offers, and no-drop import behavior |
 | 2026-03-22T19:55Z | planner | Revised plan after Critic comments | Resolve F-1 by fixing category assignment strategy for auto-created offers; clarify dedup and service-role assumptions |
+| 2026-03-22T20:24Z | devops | Stage 1 committed locally | Version `v0.8.13` confirmed, deferred staging validation tracked, and plan advanced to committed state pending release approval |
 | 2026-03-22T20:28Z | qa | QA completed | QA gates passed for Plan 053 scope; automated evidence recorded and plan advanced for UAT handoff |
 | 2026-03-22T20:45Z | uat | UAT completed | All 5 UAT scenarios PASS; APPROVED FOR RELEASE; plan advanced for DevOps handoff |
+| 2026-03-22T20:36Z | devops | Released | Release branch `release/v0.8.13-prep` and tag `v0.8.13` pushed to origin; plan chain marked Released |
 
 ## Value Statement and Business Objective
 
 As a **Muslim user searching for halal businesses**,
 I want **imported JoinHalal providers to keep stable source IDs and complete food-offer mappings**,
-| 2026-03-22T20:24Z | devops | Stage 1 committed locally | Version `v0.8.13` confirmed, deferred staging validation tracked, and plan advanced to committed state pending release approval |
 so that **UFlow shows accurate listings, supports safe re-imports without duplicates, and preserves discoverability for the food options each provider actually serves**.
 
 ## Objective

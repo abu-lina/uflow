@@ -1,7 +1,8 @@
+---
 ID: 053
 Origin: 053
 UUID: b7e4a1c9
-Status: Committed
+Status: Released
 ---
 
 # Code Review 053 — JoinHalal vxconfig Fix and Offer Auto-Creation
@@ -141,3 +142,4 @@ None MEDIUM or above. The following LOW items are deferred:
 | 2026-03-22T21:15Z | Three fix-in-review corrections applied; verdict issued |
 | 2026-03-22T21:15Z | Plan status updated to Code Review Approved |
 | 2026-03-22T20:24Z | DevOps Stage 1 closure: review marked committed and archived for release `v0.8.13` |
+| 2026-03-22T20:36Z | DevOps Stage 2 release: release tag `v0.8.13` pushed and review lifecycle moved to Released |

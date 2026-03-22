@@ -1,7 +1,8 @@
+---
 ID: 053
 Origin: 053
 UUID: b7e4a1c9
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: JoinHalal vxconfig Fix and Offer Auto-Creation
@@ -16,6 +17,7 @@ Status: Committed
 |---|---|---|---|
 | 2026-03-22T20:45Z | QA | QA Complete, execute Phase ⑧ UAT | UAT Complete — implementation delivers stated value; both data-integrity bugs addressed with automated evidence; APPROVED FOR RELEASE |
 | 2026-03-22T20:24Z | DevOps | Stage 1 closure | Marked UAT report committed and archived for release `v0.8.13` |
+| 2026-03-22T20:36Z | DevOps | Stage 2 release | Release tag `v0.8.13` pushed and UAT lifecycle moved to Released |
 
 ## Value Statement Under Test
 
