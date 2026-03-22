@@ -2,7 +2,7 @@
 ID: 054
 Origin: 054
 UUID: c4e81a2f
-Status: Active
+Status: Released
 ---
 
 # Deployment: Plan 054 Stage 1 — v0.8.14
@@ -123,12 +123,13 @@ Closed documents for Plan 054: planning, implementation, code-review, qa, uat mo
 - Commit scope: Plan 054 implementation, tests, version artifacts, lifecycle closure moves, `054-open-actions.md`, and this Stage 1 deployment record
 - Push status: **Do not push in Stage 1**
 
-## Stage 2 Readiness Note
+## Post-Release Outcome
 
-The current session branch has no upstream tracking branch and the worktree contains unrelated changes. If Stage 2 is approved, release execution will likely need the same clean replay branch/worktree pattern used for v0.8.13 so push/tag operations stay isolated and auditable.
+Stage 2 completed from clean linked worktree branch `release/v0.8.14-prep`: release payload commit `d4c26d8` was pushed to `origin/release/v0.8.14-prep`, annotated tag `v0.8.14` was published, and Plan 054 lifecycle docs were marked Released in a follow-up docs-only commit.
 
 ## Changelog
 
 | Date (UTC) | Agent | Change |
 | --- | --- | --- |
 | 2026-03-22T23:07Z | devops | Stage 1 deployment doc created; version preflight, lifecycle closure preparation, and deferred follow-up tracking completed |
+| 2026-03-22T23:14Z | devops | Stage 2 completed; `release/v0.8.14-prep` pushed and tag `v0.8.14` published |
