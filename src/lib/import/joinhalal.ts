@@ -124,6 +124,12 @@ export interface DryRunOptions {
  */
 export const IMPORT_BOT_UUID = '00000000-0000-0000-0000-000047000001';
 
+/**
+ * Category UUID for auto-created Speisen offers: "Essen & Trinken".
+ * Matches migration 061 seeding precedent (Plan 053, Decision Record #7).
+ */
+export const SPEISEN_CATEGORY_ID = '20c10efe-404b-4a39-bb81-5089a0332d78';
+
 export const DEFAULT_SITEMAPS = [
   'https://joinhalal.com/locations-sitemap1.xml',
   'https://joinhalal.com/locations-sitemap2.xml',
@@ -204,6 +210,60 @@ export function resolveOfferIds(
   }
 
   return { matchedIds, unmatchedSpeisen };
+}
+
+/**
+ * Auto-creates missing Speisen as offer rows in the DB, then returns
+ * the freshly resolved Offer records so callers can merge IDs into
+ * provider offers_ids.
+ *
+ * - Deduplicates input case-insensitively (first-seen casing wins).
+ * - Uses ON CONFLICT (name_de) DO NOTHING for idempotency.
+ * - Assigns category_id to SPEISEN_CATEGORY_ID (Essen & Trinken).
+ * - Sets created_by = NULL (system-created, no auth user).
+ *
+ * Plan 053 — auto-create unmatched offers instead of silently dropping.
+ */
+export async function createMissingOffers(
+  supabase: SupabaseClient,
+  unmatchedSpeisen: string[]
+): Promise<Offer[]> {
+  if (unmatchedSpeisen.length === 0) return [];
+
+  // Deduplicate case-insensitively, preserving first-seen casing
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const term of unmatchedSpeisen) {
+    const key = term.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(term);
+  }
+
+  // Insert with ON CONFLICT DO NOTHING (upsert with ignoreDuplicates)
+  const rows = unique.map((name_de) => ({
+    name_de,
+    category_id: SPEISEN_CATEGORY_ID,
+    created_by: null,
+  }));
+
+  const { error: upsertError } = await supabase
+    .from('offers')
+    .upsert(rows, { onConflict: 'name_de', ignoreDuplicates: true });
+
+  if (upsertError) {
+    throw new Error(`Failed to upsert offers: ${upsertError.message}`);
+  }
+
+  // Re-query to get UUIDs for both newly created and pre-existing rows
+  const { data } = await supabase
+    .from('offers')
+    .select('offer_id, name_de')
+    .in('name_de', unique);
+
+  // If case-sensitive match missed some (e.g. DB has 'döner' but we sent 'Döner'),
+  // we still return what we got — resolveOfferIds handles case-insensitive matching.
+  return (data ?? []) as Offer[];
 }
 
 /**
