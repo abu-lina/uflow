@@ -40,16 +40,19 @@ import {
   cleanProviderName,
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
+  extractSpeisen,
 } from '../src/utils/joinhalal-parser';
 import {
   runJoinHalalDryRun,
   makeProviderKey,
   resolveCategoryId,
+  resolveOfferIds,
   buildCliWriteCommand,
   IMPORT_BOT_UUID,
   DEFAULT_SITEMAPS,
   type ImportLimit,
   type Category,
+  type Offer,
   type DryRunResult,
 } from '../src/lib/import/joinhalal';
 
@@ -213,6 +216,18 @@ async function loadCategories(): Promise<Category[]> {
   return (data ?? []) as Category[];
 }
 
+async function loadOffers(): Promise<Offer[]> {
+  const { data, error } = await supabase
+    .from('offers')
+    .select('offer_id, name_de')
+    .order('name_de');
+
+  if (error) {
+    throw new Error(`Failed to load offers: ${error.message}`);
+  }
+  return (data ?? []) as Offer[];
+}
+
 // ─── HTTP helpers ──────────────────────────────────────────────────────────────
 
 const MAX_RETRY_ON_RATE_LIMIT = 3;
@@ -291,7 +306,8 @@ function transformPageToProvider(
   html: string,
   url: string,
   categories: Category[],
-  includeDescription: boolean
+  includeDescription: boolean,
+  offers: Offer[]
 ): TransformResult {
   const schema = extractSchemaOrgFromHtml(html);
   if (!schema) {
@@ -318,6 +334,10 @@ function transformPageToProvider(
   const instagram = extractInstagramFromSameAs(schema.sameAs);
   const website = schema.url ?? null;
 
+  // Resolve Speisen → offers_ids
+  const speisen = extractSpeisen(schema);
+  const { matchedIds } = resolveOfferIds(speisen, offers);
+
   const record: ProviderUpsert = {
     provider_name: providerName,
     category_id: categoryId,
@@ -333,7 +353,7 @@ function transformPageToProvider(
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
-    offers_ids: [],
+    offers_ids: matchedIds,
     needs_ids: [],
     barakah_effects: [],
     import_source_url: url,
@@ -404,7 +424,7 @@ async function loadExistingProviderKeys(): Promise<Set<string>> {
 // ─── Reporting ────────────────────────────────────────────────────────────────
 
 function printDryRunReport(result: DryRunResult, limit: ImportLimit) {
-  const { stats, unmappedGroups, samples } = result;
+  const { stats, unmappedGroups, unmappedOffers, samples } = result;
   console.log('\n════════════════════════════════════════════════════════');
   console.log('  DRY-RUN REPORT — no data was written');
   console.log('════════════════════════════════════════════════════════');
@@ -423,12 +443,20 @@ function printDryRunReport(result: DryRunResult, limit: ImportLimit) {
     });
   }
 
+  if (unmappedOffers.length > 0) {
+    console.log('\n  Unmapped Speisen (top 10):');
+    unmappedOffers.slice(0, 10).forEach(({ speise, count, example }) => {
+      console.log(`    "${speise}" (${count} providers) — example: "${example}"`);
+    });
+  }
+
   if (samples.length > 0) {
     console.log('\n  Sample records (first 3):');
     samples.forEach((r, i) => {
       console.log(`\n  [${i + 1}] ${r.provider_name}`);
       console.log(`      city     : ${r.address_city ?? '—'}`);
       console.log(`      category : ${r.category_id ?? 'UNMAPPED'}`);
+      console.log(`      offers   : ${r.offers_matched ?? 0} matched`);
       console.log(`      street   : ${r.address_street ?? '—'}`);
       console.log(`      website  : ${r.social_website ?? '—'}`);
       console.log(`      email    : ${r.contact_email ?? '—'}`);
@@ -500,6 +528,14 @@ async function main() {
     process.exit(1);
   }
 
+  // Load offers catalog for Speisen resolution
+  console.log('▶ Loading offers catalog from Supabase...');
+  const offers = await loadOffers();
+  console.log(`  ✓ Loaded ${offers.length} offers`);
+  if (offers.length === 0) {
+    console.warn('  ⚠ No offers found in catalog — Speisen will not be resolved. Run migration 061 first.');
+  }
+
   // Check provider_description column availability
   console.log('▶ Checking provider_description column availability...');
   const hasDescriptionColumn = await checkProviderDescriptionExists();
@@ -564,7 +600,8 @@ async function main() {
       html,
       url,
       categories,
-      hasDescriptionColumn
+      hasDescriptionColumn,
+      offers
     );
 
     if (error || !record) {

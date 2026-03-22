@@ -21,6 +21,7 @@ import {
   cleanProviderName,
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
+  extractSpeisen,
 } from '@/utils/joinhalal-parser';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
@@ -29,6 +30,11 @@ export type ImportLimit = 10 | 50 | 100 | 'all';
 
 export interface Category {
   category_id: string;
+  name_de: string;
+}
+
+export interface Offer {
+  offer_id: string;
   name_de: string;
 }
 
@@ -62,11 +68,19 @@ export interface SampleRecord {
   address_street: string | null;
   social_website: string | null;
   contact_email: string | null;
+  offers_matched?: number;
+}
+
+export interface UnmappedOfferGroup {
+  speise: string;
+  count: number;
+  example: string;
 }
 
 export interface DryRunResult {
   stats: DryRunStats;
   unmappedGroups: UnmappedGroup[];
+  unmappedOffers: UnmappedOfferGroup[];
   samples: SampleRecord[];
   timing?: DryRunTiming;
 }
@@ -76,6 +90,8 @@ export interface DryRunTiming {
   totalMs: number;
   /** Time to load categories from DB (ms). */
   categoriesMs: number;
+  /** Time to load offers catalog from DB (ms). */
+  offersMs: number;
   /** Time to check provider_description column existence (ms). */
   descCheckMs: number;
   /** Time to load existing provider keys from DB (ms). */
@@ -156,6 +172,38 @@ export function makeProviderKey(name: string, city: string | null): string {
 }
 
 /**
+ * Resolves an array of Speisen food terms against the offers catalog.
+ * Matching is deterministic and case-insensitive.
+ * Returns matched offer IDs (deduplicated) and any unmatched terms.
+ */
+export function resolveOfferIds(
+  speisen: string[],
+  offers: Offer[]
+): { matchedIds: string[]; unmatchedSpeisen: string[] } {
+  if (speisen.length === 0) return { matchedIds: [], unmatchedSpeisen: [] };
+
+  const lookupMap = new Map(offers.map((o) => [o.name_de.toLowerCase(), o.offer_id]));
+  const matchedIds: string[] = [];
+  const unmatchedSpeisen: string[] = [];
+  const seen = new Set<string>();
+
+  for (const term of speisen) {
+    const key = term.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const offerId = lookupMap.get(key);
+    if (offerId) {
+      matchedIds.push(offerId);
+    } else {
+      unmatchedSpeisen.push(term);
+    }
+  }
+
+  return { matchedIds, unmatchedSpeisen };
+}
+
+/**
  * Returns the CLI command an operator should run for write-mode execution
  * with the given limit. Displayed in the dashboard as a copyable command.
  */
@@ -199,6 +247,11 @@ interface ProviderRecord {
 interface UnmappedEntry {
   sourceCategory: string;
   name: string;
+}
+
+interface UnmappedOfferEntry {
+  speise: string;
+  providerName: string;
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
@@ -272,6 +325,18 @@ async function loadCategories(supabase: SupabaseClient): Promise<Category[]> {
   return (data ?? []) as Category[];
 }
 
+async function loadOffers(supabase: SupabaseClient): Promise<Offer[]> {
+  const { data, error } = await supabase
+    .from('offers')
+    .select('offer_id, name_de')
+    .order('name_de');
+
+  if (error) {
+    throw new Error(`Failed to load offers: ${error.message}`);
+  }
+  return (data ?? []) as Offer[];
+}
+
 async function checkProviderDescriptionExists(
   supabase: SupabaseClient
 ): Promise<boolean> {
@@ -321,8 +386,9 @@ function transformPage(
   html: string,
   url: string,
   categories: Category[],
-  includeDescription: boolean
-): { record: ProviderRecord | null; error?: string; unmappedCategory?: string } {
+  includeDescription: boolean,
+  offers: Offer[]
+): { record: ProviderRecord | null; error?: string; unmappedCategory?: string; unmatchedSpeisen?: string[] } {
   const schema = extractSchemaOrgFromHtml(html);
   if (!schema) return { record: null, error: 'No Schema.org JSON-LD found' };
 
@@ -340,6 +406,10 @@ function transformPage(
   );
   const resolvedCity = city ?? (schema.address?.addressLocality ?? null);
 
+  // Resolve Speisen → offers_ids
+  const speisen = extractSpeisen(schema);
+  const { matchedIds, unmatchedSpeisen } = resolveOfferIds(speisen, offers);
+
   const record: ProviderRecord = {
     provider_name: providerName,
     category_id: categoryId,
@@ -355,7 +425,7 @@ function transformPage(
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
-    offers_ids: [],
+    offers_ids: matchedIds,
     needs_ids: [],
     barakah_effects: [],
     import_source_url: url,
@@ -372,7 +442,11 @@ function transformPage(
   const unmappedCategory =
     !categoryId && categorySlug ? categorySlug : undefined;
 
-  return { record, unmappedCategory };
+  return {
+    record,
+    unmappedCategory,
+    unmatchedSpeisen: unmatchedSpeisen.length > 0 ? unmatchedSpeisen : undefined,
+  };
 }
 
 // ─── Main exported function ───────────────────────────────────────────────────
@@ -408,6 +482,11 @@ export async function runJoinHalalDryRun(
   if (signal?.aborted) {
     throw new Error('Dry-run aborted: timeout exceeded during category loading.');
   }
+
+  // Load offers catalog for Speisen resolution
+  const tOffersStart = performance.now();
+  const offers = await loadOffers(supabase);
+  const tOffersEnd = performance.now();
 
   const tDescCheckStart = performance.now();
   const hasDescriptionColumn = await checkProviderDescriptionExists(supabase);
@@ -445,6 +524,7 @@ export async function runJoinHalalDryRun(
   };
 
   const unmappedEntries: UnmappedEntry[] = [];
+  const unmappedOfferEntries: UnmappedOfferEntry[] = [];
   const samples: SampleRecord[] = [];
   let insertCount = 0;
   // Track in-batch duplicates (adds to existingKeys to avoid intra-run collisions)
@@ -467,11 +547,12 @@ export async function runJoinHalalDryRun(
       continue;
     }
 
-    const { record, error, unmappedCategory } = transformPage(
+    const { record, error, unmappedCategory, unmatchedSpeisen } = transformPage(
       html,
       url,
       categories,
-      hasDescriptionColumn
+      hasDescriptionColumn,
+      offers
     );
 
     if (error || !record) {
@@ -486,6 +567,13 @@ export async function runJoinHalalDryRun(
       unmappedEntries.push({ sourceCategory: unmappedCategory, name: record.provider_name });
     } else {
       stats.mapped++;
+    }
+
+    // Track unmatched Speisen values
+    if (unmatchedSpeisen) {
+      for (const speise of unmatchedSpeisen) {
+        unmappedOfferEntries.push({ speise, providerName: record.provider_name });
+      }
     }
 
     const key = makeProviderKey(record.provider_name, record.address_city);
@@ -504,6 +592,7 @@ export async function runJoinHalalDryRun(
         address_street: record.address_street,
         social_website: record.social_website,
         contact_email: record.contact_email,
+        offers_matched: record.offers_ids.length,
       });
     }
 
@@ -528,15 +617,32 @@ export async function runJoinHalalDryRun(
     })
   );
 
+  // Group unmapped offer entries by speise
+  const offerGroupMap = unmappedOfferEntries.reduce<Record<string, string[]>>((acc, e) => {
+    acc[e.speise] = acc[e.speise] ?? [];
+    acc[e.speise].push(e.providerName);
+    return acc;
+  }, {});
+
+  const unmappedOffers: UnmappedOfferGroup[] = Object.entries(offerGroupMap).map(
+    ([speise, names]) => ({
+      speise,
+      count: names.length,
+      example: names[0],
+    })
+  );
+
   const tEnd = performance.now();
 
   return {
     stats: { ...stats, wouldInsert },
     unmappedGroups,
+    unmappedOffers,
     samples,
     timing: {
       totalMs: Math.round(tEnd - t0),
       categoriesMs: Math.round(tCatEnd - tCatStart),
+      offersMs: Math.round(tOffersEnd - tOffersStart),
       descCheckMs: Math.round(tDescCheckEnd - tDescCheckStart),
       existingKeysMs: Math.round(tKeysEnd - tKeysStart),
       sitemapMs: Math.round(tSitemapEnd - tSitemapStart),

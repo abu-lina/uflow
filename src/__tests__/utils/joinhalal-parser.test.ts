@@ -15,6 +15,7 @@ import {
   cleanProviderName,
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
+  extractSpeisen,
 } from '@/utils/joinhalal-parser';
 
 // ---------------------------------------------------------------------------
@@ -311,5 +312,91 @@ describe('extractCategoryFromUrl', () => {
   it('returns null for unexpected URL format', () => {
     expect(extractCategoryFromUrl('https://joinhalal.com/other/path/')).toBeNull();
     expect(extractCategoryFromUrl('')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractSpeisen (Plan 051)
+// ---------------------------------------------------------------------------
+
+describe('extractSpeisen', () => {
+  it('extracts comma-separated Speisen values from additionalProperty', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: 'Döner, Falafel, Pommes' },
+      ],
+    });
+    expect(result).toEqual(['Döner', 'Falafel', 'Pommes']);
+  });
+
+  it('returns empty array when additionalProperty is undefined', () => {
+    expect(extractSpeisen({})).toEqual([]);
+  });
+
+  it('returns empty array when additionalProperty is empty', () => {
+    expect(extractSpeisen({ additionalProperty: [] })).toEqual([]);
+  });
+
+  it('returns empty array when no Speisen entry exists in additionalProperty', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Küche', value: 'Türkisch' },
+      ],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty array when Speisen value is empty string', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: '' },
+      ],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it('deduplicates repeated Speisen values', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: 'Burger, Burger, Döner' },
+      ],
+    });
+    expect(result).toEqual(['Burger', 'Döner']);
+  });
+
+  it('handles single Speisen value (no comma)', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: 'Döner' },
+      ],
+    });
+    expect(result).toEqual(['Döner']);
+  });
+
+  it('trims whitespace from individual Speisen values', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: '  Burger , Döner  , Falafel  ' },
+      ],
+    });
+    expect(result).toEqual(['Burger', 'Döner', 'Falafel']);
+  });
+
+  it('filters out empty strings after splitting', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: 'Burger,, ,Döner' },
+      ],
+    });
+    expect(result).toEqual(['Burger', 'Döner']);
+  });
+
+  it('returns empty array when Speisen value is undefined', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen' },
+      ],
+    });
+    expect(result).toEqual([]);
   });
 });
