@@ -2,7 +2,7 @@
 ID: 048
 Origin: 048
 UUID: 5e9ac41b
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 048 — Provider modal Barakah badge visuals
