@@ -406,6 +406,16 @@ describe('extractSpeisen', () => {
 // extractJoinHalalPostId (Plan 052)
 // ---------------------------------------------------------------------------
 
+// Multi-block vxconfig fixture matching real JoinHalal page structure (Plan 053).
+// Real pages have 3 vxconfig blocks: blocks 0+1 are search/filter configs
+// without current_post; block 2 is the timeline config WITH current_post.
+const MULTI_BLOCK_VXCONFIG_HTML = `<!DOCTYPE html><html><head>
+<script type="application/ld+json" class="rank-math-schema-pro">${RESTAURANT_SCHEMA_JSON}</script>
+<script type="text/json" class="vxconfig">{"post_types":["listing"],"display_mode":"form","keywords":"","single_mode":false}</script>
+<script type="text/json" class="vxconfig">{"post_types":["listing"],"display_mode":"results","keywords":"restaurant"}</script>
+<script type="text/json" class="vxconfig">{"timeline":true,"current_post":{"exists":true,"id":26548,"display_name":"ECHTE B\u00c4RLINER | Augsburg Oberhausen"}}</script>
+</head><body></body></html>`;
+
 describe('extractJoinHalalPostId', () => {
   it('extracts post ID from vxconfig script tag', () => {
     expect(extractJoinHalalPostId(VALID_HTML_WITH_SCHEMA)).toBe('24043');
@@ -432,5 +442,22 @@ describe('extractJoinHalalPostId', () => {
 
   it('returns null for empty HTML', () => {
     expect(extractJoinHalalPostId('')).toBeNull();
+  });
+
+  // Plan 053 regression: real pages have multiple vxconfig blocks,
+  // only the last one contains current_post
+  it('extracts post ID from third vxconfig block when first two lack current_post [post-fix PASSES]', () => {
+    expect(extractJoinHalalPostId(MULTI_BLOCK_VXCONFIG_HTML)).toBe('26548');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractDisplayNameFromHtml — multi-block regression (Plan 053)
+// ---------------------------------------------------------------------------
+
+describe('extractDisplayNameFromHtml — multi-block vxconfig', () => {
+  it('extracts display_name from the correct vxconfig block [post-fix PASSES]', () => {
+    const result = extractDisplayNameFromHtml(MULTI_BLOCK_VXCONFIG_HTML);
+    expect(result).toBe('ECHTE BÄRLINER | Augsburg Oberhausen');
   });
 });

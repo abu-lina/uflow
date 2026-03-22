@@ -324,19 +324,21 @@ interface VxConfigCurrentPost {
 
 function parseVxConfig(html: string): VxConfigCurrentPost | null {
   if (!html) return null;
-  const scriptMatch = html.match(
-    /<script[^>]*class="vxconfig"[^>]*>([\s\S]*?)<\/script>/i
-  );
-  if (!scriptMatch) return null;
-
-  try {
-    const config = JSON.parse(scriptMatch[1]) as {
-      current_post?: VxConfigCurrentPost;
-    };
-    return config?.current_post ?? null;
-  } catch {
-    return null;
+  // Real JoinHalal pages have multiple vxconfig blocks; only one contains
+  // current_post. Iterate all matches and return the first with that key.
+  const regex = /<script[^>]*class="vxconfig"[^>]*>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(html)) !== null) {
+    try {
+      const config = JSON.parse(match[1]) as {
+        current_post?: VxConfigCurrentPost;
+      };
+      if (config?.current_post) return config.current_post;
+    } catch {
+      // Skip unparseable blocks
+    }
   }
+  return null;
 }
 
 /**

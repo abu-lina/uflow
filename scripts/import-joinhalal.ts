@@ -48,6 +48,7 @@ import {
   makeProviderKey,
   resolveCategoryId,
   resolveOfferIds,
+  createMissingOffers,
   buildCliWriteCommand,
   IMPORT_BOT_UUID,
   DEFAULT_SITEMAPS,
@@ -132,6 +133,9 @@ interface WriteStats {
   failed: number;
   inserted: number;
   updated: number;
+  offersMatched: number;
+  offersCreated: number;
+  offersCreateFailed: number;
 }
 
 interface UnmappedEntry {
@@ -304,6 +308,7 @@ interface TransformResult {
   record: ProviderUpsert | null;
   error?: string;
   unmapped?: { category: string; url: string; name: string };
+  unmatchedSpeisen?: string[];
 }
 
 function transformPageToProvider(
@@ -340,7 +345,7 @@ function transformPageToProvider(
 
   // Resolve Speisen → offers_ids
   const speisen = extractSpeisen(schema);
-  const { matchedIds } = resolveOfferIds(speisen, offers);
+  const { matchedIds, unmatchedSpeisen } = resolveOfferIds(speisen, offers);
 
   // Extract JoinHalal post ID for upsert conflict resolution (Plan 052)
   const postId = extractJoinHalalPostId(html);
@@ -387,7 +392,7 @@ function transformPageToProvider(
       ? { category: categorySlug, url, name: providerName }
       : undefined;
 
-  return { record, unmapped };
+  return { record, unmapped, unmatchedSpeisen: unmatchedSpeisen.length > 0 ? unmatchedSpeisen : undefined };
 }
 
 // ─── Deduplication ────────────────────────────────────────────────────────────
@@ -489,6 +494,11 @@ function printWriteReport(stats: WriteStats) {
   console.log(`  Skipped (duplicate)  : ${stats.skipped}`);
   console.log(`  Unmapped category    : ${stats.unmapped}`);
   console.log(`  Parse failures       : ${stats.failed}`);
+  console.log(`  Offers matched       : ${stats.offersMatched}`);
+  console.log(`  Offers auto-created  : ${stats.offersCreated}`);
+  if (stats.offersCreateFailed > 0) {
+    console.log(`  Offers create failed : ${stats.offersCreateFailed}`);
+  }
   console.log('\n  To query imported records:');
   console.log(`    SELECT * FROM providers WHERE import_source = 'joinhalal';`);
   console.log(`    -- Or legacy: WHERE user_created_id = '${IMPORT_BOT_UUID}';`);
@@ -590,11 +600,17 @@ async function main() {
     failed: 0,
     inserted: 0,
     updated: 0,
+    offersMatched: 0,
+    offersCreated: 0,
+    offersCreateFailed: 0,
   };
 
   const unmappedEntries: UnmappedEntry[] = [];
   const toUpsert: ProviderUpsert[] = [];
   const toInsertOnly: ProviderUpsert[] = [];
+  // Track unmatched Speisen per provider record (for post-loop auto-creation)
+  const providerUnmatchedSpeisen: Map<ProviderUpsert, string[]> = new Map();
+  let totalMatchedOffers = 0;
 
   for (let i = 0; i < locationUrls.length; i++) {
     const url = locationUrls[i];
@@ -610,7 +626,7 @@ async function main() {
       continue;
     }
 
-    const { record, error, unmapped } = transformPageToProvider(
+    const { record, error, unmapped, unmatchedSpeisen } = transformPageToProvider(
       html,
       url,
       categories,
@@ -625,6 +641,7 @@ async function main() {
     }
 
     stats.parsed++;
+    totalMatchedOffers += record.offers_ids.length;
 
     if (unmapped) {
       stats.unmapped++;
@@ -637,6 +654,10 @@ async function main() {
     if (record.import_source_id) {
       // Has post ID — DB upsert will handle conflict resolution; skip client-side dedup
       toUpsert.push(record);
+      // Track unmatched Speisen only for providers that will be persisted
+      if (unmatchedSpeisen && unmatchedSpeisen.length > 0) {
+        providerUnmatchedSpeisen.set(record, unmatchedSpeisen);
+      }
     } else {
       // No post ID — apply name+city dedup to prevent duplicates (insert-only fallback)
       const providerKey = makeProviderKey(record.provider_name, record.address_city);
@@ -646,9 +667,51 @@ async function main() {
       }
       existingKeys.add(providerKey);
       toInsertOnly.push(record);
+      // Track unmatched Speisen only for providers that will be persisted
+      if (unmatchedSpeisen && unmatchedSpeisen.length > 0) {
+        providerUnmatchedSpeisen.set(record, unmatchedSpeisen);
+      }
     }
 
     await sleep(FETCH_DELAY_MS);
+  }
+
+  // ─ Auto-create missing offers (Plan 053: no silent drops)
+  stats.offersMatched = totalMatchedOffers;
+
+  if (providerUnmatchedSpeisen.size > 0) {
+    // Collect all unique unmatched Speisen terms across all providers
+    const allUnmatched = new Set<string>();
+    for (const terms of providerUnmatchedSpeisen.values()) {
+      for (const term of terms) {
+        allUnmatched.add(term);
+      }
+    }
+
+    console.log(`\n▶ Auto-creating ${allUnmatched.size} unmatched Speisen as offers...`);
+    try {
+      const createdOffers = await createMissingOffers(supabase, [...allUnmatched]);
+      stats.offersCreated = createdOffers.length;
+
+      // Build lookup from newly created/resolved offers
+      const newLookup = new Map(createdOffers.map((o) => [o.name_de.toLowerCase(), o.offer_id]));
+
+      // Merge new offer IDs into provider records' offers_ids
+      for (const [record, terms] of providerUnmatchedSpeisen) {
+        for (const term of terms) {
+          const offerId = newLookup.get(term.toLowerCase());
+          if (offerId && !record.offers_ids.includes(offerId)) {
+            record.offers_ids.push(offerId);
+          }
+        }
+      }
+
+      console.log(`  ✓ Created/resolved ${createdOffers.length} offers, linked to ${providerUnmatchedSpeisen.size} providers`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`  ❌ Failed to auto-create offers: ${message}`);
+      stats.offersCreateFailed = allUnmatched.size;
+    }
   }
 
   // ─ Bulk upsert/insert in batches
