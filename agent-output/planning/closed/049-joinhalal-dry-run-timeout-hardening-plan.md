@@ -2,7 +2,7 @@
 ID: 049
 Origin: 049
 UUID: b7e4a92c
-Status: Committed
+Status: Released
 ---
 
 # Plan 049 — JoinHalal Dry-Run Timeout Hardening
@@ -11,7 +11,7 @@ Status: Committed
 
 - **Target Release**: `v0.8.10` (bumped from provisional v0.8.9 — version collision: v0.8.9 was released as Plan 048 Barakah badge visuals before Stage 1 commit; confirmed at DevOps Stage 1)
 - **Epic Alignment**: Technical foundation and reliability / admin import operability / UAT parity for released tooling
-- **Status**: Committed for Release v0.8.10
+- **Status**: Released v0.8.10
 - **Related Issues**: None
 
 ## Changelog
@@ -27,6 +27,7 @@ Status: Committed
 | 2026-03-22T10:12Z | QA Complete | QA | Re-QA passed: abort propagation fix verified, regression and route 504 coverage added, full suite green; only pre-existing env-gated build issue remains |
 | 2026-03-22T11:30Z | UAT Approved | UAT | Value statement delivered: 3-layer timeout budget eliminates opaque infrastructure 504; APPROVED FOR RELEASE v0.8.10; live browser validation deferred to DevOps |
 | 2026-03-22T11:45Z | Committed for Release v0.8.10 | DevOps | Stage 1 commit: version collision resolved (v0.8.9 taken by Plan 048), bumped to v0.8.10; lockfile aligned; all docs moved to closed/ |
+| 2026-03-22T11:55Z | Released v0.8.10 | DevOps | Stage 2 complete: tag v0.8.10 (7038c8d) pushed; branch session/047-joinhalal-data-import pushed to origin |
 
 ## Release Strategy
 
