@@ -47,7 +47,10 @@ function makeSitemapXml(urls: string[]): string {
 // Mock Supabase client
 // ---------------------------------------------------------------------------
 
-function createMockSupabase(existingProviders: { provider_name: string; address_city: string | null }[]) {
+function createMockSupabase(
+  existingProviders: { provider_name: string; address_city: string | null }[],
+  offersData: { offer_id: string; name_de: string }[] = []
+) {
   const selectMock = vi.fn();
 
   const fromMock = vi.fn((table: string) => {
@@ -64,6 +67,14 @@ function createMockSupabase(existingProviders: { provider_name: string; address_
               ],
               error: null,
             }),
+        }),
+      };
+    }
+
+    if (table === 'offers') {
+      return {
+        select: () => ({
+          order: () => Promise.resolve({ data: offersData, error: null }),
         }),
       };
     }
@@ -247,6 +258,7 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
     // Verify DryRunResult has all required fields for both consumers
     expect(result).toHaveProperty('stats');
     expect(result).toHaveProperty('unmappedGroups');
+    expect(result).toHaveProperty('unmappedOffers');
     expect(result).toHaveProperty('samples');
 
     // Stats has the full shape
@@ -274,6 +286,127 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
 
     // Invariant: wouldInsert = parsed - skipped (all non-duplicate parsed records)
     expect(result.stats.wouldInsert).toBe(result.stats.parsed - result.stats.skipped);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Plan 051 — Speisen → offers_ids mapping
+// ---------------------------------------------------------------------------
+
+/** Page HTML with additionalProperty containing Speisen values */
+function makePageHtmlWithSpeisen(name: string, streetAddress: string, speisen: string): string {
+  const schema = {
+    '@graph': [
+      {
+        '@type': 'Restaurant',
+        name,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress,
+          addressCountry: 'DE',
+        },
+        additionalProperty: [
+          { '@type': 'PropertyValue', name: 'Speisen', value: speisen },
+        ],
+      },
+    ],
+  };
+  return `<html><head>
+    <script type="application/ld+json" class="rank-math-schema-pro">${JSON.stringify(schema)}</script>
+    </head><body><h1>${name}</h1></body></html>`;
+}
+
+describe('runJoinHalalDryRun — Speisen offers mapping (Plan 051)', () => {
+  afterEach(() => {
+    global.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  it('[Plan 051] resolves Speisen to offers_ids and reports unmatched', async () => {
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/kebab-haus/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    // Provider has Döner (in catalog), Falafel (in catalog), Sushi (NOT in catalog)
+    setupFetchMock(sitemapXml, {
+      [pageUrl]: makePageHtmlWithSpeisen(
+        'Kebab Haus', 'Berliner Str. 5, 10115 Berlin, Deutschland', 'Döner, Falafel, Sushi'
+      ),
+    });
+
+    const supabase = createMockSupabase([], [
+      { offer_id: 'offer-001', name_de: 'Döner' },
+      { offer_id: 'offer-002', name_de: 'Falafel' },
+      { offer_id: 'offer-003', name_de: 'Burger' },
+    ]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    // Unmapped offers should report "Sushi" 
+    expect(result.unmappedOffers.length).toBe(1);
+    expect(result.unmappedOffers[0].speise).toBe('Sushi');
+    expect(result.unmappedOffers[0].count).toBe(1);
+
+    // Sample should show 2 offers matched (Döner, Falafel)
+    expect(result.samples.length).toBe(1);
+    expect(result.samples[0].offers_matched).toBe(2);
+  });
+
+  it('[Plan 051] no unmapped offers when all Speisen match catalog', async () => {
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/burger-place/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    setupFetchMock(sitemapXml, {
+      [pageUrl]: makePageHtmlWithSpeisen(
+        'Burger Place', 'Musterstr. 1, 10117 Berlin, Deutschland', 'Burger, Döner'
+      ),
+    });
+
+    const supabase = createMockSupabase([], [
+      { offer_id: 'offer-001', name_de: 'Döner' },
+      { offer_id: 'offer-003', name_de: 'Burger' },
+    ]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    expect(result.unmappedOffers).toEqual([]);
+    expect(result.samples[0].offers_matched).toBe(2);
+  });
+
+  it('[Plan 051 pre-fix regression] offers_ids were hardcoded empty before Plan 051', async () => {
+    // This test verifies the pre-fix behavior: without Speisen extraction,
+    // providers would always get offers_ids: [] regardless of source data.
+    // Post-fix: offers_ids are populated from Speisen values.
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/food-spot/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    setupFetchMock(sitemapXml, {
+      [pageUrl]: makePageHtmlWithSpeisen(
+        'Food Spot', 'Hauptstr. 10, 80331 München, Deutschland', 'Pommes, Steak'
+      ),
+    });
+
+    const supabase = createMockSupabase([], [
+      { offer_id: 'offer-010', name_de: 'Pommes' },
+      { offer_id: 'offer-011', name_de: 'Steak' },
+    ]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    // Post-fix: offers_matched is > 0 (pre-fix it would always be 0)
+    expect(result.samples[0].offers_matched).toBe(2);
+    expect(result.unmappedOffers).toEqual([]);
   });
 });
 
@@ -310,6 +443,7 @@ describe('runJoinHalalDryRun — timing telemetry (Plan 049)', () => {
     // Must have all expected phase keys
     expect(timing).toHaveProperty('totalMs');
     expect(timing).toHaveProperty('categoriesMs');
+    expect(timing).toHaveProperty('offersMs');
     expect(timing).toHaveProperty('descCheckMs');
     expect(timing).toHaveProperty('existingKeysMs');
     expect(timing).toHaveProperty('sitemapMs');
@@ -318,6 +452,7 @@ describe('runJoinHalalDryRun — timing telemetry (Plan 049)', () => {
     // All timing values must be non-negative numbers
     expect(timing.totalMs).toBeGreaterThanOrEqual(0);
     expect(timing.categoriesMs).toBeGreaterThanOrEqual(0);
+    expect(timing.offersMs).toBeGreaterThanOrEqual(0);
     expect(timing.descCheckMs).toBeGreaterThanOrEqual(0);
     expect(timing.existingKeysMs).toBeGreaterThanOrEqual(0);
     expect(timing.sitemapMs).toBeGreaterThanOrEqual(0);
@@ -343,6 +478,7 @@ describe('runJoinHalalDryRun — timing telemetry (Plan 049)', () => {
     const timing = result.timing as DryRunTiming;
     const phaseSum =
       timing.categoriesMs +
+      timing.offersMs +
       timing.descCheckMs +
       timing.existingKeysMs +
       timing.sitemapMs +

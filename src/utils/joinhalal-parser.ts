@@ -274,6 +274,32 @@ export function extractCategoryFromUrl(url: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// extractSpeisen
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts food offerings ("Speisen") from a JoinHalal Schema.org entity.
+ *
+ * The source field is `additionalProperty[name="Speisen"]` with a comma-
+ * delimited string value. Returns a deduplicated, trimmed array of non-empty
+ * food terms, preserving original casing.
+ */
+export function extractSpeisen(schema: JoinHalalSchemaData): string[] {
+  const props = schema.additionalProperty;
+  if (!props || props.length === 0) return [];
+
+  const entry = props.find((p) => p.name === 'Speisen');
+  if (!entry?.value) return [];
+
+  const items = entry.value
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  return Array.from(new Set(items));
+}
+
+// ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 

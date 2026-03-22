@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.11] - 2026-03-22
+
+### Added
+
+- **JoinHalal Speisen → offers mapping (Plan 051)**: The JoinHalal import pipeline now extracts the `Speisen` (food offerings) field from each listing's Schema.org data and resolves matching food terms against the UFlow offers catalog. Imported providers arrive with populated `offers_ids` instead of empty arrays, making them immediately searchable and filterable by food type. A seed migration adds 21 missing food offers (Adana, Bowl, Chicken, Dessert, Falafel, Fisch, Grill, Hot Dog, Köfte, Lamm, Lokma, Manti, Pasta, Reis, Salat, Sandwich, Steak, Sucuk, Suppe, Waffel, Wraps) to the offers catalog under the "Essen & Trinken" category. Both the admin dry-run dashboard and CLI write path now report unmatched Speisen values so operators can detect future catalog drift. Sample records in dry-run output include an `offers_matched` count for operator visibility.
+
 ## [0.8.10] - 2026-03-22
 
 ### Fixed
