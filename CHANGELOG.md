@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.14] - 2026-03-22
+
+### Fixed
+
+- **Sitemap non-detail URL filter (Plan 054)**: The JoinHalal sitemap URL extractor (`extractUrlsFromSitemapXml`) now filters out non-detail listing pages (e.g., `/locations/`, `/locations/restaurant/`) before they enter the import candidate set. Only provider detail page URLs matching the `/locations/{category}/{name}/` three-segment pattern are accepted. The filter is applied in the shared parser utility before the numeric limit slice, so both the admin dry-run preview and the CLI write path produce identical, clean candidate sets. A new `isJoinHalalDetailUrl()` predicate is exported for direct use and testing.
+
+- **RPC write-path non-zero exit on failure (Plan 054)**: The CLI import script (`scripts/import-joinhalal.ts`) now exits with a non-zero status code when any RPC `upsert_joinhalal_providers` batch fails during a write run. Previously, batch failures were logged to stderr but the process exited 0, masking failures from operators and CI pipelines. The existing error logging is preserved; only the exit behavior changes.
+
 ## [0.8.13] - 2026-03-22
 
 ### Fixed
