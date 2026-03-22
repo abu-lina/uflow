@@ -189,6 +189,7 @@ export const en = {
     weNeed: "We need",
     weAreLookingFor: "We are looking for",
     ourBarakahEffect: "Our Barakah Effect",
+    noBadges: "No Barakah Effects",
     selectCategory: "Select category"
   },
   create: {

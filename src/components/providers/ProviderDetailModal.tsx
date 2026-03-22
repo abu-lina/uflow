@@ -5,16 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Icon } from '@iconify/react';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  Moon,
-  Building2,
-  Tag,
-  ChevronDown,
-  X,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -38,6 +29,7 @@ import {
 } from '@/utils/navigationUtils';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 import { trackEvent } from '@/lib/analytics/plausible';
+import { BadgeLabel } from '@/components/ui/BadgeLabel';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -54,7 +46,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
 }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
@@ -561,34 +553,25 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     <div className="mb-0.5 font-inter-tight text-lg font-semibold text-uFlowText">
                       {communityServices[0]?.community_service_name}
                     </div>
-                    <div className="font-inter-tight text-base text-uFlowText2">Hatem Ipsum</div>
                   </button>
                   {/* Divider */}
                   <div className="mx-4 h-[120px] w-px bg-zinc-200" />
-                  {/* Right: Barakah labels */}
+                  {/* Right: Badge visuals */}
                   <div className="flex min-h-[120px] flex-col flex-wrap items-start gap-2">
-                    {Array.isArray(provider.barakah_effects) &&
-                    provider.barakah_effects.length > 0 ? (
+                    {Array.isArray(provider.badges) && provider.badges.length > 0 ? (
                       <div className="flex flex-col gap-2">
-                        {provider.barakah_effects.map((effect, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center gap-2 rounded border border-[#CDCDCD] bg-white px-3 py-1 font-inter-tight text-[16px] font-medium text-[#232323] shadow-sm"
-                          >
-                            {/* Icon mapping for known effects */}
-                            {effect === 'Iman' && <Sparkles className="h-4 w-4 text-gray-600" />}
-                            {effect === 'Zakat' && <Moon className="h-4 w-4 text-gray-600" />}
-                            {effect === 'Sunnah' && <Building2 className="h-4 w-4 text-gray-600" />}
-                            {!(effect === 'Iman' || effect === 'Zakat' || effect === 'Sunnah') && (
-                              <Tag className="h-4 w-4 text-gray-600" />
-                            )}
-                            {effect}
-                          </span>
+                        {provider.badges.map((badge) => (
+                          <BadgeLabel
+                            key={badge.id}
+                            badge={badge}
+                            language={language === 'de' ? 'de' : 'en'}
+                            size="md"
+                          />
                         ))}
                       </div>
                     ) : (
                       <span className="font-inter text-base text-uFlowText2">
-                        Keine Barakah Effekte
+                        {t('providers.noBadges')}
                       </span>
                     )}
                   </div>
