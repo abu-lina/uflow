@@ -251,17 +251,44 @@ export function cleanProviderName(
 }
 
 // ---------------------------------------------------------------------------
+// isJoinHalalDetailUrl
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true only for JoinHalal provider detail page URLs.
+ *
+ * Detail pages match: /locations/{category-slug}/{name-slug}/
+ * (exactly 3 non-empty path segments under /locations/).
+ *
+ * Listing pages like /locations/ or /locations/restaurant/ are rejected.
+ */
+export function isJoinHalalDetailUrl(url: string): boolean {
+  if (!url) return false;
+  try {
+    const { pathname } = new URL(url);
+    // Normalise: strip trailing slash, split, filter empty
+    const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
+    // Must be exactly: ['locations', '{category}', '{name}']
+    return segments.length === 3 && segments[0] === 'locations';
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // extractUrlsFromSitemapXml
 // ---------------------------------------------------------------------------
 
 /**
  * Extracts all <loc> URLs from a sitemap XML string.
  * Works for both sitemap index files and regular sitemaps.
+ * Filters out non-detail URLs (listing pages) so only provider
+ * detail page candidates are returned.
  */
 export function extractUrlsFromSitemapXml(xml: string): string[] {
   if (!xml) return [];
   const matches = xml.matchAll(/<loc>(https?:\/\/[^<]+)<\/loc>/gi);
-  return Array.from(matches, (m) => m[1].trim());
+  return Array.from(matches, (m) => m[1].trim()).filter(isJoinHalalDetailUrl);
 }
 
 // ---------------------------------------------------------------------------

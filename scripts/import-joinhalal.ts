@@ -783,6 +783,11 @@ async function main() {
   }
 
   printWriteReport(stats);
+
+  // Plan 054: exit non-zero when any RPC upsert batch failed
+  if (stats.failed > 0) {
+    process.exit(1);
+  }
 }
 
 main().catch((err) => {

@@ -17,6 +17,7 @@ import {
   extractCategoryFromUrl,
   extractSpeisen,
   extractJoinHalalPostId,
+  isJoinHalalDetailUrl,
 } from '@/utils/joinhalal-parser';
 
 // ---------------------------------------------------------------------------
@@ -290,6 +291,51 @@ describe('extractUrlsFromSitemapXml', () => {
 
   it('returns empty array for XML with no loc elements', () => {
     expect(extractUrlsFromSitemapXml('<urlset></urlset>')).toEqual([]);
+  });
+
+  it('[post-fix PASSES] excludes non-detail URLs like /locations/ from extraction', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://joinhalal.com/locations/</loc></url>
+  <url><loc>https://joinhalal.com/locations/restaurant/</loc></url>
+  <url><loc>https://joinhalal.com/locations/restaurant/foo-bar-123/</loc></url>
+  <url><loc>https://joinhalal.com/locations/food-truck/baz-qux-456/</loc></url>
+</urlset>`;
+    const urls = extractUrlsFromSitemapXml(xml);
+    expect(urls).toHaveLength(2);
+    expect(urls[0]).toBe('https://joinhalal.com/locations/restaurant/foo-bar-123/');
+    expect(urls[1]).toBe('https://joinhalal.com/locations/food-truck/baz-qux-456/');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isJoinHalalDetailUrl
+// ---------------------------------------------------------------------------
+
+describe('isJoinHalalDetailUrl', () => {
+  it('accepts a standard detail page URL', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/restaurant/echte-baerliner-augsburg-oberhausen-26548/')).toBe(true);
+  });
+
+  it('accepts a detail page with different category', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/food-truck/some-name-999/')).toBe(true);
+  });
+
+  it('[pre-fix FAILS] rejects the generic /locations/ listing page', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/')).toBe(false);
+  });
+
+  it('rejects a category listing page like /locations/restaurant/', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/restaurant/')).toBe(false);
+  });
+
+  it('rejects non-location URLs from the same domain', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/about/')).toBe(false);
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/')).toBe(false);
+  });
+
+  it('rejects empty or invalid input', () => {
+    expect(isJoinHalalDetailUrl('')).toBe(false);
   });
 });
 

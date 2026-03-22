@@ -24,3 +24,27 @@ This tracker keeps the post-deploy validation visible after the core Plan 053 do
 | Date (UTC) | Agent | Change |
 | --- | --- | --- |
 | 2026-03-22T20:24Z | devops | Created tracker from deferred UAT/QA staging validation requirement |
+| 2026-03-22T22:52Z | implementer | Plan 054 fixes code-level blockers; added validation runbook |
+
+## Validation Runbook (added by Plan 054)
+
+Plan 054 fixes the two code-level blockers that prevented 053-OA-1 evidence collection:
+
+1. **Sitemap filter** — non-detail listing pages (e.g., `/locations/`) are now excluded from the candidate set before the numeric limit is applied.
+2. **RPC exit code** — the write script now exits non-zero if any `upsert_joinhalal_providers` batch fails, making missing-migration failures immediately obvious.
+
+### Steps to close this open action
+
+1. Confirm migration 063 (`upsert_joinhalal_providers`) is applied to the staging database:
+   ```sql
+   SELECT proname FROM pg_proc WHERE proname = 'upsert_joinhalal_providers';
+   ```
+2. Run the import in write mode against staging:
+   ```bash
+   npx tsx scripts/import-joinhalal.ts --write --limit 10
+   ```
+3. Verify evidence:
+   - At least one provider has non-null `import_source_id`
+   - At least one new `offers` row was auto-created for an unmatched Speisen value
+   - At least one provider has non-empty `offers_ids`
+4. Record evidence in this document and mark the open action as **Closed**.
