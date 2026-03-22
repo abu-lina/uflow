@@ -2,7 +2,7 @@
 ID: 052
 Origin: 052
 UUID: b4e91c3f
-Status: Stage 1 Complete
+Status: Released
 ---
 
 # Deployment: Plan 052 Stage 1 — v0.8.12

@@ -2,7 +2,7 @@
 ID: 052
 Origin: 052
 UUID: b4e91c3f
-Status: Committed
+Status: Released
 ---
 
 # Plan 052 — JoinHalal Import Upsert with Unique ID
