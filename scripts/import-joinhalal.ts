@@ -41,6 +41,7 @@ import {
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
   extractSpeisen,
+  extractJoinHalalPostId,
 } from '../src/utils/joinhalal-parser';
 import {
   runJoinHalalDryRun,
@@ -117,6 +118,8 @@ interface ProviderUpsert {
   offers_ids: string[];
   needs_ids: string[];
   barakah_effects: string[];
+  import_source: string | null;
+  import_source_id: string | null;
   import_source_url: string | null;
 }
 
@@ -128,6 +131,7 @@ interface WriteStats {
   skipped: number;
   failed: number;
   inserted: number;
+  updated: number;
 }
 
 interface UnmappedEntry {
@@ -338,6 +342,9 @@ function transformPageToProvider(
   const speisen = extractSpeisen(schema);
   const { matchedIds } = resolveOfferIds(speisen, offers);
 
+  // Extract JoinHalal post ID for upsert conflict resolution (Plan 052)
+  const postId = extractJoinHalalPostId(html);
+
   const record: ProviderUpsert = {
     provider_name: providerName,
     category_id: categoryId,
@@ -356,6 +363,8 @@ function transformPageToProvider(
     offers_ids: matchedIds,
     needs_ids: [],
     barakah_effects: [],
+    import_source: postId ? 'joinhalal' : null,
+    import_source_id: postId,
     import_source_url: url,
   };
 
@@ -435,6 +444,7 @@ function printDryRunReport(result: DryRunResult, limit: ImportLimit) {
   console.log(`  Skipped (duplicate)  : ${stats.skipped}`);
   console.log(`  Parse failures       : ${stats.failed}`);
   console.log(`  Would INSERT         : ${stats.wouldInsert}`);
+  console.log(`  Would UPDATE         : ${stats.wouldUpdate}`);
 
   if (unmappedGroups.length > 0) {
     console.log('\n  Unmapped categories (top 10):');
@@ -474,12 +484,14 @@ function printWriteReport(stats: WriteStats) {
   console.log('════════════════════════════════════════════════════════');
   console.log(`  URLs processed       : ${stats.total}`);
   console.log(`  Successfully parsed  : ${stats.parsed}`);
-  console.log(`  Inserted             : ${stats.inserted}`);
+  console.log(`  Inserted (new)       : ${stats.inserted}`);
+  console.log(`  Updated (re-import)  : ${stats.updated}`);
   console.log(`  Skipped (duplicate)  : ${stats.skipped}`);
   console.log(`  Unmapped category    : ${stats.unmapped}`);
   console.log(`  Parse failures       : ${stats.failed}`);
   console.log('\n  To query imported records:');
-  console.log(`    SELECT * FROM providers WHERE user_created_id = '${IMPORT_BOT_UUID}';`);
+  console.log(`    SELECT * FROM providers WHERE import_source = 'joinhalal';`);
+  console.log(`    -- Or legacy: WHERE user_created_id = '${IMPORT_BOT_UUID}';`);
   console.log('════════════════════════════════════════════════════════\n');
 }
 
@@ -498,7 +510,7 @@ async function main() {
     sitemapFlag >= 0 ? [args[sitemapFlag + 1]] : DEFAULT_SITEMAPS;
 
   console.log('\n╔══════════════════════════════════════════════════════╗');
-  console.log('║   UFlow — JoinHalal Provider Import (Plan 047/048)   ║');
+  console.log('║   UFlow — JoinHalal Provider Import                  ║');
   console.log('╚══════════════════════════════════════════════════════╝');
   console.log(`  Mode       : ${isDryRun ? '🔍 DRY-RUN (no writes)' : '✍️  WRITE'}`);
   console.log(`  Limit      : ${limit}`);
@@ -577,10 +589,12 @@ async function main() {
     skipped: 0,
     failed: 0,
     inserted: 0,
+    updated: 0,
   };
 
   const unmappedEntries: UnmappedEntry[] = [];
-  const toInsert: ProviderUpsert[] = [];
+  const toUpsert: ProviderUpsert[] = [];
+  const toInsertOnly: ProviderUpsert[] = [];
 
   for (let i = 0; i < locationUrls.length; i++) {
     const url = locationUrls[i];
@@ -619,50 +633,90 @@ async function main() {
       stats.mapped++;
     }
 
-    const providerKey = makeProviderKey(record.provider_name, record.address_city);
-    if (existingKeys.has(providerKey)) {
-      stats.skipped++;
-      continue;
+    // Task 3.7: Selective dedup by import_source_id availability
+    if (record.import_source_id) {
+      // Has post ID — DB upsert will handle conflict resolution; skip client-side dedup
+      toUpsert.push(record);
+    } else {
+      // No post ID — apply name+city dedup to prevent duplicates (insert-only fallback)
+      const providerKey = makeProviderKey(record.provider_name, record.address_city);
+      if (existingKeys.has(providerKey)) {
+        stats.skipped++;
+        continue;
+      }
+      existingKeys.add(providerKey);
+      toInsertOnly.push(record);
     }
-    existingKeys.add(providerKey);
-
-    toInsert.push(record);
 
     await sleep(FETCH_DELAY_MS);
   }
 
-  // ─ Bulk upsert in batches
-  if (toInsert.length === 0) {
-    console.log('\n  No new records to insert (all duplicates or mapping failures).');
+  // ─ Bulk upsert/insert in batches
+  const totalRecords = toUpsert.length + toInsertOnly.length;
+  if (totalRecords === 0) {
+    console.log('\n  No new records to write (all duplicates or mapping failures).');
     printWriteReport(stats);
     return;
   }
 
-  console.log(`\n▶ Upserting ${toInsert.length} providers in batches of ${BATCH_SIZE}...`);
+  // Upsert batch: records with import_source_id (conflict on import_source,import_source_id)
+  if (toUpsert.length > 0) {
+    console.log(`\n▶ Upserting ${toUpsert.length} providers (with post ID) in batches of ${BATCH_SIZE}...`);
 
-  for (let offset = 0; offset < toInsert.length; offset += BATCH_SIZE) {
-    const batch = toInsert.slice(offset, offset + BATCH_SIZE);
+    for (let offset = 0; offset < toUpsert.length; offset += BATCH_SIZE) {
+      const batch = toUpsert.slice(offset, offset + BATCH_SIZE);
+      // Strip import_source_url (not a real DB column)
+      const cleanBatch = batch.map(({ import_source_url: _ignored, ...rest }) => rest);
 
-    // Remove import_source_url if the column doesn't exist in schema
-    // (This is not a standard provider column — stored as a metadata only)
-    const cleanBatch = batch.map(({ import_source_url: _ignored, ...rest }) => rest);
+      // Use RPC function with explicit ON CONFLICT DO UPDATE SET allowlist
+      // to preserve admin-controlled fields (Plan 052 safety requirement)
+      const { data, error } = await supabase
+        .rpc('upsert_joinhalal_providers', { p_providers: cleanBatch });
 
-    const { error } = await supabase
-      .from('providers')
-      .insert(cleanBatch);
+      if (error) {
+        console.error(
+          `  ❌ Batch upsert failed (offset ${offset}): ${error.message}`
+        );
+        stats.failed += batch.length;
+        continue;
+      }
 
-    if (error) {
-      console.error(
-        `  ❌ Batch insert failed (offset ${offset}): ${error.message}`
+      // RPC returns { inserted_count, updated_count } via xmax technique
+      if (data && Array.isArray(data) && data.length > 0) {
+        stats.inserted += Number(data[0].inserted_count);
+        stats.updated += Number(data[0].updated_count);
+      }
+      console.log(
+        `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: upserted ${batch.length} records`
       );
-      stats.failed += batch.length;
-      continue;
     }
+  }
 
-    stats.inserted += batch.length;
-    console.log(
-      `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
-    );
+  // Insert-only batch: records without import_source_id (already deduped client-side)
+  if (toInsertOnly.length > 0) {
+    console.log(`\n▶ Inserting ${toInsertOnly.length} providers (no post ID, insert-only) in batches of ${BATCH_SIZE}...`);
+
+    for (let offset = 0; offset < toInsertOnly.length; offset += BATCH_SIZE) {
+      const batch = toInsertOnly.slice(offset, offset + BATCH_SIZE);
+      const cleanBatch = batch.map(({ import_source_url: _ignored, ...rest }) => rest);
+
+      const { error } = await supabase
+        .from('providers')
+        .insert(cleanBatch);
+
+      if (error) {
+        console.error(
+          `  ❌ Batch insert failed (offset ${offset}): ${error.message}`
+        );
+        stats.failed += batch.length;
+        continue;
+      }
+
+      stats.inserted += batch.length;
+      console.log(
+        `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
+      );
+    }
   }
 
   printWriteReport(stats);

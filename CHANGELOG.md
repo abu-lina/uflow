@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.12] - 2026-03-22
+
+### Added
+
+- **JoinHalal import upsert with unique ID (Plan 052)**: The JoinHalal import pipeline now supports true upsert behavior — re-running the import updates existing providers with fresh data instead of skipping or duplicating them. Each listing's WordPress post ID (`vxconfig.current_post.id`) is extracted as a stable unique identifier and stored in new `import_source` + `import_source_id` columns on the providers table, backed by a partial unique index. The CLI write path uses a dedicated PostgreSQL RPC function (`upsert_joinhalal_providers`) that performs `ON CONFLICT DO UPDATE SET` with an explicit source-field allowlist, ensuring admin-controlled fields (`review_status`, `barakah_effects`, `needs_ids`, etc.) are never overwritten on re-import. Providers without a post ID (vxconfig absent) fall back to the existing name+city dedup insert-only path. The dry-run report now distinguishes between providers that would be **created** vs. **updated**, giving operators full visibility before committing a write. An `updated_at` trigger on the providers table ensures timestamps are refreshed on re-import. Migrations `062_add_import_source_columns.sql` and `063_upsert_joinhalal_provider_rpc.sql` are idempotent and safe to re-run.
+
 ## [0.8.11] - 2026-03-22
 
 ### Added

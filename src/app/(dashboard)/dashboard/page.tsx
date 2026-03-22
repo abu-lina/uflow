@@ -8,21 +8,23 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+    <div className="container mx-auto max-w-6xl p-6">
+      <h1 className="mb-4 text-2xl font-bold">Admin Dashboard</h1>
       <p className="text-text-neutral mb-6">Welcome back, {user?.email}</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Link href="/dashboard/providers">
-          <div className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <h2 className="text-xl font-semibold mb-2">Provider Review</h2>
-            <p className="text-gray-600 text-sm">Review and approve provider applications</p>
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+            <h2 className="mb-2 text-xl font-semibold">Provider Review</h2>
+            <p className="text-sm text-gray-600">Review and approve provider applications</p>
           </div>
         </Link>
         <Link href="/dashboard/import">
-          <div className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <h2 className="text-xl font-semibold mb-2">JoinHalal Import</h2>
-            <p className="text-gray-600 text-sm">Preview a dry-run import from JoinHalal listings</p>
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+            <h2 className="mb-2 text-xl font-semibold">JoinHalal Import</h2>
+            <p className="text-sm text-gray-600">
+              Preview a dry-run import from JoinHalal listings
+            </p>
           </div>
         </Link>
       </div>

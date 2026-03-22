@@ -16,6 +16,7 @@ import {
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
   extractSpeisen,
+  extractJoinHalalPostId,
 } from '@/utils/joinhalal-parser';
 
 // ---------------------------------------------------------------------------
@@ -398,5 +399,38 @@ describe('extractSpeisen', () => {
       ],
     });
     expect(result).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractJoinHalalPostId (Plan 052)
+// ---------------------------------------------------------------------------
+
+describe('extractJoinHalalPostId', () => {
+  it('extracts post ID from vxconfig script tag', () => {
+    expect(extractJoinHalalPostId(VALID_HTML_WITH_SCHEMA)).toBe('24043');
+  });
+
+  it('returns null when vxconfig script tag is absent', () => {
+    expect(extractJoinHalalPostId(HTML_WITHOUT_SCHEMA)).toBeNull();
+  });
+
+  it('returns null when current_post.id is missing', () => {
+    const html = `<script type="text/json" class="vxconfig">{"current_post":{"display_name":"Test"}}</script>`;
+    expect(extractJoinHalalPostId(html)).toBeNull();
+  });
+
+  it('converts numeric id to string', () => {
+    const html = `<script type="text/json" class="vxconfig">{"current_post":{"id":99999}}</script>`;
+    expect(extractJoinHalalPostId(html)).toBe('99999');
+  });
+
+  it('returns null for non-numeric id values', () => {
+    const html = `<script type="text/json" class="vxconfig">{"current_post":{"id":null}}</script>`;
+    expect(extractJoinHalalPostId(html)).toBeNull();
+  });
+
+  it('returns null for empty HTML', () => {
+    expect(extractJoinHalalPostId('')).toBeNull();
   });
 });

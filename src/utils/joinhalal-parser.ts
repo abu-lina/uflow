@@ -97,21 +97,29 @@ export function extractSchemaOrgFromHtml(html: string): JoinHalalSchemaData | nu
  * HTML entities in display_name are decoded (e.g., &amp; → &).
  */
 export function extractDisplayNameFromHtml(html: string): string | null {
-  const scriptMatch = html.match(
-    /<script[^>]*class="vxconfig"[^>]*>([\s\S]*?)<\/script>/i
-  );
-  if (!scriptMatch) return null;
+  const config = parseVxConfig(html);
+  if (!config) return null;
+  const name = config.display_name;
+  if (!name || typeof name !== 'string') return null;
+  return decodeHtmlEntities(name.trim());
+}
 
-  try {
-    const config = JSON.parse(scriptMatch[1]) as {
-      current_post?: { display_name?: string };
-    };
-    const name = config?.current_post?.display_name;
-    if (!name || typeof name !== 'string') return null;
-    return decodeHtmlEntities(name.trim());
-  } catch {
-    return null;
-  }
+// ---------------------------------------------------------------------------
+// extractJoinHalalPostId (Plan 052)
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the WordPress/Voxel post ID from the vxconfig JSON embedded in the page.
+ * This is the immutable integer primary key used as the upsert conflict identifier.
+ *
+ * Returns the post ID as a string (for TEXT column storage), or null if absent.
+ */
+export function extractJoinHalalPostId(html: string): string | null {
+  const config = parseVxConfig(html);
+  if (!config) return null;
+  const id = config.id;
+  if (typeof id !== 'number' || !Number.isFinite(id)) return null;
+  return String(id);
 }
 
 // ---------------------------------------------------------------------------
@@ -302,6 +310,34 @@ export function extractSpeisen(schema: JoinHalalSchemaData): string[] {
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Shared vxconfig parser — extracts current_post from the Voxel theme
+ * configuration JSON embedded in JoinHalal pages.
+ *
+ * Used by extractDisplayNameFromHtml (name) and extractJoinHalalPostId (id).
+ */
+interface VxConfigCurrentPost {
+  display_name?: string;
+  id?: number;
+}
+
+function parseVxConfig(html: string): VxConfigCurrentPost | null {
+  if (!html) return null;
+  const scriptMatch = html.match(
+    /<script[^>]*class="vxconfig"[^>]*>([\s\S]*?)<\/script>/i
+  );
+  if (!scriptMatch) return null;
+
+  try {
+    const config = JSON.parse(scriptMatch[1]) as {
+      current_post?: VxConfigCurrentPost;
+    };
+    return config?.current_post ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Decodes common HTML entities in a string.

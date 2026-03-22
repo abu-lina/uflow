@@ -80,7 +80,7 @@ describe('ImportDryRunPageContent', () => {
       () =>
         new Promise(() => {
           /* never resolves in test */
-        })
+        }),
     );
     render(<ImportDryRunPageContent />);
 
@@ -148,7 +148,7 @@ describe('ImportDryRunPageContent', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/npx tsx scripts\/import-joinhalal\.ts --write/i)
+        screen.getByText(/npx tsx scripts\/import-joinhalal\.ts --write/i),
       ).toBeInTheDocument();
     });
   });
@@ -199,7 +199,7 @@ describe('ImportDryRunPageContent', () => {
       () =>
         new Promise(() => {
           /* never resolves */
-        })
+        }),
     );
     render(<ImportDryRunPageContent />);
 
