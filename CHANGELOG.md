@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.9] - 2026-03-22
+
+### Fixed
+
+- **Provider modal Barakah Effekte section now displays actual badge visuals (Plan 048)**: The "Barakah Effekte" section in the desktop provider detail modal previously rendered legacy placeholder text ("Hatem Ipsum") and string-based pills from the deprecated `barakah_effects` field. Replaced with structured `BadgeLabel` components that render verified badge icons and labels from the provider's `badges` array (populated by the trust/badge system introduced in migration 016). Providers with structured badges now display their actual badge visuals (e.g., Halal, Muslim Owned, Community Active); providers without badges see a localised empty-state message. Added `providers.noBadges` translation key across all 6 supported languages.
+
 ## [0.8.8] - 2026-03-19
 
 ### Added
 
 - **JoinHalal admin dry-run dashboard UI (Plan 048)**: A new admin-only dashboard page at `/dashboard/import` that lets operators run a JoinHalal import dry-run preview directly from the browser without needing terminal access. Introduces a shared server-safe import core (`src/lib/import/joinhalal.ts`) consumed by both the CLI script and a new authenticated admin API route (`POST /api/admin/import-joinhalal/dry-run`). The dashboard page displays import counts, unmapped category groups, sample records, and a copyable CLI write command for when the operator is ready to write. Actual database writes remain CLI-only in v1. Auth is enforced at both the dashboard layout boundary and the API route level (admin/moderator only).
-
 
 ### Added
 

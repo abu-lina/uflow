@@ -181,6 +181,7 @@ export const ar = {
     weNeed: "نحن نحتاج",
     weAreLookingFor: "نحن نبحث عن",
     ourBarakahEffect: "تأثير البركة لدينا",
+    noBadges: "لا توجد تأثيرات بركة",
     selectCategory: "اختر الفئة"
   },
   create: {
