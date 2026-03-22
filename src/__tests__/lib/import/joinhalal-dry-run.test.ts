@@ -271,6 +271,7 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
         skipped: expect.any(Number),
         failed: expect.any(Number),
         wouldInsert: expect.any(Number),
+        wouldUpdate: expect.any(Number),
       })
     );
 
@@ -284,8 +285,8 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
       })
     );
 
-    // Invariant: wouldInsert = parsed - skipped (all non-duplicate parsed records)
-    expect(result.stats.wouldInsert).toBe(result.stats.parsed - result.stats.skipped);
+    // Invariant: wouldInsert + wouldUpdate = parsed - skipped (all non-duplicate parsed records)
+    expect(result.stats.wouldInsert + result.stats.wouldUpdate).toBe(result.stats.parsed - result.stats.skipped);
   });
 });
 
@@ -593,4 +594,243 @@ describe('runJoinHalalDryRun — AbortSignal support (Plan 049)', () => {
     // This proves the caller signal is propagated into the in-flight fetch.
     expect(elapsedMs).toBeLessThan(2000);
   }, 10_000); // 10s test timeout to let the 5s fallback expire if propagation fails
+});
+
+// ---------------------------------------------------------------------------
+// Plan 052 — Upsert: import_source / import_source_id / wouldUpdate
+// ---------------------------------------------------------------------------
+
+/** Page HTML with vxconfig containing current_post.id for upsert keying */
+function makePageHtmlWithPostId(
+  name: string,
+  streetAddress: string,
+  postId: number
+): string {
+  const schema = {
+    '@graph': [
+      {
+        '@type': 'Restaurant',
+        name,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress,
+          addressCountry: 'DE',
+        },
+      },
+    ],
+  };
+  const vxconfig = JSON.stringify({ current_post: { id: postId, display_name: name } });
+  return `<html><head>
+    <script type="application/ld+json" class="rank-math-schema-pro">${JSON.stringify(schema)}</script>
+    </head><body>
+    <script class="vxconfig" type="application/json">${vxconfig}</script>
+    <h1>${name}</h1></body></html>`;
+}
+
+/**
+ * createMockSupabase variant that supports import_source and import_source_id
+ * fields on existing providers for wouldUpdate classification testing.
+ */
+function createMockSupabaseWithImportSource(
+  existingProviders: {
+    provider_name: string;
+    address_city: string | null;
+    import_source?: string | null;
+    import_source_id?: string | null;
+  }[],
+  offersData: { offer_id: string; name_de: string }[] = []
+) {
+  const selectMock = vi.fn();
+
+  const fromMock = vi.fn((table: string) => {
+    if (table === 'categories') {
+      return {
+        select: () => ({
+          order: () =>
+            Promise.resolve({
+              data: [
+                { category_id: 'cat-001', name_de: 'Restaurant' },
+                { category_id: 'cat-002', name_de: 'Metzgerei' },
+                { category_id: 'cat-003', name_de: 'Café' },
+                { category_id: 'cat-004', name_de: 'Imbiss' },
+              ],
+              error: null,
+            }),
+        }),
+      };
+    }
+
+    if (table === 'offers') {
+      return {
+        select: () => ({
+          order: () => Promise.resolve({ data: offersData, error: null }),
+        }),
+      };
+    }
+
+    if (table === 'providers') {
+      selectMock.mockReturnValueOnce({
+        limit: () => Promise.resolve({ data: [], error: null }),
+      });
+      selectMock.mockReturnValueOnce({
+        range: () =>
+          Promise.resolve({
+            data: existingProviders,
+            error: null,
+          }),
+      });
+      return { select: selectMock };
+    }
+
+    return { select: () => ({ order: () => Promise.resolve({ data: [], error: null }) }) };
+  });
+
+  return { from: fromMock } as unknown as Parameters<typeof runJoinHalalDryRun>[0]['supabase'];
+}
+
+describe('runJoinHalalDryRun — wouldUpdate classification (Plan 052)', () => {
+  afterEach(() => {
+    global.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  it('counts a provider with matching import_source+import_source_id as wouldUpdate', async () => {
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/existing-place/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    setupFetchMock(sitemapXml, {
+      [pageUrl]: makePageHtmlWithPostId(
+        'Existing Place',
+        'Hauptstr. 1, 10115 Berlin, Deutschland',
+        12345
+      ),
+    });
+
+    // Provider already exists with same import_source + import_source_id
+    const supabase = createMockSupabaseWithImportSource([
+      {
+        provider_name: 'Existing Place',
+        address_city: 'Berlin',
+        import_source: 'joinhalal',
+        import_source_id: '12345',
+      },
+    ]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    expect(result.stats.wouldUpdate).toBe(1);
+    expect(result.stats.wouldInsert).toBe(0);
+    expect(result.stats.skipped).toBe(0);
+  });
+
+  it('counts a provider with vxconfig post ID but no DB match as wouldInsert', async () => {
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/new-place/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    setupFetchMock(sitemapXml, {
+      [pageUrl]: makePageHtmlWithPostId(
+        'New Place',
+        'Berliner Str. 5, 10115 Berlin, Deutschland',
+        99999
+      ),
+    });
+
+    // No matching import_source_id in DB
+    const supabase = createMockSupabaseWithImportSource([]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    expect(result.stats.wouldInsert).toBe(1);
+    expect(result.stats.wouldUpdate).toBe(0);
+    expect(result.stats.skipped).toBe(0);
+  });
+
+  it('a page without vxconfig falls back to name+city dedup (no wouldUpdate)', async () => {
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/no-vxconfig/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    setupFetchMock(sitemapXml, {
+      // Uses makePageHtml (no vxconfig tag)
+      [pageUrl]: makePageHtml(
+        'No Vxconfig Place',
+        'Strasse 1, 10115 Berlin, Deutschland'
+      ),
+    });
+
+    // Provider exists with same name+city but no import source
+    const supabase = createMockSupabaseWithImportSource([
+      {
+        provider_name: 'No Vxconfig Place',
+        address_city: 'Berlin',
+        import_source: null,
+        import_source_id: null,
+      },
+    ]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    expect(result.stats.wouldUpdate).toBe(0);
+    expect(result.stats.skipped).toBe(1);
+    expect(result.stats.wouldInsert).toBe(0);
+  });
+
+  it('mixed: one update, one insert, one skip — invariant holds', async () => {
+    const urlUpdate = 'https://joinhalal.com/locations/restaurant/update-me/';
+    const urlNew = 'https://joinhalal.com/locations/restaurant/new-one/';
+    const urlDup = 'https://joinhalal.com/locations/restaurant/dup-one/';
+    const sitemapXml = makeSitemapXml([urlUpdate, urlNew, urlDup]);
+
+    setupFetchMock(sitemapXml, {
+      [urlUpdate]: makePageHtmlWithPostId(
+        'Update Me', 'Str 1, 10115 Berlin, Deutschland', 100
+      ),
+      [urlNew]: makePageHtmlWithPostId(
+        'New One', 'Str 2, 20095 Hamburg, Deutschland', 200
+      ),
+      [urlDup]: makePageHtml(
+        'Dup One', 'Str 3, 80331 München, Deutschland'
+      ),
+    });
+
+    const supabase = createMockSupabaseWithImportSource([
+      {
+        provider_name: 'Update Me',
+        address_city: 'Berlin',
+        import_source: 'joinhalal',
+        import_source_id: '100',
+      },
+      {
+        provider_name: 'Dup One',
+        address_city: 'München',
+        import_source: null,
+        import_source_id: null,
+      },
+    ]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    expect(result.stats.wouldUpdate).toBe(1);
+    expect(result.stats.wouldInsert).toBe(1);
+    expect(result.stats.skipped).toBe(1);
+    // Invariant: wouldInsert + wouldUpdate = parsed - skipped
+    expect(result.stats.wouldInsert + result.stats.wouldUpdate).toBe(
+      result.stats.parsed - result.stats.skipped
+    );
+  });
 });

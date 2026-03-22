@@ -50,7 +50,7 @@ jobs:
   import:
     name: Import Providers (${{ inputs.mode }}, limit=${{ inputs.limit }})
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

@@ -22,6 +22,7 @@ import {
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
   extractSpeisen,
+  extractJoinHalalPostId,
 } from '@/utils/joinhalal-parser';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
@@ -51,8 +52,10 @@ export interface DryRunStats {
   skipped: number;
   /** Failed to parse (no schema, empty name, etc.) */
   failed: number;
-  /** Net new records that would be inserted (parsed - skipped - unmapped) */
+  /** Net new records that would be inserted */
   wouldInsert: number;
+  /** Records that would be updated (import_source+import_source_id already exists) */
+  wouldUpdate: number;
 }
 
 export interface UnmappedGroup {
@@ -240,6 +243,8 @@ interface ProviderRecord {
   offers_ids: string[];
   needs_ids: string[];
   barakah_effects: string[];
+  import_source: string | null;
+  import_source_id: string | null;
   import_source_url: string | null;
   provider_description?: string | null;
 }
@@ -353,33 +358,40 @@ async function checkProviderDescriptionExists(
 
 async function loadExistingProviderKeys(
   supabase: SupabaseClient
-): Promise<Set<string>> {
-  const existing = new Set<string>();
+): Promise<{ nameCityKeys: Set<string>; importSourceKeys: Set<string> }> {
+  const nameCityKeys = new Set<string>();
+  const importSourceKeys = new Set<string>();
   let offset = 0;
 
   while (true) {
     const { data, error } = await supabase
       .from('providers')
-      .select('provider_name, address_city')
+      .select('provider_name, address_city, import_source, import_source_id')
       .range(offset, offset + BATCH_SIZE_CHECK - 1);
 
     if (error) break;
     if (!data || data.length === 0) break;
 
     for (const row of data) {
-      existing.add(
+      nameCityKeys.add(
         makeProviderKey(
           (row.provider_name ?? '') as string,
           (row.address_city ?? null) as string | null
         )
       );
+      // Build import-source key set for upsert detection
+      const src = row.import_source as string | null;
+      const srcId = row.import_source_id as string | null;
+      if (src && srcId) {
+        importSourceKeys.add(`${src}:${srcId}`);
+      }
     }
 
     if (data.length < BATCH_SIZE_CHECK) break;
     offset += BATCH_SIZE_CHECK;
   }
 
-  return existing;
+  return { nameCityKeys, importSourceKeys };
 }
 
 function transformPage(
@@ -410,6 +422,9 @@ function transformPage(
   const speisen = extractSpeisen(schema);
   const { matchedIds, unmatchedSpeisen } = resolveOfferIds(speisen, offers);
 
+  // Extract JoinHalal post ID for upsert conflict resolution (Plan 052)
+  const postId = extractJoinHalalPostId(html);
+
   const record: ProviderRecord = {
     provider_name: providerName,
     category_id: categoryId,
@@ -428,6 +443,8 @@ function transformPage(
     offers_ids: matchedIds,
     needs_ids: [],
     barakah_effects: [],
+    import_source: postId ? 'joinhalal' : null,
+    import_source_id: postId,
     import_source_url: url,
   };
 
@@ -504,9 +521,9 @@ export async function runJoinHalalDryRun(
     throw new Error('Dry-run aborted: timeout exceeded during sitemap collection.');
   }
 
-  // Load existing keys for deduplication (both modes for accuracy)
+  // Load existing keys for deduplication and upsert detection
   const tKeysStart = performance.now();
-  const existingKeys = await loadExistingProviderKeys(supabase);
+  const { nameCityKeys: existingKeys, importSourceKeys } = await loadExistingProviderKeys(supabase);
   const tKeysEnd = performance.now();
 
   if (signal?.aborted) {
@@ -521,14 +538,18 @@ export async function runJoinHalalDryRun(
     unmapped: 0,
     skipped: 0,
     failed: 0,
+    wouldUpdate: 0,
   };
 
   const unmappedEntries: UnmappedEntry[] = [];
   const unmappedOfferEntries: UnmappedOfferEntry[] = [];
   const samples: SampleRecord[] = [];
   let insertCount = 0;
-  // Track in-batch duplicates (adds to existingKeys to avoid intra-run collisions)
+  // Track intra-run dedup: name+city keys for null-source records
   const seenInRun = new Set<string>(existingKeys);
+  // Track intra-run dedup: import-source keys for import-sourced records
+  // (starts EMPTY — DB keys are checked via importSourceKeys.has() for wouldUpdate)
+  const seenImportKeys = new Set<string>();
 
   const tPagesStart = performance.now();
   for (const url of locationUrls) {
@@ -576,13 +597,30 @@ export async function runJoinHalalDryRun(
       }
     }
 
-    const key = makeProviderKey(record.provider_name, record.address_city);
-    if (seenInRun.has(key)) {
-      stats.skipped++;
-      continue;
+    // Classify: records with import_source_id use import-source key for update detection;
+    // records without it use name+city dedup for skip detection.
+    if (record.import_source_id && record.import_source) {
+      const importKey = `${record.import_source}:${record.import_source_id}`;
+      if (seenImportKeys.has(importKey)) {
+        // Already counted in this run — intra-run dedup for import-sourced records
+        stats.skipped++;
+        continue;
+      }
+      seenImportKeys.add(importKey);
+      if (importSourceKeys.has(importKey)) {
+        stats.wouldUpdate++;
+      } else {
+        insertCount++;
+      }
+    } else {
+      const key = makeProviderKey(record.provider_name, record.address_city);
+      if (seenInRun.has(key)) {
+        stats.skipped++;
+        continue;
+      }
+      seenInRun.add(key);
+      insertCount++;
     }
-    seenInRun.add(key);
-    insertCount++;
 
     if (samples.length < MAX_SAMPLES) {
       samples.push({
@@ -601,6 +639,7 @@ export async function runJoinHalalDryRun(
   const tPagesEnd = performance.now();
 
   const wouldInsert = insertCount;
+  const wouldUpdate = stats.wouldUpdate;
 
   // Group unmapped entries by category
   const groupMap = unmappedEntries.reduce<Record<string, string[]>>((acc, e) => {
@@ -635,7 +674,7 @@ export async function runJoinHalalDryRun(
   const tEnd = performance.now();
 
   return {
-    stats: { ...stats, wouldInsert },
+    stats: { ...stats, wouldInsert, wouldUpdate },
     unmappedGroups,
     unmappedOffers,
     samples,

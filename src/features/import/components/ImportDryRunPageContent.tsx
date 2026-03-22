@@ -54,17 +54,17 @@ export function ImportDryRunPageContent() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-2">JoinHalal Import — Dry-Run Preview</h1>
-      <p className="text-gray-500 text-sm mb-6">
+    <div className="container mx-auto max-w-5xl p-4 md:p-6">
+      <h1 className="mb-2 text-2xl font-bold">JoinHalal Import — Dry-Run Preview</h1>
+      <p className="mb-6 text-sm text-gray-500">
         This is a <strong>dry-run preview only</strong>. No data will be written to the database.
         Use the CLI write command below to execute an actual import.
       </p>
 
       {/* Controls */}
-      <div className="flex flex-wrap items-end gap-4 mb-6">
+      <div className="mb-6 flex flex-wrap items-end gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="import-limit">
+          <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="import-limit">
             Limit
           </label>
           <select
@@ -117,9 +117,9 @@ export function ImportDryRunPageContent() {
       {state.phase === 'result' && (
         <div className="space-y-6">
           {/* Stats */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700">
                 Dry-Run Summary
               </h2>
             </div>
@@ -133,10 +133,11 @@ export function ImportDryRunPageContent() {
                   { label: 'Skipped (duplicate)', value: state.data.stats.skipped },
                   { label: 'Parse failures', value: state.data.stats.failed },
                   { label: 'Would INSERT', value: state.data.stats.wouldInsert },
+                  { label: 'Would UPDATE', value: state.data.stats.wouldUpdate },
                 ].map(({ label, value }) => (
                   <tr key={label} className="border-b border-gray-100 last:border-0">
                     <td className="px-4 py-2 text-gray-500">{label}</td>
-                    <td className="px-4 py-2 font-medium text-gray-900 text-right">{value}</td>
+                    <td className="px-4 py-2 text-right font-medium text-gray-900">{value}</td>
                   </tr>
                 ))}
               </tbody>
@@ -146,7 +147,7 @@ export function ImportDryRunPageContent() {
           {/* Unmapped categories */}
           {state.data.unmappedGroups.length > 0 && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <h2 className="text-sm font-semibold text-amber-800 mb-2">
+              <h2 className="mb-2 text-sm font-semibold text-amber-800">
                 Unmapped Categories ({state.data.unmappedGroups.length})
               </h2>
               <ul className="space-y-1 text-sm text-amber-700">
@@ -162,9 +163,9 @@ export function ImportDryRunPageContent() {
 
           {/* Sample records */}
           {state.data.samples.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
               <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
-                <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700">
                   Sample Records (first {state.data.samples.length})
                 </h2>
               </div>
@@ -177,7 +178,7 @@ export function ImportDryRunPageContent() {
                       {r.address_street ?? '—'}
                     </p>
                     {r.social_website && (
-                      <p className="text-gray-400 truncate">{r.social_website}</p>
+                      <p className="truncate text-gray-400">{r.social_website}</p>
                     )}
                   </li>
                 ))}
@@ -187,15 +188,15 @@ export function ImportDryRunPageContent() {
 
           {/* CLI write command */}
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <h2 className="text-sm font-semibold text-gray-700 mb-2">
+            <h2 className="mb-2 text-sm font-semibold text-gray-700">
               To execute this import, run in your terminal:
             </h2>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded bg-gray-800 px-3 py-2 text-sm font-mono text-green-400 overflow-x-auto">
+              <code className="flex-1 overflow-x-auto rounded bg-gray-800 px-3 py-2 font-mono text-sm text-green-400">
                 {buildCliWriteCommand(state.limit)}
               </code>
               <button
-                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 shrink-0"
+                className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
                 type="button"
                 onClick={() => copyCommand(buildCliWriteCommand(state.limit))}
               >
@@ -203,7 +204,8 @@ export function ImportDryRunPageContent() {
               </button>
             </div>
             <p className="mt-2 text-xs text-gray-400">
-              This command writes to the database — run it only after reviewing the dry-run results above.
+              This command writes to the database — run it only after reviewing the dry-run results
+              above.
             </p>
           </div>
         </div>
