@@ -1,0 +1,110 @@
+# .github/workflows/import-joinhalal.yml
+#
+# JoinHalal Provider Data Import
+# Runs the import script against production Supabase using GitHub Secrets.
+#
+# Usage:
+#   1. Go to Actions → "Import JoinHalal Providers"
+#   2. Click "Run workflow"
+#   3. Choose mode (dry-run or write) and limit
+#   4. Review output in the workflow logs
+#
+# Security:
+#   - Uses SUPABASE_SERVICE_ROLE_KEY from GitHub Secrets (never exposed in logs)
+#   - Requires manual trigger (workflow_dispatch) — no accidental runs
+#   - Dry-run is the default to prevent unintended writes
+
+name: Import JoinHalal Providers
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Import mode'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - write
+      limit:
+        description: 'Number of providers to import (10, 50, 100, all)'
+        required: true
+        default: '50'
+        type: choice
+        options:
+          - '10'
+          - '50'
+          - '100'
+          - 'all'
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - uat
+
+jobs:
+  import:
+    name: Import Providers (${{ inputs.mode }}, limit=${{ inputs.limit }})
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run import (Production)
+        if: inputs.environment == 'production'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🚀 Running JoinHalal import against PRODUCTION"
+          echo "   Mode: ${{ inputs.mode }}"
+          echo "   Limit: ${{ inputs.limit }}"
+          echo ""
+          npx tsx scripts/import-joinhalal.ts --${{ inputs.mode }} --limit ${{ inputs.limit }}
+
+      - name: Run import (UAT)
+        if: inputs.environment == 'uat'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🚀 Running JoinHalal import against UAT"
+          echo "   Mode: ${{ inputs.mode }}"
+          echo "   Limit: ${{ inputs.limit }}"
+          echo ""
+          npx tsx scripts/import-joinhalal.ts --${{ inputs.mode }} --limit ${{ inputs.limit }}
+
+      - name: Summary
+        run: |
+          echo "## Import Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | ${{ inputs.mode }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Limit | ${{ inputs.limit }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.mode }}" = "write" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Records inserted with \`review_status = 'pending'\`**" >> $GITHUB_STEP_SUMMARY
+            echo "Approve via admin moderation UI or SQL:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`sql" >> $GITHUB_STEP_SUMMARY
+            echo "UPDATE providers SET review_status = 'approved'" >> $GITHUB_STEP_SUMMARY
+            echo "WHERE user_created_id = '00000000-0000-0000-0000-000047000001';" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
