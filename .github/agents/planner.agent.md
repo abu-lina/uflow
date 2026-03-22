@@ -142,20 +142,21 @@ Prefer small, focused scopes delivering value quickly.
 
 ## Process
 
-1. Start with "Value Statement and Business Objective": "As a [user/customer/agent], I want to [objective], so that [value]"
-2. Get User Approval. Present user story, wait for explicit approval before planning.
-3. Summarize objective, known context.
-4. Identify target release version. Check current version, consult roadmap, ensure valid increment. Run version pre-flight (see Core Responsibility 5e). State version conservatively as "next available after current origin/main version; confirm at DevOps Stage 1" and document the rationale in the plan header. Update the actual version number when DevOps Stage 1 confirms availability.
-   4b. Run the **Release bundling check** and document `## Release Strategy` accordingly.
-   4c. Add **Related Issues** links/IDs to the plan header (or “None”).
-5. Enumerate assumptions, open questions. Resolve before finalizing.
-  5b. Populate `## Decision Record` and ensure there are no `[OPEN]` items. If any decision is deferred, record the owner + reason + target plan/version.
-6. Outline milestones, break into numbered steps with implementer-ready detail.
-7. Include version management as final milestone (CHANGELOG, package.json, setup.py, etc.).
-8. **Cross-repo coordination**: If plan involves APIs spanning multiple repositories, load `cross-repo-contract` skill. Document contract requirements and sync dependencies in plan.
-9. Specify verification steps, handoff notes, rollback considerations.
-10. Verify all work delivers on value statement. Don't defer core value to future phases.
-11. **BEFORE HANDOFF**: Scan plan for any `OPEN QUESTION` items not marked as resolved/closed. If any exist, prominently list them and ask user: "The following open questions remain unresolved. Do you want to proceed to Critic/Implementer with these unresolved, or should we address them first?"
+1. **ID collision check (MANDATORY)**: Before allocating a plan ID from `.next-id`, verify the candidate ID is not already in use anywhere under `agent-output/`, including `closed/`: `find agent-output/ -name "${ID}-*" -type f 2>/dev/null`. If matches exist, increment and re-check until the ID is unused.
+2. Start with "Value Statement and Business Objective": "As a [user/customer/agent], I want to [objective], so that [value]"
+3. Get User Approval. Present user story, wait for explicit approval before planning.
+4. Summarize objective, known context.
+5. Identify target release version. Check current version, consult roadmap, ensure valid increment. Run version pre-flight (see Core Responsibility 5e). State version conservatively as "next available after current origin/main version; confirm at DevOps Stage 1" and document the rationale in the plan header. Update the actual version number when DevOps Stage 1 confirms availability.
+  5b. Run the **Release bundling check** and document `## Release Strategy` accordingly.
+  5c. Add **Related Issues** links/IDs to the plan header (or “None”).
+6. Enumerate assumptions, open questions. Resolve before finalizing.
+  6b. Populate `## Decision Record` and ensure there are no `[OPEN]` items. If any decision is deferred, record the owner + reason + target plan/version.
+7. Outline milestones, break into numbered steps with implementer-ready detail.
+8. Include version management as final milestone (CHANGELOG, package.json, setup.py, etc.).
+9. **Cross-repo coordination**: If plan involves APIs spanning multiple repositories, load `cross-repo-contract` skill. Document contract requirements and sync dependencies in plan.
+10. Specify verification steps, handoff notes, rollback considerations.
+11. Verify all work delivers on value statement. Don't defer core value to future phases.
+12. **BEFORE HANDOFF**: Scan plan for any `OPEN QUESTION` items not marked as resolved/closed. If any exist, prominently list them and ask user: "The following open questions remain unresolved. Do you want to proceed to Critic/Implementer with these unresolved, or should we address them first?"
 
 ### Gate Integrity After Revisions (MANDATORY)
 
@@ -262,8 +263,10 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 **Creating plan from user request (no analysis)**:
 
 1. Read `agent-output/.next-id` (create with value `1` if missing)
-2. Use that value as your document ID
-3. Increment and write back: `echo $((ID + 1)) > agent-output/.next-id`
+2. Verify the candidate ID is unused anywhere under `agent-output/`, including `closed/`: `find agent-output/ -name "${ID}-*" -type f 2>/dev/null`
+3. If matches exist, increment and re-check until the ID is unused
+4. Use that value as your document ID
+5. Increment and write back the next available value: `echo $((ID + 1)) > agent-output/.next-id`
 
 **Creating plan from analysis**:
 

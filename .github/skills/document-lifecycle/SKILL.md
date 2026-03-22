@@ -49,6 +49,21 @@ Contents: Single integer (e.g., `081`)
 - Downstream agents **inherit** the ID from their source document
 - Never skip numbers; always use the next available
 
+### Pre-Allocation Verification (MANDATORY)
+
+Before using a new ID from `.next-id`, verify no file already exists with that ID anywhere under `agent-output/`, including `closed/`:
+
+```bash
+find agent-output/ -name "${NEXT_ID}-*" -type f 2>/dev/null
+```
+
+If any file is found:
+1. Increment `.next-id` and repeat the check
+2. Continue until a truly unused ID is found
+3. Write the final next value back to `.next-id`
+
+This prevents ID collisions when multiple worktrees or sessions read `.next-id` concurrently.
+
 ### Document Header Format
 
 Every document in `agent-output/` MUST include:
@@ -66,9 +81,9 @@ Status: Active             # Current lifecycle state
 
 | Scenario | Action |
 |----------|--------|
-| Analyst starts new investigation | Read `.next-id`, increment, use as ID, write back |
+| Analyst starts new investigation | Read `.next-id`, verify the ID is unused across `agent-output/` (including `closed/`), increment until unused, use as ID, write back |
 | Planner creates plan from analysis | Inherit ID/Origin from analysis doc |
-| Planner creates plan from user request (no analysis) | Read `.next-id`, increment, use as ID, write back |
+| Planner creates plan from user request (no analysis) | Read `.next-id`, verify the ID is unused across `agent-output/` (including `closed/`), increment until unused, use as ID, write back |
 | Implementer/QA/UAT/Critic work on plan | Inherit ID/Origin from plan doc |
 | Retrospective reviews plan | Inherit ID/Origin from plan doc |
 
@@ -140,6 +155,10 @@ Roadmap agent performs comprehensive sweep when reviewing roadmap:
 ```bash
 # Read current ID
 NEXT_ID=$(cat agent-output/.next-id)
+# Verify the ID is unused across agent-output/, including closed/
+while find agent-output/ -name "${NEXT_ID}-*" -type f 2>/dev/null | grep -q .; do
+  NEXT_ID=$((NEXT_ID + 1))
+done
 # Increment for next use
 echo $((NEXT_ID + 1)) > agent-output/.next-id
 # Use $NEXT_ID as your document ID
