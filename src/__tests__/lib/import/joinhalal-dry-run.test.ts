@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { runJoinHalalDryRun, type DryRunResult } from '@/lib/import/joinhalal';
+import { runJoinHalalDryRun, type DryRunResult, type DryRunTiming } from '@/lib/import/joinhalal';
 
 // ---------------------------------------------------------------------------
 // Test HTML fixtures
@@ -275,4 +275,186 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
     // Invariant: wouldInsert = parsed - skipped (all non-duplicate parsed records)
     expect(result.stats.wouldInsert).toBe(result.stats.parsed - result.stats.skipped);
   });
+});
+
+// ---------------------------------------------------------------------------
+// Plan 049 — Timeout hardening: timing telemetry + AbortSignal support
+// ---------------------------------------------------------------------------
+
+describe('runJoinHalalDryRun — timing telemetry (Plan 049)', () => {
+  afterEach(() => {
+    global.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  it('returns timing object with expected phase keys', async () => {
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/test-place/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    setupFetchMock(sitemapXml, {
+      [pageUrl]: makePageHtml('Test Place', 'Berliner Str. 5, 10115 Berlin, Deutschland'),
+    });
+
+    const supabase = createMockSupabase([]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    // timing must exist on the result
+    expect(result.timing).toBeDefined();
+    const timing = result.timing as DryRunTiming;
+
+    // Must have all expected phase keys
+    expect(timing).toHaveProperty('totalMs');
+    expect(timing).toHaveProperty('categoriesMs');
+    expect(timing).toHaveProperty('descCheckMs');
+    expect(timing).toHaveProperty('existingKeysMs');
+    expect(timing).toHaveProperty('sitemapMs');
+    expect(timing).toHaveProperty('pageProcessingMs');
+
+    // All timing values must be non-negative numbers
+    expect(timing.totalMs).toBeGreaterThanOrEqual(0);
+    expect(timing.categoriesMs).toBeGreaterThanOrEqual(0);
+    expect(timing.descCheckMs).toBeGreaterThanOrEqual(0);
+    expect(timing.existingKeysMs).toBeGreaterThanOrEqual(0);
+    expect(timing.sitemapMs).toBeGreaterThanOrEqual(0);
+    expect(timing.pageProcessingMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('total timing is at least the sum of individual phases', async () => {
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/test-place/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    setupFetchMock(sitemapXml, {
+      [pageUrl]: makePageHtml('Test Place', 'Berliner Str. 5, 10115 Berlin, Deutschland'),
+    });
+
+    const supabase = createMockSupabase([]);
+
+    const result = await runJoinHalalDryRun({
+      supabase,
+      limit: 10,
+      sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+    });
+
+    const timing = result.timing as DryRunTiming;
+    const phaseSum =
+      timing.categoriesMs +
+      timing.descCheckMs +
+      timing.existingKeysMs +
+      timing.sitemapMs +
+      timing.pageProcessingMs;
+
+    // totalMs must be >= sum of phases (there may be minor overhead)
+    expect(timing.totalMs).toBeGreaterThanOrEqual(phaseSum - 1); // 1ms tolerance for rounding
+  });
+});
+
+describe('runJoinHalalDryRun — AbortSignal support (Plan 049)', () => {
+  afterEach(() => {
+    global.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  it('rejects with a timeout error when signal is already aborted', async () => {
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/test-place/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    setupFetchMock(sitemapXml, {
+      [pageUrl]: makePageHtml('Test Place', 'Berliner Str. 5, 10115 Berlin, Deutschland'),
+    });
+
+    const supabase = createMockSupabase([]);
+
+    // Pre-aborted signal
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      runJoinHalalDryRun({
+        supabase,
+        limit: 10,
+        sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+        signal: controller.signal,
+      })
+    ).rejects.toThrow(/abort|timeout/i);
+  });
+
+  it('[QA-049 regression] rejects promptly when caller aborts mid-flight during a page fetch', async () => {
+    // This test proves the caller's AbortSignal is propagated into fetchText().
+    // The mock page fetch hangs for 5s unless the signal aborts it sooner.
+    // We abort the caller signal FROM INSIDE the mock (when the page fetch starts),
+    // guaranteeing the abort fires while the fetch is in-flight — not before.
+    //
+    // Without signal propagation: fetchText uses an independent 15s timeout signal,
+    //   so the mock's 5s timer fires, fetchText returns HTML, function returns
+    //   normally → .rejects.toThrow() FAILS (function resolved, not rejected).
+    //
+    // With signal propagation: AbortSignal.any() composes the caller signal with
+    //   the 15s timeout. The mock sees the composite signal abort immediately,
+    //   rejects, fetchText returns null, the post-fetch signal check throws →
+    //   function rejects promptly.
+
+    const pageUrl = 'https://joinhalal.com/locations/restaurant/slow-place/';
+    const sitemapXml = makeSitemapXml([pageUrl]);
+
+    const controller = new AbortController();
+
+    global.fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+
+      if (url.includes('sitemap')) {
+        return { ok: true, status: 200, text: async () => sitemapXml } as Response;
+      }
+
+      // Abort the caller's signal NOW, while the page fetch is starting.
+      // This simulates the route-level timeout (90s) expiring mid-fetch.
+      controller.abort();
+
+      // Simulate a slow page fetch that respects its signal.
+      // Native fetch aborts immediately when the signal fires; our mock mirrors that.
+      const fetchSignal = init?.signal;
+      return new Promise<Response>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          resolve({
+            ok: true,
+            status: 200,
+            text: async () => makePageHtml('Slow Place', 'Str 1, 10115 Berlin, Deutschland'),
+          } as Response);
+        }, 5000);
+
+        if (fetchSignal) {
+          if (fetchSignal.aborted) {
+            clearTimeout(timer);
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+            return;
+          }
+          fetchSignal.addEventListener('abort', () => {
+            clearTimeout(timer);
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+          }, { once: true });
+        }
+      });
+    }) as typeof global.fetch;
+
+    const supabase = createMockSupabase([]);
+
+    const startMs = performance.now();
+    await expect(
+      runJoinHalalDryRun({
+        supabase,
+        limit: 10,
+        sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
+        signal: controller.signal,
+      })
+    ).rejects.toThrow(/abort|timeout|cancel/i);
+    const elapsedMs = performance.now() - startMs;
+
+    // Must reject within 2s (well before the 5s mock fallback).
+    // This proves the caller signal is propagated into the in-flight fetch.
+    expect(elapsedMs).toBeLessThan(2000);
+  }, 10_000); // 10s test timeout to let the 5s fallback expire if propagation fails
 });

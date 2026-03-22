@@ -68,6 +68,22 @@ export interface DryRunResult {
   stats: DryRunStats;
   unmappedGroups: UnmappedGroup[];
   samples: SampleRecord[];
+  timing?: DryRunTiming;
+}
+
+export interface DryRunTiming {
+  /** Total wall-clock time for the entire dry-run (ms). */
+  totalMs: number;
+  /** Time to load categories from DB (ms). */
+  categoriesMs: number;
+  /** Time to check provider_description column existence (ms). */
+  descCheckMs: number;
+  /** Time to load existing provider keys from DB (ms). */
+  existingKeysMs: number;
+  /** Time to fetch and parse sitemaps (ms). */
+  sitemapMs: number;
+  /** Time to fetch and process individual pages (ms). */
+  pageProcessingMs: number;
 }
 
 export interface DryRunOptions {
@@ -76,6 +92,8 @@ export interface DryRunOptions {
   limit: ImportLimit;
   /** Defaults to DEFAULT_SITEMAPS when omitted. */
   sitemapUrls?: string[];
+  /** Optional AbortSignal for caller-controlled timeout. */
+  signal?: AbortSignal;
 }
 
 // ─── Public constants ─────────────────────────────────────────────────────────
@@ -189,22 +207,26 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchText(url: string, attempt = 1): Promise<string | null> {
+async function fetchText(url: string, callerSignal?: AbortSignal, attempt = 1): Promise<string | null> {
   try {
+    const fetchSignal = callerSignal
+      ? AbortSignal.any([AbortSignal.timeout(15000), callerSignal])
+      : AbortSignal.timeout(15000);
+
     const response = await fetch(url, {
       headers: {
         'User-Agent': USER_AGENT,
         Accept: 'text/html,application/xhtml+xml,application/xml',
         'Accept-Language': 'de,en;q=0.5',
       },
-      signal: AbortSignal.timeout(15000),
+      signal: fetchSignal,
     });
 
     if (!response.ok) {
       if (response.status === 429 && attempt <= MAX_RETRY_ON_RATE_LIMIT) {
         const backoff = attempt * 5000;
         await sleep(backoff);
-        return fetchText(url, attempt + 1);
+        return fetchText(url, callerSignal, attempt + 1);
       }
       return null;
     }
@@ -217,7 +239,8 @@ async function fetchText(url: string, attempt = 1): Promise<string | null> {
 
 async function collectLocationUrls(
   sitemapUrls: string[],
-  limit: ImportLimit
+  limit: ImportLimit,
+  signal?: AbortSignal
 ): Promise<string[]> {
   const allUrls: string[] = [];
   const numericLimit = limit === 'all' ? null : limit;
@@ -225,7 +248,7 @@ async function collectLocationUrls(
   for (const sitemapUrl of sitemapUrls) {
     if (numericLimit !== null && allUrls.length >= numericLimit) break;
 
-    const xml = await fetchText(sitemapUrl);
+    const xml = await fetchText(sitemapUrl, signal);
     if (!xml) continue;
 
     const urls = extractUrlsFromSitemapXml(xml);
@@ -365,24 +388,51 @@ function transformPage(
 export async function runJoinHalalDryRun(
   options: DryRunOptions
 ): Promise<DryRunResult> {
-  const { supabase, limit, sitemapUrls = DEFAULT_SITEMAPS } = options;
+  const { supabase, limit, sitemapUrls = DEFAULT_SITEMAPS, signal } = options;
+
+  // Check for pre-aborted signal
+  if (signal?.aborted) {
+    throw new Error('Dry-run aborted: operation was cancelled before it started.');
+  }
+
+  const t0 = performance.now();
 
   // Load categories (required — cannot proceed without them)
+  const tCatStart = performance.now();
   const categories = await loadCategories(supabase);
+  const tCatEnd = performance.now();
   if (categories.length === 0) {
     throw new Error('No categories found in database. Cannot resolve category IDs.');
   }
 
+  if (signal?.aborted) {
+    throw new Error('Dry-run aborted: timeout exceeded during category loading.');
+  }
+
+  const tDescCheckStart = performance.now();
   const hasDescriptionColumn = await checkProviderDescriptionExists(supabase);
+  const tDescCheckEnd = performance.now();
 
   // Collect URLs from sitemaps
-  const locationUrls = await collectLocationUrls(sitemapUrls, limit);
+  const tSitemapStart = performance.now();
+  const locationUrls = await collectLocationUrls(sitemapUrls, limit, signal);
+  const tSitemapEnd = performance.now();
   if (locationUrls.length === 0) {
     throw new Error('No location URLs found in sitemaps.');
   }
 
+  if (signal?.aborted) {
+    throw new Error('Dry-run aborted: timeout exceeded during sitemap collection.');
+  }
+
   // Load existing keys for deduplication (both modes for accuracy)
+  const tKeysStart = performance.now();
   const existingKeys = await loadExistingProviderKeys(supabase);
+  const tKeysEnd = performance.now();
+
+  if (signal?.aborted) {
+    throw new Error('Dry-run aborted: timeout exceeded during key loading.');
+  }
 
   // Process each URL
   const stats = {
@@ -400,8 +450,18 @@ export async function runJoinHalalDryRun(
   // Track in-batch duplicates (adds to existingKeys to avoid intra-run collisions)
   const seenInRun = new Set<string>(existingKeys);
 
+  const tPagesStart = performance.now();
   for (const url of locationUrls) {
-    const html = await fetchText(url);
+    if (signal?.aborted) {
+      throw new Error('Dry-run aborted: timeout exceeded during page processing.');
+    }
+
+    const html = await fetchText(url, signal);
+
+    if (signal?.aborted) {
+      throw new Error('Dry-run aborted: timeout exceeded during page fetch.');
+    }
+
     if (!html) {
       stats.failed++;
       continue;
@@ -449,6 +509,7 @@ export async function runJoinHalalDryRun(
 
     await sleep(FETCH_DELAY_MS);
   }
+  const tPagesEnd = performance.now();
 
   const wouldInsert = insertCount;
 
@@ -467,9 +528,19 @@ export async function runJoinHalalDryRun(
     })
   );
 
+  const tEnd = performance.now();
+
   return {
     stats: { ...stats, wouldInsert },
     unmappedGroups,
     samples,
+    timing: {
+      totalMs: Math.round(tEnd - t0),
+      categoriesMs: Math.round(tCatEnd - tCatStart),
+      descCheckMs: Math.round(tDescCheckEnd - tDescCheckStart),
+      existingKeysMs: Math.round(tKeysEnd - tKeysStart),
+      sitemapMs: Math.round(tSitemapEnd - tSitemapStart),
+      pageProcessingMs: Math.round(tPagesEnd - tPagesStart),
+    },
   };
 }

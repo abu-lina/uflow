@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.10] - 2026-03-22
+
+### Fixed
+
+- **JoinHalal dry-run timeout hardening (Plan 049)**: The admin dry-run dashboard (`/dashboard/import`) intermittently returned 504 Gateway Timeout on UAT because the Nginx reverse proxy used the default 60-second `proxy_read_timeout`, which could be exceeded during route initialization or Supabase cold connections. Fixed by adding an explicit `proxy_read_timeout 95s` for `/api/admin/` routes in both UAT and production Nginx templates, scoped to avoid weakening other proxy behavior. An application-level 90-second AbortController timeout guard was added to the dry-run API route to ensure the app controls the failure response before Nginx (95s) or Cloudflare (100s) kill the request. The dry-run response now includes phase-level timing telemetry (`timing` field on `DryRunResult`) exposing category lookup, existing-key loading, sitemap retrieval, and page processing durations for operator diagnosis of intermittent slow paths.
+
 ## [0.8.8] - 2026-03-19
 
 ### Added
