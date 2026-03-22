@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: d7f2b8e3
-Status: Committed
+Status: Released
 ---
 
 # Plan 051 — JoinHalal Speisen Offers Mapping
@@ -11,7 +11,7 @@ Status: Committed
 
 - **Target Release**: `v0.8.11` (confirmed at DevOps Stage 1 after tag pre-flight)
 - **Epic Alignment**: Provider supply growth / admin ingestion quality / faster searchable provider coverage
-- **Status**: Committed for Release `v0.8.11`
+- **Status**: Released in `v0.8.11`
 - **Related Issues**: None
 
 ## Changelog
@@ -22,6 +22,7 @@ Status: Committed
 | 2026-03-22T17:14Z | QA execution completed | QA | QA gates passed for Plan 051 scope; status moved to QA Complete and handed off to UAT |
 | 2026-03-22T17:30Z | UAT value validation complete | UAT | APPROVED FOR RELEASE — all 5 UAT scenarios PASS; implementation delivers stated value; status moved to UAT Approved |
 | 2026-03-22T16:21Z | Stage 1 local commit prepared | DevOps | Target release confirmed as `v0.8.11`; lifecycle closure prepared; status moved to Committed |
+| 2026-03-22T16:30Z | Release completed | DevOps | Pushed to `origin/main`, tagged `v0.8.11`, and marked lifecycle docs Released |
 
 ## Release Strategy
 

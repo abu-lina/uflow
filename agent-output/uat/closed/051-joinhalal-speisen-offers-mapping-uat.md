@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: d7f2b8e3
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: JoinHalal Speisen Offers Mapping
@@ -17,6 +17,7 @@ Status: Committed
 | -------------------- | ------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
 | 2026-03-22T17:30Z    | QA → UAT      | Value delivery validation   | UAT Complete — implementation delivers stated value; both import paths resolve Speisen to offers_ids; 56/56 tests passing; catalog coverage raised to 100% |
 | 2026-03-22T16:21Z    | DevOps        | Stage 1 local commit        | UAT artifact closed for local release commit; APPROVED FOR RELEASE verdict retained. |
+| 2026-03-22T16:30Z    | DevOps        | Stage 2 release             | UAT artifact marked Released after `v0.8.11` tag and push. |
 
 ## Value Statement Under Test
 

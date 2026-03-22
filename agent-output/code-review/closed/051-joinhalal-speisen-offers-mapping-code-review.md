@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: d7f2b8e3
-Status: Committed
+Status: Released
 ---
 
 # Code Review 051 — JoinHalal Speisen Offers Mapping
@@ -18,6 +18,7 @@ Status: Committed
 |---|---|---|---|
 | 2026-03-22T17:15Z | Implementer → Code Reviewer | Review Implementation 051 | Full review of all 8 modified + 2 created files. 0 CRITICAL, 0 HIGH, 1 MEDIUM, 2 LOW. Both LOW findings applied as fix-in-review. Verdict: APPROVED_WITH_COMMENTS. |
 | 2026-03-22T16:21Z | DevOps → Stage 1 | Local Commit | Code review document moved to terminal Committed state for local release commit. |
+| 2026-03-22T16:30Z | DevOps → Stage 2 | Release | Code review artifact marked Released after `v0.8.11` tag and push. |
 
 ## Path Refactor / File-Move Checklist
 

@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: d7f2b8e3
-Status: Committed
+Status: Released
 ---
 
 # Implementation 051 — JoinHalal Speisen Offers Mapping
@@ -24,6 +24,7 @@ Status: Committed
 | 2026-03-22T17:00Z | Plan → Implementer | Implement Plan 051 | Initial implementation: extractSpeisen parser, seed migration, resolveOfferIds, wire transformPage/CLI, unmapped offers reporting, version bump to 0.8.11 |
 | 2026-03-22T17:20Z | Implementer → Code Reviewer | Code Review | APPROVED_WITH_COMMENTS. 2 fix-in-review changes applied: (1) offersMs added to DryRunTiming + timing brackets; (2) CLI warn when offers catalog empty. Plan status updated to Code Review Approved. |
 | 2026-03-22T16:21Z | DevOps → Stage 1 | Local Commit | Plan 051 approved for release; implementation document moved to terminal Committed state for local release commit. |
+| 2026-03-22T16:30Z | DevOps → Stage 2 | Release | Implementation artifact marked Released after `v0.8.11` tag and push. |
 
 ## Implementation Summary
 
