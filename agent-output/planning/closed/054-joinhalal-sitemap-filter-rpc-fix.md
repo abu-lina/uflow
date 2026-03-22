@@ -1,7 +1,7 @@
 ID: 054
 Origin: 054
 UUID: c4e81a2f
-Status: Committed
+Status: Released
 ---
 
 # Plan 054 — JoinHalal Sitemap Non-Detail Filter + RPC Write-Path Fix
@@ -9,7 +9,7 @@ Status: Committed
 **Plan ID**: 054
 **Target Release**: v0.8.14 (next available patch after origin/main v0.8.13; confirm at DevOps Stage 1)
 **Epic Alignment**: JoinHalal Data Import — import pipeline correctness and operational safety
-**Status**: Committed for Release `v0.8.14`
+**Status**: Released in `v0.8.14`
 **Related Issues**: None (user-reported live regression after v0.8.13 release, documented in Analysis 054)
 **Analysis Source**: `agent-output/analysis/054-joinhalal-limit-10-single-entry-analysis.md`
 
@@ -22,6 +22,7 @@ Status: Committed
 | 2026-03-22         | qa      | QA completed; shared extractor filter validated, changed-file diagnostics clean, residual risk limited to deferred live command execution |
 | 2026-03-22T23:30Z  | uat     | UAT Complete — APPROVED FOR RELEASE; both root causes fixed; value statement delivered; 053-OA-1 remains open as operational gate for staging validation |
 | 2026-03-22T23:07Z  | devops  | Stage 1 local commit prepared; status moved to Committed for Release `v0.8.14`; lifecycle closure initiated |
+| 2026-03-22T23:14Z  | devops  | Release completed; tag `v0.8.14` published on `release/v0.8.14-prep`; lifecycle docs marked Released |
 
 ---
 

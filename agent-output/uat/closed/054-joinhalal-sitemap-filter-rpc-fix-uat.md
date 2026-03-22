@@ -1,7 +1,7 @@
 ID: 054
 Origin: 054
 UUID: c4e81a2f
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 054 — JoinHalal Sitemap Non-Detail Filter + RPC Write-Path Fix
@@ -16,6 +16,7 @@ Status: Committed
 | ------------------- | ---------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | 2026-03-22T23:30Z   | QA → UAT         | QA Complete, ready for value validation   | UAT Complete — both root causes fixed; implementation delivers stated value; deferred live run documented via 053-OA-1 |
 | 2026-03-22T23:07Z   | DevOps → Stage 1 | Local Commit                              | UAT artifact moved to terminal Committed state for release preparation; APPROVED FOR RELEASE verdict retained |
+| 2026-03-22T23:14Z   | DevOps → Stage 2 | Release                                   | UAT artifact marked Released after `v0.8.14` tag and branch push |
 
 ---
 
@@ -160,7 +161,7 @@ The QA report correctly identified the CLI exit-code coverage gap and explicitly
 
 ## UAT Status
 
-**Status**: Committed
+**Status**: Released
 **Rationale**: All three predecessor gates pass. Both plan milestones (M1 and M2) are implemented, tested (where automatable), and correct by code review. The value statement is demonstrably satisfied by the code evidence chain. Deferred items are tracked with explicit owners and trigger conditions and do not block release.
 
 ---

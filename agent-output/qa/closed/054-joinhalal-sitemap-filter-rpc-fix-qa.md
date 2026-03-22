@@ -1,13 +1,13 @@
 ID: 054
 Origin: 054
 UUID: c4e81a2f
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 054 — JoinHalal Sitemap Non-Detail Filter + RPC Write-Path Fix
 
 **Plan Reference**: `agent-output/planning/054-joinhalal-sitemap-filter-rpc-fix.md`
-**QA Status**: Committed
+**QA Status**: Released
 **QA Specialist**: qa
 
 ## Changelog
@@ -16,6 +16,7 @@ Status: Committed
 | ---------- | ---------------- | -------------------- | ----------------------------------- |
 | 2026-03-22 | Implementer | Implementation complete, ready for testing | Reviewed implementation evidence, validated changed-file diagnostics, audited tests, and completed artifact-first QA with residual tool-limit note |
 | 2026-03-22T23:07Z | DevOps | Stage 1 local commit | QA artifact moved to terminal Committed state for release preparation |
+| 2026-03-22T23:14Z | DevOps | Stage 2 release | QA artifact marked Released after `v0.8.14` tag and branch push |
 
 ## Timeline
 
@@ -24,7 +25,7 @@ Status: Committed
 - **Implementation Received**: 2026-03-22
 - **Testing Started**: 2026-03-22
 - **Testing Completed**: 2026-03-22
-- **Final Status**: Committed
+- **Final Status**: Released
 
 ## Test Strategy (Pre-Implementation)
 
@@ -196,7 +197,7 @@ Implementation doc includes a TDD Compliance table and records red/green evidenc
 
 ## QA Verdict
 
-**Committed**
+**Released**
 
 This implementation is technically acceptable for handoff. The central user-facing regression is covered, the shared-fix placement is correct, and there are no changed-file diagnostics. Residual risk is limited to the unautomated CLI exit-code path and deferred live-environment execution.
 

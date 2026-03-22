@@ -1,7 +1,7 @@
 ID: 054
 Origin: 054
 UUID: c4e81a2f
-Status: Committed
+Status: Released
 ---
 
 # Implementation 054 — JoinHalal Sitemap Non-Detail Filter + RPC Write-Path Fix
@@ -20,6 +20,7 @@ Status: Committed
 | ------------------ | -------------------- | ------------------------------ | ------------------------------------------ |
 | 2026-03-22T22:50Z  | Planner → Implementer | Implement Plan 054             | Initial implementation complete            |
 | 2026-03-22T23:07Z  | DevOps → Stage 1     | Local Commit                   | Implementation artifact moved to terminal Committed state for release preparation |
+| 2026-03-22T23:14Z  | DevOps → Stage 2     | Release                        | Implementation artifact marked Released after `v0.8.14` tag and branch push |
 
 ## Implementation Summary
 
