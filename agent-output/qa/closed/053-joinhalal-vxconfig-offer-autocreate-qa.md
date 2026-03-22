@@ -1,7 +1,8 @@
+---
 ID: 053
 Origin: 053
 UUID: b7e4a1c9
-Status: Committed
+Status: Released
 ---
 
 # QA Report: JoinHalal vxconfig Fix and Offer Auto-Creation
@@ -18,6 +19,7 @@ Note: `agent-output/qa/README.md` is missing in this repo, so this report follow
 | --- | --- | --- | --- |
 | 2026-03-22 | Code Reviewer | Execute QA for Plan 053 | Completed QA strategy and execution review for Plan 053. Verified chain metadata, TDD evidence, changed-file coverage, editor diagnostics, and recorded automated test evidence. |
 | 2026-03-22T20:24Z | DevOps | Stage 1 closure | Marked QA report committed and archived for release `v0.8.13` |
+| 2026-03-22T20:36Z | DevOps | Stage 2 release | Release tag `v0.8.13` pushed and QA lifecycle moved to Released |
 
 ## Timeline
 
