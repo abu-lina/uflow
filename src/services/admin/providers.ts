@@ -131,22 +131,27 @@ export async function updateProviderReview(
     query = query.eq('updated_at', expectedUpdatedAt);
   }
 
-  const { data, error } = await query
-    .select()
-    .single();
+  // Use array select instead of .single() to avoid PostgREST PGRST106
+  // ("Cannot coerce the result to a single JSON object") which is thrown
+  // when the RETURNING clause produces 0 rows (e.g. wrong UUID type passed,
+  // or row already deleted). provider_id is UNIQUE so at most one row matches.
+  const { data: rows, error } = await query.select();
 
-  if (error || !data) {
-    // When expectedUpdatedAt was provided and PGRST116 is returned, the timestamp
-    // condition did not match — another admin already changed this provider.
-    if (expectedUpdatedAt && error?.code === 'PGRST116') {
+  if (error) {
+    throw new Error(`Failed to update provider review: ${error.message}`);
+  }
+
+  const data = (rows as Provider[] | null)?.[0] ?? null;
+
+  if (!data) {
+    // 0 rows updated — either the provider doesn't exist or (when expectedUpdatedAt
+    // was provided) another admin already changed it since the page was loaded.
+    if (expectedUpdatedAt) {
       throw new Error('CONFLICT: Provider was modified by another reviewer. Please refresh and try again.');
-    }
-    if (error) {
-      throw new Error(`Failed to update provider review: ${error.message}`);
     }
     throw new Error('Provider not found');
   }
 
-  return data as Provider;
+  return data;
 }
 

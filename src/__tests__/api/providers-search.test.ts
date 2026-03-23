@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  * - Used by the client component for pagination requests
  *
  * Plan 010 — P1a: Server-first Providers discovery
+ * Plan 058 — Admin status filter and caching
  */
 
 // Mock the search service
@@ -16,6 +17,22 @@ const { mockSearch } = vi.hoisted(() => ({
 }));
 vi.mock('@/services/providers', () => ({
   searchProvidersAndCommunityServices: mockSearch,
+}));
+
+// Mock getUserFromCookie for auth (Plan 058)
+const { mockGetUserFromCookie } = vi.hoisted(() => ({
+  mockGetUserFromCookie: vi.fn(),
+}));
+vi.mock('@/lib/supabase/getUserFromCookie', () => ({
+  getUserFromCookie: mockGetUserFromCookie,
+}));
+
+// Mock isAdminOrModerator for role checking (Plan 058)
+const { mockIsAdminOrModerator } = vi.hoisted(() => ({
+  mockIsAdminOrModerator: vi.fn(),
+}));
+vi.mock('@/lib/auth/roles', () => ({
+  isAdminOrModerator: mockIsAdminOrModerator,
 }));
 
 // Import after mocking
@@ -57,7 +74,7 @@ describe('GET /api/providers/search', () => {
     expect(response.status).toBe(200);
     expectCorrelationIdHeader(response);
     expect(data).toEqual(mockResults);
-    expect(mockSearch).toHaveBeenCalledWith('test', null, '', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('test', null, '', 0, 12, undefined);
   });
 
   it('should apply Cache-Control: no-store when free-text query is present', async () => {
@@ -90,7 +107,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined);
   });
 
   it('should pass category and location params to search', async () => {
@@ -101,7 +118,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', 'cat-1', 'Berlin', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('', 'cat-1', 'Berlin', 0, 12, undefined);
   });
 
   // --- Plan 044: location normalization regression tests ---
@@ -112,7 +129,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined);
   });
 
   // RC-2/RC-3: empty location param must preserve the LOCATION_ALL sentinel
@@ -122,7 +139,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search?location=');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined);
   });
 
   // RC-3: legacy 'Everywhere' label must normalise to empty string, not filter by city name
@@ -134,7 +151,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined);
   });
 
   // RC-3: legacy 'Überall' label must normalise to empty string, not filter by city name
@@ -146,7 +163,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined);
   });
 
   it('should return 500 on search failure', async () => {
@@ -159,5 +176,148 @@ describe('GET /api/providers/search', () => {
     expectCorrelationIdHeader(response);
     const data = await response.json();
     expect(data).toHaveProperty('error');
+  });
+
+  // --- Plan 058: Admin status filter tests ---
+  describe('admin status filter (Plan 058)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Default: no user (public)
+      mockGetUserFromCookie.mockResolvedValue(null);
+      mockIsAdminOrModerator.mockResolvedValue(false);
+    });
+
+    it('should return 403 when non-admin user attempts to use status param', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'user-123' });
+      mockIsAdminOrModerator.mockResolvedValue(false);
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?status=pending',
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toMatch(/admin/i);
+    });
+
+    it('should return 403 when unauthenticated user attempts to use status param', async () => {
+      mockGetUserFromCookie.mockResolvedValue(null);
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?status=pending',
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toMatch(/admin/i);
+    });
+
+    it('should allow admin user to filter by status', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
+      mockIsAdminOrModerator.mockResolvedValue(true);
+      mockSearch.mockResolvedValue({
+        results: [{ id: 'provider-1', name: 'Pending Provider', review_status: 'pending' }],
+        hasMore: false,
+      });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?status=pending',
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(200);
+      expect(mockSearch).toHaveBeenCalledWith(
+        '', null, '', 0, 12, { status: 'pending', isAdmin: true }
+      );
+    });
+
+    it('should apply no-store cache control when status param is present', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
+      mockIsAdminOrModerator.mockResolvedValue(true);
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?status=approved',
+      );
+      const response = await GET(request);
+
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
+    });
+
+    it('should preserve public caching for admin browse without status param', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
+      mockIsAdminOrModerator.mockResolvedValue(true);
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      // No status param, just regular browse as admin
+      const request = new Request(
+        'http://localhost:3000/api/providers/search',
+      );
+      const response = await GET(request);
+
+      expect(response.headers.get('Cache-Control')).toBe(
+        'public, s-maxage=60, stale-while-revalidate=30',
+      );
+    });
+
+    it('should support all valid review status values', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
+      mockIsAdminOrModerator.mockResolvedValue(true);
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      const validStatuses = ['approved', 'pending', 'rejected', 'needs_revision'];
+      
+      for (const status of validStatuses) {
+        const request = new Request(
+          `http://localhost:3000/api/providers/search?status=${status}`,
+        );
+        const response = await GET(request);
+        expect(response.status).toBe(200);
+      }
+    });
+
+    it('should reject invalid status values', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
+      mockIsAdminOrModerator.mockResolvedValue(true);
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?status=invalid',
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toMatch(/invalid.*status/i);
+    });
+
+    it('should include review metadata fields when admin calls with status param', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
+      mockIsAdminOrModerator.mockResolvedValue(true);
+      const mockResultWithMetadata = {
+        results: [{
+          id: 'provider-1',
+          name: 'Test Provider',
+          review_status: 'pending',
+          review_feedback: 'Needs more info',
+        }],
+        hasMore: false,
+      };
+      mockSearch.mockResolvedValue(mockResultWithMetadata);
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?status=pending',
+      );
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.results[0]).toHaveProperty('review_status', 'pending');
+      expect(data.results[0]).toHaveProperty('review_feedback', 'Needs more info');
+    });
   });
 });
