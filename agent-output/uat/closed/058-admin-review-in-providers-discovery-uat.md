@@ -2,7 +2,7 @@
 ID: 058
 Origin: 058
 UUID: 3c0c8f41
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: 058 — Admin Review Inside Providers Discovery

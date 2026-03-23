@@ -2,7 +2,7 @@
 ID: 058
 Origin: 058
 UUID: 3c0c8f41
-Status: Active
+Status: Released
 ---
 
 # Stage 1 Deployment: Plan 058 — Admin Review Inside Providers Discovery
