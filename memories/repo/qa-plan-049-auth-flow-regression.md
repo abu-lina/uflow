@@ -1,0 +1,3 @@
+- Plan 049 QA failure: `/api/check-email-exists` removed `exists`, but `src/lib/auth.ts` callers still gate on `if (!exists)`.
+- Impact: confirmed-user email/password login and forgot-password flows now return `EMAIL_NOT_FOUND` instead of proceeding.
+- Required fix: update `signInWithEmailConfirmation()` and `resetPasswordWithLanguage()` plus add regression tests for confirmed-user paths.

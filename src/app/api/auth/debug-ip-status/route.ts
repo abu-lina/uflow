@@ -17,7 +17,13 @@ export async function GET(request: Request) {
   // Check if admin wants to list all blocked IPs
   if (listAll) {
     const adminKey = request.headers.get('x-admin-key');
-    const expectedKey = process.env.ADMIN_DEBUG_KEY || 'debug-key-change-in-production';
+    const expectedKey = process.env.ADMIN_DEBUG_KEY;
+    if (!expectedKey) {
+      return NextResponse.json(
+        { error: 'Admin debug key not configured.' },
+        { status: 401 }
+      );
+    }
     
     if (adminKey !== expectedKey) {
       return NextResponse.json(
@@ -93,11 +99,11 @@ export async function POST(request: Request) {
   const action = url.searchParams.get('action');
   const targetIP = url.searchParams.get('ip');
   
-  // Simple admin check - in production, use proper authentication
+  // F-049-03: No hardcoded fallback key — require explicit env var
   const adminKey = request.headers.get('x-admin-key');
-  const expectedKey = process.env.ADMIN_DEBUG_KEY || 'debug-key-change-in-production';
+  const expectedKey = process.env.ADMIN_DEBUG_KEY;
   
-  if (adminKey !== expectedKey) {
+  if (!expectedKey || adminKey !== expectedKey) {
     return NextResponse.json(
       { error: 'Unauthorized. Admin key required.' },
       { status: 401 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { 
   validateOutreachToken, 
   consumeToken, 
@@ -9,18 +9,6 @@ import {
   getOutreachByProvider,
   hashToken 
 } from '@/services/outreach';
-
-// Create a Supabase admin client for server-side operations
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
-
-  return createClient(supabaseUrl, supabaseServiceKey);
-}
 
 // Create a Supabase client with auth context
 async function getSupabaseAuth() {

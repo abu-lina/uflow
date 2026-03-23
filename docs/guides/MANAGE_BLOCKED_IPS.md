@@ -47,7 +47,7 @@ To manage blocked IPs, you need to set up an admin key:
 
 3. **Restart your server** after adding the key.
 
-> **Note:** If `ADMIN_DEBUG_KEY` is not set, the system defaults to `'debug-key-change-in-production'` (not secure for production).
+> **Note:** `ADMIN_DEBUG_KEY` must be set in all environments. Without it, admin diagnostic features are disabled.
 
 ---
 

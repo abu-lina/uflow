@@ -141,6 +141,7 @@ jobs:
               -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
               -e DISABLE_PWA=false \
               -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-new \
@@ -192,6 +193,7 @@ jobs:
               -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
               -e DISABLE_PWA=false \
               -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-app \
