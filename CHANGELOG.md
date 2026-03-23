@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.19] - 2026-03-23
+
+### Added
+
+- **MuslimBusiness provider data import pipeline (Plan 052)**: A new admin-only import script (`scripts/import-muslimbusiness.ts`) that fetches public business listings from muslimbusiness.de/datenbank and bulk-upserts them into the UFlow providers database. The script extracts all ~250+ provider cards from the server-rendered single-page directory HTML using `<h3>` boundary splitting and labeled field extraction (Standorte, Branchen, Email, Telefon, Social Media), maps 60+ source Branchen values to 7 existing UFlow categories, deduplicates via a `name|city` composite key, and writes via service-role access with `--dry-run` as the default. A `--limit N` flag restricts processing to the first N cards for sampling runs. All imported rows default to `review_status = 'pending'` and are traceable via `user_created_id = '00000000-0000-0000-0000-000052000001'` (source-specific import-bot UUID). The outreach trigger is safely bypassed by the non-null `user_created_id` sentinel. A pure parser utility module (`src/utils/muslimbusiness-parser.ts`) backs the extraction logic with 74 unit and integration tests.
+
 ## [0.8.18] - 2026-03-23
 
 ### Fixed
