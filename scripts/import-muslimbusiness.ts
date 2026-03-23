@@ -41,6 +41,14 @@ import {
   isPlaceholder,
   extractPrimaryCity,
 } from '../src/utils/muslimbusiness-parser';
+import {
+  buildCardsFromClientDataset,
+  type MuslimBusinessSourceBusiness,
+  type MuslimBusinessSourceStandort,
+  type MuslimBusinessSourceBranche,
+  type MuslimBusinessSourceBusinessStandortRelation,
+  type MuslimBusinessSourceBusinessBrancheRelation,
+} from '../src/utils/muslimbusiness-client-dataset';
 
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
@@ -75,6 +83,18 @@ const BATCH_SIZE = 50;
 
 /** HTTP User-Agent — identifies the bot as a legitimate import tool */
 const USER_AGENT = 'UFlow-Import/1.0 (+https://ummahflow.com/import)';
+
+// muslimbusiness.de currently renders the directory client-side. The data backing the UI
+// is loaded from the site's own Supabase project using an embedded anon key.
+// We fall back to this acquisition path when the server-delivered HTML contains 0 cards.
+const SOURCE_CLIENT_DATA_PAGE_CHUNK_REGEX = /\/_next\/static\/chunks\/app\/datenbank\/page-[^"'\s]+\.js/g;
+const SOURCE_SUPABASE_PROJECT_REGEX = /https:\/\/([a-z0-9]+)\.supabase\.co\b/;
+const SOURCE_SUPABASE_ANON_JWT_REGEX = /eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+/;
+
+interface SourceSupabaseConfig {
+  supabaseUrl: string;
+  anonKey: string;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -400,6 +420,129 @@ async function fetchText(url: string): Promise<string | null> {
   }
 }
 
+async function fetchJson<T>(url: string, headers?: Record<string, string>): Promise<T> {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': USER_AGENT,
+      Accept: 'application/json',
+      ...headers,
+    },
+    signal: AbortSignal.timeout(30000),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`HTTP ${response.status} for ${url}${text ? ` — ${text.slice(0, 250)}` : ''}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function discoverSourceSupabaseConfigFromHtml(html: string): Promise<SourceSupabaseConfig | null> {
+  const chunkMatches = html.match(SOURCE_CLIENT_DATA_PAGE_CHUNK_REGEX) ?? [];
+  if (chunkMatches.length === 0) return null;
+
+  // Use the first matching chunk URL for /datenbank
+  const chunkPath = chunkMatches[0];
+  const chunkUrl = new URL(chunkPath, SOURCE_URL).toString();
+  const js = await fetchText(chunkUrl);
+  if (!js) return null;
+
+  const projectMatch = js.match(SOURCE_SUPABASE_PROJECT_REGEX);
+  const jwtMatch = js.match(SOURCE_SUPABASE_ANON_JWT_REGEX);
+  if (!projectMatch || !jwtMatch) return null;
+
+  const projectRef = projectMatch[1];
+  return {
+    supabaseUrl: `https://${projectRef}.supabase.co`,
+    anonKey: jwtMatch[0],
+  };
+}
+
+async function fetchAllFromSupabaseRest<T>(
+  config: SourceSupabaseConfig,
+  table: string,
+  query: string
+): Promise<T[]> {
+  // Supabase REST pagination uses Range headers. We'll page in chunks to avoid
+  // relying on unbounded responses.
+  const pageSize = 1000;
+  const results: T[] = [];
+  let from = 0;
+
+  while (true) {
+    const to = from + pageSize - 1;
+    const url = `${config.supabaseUrl}/rest/v1/${table}?${query}`;
+    const page = await fetchJson<T[]>(url, {
+      apikey: config.anonKey,
+      Authorization: `Bearer ${config.anonKey}`,
+      Range: `${from}-${to}`,
+    });
+
+    results.push(...page);
+    if (page.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return results;
+}
+
+async function fetchCardsFromSourceClientDataset(html: string) {
+  const config = await discoverSourceSupabaseConfigFromHtml(html);
+  if (!config) {
+    console.warn('  ⚠ Could not discover source Supabase config from /datenbank HTML.');
+    return [];
+  }
+
+  console.log(`  ℹ Using source Supabase project: ${config.supabaseUrl}`);
+
+  const businesses = await fetchAllFromSupabaseRest<MuslimBusinessSourceBusiness>(
+    config,
+    '7tv9s_business',
+    'select=*&genehmigt=eq.true'
+  );
+  if (businesses.length === 0) return [];
+
+  const standortRelations = await fetchAllFromSupabaseRest<MuslimBusinessSourceBusinessStandortRelation>(
+    config,
+    '7tv9s_business_standort_relation',
+    'select=id_business,id_standort'
+  );
+  const brancheRelations = await fetchAllFromSupabaseRest<MuslimBusinessSourceBusinessBrancheRelation>(
+    config,
+    'business_branche_relation',
+    'select=id_business,id_branche'
+  );
+  const standorte = await fetchAllFromSupabaseRest<MuslimBusinessSourceStandort>(
+    config,
+    '7tv9s_standort',
+    'select=id,standort'
+  );
+  const branchen = await fetchAllFromSupabaseRest<MuslimBusinessSourceBranche>(
+    config,
+    '7tv9s_branche',
+    'select=id,branche'
+  );
+
+  const cards = buildCardsFromClientDataset({
+    businesses,
+    standorte,
+    branchen,
+    standortRelations,
+    brancheRelations,
+  });
+
+  // Shape into the same interface the rest of the importer expects.
+  return cards.map((c) => ({
+    name: c.name,
+    standorte: c.standorte,
+    branchen: c.branchen,
+    email: c.email,
+    telefon: c.telefon,
+    socialMedia: c.socialMedia,
+  }));
+}
+
 // ─── Transformation ────────────────────────────────────────────────────────────
 
 interface TransformResult {
@@ -633,18 +776,6 @@ async function main() {
     `  ${hasDescriptionColumn ? '✓ Column available' : '⚠ Column absent — description mapping skipped'}`
   );
 
-  // ─ Ensure import-bot user exists (required for FK constraint)
-  if (!isDryRun) {
-    console.log('▶ Ensuring import-bot user exists in auth.users...');
-    const botOk = await ensureImportBotUser();
-    if (!botOk) {
-      console.error('  ❌ Cannot proceed without import-bot user. Aborting.');
-      process.exit(1);
-    }
-  } else {
-    console.log('▶ Skipping import-bot user setup (dry-run mode)');
-  }
-
   // ─ Fetch the directory page (single page, all cards)
   console.log('\n▶ Fetching directory page...');
   const html = await fetchText(SOURCE_URL);
@@ -660,8 +791,14 @@ async function main() {
   console.log(`  ✓ Found ${cards.length} cards`);
 
   if (cards.length === 0) {
-    console.error('  ❌ No provider cards found in HTML. Source structure may have changed.');
-    process.exit(1);
+    console.warn('  ⚠ No provider cards found in server HTML. Trying client-dataset acquisition...');
+    cards = await fetchCardsFromSourceClientDataset(html);
+    console.log(`  ✓ Found ${cards.length} cards via client dataset`);
+
+    if (cards.length === 0) {
+      console.error('  ❌ No provider cards found. Source structure may have changed.');
+      process.exit(1);
+    }
   }
 
   // Apply limit
@@ -741,6 +878,14 @@ async function main() {
   if (isDryRun) {
     printDryRunReport(stats, unmappedEntries, sampleRecords, allLocations);
     return;
+  }
+
+  // ─ Ensure import-bot user exists (required for FK constraint)
+  console.log('▶ Ensuring import-bot user exists in auth.users...');
+  const botOk = await ensureImportBotUser();
+  if (!botOk) {
+    console.error('  ❌ Cannot proceed without import-bot user. Aborting.');
+    process.exit(1);
   }
 
   // ─ Bulk insert in batches
