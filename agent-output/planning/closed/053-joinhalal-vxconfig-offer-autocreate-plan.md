@@ -1,34 +1,31 @@
----
 ID: 053
 Origin: 053
 UUID: b7e4a1c9
-Status: Released
----
+Status: UAT Approved
 
 # Plan 053 — JoinHalal vxconfig Fix and Offer Auto-Creation
 
-## Plan Header
+Status: Committed
 
-- **Target Release**: `v0.8.13`
+- **Target Release**: next available patch after current `origin/main` version `0.8.12`; confirm exact version at DevOps Stage 1 after tag pre-flight
 - **Epic Alignment**: Provider discovery data integrity and import reliability, supporting the Master Product Objective by keeping halal business listings complete, deduplicated, and trustworthy
-- **Status**: Released
+- **Status**: UAT Approved
 - **Related Issues**: None
 
-### Changelog
+- **Target Release**: `v0.8.13`
 
-| Date (UTC) | Author | Change | Rationale |
-|---|---|---|---|
-| 2026-03-22T19:10Z | planner | Created plan | Convert Analysis 053 into implementation-ready work covering vxconfig parsing, auto-created offers, and no-drop import behavior |
-| 2026-03-22T19:55Z | planner | Revised plan after Critic comments | Resolve F-1 by fixing category assignment strategy for auto-created offers; clarify dedup and service-role assumptions |
-| 2026-03-22T20:24Z | devops | Stage 1 committed locally | Version `v0.8.13` confirmed, deferred staging validation tracked, and plan advanced to committed state pending release approval |
-| 2026-03-22T20:28Z | qa | QA completed | QA gates passed for Plan 053 scope; automated evidence recorded and plan advanced for UAT handoff |
-| 2026-03-22T20:45Z | uat | UAT completed | All 5 UAT scenarios PASS; APPROVED FOR RELEASE; plan advanced for DevOps handoff |
-| 2026-03-22T20:36Z | devops | Released | Release branch `release/v0.8.13-prep` and tag `v0.8.13` pushed to origin; plan chain marked Released |
+- **Status**: Committed for Release `v0.8.13`
+  |---|---|---|---|
+  | 2026-03-22T19:10Z | planner | Created plan | Convert Analysis 053 into implementation-ready work covering vxconfig parsing, auto-created offers, and no-drop import behavior |
+  | 2026-03-22T19:55Z | planner | Revised plan after Critic comments | Resolve F-1 by fixing category assignment strategy for auto-created offers; clarify dedup and service-role assumptions |
+  | 2026-03-22T20:28Z | qa | QA completed | QA gates passed for Plan 053 scope; automated evidence recorded and plan advanced for UAT handoff |
+  | 2026-03-22T20:45Z | uat | UAT completed | All 5 UAT scenarios PASS; APPROVED FOR RELEASE; plan advanced for DevOps handoff |
 
 ## Value Statement and Business Objective
 
 As a **Muslim user searching for halal businesses**,
 I want **imported JoinHalal providers to keep stable source IDs and complete food-offer mappings**,
+| 2026-03-22T20:24Z | devops | Stage 1 committed locally | Version `v0.8.13` confirmed, deferred staging validation tracked, and plan advanced to committed state pending release approval |
 so that **UFlow shows accurate listings, supports safe re-imports without duplicates, and preserves discoverability for the food options each provider actually serves**.
 
 ## Objective
@@ -55,25 +52,25 @@ Release Strategy: Standalone (no other known active plans in `agent-output/plann
 ## Decision Record
 
 1. **[RESOLVED]** Unmatched Speisen terms will be auto-created in the `offers` table during import execution rather than omitted.
-Rationale: Silent data loss breaks provider completeness and directly contradicts the user’s required outcome.
+   Rationale: Silent data loss breaks provider completeness and directly contradicts the user’s required outcome.
 
 2. **[RESOLVED]** Offer creation and provider linkage must happen in the same import run.
-Rationale: Creating offers later would leave provider `offers_ids` incomplete and undermine re-import determinism.
+   Rationale: Creating offers later would leave provider `offers_ids` incomplete and undermine re-import determinism.
 
 3. **[RESOLVED]** vxconfig parsing will be fixed centrally in the shared parser utility, not patched separately in CLI and import-core callers.
-Rationale: The same parser feeds display-name extraction and source-ID extraction; central repair avoids drift and duplicated logic.
+   Rationale: The same parser feeds display-name extraction and source-ID extraction; central repair avoids drift and duplicated logic.
 
 4. **[RESOLVED]** Dry-run and write mode must expose identical unmatched-offer accounting semantics, with write mode no longer silently dropping terms.
-Rationale: Operators need consistent observability before and during production imports.
+   Rationale: Operators need consistent observability before and during production imports.
 
 5. **[RESOLVED]** Existing imported providers with null JoinHalal identity keys require an explicit remediation path as part of this work.
-Rationale: Without cleanup or controlled re-import guidance, the parser fix alone can create duplicate provider rows.
+   Rationale: Without cleanup or controlled re-import guidance, the parser fix alone can create duplicate provider rows.
 
 6. **[RESOLVED]** The solution stays Postgres-first and in-repo, using existing migrations and Supabase tables rather than introducing external catalog or queue services.
-Rationale: The current scale and architecture guidance do not justify added infrastructure.
+   Rationale: The current scale and architecture guidance do not justify added infrastructure.
 
 7. **[RESOLVED]** Auto-created offers will use the existing `Essen & Trinken` category UUID `20c10efe-404b-4a39-bb81-5089a0332d78`, matching the seeding precedent in migration 061, with provider-category-specific refinement explicitly out of scope for this patch.
-Rationale: `offers.category_id` is `NOT NULL`, and migration 061 already established `Essen & Trinken` as the deterministic schema-safe category for JoinHalal Speisen-derived offers.
+   Rationale: `offers.category_id` is `NOT NULL`, and migration 061 already established `Essen & Trinken` as the deterministic schema-safe category for JoinHalal Speisen-derived offers.
 
 ## Plan
 
@@ -130,6 +127,7 @@ Rationale: `offers.category_id` is `NOT NULL`, and migration 061 already establi
 ## Baseline & Measurements
 
 This plan does not introduce a new performance budget, but it does require operational measurement of data integrity during implementation:
+
 - **What will be measured**: count of providers receiving non-null `import_source_id`; count of unmatched Speisen terms auto-created; count of providers linked with non-empty `offers_ids` after creation.
 - **Where**: local automated validation and first staging/UAT-like import execution.
 - **Success thresholds**:

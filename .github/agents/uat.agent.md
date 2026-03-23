@@ -87,6 +87,26 @@ If UAT approves release with any non-blocking residual risk, you MUST record:
 
 If this is not recorded, do not describe the item as merely "post-release" or "future work".
 
+### Import Dry-Run Deferral Rule (MANDATORY when applicable)
+
+If a plan's primary value depends on a third-party import or ingestion dry-run and that dry-run cannot be executed, do not classify the residual risk as LOW.
+
+Minimum handling:
+- classify as MEDIUM risk
+- assign owner
+- assign trigger or due window (preferably before or within 24h of release)
+- define exact closure evidence
+- state whether release is conditional on that evidence
+
+### External Source Contract Stability (WHEN APPLICABLE)
+
+If the plan depends on third-party public data, UAT MUST assess:
+- whether the source contract was verified during planning/implementation
+- whether end-to-end extraction/import evidence exists
+- whether residual release risk depends on the source remaining stable
+
+If evidence is missing, record it explicitly as a value-delivery risk.
+
 ### Focus/Scroll Side-Effects Scenarios (WHEN APPLICABLE)
 
 If the change can affect mobile input focus/keyboard/scroll behavior (direct `focus()` calls or equivalent effects), UAT MUST include scenarios for:
