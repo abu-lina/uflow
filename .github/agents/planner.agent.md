@@ -191,6 +191,13 @@ Require an explicit user selection and record: `| YYYY-MM-DD | planner | Scope l
 
 - Use UTC and ISO-8601 when recording timestamps (example: `2026-02-23T17:30Z`).
 - Bold `OPEN QUESTION` for blocking issues. Mark resolved questions as `OPEN QUESTION [RESOLVED]: ...` or `OPEN QUESTION [CLOSED]: ...`.
+
+### Timestamp Discipline (MANDATORY)
+
+- At phase start, capture the current UTC time and use it as the initial changelog or timeline timestamp.
+- For each later status transition, record the actual event time in UTC ISO-8601 (`YYYY-MM-DDTHH:MMZ`).
+- Do not use date-only entries for status changes, timeline milestones, or handoff log rows unless explicitly marked `approx.`.
+- Before finalizing the plan, sanity-check that timestamps are chronologically consistent with the documented handoff order.
 - **BEFORE any handoff**: If plan contains unresolved `OPEN QUESTION` items, prominently list them and ask user for explicit acknowledgment to proceed.
 - **NO implementation code/snippets/file contents**. Describe WHAT, WHERE, WHY—never HOW.
 - Exception: Minimal pseudocode for architectural clarity, marked **"ILLUSTRATIVE ONLY"**.

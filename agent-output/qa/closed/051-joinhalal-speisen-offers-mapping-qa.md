@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: d7f2b8e3
-Status: Committed
+Status: Released
 ---
 
 # QA Report: JoinHalal Speisen Offers Mapping (Plan 051)
@@ -19,6 +19,7 @@ Status: Committed
 |---|---|---|---|
 | 2026-03-22 | Code Reviewer | Execute QA for Plan 051 | Completed preflight + strategy + execution. All targeted automated QA gates passed for changed files and Plan 051 behavior. |
 | 2026-03-22T16:21Z | DevOps | Stage 1 local commit | QA document moved to terminal Committed state for release preparation. |
+| 2026-03-22T16:30Z | DevOps | Stage 2 release | QA artifact marked Released after `v0.8.11` tag and push. |
 
 ## Timeline
 

@@ -14,9 +14,9 @@ Status: Active
 
 ## Open Actions
 
-| Item                                                         | Owner       | Trigger/Due                                     | Evidence to close                                                                                              | Status |
-| ------------------------------------------------------------ | ----------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------ |
-| Staging RPC admin-field preservation verification            | Operator    | Before first production `--write` post-migration 063 | SQL query showing `review_status`, `barakah_effects`, `needs_ids`, `show_address` unchanged on conflict rows   | Open   |
+| Item                                              | Owner    | Trigger/Due                                          | Evidence to close                                                                                            | Status |
+| ------------------------------------------------- | -------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------ |
+| Staging RPC admin-field preservation verification | Operator | Before first production `--write` post-migration 063 | SQL query showing `review_status`, `barakah_effects`, `needs_ids`, `show_address` unchanged on conflict rows | Open   |
 
 ### Staging Verification Steps
 
@@ -33,6 +33,6 @@ If admin fields are overwritten: roll back by running the inverse migration (`AL
 
 ## Changelog
 
-| Date (UTC)        | Agent  | Change                                                        |
-| ----------------- | ------ | ------------------------------------------------------------- |
-| 2026-03-22T18:24Z | devops | Created tracker from UAT deferred staging verification gate   |
+| Date (UTC)        | Agent  | Change                                                      |
+| ----------------- | ------ | ----------------------------------------------------------- |
+| 2026-03-22T18:24Z | devops | Created tracker from UAT deferred staging verification gate |

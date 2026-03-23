@@ -2,7 +2,7 @@
 ID: 053
 Origin: 053
 UUID: b7e4a1c9
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique — Plan 053: JoinHalal vxconfig Fix and Offer Auto-Creation
@@ -15,9 +15,10 @@ Status: OPEN
 
 ### Changelog
 
-| Date (UTC)           | Handoff        | Request               | Summary                                                  |
-| -------------------- | -------------- | --------------------- | -------------------------------------------------------- |
-| 2026-03-22T19:36Z    | Planner → Critic | Initial review of Plan 053 | First critique — 1 HIGH, 2 MEDIUM, 2 LOW findings |
+| Date (UTC)        | Handoff          | Request                    | Summary                                           |
+| ----------------- | ---------------- | -------------------------- | ------------------------------------------------- |
+| 2026-03-22T19:36Z | Planner → Critic | Initial review of Plan 053 | First critique — 1 HIGH, 2 MEDIUM, 2 LOW findings |
+| 2026-03-23T10:01Z | process-improvement | Close critique | Closed after release; Status: Resolved |
 
 ---
 
@@ -79,7 +80,7 @@ The plan correctly decouples the vxconfig fix (milestone 1) from the offer auto-
 ### F-1: `offers.category_id NOT NULL` constraint not addressed
 
 - **Severity**: HIGH
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Plan milestone 2 ("Add offer auto-creation to the import pipeline")
 - **Description**: The `offers` table has a `category_id UUID NOT NULL REFERENCES categories(category_id)` constraint (migrations 005 + 006). Auto-creating an offer row requires a valid `category_id`. The plan lists "unknown current offers schema constraints for auto-created rows" as an uncertainty driver in Duration Estimates, but does not elevate this to the Decision Record or Assumptions section, and provides no guidance on what `category_id` value to use for auto-created offers.
 - **Impact**: Without a concrete resolution strategy, the implementer will encounter a NOT NULL violation on first auto-creation attempt and must make an ad-hoc decision, risking scope creep or an escalation cycle.
@@ -88,7 +89,7 @@ The plan correctly decouples the vxconfig fix (milestone 1) from the offer auto-
 ### F-2: `name_de UNIQUE` dedup strategy is referenced but not made concrete
 
 - **Severity**: MEDIUM
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Plan milestone 2, acceptance criterion "Re-running the same import does not create duplicate offer rows for the same normalized term"
 - **Description**: The plan correctly identifies the need for "deterministic duplicate prevention" but does not specify whether to use `INSERT ... ON CONFLICT (name_de) DO NOTHING`, case-insensitive comparison, or pre-check against the in-memory catalog. The `name_de` UNIQUE constraint is case-sensitive (`'Döner' ≠ 'döner'`), but `resolveOfferIds()` does case-insensitive matching. If auto-creation preserves the original casing from the Speisen source and a future import encounters a different casing, the UNIQUE constraint will allow both, but the case-insensitive lookup will match whichever was created first.
 - **Impact**: Not blocking — the constraint provides a safety net — but the plan should acknowledge the casing contract to prevent subtle drift in catalog quality.
@@ -97,7 +98,7 @@ The plan correctly decouples the vxconfig fix (milestone 1) from the offer auto-
 ### F-3: RLS insert path for offers should be noted
 
 - **Severity**: MEDIUM
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Plan Assumptions section
 - **Description**: The import CLI uses service-role access, which bypasses RLS entirely. This means the "Anyone can insert offers" policy (migration 019) is irrelevant for the import path. However, the `offers.created_by` column (migration 004) will be NULL for auto-created offers since no auth user is associated with the import-bot UUID (it's a synthetic UUID, not an `auth.users` row). This is acceptable because `created_by` is nullable and NULL means "system/admin created" per the column comment. The plan should explicitly acknowledge this so the implementer doesn't waste time trying to set `created_by`.
 - **Impact**: Minor — the implementer could spend investigation time on a non-issue.
@@ -106,7 +107,7 @@ The plan correctly decouples the vxconfig fix (milestone 1) from the offer auto-
 ### F-4: Process note — planner chatmode file missing
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: `.github/chatmodes/planner.chatmode.md`
 - **Description**: The Critic mode instructions specify "If `.github/chatmodes/planner.chatmode.md` exists, read it at review start." The file does not exist in the workspace.
 - **Impact**: None — this is a process observation, not a plan quality issue.
@@ -115,7 +116,7 @@ The plan correctly decouples the vxconfig fix (milestone 1) from the offer auto-
 ### F-5: Open Questions section absent from plan
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Plan structure
 - **Description**: The plan does not include an "Open Questions" section. All uncertainty is captured in the Duration Estimates paragraph ("unknown current offers schema constraints…"). While the Decision Record resolves all stated decisions, the schema constraint gap identified in F-1 would normally surface as an open question if it hadn't been prematurely classified as resolved.
 - **Impact**: Minor structural gap. The Decision Record and Assumptions sections are otherwise complete.
@@ -169,6 +170,6 @@ The single HIGH finding (F-1: `category_id NOT NULL`) is addressable with a one-
 
 ## Revision History
 
-| Revision | Artifact Changes | Findings Addressed | New Findings | Status Changes |
-| -------- | ---------------- | ------------------- | ------------ | -------------- |
-| Initial  | N/A (first review) | N/A                 | F-1 through F-5 | N/A            |
+| Revision | Artifact Changes   | Findings Addressed | New Findings    | Status Changes |
+| -------- | ------------------ | ------------------ | --------------- | -------------- |
+| Initial  | N/A (first review) | N/A                | F-1 through F-5 | N/A            |

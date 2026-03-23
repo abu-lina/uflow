@@ -2,7 +2,7 @@
 ID: 039
 Origin: 039
 UUID: d480d9b0
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique: Plan 039 — Replace Provider Name Placeholder in Outreach Emails
@@ -16,6 +16,7 @@ Status: OPEN
 | Date | Handoff | Request | Summary |
 |------|---------|---------|---------|
 | 2026-03-13T09:15Z | Planner → Critic | Initial review | First critique of Plan 039 |
+| 2026-03-23T10:01Z | process-improvement | Normalize closed critique status | Status: Resolved |
 
 ---
 
@@ -106,7 +107,7 @@ Scanned document for `OPEN QUESTION` items not marked `[RESOLVED]` or `[CLOSED]`
 ### F-039-1: Test Environment Parity Not Specified
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Milestone 3 (Tests)
 - **Description**: Milestone 3 acceptance criteria require tests asserting "real provider name (not the placeholder)" but do not specify whether tests should use realistic mock data or just any non-placeholder string.
 - **Impact**: Tests could pass with mocked data while production edge cases (empty strings, very long names) aren't covered.
@@ -115,7 +116,7 @@ Scanned document for `OPEN QUESTION` items not marked `[RESOLVED]` or `[CLOSED]`
 ### F-039-2: Character Encoding Not Addressed
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Scope / Assumptions
 - **Description**: Provider names may contain non-ASCII characters (Arabic script, German umlauts, emojis). The plan assumes the email template handles this correctly but doesn't explicitly verify.
 - **Impact**: Unlikely to cause issues since Resend/React Email handles UTF-8, but could surprise if a provider name breaks rendering.

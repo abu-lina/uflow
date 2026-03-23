@@ -2,6 +2,7 @@ ID: 054
 Origin: 054
 UUID: c4e81a2f
 Status: Released
+
 ---
 
 # Code Review 054 — JoinHalal Sitemap Non-Detail Filter + RPC Write-Path Fix
@@ -13,11 +14,11 @@ Status: Released
 
 ## Changelog
 
-| Date (UTC)          | Handoff                   | Summary                                     |
-| ------------------- | ------------------------- | ------------------------------------------- |
-| 2026-03-22T23:00Z   | Implementer → Code Reviewer | Initial review — APPROVED WITH COMMENTS     |
-| 2026-03-22T23:07Z   | DevOps → Stage 1         | Local Commit — code review artifact moved to terminal Committed state for release preparation |
-| 2026-03-22T23:14Z   | DevOps → Stage 2         | Release — code review artifact marked Released after `v0.8.14` tag and branch push |
+| Date (UTC)        | Handoff                     | Summary                                                                                       |
+| ----------------- | --------------------------- | --------------------------------------------------------------------------------------------- |
+| 2026-03-22T23:00Z | Implementer → Code Reviewer | Initial review — APPROVED WITH COMMENTS                                                       |
+| 2026-03-22T23:07Z | DevOps → Stage 1            | Local Commit — code review artifact moved to terminal Committed state for release preparation |
+| 2026-03-22T23:14Z | DevOps → Stage 2            | Release — code review artifact marked Released after `v0.8.14` tag and branch push            |
 
 ---
 
@@ -34,21 +35,22 @@ Status: Released
 
 ## Files Reviewed
 
-| File | Role | Review Status |
-| --- | --- | --- |
-| `src/utils/joinhalal-parser.ts` | New predicate + filter integration | ✅ Reviewed |
-| `scripts/import-joinhalal.ts` | Exit code guard | ✅ Reviewed |
-| `src/__tests__/utils/joinhalal-parser.test.ts` | 7 new tests | ✅ Reviewed |
-| `package.json` | Version bump | ✅ Reviewed |
-| `package-lock.json` | Lockfile alignment | ✅ Reviewed |
-| `CHANGELOG.md` | v0.8.14 entry | ✅ Reviewed |
-| `agent-output/planning/053-open-actions.md` | Runbook update | ✅ Reviewed |
+| File                                           | Role                               | Review Status |
+| ---------------------------------------------- | ---------------------------------- | ------------- |
+| `src/utils/joinhalal-parser.ts`                | New predicate + filter integration | ✅ Reviewed   |
+| `scripts/import-joinhalal.ts`                  | Exit code guard                    | ✅ Reviewed   |
+| `src/__tests__/utils/joinhalal-parser.test.ts` | 7 new tests                        | ✅ Reviewed   |
+| `package.json`                                 | Version bump                       | ✅ Reviewed   |
+| `package-lock.json`                            | Lockfile alignment                 | ✅ Reviewed   |
+| `CHANGELOG.md`                                 | v0.8.14 entry                      | ✅ Reviewed   |
+| `agent-output/planning/053-open-actions.md`    | Runbook update                     | ✅ Reviewed   |
 
 ---
 
 ## Value Statement Alignment
 
 ✅ **Confirmed delivered.** Both stated outcomes are implemented:
+
 1. Limit-10 run produces 10 real candidates — `isJoinHalalDetailUrl()` integrated into `extractUrlsFromSitemapXml()` before the limit slice applies.
 2. Write-path failures are visible — `process.exit(1)` when `stats.failed > 0`.
 
@@ -128,11 +130,11 @@ The check is placed after `printWriteReport(stats)` and only fires when `stats.f
 
 ## TDD Compliance Review
 
-| Function | Test Written First? | Red Phase | Green Phase | Regression Named? |
-|---|---|---|---|---|
-| `isJoinHalalDetailUrl()` | ✅ Yes | ✅ Verified | ✅ Verified | ✅ `[pre-fix FAILS]` |
-| `extractUrlsFromSitemapXml()` filter | ✅ Yes | ✅ Verified | ✅ Verified | ✅ `[post-fix PASSES]` |
-| `process.exit(1)` behavior | ⚠️ Post-fix | Code inspection only | Code inspection | 🔲 No automated test |
+| Function                             | Test Written First? | Red Phase            | Green Phase     | Regression Named?      |
+| ------------------------------------ | ------------------- | -------------------- | --------------- | ---------------------- |
+| `isJoinHalalDetailUrl()`             | ✅ Yes              | ✅ Verified          | ✅ Verified     | ✅ `[pre-fix FAILS]`   |
+| `extractUrlsFromSitemapXml()` filter | ✅ Yes              | ✅ Verified          | ✅ Verified     | ✅ `[post-fix PASSES]` |
+| `process.exit(1)` behavior           | ⚠️ Post-fix         | Code inspection only | Code inspection | 🔲 No automated test   |
 
 **Assessment**: TDD compliance is strong for M1. M2 is a 3-line guard on already-tracked state; full TDD coverage would require either mocking `process.exit` or an integration test with a stubbed Supabase — acceptable deferral for a CLI script behavior change. No regression test required by the plan; implementation doc correctly notes this.
 
@@ -156,11 +158,11 @@ The check is placed after `printWriteReport(stats)` and only fires when `stats.f
 
 ## Outstanding Items
 
-| Item | Severity | Blocking? | Owner |
-|------|----------|-----------|-------|
-| No automated test for non-zero exit behavior of M2 | LOW | No | QA note — acceptable deferral |
-| Pre-existing build failure (missing env var) | N/A | No | Pre-existing, unrelated to Plan 054 |
-| 053-OA-1 staging validation | N/A | No | Operator runbook in place |
+| Item                                               | Severity | Blocking? | Owner                               |
+| -------------------------------------------------- | -------- | --------- | ----------------------------------- |
+| No automated test for non-zero exit behavior of M2 | LOW      | No        | QA note — acceptable deferral       |
+| Pre-existing build failure (missing env var)       | N/A      | No        | Pre-existing, unrelated to Plan 054 |
+| 053-OA-1 staging validation                        | N/A      | No        | Operator runbook in place           |
 
 ---
 
@@ -176,6 +178,6 @@ Update plan status to **Code Review Approved**.
 
 ## Revision History
 
-| Revision | Date | Changes | Findings | Status |
-|----------|------|---------|----------|--------|
-| Initial | 2026-03-22T23:00Z | N/A | #1 LOW, #2 LOW | APPROVED WITH COMMENTS |
+| Revision | Date              | Changes | Findings       | Status                 |
+| -------- | ----------------- | ------- | -------------- | ---------------------- |
+| Initial  | 2026-03-22T23:00Z | N/A     | #1 LOW, #2 LOW | APPROVED WITH COMMENTS |

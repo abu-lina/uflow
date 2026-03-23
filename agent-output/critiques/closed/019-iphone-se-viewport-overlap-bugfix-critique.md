@@ -2,7 +2,7 @@
 ID: 019
 Origin: 019
 UUID: c4a1d9e2
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique: Plan 019 — iPhone SE viewport overlap bugfix
@@ -17,6 +17,7 @@ Status: OPEN
 | Date (UTC) | Handoff | Request | Summary |
 | --- | --- | --- | --- |
 | 2026-02-23T18:30Z | Planner → Critic | Initial review | Plan 019 created for iOS Safari viewport bugfix |
+| 2026-03-23T10:01Z | process-improvement | Close critique | Closed after release; Status: Resolved |
 
 ---
 
@@ -92,7 +93,7 @@ No significant debt introduced. The sweep standardizes viewport handling across 
 ### Finding 019-C1: Missing explicit wrapper inventory
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Plan section "1. Sweep: inventory all `h-screen` full-height wrappers"
 - **Description**: The plan describes the inventory step but doesn't pre-populate a candidate list for the implementer.
 - **Impact**: Minor — implementer must run the search themselves.
@@ -101,7 +102,7 @@ No significant debt introduced. The sweep standardizes viewport handling across 
 ### Finding 019-C2: Version mismatch between roadmap and package.json
 
 - **Severity**: LOW
-- **Status**: OPEN (previously noted in plan)
+- **Status**: RESOLVED (previously noted in plan)
 - **Location**: Plan "Version note" in Context section
 - **Description**: Roadmap shows v0.6.1, but `package.json` shows v0.6.3. Plan acknowledges this.
 - **Impact**: Minor confusion; plan correctly targets v0.6.4 as next patch.

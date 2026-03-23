@@ -18,15 +18,15 @@ Status: Active
 
 ## Release Summary
 
-| Field | Value |
-| --- | --- |
-| Version | v0.8.15 |
-| Type | Patch |
-| Environment | Production (ummahflow.com) |
-| Epic | JoinHalal data import reliability, schema safety, and operator-visible failure diagnosis |
-| Plan ID | 055 |
-| Date | 2026-03-23 |
-| Branch | session/047-joinhalal-data-import |
+| Field       | Value                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| Version     | v0.8.15                                                                                  |
+| Type        | Patch                                                                                    |
+| Environment | Production (ummahflow.com)                                                               |
+| Epic        | JoinHalal data import reliability, schema safety, and operator-visible failure diagnosis |
+| Plan ID     | 055                                                                                      |
+| Date        | 2026-03-23                                                                               |
+| Branch      | session/047-joinhalal-data-import                                                        |
 
 ## Pre-Release Verification
 
@@ -127,6 +127,6 @@ Closed documents for Plan 055: planning, implementation, code-review, qa, uat mo
 
 ## Changelog
 
-| Date (UTC) | Agent | Change |
-| --- | --- | --- |
+| Date (UTC)        | Agent  | Change                                                                                                                                                   |
+| ----------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-03-23T08:04Z | devops | Stage 1 deployment doc created; version preflight, lifecycle closure preparation, timestamp sanity correction, and deferred follow-up tracking completed |

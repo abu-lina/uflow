@@ -16,14 +16,14 @@ Status: Released
 
 ## Changelog
 
-| Date | Change | Agent | Notes |
-|---|---|---|---|
-| 2026-03-19T15:15Z | Initial plan created from approved feature request | Planner | Admin dashboard dry-run preview for JoinHalal import; dry-run UI only, CLI write remains the operational mutation path |
-| 2026-03-19T16:35Z | Status updated to Code Review Approved | Code Reviewer | APPROVED — no blocking findings; 3 LOW items noted for future polish |
-| 2026-03-19T15:59Z | QA failed | qa | Preview count correctness gap: `wouldInsert` can be wrong for duplicate+unmapped overlap; rework required before UAT |
-| 2026-03-19T17:14Z | Status updated to QA Complete | qa | QA-1 and QA-2 resolved; fresh tests/type-check/delta-lint pass; unrelated local env build failure remains informational |
-| 2026-03-19T17:30Z | Status updated to UAT Approved | uat | APPROVED FOR RELEASE v0.8.8 — all 8 UAT scenarios PASS; value statement satisfied; 4 deferred LOW follow-ups recorded with owners; handing off to DevOps |
-| 2026-03-19T17:55Z | Status updated to Released | devops | Commit 8872fbe tagged v0.8.8 and pushed to origin/session/047-joinhalal-data-import |
+| Date              | Change                                             | Agent         | Notes                                                                                                                                                    |
+| ----------------- | -------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-19T15:15Z | Initial plan created from approved feature request | Planner       | Admin dashboard dry-run preview for JoinHalal import; dry-run UI only, CLI write remains the operational mutation path                                   |
+| 2026-03-19T16:35Z | Status updated to Code Review Approved             | Code Reviewer | APPROVED — no blocking findings; 3 LOW items noted for future polish                                                                                     |
+| 2026-03-19T15:59Z | QA failed                                          | qa            | Preview count correctness gap: `wouldInsert` can be wrong for duplicate+unmapped overlap; rework required before UAT                                     |
+| 2026-03-19T17:14Z | Status updated to QA Complete                      | qa            | QA-1 and QA-2 resolved; fresh tests/type-check/delta-lint pass; unrelated local env build failure remains informational                                  |
+| 2026-03-19T17:30Z | Status updated to UAT Approved                     | uat           | APPROVED FOR RELEASE v0.8.8 — all 8 UAT scenarios PASS; value statement satisfied; 4 deferred LOW follow-ups recorded with owners; handing off to DevOps |
+| 2026-03-19T17:55Z | Status updated to Released                         | devops        | Commit 8872fbe tagged v0.8.8 and pushed to origin/session/047-joinhalal-data-import                                                                      |
 
 ## Release Strategy
 

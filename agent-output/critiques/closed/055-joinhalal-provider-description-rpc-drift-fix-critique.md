@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: 7d2f4a9c
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique 055 — JoinHalal RPC `provider_description` Schema Drift Fix
@@ -14,9 +14,10 @@ Status: OPEN
 
 ## Changelog
 
-| Date (UTC) | Handoff | Request | Summary |
-| --- | --- | --- | --- |
+| Date (UTC)        | Handoff       | Request         | Summary                                       |
+| ----------------- | ------------- | --------------- | --------------------------------------------- |
 | 2026-03-23T07:30Z | User → Critic | Review Plan 055 | Initial critique of RPC schema drift fix plan |
+| 2026-03-23T10:01Z | process-improvement | Close critique | Closed after commit/release; Status: Resolved |
 
 ---
 
@@ -75,7 +76,7 @@ No scope creep detected. The plan does not attempt to add features, refactor unr
 
 ### MEDIUM — M1 acceptance criteria do not specify behavior when column IS present
 
-**Status**: OPEN
+**Status**: RESOLVED
 
 **Issue**: M1 AC states: "The upsert path succeeds on environments where `providers.provider_description` is absent." It does not specify what happens on environments where the column DOES exist. Should the RPC still write it? Or is the field permanently dropped from the upsert contract?
 
@@ -85,7 +86,7 @@ No scope creep detected. The plan does not attempt to add features, refactor unr
 
 ### MEDIUM — M4 preflight scope is ambiguous after fix
 
-**Status**: OPEN
+**Status**: RESOLVED
 
 **Issue**: M4 asks for "schema/RPC capability mismatch" detection before the first write batch. However, if the fix removes `provider_description` from the RPC entirely, the existing `checkProviderDescriptionExists()` probe becomes advisory rather than blocking — the import will succeed regardless of column presence. The M4 AC says "Write-mode preflight states whether the target environment supports the required JoinHalal write contract" but doesn't clarify whether this means checking the full column set against the RPC definition or just logging the `provider_description` status.
 
@@ -95,7 +96,7 @@ No scope creep detected. The plan does not attempt to add features, refactor unr
 
 ### LOW — Post-fix open action tracking not specified
 
-**Status**: OPEN
+**Status**: RESOLVED
 
 **Issue**: The plan correctly notes it unblocks open actions 053-OA-1 and 054-OA-1 (staging write validation). However, these are not listed as explicit post-conditions or follow-up actions in the plan. After Plan 055 ships, will someone explicitly re-attempt those open actions, or do they remain blocking items indefinitely?
 
@@ -103,11 +104,12 @@ No scope creep detected. The plan does not attempt to add features, refactor unr
 
 ### LOW — Hotfix risk assessment
 
-**Status**: OPEN
+**Status**: RESOLVED
 
 **Hotfix question**: "How will this plan result in a hotfix after deployment?"
 
 The primary hotfix risk is low because the fix addresses a known, isolated failure point with clear reproduction (GitHub Actions write mode). Potential hotfix scenarios:
+
 - If the implementer chooses schema-conditional SQL and the conditional logic has edge cases on specific Postgres versions → mitigated by M3 regression coverage
 - If removing `provider_description` from the RPC causes a downstream consumer to expect it in the return path → mitigated by the column being output-only in the RPC (it returns insert/update counts, not provider rows)
 
@@ -129,9 +131,9 @@ All 6 decisions are marked `[RESOLVED]`. No `[OPEN]` or `[DEFERRED]` decisions. 
 
 The plan's risk table is well-constructed with 4 relevant risks. One additional risk worth noting:
 
-| Risk | Likelihood | Impact | Note |
-| --- | --- | --- | --- |
-| Existing `checkProviderDescriptionExists()` probes become misleading after fix | Low | Low | If column is absent but RPC no longer needs it, the "⚠ Column absent" preflight log may confuse operators into thinking something is wrong. M4 should address messaging alignment. |
+| Risk                                                                           | Likelihood | Impact | Note                                                                                                                                                                               |
+| ------------------------------------------------------------------------------ | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Existing `checkProviderDescriptionExists()` probes become misleading after fix | Low        | Low    | If column is absent but RPC no longer needs it, the "⚠ Column absent" preflight log may confuse operators into thinking something is wrong. M4 should address messaging alignment. |
 
 ---
 

@@ -17,15 +17,15 @@ Status: Stage 1 Complete
 
 ## Release Summary
 
-| Field            | Value                                                              |
-| ---------------- | ------------------------------------------------------------------ |
-| Version          | v0.8.12                                                            |
-| Type             | Patch                                                              |
-| Environment      | Production (ummahflow.com)                                          |
-| Epic             | Data Import Pipeline                                                |
-| Plan ID          | 052                                                                |
-| Date             | 2026-03-22                                                         |
-| Branch           | session/047-joinhalal-data-import                                  |
+| Field       | Value                             |
+| ----------- | --------------------------------- |
+| Version     | v0.8.12                           |
+| Type        | Patch                             |
+| Environment | Production (ummahflow.com)        |
+| Epic        | Data Import Pipeline              |
+| Plan ID     | 052                               |
+| Date        | 2026-03-22                        |
+| Branch      | session/047-joinhalal-data-import |
 
 ## Pre-Release Verification
 
@@ -82,6 +82,7 @@ The v0.8.12 CHANGELOG entry was written at implementation time and described the
 ## Document Lifecycle Closure
 
 Closed documents for Plan 052:
+
 - `agent-output/planning/052-joinhalal-import-upsert-plan.md` → `closed/`
 - `agent-output/implementation/052-joinhalal-import-upsert-impl.md` → `closed/`
 - `agent-output/code-review/052-joinhalal-import-upsert-code-review.md` → `closed/`
@@ -93,6 +94,7 @@ Closed documents for Plan 052:
 All statuses updated to "Committed" before move.
 
 Stale headers fixed before closure:
+
 - Code review: `In Review` → `Committed` (verdict was APPROVED_WITH_COMMENTS)
 - Implementation: `Active` → `Committed` (all milestones complete)
 - Critique: `OPEN` → `Committed` (verdict was APPROVED, all findings RESOLVED)
@@ -136,11 +138,11 @@ $ ls -la public/fallback-*.js
 
 ## Changelog
 
-| Date (UTC)          | Agent  | Change                             |
-| ------------------- | ------ | ---------------------------------- |
-| 2026-03-22T18:24Z   | devops | Stage 1 deployment doc created     |
-| 2026-03-22T18:24Z   | devops | All Plan 052 docs closed (Status: Committed) |
-| 2026-03-22T18:24Z   | devops | Local commit prepared (not pushed) |
+| Date (UTC)        | Agent  | Change                                       |
+| ----------------- | ------ | -------------------------------------------- |
+| 2026-03-22T18:24Z | devops | Stage 1 deployment doc created               |
+| 2026-03-22T18:24Z | devops | All Plan 052 docs closed (Status: Committed) |
+| 2026-03-22T18:24Z | devops | Local commit prepared (not pushed)           |
 
 ## Next Actions
 

@@ -2,6 +2,7 @@ ID: 054
 Origin: 054
 UUID: c4e81a2f
 Status: Released
+
 ---
 
 # QA Report: Plan 054 — JoinHalal Sitemap Non-Detail Filter + RPC Write-Path Fix
@@ -12,11 +13,11 @@ Status: Released
 
 ## Changelog
 
-| Date | Agent Handoff | Request | Summary |
-| ---------- | ---------------- | -------------------- | ----------------------------------- |
-| 2026-03-22 | Implementer | Implementation complete, ready for testing | Reviewed implementation evidence, validated changed-file diagnostics, audited tests, and completed artifact-first QA with residual tool-limit note |
-| 2026-03-22T23:07Z | DevOps | Stage 1 local commit | QA artifact moved to terminal Committed state for release preparation |
-| 2026-03-22T23:14Z | DevOps | Stage 2 release | QA artifact marked Released after `v0.8.14` tag and branch push |
+| Date              | Agent Handoff | Request                                    | Summary                                                                                                                                            |
+| ----------------- | ------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-03-22        | Implementer   | Implementation complete, ready for testing | Reviewed implementation evidence, validated changed-file diagnostics, audited tests, and completed artifact-first QA with residual tool-limit note |
+| 2026-03-22T23:07Z | DevOps        | Stage 1 local commit                       | QA artifact moved to terminal Committed state for release preparation                                                                              |
+| 2026-03-22T23:14Z | DevOps        | Stage 2 release                            | QA artifact marked Released after `v0.8.14` tag and branch push                                                                                    |
 
 ## Timeline
 
@@ -111,12 +112,12 @@ Implementation doc includes a TDD Compliance table and records red/green evidenc
 
 ### New/Modified Code
 
-| File | Function/Class | Test File | Test Case | Coverage Status |
-| --------------- | -------------- | ------------ | ------------------ | ----------------- |
-| `src/utils/joinhalal-parser.ts` | `isJoinHalalDetailUrl` | `src/__tests__/utils/joinhalal-parser.test.ts` | accepts detail URL / rejects listing URLs / rejects invalid input | COVERED |
-| `src/utils/joinhalal-parser.ts` | `extractUrlsFromSitemapXml` | `src/__tests__/utils/joinhalal-parser.test.ts` | `[post-fix PASSES] excludes non-detail URLs like /locations/ from extraction` | COVERED |
-| `scripts/import-joinhalal.ts` | write-path non-zero exit | none | code-review + implementation evidence only | PARTIALLY COVERED |
-| `agent-output/planning/053-open-actions.md` | validation runbook | n/a | document update | N/A |
+| File                                        | Function/Class              | Test File                                      | Test Case                                                                     | Coverage Status   |
+| ------------------------------------------- | --------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- | ----------------- |
+| `src/utils/joinhalal-parser.ts`             | `isJoinHalalDetailUrl`      | `src/__tests__/utils/joinhalal-parser.test.ts` | accepts detail URL / rejects listing URLs / rejects invalid input             | COVERED           |
+| `src/utils/joinhalal-parser.ts`             | `extractUrlsFromSitemapXml` | `src/__tests__/utils/joinhalal-parser.test.ts` | `[post-fix PASSES] excludes non-detail URLs like /locations/ from extraction` | COVERED           |
+| `scripts/import-joinhalal.ts`               | write-path non-zero exit    | none                                           | code-review + implementation evidence only                                    | PARTIALLY COVERED |
+| `agent-output/planning/053-open-actions.md` | validation runbook          | n/a                                            | document update                                                               | N/A               |
 
 ### Coverage Gaps
 

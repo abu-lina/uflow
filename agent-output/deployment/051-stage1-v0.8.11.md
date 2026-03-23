@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: d7f2b8e3
-Status: Active
+Status: Released
 ---
 
 # Stage 1 Deployment — Plan 051: JoinHalal Speisen Offers Mapping
@@ -18,6 +18,7 @@ Status: Active
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-03-22T16:21Z | devops | Stage 1 initiated; release pre-flight, lifecycle closure preparation, and deferred follow-up tracking completed |
+| 2026-03-22T16:30Z | devops | Stage 2 completed; `v0.8.11` pushed to `origin/main` and tag published |
 
 ## Pre-Release Verification
 
@@ -152,6 +153,6 @@ Closed documents for Plan 051: planning, implementation, code-review, qa, uat mo
 3. Direct CLI execution coverage is not yet automated; this is tracked for follow-up in `agent-output/planning/051-open-actions.md`.
 4. `npm run build` still fails in page-data collection for unrelated badge routes when `NEXT_PUBLIC_SUPABASE_URL` is missing; this pre-exists Plan 051 and is not a release blocker for this scope.
 
-## Post-Release (Stage 2 — awaiting user approval)
+## Post-Release Outcome
 
-Stage 2 will tag `v0.8.11`, push the committed changes, verify release state, update all included plan docs to `Released`, and record final deployment metadata.
+Stage 2 completed successfully: `v0.8.11` was pushed to `origin/main`, tag published, and Plan 051 lifecycle docs moved from `Committed` to `Released`.

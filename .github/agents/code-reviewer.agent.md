@@ -144,6 +144,15 @@ Constraints:
 - Code Review docs in `agent-output/code-review/` are exclusive domain
 - May update Status field in planning documents (to mark "Code Review Approved")
 
+### Constraint-Sensitive Findings (MANDATORY when applicable)
+
+If a MEDIUM finding could violate an explicit plan constraint, release invariant, or acceptance threshold under realistic edge conditions, you MUST force an explicit disposition in the Code Review doc:
+
+- `Fix before QA`, or
+- `Risk accepted for this release` (name the approver and rationale)
+
+Do not leave these findings as implicit "follow-up" items.
+
 ### Fix-in-Review Protocol (CONDITIONALLY ALLOWED)
 
 Fix-in-review is appropriate when ALL are true:
