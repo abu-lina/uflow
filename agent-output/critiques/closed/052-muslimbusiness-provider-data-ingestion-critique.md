@@ -2,7 +2,7 @@
 ID: 052
 Origin: 052
 UUID: 52c1b8af
-Status: Resolved
+Status: Released
 ---
 
 # Critique: Plan 052 — MuslimBusiness Provider Data Ingestion Pipeline
