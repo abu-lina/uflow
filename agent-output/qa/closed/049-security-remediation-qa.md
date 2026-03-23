@@ -2,7 +2,7 @@
 ID: 49
 Origin: 49
 UUID: 7dfe4b10
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 049 — UFlow Security Remediation

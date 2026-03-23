@@ -2,7 +2,7 @@
 ID: 49
 Origin: 49
 UUID: 7dfe4b10
-Status: Stage1-Committed
+Status: Released
 ---
 
 # Deployment: Plan 049 — UFlow Security Remediation (Stage 1)
@@ -10,7 +10,7 @@ Status: Stage1-Committed
 **Plan Reference**: `agent-output/planning/closed/049-security-remediation-plan.md`
 **UAT Reference**: `agent-output/uat/closed/049-security-remediation-uat.md`
 **Target Version**: v0.8.16
-**Stage**: Stage 1 — Local Commit (no push)
+**Stage**: Stage 2 — Released
 **Date**: 2026-03-23
 
 ## Changelog
@@ -18,6 +18,7 @@ Status: Stage1-Committed
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-03-23T00:00Z | devops | Stage 1 deployment doc created; local commit for v0.8.16 |
+| 2026-03-23T12:30Z | devops | Stage 2 executed: user approved release; branch pushed, tag v0.8.16 published |
 
 ---
 
@@ -192,19 +193,79 @@ See `agent-output/planning/049-open-actions.md` for tracked deferred items.
 
 ## User Confirmation
 
-*Stage 1 does not require user confirmation. User confirmation is required at Stage 2 (release execution/push).*
+**Stage 2 Approval**
+- Presenter: DevOps agent
+- Timestamp: 2026-03-23T12:30Z
+- Summary presented to user: Version v0.8.16, Plan 049, 13 security findings closed, 315 tests passing, 0 vulns, branch ready
+- User response: `"approved"`
+- Authorizer: NARAFIQ
+- Timestamp of approval: 2026-03-23T12:30Z
 
 ---
 
 ## Release Execution
 
-*Deferred to Stage 2. No push executed in Stage 1.*
+### Stage 2 — Security Audit Evidence
+
+```
+npm audit: found 0 vulnerabilities
+```
+No new HIGH/CRITICAL vulnerabilities introduced by this release. Confirmed pre-push.
+
+Note: GitHub Dependabot reports 4 vulnerabilities on `main` (2 high, 2 moderate) — these are pre-existing on the default branch and will be resolved when this security branch is merged to main via PR.
+
+### Stage 2 — Branch & Tag Pre-flight
+
+```
+git fetch origin --prune --tags
+# Tags present before push: v0.8.8 through v0.8.15 — v0.8.16 NOT present ✅
+# Workspace clean (working tree clean) ✅
+# Orphan cleanup amend: commit c92c7d4 → 0b308ff (folded 4 source deletions) ✅
+```
+
+### Git Push (Branch)
+
+```
+git push -u origin session/049-security-audit
+# Enumerating objects: 143, done.
+# Writing objects: 81/81 (58.17 KiB)
+# Branch: session/049-security-audit -> origin/session/049-security-audit
+# Tracking set ✅
+```
+
+### Git Tag + Push
+
+```
+git tag -a v0.8.16 -m "Release v0.8.16 - UFlow Security Remediation (Plan 049): ..."
+git push origin v0.8.16
+# Writing objects: 1/1 (306 bytes)
+# * [new tag] v0.8.16 -> v0.8.16 ✅
+```
+
+### Commits Released
+
+| Commit | Message |
+|---|---|
+| `2f2e92f` | fix(security): Remediate Security Audit 049 — close 13 findings in v0.8.16 (32 files, 2636 ins, 124 del) |
+| `0b308ff` | chore(docs): close orphaned deployment docs (v0.8.4, v0.8.7) |
 
 ---
 
 ## Post-Release Status
 
-*Pending Stage 2.*
+**Status**: Released — branch pushed, tag `v0.8.16` published to origin
+**Timestamp**: 2026-03-23T12:30Z
+
+### Pending Before Production Deploy
+
+- ⬜ **Ops**: Add `ADMIN_DEBUG_KEY` GitHub Secret before triggering `deploy-hetzner.yml` workflow dispatch
+- ⬜ **PR merge**: Create and merge PR `session/049-security-audit` → `main` on GitHub
+- ⬜ **Smoke tests**: QA Lead to validate post-deploy (confirmed-user login, forgot-password, resend confirmation) — 24h window
+
+### Rollback Plan
+
+- Revert: `git revert 2f2e92f` and redeploy
+- Tag: `git tag -d v0.8.16 && git push origin :refs/tags/v0.8.16` if needed to re-release
 
 ---
 
@@ -214,10 +275,12 @@ See `agent-output/planning/049-open-actions.md` for tracked deferred items.
 {
   "plan": "049",
   "version": "v0.8.16",
-  "stage": "Stage1-Committed",
+  "stage": "Stage2-Released",
   "date": "2026-03-23",
-  "environment": "local",
-  "status": "Committed — awaiting Stage 2 approval",
+  "environment": "production + UAT (pending deploy workflow)",
+  "status": "Released — branch and tag pushed to origin",
+  "tag": "v0.8.16",
+  "branch": "session/049-security-audit",
   "included_plans": ["049"],
   "notes": "Version collision v0.8.13–v0.8.15; bumped to v0.8.16 at Stage 1 pre-flight"
 }
@@ -227,12 +290,10 @@ See `agent-output/planning/049-open-actions.md` for tracked deferred items.
 
 ## Next Actions
 
-1. **Ops**: Add `ADMIN_DEBUG_KEY` (and optionally `UAT_ADMIN_DEBUG_KEY`) to GitHub repository secrets before first deploy
-2. **DevOps Stage 2**: When user approves release, run:
-   - `git fetch origin --prune --tags` (verify no further tag collisions)
-   - `git push origin session/049-security-audit`
-   - Create PR from `session/049-security-audit` → `main` (or merge directly per project workflow)
-   - Tag: `git tag -a v0.8.16 -m "Release v0.8.16 — UFlow Security Remediation (Plan 049)"`
-   - Push tag: `git push origin v0.8.16`
-   - Verify deployment health at `/api/health`
-3. **QA Lead**: Within 24h of production deploy, execute browser validation checklist (see deferred tracker)
+1. ⚠️ **Ops (BLOCKING before deploy)**: Add `ADMIN_DEBUG_KEY` to GitHub repository secrets — without it, diagnostic endpoints return 401 (fail-closed, non-blocking for users but ops tooling unavailable)
+2. **PR**: Create and merge PR: `session/049-security-audit` → `main` on GitHub
+3. **Deploy**: Trigger `deploy-hetzner.yml` workflow dispatch (production) and `deploy-uat.yml` (UAT) from GitHub Actions
+4. **Smoke test**: After successful deploy, visit `/providers` (no params) and `/` — confirm results render
+5. **QA Lead**: Within 24h of production deploy, execute browser validation checklist (see `agent-output/planning/049-open-actions.md`)
+6. **Next sprint**: Migrate `check-email-exists` local rate limit Map to shared `@/lib/rate-limit` utility (tech debt, tracked in open-actions)
+7. ✅ **DevOps Stage 2**: COMPLETE — branch pushed, tag `v0.8.16` published
