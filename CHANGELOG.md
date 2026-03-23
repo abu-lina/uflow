@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.18] - 2026-03-23
+
+### Fixed
+
+- **JoinHalal importer auto-rejects alcohol sellers (Plan 051)**: Providers whose Schema.org `additionalProperty` contains `Halal Merkmale` with the token `Alkoholverkauf` are now imported with `review_status = 'rejected'` (instead of `pending`). This rule is applied consistently in both the shared dry-run/admin preview path (`src/lib/import/joinhalal.ts`) and the CLI write path (`scripts/import-joinhalal.ts`). Operator reports now include an `Auto-rejected (alcohol)` count.
+
 ## [0.8.17] - 2026-03-23
 
 ### Added

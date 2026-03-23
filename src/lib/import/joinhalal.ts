@@ -23,6 +23,7 @@ import {
   extractCategoryFromUrl,
   extractSpeisen,
   extractJoinHalalPostId,
+  hasAlkoholverkauf,
 } from '@/utils/joinhalal-parser';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
@@ -56,6 +57,8 @@ export interface DryRunStats {
   wouldInsert: number;
   /** Records that would be updated (import_source+import_source_id already exists) */
   wouldUpdate: number;
+  /** Records that were auto-rejected because Halal Merkmale contains Alkoholverkauf (Plan 051) */
+  autoRejected: number;
 }
 
 export interface UnmappedGroup {
@@ -296,7 +299,7 @@ interface ProviderRecord {
   contact_phone: string | null;
   social_website: string | null;
   social_instagram: string | null;
-  review_status: 'pending';
+  review_status: 'pending' | 'rejected';
   user_created_id: string;
   provider_owner_id: null;
   show_address: boolean;
@@ -454,7 +457,7 @@ async function loadExistingProviderKeys(
   return { nameCityKeys, importSourceKeys };
 }
 
-function transformPage(
+export function transformPage(
   html: string,
   url: string,
   categories: Category[],
@@ -496,7 +499,7 @@ function transformPage(
     contact_phone: schema.telephone ?? null,
     social_website: schema.url ?? null,
     social_instagram: extractInstagramFromSameAs(schema.sameAs),
-    review_status: 'pending',
+    review_status: hasAlkoholverkauf(schema) ? 'rejected' : 'pending',
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
@@ -599,6 +602,7 @@ export async function runJoinHalalDryRun(
     skipped: 0,
     failed: 0,
     wouldUpdate: 0,
+    autoRejected: 0,
   };
 
   const unmappedEntries: UnmappedEntry[] = [];
@@ -642,6 +646,7 @@ export async function runJoinHalalDryRun(
     }
 
     stats.parsed++;
+    if (record.review_status === 'rejected') stats.autoRejected++;
 
     if (unmappedCategory) {
       stats.unmapped++;
