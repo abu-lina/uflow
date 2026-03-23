@@ -37,13 +37,12 @@ export function AdminProvidersPageContent() {
         throw new Error('You are offline. Please check your internet connection.');
       }
 
-      const responseData = await response.json() as { data?: PendingProvidersResponse; error?: string };
-
       if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to fetch providers');
+        const errorData = await response.json() as { error?: string };
+        throw new Error(errorData.error || 'Failed to fetch providers');
       }
 
-      return responseData.data || { providers: [], pagination: { total: 0, limit: 50, offset: 0, hasMore: false } };
+      return await response.json() as PendingProvidersResponse;
     },
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -60,7 +59,7 @@ export function AdminProvidersPageContent() {
   const providers: PendingProvider[] = queryData?.providers ?? [];
   const error = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
 
-  const handleReview = async (providerId: string, status: 'approved' | 'rejected' | 'needs_revision', feedback?: string) => {
+  const handleReview = async (providerId: string, status: 'approved' | 'rejected' | 'needs_revision', feedback?: string, expectedUpdatedAt?: string) => {
     queryClient.setQueryData<PendingProvidersResponse>(['admin-pending-providers', selectedStatus], (oldData) => {
       if (!oldData) return oldData;
       return {
@@ -79,6 +78,7 @@ export function AdminProvidersPageContent() {
           providerId,
           reviewStatus: status,
           reviewFeedback: feedback,
+          expectedUpdatedAt,
         }),
       });
 
@@ -94,11 +94,13 @@ export function AdminProvidersPageContent() {
 
       if (!response.ok) {
         await refetch();
-        const errorMessage = response.status === 429
-          ? 'Too many requests. Please wait a moment and try again.'
-          : response.status === 413
-            ? 'Request too large. Please reduce the feedback length.'
-            : responseData.error || 'Failed to update review status. Please try again.';
+        const errorMessage = response.status === 409
+          ? 'This provider was modified by another reviewer. The list has been refreshed.'
+          : response.status === 429
+            ? 'Too many requests. Please wait a moment and try again.'
+            : response.status === 413
+              ? 'Request too large. Please reduce the feedback length.'
+              : responseData.error || 'Failed to update review status. Please try again.';
         throw new Error(errorMessage);
       }
 
