@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.20] - 2026-03-23
+
+### Fixed
+
+- **MuslimBusiness importer now handles client-rendered directory pages**: When the muslimbusiness.de directory no longer server-renders provider cards, the importer falls back to discovering the site’s public Supabase REST configuration and reconstructing the provider card dataset via table joins. This restores non-zero extraction results for CI/GitHub Actions runs.
+
 ## [0.8.19] - 2026-03-23
 
 ### Added
