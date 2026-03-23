@@ -12,6 +12,8 @@
  *   This bypasses RLS. Handle credentials with care.
  * • Imported rows default to review_status = 'pending' and are not publicly
  *   visible until approved via the admin moderation workflow.
+ * • Providers whose Halal Merkmale contains "Alkoholverkauf" are automatically
+ *   imported with review_status = 'rejected' (Plan 051 business rule).
  * • The outreach trigger (migration 059) is bypassed: user_created_id is set
  *   to the import-bot user UUID, which the trigger treats as non-anonymous.
  * • rate-limit: ~200ms delay between page fetches to be polite to the source.
@@ -42,6 +44,7 @@ import {
   extractCategoryFromUrl,
   extractSpeisen,
   extractJoinHalalPostId,
+  hasAlkoholverkauf,
 } from '../src/utils/joinhalal-parser';
 import {
   runJoinHalalDryRun,
@@ -112,7 +115,7 @@ interface ProviderUpsert {
   contact_phone: string | null;
   social_website: string | null;
   social_instagram: string | null;
-  review_status: 'pending';
+  review_status: 'pending' | 'rejected';
   user_created_id: string;
   provider_owner_id: null;
   show_address: boolean;
@@ -136,6 +139,8 @@ interface WriteStats {
   offersMatched: number;
   offersCreated: number;
   offersCreateFailed: number;
+  /** Records auto-rejected because Halal Merkmale contains Alkoholverkauf (Plan 051) */
+  autoRejected: number;
 }
 
 interface UnmappedEntry {
@@ -386,7 +391,7 @@ function transformPageToProvider(
     contact_phone: schema.telephone ?? null,
     social_website: website,
     social_instagram: instagram,
-    review_status: 'pending',
+    review_status: hasAlkoholverkauf(schema) ? 'rejected' : 'pending',
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
@@ -475,6 +480,9 @@ function printDryRunReport(result: DryRunResult, limit: ImportLimit) {
   console.log(`  Parse failures       : ${stats.failed}`);
   console.log(`  Would INSERT         : ${stats.wouldInsert}`);
   console.log(`  Would UPDATE         : ${stats.wouldUpdate}`);
+  if (stats.autoRejected > 0) {
+    console.log(`  Auto-rejected (alcohol): ${stats.autoRejected}`);
+  }
 
   if (unmappedGroups.length > 0) {
     console.log('\n  Unmapped categories (top 10):');
@@ -523,6 +531,9 @@ function printWriteReport(stats: WriteStats) {
   console.log(`  Offers auto-created  : ${stats.offersCreated}`);
   if (stats.offersCreateFailed > 0) {
     console.log(`  Offers create failed : ${stats.offersCreateFailed}`);
+  }
+  if (stats.autoRejected > 0) {
+    console.log(`  Auto-rejected (alcohol): ${stats.autoRejected}`);
   }
   console.log('\n  To query imported records:');
   console.log(`    SELECT * FROM providers WHERE import_source = 'joinhalal';`);
@@ -639,6 +650,7 @@ async function main() {
     offersMatched: 0,
     offersCreated: 0,
     offersCreateFailed: 0,
+    autoRejected: 0,
   };
 
   const unmappedEntries: UnmappedEntry[] = [];
@@ -677,6 +689,7 @@ async function main() {
     }
 
     stats.parsed++;
+    if (record.review_status === 'rejected') stats.autoRejected++;
     totalMatchedOffers += record.offers_ids.length;
 
     if (unmapped) {

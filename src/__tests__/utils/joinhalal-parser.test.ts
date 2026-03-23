@@ -18,6 +18,7 @@ import {
   extractSpeisen,
   extractJoinHalalPostId,
   isJoinHalalDetailUrl,
+  hasAlkoholverkauf,
 } from '@/utils/joinhalal-parser';
 
 // ---------------------------------------------------------------------------
@@ -505,5 +506,73 @@ describe('extractDisplayNameFromHtml — multi-block vxconfig', () => {
   it('extracts display_name from the correct vxconfig block [post-fix PASSES]', () => {
     const result = extractDisplayNameFromHtml(MULTI_BLOCK_VXCONFIG_HTML);
     expect(result).toBe('ECHTE BÄRLINER | Augsburg Oberhausen');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// hasAlkoholverkauf (Plan 051)
+// ---------------------------------------------------------------------------
+
+describe('hasAlkoholverkauf', () => {
+  it('returns true when additionalProperty contains Halal Merkmale with Alkoholverkauf', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [{ name: 'Halal Merkmale', value: 'Alkoholverkauf' }],
+      })
+    ).toBe(true);
+  });
+
+  it('returns true when Alkoholverkauf is one of multiple comma-separated values', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [
+          { name: 'Halal Merkmale', value: 'Handgeschächtet, Alkoholverkauf, Lieferung' },
+        ],
+      })
+    ).toBe(true);
+  });
+
+  it('returns false when Halal Merkmale does not contain Alkoholverkauf', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [
+          { name: 'Halal Merkmale', value: 'Handgeschächtet, Lieferung' },
+        ],
+      })
+    ).toBe(false);
+  });
+
+  it('returns false when additionalProperty is an empty array', () => {
+    expect(hasAlkoholverkauf({ additionalProperty: [] })).toBe(false);
+  });
+
+  it('returns false when additionalProperty is undefined', () => {
+    expect(hasAlkoholverkauf({})).toBe(false);
+  });
+
+  it('returns false when Halal Merkmale property is absent (other props present)', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [{ name: 'Speisen', value: 'Burger, Pizza' }],
+      })
+    ).toBe(false);
+  });
+
+  it('matches Alkoholverkauf case-insensitively', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [{ name: 'Halal Merkmale', value: 'alkoholverkauf' }],
+      })
+    ).toBe(true);
+  });
+
+  it('handles whitespace around token values', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [
+          { name: 'Halal Merkmale', value: '  Alkoholverkauf  ' },
+        ],
+      })
+    ).toBe(true);
   });
 });

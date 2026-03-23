@@ -368,6 +368,33 @@ function parseVxConfig(html: string): VxConfigCurrentPost | null {
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// hasAlkoholverkauf (Plan 051)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when the JoinHalal schema record's `Halal Merkmale`
+ * `additionalProperty` entry contains the token `Alkoholverkauf`.
+ *
+ * Matching is case-insensitive and whitespace-tolerant (comma-separated
+ * tokens are trimmed and lower-cased before comparison). Exact token match
+ * prevents false positives from "Kein Alkoholverkauf" or similar values.
+ *
+ * Returns false when `additionalProperty` is absent, empty, or contains
+ * no `Halal Merkmale` entry — safe default that leaves `review_status`
+ * on the existing `pending` path.
+ */
+export function hasAlkoholverkauf(schema: JoinHalalSchemaData): boolean {
+  const props = schema.additionalProperty;
+  if (!Array.isArray(props) || props.length === 0) return false;
+  const halalProp = props.find(
+    (p) => p.name?.trim().toLowerCase() === 'halal merkmale'
+  );
+  if (!halalProp?.value) return false;
+  const values = halalProp.value.split(',').map((v) => v.trim().toLowerCase());
+  return values.includes('alkoholverkauf');
+}
+
 /**
  * Decodes common HTML entities in a string.
  * Handles the subset used by WordPress/Rank Math output.
