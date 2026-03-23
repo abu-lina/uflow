@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { isAdminOrModerator } from '@/lib/auth/roles';
 
 /**
  * POST /api/admin/set-role
  * 
- * Set a user's role (allows self-promotion in development)
+ * Set a user's role (admin/moderator only)
  * 
  * Request body:
  * {
@@ -22,6 +23,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
+      );
+    }
+
+    // F-049-01: Require admin/moderator role (DB-backed) for privilege escalation
+    const hasAccess = await isAdminOrModerator(user.id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Forbidden. Only admin or moderator can set roles.' },
+        { status: 403 }
       );
     }
 

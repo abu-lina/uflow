@@ -88,20 +88,15 @@ export const resetPasswordWithLanguage = async (
       };
     }
 
-    const { exists, confirmed } = await response.json();
-    
-    if (!exists) {
-      return { 
-        error: { 
-          message: 'EMAIL_NOT_FOUND'
-        } 
-      };
-    }
+    const { confirmed } = await response.json();
 
+    // F-049-04: The API now returns { confirmed: false } for both
+    // non-existent and unconfirmed accounts (enumeration-safe).
+    // Only confirmed accounts can proceed.
     if (!confirmed) {
       return { 
         error: { 
-          message: 'EMAIL_NOT_CONFIRMED'
+          message: 'EMAIL_NOT_FOUND'
         } 
       };
     }
@@ -189,22 +184,16 @@ export const signInWithEmailConfirmation = async (
     });
 
     if (response.ok) {
-      const { exists, confirmed } = await response.json();
-      
-      if (!exists) {
-        return { 
-          data: null, 
-          error: { 
-            message: 'EMAIL_NOT_FOUND'
-          } 
-        };
-      }
+      const { confirmed } = await response.json();
 
+      // F-049-04: The API now returns { confirmed: false } for both
+      // non-existent and unconfirmed accounts (enumeration-safe).
+      // Only confirmed accounts can proceed to sign in.
       if (!confirmed) {
         return { 
           data: null, 
           error: { 
-            message: 'EMAIL_NOT_CONFIRMED'
+            message: 'EMAIL_NOT_FOUND'
           } 
         };
       }

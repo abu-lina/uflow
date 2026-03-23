@@ -1,7 +1,7 @@
 ---
-ID: 049
-Origin: 049
-UUID: b7e4a92c
+ID: 49
+Origin: 49
+UUID: 7dfe4b10
 Status: Active
 ---
 
@@ -9,26 +9,23 @@ Status: Active
 
 ## Summary
 
-These validations could not be executed prior to the v0.8.10 commit because they require the application to be deployed to the UAT environment (live Nginx + Next.js container). The automated test suite covers the exact bug path and route contract; live execution confirms the full operator value story.
+Two items from Plan 049 UAT were deferred as non-blocking but require post-deploy follow-up:
 
-Release/version context: v0.8.10 (Plan 049 — JoinHalal Dry-Run Timeout Hardening)
+1. Interactive browser validation — code contract verified by QA automated tests, but interactive UX not tested pre-release
+2. `check-email-exists` local rate limit Map — pre-existing tech debt identified during code review (INFO finding I1); not introduced by Plan 049
+
+Release/version context: Plan 049, target v0.8.16.
 
 ## Open Actions
 
-| Item | Owner | Trigger/Due | Evidence to close | Status |
+| Item | Owner | Trigger/Due | Evidence to Close | Status |
 |---|---|---|---|---|
-| DF-1: Live browser UAT validation — navigate to `/dashboard/import` on UAT, run dry-run with `limit=10`, confirm: (a) on success: `timing.totalMs > 0` visible in devtools response; (b) on timeout: response body is `{ error: 'Dry-run timed out', detail: '...90s...' }` with status 504 — NOT opaque Cloudflare/Nginx 504 | DevOps | First UAT deployment of v0.8.10 | Browser devtools screenshot or logged response; 504 body confirmed if timeout occurs | Open |
-| DF-2: Timing baseline recorded on UAT — compare `timing.totalMs` for `limit=10` to Analysis 049 baseline (~6.5s); note if significantly higher | DevOps | First UAT deployment of v0.8.10 | `timing.totalMs` value logged in deployment session notes | Open |
-
-## Rollback Trigger (DF-1)
-
-If live UAT yields **opaque Cloudflare/Nginx 504** (not app-owned `{ error: 'Dry-run timed out' }`) on two consecutive runs:
-- Roll back to v0.8.8 immediately
-- Escalate to Planner (SAME-DAY severity)
-- Open a new plan scope to investigate
+| Browser validation: confirmed-user login via `/login`; unconfirmed-user login; confirmed-user forgot-password via `/forgot-password`; resend confirmation via login modal / saved page | QA Lead | Within 24h of production deploy of v0.8.16 | Manual test notes or recording confirming expected UX flows and messaging | Open |
+| `check-email-exists` local rate limit Map → migrate to shared `checkRateLimit()` from `@/lib/rate-limit` | Implementer | Next sprint (non-blocking) | PR updating `src/app/api/check-email-exists/route.ts` to use shared utility; tests passing | Open |
+| Add `ADMIN_DEBUG_KEY` (and optionally `UAT_ADMIN_DEBUG_KEY`) to GitHub repository secrets | Ops | Before first deploy of v0.8.16 | Confirmed in GitHub repo Settings → Secrets | Open |
 
 ## Changelog
 
 | Date (UTC) | Agent | Change |
 |---|---|---|
-| 2026-03-22T11:45Z | devops | Created tracker from deferred UAT validations (UAT doc, Scenarios 5 + Performance Timing Gate) |
+| 2026-03-23T00:00Z | devops | Created tracker from UAT deferred validations and Code Review INFO finding I1 |
