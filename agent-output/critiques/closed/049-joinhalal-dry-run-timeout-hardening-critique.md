@@ -2,7 +2,7 @@
 ID: 049
 Origin: 049
 UUID: b7e4a92c
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique 049 — JoinHalal Dry-Run Timeout Hardening
@@ -14,10 +14,11 @@ Status: OPEN
 
 ## Changelog
 
-| Date (UTC) | Handoff | Request | Summary |
-|---|---|---|---|
-| 2026-03-20T19:28Z | Planner → Critic | Initial review of Plan 049 | First read; findings documented below |
-| 2026-03-20T19:30Z | Critic self-update | M-1 addressed by planner | M-1 resolved; verdict finalized as APPROVED |
+| Date (UTC)        | Handoff            | Request                    | Summary                                     |
+| ----------------- | ------------------ | -------------------------- | ------------------------------------------- |
+| 2026-03-20T19:28Z | Planner → Critic   | Initial review of Plan 049 | First read; findings documented below       |
+| 2026-03-20T19:30Z | Critic self-update | M-1 addressed by planner   | M-1 resolved; verdict finalized as APPROVED |
+| 2026-03-23T10:01Z | process-improvement | Close critique | Closed after release; Status: Resolved |
 
 ---
 
@@ -69,10 +70,10 @@ The scope is appropriately narrow. The plan explicitly defers asynchronous job o
 
 ## Technical Debt Risks
 
-| Risk | Assessment |
-|---|---|
-| Nginx timeout increase without route guard | Plan explicitly couples M2 (infra timeout) with M3 (route guardrails). Addresses the "hide but not solve" anti-pattern. **No debt.** |
-| Timing telemetry added to response contract | Additive (optional `timing` field on `DryRunResult`). Existing consumers ignore unknown fields. **Minimal debt.** |
+| Risk                                            | Assessment                                                                                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Nginx timeout increase without route guard      | Plan explicitly couples M2 (infra timeout) with M3 (route guardrails). Addresses the "hide but not solve" anti-pattern. **No debt.**       |
+| Timing telemetry added to response contract     | Additive (optional `timing` field on `DryRunResult`). Existing consumers ignore unknown fields. **Minimal debt.**                          |
 | Timeout budget chosen without Supabase baseline | Acknowledged in M1 acceptance criteria with an explicit allowed deferral if Supabase timing can't be captured. **Managed risk, not debt.** |
 
 ---
@@ -91,7 +92,7 @@ The scope is appropriately narrow. The plan explicitly defers asynchronous job o
 
 ### LOW — L-1: Roadmap tracker is stale (shows v0.8.5 as latest; v0.8.6–v0.8.8 have shipped)
 
-**Status**: OPEN
+**Status**: RESOLVED
 
 **Issue**: The Active Release Tracker in `agent-output/roadmap/product-roadmap.md` shows "v0.8.5 released successfully" as the latest entry. Three more releases (v0.8.6, v0.8.7, v0.8.8) have shipped since then. Plan 049 targets the next patch after v0.8.8 — the roadmap won't reflect this accurately until it is updated.
 
@@ -101,7 +102,7 @@ The scope is appropriately narrow. The plan explicitly defers asynchronous job o
 
 ### LOW — L-2: Process file missing: `.github/chatmodes/planner.chatmode.md`
 
-**Status**: OPEN
+**Status**: RESOLVED
 
 **Issue**: Critic instructions reference `.github/chatmodes/planner.chatmode.md` for planner constraint validation. This file does not exist in the workspace.
 
@@ -156,7 +157,7 @@ The plan is ready for implementation.
 
 ## Revision History
 
-| Revision | Date | Findings Addressed | New Findings | Status Changes |
-|---|---|---|---|---|
-| Initial | 2026-03-20T19:28Z | N/A | M-1 (MEDIUM), L-1 (LOW), L-2 (LOW) | Initial review |
-| Revision 1 | 2026-03-20T19:30Z | M-1 ADDRESSED (Cloudflare 100s constraint added to plan Context) | None | M-1: OPEN → ADDRESSED |
+| Revision   | Date              | Findings Addressed                                               | New Findings                       | Status Changes        |
+| ---------- | ----------------- | ---------------------------------------------------------------- | ---------------------------------- | --------------------- |
+| Initial    | 2026-03-20T19:28Z | N/A                                                              | M-1 (MEDIUM), L-1 (LOW), L-2 (LOW) | Initial review        |
+| Revision 1 | 2026-03-20T19:30Z | M-1 ADDRESSED (Cloudflare 100s constraint added to plan Context) | None                               | M-1: OPEN → ADDRESSED |

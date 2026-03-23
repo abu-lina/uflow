@@ -22,7 +22,7 @@ tools:
 model: Claude Opus 4.5
 handoffs:
   - label: Request Analysis
-    agent: Analyst
+    agent: analyst
     prompt: I've encountered technical unknowns during implementation. Please investigate.
     send: false
   - label: Request Plan Clarification
@@ -171,16 +171,13 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 npm install --package-lock-only
 ```
 
-  Then verify both files show the same version:
+Then verify both files show the same version:
 
 ```
 grep '"version"' package-lock.json | head -2
 ```
 
-  Do NOT hand off to Code Review or QA without this step completed and verified. Failure to do this causes a guaranteed QA blocking finding.
-14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly.
-15. Retrieve/store memory.
-16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
+Do NOT hand off to Code Review or QA without this step completed and verified. Failure to do this causes a guaranteed QA blocking finding. 14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly. 15. Retrieve/store memory. 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
 ### Dependency Override Guardrails (MANDATORY when applicable)
 
@@ -316,6 +313,12 @@ If the caller is intentionally deferred (rare):
 
 - Document the deferral explicitly in the Implementation doc (owner + trigger + evidence to close).
 - Do NOT claim the milestone is complete unless the plan explicitly allows deferral.
+
+### API Route Coverage Gate (MANDATORY when applicable)
+
+If the plan adds or modifies a Next.js route handler (`src/app/api/**/route.ts`), the TDD Compliance table or verification section MUST include at least one route-level test row covering the route contract (status, body shape, timeout/error contract, or equivalent).
+
+If route-level automated coverage is not practical, document the exception explicitly with rationale, owner, and follow-up gate.
 
 ### Local Verification Gate (MANDATORY when applicable)
 

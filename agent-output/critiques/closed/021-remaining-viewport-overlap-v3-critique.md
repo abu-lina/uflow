@@ -2,7 +2,7 @@
 ID: 21
 Origin: 21
 UUID: c4d82e6f
-Status: OPEN
+Status: Resolved
 ---
 
 # 021 — Remaining Viewport Overlap (Onboarding + City-Selection) — Plan Critique
@@ -12,6 +12,7 @@ Status: OPEN
 | Date | Handoff | Request | Summary |
 |------|---------|---------|---------|
 | 2026-02-24T18:30Z | Planner → Critic | Review Plan 021 for approval | Initial critique |
+| 2026-03-23T10:01Z | process-improvement | Close critique | Closed after release; Status: Resolved |
 
 ## Artifact & Analysis
 
@@ -137,7 +138,7 @@ The plan does not introduce new patterns; it completes the pattern established i
 
 #### M-001: Implicit Dependency on SSR `mobileUiMode` Initial Value
 - **Severity**: MEDIUM
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Plan section "Risks and Mitigations" (first risk)
 - **Description**: The plan mentions hydration layout shift when the slot expands from 0 → 128px "after mount." This implies SSR renders `data-mobile-ui="none"` initially, and the client-side hydration may set a different value. The plan relies on the transition to smooth this, but does not clarify what the SSR initial value actually is.
 - **Impact**: If the SSR value is not `"none"`, the transition mitigation may be unnecessary (or may work in reverse).
@@ -148,7 +149,7 @@ The plan does not introduce new patterns; it completes the pattern established i
 
 #### L-001: No Explicit Regression Test for Desktop Layout
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Milestone 3 (Testing Strategy)
 - **Description**: The plan focuses on iPhone SE Safari verification but does not explicitly mention desktop regression testing. The slot collapse could theoretically affect desktop layout if `data-mobile-ui="none"` is set on desktop.
 - **Impact**: Unlikely regression — the bottom slot is already hidden on desktop via other mechanisms, but worth a sanity check.

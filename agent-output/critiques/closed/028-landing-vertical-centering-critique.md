@@ -2,7 +2,7 @@
 ID: 028
 Origin: 028
 UUID: c4a9d2f1
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique — Plan 028: Landing Page Vertical Centering (Mobile)
@@ -17,6 +17,7 @@ Status: OPEN
 | Date (UTC) | Handoff | Request | Summary |
 |---|---|---|---|
 | 2026-02-28T18:00Z | Orchestrator → Critic | Critique Plan 028 | Initial review — APPROVED |
+| 2026-03-23T10:01Z | process-improvement | Close critique | Closed after release; Status: Resolved |
 
 ---
 
@@ -87,7 +88,7 @@ Key strengths:
 ### F1: Open Question on Release Target
 
 - **Severity**: LOW
-- **Status**: OPEN (non-blocking)
+- **Status**: RESOLVED (non-blocking)
 - **Location**: Open Questions section
 - **Description**: Plan notes `OPEN QUESTION (Release Target)` asking whether v0.6.10 is the correct target.
 - **Impact**: Coordination needed with roadmap owner; does not block implementation.
@@ -97,7 +98,7 @@ Key strengths:
 
 ## Unresolved Open Questions
 
-1. **Release Target (LOW)**: Plan asks for confirmation that v0.6.10 is the intended release bundle.
+None — release target confirmed during execution.
 
 **Question for user**: Do you want to approve for implementation with this open question, or should it be resolved first? (Recommendation: proceed — answer can be provided at release time.)
 

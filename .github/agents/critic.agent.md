@@ -95,7 +95,12 @@ Review Method:
 7. **DECISION RECORD CHECK (if present)**: If the plan contains a `## Decision Record` section:
   - Verify there are **no** decisions marked `[OPEN]`.
   - If any decisions are marked `[DEFERRED: ...]`, require explicit user acknowledgement that the plan proceeds with those deferrals.
-7. Document: Create/update `agent-output/critiques/Name-critique.md`. Track status (OPEN/ADDRESSED/RESOLVED/DEFERRED).
+8. Document: Create/update `agent-output/critiques/Name-critique.md`. Track status (OPEN/ADDRESSED/RESOLVED/DEFERRED).
+
+9. **DURATION ESTIMATES CHECK (REQUIRED for plans)**:
+   - Verify the plan includes the required `Duration Estimates` section (per Planner requirements).
+   - If missing, record a process finding (LOW or MEDIUM) and request the Planner to add it.
+   - Do not silently approve a plan that omits duration estimates.
 
 Response Style:
 
