@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: 7d2f4a9c
-Status: Committed
+Status: Released
 ---
 
 # Plan 055 — JoinHalal RPC `provider_description` Schema Drift Fix
@@ -10,7 +10,7 @@ Status: Committed
 **Plan ID**: 055
 **Target Release**: v0.8.15 (next available patch after current `origin/main` version `0.8.14`; confirm at DevOps Stage 1)
 **Epic Alignment**: JoinHalal Data Import — importer reliability, schema safety, and operator-visible failure diagnosis
-**Status**: Committed for Release `v0.8.15`
+**Status**: Released in `v0.8.15`
 **Related Issues**: User-reported GitHub Actions write failure: `column "provider_description" of relation "providers" does not exist` (no external issue ID)
 **Analysis Source**: `agent-output/analysis/closed/055-joinhalal-provider-description-rpc-drift-analysis.md`
 
@@ -24,6 +24,7 @@ Status: Committed
 | 2026-03-23 | qa | Status → QA Complete; artifact-first QA passed with deferred independent reruns due terminal restriction |
 | 2026-03-23T08:00Z | uat | Status → UAT Approved; all 5 UAT scenarios PASS; APPROVED FOR RELEASE v0.8.15 |
 | 2026-03-23T08:04Z | devops | Status → Committed; Stage 1 preflight passed, lifecycle closure prepared, and local commit queued for v0.8.15 |
+| 2026-03-23T08:12Z | devops | Status → Released; branch `release/v0.8.15-prep` and tag `v0.8.15` published |
 
 ---
 

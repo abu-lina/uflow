@@ -17,15 +17,15 @@ Status: Active
 
 ## Release Summary
 
-| Field       | Value                                                    |
-| ----------- | -------------------------------------------------------- |
-| Version     | v0.8.13                                                  |
-| Type        | Patch                                                    |
-| Environment | Production (ummahflow.com)                               |
-| Epic        | Provider discovery data integrity and import reliability |
-| Plan ID     | 053                                                      |
-| Date        | 2026-03-22                                               |
-| Branch      | session/047-joinhalal-data-import                        |
+| Field | Value |
+| --- | --- |
+| Version | v0.8.13 |
+| Type | Patch |
+| Environment | Production (ummahflow.com) |
+| Epic | Provider discovery data integrity and import reliability |
+| Plan ID | 053 |
+| Date | 2026-03-22 |
+| Branch | session/047-joinhalal-data-import |
 
 ## Pre-Release Verification
 

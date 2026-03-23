@@ -13,9 +13,9 @@ Plan 054 is code-complete and ready for release as v0.8.14, but one staging vali
 
 ## Open Actions
 
-| Item                                                                           | Owner             | Trigger/Due                                                                           | Evidence to close                                                                                                                                                                                              | Status |
-| ------------------------------------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Staging write validation for corrected JoinHalal import (`--write --limit 10`) | DevOps / operator | Before first production promotion of v0.8.14; within 1 sprint if staging is available | Terminal output and DB evidence showing: migrations 063 and 064 present, process exits 0, at least 9 inserted rows with non-null `import_source_id`, and no bogus `provider_name='joinhalal'` listing-page row | Open   |
+| Item | Owner | Trigger/Due | Evidence to close | Status |
+| --- | --- | --- | --- | --- |
+| Staging write validation for corrected JoinHalal import (`--write --limit 10`) | DevOps / operator | Before first production promotion of v0.8.14; within 1 sprint if staging is available | Terminal output and DB evidence showing: migrations 063 and 064 present, process exits 0, at least 9 inserted rows with non-null `import_source_id`, and no bogus `provider_name='joinhalal'` listing-page row | Open |
 
 ## Notes
 
@@ -24,6 +24,6 @@ Plan 054 is code-complete and ready for release as v0.8.14, but one staging vali
 
 ## Changelog
 
-| Date (UTC)        | Agent  | Change                                                                                  |
-| ----------------- | ------ | --------------------------------------------------------------------------------------- |
+| Date (UTC) | Agent | Change |
+| --- | --- | --- |
 | 2026-03-22T23:07Z | devops | Created tracker from deferred staging validation requirement referenced by Plan 054 UAT |

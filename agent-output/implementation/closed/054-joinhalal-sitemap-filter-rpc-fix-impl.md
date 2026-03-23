@@ -2,7 +2,6 @@ ID: 054
 Origin: 054
 UUID: c4e81a2f
 Status: Released
-
 ---
 
 # Implementation 054 — JoinHalal Sitemap Non-Detail Filter + RPC Write-Path Fix
@@ -17,11 +16,11 @@ Status: Released
 
 ## Changelog
 
-| Date (UTC)        | Handoff               | Request            | Summary                                                                           |
-| ----------------- | --------------------- | ------------------ | --------------------------------------------------------------------------------- |
-| 2026-03-22T22:50Z | Planner → Implementer | Implement Plan 054 | Initial implementation complete                                                   |
-| 2026-03-22T23:07Z | DevOps → Stage 1      | Local Commit       | Implementation artifact moved to terminal Committed state for release preparation |
-| 2026-03-22T23:14Z | DevOps → Stage 2      | Release            | Implementation artifact marked Released after `v0.8.14` tag and branch push       |
+| Date (UTC)         | Handoff              | Request                        | Summary                                    |
+| ------------------ | -------------------- | ------------------------------ | ------------------------------------------ |
+| 2026-03-22T22:50Z  | Planner → Implementer | Implement Plan 054             | Initial implementation complete            |
+| 2026-03-22T23:07Z  | DevOps → Stage 1     | Local Commit                   | Implementation artifact moved to terminal Committed state for release preparation |
+| 2026-03-22T23:14Z  | DevOps → Stage 2     | Release                        | Implementation artifact marked Released after `v0.8.14` tag and branch push |
 
 ## Implementation Summary
 
@@ -43,23 +42,23 @@ Plan 054 fixes two root causes behind the "limit-10 import creates only one entr
 
 ## Files Modified
 
-| Path                                           | Changes                                                                                     | Lines |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------- | ----- |
-| `src/utils/joinhalal-parser.ts`                | Added `isJoinHalalDetailUrl()` export; integrated filter into `extractUrlsFromSitemapXml()` | +27   |
-| `scripts/import-joinhalal.ts`                  | Added `process.exit(1)` when `stats.failed > 0` after write report                          | +5    |
-| `src/__tests__/utils/joinhalal-parser.test.ts` | Added import of `isJoinHalalDetailUrl`; 7 new tests for filter and extraction filtering     | +46   |
-| `package.json`                                 | Version 0.8.13 → 0.8.14                                                                     | 1     |
-| `package-lock.json`                            | Lockfile aligned to 0.8.14                                                                  | 2     |
-| `CHANGELOG.md`                                 | New [0.8.14] section with both fixes                                                        | +10   |
-| `agent-output/planning/053-open-actions.md`    | Added Plan 054 reference and validation runbook                                             | +22   |
+| Path | Changes | Lines |
+| --- | --- | --- |
+| `src/utils/joinhalal-parser.ts` | Added `isJoinHalalDetailUrl()` export; integrated filter into `extractUrlsFromSitemapXml()` | +27 |
+| `scripts/import-joinhalal.ts` | Added `process.exit(1)` when `stats.failed > 0` after write report | +5 |
+| `src/__tests__/utils/joinhalal-parser.test.ts` | Added import of `isJoinHalalDetailUrl`; 7 new tests for filter and extraction filtering | +46 |
+| `package.json` | Version 0.8.13 → 0.8.14 | 1 |
+| `package-lock.json` | Lockfile aligned to 0.8.14 | 2 |
+| `CHANGELOG.md` | New [0.8.14] section with both fixes | +10 |
+| `agent-output/planning/053-open-actions.md` | Added Plan 054 reference and validation runbook | +22 |
 
 ## Files Created
 
-| Path                                                                       | Purpose                                |
-| -------------------------------------------------------------------------- | -------------------------------------- |
-| `agent-output/implementation/054-joinhalal-sitemap-filter-rpc-fix-impl.md` | This document                          |
-| `agent-output/critiques/054-joinhalal-sitemap-filter-rpc-fix-critique.md`  | Critique (created during Critic phase) |
-| `agent-output/planning/054-joinhalal-sitemap-filter-rpc-fix.md`            | Plan (created during Planner phase)    |
+| Path | Purpose |
+| --- | --- |
+| `agent-output/implementation/054-joinhalal-sitemap-filter-rpc-fix-impl.md` | This document |
+| `agent-output/critiques/054-joinhalal-sitemap-filter-rpc-fix-critique.md` | Critique (created during Critic phase) |
+| `agent-output/planning/054-joinhalal-sitemap-filter-rpc-fix.md` | Plan (created during Planner phase) |
 
 ## Code Quality Validation
 
@@ -70,31 +69,31 @@ Plan 054 fixes two root causes behind the "limit-10 import creates only one entr
 
 ## Value Statement Validation
 
-| Original Value Statement                                   | Implementation Delivers                                                                                                                                  |
-| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Original Value Statement | Implementation Delivers |
+| --- | --- |
 | A limit-10 import run produces 10 real provider candidates | `extractUrlsFromSitemapXml()` now filters via `isJoinHalalDetailUrl()` before the limit slice — both dry-run and write paths use the same shared utility |
-| Write-path failures are surfaced clearly                   | `process.exit(1)` when `stats.failed > 0` after write report — stderr logging remains                                                                    |
+| Write-path failures are surfaced clearly | `process.exit(1)` when `stats.failed > 0` after write report — stderr logging remains |
 
 ## TDD Compliance
 
-| Function/Class                                | Test File                       | Test Written First?             | Failure Verified? | Failure Reason                                                                | Pass After Impl? |
-| --------------------------------------------- | ------------------------------- | ------------------------------- | ----------------- | ----------------------------------------------------------------------------- | ---------------- |
-| `isJoinHalalDetailUrl()`                      | `joinhalal-parser.test.ts`      | ✅ Yes                          | ✅ Yes            | TypeError: isJoinHalalDetailUrl is not a function                             | ✅ Yes           |
-| `extractUrlsFromSitemapXml()` filter behavior | `joinhalal-parser.test.ts`      | ✅ Yes                          | ✅ Yes            | Expected 2, received 4 (unfiltered)                                           | ✅ Yes           |
-| `process.exit(1)` on failed batches           | N/A (CLI script behavioral fix) | ⚠️ Post-fix (bugfix regression) | ✅ Yes            | Pre-fix: process exits 0 despite failed batches (verified by code inspection) | ✅ Yes           |
+| Function/Class | Test File | Test Written First? | Failure Verified? | Failure Reason | Pass After Impl? |
+| --- | --- | --- | --- | --- | --- |
+| `isJoinHalalDetailUrl()` | `joinhalal-parser.test.ts` | ✅ Yes | ✅ Yes | TypeError: isJoinHalalDetailUrl is not a function | ✅ Yes |
+| `extractUrlsFromSitemapXml()` filter behavior | `joinhalal-parser.test.ts` | ✅ Yes | ✅ Yes | Expected 2, received 4 (unfiltered) | ✅ Yes |
+| `process.exit(1)` on failed batches | N/A (CLI script behavioral fix) | ⚠️ Post-fix (bugfix regression) | ✅ Yes | Pre-fix: process exits 0 despite failed batches (verified by code inspection) | ✅ Yes |
 
 ## Test Coverage
 
 ### Unit Tests (7 new)
 
-| Test                                                                     | File                       | Description                                                                |
-| ------------------------------------------------------------------------ | -------------------------- | -------------------------------------------------------------------------- |
-| `isJoinHalalDetailUrl` — accepts standard detail page                    | `joinhalal-parser.test.ts` | Positive match for `/locations/restaurant/name-id/`                        |
-| `isJoinHalalDetailUrl` — accepts different category                      | `joinhalal-parser.test.ts` | Positive match for `/locations/food-truck/name-id/`                        |
-| `isJoinHalalDetailUrl` — [pre-fix FAILS] rejects /locations/             | `joinhalal-parser.test.ts` | Named per bugfix naming convention                                         |
-| `isJoinHalalDetailUrl` — rejects category listing                        | `joinhalal-parser.test.ts` | Rejects `/locations/restaurant/` (2 segments)                              |
-| `isJoinHalalDetailUrl` — rejects non-location URLs                       | `joinhalal-parser.test.ts` | Rejects `/about/`, `/`                                                     |
-| `isJoinHalalDetailUrl` — rejects empty input                             | `joinhalal-parser.test.ts` | Empty string returns false                                                 |
+| Test | File | Description |
+| --- | --- | --- |
+| `isJoinHalalDetailUrl` — accepts standard detail page | `joinhalal-parser.test.ts` | Positive match for `/locations/restaurant/name-id/` |
+| `isJoinHalalDetailUrl` — accepts different category | `joinhalal-parser.test.ts` | Positive match for `/locations/food-truck/name-id/` |
+| `isJoinHalalDetailUrl` — [pre-fix FAILS] rejects /locations/ | `joinhalal-parser.test.ts` | Named per bugfix naming convention |
+| `isJoinHalalDetailUrl` — rejects category listing | `joinhalal-parser.test.ts` | Rejects `/locations/restaurant/` (2 segments) |
+| `isJoinHalalDetailUrl` — rejects non-location URLs | `joinhalal-parser.test.ts` | Rejects `/about/`, `/` |
+| `isJoinHalalDetailUrl` — rejects empty input | `joinhalal-parser.test.ts` | Empty string returns false |
 | `extractUrlsFromSitemapXml` — [post-fix PASSES] excludes non-detail URLs | `joinhalal-parser.test.ts` | Integration: mixed XML with listing + detail URLs returns only detail URLs |
 
 ## Test Execution Results

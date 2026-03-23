@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: 7d2f4a9c
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: JoinHalal RPC `provider_description` Schema Drift Fix
@@ -17,6 +17,7 @@ Status: Committed
 | ---------- | ------------- | ----------------------------- | ------------------------------------------------------------------------------------------------ |
 | 2026-03-23T08:00Z | QA → UAT | Value delivery validation for Plan 055 | UAT Complete — implementation delivers stated value; write path fixed at DB boundary; 5/5 UAT scenarios PASS; APPROVED FOR RELEASE v0.8.15 |
 | 2026-03-23T08:04Z | DevOps | Stage 1 local commit | UAT artifact moved to terminal Committed state for local release commit; APPROVED FOR RELEASE verdict retained. |
+| 2026-03-23T08:12Z | DevOps | Stage 2 release | UAT artifact marked Released after `v0.8.15` tag and branch push. |
 
 ---
 

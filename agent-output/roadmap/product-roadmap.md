@@ -1,49 +1,50 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-03-22
+**Last Updated**: 2026-03-23
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.8.14
+**Current Version**: v0.8.15
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
 
-| Date & Time       | Change                                                             | Rationale                                                                                                                                                  |
-| ----------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-01-27 14:00  | Initial roadmap creation                                           | Established strategic direction based on "strengthening Ummah" outcome with focus on growth and community                                                  |
-| 2026-01-27 15:30  | Epic 2.1 implementation plan created (Plan 001), validation passed | Detailed technical plan delivers all 5 acceptance criteria, ready for Architect/Security review                                                            |
-| 2026-01-27 16:10  | Plan 001 revised for architecture gates                            | Implementation is gated by privacy-safe endorsements, unified role authority, and DB-side stable ranking                                                   |
-| 2026-02-21        | Plan 003 released (v0.2.0): Console errors bugfix                  | Fixed hydration mismatch + diagnosed CORS NXDOMAIN; zero rework, exemplary workflow execution                                                              |
-| 2026-02-21        | Process improvements implemented (PI 004)                          | Added duration estimates requirement (Planner) + remote divergence preflight (DevOps Stage 2)                                                              |
-| 2026-02-22        | Plan 001 released (v0.3.0): Provider Trust & Verification System   | Complete UI trust badges + endorsements, 109 tests passing, UAT approved, deployed to production                                                           |
-| 2026-02-22        | Plan 006 released (v0.3.1): Android Suggest Provider Form Bugfix   | Hotfix for Android UX regression; userToggledRef pattern prevents non-user focus triggers (Epic 3.1)                                                       |
-| 2026-02-22        | Process improvements implemented (PI 007)                          | Focus/scroll checklist, UUID inheritance, critique closure rules, UTC timestamps, tool capability updates                                                  |
-| 2026-02-22        | Plan 007 released (v0.4.0): Performance Improvements               | Bundle reduction 687kB→105kB (85%), tsvector search, GIN indexes; zero rejections, exceeded targets by 70%                                                 |
-| 2026-02-22        | Process improvements implemented (PI 008)                          | Schema verification gate for migrations + memory checkpoints at milestone boundaries (from Retro 007)                                                      |
-| 2026-02-22        | Plan 008 released (v0.4.1): Search Index Validation & Fallbacks    | GIN indexes proven <1ms, fallback-on-empty fixed, bounded queries; zero rework, PI feedback loop validated                                                 |
-| 2026-02-23        | Plan 010 released (v0.5.0): Next.js App Router Refactor            | P0+P1 safety/alignment: removed localhost calls, server-first Providers discovery, caching discipline                                                      |
-| 2026-02-23        | Process improvements implemented (PI 010)                          | Shell path quoting + commit message file guidance added to DevOps/QA instructions (from Retro 010)                                                         |
-| 2026-02-23        | Orphan sweep: 11 terminal docs moved to closed/                    | Cleaned deployment/implementation/code-review/uat domains per document lifecycle                                                                           |
-| 2026-02-23        | Plans 011+012 released (v0.6.0): Repository Structure Refactor     | Plan 011: placement rubric + folder READMEs; Plan 012: 30 root files moved; multi-plan bundle validated                                                    |
-| 2026-02-23        | Process improvements implemented (PI 014)                          | Code Review file-move checklist, QA path regression check, Planner release bundling scan, DevOps stage evidence (from Retro 013)                           |
-| 2026-02-23        | Plan 015 released (v0.6.1): MIUI PWA form rendering fix            | Unblocked Xiaomi/MIUI PWA users from blank recommend form via defensive viewport + layout containment fixes                                                |
-| 2026-02-23        | Process improvements identified (Retro 015)                        | Pending codification: design-review UAT for CSS fixes, automated-first QA for CSS, DevOps evidence template reuse, UTC timestamps, related-issues linking  |
-| 2026-03-02        | Plan 032 released: DIY Agent Memory System (tooling)               | Standalone tooling release — memory-extension-v0.1.0 replaces Flowbaby backend, eliminates daemon lock failures, local-first SQLite WAL                    |
-| 2026-03-03        | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                 |
-| 2026-03-07        | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1          |
-| 2026-03-07        | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence   |
-| 2026-03-08        | Plan 037 released (v0.7.2): npm dependency security remediation    | Eliminated all 10 npm vulnerabilities (8 high, 2 moderate) via package overrides; 0 vulnerabilities confirmed; zero application code changes               |
-| 2026-03-13        | Plans 039+040 released (v0.8.1): Provider outreach improvements    | Plan 039: personalized provider names in outreach emails; Plan 040: WhatsApp config. Bundled release. Retrospective 040 + ProcessImprovement 041 completed |
-| 2026-03-13        | Process improvements implemented (PI 041)                          | DevOps phase-start skill preflight, Stage 1 sequencing fixes, timestamp discipline mandate, UAT deferred-risk structured tracking (from Retro 040)         |
-| 2026-03-14        | Plan 042 released: Parallel Copilot Sessions (workflow-only)       | Operator protocol for parallel development workflows; no product version bump; 3 local commits pushed (f40d35e, bc4d0c2, 845ce10)                          |
-| 2026-03-18        | Plan 044 released (v0.8.2): Mobile footer overlay layer bugfix     | Fixed invisible tap interceptor blocking mobile footer interactions via z-index/pointer-events fixes                                                       |
-| 2026-03-18        | Process improvements implemented (PI 044)                          | Local UI verification gate pre-UAT, interaction-layer audit checklist, post-UAT delta protocol, invisible interceptor bug heuristic (from Retro 044)       |
-| 2026-03-18        | Orphan sweep: 4 terminal docs moved to closed/                     | Cleaned deployment (042, v0.8.2) and process-improvement (044 analysis + updates) per document lifecycle                                                   |
-| 2026-03-19 09:00  | Plan 045 released (v0.8.4): Providers category filter bugfix       | BUG-1: URL param now takes precedence over stale React context; BUG-2: non-DE/EN locale browse (Arabic/Turkish/Urdu/Pashto) fixed; debug log cleanup       |
-| 2026-03-19        | Process improvements implemented (PI 045)                          | Bugfix handoff completeness checklist + client-state precedence regression test pattern added to `.github/copilot-instructions.md` (from Retro 045)        |
-| 2026-03-19        | Roadmap updated with v0.8.4 and deferred open actions              | Post-release housekeeping: version tracking, deferred open actions surfaced as blocking items                                                              |
-| 2026-03-19        | Plan 046-OA-2 resolved: flatted HIGH vuln fixed in v0.8.5          | flatted 3.3.3→3.4.2 via package-lock.json update; `npm audit --audit-level=high` EXIT 0; 267 tests pass; released as v0.8.5                                |
-| 2026-03-22T20:36Z | Plan 053 released (v0.8.13): JoinHalal import integrity fixes      | Fixed multi-block vxconfig parsing, restored stable JoinHalal source IDs, and auto-created missing Speisen offers during import                            |
-| 2026-03-22T23:14Z | Plan 054 released (v0.8.14): JoinHalal sitemap filter + RPC exit   | Excluded listing pages from JoinHalal sitemap candidate sets and made write-path batch failures terminate non-zero                                         |
+| Date & Time      | Change                                                             | Rationale                                                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-27 14:00 | Initial roadmap creation                                           | Established strategic direction based on "strengthening Ummah" outcome with focus on growth and community                                                 |
+| 2026-01-27 15:30 | Epic 2.1 implementation plan created (Plan 001), validation passed | Detailed technical plan delivers all 5 acceptance criteria, ready for Architect/Security review                                                           |
+| 2026-01-27 16:10 | Plan 001 revised for architecture gates                            | Implementation is gated by privacy-safe endorsements, unified role authority, and DB-side stable ranking                                                  |
+| 2026-02-21       | Plan 003 released (v0.2.0): Console errors bugfix                  | Fixed hydration mismatch + diagnosed CORS NXDOMAIN; zero rework, exemplary workflow execution                                                             |
+| 2026-02-21       | Process improvements implemented (PI 004)                          | Added duration estimates requirement (Planner) + remote divergence preflight (DevOps Stage 2)                                                             |
+| 2026-02-22       | Plan 001 released (v0.3.0): Provider Trust & Verification System   | Complete UI trust badges + endorsements, 109 tests passing, UAT approved, deployed to production                                                          |
+| 2026-02-22       | Plan 006 released (v0.3.1): Android Suggest Provider Form Bugfix   | Hotfix for Android UX regression; userToggledRef pattern prevents non-user focus triggers (Epic 3.1)                                                      |
+| 2026-02-22       | Process improvements implemented (PI 007)                          | Focus/scroll checklist, UUID inheritance, critique closure rules, UTC timestamps, tool capability updates                                                 |
+| 2026-02-22       | Plan 007 released (v0.4.0): Performance Improvements               | Bundle reduction 687kB→105kB (85%), tsvector search, GIN indexes; zero rejections, exceeded targets by 70%                                                |
+| 2026-02-22       | Process improvements implemented (PI 008)                          | Schema verification gate for migrations + memory checkpoints at milestone boundaries (from Retro 007)                                                     |
+| 2026-02-22       | Plan 008 released (v0.4.1): Search Index Validation & Fallbacks    | GIN indexes proven <1ms, fallback-on-empty fixed, bounded queries; zero rework, PI feedback loop validated                                                |
+| 2026-02-23       | Plan 010 released (v0.5.0): Next.js App Router Refactor            | P0+P1 safety/alignment: removed localhost calls, server-first Providers discovery, caching discipline                                                     |
+| 2026-02-23       | Process improvements implemented (PI 010)                          | Shell path quoting + commit message file guidance added to DevOps/QA instructions (from Retro 010)                                                        |
+| 2026-02-23       | Orphan sweep: 11 terminal docs moved to closed/                    | Cleaned deployment/implementation/code-review/uat domains per document lifecycle                                                                          |
+| 2026-02-23       | Plans 011+012 released (v0.6.0): Repository Structure Refactor     | Plan 011: placement rubric + folder READMEs; Plan 012: 30 root files moved; multi-plan bundle validated                                                   |
+| 2026-02-23       | Process improvements implemented (PI 014)                          | Code Review file-move checklist, QA path regression check, Planner release bundling scan, DevOps stage evidence (from Retro 013)                          |
+| 2026-02-23       | Plan 015 released (v0.6.1): MIUI PWA form rendering fix            | Unblocked Xiaomi/MIUI PWA users from blank recommend form via defensive viewport + layout containment fixes                                               |
+| 2026-02-23       | Process improvements identified (Retro 015)                        | Pending codification: design-review UAT for CSS fixes, automated-first QA for CSS, DevOps evidence template reuse, UTC timestamps, related-issues linking |
+| 2026-03-02       | Plan 032 released: DIY Agent Memory System (tooling)               | Standalone tooling release — memory-extension-v0.1.0 replaces Flowbaby backend, eliminates daemon lock failures, local-first SQLite WAL                   |
+| 2026-03-03       | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                |
+| 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
+| 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |
+| 2026-03-08       | Plan 037 released (v0.7.2): npm dependency security remediation    | Eliminated all 10 npm vulnerabilities (8 high, 2 moderate) via package overrides; 0 vulnerabilities confirmed; zero application code changes               |
+| 2026-03-13       | Plans 039+040 released (v0.8.1): Provider outreach improvements    | Plan 039: personalized provider names in outreach emails; Plan 040: WhatsApp config. Bundled release. Retrospective 040 + ProcessImprovement 041 completed |
+| 2026-03-13       | Process improvements implemented (PI 041)                          | DevOps phase-start skill preflight, Stage 1 sequencing fixes, timestamp discipline mandate, UAT deferred-risk structured tracking (from Retro 040)          |
+| 2026-03-14       | Plan 042 released: Parallel Copilot Sessions (workflow-only)       | Operator protocol for parallel development workflows; no product version bump; 3 local commits pushed (f40d35e, bc4d0c2, 845ce10)                           |
+| 2026-03-18       | Plan 044 released (v0.8.2): Mobile footer overlay layer bugfix     | Fixed invisible tap interceptor blocking mobile footer interactions via z-index/pointer-events fixes                                                        |
+| 2026-03-18       | Process improvements implemented (PI 044)                          | Local UI verification gate pre-UAT, interaction-layer audit checklist, post-UAT delta protocol, invisible interceptor bug heuristic (from Retro 044)        |
+| 2026-03-18       | Orphan sweep: 4 terminal docs moved to closed/                     | Cleaned deployment (042, v0.8.2) and process-improvement (044 analysis + updates) per document lifecycle                                                    |
+| 2026-03-19 09:00 | Plan 045 released (v0.8.4): Providers category filter bugfix       | BUG-1: URL param now takes precedence over stale React context; BUG-2: non-DE/EN locale browse (Arabic/Turkish/Urdu/Pashto) fixed; debug log cleanup        |
+| 2026-03-19       | Process improvements implemented (PI 045)                          | Bugfix handoff completeness checklist + client-state precedence regression test pattern added to `.github/copilot-instructions.md` (from Retro 045)         |
+| 2026-03-19       | Roadmap updated with v0.8.4 and deferred open actions              | Post-release housekeeping: version tracking, deferred open actions surfaced as blocking items                                                                |
+| 2026-03-19       | Plan 046-OA-2 resolved: flatted HIGH vuln fixed in v0.8.5          | flatted 3.3.3→3.4.2 via package-lock.json update; `npm audit --audit-level=high` EXIT 0; 267 tests pass; released as v0.8.5                                  |
+| 2026-03-22T20:36Z | Plan 053 released (v0.8.13): JoinHalal import integrity fixes      | Fixed multi-block vxconfig parsing, restored stable JoinHalal source IDs, and auto-created missing Speisen offers during import                              |
+| 2026-03-22T23:14Z | Plan 054 released (v0.8.14): JoinHalal sitemap filter + RPC exit   | Excluded listing pages from JoinHalal sitemap candidate sets and made write-path batch failures terminate non-zero                                           |
+| 2026-03-23T08:12Z | Plan 055 released (v0.8.15): JoinHalal RPC schema drift fix        | Removed `provider_description` from the JoinHalal upsert RPC, added fail-fast RPC preflight, and aligned staging runbooks with migration 064                 |
 
 ---
 
@@ -66,7 +67,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.8.14 released successfully (2026-03-22) — ready for new planning_
+_v0.8.15 released successfully (2026-03-23) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -75,45 +76,47 @@ _v0.8.14 released successfully (2026-03-22) — ready for new planning_
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
 - **045-OA-3**: E2E browser tests for category filter — direct URL nav + SPA nav + back-button (Owner: QA/Implementer — next sprint)
 - **053-OA-1**: Live staging import validation for corrected JoinHalal parser + offer auto-creation before first corrected production import run (Owner: DevOps / Operator — evidence in `agent-output/planning/053-open-actions.md`)
-- **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.14 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
+- **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
+- **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
 - **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
 
 ✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
 
 ### Previous Releases
 
-| Version | Date       | Plans Included                                               | Status   |
-| ------- | ---------- | ------------------------------------------------------------ | -------- |
+| Version | Date       | Plans Included                                       | Status   |
+| ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.8.15 | 2026-03-23 | Plan 055 (JoinHalal RPC schema drift fix)            | Released |
 | v0.8.14 | 2026-03-22 | Plan 054 (JoinHalal sitemap filter + RPC failure visibility) | Released |
-| v0.8.13 | 2026-03-22 | Plan 053 (JoinHalal vxconfig fix + offer auto-create)        | Released |
-| v0.8.5  | 2026-03-19 | 045-OA-2 (flatted HIGH vuln fix)                             | Released |
-| v0.8.4  | 2026-03-19 | Plan 045 (Providers category filter bugfix)                  | Released |
-| v0.8.2  | 2026-03-18 | Plan 044 (Mobile footer overlay layer bugfix)                | Released |
-| v0.8.1  | 2026-03-13 | Plans 039+040 (Provider outreach improvements)               | Released |
-| v0.8.0  | 2026-03-13 | Plan 038 (Provider owner outreach & claim system)            | Released |
-| v0.7.2  | 2026-03-08 | Plan 037 (npm dependency security remediation)               | Released |
-| v0.7.1  | 2026-03-07 | Plan 036 (Analytics activation + event instrumentation)      | Released |
-| v0.7.0  | 2026-03-07 | Plan 035 (Growth: indexable city pages + Plausible)          | Released |
-| v0.6.12 | 2026-03-07 | Plan 034 (Provider image load performance fix)               | Released |
-| v0.6.11 | 2026-03-07 | Plan 033 (Performance optimization guardrails)               | Released |
-| v0.6.10 | 2026-03-01 | Plans 028+029 (Mobile onboarding vertical centering)         | Released |
-| v0.6.9  | 2026-02-24 | Plan 022 (Blurred header overlay on onboarding)              | Released |
-| v0.6.8  | 2026-02-25 | Plan 024 (Supply chain hardening)                            | Released |
-| v0.6.7  | 2026-02-24 | Plan 022 (Blurred header overlay - duplicate tag)            | Released |
-| v0.6.6  | 2026-02-24 | Plan 021 (iPhone Safari viewport overlap v3)                 | Released |
-| v0.6.5  | 2026-02-24 | Plan 020 (iPhone Safari viewport overlap v2)                 | Released |
-| v0.6.4  | 2026-02-23 | Plan 019 (iPhone Safari viewport overlap)                    | Released |
-| v0.6.3  | 2026-02-23 | Hotfix (Early access scroll + manifest icon)                 | Released |
-| v0.6.2  | 2026-02-23 | Plan 017 (Early access notification module)                  | Released |
-| v0.6.1  | 2026-02-23 | Plan 015 (PWA MIUI form rendering fix)                       | Released |
-| v0.6.0  | 2026-02-23 | Plans 011+012 (Repository Structure Refactor)                | Released |
-| v0.5.0  | 2026-02-23 | Plan 010 (Next.js App Router Refactor)                       | Released |
-| v0.4.1  | 2026-02-22 | Plan 008 (Search Index Validation & Fallback Guards)         | Released |
-| v0.4.0  | 2026-02-22 | Plan 007 (Performance Improvements)                          | Released |
-| v0.3.1  | 2026-02-22 | Plan 006 (Android Suggest Provider Form Bugfix)              | Released |
-| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System)              | Released |
-| v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix)              | Released |
-| v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access                | Released |
+| v0.8.13 | 2026-03-22 | Plan 053 (JoinHalal vxconfig fix + offer auto-create) | Released |
+| v0.8.5  | 2026-03-19 | 045-OA-2 (flatted HIGH vuln fix)                    | Released |
+| v0.8.4  | 2026-03-19 | Plan 045 (Providers category filter bugfix)          | Released |
+| v0.8.2  | 2026-03-18 | Plan 044 (Mobile footer overlay layer bugfix)       | Released |
+| v0.8.1  | 2026-03-13 | Plans 039+040 (Provider outreach improvements)      | Released |
+| v0.8.0  | 2026-03-13 | Plan 038 (Provider owner outreach & claim system)    | Released |
+| v0.7.2  | 2026-03-08 | Plan 037 (npm dependency security remediation)       | Released |
+| v0.7.1  | 2026-03-07 | Plan 036 (Analytics activation + event instrumentation) | Released |
+| v0.7.0  | 2026-03-07 | Plan 035 (Growth: indexable city pages + Plausible)  | Released |
+| v0.6.12 | 2026-03-07 | Plan 034 (Provider image load performance fix)       | Released |
+| v0.6.11 | 2026-03-07 | Plan 033 (Performance optimization guardrails)       | Released |
+| v0.6.10 | 2026-03-01 | Plans 028+029 (Mobile onboarding vertical centering) | Released |
+| v0.6.9  | 2026-02-24 | Plan 022 (Blurred header overlay on onboarding)      | Released |
+| v0.6.8  | 2026-02-25 | Plan 024 (Supply chain hardening)                    | Released |
+| v0.6.7  | 2026-02-24 | Plan 022 (Blurred header overlay - duplicate tag)    | Released |
+| v0.6.6  | 2026-02-24 | Plan 021 (iPhone Safari viewport overlap v3)         | Released |
+| v0.6.5  | 2026-02-24 | Plan 020 (iPhone Safari viewport overlap v2)         | Released |
+| v0.6.4  | 2026-02-23 | Plan 019 (iPhone Safari viewport overlap)            | Released |
+| v0.6.3  | 2026-02-23 | Hotfix (Early access scroll + manifest icon)         | Released |
+| v0.6.2  | 2026-02-23 | Plan 017 (Early access notification module)          | Released |
+| v0.6.1  | 2026-02-23 | Plan 015 (PWA MIUI form rendering fix)               | Released |
+| v0.6.0  | 2026-02-23 | Plans 011+012 (Repository Structure Refactor)        | Released |
+| v0.5.0  | 2026-02-23 | Plan 010 (Next.js App Router Refactor)               | Released |
+| v0.4.1  | 2026-02-22 | Plan 008 (Search Index Validation & Fallback Guards) | Released |
+| v0.4.0  | 2026-02-22 | Plan 007 (Performance Improvements)                  | Released |
+| v0.3.1  | 2026-02-22 | Plan 006 (Android Suggest Provider Form Bugfix)      | Released |
+| v0.3.0  | 2026-02-22 | Plan 001 (Provider Trust & Verification System)      | Released |
+| v0.2.0  | 2026-02-21 | Plan 003 (Console errors: hydration + CORS fix)      | Released |
+| v0.1.0  | 2025-Q4    | Initial launch, waitlist system, early access        | Released |
 
 **Note on v0.6.2–v0.6.11 Backfill**: These 10 patch releases were deployed between 2026-02-23 and 2026-03-07 before the roadmap agent workflow was fully established. Each release has detailed changelogs documenting fixes, features, and rationale. See [CHANGELOG.md](../../CHANGELOG.md) for complete release notes. Key themes across these versions: mobile PWA UX refinements (viewport overlap, onboarding layout), supply chain security hardening, and performance guardrails (Cache-Control alignment, budgets, telemetry).
 
@@ -138,8 +141,8 @@ Workflow and development tooling releases — versioned independently from main 
 
 Agent workflow improvements — no product version bump, documentation and instruction updates only.
 
-| Plan     | Date       | Description                                                                                        | Status   |
-| -------- | ---------- | -------------------------------------------------------------------------------------------------- | -------- |
+| Plan    | Date       | Description                                                                                      | Status   |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------ | -------- |
 | Plan 042 | 2026-03-14 | Parallel Copilot Sessions Operator Protocol — multi-window development workflow, session isolation | Released |
 
 **Key Deliverables (Plan 042)**:

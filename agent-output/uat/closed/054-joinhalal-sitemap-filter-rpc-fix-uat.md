@@ -2,7 +2,6 @@ ID: 054
 Origin: 054
 UUID: c4e81a2f
 Status: Released
-
 ---
 
 # UAT Report: Plan 054 — JoinHalal Sitemap Non-Detail Filter + RPC Write-Path Fix
@@ -13,11 +12,11 @@ Status: Released
 
 ## Changelog
 
-| Date (UTC)        | Agent Handoff    | Request                                 | Summary                                                                                                                |
-| ----------------- | ---------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 2026-03-22T23:30Z | QA → UAT         | QA Complete, ready for value validation | UAT Complete — both root causes fixed; implementation delivers stated value; deferred live run documented via 053-OA-1 |
-| 2026-03-22T23:07Z | DevOps → Stage 1 | Local Commit                            | UAT artifact moved to terminal Committed state for release preparation; APPROVED FOR RELEASE verdict retained          |
-| 2026-03-22T23:14Z | DevOps → Stage 2 | Release                                 | UAT artifact marked Released after `v0.8.14` tag and branch push                                                       |
+| Date (UTC)          | Agent Handoff    | Request                                   | Summary                                                                                                     |
+| ------------------- | ---------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 2026-03-22T23:30Z   | QA → UAT         | QA Complete, ready for value validation   | UAT Complete — both root causes fixed; implementation delivers stated value; deferred live run documented via 053-OA-1 |
+| 2026-03-22T23:07Z   | DevOps → Stage 1 | Local Commit                              | UAT artifact moved to terminal Committed state for release preparation; APPROVED FOR RELEASE verdict retained |
+| 2026-03-22T23:14Z   | DevOps → Stage 2 | Release                                   | UAT artifact marked Released after `v0.8.14` tag and branch push |
 
 ---
 
@@ -31,11 +30,11 @@ Status: Released
 
 ## Predecessor Gate Summary
 
-| Doc                                                               | Status                                             | Gate    |
-| ----------------------------------------------------------------- | -------------------------------------------------- | ------- |
-| Implementation `054-joinhalal-sitemap-filter-rpc-fix-impl.md`     | Active — all 5 milestones completed                | ✅ PASS |
-| Code Review `054-joinhalal-sitemap-filter-rpc-fix-code-review.md` | APPROVED WITH COMMENTS — 2 non-blocking LOWs       | ✅ PASS |
-| QA `054-joinhalal-sitemap-filter-rpc-fix-qa.md`                   | QA Complete — diagnostics clean, 413 tests passing | ✅ PASS |
+| Doc | Status | Gate |
+| --- | --- | --- |
+| Implementation `054-joinhalal-sitemap-filter-rpc-fix-impl.md` | Active — all 5 milestones completed | ✅ PASS |
+| Code Review `054-joinhalal-sitemap-filter-rpc-fix-code-review.md` | APPROVED WITH COMMENTS — 2 non-blocking LOWs | ✅ PASS |
+| QA `054-joinhalal-sitemap-filter-rpc-fix-qa.md` | QA Complete — diagnostics clean, 413 tests passing | ✅ PASS |
 
 ---
 
@@ -104,7 +103,6 @@ The deferred item — a live staging write run confirming real providers are ins
 **QA Report Reference**: `agent-output/qa/054-joinhalal-sitemap-filter-rpc-fix-qa.md`
 **QA Status**: QA Complete
 **QA Findings Alignment**: All QA findings documented and acknowledged:
-
 - Changed-file diagnostics: PASS on all 6 files
 - Unit tests: 413 passing, 0 failures
 - Type check: exit 0
@@ -142,22 +140,22 @@ The QA report correctly identified the CLI exit-code coverage gap and explicitly
 
 ### 053-OA-1 — Live staging write validation (pre-existing, deferred)
 
-| Field                          | Detail                                                                                                                                                                                                         |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Owner**                      | DevOps / operator running staging                                                                                                                                                                              |
-| **Trigger / due window**       | Before production promotion of v0.8.14; within 1 sprint if staging is available                                                                                                                                |
+| Field | Detail |
+| --- | --- |
+| **Owner** | DevOps / operator running staging |
+| **Trigger / due window** | Before production promotion of v0.8.14; within 1 sprint if staging is available |
 | **Evidence required to close** | `npx tsx scripts/import-joinhalal.ts --write --limit 10` on staging with migration 063 applied; at least 9 rows with non-null `import_source_id` inserted; process exits 0; `provider_name` is not `joinhalal` |
-| **Runbook**                    | `agent-output/planning/053-open-actions.md` — item 053-OA-1                                                                                                                                                    |
-| **Recommended next action**    | DevOps Stage 1 (local v0.8.14 commit) → Stage 2 (push + tag); staging validation is an operational gate, not a code gate                                                                                       |
+| **Runbook** | `agent-output/planning/053-open-actions.md` — item 053-OA-1 |
+| **Recommended next action** | DevOps Stage 1 (local v0.8.14 commit) → Stage 2 (push + tag); staging validation is an operational gate, not a code gate |
 
 ### CLI exit-code automated test gap (informational)
 
-| Field                          | Detail                                                                                                                                   |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Owner**                      | Next implementer touching `scripts/import-joinhalal.ts`                                                                                  |
-| **Trigger / due window**       | Opportunistic — no immediate risk; not blocking release                                                                                  |
-| **Evidence required to close** | A Vitest test that mocks `stats.failed > 0` and asserts `process.exit` is called with `1`                                                |
-| **Recommended destination**    | Append to `src/__tests__/utils/joinhalal-parser.test.ts` or a new `scripts/__tests__/` when the write-script test harness is established |
+| Field | Detail |
+| --- | --- |
+| **Owner** | Next implementer touching `scripts/import-joinhalal.ts` |
+| **Trigger / due window** | Opportunistic — no immediate risk; not blocking release |
+| **Evidence required to close** | A Vitest test that mocks `stats.failed > 0` and asserts `process.exit` is called with `1` |
+| **Recommended destination** | Append to `src/__tests__/utils/joinhalal-parser.test.ts` or a new `scripts/__tests__/` when the write-script test harness is established |
 
 ---
 
@@ -176,7 +174,6 @@ The QA report correctly identified the CLI exit-code coverage gap and explicitly
 **Recommended Version**: `v0.8.14` — patch bump from v0.8.13; no breaking changes, no new migrations, no API contract changes.
 
 **Key Changes for Changelog** (supplement to CHANGELOG.md entry):
-
 - `fix`: Exclude generic `/locations/` and category listing pages from JoinHalal sitemap URL collection; only 3-segment `/locations/{category}/{slug}/` URLs pass the new `isJoinHalalDetailUrl()` filter
 - `fix`: Write-mode CLI now exits non-zero when any RPC or insert batch fails, surfacing silent write-path failures to operators and CI pipelines
 

@@ -18,15 +18,15 @@ Status: Released
 
 ## Release Summary
 
-| Field       | Value                                                    |
-| ----------- | -------------------------------------------------------- |
-| Version     | v0.8.14                                                  |
-| Type        | Patch                                                    |
-| Environment | Production (ummahflow.com)                               |
-| Epic        | JoinHalal data import correctness and operational safety |
-| Plan ID     | 054                                                      |
-| Date        | 2026-03-22                                               |
-| Branch      | session/047-joinhalal-data-import                        |
+| Field | Value |
+| --- | --- |
+| Version | v0.8.14 |
+| Type | Patch |
+| Environment | Production (ummahflow.com) |
+| Epic | JoinHalal data import correctness and operational safety |
+| Plan ID | 054 |
+| Date | 2026-03-22 |
+| Branch | session/047-joinhalal-data-import |
 
 ## Pre-Release Verification
 
@@ -129,7 +129,7 @@ Stage 2 completed from clean linked worktree branch `release/v0.8.14-prep`: rele
 
 ## Changelog
 
-| Date (UTC)        | Agent  | Change                                                                                                                      |
-| ----------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Date (UTC) | Agent | Change |
+| --- | --- | --- |
 | 2026-03-22T23:07Z | devops | Stage 1 deployment doc created; version preflight, lifecycle closure preparation, and deferred follow-up tracking completed |
-| 2026-03-22T23:14Z | devops | Stage 2 completed; `release/v0.8.14-prep` pushed and tag `v0.8.14` published                                                |
+| 2026-03-22T23:14Z | devops | Stage 2 completed; `release/v0.8.14-prep` pushed and tag `v0.8.14` published |

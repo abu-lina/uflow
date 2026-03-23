@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: 7d2f4a9c
-Status: Committed
+Status: Released
 ---
 
 # Implementation 055 — JoinHalal RPC `provider_description` Schema Drift Fix
@@ -21,6 +21,7 @@ Status: Committed
 | --- | --- | --- | --- |
 | 2026-03-23T08:38Z | User → Implementer | Implement Plan 055 | Initial implementation of all 5 milestones |
 | 2026-03-23T08:04Z | DevOps → Stage 1 | Local Commit | Implementation document moved to terminal Committed state for local release commit |
+| 2026-03-23T08:12Z | DevOps → Stage 2 | Release | Implementation artifact marked Released after `v0.8.15` tag and branch push |
 
 ---
 

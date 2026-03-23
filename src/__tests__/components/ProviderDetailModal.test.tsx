@@ -4,6 +4,8 @@ import { render } from '../utils/test-utils';
 import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
 import { mockProviders } from '../mocks/providerData';
 import type { Provider } from '@/services/providers';
+import { TrustLevel, EntityType, BadgeKey } from '@/types/badges';
+import type { ProviderBadgeWithType } from '@/types/badges';
 
 describe('ProviderDetailModal Component', () => {
   const mockProvider = mockProviders[0]; // Bilal Moschee
@@ -40,7 +42,7 @@ describe('ProviderDetailModal Component', () => {
       expect(screen.getByText(/123 Hauptstraße, 10115 Berlin/)).toBeInTheDocument();
     });
 
-    it('should render barakah effects section', () => {
+    it('should render barakah effects section heading', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
@@ -49,8 +51,8 @@ describe('ProviderDetailModal Component', () => {
         />,
       );
 
-      // Category name is not rendered directly, but barakah effects are
-      expect(screen.getByText('Iman')).toBeInTheDocument();
+      // The Barakah Effekte section heading should always render
+      expect(screen.getByText(/Our Barakah Effect|Unser Barakah Effekt/i)).toBeInTheDocument();
     });
 
     it('should render close buttons', () => {
@@ -513,32 +515,126 @@ describe('ProviderDetailModal Component', () => {
   });
 
   describe('Barakah Effects', () => {
-    it('should render barakah effects when available', () => {
+    const mockBadges: ProviderBadgeWithType[] = [
+      {
+        id: 'badge-1',
+        entity_id: mockProvider.provider_id,
+        entity_type: EntityType.PROVIDER,
+        badge_type_id: 'bt-1',
+        trust_level: TrustLevel.COMMUNITY_CONFIRMED,
+        confirmation_count: 5,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        badge_type: {
+          id: 'bt-1',
+          badge_key: BadgeKey.HALAL,
+          labels: { de: 'Halal', en: 'Halal' },
+          description: null,
+          icon_name: 'halal',
+          is_active: true,
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
+      },
+      {
+        id: 'badge-2',
+        entity_id: mockProvider.provider_id,
+        entity_type: EntityType.PROVIDER,
+        badge_type_id: 'bt-2',
+        trust_level: TrustLevel.SELF_DECLARED,
+        confirmation_count: 0,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        badge_type: {
+          id: 'bt-2',
+          badge_key: BadgeKey.MUSLIM_OWNED,
+          labels: { de: 'Muslimisch geführt', en: 'Muslim Owned' },
+          description: null,
+          icon_name: 'muslim-owned',
+          is_active: true,
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
+      },
+    ];
+
+    it('should render structured badge visuals when badges are present', () => {
+      const providerWithBadges = { ...mockProvider, badges: mockBadges };
+
       render(
         <ProviderDetailModal
-          provider={mockProvider}
+          provider={providerWithBadges}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
         />,
       );
 
-      expect(screen.getByText('Iman')).toBeInTheDocument();
-      expect(screen.getByText('Zakat')).toBeInTheDocument();
-      expect(screen.getByText('Sunnah')).toBeInTheDocument();
+      // BadgeLabel renders with role="status" — verify structured badges appear
+      const badgeLabels = screen.getAllByRole('status');
+      expect(badgeLabels.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should not render barakah effects when not available', () => {
-      const providerWithoutBarakahEffects = { ...mockProvider, barakah_effects: [] };
+    it('should not show placeholder text when structured badges exist', () => {
+      const providerWithBadges = { ...mockProvider, badges: mockBadges };
 
       render(
         <ProviderDetailModal
-          provider={providerWithoutBarakahEffects}
+          provider={providerWithBadges}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
         />,
       );
 
-      expect(screen.getByText('Keine Barakah Effekte')).toBeInTheDocument();
+      // Should NOT show the legacy empty-state fallback when real badges exist
+      expect(screen.queryByText('Keine Barakah Effekte')).not.toBeInTheDocument();
+      // Should NOT show placeholder copy
+      expect(screen.queryByText('Hatem Ipsum')).not.toBeInTheDocument();
+    });
+
+    it('should show empty state when provider has no badges', () => {
+      const providerWithoutBadges = { ...mockProvider, badges: [], barakah_effects: [] };
+
+      render(
+        <ProviderDetailModal
+          provider={providerWithoutBadges}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      // Empty state should indicate no badges exist
+      expect(screen.queryAllByRole('status')).toHaveLength(0);
+    });
+
+    it('should render badge labels when badges are available [post-fix]', () => {
+      const providerWithBadges = { ...mockProvider, badges: mockBadges };
+
+      render(
+        <ProviderDetailModal
+          provider={providerWithBadges}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      // BadgeLabel components render with role="status"
+      const badgeLabels = screen.getAllByRole('status');
+      expect(badgeLabels.length).toBe(2);
+    });
+
+    it('should show empty state text when no badges exist [post-fix]', () => {
+      const providerWithoutBadges = { ...mockProvider, badges: [], barakah_effects: [] };
+
+      render(
+        <ProviderDetailModal
+          provider={providerWithoutBadges}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      // Empty state still shows a meaningful message
+      expect(screen.getByText(/Keine Barakah Effekte|No Barakah Effects/)).toBeInTheDocument();
     });
   });
 

@@ -145,6 +145,7 @@ If the target version tag already exists, increment and update the plan's `Targe
 
 - Always quote file paths passed to shell commands (especially App Router route-group paths like `src/app/(public)/...`).
 - Reason: zsh treats parentheses as glob patterns and may error with `zsh: no matches found`.
+- Never use shell heredocs for markdown (`cat <<EOF ... EOF` or `cat <<'EOF' ... EOF`). Markdown table syntax (`| cell |`) can corrupt heredoc parsing and break the terminal session. Use the `create_file` tool for new files, or write a small script to `/tmp/` via a file tool and execute it by filename for complex text transformations.
 
 6. **Prepare Stage 1 closure before the final commit**:
 
@@ -279,29 +280,31 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
    If these are already tracked as deferred DF-N items in the open-actions tracker, reference them explicitly in the release summary with their status. Do not create duplicate trackers.
 
 5. Check workspace: All plan commits present, no uncommitted changes.
-6. **Upstream tracking check (MANDATORY)**: Confirm the current branch tracks the expected remote branch (typically `main...origin/main`).
+6. **Amend formatter-only changes (MANDATORY if detected)**: Run `git diff --name-only`. If files have uncommitted changes, inspect them. If all are formatter-only (whitespace, import reordering, markdown table alignment), amend them into the most recent commit with `git commit -a --amend --no-edit`. If any contain logic changes, stop and investigate before proceeding.
+7. **Upstream tracking check (MANDATORY)**: Confirm the current branch tracks the expected remote branch (typically `main...origin/main`).
    - Run `git branch -vv` and verify the tracking info is present
    - If missing, set upstream before continuing (example): `git branch --set-upstream-to=origin/main main`
-7. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** tagging.
-   7b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
+8. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** tagging.
+  8b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
 
 - `git status`
 - `git branch -vv`
 - `git fetch origin --prune --tags`
 - `git log --max-count 20 --date=iso-strict`
+
 - If you observe signs a push occurred earlier than expected, explicitly document: what you observed, likely explanation (manual vs automation), and whether it violates the “no push without approval” rule.
 
-  7c. **Version collision resolution (IF target tag already exists after `git fetch --tags`)**:
-  If the intended version tag is already present on `origin`:
-  1. `git rebase --abort` (only if a rebase is currently in progress)
-  2. Bump version in `package.json` and `CHANGELOG.md` to next patch
-  3. Run `npm install --package-lock-only`
-  4. Rename and update Stage 1 deployment doc to reflect new version
-  5. Update plan's `Target Release` field and all changelog references
-  6. `git commit --amend` to fold the version bump into the fix commit (squash one layer only)
-  7. Resume rebase
-     Document the collision source, bumped version, and resolution steps in the deployment doc.
-     Limit to 2 bump cycles. If a third collision occurs, pause and involve user.
+  8c. **Version collision resolution (IF target tag already exists after `git fetch --tags`)**:
+    If the intended version tag is already present on `origin`:
+    1. `git rebase --abort` (only if a rebase is currently in progress)
+    2. Bump version in `package.json` and `CHANGELOG.md` to next patch
+    3. Run `npm install --package-lock-only`
+    4. Rename and update Stage 1 deployment doc to reflect new version
+    5. Update plan's `Target Release` field and all changelog references
+    6. `git commit --amend` to fold the version bump into the fix commit (squash one layer only)
+    7. Resume rebase
+       Document the collision source, bumped version, and resolution steps in the deployment doc.
+       Limit to 2 bump cycles. If a third collision occurs, pause and involve user.
 
 **Stage 2 evidence block (RECOMMENDED formatting)**:
 
@@ -310,8 +313,8 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
   - tag list deltas (if relevant)
   - recent commit ordering
 
-8. Create deployment readiness doc listing ALL included plans.
-9. **Migration readiness check (MANDATORY)**:
+9. Create deployment readiness doc listing ALL included plans.
+10. **Migration readiness check (MANDATORY)**:
 
 - If the release includes migrations that add/modify RPC functions, verify the target Supabase schema has:
   - the migration applied (or scheduled), and
@@ -331,11 +334,13 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 
 **Phase 2C: Release Execution (After Approval)**
 
-1. Tag: `git tag -a v[X.Y.Z] -m "Release v[X.Y.Z] - [plan summaries]"`, push tag.
-2. Push all commits: `git push origin [branch]`.
-3. Publish: vsce/npm/twine/GitHub (environment-specific).
-4. Verify: visible, version correct, assets accessible.
-5. Update log with timestamp/URLs.
+1. Push branch: `git push origin [branch]`.
+2. **Surface PR URL (MANDATORY)**: After every branch push, include the PR comparison URL in the agent response: `https://github.com/<org>/<repo>/compare/main...<branch>`. Do not rely on GitHub's transient "create a pull request" banner.
+3. Verify the PR comparison has no merge conflicts. If conflicts exist, rebase onto `origin/main`, resolve, and force-push with `--force-with-lease` before proceeding.
+4. Tag: `git tag -a v[X.Y.Z] -m "Release v[X.Y.Z] - [plan summaries]"`, push tag. If a post-push rebase changes `HEAD`, delete and recreate the tag on the new `HEAD` before pushing it.
+5. Publish: vsce/npm/twine/GitHub (environment-specific).
+6. Verify: visible, version correct, assets accessible.
+7. Update log with timestamp/URLs.
 
 **Phase 2D: Post-Release**
 

@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: 7d2f4a9c
-Status: Committed
+Status: Released
 ---
 
 # QA Report: JoinHalal RPC provider_description Schema Drift Fix (Plan 055)
@@ -10,7 +10,7 @@ Status: Committed
 **Plan Reference**: `agent-output/planning/055-joinhalal-provider-description-rpc-drift-fix.md`
 **Implementation Reference**: `agent-output/implementation/055-joinhalal-provider-description-rpc-drift-fix-impl.md`
 **Code Review Reference**: `agent-output/code-review/055-joinhalal-provider-description-rpc-drift-fix-code-review.md`
-**QA Status**: Committed
+**QA Status**: Released
 **QA Specialist**: qa
 
 ## Changelog
@@ -19,6 +19,7 @@ Status: Committed
 | --- | --- | --- | --- |
 | 2026-03-23 | Code Reviewer | Execute QA for Plan 055 | Completed QA strategy and execution. Independent `vitest`, `type-check`, and `build` evidence gathered; no blocking correctness issues remain in Plan 055 scope. |
 | 2026-03-23T08:04Z | DevOps | Stage 1 local commit | QA document moved to terminal Committed state for local release commit. |
+| 2026-03-23T08:12Z | DevOps | Stage 2 release | QA artifact marked Released after `v0.8.15` tag and branch push. |
 
 ## Timeline
 

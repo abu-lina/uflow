@@ -15,16 +15,16 @@ This tracker keeps the post-deploy validation visible after the core Plan 053 do
 
 ## Open Actions
 
-| Item                                                                                  | Owner             | Trigger/Due                                                                               | Evidence to close                                                                                                                                                                                                | Status |
-| ------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Live staging import validation for corrected JoinHalal parser and offer auto-creation | DevOps / Operator | Before first corrected production import run; execute during Stage 2 readiness validation | Evidence that at least one imported provider has non-null `import_source_id`, at least one missing Speisen value created a new `offers` row, and at least one affected provider persisted non-empty `offers_ids` | Open   |
+| Item | Owner | Trigger/Due | Evidence to close | Status |
+| --- | --- | --- | --- | --- |
+| Live staging import validation for corrected JoinHalal parser and offer auto-creation | DevOps / Operator | Before first corrected production import run; execute during Stage 2 readiness validation | Evidence that at least one imported provider has non-null `import_source_id`, at least one missing Speisen value created a new `offers` row, and at least one affected provider persisted non-empty `offers_ids` | Open |
 
 ## Changelog
 
-| Date (UTC)        | Agent       | Change                                                              |
-| ----------------- | ----------- | ------------------------------------------------------------------- |
-| 2026-03-22T20:24Z | devops      | Created tracker from deferred UAT/QA staging validation requirement |
-| 2026-03-22T22:52Z | implementer | Plan 054 fixes code-level blockers; added validation runbook        |
+| Date (UTC) | Agent | Change |
+| --- | --- | --- |
+| 2026-03-22T20:24Z | devops | Created tracker from deferred UAT/QA staging validation requirement |
+| 2026-03-22T22:52Z | implementer | Plan 054 fixes code-level blockers; added validation runbook |
 
 ## Validation Runbook (added by Plan 054)
 

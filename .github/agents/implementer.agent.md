@@ -159,8 +159,13 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 11. Track deviations. Refuse to proceed without updated guidance.
 12. Validate implementation delivers value statement before complete.
 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
-    13b. **Lockfile Alignment (MANDATORY after ANY `"version"` bump in `package.json`)**:
-    Immediately after editing the `"version"` field, run:
+   13c. **Version bump is preliminary (MANDATORY)**:
+  The version number in the plan is a placeholder until DevOps Stage 1 confirms it via `git fetch --tags`.
+  When bumping, note in the implementation doc: `Version bumped to X.Y.Z (preliminary - final version confirmed at DevOps Stage 1)`.
+  Do not treat the plan's version as immutable.
+
+   13b. **Lockfile Alignment (MANDATORY after ANY `"version"` bump in `package.json`)**:
+  Immediately after editing the `"version"` field, run:
 
 ```
 npm install --package-lock-only

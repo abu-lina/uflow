@@ -181,6 +181,7 @@ export const tr = {
     weNeed: "İhtiyacımız var",
     weAreLookingFor: "Aradığımız",
     ourBarakahEffect: "Bereket Etkimiz",
+    noBadges: "Bereket etkisi yok",
     selectCategory: "Kategori seç"
   },
   create: {
