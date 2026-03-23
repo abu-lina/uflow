@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: 7d2f4a9c
-Status: Committed
+Status: Released
 ---
 
 # Code Review 055 — JoinHalal RPC `provider_description` Schema Drift Fix
@@ -19,6 +19,7 @@ Status: Committed
 | --- | --- | --- | --- |
 | 2026-03-23T08:45Z | User → Code Reviewer | Review Plan 055 implementation | Full review of all 5 milestones; 2 fix-in-review changes applied |
 | 2026-03-23T08:04Z | DevOps → Stage 1 | Local Commit | Code review document moved to terminal Committed state for local release commit |
+| 2026-03-23T08:12Z | DevOps → Stage 2 | Release | Code review artifact marked Released after `v0.8.15` tag and branch push |
 
 ---
 

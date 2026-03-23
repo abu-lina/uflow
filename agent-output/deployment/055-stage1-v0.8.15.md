@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: 7d2f4a9c
-Status: Active
+Status: Released
 ---
 
 # Deployment: Plan 055 Stage 1 — v0.8.15
@@ -125,8 +125,13 @@ Closed documents for Plan 055: planning, implementation, code-review, qa, uat mo
 - Commit scope: Plan 055 implementation, tests, migration, release artifacts, lifecycle closure moves, updated staging runbooks, `055-open-actions.md`, and this Stage 1 deployment record
 - Push status: **Do not push in Stage 1**
 
+## Post-Release Outcome
+
+Stage 2 completed successfully from clean linked worktree branch `release/v0.8.15-prep`: release payload commit `904ef65` was pushed to `origin/release/v0.8.15-prep`, annotated tag `v0.8.15` was published, and Plan 055 lifecycle docs were marked Released in a follow-up docs commit.
+
 ## Changelog
 
 | Date (UTC) | Agent | Change |
 | --- | --- | --- |
 | 2026-03-23T08:04Z | devops | Stage 1 deployment doc created; version preflight, lifecycle closure preparation, timestamp sanity correction, and deferred follow-up tracking completed |
+| 2026-03-23T08:12Z | devops | Stage 2 completed; `release/v0.8.15-prep` pushed and tag `v0.8.15` published |
