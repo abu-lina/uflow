@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: b7e24c1d
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: 051 — JoinHalal Alkoholverkauf Auto-Rejection
@@ -17,6 +17,7 @@ Status: Committed
 | ---------- | ---------------- | -------------------- | ------------------------------ |
 | 2026-03-23T14:13Z (approx.) | QA → UAT | QA Complete — validate value delivery | UAT Complete — implementation delivers stated value; auto-rejection rule active at import time; APPROVED FOR RELEASE |
 | 2026-03-23T14:15Z | DevOps | Stage 1 commit prepared | Marked UAT artifact as committed for v0.8.18 bundling |
+| 2026-03-23T14:36Z (approx.) | DevOps | Release executed | Tag `v0.8.18` pushed; UAT artifact marked Released |
 
 ## Value Statement Under Test
 

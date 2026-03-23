@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: b7e24c1d
-Status: Committed
+Status: Released
 ---
 
 # Code Review: 051 — JoinHalal Alkoholverkauf Auto-Rejection
@@ -18,6 +18,7 @@ Status: Committed
 |------|---------------|---------|---------|
 | 2026-03-23 | Implementer → Code Reviewer | Review Plan 051 implementation | Reviewed 3 modified files; 0 CRITICAL/HIGH/MEDIUM; 1 LOW (stats counter placement); 1 INFO (pre-existing dry-run formula); APPROVED |
 | 2026-03-23T14:15Z | DevOps | Stage 1 commit prepared | Marked code review as committed for v0.8.18 bundling |
+| 2026-03-23T14:36Z (approx.) | DevOps | Release executed | Tag `v0.8.18` pushed; code review marked Released |
 
 ---
 

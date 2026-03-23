@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: b7e24c1d
-Status: Committed
+Status: Released
 ---
 
 # Plan 051 — JoinHalal Alkoholverkauf Auto-Rejection
@@ -11,7 +11,7 @@ Status: Committed
 
 - **Target Release**: next available patch after current `origin/main` version (currently `0.8.17`; expected `v0.8.18` if still available), confirm at DevOps Stage 1
 - **Epic Alignment**: Provider supply quality / admin moderation safeguards / JoinHalal import rule enforcement
-- **Status**: UAT Approved
+- **Status**: Released
 - **Related Issues**: None
 
 ## Changelog
@@ -23,6 +23,7 @@ Status: Committed
 | 2026-03-23T14:13Z (approx.) | UAT complete | UAT | All milestones 1–4 verified; value delivery confirmed; APPROVED FOR RELEASE |
 | 2026-03-23T14:10Z (approx.) | Synced to `origin/main` JoinHalal refactor | Implementer | Re-applied the rule to the current shared import core (`src/lib/import/joinhalal.ts`) and CLI write path; added regression tests targeting `transformPage()` |
 | 2026-03-23T14:15Z | Stage 1 commit prepared | DevOps | Version bumped to `0.8.18`, changelog updated, and artifacts closed for local commit |
+| 2026-03-23T14:36Z (approx.) | Release executed | DevOps | Pushed branch + tag `v0.8.18`; Plan 051 marked Released |
 
 ## Release Strategy
 

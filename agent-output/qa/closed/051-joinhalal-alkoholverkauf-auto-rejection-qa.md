@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: b7e24c1d
-Status: Committed
+Status: Released
 ---
 
 # QA Report: 051 — JoinHalal Alkoholverkauf Auto-Rejection
@@ -22,6 +22,7 @@ Status: Committed
 | 2026-03-23 | Implementer | QA remediation ready | Revalidated new importer-branch regression tests, reran gates, and closed the prior HIGH coverage blocker |
 | 2026-03-23 | Implementer | Sync to origin/main JoinHalal refactor | Re-applied Plan 051 to the current shared import core (`src/lib/import/joinhalal.ts`) and CLI write path; regression tests now target `transformPage()`; delta gates rerun; pre-existing full-suite failure confirmed unrelated |
 | 2026-03-23T14:15Z | DevOps | Stage 1 commit prepared | Marked QA artifact as committed for v0.8.18 bundling |
+| 2026-03-23T14:36Z (approx.) | DevOps | Release executed | Tag `v0.8.18` pushed; QA artifact marked Released |
 
 ## Timeline
 

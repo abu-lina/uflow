@@ -2,7 +2,7 @@
 ID: 051
 Origin: 051
 UUID: b7e24c1d
-Status: Committed
+Status: Released
 ---
 
 # Implementation 051 — JoinHalal Alkoholverkauf Auto-Rejection
@@ -24,6 +24,7 @@ Status: Committed
 | 2026-03-23T11:50Z | Implementer | Plan 051 (APPROVED) | Initial implementation: `hasAlkoholverkauf()` parser function + import-time rejection logic + auto-rejected stats + 8 TDD unit tests |
 | 2026-03-23T14:10Z (approx.) | Implementer | Sync to `origin/main` JoinHalal refactor | Re-applied rule on the current importer architecture: wired `hasAlkoholverkauf()` into `src/lib/import/joinhalal.ts` (dry-run/admin path) and `scripts/import-joinhalal.ts` write path; added regression tests targeting `transformPage()`; removed obsolete `src/utils/joinhalal-transform.ts` |
 | 2026-03-23T14:15Z | DevOps | Stage 1 commit prepared | Version bumped to `0.8.18`, changelog updated, artifacts moved to `closed/` in preparation for local commit |
+| 2026-03-23T14:36Z (approx.) | DevOps | Release executed | Tag `v0.8.18` pushed; implementation marked Released |
 
 ---
 
