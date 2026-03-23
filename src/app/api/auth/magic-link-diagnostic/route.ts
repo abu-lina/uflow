@@ -12,7 +12,9 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const email = url.searchParams.get('email');
   const adminKey = request.headers.get('x-admin-key');
-  const expectedKey = process.env.ADMIN_DEBUG_KEY || 'debug-key-change-in-production';
+  const expectedKey = process.env.ADMIN_DEBUG_KEY;
+  // F-049-03: No fallback key — admin override disabled when ADMIN_DEBUG_KEY is unset.
+  // Non-admin (user) diagnostic mode is unrestricted and continues below.
   
   // Allow admin to check specific IP by providing it in query params
   let ip: string;

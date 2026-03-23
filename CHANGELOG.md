@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.16] - 2026-03-23
+
+### Security
+
+- **CRITICAL — DB-backed authorization gate on `/api/admin/set-role` (Plan 049, F-049-01)**: Any authenticated user could previously self-promote to any role by calling this endpoint without an authorization check. Added `isAdminOrModerator()` DB-backed gate that returns 403 for all non-admin/moderator callers.
+
+- **CRITICAL — Rate limiting and server-authoritative URLs for auth email/token routes (Plan 049, F-049-02)**: `/api/send-auth-email` and `/api/generate-confirmation-token` accepted unlimited requests and trusted caller-supplied redirect URLs, enabling phishing via branded UFlow emails. Added 5 requests/hr/IP rate limiting to both endpoints. `send-auth-email` now derives `confirmationUrl` origin from the server-side `NEXT_PUBLIC_SITE_URL` config, ignoring any caller-supplied origin.
+
+- **HIGH — DB-backed role check in push notification route (Plan 049, F-049-05)**: `/api/push/send` trusted `user_metadata.role`, which is client-mutable. Replaced with `isAdminOrModerator()` call backed by the `users` database table.
+
+- **HIGH — Removed hardcoded admin debug key fallback (Plan 049, F-049-03)**: `debug-ip-status` and `magic-link-diagnostic` endpoints fell back to the hardcoded value `'debug-key-change-in-production'` when `ADMIN_DEBUG_KEY` env var was absent. Removed all three fallback occurrences; endpoints now fail-closed (401) without the env var.
+
+- **HIGH — Enumeration-safe `/api/check-email-exists` responses (Plan 049, F-049-04)**: Non-existent and unconfirmed email accounts previously returned distinguishable responses, enabling user enumeration. Both cases now return an identical `{ confirmed: false }` response. The `exists` and `userId` fields are removed. Updated `signInWithEmailConfirmation()` and `resetPasswordWithLanguage()` in `src/lib/auth.ts` to use only the `confirmed` field.
+
+- **HIGH — Content Security Policy response header restored (Plan 049, F-049-06)**: CSP header was inadvertently removed. Restored via `buildCsp()` in `next.config.js` `headers()` config.
+
+- **MEDIUM — Instagram scraper input validation (Plan 049, F-049-07)**: `/api/instagram/scrape` accepted arbitrary usernames enabling path traversal and injection. Added `/^[a-zA-Z0-9._]{1,30}$/` validation; invalid usernames return 400.
+
+- **MEDIUM — Removed email PII from auth token generation log (Plan 049, F-049-12)**: `generate-confirmation-token` route logged the full email address in a security log. Removed; only `userId` and token type are now logged.
+
+- **LOW — Centralized admin Supabase client in outreach routes (Plan 049, F-049-13)**: `outreach/claim` and `outreach/action` defined a local copy of `getSupabaseAdmin()`. Replaced with the centralized import from `@/lib/supabase/admin`.
+
+### Dependencies
+
+- **Next.js upgraded to 15.5.14 (Plan 049, F-049-10/11)**: Closes GHSA-3x4c-7xq6-9pq8 (unbounded image cache disk growth, moderate severity). `npm audit` reports 0 vulnerabilities.
+
+### Deployment
+
+- **`ADMIN_DEBUG_KEY` wired into production and UAT deploy workflows**: Added `-e ADMIN_DEBUG_KEY` flag to all four `docker run` invocations in `deploy-hetzner.yml` and `deploy-uat.yml`. Added `ADMIN_DEBUG_KEY` entry to `env.production.template` and `env.uat.template`. **Ops action required**: add `ADMIN_DEBUG_KEY` (and optionally `UAT_ADMIN_DEBUG_KEY`) to GitHub repository secrets before first deploy of this release.
+
 ## [0.8.7] - 2026-03-19
 
 ### Added

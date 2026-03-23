@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    // F-049-02: Rate limit token generation (5 per hour per IP)
+    const identifier = getClientIdentifier(request);
+    if (!checkRateLimit(identifier, 5, 60 * 60 * 1000, 'generate-confirmation-token')) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const { userId, email, type } = await request.json();
     
-    console.log('[TOKEN] Generation request:', { userId, email, type });
+    // F-049-12: Omit PII (email) from logs
+    console.log('[TOKEN] Generation request:', { userId, type });
     
     if (!email || !type) {
       console.error('[TOKEN] Missing required fields:', { userId, email, type });

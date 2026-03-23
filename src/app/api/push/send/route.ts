@@ -4,6 +4,7 @@ import * as webpush from 'web-push';
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
+import { isAdminOrModerator } from '@/lib/auth/roles';
 import {
   validateNotificationTitle,
   validateNotificationBody,
@@ -240,9 +241,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Authorization: Users can only send to themselves unless they're admin/moderator
-    const userRole = authUser.user_metadata?.role;
-    const isAdmin = userRole === 'admin' || userRole === 'moderator';
+    // F-049-05: Authorization uses DB-backed role check, not client-mutable metadata
+    const isAdmin = await isAdminOrModerator(authUser.id);
     const isSelfOnly = userIdArray.every((id) => id === authUser.id);
 
     if (!isAdmin && !isSelfOnly) {

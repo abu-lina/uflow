@@ -11,6 +11,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // F-049-07: Validate username format to prevent path traversal / injection
+    const INSTAGRAM_USERNAME_REGEX = /^[a-zA-Z0-9._]{1,30}$/;
+    if (!INSTAGRAM_USERNAME_REGEX.test(username)) {
+      return NextResponse.json(
+        { error: 'Invalid Instagram username format' },
+        { status: 400 }
+      );
+    }
+
     // Method 1: Try Instagram's public GraphQL endpoint
     // This endpoint returns public data without authentication
     const response = await fetch(
