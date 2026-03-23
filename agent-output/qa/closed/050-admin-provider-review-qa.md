@@ -2,7 +2,7 @@
 ID: 50
 Origin: 50
 UUID: a8c41f2e
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 050 — Admin Provider Review Panel
