@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.17] - 2026-03-23
+
+### Added
+
+- **Admin provider review panel — profile menu access, conflict-safe updates (Plan 050)**: Added "Admin Panel" navigation entry to the home profile dropdown (desktop) and mobile profile screen for admin/moderator roles. Fixed the pending-provider list API response shape (`providers` field, previously `data`) so the admin review page correctly renders reviewable items. Added `updated_at` to the pending-provider list contract to support optimistic concurrency. Extended the review mutation with an optional `expectedUpdatedAt` parameter that issues a 409 Conflict response when another admin has already changed the provider, preventing silent overwrites with a single user-facing conflict toast and automatic list refresh.
 ## [0.8.16] - 2026-03-23
 
 ### Security

@@ -26,6 +26,7 @@ export const providerReviewUpdateSchema = z.object({
     errorMap: () => ({ message: 'reviewStatus must be one of: approved, rejected, needs_revision' }),
   }),
   reviewFeedback: z.string().max(5000).optional().nullable(),
+  expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
 });
 
 /**

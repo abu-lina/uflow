@@ -98,7 +98,8 @@ export async function PATCH(request: Request) {
     const updatedProvider = await updateProviderReview(
       validatedData.providerId,
       validatedData.reviewStatus,
-      sanitizedFeedback
+      sanitizedFeedback,
+      validatedData.expectedUpdatedAt
     );
 
     // Log admin action for audit
@@ -127,6 +128,14 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
+    // Handle concurrency conflict
+    if (error instanceof Error && error.message.startsWith('CONFLICT:')) {
+      return NextResponse.json(
+        { error: 'This provider was modified by another reviewer. Please refresh and try again.' },
+        { status: 409 }
+      );
+    }
+
     // Get user for logging if available
     let userId: string | undefined;
     try {
