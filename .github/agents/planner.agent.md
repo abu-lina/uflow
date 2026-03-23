@@ -108,6 +108,13 @@ State the target version as: _"next available patch after current `origin/main` 
 16. **Status tracking**: When incorporating analysis into a plan, update the analysis doc's Status field to "Planned" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 17. **Track release assignment**: When creating or updating plans, verify target release with Roadmap agent. Multiple plans target the same release version. Plans are grouped by release, not released individually. Coordinate version bumps only at release level.
 
+### Third-Party Source Verification (MANDATORY for import/data-ingestion plans)
+
+- If the plan depends on a third-party public source, perform a lightweight live spot-check before handoff to Critic.
+- Verify and record: reachable URL, server-rendered vs client-rendered shape, pagination/access assumptions, and the minimum fields needed for the import.
+- Acceptable evidence: `curl`, page fetch, response snippet inspection, or equivalent read-only verification.
+- If the source cannot be verified from the current environment, explicitly mark the assumption as unresolved, document the blocker, and raise the risk level.
+
 ## Constraints
 
 - Never edit source code, config files, tests
@@ -146,7 +153,7 @@ Prefer small, focused scopes delivering value quickly.
 2. Start with "Value Statement and Business Objective": "As a [user/customer/agent], I want to [objective], so that [value]"
 3. Get User Approval. Present user story, wait for explicit approval before planning.
 4. Summarize objective, known context.
-5. Identify target release version. Check current version, consult roadmap, ensure valid increment. Run version pre-flight (see Core Responsibility 5e). State version conservatively as "next available after current origin/main version; confirm at DevOps Stage 1" and document the rationale in the plan header. Update the actual version number when DevOps Stage 1 confirms availability.
+5. Identify target release version. Check current version, consult roadmap, ensure valid increment. Run version pre-flight (see Core Responsibility 5e). State version conservatively as "next available after current origin/main version; confirm at DevOps Stage 1" and document the rationale in the plan header. Update the actual version number when DevOps Stage 1 confirms availability. When documenting `Target Release`, do not use speculative exact versions such as `likely vX.Y.Z`. Use one of: "next available patch after current origin/main version; confirm at DevOps Stage 1", or a confirmed bundled release version when explicitly provided by roadmap/release coordination.
   5b. Run the **Release bundling check** and document `## Release Strategy` accordingly.
   5c. Add **Related Issues** links/IDs to the plan header (or “None”).
 6. Enumerate assumptions, open questions. Resolve before finalizing.

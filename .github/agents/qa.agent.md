@@ -134,6 +134,17 @@ If the change replaces a canonical sentinel value (example: “Everywhere/Übera
 - A regression test exists for the highest-risk path (typically **no-param SSR default**)
 - A structured search was performed for the old sentinel and key assignment sites (document the terms used)
 
+### Import Dry-Run Deferral Rule (MANDATORY when applicable)
+
+If a plan's primary value depends on a third-party import or ingestion dry-run and that dry-run cannot be executed, do not classify the residual risk as LOW.
+
+Minimum handling:
+- classify as MEDIUM risk
+- assign owner
+- assign trigger or due window (preferably before or within 24h of release)
+- define exact closure evidence
+- state whether release is conditional on that evidence
+
 Diagnosability & Telemetry Responsibilities (MANDATORY for incident/bug work):
 
 - If a root cause cannot be proven, require evidence that the change improves diagnosability (added log markers, structured context, correlation IDs, or other telemetry).
