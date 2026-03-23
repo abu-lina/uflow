@@ -461,4 +461,180 @@ describe('ProviderCard Component', () => {
       expect(screen.getByText(mockProvider.provider_name)).toBeInTheDocument();
     });
   });
+
+  /**
+   * Plan 058 M3: Admin Moderation Mode
+   * 
+   * ProviderCard supports a `mode` prop to switch between:
+   * - 'bookmark' (default): Shows Save/Saved button
+   * - 'moderation': Shows Approve/Reject buttons for admin review
+   */
+  describe('Admin Moderation Mode (Plan 058)', () => {
+    const mockOnApprove = vi.fn();
+    const mockOnReject = vi.fn();
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('should render bookmark mode by default', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      // Default mode shows Save button
+      expect(screen.getByText('Save')).toBeInTheDocument();
+      // Should NOT show moderation buttons
+      expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
+    });
+
+    it('should show moderation buttons when mode is "moderation"', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="moderation"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      // Should show Approve and Reject buttons
+      expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
+      // Should NOT show Save button
+      expect(screen.queryByText('Save')).not.toBeInTheDocument();
+      expect(screen.queryByText('Saved')).not.toBeInTheDocument();
+    });
+
+    it('should call onApprove when Approve button is clicked', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="moderation"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      const approveButton = screen.getByRole('button', { name: /approve/i });
+      fireEvent.click(approveButton);
+
+      expect(mockOnApprove).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onReject when Reject button is clicked', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="moderation"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      const rejectButton = screen.getByRole('button', { name: /reject/i });
+      fireEvent.click(rejectButton);
+
+      expect(mockOnReject).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show review status badge when reviewStatus is provided', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="moderation"
+          reviewStatus="pending"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      // Should show a status indicator
+      expect(screen.getByText(/pending/i)).toBeInTheDocument();
+    });
+
+    it('should show approved status with appropriate styling', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="moderation"
+          reviewStatus="approved"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      expect(screen.getByText(/approved/i)).toBeInTheDocument();
+    });
+
+    it('should show rejected status with appropriate styling', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="moderation"
+          reviewStatus="rejected"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      expect(screen.getByText(/rejected/i)).toBeInTheDocument();
+    });
+
+    it('should disable buttons when isReviewing is true', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          isReviewing={true}
+          mode="moderation"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      const approveButton = screen.getByRole('button', { name: /approve/i });
+      const rejectButton = screen.getByRole('button', { name: /reject/i });
+
+      expect(approveButton).toBeDisabled();
+      expect(rejectButton).toBeDisabled();
+    });
+
+    it('should not call callbacks when buttons are disabled', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          isReviewing={true}
+          mode="moderation"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      const approveButton = screen.getByRole('button', { name: /approve/i });
+      fireEvent.click(approveButton);
+
+      expect(mockOnApprove).not.toHaveBeenCalled();
+    });
+  });
 });

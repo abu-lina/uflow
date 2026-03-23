@@ -13,7 +13,7 @@ import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
-import type { Provider } from '@/services/providers';
+import type { Provider, ReviewStatusFilter } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
 
@@ -27,6 +27,16 @@ interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   bookmarkableType?: 'provider' | 'community_service';
   priority?: boolean;
   loading?: 'eager' | 'lazy';
+  /** Card mode: 'bookmark' (default) shows Save/Saved, 'moderation' shows Approve/Reject */
+  mode?: 'bookmark' | 'moderation';
+  /** Review status for moderation mode badge display */
+  reviewStatus?: ReviewStatusFilter;
+  /** Callback when admin approves the provider */
+  onApprove?: () => void;
+  /** Callback when admin rejects the provider */
+  onReject?: () => void;
+  /** Loading state for review actions */
+  isReviewing?: boolean;
 }
 
 export const ProviderCard = React.memo(
@@ -51,6 +61,12 @@ export const ProviderCard = React.memo(
       bookmarkableType = 'provider',
       priority = false,
       loading,
+      // Plan 058: Moderation mode props
+      mode = 'bookmark',
+      reviewStatus,
+      onApprove,
+      onReject,
+      isReviewing = false,
     },
     ref,
   ) => {
@@ -320,6 +336,26 @@ export const ProviderCard = React.memo(
               </div>
             </div>
           )}
+          {/* Plan 058: Review status badge for moderation mode */}
+          {!showSkeleton && mode === 'moderation' && reviewStatus && (
+            <div className="absolute top-3 right-3">
+              <div 
+                className={`inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border px-2 backdrop-blur-[1.50px] ${
+                  reviewStatus === 'approved' 
+                    ? 'border-green-500 bg-green-100/70 text-green-700' 
+                    : reviewStatus === 'rejected' 
+                    ? 'border-red-500 bg-red-100/70 text-red-700'
+                    : reviewStatus === 'needs_revision'
+                    ? 'border-amber-500 bg-amber-100/70 text-amber-700'
+                    : 'border-yellow-500 bg-yellow-100/70 text-yellow-700'
+                }`}
+              >
+                <span className="justify-center text-center font-inter-tight text-xs font-medium capitalize">
+                  {reviewStatus.replace('_', ' ')}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
         {showSkeleton ? (
           <div className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5 outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300">
@@ -400,6 +436,47 @@ export const ProviderCard = React.memo(
             )}
             {!hideActions && (
               <div className="flex w-full gap-3.5">
+                {/* Plan 058: Moderation Mode - Show Approve/Reject buttons for admin review */}
+                {mode === 'moderation' ? (
+                  <div className="flex w-full gap-2">
+                    <Button
+                      aria-label="Approve"
+                      className="flex-1 h-12 items-center justify-center gap-1.5"
+                      disabled={isReviewing}
+                      icon={
+                        <div className="flex items-center">
+                          <Icon height={16} icon="mdi:check" width={16} />
+                        </div>
+                      }
+                      variant="primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onApprove?.();
+                      }}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      aria-label="Reject"
+                      className="flex-1 h-12 items-center justify-center gap-1.5"
+                      disabled={isReviewing}
+                      icon={
+                        <div className="flex items-center">
+                          <Icon height={16} icon="mdi:close" width={16} />
+                        </div>
+                      }
+                      variant="danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onReject?.();
+                      }}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                ) : (
+                  /* Default bookmark mode */
+                  <>
                 <div className="relative flex-1 h-12">
                   <motion.div
                     className="size-full cursor-pointer relative"
@@ -599,6 +676,8 @@ export const ProviderCard = React.memo(
                   >
                     Website
                   </Button>
+                )}
+                  </>
                 )}
               </div>
             )}

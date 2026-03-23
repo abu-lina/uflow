@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock supabase admin client
 const mockSelect = vi.fn();
-const mockSingle = vi.fn();
 const mockEq = vi.fn();
 const mockUpdate = vi.fn();
 const mockFrom = vi.fn();
@@ -23,9 +22,8 @@ describe('updateProviderReview', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default chain: from().update().eq().eq().select().single()
-    mockSingle.mockResolvedValue({ data: null, error: null });
-    mockSelect.mockReturnValue({ single: mockSingle });
+    // Default chain: from().update().eq().eq().select()
+    mockSelect.mockResolvedValue({ data: [], error: null });
     // Build the eq chain: first .eq('provider_id', ...) then .eq('updated_at', ...)
     mockEq.mockReturnValue({ eq: mockEq, select: mockSelect });
     mockUpdate.mockReturnValue({ eq: mockEq });
@@ -42,7 +40,7 @@ describe('updateProviderReview', () => {
       updated_at: new Date().toISOString(),
     };
 
-    mockSingle.mockResolvedValue({ data: mockProvider, error: null });
+    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
 
     await updateProviderReview(
       '123e4567-e89b-12d3-a456-426614174000',
@@ -59,9 +57,9 @@ describe('updateProviderReview', () => {
     const expectedTimestamp = '2026-03-23T10:00:00.000Z';
 
     // Simulate no row returned (concurrency conflict - another admin already changed it)
-    mockSingle.mockResolvedValue({
-      data: null,
-      error: { message: 'No rows found', code: 'PGRST116' },
+    mockSelect.mockResolvedValue({
+      data: [],
+      error: null,
     });
 
     await expect(
@@ -83,7 +81,7 @@ describe('updateProviderReview', () => {
       updated_at: new Date().toISOString(),
     };
 
-    mockSingle.mockResolvedValue({ data: mockProvider, error: null });
+    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
 
     const result = await updateProviderReview(
       '123e4567-e89b-12d3-a456-426614174000',

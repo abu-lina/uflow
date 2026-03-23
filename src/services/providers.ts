@@ -77,6 +77,10 @@ export interface SearchResult {
   type: 'provider' | 'community_service';
   originalProvider?: Provider;
   originalCommunityService?: CommunityService;
+  /** Review status (Plan 058: included for admin requests) */
+  review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
+  /** Review feedback (Plan 058: included for admin requests) */
+  review_feedback?: string | null;
 }
 
 // Constants for better maintainability
@@ -104,6 +108,7 @@ function getSearchStrategy(category: string | null | undefined): SearchStrategy 
 
 /**
  * Transforms a provider to SearchResult format
+ * Plan 058: Includes review_status and review_feedback when available
  */
 function transformProviderToSearchResult(provider: Provider): SearchResult {
   return {
@@ -132,6 +137,9 @@ function transformProviderToSearchResult(provider: Provider): SearchResult {
     category: provider.category,
     type: 'provider' as const,
     originalProvider: provider,
+    // Plan 058: Include review fields when available (admin mode)
+    review_status: provider.review_status,
+    review_feedback: provider.review_feedback,
   };
 }
 
@@ -209,8 +217,20 @@ function isValidLocation(location: string | null | undefined): boolean {
   return true;
 }
 
+/** Review status values for admin filtering (Plan 058) */
+export type ReviewStatusFilter = 'approved' | 'pending' | 'rejected' | 'needs_revision' | null;
+
+/** Admin options for filtering by review status (Plan 058) */
+export interface AdminSearchOptions {
+  status: 'approved' | 'pending' | 'rejected' | 'needs_revision';
+  isAdmin: true;
+}
+
 /**
  * Main search function that handles all entity types with pagination
+ * 
+ * Plan 058: When adminOptions is provided, filters by review_status and includes
+ * review_status/review_feedback fields in results.
  */
 export async function searchProvidersAndCommunityServices(
   query: string,
@@ -218,6 +238,7 @@ export async function searchProvidersAndCommunityServices(
   location: string,
   page: number = 0,
   pageSize: number = 5,
+  adminOptions?: AdminSearchOptions,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   try {
     const strategy = getSearchStrategy(category);
@@ -229,11 +250,11 @@ export async function searchProvidersAndCommunityServices(
         return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
       
       case 'both':
-        return await searchBoth(query, normalizedCategory, location, page, pageSize);
+        return await searchBoth(query, normalizedCategory, location, page, pageSize, adminOptions);
       
       case 'providers_only':
       default:
-        return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize);
+        return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions);
     }
   } catch (error) {
     // Log error for debugging
@@ -265,6 +286,7 @@ async function searchCommunityServicesOnly(
 
 /**
  * Search only providers with pagination
+ * Plan 058: Supports admin filtering by review_status
  */
 async function searchProvidersOnly(
   query: string,
@@ -272,11 +294,12 @@ async function searchProvidersOnly(
   location: string,
   page: number = 0,
   pageSize: number = 5,
+  adminOptions?: AdminSearchOptions,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const offset = page * pageSize;
   const limit = pageSize + 1; // Fetch one extra to check if there are more
   
-  const providers = await searchProviders(query, category, location, limit, offset);
+  const providers = await searchProviders(query, category, location, limit, offset, adminOptions);
   const hasMore = providers.length > pageSize;
   const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
   const sortedResults = sortByCreationDate(results);
@@ -286,6 +309,7 @@ async function searchProvidersOnly(
 
 /**
  * Search both providers and community services with pagination
+ * Plan 058: Supports admin filtering by review_status (providers only; community services out of scope)
  */
 async function searchBoth(
   query: string,
@@ -293,13 +317,23 @@ async function searchBoth(
   location: string,
   page: number = 0,
   pageSize: number = 5,
+  adminOptions?: AdminSearchOptions,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+  // Plan 058 fix: when admin is filtering by review status, community services are out of scope.
+  // Showing them alongside providers causes moderation buttons to appear on community service
+  // cards — clicking those buttons sends a community_service_id to the providers UPDATE query
+  // which matches 0 rows and throws a PostgREST error.
+  if (adminOptions?.status) {
+    return await searchProvidersOnly(query, category, location, page, pageSize, adminOptions);
+  }
+
   const offset = page * pageSize;
   const limit = pageSize + 1; // Fetch one extra to check if there are more
   
   // Fetch exactly what we need (not 2x)
+  // Note: adminOptions only applies to providers (community services out of scope per Plan 058)
   const [providers, communityServices] = await Promise.all([
-    searchProviders(query, category, location, limit, offset),
+    searchProviders(query, category, location, limit, offset, adminOptions),
     searchCommunityServices(query, CATEGORY_IDS.ALL, location, limit, offset)
   ]);
 
@@ -411,14 +445,50 @@ export async function getProviderById(id: string): Promise<Provider | null> {
   }
 }
 
+/**
+ * Search providers with optional admin filtering
+ * 
+ * Plan 058: When adminOptions is provided:
+ * - Filters by review_status
+ * - Includes review_status and review_feedback in results
+ */
 export async function searchProviders(
   query: string,
   category: string,
   location: string,
   limit?: number,
   offset?: number,
+  adminOptions?: AdminSearchOptions,
 ): Promise<Provider[]> {
-  let req = supabase.from('providers').select('*, category:categories(name_de, name_en)');
+  // Plan 058: Include review fields when admin
+  const selectFields = adminOptions?.isAdmin
+    ? '*, category:categories(name_de, name_en), review_status, review_feedback'
+    : '*, category:categories(name_de, name_en)';
+
+  // Plan 058 fix: admin queries must use the service-role client to bypass RLS.
+  // The anon client only sees approved providers; non-approved rows are invisible to it
+  // regardless of any eq('review_status', ...) filter applied at the application layer.
+  // getSupabaseAdmin() has 'server-only' so we replicate its pattern inline here.
+  // This branch is only reached from the API route after isAdminOrModerator() has passed.
+  let dbClient = supabase;
+  if (adminOptions?.isAdmin) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('Missing Supabase environment variables for admin search');
+    }
+    const { createClient } = await import('@supabase/supabase-js');
+    dbClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  }
+
+  let req = dbClient.from('providers').select(selectFields);
+  
+  // Plan 058: Apply review_status filter when admin options provided
+  if (adminOptions?.status) {
+    req = req.eq('review_status', adminOptions.status);
+  }
   
   // Apply pagination if provided
   if (limit !== undefined) {

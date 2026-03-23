@@ -148,12 +148,14 @@ describe('Plan 045 — GET /api/providers/search category transport', () => {
         'http://localhost:3000/api/providers/search?category=df8e549d-54c4-48ef-8e0b-c5a6646fcb7d',
       ),
     );
+    // Plan 058: Now expects 6 params (last one is adminOptions, undefined for non-admin requests)
     expect(mockSearch).toHaveBeenCalledWith(
       '',
       'df8e549d-54c4-48ef-8e0b-c5a6646fcb7d',
       '',
       0,
       12,
+      undefined,
     );
   });
 

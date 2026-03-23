@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -18,6 +18,11 @@ import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { AdminStatusFilter, type ReviewStatusFilter } from '@/features/admin/components/AdminStatusFilter';
+import { toast } from 'sonner';
+import { useProviderReview } from '@/features/admin/hooks/useProviderReview';
+import { RejectModal } from '@/features/admin/components/RejectModal';
 
 // Dynamic import for modal (Plan 007: reduce shared bundle)
 const LegalLinksModal = dynamic(
@@ -33,6 +38,7 @@ import type { Provider, SearchResult } from '@/services/providers';
  * Used for pagination after the initial server-rendered page.
  *
  * Plan 010 — P1a: Server boundary for pagination
+ * Plan 058 — Admin status filter support
  */
 async function fetchProvidersFromAPI(
   query: string,
@@ -40,6 +46,7 @@ async function fetchProvidersFromAPI(
   location: string,
   page: number,
   pageSize: number,
+  status?: ReviewStatusFilter,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const params = new URLSearchParams();
   if (query) params.set('q', query);
@@ -47,6 +54,8 @@ async function fetchProvidersFromAPI(
   if (location) params.set('location', location);
   params.set('page', String(page));
   params.set('pageSize', String(pageSize));
+  // Plan 058: Include status filter for admin users
+  if (status) params.set('status', status);
 
   const response = await fetch(`/api/providers/search?${params.toString()}`);
   if (!response.ok) {
@@ -70,10 +79,19 @@ export function ProvidersContent({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isLoading: userLoading } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
+
+  // Plan 058: Provider review hook and modal state for admin moderation
+  const { approveProvider, rejectProvider, isLoading: isReviewLoading, reviewingProviderId } = useProviderReview();
+  const [rejectModalState, setRejectModalState] = useState<{
+    isOpen: boolean;
+    providerId: string | null;
+    providerName: string;
+  }>({ isOpen: false, providerId: null, providerName: '' });
 
   useEffect(() => {
     setIsMounted(true);
@@ -110,19 +128,26 @@ export function ProvidersContent({
   // preventing stale context from overriding navigation to a different category UUID.
   const category = (searchParams.get('category') || null) ?? selectedCategory;
 
+  // Plan 058: Admin status filter from URL params
+  // Only applied when user is admin (non-admins can't use status filter)
+  const statusParam = searchParams.get('status') as ReviewStatusFilter;
+  const status = isAdmin ? statusParam : null;
+
   // Use React Query infinite query for paginated search results
   // Page size: 12 provides good balance between initial load and frequent pagination
   const PAGE_SIZE = 12;
 
+  // Plan 058: Include status in query key for proper cache management
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } =
     useInfiniteQuery({
-      queryKey: ['providers', query, category, location],
+      queryKey: ['providers', query, category, location, status],
       queryFn: ({ pageParam = 0 }) =>
-        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE),
+        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE, status),
       getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
       initialPageParam: 0,
       // Use server-rendered initial data when available (Plan 010 P1a)
-      ...(initialData && {
+      // Note: initialData only applies when no status filter is active
+      ...(!status && initialData && {
         initialData: {
           pages: [initialData],
           pageParams: [0],
@@ -138,8 +163,11 @@ export function ProvidersContent({
       placeholderData: (previousData) => previousData,
     });
 
-  // Flatten all pages into a single array
-  const searchResults = data?.pages.flatMap((page) => page.results) ?? [];
+  // Flatten all pages into a single array — memoized so stable reference for useCallback deps
+  const searchResults = useMemo(
+    () => data?.pages.flatMap((page) => page.results) ?? [],
+    [data],
+  );
 
   // Use React Query for bookmarks - includes both providers and community services
   const { data: bookmarkedProviderIds = [] } = useQuery({
@@ -243,6 +271,68 @@ export function ProvidersContent({
     [router],
   );
 
+  // Plan 058: Handle admin status filter change - update URL with new status
+  const handleStatusChange = useCallback(
+    (newStatus: ReviewStatusFilter) => {
+      const params = new URLSearchParams(window.location.search);
+      if (newStatus) {
+        params.set('status', newStatus);
+      } else {
+        params.delete('status');
+      }
+      router.replace(`/providers?${params.toString()}`, { scroll: false });
+    },
+    [router],
+  );
+
+  // Plan 058: Handle admin approve action
+  const handleApprove = useCallback(
+    async (providerId: string) => {
+      try {
+        await approveProvider(providerId);
+      } catch (err) {
+        console.error('[handleApprove] Failed to approve provider:', err);
+        toast.error('Failed to approve provider. Please try again.');
+      }
+    },
+    [approveProvider],
+  );
+
+  // Plan 058: Handle admin reject action - open modal to collect feedback
+  const handleRejectClick = useCallback(
+    (providerId: string) => {
+      // Find provider name from search results for modal display
+      const provider = searchResults.find((r) => r.id === providerId);
+      setRejectModalState({
+        isOpen: true,
+        providerId,
+        providerName: provider?.name || 'Provider',
+      });
+    },
+    [searchResults],
+  );
+
+  // Plan 058: Handle reject confirmation from modal
+  const handleRejectConfirm = useCallback(
+    async (feedback?: string) => {
+      if (rejectModalState.providerId) {
+        try {
+          await rejectProvider(rejectModalState.providerId, feedback);
+          setRejectModalState({ isOpen: false, providerId: null, providerName: '' });
+        } catch (err) {
+          console.error('[handleRejectConfirm] Failed to reject provider:', err);
+          toast.error('Failed to reject provider. Please try again.');
+        }
+      }
+    },
+    [rejectModalState.providerId, rejectProvider],
+  );
+
+  // Plan 058: Handle reject modal close
+  const handleRejectModalClose = useCallback(() => {
+    setRejectModalState({ isOpen: false, providerId: null, providerName: '' });
+  }, []);
+
   // Sync location/category/query with search context - only when they actually change
   useEffect(() => {
     // Use resolved location as source of truth (defaultLocation > URL param > context > fallback)
@@ -306,6 +396,9 @@ export function ProvidersContent({
       );
     }
 
+    // Plan 058: Determine card mode - use moderation when admin has status filter active
+    const cardMode = isAdmin && status ? 'moderation' : 'bookmark';
+
     // Show results (cached data shown immediately, background refetch doesn't block UI)
     return (
       <SearchResultsList
@@ -313,10 +406,14 @@ export function ProvidersContent({
         error={error}
         hasNextPage={hasNextPage ?? false}
         isFetchingNextPage={isFetchingNextPage}
+        mode={cardMode}
+        reviewingProviderId={reviewingProviderId}
         searchResults={searchResults}
+        onApprove={handleApprove}
         onBookmarkChange={handleBookmarkChange}
         onLoadMore={fetchNextPage}
         onProviderClick={handleProviderClick}
+        onReject={handleRejectClick}
         onRetry={() => refetch()}
       />
     );
@@ -370,6 +467,14 @@ export function ProvidersContent({
       {infoIconPortal}
       {languageSwitcherPortal}
       <LegalLinksModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} />
+      {/* Plan 058: Reject modal for admin provider review */}
+      <RejectModal
+        isLoading={isReviewLoading}
+        isOpen={rejectModalState.isOpen}
+        providerName={rejectModalState.providerName}
+        onClose={handleRejectModalClose}
+        onConfirm={handleRejectConfirm}
+      />
       {showGreeting ? (
         // Fixed greeting header for Stage 2 (matches ProvidersPageHeader style)
         <header
@@ -420,6 +525,18 @@ export function ProvidersContent({
             : 'pt-32 sm:pt-8 md:pt-28' // Full padding when fixed header is shown
         }`}
       >
+        {/* Plan 058: Admin status filter - only visible to admin/moderator users */}
+        {isAdmin && (
+          <div className="mb-6 px-4 sm:px-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-content-heading">Admin Filter:</span>
+              <AdminStatusFilter
+                selectedStatus={status}
+                onStatusChange={handleStatusChange}
+              />
+            </div>
+          </div>
+        )}
         {renderContent()}
       </main>
     </>

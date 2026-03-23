@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.21] - 2026-03-23
+
+### Added
+
+- **Admin provider review integrated into /providers discovery page (Plan 058)**: Admin and moderator users can now review providers directly from the main `/providers` discovery page instead of navigating to a separate admin panel. Added status filter tabs (All/Approved/Pending/Rejected/Needs Revision) visible only to admin users. ProviderCard now supports a `mode` prop that switches between bookmark mode (default Save/Saved button) and moderation mode (Approve/Reject buttons). Review status badges are displayed on cards in moderation mode. The RejectModal component allows optional feedback when rejecting providers. Cache invalidation and optimistic updates ensure the list reflects changes immediately. The legacy `/dashboard/providers` admin panel remains available for parallel use.
+
+### Fixed
+
+- **Admin provider search uses service-role client to bypass RLS**: Admin-filtered provider queries now use the Supabase service-role client instead of the anon client, which was restricted by RLS to approved-only providers. This fixes status filters returning empty results.
+- **Community services excluded from admin status-filtered results**: When filtering by review status, community service cards no longer appear in results — prevents moderation buttons from sending community service IDs to the providers review endpoint.
+- **updateProviderReview no longer uses PostgREST .single()**: Replaced with array-based select to avoid "Cannot coerce the result to a single JSON object" errors when 0 rows match.
 ## [0.8.20] - 2026-03-23
 
 ### Fixed
