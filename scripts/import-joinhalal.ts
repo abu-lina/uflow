@@ -197,6 +197,8 @@ async function ensureImportBotUser(): Promise<boolean> {
 /**
  * Verifies whether provider_description column exists in the target schema.
  * Migration 056 notes it may be absent in production.
+ * Plan 055: This is now informational only — the RPC no longer references
+ * provider_description, so the import succeeds regardless.
  */
 async function checkProviderDescriptionExists(): Promise<boolean> {
   const { data, error } = await supabase
@@ -208,6 +210,29 @@ async function checkProviderDescriptionExists(): Promise<boolean> {
     return false;
   }
   return !error || data !== null;
+}
+
+/**
+ * Verifies the upsert RPC function exists and is callable in the target database.
+ * Plan 055: surfaces environment/schema contract failures before the first write batch.
+ */
+async function checkUpsertRpcExists(): Promise<boolean> {
+  const { error } = await supabase.rpc('upsert_joinhalal_providers', {
+    p_providers: [],
+  });
+  if (error) {
+    // "function does not exist" or similar schema errors indicate the RPC is missing
+    if (
+      error.message.includes('function') ||
+      error.message.includes('does not exist') ||
+      error.message.includes('could not find')
+    ) {
+      return false;
+    }
+    // Other errors (e.g., auth) still mean the function exists but may have issues
+    // We'll let the actual write batch surface those.
+  }
+  return true;
 }
 
 // ─── Category resolution ───────────────────────────────────────────────────────
@@ -558,11 +583,22 @@ async function main() {
     console.warn('  ⚠ No offers found in catalog — Speisen will not be resolved. Run migration 061 first.');
   }
 
-  // Check provider_description column availability
+  // Verify upsert RPC function exists (Plan 055: fail fast on schema contract mismatch)
+  console.log('▶ Verifying upsert RPC function exists...');
+  const rpcExists = await checkUpsertRpcExists();
+  if (!rpcExists) {
+    console.error('  ❌ RPC function upsert_joinhalal_providers not found in target database.');
+    console.error('    This is a schema/environment setup error, not a content issue.');
+    console.error('    Ensure migration 064 has been applied. Aborting.');
+    process.exit(1);
+  }
+  console.log('  ✓ RPC function available');
+
+  // Check provider_description column availability (informational only — RPC does not depend on it)
   console.log('▶ Checking provider_description column availability...');
   const hasDescriptionColumn = await checkProviderDescriptionExists();
   console.log(
-    `  ${hasDescriptionColumn ? '✓ Column available' : '⚠ Column absent — description mapping skipped'}`
+    `  ${hasDescriptionColumn ? 'ℹ Column available (not used by RPC)' : 'ℹ Column absent (not required by RPC)'}`
   );
 
   // Ensure import-bot user exists (required for FK constraint)

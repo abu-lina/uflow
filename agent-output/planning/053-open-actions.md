@@ -35,9 +35,10 @@ Plan 054 fixes the two code-level blockers that prevented 053-OA-1 evidence coll
 
 ### Steps to close this open action
 
-1. Confirm migration 063 (`upsert_joinhalal_providers`) is applied to the staging database:
+1. Confirm migrations 063 and 064 (`upsert_joinhalal_providers`) are applied to the staging database:
    ```sql
    SELECT proname FROM pg_proc WHERE proname = 'upsert_joinhalal_providers';
+   -- Function should exist after migration 063; migration 064 fixes provider_description drift (Plan 055)
    ```
 2. Run the import in write mode against staging:
    ```bash

@@ -1,5 +1,5 @@
 /**
- * Contract test: JoinHalal upsert field classification (Plan 052 — QA re-fix)
+ * Contract test: JoinHalal upsert field classification (Plan 052 — QA re-fix, Plan 055 drift fix)
  *
  * Verifies that source-controlled and admin-controlled field sets are disjoint
  * and together cover all import-relevant provider fields. This is the TypeScript
@@ -26,10 +26,10 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
       ...ADMIN_CONTROLLED_FIELDS,
     ]);
     // Every field in the import payload excluding conflict-key columns
-    // (import_source, import_source_id) which are neither source- nor admin-controlled
+    // (import_source, import_source_id) which are neither source- nor admin-controlled.
+    // provider_description removed from payload fields per Plan 055 (column absent in production).
     const importPayloadFields = [
       'provider_name',
-      'provider_description',
       'category_id',
       'address_street',
       'address_zip',
@@ -58,11 +58,11 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
   it('source-controlled fields match the RPC DO UPDATE SET allowlist', () => {
     // These are the ONLY fields the RPC function updates on conflict.
     // If this list changes, the SQL migration must be updated too.
+    // provider_description removed per Plan 055 (column absent in production).
     const sourceFields = [...SOURCE_CONTROLLED_FIELDS] as string[];
     expect(sourceFields.sort()).toEqual(
       [
         'provider_name',
-        'provider_description',
         'category_id',
         'address_street',
         'address_zip',
@@ -93,5 +93,27 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
         'barakah_effects',
       ].sort()
     );
+  });
+});
+
+describe('Plan 055 — provider_description schema drift regression', () => {
+  it('provider_description is NOT in source-controlled fields (column absent in production)', () => {
+    const sourceFields = [...SOURCE_CONTROLLED_FIELDS] as string[];
+    expect(sourceFields).not.toContain('provider_description');
+  });
+
+  it('provider_description is NOT in admin-controlled fields', () => {
+    const adminFields = [...ADMIN_CONTROLLED_FIELDS] as string[];
+    expect(adminFields).not.toContain('provider_description');
+  });
+
+  it('RPC contract does not depend on provider_description column', () => {
+    // The combined set of all fields referenced by the RPC must not include
+    // provider_description, which is absent in production environments.
+    const allRpcFields = new Set<string>([
+      ...SOURCE_CONTROLLED_FIELDS,
+      ...ADMIN_CONTROLLED_FIELDS,
+    ]);
+    expect(allRpcFields.has('provider_description')).toBe(false);
   });
 });

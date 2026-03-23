@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.15] - 2026-03-23
+
+### Fixed
+
+- **RPC schema drift fix for provider_description (Plan 055)**: The PostgreSQL RPC function `upsert_joinhalal_providers` no longer references `providers.provider_description`, which is absent in production-shaped environments (documented in migration 056). Previously, write-mode imports failed with `column "provider_description" of relation "providers" does not exist` because migration 063 unconditionally included that column in INSERT, SELECT, and DO UPDATE SET clauses. Migration 064 replaces the function definition without `provider_description` references. The source-controlled field classification in `joinhalal-fields.ts` is updated to match.
+
+- **Write-mode RPC preflight check (Plan 055)**: The CLI import script now verifies the `upsert_joinhalal_providers` RPC function exists and is callable before the first write batch. Missing or incompatible RPC definitions are reported as environment/schema setup errors with actionable guidance, rather than surfacing as batch-offset failures during data writes.
+
 ## [0.8.14] - 2026-03-22
 
 ### Fixed

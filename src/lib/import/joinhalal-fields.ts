@@ -1,15 +1,17 @@
 /**
- * JoinHalal upsert field classification (Plan 052)
+ * JoinHalal upsert field classification (Plan 052, updated Plan 055)
  *
  * Defines which provider fields are source-controlled (updated on conflict)
  * vs admin-controlled (preserved on conflict). This classification must match
- * the DO UPDATE SET clause in migration 063_upsert_joinhalal_provider_rpc.sql.
+ * the DO UPDATE SET clause in migration 064 (replaces 063).
+ *
+ * Plan 055: provider_description removed — column absent in production
+ * (documented in migration 056). The RPC must not reference it.
  */
 
 /** Fields updated by the RPC function on conflict (re-import refreshes these). */
 export const SOURCE_CONTROLLED_FIELDS = [
   'provider_name',
-  'provider_description',
   'category_id',
   'address_street',
   'address_zip',
