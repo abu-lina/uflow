@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { useImageFallback } from '@/hooks/useImageFallback';
 import type { Category } from '@/services/categories';
+
+const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 
 interface UnifiedGalleryProps {
   categoryId: string;
@@ -23,11 +26,12 @@ export default function UnifiedGallery({
     entityType,
     limit: 3,
   });
+  const [failedIndexes, setFailedIndexes] = useState<Set<number>>(new Set());
 
   // Always ensure we have exactly 3 images
   const displayImages = [...images];
   while (displayImages.length < 3) {
-    displayImages.push('/images/placeholder.jpg');
+    displayImages.push(PLACEHOLDER_IMAGE);
   }
 
   if (loading) {
@@ -51,34 +55,42 @@ export default function UnifiedGallery({
 
   return (
     <div className={className}>
-      {displayImages.slice(0, 3).map((imageUrl, index) => (
-        <div
-          key={index}
-          className={`relative h-full w-1/3 overflow-hidden ${
-            index === 0 ? 'rounded-l-[29px]' : ''
-          } ${index === 2 ? 'rounded-r-[29px]' : ''}`}
-        >
-          <Image
-            fill
-            alt={
-              imageUrl === '/images/placeholder.jpg'
-                ? `Placeholder image ${index + 1}`
-                : imageUrl.includes('provider-images') || imageUrl.includes('providers')
-                ? `Provider image ${index + 1}`
-                : imageUrl.includes('community-service-images') || imageUrl.includes('community-services')
-                ? `Community service image ${index + 1}`
-                : `Category image ${index + 1}`
-            }
-            className={`border border-white object-cover ${
+      {displayImages.slice(0, 3).map((imageUrl, index) => {
+        const effectiveSrc = failedIndexes.has(index) ? PLACEHOLDER_IMAGE : imageUrl;
+        return (
+          <div
+            key={index}
+            className={`relative h-full w-1/3 overflow-hidden ${
               index === 0 ? 'rounded-l-[29px]' : ''
             } ${index === 2 ? 'rounded-r-[29px]' : ''}`}
-            loading={index === 0 ? 'eager' : 'lazy'}
-            priority={index === 0}
-            sizes="(max-width: 640px) 33vw, (max-width: 768px) 33vw, 33vw"
-            src={imageUrl}
-          />
-        </div>
-      ))}
+          >
+            <Image
+              fill
+              alt={
+                effectiveSrc === PLACEHOLDER_IMAGE
+                  ? `Placeholder image ${index + 1}`
+                  : effectiveSrc.includes('provider-images') || effectiveSrc.includes('providers')
+                  ? `Provider image ${index + 1}`
+                  : effectiveSrc.includes('community-service-images') || effectiveSrc.includes('community-services')
+                  ? `Community service image ${index + 1}`
+                  : `Category image ${index + 1}`
+              }
+              className={`border border-white object-cover ${
+                index === 0 ? 'rounded-l-[29px]' : ''
+              } ${index === 2 ? 'rounded-r-[29px]' : ''}`}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              priority={index === 0}
+              sizes="(max-width: 640px) 33vw, (max-width: 768px) 33vw, 33vw"
+              src={effectiveSrc}
+              onError={() => {
+                if (!failedIndexes.has(index)) {
+                  setFailedIndexes((prev) => new Set(prev).add(index));
+                }
+              }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

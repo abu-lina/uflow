@@ -129,7 +129,7 @@ async function fetchEntityImages(
 /**
  * Parse category images from various data structures
  */
-function parseCategoryImages(categoryImages: string | Record<string, unknown> | null | undefined): string[] {
+export function parseCategoryImages(categoryImages: string | Record<string, unknown> | null | undefined): string[] {
   if (!categoryImages) return [];
 
   try {
