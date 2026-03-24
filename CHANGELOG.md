@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.25] - 2026-03-24
+
+### Fixed
+
+- **Clothing & Fashion category gallery no longer returns `/_next/image` HTTP 400 (Plan 055)**: The `category_images` JSONB for the Clothing & Fashion category referenced a Supabase Storage object (`a65-design-2NLeXS3NR5E-unsplash.jpg`) that did not exist in the `category-images` bucket. Fixed by updating `category_images` to the confirmed live replacement asset `clothing.jpg` via migration 061. Applied via `supabase/migrations/061_fix_clothing_category_image_reference.sql` — must be run manually against the target database before the visual fix is active in production.
+
+- **`UnifiedGallery` now falls back to local placeholder on broken remote image (Plan 055)**: Any `<Image>` tile whose remote URL fails to load (network error, missing storage object, expired URL) now swaps to `/images/placeholder.jpg` via an `onError` handler instead of displaying a broken image icon. Protects against future stale `category_images` references across all home page gallery rows.
+
 ## [0.8.7] - 2026-03-19
 
 ### Added

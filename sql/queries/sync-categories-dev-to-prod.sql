@@ -49,7 +49,7 @@ VALUES
     'Einkaufen mit Niya und Wirkung',
     'Shopping with intention and impact',
     ARRAY['provider'],
-    '{"urls":["https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/a65-design-2NLeXS3NR5E-unsplash.jpg"]}'::jsonb,
+    '{"urls":["https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/clothing.jpg"]}'::jsonb,
     '2025-09-12 22:11:17.308489+00'::timestamptz,
     '2025-10-26 08:04:10.3297+00'::timestamptz
   ),
