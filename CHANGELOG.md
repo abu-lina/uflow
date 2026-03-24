@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.22] - 2026-03-24
+
+### Fixed
+
+- **Provider cards now maintain stable grid layout after repeated infinite scroll (Plan 053)**: Cards on the `/providers` page were rendering incorrectly after scrolling down 3–4 times — layout collapsed to a single column, cards overlapped, and pagination triggered cascading page fetches. Root cause: `SearchResultsList.tsx` switched from a responsive CSS grid to a `react-window` `FixedSizeList` when accumulated results crossed `VIRTUALIZATION_THRESHOLD=50` (after ~4 pages of `PAGE_SIZE=12`). The virtual path was broken in three ways: (1) single-column layout instead of the responsive 1–4 column grid, (2) `ESTIMATED_CARD_HEIGHT=320px` underestimated actual card height of 390–470px causing overlap, and (3) the IntersectionObserver pagination sentinel was placed outside the virtual scroll container and fired immediately on entry. Fixed by removing the entire `react-window` `FixedSizeList` branch; the responsive CSS grid is now the sole rendering contract for all result counts. Infinite scroll continues to work correctly at any scroll depth on desktop and mobile.
+
 ## [0.8.21] - 2026-03-23
 
 ### Added

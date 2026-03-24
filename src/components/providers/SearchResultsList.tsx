@@ -1,16 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useCallback, memo, useMemo, useState } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { useEffect, useRef, useCallback, memo, useMemo } from 'react';
 
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import { Button } from '@/components/ui/Button';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { usePrefetchProvider } from '@/hooks/useProvider';
 import type { SearchResult, Provider, ReviewStatusFilter } from '@/services/providers';
-
-const VIRTUALIZATION_THRESHOLD = 50;
-const ESTIMATED_CARD_HEIGHT = 320;
 
 interface SearchResultsListProps {
   searchResults: SearchResult[];
@@ -94,8 +90,6 @@ export const SearchResultsList = memo(function SearchResultsList({
     [searchResults]
   );
 
-  const useVirtualList = filteredResults.length > VIRTUALIZATION_THRESHOLD;
-
   const searchResultToProvider = useCallback((result: SearchResult): Provider => ({
     provider_id: result.id,
     provider_name: result.name,
@@ -121,138 +115,46 @@ export const SearchResultsList = memo(function SearchResultsList({
     community_service_id: result.type === 'community_service' ? result.id : undefined,
   }), []);
 
-  const [listHeight, setListHeight] = useState(600);
-  const listContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!useVirtualList || !listContainerRef.current) return;
-    const el = listContainerRef.current;
-    setListHeight(el.getBoundingClientRect().height || 600);
-    const observer = new ResizeObserver((entries) => {
-      const { height } = entries[0]?.contentRect ?? {};
-      if (typeof height === 'number' && height > 0) {
-        setListHeight(height);
-      }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [useVirtualList]);
-
-  const VirtualRow = useCallback(
-    ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      const result = filteredResults[index];
-      if (!result) return null;
-      const provider = searchResultToProvider(result);
-      return (
-        <div className="flex justify-center px-4 pb-4" style={style}>
-          <div
-            className="w-full max-w-md cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            role="button"
-            tabIndex={0}
-            onClick={() => onProviderClick(provider)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onProviderClick(provider);
-              }
-            }}
-            onMouseEnter={() => prefetchProvider(result.id)}
-          >
-            <ProviderCard
-              {...provider}
-              bookmarkableType={result.type}
-              hideWebsiteButton={true}
-              isBookmarked={bookmarkedProviderIds.includes(result.id)}
-              isReviewing={reviewingProviderId === result.id}
-              loading={index < 4 ? 'eager' : 'lazy'}
-              mode={mode}
-              priority={index < 4}
-              reviewStatus={result.review_status as ReviewStatusFilter}
-              onApprove={() => onApprove?.(result.id)}
-              onBookmarkChange={(isBookmarked: boolean) =>
-                onBookmarkChange(result.id, isBookmarked)
-              }
-              onReject={() => onReject?.(result.id)}
-            />
-          </div>
-        </div>
-      );
-    },
-    [
-      filteredResults,
-      searchResultToProvider,
-      onProviderClick,
-      onBookmarkChange,
-      bookmarkedProviderIds,
-      prefetchProvider,
-      mode,
-      onApprove,
-      onReject,
-      reviewingProviderId,
-    ]
-  );
-
   return (
     <>
-    {useVirtualList ? (
-      <div ref={listContainerRef} className="w-full h-[70vh] min-h-[400px]">
-        <List
-          height={listHeight}
-          itemCount={filteredResults.length}
-          itemSize={ESTIMATED_CARD_HEIGHT}
-          overscanCount={3}
-          width="100%"
-          onScroll={({ scrollOffset }: { scrollOffset: number }) => {
-            const bottom = scrollOffset + listHeight;
-            const threshold = filteredResults.length * ESTIMATED_CARD_HEIGHT - listHeight - 400;
-            if (hasNextPage && !isFetchingNextPage && bottom > threshold) {
-              debouncedLoadMore();
-            }
-          }}
-        >
-          {VirtualRow}
-        </List>
+      <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
+        {filteredResults.map((result, index) => {
+          const provider = searchResultToProvider(result);
+          return (
+            <div
+              key={result.id}
+              className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+              role="button"
+              tabIndex={0}
+              onClick={() => onProviderClick(provider)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onProviderClick(provider);
+                }
+              }}
+              onMouseEnter={() => prefetchProvider(result.id)}
+            >
+              <ProviderCard
+                {...provider}
+                bookmarkableType={result.type}
+                hideWebsiteButton={true}
+                isBookmarked={bookmarkedProviderIds.includes(result.id)}
+                isReviewing={reviewingProviderId === result.id}
+                loading={index < 4 ? 'eager' : 'lazy'}
+                mode={mode}
+                priority={index < 4}
+                reviewStatus={result.review_status as ReviewStatusFilter}
+                onApprove={() => onApprove?.(result.id)}
+                onBookmarkChange={(isBookmarked: boolean) =>
+                  onBookmarkChange(result.id, isBookmarked)
+                }
+                onReject={() => onReject?.(result.id)}
+              />
+            </div>
+          );
+        })}
       </div>
-    ) : (
-    <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
-      {filteredResults.map((result, index) => {
-        const provider = searchResultToProvider(result);
-        return (
-          <div
-            key={result.id}
-            className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            role="button"
-            tabIndex={0}
-            onClick={() => onProviderClick(provider)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onProviderClick(provider);
-              }
-            }}
-            onMouseEnter={() => prefetchProvider(result.id)}
-          >
-            <ProviderCard
-              {...provider}
-              bookmarkableType={result.type}
-              hideWebsiteButton={true}
-              isBookmarked={bookmarkedProviderIds.includes(result.id)}
-              isReviewing={reviewingProviderId === result.id}
-              loading={index < 4 ? 'eager' : 'lazy'}
-              mode={mode}
-              priority={index < 4}
-              reviewStatus={result.review_status as ReviewStatusFilter}
-              onApprove={() => onApprove?.(result.id)}
-              onBookmarkChange={(isBookmarked: boolean) =>
-                onBookmarkChange(result.id, isBookmarked)
-              }
-              onReject={() => onReject?.(result.id)}
-            />
-          </div>
-        );
-      })}
-    </div>
-    )}
       
       {/* Infinite scroll trigger - auto-loads as user approaches bottom */}
       {hasNextPage && (
