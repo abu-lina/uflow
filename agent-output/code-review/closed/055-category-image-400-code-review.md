@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: b7e4a3f1
-Status: Committed
+Status: Released
 ---
 
 # Code Review 055 — Home page category gallery image HTTP 400 bugfix

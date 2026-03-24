@@ -2,7 +2,7 @@
 ID: 055
 Origin: 055
 UUID: b7e4a3f1
-Status: Stage1-Complete
+Status: Released
 ---
 
 # Deployment — Plan 055 Stage 1 Commit: v0.8.25
@@ -86,6 +86,10 @@ Checked `date -u +%Y-%m-%d` = `2026-03-24`. CHANGELOG entry date matches. ✅
 No new file types introduced. All agent-output, test, migration, and SQL files follow existing `.gitignore` patterns. No `.gitignore` changes required.
 
 ## Stage 1 Evidence
+
+**Commit hash**: `4f1c1e8` — `fix(gallery): Fix Clothing & Fashion HTTP 400 and add image fallback`
+**Files committed**: 18 (1606 insertions, 32 deletions)
+**Temp commit message file**: `/tmp/uflow-commit-plan055-v0825.txt` — removed after commit
 
 ### git status (pre-commit)
 
