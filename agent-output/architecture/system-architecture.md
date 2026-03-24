@@ -1,6 +1,6 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-03-07
+**Last Updated**: 2026-03-24
 **Status**: Active
 
 ## Changelog
@@ -15,6 +15,7 @@
 | 2026-03-07 | Performance optimization architecture findings captured | Align caching, rendering, and telemetry for durable performance wins      | Arch 033            |
 | 2026-03-07 | Growth plan (city pages + analytics) architecture decisions captured | Establish ISR-first city acquisition pages, UTM canonicalization, and analytics guardrails | Arch 035            |
 | 2026-03-08 | Captured Plausible analytics ADR | Make analytics deployment + privacy guardrails explicit for upcoming activation/instrumentation work | Arch 035 / Plan 036 |
+| 2026-03-24 | Removed legacy in-app admin panel UI | Reduce privileged UI surface; preserve API-only admin tools and newer review workflows | Arch 054            |
 
 ---
 
@@ -121,6 +122,12 @@ The system currently uses multiple role sources:
 - `user.user_metadata.role` (client metadata fallback)
 
 This is a known architecture risk; roles must be normalized behind a single authority.
+
+### Administrative Surfaces (Current State)
+
+- The legacy in-app admin dashboard/panel UI has been removed.
+- Administrative capabilities are exposed via **server-side protected API routes** (e.g., `/api/admin/*`) and any separate operator workflow (if present).
+- Any remaining product requirement for “provider review/approval” MUST be satisfied by a supported workflow that does not reintroduce the legacy admin panel.
 
 ---
 

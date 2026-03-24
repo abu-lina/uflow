@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.24] - 2026-03-24
+
+### Removed
+
+- **Removed legacy in-app admin provider review panel (Plan 054)**: The admin dashboard (`/dashboard`, `/dashboard/providers`) and all its supporting code have been removed — 13 files deleted, net -1767 lines. Removed: route group `src/app/(dashboard)/`, review components (`AdminProvidersPageContent`, `ProviderReviewCard`, `ProviderCardSkeleton`, `StatusFilter`), admin review API endpoints (`/api/admin/pending-providers`, `/api/admin/review-provider`), admin provider service (`src/services/admin/providers.ts`), Zod validation schemas (`adminSchemas.ts`), audit logging (`adminAudit.ts`), and k6 performance tests. All cross-cutting references cleaned: email sign-up redirect (`/dashboard` → `/`), PWA manifest dashboard shortcuts (all 4 locales: de/en/ar/tr), middleware dead auth-gate block, and auth-debug dashboard link. Rate-limit config entries for the deleted endpoints removed. Provider moderation continues via Supabase Studio / direct DB operations; the `review_status = 'pending'` creation gate and `review_status = 'approved'` public visibility filter are preserved.
+
 ## [0.8.23] - 2026-03-24
 
 ### Fixed
