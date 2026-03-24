@@ -111,6 +111,15 @@ Core Responsibilities:
   - If the plan explicitly scoped out certain entity types, verify those types are excluded from the action surface, not just from the plan text.
 - If you find an entity type that can receive an action it shouldn't, record a MEDIUM or HIGH finding.
 
+  6h. **Deleted-Module Residue Sweep (MANDATORY when applicable)**:
+
+- Trigger when the implementation deletes, renames, or fully replaces modules/files.
+- Review checklist:
+  - search for remaining imports or references to deleted paths/modules
+  - check tests, fixtures, mocks, scripts, manifests, and docs that commonly retain stale references
+  - if deleted modules were part of a user-visible feature, verify no obvious entry-point references remain in navigation or account/profile surfaces
+- If stale references remain, record at least a MEDIUM finding unless the plan explicitly documents them as intentional follow-up work.
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions

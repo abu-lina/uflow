@@ -116,6 +116,31 @@ Minimum expectations:
 
 If interactive validation is required but not automatable, record it explicitly as `DEFERRED` with owner + deadline window + fallback execution path.
 
+### Removal Surface Validation (MANDATORY when applicable)
+
+If the change removes, deprecates, or hides a user-visible capability, QA MUST validate that the capability is no longer discoverable through the primary rendered surfaces listed in the plan.
+
+Minimum checks:
+
+- verify each enumerated navigation/shortcut/debug surface is removed, redirected, or intentionally retained as documented
+- verify desktop and mobile variants when both exist
+- verify any replacement flow still exposes the intended value without the removed entry point
+- document the exact surfaces checked and the evidence used
+
+If a listed surface cannot be validated, record it as DEFERRED with owner, risk, and closure evidence.
+
+### Deleted-Module Residue Check (MANDATORY when applicable)
+
+If the implementation deletes or renames modules, QA MUST verify that technical gates and structured searches do not reveal stale references to the removed modules.
+
+Minimum evidence:
+
+- note the key deleted paths/modules reviewed
+- document the search terms used
+- document whether stale references remained in tests, mocks, scripts, manifests, or docs
+
+If residue remains, QA cannot classify the implementation as QA Complete.
+
 ### SSR / Server-Defaults Check (MANDATORY when applicable)
 
 If the change touches URL param parsing, “sentinel” values (e.g., *all locations*), or any Next.js Server Component page that reads `searchParams`, QA MUST validate:

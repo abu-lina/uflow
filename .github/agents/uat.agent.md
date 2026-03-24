@@ -157,6 +157,17 @@ If live validation is infeasible at UAT time, UAT MUST:
 - Downgrade the release decision to **CONDITIONAL APPROVAL** with explicit next actions
 - NOT issue an unqualified "APPROVED FOR RELEASE"
 
+### Removed Capability Discoverability Gate (MANDATORY when applicable)
+
+If the release removes or hides a user-visible capability, UAT MUST NOT issue an unqualified "APPROVED FOR RELEASE" unless there is evidence that the capability is no longer discoverable in the primary user-facing surfaces identified by the plan/QA report.
+
+Minimum evidence:
+
+- QA lists the surfaces checked
+- any still-visible entry point is either intentional and documented, or treated as a release-blocking discrepancy
+
+If discoverability validation is incomplete, UAT must downgrade the decision to CONDITIONAL APPROVAL or REJECTED, with explicit next actions.
+
 ### Release Version Discipline (SHOULD)
 
 When recommending a version in the release decision, reference the plan's version language (e.g., "next available patch after current origin/main") rather than hard-coding a specific version number. The authoritative version is confirmed only at DevOps Stage 1 after `git fetch --tags`. Hard-coding a version in the UAT doc that DevOps later overrides creates unnecessary doc churn.
