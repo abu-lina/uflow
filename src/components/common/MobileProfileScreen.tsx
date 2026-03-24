@@ -7,7 +7,6 @@ import { Icon } from '@iconify/react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 interface MobileProfileScreenProps {
   onClose: () => void;
@@ -18,7 +17,6 @@ const SWIPE_AREA_HEIGHT = 48; // px
 export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClose }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { isAdmin } = useIsAdmin();
   const router = useRouter();
   const firstName = user?.user_metadata?.first_name || '';
   const lastName = user?.user_metadata?.last_name || '';
@@ -166,23 +164,6 @@ export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClos
               </div>
             </div>
             {/* Deactivate/Delete (disabled) */}
-            {isAdmin && (
-              <div className="flex w-full flex-col items-center gap-4">
-                <span className="w-full text-center font-inter text-[20px] text-[#555]">
-                  Administration
-                </span>
-                <button
-                  className="flex h-10 w-full flex-row items-center justify-center gap-2 rounded-xl bg-primary text-white"
-                  onClick={() => {
-                    onClose();
-                    router.push('/dashboard/providers');
-                  }}
-                >
-                  <Icon height={20} icon="material-symbols:admin-panel-settings-outline" width={20} />
-                  <span className="font-inter-tight text-[16px]">Admin Panel</span>
-                </button>
-              </div>
-            )}
             <div className="pointer-events-none flex w-full flex-col items-end gap-4 opacity-20">
               <span className="w-full text-center font-inter text-[20px] text-[#555]">
                 Deaktivieren und Löschen
