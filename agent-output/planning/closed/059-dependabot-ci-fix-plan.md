@@ -2,14 +2,14 @@
 ID: 059
 Origin: 059
 UUID: b7e3c4a1
-Status: Committed
+Status: Released
 ---
 
 # Plan 059 — Dependabot GitHub Actions CI Fix
 
 **Target Release**: v0.8.26 (confirmed at DevOps Stage 1 from latest origin tag `v0.8.25` and `origin/main` package version `0.8.25`)
 **Epic Alignment**: Active Release Tracker / Dependabot security maintenance blocker; supports the Master Product Objective by keeping CI trust, supply-chain hygiene, and release flow reliable
-**Status**: Committed for Release v0.8.26
+**Status**: Released
 **Related Issues**: Dependabot PRs #69, #70, #71, #72, #73, #74, #75, #76, #77; grouped update #2 on `main`
 
 ## Release Strategy
@@ -26,6 +26,7 @@ Standalone (no other known active plans in `agent-output/planning/` explicitly t
 | approx. 2026-03-24T14:06Z | qa | QA Complete | Validation evidence recorded; external Dependabot reruns deferred to maintainer/DevOps |
 | 2026-03-24T14:10Z | uat | UAT Approved | APPROVED FOR RELEASE; 3 structured deferred follow-ups recorded (DF-1 external reruns, DF-2 pre-existing test, DF-3 lockfile) |
 | 2026-03-24T14:23Z | devops | Stage 1 committed locally | Target release confirmed as v0.8.26; lifecycle closure and local commit prepared |
+| 2026-03-24T14:34Z | devops | Released | Branch pushed and release tagged as v0.8.26 |
 
 ## Value Statement and Business Objective
 

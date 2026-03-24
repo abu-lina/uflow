@@ -2,7 +2,7 @@
 ID: 059
 Origin: 059
 UUID: b7e3c4a1
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Dependabot GitHub Actions CI Fix
@@ -20,6 +20,7 @@ Status: Committed
 | approx. 2026-03-24T14:00Z | Code Reviewer | Test execution for Plan 059 | Built QA strategy from roadmap, architecture, plan, implementation, and code review artifacts |
 | approx. 2026-03-24T14:06Z | QA | Validation complete | Verified touched files are diagnostic-clean; confirmed prior gate evidence; recorded external rerun deferral and residual risks |
 | 2026-03-24T14:23Z | DevOps | Commit closure | Marked Committed for release v0.8.26 Stage 1 |
+| 2026-03-24T14:34Z | DevOps | Release closure | Marked Released after Stage 2 execution for v0.8.26 |
 
 ## Timeline
 

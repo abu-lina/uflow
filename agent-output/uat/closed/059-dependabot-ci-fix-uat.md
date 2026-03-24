@@ -2,7 +2,7 @@
 ID: 059
 Origin: 059
 UUID: b7e3c4a1
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Dependabot GitHub Actions CI Fix
@@ -17,6 +17,7 @@ Status: Committed
 | ---------- | ---------------- | -------------------- | ------------------------------ |
 | 2026-03-24T14:10Z | QA → UAT | Value delivery validation for Plan 059 | UAT Complete — implementation delivers stated value; external PR reruns deferred to DevOps as structured follow-up |
 | 2026-03-24T14:23Z | DevOps | Commit closure | Marked Committed for release v0.8.26 Stage 1 |
+| 2026-03-24T14:34Z | DevOps | Release closure | Marked Released after Stage 2 execution for v0.8.26 |
 
 ## Memory Health Check
 
