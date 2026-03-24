@@ -19,6 +19,7 @@ import {
   extractJoinHalalPostId,
   isJoinHalalDetailUrl,
   hasAlkoholverkauf,
+  extractHalalBadgesFromHtml,
 } from '@/utils/joinhalal-parser';
 
 // ---------------------------------------------------------------------------
@@ -572,6 +573,159 @@ describe('hasAlkoholverkauf', () => {
         additionalProperty: [
           { name: 'Halal Merkmale', value: '  Alkoholverkauf  ' },
         ],
+      })
+    ).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractHalalBadgesFromHtml (Plan 057)
+// ---------------------------------------------------------------------------
+
+/**
+ * Representative HTML fixture from dakju-korean-chicken-25247 (Alkoholverkauf badge).
+ * Simplified from the real Elementor/Voxel DOM — preserves structural anchors.
+ */
+const BADGE_HTML_POSITIVE = `<div>
+  <h3 class="elementor-heading-title elementor-size-default">Halal Merkmale</h3>
+</div>
+<div class="elementor-widget elementor-widget-ts-advanced-list">
+  <ul class="flexify simplify-ul ts-advanced-list">
+    <li class="elementor-repeater-item-01b0e18 flexify ts-action">
+      <div class="ts-action-con">
+        <div class="ts-action-icon"><i class="lar la-check-circle"></i></div>Halal Fleisch
+      </div>
+    </li>
+    <li class="elementor-repeater-item-01b0e18 flexify ts-action">
+      <div class="ts-action-con">
+        <div class="ts-action-icon"><i class="lar la-check-circle"></i></div>Halal Zertifikat vorhanden
+      </div>
+    </li>
+    <li class="elementor-repeater-item-d9918d2 flexify ts-action">
+      <div class="ts-action-con">
+        <div class="ts-action-icon"><i class="las la-exclamation-triangle"></i></div>Alkoholverkauf
+      </div>
+    </li>
+  </ul>
+</div>`;
+
+/**
+ * Representative HTML fixture from triple-b-burger-brothers-stuttgart-mitte-5990
+ * (Kein Alkoholverkauf badge).
+ */
+const BADGE_HTML_NEGATIVE = `<div>
+  <h3 class="elementor-heading-title elementor-size-default">Halal Merkmale</h3>
+</div>
+<div class="elementor-widget elementor-widget-ts-advanced-list">
+  <ul class="flexify simplify-ul ts-advanced-list">
+    <li class="elementor-repeater-item-01b0e18 flexify ts-action">
+      <div class="ts-action-con">
+        <div class="ts-action-icon"><i class="lar la-check-circle"></i></div>Kein Alkoholverkauf
+      </div>
+    </li>
+  </ul>
+</div>`;
+
+/** Page with no Halal Merkmale section at all */
+const BADGE_HTML_MISSING = `<div>
+  <h3 class="elementor-heading-title">Das bietet dir dieses Restaurant</h3>
+</div>
+<div class="elementor-widget elementor-widget-ts-advanced-list">
+  <ul class="flexify simplify-ul ts-advanced-list">
+    <li class="flexify ts-action"><div class="ts-action-con">Barzahlung</div></li>
+  </ul>
+</div>`;
+
+/** Page with Halal Merkmale heading but no badge list following it */
+const BADGE_HTML_HEADING_ONLY = `<div>
+  <h3 class="elementor-heading-title">Halal Merkmale</h3>
+</div>
+<div class="elementor-widget elementor-widget-heading">
+  <h3>Speisen</h3>
+</div>`;
+
+describe('extractHalalBadgesFromHtml (Plan 057)', () => {
+  it('extracts all badge texts from the Halal Merkmale section', () => {
+    const badges = extractHalalBadgesFromHtml(BADGE_HTML_POSITIVE);
+    expect(badges).toEqual([
+      'Halal Fleisch',
+      'Halal Zertifikat vorhanden',
+      'Alkoholverkauf',
+    ]);
+  });
+
+  it('extracts single badge from negative-only section', () => {
+    const badges = extractHalalBadgesFromHtml(BADGE_HTML_NEGATIVE);
+    expect(badges).toEqual(['Kein Alkoholverkauf']);
+  });
+
+  it('returns empty array when Halal Merkmale section is missing', () => {
+    expect(extractHalalBadgesFromHtml(BADGE_HTML_MISSING)).toEqual([]);
+  });
+
+  it('returns empty array when heading exists but no badge list follows', () => {
+    expect(extractHalalBadgesFromHtml(BADGE_HTML_HEADING_ONLY)).toEqual([]);
+  });
+
+  it('returns empty array for empty HTML', () => {
+    expect(extractHalalBadgesFromHtml('')).toEqual([]);
+  });
+
+  it('handles Halal-Merkmale hyphenated heading variant', () => {
+    const html = BADGE_HTML_POSITIVE.replace('Halal Merkmale', 'Halal-Merkmale');
+    const badges = extractHalalBadgesFromHtml(html);
+    expect(badges).toContain('Alkoholverkauf');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// hasAlkoholverkauf with HTML fallback (Plan 057)
+// ---------------------------------------------------------------------------
+
+/** JSON-LD where Halal-Merkmale has no usable value (null) — badge fallback needed */
+const SCHEMA_NULL_VALUE = {
+  additionalProperty: [{ name: 'Halal-Merkmale', value: undefined as string | undefined }],
+};
+
+/** JSON-LD where Halal-Merkmale value is a non-alcohol string — badge fallback needed */
+const SCHEMA_NON_ALCOHOL_VALUE = {
+  additionalProperty: [{ name: 'Halal-Merkmale', value: 'Asiatisch' }],
+};
+
+describe('hasAlkoholverkauf — HTML badge fallback (Plan 057)', () => {
+  it('returns true via JSON-LD when structured data contains Alkoholverkauf (no fallback needed)', () => {
+    expect(
+      hasAlkoholverkauf(
+        { additionalProperty: [{ name: 'Halal Merkmale', value: 'Alkoholverkauf' }] },
+        '<html></html>'
+      )
+    ).toBe(true);
+  });
+
+  it('falls back to HTML badges when JSON-LD Halal-Merkmale value is null/undefined', () => {
+    expect(hasAlkoholverkauf(SCHEMA_NULL_VALUE, BADGE_HTML_POSITIVE)).toBe(true);
+  });
+
+  it('falls back to HTML badges when JSON-LD Halal-Merkmale value is non-alcohol', () => {
+    expect(hasAlkoholverkauf(SCHEMA_NON_ALCOHOL_VALUE, BADGE_HTML_POSITIVE)).toBe(true);
+  });
+
+  it('returns false when fallback badges contain Kein Alkoholverkauf', () => {
+    expect(hasAlkoholverkauf(SCHEMA_NULL_VALUE, BADGE_HTML_NEGATIVE)).toBe(false);
+  });
+
+  it('returns false when no HTML is provided and JSON-LD has no alcohol signal', () => {
+    expect(hasAlkoholverkauf(SCHEMA_NULL_VALUE)).toBe(false);
+  });
+
+  it('returns false when fallback HTML has no Halal Merkmale section', () => {
+    expect(hasAlkoholverkauf(SCHEMA_NULL_VALUE, BADGE_HTML_MISSING)).toBe(false);
+  });
+
+  it('accepts Halal-Merkmale (hyphenated) in JSON-LD property name', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [{ name: 'Halal-Merkmale', value: 'Alkoholverkauf' }],
       })
     ).toBe(true);
   });

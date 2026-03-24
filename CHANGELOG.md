@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.23] - 2026-03-24
+
+### Fixed
+
+- **JoinHalal visible badge fallback and safe alcohol backfill (Plan 057)**: The JoinHalal importer now falls back to the visible `Halal Merkmale` badge list when Schema.org `additionalProperty` is absent, null, or non-decisive, so providers with a visible `Alkoholverkauf` badge are imported as `review_status = 'rejected'` and providers with `Kein Alkoholverkauf` remain on the non-rejected path. The parser accepts both `Halal Merkmale` and `Halal-Merkmale` variants, and both the shared dry-run/admin path (`src/lib/import/joinhalal.ts`) and CLI write path (`scripts/import-joinhalal.ts`) use the same detector. Added a new `--backfill-alcohol` CLI mode for one-time remediation of already-imported JoinHalal providers with dry-run-first output, `pending`-only safety guards, and direct service-role updates that do not overwrite human-reviewed rows.
+
 ## [0.8.22] - 2026-03-24
 
 ### Fixed
@@ -34,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **MuslimBusiness provider data import pipeline (Plan 052)**: A new admin-only import script (`scripts/import-muslimbusiness.ts`) that fetches public business listings from muslimbusiness.de/datenbank and bulk-upserts them into the UFlow providers database. The script extracts all ~250+ provider cards from the server-rendered single-page directory HTML using `<h3>` boundary splitting and labeled field extraction (Standorte, Branchen, Email, Telefon, Social Media), maps 60+ source Branchen values to 7 existing UFlow categories, deduplicates via a `name|city` composite key, and writes via service-role access with `--dry-run` as the default. A `--limit N` flag restricts processing to the first N cards for sampling runs. All imported rows default to `review_status = 'pending'` and are traceable via `user_created_id = '00000000-0000-0000-0000-000052000001'` (source-specific import-bot UUID). The outreach trigger is safely bypassed by the non-null `user_created_id` sentinel. A pure parser utility module (`src/utils/muslimbusiness-parser.ts`) backs the extraction logic with 74 unit and integration tests.
+
 
 ## [0.8.18] - 2026-03-23
 
@@ -47,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Admin provider review panel — profile menu access, conflict-safe updates (Plan 050)**: Added "Admin Panel" navigation entry to the home profile dropdown (desktop) and mobile profile screen for admin/moderator roles. Fixed the pending-provider list API response shape (`providers` field, previously `data`) so the admin review page correctly renders reviewable items. Added `updated_at` to the pending-provider list contract to support optimistic concurrency. Extended the review mutation with an optional `expectedUpdatedAt` parameter that issues a 409 Conflict response when another admin has already changed the provider, preventing silent overwrites with a single user-facing conflict toast and automatic list refresh.
+
 ## [0.8.16] - 2026-03-23
 
 ### Security
@@ -124,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **JoinHalal dry-run timeout hardening (Plan 049)**: The admin dry-run dashboard (`/dashboard/import`) intermittently returned 504 Gateway Timeout on UAT because the Nginx reverse proxy used the default 60-second `proxy_read_timeout`, which could be exceeded during route initialization or Supabase cold connections. Fixed by adding an explicit `proxy_read_timeout 95s` for `/api/admin/` routes in both UAT and production Nginx templates, scoped to avoid weakening other proxy behavior. An application-level 90-second AbortController timeout guard was added to the dry-run API route to ensure the app controls the failure response before Nginx (95s) or Cloudflare (100s) kill the request. The dry-run response now includes phase-level timing telemetry (`timing` field on `DryRunResult`) exposing category lookup, existing-key loading, sitemap retrieval, and page processing durations for operator diagnosis of intermittent slow paths.
+
 ## [0.8.9] - 2026-03-22
 
 ### Fixed
