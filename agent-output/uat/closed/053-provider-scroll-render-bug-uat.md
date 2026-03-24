@@ -2,7 +2,7 @@
 ID: 053
 Origin: 053
 UUID: e7b3d91a
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 053 — Provider Scroll Render Bugfix
@@ -17,6 +17,7 @@ Status: Committed
 | ------------------- | ------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
 | 2026-03-23T23:30Z   | QA → UAT      | Validate objective alignment for 053  | UAT Complete — implementation delivers stated value; manual browser check deferred with execution path documented |
 | 2026-03-24T00:00Z   | devops        | Status → Committed                    | Stage 1 complete; committed locally for release v0.8.22                                                          |
+| 2026-03-24T00:10Z   | devops        | Status → Released                     | Stage 2 complete; tag v0.8.22 pushed; commit 38a3c04                                                            |
 
 ## Value Statement Under Test
 

@@ -2,7 +2,7 @@
 ID: 053
 Origin: 053
 UUID: e7b3d91a
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 053 — Provider Scroll Render Bugfix
@@ -20,6 +20,7 @@ Status: Committed
 | 2026-03-23T23:00Z | Code Reviewer → QA   | Execute QA gates for Plan 053        | Created QA strategy and executed automated gates                        |
 | 2026-03-23T23:10Z | QA                   | Finalize QA verdict                  | All relevant automated gates passed; manual browser validation deferred |
 | 2026-03-24T00:00Z | devops               | Status → Committed                   | Stage 1 complete; committed locally for release v0.8.22                 |
+| 2026-03-24T00:10Z | devops               | Status → Released                    | Stage 2 complete; tag v0.8.22 pushed; commit 38a3c04                    |
 
 ## Timeline
 

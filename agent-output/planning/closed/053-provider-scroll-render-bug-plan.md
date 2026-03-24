@@ -2,7 +2,7 @@
 ID: 053
 Origin: 053
 UUID: e7b3d91a
-Status: Committed
+Status: Released
 ---
 
 # Plan 053 — Provider scroll render bugfix
@@ -28,6 +28,7 @@ Pre-flight note: fetched tags currently extend through `v0.8.21`. The required `
 | 2026-03-23T23:10Z | qa | Status → QA Complete | Targeted regression, full suite, type-check, and delta lint passed; manual browser validation deferred due missing env |
 | 2026-03-23T23:30Z | uat | Status → UAT Approved | APPROVED FOR RELEASE: all 5 UAT scenarios pass; value statement delivered; manual browser validation deferred with owner/fallback |
 | 2026-03-24T00:00Z | devops | Status → Committed | Stage 1 complete: version bumped to 0.8.22, all docs closed; committed locally for release v0.8.22 |
+| 2026-03-24T00:10Z | devops | Status → Released  | Stage 2 complete: tag v0.8.22 pushed; branch pushed to origin; commit 38a3c04 |
 
 ## Value Statement and Business Objective
 
