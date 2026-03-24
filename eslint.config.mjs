@@ -146,6 +146,7 @@ const eslintConfig = [
       'scripts/**/*.js',
       'scripts/**/*.ts',
       'supabase/functions/**',
+      'tools/**', // Standalone tooling projects with their own tsconfig (excluded from app tsconfig)
       'next-env.d.ts', // Next.js generated file
       'docs/archive/**', // Archived starter template and other reference material
       'docs/implementation/**', // Implementation reference scripts (browser context)

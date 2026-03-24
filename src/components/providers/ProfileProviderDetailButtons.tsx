@@ -115,7 +115,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
           title: 'Provider teilen',
           url: shareUrl,
         });
-      } catch (error) {
+      } catch {
         // User cancelled — AbortError is an expected outcome, not a failure
       }
     } else {
