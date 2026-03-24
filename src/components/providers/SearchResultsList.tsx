@@ -6,7 +6,7 @@ import { ProviderCard } from '@/components/providers/ProviderCard';
 import { Button } from '@/components/ui/Button';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { usePrefetchProvider } from '@/hooks/useProvider';
-import type { SearchResult, Provider } from '@/services/providers';
+import type { SearchResult, Provider, ReviewStatusFilter } from '@/services/providers';
 
 interface SearchResultsListProps {
   searchResults: SearchResult[];
@@ -18,6 +18,14 @@ interface SearchResultsListProps {
   onLoadMore: () => void;
   error?: Error | null;
   onRetry?: () => void;
+  /** Plan 058: Card mode - 'bookmark' (default) or 'moderation' for admin review */
+  mode?: 'bookmark' | 'moderation';
+  /** Plan 058: Callback when admin approves a provider */
+  onApprove?: (providerId: string) => void;
+  /** Plan 058: Callback when admin rejects a provider */
+  onReject?: (providerId: string) => void;
+  /** Plan 058: ID of provider currently being reviewed (loading state) */
+  reviewingProviderId?: string | null;
 }
 
 export const SearchResultsList = memo(function SearchResultsList({
@@ -30,6 +38,10 @@ export const SearchResultsList = memo(function SearchResultsList({
   onLoadMore,
   error = null,
   onRetry,
+  mode = 'bookmark',
+  onApprove,
+  onReject,
+  reviewingProviderId,
 }: SearchResultsListProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const prefetchProvider = usePrefetchProvider();
@@ -105,39 +117,44 @@ export const SearchResultsList = memo(function SearchResultsList({
 
   return (
     <>
-    <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
-      {filteredResults.map((result, index) => {
-        const provider = searchResultToProvider(result);
-        return (
-          <div
-            key={result.id}
-            className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            role="button"
-            tabIndex={0}
-            onClick={() => onProviderClick(provider)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onProviderClick(provider);
-              }
-            }}
-            onMouseEnter={() => prefetchProvider(result.id)}
-          >
-            <ProviderCard
-              {...provider}
-              bookmarkableType={result.type}
-              hideWebsiteButton={true}
-              isBookmarked={bookmarkedProviderIds.includes(result.id)}
-              loading={index < 4 ? 'eager' : 'lazy'}
-              priority={index < 4}
-              onBookmarkChange={(isBookmarked: boolean) =>
-                onBookmarkChange(result.id, isBookmarked)
-              }
-            />
-          </div>
-        );
-      })}
-    </div>
+      <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
+        {filteredResults.map((result, index) => {
+          const provider = searchResultToProvider(result);
+          return (
+            <div
+              key={result.id}
+              className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
+              role="button"
+              tabIndex={0}
+              onClick={() => onProviderClick(provider)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onProviderClick(provider);
+                }
+              }}
+              onMouseEnter={() => prefetchProvider(result.id)}
+            >
+              <ProviderCard
+                {...provider}
+                bookmarkableType={result.type}
+                hideWebsiteButton={true}
+                isBookmarked={bookmarkedProviderIds.includes(result.id)}
+                isReviewing={reviewingProviderId === result.id}
+                loading={index < 4 ? 'eager' : 'lazy'}
+                mode={mode}
+                priority={index < 4}
+                reviewStatus={result.review_status as ReviewStatusFilter}
+                onApprove={() => onApprove?.(result.id)}
+                onBookmarkChange={(isBookmarked: boolean) =>
+                  onBookmarkChange(result.id, isBookmarked)
+                }
+                onReject={() => onReject?.(result.id)}
+              />
+            </div>
+          );
+        })}
+      </div>
       
       {/* Infinite scroll trigger - auto-loads as user approaches bottom */}
       {hasNextPage && (

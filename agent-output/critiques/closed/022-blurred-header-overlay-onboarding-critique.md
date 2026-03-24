@@ -2,7 +2,7 @@
 ID: 022
 Origin: 022
 UUID: c4a1f7d2
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique — Plan 022: Remove Blurred Header Overlay on Onboarding Slide 1
@@ -17,6 +17,7 @@ Status: OPEN
 | Date       | Handoff          | Request        | Summary                                                                                      |
 | ---------- | ---------------- | -------------- | -------------------------------------------------------------------------------------------- |
 | 2026-02-24 | Planner → Critic | Initial review | Plan 022 evaluated against Critic checklist; approved with advisory notes on open questions. |
+| 2026-03-23T10:01Z | process-improvement | Close critique | Closed after release; Status: Resolved |
 
 ---
 
@@ -81,7 +82,7 @@ Plan 022 proposes removing a blurred/frosted header overlay on the onboarding "A
 ### F1: Plan contains OPEN QUESTIONs that should be addressed
 
 - **Severity**: LOW (advisory)
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Open Questions section
 - **Description**: Two open questions exist:
   1. "Is the screenshot definitively from the onboarding 'About' screen?"

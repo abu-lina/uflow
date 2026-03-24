@@ -102,6 +102,15 @@ Core Responsibilities:
 
 - If the implementation fixes an inner wrapper but leaves a higher blocking container unreviewed, record a finding.
 
+  6g. **Shared Results Actionability Checklist (MANDATORY when applicable)**:
+
+- Trigger when the implementation adds inline actions (approve, reject, delete, etc.) to a list that can return **multiple entity types** (e.g., providers + community services in the same search results).
+- For each inline action:
+  - Verify the action is only wired to the correct entity type.
+  - Verify the result set is filtered (or the UI conditionally renders actions) so that wrong-type entities cannot trigger the action.
+  - If the plan explicitly scoped out certain entity types, verify those types are excluded from the action surface, not just from the plan text.
+- If you find an entity type that can receive an action it shouldn't, record a MEDIUM or HIGH finding.
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions
@@ -143,6 +152,15 @@ Constraints:
 - Focus on: code quality, design, maintainability, readability
 - Code Review docs in `agent-output/code-review/` are exclusive domain
 - May update Status field in planning documents (to mark "Code Review Approved")
+
+### Constraint-Sensitive Findings (MANDATORY when applicable)
+
+If a MEDIUM finding could violate an explicit plan constraint, release invariant, or acceptance threshold under realistic edge conditions, you MUST force an explicit disposition in the Code Review doc:
+
+- `Fix before QA`, or
+- `Risk accepted for this release` (name the approver and rationale)
+
+Do not leave these findings as implicit "follow-up" items.
 
 ### Fix-in-Review Protocol (CONDITIONALLY ALLOWED)
 

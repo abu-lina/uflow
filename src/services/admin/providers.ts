@@ -32,6 +32,7 @@ export interface PendingProvider {
   review_status: 'pending' | 'approved' | 'rejected' | 'needs_revision';
   review_feedback: string | null;
   created_at: string;
+  updated_at: string;
   user_created_id: string | null;
 }
 
@@ -62,7 +63,7 @@ export async function getPendingProviders(
   // Fetch providers
   const { data, error } = await supabase
     .from('providers')
-    .select('provider_id, provider_name, provider_images, category_id, address_city, contact_email, review_status, review_feedback, created_at, user_created_id')
+    .select('provider_id, provider_name, provider_images, category_id, address_city, contact_email, review_status, review_feedback, created_at, updated_at, user_created_id')
     .eq('review_status', status)
     .order('created_at', { ascending: false })
     .range(pagination.offset, pagination.offset + pagination.limit - 1);
@@ -94,12 +95,15 @@ export async function getPendingProviders(
 }
 
 /**
- * Update provider review status
+ * Update provider review status with optional optimistic concurrency check.
+ * When expectedUpdatedAt is provided, the update only succeeds if the provider's
+ * updated_at still matches, preventing silent overwrites by concurrent admins.
  */
 export async function updateProviderReview(
   providerId: string,
   reviewStatus: 'approved' | 'rejected' | 'needs_revision',
-  reviewFeedback?: string | null
+  reviewFeedback?: string | null,
+  expectedUpdatedAt?: string
 ): Promise<Provider> {
   const supabase = getSupabaseAdmin();
 
@@ -117,21 +121,37 @@ export async function updateProviderReview(
     updateData.review_feedback = reviewFeedback ? sanitizeTextInput(reviewFeedback) : null;
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('providers')
     .update(updateData)
-    .eq('provider_id', providerId)
-    .select()
-    .single();
+    .eq('provider_id', providerId);
+
+  // Optimistic concurrency: only update if updated_at hasn't changed
+  if (expectedUpdatedAt) {
+    query = query.eq('updated_at', expectedUpdatedAt);
+  }
+
+  // Use array select instead of .single() to avoid PostgREST PGRST106
+  // ("Cannot coerce the result to a single JSON object") which is thrown
+  // when the RETURNING clause produces 0 rows (e.g. wrong UUID type passed,
+  // or row already deleted). provider_id is UNIQUE so at most one row matches.
+  const { data: rows, error } = await query.select();
 
   if (error) {
     throw new Error(`Failed to update provider review: ${error.message}`);
   }
 
+  const data = (rows as Provider[] | null)?.[0] ?? null;
+
   if (!data) {
+    // 0 rows updated — either the provider doesn't exist or (when expectedUpdatedAt
+    // was provided) another admin already changed it since the page was loaded.
+    if (expectedUpdatedAt) {
+      throw new Error('CONFLICT: Provider was modified by another reviewer. Please refresh and try again.');
+    }
     throw new Error('Provider not found');
   }
 
-  return data as Provider;
+  return data;
 }
 

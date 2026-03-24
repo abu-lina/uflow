@@ -15,6 +15,10 @@ import {
   cleanProviderName,
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
+  extractSpeisen,
+  extractJoinHalalPostId,
+  isJoinHalalDetailUrl,
+  hasAlkoholverkauf,
 } from '@/utils/joinhalal-parser';
 
 // ---------------------------------------------------------------------------
@@ -289,6 +293,51 @@ describe('extractUrlsFromSitemapXml', () => {
   it('returns empty array for XML with no loc elements', () => {
     expect(extractUrlsFromSitemapXml('<urlset></urlset>')).toEqual([]);
   });
+
+  it('[post-fix PASSES] excludes non-detail URLs like /locations/ from extraction', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://joinhalal.com/locations/</loc></url>
+  <url><loc>https://joinhalal.com/locations/restaurant/</loc></url>
+  <url><loc>https://joinhalal.com/locations/restaurant/foo-bar-123/</loc></url>
+  <url><loc>https://joinhalal.com/locations/food-truck/baz-qux-456/</loc></url>
+</urlset>`;
+    const urls = extractUrlsFromSitemapXml(xml);
+    expect(urls).toHaveLength(2);
+    expect(urls[0]).toBe('https://joinhalal.com/locations/restaurant/foo-bar-123/');
+    expect(urls[1]).toBe('https://joinhalal.com/locations/food-truck/baz-qux-456/');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isJoinHalalDetailUrl
+// ---------------------------------------------------------------------------
+
+describe('isJoinHalalDetailUrl', () => {
+  it('accepts a standard detail page URL', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/restaurant/echte-baerliner-augsburg-oberhausen-26548/')).toBe(true);
+  });
+
+  it('accepts a detail page with different category', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/food-truck/some-name-999/')).toBe(true);
+  });
+
+  it('[pre-fix FAILS] rejects the generic /locations/ listing page', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/')).toBe(false);
+  });
+
+  it('rejects a category listing page like /locations/restaurant/', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/restaurant/')).toBe(false);
+  });
+
+  it('rejects non-location URLs from the same domain', () => {
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/about/')).toBe(false);
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/')).toBe(false);
+  });
+
+  it('rejects empty or invalid input', () => {
+    expect(isJoinHalalDetailUrl('')).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -311,5 +360,219 @@ describe('extractCategoryFromUrl', () => {
   it('returns null for unexpected URL format', () => {
     expect(extractCategoryFromUrl('https://joinhalal.com/other/path/')).toBeNull();
     expect(extractCategoryFromUrl('')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractSpeisen (Plan 051)
+// ---------------------------------------------------------------------------
+
+describe('extractSpeisen', () => {
+  it('extracts comma-separated Speisen values from additionalProperty', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: 'Döner, Falafel, Pommes' },
+      ],
+    });
+    expect(result).toEqual(['Döner', 'Falafel', 'Pommes']);
+  });
+
+  it('returns empty array when additionalProperty is undefined', () => {
+    expect(extractSpeisen({})).toEqual([]);
+  });
+
+  it('returns empty array when additionalProperty is empty', () => {
+    expect(extractSpeisen({ additionalProperty: [] })).toEqual([]);
+  });
+
+  it('returns empty array when no Speisen entry exists in additionalProperty', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Küche', value: 'Türkisch' },
+      ],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty array when Speisen value is empty string', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: '' },
+      ],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it('deduplicates repeated Speisen values', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: 'Burger, Burger, Döner' },
+      ],
+    });
+    expect(result).toEqual(['Burger', 'Döner']);
+  });
+
+  it('handles single Speisen value (no comma)', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: 'Döner' },
+      ],
+    });
+    expect(result).toEqual(['Döner']);
+  });
+
+  it('trims whitespace from individual Speisen values', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: '  Burger , Döner  , Falafel  ' },
+      ],
+    });
+    expect(result).toEqual(['Burger', 'Döner', 'Falafel']);
+  });
+
+  it('filters out empty strings after splitting', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen', value: 'Burger,, ,Döner' },
+      ],
+    });
+    expect(result).toEqual(['Burger', 'Döner']);
+  });
+
+  it('returns empty array when Speisen value is undefined', () => {
+    const result = extractSpeisen({
+      additionalProperty: [
+        { '@type': 'PropertyValue', name: 'Speisen' },
+      ],
+    });
+    expect(result).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractJoinHalalPostId (Plan 052)
+// ---------------------------------------------------------------------------
+
+// Multi-block vxconfig fixture matching real JoinHalal page structure (Plan 053).
+// Real pages have 3 vxconfig blocks: blocks 0+1 are search/filter configs
+// without current_post; block 2 is the timeline config WITH current_post.
+const MULTI_BLOCK_VXCONFIG_HTML = `<!DOCTYPE html><html><head>
+<script type="application/ld+json" class="rank-math-schema-pro">${RESTAURANT_SCHEMA_JSON}</script>
+<script type="text/json" class="vxconfig">{"post_types":["listing"],"display_mode":"form","keywords":"","single_mode":false}</script>
+<script type="text/json" class="vxconfig">{"post_types":["listing"],"display_mode":"results","keywords":"restaurant"}</script>
+<script type="text/json" class="vxconfig">{"timeline":true,"current_post":{"exists":true,"id":26548,"display_name":"ECHTE B\u00c4RLINER | Augsburg Oberhausen"}}</script>
+</head><body></body></html>`;
+
+describe('extractJoinHalalPostId', () => {
+  it('extracts post ID from vxconfig script tag', () => {
+    expect(extractJoinHalalPostId(VALID_HTML_WITH_SCHEMA)).toBe('24043');
+  });
+
+  it('returns null when vxconfig script tag is absent', () => {
+    expect(extractJoinHalalPostId(HTML_WITHOUT_SCHEMA)).toBeNull();
+  });
+
+  it('returns null when current_post.id is missing', () => {
+    const html = `<script type="text/json" class="vxconfig">{"current_post":{"display_name":"Test"}}</script>`;
+    expect(extractJoinHalalPostId(html)).toBeNull();
+  });
+
+  it('converts numeric id to string', () => {
+    const html = `<script type="text/json" class="vxconfig">{"current_post":{"id":99999}}</script>`;
+    expect(extractJoinHalalPostId(html)).toBe('99999');
+  });
+
+  it('returns null for non-numeric id values', () => {
+    const html = `<script type="text/json" class="vxconfig">{"current_post":{"id":null}}</script>`;
+    expect(extractJoinHalalPostId(html)).toBeNull();
+  });
+
+  it('returns null for empty HTML', () => {
+    expect(extractJoinHalalPostId('')).toBeNull();
+  });
+
+  // Plan 053 regression: real pages have multiple vxconfig blocks,
+  // only the last one contains current_post
+  it('extracts post ID from third vxconfig block when first two lack current_post [post-fix PASSES]', () => {
+    expect(extractJoinHalalPostId(MULTI_BLOCK_VXCONFIG_HTML)).toBe('26548');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractDisplayNameFromHtml — multi-block regression (Plan 053)
+// ---------------------------------------------------------------------------
+
+describe('extractDisplayNameFromHtml — multi-block vxconfig', () => {
+  it('extracts display_name from the correct vxconfig block [post-fix PASSES]', () => {
+    const result = extractDisplayNameFromHtml(MULTI_BLOCK_VXCONFIG_HTML);
+    expect(result).toBe('ECHTE BÄRLINER | Augsburg Oberhausen');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// hasAlkoholverkauf (Plan 051)
+// ---------------------------------------------------------------------------
+
+describe('hasAlkoholverkauf', () => {
+  it('returns true when additionalProperty contains Halal Merkmale with Alkoholverkauf', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [{ name: 'Halal Merkmale', value: 'Alkoholverkauf' }],
+      })
+    ).toBe(true);
+  });
+
+  it('returns true when Alkoholverkauf is one of multiple comma-separated values', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [
+          { name: 'Halal Merkmale', value: 'Handgeschächtet, Alkoholverkauf, Lieferung' },
+        ],
+      })
+    ).toBe(true);
+  });
+
+  it('returns false when Halal Merkmale does not contain Alkoholverkauf', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [
+          { name: 'Halal Merkmale', value: 'Handgeschächtet, Lieferung' },
+        ],
+      })
+    ).toBe(false);
+  });
+
+  it('returns false when additionalProperty is an empty array', () => {
+    expect(hasAlkoholverkauf({ additionalProperty: [] })).toBe(false);
+  });
+
+  it('returns false when additionalProperty is undefined', () => {
+    expect(hasAlkoholverkauf({})).toBe(false);
+  });
+
+  it('returns false when Halal Merkmale property is absent (other props present)', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [{ name: 'Speisen', value: 'Burger, Pizza' }],
+      })
+    ).toBe(false);
+  });
+
+  it('matches Alkoholverkauf case-insensitively', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [{ name: 'Halal Merkmale', value: 'alkoholverkauf' }],
+      })
+    ).toBe(true);
+  });
+
+  it('handles whitespace around token values', () => {
+    expect(
+      hasAlkoholverkauf({
+        additionalProperty: [
+          { name: 'Halal Merkmale', value: '  Alkoholverkauf  ' },
+        ],
+      })
+    ).toBe(true);
   });
 });

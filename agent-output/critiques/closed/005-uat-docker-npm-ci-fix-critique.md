@@ -2,7 +2,7 @@
 ID: 5
 Origin: 5
 UUID: d7e2a91f
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique: 005 — Fix Plan: Restore UAT Docker Build (`npm ci` failure)
@@ -20,6 +20,7 @@ Status: OPEN
 | Date       | Handoff          | Request        | Summary                                            |
 | ---------- | ---------------- | -------------- | -------------------------------------------------- |
 | 2026-02-21 | Planner → Critic | Initial review | Plan reviewed; approved with low-severity findings |
+| 2026-03-23T10:01Z | process-improvement | Normalize closed critique status | Status: Resolved |
 
 ---
 
@@ -81,7 +82,7 @@ The plan actively reduces technical debt (lock file drift, toolchain misalignmen
 ### F1: Release targeting should be resolved before implementation
 
 - **Severity**: MEDIUM
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Open Questions, "release targeting"
 - **Description**: The plan leaves unresolved whether this should ship as v0.2.1 (patch) or under v0.3.0. Since v0.2.0 is the current production version and UAT is broken _now_, a patch release (v0.2.1) would be the correct semver signal: "bugfix to existing release, no new features."
 - **Impact**: If carried under v0.3.0, UAT remains broken until all v0.3.0 plans are ready. This contradicts the P0 urgency stated in the plan header.
@@ -90,7 +91,7 @@ The plan actively reduces technical debt (lock file drift, toolchain misalignmen
 ### F2: Missing explicit semver bump specification
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Version Management Milestone section
 - **Description**: The plan's "Version Management Milestone" section describes two options but doesn't commit to either. Per planner standards, plans should specify the target semver bump.
 - **Impact**: Low — the implementer can infer this from context, and it depends on F1 resolution.
@@ -99,7 +100,7 @@ The plan actively reduces technical debt (lock file drift, toolchain misalignmen
 ### F3: Assumption about `package.json` as source of truth should be validated
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Assumptions section
 - **Description**: The plan assumes "the intended dependency set is the current `package.json`." However, Analysis 005 notes that `package.json` shows `@supabase/ssr ^0.6.1` while the lock file has `^0.8.0`, and the analysis flags this as a possible accidental regression. If the lock file had the _correct_ version and `package.json` was accidentally downgraded, regenerating the lock file from `package.json` would cement the regression.
 - **Impact**: Low — likely the package.json is correct since it was consciously committed, but the implementer should verify the app compiles and functions with the `package.json` dependency set before committing.

@@ -82,14 +82,14 @@ export async function GET(request: Request) {
     }
 
     // Fetch pending providers using service layer
-    const { data, pagination } = await getPendingProviders(validatedParams.status, {
+    const result = await getPendingProviders(validatedParams.status, {
       limit: validatedParams.limit,
       offset: validatedParams.offset,
     });
 
     return NextResponse.json({
-      data,
-      pagination,
+      providers: result.data,
+      pagination: result.pagination,
     });
   } catch (error) {
     logger.error(

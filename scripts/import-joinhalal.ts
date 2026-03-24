@@ -12,6 +12,8 @@
  *   This bypasses RLS. Handle credentials with care.
  * • Imported rows default to review_status = 'pending' and are not publicly
  *   visible until approved via the admin moderation workflow.
+ * • Providers whose Halal Merkmale contains "Alkoholverkauf" are automatically
+ *   imported with review_status = 'rejected' (Plan 051 business rule).
  * • The outreach trigger (migration 059) is bypassed: user_created_id is set
  *   to the import-bot user UUID, which the trigger treats as non-anonymous.
  * • rate-limit: ~200ms delay between page fetches to be polite to the source.
@@ -40,7 +42,24 @@ import {
   cleanProviderName,
   extractUrlsFromSitemapXml,
   extractCategoryFromUrl,
+  extractSpeisen,
+  extractJoinHalalPostId,
+  hasAlkoholverkauf,
 } from '../src/utils/joinhalal-parser';
+import {
+  runJoinHalalDryRun,
+  makeProviderKey,
+  resolveCategoryId,
+  resolveOfferIds,
+  createMissingOffers,
+  buildCliWriteCommand,
+  IMPORT_BOT_UUID,
+  DEFAULT_SITEMAPS,
+  type ImportLimit,
+  type Category,
+  type Offer,
+  type DryRunResult,
+} from '../src/lib/import/joinhalal';
 
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
@@ -70,18 +89,7 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
  *   2. Provides a stable, queryable provenance marker:
  *        SELECT * FROM providers WHERE user_created_id = '<this UUID>';
  */
-const IMPORT_BOT_UUID = '00000000-0000-0000-0000-000047000001';
 const IMPORT_BOT_EMAIL = 'import-bot-joinhalal@system.internal';
-
-/** Base URL for all sitemaps */
-const SITEMAP_BASE = 'https://joinhalal.com';
-const DEFAULT_SITEMAPS = [
-  `${SITEMAP_BASE}/locations-sitemap1.xml`,
-  `${SITEMAP_BASE}/locations-sitemap2.xml`,
-  `${SITEMAP_BASE}/locations-sitemap3.xml`,
-  `${SITEMAP_BASE}/locations-sitemap4.xml`,
-  `${SITEMAP_BASE}/locations-sitemap5.xml`,
-];
 
 /** Polite delay between page fetches (ms) */
 const FETCH_DELAY_MS = 250;
@@ -93,11 +101,6 @@ const BATCH_SIZE = 50;
 const USER_AGENT = 'UFlow-Import/1.0 (+https://ummahflow.com/import)';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Category {
-  category_id: string;
-  name_de: string;
-}
 
 interface ProviderUpsert {
   provider_name: string;
@@ -112,25 +115,32 @@ interface ProviderUpsert {
   contact_phone: string | null;
   social_website: string | null;
   social_instagram: string | null;
-  review_status: 'pending';
+  review_status: 'pending' | 'rejected';
   user_created_id: string;
   provider_owner_id: null;
   show_address: boolean;
   offers_ids: string[];
   needs_ids: string[];
   barakah_effects: string[];
+  import_source: string | null;
+  import_source_id: string | null;
   import_source_url: string | null;
 }
 
-interface ImportStats {
+interface WriteStats {
   total: number;
   parsed: number;
   mapped: number;
   unmapped: number;
   skipped: number;
   failed: number;
-  inserted?: number;
-  updated?: number;
+  inserted: number;
+  updated: number;
+  offersMatched: number;
+  offersCreated: number;
+  offersCreateFailed: number;
+  /** Records auto-rejected because Halal Merkmale contains Alkoholverkauf (Plan 051) */
+  autoRejected: number;
 }
 
 interface UnmappedEntry {
@@ -138,26 +148,6 @@ interface UnmappedEntry {
   name: string;
   url: string;
 }
-
-// ─── Category mapping ─────────────────────────────────────────────────────────
-
-/**
- * Maps JoinHalal URL category slugs to UFlow category name (German).
- * These are then resolved against the live categories table.
- *
- * Only categories with a clear UFlow counterpart are mapped.
- * Unknown slugs result in category_id = null and are reported as unmapped.
- */
-const CATEGORY_SLUG_MAP: Record<string, string> = {
-  restaurant: 'Restaurant',
-  'food-truck': 'Imbiss',
-  metzgerei: 'Metzgerei',
-  imbiss: 'Imbiss',
-  cafe: 'Café',
-  baeckerei: 'Bäckerei',
-  supermarkt: 'Supermarkt',
-  moschee: 'Moschee',
-};
 
 // ─── Supabase client ──────────────────────────────────────────────────────────
 
@@ -212,6 +202,8 @@ async function ensureImportBotUser(): Promise<boolean> {
 /**
  * Verifies whether provider_description column exists in the target schema.
  * Migration 056 notes it may be absent in production.
+ * Plan 055: This is now informational only — the RPC no longer references
+ * provider_description, so the import succeeds regardless.
  */
 async function checkProviderDescriptionExists(): Promise<boolean> {
   const { data, error } = await supabase
@@ -223,6 +215,29 @@ async function checkProviderDescriptionExists(): Promise<boolean> {
     return false;
   }
   return !error || data !== null;
+}
+
+/**
+ * Verifies the upsert RPC function exists and is callable in the target database.
+ * Plan 055: surfaces environment/schema contract failures before the first write batch.
+ */
+async function checkUpsertRpcExists(): Promise<boolean> {
+  const { error } = await supabase.rpc('upsert_joinhalal_providers', {
+    p_providers: [],
+  });
+  if (error) {
+    // "function does not exist" or similar schema errors indicate the RPC is missing
+    if (
+      error.message.includes('function') ||
+      error.message.includes('does not exist') ||
+      error.message.includes('could not find')
+    ) {
+      return false;
+    }
+    // Other errors (e.g., auth) still mean the function exists but may have issues
+    // We'll let the actual write batch surface those.
+  }
+  return true;
 }
 
 // ─── Category resolution ───────────────────────────────────────────────────────
@@ -239,23 +254,16 @@ async function loadCategories(): Promise<Category[]> {
   return (data ?? []) as Category[];
 }
 
-/**
- * Resolves a JoinHalal URL category slug to a UFlow category_id.
- * Returns null for unmapped categories.
- */
-function resolveCategoryId(
-  slug: string | null,
-  categories: Category[]
-): string | null {
-  if (!slug) return null;
+async function loadOffers(): Promise<Offer[]> {
+  const { data, error } = await supabase
+    .from('offers')
+    .select('offer_id, name_de')
+    .order('name_de');
 
-  const targetName = CATEGORY_SLUG_MAP[slug.toLowerCase()];
-  if (!targetName) return null;
-
-  const match = categories.find(
-    (c) => c.name_de.toLowerCase() === targetName.toLowerCase()
-  );
-  return match?.category_id ?? null;
+  if (error) {
+    throw new Error(`Failed to load offers: ${error.message}`);
+  }
+  return (data ?? []) as Offer[];
 }
 
 // ─── HTTP helpers ──────────────────────────────────────────────────────────────
@@ -330,13 +338,15 @@ interface TransformResult {
   record: ProviderUpsert | null;
   error?: string;
   unmapped?: { category: string; url: string; name: string };
+  unmatchedSpeisen?: string[];
 }
 
 function transformPageToProvider(
   html: string,
   url: string,
   categories: Category[],
-  includeDescription: boolean
+  includeDescription: boolean,
+  offers: Offer[]
 ): TransformResult {
   const schema = extractSchemaOrgFromHtml(html);
   if (!schema) {
@@ -363,6 +373,13 @@ function transformPageToProvider(
   const instagram = extractInstagramFromSameAs(schema.sameAs);
   const website = schema.url ?? null;
 
+  // Resolve Speisen → offers_ids
+  const speisen = extractSpeisen(schema);
+  const { matchedIds, unmatchedSpeisen } = resolveOfferIds(speisen, offers);
+
+  // Extract JoinHalal post ID for upsert conflict resolution (Plan 052)
+  const postId = extractJoinHalalPostId(html);
+
   const record: ProviderUpsert = {
     provider_name: providerName,
     category_id: categoryId,
@@ -374,13 +391,15 @@ function transformPageToProvider(
     contact_phone: schema.telephone ?? null,
     social_website: website,
     social_instagram: instagram,
-    review_status: 'pending',
+    review_status: hasAlkoholverkauf(schema) ? 'rejected' : 'pending',
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
-    offers_ids: [],
+    offers_ids: matchedIds,
     needs_ids: [],
     barakah_effects: [],
+    import_source: postId ? 'joinhalal' : null,
+    import_source_id: postId,
     import_source_url: url,
   };
 
@@ -403,7 +422,7 @@ function transformPageToProvider(
       ? { category: categorySlug, url, name: providerName }
       : undefined;
 
-  return { record, unmapped };
+  return { record, unmapped, unmatchedSpeisen: unmatchedSpeisen.length > 0 ? unmatchedSpeisen : undefined };
 }
 
 // ─── Deduplication ────────────────────────────────────────────────────────────
@@ -431,8 +450,12 @@ async function loadExistingProviderKeys(): Promise<Set<string>> {
     if (!data || data.length === 0) break;
 
     for (const row of data) {
-      const key = `${(row.provider_name ?? '').toLowerCase().trim()}|${(row.address_city ?? '').toLowerCase().trim()}`;
-      existing.add(key);
+      existing.add(
+        makeProviderKey(
+          (row.provider_name ?? '') as string,
+          (row.address_city ?? null) as string | null
+        )
+      );
     }
 
     if (data.length < pageSize) break;
@@ -442,17 +465,10 @@ async function loadExistingProviderKeys(): Promise<Set<string>> {
   return existing;
 }
 
-function makeProviderKey(record: ProviderUpsert): string {
-  return `${(record.provider_name ?? '').toLowerCase().trim()}|${(record.address_city ?? '').toLowerCase().trim()}`;
-}
-
 // ─── Reporting ────────────────────────────────────────────────────────────────
 
-function printDryRunReport(
-  stats: ImportStats,
-  unmapped: UnmappedEntry[],
-  samples: ProviderUpsert[]
-) {
+function printDryRunReport(result: DryRunResult, limit: ImportLimit) {
+  const { stats, unmappedGroups, unmappedOffers, samples } = result;
   console.log('\n════════════════════════════════════════════════════════');
   console.log('  DRY-RUN REPORT — no data was written');
   console.log('════════════════════════════════════════════════════════');
@@ -462,51 +478,66 @@ function printDryRunReport(
   console.log(`  Unmapped category    : ${stats.unmapped}`);
   console.log(`  Skipped (duplicate)  : ${stats.skipped}`);
   console.log(`  Parse failures       : ${stats.failed}`);
-  console.log(`  Would INSERT         : ${stats.parsed - stats.skipped - stats.unmapped}`);
+  console.log(`  Would INSERT         : ${stats.wouldInsert}`);
+  console.log(`  Would UPDATE         : ${stats.wouldUpdate}`);
+  if (stats.autoRejected > 0) {
+    console.log(`  Auto-rejected (alcohol): ${stats.autoRejected}`);
+  }
 
-  if (unmapped.length > 0) {
+  if (unmappedGroups.length > 0) {
     console.log('\n  Unmapped categories (top 10):');
-    const grouped = unmapped.reduce<Record<string, string[]>>((acc, e) => {
-      acc[e.sourceCategory] = acc[e.sourceCategory] ?? [];
-      acc[e.sourceCategory].push(e.name);
-      return acc;
-    }, {});
-    Object.entries(grouped)
-      .slice(0, 10)
-      .forEach(([cat, names]) => {
-        console.log(`    "${cat}" (${names.length} entries) — example: "${names[0]}"`);
-      });
+    unmappedGroups.slice(0, 10).forEach(({ sourceCategory, count, example }) => {
+      console.log(`    "${sourceCategory}" (${count} entries) — example: "${example}"`);
+    });
+  }
+
+  if (unmappedOffers.length > 0) {
+    console.log('\n  Unmapped Speisen (top 10):');
+    unmappedOffers.slice(0, 10).forEach(({ speise, count, example }) => {
+      console.log(`    "${speise}" (${count} providers) — example: "${example}"`);
+    });
   }
 
   if (samples.length > 0) {
     console.log('\n  Sample records (first 3):');
-    samples.slice(0, 3).forEach((r, i) => {
+    samples.forEach((r, i) => {
       console.log(`\n  [${i + 1}] ${r.provider_name}`);
       console.log(`      city     : ${r.address_city ?? '—'}`);
       console.log(`      category : ${r.category_id ?? 'UNMAPPED'}`);
+      console.log(`      offers   : ${r.offers_matched ?? 0} matched`);
       console.log(`      street   : ${r.address_street ?? '—'}`);
       console.log(`      website  : ${r.social_website ?? '—'}`);
       console.log(`      email    : ${r.contact_email ?? '—'}`);
     });
   }
 
-  console.log('\n  To execute the import, run:');
-  console.log('    npx tsx scripts/import-joinhalal.ts --write [--limit N]');
+  console.log(`\n  To execute the import, run:`);
+  console.log(`    ${buildCliWriteCommand(limit)}`);
   console.log('════════════════════════════════════════════════════════\n');
 }
 
-function printWriteReport(stats: ImportStats) {
+function printWriteReport(stats: WriteStats) {
   console.log('\n════════════════════════════════════════════════════════');
   console.log('  WRITE REPORT');
   console.log('════════════════════════════════════════════════════════');
   console.log(`  URLs processed       : ${stats.total}`);
   console.log(`  Successfully parsed  : ${stats.parsed}`);
-  console.log(`  Inserted             : ${stats.inserted ?? 0}`);
+  console.log(`  Inserted (new)       : ${stats.inserted}`);
+  console.log(`  Updated (re-import)  : ${stats.updated}`);
   console.log(`  Skipped (duplicate)  : ${stats.skipped}`);
   console.log(`  Unmapped category    : ${stats.unmapped}`);
   console.log(`  Parse failures       : ${stats.failed}`);
+  console.log(`  Offers matched       : ${stats.offersMatched}`);
+  console.log(`  Offers auto-created  : ${stats.offersCreated}`);
+  if (stats.offersCreateFailed > 0) {
+    console.log(`  Offers create failed : ${stats.offersCreateFailed}`);
+  }
+  if (stats.autoRejected > 0) {
+    console.log(`  Auto-rejected (alcohol): ${stats.autoRejected}`);
+  }
   console.log('\n  To query imported records:');
-  console.log(`    SELECT * FROM providers WHERE user_created_id = '${IMPORT_BOT_UUID}';`);
+  console.log(`    SELECT * FROM providers WHERE import_source = 'joinhalal';`);
+  console.log(`    -- Or legacy: WHERE user_created_id = '${IMPORT_BOT_UUID}';`);
   console.log('════════════════════════════════════════════════════════\n');
 }
 
@@ -517,19 +548,36 @@ async function main() {
   const args = process.argv.slice(2);
   const isDryRun = args.includes('--dry-run') || !args.includes('--write');
   const limitFlag = args.findIndex((a) => a === '--limit');
-  const limit = limitFlag >= 0 ? parseInt(args[limitFlag + 1], 10) : null;
+  const limitRaw = limitFlag >= 0 ? parseInt(args[limitFlag + 1], 10) : null;
+  const limit: ImportLimit =
+    limitRaw === 10 || limitRaw === 50 || limitRaw === 100 ? limitRaw : 'all';
   const sitemapFlag = args.findIndex((a) => a === '--sitemap');
   const sitemapUrls =
     sitemapFlag >= 0 ? [args[sitemapFlag + 1]] : DEFAULT_SITEMAPS;
 
   console.log('\n╔══════════════════════════════════════════════════════╗');
-  console.log('║   UFlow — JoinHalal Provider Import (Plan 047)       ║');
+  console.log('║   UFlow — JoinHalal Provider Import                  ║');
   console.log('╚══════════════════════════════════════════════════════╝');
   console.log(`  Mode       : ${isDryRun ? '🔍 DRY-RUN (no writes)' : '✍️  WRITE'}`);
-  console.log(`  Limit      : ${limit !== null ? limit : 'all'}`);
+  console.log(`  Limit      : ${limit}`);
   console.log(`  Sitemaps   : ${sitemapUrls.length} file(s)\n`);
 
-  // ─ Load categories
+  // ─── DRY-RUN: delegate to shared import core ─────────────────────────────
+  if (isDryRun) {
+    console.log('▶ Running dry-run via shared import core...');
+    try {
+      const result = await runJoinHalalDryRun({ supabase, limit, sitemapUrls });
+      printDryRunReport(result, limit);
+    } catch (err) {
+      console.error(`❌ Dry-run failed: ${err instanceof Error ? err.message : String(err)}`);
+      process.exit(1);
+    }
+    return;
+  }
+
+  // ─── WRITE MODE ────────────────────────────────────────────────────────────
+
+  // Load categories
   console.log('▶ Loading categories from Supabase...');
   const categories = await loadCategories();
   console.log(`  ✓ Loaded ${categories.length} categories`);
@@ -538,28 +586,44 @@ async function main() {
     process.exit(1);
   }
 
-  // ─ Check provider_description column availability
+  // Load offers catalog for Speisen resolution
+  console.log('▶ Loading offers catalog from Supabase...');
+  const offers = await loadOffers();
+  console.log(`  ✓ Loaded ${offers.length} offers`);
+  if (offers.length === 0) {
+    console.warn('  ⚠ No offers found in catalog — Speisen will not be resolved. Run migration 061 first.');
+  }
+
+  // Verify upsert RPC function exists (Plan 055: fail fast on schema contract mismatch)
+  console.log('▶ Verifying upsert RPC function exists...');
+  const rpcExists = await checkUpsertRpcExists();
+  if (!rpcExists) {
+    console.error('  ❌ RPC function upsert_joinhalal_providers not found in target database.');
+    console.error('    This is a schema/environment setup error, not a content issue.');
+    console.error('    Ensure migration 064 has been applied. Aborting.');
+    process.exit(1);
+  }
+  console.log('  ✓ RPC function available');
+
+  // Check provider_description column availability (informational only — RPC does not depend on it)
   console.log('▶ Checking provider_description column availability...');
   const hasDescriptionColumn = await checkProviderDescriptionExists();
   console.log(
-    `  ${hasDescriptionColumn ? '✓ Column available' : '⚠ Column absent — description mapping skipped'}`
+    `  ${hasDescriptionColumn ? 'ℹ Column available (not used by RPC)' : 'ℹ Column absent (not required by RPC)'}`
   );
 
-  // ─ Ensure import-bot user exists (required for FK constraint)
-  if (!isDryRun) {
-    console.log('▶ Ensuring import-bot user exists in auth.users...');
-    const botOk = await ensureImportBotUser();
-    if (!botOk) {
-      console.error('  ❌ Cannot proceed without import-bot user. Aborting.');
-      process.exit(1);
-    }
-  } else {
-    console.log('▶ Skipping import-bot user setup (dry-run mode)');
+  // Ensure import-bot user exists (required for FK constraint)
+  console.log('▶ Ensuring import-bot user exists in auth.users...');
+  const botOk = await ensureImportBotUser();
+  if (!botOk) {
+    console.error('  ❌ Cannot proceed without import-bot user. Aborting.');
+    process.exit(1);
   }
 
-  // ─ Collect URLs from sitemaps
+  // Collect URLs from sitemaps
+  const numericLimit = limit === 'all' ? null : limit;
   console.log('\n▶ Collecting location URLs from sitemaps...');
-  const locationUrls = await collectLocationUrls(sitemapUrls, limit);
+  const locationUrls = await collectLocationUrls(sitemapUrls, numericLimit);
   console.log(`  ✓ Total URLs to process: ${locationUrls.length}`);
 
   if (locationUrls.length === 0) {
@@ -567,18 +631,14 @@ async function main() {
     process.exit(1);
   }
 
-  // ─ Load existing providers for duplicate detection (both modes)
-  // Dry-run loads real DB keys so the "Would INSERT" count is accurate.
+  // Load existing providers for deduplication
   console.log('\n▶ Loading existing provider keys for deduplication...');
   const existingKeys = await loadExistingProviderKeys();
   console.log(`  ✓ Loaded ${existingKeys.size} existing providers`);
-  if (isDryRun) {
-    console.log('  ℹ Dry-run: deduplication counts reflect actual DB state.');
-  }
 
-  // ─ Process each URL
+  // Process each URL
   console.log('\n▶ Processing location pages...');
-  const stats: ImportStats = {
+  const stats: WriteStats = {
     total: locationUrls.length,
     parsed: 0,
     mapped: 0,
@@ -586,11 +646,19 @@ async function main() {
     skipped: 0,
     failed: 0,
     inserted: 0,
+    updated: 0,
+    offersMatched: 0,
+    offersCreated: 0,
+    offersCreateFailed: 0,
+    autoRejected: 0,
   };
 
   const unmappedEntries: UnmappedEntry[] = [];
-  const toInsert: ProviderUpsert[] = [];
-  const sampleRecords: ProviderUpsert[] = [];
+  const toUpsert: ProviderUpsert[] = [];
+  const toInsertOnly: ProviderUpsert[] = [];
+  // Track unmatched Speisen per provider record (for post-loop auto-creation)
+  const providerUnmatchedSpeisen: Map<ProviderUpsert, string[]> = new Map();
+  let totalMatchedOffers = 0;
 
   for (let i = 0; i < locationUrls.length; i++) {
     const url = locationUrls[i];
@@ -606,11 +674,12 @@ async function main() {
       continue;
     }
 
-    const { record, error, unmapped } = transformPageToProvider(
+    const { record, error, unmapped, unmatchedSpeisen } = transformPageToProvider(
       html,
       url,
       categories,
-      hasDescriptionColumn
+      hasDescriptionColumn,
+      offers
     );
 
     if (error || !record) {
@@ -620,6 +689,8 @@ async function main() {
     }
 
     stats.parsed++;
+    if (record.review_status === 'rejected') stats.autoRejected++;
+    totalMatchedOffers += record.offers_ids.length;
 
     if (unmapped) {
       stats.unmapped++;
@@ -628,62 +699,144 @@ async function main() {
       stats.mapped++;
     }
 
-    // Deduplication: check against DB-loaded keys (both modes)
-    const providerKey = makeProviderKey(record);
-    if (existingKeys.has(providerKey)) {
-      stats.skipped++;
-      continue;
+    // Task 3.7: Selective dedup by import_source_id availability
+    if (record.import_source_id) {
+      // Has post ID — DB upsert will handle conflict resolution; skip client-side dedup
+      toUpsert.push(record);
+      // Track unmatched Speisen only for providers that will be persisted
+      if (unmatchedSpeisen && unmatchedSpeisen.length > 0) {
+        providerUnmatchedSpeisen.set(record, unmatchedSpeisen);
+      }
+    } else {
+      // No post ID — apply name+city dedup to prevent duplicates (insert-only fallback)
+      const providerKey = makeProviderKey(record.provider_name, record.address_city);
+      if (existingKeys.has(providerKey)) {
+        stats.skipped++;
+        continue;
+      }
+      existingKeys.add(providerKey);
+      toInsertOnly.push(record);
+      // Track unmatched Speisen only for providers that will be persisted
+      if (unmatchedSpeisen && unmatchedSpeisen.length > 0) {
+        providerUnmatchedSpeisen.set(record, unmatchedSpeisen);
+      }
     }
-    // Track in-batch duplicates for the current run
-    existingKeys.add(providerKey);
-
-    toInsert.push(record);
-    if (sampleRecords.length < 3) sampleRecords.push(record);
 
     await sleep(FETCH_DELAY_MS);
   }
 
-  // ─ Write or report
-  if (isDryRun) {
-    printDryRunReport(stats, unmappedEntries, sampleRecords);
-    return;
+  // ─ Auto-create missing offers (Plan 053: no silent drops)
+  stats.offersMatched = totalMatchedOffers;
+
+  if (providerUnmatchedSpeisen.size > 0) {
+    // Collect all unique unmatched Speisen terms across all providers
+    const allUnmatched = new Set<string>();
+    for (const terms of providerUnmatchedSpeisen.values()) {
+      for (const term of terms) {
+        allUnmatched.add(term);
+      }
+    }
+
+    console.log(`\n▶ Auto-creating ${allUnmatched.size} unmatched Speisen as offers...`);
+    try {
+      const createdOffers = await createMissingOffers(supabase, [...allUnmatched]);
+      stats.offersCreated = createdOffers.length;
+
+      // Build lookup from newly created/resolved offers
+      const newLookup = new Map(createdOffers.map((o) => [o.name_de.toLowerCase(), o.offer_id]));
+
+      // Merge new offer IDs into provider records' offers_ids
+      for (const [record, terms] of providerUnmatchedSpeisen) {
+        for (const term of terms) {
+          const offerId = newLookup.get(term.toLowerCase());
+          if (offerId && !record.offers_ids.includes(offerId)) {
+            record.offers_ids.push(offerId);
+          }
+        }
+      }
+
+      console.log(`  ✓ Created/resolved ${createdOffers.length} offers, linked to ${providerUnmatchedSpeisen.size} providers`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`  ❌ Failed to auto-create offers: ${message}`);
+      stats.offersCreateFailed = allUnmatched.size;
+    }
   }
 
-  // ─ Bulk upsert in batches
-  if (toInsert.length === 0) {
-    console.log('\n  No new records to insert (all duplicates or mapping failures).');
+  // ─ Bulk upsert/insert in batches
+  const totalRecords = toUpsert.length + toInsertOnly.length;
+  if (totalRecords === 0) {
+    console.log('\n  No new records to write (all duplicates or mapping failures).');
     printWriteReport(stats);
     return;
   }
 
-  console.log(`\n▶ Upserting ${toInsert.length} providers in batches of ${BATCH_SIZE}...`);
+  // Upsert batch: records with import_source_id (conflict on import_source,import_source_id)
+  if (toUpsert.length > 0) {
+    console.log(`\n▶ Upserting ${toUpsert.length} providers (with post ID) in batches of ${BATCH_SIZE}...`);
 
-  for (let offset = 0; offset < toInsert.length; offset += BATCH_SIZE) {
-    const batch = toInsert.slice(offset, offset + BATCH_SIZE);
+    for (let offset = 0; offset < toUpsert.length; offset += BATCH_SIZE) {
+      const batch = toUpsert.slice(offset, offset + BATCH_SIZE);
+      // Strip import_source_url (not a real DB column)
+      const cleanBatch = batch.map(({ import_source_url: _ignored, ...rest }) => rest);
 
-    // Remove import_source_url if the column doesn't exist in schema
-    // (This is not a standard provider column — stored as a metadata only)
-    const cleanBatch = batch.map(({ import_source_url: _ignored, ...rest }) => rest);
+      // Use RPC function with explicit ON CONFLICT DO UPDATE SET allowlist
+      // to preserve admin-controlled fields (Plan 052 safety requirement)
+      const { data, error } = await supabase
+        .rpc('upsert_joinhalal_providers', { p_providers: cleanBatch });
 
-    const { error } = await supabase
-      .from('providers')
-      .insert(cleanBatch);
+      if (error) {
+        console.error(
+          `  ❌ Batch upsert failed (offset ${offset}): ${error.message}`
+        );
+        stats.failed += batch.length;
+        continue;
+      }
 
-    if (error) {
-      console.error(
-        `  ❌ Batch insert failed (offset ${offset}): ${error.message}`
+      // RPC returns { inserted_count, updated_count } via xmax technique
+      if (data && Array.isArray(data) && data.length > 0) {
+        stats.inserted += Number(data[0].inserted_count);
+        stats.updated += Number(data[0].updated_count);
+      }
+      console.log(
+        `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: upserted ${batch.length} records`
       );
-      stats.failed += batch.length;
-      continue;
     }
+  }
 
-    stats.inserted = (stats.inserted ?? 0) + batch.length;
-    console.log(
-      `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
-    );
+  // Insert-only batch: records without import_source_id (already deduped client-side)
+  if (toInsertOnly.length > 0) {
+    console.log(`\n▶ Inserting ${toInsertOnly.length} providers (no post ID, insert-only) in batches of ${BATCH_SIZE}...`);
+
+    for (let offset = 0; offset < toInsertOnly.length; offset += BATCH_SIZE) {
+      const batch = toInsertOnly.slice(offset, offset + BATCH_SIZE);
+      const cleanBatch = batch.map(({ import_source_url: _ignored, ...rest }) => rest);
+
+      const { error } = await supabase
+        .from('providers')
+        .insert(cleanBatch);
+
+      if (error) {
+        console.error(
+          `  ❌ Batch insert failed (offset ${offset}): ${error.message}`
+        );
+        stats.failed += batch.length;
+        continue;
+      }
+
+      stats.inserted += batch.length;
+      console.log(
+        `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
+      );
+    }
   }
 
   printWriteReport(stats);
+
+  // Plan 054: exit non-zero when any RPC upsert batch failed
+  if (stats.failed > 0) {
+    process.exit(1);
+  }
 }
 
 main().catch((err) => {

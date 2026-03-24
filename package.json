@@ -81,7 +81,7 @@
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.545.0",
     "motion": "^12.23.23",
-    "next": "^15.5.9",
+    "next": "^15.5.14",
     "next-intl": "^4.4.0",
     "next-swagger-doc": "^0.4.1",
     "react": "^18.3.1",

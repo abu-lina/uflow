@@ -19,7 +19,7 @@ tools:
     'flowbaby_retrieveMemory',
     'todo',
   ]
-model: Gemini 3 Flash (Preview)
+model: GPT-5.2
 handoffs:
   - label: Request Implementation Fixes
     agent: Implementer
@@ -99,12 +99,12 @@ _Triggered when: UAT approves a plan. Goal: Commit locally, do NOT push._
 
 1. **Acknowledge handoff**: Plan ID, target release version (e.g., v0.6.2), UAT decision.
 2. Confirm UAT "APPROVED FOR RELEASE", QA "QA Complete" for this plan.
-  2b. **Post-UAT delta check (MANDATORY)**:
-    - Inspect the Implementation doc changelog and completion notes for any code changes made after UAT approval.
-    - If post-UAT code changes exist, require one of:
-      - fresh Code Review / QA evidence, or
-      - a documented `Post-UAT Delta Review` that satisfies the narrow self-review criteria.
-    - If neither exists, block Stage 1 and hand back to Implementer.
+   2b. **Post-UAT delta check (MANDATORY)**:
+   - Inspect the Implementation doc changelog and completion notes for any code changes made after UAT approval.
+   - If post-UAT code changes exist, require one of:
+     - fresh Code Review / QA evidence, or
+     - a documented `Post-UAT Delta Review` that satisfies the narrow self-review criteria.
+   - If neither exists, block Stage 1 and hand back to Implementer.
 3. Read roadmap. Verify plan's target release version. Multiple plans may target same release.
    **Version pre-flight (MANDATORY)**: Before accepting the plan's target version as final, run:
 
@@ -114,19 +114,25 @@ git tag --list "v*" | sort -V | tail -5
 git show origin/main:package.json | grep '"version"'
 ```
 
-   If the target version tag already exists, increment and update the plan's `Target Release` field before continuing. Document the adjustment in the Stage 1 deployment doc.
-4. Check version consistency for target release per `release-procedures` skill.
-  4b. **CHANGELOG date sanity-check (MANDATORY)**:
-    - If the latest `CHANGELOG.md` entry includes a date, verify it matches the actual release day.
-    - Preferred check: compare against `date -u +%Y-%m-%d` and correct obvious mismatches before committing.
-    - If you intentionally do not correct it, record rationale in the Stage 1 deployment doc.
+If the target version tag already exists, increment and update the plan's `Target Release` field before continuing. Document the adjustment in the Stage 1 deployment doc. 4. Check version consistency for target release per `release-procedures` skill.
+4b. **CHANGELOG date sanity-check (MANDATORY)**: - If the latest `CHANGELOG.md` entry includes a date, verify it matches the actual release day. - Preferred check: compare against `date -u +%Y-%m-%d` and correct obvious mismatches before committing. - If you intentionally do not correct it, record rationale in the Stage 1 deployment doc.
+4c. **Chain timestamp sanity-check (MANDATORY)**:
+
+- Review the current plan's implementation, code-review, QA, and UAT docs for UTC timestamps in status changes, timeline tables, or changelog entries.
+- Verify timestamps are **causally monotonic** across the handoff order (do not allow later phases to appear earlier than predecessor phases).
+- Do NOT replace one invalid precise timestamp with another guessed precise timestamp.
+- If an anomaly is found, record it in the Stage 1 deployment doc and either:
+  - correct an obvious typo before commit when ownership is clear, or
+  - leave the source doc unchanged and record follow-up rationale (mark uncertain times as `approx.` rather than inventing exact times).
+
 5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
 
 5b. **PWA dev-artifact check (MANDATORY if dev server ran)**:
-  - If `npm run dev` (or any Next.js dev server) was running during the session, inspect `git status` for unexpected changes under `public/`, especially `public/fallback-*.js`.
-  - If a production fallback file appears deleted/modified, restore it from git before committing.
-  - Canonical restore command: `git checkout -- public/fallback-*.js` (production hash-suffixed fallback) — ensure `public/fallback-development.js` remains dev-only/ignored.
-  - Ensure dev-only fallback artifacts are gitignored (current known pattern: `**/public/fallback-development.js`).
+
+- If `npm run dev` (or any Next.js dev server) was running during the session, inspect `git status` for unexpected changes under `public/`, especially `public/fallback-*.js`.
+- If a production fallback file appears deleted/modified, restore it from git before committing.
+- Canonical restore command: `git checkout -- public/fallback-*.js` (production hash-suffixed fallback) — ensure `public/fallback-development.js` remains dev-only/ignored.
+- Ensure dev-only fallback artifacts are gitignored (current known pattern: `**/public/fallback-development.js`).
 
 **Stage 1 evidence block (RECOMMENDED)**:
 
@@ -139,12 +145,14 @@ git show origin/main:package.json | grep '"version"'
 
 - Always quote file paths passed to shell commands (especially App Router route-group paths like `src/app/(public)/...`).
 - Reason: zsh treats parentheses as glob patterns and may error with `zsh: no matches found`.
+- Never use shell heredocs for markdown (`cat <<EOF ... EOF` or `cat <<'EOF' ... EOF`). Markdown table syntax (`| cell |`) can corrupt heredoc parsing and break the terminal session. Use the `create_file` tool for new files, or write a small script to `/tmp/` via a file tool and execute it by filename for complex text transformations.
 
 6. **Prepare Stage 1 closure before the final commit**:
-  - Create or update the Stage 1 deployment doc before the final `git add` / `git commit` step.
-  - For the current plan, update lifecycle statuses and move the plan's docs to `closed/` before the final staged-set verification.
-  - Verify the staged set includes the plan changes, the deployment doc, and the lifecycle doc moves for that same plan.
-  - Exception: if you discover unrelated orphaned documents from older plans, keep those in a separate docs-only commit.
+
+- Create or update the Stage 1 deployment doc before the final `git add` / `git commit` step.
+- For the current plan, update lifecycle statuses and move the plan's docs to `closed/` before the final staged-set verification.
+- Verify the staged set includes the plan changes, the deployment doc, and the lifecycle doc moves for that same plan.
+- Exception: if you discover unrelated orphaned documents from older plans, keep those in a separate docs-only commit.
 
 7. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
 
@@ -155,7 +163,6 @@ git show origin/main:package.json | grep '"version"'
 - Do NOT use heredocs or multi-paragraph `git commit -m ...` (shell quoting is fragile).
 
   **Temp commit message file safety (MANDATORY)**:
-
   - Prefer creating the message file outside the repo (example: `/tmp/uflow-commit-msg-<id>.txt`) so it cannot be staged or committed accidentally.
   - If you create the message file inside the repo for any reason:
     - Stage changes using an explicit allowlist of paths (avoid `git add -A`).
@@ -198,12 +205,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
      - Update Status to terminal state for Stage 1: "Committed" on plan, implementation, code-review, qa, uat docs
    - Move each to their respective `agent-output/<domain>/closed/` folders
    - Log: "Closed documents for Plan [ID]: planning, implementation, code-review, qa, uat moved to closed/"
-9b. **Deferred post-deploy tracker (MANDATORY when applicable)**:
-  - If the plan or UAT report includes any deferred post-deploy milestone/validation, or any UAT residual risk labeled deferred / post-release / follow-up required, create `agent-output/planning/[ID]-open-actions.md` (Status: Active) so it remains visible after the plan doc is moved to `closed/`.
-  - If the deployment doc contains any **Known Limitations (pre-operation)** items that MUST be completed before first real-world operation, create the same tracker and record those items with owner + trigger + evidence-to-close.
-  - Use the same `ID` / `Origin` / `UUID` as the plan (copy/paste exact values).
-  - Include: deferred item, owner, trigger/due, and the evidence link required to close it.
-  - Minimal template (copy/paste and fill in):
+     9b. **Deferred post-deploy tracker (MANDATORY when applicable)**:
+
+- If the plan or UAT report includes any deferred post-deploy milestone/validation, or any UAT residual risk labeled deferred / post-release / follow-up required, create `agent-output/planning/[ID]-open-actions.md` (Status: Active) so it remains visible after the plan doc is moved to `closed/`.
+- If the deployment doc contains any **Known Limitations (pre-operation)** items that MUST be completed before first real-world operation, create the same tracker and record those items with owner + trigger + evidence-to-close.
+- Use the same `ID` / `Origin` / `UUID` as the plan (copy/paste exact values).
+- Include: deferred item, owner, trigger/due, and the evidence link required to close it.
+- Minimal template (copy/paste and fill in):
 
 ```md
 ---
@@ -222,16 +230,17 @@ Status: Active
 
 ## Open Actions
 
-| Item | Owner | Trigger/Due | Evidence to close | Status |
-|---|---|---|---|---|
-| [e.g., Plausible dashboard validation] | [name/role] | [date/trigger] | [link/screenshot/logs] | Open |
+| Item                                   | Owner       | Trigger/Due    | Evidence to close      | Status |
+| -------------------------------------- | ----------- | -------------- | ---------------------- | ------ |
+| [e.g., Plausible dashboard validation] | [name/role] | [date/trigger] | [link/screenshot/logs] | Open   |
 
 ## Changelog
 
-| Date (UTC) | Agent | Change |
-|---|---|---|
+| Date (UTC) | Agent  | Change                                    |
+| ---------- | ------ | ----------------------------------------- |
 | YYYY-MM-DD | devops | Created tracker from deferred validations |
 ```
+
 10. Update plan status to "Committed for Release [X.Y.Z]".
 11. Report to Roadmap agent (handoff): Plan committed, release tracker needs update.
 12. Inform user: "[Plan ID] committed locally for release [X.Y.Z]. [N] of [M] plans committed for this release."
@@ -251,38 +260,41 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 1. Query Roadmap for release status: All plans for target version must be "Committed".
 2. If any plans incomplete: Report status, list pending plans, await further commits.
 3. Verify version consistency across ALL committed changes.
-  3b. **Security audit evidence (MANDATORY)**:
-    - Run `npm audit` (or an equivalent audit command agreed for this repo).
-    - Record whether any **new** HIGH/CRITICAL vulnerabilities appear compared to the start of Stage 2.
-    - If new HIGH/CRITICAL vulnerabilities are introduced by this release work, treat as a blocker unless the user explicitly accepts the risk.
+   3b. **Security audit evidence (MANDATORY)**:
+   - Run `npm audit` (or an equivalent audit command agreed for this repo).
+   - Record whether any **new** HIGH/CRITICAL vulnerabilities appear compared to the start of Stage 2.
+   - If new HIGH/CRITICAL vulnerabilities are introduced by this release work, treat as a blocker unless the user explicitly accepts the risk.
 4. Validate packaging: Build, package, verify all bundled changes.
-  4b. **PWA Browser Verification Requirements (MANDATORY when plan touches PWA surface area)**:
-    PWA surface area includes: `next.config.js` (workboxOptions), service worker routes, offline fallback, push notification handlers, or any file under `lib/pwa/`.
+   4b. **PWA Browser Verification Requirements (MANDATORY when plan touches PWA surface area)**:
+   PWA surface area includes: `next.config.js` (workboxOptions), service worker routes, offline fallback, push notification handlers, or any file under `lib/pwa/`.
 
-    If the plan touched any of these areas, include the following in the release readiness summary presented to the user (Phase 2B). These items can be deferred with user acknowledgment, but they MUST be visible — not silently omitted:
+   If the plan touched any of these areas, include the following in the release readiness summary presented to the user (Phase 2B). These items can be deferred with user acknowledgment, but they MUST be visible — not silently omitted:
 
-    Required manual validations before production promotion:
-    □ DevTools → Application → Service Workers: SW active, version matches build
-    □ Icon pages (e.g., `/providers/[id]`): icons render; no SW console errors
-    □ Network tab: CDN icon requests not intercepted by SW (status 200 from CDN, not SW)
-    □ Offline mode: `/offline.html` fallback served correctly
-    □ Push (only if push handler was changed): test notification delivered
+   Required manual validations before production promotion:
+   □ DevTools → Application → Service Workers: SW active, version matches build
+   □ Icon pages (e.g., `/providers/[id]`): icons render; no SW console errors
+   □ Network tab: CDN icon requests not intercepted by SW (status 200 from CDN, not SW)
+   □ Offline mode: `/offline.html` fallback served correctly
+   □ Push (only if push handler was changed): test notification delivered
 
-    If these are already tracked as deferred DF-N items in the open-actions tracker, reference them explicitly in the release summary with their status. Do not create duplicate trackers.
+   If these are already tracked as deferred DF-N items in the open-actions tracker, reference them explicitly in the release summary with their status. Do not create duplicate trackers.
+
 5. Check workspace: All plan commits present, no uncommitted changes.
-6. **Upstream tracking check (MANDATORY)**: Confirm the current branch tracks the expected remote branch (typically `main...origin/main`).
+6. **Amend formatter-only changes (MANDATORY if detected)**: Run `git diff --name-only`. If files have uncommitted changes, inspect them. If all are formatter-only (whitespace, import reordering, markdown table alignment), amend them into the most recent commit with `git commit -a --amend --no-edit`. If any contain logic changes, stop and investigate before proceeding.
+7. **Upstream tracking check (MANDATORY)**: Confirm the current branch tracks the expected remote branch (typically `main...origin/main`).
    - Run `git branch -vv` and verify the tracking info is present
    - If missing, set upstream before continuing (example): `git branch --set-upstream-to=origin/main main`
-7. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** tagging.
-   7b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
+8. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** tagging.
+  8b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
 
 - `git status`
 - `git branch -vv`
 - `git fetch origin --prune --tags`
 - `git log --max-count 20 --date=iso-strict`
+
 - If you observe signs a push occurred earlier than expected, explicitly document: what you observed, likely explanation (manual vs automation), and whether it violates the “no push without approval” rule.
 
-  7c. **Version collision resolution (IF target tag already exists after `git fetch --tags`)**:
+  8c. **Version collision resolution (IF target tag already exists after `git fetch --tags`)**:
     If the intended version tag is already present on `origin`:
     1. `git rebase --abort` (only if a rebase is currently in progress)
     2. Bump version in `package.json` and `CHANGELOG.md` to next patch
@@ -291,8 +303,8 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
     5. Update plan's `Target Release` field and all changelog references
     6. `git commit --amend` to fold the version bump into the fix commit (squash one layer only)
     7. Resume rebase
-    Document the collision source, bumped version, and resolution steps in the deployment doc.
-    Limit to 2 bump cycles. If a third collision occurs, pause and involve user.
+       Document the collision source, bumped version, and resolution steps in the deployment doc.
+       Limit to 2 bump cycles. If a third collision occurs, pause and involve user.
 
 **Stage 2 evidence block (RECOMMENDED formatting)**:
 
@@ -301,8 +313,8 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
   - tag list deltas (if relevant)
   - recent commit ordering
 
-8. Create deployment readiness doc listing ALL included plans.
-9. **Migration readiness check (MANDATORY)**:
+9. Create deployment readiness doc listing ALL included plans.
+10. **Migration readiness check (MANDATORY)**:
 
 - If the release includes migrations that add/modify RPC functions, verify the target Supabase schema has:
   - the migration applied (or scheduled), and
@@ -322,11 +334,13 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 
 **Phase 2C: Release Execution (After Approval)**
 
-1. Tag: `git tag -a v[X.Y.Z] -m "Release v[X.Y.Z] - [plan summaries]"`, push tag.
-2. Push all commits: `git push origin [branch]`.
-3. Publish: vsce/npm/twine/GitHub (environment-specific).
-4. Verify: visible, version correct, assets accessible.
-5. Update log with timestamp/URLs.
+1. Push branch: `git push origin [branch]`.
+2. **Surface PR URL (MANDATORY)**: After every branch push, include the PR comparison URL in the agent response: `https://github.com/<org>/<repo>/compare/main...<branch>`. Do not rely on GitHub's transient "create a pull request" banner.
+3. Verify the PR comparison has no merge conflicts. If conflicts exist, rebase onto `origin/main`, resolve, and force-push with `--force-with-lease` before proceeding.
+4. Tag: `git tag -a v[X.Y.Z] -m "Release v[X.Y.Z] - [plan summaries]"`, push tag. If a post-push rebase changes `HEAD`, delete and recreate the tag on the new `HEAD` before pushing it.
+5. Publish: vsce/npm/twine/GitHub (environment-specific).
+6. Verify: visible, version correct, assets accessible.
+7. Update log with timestamp/URLs.
 
 **Phase 2D: Post-Release**
 
@@ -356,6 +370,11 @@ If any smoke check fails: stop and treat as a release failure. Coordinate rollba
 4. Hand off to Roadmap: Release complete, update tracker.
 5. Hand off to Retrospective.
 6. Store memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
+
+6b. **Post-release local sync (MANDATORY when Stage 2 used a clean release worktree)**:
+
+- Sync release-state documentation changes back to the session worktree, OR
+- Explicitly state in the final Stage 2 summary that local sync remains outstanding and list which docs are affected.
 
 - After storing memory, immediately retrieve using query:
   "Plan <ID> DevOps Stage 2 <version>"
@@ -437,18 +456,30 @@ If a referenced skill path is missing or appears stale:
 **Before the final Stage 1 commit** (for the plan currently being committed):
 
 1. Update Status to "Committed" on: plan, implementation, code-review, qa, uat docs for the committed plan
+1b. **Critique closure verification (MANDATORY)**:
+
+- Check whether a critique exists for the current plan in `agent-output/critiques/`.
+- If the critique exists and all findings are resolved, ensure it is closed per the Critic closure rule (Status → `Resolved`, move to `agent-output/critiques/closed/`).
+- If the critique cannot be closed yet (OPEN findings remain, or resolution is unclear), explicitly record that status in the Stage 1 deployment doc (do not silently leave it ambiguous).
 2. Move all to their respective `closed/` folders:
-  - `agent-output/planning/closed/`
-  - `agent-output/implementation/closed/`
-  - `agent-output/code-review/closed/`
-  - `agent-output/qa/closed/`
-  - `agent-output/uat/closed/`
+
+- `agent-output/planning/closed/`
+- `agent-output/implementation/closed/`
+- `agent-output/code-review/closed/`
+- `agent-output/qa/closed/`
+- `agent-output/uat/closed/`
+
 3. Verify the final staged set includes these lifecycle moves together with the plan changes and Stage 1 deployment doc.
 4. Log: "Closed documents for Plan [ID]: planning, implementation, code-review, qa, uat moved to closed/"
 
 **Self-check on start**: Before starting work, scan `agent-output/deployment/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
 
 **Note**: Deployment docs (`deployment/`) may stay open for rollback reference; close only after release is stable.
+
+**Stage 1 deployment doc lifecycle**:
+
+- Stage 1 deployment docs may remain `Active` after Stage 2 as historical release-preparation and rollback context.
+- Do not treat Stage 1 deployment docs as lifecycle orphans solely because the release is complete.
 
 ---
 

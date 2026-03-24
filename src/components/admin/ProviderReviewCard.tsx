@@ -17,12 +17,13 @@ export interface PendingProvider {
   review_status: 'pending' | 'approved' | 'rejected' | 'needs_revision';
   review_feedback: string | null;
   created_at: string;
+  updated_at: string;
   user_created_id: string | null;
 }
 
 interface ProviderReviewCardProps {
   provider: PendingProvider;
-  onReview: (providerId: string, status: 'approved' | 'rejected' | 'needs_revision', feedback?: string) => Promise<void>;
+  onReview: (providerId: string, status: 'approved' | 'rejected' | 'needs_revision', feedback?: string, expectedUpdatedAt?: string) => Promise<void>;
   index?: number;
 }
 
@@ -45,10 +46,10 @@ export function ProviderReviewCard({ provider, onReview, index = 0 }: ProviderRe
   const handleApprove = async () => {
     setIsLoading(true);
     try {
-      await onReview(provider.provider_id, 'approved');
+      await onReview(provider.provider_id, 'approved', undefined, provider.updated_at);
       toast.success('Provider approved successfully');
     } catch {
-      toast.error('Failed to approve provider');
+      // Parent (AdminProvidersPageContent.handleReview) already shows an error toast
     } finally {
       setIsLoading(false);
     }
@@ -68,10 +69,10 @@ export function ProviderReviewCard({ provider, onReview, index = 0 }: ProviderRe
     setShowConfirmDialog(false);
     setIsLoading(true);
     try {
-      await onReview(provider.provider_id, 'rejected', feedback);
+      await onReview(provider.provider_id, 'rejected', feedback, provider.updated_at);
       toast.success('Provider rejected');
     } catch {
-      toast.error('Failed to reject provider');
+      // Parent (AdminProvidersPageContent.handleReview) already shows an error toast
     } finally {
       setIsLoading(false);
       setShowFeedback(false);
@@ -92,10 +93,10 @@ export function ProviderReviewCard({ provider, onReview, index = 0 }: ProviderRe
   const submitRevision = async () => {
     setIsLoading(true);
     try {
-      await onReview(provider.provider_id, 'needs_revision', feedback);
+      await onReview(provider.provider_id, 'needs_revision', feedback, provider.updated_at);
       toast.success('Revision requested');
     } catch {
-      toast.error('Failed to request revision');
+      // Parent (AdminProvidersPageContent.handleReview) already shows an error toast
     } finally {
       setIsLoading(false);
       setShowFeedback(false);

@@ -287,6 +287,9 @@ If the user only asks to plan or preview, stay in preview mode.
 ```bash
 # Control window only
 NEXT_ID=$(cat agent-output/.next-id)
+while find agent-output/ -name "${NEXT_ID}-*" -type f 2>/dev/null | grep -q .; do
+  NEXT_ID=$((NEXT_ID + 1))
+done
 echo $((NEXT_ID + 1)) > agent-output/.next-id
 
 SESSION="S${NEXT_ID}-<short-topic>"   # e.g. S044-auth-fix

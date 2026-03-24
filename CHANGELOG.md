@@ -13,6 +13,133 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Provider cards now maintain stable grid layout after repeated infinite scroll (Plan 053)**: Cards on the `/providers` page were rendering incorrectly after scrolling down 3–4 times — layout collapsed to a single column, cards overlapped, and pagination triggered cascading page fetches. Root cause: `SearchResultsList.tsx` switched from a responsive CSS grid to a `react-window` `FixedSizeList` when accumulated results crossed `VIRTUALIZATION_THRESHOLD=50` (after ~4 pages of `PAGE_SIZE=12`). The virtual path was broken in three ways: (1) single-column layout instead of the responsive 1–4 column grid, (2) `ESTIMATED_CARD_HEIGHT=320px` underestimated actual card height of 390–470px causing overlap, and (3) the IntersectionObserver pagination sentinel was placed outside the virtual scroll container and fired immediately on entry. Fixed by removing the entire `react-window` `FixedSizeList` branch; the responsive CSS grid is now the sole rendering contract for all result counts. Infinite scroll continues to work correctly at any scroll depth on desktop and mobile.
 
+## [0.8.21] - 2026-03-23
+
+### Added
+
+- **Admin provider review integrated into /providers discovery page (Plan 058)**: Admin and moderator users can now review providers directly from the main `/providers` discovery page instead of navigating to a separate admin panel. Added status filter tabs (All/Approved/Pending/Rejected/Needs Revision) visible only to admin users. ProviderCard now supports a `mode` prop that switches between bookmark mode (default Save/Saved button) and moderation mode (Approve/Reject buttons). Review status badges are displayed on cards in moderation mode. The RejectModal component allows optional feedback when rejecting providers. Cache invalidation and optimistic updates ensure the list reflects changes immediately. The legacy `/dashboard/providers` admin panel remains available for parallel use.
+
+### Fixed
+
+- **Admin provider search uses service-role client to bypass RLS**: Admin-filtered provider queries now use the Supabase service-role client instead of the anon client, which was restricted by RLS to approved-only providers. This fixes status filters returning empty results.
+- **Community services excluded from admin status-filtered results**: When filtering by review status, community service cards no longer appear in results — prevents moderation buttons from sending community service IDs to the providers review endpoint.
+- **updateProviderReview no longer uses PostgREST .single()**: Replaced with array-based select to avoid "Cannot coerce the result to a single JSON object" errors when 0 rows match.
+## [0.8.20] - 2026-03-23
+
+### Fixed
+
+- **MuslimBusiness importer now handles client-rendered directory pages**: When the muslimbusiness.de directory no longer server-renders provider cards, the importer falls back to discovering the site’s public Supabase REST configuration and reconstructing the provider card dataset via table joins. This restores non-zero extraction results for CI/GitHub Actions runs.
+
+## [0.8.19] - 2026-03-23
+
+### Added
+
+- **MuslimBusiness provider data import pipeline (Plan 052)**: A new admin-only import script (`scripts/import-muslimbusiness.ts`) that fetches public business listings from muslimbusiness.de/datenbank and bulk-upserts them into the UFlow providers database. The script extracts all ~250+ provider cards from the server-rendered single-page directory HTML using `<h3>` boundary splitting and labeled field extraction (Standorte, Branchen, Email, Telefon, Social Media), maps 60+ source Branchen values to 7 existing UFlow categories, deduplicates via a `name|city` composite key, and writes via service-role access with `--dry-run` as the default. A `--limit N` flag restricts processing to the first N cards for sampling runs. All imported rows default to `review_status = 'pending'` and are traceable via `user_created_id = '00000000-0000-0000-0000-000052000001'` (source-specific import-bot UUID). The outreach trigger is safely bypassed by the non-null `user_created_id` sentinel. A pure parser utility module (`src/utils/muslimbusiness-parser.ts`) backs the extraction logic with 74 unit and integration tests.
+
+## [0.8.18] - 2026-03-23
+
+### Fixed
+
+- **JoinHalal importer auto-rejects alcohol sellers (Plan 051)**: Providers whose Schema.org `additionalProperty` contains `Halal Merkmale` with the token `Alkoholverkauf` are now imported with `review_status = 'rejected'` (instead of `pending`). This rule is applied consistently in both the shared dry-run/admin preview path (`src/lib/import/joinhalal.ts`) and the CLI write path (`scripts/import-joinhalal.ts`). Operator reports now include an `Auto-rejected (alcohol)` count.
+
+## [0.8.17] - 2026-03-23
+
+### Added
+
+- **Admin provider review panel — profile menu access, conflict-safe updates (Plan 050)**: Added "Admin Panel" navigation entry to the home profile dropdown (desktop) and mobile profile screen for admin/moderator roles. Fixed the pending-provider list API response shape (`providers` field, previously `data`) so the admin review page correctly renders reviewable items. Added `updated_at` to the pending-provider list contract to support optimistic concurrency. Extended the review mutation with an optional `expectedUpdatedAt` parameter that issues a 409 Conflict response when another admin has already changed the provider, preventing silent overwrites with a single user-facing conflict toast and automatic list refresh.
+## [0.8.16] - 2026-03-23
+
+### Security
+
+- **CRITICAL — DB-backed authorization gate on `/api/admin/set-role` (Plan 049, F-049-01)**: Any authenticated user could previously self-promote to any role by calling this endpoint without an authorization check. Added `isAdminOrModerator()` DB-backed gate that returns 403 for all non-admin/moderator callers.
+
+- **CRITICAL — Rate limiting and server-authoritative URLs for auth email/token routes (Plan 049, F-049-02)**: `/api/send-auth-email` and `/api/generate-confirmation-token` accepted unlimited requests and trusted caller-supplied redirect URLs, enabling phishing via branded UFlow emails. Added 5 requests/hr/IP rate limiting to both endpoints. `send-auth-email` now derives `confirmationUrl` origin from the server-side `NEXT_PUBLIC_SITE_URL` config, ignoring any caller-supplied origin.
+
+- **HIGH — DB-backed role check in push notification route (Plan 049, F-049-05)**: `/api/push/send` trusted `user_metadata.role`, which is client-mutable. Replaced with `isAdminOrModerator()` call backed by the `users` database table.
+
+- **HIGH — Removed hardcoded admin debug key fallback (Plan 049, F-049-03)**: `debug-ip-status` and `magic-link-diagnostic` endpoints fell back to the hardcoded value `'debug-key-change-in-production'` when `ADMIN_DEBUG_KEY` env var was absent. Removed all three fallback occurrences; endpoints now fail-closed (401) without the env var.
+
+- **HIGH — Enumeration-safe `/api/check-email-exists` responses (Plan 049, F-049-04)**: Non-existent and unconfirmed email accounts previously returned distinguishable responses, enabling user enumeration. Both cases now return an identical `{ confirmed: false }` response. The `exists` and `userId` fields are removed. Updated `signInWithEmailConfirmation()` and `resetPasswordWithLanguage()` in `src/lib/auth.ts` to use only the `confirmed` field.
+
+- **HIGH — Content Security Policy response header restored (Plan 049, F-049-06)**: CSP header was inadvertently removed. Restored via `buildCsp()` in `next.config.js` `headers()` config.
+
+- **MEDIUM — Instagram scraper input validation (Plan 049, F-049-07)**: `/api/instagram/scrape` accepted arbitrary usernames enabling path traversal and injection. Added `/^[a-zA-Z0-9._]{1,30}$/` validation; invalid usernames return 400.
+
+- **MEDIUM — Removed email PII from auth token generation log (Plan 049, F-049-12)**: `generate-confirmation-token` route logged the full email address in a security log. Removed; only `userId` and token type are now logged.
+
+- **LOW — Centralized admin Supabase client in outreach routes (Plan 049, F-049-13)**: `outreach/claim` and `outreach/action` defined a local copy of `getSupabaseAdmin()`. Replaced with the centralized import from `@/lib/supabase/admin`.
+
+### Dependencies
+
+- **Next.js upgraded to 15.5.14 (Plan 049, F-049-10/11)**: Closes GHSA-3x4c-7xq6-9pq8 (unbounded image cache disk growth, moderate severity). `npm audit` reports 0 vulnerabilities.
+
+### Deployment
+
+- **`ADMIN_DEBUG_KEY` wired into production and UAT deploy workflows**: Added `-e ADMIN_DEBUG_KEY` flag to all four `docker run` invocations in `deploy-hetzner.yml` and `deploy-uat.yml`. Added `ADMIN_DEBUG_KEY` entry to `env.production.template` and `env.uat.template`. **Ops action required**: add `ADMIN_DEBUG_KEY` (and optionally `UAT_ADMIN_DEBUG_KEY`) to GitHub repository secrets before first deploy of this release.
+
+## [0.8.15] - 2026-03-23
+
+### Fixed
+
+- **RPC schema drift fix for provider_description (Plan 055)**: The PostgreSQL RPC function `upsert_joinhalal_providers` no longer references `providers.provider_description`, which is absent in production-shaped environments (documented in migration 056). Previously, write-mode imports failed with `column "provider_description" of relation "providers" does not exist` because migration 063 unconditionally included that column in INSERT, SELECT, and DO UPDATE SET clauses. Migration 064 replaces the function definition without `provider_description` references. The source-controlled field classification in `joinhalal-fields.ts` is updated to match.
+
+- **Write-mode RPC preflight check (Plan 055)**: The CLI import script now verifies the `upsert_joinhalal_providers` RPC function exists and is callable before the first write batch. Missing or incompatible RPC definitions are reported as environment/schema setup errors with actionable guidance, rather than surfacing as batch-offset failures during data writes.
+
+## [0.8.14] - 2026-03-22
+
+### Fixed
+
+- **Sitemap non-detail URL filter (Plan 054)**: The JoinHalal sitemap URL extractor (`extractUrlsFromSitemapXml`) now filters out non-detail listing pages (e.g., `/locations/`, `/locations/restaurant/`) before they enter the import candidate set. Only provider detail page URLs matching the `/locations/{category}/{name}/` three-segment pattern are accepted. The filter is applied in the shared parser utility before the numeric limit slice, so both the admin dry-run preview and the CLI write path produce identical, clean candidate sets. A new `isJoinHalalDetailUrl()` predicate is exported for direct use and testing.
+
+- **RPC write-path non-zero exit on failure (Plan 054)**: The CLI import script (`scripts/import-joinhalal.ts`) now exits with a non-zero status code when any RPC `upsert_joinhalal_providers` batch fails during a write run. Previously, batch failures were logged to stderr but the process exited 0, masking failures from operators and CI pipelines. The existing error logging is preserved; only the exit behavior changes.
+
+## [0.8.13] - 2026-03-22
+
+### Fixed
+
+- **JoinHalal vxconfig parser fix (Plan 053)**: The `parseVxConfig()` function previously used `html.match()` which only returned the first vxconfig `<script>` block on JoinHalal pages. Real pages contain 3 blocks, and only the last one holds the authoritative `current_post` data (post ID and display name). The parser now iterates all vxconfig blocks using a `RegExp.exec()` loop and returns the first block containing `current_post`. This restores correct `import_source_id` extraction so providers are keyed for upsert rather than falling into the insert-only fallback path.
+
+### Added
+
+- **Offer auto-creation for unmatched Speisen (Plan 053)**: The import pipeline no longer silently drops unmatched Speisen food terms. A new `createMissingOffers()` function auto-creates missing offers in the `offers` table during import execution, assigns them to the "Essen & Trinken" category (`20c10efe-404b-4a39-bb81-5089a0332d78`), and uses `ON CONFLICT (name_de) DO NOTHING` for idempotency. Created offer IDs are merged into provider `offers_ids` before the provider upsert, ensuring every Speisen term is represented. The write report now shows `Offers matched`, `Offers auto-created`, and `Offers create failed` counts so operators have full visibility into offer-mapping behavior.
+
+### Operator Notes
+
+- **Remediation for pre-fix imports**: Providers imported before this fix may have `import_source_id = NULL` due to the parser bug. Before running a corrected re-import, operators should either: (a) delete providers with `import_source IS NULL AND user_created_id = '00000000-0000-0000-0000-000047000001'` to allow clean re-import, or (b) run a targeted update to backfill `import_source_id` from the source pages. Without remediation, the first corrected import may create duplicate rows for providers that previously lacked a post ID.
+
+## [0.8.12] - 2026-03-22
+
+### Added
+
+- **JoinHalal import upsert with unique ID (Plan 052)**: The JoinHalal import pipeline now supports true upsert behavior — re-running the import updates existing providers with fresh data instead of skipping or duplicating them. Each listing's WordPress post ID (`vxconfig.current_post.id`) is extracted as a stable unique identifier and stored in new `import_source` + `import_source_id` columns on the providers table, backed by a partial unique index. The CLI write path uses a dedicated PostgreSQL RPC function (`upsert_joinhalal_providers`) that performs `ON CONFLICT DO UPDATE SET` with an explicit source-field allowlist, ensuring admin-controlled fields (`review_status`, `barakah_effects`, `needs_ids`, etc.) are never overwritten on re-import. Providers without a post ID (vxconfig absent) fall back to the existing name+city dedup insert-only path. The dry-run report now distinguishes between providers that would be **created** vs. **updated**, giving operators full visibility before committing a write. An `updated_at` trigger on the providers table ensures timestamps are refreshed on re-import. Migrations `062_add_import_source_columns.sql` and `063_upsert_joinhalal_provider_rpc.sql` are idempotent and safe to re-run.
+
+## [0.8.11] - 2026-03-22
+
+### Added
+
+- **JoinHalal Speisen → offers mapping (Plan 051)**: The JoinHalal import pipeline now extracts the `Speisen` (food offerings) field from each listing's Schema.org data and resolves matching food terms against the UFlow offers catalog. Imported providers arrive with populated `offers_ids` instead of empty arrays, making them immediately searchable and filterable by food type. A seed migration adds 21 missing food offers (Adana, Bowl, Chicken, Dessert, Falafel, Fisch, Grill, Hot Dog, Köfte, Lamm, Lokma, Manti, Pasta, Reis, Salat, Sandwich, Steak, Sucuk, Suppe, Waffel, Wraps) to the offers catalog under the "Essen & Trinken" category. Both the admin dry-run dashboard and CLI write path now report unmatched Speisen values so operators can detect future catalog drift. Sample records in dry-run output include an `offers_matched` count for operator visibility.
+
+## [0.8.10] - 2026-03-22
+
+### Fixed
+
+- **JoinHalal dry-run timeout hardening (Plan 049)**: The admin dry-run dashboard (`/dashboard/import`) intermittently returned 504 Gateway Timeout on UAT because the Nginx reverse proxy used the default 60-second `proxy_read_timeout`, which could be exceeded during route initialization or Supabase cold connections. Fixed by adding an explicit `proxy_read_timeout 95s` for `/api/admin/` routes in both UAT and production Nginx templates, scoped to avoid weakening other proxy behavior. An application-level 90-second AbortController timeout guard was added to the dry-run API route to ensure the app controls the failure response before Nginx (95s) or Cloudflare (100s) kill the request. The dry-run response now includes phase-level timing telemetry (`timing` field on `DryRunResult`) exposing category lookup, existing-key loading, sitemap retrieval, and page processing durations for operator diagnosis of intermittent slow paths.
+## [0.8.9] - 2026-03-22
+
+### Fixed
+
+- **Provider modal Barakah Effekte section now displays actual badge visuals (Plan 048)**: The "Barakah Effekte" section in the desktop provider detail modal previously rendered legacy placeholder text ("Hatem Ipsum") and string-based pills from the deprecated `barakah_effects` field. Replaced with structured `BadgeLabel` components that render verified badge icons and labels from the provider's `badges` array (populated by the trust/badge system introduced in migration 016). Providers with structured badges now display their actual badge visuals (e.g., Halal, Muslim Owned, Community Active); providers without badges see a localised empty-state message. Added `providers.noBadges` translation key across all 6 supported languages.
+
+## [0.8.8] - 2026-03-19
+
+### Added
+
+- **JoinHalal admin dry-run dashboard UI (Plan 048)**: A new admin-only dashboard page at `/dashboard/import` that lets operators run a JoinHalal import dry-run preview directly from the browser without needing terminal access. Introduces a shared server-safe import core (`src/lib/import/joinhalal.ts`) consumed by both the CLI script and a new authenticated admin API route (`POST /api/admin/import-joinhalal/dry-run`). The dashboard page displays import counts, unmapped category groups, sample records, and a copyable CLI write command for when the operator is ready to write. Actual database writes remain CLI-only in v1. Auth is enforced at both the dashboard layout boundary and the API route level (admin/moderator only).
+
+### Added
+
+- **JoinHalal provider data import pipeline (Plan 047)**: A new admin-only import script (`scripts/import-joinhalal.ts`) that fetches public halal business listings from joinhalal.com and bulk-upserts them into the UFlow providers database. The script scrapes Schema.org JSON-LD structured data from each listing page (server-side, no JS rendering required), normalises addresses, resolves UFlow category IDs, and writes via service-role access. A `--dry-run` mode generates a full import plan without writing data. All imported rows default to `review_status = 'pending'` and are traceable via `user_created_id = '<import-bot-uuid>'`. The outreach trigger is safely bypassed by the non-null `user_created_id` sentinel. A pure parser utility module (`src/utils/joinhalal-parser.ts`) backs the scraping logic with 27 unit tests.
+
 ## [0.8.7] - 2026-03-19
 
 ### Added

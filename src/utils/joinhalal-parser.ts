@@ -97,21 +97,29 @@ export function extractSchemaOrgFromHtml(html: string): JoinHalalSchemaData | nu
  * HTML entities in display_name are decoded (e.g., &amp; → &).
  */
 export function extractDisplayNameFromHtml(html: string): string | null {
-  const scriptMatch = html.match(
-    /<script[^>]*class="vxconfig"[^>]*>([\s\S]*?)<\/script>/i
-  );
-  if (!scriptMatch) return null;
+  const config = parseVxConfig(html);
+  if (!config) return null;
+  const name = config.display_name;
+  if (!name || typeof name !== 'string') return null;
+  return decodeHtmlEntities(name.trim());
+}
 
-  try {
-    const config = JSON.parse(scriptMatch[1]) as {
-      current_post?: { display_name?: string };
-    };
-    const name = config?.current_post?.display_name;
-    if (!name || typeof name !== 'string') return null;
-    return decodeHtmlEntities(name.trim());
-  } catch {
-    return null;
-  }
+// ---------------------------------------------------------------------------
+// extractJoinHalalPostId (Plan 052)
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the WordPress/Voxel post ID from the vxconfig JSON embedded in the page.
+ * This is the immutable integer primary key used as the upsert conflict identifier.
+ *
+ * Returns the post ID as a string (for TEXT column storage), or null if absent.
+ */
+export function extractJoinHalalPostId(html: string): string | null {
+  const config = parseVxConfig(html);
+  if (!config) return null;
+  const id = config.id;
+  if (typeof id !== 'number' || !Number.isFinite(id)) return null;
+  return String(id);
 }
 
 // ---------------------------------------------------------------------------
@@ -243,17 +251,44 @@ export function cleanProviderName(
 }
 
 // ---------------------------------------------------------------------------
+// isJoinHalalDetailUrl
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true only for JoinHalal provider detail page URLs.
+ *
+ * Detail pages match: /locations/{category-slug}/{name-slug}/
+ * (exactly 3 non-empty path segments under /locations/).
+ *
+ * Listing pages like /locations/ or /locations/restaurant/ are rejected.
+ */
+export function isJoinHalalDetailUrl(url: string): boolean {
+  if (!url) return false;
+  try {
+    const { pathname } = new URL(url);
+    // Normalise: strip trailing slash, split, filter empty
+    const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
+    // Must be exactly: ['locations', '{category}', '{name}']
+    return segments.length === 3 && segments[0] === 'locations';
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // extractUrlsFromSitemapXml
 // ---------------------------------------------------------------------------
 
 /**
  * Extracts all <loc> URLs from a sitemap XML string.
  * Works for both sitemap index files and regular sitemaps.
+ * Filters out non-detail URLs (listing pages) so only provider
+ * detail page candidates are returned.
  */
 export function extractUrlsFromSitemapXml(xml: string): string[] {
   if (!xml) return [];
   const matches = xml.matchAll(/<loc>(https?:\/\/[^<]+)<\/loc>/gi);
-  return Array.from(matches, (m) => m[1].trim());
+  return Array.from(matches, (m) => m[1].trim()).filter(isJoinHalalDetailUrl);
 }
 
 // ---------------------------------------------------------------------------
@@ -274,8 +309,91 @@ export function extractCategoryFromUrl(url: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// extractSpeisen
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts food offerings ("Speisen") from a JoinHalal Schema.org entity.
+ *
+ * The source field is `additionalProperty[name="Speisen"]` with a comma-
+ * delimited string value. Returns a deduplicated, trimmed array of non-empty
+ * food terms, preserving original casing.
+ */
+export function extractSpeisen(schema: JoinHalalSchemaData): string[] {
+  const props = schema.additionalProperty;
+  if (!props || props.length === 0) return [];
+
+  const entry = props.find((p) => p.name === 'Speisen');
+  if (!entry?.value) return [];
+
+  const items = entry.value
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  return Array.from(new Set(items));
+}
+
+// ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Shared vxconfig parser — extracts current_post from the Voxel theme
+ * configuration JSON embedded in JoinHalal pages.
+ *
+ * Used by extractDisplayNameFromHtml (name) and extractJoinHalalPostId (id).
+ */
+interface VxConfigCurrentPost {
+  display_name?: string;
+  id?: number;
+}
+
+function parseVxConfig(html: string): VxConfigCurrentPost | null {
+  if (!html) return null;
+  // Real JoinHalal pages have multiple vxconfig blocks; only one contains
+  // current_post. Iterate all matches and return the first with that key.
+  const regex = /<script[^>]*class="vxconfig"[^>]*>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(html)) !== null) {
+    try {
+      const config = JSON.parse(match[1]) as {
+        current_post?: VxConfigCurrentPost;
+      };
+      if (config?.current_post) return config.current_post;
+    } catch {
+      // Skip unparseable blocks
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// hasAlkoholverkauf (Plan 051)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when the JoinHalal schema record's `Halal Merkmale`
+ * `additionalProperty` entry contains the token `Alkoholverkauf`.
+ *
+ * Matching is case-insensitive and whitespace-tolerant (comma-separated
+ * tokens are trimmed and lower-cased before comparison). Exact token match
+ * prevents false positives from "Kein Alkoholverkauf" or similar values.
+ *
+ * Returns false when `additionalProperty` is absent, empty, or contains
+ * no `Halal Merkmale` entry — safe default that leaves `review_status`
+ * on the existing `pending` path.
+ */
+export function hasAlkoholverkauf(schema: JoinHalalSchemaData): boolean {
+  const props = schema.additionalProperty;
+  if (!Array.isArray(props) || props.length === 0) return false;
+  const halalProp = props.find(
+    (p) => p.name?.trim().toLowerCase() === 'halal merkmale'
+  );
+  if (!halalProp?.value) return false;
+  const values = halalProp.value.split(',').map((v) => v.trim().toLowerCase());
+  return values.includes('alkoholverkauf');
+}
 
 /**
  * Decodes common HTML entities in a string.

@@ -2,7 +2,7 @@
 ID: 007
 Origin: 007
 UUID: e7f4a31c
-Status: OPEN
+Status: Resolved
 ---
 
 # 007 — Performance Improvements Plan Critique
@@ -17,6 +17,7 @@ Status: OPEN
 | Date       | Handoff          | Request             | Summary                    |
 | ---------- | ---------------- | ------------------- | -------------------------- |
 | 2026-02-22 | Planner → Critic | Initial plan review | First critique of Plan 007 |
+| 2026-03-23T10:01Z | process-improvement | Normalize closed critique status | Status: Resolved |
 
 ---
 
@@ -93,7 +94,7 @@ The plan derives from Analysis 007 which identified concrete performance bottlen
 ### F-1: Middleware ≤50 kB Target May Be Unachievable Without Behavior Change
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Milestone 6 acceptance criteria
 - **Description**: The acceptance criteria says "Middleware size reduced OR a clear, documented rationale for remaining size". This is appropriately flexible, but there's no analysis of what's actually in the 79.3 kB middleware bundle and whether ≤50 kB is realistic without removing functionality.
 - **Impact**: Implementer may spend effort chasing an unachievable target.
@@ -102,7 +103,7 @@ The plan derives from Analysis 007 which identified concrete performance bottlen
 ### F-2: UAT Data Sizing — Cleanup Procedure Not Specified
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Milestone 2 deliverables
 - **Description**: Plan says "document how it is generated and cleaned up" for UAT test data, but doesn't specify whether cleanup is manual or automated, or who is responsible for ensuring UAT isn't polluted with synthetic data before production-like validation.
 - **Impact**: UAT environment could end up with stale synthetic data affecting other testing.
@@ -111,7 +112,7 @@ The plan derives from Analysis 007 which identified concrete performance bottlen
 ### F-3: Bundle Target (≤350 kB) Rationale Not Documented
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Success Metrics (Frontend)
 - **Description**: The target of ≤350 kB is a ~50% reduction from 687 kB, but the plan doesn't explain why this specific number was chosen (e.g., industry benchmark, Lighthouse score threshold, competitor analysis).
 - **Impact**: If implementer achieves 400 kB and can't go lower without major refactoring, there's no guidance on whether that's acceptable.

@@ -188,6 +188,7 @@ export const ps = {
     weNeed: "موږ ته اړتیا ده",
     weAreLookingFor: "موږ لټون کوو",
     ourBarakahEffect: "زموږ د برکت اغیزه",
+    noBadges: "د برکت اغیزې نشته",
     selectCategory: "کټګوري غوره کړئ"
   },
   create: {

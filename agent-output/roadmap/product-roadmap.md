@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-03-19
+**Last Updated**: 2026-03-24
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.8.6
+**Current Version**: v0.8.21
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -42,6 +42,11 @@
 | 2026-03-19       | Process improvements implemented (PI 045)                          | Bugfix handoff completeness checklist + client-state precedence regression test pattern added to `.github/copilot-instructions.md` (from Retro 045)         |
 | 2026-03-19       | Roadmap updated with v0.8.4 and deferred open actions              | Post-release housekeeping: version tracking, deferred open actions surfaced as blocking items                                                                |
 | 2026-03-19       | Plan 046-OA-2 resolved: flatted HIGH vuln fixed in v0.8.5          | flatted 3.3.3→3.4.2 via package-lock.json update; `npm audit --audit-level=high` EXIT 0; 267 tests pass; released as v0.8.5                                  |
+| 2026-03-22T20:36Z | Plan 053 released (v0.8.13): JoinHalal import integrity fixes      | Fixed multi-block vxconfig parsing, restored stable JoinHalal source IDs, and auto-created missing Speisen offers during import                              |
+| 2026-03-22T23:14Z | Plan 054 released (v0.8.14): JoinHalal sitemap filter + RPC exit   | Excluded listing pages from JoinHalal sitemap candidate sets and made write-path batch failures terminate non-zero                                           |
+| 2026-03-23T08:12Z | Plan 055 released (v0.8.15): JoinHalal RPC schema drift fix        | Removed `provider_description` from the JoinHalal upsert RPC, added fail-fast RPC preflight, and aligned staging runbooks with migration 064                 |
+| 2026-03-24T03:15Z | Plan 058 released (v0.8.21): Admin review in providers discovery   | Admin provider review integrated into main /providers discovery page with status filter tabs, fixed RLS bypass with service-role client, excluded community services from moderation, removed .single() error |
+| 2026-03-24T03:30Z | Process improvements implemented (PI 058)                          | Admin Runtime Smoke Gate (UAT), Shared Results Actionability Checklist (Planner + Code Reviewer), Release Version Discipline (UAT) from Retrospective 058      |
 
 ---
 
@@ -64,7 +69,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.8.5 released successfully (2026-03-19) — ready for new planning_
+_v0.8.21 released successfully (2026-03-24) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -72,6 +77,9 @@ _v0.8.5 released successfully (2026-03-19) — ready for new planning_
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
 - **045-OA-3**: E2E browser tests for category filter — direct URL nav + SPA nav + back-button (Owner: QA/Implementer — next sprint)
+- **053-OA-1**: Live staging import validation for corrected JoinHalal parser + offer auto-creation before first corrected production import run (Owner: DevOps / Operator — evidence in `agent-output/planning/053-open-actions.md`)
+- **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
+- **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
 - **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
 
 ✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
@@ -80,6 +88,10 @@ _v0.8.5 released successfully (2026-03-19) — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.8.21 | 2026-03-24 | Plan 058 (Admin review in providers discovery)       | Released |
+| v0.8.15 | 2026-03-23 | Plan 055 (JoinHalal RPC schema drift fix)            | Released |
+| v0.8.14 | 2026-03-22 | Plan 054 (JoinHalal sitemap filter + RPC failure visibility) | Released |
+| v0.8.13 | 2026-03-22 | Plan 053 (JoinHalal vxconfig fix + offer auto-create) | Released |
 | v0.8.5  | 2026-03-19 | 045-OA-2 (flatted HIGH vuln fix)                    | Released |
 | v0.8.4  | 2026-03-19 | Plan 045 (Providers category filter bugfix)          | Released |
 | v0.8.2  | 2026-03-18 | Plan 044 (Mobile footer overlay layer bugfix)       | Released |
