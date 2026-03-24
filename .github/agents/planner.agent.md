@@ -103,6 +103,16 @@ State the target version as: _"next available patch after current `origin/main` 
 11. Include a **Duration Estimates** section (REQUIRED): rough phase-level ranges for Analysis, Planning, Implementation, QA, UAT, DevOps; call out uncertainty drivers.
 12. Ensure value statement guides all decisions. Core value delivered by plan, not deferred.
 13. MUST NOT define QA processes/test cases/test requirements. QA agent's exclusive responsibility in `agent-output/qa/`.
+
+### Shared Results Actionability Check (MANDATORY when applicable)
+
+If a plan introduces **inline actions** (approve, reject, delete, edit, etc.) on a **list that can return multiple entity types** (e.g., providers + community services), the plan MUST include an explicit statement about:
+- Which result types may legally receive each action
+- Where entity-type filtering occurs (service layer, API route, or UI)
+- What happens if the wrong entity type receives the action (error handling, not silent failure)
+
+If the plan scopes out certain entity types (e.g., "community services are out of scope"), it MUST note that the shared list may still return those types and specify how they are excluded from the action surface.
+
 14. Include version management milestone. Update release artifacts to match roadmap target version.
 15. Retrieve/store memory.
 16. **Status tracking**: When incorporating analysis into a plan, update the analysis doc's Status field to "Planned" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.

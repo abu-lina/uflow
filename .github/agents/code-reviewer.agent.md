@@ -102,6 +102,15 @@ Core Responsibilities:
 
 - If the implementation fixes an inner wrapper but leaves a higher blocking container unreviewed, record a finding.
 
+  6g. **Shared Results Actionability Checklist (MANDATORY when applicable)**:
+
+- Trigger when the implementation adds inline actions (approve, reject, delete, etc.) to a list that can return **multiple entity types** (e.g., providers + community services in the same search results).
+- For each inline action:
+  - Verify the action is only wired to the correct entity type.
+  - Verify the result set is filtered (or the UI conditionally renders actions) so that wrong-type entities cannot trigger the action.
+  - If the plan explicitly scoped out certain entity types, verify those types are excluded from the action surface, not just from the plan text.
+- If you find an entity type that can receive an action it shouldn't, record a MEDIUM or HIGH finding.
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions

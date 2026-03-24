@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-03-23
+**Last Updated**: 2026-03-24
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.8.15
+**Current Version**: v0.8.21
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -45,6 +45,8 @@
 | 2026-03-22T20:36Z | Plan 053 released (v0.8.13): JoinHalal import integrity fixes      | Fixed multi-block vxconfig parsing, restored stable JoinHalal source IDs, and auto-created missing Speisen offers during import                              |
 | 2026-03-22T23:14Z | Plan 054 released (v0.8.14): JoinHalal sitemap filter + RPC exit   | Excluded listing pages from JoinHalal sitemap candidate sets and made write-path batch failures terminate non-zero                                           |
 | 2026-03-23T08:12Z | Plan 055 released (v0.8.15): JoinHalal RPC schema drift fix        | Removed `provider_description` from the JoinHalal upsert RPC, added fail-fast RPC preflight, and aligned staging runbooks with migration 064                 |
+| 2026-03-24T03:15Z | Plan 058 released (v0.8.21): Admin review in providers discovery   | Admin provider review integrated into main /providers discovery page with status filter tabs, fixed RLS bypass with service-role client, excluded community services from moderation, removed .single() error |
+| 2026-03-24T03:30Z | Process improvements implemented (PI 058)                          | Admin Runtime Smoke Gate (UAT), Shared Results Actionability Checklist (Planner + Code Reviewer), Release Version Discipline (UAT) from Retrospective 058      |
 
 ---
 
@@ -67,7 +69,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.8.15 released successfully (2026-03-23) — ready for new planning_
+_v0.8.21 released successfully (2026-03-24) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -86,6 +88,7 @@ _v0.8.15 released successfully (2026-03-23) — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.8.21 | 2026-03-24 | Plan 058 (Admin review in providers discovery)       | Released |
 | v0.8.15 | 2026-03-23 | Plan 055 (JoinHalal RPC schema drift fix)            | Released |
 | v0.8.14 | 2026-03-22 | Plan 054 (JoinHalal sitemap filter + RPC failure visibility) | Released |
 | v0.8.13 | 2026-03-22 | Plan 053 (JoinHalal vxconfig fix + offer auto-create) | Released |
