@@ -2,7 +2,7 @@
 ID: 56
 Origin: 56
 UUID: c4e91a7b
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 056 — GitHub Actions Supply Chain Remediation

@@ -2,7 +2,7 @@
 ID: 56
 Origin: 56
 UUID: c4e91a7b
-Status: Committed
+Status: Released
 ---
 
 # Plan 056 - GitHub Actions Supply Chain Remediation
@@ -11,7 +11,7 @@ Status: Committed
 
 - **Target Release**: N/A (workflow-only security hardening; version pre-flight completed and current product head is `v0.8.23`)
 - **Epic Alignment**: Security hardening / CI-CD supply chain resilience
-- **Status**: Committed
+- **Status**: Released
 - **Related Issues**: Security Audit 056; Checkmarx KICS compromise advisory (2026-03-23); no internal GitHub issue provided
 
 ## Release Strategy
@@ -217,3 +217,4 @@ Uncertainty drivers: GitHub Actions syntax sensitivity, whether any action SHA m
 | 2026-03-24 | QA | Completed QA validation: static workflow checks passed, type-check passed, tests passed, plan status advanced to QA Complete |
 | 2026-03-24 | UAT | All 5 UAT scenarios PASS; value delivery confirmed; APPROVED FOR RELEASE — no product version bump required |
 | 2026-03-24 | DevOps | Document closed | Status: Committed |
+| 2026-03-24 | DevOps | Stage 2 pushed to origin | Status: Released — commit 15b2a0b pushed to session/056-gha-supply-chain-audit |

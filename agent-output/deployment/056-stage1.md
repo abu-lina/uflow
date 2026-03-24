@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | **Plan** | 056 — GitHub Actions Supply Chain Remediation |
-| **Stage** | Stage 1 — Local Commit |
+| **Stage** | Stage 1 + Stage 2 — Committed + Pushed |
 | **Date** | 2026-03-24T12:30Z |
 | **DevOps Agent** | DevOps |
 | **Target Release** | N/A — workflow-only security hardening, no product version bump |
@@ -135,13 +135,13 @@ Closed documents for Plan 056: planning, implementation, code-review, critique, 
 
 | Document | From | To | Terminal Status |
 | --- | --- | --- | --- |
-| `056-gha-supply-chain-remediation-plan.md` | `planning/` | `planning/closed/` | Committed |
-| `056-gha-supply-chain-remediation.md` | `implementation/` | `implementation/closed/` | Committed |
-| `056-gha-supply-chain-remediation-code-review.md` | `code-review/` | `code-review/closed/` | Committed |
+| `056-gha-supply-chain-remediation-plan.md` | `planning/` | `planning/closed/` | Released |
+| `056-gha-supply-chain-remediation.md` | `implementation/` | `implementation/closed/` | Released |
+| `056-gha-supply-chain-remediation-code-review.md` | `code-review/` | `code-review/closed/` | Released |
 | `056-gha-supply-chain-remediation-plan-critique.md` | `critiques/` | `critiques/closed/` | Resolved |
-| `056-gha-supply-chain-remediation-qa.md` | `qa/` | `qa/closed/` | Committed |
-| `056-gha-supply-chain-remediation-uat.md` | `uat/` | `uat/closed/` | Committed |
-| `056-gha-supply-chain-audit.md` | `security/` | `security/closed/` | Committed |
+| `056-gha-supply-chain-remediation-qa.md` | `qa/` | `qa/closed/` | Released |
+| `056-gha-supply-chain-remediation-uat.md` | `uat/` | `uat/closed/` | Released |
+| `056-gha-supply-chain-audit.md` | `security/` | `security/closed/` | Released |
 
 ## Commit Details
 
@@ -151,9 +151,43 @@ Closed documents for Plan 056: planning, implementation, code-review, critique, 
 - **Files staged**: 7 modified workflows + 1 new dependabot.yml + CHANGELOG.md + 8 agent-output docs (7 in closed/ + 1 deployment doc)
 - **Commit message**: See `/tmp/uflow-commit-msg-056.txt`
 
-## Post-Release Status
+## Stage 2 Evidence
 
-**Status**: Committed (Stage 1 complete — awaiting Stage 2 user approval to push)
+```
+=== Pre-push checks ===
+git fetch origin --prune --tags
+git branch -vv | grep session/056-gha-supply-chain-audit
+→ * session/056-gha-supply-chain-audit 15b2a0b ci(workflows): Pin all GitHub Actions refs to immutable SHAs  [no upstream]
+git rev-list origin/main..HEAD → 1 commit ahead
+git rev-list HEAD..origin/main → 78 commits behind (expected: worktree base)
+git status --short             → empty (clean)
+
+npm audit --audit-level=high
+→ 1 moderate (GHSA-3x4c-7xq6-9pq8, Next.js, pre-existing)
+→ 0 HIGH/CRITICAL vulnerabilities
+
+=== Push result ===
+git push -u origin session/056-gha-supply-chain-audit
+  Enumerating objects: 37, done.
+  Writing objects: 100% (37/37), 38.30 KiB | 2.30 MiB/s, done.
+  remote: Create a pull request: https://github.com/abu-lina/uflow/pull/new/session/056-gha-supply-chain-audit
+  Branch 'session/056-gha-supply-chain-audit' set up to track remote branch 'session/056-gha-supply-chain-audit' from 'origin'.
+  EXIT: 0 (success)
+```
+
+**User confirmation**: User said "approved" at Stage 2B gate. Stage 2 executed immediately after.
+
+**Status**: Released — 2026-03-24T12:38Z
+
+**Commit**: `15b2a0b3423cb70b48e1bf6717f9b6a413796c0f`
+**Branch pushed**: `session/056-gha-supply-chain-audit` → `origin/session/056-gha-supply-chain-audit`
+**PR creation URL**: https://github.com/abu-lina/uflow/pull/new/session/056-gha-supply-chain-audit
+
+**Security audit (Stage 2)**: `npm audit --audit-level=high` → 0 HIGH/CRITICAL. 1 pre-existing moderate (Next.js GHSA-3x4c-7xq6-9pq8, deferred per roadmap). No new vulnerabilities introduced by this plan.
+
+**Note on GitHub Dependabot alerts**: GitHub reported 3 vulnerabilities on `abu-lina/uflow` default branch (2 high, 1 moderate) in the push response. These are pre-existing alerts on `origin/main` already tracked in the roadmap (`045-OA` item), not introduced by Plan 056.
+
+**Smoke tests**: Workflow-only change — standard application smoke tests do not apply. CI will validate action resolution when the PR runs. `git push` exited 0 and branch is visible on origin.
 
 ## Known Limitations (pre-operation)
 
@@ -174,19 +208,28 @@ If the commit causes unexpected CI failures after push:
 {
   "plan": "056",
   "type": "ci-security-hardening",
-  "stage": "Stage 1 - Committed",
-  "date": "2026-03-24T12:30Z",
+  "stage": "Stage 1+2 — Committed + Pushed",
+  "stage1_date": "2026-03-24T12:30Z",
+  "stage2_date": "2026-03-24T12:38Z",
   "branch": "session/056-gha-supply-chain-audit",
-  "files_changed": 8,
+  "commit": "15b2a0b3423cb70b48e1bf6717f9b6a413796c0f",
+  "pushed_to": "origin/session/056-gha-supply-chain-audit",
+  "pr_creation_url": "https://github.com/abu-lina/uflow/pull/new/session/056-gha-supply-chain-audit",
+  "files_changed": 17,
   "version_bump": null,
-  "authorizer": "User (UAT Approved for Release)",
-  "notes": "Workflow-only SHA-pinning remediation. No product version bump."
+  "authorizer": "User (UAT Approved + Stage 2 \"approved\")",
+  "security_audit": "0 HIGH/CRITICAL; 1 pre-existing moderate",
+  "notes": "Workflow-only SHA-pinning remediation. No product version bump. CI will validate on PR."
 }
 ```
 
 ## Next Actions
 
-1. **User approves Stage 2** → Push `session/056-gha-supply-chain-audit` to origin and open PR to `main`
-2. CI will run with the pinned actions; validate build passes in GitHub Actions environment
+1. **Open PR on GitHub**: Visit `https://github.com/abu-lina/uflow/pull/new/session/056-gha-supply-chain-audit` to open the PR targeting `main`
+2. **CI validation**: Actions will resolve against pinned SHAs; verify all CI jobs pass
+3. **Rebase before merge**: Branch is 78 commits behind `origin/main`; rebase/merge will be required before the PR merges cleanly
+4. **After merge**: Update CHANGELOG `[Unreleased]` section to a versioned entry (if governance requires)
+5. **Deferred**: Investigate `appleboy/ssh-action` + `appleboy/scp-action` replacement with native SSH/SCP (separate security plan)
+6. **Deferred**: Pre-existing Dependabot SHA mismatch on `actions/dependency-review-action` — tracked in roadmap
 3. Merge PR after CI green
 4. Close this deployment doc (Status: Released) after successful merge

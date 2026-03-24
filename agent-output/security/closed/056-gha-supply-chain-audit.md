@@ -3,7 +3,7 @@
 | Field        | Value                                               |
 | ------------ | --------------------------------------------------- |
 | **ID**       | 056                                                 |
-| **Status**   | Committed                                           |
+| **Status**   | Released                                            |
 | **Verdict**  | PASSED_WITH_FINDINGS                                |
 | **Date**     | 2026-03-24                                          |
 | **Trigger**  | Checkmarx KICS compromise (CVE advisory 2026-03-23) |
