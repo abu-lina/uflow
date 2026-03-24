@@ -1,26 +1,42 @@
 # .github/workflows/import-joinhalal.yml
 #
-# JoinHalal Provider Data Import
-# Runs the import script against production Supabase using GitHub Secrets.
+# JoinHalal Provider Data Operations
+# Runs the import script against production/UAT Supabase using GitHub Secrets.
 #
 # Usage:
-#   1. Go to Actions → "Import JoinHalal Providers"
+#   1. Go to Actions → "JoinHalal Provider Operations"
 #   2. Click "Run workflow"
-#   3. Choose mode (dry-run or write) and limit
+#   3. Choose the operation, mode, and environment
 #   4. Review output in the workflow logs
+#
+# Operations:
+#   - import:             Fetch & upsert providers from JoinHalal sitemaps
+#   - backfill-alcohol:   Re-evaluate existing providers for Alkohol badges → reject
+#   - recover-provenance: Match legacy providers to JoinHalal source URLs
+#   - audit-stale-clone:  Report providers that may be stale clones
 #
 # Security:
 #   - Uses SUPABASE_SERVICE_ROLE_KEY from GitHub Secrets (never exposed in logs)
 #   - Requires manual trigger (workflow_dispatch) — no accidental runs
 #   - Dry-run is the default to prevent unintended writes
 
-name: Import JoinHalal Providers
+name: JoinHalal Provider Operations
 
 on:
   workflow_dispatch:
     inputs:
+      operation:
+        description: 'Operation to run'
+        required: true
+        default: 'import'
+        type: choice
+        options:
+          - import
+          - backfill-alcohol
+          - recover-provenance
+          - audit-stale-clone
       mode:
-        description: 'Import mode'
+        description: 'Execution mode (ignored for audit-stale-clone)'
         required: true
         default: 'dry-run'
         type: choice
@@ -28,7 +44,7 @@ on:
           - dry-run
           - write
       limit:
-        description: 'Number of providers to import (10, 50, 100, all)'
+        description: 'Provider limit (import only)'
         required: true
         default: '50'
         type: choice
@@ -47,8 +63,8 @@ on:
           - uat
 
 jobs:
-  import:
-    name: Import Providers (${{ inputs.mode }}, limit=${{ inputs.limit }})
+  run:
+    name: "${{ inputs.operation }} (${{ inputs.mode }})"
     runs-on: ubuntu-latest
 
     steps:
@@ -64,42 +80,61 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run import (Production)
+      - name: Build CLI arguments
+        id: args
+        run: |
+          OP="${{ inputs.operation }}"
+          MODE="${{ inputs.mode }}"
+
+          if [ "$OP" = "import" ]; then
+            echo "cli_args=--${MODE} --limit ${{ inputs.limit }}" >> "$GITHUB_OUTPUT"
+          elif [ "$OP" = "audit-stale-clone" ]; then
+            echo "cli_args=--audit-stale-clone" >> "$GITHUB_OUTPUT"
+          else
+            echo "cli_args=--${OP} --${MODE}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run operation (Production)
         if: inputs.environment == 'production'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "🚀 Running JoinHalal import against PRODUCTION"
+          echo "🚀 Running JoinHalal [${{ inputs.operation }}] against PRODUCTION"
           echo "   Mode: ${{ inputs.mode }}"
-          echo "   Limit: ${{ inputs.limit }}"
+          echo "   Args: ${{ steps.args.outputs.cli_args }}"
           echo ""
-          npx tsx scripts/import-joinhalal.ts --${{ inputs.mode }} --limit ${{ inputs.limit }}
+          npx tsx scripts/import-joinhalal.ts ${{ steps.args.outputs.cli_args }}
 
-      - name: Run import (UAT)
+      - name: Run operation (UAT)
         if: inputs.environment == 'uat'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "🚀 Running JoinHalal import against UAT"
+          echo "🚀 Running JoinHalal [${{ inputs.operation }}] against UAT"
           echo "   Mode: ${{ inputs.mode }}"
-          echo "   Limit: ${{ inputs.limit }}"
+          echo "   Args: ${{ steps.args.outputs.cli_args }}"
           echo ""
-          npx tsx scripts/import-joinhalal.ts --${{ inputs.mode }} --limit ${{ inputs.limit }}
+          npx tsx scripts/import-joinhalal.ts ${{ steps.args.outputs.cli_args }}
 
       - name: Summary
         run: |
-          echo "## Import Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## Operation Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Operation | ${{ inputs.operation }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Mode | ${{ inputs.mode }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Limit | ${{ inputs.limit }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ inputs.mode }}" = "write" ]; then
+          if [ "${{ inputs.operation }}" = "backfill-alcohol" ] && [ "${{ inputs.mode }}" = "write" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Providers with Alkohol badges set to \`review_status = 'rejected'\`**" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.operation }}" = "import" ] && [ "${{ inputs.mode }}" = "write" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "⚠️ **Records inserted with \`review_status = 'pending'\`**" >> $GITHUB_STEP_SUMMARY
             echo "Approve via admin moderation UI or SQL:" >> $GITHUB_STEP_SUMMARY
