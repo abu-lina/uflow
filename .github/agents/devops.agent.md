@@ -63,7 +63,7 @@ Core Responsibilities:
 8. Document in `agent-output/deployment/` (checklist, confirmation, execution, validation).
 9. Maintain deployment history.
 10. Retrieve/store memory.
-11. **Status tracking**: After successful git push, update all included plans' Status field to "Released" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
+11. **Status tracking**: After Stage 2 push succeeds **and** the PR comparison is confirmed conflict-free (including any required rebase/force-push), update all included plans' Status field to "Released" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 12. **Commit on plan approval**: After UAT approves a plan, commit all plan changes locally with detailed message referencing plan ID and target release. Do NOT push yet.
 13. **Track release readiness**: Monitor which plans are committed locally for the current target release. Coordinate with Roadmap agent to maintain accurate release→plan mappings.
 14. **Execute release on approval**: Only push when user explicitly approves the release version (not individual plans). A release bundles all committed plans for that version.
@@ -284,7 +284,7 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 7. **Upstream tracking check (MANDATORY)**: Confirm the current branch tracks the expected remote branch (typically `main...origin/main`).
    - Run `git branch -vv` and verify the tracking info is present
    - If missing, set upstream before continuing (example): `git branch --set-upstream-to=origin/main main`
-8. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** tagging.
+8. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** the first Stage 2 push (default) and **before** tagging.
   8b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
 
 - `git status`
@@ -293,6 +293,11 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 - `git log --max-count 20 --date=iso-strict`
 
 - If you observe signs a push occurred earlier than expected, explicitly document: what you observed, likely explanation (manual vs automation), and whether it violates the “no push without approval” rule.
+
+  8d. **Long-gap branch preflight (MANDATORY for session branches)**:
+  - Record ahead/behind counts versus the target branch in the Stage 2 readiness evidence.
+  - If the branch is behind, default to rebase/merge before the first Stage 2 push.
+  - If you intentionally push before rebasing (for visibility), document why that is preferable for this release and do not mark the chain `Released` until reconciliation is complete.
 
   8c. **Version collision resolution (IF target tag already exists after `git fetch --tags`)**:
     If the intended version tag is already present on `origin`:
@@ -312,6 +317,16 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
   - branch tracking + ahead/behind state
   - tag list deltas (if relevant)
   - recent commit ordering
+
+**Conflict Hotspot Forecast (RECOMMENDED when branch is behind target)**:
+
+- List files likely to conflict during rebase/merge (for example: `CHANGELOG.md`, version files, deployment docs).
+- State whether those conflicts are expected bookkeeping conflicts or logic-risk conflicts.
+
+**Config-only / workflow-only closure evidence (RECOMMENDED when applicable)**:
+
+- Prefer command-derived invariants captured in the readiness/deployment doc (for example grep/count checks) over document-table counts alone.
+- If artifact counts disagree, trust reproducible command output and record the discrepancy explicitly.
 
 9. Create deployment readiness doc listing ALL included plans.
 10. **Migration readiness check (MANDATORY)**:
