@@ -63,13 +63,6 @@ const shortcuts = {
       url: '/saved',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
-    {
-      name: 'Dashboard',
-      short_name: 'Dashboard',
-      description: 'Mein Dashboard',
-      url: '/dashboard',
-      icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
-    },
   ],
   en: [
     {
@@ -91,13 +84,6 @@ const shortcuts = {
       short_name: 'Saved',
       description: 'Saved providers',
       url: '/saved',
-      icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
-    },
-    {
-      name: 'Dashboard',
-      short_name: 'Dashboard',
-      description: 'My dashboard',
-      url: '/dashboard',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
   ],
@@ -123,13 +109,6 @@ const shortcuts = {
       url: '/saved',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
-    {
-      name: 'لوحة التحكم',
-      short_name: 'لوحة',
-      description: 'لوحة التحكم الخاصة بي',
-      url: '/dashboard',
-      icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
-    },
   ],
   tr: [
     {
@@ -151,13 +130,6 @@ const shortcuts = {
       short_name: 'Kaydedilen',
       description: 'Kaydedilen sağlayıcılar',
       url: '/saved',
-      icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
-    },
-    {
-      name: 'Kontrol Paneli',
-      short_name: 'Panel',
-      description: 'Kontrol panelim',
-      url: '/dashboard',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
   ],

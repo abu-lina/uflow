@@ -134,6 +134,17 @@ If the change replaces a canonical sentinel value (example: “Everywhere/Übera
 - A regression test exists for the highest-risk path (typically **no-param SSR default**)
 - A structured search was performed for the old sentinel and key assignment sites (document the terms used)
 
+### Import Dry-Run Deferral Rule (MANDATORY when applicable)
+
+If a plan's primary value depends on a third-party import or ingestion dry-run and that dry-run cannot be executed, do not classify the residual risk as LOW.
+
+Minimum handling:
+- classify as MEDIUM risk
+- assign owner
+- assign trigger or due window (preferably before or within 24h of release)
+- define exact closure evidence
+- state whether release is conditional on that evidence
+
 Diagnosability & Telemetry Responsibilities (MANDATORY for incident/bug work):
 
 - If a root cause cannot be proven, require evidence that the change improves diagnosability (added log markers, structured context, correlation IDs, or other telemetry).
@@ -281,6 +292,13 @@ Process:
 **Timestamp guidance (SHOULD)**:
 
 - Use UTC and ISO-8601 when recording timestamps (example: `2026-02-22T17:30Z`).
+
+### Timestamp Discipline (MANDATORY)
+
+- At phase start, capture the current UTC time and use it as the initial changelog or timeline timestamp.
+- For each later status transition, record the actual event time in UTC ISO-8601 (`YYYY-MM-DDTHH:MMZ`).
+- Do not use date-only entries for status changes, timeline milestones, or handoff log rows unless explicitly marked `approx.`.
+- Before finalizing the QA report, sanity-check that timestamps are chronologically consistent with the documented handoff order.
 
 Subagent Behavior:
 

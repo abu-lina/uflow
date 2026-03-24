@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 2
 
@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload Nginx config to Hetzner
         if: steps.nginx-check.outputs.changed == 'true'
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -61,17 +61,17 @@ jobs:
           echo "✅ Deployment confirmed - proceeding with production deployment"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image to GHCR
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: .
           push: true
@@ -88,7 +88,7 @@ jobs:
           platforms: linux/amd64
 
       - name: Deploy to Hetzner
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -141,6 +141,7 @@ jobs:
               -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
               -e DISABLE_PWA=false \
               -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-new \
@@ -192,6 +193,7 @@ jobs:
               -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
               -e DISABLE_PWA=false \
               -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-app \

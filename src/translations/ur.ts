@@ -188,6 +188,7 @@ export const ur = {
     weNeed: "ہمیں چاہیے",
     weAreLookingFor: "ہم تلاش کر رہے ہیں",
     ourBarakahEffect: "ہمارا برکت اثر",
+    noBadges: "کوئی برکت اثرات نہیں",
     selectCategory: "زمرہ منتخب کریں"
   },
   create: {

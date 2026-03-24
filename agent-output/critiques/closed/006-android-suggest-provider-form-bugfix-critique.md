@@ -2,7 +2,7 @@
 ID: 006
 Origin: 006
 UUID: 9c41e0ab
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique: Plan 006 — Android Suggest Provider Form Bugfix
@@ -20,6 +20,7 @@ Status: OPEN
 | ---------- | ------------------------- | ----------------------------------------------------------------------------------------- |
 | 2026-02-22 | Planner → Critic (006)    | Reviewed for value alignment, completeness, and production readiness; revisions requested |
 | 2026-02-22 | Planner revision → Critic | Re-reviewed after F1–F3 addressed; APPROVED for implementation                            |
+| 2026-03-23T10:01Z | process-improvement | Normalize closed critique status | Status: Resolved |
 
 ---
 
@@ -95,7 +96,7 @@ Revisions are requested due to (1) an unresolved release-targeting OPEN QUESTION
 ### F4: Missing mandated chatmode reference (process)
 
 - **Severity**: LOW
-- **Status**: OPEN
+- **Status**: RESOLVED
 - **Location**: Repo process / agent instruction
 - **Description**: Critic workflow requires reading `.github/chatmodes/planner.chatmode.md` at review start. That file appears missing in this workspace.
 - **Impact**: Process inconsistency; future agents may not be able to comply.

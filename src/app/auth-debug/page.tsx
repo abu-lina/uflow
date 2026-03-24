@@ -124,12 +124,7 @@ export default function AuthDebugPage() {
             >
               Force Refresh (Client)
             </button>
-            <a
-              className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
-              href="/dashboard"
-            >
-              Try Dashboard
-            </a>
+
           </div>
         </div>
 

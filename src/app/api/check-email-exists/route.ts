@@ -47,8 +47,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Log security event
-    console.log(`[SECURITY] Email check attempt for: ${email} from IP: ${ip}`);
+    // F-049-12: Log security event without PII
+    console.log(`[SECURITY] Email check attempt from IP: ${ip}`);
 
     // Use admin API to check user existence and metadata
     // Use pagination to handle large user lists (same approach as login route)
@@ -87,31 +87,33 @@ export async function POST(request: Request) {
       );
     }
 
-    // Always return same response to prevent email enumeration
+    // F-049-04: Reduce user enumeration.
+    // Unify "not found" and "found but not confirmed" into the same response
+    // so attackers cannot distinguish unregistered from unconfirmed accounts.
+    // Only confirmed accounts are distinguishable (required for login flow).
+    // userId is never returned to prevent data leakage.
     if (!user) {
-      // Log potential enumeration attempt
-      console.log(`[SECURITY] Email not found: ${email} from IP: ${ip}`);
-      
       return NextResponse.json({ 
-        exists: false,
         confirmed: false,
-        message: 'Email not found'
+        message: 'If this email is registered, you will receive further instructions.'
       });
     }
 
-    // Log successful lookup
-    console.log(`[SECURITY] Email found: ${email} from IP: ${ip}`);
-    
-    // Check both Supabase's email_confirmed_at and our custom metadata field
-    // User is confirmed if either field indicates confirmation
     const emailConfirmed = 
       user.email_confirmed_at !== null || 
       user.user_metadata?.email_confirmed === true;
+
+    if (!emailConfirmed) {
+      // Same response as "not found" to prevent enumeration
+      return NextResponse.json({ 
+        confirmed: false,
+        message: 'If this email is registered, you will receive further instructions.'
+      });
+    }
     
     return NextResponse.json({ 
-      exists: true,
-      confirmed: emailConfirmed,
-      userId: user.id
+      confirmed: true,
+      message: 'If this email is registered, you will receive further instructions.'
     });
   } catch (error) {
     console.error('[SECURITY] Check email error:', error);

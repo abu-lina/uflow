@@ -103,10 +103,27 @@ State the target version as: _"next available patch after current `origin/main` 
 11. Include a **Duration Estimates** section (REQUIRED): rough phase-level ranges for Analysis, Planning, Implementation, QA, UAT, DevOps; call out uncertainty drivers.
 12. Ensure value statement guides all decisions. Core value delivered by plan, not deferred.
 13. MUST NOT define QA processes/test cases/test requirements. QA agent's exclusive responsibility in `agent-output/qa/`.
+
+### Shared Results Actionability Check (MANDATORY when applicable)
+
+If a plan introduces **inline actions** (approve, reject, delete, edit, etc.) on a **list that can return multiple entity types** (e.g., providers + community services), the plan MUST include an explicit statement about:
+- Which result types may legally receive each action
+- Where entity-type filtering occurs (service layer, API route, or UI)
+- What happens if the wrong entity type receives the action (error handling, not silent failure)
+
+If the plan scopes out certain entity types (e.g., "community services are out of scope"), it MUST note that the shared list may still return those types and specify how they are excluded from the action surface.
+
 14. Include version management milestone. Update release artifacts to match roadmap target version.
 15. Retrieve/store memory.
 16. **Status tracking**: When incorporating analysis into a plan, update the analysis doc's Status field to "Planned" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 17. **Track release assignment**: When creating or updating plans, verify target release with Roadmap agent. Multiple plans target the same release version. Plans are grouped by release, not released individually. Coordinate version bumps only at release level.
+
+### Third-Party Source Verification (MANDATORY for import/data-ingestion plans)
+
+- If the plan depends on a third-party public source, perform a lightweight live spot-check before handoff to Critic.
+- Verify and record: reachable URL, server-rendered vs client-rendered shape, pagination/access assumptions, and the minimum fields needed for the import.
+- Acceptable evidence: `curl`, page fetch, response snippet inspection, or equivalent read-only verification.
+- If the source cannot be verified from the current environment, explicitly mark the assumption as unresolved, document the blocker, and raise the risk level.
 
 ## Constraints
 
@@ -142,20 +159,21 @@ Prefer small, focused scopes delivering value quickly.
 
 ## Process
 
-1. Start with "Value Statement and Business Objective": "As a [user/customer/agent], I want to [objective], so that [value]"
-2. Get User Approval. Present user story, wait for explicit approval before planning.
-3. Summarize objective, known context.
-4. Identify target release version. Check current version, consult roadmap, ensure valid increment. Run version pre-flight (see Core Responsibility 5e). State version conservatively as "next available after current origin/main version; confirm at DevOps Stage 1" and document the rationale in the plan header. Update the actual version number when DevOps Stage 1 confirms availability.
-   4b. Run the **Release bundling check** and document `## Release Strategy` accordingly.
-   4c. Add **Related Issues** links/IDs to the plan header (or “None”).
-5. Enumerate assumptions, open questions. Resolve before finalizing.
-  5b. Populate `## Decision Record` and ensure there are no `[OPEN]` items. If any decision is deferred, record the owner + reason + target plan/version.
-6. Outline milestones, break into numbered steps with implementer-ready detail.
-7. Include version management as final milestone (CHANGELOG, package.json, setup.py, etc.).
-8. **Cross-repo coordination**: If plan involves APIs spanning multiple repositories, load `cross-repo-contract` skill. Document contract requirements and sync dependencies in plan.
-9. Specify verification steps, handoff notes, rollback considerations.
-10. Verify all work delivers on value statement. Don't defer core value to future phases.
-11. **BEFORE HANDOFF**: Scan plan for any `OPEN QUESTION` items not marked as resolved/closed. If any exist, prominently list them and ask user: "The following open questions remain unresolved. Do you want to proceed to Critic/Implementer with these unresolved, or should we address them first?"
+1. **ID collision check (MANDATORY)**: Before allocating a plan ID from `.next-id`, verify the candidate ID is not already in use anywhere under `agent-output/`, including `closed/`: `find agent-output/ -name "${ID}-*" -type f 2>/dev/null`. If matches exist, increment and re-check until the ID is unused.
+2. Start with "Value Statement and Business Objective": "As a [user/customer/agent], I want to [objective], so that [value]"
+3. Get User Approval. Present user story, wait for explicit approval before planning.
+4. Summarize objective, known context.
+5. Identify target release version. Check current version, consult roadmap, ensure valid increment. Run version pre-flight (see Core Responsibility 5e). State version conservatively as "next available after current origin/main version; confirm at DevOps Stage 1" and document the rationale in the plan header. Update the actual version number when DevOps Stage 1 confirms availability. When documenting `Target Release`, do not use speculative exact versions such as `likely vX.Y.Z`. Use one of: "next available patch after current origin/main version; confirm at DevOps Stage 1", or a confirmed bundled release version when explicitly provided by roadmap/release coordination.
+  5b. Run the **Release bundling check** and document `## Release Strategy` accordingly.
+  5c. Add **Related Issues** links/IDs to the plan header (or “None”).
+6. Enumerate assumptions, open questions. Resolve before finalizing.
+  6b. Populate `## Decision Record` and ensure there are no `[OPEN]` items. If any decision is deferred, record the owner + reason + target plan/version.
+7. Outline milestones, break into numbered steps with implementer-ready detail.
+8. Include version management as final milestone (CHANGELOG, package.json, setup.py, etc.).
+9. **Cross-repo coordination**: If plan involves APIs spanning multiple repositories, load `cross-repo-contract` skill. Document contract requirements and sync dependencies in plan.
+10. Specify verification steps, handoff notes, rollback considerations.
+11. Verify all work delivers on value statement. Don't defer core value to future phases.
+12. **BEFORE HANDOFF**: Scan plan for any `OPEN QUESTION` items not marked as resolved/closed. If any exist, prominently list them and ask user: "The following open questions remain unresolved. Do you want to proceed to Critic/Implementer with these unresolved, or should we address them first?"
 
 ### Gate Integrity After Revisions (MANDATORY)
 
@@ -191,6 +209,13 @@ Require an explicit user selection and record: `| YYYY-MM-DD | planner | Scope l
 
 - Use UTC and ISO-8601 when recording timestamps (example: `2026-02-23T17:30Z`).
 - Bold `OPEN QUESTION` for blocking issues. Mark resolved questions as `OPEN QUESTION [RESOLVED]: ...` or `OPEN QUESTION [CLOSED]: ...`.
+
+### Timestamp Discipline (MANDATORY)
+
+- At phase start, capture the current UTC time and use it as the initial changelog or timeline timestamp.
+- For each later status transition, record the actual event time in UTC ISO-8601 (`YYYY-MM-DDTHH:MMZ`).
+- Do not use date-only entries for status changes, timeline milestones, or handoff log rows unless explicitly marked `approx.`.
+- Before finalizing the plan, sanity-check that timestamps are chronologically consistent with the documented handoff order.
 - **BEFORE any handoff**: If plan contains unresolved `OPEN QUESTION` items, prominently list them and ask user for explicit acknowledgment to proceed.
 - **NO implementation code/snippets/file contents**. Describe WHAT, WHERE, WHY—never HOW.
 - Exception: Minimal pseudocode for architectural clarity, marked **"ILLUSTRATIVE ONLY"**.
@@ -262,8 +287,10 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 **Creating plan from user request (no analysis)**:
 
 1. Read `agent-output/.next-id` (create with value `1` if missing)
-2. Use that value as your document ID
-3. Increment and write back: `echo $((ID + 1)) > agent-output/.next-id`
+2. Verify the candidate ID is unused anywhere under `agent-output/`, including `closed/`: `find agent-output/ -name "${ID}-*" -type f 2>/dev/null`
+3. If matches exist, increment and re-check until the ID is unused
+4. Use that value as your document ID
+5. Increment and write back the next available value: `echo $((ID + 1)) > agent-output/.next-id`
 
 **Creating plan from analysis**:
 

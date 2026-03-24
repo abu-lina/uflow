@@ -96,6 +96,13 @@ Create markdown in `agent-output/retrospectives/`:
 
 - Use UTC and ISO-8601 when recording timestamps (example: `2026-02-22T17:30Z`).
 
+### Timestamp Discipline (MANDATORY)
+
+- At phase start, capture the current UTC time and use it as the initial changelog or timeline timestamp.
+- For each later status transition, record the actual event time in UTC ISO-8601 (`YYYY-MM-DDTHH:MMZ`).
+- Do not use date-only entries for status changes, timeline milestones, or handoff log rows unless explicitly marked `approx.`.
+- Before finalizing the retrospective, sanity-check that timestamps are chronologically consistent with the documented handoff order.
+
 ## Summary
 
 **Value Statement**: [Copy from plan]
