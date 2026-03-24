@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Pin all GitHub Actions workflow references to immutable commit SHAs (Plan 056)**: Replaces 42 mutable action tag/branch references (`@v*`, `@master`) across 7 workflow files with immutable 40-character commit SHAs. Eliminates the tag-rewrite supply chain attack vector triggered by the Checkmarx KICS compromise (2026-03-23). Adds `.github/dependabot.yml` for automated GitHub Actions version tracking (weekly, `ci` label). Critical change: `snyk/actions/node@master` (live branch reference) pinned to commit SHA. All production and UAT deploy-path action SHAs verified aligned.
+
 ## [0.8.24] - 2026-03-24
 
 ### Removed
@@ -153,7 +157,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **JoinHalal provider data import pipeline (Plan 047)**: A new admin-only import script (`scripts/import-joinhalal.ts`) that fetches public halal business listings from joinhalal.com and bulk-upserts them into the UFlow providers database. The script scrapes Schema.org JSON-LD structured data from each listing page (server-side, no JS rendering required), normalises addresses, resolves UFlow category IDs, and writes via service-role access. A `--dry-run` mode generates a full import plan without writing data. All imported rows default to `review_status = 'pending'` and are traceable via `user_created_id = '<import-bot-uuid>'`. The outreach trigger is safely bypassed by the non-null `user_created_id` sentinel. A pure parser utility module (`src/utils/joinhalal-parser.ts`) backs the scraping logic with 27 unit tests.
-
 ## [0.8.7] - 2026-03-19
 
 ### Added
