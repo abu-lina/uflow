@@ -27,6 +27,8 @@
  *   npx tsx scripts/import-joinhalal.ts --write --sitemap https://joinhalal.com/locations-sitemap2.xml
  *   npx tsx scripts/import-joinhalal.ts --backfill-alcohol --dry-run
  *   npx tsx scripts/import-joinhalal.ts --backfill-alcohol --write
+ *   npx tsx scripts/import-joinhalal.ts --recover-provenance --dry-run
+ *   npx tsx scripts/import-joinhalal.ts --recover-provenance --write
  *
  * Environment variables (from .env.local):
  *   NEXT_PUBLIC_SUPABASE_URL       (required)
@@ -55,12 +57,16 @@ import {
   resolveOfferIds,
   createMissingOffers,
   buildCliWriteCommand,
+  matchLegacyProviders,
+  auditStaleCloneOverlap,
   IMPORT_BOT_UUID,
   DEFAULT_SITEMAPS,
   type ImportLimit,
   type Category,
   type Offer,
   type DryRunResult,
+  type CorpusEntry,
+  type LegacyProviderRow,
 } from '../src/lib/import/joinhalal';
 
 // ─── Env setup ────────────────────────────────────────────────────────────────
@@ -149,6 +155,14 @@ interface UnmappedEntry {
   sourceCategory: string;
   name: string;
   url: string;
+}
+
+interface BackfillProviderRow {
+  id: string;
+  provider_name: string;
+  social_website: string | null;
+  import_source_url?: string | null;
+  review_status: 'pending' | 'approved' | 'rejected';
 }
 
 // ─── Supabase client ──────────────────────────────────────────────────────────
@@ -566,14 +580,40 @@ async function runBackfillAlcohol(isDryRun: boolean): Promise<void> {
 
   // 1. Fetch all JoinHalal-imported providers
   console.log('▶ Loading JoinHalal providers from database...');
-  const { data: providers, error: fetchError } = await supabase
+  const selectFields = 'id, provider_name, social_website, import_source_url, review_status';
+
+  const { data: modernProviders, error: fetchError } = await supabase
     .from('providers')
-    .select('id, provider_name, social_website, review_status')
+    .select(selectFields)
     .eq('import_source', 'joinhalal');
 
   if (fetchError) {
     console.error(`  ❌ Failed to fetch providers: ${fetchError.message}`);
     process.exit(1);
+  }
+
+  const { data: legacyProviders, error: legacyFetchError } = await supabase
+    .from('providers')
+    .select(selectFields)
+    .eq('user_created_id', IMPORT_BOT_UUID);
+
+  if (legacyFetchError) {
+    console.error(`  ❌ Failed to fetch legacy import-bot providers: ${legacyFetchError.message}`);
+    process.exit(1);
+  }
+
+  const providersById = new Map<string, BackfillProviderRow>();
+  for (const provider of (modernProviders ?? []) as BackfillProviderRow[]) {
+    providersById.set(provider.id, provider);
+  }
+  for (const provider of (legacyProviders ?? []) as BackfillProviderRow[]) {
+    providersById.set(provider.id, provider);
+  }
+
+  const providers = Array.from(providersById.values());
+
+  if ((modernProviders?.length ?? 0) === 0 && (legacyProviders?.length ?? 0) > 0) {
+    console.log(`  ℹ No import_source='joinhalal' rows found; using ${(legacyProviders ?? []).length} legacy import-bot rows.`);
   }
 
   if (!providers || providers.length === 0) {
@@ -612,8 +652,8 @@ async function runBackfillAlcohol(isDryRun: boolean): Promise<void> {
       console.log(`  ${progress} Processing...`);
     }
 
-    // social_website stores the full JoinHalal listing URL
-    const url = provider.social_website;
+    // Prefer import_source_url (recovered provenance, Plan 058) over social_website (merchant site)
+    const url = provider.import_source_url ?? provider.social_website;
     if (!url) {
       noUrlCount++;
       continue;
@@ -690,12 +730,348 @@ async function runBackfillAlcohol(isDryRun: boolean): Promise<void> {
   console.log('\n  Backfill complete.');
 }
 
+// ---------------------------------------------------------------------------
+// Provenance Recovery (Plan 058)
+// ---------------------------------------------------------------------------
+
+/**
+ * Recovers JoinHalal listing provenance for legacy import-bot rows.
+ *
+ * Fetches the current JoinHalal sitemap, extracts identity signals from
+ * each detail page, and deterministically matches legacy DB rows back to
+ * their authoritative JoinHalal listing URLs.
+ *
+ * Matched rows get import_source_url persisted. Ambiguous and unmatched
+ * rows are reported but not modified.
+ *
+ * Usage:
+ *   npx tsx scripts/import-joinhalal.ts --recover-provenance --dry-run
+ *   npx tsx scripts/import-joinhalal.ts --recover-provenance --write
+ */
+async function runProvenanceRecovery(isDryRun: boolean): Promise<void> {
+  console.log('\n╔══════════════════════════════════════════════════════╗');
+  console.log('║   UFlow — JoinHalal Provenance Recovery (Plan 058)   ║');
+  console.log('╚══════════════════════════════════════════════════════╝');
+  console.log(`  Mode: ${isDryRun ? '🔍 DRY-RUN (no writes)' : '✍️  WRITE'}\n`);
+
+  // 1. Load legacy providers from DB
+  console.log('▶ Step 1: Loading legacy providers from database...');
+  const selectFields =
+    'id, provider_name, address_city, contact_phone, social_website, import_source_id, import_source, import_source_url, review_status, user_created_id';
+
+  const { data: modernProviders, error: modernErr } = await supabase
+    .from('providers')
+    .select(selectFields)
+    .eq('import_source', 'joinhalal');
+
+  if (modernErr) {
+    console.error(`  ❌ Failed to fetch modern providers: ${modernErr.message}`);
+    process.exit(1);
+  }
+
+  const { data: legacyProviders, error: legacyErr } = await supabase
+    .from('providers')
+    .select(selectFields)
+    .eq('user_created_id', IMPORT_BOT_UUID);
+
+  if (legacyErr) {
+    console.error(`  ❌ Failed to fetch legacy import-bot providers: ${legacyErr.message}`);
+    process.exit(1);
+  }
+
+  // Dedup into unified set
+  const providersById = new Map<string, LegacyProviderRow>();
+  for (const p of (modernProviders ?? []) as LegacyProviderRow[]) {
+    providersById.set(p.id, p);
+  }
+  for (const p of (legacyProviders ?? []) as LegacyProviderRow[]) {
+    providersById.set(p.id, p);
+  }
+
+  const allProviders = Array.from(providersById.values());
+  const alreadyHaveUrl = allProviders.filter((p) => p.import_source_url);
+  const needsProvenance = allProviders.filter((p) => !p.import_source_url);
+
+  console.log(`  ✓ Total providers: ${allProviders.length}`);
+  console.log(`  ✓ Already have import_source_url: ${alreadyHaveUrl.length}`);
+  console.log(`  ✓ Need provenance recovery: ${needsProvenance.length}`);
+
+  if (needsProvenance.length === 0) {
+    console.log('  ℹ All providers already have provenance. Nothing to recover.');
+    return;
+  }
+
+  // 2. Fetch JoinHalal corpus from sitemaps
+  console.log('\n▶ Step 2: Building JoinHalal corpus from sitemaps...');
+  const locationUrls = await collectLocationUrls(DEFAULT_SITEMAPS, null);
+  console.log(`  ✓ Found ${locationUrls.length} JoinHalal listing URLs`);
+
+  if (locationUrls.length === 0) {
+    console.error('  ❌ No JoinHalal listings found in sitemaps. Aborting.');
+    process.exit(1);
+  }
+
+  // Build corpus index by fetching each detail page
+  console.log('\n▶ Step 2b: Extracting identity signals from detail pages...');
+  const corpus: CorpusEntry[] = [];
+  let fetchErrors = 0;
+
+  for (let i = 0; i < locationUrls.length; i++) {
+    const url = locationUrls[i];
+    if ((i + 1) % 50 === 0 || i === 0) {
+      console.log(`  [${i + 1}/${locationUrls.length}] Processing...`);
+    }
+
+    const html = await fetchText(url);
+    if (!html) {
+      fetchErrors++;
+      continue;
+    }
+
+    const schema = extractSchemaOrgFromHtml(html);
+    const postId = extractJoinHalalPostId(html);
+    const displayName = extractDisplayNameFromHtml(html);
+    const rawName = schema?.name ?? '';
+    const name = cleanProviderName(rawName, displayName) || rawName;
+
+    // Extract city from address
+    const addressStr = schema?.address?.streetAddress ?? '';
+    const { city } = parseGermanAddress(addressStr);
+    const resolvedCity = city ?? schema?.address?.addressLocality ?? null;
+
+    // Extract slug from URL
+    const urlObj = new URL(url);
+    const segments = urlObj.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+    const slug = segments[segments.length - 1] || '';
+
+    corpus.push({
+      url,
+      slug,
+      postId,
+      name,
+      city: resolvedCity,
+      phone: schema?.telephone ?? null,
+      website: schema?.url ?? null,
+    });
+
+    await sleep(FETCH_DELAY_MS);
+  }
+
+  console.log(`  ✓ Built corpus: ${corpus.length} entries (${fetchErrors} fetch errors)`);
+
+  // 3. Deterministic matching
+  console.log('\n▶ Step 3: Matching legacy providers to JoinHalal corpus...');
+  const matchResult = matchLegacyProviders(needsProvenance, corpus);
+
+  console.log('\n════════════════════════════════════════════════════════');
+  console.log('  Provenance Recovery Results:');
+  console.log(`    Total needing provenance   : ${needsProvenance.length}`);
+  console.log(`    Matched (single candidate) : ${matchResult.matched.length}`);
+  console.log(`    Ambiguous (multiple)        : ${matchResult.ambiguous.length}`);
+  console.log(`    Unmatched                   : ${matchResult.unmatched.length}`);
+  console.log(`    Skipped (already reviewed)  : ${matchResult.skippedReviewed.length}`);
+  console.log('════════════════════════════════════════════════════════');
+
+  // Match method breakdown
+  const byMethod = new Map<string, number>();
+  for (const m of matchResult.matched) {
+    byMethod.set(m.matchMethod, (byMethod.get(m.matchMethod) ?? 0) + 1);
+  }
+  if (byMethod.size > 0) {
+    console.log('\n  Match methods:');
+    for (const [method, count] of Array.from(byMethod.entries())) {
+      console.log(`    ${method}: ${count}`);
+    }
+  }
+
+  // Sample matched
+  if (matchResult.matched.length > 0) {
+    console.log('\n  Sample matched (first 5):');
+    for (const m of matchResult.matched.slice(0, 5)) {
+      console.log(`    • ${m.evidence.providerName} → ${m.joinHalalUrl} [${m.matchMethod}]`);
+    }
+  }
+
+  // Sample ambiguous
+  if (matchResult.ambiguous.length > 0) {
+    console.log('\n  ⚠ Ambiguous (first 5):');
+    for (const a of matchResult.ambiguous.slice(0, 5)) {
+      console.log(`    • ${a.providerName} (${a.candidateCount} candidates)`);
+    }
+  }
+
+  // Sample unmatched
+  if (matchResult.unmatched.length > 0) {
+    console.log('\n  ⊘ Unmatched (first 5):');
+    for (const u of matchResult.unmatched.slice(0, 5)) {
+      console.log(`    • ${u.providerName} (${u.city ?? 'no city'})`);
+    }
+  }
+
+  // 4. Persist provenance (write mode only)
+  if (isDryRun) {
+    console.log('\n  🔍 DRY-RUN complete. No changes written.');
+    console.log('  To apply, re-run with --write flag.');
+    return;
+  }
+
+  if (matchResult.matched.length === 0) {
+    console.log('\n  ℹ No matches to persist. Provenance recovery complete.');
+    return;
+  }
+
+  console.log(`\n▶ Step 4: Persisting provenance for ${matchResult.matched.length} matched providers...`);
+  let persistSuccess = 0;
+  let persistFailed = 0;
+
+  for (let i = 0; i < matchResult.matched.length; i += BATCH_SIZE) {
+    const batch = matchResult.matched.slice(i, i + BATCH_SIZE);
+
+    for (const match of batch) {
+      const updateFields: Record<string, string> = {
+        import_source_url: match.joinHalalUrl,
+      };
+
+      // Also set import_source + import_source_id if not already set
+      if (match.joinHalalPostId) {
+        updateFields.import_source = 'joinhalal';
+        updateFields.import_source_id = match.joinHalalPostId;
+      }
+
+      const { error: updateErr } = await supabase
+        .from('providers')
+        .update(updateFields)
+        .eq('id', match.providerId)
+        .eq('review_status', 'pending'); // Safety: only update pending rows
+
+      if (updateErr) {
+        console.error(`  ❌ Failed to update ${match.providerId}: ${updateErr.message}`);
+        persistFailed++;
+      } else {
+        persistSuccess++;
+      }
+    }
+
+    console.log(
+      `  ✓ Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.length} updates`
+    );
+  }
+
+  console.log('\n════════════════════════════════════════════════════════');
+  console.log('  Provenance Persistence Results:');
+  console.log(`    Successfully persisted : ${persistSuccess}`);
+  console.log(`    Failed                 : ${persistFailed}`);
+  console.log('════════════════════════════════════════════════════════');
+
+  if (persistFailed > 0) {
+    process.exit(1);
+  }
+}
+
+// ─── Stale-Clone Audit (Plan 058 — Step 6) ────────────────────────────────────
+
+async function runStaleCloneAudit(): Promise<void> {
+  console.log('\n╔══════════════════════════════════════════════════════╗');
+  console.log('║   UFlow — Stale-Clone Batch Audit (Plan 058 Step 6)  ║');
+  console.log('╚══════════════════════════════════════════════════════╝\n');
+
+  // 1. Load modern (stale-clone) providers: import_source='joinhalal'
+  console.log('▶ Loading stale-clone batch (import_source=joinhalal)...');
+  const selectFields =
+    'id, provider_name, address_city, contact_phone, social_website, import_source_id, import_source, import_source_url, review_status, user_created_id';
+
+  const { data: staleCloneRows, error: staleErr } = await supabase
+    .from('providers')
+    .select(selectFields)
+    .eq('import_source', 'joinhalal');
+
+  if (staleErr) {
+    console.error(`  ❌ Failed to fetch stale-clone rows: ${staleErr.message}`);
+    process.exit(1);
+  }
+
+  // 2. Load legacy import-bot providers
+  console.log('▶ Loading legacy import-bot batch (user_created_id=IMPORT_BOT_UUID)...');
+  const { data: legacyRows, error: legacyErr } = await supabase
+    .from('providers')
+    .select(selectFields)
+    .eq('user_created_id', IMPORT_BOT_UUID);
+
+  if (legacyErr) {
+    console.error(`  ❌ Failed to fetch legacy rows: ${legacyErr.message}`);
+    process.exit(1);
+  }
+
+  const staleClone = (staleCloneRows ?? []) as LegacyProviderRow[];
+  const legacy = (legacyRows ?? []) as LegacyProviderRow[];
+
+  console.log(`  ✓ Stale-clone batch: ${staleClone.length} rows`);
+  console.log(`  ✓ Legacy batch: ${legacy.length} rows\n`);
+
+  // 3. Run audit
+  console.log('▶ Analyzing overlap...');
+  const audit = auditStaleCloneOverlap(legacy, staleClone);
+
+  // 4. Print report
+  console.log('\n════════════════════════════════════════════════════════');
+  console.log('  STALE-CLONE AUDIT REPORT');
+  console.log('════════════════════════════════════════════════════════');
+  console.log(`  Stale-clone batch size : ${audit.staleCloneCount}`);
+  console.log(`  Legacy batch size      : ${audit.legacyCount}`);
+  console.log(`  Exact duplicates       : ${audit.exactDuplicates.length}`);
+  console.log(`  Partial overlaps       : ${audit.partialOverlaps.length}`);
+  console.log(`  Unique to stale-clone  : ${audit.uniqueToStaleClone.length}`);
+  console.log('════════════════════════════════════════════════════════');
+
+  if (audit.exactDuplicates.length > 0) {
+    console.log('\n  Exact duplicates (first 10):');
+    for (const dup of audit.exactDuplicates.slice(0, 10)) {
+      console.log(`    • stale=${dup.staleCloneId} ↔ legacy=${dup.legacyId} [${dup.matchField}=${dup.matchValue}]`);
+    }
+  }
+
+  if (audit.partialOverlaps.length > 0) {
+    console.log('\n  Partial overlaps (first 10):');
+    for (const overlap of audit.partialOverlaps.slice(0, 10)) {
+      console.log(`    • stale=${overlap.staleCloneId} (${overlap.staleCloneName}) ↔ legacy=${overlap.legacyId} (${overlap.legacyName}) [${overlap.city ?? 'no city'}]`);
+    }
+  }
+
+  if (audit.uniqueToStaleClone.length > 0) {
+    console.log('\n  Unique to stale-clone (first 10):');
+    for (const row of audit.uniqueToStaleClone.slice(0, 10)) {
+      console.log(`    • ${row.id}: ${row.provider_name} (${row.address_city ?? 'no city'})`);
+    }
+  }
+
+  console.log('\n════════════════════════════════════════════════════════');
+  console.log('  RECOMMENDATION');
+  console.log('════════════════════════════════════════════════════════');
+  console.log(audit.recommendation);
+  console.log('════════════════════════════════════════════════════════\n');
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   // Parse CLI arguments
   const args = process.argv.slice(2);
   const isBackfill = args.includes('--backfill-alcohol');
+  const isRecoverProvenance = args.includes('--recover-provenance');
+  const isAuditStaleClone = args.includes('--audit-stale-clone');
+
+  // Handle stale-clone audit mode (Plan 058 — Step 6)
+  if (isAuditStaleClone) {
+    await runStaleCloneAudit();
+    return;
+  }
+
+  // Handle provenance recovery mode (Plan 058)
+  if (isRecoverProvenance) {
+    const isDryRun = args.includes('--dry-run') || !args.includes('--write');
+    await runProvenanceRecovery(isDryRun);
+    return;
+  }
 
   // Handle backfill mode separately (Plan 057)
   if (isBackfill) {
@@ -934,13 +1310,12 @@ async function main() {
 
     for (let offset = 0; offset < toUpsert.length; offset += BATCH_SIZE) {
       const batch = toUpsert.slice(offset, offset + BATCH_SIZE);
-      // Strip import_source_url (not a real DB column)
-      const cleanBatch = batch.map(({ import_source_url: _ignored, ...rest }) => rest);
 
       // Use RPC function with explicit ON CONFLICT DO UPDATE SET allowlist
       // to preserve admin-controlled fields (Plan 052 safety requirement)
+      // import_source_url is now persisted (Plan 058, migration 065)
       const { data, error } = await supabase
-        .rpc('upsert_joinhalal_providers', { p_providers: cleanBatch });
+        .rpc('upsert_joinhalal_providers', { p_providers: batch });
 
       if (error) {
         console.error(
@@ -967,11 +1342,11 @@ async function main() {
 
     for (let offset = 0; offset < toInsertOnly.length; offset += BATCH_SIZE) {
       const batch = toInsertOnly.slice(offset, offset + BATCH_SIZE);
-      const cleanBatch = batch.map(({ import_source_url: _ignored, ...rest }) => rest);
+      // import_source_url is now persisted (Plan 058, migration 065)
 
       const { error } = await supabase
         .from('providers')
-        .insert(cleanBatch);
+        .insert(batch);
 
       if (error) {
         console.error(
