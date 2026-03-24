@@ -27,6 +27,7 @@ Status: Released
 | 2026-03-24T15:26Z | DevOps | Version artifacts updated to v0.8.26; packaging integrity revalidated |
 | 2026-03-24T15:30Z | DevOps | Lifecycle docs moved to `closed/`; final staged set verified as plan-scoped only |
 | 2026-03-24T14:34Z | DevOps | Stage 2 executed successfully; branch pushed and release marked Released |
+| 2026-03-24T14:34Z | DevOps | Final release tag `v0.8.26` pushed on commit `15a287a` |
 
 ## Pre-Release Verification
 
