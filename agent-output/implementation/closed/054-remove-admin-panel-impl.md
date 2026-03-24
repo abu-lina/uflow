@@ -2,7 +2,7 @@
 ID: 054
 Origin: 054
 UUID: c7e1b4a2
-Status: Committed
+Status: Released
 ---
 
 # 054 - Remove Legacy Admin Panel: Implementation
