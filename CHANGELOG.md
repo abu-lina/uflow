@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.26] - 2026-03-24
+
+### Added
+
+- **JoinHalal legacy provenance recovery (Plan 058)**: Added deterministic legacy provenance recovery for JoinHalal-imported provider rows that were created before authoritative listing URLs were persisted. The import pipeline now supports `--recover-provenance` to match legacy rows back to current JoinHalal detail pages, persist `import_source_url`, and report matched / ambiguous / unmatched outcomes without modifying reviewed rows.
+- **Stale-clone audit CLI for Plan 058**: Added `--audit-stale-clone` to classify the 864-row stale-clone batch into exact duplicates, partial overlaps, and unique rows, with an operator-facing remediation recommendation before any provenance write run.
+
+### Changed
+
+- **Migration 065 / JoinHalal RPC provenance persistence**: Added `import_source_url` to the `providers` table and updated `upsert_joinhalal_providers` so authoritative JoinHalal listing URLs are persisted on both insert and upsert paths.
+
+### Fixed
+
+- **Legacy JoinHalal alcohol backfill now uses recovered provenance**: The alcohol backfill now prefers `import_source_url` over `social_website`, allowing legacy rows to be evaluated against the authoritative JoinHalal page instead of merchant websites after provenance recovery is run.
+
 ### Security
 
 - **Pin all GitHub Actions workflow references to immutable commit SHAs (Plan 056)**: Replaces 42 mutable action tag/branch references (`@v*`, `@master`) across 7 workflow files with immutable 40-character commit SHAs. Eliminates the tag-rewrite supply chain attack vector triggered by the Checkmarx KICS compromise (2026-03-23). Adds `.github/dependabot.yml` for automated GitHub Actions version tracking (weekly, `ci` label). Critical change: `snyk/actions/node@master` (live branch reference) pinned to commit SHA. All production and UAT deploy-path action SHAs verified aligned.

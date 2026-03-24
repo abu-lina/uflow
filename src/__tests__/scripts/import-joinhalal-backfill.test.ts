@@ -5,7 +5,11 @@ interface ProviderRow {
   provider_name: string;
   social_website: string | null;
   review_status: 'pending' | 'approved' | 'rejected';
+  import_source?: string | null;
+  user_created_id?: string | null;
 }
+
+const IMPORT_BOT_UUID = '00000000-0000-0000-0000-000047000001';
 
 interface BackfillHarness {
   update: ReturnType<typeof vi.fn>;
@@ -41,25 +45,41 @@ async function importBackfillScript(args: string[]): Promise<BackfillHarness> {
       provider_name: 'Pending Positive',
       social_website: 'https://joinhalal.com/locations/restaurant/pending-positive/',
       review_status: 'pending',
+      import_source: 'joinhalal',
+      user_created_id: IMPORT_BOT_UUID,
     },
     {
       id: 'approved-positive',
       provider_name: 'Approved Positive',
       social_website: 'https://joinhalal.com/locations/restaurant/approved-positive/',
       review_status: 'approved',
+      import_source: 'joinhalal',
+      user_created_id: IMPORT_BOT_UUID,
     },
     {
       id: 'pending-no-url',
       provider_name: 'Pending No URL',
       social_website: null,
       review_status: 'pending',
+      import_source: 'joinhalal',
+      user_created_id: IMPORT_BOT_UUID,
     },
   ];
 
   const updateEq = vi.fn().mockResolvedValue({ error: null });
   const updateIn = vi.fn().mockReturnValue({ eq: updateEq });
   const update = vi.fn().mockReturnValue({ in: updateIn });
-  const selectEq = vi.fn().mockResolvedValue({ data: providers, error: null });
+  const selectEq = vi.fn((field: string, value: string) => {
+    if (field === 'import_source' && value === 'joinhalal') {
+      return Promise.resolve({ data: providers.filter((provider) => provider.import_source === 'joinhalal'), error: null });
+    }
+
+    if (field === 'user_created_id' && value === IMPORT_BOT_UUID) {
+      return Promise.resolve({ data: providers.filter((provider) => provider.user_created_id === IMPORT_BOT_UUID), error: null });
+    }
+
+    return Promise.resolve({ data: [], error: null });
+  });
 
   const from = vi.fn().mockReturnValue({
     select: vi.fn().mockReturnValue({ eq: selectEq }),
@@ -165,5 +185,76 @@ describe('JoinHalal backfill CLI (Plan 057)', () => {
 
     const output = harness.logSpy.mock.calls.map(([line]) => String(line)).join('\n');
     expect(output).toContain("Updated 1 providers to rejected.");
+  });
+
+  it('falls back to legacy import-bot rows when import_source provenance is missing', async () => {
+    const legacyOnlyHarness = await (async () => {
+      const providers: ProviderRow[] = [
+        {
+          id: 'legacy-pending-positive',
+          provider_name: 'Legacy Pending Positive',
+          social_website: 'https://joinhalal.com/locations/restaurant/legacy-pending-positive/',
+          review_status: 'pending',
+          import_source: null,
+          user_created_id: IMPORT_BOT_UUID,
+        },
+      ];
+
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const updateIn = vi.fn().mockReturnValue({ eq: updateEq });
+      const update = vi.fn().mockReturnValue({ in: updateIn });
+      const selectEq = vi.fn((field: string, value: string) => {
+        if (field === 'import_source' && value === 'joinhalal') {
+          return Promise.resolve({ data: [], error: null });
+        }
+
+        if (field === 'user_created_id' && value === IMPORT_BOT_UUID) {
+          return Promise.resolve({ data: providers, error: null });
+        }
+
+        return Promise.resolve({ data: [], error: null });
+      });
+
+      const from = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({ eq: selectEq }),
+        update,
+      });
+
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        text: async () => makeJoinHalalHtml('Alkoholverkauf'),
+      }));
+
+      vi.doMock('@supabase/supabase-js', () => ({
+        createClient: vi.fn(() => ({ from, auth: { admin: {} } })),
+      }));
+      vi.doMock('dotenv', () => ({ config: vi.fn() }));
+
+      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
+      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
+      process.argv = ['node', 'scripts/import-joinhalal.ts', '--backfill-alcohol', '--dry-run'];
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const exitSpy = vi
+        .spyOn(process, 'exit')
+        .mockImplementation((() => undefined) as never);
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await import('../../../scripts/import-joinhalal');
+      await new Promise((resolve) => setTimeout(resolve, 350));
+
+      expect(exitSpy).not.toHaveBeenCalled();
+
+      return { update, updateIn, updateEq, fetchMock, logSpy };
+    })();
+
+    expect(legacyOnlyHarness.fetchMock).toHaveBeenCalledTimes(1);
+
+    const output = legacyOnlyHarness.logSpy.mock.calls.map(([line]) => String(line)).join('\n');
+    expect(output).toContain("No import_source='joinhalal' rows found; using 1 legacy import-bot rows.");
+    expect(output).toContain('Would reject          : 1');
   });
 });

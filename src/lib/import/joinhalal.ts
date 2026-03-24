@@ -754,3 +754,331 @@ export async function runJoinHalalDryRun(
     },
   };
 }
+
+// ---------------------------------------------------------------------------
+// Provenance Recovery Types & Functions (Plan 058)
+// ---------------------------------------------------------------------------
+
+/** A JoinHalal listing entry extracted from the sitemap + detail page. */
+export interface CorpusEntry {
+  url: string;
+  slug: string;
+  postId: string | null;
+  name: string;
+  city: string | null;
+  phone: string | null;
+  website: string | null;
+}
+
+/** A legacy provider row from the DB that needs provenance recovery. */
+export interface LegacyProviderRow {
+  id: string;
+  provider_name: string;
+  address_city: string | null;
+  contact_phone: string | null;
+  social_website: string | null;
+  import_source_id: string | null;
+  import_source_url?: string | null;
+  review_status: string;
+}
+
+/** Evidence captured for a successful provenance match. */
+export interface MatchEvidence {
+  providerName: string;
+  corpusName: string;
+  providerCity: string | null;
+  corpusCity: string | null;
+}
+
+/** A successfully matched provider → JoinHalal listing. */
+export interface ProvenanceMatch {
+  providerId: string;
+  joinHalalUrl: string;
+  joinHalalSlug: string;
+  joinHalalPostId: string | null;
+  matchMethod: 'import_source_id' | 'name_city';
+  evidence: MatchEvidence;
+}
+
+/** An ambiguous match (multiple candidates). */
+export interface AmbiguousMatch {
+  providerId: string;
+  providerName: string;
+  candidateCount: number;
+  candidateUrls: string[];
+}
+
+/** An unmatched legacy provider. */
+export interface UnmatchedProvider {
+  providerId: string;
+  providerName: string;
+  city: string | null;
+}
+
+/** Result of matching legacy providers against the JoinHalal corpus. */
+export interface MatchResult {
+  matched: ProvenanceMatch[];
+  ambiguous: AmbiguousMatch[];
+  unmatched: UnmatchedProvider[];
+  skippedReviewed: Array<{ providerId: string; reviewStatus: string }>;
+}
+
+/**
+ * Generates a normalized key for matching providers by name + city.
+ * Lowercase, trimmed, collapsed whitespace.
+ */
+export function normalizeMatchKey(name: string, city: string | null): string {
+  const norm = (s: string) => s.toLowerCase().trim().replace(/\s+/g, ' ');
+  return `${norm(name)}|${norm(city ?? '')}`;
+}
+
+/**
+ * Deterministically matches legacy provider rows to JoinHalal corpus entries.
+ *
+ * Match strategy (in priority order):
+ * 1. Exact match on import_source_id → corpus postId (highest confidence)
+ * 2. Exact match on normalized name + city
+ *
+ * Rules:
+ * - Only pending providers are candidates for matching
+ * - A match is accepted only when exactly one candidate exists (no ties)
+ * - Every accepted match includes evidence fields
+ */
+export function matchLegacyProviders(
+  legacy: LegacyProviderRow[],
+  corpus: CorpusEntry[]
+): MatchResult {
+  const result: MatchResult = {
+    matched: [],
+    ambiguous: [],
+    unmatched: [],
+    skippedReviewed: [],
+  };
+
+  // Build corpus indexes
+  const byPostId = new Map<string, CorpusEntry>();
+  const byNameCity = new Map<string, CorpusEntry[]>();
+
+  for (const entry of corpus) {
+    if (entry.postId) {
+      byPostId.set(entry.postId, entry);
+    }
+    const key = normalizeMatchKey(entry.name, entry.city);
+    const existing = byNameCity.get(key) ?? [];
+    existing.push(entry);
+    byNameCity.set(key, existing);
+  }
+
+  for (const provider of legacy) {
+    // Guard: skip non-pending
+    if (provider.review_status !== 'pending') {
+      result.skippedReviewed.push({
+        providerId: provider.id,
+        reviewStatus: provider.review_status,
+      });
+      continue;
+    }
+
+    // Strategy 1: match by import_source_id
+    if (provider.import_source_id) {
+      const corpusEntry = byPostId.get(provider.import_source_id);
+      if (corpusEntry) {
+        result.matched.push({
+          providerId: provider.id,
+          joinHalalUrl: corpusEntry.url,
+          joinHalalSlug: corpusEntry.slug,
+          joinHalalPostId: corpusEntry.postId,
+          matchMethod: 'import_source_id',
+          evidence: {
+            providerName: provider.provider_name,
+            corpusName: corpusEntry.name,
+            providerCity: provider.address_city,
+            corpusCity: corpusEntry.city,
+          },
+        });
+        continue;
+      }
+    }
+
+    // Strategy 2: match by normalized name + city
+    const key = normalizeMatchKey(provider.provider_name, provider.address_city);
+    const candidates = byNameCity.get(key);
+
+    if (!candidates || candidates.length === 0) {
+      result.unmatched.push({
+        providerId: provider.id,
+        providerName: provider.provider_name,
+        city: provider.address_city,
+      });
+    } else if (candidates.length === 1) {
+      const corpusEntry = candidates[0];
+      result.matched.push({
+        providerId: provider.id,
+        joinHalalUrl: corpusEntry.url,
+        joinHalalSlug: corpusEntry.slug,
+        joinHalalPostId: corpusEntry.postId,
+        matchMethod: 'name_city',
+        evidence: {
+          providerName: provider.provider_name,
+          corpusName: corpusEntry.name,
+          providerCity: provider.address_city,
+          corpusCity: corpusEntry.city,
+        },
+      });
+    } else {
+      result.ambiguous.push({
+        providerId: provider.id,
+        providerName: provider.provider_name,
+        candidateCount: candidates.length,
+        candidateUrls: candidates.map((c) => c.url),
+      });
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Stale-Clone Audit (Plan 058 — Step 6)
+// ---------------------------------------------------------------------------
+
+/** An exact duplicate between stale-clone and legacy sets. */
+export interface StaleCloneExactDuplicate {
+  staleCloneId: string;
+  legacyId: string;
+  matchField: string;
+  matchValue: string;
+}
+
+/** A partial overlap between stale-clone and legacy sets (name+city only). */
+export interface StaleClonePartialOverlap {
+  staleCloneId: string;
+  legacyId: string;
+  staleCloneName: string;
+  legacyName: string;
+  city: string | null;
+}
+
+/** Result of auditing stale-clone rows against legacy rows. */
+export interface StaleCloneAuditResult {
+  staleCloneCount: number;
+  legacyCount: number;
+  exactDuplicates: StaleCloneExactDuplicate[];
+  partialOverlaps: StaleClonePartialOverlap[];
+  uniqueToStaleClone: LegacyProviderRow[];
+  recommendation: string;
+}
+
+/**
+ * Audits stale-clone rows against legacy rows to classify overlap.
+ *
+ * Classification:
+ * - exactDuplicates: matched by import_source_id
+ * - partialOverlaps: matched by normalized name+city only
+ * - uniqueToStaleClone: no legacy counterpart
+ */
+export function auditStaleCloneOverlap(
+  legacyRows: LegacyProviderRow[],
+  staleCloneRows: LegacyProviderRow[]
+): StaleCloneAuditResult {
+  const exactDuplicates: StaleCloneExactDuplicate[] = [];
+  const partialOverlaps: StaleClonePartialOverlap[] = [];
+  const uniqueToStaleClone: LegacyProviderRow[] = [];
+
+  // Build legacy indexes
+  const legacyBySourceId = new Map<string, LegacyProviderRow>();
+  const legacyByNameCity = new Map<string, LegacyProviderRow>();
+
+  for (const row of legacyRows) {
+    if (row.import_source_id) {
+      legacyBySourceId.set(row.import_source_id, row);
+    }
+    const key = normalizeMatchKey(row.provider_name, row.address_city);
+    legacyByNameCity.set(key, row);
+  }
+
+  for (const staleRow of staleCloneRows) {
+    // Strategy 1: exact match by import_source_id
+    if (staleRow.import_source_id) {
+      const legacyRow = legacyBySourceId.get(staleRow.import_source_id);
+      if (legacyRow) {
+        exactDuplicates.push({
+          staleCloneId: staleRow.id,
+          legacyId: legacyRow.id,
+          matchField: 'import_source_id',
+          matchValue: staleRow.import_source_id,
+        });
+        continue;
+      }
+    }
+
+    // Strategy 2: partial overlap by name+city
+    const key = normalizeMatchKey(staleRow.provider_name, staleRow.address_city);
+    const legacyRow = legacyByNameCity.get(key);
+    if (legacyRow) {
+      partialOverlaps.push({
+        staleCloneId: staleRow.id,
+        legacyId: legacyRow.id,
+        staleCloneName: staleRow.provider_name,
+        legacyName: legacyRow.provider_name,
+        city: staleRow.address_city,
+      });
+      continue;
+    }
+
+    // No match → unique to stale-clone
+    uniqueToStaleClone.push(staleRow);
+  }
+
+  const recommendation = buildAuditRecommendation(
+    staleCloneRows.length,
+    exactDuplicates.length,
+    partialOverlaps.length,
+    uniqueToStaleClone.length
+  );
+
+  return {
+    staleCloneCount: staleCloneRows.length,
+    legacyCount: legacyRows.length,
+    exactDuplicates,
+    partialOverlaps,
+    uniqueToStaleClone,
+    recommendation,
+  };
+}
+
+function buildAuditRecommendation(
+  total: number,
+  exact: number,
+  partial: number,
+  unique: number
+): string {
+  if (total === 0) {
+    return 'No stale-clone rows found. No action required.';
+  }
+
+  const lines: string[] = [
+    `Stale-clone audit: ${total} rows analyzed.`,
+    `  - Exact duplicates (by import_source_id): ${exact} → RECOMMEND soft-delete (retain legacy originals)`,
+    `  - Partial overlaps (by name+city): ${partial} → RECOMMEND manual review before merge/delete`,
+    `  - Unique to stale-clone batch: ${unique} → RECOMMEND retain (no legacy counterpart)`,
+  ];
+
+  if (exact > 0) {
+    lines.push(
+      `\nAction: Soft-delete the ${exact} exact duplicate(s) from the stale-clone batch to prevent double-processing during provenance recovery.`
+    );
+  }
+  if (partial > 0) {
+    lines.push(
+      `Action: Manual review required for ${partial} partial overlap(s) — same name+city but different source IDs may indicate renamed/relocated listings.`
+    );
+  }
+  if (exact === 0 && partial === 0) {
+    lines.push(
+      '\nNo overlap detected between stale-clone and legacy batches. Provenance recovery can proceed without deduplication.'
+    );
+  }
+
+  return lines.join('\n');
+}
