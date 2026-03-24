@@ -143,6 +143,26 @@ If the plan includes measurable performance targets (example: latency thresholds
 
 Additionally, verify the Implementation doc contains either baseline numbers or an explicit baseline deferral when the plan promised measurement milestones. Missing baseline evidence/deferral is a UAT finding (even if the code changes look correct).
 
+### Admin Runtime Smoke Gate (MANDATORY when applicable)
+
+If the feature depends on **admin/moderator role metadata**, **Supabase RLS visibility boundaries**, or **service-role client fallbacks**, UAT MUST NOT issue "APPROVED FOR RELEASE" without evidence that the feature was validated in a live session with correct role configuration.
+
+Minimum checks:
+- Admin role is present in `auth.users.raw_user_meta_data` (not just `public.users`)
+- The feature's primary admin path returns expected data (e.g., pending-status filter returns non-empty results)
+- At least one mutation path (approve, reject, or equivalent) completes without error
+
+If live validation is infeasible at UAT time, UAT MUST:
+- Record the gap as a **DEFERRED** finding with severity, owner, and trigger
+- Downgrade the release decision to **CONDITIONAL APPROVAL** with explicit next actions
+- NOT issue an unqualified "APPROVED FOR RELEASE"
+
+### Release Version Discipline (SHOULD)
+
+When recommending a version in the release decision, reference the plan's version language (e.g., "next available patch after current origin/main") rather than hard-coding a specific version number. The authoritative version is confirmed only at DevOps Stage 1 after `git fetch --tags`. Hard-coding a version in the UAT doc that DevOps later overrides creates unnecessary doc churn.
+
+Exception: If DevOps Stage 1 has already run and confirmed the version (e.g., the plan's Target Release field has been updated with a confirmed version), UAT may reference that confirmed version.
+
 Constraints:
 
 - Don't request new features or scope changes; focus on plan compliance
