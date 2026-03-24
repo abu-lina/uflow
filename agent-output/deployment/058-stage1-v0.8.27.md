@@ -5,7 +5,7 @@ UUID: f8cb0a9c
 Status: Active
 ---
 
-# Deployment: Plan 058 Stage 1 — v0.8.26
+# Deployment: Plan 058 Stage 1 — v0.8.27
 
 ## Plan Reference
 
@@ -20,7 +20,7 @@ Status: Active
 
 | Field | Value |
 | --- | --- |
-| Version | v0.8.26 |
+| Version | v0.8.27 |
 | Type | Patch |
 | Environment | Production (ummahflow.com) |
 | Epic | JoinHalal import integrity and moderation correctness |
@@ -41,7 +41,7 @@ Status: Active
 
 - [x] Plan 058 aligns with the roadmap objective of improving JoinHalal import reliability and moderation correctness for legacy rows.
 - [x] `agent-output/roadmap/product-roadmap.md` still reports `Current Version: v0.8.15`; release decisions use git tags plus `origin/main:package.json` per procedure.
-- [x] Release tracker shows no other active plan currently assigned to `v0.8.26` in the planning directory.
+- [x] Release tracker showed no other active plan assigned to `v0.8.26` during Stage 1 planning, but Stage 2 later detected that `v0.8.26` had already been tagged on origin for Plan 059.
 
 ### Version Pre-Flight
 
@@ -50,13 +50,14 @@ Status: Active
 - [x] `origin/main:package.json` reports `0.8.25`
 - [x] Original target tag `v0.8.25` already exists on origin
 - [x] Plan target release adjusted to `v0.8.26` before commit
+- [x] Stage 2 detected `v0.8.26` already existed on origin and retargeted the release to `v0.8.27`
 
 ### Version Consistency
 
-- [x] Local `package.json` updated to `0.8.26`
-- [x] Local `package-lock.json` updated to `0.8.26`
-- [x] `CHANGELOG.md` latest heading updated to `[0.8.26] - 2026-03-24`
-- [x] UAT recommended version updated from `v0.8.25` to `v0.8.26`
+- [x] Local `package.json` updated to `0.8.27`
+- [x] Local `package-lock.json` updated to `0.8.27`
+- [x] `CHANGELOG.md` latest heading updated to `[0.8.27] - 2026-03-24`
+- [x] UAT recommended version updated from `v0.8.25` to `v0.8.27`
 
 ### Packaging Integrity
 
@@ -90,7 +91,7 @@ Status: Active
 ### Critique Closure Verification
 
 - [ ] Critique remains open
-- Reason: LOW-002 (missing planner chatmode file) and LOW-003 (orphan critique housekeeping outside Plan 058 scope) remain open and non-blocking. LOW-001 (target version) is resolved by the `v0.8.26` retargeting recorded here.
+- Reason: LOW-002 (missing planner chatmode file) and LOW-003 (orphan critique housekeeping outside Plan 058 scope) remain open and non-blocking. LOW-001 (target version) is resolved by the `v0.8.27` retargeting recorded here.
 
 ## Evidence
 
@@ -113,7 +114,7 @@ UTC start: 2026-03-24T14:17Z
 Branch: session/051-joinhalal-alkohol-rejection
 Latest tags: v0.8.21, v0.8.22, v0.8.23, v0.8.24, v0.8.25
 origin/main package.json: "version": "0.8.25"
-Chosen Stage 1 target: v0.8.26
+Chosen Stage 1 target: v0.8.27
 ```
 
 ## Deferred Follow-Ups
@@ -136,3 +137,4 @@ Closed documents for Plan 058: planning, implementation, code-review, qa, uat mo
 | Date (UTC) | Agent | Change |
 | --- | --- | --- |
 | 2026-03-24T14:17Z | devops | Stage 1 deployment doc created; version collision resolved to `v0.8.26`, deferred follow-up tracker created, chronology typo corrected, and lifecycle closure prepared for local commit |
+| 2026-03-24T15:04Z | devops | Stage 2 version collision correction applied; retargeted release artifacts and plan references from `v0.8.26` to `v0.8.27` after origin already contained the `v0.8.26` tag for Plan 059 |

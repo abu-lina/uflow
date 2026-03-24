@@ -248,3 +248,4 @@ All findings are LOW or INFO. No blocking issues. Three findings accepted risks 
 |---|---|---|
 | 2026-03-24T14:00Z | Code Reviewer | Initial review — APPROVED_WITH_COMMENTS |
 | 2026-03-24T14:17Z | DevOps | Stage 1 commit prepared — marked code review committed for v0.8.26 bundling |
+| 2026-03-24T15:04Z | DevOps | Stage 2 version collision correction — release retargeted to v0.8.27 after v0.8.26 tag collision |

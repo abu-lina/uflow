@@ -19,6 +19,7 @@ Status: Committed
 | 2026-03-24T13:41Z | QA | Testing complete | Added QA-owned CLI regression coverage for `--recover-provenance`; targeted tests and type-check passed, but QA failed on missing stale-clone audit deliverable, incomplete TDD evidence for `runProvenanceRecovery()`, and changed-script lint defects |
 | 2026-03-24T14:02Z | Implementer | Re-validation after remediation | All 3 findings resolved: stale-clone audit implemented (HIGH-001), TDD evidence completed (MEDIUM-001), lint defects fixed (MEDIUM-002). 22/22 tests pass, type-check clean, delta lint clean, script lint has 0 plan-specific errors. QA Complete. |
 | 2026-03-24T14:17Z | DevOps | Stage 1 commit prepared | Marked QA artifact as committed for `v0.8.26` bundling |
+| 2026-03-24T15:04Z | DevOps | Stage 2 version collision correction | Retargeted release bundle from `v0.8.26` to `v0.8.27` after origin already contained the `v0.8.26` tag |
 
 ## Timeline
 

@@ -17,6 +17,7 @@ Status: Committed
 | ---------- | ------------- | -------------------- | ------------------------------ |
 | 2026-03-24T14:10Z | QA | All gates passing, ready for value validation | UAT Complete — implementation delivers stated value; provenance recovery tooling functional, stale-clone audit tooling delivered, backfill path unblocked |
 | 2026-03-24T14:17Z | DevOps | Stage 1 commit prepared | Marked UAT artifact as committed for `v0.8.26` bundling |
+| 2026-03-24T15:04Z | DevOps | Stage 2 version collision correction | Recommended release retargeted to `v0.8.27` after `v0.8.26` was already tagged on origin |
 
 ## Value Statement Under Test
 
@@ -138,7 +139,7 @@ The stale-clone batch concern from the plan context is addressed: the audit tool
 
 **Rationale**: Implementation, Code Review (APPROVED_WITH_COMMENTS — all LOWs accepted), and QA (QA Complete after remediation) all demonstrate delivery of the stated value. No blocking issues remain. Residual items are operational (DevOps runtime execution) rather than code-quality gaps.
 
-**Recommended Version**: v0.8.26 (patch) — retargeted at DevOps Stage 1 after `v0.8.25` was found on origin. Consistent with the standalone change scope: one new DB column, one RPC update, new CLI modes, no API surface changes, no UI changes.
+**Recommended Version**: v0.8.27 (patch) — retargeted at DevOps Stage 2 after `v0.8.26` was already tagged on origin for Plan 059. Consistent with the standalone change scope: one new DB column, one RPC update, new CLI modes, no API surface changes, no UI changes.
 
 **Key Changes for Changelog**:
 - `feat(import): recover JoinHalal listing provenance for 914 legacy import-bot providers`
@@ -152,7 +153,7 @@ The stale-clone batch concern from the plan context is addressed: the audit tool
 
 | Item | Owner | Trigger / Due Window | Evidence to Close |
 |---|---|---|---|
-| Run `--audit-stale-clone` against production and record output | DevOps / operator | At deploy of v0.8.26, before any `--recover-provenance --write` run | Report artifact saved to `agent-output/implementation/058-stale-clone-audit-report.md` or equivalent |
+| Run `--audit-stale-clone` against production and record output | DevOps / operator | At deploy of v0.8.27, before any `--recover-provenance --write` run | Report artifact saved to `agent-output/implementation/058-stale-clone-audit-report.md` or equivalent |
 | Run `--recover-provenance --dry-run` to verify match coverage | DevOps / operator | After migration 065 is applied | Dry-run output saved; counts reviewed for reasonableness |
 | Run `--recover-provenance --write` to persist provenance | DevOps / operator | After stale-clone audit reviewed and any duplicates handled | `persistSuccess` count > 0; `persistFailed` = 0 |
 | Run `--backfill-alcohol --dry-run` against recovered rows | DevOps / operator | After provenance write completes | `Would reject` count > 0 (confirms alcohol detection is now working) |
