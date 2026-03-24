@@ -25,6 +25,8 @@
  *   npx tsx scripts/import-joinhalal.ts --write --limit 50
  *   npx tsx scripts/import-joinhalal.ts --write
  *   npx tsx scripts/import-joinhalal.ts --write --sitemap https://joinhalal.com/locations-sitemap2.xml
+ *   npx tsx scripts/import-joinhalal.ts --backfill-alcohol --dry-run
+ *   npx tsx scripts/import-joinhalal.ts --backfill-alcohol --write
  *
  * Environment variables (from .env.local):
  *   NEXT_PUBLIC_SUPABASE_URL       (required)
@@ -391,7 +393,7 @@ function transformPageToProvider(
     contact_phone: schema.telephone ?? null,
     social_website: website,
     social_instagram: instagram,
-    review_status: hasAlkoholverkauf(schema) ? 'rejected' : 'pending',
+    review_status: hasAlkoholverkauf(schema, html) ? 'rejected' : 'pending',
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
@@ -541,11 +543,166 @@ function printWriteReport(stats: WriteStats) {
   console.log('════════════════════════════════════════════════════════\n');
 }
 
+// ---------------------------------------------------------------------------
+// Backfill alcohol rejection (Plan 057)
+// ---------------------------------------------------------------------------
+
+/**
+ * Re-evaluates all already-imported JoinHalal providers for alcohol-sale
+ * badges using the improved detector (JSON-LD + visible HTML fallback).
+ *
+ * Only rows with review_status = 'pending' are eligible for update.
+ * Rows already reviewed by a human (approved / rejected) are skipped.
+ *
+ * Uses service_role Supabase client (same as the regular import path)
+ * and a direct UPDATE rather than the upsert RPC, so the
+ * ADMIN_CONTROLLED_FIELDS preservation logic is bypassed intentionally.
+ */
+async function runBackfillAlcohol(isDryRun: boolean): Promise<void> {
+  console.log('\n╔══════════════════════════════════════════════════════╗');
+  console.log('║   UFlow — JoinHalal Alcohol Backfill (Plan 057)      ║');
+  console.log('╚══════════════════════════════════════════════════════╝');
+  console.log(`  Mode: ${isDryRun ? '🔍 DRY-RUN (no writes)' : '✍️  WRITE'}\n`);
+
+  // 1. Fetch all JoinHalal-imported providers
+  console.log('▶ Loading JoinHalal providers from database...');
+  const { data: providers, error: fetchError } = await supabase
+    .from('providers')
+    .select('id, provider_name, social_website, review_status')
+    .eq('import_source', 'joinhalal');
+
+  if (fetchError) {
+    console.error(`  ❌ Failed to fetch providers: ${fetchError.message}`);
+    process.exit(1);
+  }
+
+  if (!providers || providers.length === 0) {
+    console.log('  ℹ No JoinHalal providers found in database. Nothing to backfill.');
+    return;
+  }
+
+  console.log(`  ✓ Found ${providers.length} JoinHalal providers`);
+
+  // 2. Partition by review_status
+  const pending = providers.filter((p) => p.review_status === 'pending');
+  const skippedReviewed = providers.filter((p) => p.review_status !== 'pending');
+
+  console.log(`  ✓ Eligible (pending): ${pending.length}`);
+  if (skippedReviewed.length > 0) {
+    console.log(`  ⊘ Skipped (already reviewed): ${skippedReviewed.length}`);
+  }
+
+  if (pending.length === 0) {
+    console.log('  ℹ No pending providers to evaluate. Backfill complete.');
+    return;
+  }
+
+  // 3. Re-evaluate each pending provider
+  console.log('\n▶ Re-evaluating pending providers for alcohol badges...');
+
+  const candidates: Array<{ id: string; name: string; url: string }> = [];
+  let errorCount = 0;
+  let noUrlCount = 0;
+
+  for (let i = 0; i < pending.length; i++) {
+    const provider = pending[i];
+    const progress = `[${i + 1}/${pending.length}]`;
+
+    if ((i + 1) % 25 === 0 || i === 0) {
+      console.log(`  ${progress} Processing...`);
+    }
+
+    // social_website stores the full JoinHalal listing URL
+    const url = provider.social_website;
+    if (!url) {
+      noUrlCount++;
+      continue;
+    }
+
+    const html = await fetchText(url);
+    if (!html) {
+      errorCount++;
+      continue;
+    }
+
+    const schema = extractSchemaOrgFromHtml(html);
+    if (!schema) {
+      errorCount++;
+      continue;
+    }
+
+    if (hasAlkoholverkauf(schema, html)) {
+      candidates.push({
+        id: provider.id,
+        name: provider.provider_name,
+        url,
+      });
+    }
+
+    await sleep(FETCH_DELAY_MS);
+  }
+
+  // 4. Report
+  console.log('\n════════════════════════════════════════════════════════');
+  console.log('  Backfill Results:');
+  console.log(`    Total providers       : ${providers.length}`);
+  console.log(`    Eligible (pending)    : ${pending.length}`);
+  console.log(`    Skipped (reviewed)    : ${skippedReviewed.length}`);
+  console.log(`    Would reject          : ${candidates.length}`);
+  console.log(`    No URL (skipped)      : ${noUrlCount}`);
+  console.log(`    Fetch/parse errors    : ${errorCount}`);
+  console.log('════════════════════════════════════════════════════════');
+
+  if (candidates.length > 0) {
+    console.log('\n  Providers to be rejected:');
+    for (const c of candidates) {
+      console.log(`    • ${c.name} (${c.url})`);
+    }
+  }
+
+  // 5. Write (if not dry-run)
+  if (isDryRun) {
+    console.log('\n  🔍 DRY-RUN complete. No changes written.');
+    console.log('  To apply, re-run with --write flag.');
+    return;
+  }
+
+  if (candidates.length === 0) {
+    console.log('\n  ℹ No providers to update. Backfill complete.');
+    return;
+  }
+
+  console.log(`\n▶ Updating ${candidates.length} providers to review_status = 'rejected'...`);
+  const ids = candidates.map((c) => c.id);
+
+  const { error: updateError } = await supabase
+    .from('providers')
+    .update({ review_status: 'rejected' })
+    .in('id', ids)
+    .eq('review_status', 'pending'); // Safety: double-check pending guard
+
+  if (updateError) {
+    console.error(`  ❌ Update failed: ${updateError.message}`);
+    process.exit(1);
+  }
+
+  console.log(`  ✓ Updated ${candidates.length} providers to rejected.`);
+  console.log('\n  Backfill complete.');
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   // Parse CLI arguments
   const args = process.argv.slice(2);
+  const isBackfill = args.includes('--backfill-alcohol');
+
+  // Handle backfill mode separately (Plan 057)
+  if (isBackfill) {
+    const isDryRun = args.includes('--dry-run') || !args.includes('--write');
+    await runBackfillAlcohol(isDryRun);
+    return;
+  }
   const isDryRun = args.includes('--dry-run') || !args.includes('--write');
   const limitFlag = args.findIndex((a) => a === '--limit');
   const limitRaw = limitFlag >= 0 ? parseInt(args[limitFlag + 1], 10) : null;
@@ -731,7 +888,7 @@ async function main() {
   if (providerUnmatchedSpeisen.size > 0) {
     // Collect all unique unmatched Speisen terms across all providers
     const allUnmatched = new Set<string>();
-    for (const terms of providerUnmatchedSpeisen.values()) {
+    for (const terms of Array.from(providerUnmatchedSpeisen.values())) {
       for (const term of terms) {
         allUnmatched.add(term);
       }
@@ -739,14 +896,14 @@ async function main() {
 
     console.log(`\n▶ Auto-creating ${allUnmatched.size} unmatched Speisen as offers...`);
     try {
-      const createdOffers = await createMissingOffers(supabase, [...allUnmatched]);
+      const createdOffers = await createMissingOffers(supabase, Array.from(allUnmatched));
       stats.offersCreated = createdOffers.length;
 
       // Build lookup from newly created/resolved offers
       const newLookup = new Map(createdOffers.map((o) => [o.name_de.toLowerCase(), o.offer_id]));
 
       // Merge new offer IDs into provider records' offers_ids
-      for (const [record, terms] of providerUnmatchedSpeisen) {
+      for (const [record, terms] of Array.from(providerUnmatchedSpeisen)) {
         for (const term of terms) {
           const offerId = newLookup.get(term.toLowerCase());
           if (offerId && !record.offers_ids.includes(offerId)) {

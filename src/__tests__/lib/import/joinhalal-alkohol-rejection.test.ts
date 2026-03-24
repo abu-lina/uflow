@@ -103,3 +103,84 @@ describe('transformPage — Alkoholverkauf auto-rejection (Plan 051)', () => {
     expect(record.user_created_id).toBe(IMPORT_BOT_UUID);
   });
 });
+
+// ---------------------------------------------------------------------------
+// transformPage — HTML badge fallback (Plan 057)
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds a JoinHalal page where JSON-LD has Halal-Merkmale with non-alcohol
+ * value (e.g. "Asiatisch") but the visible HTML badges contain the given
+ * badge texts. Simulates the real-world Dakju/Triple B pattern.
+ */
+function makeHtmlWithBadgeFallback(
+  jsonLdValue: string | null,
+  badgeTexts: string[]
+): string {
+  const additionalProperty = jsonLdValue !== null
+    ? `,"additionalProperty":[{"@type":"PropertyValue","name":"Halal-Merkmale","value":"${jsonLdValue}"}]`
+    : '';
+
+  const badgeListItems = badgeTexts.map(
+    (text) => `<li class="flexify ts-action"><div class="ts-action-con"><div class="ts-action-icon"><i class="lar la-check-circle"></i></div>${text}</div></li>`
+  ).join('\n');
+
+  const badgeSection = badgeTexts.length > 0
+    ? `<div><h3 class="elementor-heading-title elementor-size-default">Halal Merkmale</h3></div>
+       <div class="elementor-widget elementor-widget-ts-advanced-list">
+         <ul class="flexify simplify-ul ts-advanced-list">${badgeListItems}</ul>
+       </div>`
+    : '';
+
+  return `<!DOCTYPE html><html><head>
+<script type="application/ld+json" class="rank-math-schema-pro">
+{
+  "@context":"https://schema.org",
+  "@graph":[{
+    "@type":"FoodEstablishment",
+    "name":"Test Fallback Restaurant",
+    "url":"${TEST_URL}",
+    "address":{"@type":"PostalAddress","streetAddress":"Teststr. 1, 12345 Berlin","addressCountry":"DE"}
+    ${additionalProperty}
+  }]
+}
+</script>
+</head><body>${badgeSection}</body></html>`;
+}
+
+/** Dakju pattern: JSON-LD has non-alcohol value, visible badge has Alkoholverkauf */
+const HTML_BADGE_FALLBACK_POSITIVE = makeHtmlWithBadgeFallback('Asiatisch', [
+  'Halal Fleisch',
+  'Alkoholverkauf',
+]);
+
+/** Triple B pattern: JSON-LD has null-ish value, visible badge says Kein Alkoholverkauf */
+const HTML_BADGE_FALLBACK_NEGATIVE = makeHtmlWithBadgeFallback(null, [
+  'Kein Alkoholverkauf',
+]);
+
+/** No badges at all, JSON-LD non-decisive */
+const HTML_BADGE_FALLBACK_NONE = makeHtmlWithBadgeFallback('Asiatisch', []);
+
+describe('transformPage — HTML badge fallback (Plan 057)', () => {
+  it('rejects when JSON-LD has non-alcohol value but visible badge says Alkoholverkauf', () => {
+    const record = expectRecord(
+      transformPage(HTML_BADGE_FALLBACK_POSITIVE, TEST_URL, CATEGORIES, false, OFFERS)
+    );
+    expect(record.review_status).toBe('rejected');
+  });
+
+  it('keeps pending when JSON-LD is empty but visible badge says Kein Alkoholverkauf', () => {
+    const record = expectRecord(
+      transformPage(HTML_BADGE_FALLBACK_NEGATIVE, TEST_URL, CATEGORIES, false, OFFERS)
+    );
+    expect(record.review_status).toBe('pending');
+  });
+
+  it('keeps pending when JSON-LD has non-alcohol value and no visible badges', () => {
+    const record = expectRecord(
+      transformPage(HTML_BADGE_FALLBACK_NONE, TEST_URL, CATEGORIES, false, OFFERS)
+    );
+    expect(record.review_status).toBe('pending');
+  });
+});

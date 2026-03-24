@@ -369,30 +369,96 @@ function parseVxConfig(html: string): VxConfigCurrentPost | null {
 }
 
 // ---------------------------------------------------------------------------
-// hasAlkoholverkauf (Plan 051)
+// hasAlkoholverkauf (Plan 051, extended Plan 057)
 // ---------------------------------------------------------------------------
 
 /**
- * Returns true when the JoinHalal schema record's `Halal Merkmale`
- * `additionalProperty` entry contains the token `Alkoholverkauf`.
+ * Extracts badge text labels from the visible "Halal Merkmale" section of
+ * a JoinHalal detail page. The section is identified by an <h3> heading
+ * containing "Halal Merkmale" (or "Halal-Merkmale"), followed by a sibling
+ * <ul class="...ts-advanced-list"> with <li> badge items.
  *
- * Matching is case-insensitive and whitespace-tolerant (comma-separated
- * tokens are trimmed and lower-cased before comparison). Exact token match
- * prevents false positives from "Kein Alkoholverkauf" or similar values.
+ * Returns an empty array when the section is absent or contains no badges.
  *
- * Returns false when `additionalProperty` is absent, empty, or contains
- * no `Halal Merkmale` entry — safe default that leaves `review_status`
- * on the existing `pending` path.
+ * @param html Raw HTML string from a JoinHalal detail page.
  */
-export function hasAlkoholverkauf(schema: JoinHalalSchemaData): boolean {
-  const props = schema.additionalProperty;
-  if (!Array.isArray(props) || props.length === 0) return false;
-  const halalProp = props.find(
-    (p) => p.name?.trim().toLowerCase() === 'halal merkmale'
+export function extractHalalBadgesFromHtml(html: string): string[] {
+  // Find the Halal Merkmale heading (space or hyphen variant)
+  const headingMatch = html.match(
+    /<h3[^>]*>Halal[\s-]Merkmale<\/h3>/i
   );
-  if (!halalProp?.value) return false;
-  const values = halalProp.value.split(',').map((v) => v.trim().toLowerCase());
-  return values.includes('alkoholverkauf');
+  if (!headingMatch) return [];
+
+  // Search for the next ts-advanced-list <ul> after the heading
+  const headingIndex = headingMatch.index ?? 0;
+  const afterHeading = html.slice(headingIndex + headingMatch[0].length);
+  const listMatch = afterHeading.match(
+    /<ul[^>]*ts-advanced-list[^>]*>([\s\S]*?)<\/ul>/i
+  );
+  if (!listMatch) return [];
+
+  const listHtml = listMatch[1];
+
+  // Extract text from each badge item's ts-action-con div.
+  // Pattern: <div class="ts-action-con">...<icon div>...</div>BADGE TEXT</div>
+  const badges: string[] = [];
+  const itemRegex = /<div\s+class="ts-action-con">([\s\S]*?)<\/div>\s*<\/li>/gi;
+  let match;
+  while ((match = itemRegex.exec(listHtml)) !== null) {
+    // The badge text is after the last closing </div> of the icon wrapper
+    const content = match[1];
+    // Strip the icon div and extract remaining text
+    const textOnly = content.replace(/<div[^>]*>[\s\S]*?<\/div>/gi, '').trim();
+    if (textOnly) {
+      badges.push(textOnly);
+    }
+  }
+
+  return badges;
+}
+
+/**
+ * Returns true when the JoinHalal page indicates alcohol sale.
+ *
+ * Detection order (Plan 057):
+ * 1. JSON-LD `additionalProperty` with name matching "halal merkmale" or
+ *    "halal-merkmale" and a comma-separated value containing exact token
+ *    "alkoholverkauf" (case-insensitive).
+ * 2. Fallback: visible HTML badge list under the "Halal Merkmale" heading.
+ *    Exact badge text "Alkoholverkauf" → true.
+ *    Exact badge text "Kein Alkoholverkauf" → false (explicit negative).
+ *
+ * Returns false when neither source provides a decisive signal — safe
+ * default that leaves `review_status` on the existing `pending` path.
+ */
+export function hasAlkoholverkauf(
+  schema: JoinHalalSchemaData,
+  html?: string
+): boolean {
+  // --- Primary: structured JSON-LD ---
+  const props = schema.additionalProperty;
+  if (Array.isArray(props) && props.length > 0) {
+    const halalProp = props.find((p) => {
+      const normalized = p.name?.trim().toLowerCase().replace(/-/g, ' ');
+      return normalized === 'halal merkmale';
+    });
+    if (halalProp?.value) {
+      const values = halalProp.value.split(',').map((v) => v.trim().toLowerCase());
+      if (values.includes('alkoholverkauf')) return true;
+    }
+  }
+
+  // --- Fallback: visible HTML badges (Plan 057) ---
+  if (html) {
+    const badges = extractHalalBadgesFromHtml(html);
+    for (const badge of badges) {
+      const normalized = badge.trim().toLowerCase();
+      if (normalized === 'kein alkoholverkauf') return false;
+      if (normalized === 'alkoholverkauf') return true;
+    }
+  }
+
+  return false;
 }
 
 /**

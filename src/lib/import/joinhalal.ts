@@ -499,7 +499,7 @@ export function transformPage(
     contact_phone: schema.telephone ?? null,
     social_website: schema.url ?? null,
     social_instagram: extractInstagramFromSameAs(schema.sameAs),
-    review_status: hasAlkoholverkauf(schema) ? 'rejected' : 'pending',
+    review_status: hasAlkoholverkauf(schema, html) ? 'rejected' : 'pending',
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
