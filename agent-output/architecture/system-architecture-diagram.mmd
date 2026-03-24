@@ -17,6 +17,7 @@ flowchart TB
   subgraph App[Next.js 15 Application]
     UI[UI Pages / Components]
     API[API Routes]
+    AdminAPI[/Admin APIs (API-only)\n/api/admin/*/]
     Services[src/services/*]
   end
 
@@ -47,6 +48,7 @@ flowchart TB
   UI --> API
   UI --> Services
   API --> Services
+  API --> AdminAPI
 
   Services --> Auth
   Services --> DB
@@ -64,4 +66,5 @@ flowchart TB
 
   %% Notes
   %% Public UI should read TrustSummary (aggregates), not raw Confirmations.
+  %% Legacy in-app admin panel UI is intentionally removed (Arch 054).
 ```
