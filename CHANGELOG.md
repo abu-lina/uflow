@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Pin all GitHub Actions workflow references to immutable commit SHAs (Plan 056)**: Replaces 42 mutable action tag/branch references (`@v*`, `@master`) across 7 workflow files with immutable 40-character commit SHAs. Eliminates the tag-rewrite supply chain attack vector triggered by the Checkmarx KICS compromise (2026-03-23). Adds `.github/dependabot.yml` for automated GitHub Actions version tracking (weekly, `ci` label). Critical change: `snyk/actions/node@master` (live branch reference) pinned to commit SHA. All production and UAT deploy-path action SHAs verified aligned.
 
+## [0.8.26] - 2026-03-24
+
+### Fixed
+
+- **Dependabot GitHub Actions CI baseline restored (Plan 059)**: Aligned the app-level ESLint project boundary with `tsconfig.json` by excluding `tools/**`, eliminating 8 TypeScript parser errors that blocked every Dependabot PR in `Lint & Type Check`.
+- **Share cancel handler no longer fails lint (Plan 059)**: Removed the unused `error` binding from the `navigator.share()` cancel path in `ProfileProviderDetailButtons.tsx`, clearing the remaining source-level unused-variable blocker in the session branch.
+- **Flaky CLI timeout hardened for CI latency (Plan 059)**: Added a 15-second per-test timeout to the `import-muslimbusiness` invalid `--limit` regression test so GitHub-hosted runner variance no longer causes false-negative failures.
+
+### Changed
+
+- **Workflow compatibility verified without YAML churn (Plan 059)**: Audited all 9 affected GitHub Actions workflows and confirmed the Dependabot action-major bumps are compatible as-is; failures were caused by repository lint/test baselines, not workflow bootstrap.
+
 ## [0.8.25] - 2026-03-24
 
 ### Fixed

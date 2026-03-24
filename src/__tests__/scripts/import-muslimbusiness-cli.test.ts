@@ -27,7 +27,7 @@ describe('import-muslimbusiness CLI', () => {
     expect(result.stderr || result.stdout).toContain(
       '--limit requires a positive integer (got: undefined)'
     );
-  });
+  }, 15_000);
 
   it('accepts a positive --limit and reaches category loading', () => {
     const result = runImport(['--dry-run', '--limit', '3']);
