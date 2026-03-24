@@ -22,6 +22,7 @@ Status: Committed
 | 2026-03-24T13:21Z | Critic → Implementer | Implement Plan 058 | Created matching functions, migration 065, provenance recovery CLI mode, updated backfill to use recovered provenance |
 | 2026-03-24T13:55Z (approx.) | QA → Implementer | Remediate 3 QA findings | Fixed lint defects (MEDIUM-002), added stale-clone audit CLI mode + function (HIGH-001), completed TDD evidence (MEDIUM-001) |
 | 2026-03-24T14:17Z | DevOps | Stage 1 commit prepared | Retargeted release to `v0.8.26`, updated release artifacts, and marked implementation committed for local bundling |
+| 2026-03-24T15:04Z | DevOps | Stage 2 version collision correction | Retargeted release to `v0.8.27` after `v0.8.26` was already published for Plan 059 |
 
 ## Implementation Summary
 

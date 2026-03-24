@@ -7,14 +7,14 @@ Status: Committed
 
 # Plan 058 — JoinHalal Legacy Provenance Recovery (Alcohol Backfill Enablement)
 
-**Target Release**: v0.8.26 (retargeted at DevOps Stage 1 after `v0.8.25` was found on origin and `origin/main:package.json` reported `0.8.25`)  
+**Target Release**: v0.8.27 (retargeted at DevOps Stage 2 after `v0.8.26` was already tagged on origin for Plan 059)  
 **Epic Alignment**: JoinHalal import integrity + trust-first moderation correctness  
-**Status**: Committed for Release v0.8.26  
+**Status**: Committed for Release v0.8.27  
 **Related Issues**: None
 
 ## Release Strategy
 
-Standalone (no other known active plans targeting v0.8.26 in `agent-output/planning/`).
+Standalone (no other known active plans targeting v0.8.27 in `agent-output/planning/`).
 
 ## Changelog
 
@@ -28,6 +28,7 @@ Standalone (no other known active plans targeting v0.8.26 in `agent-output/plann
 | 2026-03-24T14:02Z | qa | QA re-validation | QA COMPLETE — all 3 findings resolved; 22/22 tests pass, type-check clean, lint clean |
 | 2026-03-24T14:10Z | uat | UAT complete | APPROVED FOR RELEASE — all plan objectives met, safety constraints verified, stale-clone audit tooling delivered |
 | 2026-03-24T14:17Z | devops | Stage 1 commit prepared | Retargeted release from `v0.8.25` to `v0.8.26` after version collision, updated release artifacts, created deferred follow-up tracker, and closed lifecycle docs for local commit |
+| 2026-03-24T15:04Z | devops | Stage 2 version collision correction | Retargeted release from `v0.8.26` to `v0.8.27` after origin already contained tag `v0.8.26` for Plan 059 |
 
 ## Value Statement and Business Objective
 
@@ -68,7 +69,7 @@ Separately, an operator ran a stale clone importer which inserted **864** rows v
 - [RESOLVED] Use a confidence-gated, deterministic matching pipeline that only applies updates when exactly one high-confidence JoinHalal candidate exists. Rationale: prevents silent false positives.
 - [RESOLVED] Ambiguous matches must not change `review_status`; they are reported for manual follow-up only. Rationale: avoids overwriting human moderation with uncertain automation.
 - [RESOLVED] Unmatched legacy rows remain untouched (no auto moderation), but are explicitly tagged/recorded as `unmatched_provenance` for auditability. Rationale: makes the gap visible without forcing risky guesses.
-- [DEFERRED: Implementer — schema tradeoff; target Plan 058 / v0.8.26] Choose between (A) a new `import_source_url` column on `providers` or (B) a dedicated provenance table for multi-source extensibility. Rationale: both can satisfy the immediate need; prefer the new column unless Architect/implementation discovery identifies a near-term requirement for multi-source provenance beyond JoinHalal, in which case the dedicated table is justified.
+- [DEFERRED: Implementer — schema tradeoff; target Plan 058 / v0.8.27] Choose between (A) a new `import_source_url` column on `providers` or (B) a dedicated provenance table for multi-source extensibility. Rationale: both can satisfy the immediate need; prefer the new column unless Architect/implementation discovery identifies a near-term requirement for multi-source provenance beyond JoinHalal, in which case the dedicated table is justified.
 - [RESOLVED] Treat the stale-clone insert batch (864 rows) as a separate operational risk: produce an audit report + remediation recommendation before any deletions. Rationale: deletion without overlap analysis risks data loss.
 
 ## Plan
