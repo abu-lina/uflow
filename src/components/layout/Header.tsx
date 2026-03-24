@@ -16,7 +16,6 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useAuth } from '@/providers/auth-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 // Dynamic imports for modals (Plan 007: reduce shared bundle)
 const SignupModal = dynamic(
@@ -40,7 +39,6 @@ export function Header() {
   const pathname = usePathname();
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();
-  const { isAdmin } = useIsAdmin();
 
   // Handle search submission - navigate to providers page
   const handleSearchSubmit = (query: string, category: string | null, location: string) => {
@@ -187,17 +185,6 @@ export function Header() {
                         >
                           {t('profile.accountSettings')}
                         </button>
-                        {isAdmin && (
-                          <button
-                            className="block w-full px-4 py-2 text-left text-base hover:bg-neutral-50"
-                            onClick={() => {
-                              setDropdownOpen(false);
-                              router.push('/dashboard/providers');
-                            }}
-                          >
-                            Admin Panel
-                          </button>
-                        )}
                         <button
                           className="block w-full px-4 py-2 text-left text-base text-danger hover:bg-neutral-50"
                           onClick={async () => {
