@@ -113,6 +113,26 @@ If a plan introduces **inline actions** (approve, reject, delete, edit, etc.) on
 
 If the plan scopes out certain entity types (e.g., "community services are out of scope"), it MUST note that the shared list may still return those types and specify how they are excluded from the action surface.
 
+### Removal Surface Enumeration (MANDATORY when applicable)
+
+If a plan removes, deprecates, or hides a user-visible capability, route, or privileged workflow, the plan MUST enumerate all known discovery and entry surfaces for that capability, including when applicable:
+
+- direct routes/pages
+- desktop/mobile navigation
+- profile/account menus
+- manifest/PWA shortcuts
+- debug/dev-only links
+- deep links or redirects
+- automated tests/imports tied to the removed modules
+
+For each surface, state one of:
+
+- removed in this plan
+- intentionally retained with rationale
+- out of scope with owner and follow-up plan
+
+Do not treat route deletion alone as proof that the feature is no longer discoverable.
+
 14. Include version management milestone. Update release artifacts to match roadmap target version.
 15. Retrieve/store memory.
 16. **Status tracking**: When incorporating analysis into a plan, update the analysis doc's Status field to "Planned" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
