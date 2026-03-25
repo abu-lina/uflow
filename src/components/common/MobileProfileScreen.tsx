@@ -1,7 +1,5 @@
 import { useRef, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import { Icon } from '@iconify/react';
 
 import { Logo } from '@/components/ui/Logo';
@@ -17,7 +15,6 @@ const SWIPE_AREA_HEIGHT = 48; // px
 export const MobileProfileScreen: React.FC<MobileProfileScreenProps> = ({ onClose }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const router = useRouter();
   const firstName = user?.user_metadata?.first_name || '';
   const lastName = user?.user_metadata?.last_name || '';
   const email = user?.email || '';
