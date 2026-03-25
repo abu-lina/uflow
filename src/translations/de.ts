@@ -495,6 +495,8 @@ export const de = {
     media: "Media",
     titleField: "Titel",
     titlePlaceholder: "Titel eingeben",
+    description: "Beschreibung",
+    descriptionPlaceholder: "Beschreibung eingeben",
     category: "Kategorie",
     whatDoIOffer: "Was biete ich?",
     whatDoINeed: "Was suche ich?",

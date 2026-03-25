@@ -474,6 +474,8 @@ export const tr = {
     media: "Medya",
     titleField: "Başlık",
     titlePlaceholder: "Başlık girin",
+    description: "Açıklama",
+    descriptionPlaceholder: "Açıklama girin",
     category: "Kategori",
     whatDoIOffer: "Ne sunuyorum?",
     whatDoINeed: "Ne ihtiyacım var?",

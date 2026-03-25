@@ -154,3 +154,22 @@ export async function updateProviderReview(
 
   return data;
 }
+
+/**
+ * Get a single provider by ID for admin editing.
+ * Uses service-role to bypass RLS (can load non-approved providers).
+ */
+export async function getProviderForAdmin(providerId: string): Promise<Provider | null> {
+  const supabase = getSupabaseAdmin();
+
+  const { data: rows, error } = await supabase
+    .from('providers')
+    .select('*, category:categories(name_de, name_en, category_images)')
+    .eq('provider_id', providerId);
+
+  if (error) {
+    throw new Error(`Failed to fetch provider: ${error.message}`);
+  }
+
+  return (rows as Provider[] | null)?.[0] ?? null;
+}

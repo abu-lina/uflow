@@ -474,6 +474,8 @@ export const ar = {
     media: "الوسائط",
     titleField: "العنوان",
     titlePlaceholder: "أدخل العنوان",
+    description: "الوصف",
+    descriptionPlaceholder: "أدخل الوصف",
     category: "الفئة",
     whatDoIOffer: "ماذا أقدم؟",
     whatDoINeed: "ماذا أحتاج؟",

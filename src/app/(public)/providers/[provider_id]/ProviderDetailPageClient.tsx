@@ -5,9 +5,11 @@ import dynamic from 'next/dynamic';
 
 import { useProvider } from '@/hooks/useProvider';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import type { Provider } from '@/services/providers';
 import type { CommunityService } from '@/services/communityServices';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
+import { AdminProviderDetailButtons } from '@/features/admin/components/AdminProviderDetailButtons';
 
 // Lazy load heavy modal component - only loads when needed (desktop view)
 const ProviderDetailModal = dynamic(
@@ -58,6 +60,7 @@ interface ProviderDetailPageClientProps {
 export function ProviderDetailPageClient({ providerId, initialData, initialCommunityServices }: ProviderDetailPageClientProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const { isAdmin } = useIsAdmin();
   const { data: provider, isLoading, error } = useProvider({
     providerId,
     enabled: true,
@@ -127,6 +130,9 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
   if (!isMobile) {
     return (
       <ProviderDetailModal
+        customActionButtons={
+          isAdmin ? <AdminProviderDetailButtons providerId={providerId} variant="desktop" /> : undefined
+        }
         initialCommunityServices={initialCommunityServices}
         provider={provider}
         onClose={handleModalClose}
@@ -135,6 +141,14 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
   }
 
   // Render the actual provider detail page on mobile
-  return <ProviderDetailPageComponent initialCommunityServices={initialCommunityServices} provider={provider} />;
+  return (
+    <ProviderDetailPageComponent
+      customActionButtons={
+        isAdmin ? <AdminProviderDetailButtons providerId={providerId} variant="mobile" /> : undefined
+      }
+      initialCommunityServices={initialCommunityServices}
+      provider={provider}
+    />
+  );
 }
 

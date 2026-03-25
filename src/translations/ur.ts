@@ -494,6 +494,8 @@ export const ur = {
     media: "میڈیا",
     titleField: "عنوان",
     titlePlaceholder: "عنوان درج کریں",
+    description: "تفصیل",
+    descriptionPlaceholder: "تفصیل درج کریں",
     category: "زمرہ",
     whatDoIOffer: "میں کیا پیش کرتا ہوں؟",
     whatDoINeed: "مجھے کیا چاہیے؟",
