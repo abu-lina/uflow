@@ -77,7 +77,7 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
     return (
       <div className="flex min-h-screen flex-col">
         {/* Header skeleton */}
-        <div className="sticky top-0 z-50 border-b border-neutral-200 bg-white px-6 py-4">
+        <div className="sticky top-0 z-50 border-b border-neutral-200 bg-white px-6 pb-4 pt-[calc(env(safe-area-inset-top)+16px)]">
           <Skeleton className="h-8 w-32" />
         </div>
 
