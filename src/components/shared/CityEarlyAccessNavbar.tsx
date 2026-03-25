@@ -7,15 +7,17 @@ import { getFeatureFlag } from '@/config/feature-flags';
 import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
+import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { useAppStage } from '@/hooks/useAppStage';
+import { useAuth } from '@/providers/auth-provider';
 import { cn } from '@/lib/utils';
 
 /**
  * City Early Access Navigation Bar
  * 
  * Bottom navigation bar with Home, Create, and Saved (Bookmark) items.
- * - Stage 1: Home, Create
- * - Stage 2: Home, Create, Saved (Bookmark)
+ * - Stage 1: Home, Create, Profile
+ * - Stage 2: Home, Create, Saved (Bookmark), Profile
  * 
  * Design (matches MobileFooterBar pattern):
  * - Dynamic height with pt-footer-safe and pb-safe
@@ -31,6 +33,7 @@ export function CityEarlyAccessNavbar() {
   const pathname = usePathname();
   const [isAppLaunched, setIsAppLaunched] = useState(false);
   const { stage } = useAppStage();
+  const { user } = useAuth();
 
   // Check feature flag client-side
   useEffect(() => {
@@ -50,6 +53,12 @@ export function CityEarlyAccessNavbar() {
   const isCreateActive = pathname === '/create' || pathname.startsWith('/create/recommend');
   
   const isSavedActive = pathname === '/saved';
+
+  // Profile is active on /profile, /login, or /signup (mirrors MobileFooterBar pattern)
+  const isProfileActive =
+    pathname.startsWith('/profile') ||
+    pathname === '/login' ||
+    pathname === '/signup';
 
   // Show Saved menu item only for Stage 2
   const showSaved = stage === 'stage2';
@@ -119,6 +128,20 @@ export function CityEarlyAccessNavbar() {
             <SavedIcon isActive={isSavedActive} />
           </Link>
         )}
+
+        {/* Profile - auth-gated: unauthenticated → /login, authenticated → /profile */}
+        <Link
+          aria-label="Profile"
+          className={cn(
+            'flex flex-1 flex-row items-center justify-center',
+            'h-12',
+            isProfileActive && 'border-b-[2.4px] border-primary'
+          )}
+          href={user ? '/profile' : '/login'}
+          scroll={false}
+        >
+          <ProfileIcon isActive={isProfileActive} />
+        </Link>
       </div>
     </nav>
   );
