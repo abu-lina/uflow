@@ -2,7 +2,7 @@
 ID: 058
 Origin: 058
 UUID: f8cb0a9c
-Status: Active
+Status: Released
 ---
 
 # Deployment: Plan 058 Stage 1 — v0.8.27
