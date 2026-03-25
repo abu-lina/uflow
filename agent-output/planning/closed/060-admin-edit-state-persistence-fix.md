@@ -23,7 +23,8 @@ Status: Released
 | 2026-03-25T16:18Z | QA | Verdict: QA Complete. Focused regression, full suite, type-check, and build pass; manual browser-path validation deferred to UAT. |
 | 2026-03-25T16:24Z | UAT | Verdict: APPROVED FOR RELEASE. Value statement delivered. DF-060-UAT-01 (live back-navigation) deferred to operator before deploy. Status → UAT Approved. |
 | 2026-03-25T15:21Z | DevOps | Stage 1 commit prepared for `v0.9.1`. Status → Committed. Lifecycle docs closed; Stage 2 blocked on DF-060-UAT-01 evidence and explicit release approval. |
-| 2026-03-25T15:48Z | DevOps | Stage 2 verified complete. Branch `session/061-admin-provider-edit` and tag `v0.9.1` both point to `6d326f1b`; `origin/main` is an ancestor of `HEAD`. Status → Released. |
+| 2026-03-25T15:48Z | DevOps | Stage 2 verified complete. Release tag `v0.9.1` points to shipped commit `6d326f1b`; `origin/main` is an ancestor of the release commit and current branch `HEAD`. Status → Released. |
+| 2026-03-25T15:51Z | DevOps | Post-release docs sync pushed as `ef042f9b` so the branch history reflects Released status. The release tag remains on shipped commit `6d326f1b`. |
 
 ## Release Strategy
 
