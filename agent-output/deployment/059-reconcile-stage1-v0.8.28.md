@@ -249,8 +249,18 @@ Closed documents for Plan 059: planning, implementation, code-review, qa, uat mo
 | Remediation | Added `resolve-uat-env` step outputs for resolved secret values and rewired Buildx plus both `docker run` invocations to consume those concrete outputs |
 | Scope | CI workflow only; no application code, Dockerfile logic, or release tag contents changed |
 
+## Post-Release UAT Build Graph Remediation
+
+| Field | Value |
+|---|---|
+| Incident timestamp | 2026-03-25T11:19Z |
+| Failure | The rerun progressed into Next.js build, then failed on `agent-output/qa/tmp/059-schema-negative-check.ts` because Next type-checking included a QA helper file with a `.ts` extension |
+| Root cause | `tsconfig.json` included broad `**/*.ts` patterns without excluding `agent-output/**/*`, so non-runtime artifacts entered the production build graph |
+| Remediation | Added `agent-output/**/*` to `tsconfig.json` `exclude` so deployment/build pipelines ignore agent work products and temporary QA scripts |
+| Scope | Build configuration only; application runtime code unchanged |
+
 ## Next Actions
 
 1. Carry forward the admin smoke gate and audit migration through `agent-output/planning/059-reconcile-plan-062-current-main-open-actions.md`
 2. Run the deferred admin runtime smoke verification within 24h of first UAT deployment
-3. Re-run `Deploy to UAT` against `session/059-reconcile-reject-comment` after pushing the workflow fix and confirm Docker build args resolve correctly
+3. Re-run `Deploy to UAT` against `session/059-reconcile-reject-comment` after pushing the tsconfig exclusion and confirm the Docker build completes past Next.js type-checking
