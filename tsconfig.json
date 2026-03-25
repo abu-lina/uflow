@@ -45,6 +45,7 @@
   ],
   "exclude": [
     "node_modules",
+    "agent-output/**/*",
     "supabase/functions/**/*",
     "docs/archive/nextjs-supabase-starter",
     "scripts/**/*.ts",
