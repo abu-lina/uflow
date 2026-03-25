@@ -17,6 +17,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOfferIds, setSelectedOfferIds] = useState<string[]>([]);
+  const [providerCategoryId, setProviderCategoryId] = useState<string | null>(null);
   const [newOffer, setNewOffer] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const loadCurrentOffers = async () => {
       try {
-        const stored = localStorage.getItem(`edit_offers_${providerId}`);
+        const stored = localStorage.getItem(`admin_edit_offers_${providerId}`);
         if (stored) {
           setSelectedOfferIds(JSON.parse(stored));
           return;
@@ -57,12 +58,17 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
 
         const { data, error } = await supabase
           .from('providers')
-          .select('offers_ids')
+          .select('offers_ids, category_id')
           .eq('provider_id', providerId)
           .single();
 
-        if (!error && data?.offers_ids) {
-          setSelectedOfferIds(data.offers_ids);
+        if (!error && data) {
+          if (data.offers_ids) {
+            setSelectedOfferIds(data.offers_ids);
+          }
+          if (data.category_id) {
+            setProviderCategoryId(data.category_id);
+          }
         }
       } catch (error) {
         console.error('Error loading current offers:', error);
@@ -83,7 +89,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
         ? prev.filter(id => id !== offerId)
         : [...prev, offerId];
       
-      localStorage.setItem(`edit_offers_${providerId}`, JSON.stringify(newSelection));
+      localStorage.setItem(`admin_edit_offers_${providerId}`, JSON.stringify(newSelection));
       return newSelection;
     });
   };
@@ -100,7 +106,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
       const response = await fetch('/api/admin/offers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: sanitizedName }),
+        body: JSON.stringify({ name: sanitizedName, categoryId: providerCategoryId }),
       });
 
       const responseData = await response.json().catch(() => ({}));
@@ -113,7 +119,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
       setOffers(prev => [...prev, createdOffer]);
       const newSelection = [...selectedOfferIds, createdOffer.offer_id];
         setSelectedOfferIds(newSelection);
-        localStorage.setItem(`edit_offers_${providerId}`, JSON.stringify(newSelection));
+        localStorage.setItem(`admin_edit_offers_${providerId}`, JSON.stringify(newSelection));
         setNewOffer('');
     } catch (error) {
       console.error('Error creating offer:', error);

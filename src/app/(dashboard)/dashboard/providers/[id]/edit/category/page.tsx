@@ -45,7 +45,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     const loadCurrentCategory = async () => {
       try {
-        const stored = localStorage.getItem(`edit_category_${providerId}`);
+        const stored = localStorage.getItem(`admin_edit_category_${providerId}`);
         if (stored) {
           setSelectedCategoryId(stored);
           return;
@@ -96,7 +96,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
-    localStorage.setItem(`edit_category_${providerId}`, categoryId);
+    localStorage.setItem(`admin_edit_category_${providerId}`, categoryId);
     router.back();
   };
 

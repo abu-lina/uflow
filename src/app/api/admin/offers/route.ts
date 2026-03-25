@@ -29,8 +29,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
     }
 
-    const body = await request.json().catch(() => null) as { name?: unknown } | null;
+    const body = await request.json().catch(() => null) as { name?: unknown; categoryId?: unknown } | null;
     const sanitizedName = validateAndSanitizeName(typeof body?.name === 'string' ? body.name : '', 100);
+    const categoryId = typeof body?.categoryId === 'string' ? body.categoryId : null;
 
     if (!sanitizedName) {
       return NextResponse.json({ error: 'Offer name is required' }, { status: 400 });
@@ -54,9 +55,13 @@ export async function POST(request: Request) {
       );
     }
 
+    // Migration 006 made category_id NOT NULL; use provider's category or fall back to 'Sonstiges' (Other)
+    const DEFAULT_CATEGORY_ID = '5e5d910d-d790-4184-a061-9cd74d0950e8';
+    const effectiveCategoryId = categoryId || DEFAULT_CATEGORY_ID;
+
     const { data: createdOffer, error: createError } = await supabase
       .from('offers')
-      .insert([{ name_de: sanitizedName, created_by: user.id }])
+      .insert([{ name_de: sanitizedName, created_by: user.id, category_id: effectiveCategoryId }])
       .select()
       .single();
 

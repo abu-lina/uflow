@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-03-25
+
+### Fixed
+
+- **Admin edit sub-page state now persists on return to the edit form (Plan 060)**: The admin provider edit flow no longer drops category, offers, needs, social, or images selections after navigating back from sub-pages. Root cause: the shared `ProviderEditForm` was rendered with `enableLocalStorage={false}` in the admin context, which blocked all local draft-state hydration even though the admin sub-pages still used localStorage as their handoff mechanism.
+- **Admin and owner edit draft state is now isolated by context (Plan 060)**: Added `localStoragePrefix="admin_"` for the admin wrapper and updated all 5 admin sub-pages to read/write `admin_edit_*_${providerId}` keys. This restores admin persistence without leaking stale owner-side draft state into moderation.
+- **Regression coverage added for the shared draft-state seam (Plan 060)**: Added 6 focused `ProviderEditForm` regression tests covering the pre-fix failure path, admin category/offers/needs hydration, owner/admin localStorage isolation, and owner-flow non-regression.
+
 ## [0.9.0] - 2026-03-25
 
 ### Added

@@ -17,6 +17,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedNeedIds, setSelectedNeedIds] = useState<string[]>([]);
+  const [providerCategoryId, setProviderCategoryId] = useState<string | null>(null);
   const [newNeed, setNewNeed] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     const loadCurrentNeeds = async () => {
       try {
-        const stored = localStorage.getItem(`edit_needs_${providerId}`);
+        const stored = localStorage.getItem(`admin_edit_needs_${providerId}`);
         if (stored) {
           setSelectedNeedIds(JSON.parse(stored));
           return;
@@ -57,12 +58,17 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
 
         const { data, error } = await supabase
           .from('providers')
-          .select('needs_ids')
+          .select('needs_ids, category_id')
           .eq('provider_id', providerId)
           .single();
 
-        if (!error && data?.needs_ids) {
-          setSelectedNeedIds(data.needs_ids);
+        if (!error && data) {
+          if (data.needs_ids) {
+            setSelectedNeedIds(data.needs_ids);
+          }
+          if (data.category_id) {
+            setProviderCategoryId(data.category_id);
+          }
         }
       } catch (error) {
         console.error('Error loading current needs:', error);
@@ -83,7 +89,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
         ? prev.filter(id => id !== needId)
         : [...prev, needId];
       
-      localStorage.setItem(`edit_needs_${providerId}`, JSON.stringify(newSelection));
+      localStorage.setItem(`admin_edit_needs_${providerId}`, JSON.stringify(newSelection));
       return newSelection;
     });
   };
@@ -100,7 +106,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
       const response = await fetch('/api/admin/needs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: sanitizedName }),
+        body: JSON.stringify({ name: sanitizedName, categoryId: providerCategoryId }),
       });
 
       const responseData = await response.json().catch(() => ({}));
@@ -113,7 +119,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
       setNeeds(prev => [...prev, createdNeed]);
       const newSelection = [...selectedNeedIds, createdNeed.need_id];
         setSelectedNeedIds(newSelection);
-        localStorage.setItem(`edit_needs_${providerId}`, JSON.stringify(newSelection));
+        localStorage.setItem(`admin_edit_needs_${providerId}`, JSON.stringify(newSelection));
         setNewNeed('');
     } catch (error) {
       console.error('Error creating need:', error);

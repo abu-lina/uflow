@@ -317,3 +317,120 @@ describe('ProviderEditForm regressions', () => {
     expect(mockProviderUpdate).not.toHaveBeenCalled();
   });
 });
+
+describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
+  const pid = baseProvider.provider_id;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+
+    mockCategoriesOrder.mockResolvedValue({ data: [{ category_id: 'cat-food', name_de: 'Essen & Trinken', name_en: 'Food & Drinks' }], error: null });
+    mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
+
+    mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
+    mockProviderCommunityServicesSelect.mockReturnValue({ eq: mockProviderCommunityServicesSelectEq });
+  });
+
+  it('[pre-fix FAILS] admin form with enableLocalStorage=false ignores admin category selection', () => {
+    // Simulate: admin sub-page wrote the category to localStorage
+    localStorage.setItem(`admin_edit_category_${pid}`, 'cat-food');
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        provider={baseProvider}
+        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
+      />
+    );
+
+    // Pre-fix: form ignores localStorage entirely → shows placeholder
+    expect(screen.getByText('Select category')).toBeInTheDocument();
+  });
+
+  it('[post-fix PASSES] admin form with localStoragePrefix reads admin-prefixed category', async () => {
+    localStorage.setItem(`admin_edit_category_${pid}`, 'cat-food');
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={baseProvider}
+        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Food & Drinks')).toBeInTheDocument();
+    });
+  });
+
+  it('[post-fix PASSES] admin form reads admin-prefixed offers count', async () => {
+    localStorage.setItem(`admin_edit_offers_${pid}`, JSON.stringify(['offer-1', 'offer-2', 'offer-3']));
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={baseProvider}
+        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/3/)).toBeInTheDocument();
+    });
+  });
+
+  it('[post-fix PASSES] admin form reads admin-prefixed needs count', async () => {
+    localStorage.setItem(`admin_edit_needs_${pid}`, JSON.stringify(['need-1', 'need-2']));
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={baseProvider}
+        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/2/)).toBeInTheDocument();
+    });
+  });
+
+  it('[post-fix PASSES] admin form ignores unprefixed owner draft state (context isolation)', async () => {
+    // Owner flow wrote category to unprefixed key
+    localStorage.setItem(`edit_category_${pid}`, 'cat-food');
+    // Admin flow has no matching admin-prefixed key
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={baseProvider}
+        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
+      />
+    );
+
+    await waitFor(() => {
+      // Should show placeholder — admin form should NOT read unprefixed owner key
+      expect(screen.getByText('Select category')).toBeInTheDocument();
+    });
+  });
+
+  it('[post-fix PASSES] owner form still reads unprefixed keys (no regression)', async () => {
+    localStorage.setItem(`edit_category_${pid}`, 'cat-food');
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        provider={baseProvider}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Food & Drinks')).toBeInTheDocument();
+    });
+  });
+});

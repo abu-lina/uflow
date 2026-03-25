@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-03-24
+**Last Updated**: 2026-03-25
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.8.24
+**Current Version**: v0.9.1
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -51,6 +51,8 @@
 | 2026-03-24       | v0.8.23 released (Plan 057): JoinHalal badge fallback + alcohol backfill | Visible-rating badge fallback for providers without badges; safe alcohol-content backfill for JoinHalal import                                            |
 | 2026-03-24       | v0.8.24 released: Remove legacy admin panel (S054)                 | Removed /dashboard route group, admin API routes, admin UI components, and rate-limit entries; preserved Supabase-layer review_status gate for operator moderation |
 | 2026-03-24       | Process improvements implemented (PI 059)                          | Removal-Surface Enumeration (Planner), Removal-Surface Validation + Deleted-Module Residue Check (QA), Removed Capability Discoverability Gate (UAT), Deleted-Module Residue Sweep 6h (Code Reviewer) from Retrospective 054 |
+| 2026-03-25       | Plan 061 released (v0.9.0): Admin provider edit flow               | Added admin provider editing from moderation detail view, including edit sub-pages and admin moderation handoff controls |
+| 2026-03-25       | Plan 060 released (v0.9.1): Admin edit state persistence fix       | Restored admin category/offers/needs draft-state persistence on return to the edit form with admin-prefixed localStorage isolation and regression coverage |
 
 ---
 
@@ -73,7 +75,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.8.24 released successfully (2026-03-24) — ready for new planning_
+_v0.9.1 released successfully (2026-03-25) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -84,6 +86,7 @@ _v0.8.24 released successfully (2026-03-24) — ready for new planning_
 - **053-OA-1**: Live staging import validation for corrected JoinHalal parser + offer auto-creation before first corrected production import run (Owner: DevOps / Operator — evidence in `agent-output/planning/053-open-actions.md`)
 - **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
 - **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
+- **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject during a future admin moderation UX touch (Owner: Implementer / future sprint — evidence in `agent-output/planning/060-open-actions.md`)
 - **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
 
 ✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
@@ -92,6 +95,8 @@ _v0.8.24 released successfully (2026-03-24) — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.9.1  | 2026-03-25 | Plan 060 (Admin edit state persistence fix)          | Released |
+| v0.9.0  | 2026-03-25 | Plan 061 (Admin provider edit flow)                  | Released |
 | v0.8.24 | 2026-03-24 | S054 (Remove legacy admin panel)                     | Released |
 | v0.8.23 | 2026-03-24 | Plan 057 (JoinHalal badge fallback + alcohol backfill) | Released |
 | v0.8.22 | 2026-03-24 | Plan 053 (Provider scroll render bug fix)            | Released |
