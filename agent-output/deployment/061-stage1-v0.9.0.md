@@ -23,6 +23,7 @@ Status: Active
 | Date (UTC) | Agent | Change |
 |------------|-------|--------|
 | 2026-03-25T13:42Z | DevOps | Stage 1 initiated. Acknowledged CONDITIONAL APPROVAL from UAT. Version pre-flight confirms v0.9.0 (minor bump from v0.8.28). PWA fallback restored. CHANGELOG expanded for Pass 2/Pass 3 features. |
+| 2026-03-25T13:48Z | DevOps | Stage 2 executed. User confirmed release. Branch pushed to origin. Tag v0.9.0 created and pushed. PR comparison conflict-free (origin/main is ancestor of HEAD). npm audit: 0 vulnerabilities. |
 
 ## Pre-Release Verification
 

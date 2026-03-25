@@ -2,7 +2,7 @@
 ID: 061
 Origin: 061
 UUID: a61d4f2c
-Status: Committed
+Status: Released
 ---
 
 # 061 — Admin Provider Edit
@@ -13,7 +13,7 @@ Status: Committed
 | Target Release | next available patch after current origin/main version; confirm at DevOps Stage 1 |
 | Version Scope | Minor feature release expected; confirm exact semver at DevOps Stage 1 |
 | Epic Alignment | Admin provider review workflow; provider data quality and moderation throughput |
-| Status | UAT Approved (Conditional) |
+| Status | Released |
 | Related Issues | None |
 
 ## Changelog
@@ -33,6 +33,7 @@ Status: Committed
 | 2026-03-25T14:20Z | Implementer | Pass 3 artifact rework complete. Implementation doc fully updated: TDD Compliance (3 new rows for Pass 3 + UAT surfaces), Files Created (4 new rows), Cross-Layer Integration (5 new rows), Outstanding Items (3 new rows), fresh test evidence (667 pass / 18 skip, focused 27/27). All gates green: type-check exit 0, build exit 0. Status updated to In Progress for QA re-validation. |
 | 2026-03-25T13:23Z | QA | QA re-validation complete. TDD Compliance Gate now passes after the artifact rework. Fresh evidence: focused suite 27/27 pass, broad suite 667/667 pass with 18 skips, delta lint 0 errors / 1 known warning, type-check exit 0, build exit 0 with dashboard sub-pages present. Status updated to QA Complete. |
 | 2026-03-25T14:30Z | UAT | Pass 3 UAT complete. Scenarios 1-7 (base edit, auth, save, error handling, access control, owner regression, community service gate) retain prior PASS from live testing. Scenarios 8-9 (approve/reject review mutation paths) DEFERRED — PATCH /api/admin/review-provider not yet live-tested in any admin session; Admin Runtime Smoke Gate check #3 not satisfied for review decision path. CONDITIONAL APPROVAL issued. Smoke gate delegated to DevOps pre-release checklist. |
+| 2026-03-25T13:48Z | DevOps | Released as v0.9.0. Branch `session/061-admin-provider-edit` pushed to origin. Tag v0.9.0 pushed. PR: https://github.com/abu-lina/uflow/compare/main...session/061-admin-provider-edit. Conditional smoke gate items (approve/reject paths) remain for post-merge operator verification. |
 
 ## Release Strategy
 

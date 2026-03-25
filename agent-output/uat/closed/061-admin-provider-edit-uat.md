@@ -2,7 +2,7 @@
 ID: 061
 Origin: 061
 UUID: a61d4f2c
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: 061 — Admin Provider Edit
