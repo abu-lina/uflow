@@ -95,9 +95,11 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
     
     setIsCreating(true);
     try {
+      // Migration 006 made category_id NOT NULL; default to 'Sonstiges' (Other)
+      const DEFAULT_CATEGORY_ID = '5e5d910d-d790-4184-a061-9cd74d0950e8';
       const { data, error } = await supabase
         .from('offers')
-        .insert([{ name_de: newOffer.trim() }])
+        .insert([{ name_de: newOffer.trim(), category_id: DEFAULT_CATEGORY_ID }])
         .select()
         .single();
       
