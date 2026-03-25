@@ -54,9 +54,12 @@ export async function POST(request: Request) {
       );
     }
 
+    // Migration 006 made category_id NOT NULL; default to 'Sonstiges' (Other)
+    const DEFAULT_CATEGORY_ID = '5e5d910d-d790-4184-a061-9cd74d0950e8';
+
     const { data: createdOffer, error: createError } = await supabase
       .from('offers')
-      .insert([{ name_de: sanitizedName, created_by: user.id }])
+      .insert([{ name_de: sanitizedName, created_by: user.id, category_id: DEFAULT_CATEGORY_ID }])
       .select()
       .single();
 
