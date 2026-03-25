@@ -36,6 +36,7 @@ interface ProviderDetailModalProps {
   onClose: () => void;
   onBookmarkChange?: (providerId: string, isBookmarked: boolean) => void;
   initialCommunityServices?: CommunityService[];
+  customActionButtons?: React.ReactNode;
 }
 
 export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
@@ -43,6 +44,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   onClose,
   onBookmarkChange,
   initialCommunityServices,
+  customActionButtons,
 }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -761,6 +763,12 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             )}
           </button>
         </div>
+        {/* Admin action buttons (e.g., edit) rendered above the actions bar */}
+        {customActionButtons && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2">
+            {customActionButtons}
+          </div>
+        )}
       </section>
     </Modal>
   );

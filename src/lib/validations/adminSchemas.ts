@@ -29,3 +29,25 @@ export const providerReviewUpdateSchema = z.object({
     path: ['reviewFeedback'],
   },
 );
+
+/**
+ * Provider edit update schema (admin/moderator editing provider fields)
+ */
+export const providerEditUpdateSchema = z.object({
+  providerId: z.string().uuid('Invalid provider ID format'),
+  providerName: z.string().min(1).max(200).optional(),
+  providerDescription: z.string().max(5000).nullable().optional(),
+  categoryId: z.string().uuid().optional(),
+  addressStreet: z.string().max(500).nullable().optional(),
+  addressZip: z.string().max(20).nullable().optional(),
+  addressCity: z.string().max(200).nullable().optional(),
+  addressCountry: z.string().max(200).nullable().optional(),
+  contactEmail: z.string().email().max(320).nullable().optional(),
+  contactPhone: z.string().max(50).nullable().optional(),
+  socialWebsite: z.string().url().max(2000).nullable().optional(),
+  socialInstagram: z.string().max(200).nullable().optional(),
+  providerImages: z.string().max(10000).nullable().optional(),
+  offersIds: z.array(z.string()).optional(),
+  needsIds: z.array(z.string()).optional(),
+  communityServiceIds: z.array(z.string()).optional(),
+});

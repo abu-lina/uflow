@@ -495,6 +495,8 @@ export const en = {
     media: "Media",
     titleField: "Title",
     titlePlaceholder: "Enter title",
+    description: "Description",
+    descriptionPlaceholder: "Enter description",
     category: "Category",
     whatDoIOffer: "What do I offer?",
     whatDoINeed: "What do I need?",

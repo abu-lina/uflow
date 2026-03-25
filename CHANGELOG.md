@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-03-25
+
+### Added
+
+- **Admin provider editing from moderation detail flow (Plan 061)**: Admin and moderator users can now edit provider details directly from the provider detail view during moderation. An edit button appears on both mobile and desktop provider detail views for admin users only. The edit page reuses the existing owner provider edit form with admin-specific persistence (server-side authorization, audit logging, service-role writes). Includes provider description field in the shared edit form, cache invalidation after save, and complete separation from owner localStorage state. Community service detail views are unaffected.
+- **Approve and reject providers from the admin edit form (Plan 061)**: Admin moderators can approve or reject providers directly from the edit page via a moderation footer that replaces the generic Save button. Rejecting a provider requires mandatory feedback via a RejectModal. Approving is a one-click action. Both actions chain save-then-review to preserve edits before the review decision.
+- **Admin taxonomy creation via server routes (Plan 061)**: Admin offer and need creation now goes through dedicated server routes (`/api/admin/offers`, `/api/admin/needs`) that bypass RLS, enforce auth, rate-limit, sanitize input, and reject duplicates.
+- **Admin image upload via service-role route (Plan 061)**: Admin image uploads bypass storage RLS via `POST /api/admin/upload-image` using the service-role client.
+- **Dashboard edit sub-pages (Plan 061)**: Category, images, and social sub-pages added under the `(dashboard)` route group for admin provider editing.
+
 ## [0.8.28] - 2026-03-25
 
 ### Added

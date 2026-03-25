@@ -490,6 +490,8 @@ export const ps = {
     media: "میډیا",
     titleField: "عنوان",
     titlePlaceholder: "عنوان داخل کړئ",
+    description: "توضیحات",
+    descriptionPlaceholder: "توضیحات داخل کړئ",
     category: "کټګوري",
     whatDoIOffer: "زه څه وړاندیز کوم؟",
     whatDoINeed: "زه ته څه اړتیا ده؟",

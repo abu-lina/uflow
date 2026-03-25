@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
@@ -11,16 +11,66 @@ import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/types/supabase';
 import type { Provider } from '@/services/providers';
 import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
+import { Button } from '@/components/ui/Button';
 import { FooterAction } from '@/components/ui/FooterAction';
 
 interface ProviderEditFormProps {
   provider: Provider;
   onSave?: () => void;
+  /** Custom submit handler — when provided, replaces the built-in Supabase write. */
+  onSubmitForm?: (data: ProviderEditFormData) => Promise<void>;
+  /** Base URL for sub-page navigation (category, offers, needs, images, social).
+   *  Defaults to `/profile/providers/${provider.provider_id}/edit`. */
+  subPageBaseUrl?: string;
+  /** Whether to read/write localStorage for sub-page state.
+   *  Set to false in admin context to avoid stale owner state. Defaults to true. */
+  enableLocalStorage?: boolean;
+  /** Optional custom moderation footer actions for admin review flows. */
+  reviewFooterActions?: {
+    reject: ProviderEditFooterAction;
+    approve: ProviderEditFooterAction;
+  };
 }
 
-export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
+interface ProviderEditFooterAction {
+  label: string;
+  variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'cancel';
+  onClick: (data: ProviderEditFormData) => Promise<void>;
+  'aria-label'?: string;
+}
+
+/** Exported form data shape so external save handlers can type their inputs. */
+export interface ProviderEditFormData {
+  providerName: string;
+  providerDescription: string;
+  categoryId: string;
+  street: string;
+  zipCode: string;
+  city: string;
+  country: string;
+  isOnlineBusiness: boolean;
+  showAddress: boolean;
+  website: string;
+  instagram: string;
+  email: string;
+  phone: string;
+  images: string;
+  selectedOfferIds: string[];
+  selectedNeedIds: string[];
+  selectedCommunityServiceIds: string[];
+}
+
+export function ProviderEditForm({
+  provider,
+  onSave,
+  onSubmitForm,
+  subPageBaseUrl,
+  enableLocalStorage = true,
+  reviewFooterActions,
+}: ProviderEditFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeFooterAction, setActiveFooterAction] = useState<'reject' | 'approve' | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedSections, setExpandedSections] = useState({
     basics: true,
@@ -32,6 +82,9 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
   const { t, language } = useLanguage();
   const router = useRouter();
 
+  // Compute edit sub-page base URL (admin vs owner context)
+  const editBaseUrl = subPageBaseUrl ?? `/profile/providers/${provider.provider_id}/edit`;
+
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -40,8 +93,9 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
   };
 
   // Initialize form data from provider
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProviderEditFormData>({
     providerName: provider.provider_name || '',
+    providerDescription: (provider as unknown as Record<string, unknown>).provider_description as string || provider.description || '',
     categoryId: provider.category_id || '',
     street: provider.address_street || '',
     zipCode: provider.address_zip || '',
@@ -59,62 +113,64 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
     selectedCommunityServiceIds: [], // Will be populated from relationships
   });
 
-  // Load selected category from localStorage when returning from selection page
-  useEffect(() => {
-    const stored = localStorage.getItem(`edit_category_${provider.provider_id}`);
-    if (stored && stored !== formData.categoryId) {
-      handleInputChange('categoryId', stored);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider.provider_id]);
+  // Sync form state from localStorage (runs on mount + when page regains focus after sub-page navigation)
+  const syncFromLocalStorage = useCallback(() => {
+    if (!enableLocalStorage) return;
+    const pid = provider.provider_id;
 
-  // Load selected offers from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(`edit_offers_${provider.provider_id}`);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (JSON.stringify(parsed) !== JSON.stringify(formData.selectedOfferIds)) {
-        handleInputChange('selectedOfferIds', parsed);
-      }
+    const storedCategory = localStorage.getItem(`edit_category_${pid}`);
+    if (storedCategory) {
+      setFormData(prev => prev.categoryId !== storedCategory ? { ...prev, categoryId: storedCategory } : prev);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider.provider_id]);
 
-  // Load selected needs from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(`edit_needs_${provider.provider_id}`);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (JSON.stringify(parsed) !== JSON.stringify(formData.selectedNeedIds)) {
-        handleInputChange('selectedNeedIds', parsed);
-      }
+    const storedOffers = localStorage.getItem(`edit_offers_${pid}`);
+    if (storedOffers) {
+      const parsed = JSON.parse(storedOffers) as string[];
+      setFormData(prev => JSON.stringify(prev.selectedOfferIds) !== storedOffers ? { ...prev, selectedOfferIds: parsed } : prev);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider.provider_id]);
 
-  // Load selected community services from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(`edit_social_${provider.provider_id}`);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (JSON.stringify(parsed) !== JSON.stringify(formData.selectedCommunityServiceIds)) {
-        handleInputChange('selectedCommunityServiceIds', parsed);
-      }
+    const storedNeeds = localStorage.getItem(`edit_needs_${pid}`);
+    if (storedNeeds) {
+      const parsed = JSON.parse(storedNeeds) as string[];
+      setFormData(prev => JSON.stringify(prev.selectedNeedIds) !== storedNeeds ? { ...prev, selectedNeedIds: parsed } : prev);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider.provider_id]);
 
-  // Load updated images from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(`edit_images_${provider.provider_id}`);
-    if (stored) {
-      const storedImages = JSON.stringify(stored);
-      if (storedImages !== formData.images) {
-        handleInputChange('images', stored);
-      }
+    const storedSocial = localStorage.getItem(`edit_social_${pid}`);
+    if (storedSocial) {
+      const parsed = JSON.parse(storedSocial) as string[];
+      setFormData(prev => JSON.stringify(prev.selectedCommunityServiceIds) !== storedSocial ? { ...prev, selectedCommunityServiceIds: parsed } : prev);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider.provider_id]);
+
+    const storedImages = localStorage.getItem(`edit_images_${pid}`);
+    if (storedImages) {
+      setFormData(prev => prev.images !== storedImages ? { ...prev, images: storedImages } : prev);
+    }
+  }, [enableLocalStorage, provider.provider_id]);
+
+  // Run on mount
+  useEffect(() => {
+    syncFromLocalStorage();
+  }, [syncFromLocalStorage]);
+
+  // Re-sync when user navigates back from sub-page (page regains visibility)
+  useEffect(() => {
+    if (!enableLocalStorage) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncFromLocalStorage();
+      }
+    };
+    const handleFocus = () => syncFromLocalStorage();
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('pageshow', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pageshow', handleFocus);
+    };
+  }, [enableLocalStorage, syncFromLocalStorage]);
 
   useEffect(() => {
     // Load categories
@@ -162,7 +218,27 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Admin review footer uses explicit approve/reject actions instead of generic form submit.
+    if (reviewFooterActions) {
+      return;
+    }
     
+    // If a custom submit handler is provided (admin context), use it
+    if (onSubmitForm) {
+      setIsSubmitting(true);
+      try {
+        await onSubmitForm(formData);
+      } catch (error) {
+        // External handler is responsible for its own error toast
+        console.error('Error updating provider:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Default owner submit path
     if (!user) {
       toast.error(t('editProvider.mustBeLoggedIn'));
       router.push('/signin');
@@ -176,6 +252,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
         .from('providers')
         .update({
           provider_name: formData.providerName,
+          provider_description: formData.providerDescription || null,
           category_id: formData.categoryId,
           // If online business, all address fields are null
           address_street: formData.isOnlineBusiness ? null : (formData.street || null),
@@ -232,6 +309,27 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
     }
   };
 
+  const handleReviewFooterAction = async (
+    actionKey: 'reject' | 'approve',
+    action: ProviderEditFooterAction
+  ) => {
+    if (isSubmitting) return;
+    if (formRef.current && !formRef.current.reportValidity()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setActiveFooterAction(actionKey);
+    try {
+      await action.onClick(formData);
+    } catch (error) {
+      console.error('Error submitting moderation action:', error);
+    } finally {
+      setActiveFooterAction(null);
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <form
       ref={formRef}
@@ -272,10 +370,24 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
               </div>
             </div>
 
+            {/* Description Field */}
+            <div className="flex w-full min-h-[80px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+              <div className="flex flex-1 flex-col gap-1">
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.description')}</span>
+                <textarea
+                  className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0 resize-none min-h-[40px]"
+                  placeholder={t('editProvider.descriptionPlaceholder')}
+                  rows={3}
+                  value={formData.providerDescription}
+                  onChange={(e) => handleInputChange('providerDescription', e.target.value)}
+                />
+              </div>
+            </div>
+
             {/* Category Field */}
             <div 
               className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
-              onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/category`)}
+              onClick={() => router.push(`${editBaseUrl}/category`)}
             >
               <div className="flex flex-1 flex-col gap-1">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.category')} *</span>
@@ -293,7 +405,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             {/* Offers Field */}
             <div 
               className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
-              onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/offers`)}
+              onClick={() => router.push(`${editBaseUrl}/offers`)}
             >
               <div className="flex flex-1 flex-col gap-1">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.whatDoIOffer')} *</span>
@@ -310,7 +422,7 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             {/* Needs Field */}
             <div 
               className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
-              onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/needs`)}
+              onClick={() => router.push(`${editBaseUrl}/needs`)}
             >
               <div className="flex flex-1 flex-col gap-1">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.whatDoINeed')}</span>
@@ -552,9 +664,9 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
             <div className="space-y-3">
             {/* Bilder Field */}
             <button
-              className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+              className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
               type="button"
-              onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/images`)}
+              onClick={() => router.push(`${editBaseUrl}/images`)}
             >
               <div className="flex flex-1 flex-col gap-1 items-start">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.images')}</span>
@@ -577,9 +689,9 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
 
             {/* Soziale Initiativen Field */}
             <button
-              className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+              className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
               type="button"
-              onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit/social`)}
+              onClick={() => router.push(`${editBaseUrl}/social`)}
             >
               <div className="flex flex-1 flex-col gap-1 items-start">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.socialInitiatives')}</span>
@@ -599,31 +711,73 @@ export function ProviderEditForm({ provider, onSave }: ProviderEditFormProps) {
         </div>
       </div>
 
-      {/* Save and Discard Buttons - Fixed at bottom */}
-      <FooterAction
-        primaryButton={{
-          label: t('editProvider.save'),
-          icon: 'material-symbols:save-outline',
-          onClick: () => {
-            // Trigger form submission
-            if (formRef.current && !isSubmitting) {
-              formRef.current.requestSubmit();
-            }
-          },
-          variant: 'primary',
-          disabled: isSubmitting,
-          loading: isSubmitting,
-          'aria-label': t('editProvider.saveChanges'),
-        }}
-        secondaryButton={{
-          icon: 'material-symbols:close',
-          onClick: () => {
-            // Discard changes and go back
-            router.back();
-          },
-          'aria-label': t('editProvider.discardChanges'),
-        }}
-      />
+      {reviewFooterActions ? (
+        <footer
+          className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]"
+          style={{
+            background: 'linear-gradient(to bottom, #f5f5f5 0%, #fbfbfb 100%)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
+          }}
+        >
+          <div className="flex w-full gap-3.5 px-6 pt-4" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+            <Button
+              fullWidth
+              aria-label={reviewFooterActions.reject['aria-label'] || reviewFooterActions.reject.label}
+              className="!h-[48px] !min-h-[48px] !max-h-[48px]"
+              disabled={isSubmitting}
+              loading={isSubmitting && activeFooterAction === 'reject'}
+              loadingText={reviewFooterActions.reject.label}
+              variant={reviewFooterActions.reject.variant || 'danger'}
+              onClick={() => {
+                void handleReviewFooterAction('reject', reviewFooterActions.reject);
+              }}
+            >
+              {reviewFooterActions.reject.label}
+            </Button>
+            <Button
+              fullWidth
+              aria-label={reviewFooterActions.approve['aria-label'] || reviewFooterActions.approve.label}
+              className="!h-[48px] !min-h-[48px] !max-h-[48px]"
+              disabled={isSubmitting}
+              loading={isSubmitting && activeFooterAction === 'approve'}
+              loadingText={reviewFooterActions.approve.label}
+              variant={reviewFooterActions.approve.variant || 'success'}
+              onClick={() => {
+                void handleReviewFooterAction('approve', reviewFooterActions.approve);
+              }}
+            >
+              {reviewFooterActions.approve.label}
+            </Button>
+          </div>
+        </footer>
+      ) : (
+        <FooterAction
+          primaryButton={{
+            label: t('editProvider.save'),
+            icon: 'material-symbols:save-outline',
+            onClick: () => {
+              // Trigger form submission
+              if (formRef.current && !isSubmitting) {
+                formRef.current.requestSubmit();
+              }
+            },
+            variant: 'primary',
+            disabled: isSubmitting,
+            loading: isSubmitting,
+            'aria-label': t('editProvider.saveChanges'),
+          }}
+          secondaryButton={{
+            icon: 'material-symbols:close',
+            onClick: () => {
+              // Discard changes and go back
+              router.back();
+            },
+            'aria-label': t('editProvider.discardChanges'),
+          }}
+        />
+      )}
     </form>
   );
 }
