@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: 60d3c8ae
-Status: Committed
+Status: Released
 ---
 
 # Code Review: Plan 060 — Admin Edit State Persistence Fix
@@ -22,6 +22,7 @@ Status: Committed
 | 2026-03-25T16:00Z | Implementer → Code Reviewer | Review Plan 060 implementation | Initial review pass |
 | 2026-03-25T16:02Z | Code Reviewer | Review complete | Verdict: APPROVED — 3 LOW findings (pre-existing or redundancy), no blocking concerns. Status updated to Code Review Approved. |
 | 2026-03-25T15:21Z | DevOps | Stage 1 closure | Status → Committed for `v0.9.1`; document moved to `closed/` with the rest of the Plan 060 lifecycle chain. |
+| 2026-03-25T15:48Z | DevOps | Stage 2 release record | `v0.9.1` release verified on origin; code review lifecycle status updated to Released. |
 
 ---
 

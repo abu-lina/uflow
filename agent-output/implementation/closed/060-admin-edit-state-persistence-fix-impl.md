@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: 60d3c8ae
-Status: Committed
+Status: Released
 ---
 
 # Implementation: Plan 060 — Admin Edit State Persistence Fix
@@ -21,6 +21,7 @@ Status: Committed
 |------------|---------|---------|---------|
 | 2026-03-25T15:50Z | Implementer | Initial implementation | M1–M3 complete; all gates pass; M4 deferred to DevOps Stage 1 |
 | 2026-03-25T15:21Z | DevOps | Stage 1 closure | Status → Committed for `v0.9.1`; M4 version and release artifacts completed in DevOps Stage 1 |
+| 2026-03-25T15:48Z | DevOps | Stage 2 release record | Branch and tag verification completed for `v0.9.1`; implementation lifecycle status updated to Released |
 
 ## Implementation Summary
 
@@ -33,7 +34,7 @@ Restored admin edit sub-page state persistence by introducing a `localStoragePre
 - [x] M1: Define admin-safe draft-state boundary (localStoragePrefix approach)
 - [x] M2: Restore admin sub-page persistence end-to-end (all 5 sub-pages updated)
 - [x] M3: Add regression coverage and runtime validation (6 new tests)
-- [ ] M4: Version and release artifacts (deferred to DevOps Stage 1)
+- [x] M4: Version and release artifacts (completed in DevOps Stage 1 / Stage 2)
 
 ## Files Modified
 

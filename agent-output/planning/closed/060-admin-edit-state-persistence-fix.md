@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: 60d3c8ae
-Status: Committed
+Status: Released
 ---
 
 # Plan 060 — Admin Edit State Persistence Fix
@@ -10,7 +10,7 @@ Status: Committed
 **Plan ID**: 060
 **Target Release**: v0.9.1
 **Epic Alignment**: Admin moderation workflow reliability; provider data quality before approval
-**Status**: Committed for Release v0.9.1
+**Status**: Released in v0.9.1
 **Related Issues**: None (live regression reported after v0.9.0 release during admin verification)
 
 ## Changelog
@@ -23,6 +23,7 @@ Status: Committed
 | 2026-03-25T16:18Z | QA | Verdict: QA Complete. Focused regression, full suite, type-check, and build pass; manual browser-path validation deferred to UAT. |
 | 2026-03-25T16:24Z | UAT | Verdict: APPROVED FOR RELEASE. Value statement delivered. DF-060-UAT-01 (live back-navigation) deferred to operator before deploy. Status → UAT Approved. |
 | 2026-03-25T15:21Z | DevOps | Stage 1 commit prepared for `v0.9.1`. Status → Committed. Lifecycle docs closed; Stage 2 blocked on DF-060-UAT-01 evidence and explicit release approval. |
+| 2026-03-25T15:48Z | DevOps | Stage 2 verified complete. Branch `session/061-admin-provider-edit` and tag `v0.9.1` both point to `6d326f1b`; `origin/main` is an ancestor of `HEAD`. Status → Released. |
 
 ## Release Strategy
 

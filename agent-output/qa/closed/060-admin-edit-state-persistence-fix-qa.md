@@ -2,13 +2,13 @@
 ID: 060
 Origin: 060
 UUID: 60d3c8ae
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 060 — Admin Edit State Persistence Fix
 
 **Plan Reference**: `agent-output/planning/060-admin-edit-state-persistence-fix.md`
-**QA Status**: Committed
+**QA Status**: Released
 **QA Specialist**: qa
 
 ## Changelog
@@ -18,6 +18,7 @@ Status: Committed
 | 2026-03-25T16:12Z | Code Reviewer | QA validation for Plan 060 implementation | Created QA strategy, validated TDD gate, and prepared execution plan for admin draft-state persistence fix |
 | 2026-03-25T16:18Z | QA | Test execution complete | Focused regression, full Vitest suite, type-check, delta lint, and clean build reviewed. Verdict: QA Complete with manual browser validation deferred to UAT. |
 | 2026-03-25T15:21Z | DevOps | Stage 1 closure | Status → Committed for `v0.9.1`; deferred browser-path validation remains tracked in `060-open-actions.md`. |
+| 2026-03-25T15:48Z | DevOps | Stage 2 release record | Deferred browser-path evidence is satisfied; `v0.9.1` released and QA lifecycle status updated to Released. |
 
 ## Timeline
 

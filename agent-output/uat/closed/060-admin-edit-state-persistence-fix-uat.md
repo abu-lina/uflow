@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: 60d3c8ae
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 060 — Admin Edit State Persistence Fix
@@ -17,6 +17,7 @@ Status: Committed
 | ---------- | ---------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
 | 2026-03-25T16:24Z | QA → UAT | Value validation for Plan 060 | UAT complete — implementation delivers the stated value. Live back-navigation path deferred as DF-060-UAT-01. APPROVED FOR RELEASE (conditional on deferred live validation before deploy). |
 | 2026-03-25T15:21Z | DevOps | Stage 1 closure | Status → Committed for `v0.9.1`. `DF-060-UAT-01` remains open and blocks Stage 2 tag/push until live evidence is captured. |
+| 2026-03-25T15:48Z | DevOps | Stage 2 release record | Screenshot evidence closed `DF-060-UAT-01`; branch and tag verification completed for `v0.9.1`. UAT lifecycle status updated to Released. |
 
 ### Memory Health Check
 
