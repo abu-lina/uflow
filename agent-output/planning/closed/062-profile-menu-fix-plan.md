@@ -2,7 +2,7 @@
 ID: 062
 Origin: 062
 UUID: c062f1a9
-Status: Released
+Status: Committed
 ---
 
 # 062 — Profile Menu Fix
@@ -13,7 +13,7 @@ Status: Released
 | Target Release | v0.9.2 |
 | Version Scope | Patch bugfix |
 | Epic Alignment | Mobile navigation reliability; early-access to full-access UX continuity |
-| Status | Released |
+| Status | Committed for Release v0.9.2 |
 | Related Issues | None (reported directly via chat in Session S060) |
 
 ## Changelog
@@ -25,7 +25,6 @@ Status: Released
 | 2026-03-25T22:26Z | QA | QA Complete — focused regressions, full suite, and type-check passed; local runtime/mobile validation deferred due missing `.env.local` and requires UAT/browser evidence |
 | 2026-03-25T22:30Z | UAT | UAT Complete — APPROVED FOR RELEASE; all automated gates pass; 2 MEDIUM deferred manual tap checks (D1/D2) required within 24h of UAT deployment |
 | 2026-03-25T21:33Z | DevOps | Committed for Release v0.9.2 — version artifacts aligned from local 0.9.0 to v0.9.2 after Stage 1 pre-flight; deferred follow-ups tracked in `062-open-actions.md` |
-| 2026-03-25T21:55Z | DevOps | Released — branch pushed and compare confirmed conflict-free against `origin/main`; final release recorded as v0.9.2 |
 
 ## Release Strategy
 

@@ -2,7 +2,7 @@
 ID: 062
 Origin: 062
 UUID: c062f1a9
-Status: Released
+Status: Committed
 ---
 
 # 062 — Profile Menu Fix — Implementation
@@ -23,7 +23,6 @@ Status: Released
 |------|---------|---------|---------|
 | 2026-03-25T22:15Z | Implementer | Plan 062 execution | Initial implementation: added Profile icon to CityEarlyAccessNavbar with auth-gated href, TDD-first with 17 regression tests |
 | 2026-03-25T21:33Z | DevOps | Stage 1 closure | Marked implementation as Committed for release v0.9.2 |
-| 2026-03-25T21:55Z | DevOps | Stage 2 release | Marked implementation doc as Released in v0.9.2 |
 
 ## Implementation Summary
 

@@ -2,7 +2,7 @@
 ID: 062
 Origin: 062
 UUID: c062f1a9
-Status: Released
+Status: Committed
 ---
 
 # UAT Report: 062 — Profile Menu Fix
@@ -17,7 +17,6 @@ Status: Released
 | ---------- | ---------------- | -------------------- | ------------------------------ |
 | 2026-03-25T22:30Z | QA → UAT | UAT value delivery validation for Plan 062 | APPROVED FOR RELEASE — all automated gates pass; 2 MEDIUM deferred manual tap checks carried forward as post-release follow-ups with documented owner and closure evidence |
 | 2026-03-25T21:33Z | DevOps | Stage 1 closure | Marked UAT doc as Committed for release v0.9.2; D1-D4 carried into `062-open-actions.md` |
-| 2026-03-25T21:55Z | DevOps | Stage 2 release | Marked UAT doc as Released in v0.9.2; release continues to require D1-D4 follow-up evidence |
 
 ## Value Statement Under Test
 

@@ -23,8 +23,6 @@ Status: Active
 | Date (UTC) | Agent | Change |
 |------------|-------|--------|
 | 2026-03-25T21:33Z | DevOps | Stage 1 initiated. UAT is APPROVED FOR RELEASE. Version pre-flight confirmed latest released tag `v0.9.1` and `origin/main` version `0.9.1`, so Plan 062 is committed for `v0.9.2`. Local version artifacts were corrected from `0.9.0` to `0.9.2`. |
-| 2026-03-25T21:55Z | DevOps | Stage 2 branch push complete. User approved release, branch rebased cleanly onto `origin/main`, compare is conflict-free, and provisional Plan 060 artifacts were remapped to Plan 062 to avoid collision with an unrelated mainline Plan 060 chain. |
-| 2026-03-26 | DevOps | Post-release iOS hotfix prepared for next patch `v0.9.4`. Version artifacts were advanced from `0.9.2` to `0.9.4` so the fix can merge onto `main` without reusing the already-published `v0.9.2` version or the existing `v0.9.3` tag. |
 
 ## Pre-Release Verification
 
@@ -108,8 +106,8 @@ Verified monotonic sequence across the plan chain:
 ### Workspace Cleanliness
 
 - Branch: `session/060-profile-menu-fix`
-- Tracking: `origin/session/060-profile-menu-fix` after Stage 2 push.
-- Current worktree was clean at Stage 2 push time.
+- Tracking: no upstream configured yet — expected before Stage 1 local commit; Stage 2 will establish remote tracking on push.
+- Current worktree contains Plan 060 changes plus one unrelated historical deployment-doc closure cleanup that will be kept in a separate docs-only commit.
 
 ## Critique Closure Verification
 
@@ -176,11 +174,11 @@ M src/components/shared/CityEarlyAccessNavbar.tsx
 
 | Document | Domain | Terminal Status |
 |----------|--------|-----------------|
-| 062 Plan | planning | Released |
-| 062 Implementation | implementation | Released |
-| 062 Code Review | code-review | Released |
-| 062 QA | qa | Released |
-| 062 UAT | uat | Released |
+| 060 Plan | planning | Committed |
+| 060 Implementation | implementation | Committed |
+| 060 Code Review | code-review | Committed |
+| 060 QA | qa | Committed |
+| 060 UAT | uat | Committed |
 
 Closed documents for Plan 062: planning, implementation, code-review, qa, uat moved to their respective `closed/` folders.
 
@@ -194,87 +192,9 @@ Closed documents for Plan 062: planning, implementation, code-review, qa, uat mo
 | D4: Stage 3 footer regression browser check | QA | Same session as D1/D2 | Browser verification of existing Profile behavior |
 | Repo baseline vulnerabilities (`picomatch`, `yaml`) | DevOps / Maintainers | Before or during a dependency remediation plan | Audit report or dependency upgrades removing both advisories |
 
-## User Confirmation
-
-| Field | Value |
-|-------|-------|
-| Release summary presented | v0.9.2; Plan 062 only; branch `session/060-profile-menu-fix`; D1-D4 remain deferred follow-ups |
-| User response | `approved` |
-| Timestamp (UTC) | 2026-03-25T21:55Z |
-| Decision | Proceed with Stage 2 push and tag |
-
-## Release Execution
-
-| Step | Status | Evidence |
-|------|--------|----------|
-| Branch push | ✅ PASS | `git push -u origin session/060-profile-menu-fix` succeeded |
-| Compare URL surfaced | ✅ PASS | `https://github.com/abu-lina/uflow/compare/main...session/060-profile-menu-fix` |
-| Compare conflict check | ✅ PASS | `git merge-base --is-ancestor origin/main HEAD` returned `0`; branch is `0 behind / 4 ahead` |
-| Final release-state push | ✅ PASS | `docs(release): Mark Plan 062 released` pushed as `cddce709` |
-| Tag creation | ✅ PASS | `git tag -a v0.9.2 -m "Release v0.9.2 - Plan 062 profile menu fix"` |
-| Tag push | ✅ PASS | `git push origin v0.9.2` succeeded; remote tag `v0.9.2` visible |
-
-## Post-Release Status
-
-| Field | Value |
-|-------|-------|
-| Status | Released |
-| Branch | `session/060-profile-menu-fix` |
-| Compare URL | `https://github.com/abu-lina/uflow/compare/main...session/060-profile-menu-fix` |
-| Release tag | `v0.9.2` |
-| Functional smoke tests | Not executed — this Stage 2 flow pushed branch/tag only and did not publish a runtime environment from this worktree |
-
-## Post-Release Hotfix (2026-03-26)
-
-**Status**: CRITICAL iOS regression discovered during deferred D1 validation; hotfix prepared for next patch `v0.9.4` and awaiting merge to main
-
-### Timeline
-
-| Date (UTC) | Event |
-|------------|-------|
-| 2026-03-25T21:55Z | Stage 2 Released; branch/tag pushed |
-| 2026-03-26 | User executed D1 validation on real iOS device |
-| 2026-03-26 | **iOS touch event failure**: Profile icon visible but unresponsive |
-| 2026-03-26 | Root cause identified: wrapper `pointer-events: none` blocking iOS WebKit touch |
-| 2026-03-26 | Hotfix applied to `src/styles/globals.css` |
-| 2026-03-26 | D1 reopened + D5 added to track Stage 3 iOS regression |
-
-### Root Cause
-
-Parent wrapper div (`.city-navbar-wrapper` in `src/styles/globals.css`) had `pointer-events: none` that was never restored when wrapper became visible (lines 456-457 only set `visibility: visible`). iOS WebKit does not allow child `pointer-events: auto` to override parent `pointer-events: none`, unlike Chrome's engine. Desktop DevTools mobile emulation with Chrome engine did not surface this iOS-specific behavior.
-
-### Fix Applied
-
-Added `pointer-events: auto;` to both active wrapper visibility rules:
-- `.mobile-bottom-ui-slot[data-mobile-ui='footer'] .mobile-footer-bar-wrapper { visibility: visible; pointer-events: auto; }`
-- `.mobile-bottom-ui-slot[data-mobile-ui='navbar'] .city-navbar-wrapper { visibility: visible; pointer-events: auto; }`
-
-**Changed files**: `src/styles/globals.css` (lines 453-457)
-
-### Impact
-
-- **Critical severity**: Complete loss of Profile/account-entry on iOS for Stage 1/2 users
-- **Stage 3 users**: Likely also affected (same wrapper pattern)
-- **Desktop**: Unaffected
-- **Android**: Unknown (requires verification)
-
-### Remediation Status
-
-| Action | Status |
-|--------|--------|
-| Hotfix committed to branch | ⏳ Pending |
-| Version artifacts advanced to `0.9.4` | ✅ Complete |
-| Merge to main | ⏳ Blocked on hotfix commit |
-| UAT deployment | ⏳ Blocked on merge |
-| D1 re-validation (iOS) | ⏳ Blocked on UAT deployment |
-| D5 Stage 3 iOS validation | ⏳ Blocked on UAT deployment |
-
-**Documentation updated**: `agent-output/planning/062-open-actions.md` (incident log and reopened items)
-
 ## Next Actions
 
-1. **IMMEDIATE**: Commit hotfix to `session/060-profile-menu-fix` branch
-2. **IMMEDIATE**: Merge compare URL to `main` (https://github.com/abu-lina/uflow/compare/main...session/060-profile-menu-fix)
-3. **IMMEDIATE**: UAT auto-deployment via GitHub Actions will trigger on merge to `main`
-4. Re-execute D1-D5 browser validations from `agent-output/planning/062-open-actions.md` after UAT deployment completes
-5. Hand off to Roadmap / Retrospective after iOS validations pass with lessons learned on browser emulation vs real device testing
+1. Update Plan 062 lifecycle docs to `Committed` and move them to `closed/`.
+2. Commit historical deployment-orphan cleanup separately.
+3. Commit Plan 062 locally with release version `v0.9.2` and no push.
+4. Hand off to Roadmap / Stage 2 release readiness once the local commit is complete.
