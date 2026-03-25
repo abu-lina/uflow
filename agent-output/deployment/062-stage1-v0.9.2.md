@@ -23,6 +23,7 @@ Status: Active
 | Date (UTC) | Agent | Change |
 |------------|-------|--------|
 | 2026-03-25T21:33Z | DevOps | Stage 1 initiated. UAT is APPROVED FOR RELEASE. Version pre-flight confirmed latest released tag `v0.9.1` and `origin/main` version `0.9.1`, so Plan 062 is committed for `v0.9.2`. Local version artifacts were corrected from `0.9.0` to `0.9.2`. |
+| 2026-03-25T21:55Z | DevOps | Stage 2 branch push complete. User approved release, branch rebased cleanly onto `origin/main`, compare is conflict-free, and provisional Plan 060 artifacts were remapped to Plan 062 to avoid collision with an unrelated mainline Plan 060 chain. |
 
 ## Pre-Release Verification
 
@@ -106,8 +107,8 @@ Verified monotonic sequence across the plan chain:
 ### Workspace Cleanliness
 
 - Branch: `session/060-profile-menu-fix`
-- Tracking: no upstream configured yet — expected before Stage 1 local commit; Stage 2 will establish remote tracking on push.
-- Current worktree contains Plan 060 changes plus one unrelated historical deployment-doc closure cleanup that will be kept in a separate docs-only commit.
+- Tracking: `origin/session/060-profile-menu-fix` after Stage 2 push.
+- Current worktree was clean at Stage 2 push time.
 
 ## Critique Closure Verification
 
@@ -174,11 +175,11 @@ M src/components/shared/CityEarlyAccessNavbar.tsx
 
 | Document | Domain | Terminal Status |
 |----------|--------|-----------------|
-| 060 Plan | planning | Committed |
-| 060 Implementation | implementation | Committed |
-| 060 Code Review | code-review | Committed |
-| 060 QA | qa | Committed |
-| 060 UAT | uat | Committed |
+| 062 Plan | planning | Released |
+| 062 Implementation | implementation | Released |
+| 062 Code Review | code-review | Released |
+| 062 QA | qa | Released |
+| 062 UAT | uat | Released |
 
 Closed documents for Plan 062: planning, implementation, code-review, qa, uat moved to their respective `closed/` folders.
 
@@ -194,7 +195,6 @@ Closed documents for Plan 062: planning, implementation, code-review, qa, uat mo
 
 ## Next Actions
 
-1. Update Plan 062 lifecycle docs to `Committed` and move them to `closed/`.
-2. Commit historical deployment-orphan cleanup separately.
-3. Commit Plan 062 locally with release version `v0.9.2` and no push.
-4. Hand off to Roadmap / Stage 2 release readiness once the local commit is complete.
+1. Push the release-state docs commit to `origin/session/060-profile-menu-fix`.
+2. Create and push tag `v0.9.2` on the final release-state HEAD.
+3. Track D1-D4 follow-up validation in `agent-output/planning/062-open-actions.md`.

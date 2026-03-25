@@ -2,7 +2,7 @@
 ID: 062
 Origin: 062
 UUID: c062f1a9
-Status: Committed
+Status: Released
 ---
 
 # Code Review: 062 — Profile Menu Fix
@@ -18,6 +18,7 @@ Status: Committed
 |------|---------------|---------|---------|
 | 2026-03-25T22:20Z | Implementer → Code Reviewer | Plan 062 implementation review | Full review of CityEarlyAccessNavbar Profile icon addition; fix-in-review applied for unused import; verdict APPROVED |
 | 2026-03-25T21:33Z | DevOps | Stage 1 closure | Marked code review doc as Committed for release v0.9.2 |
+| 2026-03-25T21:55Z | DevOps | Stage 2 release | Marked code review doc as Released in v0.9.2 |
 
 ## Architecture Alignment
 
