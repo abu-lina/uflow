@@ -132,6 +132,10 @@ jobs:
             fi
             echo "✅ Image pulled successfully"
 
+            # Clean up any stale blue-green container from a previous failed deployment
+            docker stop uflow-new 2>/dev/null || true
+            docker rm uflow-new 2>/dev/null || true
+
             echo "🚀 Starting new container on temporary port 3002 (blue-green deployment)..."
             NEW_CONTAINER=$(docker run -d -p 3002:3000 \
               -e NEXT_PUBLIC_SUPABASE_URL="${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
