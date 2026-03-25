@@ -193,8 +193,37 @@ Closed documents for Plan 062: planning, implementation, code-review, qa, uat mo
 | D4: Stage 3 footer regression browser check | QA | Same session as D1/D2 | Browser verification of existing Profile behavior |
 | Repo baseline vulnerabilities (`picomatch`, `yaml`) | DevOps / Maintainers | Before or during a dependency remediation plan | Audit report or dependency upgrades removing both advisories |
 
+## User Confirmation
+
+| Field | Value |
+|-------|-------|
+| Release summary presented | v0.9.2; Plan 062 only; branch `session/060-profile-menu-fix`; D1-D4 remain deferred follow-ups |
+| User response | `approved` |
+| Timestamp (UTC) | 2026-03-25T21:55Z |
+| Decision | Proceed with Stage 2 push and tag |
+
+## Release Execution
+
+| Step | Status | Evidence |
+|------|--------|----------|
+| Branch push | ✅ PASS | `git push -u origin session/060-profile-menu-fix` succeeded |
+| Compare URL surfaced | ✅ PASS | `https://github.com/abu-lina/uflow/compare/main...session/060-profile-menu-fix` |
+| Compare conflict check | ✅ PASS | `git merge-base --is-ancestor origin/main HEAD` returned `0`; branch is `0 behind / 4 ahead` |
+| Final release-state push | ✅ PASS | `docs(release): Mark Plan 062 released` pushed as `cddce709` |
+| Tag creation | ✅ PASS | `git tag -a v0.9.2 -m "Release v0.9.2 - Plan 062 profile menu fix"` |
+| Tag push | ✅ PASS | `git push origin v0.9.2` succeeded; remote tag `v0.9.2` visible |
+
+## Post-Release Status
+
+| Field | Value |
+|-------|-------|
+| Status | Released |
+| Branch | `session/060-profile-menu-fix` |
+| Compare URL | `https://github.com/abu-lina/uflow/compare/main...session/060-profile-menu-fix` |
+| Release tag | `v0.9.2` |
+| Functional smoke tests | Not executed — this Stage 2 flow pushed branch/tag only and did not publish a runtime environment from this worktree |
+
 ## Next Actions
 
-1. Push the release-state docs commit to `origin/session/060-profile-menu-fix`.
-2. Create and push tag `v0.9.2` on the final release-state HEAD.
-3. Track D1-D4 follow-up validation in `agent-output/planning/062-open-actions.md`.
+1. Execute D1-D4 browser validations from `agent-output/planning/062-open-actions.md` within the stated UAT verification window.
+2. Hand off to Roadmap / Retrospective with release version `v0.9.2` and Plan 062 marked Released.
