@@ -227,19 +227,19 @@ Closed documents for Plan 059: planning, implementation, code-review, qa, uat mo
 |---|---|---|
 | Branch push | ✅ PASS | `git push -u origin session/059-reconcile-reject-comment` created remote branch |
 | Compare state | ✅ PASS | `https://github.com/abu-lina/uflow/compare/main...session/059-reconcile-reject-comment` and local merge-tree check show no conflicts |
-| Tag push | pending | Tag to be created on the final post-release-docs HEAD |
+| Tag push | ✅ PASS | `v0.8.28` pushed on the final release-state HEAD |
 
 ## Post-Release Status
 
 | Field | Value |
 |---|---|
-| Status | Release execution in progress |
+| Status | Released |
 | Branch push timestamp | 2026-03-25T10:56Z |
 | Compare verified conflict-free | 2026-03-25T10:57Z |
+| Release-state commit pushed | 2026-03-25T10:58Z |
 | Functional smoke tests | Not executed — no deployed runtime/environment was published from this worktree; deferred to first UAT deployment via open-actions tracker |
 
 ## Next Actions
 
-1. Commit release-state document updates on top of the pushed branch
-2. Push that release-state commit and then tag `v0.8.28` on the final HEAD
-3. Carry forward the admin smoke gate and audit migration through `agent-output/planning/059-reconcile-plan-062-current-main-open-actions.md`
+1. Carry forward the admin smoke gate and audit migration through `agent-output/planning/059-reconcile-plan-062-current-main-open-actions.md`
+2. Run the deferred admin runtime smoke verification within 24h of first UAT deployment
