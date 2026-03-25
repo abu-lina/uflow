@@ -50,7 +50,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const loadCurrentOffers = async () => {
       try {
-        const stored = localStorage.getItem(`edit_offers_${providerId}`);
+        const stored = localStorage.getItem(`admin_edit_offers_${providerId}`);
         if (stored) {
           setSelectedOfferIds(JSON.parse(stored));
           return;
@@ -89,7 +89,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
         ? prev.filter(id => id !== offerId)
         : [...prev, offerId];
       
-      localStorage.setItem(`edit_offers_${providerId}`, JSON.stringify(newSelection));
+      localStorage.setItem(`admin_edit_offers_${providerId}`, JSON.stringify(newSelection));
       return newSelection;
     });
   };
@@ -119,7 +119,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ id: strin
       setOffers(prev => [...prev, createdOffer]);
       const newSelection = [...selectedOfferIds, createdOffer.offer_id];
         setSelectedOfferIds(newSelection);
-        localStorage.setItem(`edit_offers_${providerId}`, JSON.stringify(newSelection));
+        localStorage.setItem(`admin_edit_offers_${providerId}`, JSON.stringify(newSelection));
         setNewOffer('');
     } catch (error) {
       console.error('Error creating offer:', error);

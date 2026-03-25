@@ -206,7 +206,8 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       />
       <main className="flex flex-1 flex-col pt-[calc(env(safe-area-inset-top)+24px+40px)] px-6 pb-4">
         <ProviderEditForm
-          enableLocalStorage={false}
+          enableLocalStorage={true}
+          localStoragePrefix="admin_"
           provider={provider}
           reviewFooterActions={{
             reject: {

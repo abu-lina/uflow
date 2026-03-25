@@ -50,7 +50,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     const loadCurrentNeeds = async () => {
       try {
-        const stored = localStorage.getItem(`edit_needs_${providerId}`);
+        const stored = localStorage.getItem(`admin_edit_needs_${providerId}`);
         if (stored) {
           setSelectedNeedIds(JSON.parse(stored));
           return;
@@ -89,7 +89,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
         ? prev.filter(id => id !== needId)
         : [...prev, needId];
       
-      localStorage.setItem(`edit_needs_${providerId}`, JSON.stringify(newSelection));
+      localStorage.setItem(`admin_edit_needs_${providerId}`, JSON.stringify(newSelection));
       return newSelection;
     });
   };
@@ -119,7 +119,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
       setNeeds(prev => [...prev, createdNeed]);
       const newSelection = [...selectedNeedIds, createdNeed.need_id];
         setSelectedNeedIds(newSelection);
-        localStorage.setItem(`edit_needs_${providerId}`, JSON.stringify(newSelection));
+        localStorage.setItem(`admin_edit_needs_${providerId}`, JSON.stringify(newSelection));
         setNewNeed('');
     } catch (error) {
       console.error('Error creating need:', error);

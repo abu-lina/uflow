@@ -112,9 +112,9 @@ export default function EditImagesPage({ params }: { params: Promise<{ id: strin
       }
 
       if (imageJson) {
-        localStorage.setItem(`edit_images_${providerId}`, imageJson);
+        localStorage.setItem(`admin_edit_images_${providerId}`, imageJson);
       } else {
-        localStorage.removeItem(`edit_images_${providerId}`);
+        localStorage.removeItem(`admin_edit_images_${providerId}`);
       }
 
       toast.success(t('editProvider.editImages.success'));

@@ -39,7 +39,7 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const loadCurrentServices = async () => {
       try {
-        const stored = localStorage.getItem(`edit_social_${providerId}`);
+        const stored = localStorage.getItem(`admin_edit_social_${providerId}`);
         if (stored) {
           setSelectedServiceIds(JSON.parse(stored));
           return;
@@ -72,7 +72,7 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
         ? prev.filter(id => id !== serviceId)
         : [...prev, serviceId];
       
-      localStorage.setItem(`edit_social_${providerId}`, JSON.stringify(newSelection));
+      localStorage.setItem(`admin_edit_social_${providerId}`, JSON.stringify(newSelection));
       return newSelection;
     });
   };

@@ -25,6 +25,9 @@ interface ProviderEditFormProps {
   /** Whether to read/write localStorage for sub-page state.
    *  Set to false in admin context to avoid stale owner state. Defaults to true. */
   enableLocalStorage?: boolean;
+  /** Key prefix for localStorage draft state.
+   *  Use 'admin_' in admin context to isolate from owner draft state. Defaults to ''. */
+  localStoragePrefix?: string;
   /** Optional custom moderation footer actions for admin review flows. */
   reviewFooterActions?: {
     reject: ProviderEditFooterAction;
@@ -66,6 +69,7 @@ export function ProviderEditForm({
   onSubmitForm,
   subPageBaseUrl,
   enableLocalStorage = true,
+  localStoragePrefix = '',
   reviewFooterActions,
 }: ProviderEditFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -117,35 +121,36 @@ export function ProviderEditForm({
   const syncFromLocalStorage = useCallback(() => {
     if (!enableLocalStorage) return;
     const pid = provider.provider_id;
+    const pfx = localStoragePrefix;
 
-    const storedCategory = localStorage.getItem(`edit_category_${pid}`);
+    const storedCategory = localStorage.getItem(`${pfx}edit_category_${pid}`);
     if (storedCategory) {
       setFormData(prev => prev.categoryId !== storedCategory ? { ...prev, categoryId: storedCategory } : prev);
     }
 
-    const storedOffers = localStorage.getItem(`edit_offers_${pid}`);
+    const storedOffers = localStorage.getItem(`${pfx}edit_offers_${pid}`);
     if (storedOffers) {
       const parsed = JSON.parse(storedOffers) as string[];
       setFormData(prev => JSON.stringify(prev.selectedOfferIds) !== storedOffers ? { ...prev, selectedOfferIds: parsed } : prev);
     }
 
-    const storedNeeds = localStorage.getItem(`edit_needs_${pid}`);
+    const storedNeeds = localStorage.getItem(`${pfx}edit_needs_${pid}`);
     if (storedNeeds) {
       const parsed = JSON.parse(storedNeeds) as string[];
       setFormData(prev => JSON.stringify(prev.selectedNeedIds) !== storedNeeds ? { ...prev, selectedNeedIds: parsed } : prev);
     }
 
-    const storedSocial = localStorage.getItem(`edit_social_${pid}`);
+    const storedSocial = localStorage.getItem(`${pfx}edit_social_${pid}`);
     if (storedSocial) {
       const parsed = JSON.parse(storedSocial) as string[];
       setFormData(prev => JSON.stringify(prev.selectedCommunityServiceIds) !== storedSocial ? { ...prev, selectedCommunityServiceIds: parsed } : prev);
     }
 
-    const storedImages = localStorage.getItem(`edit_images_${pid}`);
+    const storedImages = localStorage.getItem(`${pfx}edit_images_${pid}`);
     if (storedImages) {
       setFormData(prev => prev.images !== storedImages ? { ...prev, images: storedImages } : prev);
     }
-  }, [enableLocalStorage, provider.provider_id]);
+  }, [enableLocalStorage, localStoragePrefix, provider.provider_id]);
 
   // Run on mount
   useEffect(() => {
