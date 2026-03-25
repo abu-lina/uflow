@@ -18,7 +18,7 @@ Plan 060 is ready to be committed locally for `v0.9.1`, but two follow-ups remai
 
 | Item | Owner | Trigger/Due | Evidence to close | Status |
 |---|---|---|---|---|
-| Validate live admin back-navigation in UAT or local dev: category selection persists after returning to `/dashboard/providers/[id]/edit`, then repeat for offers or needs | QA Lead / Operator | Before Stage 2 tag/push for `v0.9.1` | Screenshot or screen recording showing the sub-page selection, browser back-navigation, and persisted value on the edit form | Open |
+| Validate live admin back-navigation in UAT or local dev: category selection persists after returning to `/dashboard/providers/[id]/edit`, then repeat for offers or needs | QA Lead / Operator | Before Stage 2 tag/push for `v0.9.1` | Screenshot sequence provided on 2026-03-25 showing: admin detail -> edit form -> category selection -> persisted category on return -> `1 offers selected` on the edit form after return | Closed |
 | Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject | Future sprint owner | Next admin moderation UX touch | Test coverage proving keys are removed after successful terminal moderation/save action | Open |
 
 ## Changelog
@@ -27,3 +27,4 @@ Plan 060 is ready to be committed locally for `v0.9.1`, but two follow-ups remai
 |---|---|---|
 | 2026-03-25T15:18Z | devops | Created tracker from deferred UAT validations and known low-priority cleanup follow-up |
 | 2026-03-25T15:40Z | devops | User provided screenshot sequence confirming category back-navigation persistence in the admin edit flow. Action remains open because the required second sub-page proof (offers or needs) is still not evidenced. |
+| 2026-03-25T15:43Z | devops | `DF-060-UAT-01` closed. Additional screenshot confirms `1 offers selected` on return to the edit form, satisfying the second sub-page persistence requirement. |
