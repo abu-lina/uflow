@@ -2,7 +2,7 @@
 ID: 059
 Origin: 059
 UUID: 8c41d7ae
-Status: Committed
+Status: Released
 ---
 
 # Implementation 059 — Reconcile Plan 062 with Current Main
@@ -22,6 +22,7 @@ Status: Committed
 | --- | --- | --- | --- |
 | 2026-03-25T09:05Z | Critic → Implementer | Implement Plan 059 | Completed M1–M4: audited current-main moderation architecture, restored backend route/service/schema/audit modules, updated RejectModal to require feedback, refreshed regression tests |
 | 2026-03-25T10:55Z | DevOps | Document closed | Status: Committed |
+| 2026-03-25T10:57Z | DevOps | Released | Included in v0.8.28 release state update |
 
 ---
 

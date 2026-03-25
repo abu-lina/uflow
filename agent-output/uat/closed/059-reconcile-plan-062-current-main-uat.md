@@ -2,7 +2,7 @@
 ID: 059
 Origin: 059
 UUID: 8c41d7ae
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 059 — Reconcile Plan 062 with Current Main
@@ -17,6 +17,7 @@ Status: Committed
 | --- | --- | --- | --- |
 | 2026-03-25T09:50Z | QA → UAT | Value delivery validation for Plan 059 | UAT Complete — CONDITIONAL APPROVAL. All automated gate evidence confirms value delivery. Admin runtime smoke gate deferred (live session infeasible at UAT time). |
 | 2026-03-25T10:55Z | DevOps | Document closed | Status: Committed |
+| 2026-03-25T10:57Z | DevOps | Released | Included in v0.8.28 release state update |
 
 ---
 

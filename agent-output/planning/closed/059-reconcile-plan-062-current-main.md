@@ -2,7 +2,7 @@
 ID: 059
 Origin: 059
 UUID: 8c41d7ae
-Status: Committed
+Status: Released
 ---
 
 
@@ -12,7 +12,7 @@ Status: Committed
 
 - **Target Release**: v0.8.28
 - **Epic Alignment**: Admin provider review / moderation workflow hardening
-- **Status**: Committed for Release v0.8.28
+- **Status**: Released in v0.8.28
 - **Related Issues**: Session `S062-reject-comment-required`; blocked Stage 2 release attempt for closed Plan 062
 
 ## Release Strategy
@@ -241,3 +241,4 @@ None.
 | 2026-03-25T09:44Z | qa | QA complete | QA gates pass (type-check, tests, lint, build). Negative-check evidence recorded for reject-without-feedback via runtime schema script due to Vitest/Zod ESM limitation. Handoff to UAT. |
 | 2026-03-25T09:50Z | uat | UAT Complete — CONDITIONAL APPROVAL | All 5 plan objectives delivered per artifact evidence. Admin runtime smoke gate deferred (MEDIUM severity, 24h post-deploy trigger). `admin_audit_logs` migration deferred. Handoff to DevOps. |
 | 2026-03-25T10:55Z | devops | Document closed | Status: Committed for Release v0.8.28 |
+| 2026-03-25T10:57Z | devops | Released | Stage 2 branch push completed, compare verified conflict-free, and release tag v0.8.28 created on final HEAD |

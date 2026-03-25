@@ -2,7 +2,7 @@
 ID: 059
 Origin: 059
 UUID: 8c41d7ae
-Status: Committed
+Status: Released
 ---
 
 # Code Review: Plan 059 — Reconcile Plan 062 Reject-Comment-Required with Current Main
@@ -272,3 +272,4 @@ The core feature is correctly implemented. The reject-comment enforcement is enf
 |------|-------|
 | 2026-03-25T09:26Z | Code review completed. Verdict: APPROVED_WITH_COMMENTS. F-01/F-02 dispositions required before QA handoff. |
 | 2026-03-25T10:55Z | Document closed. Status: Committed. |
+| 2026-03-25T10:57Z | Document released. Status: Released. |
