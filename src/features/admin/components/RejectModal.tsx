@@ -12,18 +12,21 @@ interface RejectModalProps {
   isLoading?: boolean;
   /** Called when the modal should close (cancel, outside click, or Escape) */
   onClose: () => void;
-  /** Called when rejection is confirmed, with optional feedback */
-  onConfirm: (feedback?: string) => void;
+  /** Called when rejection is confirmed, with required feedback (Plan 059/062) */
+  onConfirm: (feedback: string) => void;
 }
 
 /**
- * Modal for rejecting a provider with optional feedback (Plan 058 M3)
+ * Modal for rejecting a provider with required feedback (Plan 059/062)
  * 
  * Shows a compact modal/popover with:
  * - Provider name
- * - Optional feedback textarea
+ * - Required feedback textarea (rejection reason)
  * - Cancel and Confirm Rejection buttons
  * Dismisses on Escape or outside click
+ * 
+ * Plan 059/062: Rejection requires a non-empty feedback reason.
+ * Confirm button is disabled until valid feedback is entered.
  */
 export function RejectModal({
   isOpen,
@@ -54,9 +57,15 @@ export function RejectModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Plan 059/062: Feedback is required for rejection
+  const isValidFeedback = feedback.trim().length > 0;
+
   const handleConfirm = useCallback(() => {
-    onConfirm(feedback.trim() || undefined);
-  }, [feedback, onConfirm]);
+    // Only confirm if feedback is valid (non-empty after trimming)
+    if (isValidFeedback) {
+      onConfirm(feedback.trim());
+    }
+  }, [feedback, isValidFeedback, onConfirm]);
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -97,12 +106,13 @@ export function RejectModal({
 
             <label className="mb-4 block">
               <span className="mb-1 block text-sm font-medium text-content">
-                Feedback (optional)
+                Rejection Reason <span className="text-danger">*</span>
               </span>
               <textarea
+                aria-required="true"
                 className="w-full rounded-lg border border-neutral-200 p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 disabled={isLoading}
-                placeholder="Provide feedback or reason for rejection..."
+                placeholder="Please provide a reason for rejecting this provider..."
                 rows={3}
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
@@ -119,8 +129,8 @@ export function RejectModal({
                 Cancel
               </button>
               <button
-                className="flex-1 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-dark focus:outline-none focus:ring-2 focus:ring-danger/20 disabled:opacity-50"
-                disabled={isLoading}
+                className="flex-1 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-dark focus:outline-none focus:ring-2 focus:ring-danger/20 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isLoading || !isValidFeedback}
                 type="button"
                 onClick={handleConfirm}
               >

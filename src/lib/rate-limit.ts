@@ -117,6 +117,18 @@ export const rateLimiters = {
     perHour: (identifier: string) =>
       checkRateLimit(identifier, 50, 60 * 60 * 1000, 'create-offer-hour'),
   },
+
+  /**
+   * Admin provider review endpoint
+   * - 5 reviews per minute per admin
+   * - 20 reviews per hour per admin
+   */
+  adminReview: {
+    perMinute: (identifier: string) =>
+      checkRateLimit(identifier, 5, 60 * 1000, 'admin-review-minute'),
+    perHour: (identifier: string) =>
+      checkRateLimit(identifier, 20, 60 * 60 * 1000, 'admin-review-hour'),
+  },
 };
 
 /**

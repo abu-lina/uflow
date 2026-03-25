@@ -4,9 +4,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { RejectModal } from '../RejectModal';
 
 /**
- * Tests for RejectModal component (Plan 058 M3)
+ * Tests for RejectModal component (Plan 059/062)
  * 
- * Modal/popover for rejecting a provider with optional feedback
+ * Modal/popover for rejecting a provider with REQUIRED feedback
+ * Plan 059/062: Rejection requires a non-empty feedback reason
  */
 describe('RejectModal', () => {
   const mockOnConfirm = vi.fn();
@@ -55,7 +56,7 @@ describe('RejectModal', () => {
     expect(screen.getByText(/Amazing Bakery/i)).toBeInTheDocument();
   });
 
-  it('should have an optional feedback textarea', () => {
+  it('should have a required feedback textarea with aria-required', () => {
     render(
       <RejectModal
         isOpen={true}
@@ -65,11 +66,13 @@ describe('RejectModal', () => {
       />
     );
 
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/feedback|reason|comment/i)).toBeInTheDocument();
+    const textarea = screen.getByRole('textbox');
+    expect(textarea).toBeInTheDocument();
+    expect(textarea).toHaveAttribute('aria-required', 'true');
+    expect(screen.getByPlaceholderText(/reason/i)).toBeInTheDocument();
   });
 
-  it('should call onConfirm without feedback when confirmed with empty textarea', async () => {
+  it('should have confirm button disabled when textarea is empty (Plan 059/062)', async () => {
     render(
       <RejectModal
         isOpen={true}
@@ -80,12 +83,57 @@ describe('RejectModal', () => {
     );
 
     const confirmButton = screen.getByRole('button', { name: /confirm.*reject/i });
+    expect(confirmButton).toBeDisabled();
+    
+    // Clicking disabled button should not call onConfirm
     fireEvent.click(confirmButton);
-
-    expect(mockOnConfirm).toHaveBeenCalledWith(undefined);
+    expect(mockOnConfirm).not.toHaveBeenCalled();
   });
 
-  it('should call onConfirm with feedback when provided', async () => {
+  it('should enable confirm button when valid feedback is entered (Plan 059/062)', async () => {
+    render(
+      <RejectModal
+        isOpen={true}
+        providerName="Test Provider"
+        onClose={mockOnClose}
+        onConfirm={mockOnConfirm}
+      />
+    );
+
+    const textarea = screen.getByRole('textbox');
+    const confirmButton = screen.getByRole('button', { name: /confirm.*reject/i });
+    
+    // Initially disabled
+    expect(confirmButton).toBeDisabled();
+    
+    // Enter valid feedback
+    fireEvent.change(textarea, { target: { value: 'Does not meet community guidelines' } });
+    
+    // Should now be enabled
+    expect(confirmButton).not.toBeDisabled();
+  });
+
+  it('should keep confirm button disabled for whitespace-only feedback (Plan 059/062)', async () => {
+    render(
+      <RejectModal
+        isOpen={true}
+        providerName="Test Provider"
+        onClose={mockOnClose}
+        onConfirm={mockOnConfirm}
+      />
+    );
+
+    const textarea = screen.getByRole('textbox');
+    const confirmButton = screen.getByRole('button', { name: /confirm.*reject/i });
+    
+    // Enter whitespace-only feedback
+    fireEvent.change(textarea, { target: { value: '   \n\t  ' } });
+    
+    // Should still be disabled
+    expect(confirmButton).toBeDisabled();
+  });
+
+  it('should call onConfirm with trimmed feedback when provided', async () => {
     render(
       <RejectModal
         isOpen={true}
@@ -148,6 +196,21 @@ describe('RejectModal', () => {
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(dialog).toHaveAttribute('aria-labelledby');
+  });
+
+  it('should show required indicator for rejection reason (Plan 059/062)', () => {
+    render(
+      <RejectModal
+        isOpen={true}
+        providerName="Test Provider"
+        onClose={mockOnClose}
+        onConfirm={mockOnConfirm}
+      />
+    );
+
+    // Should show "Rejection Reason" label with required indicator
+    expect(screen.getByText(/rejection reason/i)).toBeInTheDocument();
+    expect(screen.getByText('*')).toBeInTheDocument();
   });
 
   it('should show loading state when isLoading is true', () => {

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.28] - 2026-03-25
+
+### Added
+
+- **Admin provider review route restored on current main (Plan 059)**: Reintroduces `PATCH /api/admin/review-provider` on top of current `origin/main`, including admin/moderator authorization, request size guard, optimistic concurrency handling, and admin review rate limiting (`5/min`, `20/hour`).
+
+### Changed
+
+- **Rejecting a provider now requires a non-empty reason again (Plan 059)**: `RejectModal` now disables confirmation until a trimmed rejection reason is present, shows the field as required, and passes trimmed text through the `/providers` moderation flow while leaving approval as a one-click action.
+
+### Fixed
+
+- **Current-main `/providers` moderation no longer 404s on reject/approve (Plan 059)**: Restored the missing validation/service/audit modules removed in `v0.8.24`, so `useProviderReview` once again targets a live backend contract instead of the deleted route.
+- **Server-side validation now blocks bypass attempts for comment-free rejections (Plan 059)**: `providerReviewUpdateSchema` enforces that `reviewStatus: 'rejected'` includes a non-empty trimmed `reviewFeedback`, preserving accountability even if the client UI is bypassed.
+
 ## [0.8.27] - 2026-03-24
 
 ### Added
