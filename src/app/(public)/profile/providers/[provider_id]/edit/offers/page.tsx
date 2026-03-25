@@ -15,6 +15,7 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOfferIds, setSelectedOfferIds] = useState<string[]>([]);
+  const [providerCategoryId, setProviderCategoryId] = useState<string | null>(null);
   const [newOffer, setNewOffer] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
@@ -59,12 +60,17 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
         // If no localStorage value, fetch current provider offers
         const { data, error } = await supabase
           .from('providers')
-          .select('offers_ids')
+          .select('offers_ids, category_id')
           .eq('provider_id', resolvedParams.provider_id)
           .single();
 
-        if (!error && data?.offers_ids) {
-          setSelectedOfferIds(data.offers_ids);
+        if (!error && data) {
+          if (data.offers_ids) {
+            setSelectedOfferIds(data.offers_ids);
+          }
+          if (data.category_id) {
+            setProviderCategoryId(data.category_id);
+          }
         }
       } catch (error) {
         console.error('Error loading current offers:', error);
@@ -95,11 +101,12 @@ export default function EditOffersPage({ params }: { params: Promise<{ provider_
     
     setIsCreating(true);
     try {
-      // Migration 006 made category_id NOT NULL; default to 'Sonstiges' (Other)
+      // Migration 006 made category_id NOT NULL; use provider's category or default to 'Sonstiges' (Other)
       const DEFAULT_CATEGORY_ID = '5e5d910d-d790-4184-a061-9cd74d0950e8';
+      const effectiveCategoryId = providerCategoryId || DEFAULT_CATEGORY_ID;
       const { data, error } = await supabase
         .from('offers')
-        .insert([{ name_de: newOffer.trim(), category_id: DEFAULT_CATEGORY_ID }])
+        .insert([{ name_de: newOffer.trim(), category_id: effectiveCategoryId }])
         .select()
         .single();
       

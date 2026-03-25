@@ -17,6 +17,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedNeedIds, setSelectedNeedIds] = useState<string[]>([]);
+  const [providerCategoryId, setProviderCategoryId] = useState<string | null>(null);
   const [newNeed, setNewNeed] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
@@ -57,12 +58,17 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
 
         const { data, error } = await supabase
           .from('providers')
-          .select('needs_ids')
+          .select('needs_ids, category_id')
           .eq('provider_id', providerId)
           .single();
 
-        if (!error && data?.needs_ids) {
-          setSelectedNeedIds(data.needs_ids);
+        if (!error && data) {
+          if (data.needs_ids) {
+            setSelectedNeedIds(data.needs_ids);
+          }
+          if (data.category_id) {
+            setProviderCategoryId(data.category_id);
+          }
         }
       } catch (error) {
         console.error('Error loading current needs:', error);
@@ -100,7 +106,7 @@ export default function EditNeedsPage({ params }: { params: Promise<{ id: string
       const response = await fetch('/api/admin/needs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: sanitizedName }),
+        body: JSON.stringify({ name: sanitizedName, categoryId: providerCategoryId }),
       });
 
       const responseData = await response.json().catch(() => ({}));
