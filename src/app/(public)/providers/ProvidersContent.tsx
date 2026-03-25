@@ -312,9 +312,9 @@ export function ProvidersContent({
     [searchResults],
   );
 
-  // Plan 058: Handle reject confirmation from modal
+  // Plan 059/062: Handle reject confirmation from modal (feedback is now required)
   const handleRejectConfirm = useCallback(
-    async (feedback?: string) => {
+    async (feedback: string) => {
       if (rejectModalState.providerId) {
         try {
           await rejectProvider(rejectModalState.providerId, feedback);
