@@ -26,3 +26,4 @@ Plan 060 is ready to be committed locally for `v0.9.1`, but two follow-ups remai
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-03-25T15:18Z | devops | Created tracker from deferred UAT validations and known low-priority cleanup follow-up |
+| 2026-03-25T15:40Z | devops | User provided screenshot sequence confirming category back-navigation persistence in the admin edit flow. Action remains open because the required second sub-page proof (offers or needs) is still not evidenced. |
