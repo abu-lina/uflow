@@ -239,7 +239,18 @@ Closed documents for Plan 059: planning, implementation, code-review, qa, uat mo
 | Release-state commit pushed | 2026-03-25T10:58Z |
 | Functional smoke tests | Not executed — no deployed runtime/environment was published from this worktree; deferred to first UAT deployment via open-actions tracker |
 
+## Post-Release UAT Deployment Remediation
+
+| Field | Value |
+|---|---|
+| Incident timestamp | 2026-03-25T11:14Z |
+| Failure | GitHub Actions `Deploy to UAT` Buildx build failed because `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` were empty at Docker build time |
+| Root cause | `.github/workflows/deploy-uat.yml` repeated inline UAT-or-default secret fallback expressions across Buildx and remote `docker run` steps, which made the effective values brittle and hard to verify |
+| Remediation | Added `resolve-uat-env` step outputs for resolved secret values and rewired Buildx plus both `docker run` invocations to consume those concrete outputs |
+| Scope | CI workflow only; no application code, Dockerfile logic, or release tag contents changed |
+
 ## Next Actions
 
 1. Carry forward the admin smoke gate and audit migration through `agent-output/planning/059-reconcile-plan-062-current-main-open-actions.md`
 2. Run the deferred admin runtime smoke verification within 24h of first UAT deployment
+3. Re-run `Deploy to UAT` against `session/059-reconcile-reject-comment` after pushing the workflow fix and confirm Docker build args resolve correctly
