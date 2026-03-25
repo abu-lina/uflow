@@ -2,7 +2,7 @@
 ID: 063
 Origin: 063
 UUID: b7e3a1d9
-Status: Committed
+Status: Released
 ---
 
 # Code Review: 063 — Provider Detail Safe-Area Top Gap
@@ -14,6 +14,7 @@ Status: Committed
 | 2026-03-25T21:28Z  | Code Reviewer | Initial review — APPROVED_WITH_COMMENTS; Fix-in-Review applied; status → Code Review Approved |
 | 2026-03-25T21:46Z  | DevOps | Status → Committed for Release v0.9.2 |
 | 2026-03-25T22:05Z  | DevOps | Target Release adjusted to v0.9.3 after origin/main/tag advanced to v0.9.2 |
+| 2026-03-25T22:25Z  | DevOps | Status → Released as v0.9.3 |
 
 ## Implementation Reference
 

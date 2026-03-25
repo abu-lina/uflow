@@ -10,7 +10,7 @@ Status: Active
 ## Summary
 
 - UAT approved Plan 063 for release, but physical iOS rendering evidence could not be captured in this environment because `env(safe-area-inset-top)` behavior cannot be trusted in jsdom.
-- DevOps Stage 2 also requires a valid environment configuration so the production build can complete without the pre-existing `NEXT_PUBLIC_SUPABASE_URL` failure.
+- Release v0.9.3 is now published. The build-environment prerequisite was satisfied locally during Stage 2; the remaining follow-ups are the deferred physical-device validations.
 
 ## Open Actions
 
@@ -19,10 +19,11 @@ Status: Active
 | Manual notch / Dynamic Island validation on provider detail page | DevOps / QA operator | Before or within 24 hours of production release tag | Screenshot showing hero + back button below status area on a notch/Dynamic Island iPhone (for example iPhone 15 Pro) | Open |
 | Manual non-notch regression validation on provider detail page | DevOps / QA operator | Before or within 24 hours of production release tag | Screenshot showing top spacing unchanged on a non-notch iPhone viewport (for example iPhone SE) | Open |
 | Loading skeleton safe-area flash check | DevOps / QA operator | Same validation session as device checks | Screenshot or operator note confirming the loading skeleton does not flash under the status area | Open |
-| Production build environment readiness (`NEXT_PUBLIC_SUPABASE_URL`) | DevOps / Operator | Before Stage 2 release execution | `npm run build` exits 0 in the release environment with valid env vars present | Open |
+| Production build environment readiness (`NEXT_PUBLIC_SUPABASE_URL`) | DevOps / Operator | Before Stage 2 release execution | `npm run build` exits 0 in the release environment with valid env vars present | Closed |
 
 ## Changelog
 
 | Date (UTC) | Agent | Change |
 |------------|-------|--------|
 | 2026-03-25T21:46Z | DevOps | Created tracker from UAT deferred iOS validation and pre-existing build-environment dependency |
+| 2026-03-25T22:25Z | DevOps | Marked build-environment readiness closed after successful real-env build for release v0.9.3 |

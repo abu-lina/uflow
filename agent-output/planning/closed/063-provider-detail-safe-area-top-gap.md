@@ -2,7 +2,7 @@
 ID: 063
 Origin: 063
 UUID: b7e3a1d9
-Status: Committed
+Status: Released
 ---
 
 # 063 — Provider Detail Safe-Area Top Gap Remediation Plan
@@ -18,12 +18,13 @@ Status: Committed
 | 2026-03-25T21:45Z | UAT | Status → UAT Approved; APPROVED FOR RELEASE |
 | 2026-03-25T21:46Z | DevOps | Status → Committed for Release v0.9.2 |
 | 2026-03-25T22:05Z | DevOps | Target Release adjusted to v0.9.3 after origin/main/tag advanced to v0.9.2 |
+| 2026-03-25T22:25Z | DevOps | Status → Released as v0.9.3; branch pushed, tag created, local smoke checks passed |
 
 ## Plan Header
 
 - **Target Release**: v0.9.3
 - **Epic Alignment**: Bugfix follow-up to mobile viewport and safe-area hardening work; supports the roadmap objective of making provider discovery feel polished and trustworthy on mobile.
-- **Status**: Committed for Release v0.9.3
+- **Status**: Released as v0.9.3
 - **Related Issues**: None
 
 ## Release Strategy

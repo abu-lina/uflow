@@ -2,7 +2,7 @@
 ID: 063
 Origin: 063
 UUID: b7e3a1d9
-Status: Committed
+Status: Released
 ---
 
 # Implementation: 063 — Provider Detail Safe-Area Top Gap Remediation
@@ -22,6 +22,7 @@ Status: Committed
 | 2026-03-25T21:24Z  | Planner → Implementer | Initial implementation | M1–M3 complete; ready for Code Review handoff |
 | 2026-03-25T21:46Z  | UAT → DevOps | Stage 1 release prep | Status → Committed for Release v0.9.2; version artifacts deferred item completed |
 | 2026-03-25T22:05Z  | DevOps | Version collision correction | Target release adjusted to v0.9.3 after origin/main/tag advanced to v0.9.2 |
+| 2026-03-25T22:25Z  | DevOps | Release execution complete | Status → Released as v0.9.3 |
 
 ## Implementation Summary
 

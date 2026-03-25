@@ -2,7 +2,7 @@
 ID: 063
 Origin: 063
 UUID: b7e3a1d9
-Status: Committed
+Status: Released
 ---
 
 # QA Report: 063 — Provider Detail Safe-Area Top Gap
@@ -18,6 +18,7 @@ Status: Committed
 | 2026-03-25T21:35Z | Planner/Impl/CR | Test strategy + execution for Plan 063 | Verified CSS-only safe-area fix with targeted and full automated gates; manual notch/non-notch validation deferred to QA/UAT owner path |
 | 2026-03-25T21:46Z | UAT → DevOps | Stage 1 release prep | Status → Committed for Release v0.9.2 |
 | 2026-03-25T22:05Z | DevOps | Version collision correction | Target release adjusted to v0.9.3 after origin/main/tag advanced to v0.9.2 |
+| 2026-03-25T22:25Z | DevOps | Status → Released as v0.9.3 |
 
 ## Timeline
 
