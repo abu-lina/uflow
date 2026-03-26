@@ -2,7 +2,7 @@
 ID: 063
 Origin: 063
 UUID: a7e4f3b2
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: 063 — Restore Mobile Profile Entry When Logged Out

@@ -2,7 +2,7 @@
 ID: 063
 Origin: 063
 UUID: a7e4f3b2
-Status: QA Complete
+Status: Released
 ---
 
 # Plan 063 — Restore Mobile Profile Entry When Logged Out
@@ -11,7 +11,7 @@ Status: QA Complete
 
 - Target Release: next available patch after current `origin/main` version (`0.9.5`); confirm at DevOps Stage 1
 - Epic Alignment: Mobile Navigation Reliability (Early Access / onboarding stages)
-- Status: Committed
+- Status: Released
 - Related Issues: None
 - Input Analysis: `agent-output/analysis/closed/063-profile-menu-stage-gating-analysis.md`
 

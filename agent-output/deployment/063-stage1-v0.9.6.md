@@ -130,11 +130,27 @@ Excluded from commit (unrelated):
 
 ## Stage 1 Commit
 
-- Status: **Committed locally** (Stage 2 pending user approval)
+- Status: **Committed locally** (Stage 2 approved; push executed)
 - Commit message type: `fix(nav)`
 - Refs: PLAN-063
 
 ---
+
+## Stage 2 — User Confirmation
+
+- User approval: **YES** (recorded in chat on 2026-03-26)
+- Compare URL: https://github.com/abu-lina/uflow/compare/main...session/060-profile-menu-fix
+
+## Stage 2 — Release Execution
+
+- Branch push: `git push --force-with-lease origin session/060-profile-menu-fix`
+- Result: forced update succeeded at **2026-03-26T22:34Z**
+- Note: GitHub security banner reports vulnerabilities on default branch; not introduced by Plan 063 (no new deps)
+
+## Stage 2 — Tagging (Pending)
+
+- Tag to create: `v0.9.6` (annotated) on the final release HEAD
+- Push: `git push origin v0.9.6`
 
 ## Known Limitations (pre-operation)
 
