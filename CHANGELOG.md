@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-03-26
+
+### Fixed
+
+- **iOS touch blocked at slot level: ancestor pointer-events:none prevents Safari hit-testing (Plan 062 deep fix)**: iOS Safari stops DOM hit-test traversal at the first `pointer-events: none` ancestor, unlike Chrome which correctly propagates child overrides per spec. The previous v0.9.4 fix restored `pointer-events: auto` on the active nav *wrapper* only, but the outer `.mobile-bottom-ui-slot` container still had `pointer-events: none`, causing Safari to abort before reaching the wrapper. Fix: add `pointer-events: auto` to `.mobile-bottom-ui-slot` itself when `data-mobile-ui` is `footer` or `navbar`, eliminating the blocking ancestor from the entire hit-test path. Chrome DevTools mobile emulation was silent on this because Chrome's engine does not share Safari's non-compliant hit-test propagation behaviour.
+
 ## [0.9.4] - 2026-03-26
 
 ### Fixed
