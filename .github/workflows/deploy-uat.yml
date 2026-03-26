@@ -163,6 +163,12 @@ jobs:
             docker stop uflow-uat-new 2>/dev/null || true
             docker rm uflow-uat-new 2>/dev/null || true
 
+            echo "🧹 Reclaiming Docker disk space before pulling the new UAT image..."
+            docker container prune -f || true
+            docker image prune -af || true
+            docker builder prune -af || true
+            docker system df || true
+
             echo "🚀 Starting new UAT container on temporary port 3003 (blue-green deployment)..."
             NEW_CONTAINER=$(docker run -d -p 3003:3000 \
               -e NEXT_PUBLIC_SUPABASE_URL="${{ steps.resolve-uat-env.outputs.supabase_url }}" \
