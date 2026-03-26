@@ -447,6 +447,16 @@
     pointer-events: none;
   }
 
+  /* iOS Safari fix: restore pointer-events at the SLOT level when a nav is active.
+     Safari stops DOM hit-test traversal at the first pointer-events:none ancestor,
+     unlike Chrome which lets child pointer-events:auto override per spec.
+     Setting pointer-events:auto on the slot breaks the blocking chain so fixed
+     nav children are reachable on real iOS devices. */
+  .mobile-bottom-ui-slot[data-mobile-ui='footer'],
+  .mobile-bottom-ui-slot[data-mobile-ui='navbar'] {
+    pointer-events: auto;
+  }
+
   .mobile-bottom-ui-slot[data-mobile-ui='footer'] .mobile-footer-bar-wrapper {
     visibility: visible;
     pointer-events: auto;
