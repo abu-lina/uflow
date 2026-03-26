@@ -449,10 +449,12 @@
 
   .mobile-bottom-ui-slot[data-mobile-ui='footer'] .mobile-footer-bar-wrapper {
     visibility: visible;
+    pointer-events: auto;
   }
 
   .mobile-bottom-ui-slot[data-mobile-ui='navbar'] .city-navbar-wrapper {
     visibility: visible;
+    pointer-events: auto;
   }
 
   h1,
