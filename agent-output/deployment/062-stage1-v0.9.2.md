@@ -24,7 +24,7 @@ Status: Active
 |------------|-------|--------|
 | 2026-03-25T21:33Z | DevOps | Stage 1 initiated. UAT is APPROVED FOR RELEASE. Version pre-flight confirmed latest released tag `v0.9.1` and `origin/main` version `0.9.1`, so Plan 062 is committed for `v0.9.2`. Local version artifacts were corrected from `0.9.0` to `0.9.2`. |
 | 2026-03-25T21:55Z | DevOps | Stage 2 branch push complete. User approved release, branch rebased cleanly onto `origin/main`, compare is conflict-free, and provisional Plan 060 artifacts were remapped to Plan 062 to avoid collision with an unrelated mainline Plan 060 chain. |
-| 2026-03-26 | DevOps | Post-release iOS hotfix prepared for next patch `v0.9.4`. Version artifacts were advanced from `0.9.2` to `0.9.4` so the fix can merge onto `main` without reusing the already-published `v0.9.2` version or the existing `v0.9.3` tag. |
+| 2026-03-26 | DevOps | Post-release iOS hotfix prepared for next patch `v0.9.3`. Version artifacts were advanced from `0.9.2` to `0.9.3` so the fix can merge onto `main` without reusing the already-published `v0.9.2` version. |
 
 ## Pre-Release Verification
 
@@ -226,7 +226,7 @@ Closed documents for Plan 062: planning, implementation, code-review, qa, uat mo
 
 ## Post-Release Hotfix (2026-03-26)
 
-**Status**: CRITICAL iOS regression discovered during deferred D1 validation; hotfix prepared for next patch `v0.9.4` and awaiting merge to main
+**Status**: CRITICAL iOS regression discovered during deferred D1 validation; hotfix prepared for next patch `v0.9.3` and awaiting merge to main
 
 ### Timeline
 
@@ -263,7 +263,7 @@ Added `pointer-events: auto;` to both active wrapper visibility rules:
 | Action | Status |
 |--------|--------|
 | Hotfix committed to branch | ⏳ Pending |
-| Version artifacts advanced to `0.9.4` | ✅ Complete |
+| Version artifacts advanced to `0.9.3` | ✅ Complete |
 | Merge to main | ⏳ Blocked on hotfix commit |
 | UAT deployment | ⏳ Blocked on merge |
 | D1 re-validation (iOS) | ⏳ Blocked on UAT deployment |
