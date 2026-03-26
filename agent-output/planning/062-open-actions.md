@@ -29,26 +29,41 @@ Status: Active
 
 **Severity**: CRITICAL  
 **Discovered by**: User real-device iOS testing during D1 validation  
-**Status**: Hotfix applied, pending merge + UAT deployment verification
+**Status**: Two-part root cause fully resolved; pending merge + UAT deployment verification
 
-#### Symptom
-Profile icon in `CityEarlyAccessNavbar` visible but unresponsive to touch on real iOS devices. Desktop Chrome DevTools mobile emulation showed no issue.
+#### Root Cause (Complete)
 
-#### Root Cause
-Parent wrapper div (`.city-navbar-wrapper` in `src/styles/globals.css` lines 447-457) had `pointer-events: none` that was never restored when the wrapper became visible. iOS WebKit does not allow child elements with `pointer-events: auto` to override parent `pointer-events: none`, unlike Chrome's rendering engine.
+Two layers of `pointer-events: none` were blocking iOS Safari hit-testing:
 
-#### Fix Applied
-Added `pointer-events: auto;` to both active wrapper rules in `globals.css`:
-- `.mobile-bottom-ui-slot[data-mobile-ui='footer'] .mobile-footer-bar-wrapper`
-- `.mobile-bottom-ui-slot[data-mobile-ui='navbar'] .city-navbar-wrapper`
+| Layer | Class | Property | State |
+|-------|-------|----------|-------|
+| Slot | `.mobile-bottom-ui-slot` | `pointer-events: none` | **Never restored** → Safari bails here |
+| Wrapper | `.city-navbar-wrapper` | `pointer-events: none` → restored to `auto` when active | Fixed in first pass — Chrome respects this; iOS does not |
+| Nav | `<nav>` | `pointer-events: auto` (Tailwind class) | Never reached on iOS due to slot-level block |
 
-**Files changed**: `src/styles/globals.css` (lines 453-457)
+**Chrome behaviour** (spec-compliant): child `pointer-events: auto` overrides ancestor `pointer-events: none`  
+**iOS Safari behaviour** (non-compliant / known bug): stops DOM hit-test traversal at the first `pointer-events: none` ancestor regardless of child overrides; Chrome DevTools mock-mobile uses Chrome's engine so the bug is invisible there
+
+#### Fixes Applied
+
+**Pass 1** (wrapper level — `pointer-events: auto` on active wrappers): Merged to main; insufficient on iOS alone  
+**Pass 2** (slot level — `pointer-events: auto` on the slot itself when active): Branch `session/060-profile-menu-fix` commit `a0f8379d`; restores the slot so no blocking ancestor exists in the hit-test path
+
+```css
+/* Pass 2 — slot level, committed a0f8379d */
+.mobile-bottom-ui-slot[data-mobile-ui='footer'],
+.mobile-bottom-ui-slot[data-mobile-ui='navbar'] {
+  pointer-events: auto;
+}
+```
+
+**Files changed**: `src/styles/globals.css` (both passes)
 
 #### Impact Assessment
 - **Stage 1/2 users**: Profile icon was non-functional on iOS (complete loss of account-entry path)
-- **Stage 3 users**: Likely also affected (same wrapper pattern used for `MobileFooterBar`)
-- **Desktop users**: No impact
-- **Android Chrome/Firefox mobile**: Unknown - requires verification
+- **Stage 3 users**: Same wrapper pattern affected; Pass 2 also fixes `MobileFooterBar` on iOS
+- **Desktop**: Unaffected
+- **Android Chrome/Firefox mobile**: No issue (compliant engines)
 
 #### Next Actions
 1. ✅ Hotfix applied to branch `session/060-profile-menu-fix`

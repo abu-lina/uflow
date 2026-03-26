@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.9.3] - 2026-03-26
+## [0.9.6] - 2026-03-26
+
+### Fixed
+
+- **Mobile auth entry restored for fresh and logged-out users (Plan 063)**: Fresh users (no localStorage / incognito / new device) on `/` now always see `CityEarlyAccessNavbar` with a Profile icon. Previously, `shouldShowCityEarlyAccessNavbar` gated `/` behind `hasCompletedOnboarding()`, which is always `false` for fresh users, leaving them with no mobile auth entry point.
+- **Authentication routes unblocked in early-access mode (Plan 063)**: `/login`, `/signup`, `/forgot-password`, and `/reset-password` were listed as app routes in the middleware and redirected to `/providers` when `isAppLaunched=false`. Auth routes are now always public regardless of waitlist/launch status.
+- **Navbar hidden during onboarding splash screens (Plan 063)**: The `CityEarlyAccessNavbar` now respects `isSplashVisible`, matching the long-standing `shouldShowMobileFooter` behaviour. The navbar no longer appears during first-visit splash/onboarding screens.
+
+
 
 ### Fixed
 

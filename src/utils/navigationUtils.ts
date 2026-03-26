@@ -321,6 +321,7 @@ export const isProviderDetailPage = (pathname: string): boolean => {
 /**
  * Determines if CityEarlyAccessNavbar should be shown
  * @param pathname - Current pathname
+ * @param isSplashVisible - Whether splash screen is visible
  * @param isAppLaunched - Whether app is launched (Stage 3)
  * @param user - Current authenticated user
  * @param stage - Current app stage ('stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading')
@@ -328,6 +329,7 @@ export const isProviderDetailPage = (pathname: string): boolean => {
  */
 export const shouldShowCityEarlyAccessNavbar = (
   pathname: string,
+  isSplashVisible: boolean,
   isAppLaunched: boolean,
   _user: User | null,
   stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading'
@@ -338,16 +340,25 @@ export const shouldShowCityEarlyAccessNavbar = (
     return false;
   }
 
-  // Check if onboarding is complete
-  const onboardingComplete = hasCompletedOnboarding();
+  // Hide navbar when splash is visible (even for returning users)
+  // Matches shouldShowMobileFooter behavior to prevent navbar during onboarding screens
+  if (isSplashVisible) {
+    return false;
+  }
 
-  // Show on root if onboarding is complete
-  if (pathname === '/' && onboardingComplete) {
+  // Always show on root `/` — it is the primary mobile auth-entry path.
+  // Fresh users (no localStorage) must see the Profile icon to log in.
+  // Plan 063 / Bug B: previously gated behind hasCompletedOnboarding(),
+  // which blocked fresh users entirely from accessing auth on mobile.
+  if (pathname === '/') {
     return true;
   }
 
-  // Hide on onboarding pages if onboarding is not complete
-  const onboardingPages = ['/', '/about', '/welcome'];
+  // Check if onboarding is complete
+  const onboardingComplete = hasCompletedOnboarding();
+
+  // Hide on other onboarding pages if onboarding is not complete
+  const onboardingPages = ['/about', '/welcome'];
   if (onboardingPages.includes(pathname) && !onboardingComplete) {
     return false;
   }
