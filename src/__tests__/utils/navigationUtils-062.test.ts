@@ -49,7 +49,7 @@ describe('Plan 062 — Mobile nav selection: Stage/Auth matrix', () => {
     });
 
     it('hides CityEarlyAccessNavbar for any user', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/', true, null, 'stage3')).toBe(false);
+      expect(shouldShowCityEarlyAccessNavbar('/', false, true, null, 'stage3')).toBe(false);
     });
   });
 
@@ -62,11 +62,11 @@ describe('Plan 062 — Mobile nav selection: Stage/Auth matrix', () => {
     });
 
     it('shouldShowCityEarlyAccessNavbar returns true on root with onboarding complete', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/', false, null, 'stage1')).toBe(true);
+      expect(shouldShowCityEarlyAccessNavbar('/', false, false, null, 'stage1')).toBe(true);
     });
 
     it('shouldShowCityEarlyAccessNavbar returns true for Stage 2 on /providers', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/providers', false, null, 'stage2')).toBe(true);
+      expect(shouldShowCityEarlyAccessNavbar('/providers', false, false, null, 'stage2')).toBe(true);
     });
   });
 
@@ -92,7 +92,7 @@ describe('Plan 062 — Mobile nav selection: Stage/Auth matrix', () => {
     });
 
     it('shouldShowCityEarlyAccessNavbar returns false for /about', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/about', false, null, 'stage1')).toBe(false);
+      expect(shouldShowCityEarlyAccessNavbar('/about', false, false, null, 'stage1')).toBe(false);
     });
   });
 });

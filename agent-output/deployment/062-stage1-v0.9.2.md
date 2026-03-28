@@ -24,6 +24,7 @@ Status: Active
 |------------|-------|--------|
 | 2026-03-25T21:33Z | DevOps | Stage 1 initiated. UAT is APPROVED FOR RELEASE. Version pre-flight confirmed latest released tag `v0.9.1` and `origin/main` version `0.9.1`, so Plan 062 is committed for `v0.9.2`. Local version artifacts were corrected from `0.9.0` to `0.9.2`. |
 | 2026-03-25T21:55Z | DevOps | Stage 2 branch push complete. User approved release, branch rebased cleanly onto `origin/main`, compare is conflict-free, and provisional Plan 060 artifacts were remapped to Plan 062 to avoid collision with an unrelated mainline Plan 060 chain. |
+| 2026-03-26 | DevOps | Post-release iOS hotfix prepared for next patch `v0.9.3`. Version artifacts were advanced from `0.9.2` to `0.9.3` so the fix can merge onto `main` without reusing the already-published `v0.9.2` version. |
 
 ## Pre-Release Verification
 
@@ -223,7 +224,57 @@ Closed documents for Plan 062: planning, implementation, code-review, qa, uat mo
 | Release tag | `v0.9.2` |
 | Functional smoke tests | Not executed — this Stage 2 flow pushed branch/tag only and did not publish a runtime environment from this worktree |
 
+## Post-Release Hotfix (2026-03-26)
+
+**Status**: CRITICAL iOS regression discovered during deferred D1 validation; hotfix prepared for next patch `v0.9.3` and awaiting merge to main
+
+### Timeline
+
+| Date (UTC) | Event |
+|------------|-------|
+| 2026-03-25T21:55Z | Stage 2 Released; branch/tag pushed |
+| 2026-03-26 | User executed D1 validation on real iOS device |
+| 2026-03-26 | **iOS touch event failure**: Profile icon visible but unresponsive |
+| 2026-03-26 | Root cause identified: wrapper `pointer-events: none` blocking iOS WebKit touch |
+| 2026-03-26 | Hotfix applied to `src/styles/globals.css` |
+| 2026-03-26 | D1 reopened + D5 added to track Stage 3 iOS regression |
+
+### Root Cause
+
+Parent wrapper div (`.city-navbar-wrapper` in `src/styles/globals.css`) had `pointer-events: none` that was never restored when wrapper became visible (lines 456-457 only set `visibility: visible`). iOS WebKit does not allow child `pointer-events: auto` to override parent `pointer-events: none`, unlike Chrome's engine. Desktop DevTools mobile emulation with Chrome engine did not surface this iOS-specific behavior.
+
+### Fix Applied
+
+Added `pointer-events: auto;` to both active wrapper visibility rules:
+- `.mobile-bottom-ui-slot[data-mobile-ui='footer'] .mobile-footer-bar-wrapper { visibility: visible; pointer-events: auto; }`
+- `.mobile-bottom-ui-slot[data-mobile-ui='navbar'] .city-navbar-wrapper { visibility: visible; pointer-events: auto; }`
+
+**Changed files**: `src/styles/globals.css` (lines 453-457)
+
+### Impact
+
+- **Critical severity**: Complete loss of Profile/account-entry on iOS for Stage 1/2 users
+- **Stage 3 users**: Likely also affected (same wrapper pattern)
+- **Desktop**: Unaffected
+- **Android**: Unknown (requires verification)
+
+### Remediation Status
+
+| Action | Status |
+|--------|--------|
+| Hotfix committed to branch | ⏳ Pending |
+| Version artifacts advanced to `0.9.3` | ✅ Complete |
+| Merge to main | ⏳ Blocked on hotfix commit |
+| UAT deployment | ⏳ Blocked on merge |
+| D1 re-validation (iOS) | ⏳ Blocked on UAT deployment |
+| D5 Stage 3 iOS validation | ⏳ Blocked on UAT deployment |
+
+**Documentation updated**: `agent-output/planning/062-open-actions.md` (incident log and reopened items)
+
 ## Next Actions
 
-1. Execute D1-D4 browser validations from `agent-output/planning/062-open-actions.md` within the stated UAT verification window.
-2. Hand off to Roadmap / Retrospective with release version `v0.9.2` and Plan 062 marked Released.
+1. **IMMEDIATE**: Commit hotfix to `session/060-profile-menu-fix` branch
+2. **IMMEDIATE**: Merge compare URL to `main` (https://github.com/abu-lina/uflow/compare/main...session/060-profile-menu-fix)
+3. **IMMEDIATE**: UAT auto-deployment via GitHub Actions will trigger on merge to `main`
+4. Re-execute D1-D5 browser validations from `agent-output/planning/062-open-actions.md` after UAT deployment completes
+5. Hand off to Roadmap / Retrospective after iOS validations pass with lessons learned on browser emulation vs real device testing

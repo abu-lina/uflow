@@ -70,6 +70,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   );
   const showCityEarlyAccessNavbar = shouldShowCityEarlyAccessNavbar(
     pathname,
+    isSplashVisible,
     isAppLaunched,
     user,
     stage,

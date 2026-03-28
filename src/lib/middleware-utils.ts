@@ -198,6 +198,13 @@ export async function shouldRedirectToWaitlist(
     return false; // Always allow access to legal pages
   }
 
+  // Special case: Authentication routes must always be publicly accessible
+  // Users need to be able to log in, sign up, and reset passwords regardless of waitlist status
+  // Plan 063: /login was being redirected to /providers, blocking mobile auth entry
+  if (pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname.startsWith('/auth/')) {
+    return false; // Always allow access to auth routes
+  }
+
   // If user is admin/moderator, allow access (bypass waitlist)
   if (accessToken) {
     const user = await validateUser(accessToken);
