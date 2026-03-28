@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: e9c6ce15
-Status: Committed
+Status: Released
 ---
 
 # QA Report: 060 — Security Remediation: Audit 066 Findings
@@ -18,6 +18,7 @@ Status: Committed
 | ----------------- | ------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-03-28T14:24Z | Code Reviewer | Execute QA for Plan 060  | Created QA strategy, identified missing M-2 regression coverage, and prepared validation gates                                      |
 | 2026-03-28T14:27Z | QA            | Execute validation gates | Added M-2 regression tests, full suite passed, but `tsc` and `next build` failed on invalid route export in `upload-image/route.ts` |
+| 2026-03-28T17:54Z | DevOps         | Released                | Stage 2 completed: branch pushed and tag v0.9.7 published                                                                              |
 | 2026-03-28T14:35Z | Implementer   | QA finding fix applied; re-run requested | Moved `ALLOWED_IMAGE_EXTENSIONS` to `constants.ts`; all gates passed; QA Complete |
 | 2026-03-28T17:36Z | DevOps        | Stage 1 close           | QA evidence accepted for release v0.9.7; document committed and closed |
 

@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: e9c6ce15
-Status: Committed
+Status: Released
 ---
 
 # Implementation 060 — Security Remediation: Audit 066 Findings
@@ -18,6 +18,7 @@ Status: Committed
 | Date (UTC)        | Handoff     | Request        | Summary                                                                                         |
 | ----------------- | ----------- | -------------- | ----------------------------------------------------------------------------------------------- |
 | 2026-03-28T13:00Z | Implementer | Initial        | Implement P0/P1 findings from Audit 066                                                         |
+| 2026-03-28T17:54Z | DevOps      | Released       | Stage 2 completed: branch pushed and tag v0.9.7 published                                       |
 | 2026-03-28T14:31Z | Implementer | QA finding fix | Moved `ALLOWED_IMAGE_EXTENSIONS` from route to `constants.ts`; added 3 M-2 dashboard auth tests |
 | 2026-03-28T17:36Z | DevOps      | Stage 1 close  | Version artifacts aligned to v0.9.7; implementation document committed and closed               |
 

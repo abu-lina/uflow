@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: e9c6ce15
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: 060 — Security Remediation: Audit 066 Findings
@@ -17,6 +17,7 @@ Status: Committed
 | ------------------- | ------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | 2026-03-28T14:40Z   | QA            | QA Complete; UAT requested       | Document review complete; all gated evidence confirms value delivery; CONDITIONAL APPROVAL issued    |
 | 2026-03-28T17:36Z   | DevOps        | Stage 1 close                    | Conditional approval acknowledged; deferred smoke gate carried to open-actions and deployment docs   |
+| 2026-03-28T17:54Z   | DevOps        | Released                         | Stage 2 completed: branch pushed and tag v0.9.7 published                                              |
 
 ### Timestamp Discipline
 

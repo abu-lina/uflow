@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: e9c6ce15
-Status: Committed
+Status: Released
 ---
 
 # Code Review: 060 — Security Remediation: Audit 066 Findings
@@ -18,6 +18,7 @@ Status: Committed
 | ----------------- | ----------- | --------------------- | -------------------------------------------- |
 | 2026-03-28T14:00Z | Implementer | Code review requested | Initial review of P0/P1 security remediation |
 | 2026-03-28T17:36Z | DevOps      | Stage 1 close         | Code review findings resolved; document committed and closed |
+| 2026-03-28T17:54Z | DevOps      | Released              | Stage 2 completed: branch pushed and tag v0.9.7 published |
 
 ---
 

@@ -2,7 +2,7 @@
 ID: 060
 Origin: 060
 UUID: e9c6ce15
-Status: Committed
+Status: Released
 ---
 
 # Plan 060 — Security Remediation: Audit 066 Findings
@@ -12,7 +12,7 @@ Status: Committed
 | **Plan ID**        | 060                                                                                                                               |
 | **Type**           | Security Bugfix                                                                                                                   |
 | **Target Release** | v0.9.7                                                                                                                            |
-| **Status**         | Committed for Release v0.9.7                                                                                                      |
+| **Status**         | Released (v0.9.7)                                                                                                                 |
 | **Epic Alignment** | Platform Security / Admin Provider Edit hardening                                                                                 |
 | **Related Issues** | Audit 066 (`agent-output/security/066-find-bugs.md`); Prior audit 049 (`agent-output/security/049-full-security-audit-v0.8.7.md`) |
 | **Created**        | 2026-03-28T15:00Z                                                                                                                 |
@@ -25,6 +25,7 @@ Status: Committed
 | 2026-03-28T14:35Z | qa      | All gates passed; status updated to QA Complete |
 | 2026-03-28T14:40Z | uat     | CONDITIONAL APPROVAL — all value delivery confirmed; live admin smoke deferred to DevOps Stage 3 |
 | 2026-03-28T17:36Z | devops  | Target release confirmed as v0.9.7; document committed and closed for Stage 1 |
+| 2026-03-28T17:54Z | devops  | Stage 2 completed: branch pushed, tag v0.9.7 published, and plan marked Released |
 
 ---
 
