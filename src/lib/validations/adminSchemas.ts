@@ -46,8 +46,23 @@ export const providerEditUpdateSchema = z.object({
   contactPhone: z.string().max(50).nullable().optional(),
   socialWebsite: z.string().url().max(2000).nullable().optional(),
   socialInstagram: z.string().max(200).nullable().optional(),
-  providerImages: z.string().max(10000).nullable().optional(),
-  offersIds: z.array(z.string()).optional(),
-  needsIds: z.array(z.string()).optional(),
-  communityServiceIds: z.array(z.string()).optional(),
+  providerImages: z.string().max(10000).nullable().optional()
+    .refine(
+      (val) => {
+        if (val === null || val === undefined) return true;
+        try {
+          const parsed = JSON.parse(val);
+          return parsed !== null
+            && typeof parsed === 'object'
+            && Array.isArray(parsed.urls)
+            && parsed.urls.every((u: unknown) => typeof u === 'string');
+        } catch {
+          return false;
+        }
+      },
+      { message: 'providerImages must be valid JSON with shape { urls: string[] }' }
+    ),
+  offersIds: z.array(z.string().uuid()).optional(),
+  needsIds: z.array(z.string().uuid()).optional(),
+  communityServiceIds: z.array(z.string().uuid()).optional(),
 });

@@ -1,6 +1,6 @@
 {
   "name": "ummah-flow",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "private": true,
   "engines": {
     "node": ">=18.0.0",
@@ -146,8 +146,11 @@
     "js-yaml": "^4.1.1",
     "minimatch": ">=3.1.5",
     "immutable": "^3.8.3",
-    "serialize-javascript": ">=7.0.4",
-    "dompurify": "^3.3.2"
+    "serialize-javascript": ">=7.0.5",
+    "dompurify": "^3.3.2",
+    "picomatch": ">=4.0.4",
+    "brace-expansion": ">=5.0.5",
+    "yaml": ">=2.8.3"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
