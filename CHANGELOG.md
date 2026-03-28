@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.8] - 2026-03-28
+
+### Fixed
+
+- **Full onboarding mobile centering bundle (Plans 067 + 060)**: Restored consistent vertical centering across all 7 `MobileSplashScreen` AnimatePresence branches. Plan 067 corrects the `loading` and `splash` motion wrappers to use a column flex layout, and Plan 060 extends the same `flex w-full flex-1 flex-col` wrapper participation to `about`, `waitlist`, `success`, `earlyAccess`, and `aboutFromEarlyAccess`. Together the bundle closes the user-reported top-alignment regression on the onboarding flow without changing flow logic or content.
+
 ## [0.9.7] - 2026-03-28
 
 ### Security

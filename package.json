@@ -1,6 +1,7 @@
 {
   "name": "ummah-flow",
-  "version": "0.9.7",
+<<<<<<< HEAD
+  "version": "0.9.8",
   "private": true,
   "engines": {
     "node": ">=18.0.0",

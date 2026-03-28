@@ -108,7 +108,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="loading"
           animate={{ opacity: 1 }}
-          className="flex flex-1 w-full"
+          className="flex w-full flex-1 flex-col"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
@@ -122,7 +122,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="splash"
           animate={{ opacity: 1 }}
-          className="flex flex-1 w-full"
+          className="flex w-full flex-1 flex-col"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
@@ -136,6 +136,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="about"
           animate={{ opacity: 1 }}
+          className="flex w-full flex-1 flex-col"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
@@ -147,6 +148,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="waitlist"
           animate={{ opacity: 1 }}
+          className="flex w-full flex-1 flex-col"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
@@ -167,6 +169,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="success"
           animate={{ opacity: 1 }}
+          className="flex w-full flex-1 flex-col"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
@@ -178,6 +181,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="earlyAccess"
           animate={{ opacity: 1 }}
+          className="flex w-full flex-1 flex-col"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
@@ -189,6 +193,7 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         <motion.div
           key="aboutFromEarlyAccess"
           animate={{ opacity: 1 }}
+          className="flex w-full flex-1 flex-col"
           exit={{ opacity: 0 }}
           initial={{ opacity: 0 }}
         >
