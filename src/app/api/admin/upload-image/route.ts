@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { isAdminOrModerator } from '@/lib/auth/roles';
+import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
+import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { ALLOWED_IMAGE_EXTENSIONS } from './constants';
 
 /**
  * POST /api/admin/upload-image
@@ -23,6 +26,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Rate limiting (Plan 060 M-4)
+    const identifier = getClientIdentifier(request, user.id);
+    const isRateLimited = !rateLimiters.adminReview.perHour(identifier) ||
+                          !rateLimiters.adminReview.perMinute(identifier);
+    if (isRateLimited) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
@@ -30,9 +44,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+    // Validate file extension against allowlist (Plan 060 H-1)
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExt || !ALLOWED_IMAGE_EXTENSIONS.includes(fileExt)) {
+      return NextResponse.json(
+        { error: `File type not allowed. Accepted extensions: ${ALLOWED_IMAGE_EXTENSIONS.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate MIME type
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
+      return NextResponse.json({ error: 'File must be a raster image (SVG not allowed)' }, { status: 400 });
     }
 
     // Validate file size (max 5MB)
@@ -41,7 +64,6 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
-    const fileExt = file.name.split('.').pop();
     const fileName = `providers/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
     const arrayBuffer = await file.arrayBuffer();
@@ -55,9 +77,14 @@ export async function POST(request: Request) {
       });
 
     if (uploadError) {
-      console.error('Admin image upload error:', uploadError);
+      logger.error(
+        'Admin image upload error',
+        new Error(uploadError.message),
+        {},
+        { ...getRequestMetadata(request), userId: user.id }
+      );
       return NextResponse.json(
-        { error: `Upload failed: ${uploadError.message}` },
+        { error: 'Upload failed' },
         { status: 500 }
       );
     }
@@ -68,7 +95,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: publicUrl });
   } catch (error) {
-    console.error('Admin image upload error:', error);
+    logger.error(
+      'Admin image upload error',
+      error instanceof Error ? error : new Error(String(error)),
+      {},
+      getRequestMetadata(request)
+    );
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -93,8 +93,13 @@ export async function POST(request: Request) {
       getRequestMetadata(request)
     );
 
+    // Plan 060 H-2: Sanitize error message in production
+    const errorMessage = process.env.NODE_ENV === 'production'
+      ? 'Failed to create offer'
+      : error instanceof Error ? error.message : 'Unknown error';
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create offer' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

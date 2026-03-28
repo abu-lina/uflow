@@ -96,7 +96,10 @@ export async function updateProviderFields(
       : null;
   }
   if (editData.providerImages !== undefined) {
-    updatePayload.provider_images = editData.providerImages;
+    // providerImages is validated at the schema layer (Plan 060 M-1)
+    updatePayload.provider_images = editData.providerImages
+      ? sanitizeTextInput(editData.providerImages)
+      : null;
   }
   if (editData.offersIds !== undefined) {
     updatePayload.offers_ids = editData.offersIds;

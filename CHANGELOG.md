@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.7] - 2026-03-28
+
+### Security
+
+- Reject non-image file types at the admin image upload endpoint using a safe extension allowlist (`jpg`, `jpeg`, `png`, `webp`, `gif`) and explicit SVG rejection.
+- Add admin upload route rate limiting to reduce storage abuse and request flooding risk.
+- Sanitize internal error details in admin needs and offers routes so production responses no longer leak SQL or database internals.
+- Add a server-side dashboard auth guard so unauthenticated users redirect to `/login` and non-admin users redirect to `/providers` before any admin UI renders.
+- Enforce UUID validation on `offersIds`, `needsIds`, and `communityServiceIds` in the admin schema.
+- Validate `providerImages` as JSON with shape `{ urls: string[] }` and sanitize the persisted payload at the service layer.
+
+### Dependencies
+
+- Patch `picomatch`, `brace-expansion`, `yaml`, and `serialize-javascript` via package overrides. `npm audit --audit-level=high` now reports 0 vulnerabilities.
+
 ## [0.9.6] - 2026-03-26
 
 ### Fixed
@@ -14,8 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mobile auth entry restored for fresh and logged-out users (Plan 063)**: Fresh users (no localStorage / incognito / new device) on `/` now always see `CityEarlyAccessNavbar` with a Profile icon. Previously, `shouldShowCityEarlyAccessNavbar` gated `/` behind `hasCompletedOnboarding()`, which is always `false` for fresh users, leaving them with no mobile auth entry point.
 - **Authentication routes unblocked in early-access mode (Plan 063)**: `/login`, `/signup`, `/forgot-password`, and `/reset-password` were listed as app routes in the middleware and redirected to `/providers` when `isAppLaunched=false`. Auth routes are now always public regardless of waitlist/launch status.
 - **Navbar hidden during onboarding splash screens (Plan 063)**: The `CityEarlyAccessNavbar` now respects `isSplashVisible`, matching the long-standing `shouldShowMobileFooter` behaviour. The navbar no longer appears during first-visit splash/onboarding screens.
-
-
 
 ### Fixed
 
