@@ -141,27 +141,50 @@ jobs:
 
             echo "🔍 Attempting to pull: $IMAGE_NAME"
             if ! docker pull "$IMAGE_NAME"; then
-              echo ""
-              echo "❌ Failed to pull image from GHCR"
-              echo "   Image: $IMAGE_NAME"
-              echo ""
-              echo "   Possible causes:"
-              echo "   1. Image doesn't exist yet (build step may have failed)"
-              echo "   2. GHCR_PAT token doesn't have 'read:packages' permission"
-              echo "   3. Package visibility is set to private and token can't access it"
-              echo ""
-              echo "   Solutions:"
-              echo "   - Check if the 'Build and push Docker image to GHCR' step succeeded"
-              echo "   - Verify GHCR_PAT has 'read:packages' permission"
-              echo "   - Check package visibility at: https://github.com/${{ github.repository_owner }}?tab=packages"
-              echo ""
-              exit 1
+              echo "⚠️ Initial pull failed. Attempting low-disk fallback cleanup..."
+
+              if [ -n "$OLD_CONTAINER" ]; then
+                echo "🛑 Stopping current UAT container to free image layers..."
+                docker stop uflow-uat || true
+                docker rm uflow-uat || true
+              fi
+
+              docker image rm "$IMAGE_NAME" 2>/dev/null || true
+              docker system prune -af --volumes || true
+              docker system df || true
+
+              echo "🔁 Retrying image pull after aggressive cleanup..."
+              if ! docker pull "$IMAGE_NAME"; then
+                echo ""
+                echo "❌ Failed to pull image from GHCR after retry"
+                echo "   Image: $IMAGE_NAME"
+                echo ""
+                echo "   Possible causes:"
+                echo "   1. Server disk is still exhausted even after cleanup"
+                echo "   2. Image doesn't exist yet (build step may have failed)"
+                echo "   3. GHCR_PAT token doesn't have 'read:packages' permission"
+                echo "   4. Package visibility is set to private and token can't access it"
+                echo ""
+                echo "   Solutions:"
+                echo "   - Check Hetzner disk usage and remove large unused artifacts"
+                echo "   - Check if the 'Build and push Docker image to GHCR' step succeeded"
+                echo "   - Verify GHCR_PAT has 'read:packages' permission"
+                echo "   - Check package visibility at: https://github.com/${{ github.repository_owner }}?tab=packages"
+                echo ""
+                exit 1
+              fi
             fi
             echo "✅ Image pulled successfully"
 
             # Clean up any stale blue-green container from a previous failed deployment
             docker stop uflow-uat-new 2>/dev/null || true
             docker rm uflow-uat-new 2>/dev/null || true
+
+            echo "🧹 Reclaiming Docker disk space before pulling the new UAT image..."
+            docker container prune -f || true
+            docker image prune -af || true
+            docker builder prune -af || true
+            docker system df || true
 
             echo "🚀 Starting new UAT container on temporary port 3003 (blue-green deployment)..."
             NEW_CONTAINER=$(docker run -d -p 3003:3000 \
