@@ -152,10 +152,18 @@ Critique Lifecycle:
 4. Audit: Preserve full history.
 5. Reference: Implementer consults for context.
 
-**Closure rule (MANDATORY)**: If the plan is now **APPROVED** and there are no OPEN findings remaining, you MUST:
+**Deferred Findings Rule (MANDATORY)**: A finding may be marked `Deferred` instead of OPEN when it is intentionally carried forward to a named future plan or open-action item. Marking a finding Deferred REQUIRES all of the following to be present in the finding row:
+
+- **Downstream owner**: the agent or plan responsible for resolution
+- **Target artifact**: the plan ID, open-actions file, or release milestone that owns it (e.g., `agent-output/planning/NNN-open-actions.md`, `PLAN-NNN M4`)
+- **Trigger**: the milestone, release, or condition that will activate resolution
+
+A `Deferred` finding does **NOT** count as an unresolved blocker for critique closure. It counts as an acknowledged item whose resolution is a future obligation. Findings may NOT be marked Deferred without all three fields above — if any are missing, the finding remains OPEN.
+
+**Closure rule (MANDATORY)**: If the plan is now **APPROVED** and all findings are either RESOLVED or DEFERRED (with downstream owner + target artifact + trigger present), you MUST:
 
 1. Update critique `Status` to `Resolved`
-2. Add a changelog entry
+2. Add a changelog entry that lists any deferred items and their owners
 3. Move the critique to `agent-output/critiques/closed/`
 
 Escalation:

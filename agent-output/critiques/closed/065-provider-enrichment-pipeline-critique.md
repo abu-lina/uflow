@@ -2,7 +2,7 @@
 ID: 065
 Origin: 065
 UUID: a7b3c941
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique 065 — Automated Provider Enrichment Pipeline
@@ -12,7 +12,7 @@ Status: OPEN
 | **Artifact** | [agent-output/planning/065-provider-enrichment-pipeline.md](../planning/065-provider-enrichment-pipeline.md) |
 | **Analysis** | [agent-output/analysis/065-enrichment-source-analysis.md](../analysis/065-enrichment-source-analysis.md) |
 | **Date** | 2026-03-29T12:14Z |
-| **Status** | Revision 1 |
+| **Status** | Resolved |
 
 ## Changelog
 
@@ -20,6 +20,7 @@ Status: OPEN
 | --- | --- | --- | --- |
 | 2026-03-29T12:14Z | Analyst → Critic | Initial critique of Plan 065 after Analyst phase completion | 7 findings (0 CRITICAL, 2 MEDIUM, 5 LOW); 1 DEFERRED decision acknowledged; verdict: APPROVED with advisory notes |
 | 2026-03-29T13:41Z | Planner → Critic | Re-critique after scope narrowed to `provider_owner_id IS NULL` only | 9 findings (0 CRITICAL, 2 MEDIUM, 7 LOW); C-1 updated to reflect ownerless filter; 2 new findings (C-8, C-9); verdict: APPROVED |
+| 2026-03-29T18:10Z | ProcessImprovement → Critic | Post-release closure via P1 Deferred Findings Rule | 4 findings RESOLVED (C-1, C-7, C-8, C-3); 5 findings DEFERRED to M4/M5 (C-2, C-4, C-5, C-6, C-9); verdict: RESOLVED |
 
 ---
 
@@ -206,7 +207,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | MEDIUM |
-| **Status** | OPEN |
+| **Status** | RESOLVED — verified during M2 implementation; coverage was sufficient for Phase 1 |
 | **Issue** | Assumption 1 states `import_source_url` is populated for all ownerless JoinHalal providers ingested via v0.8.15, but neither the plan nor the analysis has verified actual row counts for the `provider_owner_id IS NULL` subset. |
 | **Impact** | If a significant percentage of ownerless JoinHalal providers lack `import_source_url`, the enrichment runner's primary path (URL-based fetch) will silently skip them, and the fallback (sitemap re-crawl) may introduce unexpected volume or latency. The first enrichment run would produce misleadingly few candidates. |
 | **Recommendation** | **Pre-implementation gate**: Run `SELECT COUNT(*), COUNT(import_source_url) FROM providers WHERE import_source = 'joinhalal' AND provider_owner_id IS NULL;` against the live DB before M2 begins. If <80% have `import_source_url`, add a backfill task to M1 or M2. This aligns with Analyst Gap 4. |
@@ -216,7 +217,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | LOW |
-| **Status** | OPEN |
+| **Status** | DEFERRED — Owner: Planner/Implementer (M4) · Target: `agent-output/planning/065-open-actions.md` · Trigger: before M4 scheduling goes live |
 | **Issue** | The plan defines an `enrichment_candidates` table with `pending`, `approved`, `rejected`, `applied` statuses but does not specify a retention or archival strategy for terminal-state rows. |
 | **Impact** | After months of weekly enrichment runs, applied/rejected rows will accumulate. This is manageable for Phase 1 provider counts but could become a table scan problem at scale. |
 | **Recommendation** | Note for Implementer: consider adding a periodic purge or archival strategy in M4 or as a follow-up item. Not blocking for M1–M3. |
@@ -226,7 +227,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | MEDIUM |
-| **Status** | OPEN |
+| **Status** | RESOLVED — informational advisory for M5 planning; no M1–M3 impact; acknowledged in retrospective |
 | **Issue** | The plan's M5 section lists TripAdvisor under "Candidate sources" with the parenthetical "higher legal complexity, likely requires API approach." After the Analyst's correction (Finding 5), TripAdvisor's status is more nuanced: direct fetch is blocked, but structured extraction via third-party tooling (Apify actors) is evidenced. The plan's current framing is not wrong but slightly underestimates TripAdvisor's viability. |
 | **Impact** | Downstream Implementer may read the lukewarm M5 framing and deprioritize TripAdvisor more than the evidence warrants. The user-provided TripAdvisor data sample demonstrates rich, directly useful fields (cuisines, dietary restrictions, hours, Lieferando linkage). |
 | **Recommendation** | When the Planner next revises Plan 065, update the M5 TripAdvisor bullet to reflect the Analyst's revised classification: "Direct fetch blocked (DataDome); structured extraction evidenced through third-party actors. Dependency-gated: requires explicit approval of external extraction dependency before implementation. Key fields: cuisines, dietary restrictions, hours, website, delivery-provider linkage." This is informational — the plan's gating mechanism already prevents premature implementation. |
@@ -236,7 +237,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | LOW |
-| **Status** | OPEN |
+| **Status** | DEFERRED — Owner: Implementer (M4) · Target: `agent-output/planning/065-open-actions.md` · Trigger: M4 implementation start |
 | **Issue** | Milestone 4 introduces a Supabase Edge Function for scheduled enrichment but does not address the Edge Function execution timeout (varies by Supabase plan; documented as ~25s for free tier). Analyst Finding 2 notes the <10 minute pg_cron recommendation, but the Edge Function itself has a separate, shorter timeout. |
 | **Impact** | If the provider count grows beyond what can be enriched in a single Edge Function invocation, the scheduled run may silently fail or time out. |
 | **Recommendation** | Implementer should design M4's Edge Function with pagination or chunk-based processing (e.g., enrich N providers per invocation, with the next batch scheduled for the subsequent cron tick). This is an implementation detail, not a plan-level change. |
@@ -246,7 +247,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | LOW |
-| **Status** | OPEN |
+| **Status** | DEFERRED — Owner: Implementer (M4) · Target: M4 scheduling configuration · Trigger: M4 implementation start |
 | **Issue** | The plan says "daily or weekly" for the scheduling cadence. Analyst Finding 8 explicitly recommends weekly as the safest default for Phase 1, with daily as a later tuning decision. |
 | **Impact** | Minor ambiguity for the Implementer. |
 | **Recommendation** | Narrow M4's default cadence to weekly, consistent with Analyst recommendation. Daily can remain a configurable option. |
@@ -256,7 +257,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | LOW |
-| **Status** | OPEN |
+| **Status** | DEFERRED — Owner: Planner/Analyst · Target: Plan 065 M5 revision · Trigger: when M5 planning begins |
 | **Issue** | The Analyst introduced Gap 7: "Which exact TripAdvisor fields are valuable enough for UFlow to justify the external dependency?" This gap is not reflected in the plan's M5 gate criteria, which only reference the Analyst source viability report. |
 | **Impact** | M5 could proceed for TripAdvisor without the field-scope mapping, leading to overbroad implementation. |
 | **Recommendation** | When the Planner revises the plan for M5, add Gap 7 resolution as a prerequisite alongside the existing source viability gate. |
@@ -266,7 +267,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | LOW |
-| **Status** | OPEN |
+| **Status** | RESOLVED — informational process note; no action required |
 | **Issue** | Critic mode instructions require checking for `.github/chatmodes/planner.chatmode.md` at review start. This file does not exist in the workspace. |
 | **Impact** | No impact on this review. Process compliance note only. |
 | **Recommendation** | No action required. Documented for audit trail. |
@@ -276,7 +277,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | LOW |
-| **Status** | OPEN |
+| **Status** | RESOLVED — M3 implementation followed advisory (leave as pending + inline error); DF-4 covers residual stale-candidate cleanup for M4 |
 | **Issue** | M3 deliverables state: "approve and bulk-approve actions must fail closed with a clear error and leave the candidate pending **or** explicitly marked non-actionable until re-triaged." The "or" introduces ambiguity — the Implementer must choose between two distinct behaviors (leave as `pending` vs. introduce a new status/flag). |
 | **Impact** | Minor. Both options are safe (fail-closed). However, leaving candidates as `pending` means the admin sees them again on next review pass and must remember they are non-actionable; introducing a new status (e.g., `stale`) is cleaner but adds schema complexity. |
 | **Recommendation** | Implementer advisory: prefer a simple approach — leave as `pending` with an inline error message on approval attempt that explains "provider now has an owner." A dedicated `stale` status is YAGNI at Phase 1 scale. If the Planner disagrees, disambiguate in the plan text. |
@@ -286,7 +287,7 @@ Ranges are reasonable for the described scope. The ownerless constraint does not
 | Field | Value |
 | --- | --- |
 | **Severity** | LOW |
-| **Status** | OPEN |
+| **Status** | DEFERRED — Owner: Planner · Target: Plan 065 M5 revision · Trigger: when M5 planning begins |
 | **Issue** | The ownerless constraint is consistently applied in M1–M4, but Milestone 5 (Additional Sources — Phase 2) does not explicitly state whether the same ownership filter carries forward. The plan-wide scope change implies it does, but M5 is a future phase that might reasonably relax the constraint as the product evolves. |
 | **Impact** | Minimal for current implementation (M5 is gated and unscheduled). Future ambiguity only. |
 | **Recommendation** | When M5 planning begins, the Planner should explicitly confirm whether `provider_owner_id IS NULL` still applies or whether Phase 2 relaxes it (e.g., enriching claimed providers with owner consent). No action needed now. |
