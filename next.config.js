@@ -25,16 +25,27 @@ const withPWA = require('@ducanh2912/next-pwa').default({
     // Exclude files that may not exist in standalone builds from precaching
     exclude: [/app-build-manifest\.json$/, /middleware-manifest\.json$/],
     runtimeCaching: [
-      // IMPORTANT: Iconify CDN APIs must bypass the service worker entirely.
-      // @iconify/react makes runtime fetch() calls to these JSON endpoints to load
-      // icon sets (e.g. lucide.json?icons=share-2, mdi.json?icons=instagram).
-      // Any SW interception + cache miss triggers handlerDidError → Response.error()
-      // → "ServiceWorker passed an Error Response to FetchEvent.respondWith()".
-      // This rule MUST appear first to take precedence over broader patterns below.
-      {
-        urlPattern: /^https:\/\/(api\.iconify\.design|api\.unisvg\.com|api\.simplesvg\.com)\//,
-        handler: 'NetworkOnly',
-      },
+      // NOTE: No explicit route for the Iconify CDN APIs
+      // (api.iconify.design, api.unisvg.com, api.simplesvg.com).
+      //
+      // Previously a NetworkOnly route was registered here as a safety net.
+      // That caused a new failure: Workbox intercepts the request and re-issues
+      // fetch() from the service-worker context.  In Firefox with Enhanced Tracking
+      // Protection (or any browser extension that classifies CDN domains as
+      // trackers), that SW-context fetch is blocked at the network layer (status
+      // null), producing "no-response :: error:{}" even though the same request
+      // succeeds when the browser makes it directly.
+      //
+      // The NetworkOnly route is unnecessary because the fix that actually solved
+      // the original issue was correctly nesting workboxOptions (above), which
+      // eliminated the default !sameOrigin NetworkFirst catch-all that was
+      // intercepting Iconify requests.  Without a registered route, Workbox does
+      // NOT intercept these requests at all — the browser handles them natively,
+      // bypassing any SW-context network restriction.
+      //
+      // See: agent-output/analysis/closed/046-iconify-pwa-analysis.md
+      //      agent-output/retrospectives/closed/064-iconify-sw-cors-fix-retrospective.md
+
       // Cross-origin image assets (e.g. Supabase Storage provider photos).
       // Do NOT add Supabase API calls here — only static image assets.
       {

@@ -1,10 +1,12 @@
 ID: 059
 Origin: 059
 UUID: b1e4c8a2
-Status: Implemented
+Status: Superseded
 ---
 
 # Process Improvement Analysis 059: Plan 056 Release-State and Mergeability Gaps
+
+> NOTE: This document shares ID `059` with another Process Improvement chain in `agent-output/process-improvement/closed/`. To avoid overwriting or losing history, this copy is being archived as **Superseded (ID collision)**.
 
 **Source Retrospective**: `agent-output/retrospectives/closed/056-gha-supply-chain-remediation-retrospective.md`
 **Date**: 2026-03-24
@@ -316,4 +318,10 @@ Choose one:
 - `.github/agents/devops.agent.md`
 - `.github/agents/orchestrator.agent.md`
 - `.github/skills/document-lifecycle/SKILL.md`
-- `agent-output/process-improvement/059-process-improvement-analysis.md`
+- `agent-output/process-improvement/closed/059-process-improvement-analysis-plan056.md`
+
+## Changelog
+
+| Date (UTC) | Agent | Change |
+|---|---|---|
+| 2026-03-29T12:55Z | process-improvement | Archived as Superseded due to ID collision; preserved content under unique closed filename |
