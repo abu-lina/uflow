@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-03-29
+
+### Added
+
+- **Automated provider enrichment pipeline (Plan 065, M1–M3)**: Introduces an ownerless-provider enrichment workflow with three layers:
+  - **M1 — Schema**: `enrichment_candidates` staging table with `pending/approved/rejected/applied` status, `enrichment_run_logs` telemetry, and `enrichment_eligible` / `last_enriched_at` columns on `providers`. GIN/BTREE indexes and RLS admin-only policies included.
+  - **M2 — CLI runner + JoinHalal enricher core**: `scripts/enrich-providers.ts` with `--dry-run` (default), `--write`, `--source`, and `--limit` flags. Enrichment is restricted to approved providers where `provider_owner_id IS NULL`. Circuit breaker halts the run at 20% failure. Side-effect-free enricher core (`joinhalal-enricher.ts`) detects conflicts, deduplicates candidates, and preserves admin-controlled fields.
+  - **M3 — Admin review surface**: `EnrichmentReviewPanel` client component with per-candidate approve/reject and bulk-approve-by-provider. Backed by `/api/admin/enrichment/candidates` (GET/POST) with admin auth, pagination, rate limiting, and ownership fail-closed guard at the service layer.
+
 ## [0.9.10] - 2026-03-29
 
 ### Fixed
