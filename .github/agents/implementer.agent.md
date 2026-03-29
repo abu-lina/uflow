@@ -372,6 +372,8 @@ Before handing off to **Code Reviewer** or **QA**, you MUST complete this checkl
 - [ ] `npm run type-check` exits `0`
 - [ ] `npm run build` exits `0`
 - [ ] Implementation doc is updated: Files Modified/Created tables, Code Quality Validation, and **TDD Compliance** table is complete
+- [ ] Implementation doc is committed before handoff: `git add agent-output/implementation/ && git commit -m "docs(<ID>): implementation doc"`
+- [ ] `git status --short` shows **no unintended modifications** to implementation files — if any committed files appear as modified/deleted/missing, restore them before proceeding
 
 If any item fails: STOP, fix, re-run. Do not hand off.
 

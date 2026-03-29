@@ -93,6 +93,18 @@ Minimum expectations (unless the plan explicitly states otherwise):
 - Record manual validation status as **executed** or **deferred**
   - If deferred: owner, rationale, severity, and fallback execution path
 
+### Build Gate: Env-Gated Failure Exception (WHEN APPLICABLE)
+
+When `npm run build` fails due to missing environment variables required for page rendering at build time (for example: `NEXT_PUBLIC_SUPABASE_URL` or other Supabase environment variables), treat this as a **known local build constraint** (see DF-4 in `046-open-actions.md`), not necessarily a code regression.
+
+**Acceptable alternative evidence when `npm run build` fails for this known reason:**
+
+1. PWA compilation phase completes (presence of expected `next-pwa`/Workbox build output)
+2. `public/sw.js` is generated and non-empty
+3. `public/sw.js` content contains the expected patterns for the change (verify with `grep` and record evidence in the QA report)
+
+If QA accepts this exception, QA MUST explicitly document it in the QA report (owner + rationale + evidence). This exception is NOT a general allowance to ship with failing builds.
+
 ### Dependency Override / Lockfile Changes (WHEN APPLICABLE)
 
 If the change is primarily dependency-related (e.g., `package.json` `overrides`, lockfile regen, transitive patching):

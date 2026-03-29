@@ -140,7 +140,13 @@ Workflow:
 6. Synthesize findings into verdict
 7. Create Code Review document using template from `code-review-standards` skill
 8. If REJECTED: handoff to Implementer with specific fixes required
-9. If APPROVED: handoff to QA for testing
+9. If APPROVED:
+   - Commit the Code Review doc before handing off to QA:
+     - Stage: `git add agent-output/code-review/`
+     - Verify: `git status --short`
+     - Commit: `git commit -m "docs(<ID>): code review — APPROVED"`
+   - Rationale: QA enforces a clean working-tree gate. An uncommitted Code Review doc can trigger an unnecessary QA failure and round-trip.
+   - Handoff to QA for testing
 
 Response Style:
 
