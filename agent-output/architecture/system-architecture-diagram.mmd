@@ -1,6 +1,6 @@
 ```mermaid
 flowchart TB
-  %% UFlow System Architecture (focus: Trust & Verification + Performance Caching Layers)
+  %% UFlow System Architecture (Plan 065: Enrichment Pipeline added)
 
   subgraph Client[Client]
     Browser[Browser]
@@ -18,6 +18,7 @@ flowchart TB
     UI[UI Pages / Components]
     API[API Routes]
     AdminAPI[/Admin APIs (API-only)\n/api/admin/*/]
+    EnrichAPI[/Enrichment Admin Routes\n/api/admin/enrichment/*/]
     Services[src/services/*]
   end
 
@@ -25,6 +26,16 @@ flowchart TB
     Auth[Auth]
     DB[(Postgres + RLS)]
     Storage[Storage]
+    Vault[Vault\n(function URL, anon key)]
+
+    subgraph EdgeFn[Edge Functions (Deno)]
+      EmailFn[send-confirmation-email]
+      EnrichFn[enrich-providers]
+    end
+
+    subgraph Cron[pg_cron + pg_net]
+      CronJob[cron.job\nweekly enrichment trigger\ndefined in migration]
+    end
   end
 
   subgraph Trust[Trust & Verification Subsystem]
@@ -33,10 +44,22 @@ flowchart TB
     Confirmations[badge_confirmations]
     Verifications[badge_verifications]
     Config[badge_system_config]
-    TrustSummary[[trust_summary view/materialized view]]
+    TrustSummary[[trust_summary view]]
   end
 
-  subgraph External[External Services]
+  subgraph Enrichment[Enrichment Pipeline (Plan 065)]
+    EnrichCandidates[(enrichment_candidates\nstaging inbox)]
+    EnrichRunLogs[(enrichment_run_logs\ntelemetry)]
+    Providers[(providers)]
+    ImportBot[IMPORT_BOT_UUID\nautonomous actor]
+  end
+
+  subgraph ExternalSources[External Data Sources]
+    JoinHalal[JoinHalal\nPhase 1 - proven]
+    Future[Lieferando / TripAdvisor /\nInstagram - Phase 2, gated]
+  end
+
+  subgraph ExternalServices[External Services]
     Resend[Resend]
     Maps[OSM / Nominatim]
   end
@@ -49,6 +72,7 @@ flowchart TB
   UI --> Services
   API --> Services
   API --> AdminAPI
+  AdminAPI --> EnrichAPI
 
   Services --> Auth
   Services --> DB
@@ -61,10 +85,32 @@ flowchart TB
   DB --> Config
   DB --> TrustSummary
 
+  %% Enrichment pipeline flow
+  CronJob -->|pg_net HTTP POST| EnrichFn
+  CronJob --> Vault
+  Vault -.->|secrets| CronJob
+  EnrichFn -->|fetch source pages| JoinHalal
+  EnrichFn -.->|Phase 2 gated| Future
+  EnrichFn -->|write candidates| EnrichCandidates
+  EnrichFn -->|write run log| EnrichRunLogs
+  EnrichFn --> ImportBot
+
+  %% Admin review surface
+  EnrichAPI -->|read pending candidates| EnrichCandidates
+  EnrichAPI -->|apply approved candidates| Providers
+  EnrichAPI -->|mark applied/rejected| EnrichCandidates
+
+  %% CLI enrichment (dry-run / write)
+  ImportBot -.->|CLI: enrich-providers.ts| EnrichCandidates
+
   API --> Resend
+  EmailFn --> Resend
   UI --> Maps
 
   %% Notes
-  %% Public UI should read TrustSummary (aggregates), not raw Confirmations.
-  %% Legacy in-app admin panel UI is intentionally removed (Arch 054).
+  %% enrichment_candidates is a staging table: pending -> applied/rejected -> archival
+  %% cron schedule defined in migration file (ADR-008), NOT dashboard-only
+  %% Edge Function can only import ESM-compatible src/lib modules (ADR A-1)
+  %% Public UI reads TrustSummary (aggregates), not raw Confirmations (ADR-001)
+  %% Legacy in-app admin panel UI removed (Arch 054)
 ```

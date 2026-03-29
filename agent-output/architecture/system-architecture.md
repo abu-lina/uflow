@@ -1,6 +1,6 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-03-24
+**Last Updated**: 2026-03-29
 **Status**: Active
 
 ## Changelog
@@ -16,6 +16,7 @@
 | 2026-03-07 | Growth plan (city pages + analytics) architecture decisions captured | Establish ISR-first city acquisition pages, UTM canonicalization, and analytics guardrails | Arch 035            |
 | 2026-03-08 | Captured Plausible analytics ADR | Make analytics deployment + privacy guardrails explicit for upcoming activation/instrumentation work | Arch 035 / Plan 036 |
 | 2026-03-24 | Removed legacy in-app admin panel UI | Reduce privileged UI surface; preserve API-only admin tools and newer review workflows | Arch 054            |
+| 2026-03-29 | Plan 065: Enrichment Pipeline — new subsystem, ADR-007 (staging-first), ADR-008 (pg_cron-in-migrations), Problem Areas 8–9 | First automated background actor in system; establishes scheduling, staging, and module-boundary constraints | Arch 065            |
 
 ---
 
@@ -39,9 +40,45 @@ UFlow (Ummah Flow) is a community services marketplace that connects Muslims wit
 
 **Postgres-first**: Prefer Postgres-native capabilities (RLS, views, indexes, triggers, full-text search) before adding external services.
 
+### Automated Background Actor (Plan 065+)
+
+From Plan 065 onward, UFlow includes a **time-driven subsystem** alongside the existing request-driven core:
+
+- **Scheduler**: pg_cron (definition in migration files — see ADR-008)
+- **Trigger path**: pg_cron → pg_net HTTP POST → Supabase Edge Function
+- **Actor**: `IMPORT_BOT_UUID` sentinel (system-initiated writes, distinct from operator writes)
+- **Output**: `enrichment_candidates` staging table (see ADR-007)
+- **Outbound fetches**: External source URLs (JoinHalal Phase 1; Lieferando/TripAdvisor/Instagram Phase 2+) originate from Supabase shared Edge Function infrastructure
+
 ---
 
 ## Core Components
+
+### Import & Enrichment Pipeline
+
+UFlow maintains a multi-phase data ingestion architecture for provider enrichment:
+
+**Phase 1 — Manual CLI Import (existing)**:
+- `scripts/import-joinhalal.ts` — operator-triggered import CLI (dry-run / write modes)
+- `src/lib/import/joinhalal.ts` — import library
+- `src/utils/joinhalal-parser.ts` — Rank Math JSON-LD parser
+- `upsert_joinhalal_providers` RPC — idempotent Postgres upsert (migration 064)
+- Source: JoinHalal listing pages (server-rendered, Rank Math JSON-LD)
+
+**Phase 2 — Automated Enrichment Pipeline (Plan 065)**:
+- `scripts/enrich-providers.ts` — CLI enrichment runner (dry-run / write modes)
+- `src/lib/enrichment/joinhalal-enricher.ts` — ESM-compatible enrichment core (must work in both Node and Deno runtimes — see A-1)
+- `supabase/functions/enrich-providers/` — Deno Edge Function, scheduled via pg_cron
+- `enrichment_candidates` table — staging inbox (ADR-007); admin must approve before application to `providers`
+- `enrichment_run_logs` table — normal + debug telemetry for each run
+- Scheduling: weekly by default (pg_cron in migration file — ADR-008); cadence configurable
+- Secrets: function URL + anon key stored in Vault
+
+**Admin Enrichment Review Surface (Plan 065 M3)**:
+- Extends Plans 058+061 admin moderation UI
+- Route: admin-only, service-role client, server-side Route Handlers
+- Admin approves/rejects/bulk-approves enrichment candidates; apply writes to `providers`
+- Admin-field preservation (Plan 052) enforced at server layer
 
 ### Next.js Application (src/)
 
@@ -54,6 +91,9 @@ UFlow (Ummah Flow) is a community services marketplace that connects Muslims wit
 - **Auth**: Email/password + cookie session handling
 - **Postgres**: Domain tables + RLS (privacy + tenancy)
 - **Storage**: Provider images and media
+- **Edge Functions**: Deno runtime; currently `send-confirmation-email` (Resend) and `enrich-providers` (Plan 065)
+- **pg_cron** (Plan 065+): Scheduled job definitions live in migration files; job registration via `cron.schedule()`
+- **pg_net** (Plan 065+): Used by pg_cron to POST to Edge Function endpoints; auth via Vault secrets
 
 ---
 
@@ -170,6 +210,8 @@ This is a known architecture risk; roles must be normalized behind a single auth
 5. **Caching policy inconsistency**: global header defaults (e.g., broad `/api/*` no-store) can silently override route-level caching intent.
 6. **Telemetry guardrails**: debug telemetry must remain opt-in; keep safety checks to prevent reintroducing localhost/unsafe endpoints.
 7. **Agent memory tooling reliability**: Flowbaby memory tools frequently fail due to multi-window daemon ownership/lock contention, forcing NO-MEMORY MODE and reducing workflow quality.
+8. **Enrichment candidate table lifecycle**: `enrichment_candidates` is a staging table but has no defined archival or purge policy. Applied/rejected rows will accumulate over time. A periodic purge job or archival strategy should be added in M4 or a post-launch task.
+9. **Enrichment fetch origin (shared Supabase IPs)**: After M4, JoinHalal and Phase 2 source fetches originate from Supabase's shared Edge Function IP fleet rather than a controlled developer IP. Rate limit exposure changes; polite delays (200ms) and a meaningful `User-Agent` header partially mitigate this.
 
 ---
 
@@ -254,6 +296,35 @@ This is a known architecture risk; roles must be normalized behind a single auth
   - Requires clear governance for event naming and allowed properties.
   - Requires ops ownership if self-hosting (backups/monitoring/access controls).
   - Preserves UX (no cookie banner) and privacy-first brand posture.
+
+### ADR-007: Staging-first pattern for external data ingestion (Enrichment Inbox)
+
+- **Status**: Accepted
+- **Context**: Automated recurring enrichment requires controlled staging before writes reach `providers`. Direct upsert gives no conflict tracking, no admin visibility, and risks overwriting admin-set fields. Admin moderation (Plans 058/061) established the pattern of review-before-apply; enrichment follows the same principle.
+- **Choice**: All enrichment proposals stage in `enrichment_candidates` as `pending` records. Admin approval required for conflicts. Auto-apply only for additive non-conflicting updates from the provider's known import source.
+- **Alternatives**:
+  - Direct upsert into `providers` (rejected: no conflict tracking, risks admin-field overwrite)
+  - External queue service (rejected: violates Postgres-first, adds unnecessary vendor dependency)
+  - CQRS event log (rejected: overengineered for current scale)
+- **Consequences**:
+  - Adds latency to data propagation (enriched data is pending until approved)
+  - Staging table needs lifecycle management (Problem Area 8)
+  - Unlocks auditability and conflict visibility impossible with direct upsert
+- **Related**: ADR-008, Plans 052/058/061
+
+### ADR-008: pg_cron schedule definitions belong in migration files
+
+- **Status**: Accepted
+- **Context**: Supabase offers both dashboard-defined native schedules and pg_cron migration-defined schedules. Dashboard-only definitions are invisible in-repo, not reproducible across environments, not code-reviewed, and not rollback-able via migration workflow.
+- **Choice**: All persistent automated job schedules MUST be defined in migration files as `cron.schedule(...)` calls. Vault stores function URL and anon key. Dashboard may inspect/pause jobs but is not the source of truth.
+- **Alternatives**:
+  - Dashboard-only native schedule (rejected: stealth configuration, not version-controlled)
+  - External cron from GitHub Actions / Hetzner (rejected: introduces auth complexity and ops surface outside Supabase stack)
+- **Consequences**:
+  - Operator must populate Vault at deployment time (documented in runbook)
+  - Local `supabase db reset` registers the cron job (harmless; safe to ignore in local context)
+  - Cadence changes are diff-able and code-reviewed
+- **Related**: ADR-007, Arch Finding A-2
 
 ---
 
