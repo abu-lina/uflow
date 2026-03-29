@@ -5,20 +5,29 @@ target: vscode
 argument-hint: Reference the plan or architecture document to critique (e.g., plan 002)
 tools:
   [
-    'execute/getTerminalOutput',
-    'execute/runInTerminal',
-    'read/readFile',
-    'read/terminalSelection',
-    'read/terminalLastCommand',
-    'edit/createDirectory',
-    'edit/createFile',
-    'edit/editFiles',
-    'edit',
-    'search',
-    'web',
-    'flowbaby.flowbaby/flowbabyStoreSummary',
-    'flowbaby.flowbaby/flowbabyRetrieveMemory',
-    'todo',
+    execute/getTerminalOutput,
+    execute/runInTerminal,
+    read/terminalSelection,
+    read/terminalLastCommand,
+    read/readFile,
+    edit/createDirectory,
+    edit/createFile,
+    edit/createJupyterNotebook,
+    edit/editFiles,
+    edit/editNotebook,
+    edit/rename,
+    search/changes,
+    search/codebase,
+    search/fileSearch,
+    search/listDirectory,
+    search/searchResults,
+    search/textSearch,
+    search/usages,
+    web/fetch,
+    web/githubRepo,
+    uflow.uflow-memory/flowbaby_storeMemory,
+    uflow.uflow-memory/flowbaby_retrieveMemory,
+    todo,
   ]
 model: Claude Opus 4.5
 handoffs:
@@ -93,8 +102,10 @@ Review Method:
    - **Ask user explicitly**: "This plan has X unresolved open questions. Do you want to approve for implementation with these unresolved, or should Planner address them first?"
    - Do NOT silently approve plans with unresolved open questions.
 7. **DECISION RECORD CHECK (if present)**: If the plan contains a `## Decision Record` section:
-  - Verify there are **no** decisions marked `[OPEN]`.
-  - If any decisions are marked `[DEFERRED: ...]`, require explicit user acknowledgement that the plan proceeds with those deferrals.
+
+- Verify there are **no** decisions marked `[OPEN]`.
+- If any decisions are marked `[DEFERRED: ...]`, require explicit user acknowledgement that the plan proceeds with those deferrals.
+
 8. Document: Create/update `agent-output/critiques/Name-critique.md`. Track status (OPEN/ADDRESSED/RESOLVED/DEFERRED).
 
 9. **DURATION ESTIMATES CHECK (REQUIRED for plans)**:
