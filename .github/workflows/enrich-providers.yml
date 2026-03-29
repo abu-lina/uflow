@@ -1,0 +1,149 @@
+# .github/workflows/enrich-providers.yml
+#
+# Provider Enrichment Pipeline — Plan 065
+# Re-fetches approved ownerless providers' source pages and stages enrichment
+# candidates for admin review.
+#
+# Usage:
+#   1. Go to Actions → "Provider Enrichment Pipeline"
+#   2. Click "Run workflow"
+#   3. Choose mode (dry-run/write), source, limit, and environment
+#   4. Review output in the workflow logs
+#
+# Candidates are staged in enrichment_candidates with status='pending'.
+# Approve/reject via the admin API or Supabase Dashboard.
+#
+# Security:
+#   - Uses SUPABASE_SERVICE_ROLE_KEY from GitHub Secrets (never exposed in logs)
+#   - Requires manual trigger (workflow_dispatch) — no accidental runs
+#   - Dry-run is the default to prevent unintended writes
+
+name: Provider Enrichment Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Execution mode'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - write
+      source:
+        description: 'Enrichment source'
+        required: true
+        default: 'joinhalal'
+        type: choice
+        options:
+          - joinhalal
+      limit:
+        description: 'Provider limit'
+        required: true
+        default: '10'
+        type: choice
+        options:
+          - '5'
+          - '10'
+          - '50'
+          - '100'
+          - 'all'
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'uat'
+        type: choice
+        options:
+          - uat
+          - production
+
+jobs:
+  enrich:
+    name: "enrich (${{ inputs.mode }}, ${{ inputs.source }}, limit=${{ inputs.limit }}, ${{ inputs.environment }})"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CLI arguments
+        id: args
+        run: |
+          MODE="${{ inputs.mode }}"
+          LIMIT="${{ inputs.limit }}"
+
+          if [ "$MODE" = "write" ]; then
+            CLI_ARGS="--write --source ${{ inputs.source }}"
+          else
+            CLI_ARGS="--dry-run --source ${{ inputs.source }}"
+          fi
+
+          if [ "$LIMIT" != "all" ]; then
+            CLI_ARGS="$CLI_ARGS --limit $LIMIT"
+          fi
+
+          echo "cli_args=$CLI_ARGS" >> "$GITHUB_OUTPUT"
+
+      - name: Run enrichment (Production)
+        if: inputs.environment == 'production'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🚀 Running Provider Enrichment against PRODUCTION"
+          echo "   Source: ${{ inputs.source }}"
+          echo "   Mode:   ${{ inputs.mode }}"
+          echo "   Limit:  ${{ inputs.limit }}"
+          echo "   Args:   ${{ steps.args.outputs.cli_args }}"
+          echo ""
+          npx tsx scripts/enrich-providers.ts ${{ steps.args.outputs.cli_args }}
+
+      - name: Run enrichment (UAT)
+        if: inputs.environment == 'uat'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🚀 Running Provider Enrichment against UAT"
+          echo "   Source: ${{ inputs.source }}"
+          echo "   Mode:   ${{ inputs.mode }}"
+          echo "   Limit:  ${{ inputs.limit }}"
+          echo "   Args:   ${{ steps.args.outputs.cli_args }}"
+          echo ""
+          npx tsx scripts/enrich-providers.ts ${{ steps.args.outputs.cli_args }}
+
+      - name: Summary
+        run: |
+          echo "## Provider Enrichment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Source | ${{ inputs.source }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | ${{ inputs.mode }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Limit | ${{ inputs.limit }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.mode }}" = "write" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Candidates staged with \`status = 'pending'\`**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Review and approve via:" >> $GITHUB_STEP_SUMMARY
+            echo "- Admin API: \`GET /api/admin/enrichment/candidates\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Supabase Dashboard → Table Editor → \`enrichment_candidates\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.mode }}" = "dry-run" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ **Dry-run mode — no data was written.** Review the logs above for proposed changes." >> $GITHUB_STEP_SUMMARY
+          fi
