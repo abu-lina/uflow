@@ -2,7 +2,7 @@
 ID: 064
 Origin: 064
 UUID: f3a9c2d7
-Status: Implemented
+Status: Committed
 ---
 
 # Implementation: Plan 064 — Iconify SW CORS Fix
