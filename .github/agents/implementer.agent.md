@@ -156,6 +156,12 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 8. Run/report tests, linters, checks per plan.
 9. Build/run test coverage for all work. Create unit + integration tests per `testing-patterns` skill.
 10. NOT complete until tests pass. Verify all tests before handoff.
+   10b. **Pre-QA Static Gate (MANDATORY before any Code Review or QA handoff)**: Run both commands and confirm each exits 0 before handoff:
+   ```
+   npm run lint
+   npm run type-check
+   ```
+   If either fails, fix all errors before handoff. Do not hand off to Code Review or QA with known lint or type errors. QA remains the authoritative lint and type gate; this is a mandatory self-check only to prevent resetting QA on IDE-level warnings.
 11. Track deviations. Refuse to proceed without updated guidance.
 12. Validate implementation delivers value statement before complete.
 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.

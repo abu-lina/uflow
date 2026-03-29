@@ -113,6 +113,16 @@ If a plan introduces **inline actions** (approve, reject, delete, edit, etc.) on
 
 If the plan scopes out certain entity types (e.g., "community services are out of scope"), it MUST note that the shared list may still return those types and specify how they are excluded from the action surface.
 
+### Entity Ownership Check (MANDATORY when applicable)
+
+If a plan creates, modifies, enriches, moderates, or batch-updates existing `providers` rows, the Planner MUST explicitly state:
+
+- Whether the plan applies to **claimed** providers (`provider_owner_id IS NOT NULL`), **unclaimed** providers (`provider_owner_id IS NULL`), or both
+- Where the ownership filter is enforced (query time, service layer, or UI)
+- Whether fail-closed behaviour is required if a provider's ownership status changes after data is staged but before it is applied
+
+If the scope is unclaimed-only, record this as a `[RESOLVED]` decision in `## Decision Record`. Do not leave ownership scope as an implied default — state it explicitly.
+
 ### Removal Surface Enumeration (MANDATORY when applicable)
 
 If a plan removes, deprecates, or hides a user-visible capability, route, or privileged workflow, the plan MUST enumerate all known discovery and entry surfaces for that capability, including when applicable:
