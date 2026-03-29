@@ -110,7 +110,9 @@ function buildCsp() {
     ]
       .filter(Boolean)
       .join(' '),
-    "frame-src 'self' https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com",
+    // Iconify API domains removed from frame-src: they serve JSON data and are
+    // never used as iframe/frame sources. They remain in connect-src and default-src.
+    "frame-src 'self'",
     "worker-src 'self' blob:",
   ];
 

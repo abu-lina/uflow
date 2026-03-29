@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.9] - 2026-03-29
+
+### Fixed
+
+- **Service worker push handler cache fix (Plan 064)**: Added `location = /sw-push-handler.js` exact-match nginx blocks with `no-cache` headers in both production and UAT configs. Previously the file fell through to the generic JS rule with a 1-year immutable cache, silently preventing push handler updates after deployments.
+- **CSP frame-src hygiene (Plan 064)**: Removed Iconify API domains (`api.iconify.design`, `api.unisvg.com`, `api.simplesvg.com`) from `frame-src` CSP directive — they serve JSON data via `fetch()`, not iframe content. Origins remain in `connect-src` where they belong.
+
 ## [0.9.8] - 2026-03-28
 
 ### Fixed

@@ -61,3 +61,28 @@ describe('next.config.js PWA configuration (Plan 046 regression)', () => {
     expect(networkOnlyIdx).toBeLessThan(firstCacheNameIdx); // must precede other entries
   });
 });
+
+describe('next.config.js CSP configuration (Plan 064 regression)', () => {
+  it('does not include Iconify API domains in frame-src (they are JSON APIs, not iframe sources)', () => {
+    // frame-src restricts <iframe>/<frame> embedding sources.
+    // Iconify APIs serve JSON — they are never embedded as iframes.
+    // They belong in connect-src and default-src only.
+    const frameSrcLine = configSource
+      .split('\n')
+      .find((line) => line.includes('frame-src'));
+    expect(frameSrcLine).toBeDefined();
+    expect(frameSrcLine).not.toContain('api.iconify.design');
+    expect(frameSrcLine).not.toContain('api.unisvg.com');
+    expect(frameSrcLine).not.toContain('api.simplesvg.com');
+  });
+
+  it('retains Iconify API domains in connect-src (required for fetch() calls from @iconify/react)', () => {
+    const connectSrcIdx = configSource.indexOf("'connect-src'");
+    expect(connectSrcIdx).toBeGreaterThan(0);
+    // Grab enough context around connect-src to find all its origins
+    const connectSrcChunk = configSource.slice(connectSrcIdx, connectSrcIdx + 400);
+    expect(connectSrcChunk).toContain('api.iconify.design');
+    expect(connectSrcChunk).toContain('api.unisvg.com');
+    expect(connectSrcChunk).toContain('api.simplesvg.com');
+  });
+});
