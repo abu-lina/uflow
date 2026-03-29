@@ -299,6 +299,14 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
   - If the branch is behind, default to rebase/merge before the first Stage 2 push.
   - If you intentionally push before rebasing (for visibility), document why that is preferable for this release and do not mark the chain `Released` until reconciliation is complete.
 
+  8e. **Post-rebase artifact integrity gate (MANDATORY after any rebase)**:
+  After completing a rebase (regardless of cause), before continuing to push or tag:
+    1. **Reject conflict markers**: run `grep -r "<<<<<<< HEAD" package.json package-lock.json CHANGELOG.md` — any match is a blocker. Do NOT push until resolved.
+    2. **JSON parse check**: `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"` and same for `package-lock.json`. Any parse error is a blocker.
+    3. **Re-run build**: `npm run build` — confirm the build still exits 0 after the rebase.
+    4. **Re-run audit**: `npm audit --audit-level=high` — confirm no new HIGH/CRITICAL vulnerabilities were introduced by updated dependencies in the rebased commits.
+  Document all four checks in the Stage 2 readiness evidence block before proceeding to push/tag.
+
   8c. **Version collision resolution (IF target tag already exists after `git fetch --tags`)**:
     If the intended version tag is already present on `origin`:
     1. `git rebase --abort` (only if a rebase is currently in progress)
@@ -366,7 +374,11 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 
 - Visit `/providers` with **no query params** and confirm results render (not “No results found”).
 - Visit `/` and confirm the primary search UI renders.
-
+**Smoke server instance discipline**: If running smoke checks against a local dev server:
+- Prefer a **fresh server instance** started from the current HEAD (not a server that was running continuously throughout the session).
+- If you use an existing server, explicitly confirm it is serving the latest committed code (e.g., was started after the final release commit).
+- If an existing server returns unexpected errors (e.g., 500 on `/`), start a fresh instance before treating it as a release failure.
+- Record which port/instance was used for smoke checks in the deployment doc.
 Manual browser verification is acceptable. If using `curl`, document the exact commands and what you checked for in the response.
 
 If any smoke check fails: stop and treat as a release failure. Coordinate rollback or hotfix before marking Stage 2 complete.
@@ -382,7 +394,25 @@ If any smoke check fails: stop and treat as a release failure. Coordinate rollba
 - Coordinate with the Roadmap agent’s orphan sweep policy. If orphaned terminal-status docs are found outside `closed/`, move them to the appropriate `closed/` folders.
 - Do NOT mix orphan cleanup with a plan’s Stage 1 commit. If cleanup produces git changes, make a dedicated **docs-only** commit (e.g., `chore(docs): close orphaned agent-output documents`) so plan commits remain scoped.
 
-4. Hand off to Roadmap: Release complete, update tracker.
+3e. **Deployment doc normalization (MANDATORY)**:
+
+After release is confirmed complete, normalize the main deployment doc:
+- Update the frontmatter `Status:` field to `Released`.
+- If the doc contains a "Remaining Work" or "Stage 2 Blockers" section left over from pre-release gating, update it to reflect the final resolution (e.g., "Cleared by release completion" or "Cleared by user gate relaxation on [date]").
+- Ensure no open-language blocker text (e.g., "X is still required before push") survives unfalsified after the release is complete.
+- This normalization may be part of the final release-record commit or a separate docs-only commit.
+
+4. **Roadmap sync (MANDATORY in the same release window)**:
+   Update the product roadmap (`agent-output/roadmap/product-roadmap.md`) with:
+   - `Current Version` → new released version
+   - Release table entry for the new version (date, plans, version)
+   - Active release tracker → mark plans released
+
+   If roadmap sync cannot be completed in the same release window (e.g., token budget, session end), record an explicit named deferment in the deployment doc:
+   - Deferred item: `ROADMAP-SYNC`
+   - Owner: retrospective agent or next available session
+   - Due: before next plan's Stage 1 commit
+   - Evidence to close: `Current Version` field updated to `[released version]` in roadmap doc
 5. Hand off to Retrospective.
 6. Store memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
 

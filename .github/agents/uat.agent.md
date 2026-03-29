@@ -87,6 +87,16 @@ If UAT approves release with any non-blocking residual risk, you MUST record:
 
 If this is not recorded, do not describe the item as merely "post-release" or "future work".
 
+**Deferred visual gates: reachable-path scoping (MANDATORY when applicable)**
+
+When writing a deferred visual validation gate (DF-N), scope the required evidence to states that are **actually reachable in the current live user flow** (considering active feature flags, user state, and flow routing). Do not require proof for states that cannot be reached by the typical user path in the current deployment.
+
+If a state exists in the code but is not reachable in the live flow (examples: feature-flagged component, prerequisite user state not achievable during automated testing), record it separately:
+- **Reachable states**: include in DF-N required evidence.
+- **Unreachable states (with reason)**: note as "not in scope for DF-N — [reason]".
+
+This prevents a single unreachable screen from blocking an otherwise closed release gate.
+
 ### Import Dry-Run Deferral Rule (MANDATORY when applicable)
 
 If a plan's primary value depends on a third-party import or ingestion dry-run and that dry-run cannot be executed, do not classify the residual risk as LOW.

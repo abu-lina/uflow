@@ -169,6 +169,13 @@ Prefer small, focused scopes delivering value quickly.
 
 **Large scope**: Document justification. Critic must explicitly approve.
 
+### State-Machine Coverage Requirement (MANDATORY when applicable)
+
+If the plan fixes a bug inside a conditional render block (examples: AnimatePresence with N branches, state machine, tabbed UI, role-gated component), the plan MUST:
+1. Include a milestone that explicitly enumerates all state/branch paths in scope.
+2. State which paths are being fixed and which are explicitly confirmed not broken.
+3. NOT hand off to implementation without the full branch list settled — partial-branch implementation is allowed only when the remaining branches are confirmed unaffected by inspection.
+
 ## Analyst Consultation
 
 **REQUIRED when**: Unknown APIs need experimentation, multiple approaches need comparison, high-risk assumptions, plan blocked without validated constraints.

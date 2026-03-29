@@ -61,6 +61,17 @@ Trace outward from the blocked target to the highest relevant layout ancestor an
 
 Classify findings by confidence and clearly separate proven blockers from plausible secondary contributors.
 
+### State-Machine / Conditional-Render Bug Heuristic (WHEN APPLICABLE)
+
+For bugs inside a conditional render block (examples: state machine, AnimatePresence with N branches, tabbed UI, role-gated views), do not limit analysis to the branch currently visible to the reporter.
+
+**REQUIRED before handoff to Planner**:
+1. Enumerate every reachable branch/state in the component or state machine.
+2. Identify which branches are covered by the reported fix and which are not.
+3. Explicitly state in the analysis doc which branches are confirmed fixed, which are confirmed broken, and which are unverified.
+
+Do not present a partial-branch analysis as a complete RCA unless the unreachable branches are documented with an explicit rationale for exclusion.
+
 Constraints:
 
 - Read-only on production code/config.
