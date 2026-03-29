@@ -277,7 +277,26 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
    □ Offline mode: `/offline.html` fallback served correctly
    □ Push (only if push handler was changed): test notification delivered
 
-   If these are already tracked as deferred DF-N items in the open-actions tracker, reference them explicitly in the release summary with their status. Do not create duplicate trackers.
+  **Closure discipline (MANDATORY for PWA/service-worker runtime bugfixes)**:
+  - Do not treat this checklist as visibility-only.
+  - Before marking Stage 2 complete, require either:
+    - at least one executed browser-backed validation recorded in the deployment doc, OR
+    - an explicit DEFERRED risk record (owner + trigger/due + closure evidence) in the deployment doc or open-actions tracker.
+
+  If these are already tracked as deferred DF-N items in the open-actions tracker, reference them explicitly in the release summary with their status. Do not create duplicate trackers.
+
+  **Hotfix note (WHEN APPLICABLE)**: If the release followed a compressed hotfix pipeline without a formal UAT artifact, the deployment doc MUST include a `Live Verification` subsection summarizing:
+  - route(s) checked
+  - browser/profile context
+  - observed outcome
+
+### Post-Merge Hotfix Metadata Lock (WHEN APPLICABLE)
+
+If the functional hotfix is already on `main` but the repo still reports the prior version (no changelog/lockfile/roadmap bump yet), prepare the version/changelog/roadmap metadata in the same release-prep step before tagging the new patch version.
+
+Goal: avoid splitting “fix is on main” and “fix is formally released” into multiple avoidable deploy-triggering pushes.
+
+If a follow-up push is still required (for example: unavoidable docs corrections), document why it was unavoidable in the deployment record.
 
 5. Check workspace: All plan commits present, no uncommitted changes.
 6. **Amend formatter-only changes (MANDATORY if detected)**: Run `git diff --name-only`. If files have uncommitted changes, inspect them. If all are formatter-only (whitespace, import reordering, markdown table alignment), amend them into the most recent commit with `git commit -a --amend --no-edit`. If any contain logic changes, stop and investigate before proceeding.

@@ -117,6 +117,16 @@ If the plan depends on third-party public data, UAT MUST assess:
 
 If evidence is missing, record it explicitly as a value-delivery risk.
 
+### PWA / Privacy Runtime Evidence Gate (MANDATORY when applicable)
+
+If the plan (or hotfix) addresses a **PWA/service-worker**, **cross-origin asset fetch**, or **browser privacy/network** runtime defect, UAT MUST NOT issue an unqualified `APPROVED FOR RELEASE` unless browser-runtime evidence exists in one of:
+
+- the QA report
+- the DevOps deployment record
+- an explicit live verification note (with route(s), browser/profile context, and observed outcome)
+
+If runtime evidence is missing, UAT MUST downgrade the decision to **CONDITIONAL APPROVAL** or **NOT APPROVED** and record the missing evidence as a deferred follow-up with owner + trigger + closure evidence.
+
 ### Focus/Scroll Side-Effects Scenarios (WHEN APPLICABLE)
 
 If the change can affect mobile input focus/keyboard/scroll behavior (direct `focus()` calls or equivalent effects), UAT MUST include scenarios for:
