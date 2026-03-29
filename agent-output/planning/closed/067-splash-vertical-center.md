@@ -2,7 +2,7 @@
 ID: 067
 Origin: 067
 UUID: b7f2c8a3
-Status: Committed
+Status: Released
 ---
 
 # Plan 067 — Splash Screen Vertical Centering (Mobile)
@@ -11,7 +11,7 @@ Status: Committed
 
 - **Target Release**: v0.9.8
 - **Epic Alignment**: Landing / Onboarding entry experience — first impression and friction reduction for new mobile visitors
-- **Status**: Committed for Release v0.9.8
+- **Status**: Released in v0.9.8
 - **Related Issues**: None
 
 ### Changelog

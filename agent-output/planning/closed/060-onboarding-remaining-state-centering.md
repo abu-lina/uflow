@@ -2,7 +2,7 @@
 ID: 060
 Origin: 067
 UUID: d4e8f1a2
-Status: Committed
+Status: Released
 ---
 
 # Plan 060 — Onboarding Remaining State Centering Follow-Up
@@ -11,7 +11,7 @@ Status: Committed
 
 - **Target Release**: v0.9.8
 - **Epic Alignment**: Landing / onboarding entry experience — preserve a balanced, trustworthy first-run mobile flow from splash through onboarding progression
-- **Status**: Committed for Release v0.9.8
+- **Status**: Released in v0.9.8
 - **Related Issues**: None
 
 ### Changelog

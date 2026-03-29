@@ -2,7 +2,7 @@
 ID: 067
 Origin: 067
 UUID: b7f2c8a3
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Splash Screen Vertical Centering (Mobile)

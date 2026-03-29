@@ -2,7 +2,7 @@
 ID: 060
 Origin: 067
 UUID: d4e8f1a2
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 060 — Onboarding Remaining State Centering Follow-Up
