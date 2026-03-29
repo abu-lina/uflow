@@ -17,6 +17,15 @@ Status: Implemented
 
 ---
 
+## Changelog
+
+| Date | Handoff | Request | Summary |
+|------|---------|---------|---------|
+| 2026-03-29 | Planner → Implementer | Execute Plan 064 | Initial implementation: nginx no-cache blocks, CSP frame-src cleanup, version bump, regression tests |
+| 2026-03-29 | QA → Implementer | QA Failed — resolve blockers | Committed pipeline artifacts + lockfile (7ecc9d0f), gathered build evidence including sw.js content verification |
+
+---
+
 ## Summary
 
 Two bugs fixed in this plan:
@@ -82,6 +91,7 @@ Value changed from `"frame-src 'self' https://api.iconify.design ..."` to
 
 ## Test Evidence
 
+### Initial Run (2026-03-29, pre-QA)
 ```
 Test Files  2 passed (2)     [config suite]
 Tests       14 passed (14)
@@ -92,6 +102,61 @@ Tests       736 passed | 18 skipped (754)
 
 tsc --noEmit: clean (0 errors)
 ```
+
+### QA Re-run (2026-03-29, post-blocker resolution)
+```
+Focused config tests:
+  npx vitest run src/__tests__/config/
+  Test Files  2 passed (2)
+  Tests       14 passed (14)
+  Duration    793ms
+
+Full suite:
+  npx vitest run
+  Test Files  71 passed | 1 skipped (72)
+  Tests       736 passed | 18 skipped (754)
+  Duration    11.57s
+
+Type-check:
+  npm run type-check → tsc --noEmit: clean (0 errors)
+
+Git status:
+  git status --short → (empty, clean working tree)
+  HEAD: 7ecc9d0f chore(064): pipeline artifacts + lockfile alignment
+```
+
+---
+
+## QA Blocker Resolution (2026-03-29)
+
+### [HIGH] Working tree not clean — RESOLVED
+
+- **Cause**: Pipeline artifacts (impl doc, code-review doc, QA doc) and `package-lock.json` were not committed after Code Review and QA phases
+- **Resolution**: Committed 4 files as `7ecc9d0f chore(064): pipeline artifacts + lockfile alignment`
+- **Verification**: `git status --short` returns empty (clean working tree)
+
+### [MEDIUM] Build evidence incomplete — RESOLVED
+
+- **Cause**: `npm run build` fails at page-data collection due to missing `NEXT_PUBLIC_SUPABASE_URL` (no `.env.local` in worktree)
+- **Resolution**: This is a pre-existing environment limitation, identical to Plan 046 DF-4. The failure occurs at SSR page-data collection for API routes that import Supabase client — NOT at PWA compilation or sw.js generation
+- **PWA compilation evidence**:
+  - `✓ (pwa) Compiling...` completes successfully
+  - `Service worker: .../public/sw.js` generated
+  - `Custom runtimeCaching array found` confirmed
+- **sw.js content verification** (generated file):
+  - `importScripts("/fallback-ce627215c0e4a9af.js","/sw-push-handler.js")` — push handler imported ✅
+  - `registerRoute(/^https:\/\/(api\.iconify\.design|api\.unisvg\.com|api\.simplesvg\.com)\//,new e.NetworkOnly,"GET")` — Iconify CDN bypass ✅
+  - `/sw-push-handler.js` in precache manifest with revision `7ac6eb2b761b71b71776c6bf03c57320` ✅
+- **Assessment**: All Plan 064 changes are verified in the build output. The build failure is env-gated (DF-4) and does not affect the PWA/nginx surface area of this plan
+
+---
+
+## Code Quality Validation
+
+- [x] `npm test` (vitest run) exits 0 — 736 passed | 18 skipped
+- [x] `npm run type-check` exits 0 — tsc --noEmit clean
+- [x] `npm run build` — PWA compilation succeeds; page-data fails (env-gated, DF-4)
+- [x] Implementation doc updated with all evidence
 
 ---
 
