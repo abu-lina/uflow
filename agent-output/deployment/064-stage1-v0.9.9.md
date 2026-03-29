@@ -2,7 +2,7 @@
 ID: 064
 Origin: 064
 UUID: f3a9c2d7
-Status: Active
+Status: Released
 ---
 
 # Deployment: Plan 064 Stage 1 — v0.9.9
@@ -12,7 +12,7 @@ Status: Active
 | Plan ID | 064 |
 | Target Release | v0.9.9 |
 | Branch | session/64-iconify-sw-cors-fix |
-| Stage | 1 (Committed locally, NOT pushed) |
+| Stage | 2 (Released — pushed + tagged) |
 | Date | 2026-03-29 |
 
 ## Plan Summary
@@ -107,6 +107,25 @@ Plan 064 carries forward DF-1 through DF-4 from Plan 046. These are already trac
 
 Evidence captured at commit time (see below for actual values after commit).
 
+## Stage 2 Evidence
+
+```
+git status: clean
+git branch -vv: session/64-iconify-sw-cors-fix -> origin/session/64-iconify-sw-cors-fix
+git fetch origin --prune --tags: no new upstream changes
+ahead/behind: 5 ahead, 0 behind origin/main (no rebase needed)
+npm audit --audit-level=high: 0 vulnerabilities
+
+git push -u origin session/64-iconify-sw-cors-fix: success
+git tag -a v0.9.9: created on 9d5aff9a
+git push origin v0.9.9: success
+
+GitHub pre-existing vulnerabilities note: 6 on default branch (3 high, 3 moderate)
+  — NOT introduced by this release; npm audit local shows 0
+
+PR comparison: https://github.com/abu-lina/uflow/compare/main...session/64-iconify-sw-cors-fix
+```
+
 ## Known Limitations (pre-operation)
 
 - Full `npm run build` fails at page-data collection due to missing `NEXT_PUBLIC_SUPABASE_URL` (no `.env.local`). PWA compilation phase succeeds. This is DF-4, pre-existing since Plan 046.
@@ -120,8 +139,8 @@ Evidence captured at commit time (see below for actual values after commit).
   "version": "0.9.9",
   "branch": "session/64-iconify-sw-cors-fix",
   "date": "2026-03-29",
-  "status": "Committed (local)",
-  "notes": "Stage 1 local commit. NOT pushed. Awaiting release approval for Stage 2."
+  "status": "Released",
+  "notes": "Stage 2 complete. Branch pushed, tag v0.9.9 pushed. PR comparison: https://github.com/abu-lina/uflow/compare/main...session/64-iconify-sw-cors-fix"
 }
 ```
 
@@ -130,3 +149,4 @@ Evidence captured at commit time (see below for actual values after commit).
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-03-29T11:46Z | devops | Stage 1: lifecycle closure, CHANGELOG update, local commit |
+| 2026-03-29T12:13Z | devops | Stage 2: branch pushed, tag v0.9.9 pushed, deployment doc updated to Released |

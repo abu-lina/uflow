@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-03-25
+**Last Updated**: 2026-03-29
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.9.1
+**Current Version**: v0.9.9
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -53,6 +53,9 @@
 | 2026-03-24       | Process improvements implemented (PI 059)                          | Removal-Surface Enumeration (Planner), Removal-Surface Validation + Deleted-Module Residue Check (QA), Removed Capability Discoverability Gate (UAT), Deleted-Module Residue Sweep 6h (Code Reviewer) from Retrospective 054 |
 | 2026-03-25       | Plan 061 released (v0.9.0): Admin provider edit flow               | Added admin provider editing from moderation detail view, including edit sub-pages and admin moderation handoff controls |
 | 2026-03-25       | Plan 060 released (v0.9.1): Admin edit state persistence fix       | Restored admin category/offers/needs draft-state persistence on return to the edit form with admin-prefixed localStorage isolation and regression coverage |
+| 2026-03-26       | Plan 063 released (v0.9.3): Profile menu mobile auth entry fix     | Restored mobile auth entry for fresh/logged-out users, unblocked auth routes in early-access mode, hid navbar during onboarding splash |
+| 2026-03-28       | Plans 067+060 released (v0.9.8): Splash vertical centering bundle  | Full onboarding mobile centering across all 7 AnimatePresence branches |
+| 2026-03-29       | Plan 064 released (v0.9.9): Iconify SW CORS fix                    | nginx sw-push-handler.js no-cache blocks + CSP frame-src cleanup |
 
 ---
 
@@ -75,7 +78,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.9.1 released successfully (2026-03-25) — ready for new planning_
+_v0.9.9 released successfully (2026-03-29) — ready for new planning_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -95,6 +98,12 @@ _v0.9.1 released successfully (2026-03-25) — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.9.9  | 2026-03-29 | Plan 064 (Iconify SW CORS fix)                       | Released |
+| v0.9.8  | 2026-03-28 | Plans 067+060 (Splash vertical centering bundle)     | Released |
+| v0.9.7  | 2026-03-28 | Plan 060 (Security remediation)                      | Released |
+| v0.9.6  | 2026-03-26 | Plan 059 (Dependabot CI fix)                         | Released |
+| v0.9.3  | 2026-03-26 | Plan 063 (Profile menu mobile auth entry fix)        | Released |
+| v0.9.2  | 2026-03-25 | Plan 062 (Profile menu fix)                          | Released |
 | v0.9.1  | 2026-03-25 | Plan 060 (Admin edit state persistence fix)          | Released |
 | v0.9.0  | 2026-03-25 | Plan 061 (Admin provider edit flow)                  | Released |
 | v0.8.24 | 2026-03-24 | S054 (Remove legacy admin panel)                     | Released |
