@@ -57,6 +57,8 @@
 | 2026-03-28       | Plans 067+060 released (v0.9.8): Splash vertical centering bundle  | Full onboarding mobile centering across all 7 AnimatePresence branches |
 | 2026-03-29       | Plan 064 released (v0.9.9): Iconify SW CORS fix                    | nginx sw-push-handler.js no-cache blocks + CSP frame-src cleanup |
 | 2026-03-29       | Plan 065 released (v0.10.0): Automated provider enrichment pipeline (M1–M3) | enrichment_candidates schema, CLI runner with dry-run/write modes, admin review surface with approve/reject/bulk-approve; ownerless providers only |
+| 2026-03-29       | Process improvements implemented (PI 070)                          | Deferred Findings Rule (Critic), Entity Ownership Check (Planner), Pre-QA Static Gate (Implementer) from Retrospective 065 |
+| 2026-03-29       | Critique 065 closed via P1 Deferred Findings Rule                  | 4 findings RESOLVED, 5 findings DEFERRED to M4/M5 with named owners and triggers; first use of PI-070 closure path |
 | 2026-03-29       | v0.9.10 released: Iconify service-worker interception hotfix       | Removed the explicit Iconify `NetworkOnly` Workbox route so browsers handle CDN JSON fetches natively |
 
 ---
