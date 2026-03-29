@@ -423,6 +423,12 @@ Analyst → Implementer → Code Reviewer → QA → DevOps
 
 _Rationale: Speed is critical. Skip Planner (fix is the plan), Critic, Architect, UAT. Analyst pinpoints root cause, Implementer fixes, fast QA gate, immediate deploy._
 
+**Hotfix minimum evidence rule (MANDATORY when user-visible runtime behavior changes)**:
+
+- If the hotfix touches PWA/service-worker behavior, cross-origin asset fetch routing, or browser privacy/network runtime behavior:
+  - Require at least one browser-backed validation path to be recorded (executed or explicitly deferred with owner + closure evidence) in QA and/or the DevOps deployment record.
+  - If evidence cannot be produced quickly and the blast radius is unclear, recommend overriding to the full Feature pipeline (adds UAT) rather than shipping on assumption.
+
 **Verification** (QA-Direct — 3 phases):
 
 ```

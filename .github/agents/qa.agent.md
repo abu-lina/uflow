@@ -105,6 +105,32 @@ When `npm run build` fails due to missing environment variables required for pag
 
 If QA accepts this exception, QA MUST explicitly document it in the QA report (owner + rationale + evidence). This exception is NOT a general allowance to ship with failing builds.
 
+### PWA / Service-Worker Runtime Validation Gate (MANDATORY when applicable)
+
+If the change touches **PWA/service-worker runtime behavior** (examples: `next.config.js` `workboxOptions`, Workbox routes, `public/sw.js` behavior, cross-origin asset fetch routing, offline fallback, or browser privacy/network restrictions), QA MUST ensure there is browser-runtime evidence for at least one real request path.
+
+QA MUST record one of:
+
+- **Executed**: A browser-backed validation was performed (by QA, the Implementer, DevOps, or a named operator). Record:
+  - the route(s) checked
+  - browser/profile context (e.g., Firefox ETP / privacy profile)
+  - observed outcome (e.g., “icons render; no SW console errors; network requests are not intercepted by SW”)
+- **DEFERRED**: Browser-runtime validation is not executed yet. Record:
+  - owner
+  - risk level
+  - trigger/due window
+  - exact closure evidence required
+
+Static checks (config diffs, generated `public/sw.js` inspection, handler/route presence or absence) are useful diagnostic evidence, but are **not sufficient** as closure evidence for runtime behavior.
+
+### Hotfix Evidence Minimum (WHEN APPLICABLE)
+
+If the chain is a compressed hotfix (especially when UAT is skipped), QA MUST still provide a concise evidence note in the QA report:
+
+- user-visible path(s) affected
+- automated gates executed (tests/type-check/build or accepted scoped exception)
+- whether browser-runtime validation was executed vs deferred (and if deferred: owner + trigger + closure evidence)
+
 ### Dependency Override / Lockfile Changes (WHEN APPLICABLE)
 
 If the change is primarily dependency-related (e.g., `package.json` `overrides`, lockfile regen, transitive patching):
