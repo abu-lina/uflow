@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-03-29
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.9.10
+**Current Version**: v0.10.0
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -56,6 +56,7 @@
 | 2026-03-26       | Plan 063 released (v0.9.3): Profile menu mobile auth entry fix     | Restored mobile auth entry for fresh/logged-out users, unblocked auth routes in early-access mode, hid navbar during onboarding splash |
 | 2026-03-28       | Plans 067+060 released (v0.9.8): Splash vertical centering bundle  | Full onboarding mobile centering across all 7 AnimatePresence branches |
 | 2026-03-29       | Plan 064 released (v0.9.9): Iconify SW CORS fix                    | nginx sw-push-handler.js no-cache blocks + CSP frame-src cleanup |
+| 2026-03-29       | Plan 065 released (v0.10.0): Automated provider enrichment pipeline (M1–M3) | enrichment_candidates schema, CLI runner with dry-run/write modes, admin review surface with approve/reject/bulk-approve; ownerless providers only |
 | 2026-03-29       | v0.9.10 released: Iconify service-worker interception hotfix       | Removed the explicit Iconify `NetworkOnly` Workbox route so browsers handle CDN JSON fetches natively |
 
 ---
@@ -79,7 +80,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.9.10 released successfully (2026-03-29) — ready for new planning_
+_v0.10.0 released successfully (2026-03-29) — Plan 065 automated provider enrichment pipeline (M1–M3)_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -99,6 +100,7 @@ _v0.9.10 released successfully (2026-03-29) — ready for new planning_
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.0 | 2026-03-29 | Plan 065 (Automated provider enrichment pipeline M1–M3) | Released |
 | v0.9.10 | 2026-03-29 | Hotfix release: Iconify SW interception removal      | Released |
 | v0.9.9  | 2026-03-29 | Plan 064 (Iconify SW CORS fix)                       | Released |
 | v0.9.8  | 2026-03-28 | Plans 067+060 (Splash vertical centering bundle)     | Released |
