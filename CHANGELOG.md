@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.10] - 2026-03-29
+
+### Fixed
+
+- **Iconify service-worker interception hotfix**: Removed the explicit `NetworkOnly` Workbox route for `api.iconify.design`, `api.unisvg.com`, and `api.simplesvg.com`. The prior hotfix still caused the service worker to intercept Iconify JSON fetches and re-issue them from the SW context, which Firefox ETP and some content blockers can block at network level. With no explicit route, Workbox leaves Iconify requests alone and the browser handles them natively.
+
 ## [0.9.9] - 2026-03-29
 
 ### Fixed
