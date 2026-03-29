@@ -15,11 +15,12 @@ tools:
     'edit/createFile',
     'edit/editFiles',
     'search',
-    'flowbaby_storeMemory',
-    'flowbaby_retrieveMemory',
+    'web/fetch',
+    'uflow.uflow-memory/flowbaby_storeMemory',
+    'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: GPT-5.2
+model: Claude Opus 4.6
 handoffs:
   - label: Request Implementation Fixes
     agent: Implementer
@@ -28,7 +29,7 @@ handoffs:
   - label: Hand Off to Retrospective
     agent: Retrospective
     prompt: Release complete. Please capture deployment lessons learned.
-    send: false
+    send: true
   - label: Update Release Tracker
     agent: Roadmap
     prompt: Plan committed locally. Please update release tracker with current status.
@@ -67,6 +68,13 @@ Core Responsibilities:
 12. **Commit on plan approval**: After UAT approves a plan, commit all plan changes locally with detailed message referencing plan ID and target release. Do NOT push yet.
 13. **Track release readiness**: Monitor which plans are committed locally for the current target release. Coordinate with Roadmap agent to maintain accurate release→plan mappings.
 14. **Execute release on approval**: Only push when user explicitly approves the release version (not individual plans). A release bundles all committed plans for that version.
+15. **GitHub & Hetzner platform operations**:
+
+- **GitHub releases/tags**: Use `gh` CLI via terminal — `gh release create`, `gh api`, `git push --tags`
+- **GitHub Actions**: Review and trigger workflows via `gh workflow run` or `gh run list`
+- **Hetzner Cloud API**: Use `web/fetch` against `https://api.hetzner.cloud/v1/` with `Authorization: Bearer <token>` for server status, reboots, and firewall rule checks
+- **Hetzner SSH deployment**: Use `execute/runInTerminal` for SSH-based pull-and-restart scripts on the VPS
+- Prefer `gh` CLI over raw GitHub API for release and tag management — it handles auth and formats correctly
 
 Constraints:
 
@@ -277,18 +285,20 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
    □ Offline mode: `/offline.html` fallback served correctly
    □ Push (only if push handler was changed): test notification delivered
 
-  **Closure discipline (MANDATORY for PWA/service-worker runtime bugfixes)**:
-  - Do not treat this checklist as visibility-only.
-  - Before marking Stage 2 complete, require either:
-    - at least one executed browser-backed validation recorded in the deployment doc, OR
-    - an explicit DEFERRED risk record (owner + trigger/due + closure evidence) in the deployment doc or open-actions tracker.
+   **Closure discipline (MANDATORY for PWA/service-worker runtime bugfixes)**:
 
-  If these are already tracked as deferred DF-N items in the open-actions tracker, reference them explicitly in the release summary with their status. Do not create duplicate trackers.
+- Do not treat this checklist as visibility-only.
+- Before marking Stage 2 complete, require either:
+  - at least one executed browser-backed validation recorded in the deployment doc, OR
+  - an explicit DEFERRED risk record (owner + trigger/due + closure evidence) in the deployment doc or open-actions tracker.
 
-  **Hotfix note (WHEN APPLICABLE)**: If the release followed a compressed hotfix pipeline without a formal UAT artifact, the deployment doc MUST include a `Live Verification` subsection summarizing:
-  - route(s) checked
-  - browser/profile context
-  - observed outcome
+If these are already tracked as deferred DF-N items in the open-actions tracker, reference them explicitly in the release summary with their status. Do not create duplicate trackers.
+
+**Hotfix note (WHEN APPLICABLE)**: If the release followed a compressed hotfix pipeline without a formal UAT artifact, the deployment doc MUST include a `Live Verification` subsection summarizing:
+
+- route(s) checked
+- browser/profile context
+- observed outcome
 
 ### Post-Merge Hotfix Metadata Lock (WHEN APPLICABLE)
 
@@ -304,7 +314,7 @@ If a follow-up push is still required (for example: unavoidable docs corrections
    - Run `git branch -vv` and verify the tracking info is present
    - If missing, set upstream before continuing (example): `git branch --set-upstream-to=origin/main main`
 8. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** the first Stage 2 push (default) and **before** tagging.
-  8b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
+   8b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
 
 - `git status`
 - `git branch -vv`
@@ -320,23 +330,23 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
   8e. **Post-rebase artifact integrity gate (MANDATORY after any rebase)**:
   After completing a rebase (regardless of cause), before continuing to push or tag:
-    1. **Reject conflict markers**: run `grep -r "<<<<<<< HEAD" package.json package-lock.json CHANGELOG.md` — any match is a blocker. Do NOT push until resolved.
-    2. **JSON parse check**: `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"` and same for `package-lock.json`. Any parse error is a blocker.
-    3. **Re-run build**: `npm run build` — confirm the build still exits 0 after the rebase.
-    4. **Re-run audit**: `npm audit --audit-level=high` — confirm no new HIGH/CRITICAL vulnerabilities were introduced by updated dependencies in the rebased commits.
-  Document all four checks in the Stage 2 readiness evidence block before proceeding to push/tag.
+  1. **Reject conflict markers**: run `grep -r "<<<<<<< HEAD" package.json package-lock.json CHANGELOG.md` — any match is a blocker. Do NOT push until resolved.
+  2. **JSON parse check**: `node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"` and same for `package-lock.json`. Any parse error is a blocker.
+  3. **Re-run build**: `npm run build` — confirm the build still exits 0 after the rebase.
+  4. **Re-run audit**: `npm audit --audit-level=high` — confirm no new HIGH/CRITICAL vulnerabilities were introduced by updated dependencies in the rebased commits.
+     Document all four checks in the Stage 2 readiness evidence block before proceeding to push/tag.
 
   8c. **Version collision resolution (IF target tag already exists after `git fetch --tags`)**:
-    If the intended version tag is already present on `origin`:
-    1. `git rebase --abort` (only if a rebase is currently in progress)
-    2. Bump version in `package.json` and `CHANGELOG.md` to next patch
-    3. Run `npm install --package-lock-only`
-    4. Rename and update Stage 1 deployment doc to reflect new version
-    5. Update plan's `Target Release` field and all changelog references
-    6. `git commit --amend` to fold the version bump into the fix commit (squash one layer only)
-    7. Resume rebase
-       Document the collision source, bumped version, and resolution steps in the deployment doc.
-       Limit to 2 bump cycles. If a third collision occurs, pause and involve user.
+  If the intended version tag is already present on `origin`:
+  1. `git rebase --abort` (only if a rebase is currently in progress)
+  2. Bump version in `package.json` and `CHANGELOG.md` to next patch
+  3. Run `npm install --package-lock-only`
+  4. Rename and update Stage 1 deployment doc to reflect new version
+  5. Update plan's `Target Release` field and all changelog references
+  6. `git commit --amend` to fold the version bump into the fix commit (squash one layer only)
+  7. Resume rebase
+     Document the collision source, bumped version, and resolution steps in the deployment doc.
+     Limit to 2 bump cycles. If a third collision occurs, pause and involve user.
 
 **Stage 2 evidence block (RECOMMENDED formatting)**:
 
@@ -393,12 +403,12 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 - Visit `/providers` with **no query params** and confirm results render (not “No results found”).
 - Visit `/` and confirm the primary search UI renders.
-**Smoke server instance discipline**: If running smoke checks against a local dev server:
+  **Smoke server instance discipline**: If running smoke checks against a local dev server:
 - Prefer a **fresh server instance** started from the current HEAD (not a server that was running continuously throughout the session).
 - If you use an existing server, explicitly confirm it is serving the latest committed code (e.g., was started after the final release commit).
 - If an existing server returns unexpected errors (e.g., 500 on `/`), start a fresh instance before treating it as a release failure.
 - Record which port/instance was used for smoke checks in the deployment doc.
-Manual browser verification is acceptable. If using `curl`, document the exact commands and what you checked for in the response.
+  Manual browser verification is acceptable. If using `curl`, document the exact commands and what you checked for in the response.
 
 If any smoke check fails: stop and treat as a release failure. Coordinate rollback or hotfix before marking Stage 2 complete.
 
@@ -416,6 +426,7 @@ If any smoke check fails: stop and treat as a release failure. Coordinate rollba
 3e. **Deployment doc normalization (MANDATORY)**:
 
 After release is confirmed complete, normalize the main deployment doc:
+
 - Update the frontmatter `Status:` field to `Released`.
 - If the doc contains a "Remaining Work" or "Stage 2 Blockers" section left over from pre-release gating, update it to reflect the final resolution (e.g., "Cleared by release completion" or "Cleared by user gate relaxation on [date]").
 - Ensure no open-language blocker text (e.g., "X is still required before push") survives unfalsified after the release is complete.
@@ -432,6 +443,7 @@ After release is confirmed complete, normalize the main deployment doc:
    - Owner: retrospective agent or next available session
    - Due: before next plan's Stage 1 commit
    - Evidence to close: `Current Version` field updated to `[released version]` in roadmap doc
+
 5. Hand off to Retrospective.
 6. Store memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
 
@@ -497,6 +509,16 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
 6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `release-procedures`, `commit`)
 
+**Catalog skills available for this agent** (load when the task touches these domains):
+
+| Skill                        | Path                                                       | When to load                                                                                     |
+| ---------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `bash-pro`                   | `.agent/skills/skills/bash-pro/SKILL.md`                   | SSH deployment scripts, health checks, rollback automation — defensive Bash patterns             |
+| `deployment-procedures`      | `.agent/skills/skills/deployment-procedures/SKILL.md`      | Release runbooks, platform-specific deployment decisions, rollback safety                        |
+| `docker-expert`              | `.agent/skills/skills/docker-expert/SKILL.md`              | Standalone Docker build optimization, image security, tagging strategy                           |
+| `github-actions-templates`   | `.agent/skills/skills/github-actions-templates/SKILL.md`   | Authoring or debugging GitHub Actions workflows — Docker push, matrix builds, release automation |
+| `github-workflow-automation` | `.agent/skills/skills/github-workflow-automation/SKILL.md` | GitHub CLI (`gh`) operations — creating releases, tags, managing PRs programmatically            |
+
 If a referenced skill path is missing or appears stale:
 
 - Prefer the canonical UFlow path pattern: `.github/skills/<name>/SKILL.md`
@@ -520,11 +542,12 @@ If a referenced skill path is missing or appears stale:
 **Before the final Stage 1 commit** (for the plan currently being committed):
 
 1. Update Status to "Committed" on: plan, implementation, code-review, qa, uat docs for the committed plan
-1b. **Critique closure verification (MANDATORY)**:
+   1b. **Critique closure verification (MANDATORY)**:
 
 - Check whether a critique exists for the current plan in `agent-output/critiques/`.
 - If the critique exists and all findings are resolved, ensure it is closed per the Critic closure rule (Status → `Resolved`, move to `agent-output/critiques/closed/`).
 - If the critique cannot be closed yet (OPEN findings remain, or resolution is unclear), explicitly record that status in the Stage 1 deployment doc (do not silently leave it ambiguous).
+
 2. Move all to their respective `closed/` folders:
 
 - `agent-output/planning/closed/`
@@ -549,7 +572,7 @@ If a referenced skill path is missing or appears stale:
 
 ## Memory Health Check (MANDATORY)
 
-At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+At the start of work (before substantive decisions), run **one** uflow memory retrieval.
 
 - If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
 - Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
@@ -566,8 +589,8 @@ At the start of work (before substantive decisions), run **one** Flowbaby retrie
 
 **Quick reference:**
 
-- Retrieve: `#flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 
@@ -585,10 +608,10 @@ Full contract details: `memory-contract` skill
 When you finish your work, **always end your response** with a clear next-step block:
 
 ```
-✅ PHASE COMPLETE: ⑨ DevOps — Status: {Committed|Released}
+✅ PHASE COMPLETE: [N] DevOps — Status: {Committed|Released}
 📄 Output: agent-output/deployment/{document}
-➡️ NEXT: Pick "⑩ Retrospective" from the Orchestrator handoff suggestions
+➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
    Gate: Retrospective document complete with lessons learned
 ```
 
-Adjust based on the active Workflow Card pipeline.
+Adjust routing based on the active Workflow Card pipeline.

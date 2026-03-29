@@ -11,11 +11,11 @@ tools:
     'edit/createDirectory',
     'edit/createFile',
     'edit/editFiles',
-    'flowbaby_storeMemory',
-    'flowbaby_retrieveMemory',
+    'uflow.uflow-memory/flowbaby_storeMemory',
+    'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: Claude Sonnet 4.5
+model: Claude Opus 4.6
 handoffs:
   - label: Report UAT Failure
     agent: Planner
@@ -28,7 +28,7 @@ handoffs:
   - label: Prepare Release
     agent: DevOps
     prompt: Implementation complete with release decision. Please manage release steps.
-    send: false
+    send: true
   - label: Update Roadmap
     agent: Roadmap
     prompt: Retrospective is closed for this plan. Please update the roadmap accordingly.
@@ -92,6 +92,7 @@ If this is not recorded, do not describe the item as merely "post-release" or "f
 When writing a deferred visual validation gate (DF-N), scope the required evidence to states that are **actually reachable in the current live user flow** (considering active feature flags, user state, and flow routing). Do not require proof for states that cannot be reached by the typical user path in the current deployment.
 
 If a state exists in the code but is not reachable in the live flow (examples: feature-flagged component, prerequisite user state not achievable during automated testing), record it separately:
+
 - **Reachable states**: include in DF-N required evidence.
 - **Unreachable states (with reason)**: note as "not in scope for DF-N — [reason]".
 
@@ -102,6 +103,7 @@ This prevents a single unreachable screen from blocking an otherwise closed rele
 If a plan's primary value depends on a third-party import or ingestion dry-run and that dry-run cannot be executed, do not classify the residual risk as LOW.
 
 Minimum handling:
+
 - classify as MEDIUM risk
 - assign owner
 - assign trigger or due window (preferably before or within 24h of release)
@@ -111,6 +113,7 @@ Minimum handling:
 ### External Source Contract Stability (WHEN APPLICABLE)
 
 If the plan depends on third-party public data, UAT MUST assess:
+
 - whether the source contract was verified during planning/implementation
 - whether end-to-end extraction/import evidence exists
 - whether residual release risk depends on the source remaining stable
@@ -168,11 +171,13 @@ Additionally, verify the Implementation doc contains either baseline numbers or 
 If the feature depends on **admin/moderator role metadata**, **Supabase RLS visibility boundaries**, or **service-role client fallbacks**, UAT MUST NOT issue "APPROVED FOR RELEASE" without evidence that the feature was validated in a live session with correct role configuration.
 
 Minimum checks:
+
 - Admin role is present in `auth.users.raw_user_meta_data` (not just `public.users`)
 - The feature's primary admin path returns expected data (e.g., pending-status filter returns non-empty results)
 - At least one mutation path (approve, reject, or equivalent) completes without error
 
 If live validation is infeasible at UAT time, UAT MUST:
+
 - Record the gap as a **DEFERRED** finding with severity, owner, and trigger
 - Downgrade the release decision to **CONDITIONAL APPROVAL** with explicit next actions
 - NOT issue an unqualified "APPROVED FOR RELEASE"
@@ -356,6 +361,27 @@ Part of structured workflow: planner → analyst → critic → architect → im
 
 ---
 
+# Dynamic Skill Loading
+
+When receiving a handoff from `@Orchestrator` (or any agent) that includes skill loading instructions:
+
+1. **Scan** the handoff prompt or Workflow Card for lines matching: `Load skill '{name}' from '{path}'`
+2. **Read** each referenced skill file using `readFile` on the specified path
+3. **Incorporate** the skill's instructions into your work for this task
+4. **UFlow skills** (`.github/skills/`): Always take priority over catalog skills
+5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
+6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `testing-patterns`)
+
+**Catalog skills available for this agent** (load when the task touches these domains):
+
+| Skill                                          | Path                                                                         | When to load                                                                    |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `progressive-web-app`                          | `.agent/skills/skills/progressive-web-app/SKILL.md`                          | Validating offline behavior, installability, service worker, home-screen UX     |
+| `ui-visual-validator`                          | `.agent/skills/skills/ui-visual-validator/SKILL.md`                          | Visual regression, responsive breakpoints, design system compliance             |
+| `accessibility-compliance-accessibility-audit` | `.agent/skills/skills/accessibility-compliance-accessibility-audit/SKILL.md` | Pre-release a11y gate — WCAG compliance, keyboard nav, screen reader validation |
+
+---
+
 # Document Lifecycle
 
 **MANDATORY**: Load `document-lifecycle` skill. You **inherit** document IDs.
@@ -381,7 +407,7 @@ Status: Active
 
 ## Memory Health Check (MANDATORY)
 
-At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+At the start of work (before substantive decisions), run **one** uflow memory retrieval.
 
 - If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
 - Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
@@ -398,8 +424,8 @@ At the start of work (before substantive decisions), run **one** Flowbaby retrie
 
 **Quick reference:**
 
-- Retrieve: `#flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 
@@ -410,10 +436,10 @@ Full contract details: `memory-contract` skill
 When you finish your work, **always end your response** with a clear next-step block:
 
 ```
-✅ PHASE COMPLETE: ⑧ UAT — Verdict: {APPROVED FOR RELEASE|NOT APPROVED}
+✅ PHASE COMPLETE: [N] UAT — Verdict: {APPROVED FOR RELEASE|NOT APPROVED}
 📄 Output: agent-output/uat/{document}
-➡️ NEXT: Pick "⑨ DevOps" from the Orchestrator handoff suggestions
+➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
    Gate: Status must be Committed or Released
 ```
 
-If NOT APPROVED, direct back to ① Planner or ⑤ Implementer depending on the gap. Adjust based on the active Workflow Card pipeline.
+Adjust routing based on the active Workflow Card pipeline (e.g., if NOT APPROVED: back to Planner or Implementer depending on the gap).

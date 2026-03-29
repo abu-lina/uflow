@@ -11,18 +11,18 @@ tools:
     'edit',
     'search',
     'web',
-    'flowbaby_storeMemory',
-    'flowbaby_retrieveMemory',
+    'uflow.uflow-memory/flowbaby_storeMemory',
+    'uflow.uflow-memory/flowbaby_retrieveMemory',
     'ms-python.python/getPythonEnvironmentInfo',
     'ms-python.python/getPythonExecutableCommand',
     'ms-python.python/installPythonPackage',
     'ms-python.python/configurePythonEnvironment',
     'todo',
   ]
-model: Claude Opus 4.5
+model: Claude Opus 4.6
 handoffs:
   - label: Request Analysis
-    agent: analyst
+    agent: Analyst
     prompt: I've encountered technical unknowns during implementation. Please investigate.
     send: false
   - label: Request Plan Clarification
@@ -32,7 +32,7 @@ handoffs:
   - label: Submit for Code Review
     agent: Code Reviewer
     prompt: Implementation is complete. Please review code quality before QA.
-    send: false
+    send: true
 ---
 
 ## Workspace Tool Restrictions (MANDATORY)
@@ -156,22 +156,21 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 8. Run/report tests, linters, checks per plan.
 9. Build/run test coverage for all work. Create unit + integration tests per `testing-patterns` skill.
 10. NOT complete until tests pass. Verify all tests before handoff.
-   10b. **Pre-QA Static Gate (MANDATORY before any Code Review or QA handoff)**: Run both commands and confirm each exits 0 before handoff:
-   ```
-   npm run lint
-   npm run type-check
-   ```
-   If either fails, fix all errors before handoff. Do not hand off to Code Review or QA with known lint or type errors. QA remains the authoritative lint and type gate; this is a mandatory self-check only to prevent resetting QA on IDE-level warnings.
-11. Track deviations. Refuse to proceed without updated guidance.
-12. Validate implementation delivers value statement before complete.
-13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
-   13c. **Version bump is preliminary (MANDATORY)**:
-  The version number in the plan is a placeholder until DevOps Stage 1 confirms it via `git fetch --tags`.
-  When bumping, note in the implementation doc: `Version bumped to X.Y.Z (preliminary - final version confirmed at DevOps Stage 1)`.
-  Do not treat the plan's version as immutable.
+    10b. **Pre-QA Static Gate (MANDATORY before any Code Review or QA handoff)**: Run both commands and confirm each exits 0 before handoff:
 
-   13b. **Lockfile Alignment (MANDATORY after ANY `"version"` bump in `package.json`)**:
-  Immediately after editing the `"version"` field, run:
+```
+npm run lint
+npm run type-check
+```
+
+If either fails, fix all errors before handoff. Do not hand off to Code Review or QA with known lint or type errors. QA remains the authoritative lint and type gate; this is a mandatory self-check only to prevent resetting QA on IDE-level warnings. 11. Track deviations. Refuse to proceed without updated guidance. 12. Validate implementation delivers value statement before complete. 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
+13c. **Version bump is preliminary (MANDATORY)**:
+The version number in the plan is a placeholder until DevOps Stage 1 confirms it via `git fetch --tags`.
+When bumping, note in the implementation doc: `Version bumped to X.Y.Z (preliminary - final version confirmed at DevOps Stage 1)`.
+Do not treat the plan's version as immutable.
+
+13b. **Lockfile Alignment (MANDATORY after ANY `"version"` bump in `package.json`)**:
+Immediately after editing the `"version"` field, run:
 
 ```
 npm install --package-lock-only
@@ -528,6 +527,14 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
 6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `engineering-standards`, `testing-patterns`)
 
+**Catalog skills available for this agent** (load when the task touches these domains):
+
+| Skill                     | Path                                                    | When to load                                                                                       |
+| ------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `react-best-practices`    | `.agent/skills/skills/react-best-practices/SKILL.md`    | Any React/Next.js component work — server/client split, waterfall elimination, bundle optimization |
+| `nextjs-best-practices`   | `.agent/skills/skills/nextjs-best-practices/SKILL.md`   | App Router data fetching, layouts, streaming, server actions                                       |
+| `postgres-best-practices` | `.agent/skills/skills/postgres-best-practices/SKILL.md` | Any Supabase/Postgres work — RLS, indexing, query optimization                                     |
+
 ---
 
 # Document Lifecycle
@@ -559,7 +566,7 @@ Status: Active
 
 ## Memory Health Check (MANDATORY)
 
-At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+At the start of work (before substantive decisions), run **one** uflow memory retrieval.
 
 - If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
 - Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
@@ -576,8 +583,8 @@ At the start of work (before substantive decisions), run **one** Flowbaby retrie
 
 **Quick reference:**
 
-- Retrieve: `#flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 
@@ -588,10 +595,10 @@ Full contract details: `memory-contract` skill
 When you finish your work, **always end your response** with a clear next-step block:
 
 ```
-✅ PHASE COMPLETE: ⑤ Implementer
+✅ PHASE COMPLETE: [N] Implementer
 📄 Output: agent-output/implementation/{document}
-➡️ NEXT: Pick "⑥ Code Reviewer" from the Orchestrator handoff suggestions
+➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
    Gate: Review verdict must be APPROVED or APPROVED_WITH_COMMENTS
 ```
 
-Adjust the next agent based on the active Workflow Card pipeline.
+Adjust routing based on the active Workflow Card pipeline (e.g., Feature: next is Code Reviewer; Bugfix: may go direct to QA).

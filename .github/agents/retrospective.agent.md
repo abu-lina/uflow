@@ -10,11 +10,11 @@ tools:
     'edit/createFile',
     'search',
     'web',
-    'flowbaby.flowbaby/flowbabyStoreSummary',
-    'flowbaby.flowbaby/flowbabyRetrieveMemory',
+    'uflow.uflow-memory/flowbaby_storeMemory',
+    'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: Gemini 3 Pro (Preview)
+model: Claude Opus 4.6
 handoffs:
   - label: Update Architecture
     agent: Architect
@@ -49,7 +49,7 @@ Core Responsibilities:
 5. Measure against objectives: value delivery, cost, drift timing
 6. Document technical patterns as secondary (clearly marked)
 7. Build knowledge base; recommend next actions
-8. Use Flowbaby memory for continuity
+8. Use uflow memory for continuity
 9. **Status tracking**: Keep retrospective doc's Status current. Other agents and users rely on accurate status at a glance.
 
 Constraints:
@@ -63,13 +63,17 @@ Process:
 
 1. Acknowledge handoff: Plan ID, version, deployment outcome, scope
 2. Read all artifacts: planning, analysis, critique, implementation, architecture, QA, UAT, deployment, escalations
-2b. **Memory health check (MANDATORY)**: Run **one** `flowbabyRetrieveMemory` query.
-  - If it errors (e.g., daemon lock), explicitly document **NO-MEMORY MODE** and proceed artifact-first.
-  - Do not repeatedly retry memory tools if the first call errors.
-3. Retrieve Flowbaby memory using at least 2 queries:
-  - "Plan <ID> release <version>" (phase summary)
-  - "Plan <ID> handoff issues" (process gaps)
+   2b. **Memory health check (MANDATORY)**: Run **one** `uflow.uflow-memory/flowbaby_retrieveMemory` query.
+
+- If it errors (e.g., daemon lock), explicitly document **NO-MEMORY MODE** and proceed artifact-first.
+- Do not repeatedly retry memory tools if the first call errors.
+
+3. Retrieve uflow memory using at least 2 queries:
+
+- "Plan <ID> release <version>" (phase summary)
+- "Plan <ID> handoff issues" (process gaps)
   If retrieval returns 0 results, document **NO-MEMORY MODE** and proceed artifact-first.
+
 4. Analyze changelog patterns: handoffs, requests, changes, gaps, excessive back-and-forth
 5. Review issues/blockers: Open Questions, Blockers, resolution status, escalation appropriateness, patterns
 6. Count substantive changes: update frequency, additions vs corrections, planning gaps indicators
@@ -223,6 +227,27 @@ Status: Active
 
 ---
 
+# Dynamic Skill Loading
+
+When receiving a handoff from `@Orchestrator` (or any agent) that includes skill loading instructions:
+
+1. **Scan** the handoff prompt or Workflow Card for lines matching: `Load skill '{name}' from '{path}'`
+2. **Read** each referenced skill file using `readFile` on the specified path
+3. **Incorporate** the skill's instructions into your work for this task
+4. **UFlow skills** (`.github/skills/`): Always take priority over catalog skills
+5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
+6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`)
+
+**Catalog skills available for this agent** (load when the task touches these domains):
+
+| Skill                   | Path                                                  | When to load                                                                                          |
+| ----------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `postmortem-writing`    | `.agent/skills/skills/postmortem-writing/SKILL.md`    | Any release with incidents or blockers — blameless postmortem templates, SLA/severity frameworks      |
+| `kaizen`                | `.agent/skills/skills/kaizen/SKILL.md`                | Framing findings as actionable improvements — continuous improvement, error-proofing, standardization |
+| `devops-troubleshooter` | `.agent/skills/skills/devops-troubleshooter/SKILL.md` | RCA of deployment or pipeline issues discovered during retrospective                                  |
+
+---
+
 # Memory Contract
 
 **MANDATORY**: Load `memory-contract` skill at session start. Memory is core to your reasoning.
@@ -235,8 +260,8 @@ Status: Active
 
 **Quick reference:**
 
-- Retrieve: `#flowbabyRetrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbabyStoreSummary { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 
@@ -247,10 +272,10 @@ Full contract details: `memory-contract` skill
 When you finish your work, **always end your response** with a clear next-step block:
 
 ```
-✅ PHASE COMPLETE: ⑩ Retrospective
+✅ PHASE COMPLETE: [N] Retrospective
 📄 Output: agent-output/retrospectives/{document}
-➡️ NEXT: Pick "⑪ ProcessImprovement" from the Orchestrator handoff suggestions (if systemic findings)
-   Or: Pick "⑬ Roadmap" (if no systemic findings)
+➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
+   (e.g., ProcessImprovement if systemic findings; Roadmap if none)
 ```
 
-Adjust based on the active Workflow Card pipeline.
+Adjust routing based on the active Workflow Card pipeline.

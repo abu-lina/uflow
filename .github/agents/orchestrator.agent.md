@@ -16,18 +16,18 @@ tools:
     'edit/editFiles',
     'search',
     'web',
-    'flowbaby_storeMemory',
-    'flowbaby_retrieveMemory',
+    'uflow.uflow-memory/flowbaby_storeMemory',
+    'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: Claude Opus 4.5
+model: Claude Opus 4.6
 handoffs:
   - label: '① Planner'
     agent: Planner
     prompt: Task classified and skills selected. Please create implementation plan per the Workflow Card.
     send: false
   - label: '② Analyst'
-    agent: analyst
+    agent: Analyst
     prompt: Task requires technical investigation before planning. Proceed with analysis.
     send: false
   - label: '③ Critic'
@@ -136,7 +136,7 @@ Still forbidden during bootstrap:
 
 ## Memory Health Check (MANDATORY)
 
-At the start of every session (before the first Workflow Card), run **one** `flowbabyRetrieveMemory` query.
+At the start of every session (before the first Workflow Card), run **one** `uflow.uflow-memory/flowbaby_retrieveMemory` query.
 
 - If retrieval errors (e.g., daemon lock by another VS Code window), explicitly declare: **NO-MEMORY MODE** and proceed artifact-first for this entire session.
 - Do not wait until later phases to discover memory is unavailable.
@@ -197,7 +197,7 @@ Single entry point for all development work. When invoked with a task descriptio
 ## Session Start Protocol
 
 1. Load `document-lifecycle` skill and `memory-contract` skill (MANDATORY)
-2. Retrieve Flowbaby memory for prior workflow context
+2. Retrieve uflow memory for prior workflow context
 3. Read `agent-output/.next-id` to understand current document state
 4. Scan `agent-output/` subdirectories for in-progress work
 5. **Release-ready stall detection (MANDATORY)**: Identify any plans with Status `UAT Approved` that are not yet `Committed`/`Released`. Surface them explicitly as “Ready for DevOps” and suggest handoff to `⑨ DevOps`. Note: long delays increase version drift and coordination cost.
@@ -529,17 +529,18 @@ The Workflow Card **MUST** always include the `Catalog:` line — either with ma
 
 When the task matches one of these categories, **you MUST include the listed UFlow skill AND search the catalog for the listed catalog candidates**. List at least one catalog skill in the Workflow Card if the catalog is available.
 
-| Category         | Token triggers                                                  | UFlow skill (Layer 1)   | Catalog candidates (Layer 3) — search by ID                                                                                                                              |
-| ---------------- | --------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Database**     | database, schema, migration, table, query, index, RLS, postgres | `architecture-patterns` | `postgres-best-practices`, `postgresql`, `postgresql-optimization`, `sql-optimization-patterns`, `supabase-automation`, `nextjs-supabase-auth`, `neon-postgres`          |
-| **Auth**         | auth, login, signup, session, JWT, password, OAuth              | `security-patterns`     | `auth-implementation-patterns`, `nextjs-supabase-auth`, `clerk-auth`, `broken-authentication`                                                                            |
-| **API**          | API, endpoint, route, REST, handler                             | `cross-repo-contract`   | `api-patterns`, `api-design-principles`, `api-documentation`, `api-security-best-practices`                                                                              |
-| **UI**           | component, page, form, modal, UI, UX, responsive, tailwind      | (none specific)         | `react-best-practices`, `react-patterns`, `react-ui-patterns`, `tailwind-design-system`, `tailwind-patterns`, `cc-skill-frontend-patterns`, `nextjs-app-router-patterns` |
-| **Performance**  | slow, optimize, cache, latency, performance                     | (none specific)         | `web-performance-optimization`, `performance-profiling`, `performance-engineer`, `application-performance-performance-optimization`                                      |
-| **Testing**      | test, coverage, TDD, mock, fixture, vitest                      | `testing-patterns`      | `javascript-testing-patterns`                                                                                                                                            |
-| **TypeScript**   | typescript, types, generics, type-safe                          | (none specific)         | `typescript-advanced-types`, `typescript-expert`, `typescript-pro`                                                                                                       |
-| **Docker/Infra** | docker, container, deploy, CI, CD, nginx                        | (none specific)         | `docker-expert`, `vercel-deployment`, `cdk-patterns`                                                                                                                     |
-| **Next.js**      | nextjs, app router, server component, RSC, middleware           | (none specific)         | `nextjs-best-practices`, `nextjs-app-router-patterns`, `react-nextjs-development`                                                                                        |
+| Category          | Token triggers                                                                     | UFlow skill (Layer 1)   | Catalog candidates (Layer 3) — search by ID                                                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Database**      | database, schema, migration, table, query, index, RLS, postgres                    | `architecture-patterns` | `postgres-best-practices`, `postgresql`, `postgresql-optimization`, `sql-optimization-patterns`, `supabase-automation`, `nextjs-supabase-auth`, `neon-postgres`          |
+| **Auth**          | auth, login, signup, session, JWT, password, OAuth                                 | `security-patterns`     | `auth-implementation-patterns`, `nextjs-supabase-auth`, `clerk-auth`, `broken-authentication`                                                                            |
+| **API**           | API, endpoint, route, REST, handler                                                | `cross-repo-contract`   | `api-patterns`, `api-design-principles`, `api-documentation`, `api-security-best-practices`                                                                              |
+| **UI**            | component, page, form, modal, UI, UX, responsive, tailwind                         | (none specific)         | `react-best-practices`, `react-patterns`, `react-ui-patterns`, `tailwind-design-system`, `tailwind-patterns`, `cc-skill-frontend-patterns`, `nextjs-app-router-patterns` |
+| **Performance**   | slow, optimize, cache, latency, performance                                        | (none specific)         | `web-performance-optimization`, `performance-profiling`, `performance-engineer`, `application-performance-performance-optimization`                                      |
+| **Testing**       | test, coverage, TDD, mock, fixture, vitest                                         | `testing-patterns`      | `javascript-testing-patterns`                                                                                                                                            |
+| **TypeScript**    | typescript, types, generics, type-safe                                             | (none specific)         | `typescript-advanced-types`, `typescript-expert`, `typescript-pro`                                                                                                       |
+| **Docker/Infra**  | docker, container, deploy, CI, CD, nginx                                           | (none specific)         | `docker-expert`, `vercel-deployment`, `cdk-patterns`                                                                                                                     |
+| **Next.js**       | nextjs, app router, server component, RSC, middleware                              | (none specific)         | `nextjs-best-practices`, `nextjs-app-router-patterns`, `react-nextjs-development`                                                                                        |
+| **Investigation** | bug, error, broken, crash, trace, rca, root cause, investigate, unknown, reproduce | `analysis-methodology`  | `systematic-debugging`, `variant-analysis`, `audit-context-building`, `verification-before-completion`                                                                   |
 
 **If none of the above categories match**, still run the general scoring algorithm (Step 2) against the full catalog. Only skip Layer 3 if the catalog was not found.
 
@@ -605,6 +606,7 @@ Before recommending advancement to the next phase, verify gate conditions by rea
 | Transition                  | Gate Condition                                     | Check Method                   |
 | --------------------------- | -------------------------------------------------- | ------------------------------ |
 | → Planner                   | Task classified, skills selected                   | Workflow Card exists           |
+| Analyst → Planner           | Analysis doc exists in `agent-output/analysis/`    | Read directory listing         |
 | Planner → Critic            | Plan doc exists in `agent-output/planning/`        | Read directory listing         |
 | Critic → Architect          | Critique verdict is not REJECTED                   | Read critique doc Status field |
 | Critic → Implementer        | Critique verdict is APPROVED                       | Read critique doc for verdict  |
@@ -736,7 +738,19 @@ To confirm the Orchestrator is correctly using catalog skills:
 
 **Quick reference:**
 
-- Retrieve: `#flowbabyRetrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbabyStoreSummary { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
+
+---
+
+# Dynamic Skill Loading
+
+The Orchestrator itself benefits from the following catalog skills when orchestrating complex multi-stream or ambiguous tasks. Load when relevant; UFlow skills always take priority.
+
+| Skill                         | Path                                                        | When to load                                                                                                         |
+| ----------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `dispatching-parallel-agents` | `.agent/skills/skills/dispatching-parallel-agents/SKILL.md` | When deciding whether and how to split work into parallel sessions — reinforces the session bootstrap decision logic |
+| `acceptance-orchestrator`     | `.agent/skills/skills/acceptance-orchestrator/SKILL.md`     | State machine routing from intake → implementation → deploy → verification — reinforces gate validation discipline   |
+| `closed-loop-delivery`        | `.agent/skills/skills/closed-loop-delivery/SKILL.md`        | Requires all phases to complete before DoD sign-off — reinforces the "no skipping gates" constraint                  |

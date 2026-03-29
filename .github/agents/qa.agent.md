@@ -18,11 +18,11 @@ tools:
     'edit/editFiles',
     'edit/editNotebook',
     'search',
-    'flowbaby.flowbaby/flowbabyStoreSummary',
-    'flowbaby.flowbaby/flowbabyRetrieveMemory',
+    'uflow.uflow-memory/flowbaby_storeMemory',
+    'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: GPT-5.2
+model: Claude Opus 4.6
 handoffs:
   - label: Request Testing Infrastructure
     agent: Planner
@@ -35,7 +35,7 @@ handoffs:
   - label: Send for Review
     agent: UAT
     prompt: Implementation is completed and QA passed. Please review.
-    send: false
+    send: true
 ---
 
 ## Workspace Tool Restrictions (MANDATORY)
@@ -69,7 +69,7 @@ Core Responsibilities:
 9. Maintain clear QA state: Test Strategy Development → Awaiting Implementation → Testing In Progress → QA Complete/Failed
 10. Verify test effectiveness: validate real workflows, realistic edge cases
 11. Flag when tests pass but implementation risky
-12. Use Flowbaby memory for continuity
+12. Use uflow memory for continuity
 13. **Status tracking**: When QA passes, update the plan's Status field to "QA Complete" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
 ### Focus/Scroll Side-Effects Checklist (WHEN APPLICABLE)
@@ -181,7 +181,7 @@ If residue remains, QA cannot classify the implementation as QA Complete.
 
 ### SSR / Server-Defaults Check (MANDATORY when applicable)
 
-If the change touches URL param parsing, “sentinel” values (e.g., *all locations*), or any Next.js Server Component page that reads `searchParams`, QA MUST validate:
+If the change touches URL param parsing, “sentinel” values (e.g., _all locations_), or any Next.js Server Component page that reads `searchParams`, QA MUST validate:
 
 - The page with **no URL params** (server defaults apply)
 - The page with URL params (expected behavior)
@@ -202,6 +202,7 @@ If the change replaces a canonical sentinel value (example: “Everywhere/Übera
 If a plan's primary value depends on a third-party import or ingestion dry-run and that dry-run cannot be executed, do not classify the residual risk as LOW.
 
 Minimum handling:
+
 - classify as MEDIUM risk
 - assign owner
 - assign trigger or due window (preferably before or within 24h of release)
@@ -282,12 +283,13 @@ If implementation arrives without tests:
 2. Search for the "TDD Compliance" section
 3. Verify the table exists and has rows for ALL new functions/classes
 4. Check each row:
-  - "Test Written First?" must be ✅ Yes
-  - **Bugfix regression exception (ALLOWED only when applicable):** If the change is a bugfix/refactor with **no new API surface** and no new functions/classes, this column MAY be `⚠️ Post-fix (bugfix regression)` *only if*:
-    - “Failure Reason” clearly describes how/why the pre-fix code would fail, and
-    - A regression test exists and meaningfully exercises the bug (not a trivial assertion)
-   - "Failure Verified?" must be ✅ Yes with a valid failure reason
-   - "Pass After Impl?" must be ✅ Yes
+
+- "Test Written First?" must be ✅ Yes
+- **Bugfix regression exception (ALLOWED only when applicable):** If the change is a bugfix/refactor with **no new API surface** and no new functions/classes, this column MAY be `⚠️ Post-fix (bugfix regression)` _only if_:
+  - “Failure Reason” clearly describes how/why the pre-fix code would fail, and
+  - A regression test exists and meaningfully exercises the bug (not a trivial assertion)
+- "Failure Verified?" must be ✅ Yes with a valid failure reason
+- "Pass After Impl?" must be ✅ Yes
 
 **If table is missing or incomplete:**
 
@@ -501,6 +503,14 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
 6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `testing-patterns`)
 
+**Catalog skills available for this agent** (load when the task touches these domains):
+
+| Skill                                          | Path                                                                         | When to load                                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `test-automator`                               | `.agent/skills/skills/test-automator/SKILL.md`                               | Complex test suites — TDD orchestration, quality metrics, CI/CD test patterns        |
+| `test-fixing`                                  | `.agent/skills/skills/test-fixing/SKILL.md`                                  | Diagnosing and repairing broken test suites received from Implementer                |
+| `accessibility-compliance-accessibility-audit` | `.agent/skills/skills/accessibility-compliance-accessibility-audit/SKILL.md` | Pre-UAT accessibility gate — WCAG compliance, keyboard nav, screen reader validation |
+
 ---
 
 # Document Lifecycle
@@ -533,7 +543,7 @@ Status: Test Strategy Development
 
 ## Memory Health Check (MANDATORY)
 
-At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+At the start of work (before substantive decisions), run **one** uflow memory retrieval.
 
 - If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
 - Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
@@ -550,8 +560,8 @@ At the start of work (before substantive decisions), run **one** Flowbaby retrie
 
 **Quick reference:**
 
-- Retrieve: `#flowbabyRetrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbabyStoreSummary { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 
@@ -562,10 +572,10 @@ Full contract details: `memory-contract` skill
 When you finish your work, **always end your response** with a clear next-step block:
 
 ```
-✅ PHASE COMPLETE: ⑦ QA — Status: {QA Complete|QA Failed}
+✅ PHASE COMPLETE: [N] QA — Status: {QA Complete|QA Failed}
 📄 Output: agent-output/qa/{document}
-➡️ NEXT: Pick "⑧ UAT" from the Orchestrator handoff suggestions
+➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
    Gate: UAT verdict must be APPROVED FOR RELEASE
 ```
 
-If QA Failed, direct back to ⑤ Implementer with failing test details. Adjust based on the active Workflow Card pipeline.
+Adjust routing based on the active Workflow Card pipeline (e.g., if QA Failed: back to Implementer with failing test details).

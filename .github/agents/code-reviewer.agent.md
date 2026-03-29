@@ -11,11 +11,11 @@ tools:
     'edit/createDirectory',
     'edit/createFile',
     'edit/editFiles',
-    'flowbaby_storeMemory',
-    'flowbaby_retrieveMemory',
+    'uflow.uflow-memory/flowbaby_storeMemory',
+    'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: Claude Sonnet 4.5
+model: Claude Opus 4.6
 handoffs:
   - label: Request Implementation Fixes
     agent: Implementer
@@ -28,7 +28,7 @@ handoffs:
   - label: Send for Testing
     agent: QA
     prompt: Code review approved. Implementation ready for QA testing.
-    send: false
+    send: true
 ---
 
 ## Workspace Tool Restrictions (MANDATORY)
@@ -237,6 +237,14 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
 6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `code-review-standards`, `engineering-standards`)
 
+**Catalog skills available for this agent** (load when the task touches these domains):
+
+| Skill                              | Path                                                             | When to load                                                                                         |
+| ---------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `react-best-practices`             | `.agent/skills/skills/react-best-practices/SKILL.md`             | Reviewing React/Next.js components — server/client split, bundle size, async waterfalls              |
+| `dependency-management-deps-audit` | `.agent/skills/skills/dependency-management-deps-audit/SKILL.md` | Any change touching `package.json` or lockfile — CVE scanning, license compliance, supply chain risk |
+| `differential-review`              | `.agent/skills/skills/differential-review/SKILL.md`              | Security-critical PRs — diff-scoped blast radius analysis, auth/crypto/data change classification    |
+
 ---
 
 # Document Lifecycle
@@ -268,7 +276,7 @@ Status: In Review
 
 ## Memory Health Check (MANDATORY)
 
-At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+At the start of work (before substantive decisions), run **one** uflow memory retrieval.
 
 - If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
 - Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
@@ -285,8 +293,8 @@ At the start of work (before substantive decisions), run **one** Flowbaby retrie
 
 **Quick reference:**
 
-- Retrieve: `#flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 
@@ -297,10 +305,10 @@ Full contract details: `memory-contract` skill
 When you finish your work, **always end your response** with a clear next-step block:
 
 ```
-✅ PHASE COMPLETE: ⑥ Code Reviewer — Verdict: {APPROVED|APPROVED_WITH_COMMENTS|REJECTED}
+✅ PHASE COMPLETE: [N] Code Reviewer — Verdict: {APPROVED|APPROVED_WITH_COMMENTS|REJECTED}
 📄 Output: agent-output/code-review/{document}
-➡️ NEXT: Pick "⑦ QA" from the Orchestrator handoff suggestions
+➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
    Gate: QA doc status must be QA Complete
 ```
 
-If REJECTED, direct back to ⑤ Implementer. Adjust based on the active Workflow Card pipeline.
+Adjust routing based on the active Workflow Card pipeline (e.g., if REJECTED: back to Implementer).

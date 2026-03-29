@@ -16,11 +16,11 @@ tools:
     'edit/editFiles',
     'search',
     'web',
-    'flowbaby_storeMemory',
-    'flowbaby_retrieveMemory',
+    'uflow.uflow-memory/flowbaby_storeMemory',
+    'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: Claude Sonnet 4.5
+model: Claude Opus 4.6
 handoffs:
   - label: Request Architectural Guidance
     agent: Architect
@@ -184,6 +184,27 @@ So that [business value/benefit].
 
 ---
 
+# Dynamic Skill Loading
+
+When receiving a handoff from `@Orchestrator` (or any agent) that includes skill loading instructions:
+
+1. **Scan** the handoff prompt or Workflow Card for lines matching: `Load skill '{name}' from '{path}'`
+2. **Read** each referenced skill file using `readFile` on the specified path
+3. **Incorporate** the skill's instructions into your work for this task
+4. **UFlow skills** (`.github/skills/`): Always take priority over catalog skills
+5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
+6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`)
+
+**Catalog skills available for this agent** (load when the task touches these domains):
+
+| Skill                  | Path                                                 | When to load                                                           |
+| ---------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------- |
+| `release-procedures`   | `.agent/skills/skills/release-procedures/SKILL.md`   | Managing releases, version milestones, and release tracker updates     |
+| `product-manager`      | `.agent/skills/skills/product-manager/SKILL.md`      | Backlog prioritization, epic framing, and strategic roadmap governance |
+| `kpi-dashboard-design` | `.agent/skills/skills/kpi-dashboard-design/SKILL.md` | OKR visualization, KPI tracking, and roadmap progress metrics          |
+
+---
+
 # Document Lifecycle
 
 **MANDATORY**: Load `document-lifecycle` skill. You own the **periodic orphan sweep**.
@@ -206,12 +227,14 @@ If you encounter additional domain-specific terminal statuses in the wild, treat
 
 **Report format**:
 ```
+
 Found [N] orphaned documents with terminal status outside closed/:
 
 - planning/075-feature.md (Status: Released)
 - qa/072-bugfix.md (Status: Committed)
 
 Moved to respective `closed/` folders.
+
 ```
 
 **Open-actions sweep** (run alongside orphan sweep):
@@ -224,7 +247,7 @@ Moved to respective `closed/` folders.
 
 ## Memory Health Check (MANDATORY)
 
-At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+At the start of work (before substantive decisions), run **one** `uflow.uflow-memory/flowbaby_retrieveMemory` query.
 
 - If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
 - Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
@@ -239,7 +262,25 @@ At the start of work (before substantive decisions), run **one** Flowbaby retrie
 - If tools fail, announce no-memory mode immediately
 
 **Quick reference:**
-- Retrieve: `#flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
+
+---
+
+# Completion & Next Step
+
+When you finish your work, **always end your response** with a clear next-step block:
+
+```
+
+✅ PHASE COMPLETE: [N] Roadmap
+📄 Output: agent-output/roadmap/product-roadmap.md
+➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
+(e.g., Planner if a new epic is ready; Architect if design is needed)
+
+```
+
+Adjust routing based on the active Workflow Card pipeline.
+```

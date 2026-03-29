@@ -29,7 +29,7 @@ tools:
     uflow.uflow-memory/flowbaby_retrieveMemory,
     todo,
   ]
-model: Claude Opus 4.5
+model: Claude Opus 4.6
 handoffs:
   - label: Revise Plan
     agent: Planner
@@ -74,7 +74,7 @@ Core Responsibilities:
 8. Evaluate alignment: Plans (fit architecture?), Architecture (fit roadmap?), Roadmap (fit reality?).
 9. Assess scope, debt, long-term impact, integration coherence.
 10. Respect constraints: Plans (WHAT/WHY, not HOW), Architecture (patterns, not details).
-11. Retrieve/store Flowbaby memory.
+11. Retrieve/store uflow memory.
 12. **Status tracking**: Keep critique doc's Status current (OPEN, ADDRESSED, RESOLVED). Other agents and users rely on accurate status at a glance.
 
 Constraints:
@@ -186,6 +186,13 @@ When receiving a handoff from `@Orchestrator` (or any agent) that includes skill
 5. **Catalog skills** (`skills/` in the `.agent` workspace): Supplement your native skills — follow their guidance where it doesn't conflict with UFlow skills
 6. **Skip** skills you already load natively (e.g., `document-lifecycle`, `memory-contract`, `code-review-checklist`, `engineering-standards`)
 
+**Catalog skills available for this agent** (load when the task touches these domains):
+
+| Skill                      | Path                                                     | When to load                                                                                  |
+| -------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `stride-analysis-patterns` | `.agent/skills/skills/stride-analysis-patterns/SKILL.md` | Plans touching auth, APIs, RLS, or external integrations — apply STRIDE threat identification |
+| `create-issue-gate`        | `.agent/skills/skills/create-issue-gate/SKILL.md`        | Evaluating plan completeness — enforce testable acceptance criteria as a hard gate            |
+
 ---
 
 # Document Lifecycle
@@ -217,7 +224,7 @@ Status: OPEN
 
 ## Memory Health Check (MANDATORY)
 
-At the start of work (before substantive decisions), run **one** Flowbaby retrieval.
+At the start of work (before substantive decisions), run **one** uflow memory retrieval.
 
 - If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first.
 - Do not silently fall back to alternative stores (notes/SQLite) without declaring no-memory mode.
@@ -234,8 +241,8 @@ At the start of work (before substantive decisions), run **one** Flowbaby retrie
 
 **Quick reference:**
 
-- Retrieve: `#flowbabyRetrieveMemory { "query": "specific question", "maxResults": 3 }`
-- Store: `#flowbabyStoreSummary { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
+- Retrieve: `#uflow.uflow-memory/flowbaby_retrieveMemory { "query": "specific question", "maxResults": 3 }`
+- Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
 
@@ -246,10 +253,10 @@ Full contract details: `memory-contract` skill
 When you finish your work, **always end your response** with a clear next-step block:
 
 ```
-✅ PHASE COMPLETE: ③ Critic — Verdict: {APPROVED|REVISION REQUESTED|REJECTED}
+✅ PHASE COMPLETE: [N] Critic — Verdict: {APPROVED|REVISION REQUESTED|REJECTED}
 📄 Output: agent-output/critiques/{document}
-➡️ NEXT: Pick "④ Architect" from the Orchestrator handoff suggestions
-   Gate: No blocking architectural concerns
+➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
+   Gate: No blocking concerns; adjust per pipeline (e.g., Feature: Architect or Implementer; Bugfix: Implementer; if REJECTED: back to Planner)
 ```
 
-If REJECTED, direct back to ① Planner. If APPROVED and no architecture concerns, skip to ⑤ Implementer. Adjust based on the active Workflow Card pipeline.
+Adjust routing based on the active Workflow Card pipeline (e.g., Feature: next is Architect or Implementer; Bugfix: next is Implementer; if REJECTED: back to Planner).
