@@ -2,7 +2,7 @@
 ID: 065
 Origin: 065
 UUID: a7b3c941
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Automated Provider Enrichment Pipeline (M1–M3)
