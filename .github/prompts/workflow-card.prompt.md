@@ -26,6 +26,11 @@
 ║  Native:  {agent-embedded skills already wired}             ║
 ║  Catalog: {general-skill1} (score: N), ...                  ║
 ╠══════════════════════════════════════════════════════════════╣
+║  ACCEPTANCE CRITERIA (populated after Planner phase)        ║
+║  - {observable outcome 1}                                   ║
+║  - {observable outcome 2}                                   ║
+║  OUT OF SCOPE: {what agents must NOT touch — 1-2 items}     ║
+╠══════════════════════════════════════════════════════════════╣
 ║  INSTRUCTIONS FOR @{agent}                                  ║
 ║  Load skill '{name}' from '{path}' — {reason}               ║
 ║  ...                                                        ║
@@ -84,6 +89,12 @@
 ║  Native:  cross-repo-contract (conditional)                 ║
 ║  Catalog: (none needed)                                     ║
 ╠══════════════════════════════════════════════════════════════╣
+║  ACCEPTANCE CRITERIA                                        ║
+║  - Search returns providers within specified radius          ║
+║  - Results are ranked by proximity                           ║
+║  - Empty state shown when no providers in range              ║
+║  OUT OF SCOPE: Do not modify existing provider card layout   ║
+╠══════════════════════════════════════════════════════════════╣
 ║  INSTRUCTIONS FOR @Critic                                   ║
 ║  Load 'code-review-checklist' — plan quality assessment     ║
 ║  Load 'engineering-standards' — SOLID/DRY/YAGNI/KISS check  ║
@@ -114,5 +125,10 @@
 ║  CURRENT PHASE: Implement the fix (retry)                   ║
 ║  Agent: @Implementer                                        ║
 ║  Next: @Code Reviewer (gate: fix applied, tests green)      ║
+╠══════════════════════════════════════════════════════════════╣
+║  ACCEPTANCE CRITERIA                                        ║
+║  - Page 2 results no longer duplicate page 1                ║
+║  - Offset calculation uses 0-based index                    ║
+║  OUT OF SCOPE: Do not refactor search query builder         ║
 ╚══════════════════════════════════════════════════════════════╝
 ```

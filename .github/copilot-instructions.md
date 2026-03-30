@@ -247,7 +247,37 @@ Detailed expert rules exist in `.cursor/rules/`:
 4. **PWA**: Don't disable PWA in production (use `DISABLE_PWA=true` for local dev only)
 5. **Environment Variables**: All Supabase vars are in `.env.local` (never commit)
 6. **Premature Optimization**: Don't add Redis/queues before proving Postgres can't handle it
-7. **Parallel Sessions**: When a Session Context Header is provided, do not allocate new Plan IDs, do not edit `agent-output/.next-id`, and do not read/write outside the declared worktree root and `.agent` root. See `docs/ai/parallel-sessions.md`.
+7. **Parallel Sessions**: See the dedicated section below.
+
+## Parallel Session Awareness (All Agents)
+
+When working inside a **git worktree** (a parallel worker session), all agents must obey these constraints:
+
+### Detecting a Worker Session
+
+- A **Session Context Header** is present in the conversation (starts with `Session: S<id>-<topic>`).
+- The workspace root path contains `/uflow-wt/` instead of the canonical `/uflow/` checkout.
+
+### Constraints (MANDATORY when in a worker session)
+
+1. **No ID allocation**: Do not create new Plan IDs or edit `agent-output/.next-id` — the control window owns ID assignment.
+2. **Stay in scope**: Do not read or write files outside the declared worktree root and the shared `.agent` root.
+3. **Relay the header**: Include the Session Context Header verbatim in every handoff prompt to downstream agents.
+
+### Agent-Specific Cautions
+
+| Agent | Risk | Rule |
+|-------|------|------|
+| **DevOps** | Pushing to wrong branch or deploying from worktree | Always verify `git branch` before push; never deploy from a worktree — merge to main first |
+| **Implementer** | Writing files outside worktree scope | Check `$PWD` matches the declared worktree root before creating/editing files |
+| **Planner** | Allocating Plan IDs in worker session | Only the control window allocates IDs; in a worker session, use the pre-assigned ID from the Session Context Header |
+
+### Control Window vs Worker Window
+
+- **No Session Context Header** + canonical `/uflow/` path = **control window** → normal operations, ID allocation allowed.
+- **Session Context Header present** or `/uflow-wt/` path = **worker session** → constraints above apply.
+
+Full operator guide: `docs/ai/parallel-sessions.md`.
 
 ## Quick Reference
 

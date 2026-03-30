@@ -393,11 +393,13 @@ If the task doesn't match ANY classification above:
 
 ### Pipeline Definitions
 
-**Feature** (Full — 10 phases):
+**Feature** (Full — 13 phases):
 
 ```
-Planner → Analyst → Critic → Architect → Implementer → Code Reviewer → QA → UAT → DevOps → Retrospective
+Planner → Analyst → Critic → Architect → Implementer → Code Reviewer → QA → UAT → DevOps (Stage 1) → Retrospective → ProcessImprovement → DevOps (Stage 2) → Roadmap
 ```
+
+_Note: DevOps appears twice. Stage 1 commits locally after UAT approval. Stage 2 pushes/deploys after retrospective and process improvement are complete. If no systemic findings, PI is skipped. If all release plans are already pushed, Stage 2 is skipped._
 
 **Bugfix** (Abbreviated — 6 phases):
 
@@ -574,6 +576,11 @@ At the start of every workflow and at each phase transition, produce a Workflow 
 ║  Native:  {agent-embedded skill1}, {skill2}                 ║
 ║  Catalog: {general-catalog-skill1} (score: N)               ║
 ╠══════════════════════════════════════════════════════════════╣
+║  ACCEPTANCE CRITERIA (populated after Planner phase)        ║
+║  - {observable outcome 1}                                   ║
+║  - {observable outcome 2}                                   ║
+║  OUT OF SCOPE: {what agents must NOT touch — 1-2 items}     ║
+╠══════════════════════════════════════════════════════════════╣
 ║  INSTRUCTIONS FOR @{agent}                                  ║
 ║  Load skill '{name}' from '{path}' — {reason}               ║
 ║  Load skill '{name}' from '{path}' — {reason}               ║
@@ -595,11 +602,24 @@ When handing off to the next agent, include in the handoff message:
 3. Document ID to inherit: "Continue work chain #{ID}"
 4. Gate condition for the NEXT transition: "After you complete, the gate for {next phase} requires: {condition}"
 
+### Populating Acceptance Criteria & Out of Scope
+
+The `ACCEPTANCE CRITERIA` and `OUT OF SCOPE` sections in the Workflow Card are **blank at initial classification** (the Orchestrator doesn't know them yet). Populate them after the Planner creates the plan:
+
+1. When the Planner completes, read the plan's acceptance criteria from `agent-output/planning/`
+2. Extract 2–3 observable outcomes and 1–2 out-of-scope boundaries
+3. Update the Workflow Card with these before handing off to the next phase (Critic or Implementer)
+4. If the plan doesn't define clear acceptance criteria, flag this to the user: "Plan lacks acceptance criteria — agents may drift"
+
 ---
 
 ## Phase 4: Gate Validation
 
-Before recommending advancement to the next phase, verify gate conditions by reading `agent-output/` documents.
+Before recommending advancement to the next phase, verify gate conditions.
+
+**Primary signal (same-session)**: Use the completing agent's `✅ PHASE COMPLETE` block as the gate signal. This avoids redundant doc reads.
+
+**Fallback (re-entry or new session)**: If the Orchestrator is invoked fresh (no prior chat context), fall back to reading `agent-output/` documents to determine pipeline state.
 
 ### Gate Conditions
 
@@ -631,16 +651,22 @@ When routing back, update the Workflow Card to show the regression (e.g., ❌ on
 
 ---
 
-## Phase 5: Feedback Loop (Learn → Plan)
+## Phase 5: Feedback Loop (Learn → Deploy → Plan)
 
 After Retrospective completes:
 
 1. Check retrospective doc for **systemic findings** (process patterns, repeated failures, communication gaps)
 2. If systemic findings exist → hand off to **ProcessImprovement** agent
    - PI analyzes retrospectives, proposes agent instruction updates
-   - PI hands off to **Planner** when ready for new work → cycle complete
-3. If no systemic findings → hand off directly to **Roadmap** agent
-   - Roadmap updates epic status, identifies next work
+3. If no systemic findings → skip PI, proceed to step 4
+
+After PI completes (or was skipped):
+
+4. **DevOps Stage 2 checkpoint**: Check if the release has locally committed plans that haven't been pushed yet
+   - If uncommitted/unpushed plans exist → hand off to **DevOps** for Stage 2 (push/deploy)
+   - If all plans are already released (e.g., Stage 2 was done earlier) → skip to step 5
+5. After DevOps Stage 2 completes (or was skipped) → hand off to **Roadmap** agent
+   - Roadmap updates epic status, release tracker, identifies next work
    - Roadmap hands off to **Planner** → cycle complete
 
 **Iteration tracking**: If the same task cycles back (e.g., QA failure → Implementer → Code Reviewer → QA again), increment the iteration counter in the Workflow Card. After 3 iterations on the same gate, escalate to user with a summary of what's failing.

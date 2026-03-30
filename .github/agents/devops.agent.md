@@ -28,12 +28,12 @@ handoffs:
     send: false
   - label: Hand Off to Retrospective
     agent: Retrospective
-    prompt: Release complete. Please capture deployment lessons learned.
+    prompt: Stage 1 commit complete. Please capture deployment lessons learned.
     send: true
-  - label: Update Release Tracker
+  - label: Push and Deploy (Stage 2)
     agent: Roadmap
-    prompt: Plan committed locally. Please update release tracker with current status.
-    send: false
+    prompt: Stage 2 release complete. Please update release tracker with final status.
+    send: true
 ---
 
 ## Workspace Tool Restrictions (MANDATORY)
@@ -605,13 +605,24 @@ Full contract details: `memory-contract` skill
 
 # Completion & Next Step
 
-When you finish your work, **always end your response** with a clear next-step block:
+When you finish your work, **always end your response** with a clear next-step block.
+
+**After Stage 1 (local commit, no push):**
 
 ```
-✅ PHASE COMPLETE: [N] DevOps — Status: {Committed|Released}
+✅ PHASE COMPLETE: [N] DevOps — Status: Committed
 📄 Output: agent-output/deployment/{document}
-➡️ NEXT: Pick the next agent from the active Workflow Card pipeline
+➡️ NEXT: Retrospective (capture deployment lessons learned)
    Gate: Retrospective document complete with lessons learned
+```
+
+**After Stage 2 (push/deploy):**
+
+```
+✅ PHASE COMPLETE: [N] DevOps — Status: Released
+📄 Output: agent-output/deployment/{document}
+➡️ NEXT: Roadmap (update release tracker, epic status, identify next work)
+   Gate: Roadmap updated with release status
 ```
 
 Adjust routing based on the active Workflow Card pipeline.
