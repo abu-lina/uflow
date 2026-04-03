@@ -489,7 +489,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
         <div aria-atomic="true" aria-live="polite" className="sr-only">
           {!isLoading && 'Provider details loaded'}
         </div>
-        <div className="hide-scrollbar animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
+        <div className="hide-scrollbar animate-fadeInUp relative h-full w-full max-w-[392px] overflow-y-auto overscroll-none rounded-t-[29.4px] bg-white pb-6 sm:rounded-[29.4px]">
           {/* Visual Section - Mobile Only */}
           <div className="relative h-96 w-full sm:hidden">
             {/* Main Image Container with Swipe Support */}
@@ -776,6 +776,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               </div>
             </div>
           </div>
+          </div>
           {/* Sticky ProviderActionBar at the bottom on mobile */}
           <div className="pb-safe fixed bottom-0 left-0 right-0 z-[120] bg-white px-6 pt-4 sm:hidden">
             <ProviderActionBar
@@ -792,7 +793,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               onWebsite={handleWebsite}
             />
           </div>
-        </div>
       </div>
     </>,
     document.body,

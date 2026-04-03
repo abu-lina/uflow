@@ -326,10 +326,11 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   // Mobile version
   if (isMobile) {
     return (
-      <div className="h-screen-fix overflow-y-auto overscroll-contain bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
-        {/* Mobile Content */}
-        <div className="pb-24">
-          <MobileProviderDetail provider={provider} onBack={handleBack} />
+      <>
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-none bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+          {/* Mobile Content */}
+          <div className="pb-24">
+            <MobileProviderDetail provider={provider} onBack={handleBack} />
 
           {/* Provider Info Card */}
           <div className="mx-6 mt-6 rounded-2xl bg-white p-4 shadow-sm">
@@ -586,6 +587,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             </div>
           )}
         </div>
+        </div>
 
         {/* Mobile Action Buttons - Fixed at bottom */}
         {customActionButtons ? (
@@ -619,7 +621,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             </div>
           </div>
         )}
-      </div>
+      </>
     );
   }
 

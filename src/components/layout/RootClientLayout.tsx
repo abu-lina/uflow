@@ -117,7 +117,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
           </div>
         )}
 
-        <main ref={mainRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <main ref={mainRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-none">
           <PageTransition key={pathname}>{children}</PageTransition>
         </main>
 
