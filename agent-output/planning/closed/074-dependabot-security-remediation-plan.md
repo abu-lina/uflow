@@ -2,7 +2,7 @@
 ID: 074
 Origin: 074
 UUID: b8f4c2e7
-Status: Committed
+Status: Released
 ---
 
 # Plan 074 — Dependabot Security Remediation
@@ -12,7 +12,7 @@ Status: Committed
 | **Plan ID**        | 074                                                                             |
 | **Epic Alignment** | Security / Supply-Chain Hardening                                               |
 | **Target Release** | Next available patch after current origin/main version (v0.10.1); confirm at DevOps Stage 1 |
-| **Status**         | Committed for Release v0.10.2                                                   |
+| **Status**         | Released (v0.10.2)                                                              |
 | **Related Issues** | GitHub Dependabot alerts (8 open); Prior audits: 037, 049, 066                  |
 | **Branch**         | session/074-dependabot-security-remediation                                     |
 
@@ -25,6 +25,7 @@ Status: Committed
 | 2026-04-03T12:00Z | Code Reviewer | Code review completed          | APPROVED — lockfile-only changes, all gates passed, 0 blocking   |
 | 2026-04-03T10:35Z | UAT     | UAT completed                       | UAT Complete — APPROVED FOR RELEASE; value delivered and deferred follow-up recorded |
 | 2026-04-03T13:24Z | DevOps  | Stage 1 local commit                | Committed for Release v0.10.2; lifecycle documents closed and moved |
+| 2026-04-03T13:30Z | DevOps  | Stage 2 release execution           | Branch pushed, conflict check clean, tag `v0.10.2` pushed; plan status set to Released |
 
 ---
 
