@@ -2,7 +2,7 @@
 ID: 075
 Origin: 075
 UUID: d4e8f1a7
-Status: Complete-Pending-QA
+Status: Committed
 ---
 
 # 075 — Implementation: Fix Background Overlay on Footer CTA During iOS Scroll
@@ -19,6 +19,7 @@ Status: Complete-Pending-QA
 | Date              | Handoff         | Request                 | Summary                                              |
 |-------------------|-----------------|-------------------------|------------------------------------------------------|
 | 2026-04-03T10:45Z | Critic → Implementer | APPROVED; implement   | Applied M1 (overscroll-contain) + M2 (opaque footer) |
+| 2026-04-03T13:43Z | QA/UAT -> DevOps | Stage 1 commit prep | Marked Committed and moved to lifecycle closure path |
 
 ## Implementation Summary
 

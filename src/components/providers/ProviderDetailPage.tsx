@@ -326,7 +326,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   // Mobile version
   if (isMobile) {
     return (
-      <div className="h-screen-fix overflow-y-auto bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+      <div className="h-screen-fix overflow-y-auto overscroll-contain bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
         {/* Mobile Content */}
         <div className="pb-24">
           <MobileProviderDetail provider={provider} onBack={handleBack} />
@@ -592,7 +592,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
           // Custom action buttons (like FooterAction) handle their own styling
           customActionButtons
         ) : (
-          <div className="pb-safe fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/30 bg-white/95 px-6 pt-4 backdrop-blur-sm">
+          <div className="pb-safe fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/30 bg-white px-6 pt-4">
             <div className="flex w-full gap-3.5">
               {/* Save Button */}
               <BookmarkButton
