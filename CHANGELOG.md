@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.4] - 2026-04-03
+
+### Fixed
+
+- **Desktop provider detail: Barakah Effect section hidden when no community service linked (Plan 076, Bug A)**: The "Unser Barakah Effekt" section in `ProviderDetailModal` now only renders when the provider has at least one linked community service. Previously it always rendered a placeholder card with empty content.
+- **Desktop provider detail: "Service bearbeiten" button repositioned (Plan 076, Bug B)**: The admin edit button is now anchored in the top-right area of the modal's right panel (near the close button) instead of floating at the bottom-center. This gives the action clear visual context.
+- **Desktop provider detail: Instagram social button added (Plan 076, Bug C)**: The desktop modal actions bar now includes a conditional Instagram button when `social_instagram` is set, matching the mobile path's behavior. Follows the same expand-on-click pill pattern as Phone/Website buttons.
+
 ## [0.10.3] - 2026-04-03
 
 ### Fixed

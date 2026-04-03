@@ -42,7 +42,29 @@ describe('ProviderDetailModal Component', () => {
       expect(screen.getByText(/123 Hauptstraße, 10115 Berlin/)).toBeInTheDocument();
     });
 
-    it('should render barakah effects section heading', () => {
+    it('should render barakah effects section heading when community services are present', () => {
+      const mockCommunityService = {
+        community_service_id: 'cs-001',
+        community_service_name: 'Zakat Foundation',
+        community_service_images: ['https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg'],
+        category: { name_de: 'Soziales', name_en: 'Social' },
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      };
+
+      render(
+        <ProviderDetailModal
+          initialCommunityServices={[mockCommunityService]}
+          provider={mockProvider}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      expect(screen.getByText(/Our Barakah Effect|Unser Barakah Effekt/i)).toBeInTheDocument();
+    });
+
+    it('should NOT render barakah effects section heading when no community services [post-fix]', () => {
       render(
         <ProviderDetailModal
           provider={mockProvider}
@@ -51,8 +73,8 @@ describe('ProviderDetailModal Component', () => {
         />,
       );
 
-      // The Barakah Effekte section heading should always render
-      expect(screen.getByText(/Our Barakah Effect|Unser Barakah Effekt/i)).toBeInTheDocument();
+      // The Barakah Effekte section heading should NOT render when no community services
+      expect(screen.queryByText(/Our Barakah Effect|Unser Barakah Effekt/i)).not.toBeInTheDocument();
     });
 
     it('should render close buttons', () => {
@@ -515,6 +537,15 @@ describe('ProviderDetailModal Component', () => {
   });
 
   describe('Barakah Effects', () => {
+    const mockCommunityServiceForBadges = {
+      community_service_id: 'cs-badges-001',
+      community_service_name: 'Zakat Foundation',
+      community_service_images: ['https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg'],
+      category: { name_de: 'Soziales', name_en: 'Social' },
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+    };
+
     const mockBadges: ProviderBadgeWithType[] = [
       {
         id: 'badge-1',
@@ -563,6 +594,7 @@ describe('ProviderDetailModal Component', () => {
 
       render(
         <ProviderDetailModal
+          initialCommunityServices={[mockCommunityServiceForBadges]}
           provider={providerWithBadges}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
@@ -579,6 +611,7 @@ describe('ProviderDetailModal Component', () => {
 
       render(
         <ProviderDetailModal
+          initialCommunityServices={[mockCommunityServiceForBadges]}
           provider={providerWithBadges}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
@@ -596,6 +629,7 @@ describe('ProviderDetailModal Component', () => {
 
       render(
         <ProviderDetailModal
+          initialCommunityServices={[mockCommunityServiceForBadges]}
           provider={providerWithoutBadges}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
@@ -611,6 +645,7 @@ describe('ProviderDetailModal Component', () => {
 
       render(
         <ProviderDetailModal
+          initialCommunityServices={[mockCommunityServiceForBadges]}
           provider={providerWithBadges}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
@@ -627,6 +662,7 @@ describe('ProviderDetailModal Component', () => {
 
       render(
         <ProviderDetailModal
+          initialCommunityServices={[mockCommunityServiceForBadges]}
           provider={providerWithoutBadges}
           onBookmarkChange={mockOnBookmarkChange}
           onClose={mockOnClose}
@@ -751,6 +787,104 @@ describe('ProviderDetailModal Component', () => {
 
       // Should render modal without crashing
       expect(screen.getAllByRole('dialog')).toHaveLength(2); // Both div and section have role="dialog"
+    });
+  });
+
+  describe('076 Regression: Barakah section conditional rendering', () => {
+    it('should hide Barakah section when initialCommunityServices is empty [post-fix PASSES]', () => {
+      render(
+        <ProviderDetailModal
+          initialCommunityServices={[]}
+          provider={mockProvider}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      expect(screen.queryByText(/Our Barakah Effect|Unser Barakah Effekt/i)).not.toBeInTheDocument();
+    });
+
+    it('should show Barakah section when community services are present [post-fix PASSES]', () => {
+      const mockCommunityService = {
+        community_service_id: 'cs-001',
+        community_service_name: 'Zakat Foundation',
+        community_service_images: ['https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg'],
+        category: { name_de: 'Soziales', name_en: 'Social' },
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      };
+
+      render(
+        <ProviderDetailModal
+          initialCommunityServices={[mockCommunityService]}
+          provider={mockProvider}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      expect(screen.getByText(/Our Barakah Effect|Unser Barakah Effekt/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('076 Regression: Instagram social button', () => {
+    it('should render Instagram button when social_instagram is set [post-fix PASSES]', () => {
+      const providerWithInstagram = {
+        ...mockProvider,
+        social_instagram: 'https://instagram.com/test-provider',
+      };
+
+      render(
+        <ProviderDetailModal
+          provider={providerWithInstagram}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: /instagram/i })).toBeInTheDocument();
+    });
+
+    it('should NOT render Instagram button when social_instagram is null [post-fix PASSES]', () => {
+      const providerWithoutInstagram = {
+        ...mockProvider,
+        social_instagram: null,
+      };
+
+      render(
+        <ProviderDetailModal
+          provider={providerWithoutInstagram}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: /instagram/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('076 Regression: Admin edit button placement', () => {
+    it('should render customActionButtons in the right panel header area, not bottom-center [post-fix PASSES]', () => {
+      const editButton = <button data-testid="admin-edit-btn">Edit Service</button>;
+
+      render(
+        <ProviderDetailModal
+          customActionButtons={editButton}
+          provider={mockProvider}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      const adminBtn = screen.getByTestId('admin-edit-btn');
+      expect(adminBtn).toBeInTheDocument();
+
+      // The admin button's parent container should be positioned in the top-right area (right-12 top-20)
+      // and NOT at absolute bottom-24 left-1/2
+      const container = adminBtn.parentElement;
+      expect(container?.className).toContain('right-12');
+      expect(container?.className).toContain('top-20');
+      expect(container?.className).not.toContain('bottom-24');
     });
   });
 });
