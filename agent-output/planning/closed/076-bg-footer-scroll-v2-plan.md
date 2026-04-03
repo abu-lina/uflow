@@ -2,8 +2,8 @@
 ID: 076
 Origin: 076
 UUID: b4e8f21a
-Status: QA Complete
-Target Release: next available patch after current origin/main v0.10.3; confirm at DevOps Stage 1
+Status: Committed
+Target Release: v0.10.5
 Epic Alignment: iOS Mobile UX — Provider Detail Page CTA Stability
 Related Issues: Plan 075 (deployed, issue persists), Analysis 020 (prior h-screen-fix nesting RCA)
 ---
@@ -17,6 +17,8 @@ Related Issues: Plan 075 (deployed, issue persists), Analysis 020 (prior h-scree
 | 2026-04-03T17:05Z | Planner | Initial plan created from analysis 076 |
 | 2026-04-03T17:45Z | Planner | Revised per critique: M1 gradient fill check, M3 extraction specificity |
 | 2026-04-03T16:35Z | QA | QA re-execution complete; status set to QA Complete with deferred iOS device runtime validation routed to UAT |
+| 2026-04-03T16:42Z | UAT | UAT complete; status set to UAT Approved and release decision marked APPROVED FOR RELEASE with DF-1 deferred runtime validation tracking |
+| 2026-04-03T16:55Z | DevOps | Stage 1 complete; version bumped to v0.10.5; status set to Committed |
 
 ## Value Statement and Business Objective
 

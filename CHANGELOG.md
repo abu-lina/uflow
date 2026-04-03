@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.5] - 2026-04-03
+
+### Fixed
+
+- **Provider detail iOS footer CTA overlay — structural overscroll fix v2 (Plan 076)**: Replaced `overscroll-contain` with `overscroll-none` on mobile provider detail and provider card modal scroll containers to suppress all rubber-band bounce (CSS spec: `contain` still allows local bounce). Replaced nested `h-screen-fix` (explicit viewport-height claim) with `flex-1 min-h-0` in the mobile branch to eliminate the height duplication anti-pattern identified in Analysis 020. Added `overscroll-none` to root `<main>` as a safety net. Extracted the fixed CTA footer outside the `overflow-y-auto` scroll container as a DOM sibling (fragment-wrapper pattern) to eliminate iOS Safari compositor coupling in both `ProviderDetailPage` and `ProviderCardModal`.
+
 ## [0.10.4] - 2026-04-03
 
 ### Fixed
