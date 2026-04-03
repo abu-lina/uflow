@@ -61,6 +61,7 @@
 | 2026-03-29       | Critique 065 closed via P1 Deferred Findings Rule                  | 4 findings RESOLVED, 5 findings DEFERRED to M4/M5 with named owners and triggers; first use of PI-070 closure path |
 | 2026-03-29       | v0.9.10 released: Iconify service-worker interception hotfix       | Removed the explicit Iconify `NetworkOnly` Workbox route so browsers handle CDN JSON fetches natively |
 | 2026-04-03       | Plan 074 released (v0.10.2): Dependabot security remediation       | Resolved actionable root + extension dependency vulnerabilities; tagged v0.10.2 with deferred dev-only memory-backend follow-up |
+| 2026-04-03       | Roadmap sync after v0.10.2 release                                 | Active tracker refreshed, orphan sweep executed, and DF-074-01 surfaced as next-work blocker |
 
 ---
 
@@ -95,7 +96,8 @@ _v0.10.2 released successfully (2026-04-03) — Plan 074 dependabot security rem
 - **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
 - **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
 - **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject during a future admin moderation UX touch (Owner: Implementer / future sprint — evidence in `agent-output/planning/060-open-actions.md`)
-- **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
+- **074-DF-074-01**: Upgrade memory-backend toolchain to remove deferred esbuild/vite dev-only chain (Owner: Engineering — evidence in `agent-output/planning/074-open-actions.md`)
+- **Dependabot**: GitHub currently reports 1 moderate on default branch — validate if this maps to deferred memory-backend scope and close drift
 
 ✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
 
