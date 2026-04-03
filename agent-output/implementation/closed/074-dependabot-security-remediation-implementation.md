@@ -2,7 +2,7 @@
 ID: 074
 Origin: 074
 UUID: b8f4c2e7
-Status: Active
+Status: Committed
 ---
 
 # Implementation 074 — Dependabot Security Remediation
