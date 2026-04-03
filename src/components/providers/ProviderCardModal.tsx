@@ -777,7 +777,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
             </div>
           </div>
           {/* Sticky ProviderActionBar at the bottom on mobile */}
-          <div className="pb-safe fixed bottom-0 left-0 right-0 z-[120] bg-white/95 px-6 pt-4 sm:hidden">
+          <div className="pb-safe fixed bottom-0 left-0 right-0 z-[120] bg-white px-6 pt-4 sm:hidden">
             <ProviderActionBar
               isSaved={isSaved}
               phoneNumber={provider.contact_phone || undefined}

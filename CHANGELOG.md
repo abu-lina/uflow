@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.3] - 2026-04-03
+
+### Fixed
+
+- **Provider detail iOS footer CTA overlay during bottom overscroll (Plan 075)**: Added `overscroll-contain` to the mobile provider detail scroll container to stop iOS scroll chaining/rubber-band propagation into viewport layers. Updated mobile fixed action bars to use fully opaque `bg-white` (removed translucent footer on detail page and modal footer) so CTA controls remain visually stable and unobscured during upward drag gestures.
+
 ## [0.10.2] - 2026-04-03
 
 ### Security
