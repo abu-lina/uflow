@@ -2,7 +2,7 @@
 ID: 076
 Origin: 076
 UUID: b4e8f21a
-Status: Committed
+Status: Released
 ---
 
 # QA Report: 076 — iOS Footer CTA Overlay Fix v2

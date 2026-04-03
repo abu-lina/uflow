@@ -2,7 +2,7 @@
 ID: 076
 Origin: 076
 UUID: b4e8f21a
-Status: Active
+Status: Released
 ---
 
 # Deployment: 076 — iOS Footer CTA Overlay Fix v2 — Stage 1 (v0.10.5)
@@ -16,6 +16,7 @@ Status: Active
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-04-03T16:55Z | devops | Stage 1 completed — version bumped to v0.10.5, docs closed, local commit staged |
+| 2026-04-03T17:30Z | devops | Stage 2 completed — rebased onto origin/main, pushed tag v0.10.5, PR branch pushed |
 
 ---
 
@@ -171,7 +172,41 @@ Note: Named distinctly from `agent-output/planning/076-open-actions.md` (other P
 
 ## Post-Release Status
 
-- Status: Active (Stage 1 complete; Stage 2 pending release approval)
+**Status: RELEASED** (2026-04-03T17:30Z)
+
+## Stage 2 Evidence Block
+
+```
+Branch pushed:    git push origin session/075-bg-footer-scroll --force-with-lease
+HEAD after rebase: 96f7c82b (fix(providers): Bump to v0.10.5 — iOS footer CTA overlay structural fix v2)
+Tag created:      v0.10.5 → pushed to origin
+PR comparison:    https://github.com/abu-lina/uflow/compare/main...session/075-bg-footer-scroll
+
+Post-rebase integrity:
+  package.json:     valid JSON, version "0.10.5" ✅
+  package-lock.json: valid JSON, version "0.10.5" ✅
+  npm audit:        0 vulnerabilities (HIGH/CRITICAL) ✅
+  Git status:       nothing to commit, working tree clean ✅
+
+Rebase conflicts resolved:
+  1. At commit a8f90a5c (Plan 075 CHANGELOG/package.json/package-lock.json) — bookkeeping, resolved to 0.10.3/0.10.4 as expected for intermediate commit
+  2. At commit 16763e59 (Stage 1 commit — CHANGELOG) — kept both [0.10.5] and [0.10.4] entries, [0.10.5] above [0.10.4]
+
+Note: GitHub reports 1 moderate vulnerability on default branch — pre-existing, not introduced by this PR.
+
+Rebase commit chain (post-rebase):
+  96f7c82b fix(providers): Bump to v0.10.5 — iOS footer CTA overlay structural fix v2
+  ee552a2f docs(076): QA re-execution complete and routed to UAT
+  fadb2fd0 docs(076): code review + QA reports
+  ce44629c docs(076): implementation doc for QA resubmission
+  dd0dc7d7 docs(076): analysis, plan, critique for iOS footer overlay v2
+  70ae3e29 fix(providers): iOS footer CTA overlay v2 — structural scroll fixes
+```
+
+## Remaining Work
+
+- DF-1 deferred validation: physical iOS device confirmation by device owner (see `076-bg-footer-scroll-v2-open-actions.md`)
+- Roadmap sync: update `product-roadmap.md` with v0.10.5 entry and Current Version field
 
 ## Known Limitations (pre-operation)
 
@@ -181,6 +216,7 @@ Note: Named distinctly from `agent-output/planning/076-open-actions.md` (other P
 
 ## Next Actions
 
-1. User approves release for v0.10.5
-2. Stage 2: rebase branch onto origin/main, resolve bookkeeping conflicts, push, tag v0.10.5
-3. DF-1: device owner executes iOS runtime validation and closes open-actions tracker
+1. ✅ Stage 2 released — v0.10.5 tagged and pushed
+2. DF-1: device owner executes iOS runtime validation and closes open-actions tracker
+3. Roadmap agent: update Current Version to 0.10.5, add release entry
+4. Retrospective: capture lessons from this session

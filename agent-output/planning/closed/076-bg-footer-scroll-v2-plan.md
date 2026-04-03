@@ -2,7 +2,7 @@
 ID: 076
 Origin: 076
 UUID: b4e8f21a
-Status: Committed
+Status: Released
 Target Release: v0.10.5
 Epic Alignment: iOS Mobile UX — Provider Detail Page CTA Stability
 Related Issues: Plan 075 (deployed, issue persists), Analysis 020 (prior h-screen-fix nesting RCA)
