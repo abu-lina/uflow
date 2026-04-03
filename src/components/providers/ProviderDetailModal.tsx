@@ -26,6 +26,7 @@ import {
   formatAddress,
   isAddressNavigable,
   normalizeWebsiteUrl,
+  normalizeInstagramUrl,
 } from '@/utils/navigationUtils';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 import { trackEvent } from '@/lib/analytics/plausible';
@@ -131,7 +132,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     minSwipeDistance: 30,
   });
 
-  const [expandedAction, setExpandedAction] = useState<'save' | 'share' | 'call' | 'website'>(
+  const [expandedAction, setExpandedAction] = useState<'save' | 'share' | 'call' | 'website' | 'instagram'>(
     'save',
   );
 
@@ -214,7 +215,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   };
 
   // Action handlers
-  const handleExpand = async (action: 'save' | 'share' | 'call' | 'website') => {
+  const handleExpand = async (action: 'save' | 'share' | 'call' | 'website' | 'instagram') => {
     setExpandedAction(action);
     if (action === 'save') {
       void handleBookmark();
@@ -293,6 +294,15 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       if (url) {
         trackEvent('contact_intent_triggered', {
           contact_type: 'website',
+          city: provider.address_city ?? '',
+        });
+        window.open(url, '_blank');
+      }
+    } else if (action === 'instagram' && provider.social_instagram) {
+      const url = normalizeInstagramUrl(provider.social_instagram);
+      if (url) {
+        trackEvent('contact_intent_triggered', {
+          contact_type: 'instagram',
           city: provider.address_city ?? '',
         });
         window.open(url, '_blank');
@@ -508,8 +518,15 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           >
             <X aria-hidden className="size-5" />
           </button>
+          {/* Admin action buttons (e.g., edit) — positioned in the right panel header zone */}
+          {customActionButtons && (
+            <div className="absolute right-12 top-20">
+              {customActionButtons}
+            </div>
+          )}
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
             {/* Barakah Effekt Section - with fade-in animation */}
+            {communityServices.length > 0 && (
             <div
               className="animate-fadeIn flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100"
               style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
@@ -580,6 +597,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 </div>
               </div>
             </div>
+            )}
             {/* Offers & Needs Section - with fade-in animation */}
             {((provider.offers && provider.offers.length > 0) ||
               (provider.needs && provider.needs.length > 0)) && (
@@ -762,13 +780,31 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               <span className="font-inter-tight text-base font-medium text-white">Website</span>
             )}
           </button>
+          {/* Instagram Button — conditionally rendered */}
+          {provider.social_instagram && (
+          <button
+            aria-expanded={expandedAction === 'instagram'}
+            aria-label="Instagram"
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'instagram' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
+            type="button"
+            onClick={() => handleExpand('instagram')}
+          >
+            <Icon
+              className={
+                expandedAction === 'instagram'
+                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                  : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
+              }
+              height={20}
+              icon="mdi:instagram"
+              width={20}
+            />
+            {expandedAction === 'instagram' && (
+              <span className="font-inter-tight text-base font-medium text-white">Instagram</span>
+            )}
+          </button>
+          )}
         </div>
-        {/* Admin action buttons (e.g., edit) rendered above the actions bar */}
-        {customActionButtons && (
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2">
-            {customActionButtons}
-          </div>
-        )}
       </section>
     </Modal>
   );

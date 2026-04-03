@@ -2,7 +2,7 @@
 ID: 076
 Origin: 076
 UUID: c94b9360
-Status: Code Review Complete
+Status: Committed
 ---
 
 # 076 — Provider Detail UAT Bug Fixes — Code Review
@@ -19,6 +19,7 @@ Status: Code Review Complete
 | Date | Event | Summary |
 |---|---|---|
 | 2026-04-03T12:00Z | Code Review Complete | Verdict: APPROVED — Zero blocking findings; all acceptance criteria met |
+| 2026-04-03T16:25Z | DevOps Stage 1 | Marked committed for release chain closure |
 
 ---
 

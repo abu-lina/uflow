@@ -2,7 +2,7 @@
 ID: 076
 Origin: 076
 UUID: c94b9360
-Status: QA Complete
+Status: Committed for Release v0.10.4
 ---
 
 # 076 — Provider Detail UAT Bug Fixes
@@ -22,6 +22,8 @@ Status: QA Complete
 | 2026-04-03T12:00Z | Code Reviewer (@S76) | Code Review: APPROVED — Zero blocking findings |
 | 2026-04-03T16:08Z | QA (@S76) | QA FAILED — blocking TypeScript errors in ProviderDetailModal tests (CommunityService shape mismatch) |
 | 2026-04-03T16:14Z | QA (@S76) | QA PASSED — fixture fix applied, all gates green (type-check EXIT 0, 43/43 tests) |
+| 2026-04-03T16:16Z (approx.) | UAT (@S76) | UAT Complete — APPROVED FOR RELEASE with DF-1 deferred visual evidence gate |
+| 2026-04-03T16:25Z | DevOps (@S76) | Stage 1 complete — committed locally for v0.10.4 |
 
 ---
 
