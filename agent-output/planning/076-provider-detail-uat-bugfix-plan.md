@@ -2,7 +2,7 @@
 ID: 076
 Origin: 076
 UUID: c94b9360
-Status: Code Review Approved
+Status: QA Complete
 ---
 
 # 076 — Provider Detail UAT Bug Fixes
@@ -20,6 +20,8 @@ Status: Code Review Approved
 |---|---|---|
 | 2026-04-03T09:30Z | Planner (@S76) | Plan created from analysis 076 (L1 confirmed root causes, 1 file, 3 bugs) |
 | 2026-04-03T12:00Z | Code Reviewer (@S76) | Code Review: APPROVED — Zero blocking findings |
+| 2026-04-03T16:08Z | QA (@S76) | QA FAILED — blocking TypeScript errors in ProviderDetailModal tests (CommunityService shape mismatch) |
+| 2026-04-03T16:14Z | QA (@S76) | QA PASSED — fixture fix applied, all gates green (type-check EXIT 0, 43/43 tests) |
 
 ---
 

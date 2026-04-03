@@ -18,8 +18,11 @@ Status: Active
 ## Changelog
 
 | Date | Handoff | Request | Summary |
-|---|---|---|---|
+|---|---|---|
+
+|---|
 | 2026-04-03T11:00Z | Planner/Critic → Implementer | Execute Plan 076 (3 bugs, 5 milestones) | All 5 milestones complete. 1 source file + 1 test file + version artifacts. |
+| 2026-04-03T16:14Z | QA → Implementer | Fix CommunityService fixture type errors | Added `created_at`/`updated_at` ISO timestamps to 3 fixture objects in `ProviderDetailModal.test.tsx`. type-check: EXIT 0. 43/43 tests pass. |
 
 ---
 
