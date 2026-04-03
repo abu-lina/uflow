@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-03-29
+**Last Updated**: 2026-04-03
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.0
+**Current Version**: v0.10.1
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -60,6 +60,7 @@
 | 2026-03-29       | Process improvements implemented (PI 070)                          | Deferred Findings Rule (Critic), Entity Ownership Check (Planner), Pre-QA Static Gate (Implementer) from Retrospective 065 |
 | 2026-03-29       | Critique 065 closed via P1 Deferred Findings Rule                  | 4 findings RESOLVED, 5 findings DEFERRED to M4/M5 with named owners and triggers; first use of PI-070 closure path |
 | 2026-03-29       | v0.9.10 released: Iconify service-worker interception hotfix       | Removed the explicit Iconify `NetworkOnly` Workbox route so browsers handle CDN JSON fetches natively |
+| 2026-04-03       | Plan 073 released (v0.10.1): Admin providerImages HTTP 400 bugfix  | Fixed admin approve/reject returning HTTP 400 — normaliseProviderImages() omits empty/invalid field, unblocking all admin moderation actions |
 
 ---
 
@@ -82,7 +83,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 **Current Working Release**: (none — ready for next cycle)
 
-_v0.10.0 released successfully (2026-03-29) — Plan 065 automated provider enrichment pipeline (M1–M3)_
+_v0.10.1 released successfully (2026-04-03) — Plan 073 admin providerImages HTTP 400 bugfix_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -102,6 +103,7 @@ _v0.10.0 released successfully (2026-03-29) — Plan 065 automated provider enri
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.1 | 2026-04-03 | Plan 073 (Admin providerImages HTTP 400 bugfix)          | Released |
 | v0.10.0 | 2026-03-29 | Plan 065 (Automated provider enrichment pipeline M1–M3) | Released |
 | v0.9.10 | 2026-03-29 | Hotfix release: Iconify SW interception removal      | Released |
 | v0.9.9  | 2026-03-29 | Plan 064 (Iconify SW CORS fix)                       | Released |

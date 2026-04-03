@@ -2,7 +2,7 @@
 ID: 073
 Origin: 073
 UUID: c4e19b7a
-Status: Active
+Status: Released
 ---
 
 # Stage 1 Deployment: 073 — Admin Provider Moderation UAT Bugfix
@@ -154,3 +154,33 @@ None blocking. DF-1 and DF-2 are low-severity follow-ups documented above.
 ## Stage 1 Status
 
 **Status**: Committed
+
+## Release Execution
+
+| Step | Result |
+|---|---|
+| Branch pushed | `session/073-admin-provider-moderation-uat` → `origin` ✅ |
+| PR comparison | https://github.com/abu-lina/uflow/compare/main...session/073-admin-provider-moderation-uat |
+| Tag created | `v0.10.1` (annotated) ✅ |
+| Tag pushed | `git push origin v0.10.1` ✅ |
+| Security audit | 1 HIGH (lodash transitive) — **pre-existing**, not introduced by Plan 073. Plan 073 changed only `"version"` in package.json. |
+| Roadmap synced | `Current Version` updated to v0.10.1; release table entry added ✅ |
+| Conflict check | 0 behind origin/main before push — no rebase required ✅ |
+| User confirmation | Approved explicitly — 2026-04-03 |
+
+## Post-Release Status
+
+**Status**: Released  
+**Tag**: v0.10.1  
+**Branch**: `session/073-admin-provider-moderation-uat`  
+**Released**: 2026-04-03T07:13Z  
+**Authorizer**: User (explicit approval)  
+
+## Known Issues
+
+- DF-1: Reject path live validation — same code boundary as proven approve path; low risk; owner: DevOps operator
+- Lodash transitive HIGH vulnerability — pre-existing since before Plan 073; not introduced by this release
+
+## Rollback Plan
+
+Revert `fc24b690` (amend target was `28ae0f14`). Re-deploy `v0.10.0`.
