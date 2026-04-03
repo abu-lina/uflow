@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-04-03
+
+### Security
+
+- Remediated lodash code injection (GHSA-r5fr-rjxr-66jc) and prototype pollution (GHSA-f23m-r3pf-42rh) via override to lodash >=4.18.0
+- Remediated tar path traversal, picomatch ReDoS, and brace-expansion DoS vulnerabilities in uflow-memory-extension via npm audit fix
+- Deferred esbuild/vite dev-server CORS vulnerabilities in memory-backend (dev-only tool, requires semver-major vitest upgrade)
+
 ## [0.10.1] - 2026-04-03
 
 ### Fixed
