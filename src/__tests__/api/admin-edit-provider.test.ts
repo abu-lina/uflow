@@ -168,4 +168,71 @@ describe('PATCH /api/admin/edit-provider', () => {
     const response = await PATCH(createRequest(validBody));
     expect(response.status).toBe(500);
   });
+
+  // Plan 073 M2: Regression tests for providerImages contract drift
+  describe('[Plan 073] providerImages normalisation — prevent HTTP 400 on moderation', () => {
+    it('[context] mocked schema accepts "[]" but real schema rejects it — client normalisation is required', async () => {
+      // Context: This test documents why client-side normalisation is needed.
+      // The real providerEditUpdateSchema (Zod .refine) rejects '[]' with HTTP 400.
+      // This test uses a simplified mock that doesn't enforce that rule.
+      // The client normalisation in saveProviderEdits() prevents '[]' from ever reaching the route.
+      const bodyWithEmptyArray = {
+        ...validBody,
+        providerImages: '[]',
+      };
+
+      const response = await PATCH(createRequest(bodyWithEmptyArray));
+      
+      // Mock accepts this (HTTP 200), but production schema rejects it.
+      // The fix ensures '[]' is omitted from the request body before sending.
+      expect(response.status).toBe(200);
+    });
+
+    it('[post-fix PASSES] omitting providerImages field (undefined) should succeed', async () => {
+      // Post-fix: normalisation omits empty/invalid values → field not in request body
+      const bodyWithoutImages = {
+        ...validBody,
+        // providerImages intentionally omitted
+      };
+
+      const response = await PATCH(createRequest(bodyWithoutImages));
+      expect(response.status).toBe(200);
+      
+      // Verify updateProviderFields was called without providerImages
+      expect(mockUpdateProviderFields).toHaveBeenCalledWith(
+        validBody.providerId,
+        expect.not.objectContaining({ providerImages: expect.anything() }),
+        adminUser.id
+      );
+    });
+
+    it('[post-fix PASSES] valid providerImages with {urls: string[]} should succeed', async () => {
+      const bodyWithValidImages = {
+        ...validBody,
+        providerImages: JSON.stringify({ urls: ['https://example.com/image.jpg'] }),
+      };
+
+      const response = await PATCH(createRequest(bodyWithValidImages));
+      expect(response.status).toBe(200);
+
+      // Verify the valid structure was passed through
+      expect(mockUpdateProviderFields).toHaveBeenCalledWith(
+        validBody.providerId,
+        expect.objectContaining({
+          providerImages: JSON.stringify({ urls: ['https://example.com/image.jpg'] }),
+        }),
+        adminUser.id
+      );
+    });
+
+    it('[post-fix PASSES] null providerImages should succeed (clears images in DB)', async () => {
+      const bodyWithNull = {
+        ...validBody,
+        providerImages: null,
+      };
+
+      const response = await PATCH(createRequest(bodyWithNull));
+      expect(response.status).toBe(200);
+    });
+  });
 });

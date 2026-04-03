@@ -2,7 +2,7 @@
 ID: 073
 Origin: 073
 UUID: c4e19b7a
-Status: Active
+Status: Committed
 ---
 
 # 073 — Admin Provider Moderation UAT Bugfix Implementation

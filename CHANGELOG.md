@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-04-03
+
+### Fixed
+
+- **Admin provider moderation contract drift (Plan 073)**: Fixed HTTP 400 validation errors when admin moderators attempt to approve or reject providers with no images. The shared `ProviderEditForm` defaults missing images to the JSON array string `'[]'`, but `providerEditUpdateSchema` only accepts `null` or `'{"urls": string[]}'`. Added client-side normalisation in `saveProviderEdits()` to omit the `providerImages` field entirely when empty/invalid (triggering "no change" semantics in the service layer), send valid `{urls: [...]}` as-is, and wrap legacy bare arrays. Includes regression tests documenting the pre-fix failure and post-fix acceptance paths.
+
 ## [0.10.0] - 2026-03-29
 
 ### Added

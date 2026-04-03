@@ -2,7 +2,7 @@
 ID: 073
 Origin: 073
 UUID: c4e19b7a
-Status: In Progress
+Status: Committed
 Target Release: v0.10.1 (next patch after current origin/main v0.10.0; confirm at DevOps Stage 1)
 Related Issues: None (reported via live UAT session on iPhone Safari)
 ---
@@ -17,6 +17,9 @@ Related Issues: None (reported via live UAT session on iPhone Safari)
 | 2026-04-02T21:05Z | Planner | Plan created | Focused bugfix, two-file scope |
 | 2026-04-03T00:10Z | Planner | Revision per critique | Corrected D3 null semantics (M-1), acknowledged enableLocalStorage (L-1), stated explicit semver (L-2) |
 | 2026-04-03T08:10Z | Implementer | Implementation complete | M1-M4 delivered, all gates passed, ready for Code Review |
+| 2026-04-03T08:15Z | Code Reviewer | Code review approved | Verdict: APPROVED with fix-in-review applied (React hooks dependency); ready for QA |
+| 2026-04-03T08:25Z | QA | QA complete | All gates passed; APPROVED FOR UAT; manual smoke test scenarios documented |
+| 2026-04-03T07:00Z | UAT | UAT complete | APPROVED FOR RELEASE — live iPhone Safari approve-path evidence received; all HIGH findings resolved |
 
 ## Value Statement and Business Objective
 
