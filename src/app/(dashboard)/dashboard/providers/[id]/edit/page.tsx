@@ -55,27 +55,73 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
   }, [providerId]);
 
   const saveProviderEdits = async (formData: ProviderEditFormData) => {
+    // Plan 073 M1: Normalise providerImages to avoid contract drift
+    // Empty/invalid → omit field (undefined = no DB change in service layer)
+    // Valid {urls: string[]} → send as-is
+    // Legacy array → wrap in {urls: [...]}
+    const normaliseProviderImages = (rawImages: string): string | undefined => {
+      // Case 1: Empty/absent → omit field entirely
+      if (!rawImages || rawImages === '[]' || rawImages === 'null' || rawImages.trim() === '') {
+        return undefined;
+      }
+
+      try {
+        const parsed = JSON.parse(rawImages);
+        
+        // Case 2: Already valid {urls: string[]} with non-empty array
+        if (
+          parsed && 
+          typeof parsed === 'object' && 
+          !Array.isArray(parsed) &&
+          Array.isArray(parsed.urls) &&
+          parsed.urls.length > 0 &&
+          parsed.urls.every((u: unknown) => typeof u === 'string')
+        ) {
+          return rawImages; // Send as-is
+        }
+
+        // Case 3: Legacy array format → wrap in {urls: [...]}
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed.every((u: unknown) => typeof u === 'string')) {
+          return JSON.stringify({ urls: parsed });
+        }
+
+        // Case 4: Invalid structure → omit
+        return undefined;
+      } catch {
+        // Case 5: Malformed JSON → omit
+        return undefined;
+      }
+    };
+
+    const normalisedImages = normaliseProviderImages(formData.images);
+
+    const requestBody: Record<string, unknown> = {
+      providerId,
+      providerName: formData.providerName,
+      providerDescription: formData.providerDescription || null,
+      categoryId: formData.categoryId || undefined,
+      addressStreet: formData.isOnlineBusiness ? null : (formData.street || null),
+      addressZip: formData.isOnlineBusiness ? null : (formData.zipCode || null),
+      addressCity: formData.isOnlineBusiness ? null : (formData.city || null),
+      addressCountry: formData.isOnlineBusiness ? null : (formData.country || null),
+      contactEmail: formData.email || null,
+      contactPhone: formData.phone || null,
+      socialWebsite: formData.website || null,
+      socialInstagram: formData.instagram || null,
+      offersIds: formData.selectedOfferIds,
+      needsIds: formData.selectedNeedIds,
+      communityServiceIds: formData.selectedCommunityServiceIds,
+    };
+
+    // Only include providerImages if normalisation returned a value
+    if (normalisedImages !== undefined) {
+      requestBody.providerImages = normalisedImages;
+    }
+
     const response = await fetch('/api/admin/edit-provider', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        providerId,
-        providerName: formData.providerName,
-        providerDescription: formData.providerDescription || null,
-        categoryId: formData.categoryId || undefined,
-        addressStreet: formData.isOnlineBusiness ? null : (formData.street || null),
-        addressZip: formData.isOnlineBusiness ? null : (formData.zipCode || null),
-        addressCity: formData.isOnlineBusiness ? null : (formData.city || null),
-        addressCountry: formData.isOnlineBusiness ? null : (formData.country || null),
-        contactEmail: formData.email || null,
-        contactPhone: formData.phone || null,
-        socialWebsite: formData.website || null,
-        socialInstagram: formData.instagram || null,
-        providerImages: formData.images,
-        offersIds: formData.selectedOfferIds,
-        needsIds: formData.selectedNeedIds,
-        communityServiceIds: formData.selectedCommunityServiceIds,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -153,7 +199,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     } catch {
       setRejectModal(prev => ({ ...prev, isLoading: false }));
     }
-  }, [rejectModal.formData]);
+  }, [rejectModal.formData, finishModerationAction]);
 
   const handleRejectClose = useCallback(() => {
     if (!rejectModal.isLoading) {

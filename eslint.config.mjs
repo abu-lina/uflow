@@ -151,6 +151,7 @@ const eslintConfig = [
       'docs/archive/**', // Archived starter template and other reference material
       'docs/implementation/**', // Implementation reference scripts (browser context)
       'tests/**', // Performance and integration tests (k6, etc.)
+      'agent-output/qa/tmp/**', // QA temporary test files (not part of app tsconfig)
     ],
   },
 
