@@ -2,7 +2,7 @@
 ID: 075
 Origin: 075
 UUID: d4e8f1a7
-Status: Committed for Release v0.10.3
+Status: Released
 ---
 
 # 075 — Fix Background Overlay on Footer CTA During iOS Scroll
@@ -11,9 +11,9 @@ Status: Committed for Release v0.10.3
 |-------------------|-------------------------------------------------------------------------|
 | **Plan ID**       | 075                                                                     |
 | **Epic Alignment**| Mobile UX quality — provider detail page conversion surface              |
-| **Target Release**| v0.10.3 (adjusted at DevOps Stage 1 after upstream advanced to v0.10.2) |
+| **Target Release**| v0.10.5 (final bundled release with Plan 076 after upstream version collision handling) |
 | **Related Issues**| Session S075-bg-footer-scroll                                           |
-| **Status**        | Committed for Release v0.10.3                                           |
+| **Status**        | Released                                                                  |
 
 ## Changelog
 
@@ -24,6 +24,7 @@ Status: Committed for Release v0.10.3
 | 2026-04-03T13:35Z     | QA      | Automated gates PASS; manual iOS validation DEFERRED to device owner |
 | 2026-04-03T13:37Z     | DevOps  | Stage 1 preflight adjusted target release to v0.10.3 (v0.10.2 already tagged upstream) |
 | 2026-04-03T13:43Z     | DevOps  | Stage 1 local commit preparation complete; lifecycle moved to Committed |
+| 2026-04-04T07:06Z     | Planner | Post-release alignment with roadmap: final release recorded as v0.10.5 bundled with Plan 076; status set to Released after user-confirmed UAT closure |
 
 ## Value Statement and Business Objective
 
@@ -33,7 +34,7 @@ Status: Committed for Release v0.10.3
 
 ## Release Strategy
 
-Standalone (no other known plans bundled into v0.10.3).
+Bundled release with Plan 076 in v0.10.5.
 
 ## Decision Record
 

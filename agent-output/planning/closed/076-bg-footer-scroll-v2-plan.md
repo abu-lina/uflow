@@ -19,6 +19,7 @@ Related Issues: Plan 075 (deployed, issue persists), Analysis 020 (prior h-scree
 | 2026-04-03T16:35Z | QA | QA re-execution complete; status set to QA Complete with deferred iOS device runtime validation routed to UAT |
 | 2026-04-03T16:42Z | UAT | UAT complete; status set to UAT Approved and release decision marked APPROVED FOR RELEASE with DF-1 deferred runtime validation tracking |
 | 2026-04-03T16:55Z | DevOps | Stage 1 complete; version bumped to v0.10.5; status set to Committed |
+| 2026-04-04T07:06Z | Planner | Post-release roadmap alignment: release strategy corrected to bundled v0.10.5 with Plan 075 and deferred DF-1 validation confirmed complete by user |
 
 ## Value Statement and Business Objective
 
@@ -28,7 +29,7 @@ Plan 075 deployed `overscroll-contain` + opaque footer but the user confirms the
 
 ## Release Strategy
 
-Release Strategy: Standalone (no other known plans targeting v0.10.4).
+Release Strategy: Bundled with Plan 075 in v0.10.5 (released).
 
 ## Decision Record
 
