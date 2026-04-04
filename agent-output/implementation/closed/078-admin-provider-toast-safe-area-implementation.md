@@ -2,7 +2,7 @@
 ID: 078
 Origin: 078
 UUID: f7a9c3e1
-Status: Active
+Status: Committed
 ---
 
 # Implementation: Admin Provider Toast Safe-Area Fix
@@ -25,6 +25,7 @@ Status: Active
 | 2026-04-04T08:33Z | TDD Red -> Green | Added failing regression test, then implemented Toaster safe-area offsets |
 | 2026-04-04T08:35Z | Release artifacts | Bumped version and changelog entry per plan |
 | 2026-04-04T08:37Z | Verification | Ran tests/type-check/lint/build and documented blockers |
+| 2026-04-04T09:12Z | DevOps | Document closed | Status: Committed |
 
 ## Implementation Summary
 
