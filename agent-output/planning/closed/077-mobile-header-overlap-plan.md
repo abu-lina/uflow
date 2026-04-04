@@ -2,7 +2,7 @@
 ID: 077
 Origin: 077
 UUID: d4e8a1f2
-Status: Committed
+Status: Released
 ---
 
 # Plan 077 — Mobile Header Overlap Bugfix (Providers Page)
@@ -14,7 +14,7 @@ Status: Committed
 | **Plan ID**        | 077                                                                                                |
 | **Target Release** | Next available patch after `v0.10.5`; confirm as `v0.10.6` at DevOps Stage 1                      |
 | **Epic Alignment** | Mobile UX reliability / provider discovery browse quality                                          |
-| **Status**         | Committed for Release `v0.10.6`                                                                    |
+| **Status**         | Released (`v0.10.6`)                                                                                |
 | **Related Issues** | None                                                                                               |
 | **Analysis Doc**   | `agent-output/analysis/077-mobile-header-overlap.md`                                              |
 
@@ -31,6 +31,7 @@ Status: Committed
 | 2026-04-04T08:31Z   | QA | Validation complete; Status → QA Complete (manual iOS runtime checks deferred to UAT/QA operator) |
 | 2026-04-04T08:35Z   | UAT | Value delivery validated; conditional approval issued (pending manual device visual verification) → UAT Approved |
 | 2026-04-04T08:39Z   | DevOps | Stage 1 local commit preparation complete; Status → Committed for Release `v0.10.6` |
+| 2026-04-04T08:44Z   | DevOps | Stage 2 completed; branch pushed and tag `v0.10.6` prepared; Status → Released |
 
 ---
 

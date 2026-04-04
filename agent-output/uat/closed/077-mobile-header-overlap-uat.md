@@ -2,7 +2,7 @@
 ID: 077
 Origin: 077
 UUID: d4e8a1f2
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 077 — Mobile Header Overlap Bugfix
@@ -20,6 +20,7 @@ Status: Committed
 | ----------- | -------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | 2026-04-04T08:31Z | QA → UAT             | UAT verification        | Reviewed plan value statement, implementation, code review, and QA docs. Value delivery confirmed via code/test evidence. Manual device validation deferred with owner/risk. Conditional Approval issued. |
 | 2026-04-04T08:39Z | DevOps → Lifecycle   | Stage 1 closure         | Document closed for Stage 1 local commit; Status → Committed. |
+| 2026-04-04T08:44Z | DevOps → Lifecycle   | Stage 2 release         | Release completed for v0.10.6; Status → Released. |
 
 ### Timestamp Discipline
 

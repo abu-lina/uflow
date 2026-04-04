@@ -2,7 +2,7 @@
 ID: 077
 Origin: 077
 UUID: d4e8a1f2
-Status: Committed
+Status: Released
 ---
 
 # Code Review 077 — Mobile Header Overlap Bugfix
@@ -22,6 +22,7 @@ Status: Committed
 |------|-------|---------|
 | 2026-04-04T08:25Z | Code Review Start | Implementer → Code Reviewer handoff; reviewing Plan 077 implementation |
 | 2026-04-04T08:39Z | Lifecycle Closure | Document closed for Stage 1 local commit; Status → Committed |
+| 2026-04-04T08:44Z | Release Closure | Stage 2 release completed for v0.10.6; Status → Released |
 
 ---
 

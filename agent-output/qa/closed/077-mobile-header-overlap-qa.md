@@ -2,7 +2,7 @@
 ID: 077
 Origin: 077
 UUID: d4e8a1f2
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 077 — Mobile Header Overlap Bugfix
@@ -19,6 +19,7 @@ Status: Committed
 | --- | --- | --- | --- |
 | 2026-04-04T08:31Z | Code Reviewer -> QA | Execute QA validation for Plan 077 | Automated gates executed; CSS fix validated; manual iPhone runtime validation deferred with owner/risk/closure evidence. QA Complete. |
 | 2026-04-04T08:39Z | DevOps -> Lifecycle | Stage 1 closure | Document closed for Stage 1 local commit; Status -> Committed. |
+| 2026-04-04T08:44Z | DevOps -> Lifecycle | Stage 2 release | Release completed for v0.10.6; Status -> Released. |
 
 ## Timeline
 
