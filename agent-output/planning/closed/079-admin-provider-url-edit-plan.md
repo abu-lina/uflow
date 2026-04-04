@@ -2,7 +2,7 @@
 ID: 079
 Origin: 079
 UUID: 4a8f1c3e
-Status: Committed
+Status: Released
 ---
 
 # Plan 079 — Admin Provider URL Edit Fix
@@ -24,6 +24,7 @@ Status: Committed
 | 2026-04-04T13:20Z (approx.) | UAT | UAT completed | Value statement validated; APPROVED FOR RELEASE with DF-1 runtime smoke follow-up |
 | 2026-04-04T13:06Z | DevOps | Stage 1 preflight started | Version preflight completed; target release v0.10.8 confirmed available |
 | 2026-04-04T13:30Z (approx.) | DevOps | Stage 1 local commit prepared | Plan marked Committed for Release v0.10.8 |
+| 2026-04-04T13:12Z | DevOps | Stage 2 release executed | Branch/tag pushed and GitHub release published; status set to Released |
 
 ---
 
