@@ -30,7 +30,7 @@ Status: Active
 
 - **UAT Status**: CONDITIONAL APPROVAL FOR RELEASE — `agent-output/uat/closed/077-mobile-header-overlap-uat.md`
 - **QA Status**: QA Complete — `agent-output/qa/closed/077-mobile-header-overlap-qa.md`
-- Deferred runtime validations exist and are tracked in `agent-output/planning/077-open-actions.md`.
+- Deferred runtime validations were tracked in `agent-output/planning/077-open-actions.md` and are now closed in `agent-output/planning/closed/077-open-actions.md`.
 
 ### Version Consistency
 
@@ -89,10 +89,11 @@ Status: Active
 
 ## Deferred / Open Actions Visibility
 
-Deferred runtime validations from UAT/QA are tracked in:
+Deferred runtime validations from UAT/QA were tracked in:
 - `agent-output/planning/077-open-actions.md`
 
-These items stay visible after plan closure.
+Closure record now at:
+- `agent-output/planning/closed/077-open-actions.md`
 
 ## Documents Closed
 
@@ -122,7 +123,7 @@ Closed documents for Plan 077 in Stage 1:
 Final commit includes:
 - Plan 077 code and test files
 - Plan 077 lifecycle docs + closure moves
-- `agent-output/planning/077-open-actions.md`
+- `agent-output/planning/closed/077-open-actions.md`
 - `agent-output/deployment/077-stage1-v0.10.6.md`
 
 ## Next Actions
