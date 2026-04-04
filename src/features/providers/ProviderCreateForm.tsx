@@ -17,6 +17,7 @@ import type { Offer, Need } from '@/types/offer';
 import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 interface ProviderCreateFormProps {
   onNextStep?: () => void;
@@ -134,6 +135,11 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedWebsite = normalizeWebsiteUrl(formData.website);
+
+    if ((normalizedWebsite ?? '') !== formData.website) {
+      updateFormData({ website: normalizedWebsite ?? '' });
+    }
     
     // Only allow submission on the last step
     if (currentStep !== STEPS.length - 1) {
@@ -215,7 +221,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       category_id: formData.category && formData.category.trim() !== '' ? formData.category : null,
       contact_email: formData.email || null,
       contact_phone: formData.phone || null,
-      social_website: formData.website || null,
+      social_website: normalizedWebsite,
       social_instagram: formData.instagram || null,
       barakah_effects: formData.tags,
       // user_created_id: ALWAYS set to track who created this database entry
@@ -645,6 +651,12 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
               placeholder="Website eingeben"
               type="url"
               value={formData.website}
+              onBlur={() => {
+                const normalizedWebsite = normalizeWebsiteUrl(formData.website) ?? '';
+                if (normalizedWebsite !== formData.website) {
+                  handleInputChange('website', normalizedWebsite);
+                }
+              }}
               onChange={(e) => handleInputChange('website', e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, instagramInputRef)}
             />
@@ -724,7 +736,7 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
                           className="w-6 h-6 text-[#232323] flex-shrink-0" 
                           icon="lucide:image-up" 
                         />
-                        <span className="font-inter-tight font-normal font-semibold text-base leading-[19px] flex items-center text-[#232323] whitespace-nowrap">
+                        <span className="font-inter-tight font-semibold text-base leading-[19px] flex items-center text-[#232323] whitespace-nowrap">
                           Bilder hochladen{formData.images.length > 0 ? ` (${formData.images.length})` : ''}
                         </span>
                       </div>

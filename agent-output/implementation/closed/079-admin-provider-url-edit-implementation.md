@@ -2,7 +2,7 @@
 ID: 079
 Origin: 079
 UUID: 4a8f1c3e
-Status: Active
+Status: Committed
 ---
 
 # Implementation 079 — Admin Provider URL Edit Fix
@@ -25,6 +25,7 @@ Status: Active
 | 2026-04-04T12:08Z | TDD Gate | Added regression test for schemeless website moderation path; verified RED (approve callback not called) |
 | 2026-04-04T12:20Z | M1 implementation | Added website normalization on blur + pre-action/pre-submit in edit/create forms |
 | 2026-04-04T12:30Z | M2 release artifacts | Version bumped to 0.10.8, package-lock aligned, changelog entry added |
+| 2026-04-04T13:30Z (approx.) | DevOps Stage 1 | Lifecycle status update | Marked Committed for Release v0.10.8 |
 
 ## Implementation Summary
 

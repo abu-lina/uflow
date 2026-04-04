@@ -13,6 +13,7 @@ import type { Provider } from '@/services/providers';
 import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { Button } from '@/components/ui/Button';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 interface ProviderEditFormProps {
   provider: Provider;
@@ -73,6 +74,7 @@ export function ProviderEditForm({
   reviewFooterActions,
 }: ProviderEditFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const websiteInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeFooterAction, setActiveFooterAction] = useState<'reject' | 'approve' | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -223,6 +225,14 @@ export function ProviderEditForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedWebsite = normalizeWebsiteUrl(formData.website) ?? '';
+    const submitData = normalizedWebsite !== formData.website
+      ? { ...formData, website: normalizedWebsite }
+      : formData;
+
+    if (normalizedWebsite !== formData.website) {
+      setFormData(submitData);
+    }
 
     // Admin review footer uses explicit approve/reject actions instead of generic form submit.
     if (reviewFooterActions) {
@@ -233,7 +243,7 @@ export function ProviderEditForm({
     if (onSubmitForm) {
       setIsSubmitting(true);
       try {
-        await onSubmitForm(formData);
+        await onSubmitForm(submitData);
       } catch (error) {
         // External handler is responsible for its own error toast
         console.error('Error updating provider:', error);
@@ -256,22 +266,22 @@ export function ProviderEditForm({
       const { error } = await supabase
         .from('providers')
         .update({
-          provider_name: formData.providerName,
-          provider_description: formData.providerDescription || null,
-          category_id: formData.categoryId,
+          provider_name: submitData.providerName,
+          provider_description: submitData.providerDescription || null,
+          category_id: submitData.categoryId,
           // If online business, all address fields are null
-          address_street: formData.isOnlineBusiness ? null : (formData.street || null),
-          address_zip: formData.isOnlineBusiness ? null : (formData.zipCode || null),
-          address_city: formData.isOnlineBusiness ? null : (formData.city || null),
-          address_country: formData.isOnlineBusiness ? null : (formData.country || null),
-          show_address: formData.isOnlineBusiness ? false : formData.showAddress,
-          social_website: formData.website,
-          social_instagram: formData.instagram,
-          contact_email: formData.email,
-          contact_phone: formData.phone,
-          provider_images: formData.images,
-          offers_ids: formData.selectedOfferIds,
-          needs_ids: formData.selectedNeedIds,
+          address_street: submitData.isOnlineBusiness ? null : (submitData.street || null),
+          address_zip: submitData.isOnlineBusiness ? null : (submitData.zipCode || null),
+          address_city: submitData.isOnlineBusiness ? null : (submitData.city || null),
+          address_country: submitData.isOnlineBusiness ? null : (submitData.country || null),
+          show_address: submitData.isOnlineBusiness ? false : submitData.showAddress,
+          social_website: submitData.website || null,
+          social_instagram: submitData.instagram,
+          contact_email: submitData.email,
+          contact_phone: submitData.phone,
+          provider_images: submitData.images,
+          offers_ids: submitData.selectedOfferIds,
+          needs_ids: submitData.selectedNeedIds,
           updated_at: new Date().toISOString(),
         })
         .eq('provider_id', provider.provider_id);
@@ -279,7 +289,7 @@ export function ProviderEditForm({
       if (error) throw error;
 
       // Update community service relationships if changed
-      if (formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0) {
+      if (submitData.selectedCommunityServiceIds && submitData.selectedCommunityServiceIds.length > 0) {
         // First, delete existing relationships
         await supabase
           .from('provider_community_services')
@@ -287,7 +297,7 @@ export function ProviderEditForm({
           .eq('provider_id', provider.provider_id);
 
         // Then create new relationships
-        const relationshipPromises = formData.selectedCommunityServiceIds.map(serviceId =>
+        const relationshipPromises = submitData.selectedCommunityServiceIds.map(serviceId =>
           createProviderCommunityServiceRelationship(provider.provider_id, serviceId)
         );
         
@@ -319,6 +329,18 @@ export function ProviderEditForm({
     action: ProviderEditFooterAction
   ) => {
     if (isSubmitting) return;
+    const normalizedWebsite = normalizeWebsiteUrl(formData.website) ?? '';
+    const submitData = normalizedWebsite !== formData.website
+      ? { ...formData, website: normalizedWebsite }
+      : formData;
+
+    if (normalizedWebsite !== formData.website) {
+      if (websiteInputRef.current) {
+        websiteInputRef.current.value = normalizedWebsite;
+      }
+      setFormData(submitData);
+    }
+
     if (formRef.current && !formRef.current.reportValidity()) {
       return;
     }
@@ -326,7 +348,7 @@ export function ProviderEditForm({
     setIsSubmitting(true);
     setActiveFooterAction(actionKey);
     try {
-      await action.onClick(formData);
+      await action.onClick(submitData);
     } catch (error) {
       console.error('Error submitting moderation action:', error);
     } finally {
@@ -597,10 +619,17 @@ export function ProviderEditForm({
               <div className="flex flex-1 flex-col gap-1">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.website')}</span>
                 <input
+                  ref={websiteInputRef}
                   className="text-[15px] font-medium text-[#272727] leading-[18px] placeholder:text-[#999999] outline-none tracking-[0.15px] border-0 focus:border-0 focus:ring-0 focus:outline-none bg-transparent p-0"
                   placeholder={t('editProvider.websitePlaceholder')}
                   type="url"
                   value={formData.website}
+                  onBlur={() => {
+                    const normalizedWebsite = normalizeWebsiteUrl(formData.website) ?? '';
+                    if (normalizedWebsite !== formData.website) {
+                      handleInputChange('website', normalizedWebsite);
+                    }
+                  }}
                   onChange={(e) => handleInputChange('website', e.target.value)}
                 />
               </div>
