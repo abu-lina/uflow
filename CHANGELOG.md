@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.8] - 2026-04-04
+
+### Fixed
+
+- **Admin provider URL validation block (Plan 079)**: Normalized schemeless website inputs (for example `www.example.com` -> `https://www.example.com`) in provider edit and create flows so HTML5 URL validation no longer blocks moderation approve/reject or final save actions.
+
 ## [0.10.7] - 2026-04-04
 
 ### Fixed
@@ -52,13 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Admin provider moderation contract drift (Plan 073)**: Fixed HTTP 400 validation errors when admin moderators attempt to approve or reject providers with no images. The shared `ProviderEditForm` defaults missing images to the JSON array string `'[]'`, but `providerEditUpdateSchema` only accepts `null` or `'{"urls": string[]}'`. Added client-side normalisation in `saveProviderEdits()` to omit the `providerImages` field entirely when empty/invalid (triggering "no change" semantics in the service layer), send valid `{urls: [...]}` as-is, and wrap legacy bare arrays. Includes regression tests documenting the pre-fix failure and post-fix acceptance paths.
-=======
-## [0.10.7] - 2026-04-04
-
-### Fixed
-
-- **iOS admin/provider toast safe-area overlap (Plan 078)**: Updated global Sonner toaster configuration to include safe-area-aware top offsets so approve/reject confirmations no longer render behind the iPhone status bar when `viewport-fit=cover` is active.
->>>>>>> 4f159520 (fix(pwa): Add safe-area offset to global Sonner toaster config)
 
 ## [0.10.0] - 2026-03-29
 

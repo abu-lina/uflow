@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-04
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.6
+**Current Version**: v0.10.8
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -63,6 +63,7 @@
 | 2026-04-03 17:05 | Plans 075+076 released (v0.10.5): iOS footer CTA overlay fixes    | Released the iOS footer overlay fix bundle after version-collision rebase onto main; current version advanced to v0.10.5 and deferred device validation remains tracked via open-actions |
 | 2026-04-04       | v0.10.5 deferred UAT validation confirmed                          | User confirmed the post-release iOS/UAT validation passed, so the roadmap no longer treats Plans 075+076 as active release blockers |
 | 2026-04-04       | Plan 077 released (v0.10.6): Mobile header overlap fix             | Released safe-area-aware providers header offset fix for notch iPhones with regression tests and lifecycle closure |
+| 2026-04-04       | Plan 079 released (v0.10.8): Admin provider URL edit fix           | Normalized schemeless website URLs in edit/create flows so browser URL validation no longer blocks moderation approve/reject actions |
 
 ---
 
@@ -83,9 +84,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: (none — v0.10.6 released, ready for next cycle)
+**Current Working Release**: (none — v0.10.8 released, ready for next cycle)
 
-_v0.10.6 released successfully (2026-04-04) — Plan 077 mobile header overlap fix_
+_v0.10.8 released successfully (2026-04-04) — Plan 079 admin provider URL edit fix_
 
 **Release Status**: Ready for new planning  
 **Ready for Release**: N/A  
@@ -105,6 +106,7 @@ _v0.10.6 released successfully (2026-04-04) — Plan 077 mobile header overlap f
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.8 | 2026-04-04 | Plan 079 (Admin provider URL edit fix)               | Released |
 | v0.10.6 | 2026-04-04 | Plan 077 (Mobile header overlap fix)                 | Released |
 | v0.10.5 | 2026-04-03 | Plans 075+076 (iOS footer CTA overlay fixes)         | Released |
 | v0.10.0 | 2026-03-29 | Plan 065 (Automated provider enrichment pipeline M1–M3) | Released |
