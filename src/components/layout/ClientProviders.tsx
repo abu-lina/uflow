@@ -22,6 +22,8 @@ interface ClientProvidersProps {
   initialUser: User | null;
 }
 
+const TOASTER_TOP_OFFSET = 'calc(env(safe-area-inset-top) + 16px)';
+
 // QueryClient configuration - defined as a function to avoid webpack evaluation issues
 function makeQueryClient() {
   return new QueryClient({
@@ -72,7 +74,11 @@ export function ClientProviders({ children, initialUser }: ClientProvidersProps)
                 <SearchProvider>
                   <FilterProvider>
                     {children}
-                    <Toaster position="top-center" />
+                    <Toaster
+                      mobileOffset={{ top: TOASTER_TOP_OFFSET, left: '12px', right: '12px' }}
+                      offset={{ top: TOASTER_TOP_OFFSET, left: '16px', right: '16px' }}
+                      position="top-center"
+                    />
                     <PWAInstallPrompt />
                   </FilterProvider>
                 </SearchProvider>
