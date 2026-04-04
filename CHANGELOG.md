@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.6] - 2026-04-04
+
+### Fixed
+
+- **Mobile header overlap on providers page (Plan 077)**: Replaced static `pt-32` (128px) top padding with safe-area-aware `max(128px, calc(env(safe-area-inset-top) + 128px))` on the `/providers` content container. On iOS devices with a notch or Dynamic Island (`safe-area-inset-top ≈ 59px`), the fixed `ProvidersPageHeader` was ~173px tall but content only offset by 128px, hiding the first provider card and admin filter tabs behind the glassmorphic header. Non-notch devices retain identical 128px padding.
+
 ## [0.10.5] - 2026-04-03
 
 ### Fixed
