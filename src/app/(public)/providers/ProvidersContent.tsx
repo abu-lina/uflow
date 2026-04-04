@@ -522,7 +522,7 @@ export function ProvidersContent({
         className={`mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden ${
           showGreeting
             ? 'pt-0 sm:pt-8 md:pt-28' // No top padding - CityCard pb-8 provides the gap, fixed header overlays
-            : 'pt-32 sm:pt-8 md:pt-28' // Full padding when fixed header is shown
+            : 'pt-[max(128px,calc(env(safe-area-inset-top)+128px))] sm:pt-8 md:pt-28' // Plan 077: safe-area-aware padding for notch devices
         }`}
       >
         {/* Plan 058: Admin status filter - only visible to admin/moderator users */}
