@@ -17,9 +17,9 @@ Status: Active
 
 | Item | Owner | Trigger/Due | Evidence to close | Status |
 |---|---|---|---|---|
-| DF-1: Physical iOS runtime confirmation — provider detail page overscroll | UAT / device owner | Before production cutover or within 24h post-release | iPhone SE Safari: drag past scroll boundary on `/providers/[id]`, CTA remains unobscured; screen capture | Open |
-| DF-1: Physical iOS runtime confirmation — provider card modal path | UAT / device owner | Before production cutover or within 24h post-release | iPhone 16 Pro Safari: same overscroll gesture in ProviderCardModal; screen capture | Open |
-| DF-1: Gradient fill visual check | UAT / device owner | Same session as device testing | Open a provider with no offers/needs (minimal content); confirm `flex-1` gradient fills full viewport without cutoff | Open |
+| DF-1: Physical iOS runtime confirmation — provider detail page overscroll | UAT / device owner | Before production cutover or within 24h post-release | iPhone SE Safari: drag past scroll boundary on `/providers/[id]`, CTA remains unobscured; screen capture | Closed — user-confirmed UAT pass |
+| DF-1: Physical iOS runtime confirmation — provider card modal path | UAT / device owner | Before production cutover or within 24h post-release | iPhone 16 Pro Safari: same overscroll gesture in ProviderCardModal; screen capture | Closed — user-confirmed UAT pass |
+| DF-1: Gradient fill visual check | UAT / device owner | Same session as device testing | Open a provider with no offers/needs (minimal content); confirm `flex-1` gradient fills full viewport without cutoff | Closed — user-confirmed UAT pass |
 | CODE-REVIEW-LOW: Cosmetic indentation in ProviderDetailPage.tsx | Future maintainer | Next touch of that file | Run prettier/formatter pass on L334-L589 to normalise 8-vs-10-space indent inconsistency (non-blocking) | Open |
 
 ## Changelog
@@ -27,3 +27,4 @@ Status: Active
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-04-03T16:55Z | devops | Created tracker from deferred UAT DF-1 items and code-review LOW finding |
+| 2026-04-04T07:06Z | planner | Closed DF-1 runtime validation items based on user-confirmed UAT success; kept CODE-REVIEW-LOW as non-blocking future-touch item |
