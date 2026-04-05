@@ -65,6 +65,7 @@
 | 2026-04-04       | Plan 077 released (v0.10.6): Mobile header overlap fix             | Released safe-area-aware providers header offset fix for notch iPhones with regression tests and lifecycle closure |
 | 2026-04-04       | Plan 079 released (v0.10.8): Admin provider URL edit fix           | Normalized schemeless website URLs in edit/create flows so browser URL validation no longer blocks moderation approve/reject actions |
 | 2026-04-05T12:15Z | Plan 080 in progress: Agent Model Cost Optimization (internal tooling) | 4-tier model strategy reduces agent cost multiplier 42x → 20.66x (~51% savings); no version bump; all config gates passed; M-1 GPT-5.3-Codex runtime verification gating QA Complete |
+| 2026-04-05T12:30Z | Plan 080 closed (internal tooling): Agent Model Cost Optimization      | QA Complete, M-1 accepted risk (platform abstraction), committed locally; 50.8% agent cost savings delivered |
 
 ---
 
@@ -85,19 +86,13 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: No version bump — internal tooling only (Plan 080)
+**Current Working Release**: (none — ready for next topic)
 
-_v0.10.8 released successfully (2026-04-04) — Plan 079 admin provider URL edit fix. Now tracking Plan 080 (internal agent tooling change — no product version bump)._
+_Plan 080 closed (2026-04-05) — Agent model cost optimization committed; 50.8% savings delivered._
 
-| Plan ID | Title                            | UAT Status | Committed |
-| ------- | -------------------------------- | ---------- | --------- |
-| 080     | Agent Model Cost Optimization    | Pending    | ✗         |
-
-**Release Status**: 0 of 1 plans committed (M-1 operator verification required before closure)  
-**Ready for Release**: No — M-1 GPT-5.3-Codex tool namespace parity verification outstanding  
+**Release Status**: Ready for new planning  
+**Ready for Release**: N/A  
 **Blocking Items**:
-
-- **080-M-1**: GPT-5.3-Codex tool namespace parity — operator must execute `execute/runInTerminal` + `edit/editFiles` in explicit GPT-5.3-Codex session; if PASS → QA Complete → commit; if FAIL → revert Implementer/Code Reviewer to Sonnet 4.6 and re-validate (evidence in `agent-output/qa/080-agent-model-cost-optimization-qa.md`)
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
 - **045-OA-3**: E2E browser tests for category filter — direct URL nav + SPA nav + back-button (Owner: QA/Implementer — next sprint)
@@ -187,6 +182,7 @@ Agent workflow improvements — no product version bump, documentation and instr
 
 | Plan    | Date       | Description                                                                                      | Status   |
 | ------- | ---------- | ------------------------------------------------------------------------------------------------ | -------- |
+| Plan 080 | 2026-04-05 | Agent Model Cost Optimization — 4-tier model strategy (Opus/Codex/Sonnet/Haiku); 42x → 20.66x multiplier (~51% savings) | Released |
 | Plan 042 | 2026-03-14 | Parallel Copilot Sessions Operator Protocol — multi-window development workflow, session isolation | Released |
 
 **Key Deliverables (Plan 042)**:
