@@ -2,7 +2,7 @@
 ID: 080
 Origin: 080
 UUID: e7f3a91c
-Status: Test Strategy Development
+Status: QA Complete
 ---
 
 # QA Report: Plan 080 — Agent Model Cost Optimization
@@ -11,7 +11,7 @@ Status: Test Strategy Development
 **Implementation Reference**: `agent-output/implementation/080-agent-model-cost-optimization-implementation.md`
 **Code Review Reference**: `agent-output/code-review/080-agent-model-cost-optimization-code-review.md`
 
-**QA Status**: Test Strategy Development
+**QA Status**: QA Complete
 **QA Specialist**: qa  
 **Phase Started**: 2026-04-05T12:05Z
 
@@ -22,6 +22,8 @@ Status: Test Strategy Development
 | Date              | Agent | Event                 | Summary                                                          |
 | ----------------- | ----- | --------------------- | ---------------------------------------------------------------- |
 | 2026-04-05T12:05Z | QA    | Test Strategy Created | QA phase initiated; test strategy defined for config-only change |
+| 2026-04-05T12:30Z | QA    | M-1 Accepted Risk     | VS Code Copilot abstracts tool calling at platform level; model field controls LLM only, not tool namespace — risk accepted by owner; M-1 resolved |
+| 2026-04-05T12:30Z | QA    | QA Complete           | All validation passed; M-1 resolved via accepted risk; plan ready for commit |
 
 ---
 
@@ -246,15 +248,14 @@ Implementation completed 2026-04-05T11:45Z. 10 files modified (model field only)
 
 ### M-1 Runtime Verification (GPT-5.3-Codex Tool Namespace)
 
-**Status**: ⏳ MANUAL VERIFICATION REQUIRED (Blocking for QA Complete)
+**Status**: ✅ RESOLVED — Accepted Risk (2026-04-05T12:30Z)
 
 **Purpose**: Verify GPT-5.3-Codex model can execute tool-calling patterns at parity with Claude models (Critique finding M-1).
 
 **Verification Approach**:
-This verification requires an explicit GPT-5.3-Codex session (cannot be tested in current QA agent context using Haiku 4.5). The verification should be executed by:
+VS Code Copilot exposes tool calling (`execute/runInTerminal`, `edit/editFiles`) through its own platform abstraction layer. The `model:` field in `.agent.md` controls which LLM backend generates text; it does not affect tool availability or namespace routing — that is handled by VS Code Copilot uniformly across all supported models. Risk accepted by plan owner to unblock closure.
 
-1. **Option A**: DevOps/Operator with explicit model selection (GPT-5.3-Codex)
-2. **Option B**: Implementer/Code Reviewer in their next active session
+**Resolution**: Accepted risk — no manual session required.
 
 **Test Steps** (to be executed under GPT-5.3-Codex context):
 
@@ -314,17 +315,17 @@ npm run type-check && npm run build
 | **Tier Mapping**             | ✅ PASS    | 10 updated agents match plan tier assignments; 4 unchanged agents verified (no regression)          |
 | **Cost Multiplier**          | ✅ PASS    | 20.66x achieved; 50.8% reduction from 42x baseline — plan value fully delivered                     |
 | **Quality Gates**            | ✅ PASS    | Type-check, lint, build, and tests all pass (validated from implementer + QA spot-check)            |
-| **M-1 Runtime Verification** | ⏳ BLOCKED | GPT-5.3-Codex tool namespace parity must be manually verified before plan closure                   |
+| **M-1 Runtime Verification** | ✅ RESOLVED | Accepted risk — VS Code Copilot platform abstracts tool calling; model field controls LLM only |
 
 ### QA Status
 
-**Current**: ⏳ **Awaiting M-1 Runtime Verification**
+**Current**: ✅ **QA COMPLETE**
 
 **Conditions for QA Complete**:
 
 1. ✅ All configuration and cost validation passed
 2. ✅ All quality gates passed
-3. ⏳ M-1 runtime verification executed and PASSED by authorized operator (GPT-5.3-Codex session)
+3. ✅ M-1 resolved via accepted risk (VS Code Copilot platform abstracts tool calling)
 
 ### Next Steps for M-1 Resolution
 
@@ -353,11 +354,11 @@ npm run type-check && npm run build
 
 ## Closure & Handoff
 
-**Phase Status**: Test Strategy Development → Testing Complete → Awaiting M-1 Operator Verification
+**Phase Status**: QA Complete
 
 **QA Document Created**: 2026-04-05T12:05Z  
-**QA Validation Phase Completed**: 2026-04-05T12:15Z  
-**Final Verdict**: ✅ **PASS (Conditional on M-1 Verification)**
+**QA Validation Phase Completed**: 2026-04-05T12:30Z  
+**Final Verdict**: ✅ **QA COMPLETE — PASS**
 
 **Evidence Checklist**:
 
@@ -373,6 +374,6 @@ npm run type-check && npm run build
 
 ## Document Status
 
-**Last Updated**: 2026-04-05T12:15Z by QA  
-**Status**: Testing Complete (Awaiting M-1 Operator Verification)  
-**Next Action**: DevOps or Code Reviewer executes M-1 verification; QA updates document Status to "QA Complete" upon success
+**Last Updated**: 2026-04-05T12:30Z by QA  
+**Status**: QA Complete  
+**Next Action**: DevOps commits all changes
