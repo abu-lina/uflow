@@ -98,7 +98,13 @@ _v0.10.8 released successfully (2026-04-04) — Plan 079 admin provider URL edit
 - **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
 - **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
 - **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject during a future admin moderation UX touch (Owner: Implementer / future sprint — evidence in `agent-output/planning/060-open-actions.md`)
-- **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
+
+**Security Status** (2026-04-04 investigation):
+- **Production clean**: `npm audit` shows 0 vulnerabilities ✅
+- **Dependabot**: 1 MEDIUM alert (esbuild #46) — **known-deferred dev-only** per Plan 074 Finding F-074-05
+  - Affects: esbuild dev server CORS (dev-only, no production exposure)
+  - Deferred rationale: Requires semver-major vitest upgrade (v1→v3), dev-time only risk
+  - Historical: 29 alerts fixed (Plan 074 v0.10.2), only this consciously-deferred alert remains
 
 ✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
 
