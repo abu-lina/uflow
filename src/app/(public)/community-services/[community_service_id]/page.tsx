@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
-import { getCommunityServiceById } from '@/services/communityServices';
+import { getCommunityServiceById } from '@/services/communityServices.server';
 
 import { CommunityServiceDetailPageClient } from './CommunityServiceDetailPageClient';
 import { ImagePreloader } from '@/components/community-services/ImagePreloader';
