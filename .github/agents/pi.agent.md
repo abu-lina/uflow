@@ -19,7 +19,7 @@ tools:
     'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: Claude Opus 4.6
+model: Claude Sonnet 4.6
 handoffs:
   - label: Start New Plan
     agent: Planner

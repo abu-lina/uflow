@@ -19,7 +19,7 @@ tools:
     'ms-python.python/configurePythonEnvironment',
     'todo',
   ]
-model: Claude Opus 4.6
+model: GPT-5.3-Codex
 handoffs:
   - label: Request Analysis
     agent: Analyst

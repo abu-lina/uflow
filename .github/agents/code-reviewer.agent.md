@@ -15,7 +15,7 @@ tools:
     'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: Claude Opus 4.6
+model: GPT-5.3-Codex
 handoffs:
   - label: Request Implementation Fixes
     agent: Implementer

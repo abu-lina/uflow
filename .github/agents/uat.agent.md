@@ -15,7 +15,7 @@ tools:
     'uflow.uflow-memory/flowbaby_retrieveMemory',
     'todo',
   ]
-model: Claude Opus 4.6
+model: Claude Haiku 4.5
 handoffs:
   - label: Report UAT Failure
     agent: Planner
