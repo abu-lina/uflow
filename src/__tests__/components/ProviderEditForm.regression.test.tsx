@@ -316,6 +316,37 @@ describe('ProviderEditForm regressions', () => {
     expect(rejectAction).not.toHaveBeenCalled();
     expect(mockProviderUpdate).not.toHaveBeenCalled();
   });
+
+  it('[post-fix PASSES] moderation approve is not blocked when provider website is schemeless', async () => {
+    const approveAction = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        provider={{ ...baseProvider, social_website: 'www.example.com' }}
+        reviewFooterActions={{
+          reject: {
+            label: 'Reject',
+            onClick: vi.fn().mockResolvedValue(undefined),
+          },
+          approve: {
+            label: 'Approve',
+            onClick: approveAction,
+          },
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+    await waitFor(() => {
+      expect(approveAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          website: 'https://www.example.com',
+        })
+      );
+    });
+  });
 });
 
 describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
