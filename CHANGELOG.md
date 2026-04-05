@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.10] - 2026-04-05
+
+### Fixed
+
+- **Community service detail page: full architectural + design system parity (Plan 082)**: Achieved full UX parity between community service and provider detail pages. Removed the hard `notFound()` call in the Server Component that caused a permanent "Service nicht gefunden" wall for non-approved or auth-context-sensitive services; the component now passes nullable `initialData` to the client. Added `useCommunityService(id)` React Query hook (mirrors `useProvider()`) with 5-min stale time, SSR hydration, and graceful loading/error states. Rewrote `CommunityServiceDetailPageClient` to use the hook with loading skeleton and client-side not-found only after React Query confirms. Desktop now renders through `ProviderDetailModal` (eliminating the separate 714-line `CommunityServiceDetailModal`), giving community services full design system compliance: image carousel, analytics tracking, Skeleton states, and badges. Fixed `ProviderDetailModal` to dynamically use `bookmarkableType: 'community_service'` and the correct share URL when `provider.community_service_id` is set. Improved the community-service-to-provider data transform: description, badges, all social/contact fields, and correct image encoding. `CommunityServiceDetailModal` deprecated (not deleted) pending import-site audit.
+
 ## [0.10.9] - 2026-04-05
 
 ### Fixed
