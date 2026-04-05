@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.9] - 2026-04-05
+
+### Fixed
+
+- **Community service owner detail crash in Server Components (Plan 081)**: Fixed owner navigation from Profile -> Deine Inhalte to `/community-services/[community_service_id]` by switching the route to server-side data services (`communityServices.server`) so auth context is preserved under RLS for non-approved services. Also hardened `/providers/[provider_id]` Server Component imports to server modules and aligned `providers.server.getProviderById` with client parity by resolving offers/needs names for SSR `initialData`, preventing missing-label regressions during React Query stale windows.
+
 ## [0.10.8] - 2026-04-04
 
 ### Fixed

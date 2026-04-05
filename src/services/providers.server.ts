@@ -40,11 +40,31 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
   if (!data) return null;
 
-  // Fetch badges
-  const badges = await getBadgesForEntityServer(id, EntityType.PROVIDER);
+  // Fetch offers, needs, and badges in parallel to keep SSR initialData shape
+  // aligned with the client-side providers service.
+  const [offersResult, needsResult, badges] = await Promise.all([
+    data.offers_ids && data.offers_ids.length > 0
+      ? supabase
+          .from('offers')
+          .select('name_de')
+          .in('offer_id', data.offers_ids)
+      : Promise.resolve({ data: [], error: null }),
+    data.needs_ids && data.needs_ids.length > 0
+      ? supabase
+          .from('needs')
+          .select('name_de')
+          .in('need_id', data.needs_ids)
+      : Promise.resolve({ data: [], error: null }),
+    getBadgesForEntityServer(id, EntityType.PROVIDER),
+  ]);
+
+  const offers = offersResult.data || [];
+  const needs = needsResult.data || [];
 
   return {
     ...data,
+    offers,
+    needs,
     badges,
   } as Provider;
 }
