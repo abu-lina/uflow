@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-06
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.13
+**Current Version**: v0.10.15
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -70,6 +70,8 @@
 | 2026-04-06       | Plan 083 released (v0.10.11): Admin community service edit/review       | Full admin CRUD for community services — edit fields, approve, reject with feedback, request revision; Plan 082 M8 profile provider RLS fix bundled |
 | 2026-04-06       | Plan 082 (S82) released (v0.10.12): Saved page search bar visibility fix | SearchBar now remains visible and interactive in no-results state on /saved; lifted out of conditional branch chain; eliminates dead-end search state on mobile |
 | 2026-04-06       | Plan 084 released (v0.10.13): GitHub Issues integration for workflow pipeline | Planner creates GitHub Issues on plan finalization; DevOps closes on release; 7 custom labels; 5 YAML issue form templates for manual issue creation |
+| 2026-04-06       | Plan 083 S83 released (v0.10.14): Full admin CS edit UI | Full ProviderEditForm adapter for community services — edit fields, PATCH APIs with rate-limiting/Zod/audit log, approve/reject with feedback, `hideSocialInitiatives` prop; released by Session 83 |
+| 2026-04-06       | Plan 085 released (v0.10.15): Fix profile provider navigation links | Fixed 4 broken provider card click handlers in ProfileContent.tsx — cards now navigate to `/providers/:id` (public detail) instead of `/profile/providers/:id` (404). Abbreviated pipeline; 8 regression tests; tag v0.10.15 pushed. Closes #125, #128 |
 
 ---
 
@@ -90,12 +92,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.13 — Released 2026-04-06
+**Current Working Release**: v0.10.15 — Released 2026-04-06
 
-_Plan 084 released (2026-04-06) — GitHub Issues integration for workflow pipeline. Planner agent now creates GitHub Issues via `gh issue create --body-file`; DevOps Stage 2 closes issues on release; 7 custom labels; 5 YAML issue form templates. Tag v0.10.13 pushed._
+_Plan 085 released (2026-04-06) — Fix profile page provider navigation links. Provider cards in the profile page now navigate to `/providers/:id` (public detail) instead of 404-producing `/profile/providers/:id` paths. Abbreviated pipeline. Tag v0.10.15 pushed. GitHub issue #125 closed via commit, issue #128 closed on release._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.13 complete  
+**Ready for Release**: ✅ v0.10.15 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -112,6 +114,8 @@ _Plan 084 released (2026-04-06) — GitHub Issues integration for workflow pipel
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.15 | 2026-04-06 | Plan 085 (Fix profile provider navigation links — Issue #125) | Released |
+| v0.10.14 | 2026-04-06 | Plan 083 S83 (Full admin CS edit UI — ProviderEditForm adapter, CS PATCH APIs) | Released |
 | v0.10.13 | 2026-04-06 | Plan 084 (GitHub Issues integration for workflow pipeline) | Released |
 | v0.10.12 | 2026-04-06 | Plan 082 S82 (Saved page SearchBar visibility fix — Issue #82) | Released |
 | v0.10.11 | 2026-04-06 | Plan 083 (Admin CS edit/review) + Plan 082 M8 (profile provider RLS fix) | Released |

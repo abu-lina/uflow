@@ -2,7 +2,7 @@
 ID: 085
 Origin: 085
 UUID: b4e9c7a3
-Status: Active
+Status: Released
 ---
 
 # Stage 1 Deployment — Plan 085 / v0.10.15
@@ -183,11 +183,33 @@ faebfc30 2026-04-06T16:12:59+02:00  chore(084): close Plan 084 docs, bump versio
 
 ---
 
+## Stage 2 Execution Record
+
+| Action | Result | Timestamp (UTC) |
+|--------|--------|-----------------|
+| User confirmation | "yes, release v0.10.15" | 2026-04-06T~19:48Z |
+| Rebase onto origin/main | ✅ Completed | 2026-04-06T19:50Z |
+| Conflict resolution | ✅ CHANGELOG + package.json + package-lock.json | 2026-04-06T19:51Z |
+| Post-rebase: conflict markers | ✅ None | 2026-04-06T19:52Z |
+| Post-rebase: JSON parse | ✅ package.json + package-lock.json valid | 2026-04-06T19:52Z |
+| Post-rebase: build | ✅ Exit 0 (153 pages) | 2026-04-06T19:53Z |
+| Post-rebase: audit | ✅ 1 pre-existing Vite HIGH (same as origin/main — not introduced) | 2026-04-06T19:53Z |
+| Push branch | ✅ `git push origin session/085-profile-nav-links` | 2026-04-06T19:54Z |
+| PR comparison | ✅ `ahead`, 0 behind, 11 files — no conflicts | 2026-04-06T19:54Z |
+| Tag v0.10.15 | ✅ `git tag -a v0.10.15` pushed | 2026-04-06T19:55Z |
+| Close GitHub issue #128 | ✅ Closed with comment "Released in v0.10.15" | 2026-04-06T19:55Z |
+| Lifecycle docs status | ✅ All → Released | 2026-04-06T19:56Z |
+| Roadmap updated | ✅ Current Version → v0.10.15 | 2026-04-06T19:56Z |
+
+**PR Comparison**: https://github.com/abu-lina/uflow/compare/main...session/085-profile-nav-links
+**Implementation commit**: `81651d347d8627ef8458a2ecceb7d941126370b0` (rebased)
+**Stage 1 commit**: `9b2c0ea26ea0b31cdf0b579195d2580b3342fd66` (rebased)
+
 ## Post-Release Status
 
-**Status**: Committed (awaiting Stage 2)
+**Status**: Released ✅
 **Known Issues**: None
-**Rollback Plan**: Revert 79740a11 (4 router.push changes in ProfileContent.tsx)
+**Rollback Plan**: Revert `81651d34` (4 router.push changes in ProfileContent.tsx)
 
 ---
 

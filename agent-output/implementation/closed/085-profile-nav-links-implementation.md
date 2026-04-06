@@ -2,7 +2,7 @@
 ID: 085
 Origin: 085
 UUID: b4e9c7a3
-Status: Committed
+Status: Released
 ---
 
 # Implementation 085 — Fix Profile Navigation Links
