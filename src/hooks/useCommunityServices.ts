@@ -1,6 +1,34 @@
 // React Query hooks for community services with caching
 import { useQuery } from '@tanstack/react-query';
-import { getCommunityServicesForProvider, getCommunityServices, getCommunityServicesByCategory, type CommunityService } from '@/services/communityServices';
+import { getCommunityServicesForProvider, getCommunityServices, getCommunityServicesByCategory, getCommunityServiceById, type CommunityService } from '@/services/communityServices';
+
+// Hook for fetching a single community service by ID (Plan 082: M2)
+// Mirrors useProvider() pattern: 5-min stale time, SSR initialData support, enabled flag
+interface UseCommunityServiceOptions {
+  communityServiceId: string;
+  initialData?: CommunityService | null; // For SSR initial data
+  enabled?: boolean;
+}
+
+export function useCommunityService({ communityServiceId, initialData, enabled = true }: UseCommunityServiceOptions) {
+  return useQuery<CommunityService | null, Error>({
+    queryKey: ['community-service', communityServiceId],
+    queryFn: async () => {
+      if (!communityServiceId) return null;
+      return await getCommunityServiceById(communityServiceId);
+    },
+    enabled: enabled && !!communityServiceId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+    gcTime: 30 * 60 * 1000, // 30 minutes - stays in cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
+    retryOnMount: false,
+    placeholderData: (previousData) => previousData,
+    initialData: initialData ?? undefined, // Use SSR data if available
+    initialDataUpdatedAt: initialData ? Date.now() : undefined, // Mark SSR data as fresh
+  });
+}
 
 // Hook for getting community services for a specific provider
 export function useCommunityServicesForProvider(providerId: string, initialData?: CommunityService[]) {

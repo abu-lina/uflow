@@ -1,5 +1,5 @@
-import { getProviderById } from '@/services/providers';
-import { getCommunityServicesForProvider } from '@/services/communityServices';
+import { getProviderById } from '@/services/providers.server';
+import { getCommunityServicesForProvider } from '@/services/communityServices.server';
 import { ProviderDetailPageClient } from './ProviderDetailPageClient';
 
 /**

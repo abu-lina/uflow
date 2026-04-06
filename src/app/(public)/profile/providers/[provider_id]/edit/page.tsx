@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { ProviderEditPage } from '@/components/providers/ProviderEditPage';
-import { getProviderById } from '@/services/providers';
+import { getProviderById } from '@/services/providers.server';
 
 export default async function EditProviderPage({ params }: { params: Promise<{ provider_id: string }> }) {
   const { provider_id } = await params;
