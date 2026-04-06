@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.13] - 2026-04-06
+
+### Added
+
+- **GitHub Issues integration for workflow pipeline (Plan 084)**: The Planner agent now creates a GitHub Issue in `abu-lina/uflow` when finalising a plan, using `gh issue create --body-file` with structured content (value statement, milestones, artifact path). Labels mirror the Orchestrator task classification (`type:feature`, `type:bugfix`, `type:refactor`, `type:hotfix`, `type:verification`, `type:security`) plus a `plan` meta-label. DevOps Stage 2 automatically closes the issue on release with a versioned comment. Five GitHub Issue form templates added to `.github/ISSUE_TEMPLATE/` (feature, bugfix, refactor, hotfix, security) for manual issue creation with consistent structure and auto-applied labels.
+
 ## [0.10.12] - 2026-04-06
 
 ### Fixed
@@ -19,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Profile provider pages: server Supabase client for RLS (Plan 082 M8)**: Profile provider detail (`/profile/providers/[id]`) and edit (`/profile/providers/[id]/edit`) pages were silently using the anonymous Supabase client in Server Components, causing RLS failures for non-approved providers. Both pages now import `getProviderById` from `@/services/providers.server` (cookie-based auth context), matching the fix applied to the public provider and community-service pages in Plan 081.
 
+### Added
 ### Added
 
 - **Admin community service edit page (Plan 083)**: Full admin CRUD surface for community services. Admins and moderators can now view (bypassing RLS), edit fields, and review (approve/reject/request revision) any community service from `/dashboard/community-services/[id]/edit`. New API routes: `GET /api/admin/community-services/[id]` and `PATCH /api/admin/edit-community-service` and `PATCH /api/admin/review-community-service`. New admin service layer at `src/services/admin/communityServices.ts` with sanitized partial-update and review functions. Zod validation schemas added to `src/lib/validations/adminSchemas.ts`. Resolves `AdminCommunityServiceDetailButtons` OA-1 (edit button now routes to a working page).
@@ -246,6 +253,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Admin provider search uses service-role client to bypass RLS**: Admin-filtered provider queries now use the Supabase service-role client instead of the anon client, which was restricted by RLS to approved-only providers. This fixes status filters returning empty results.
 - **Community services excluded from admin status-filtered results**: When filtering by review status, community service cards no longer appear in results — prevents moderation buttons from sending community service IDs to the providers review endpoint.
 - **updateProviderReview no longer uses PostgREST .single()**: Replaced with array-based select to avoid "Cannot coerce the result to a single JSON object" errors when 0 rows match.
+
 ## [0.8.20] - 2026-03-23
 
 ### Fixed
@@ -255,8 +263,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.19] - 2026-03-23
 
 ### Added
-
-
 
 ## [0.8.18] - 2026-03-23
 

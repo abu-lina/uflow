@@ -2,30 +2,30 @@
 ID: 084
 Origin: 084
 UUID: e7a2c9f1
-Status: Code Review Approved
+Status: Committed
 ---
 
 # Plan 084 — GitHub Issues Integration for Workflow Pipeline
 
-| Field            | Value                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| Plan ID          | 084                                                                                     |
-| Target Release   | Next available patch after current origin/main version; confirm at DevOps Stage 1       |
-| Epic Alignment   | Developer Experience / Workflow Observability                                            |
-| Related Issues   | None                                                                                    |
-| Classification   | Feature                                                                                 |
-| Pipeline         | Full (13 phases)                                                                        |
-| Created          | 2026-04-06T15:00Z                                                                       |
+| Field          | Value                                                                             |
+| -------------- | --------------------------------------------------------------------------------- |
+| Plan ID        | 084                                                                               |
+| Target Release | Next available patch after current origin/main version; confirm at DevOps Stage 1 |
+| Epic Alignment | Developer Experience / Workflow Observability                                     |
+| Related Issues | None                                                                              |
+| Classification | Feature                                                                           |
+| Pipeline       | Full (13 phases)                                                                  |
+| Created        | 2026-04-06T15:00Z                                                                 |
 
 ## Changelog
 
-| Date                | Agent   | Action                        | Notes                      |
-| ------------------- | ------- | ----------------------------- | -------------------------- |
-| 2026-04-06T15:00Z   | Planner | Plan created                  | ID 084 allocated           |
-| 2026-04-06T15:30Z   | Planner | Scope expanded                | Added M-7: GitHub Issue templates for manual creation |
-| 2026-04-06T15:50Z   | Planner | Revised per critique          | Addressed M-1, L-1, L-2, L-3, L-4 from critique 084  |
-| 2026-04-06T16:00Z   | Implementer | Implementation started    | Status → In Progress                                  |
-| 2026-04-06T16:35Z   | Code Reviewer | Review complete          | Verdict: APPROVED — ready for QA                      |
+| Date              | Agent         | Action                 | Notes                                                 |
+| ----------------- | ------------- | ---------------------- | ----------------------------------------------------- |
+| 2026-04-06T15:00Z | Planner       | Plan created           | ID 084 allocated                                      |
+| 2026-04-06T15:30Z | Planner       | Scope expanded         | Added M-7: GitHub Issue templates for manual creation |
+| 2026-04-06T15:50Z | Planner       | Revised per critique   | Addressed M-1, L-1, L-2, L-3, L-4 from critique 084   |
+| 2026-04-06T16:00Z | Implementer   | Implementation started | Status → In Progress                                  |
+| 2026-04-06T16:35Z | Code Reviewer | Review complete        | Verdict: APPROVED — ready for QA                      |
 
 ---
 
@@ -104,6 +104,7 @@ Standalone (no other known plans for this version). This is an agent-workflow-on
 **Where**: One-time setup executed by the Implementer via terminal commands.
 
 **Acceptance Criteria**:
+
 - All 7 labels exist on `abu-lina/uflow`: `type:feature`, `type:bugfix`, `type:refactor`, `type:hotfix`, `type:verification`, `type:security`, `plan`
 - Existing default labels are NOT modified or deleted
 - Labels verified via `gh label list`
@@ -115,6 +116,7 @@ Standalone (no other known plans for this version). This is an agent-workflow-on
 **Objective**: Add instructions to `planner.agent.md` so the Planner creates a GitHub Issue when finalizing a plan.
 
 **What**: Add a new section to the Planner agent instructions specifying:
+
 - WHEN: After the plan document is written to `agent-output/planning/` and before the completion/handoff block
 - HOW: Write issue body to `/tmp/uflow-issue-body-{ID}.md`, then run `gh issue create --body-file /tmp/uflow-issue-body-{ID}.md` (never use inline `--body` for multi-line markdown)
 - WHAT: Title format `[Plan {ID}] {short title}`, body from a temp file, labels = `plan` + `type:{classification}`
@@ -123,6 +125,7 @@ Standalone (no other known plans for this version). This is an agent-workflow-on
 **Where**: `.github/agents/planner.agent.md`
 
 **Acceptance Criteria**:
+
 - Planner instructions contain a "GitHub Issue Creation" section
 - The section specifies exact `gh issue create` command pattern
 - Title format, body template, and label assignment are documented
@@ -136,12 +139,14 @@ Standalone (no other known plans for this version). This is an agent-workflow-on
 **Objective**: Ensure the Planner can derive the correct `type:*` GitHub label from the Workflow Card.
 
 **What**: The Orchestrator's Workflow Card already includes `Type: {Feature|Bugfix|Refactor|Hotfix}`. Two changes needed:
+
 1. Add `Verification` and `Security Audit` to the Workflow Card `Type` field enum (currently missing from the template but present in the classification table)
 2. Add a one-line mapping note to the Planner instructions: "Derive `type:` label by lowercasing the Workflow Card Type field and joining with a colon (e.g., `Type: Feature` → `type:feature`, `Type: Security Audit` → `type:security`)"
 
 **Where**: `.github/agents/orchestrator.agent.md` (Workflow Card template Type field), `.github/agents/planner.agent.md` (mapping note in GitHub Issue Creation section)
 
 **Acceptance Criteria**:
+
 - Workflow Card Type field includes all 6 classifications: `Feature|Bugfix|Refactor|Hotfix|Verification|Security Audit`
 - Planner instructions include the explicit type-to-label mapping rule
 
@@ -152,6 +157,7 @@ Standalone (no other known plans for this version). This is an agent-workflow-on
 **Objective**: Add instructions to `devops.agent.md` so DevOps closes the GitHub Issue on successful Stage 2 release.
 
 **What**: Add a step to the Stage 2 workflow:
+
 - WHEN: After successful `git push` and tag creation (Stage 2 completion)
 - HOW: Run `gh issue close {number} --comment "Released in {version}"` via terminal
 - WHERE: The issue number comes from the plan document's `GitHub Issue` header field
@@ -159,6 +165,7 @@ Standalone (no other known plans for this version). This is an agent-workflow-on
 **Where**: `.github/agents/devops.agent.md`
 
 **Acceptance Criteria**:
+
 - DevOps Stage 2 instructions include a "Close GitHub Issues" step
 - The step reads plan docs to find issue numbers for all plans bundled in the release
 - The closing comment includes the release version tag
@@ -175,6 +182,7 @@ Standalone (no other known plans for this version). This is an agent-workflow-on
 **Where**: `.github/agents/planner.agent.md` (plan header template section), `.github/copilot-instructions.md` (if header format is documented there)
 
 **Acceptance Criteria**:
+
 - Plan header template includes `GitHub Issue: (populated after creation)` field
 - Format specified as full URL: `GitHub Issue: https://github.com/abu-lina/uflow/issues/{N}`
 - Field is clearly marked as optional for backward compatibility
@@ -189,16 +197,17 @@ Standalone (no other known plans for this version). This is an agent-workflow-on
 
 **Templates to create**:
 
-| Template File              | Label Auto-Applied         | Description                                    |
-| -------------------------- | -------------------------- | ---------------------------------------------- |
-| `feature.yml`              | `type:feature`, `plan`     | New feature or capability request               |
-| `bugfix.yml`               | `type:bugfix`, `plan`      | Something isn't working correctly               |
-| `refactor.yml`             | `type:refactor`, `plan`    | Code restructuring / technical debt             |
-| `hotfix.yml`               | `type:hotfix`, `plan`      | **URGENT production issues only** — use bugfix for non-critical bugs |
-| `security.yml`             | `type:security`, `plan`    | Security vulnerability or audit request         |
-| `config.yml`               | —                          | Template chooser config (blank issue option)    |
+| Template File  | Label Auto-Applied      | Description                                                          |
+| -------------- | ----------------------- | -------------------------------------------------------------------- |
+| `feature.yml`  | `type:feature`, `plan`  | New feature or capability request                                    |
+| `bugfix.yml`   | `type:bugfix`, `plan`   | Something isn't working correctly                                    |
+| `refactor.yml` | `type:refactor`, `plan` | Code restructuring / technical debt                                  |
+| `hotfix.yml`   | `type:hotfix`, `plan`   | **URGENT production issues only** — use bugfix for non-critical bugs |
+| `security.yml` | `type:security`, `plan` | Security vulnerability or audit request                              |
+| `config.yml`   | —                       | Template chooser config (blank issue option)                         |
 
 Each template form should include:
+
 - **Title** (pre-filled with classification prefix, e.g., `[Feature] `)
 - **Description / Value Statement** (textarea — what and why)
 - **Acceptance Criteria** (textarea)
@@ -210,6 +219,7 @@ Each template form should include:
 **Where**: `.github/ISSUE_TEMPLATE/` directory (new)
 
 **Acceptance Criteria**:
+
 - All 6 files exist in `.github/ISSUE_TEMPLATE/`
 - Templates render correctly on GitHub's "New Issue" page with the chooser
 - Labels are auto-applied when a template is used
@@ -226,6 +236,7 @@ Each template form should include:
 **What**: Standard version milestone — CHANGELOG entry documenting the workflow integration, any relevant README updates.
 
 **Acceptance Criteria**:
+
 - CHANGELOG entry describes the GitHub Issues integration
 - Version matches roadmap target (confirmed at DevOps Stage 1)
 
@@ -266,13 +277,13 @@ Sequencing rule: M-1 (labels) must exist before any agent or template can refere
 
 ## Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-| ---- | ---------- | ------ | ---------- |
-| `gh` auth expires mid-session | Low | Low | Instructions include conditional check; agent surfaces error to user |
-| Rate limiting on `gh issue create` | Very Low | Low | GitHub API rate limits are generous (5000/hr); agent creates ~1 issue per plan |
-| Instruction bloat in agent files | Medium | Low | Keep instructions concise; use a single well-defined section per agent |
-| Parallel sessions creating duplicate issues | Low | Medium | Instructions specify: check if issue already exists for plan ID before creating |
-| Shell quoting breaks issue body content | Medium | Medium | Use `--body-file` instead of `--body` for all multi-line issue content (see Decision Record #6) |
+| Risk                                        | Likelihood | Impact | Mitigation                                                                                      |
+| ------------------------------------------- | ---------- | ------ | ----------------------------------------------------------------------------------------------- |
+| `gh` auth expires mid-session               | Low        | Low    | Instructions include conditional check; agent surfaces error to user                            |
+| Rate limiting on `gh issue create`          | Very Low   | Low    | GitHub API rate limits are generous (5000/hr); agent creates ~1 issue per plan                  |
+| Instruction bloat in agent files            | Medium     | Low    | Keep instructions concise; use a single well-defined section per agent                          |
+| Parallel sessions creating duplicate issues | Low        | Medium | Instructions specify: check if issue already exists for plan ID before creating                 |
+| Shell quoting breaks issue body content     | Medium     | Medium | Use `--body-file` instead of `--body` for all multi-line issue content (see Decision Record #6) |
 
 ---
 
@@ -285,16 +296,16 @@ Sequencing rule: M-1 (labels) must exist before any agent or template can refere
 
 ## Duration Estimates
 
-| Phase          | Estimate    | Uncertainty Driver                       |
-| -------------- | ----------- | ---------------------------------------- |
-| Planning       | 0.5 day     | (this document — complete)               |
-| Critique       | 0.5 day     | None                                     |
-| Implementation | 0.5–1 day   | Low — markdown/YAML edits only, no code  |
-| Code Review    | 0.25 day    | Low — reviewing instruction clarity      |
-| QA             | 0.25 day    | Requires manual `gh` verification        |
-| UAT            | 0.25 day    | User confirms issue appears on GitHub    |
-| DevOps         | 0.25 day    | Standard commit/release cycle            |
-| **Total**      | **2–3 days** | Low overall uncertainty                  |
+| Phase          | Estimate     | Uncertainty Driver                      |
+| -------------- | ------------ | --------------------------------------- |
+| Planning       | 0.5 day      | (this document — complete)              |
+| Critique       | 0.5 day      | None                                    |
+| Implementation | 0.5–1 day    | Low — markdown/YAML edits only, no code |
+| Code Review    | 0.25 day     | Low — reviewing instruction clarity     |
+| QA             | 0.25 day     | Requires manual `gh` verification       |
+| UAT            | 0.25 day     | User confirms issue appears on GitHub   |
+| DevOps         | 0.25 day     | Standard commit/release cycle           |
+| **Total**      | **2–3 days** | Low overall uncertainty                 |
 
 ---
 

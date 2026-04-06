@@ -1,9 +1,9 @@
-name: "🐛 Bug Fix"
+name: '🐛 Bug Fix'
 description: "Something isn't working correctly. For urgent production outages use the Hotfix template."
-title: "[Bug] "
+title: '[Bug] '
 labels:
-  - "type:bugfix"
-  - "plan"
+  - 'type:bugfix'
+  - 'plan'
 body:
   - type: markdown
     attributes:
@@ -15,15 +15,15 @@ body:
     id: description
     attributes:
       label: "What's broken?"
-      description: "Describe the incorrect behaviour and how it differs from what is expected."
-      placeholder: "Providers page shows a blank list when navigating from the home page search."
+      description: 'Describe the incorrect behaviour and how it differs from what is expected.'
+      placeholder: 'Providers page shows a blank list when navigating from the home page search.'
     validations:
       required: true
 
   - type: textarea
     id: steps
     attributes:
-      label: "Steps to Reproduce"
+      label: 'Steps to Reproduce'
       placeholder: |
         1. Go to the home page
         2. Type a search term and press Enter
@@ -34,15 +34,15 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: "Expected Behaviour"
-      placeholder: "Providers matching the search term should be displayed."
+      label: 'Expected Behaviour'
+      placeholder: 'Providers matching the search term should be displayed.'
     validations:
       required: true
 
   - type: textarea
     id: acceptance_criteria
     attributes:
-      label: "Acceptance Criteria"
+      label: 'Acceptance Criteria'
       description: "Each item on a new line starting with '- [ ]'."
       placeholder: |
         - [ ] Providers list is populated after navigating from home search
@@ -53,25 +53,25 @@ body:
   - type: input
     id: plan_id
     attributes:
-      label: "Plan ID"
-      description: "If linked to an agent-output plan, enter the ID (e.g. 085). Leave blank if not yet planned."
-      placeholder: "085"
+      label: 'Plan ID'
+      description: 'If linked to an agent-output plan, enter the ID (e.g. 085). Leave blank if not yet planned.'
+      placeholder: '085'
 
   - type: input
     id: target_release
     attributes:
-      label: "Target Release"
-      description: "Semver target (e.g. v0.10.9). Leave blank if unknown."
-      placeholder: "v0.10.9"
+      label: 'Target Release'
+      description: 'Semver target (e.g. v0.10.9). Leave blank if unknown.'
+      placeholder: 'v0.10.9'
 
   - type: dropdown
     id: priority
     attributes:
-      label: "Priority"
+      label: 'Priority'
       options:
-        - "Low"
-        - "Medium"
-        - "High"
-        - "Critical"
+        - 'Low'
+        - 'Medium'
+        - 'High'
+        - 'Critical'
     validations:
       required: true

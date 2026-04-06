@@ -1,9 +1,9 @@
-name: "♻️ Refactor"
-description: "Code restructuring, technical debt reduction, or internal improvement with no user-facing behaviour change."
-title: "[Refactor] "
+name: '♻️ Refactor'
+description: 'Code restructuring, technical debt reduction, or internal improvement with no user-facing behaviour change.'
+title: '[Refactor] '
 labels:
-  - "type:refactor"
-  - "plan"
+  - 'type:refactor'
+  - 'plan'
 body:
   - type: markdown
     attributes:
@@ -14,16 +14,16 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: "What needs refactoring and why?"
-      description: "Describe the current state and the desired outcome."
-      placeholder: "The auth middleware has grown to 400 lines and mixes concerns. Extract token validation, session renewal, and role checks into separate modules."
+      label: 'What needs refactoring and why?'
+      description: 'Describe the current state and the desired outcome.'
+      placeholder: 'The auth middleware has grown to 400 lines and mixes concerns. Extract token validation, session renewal, and role checks into separate modules.'
     validations:
       required: true
 
   - type: textarea
     id: acceptance_criteria
     attributes:
-      label: "Acceptance Criteria"
+      label: 'Acceptance Criteria'
       description: "Each item on a new line starting with '- [ ]'. Behaviour should be unchanged — focus on structural goals."
       placeholder: |
         - [ ] Auth logic split into token.ts, session.ts, roles.ts
@@ -35,25 +35,25 @@ body:
   - type: input
     id: plan_id
     attributes:
-      label: "Plan ID"
-      description: "If linked to an agent-output plan, enter the ID (e.g. 086). Leave blank if not yet planned."
-      placeholder: "086"
+      label: 'Plan ID'
+      description: 'If linked to an agent-output plan, enter the ID (e.g. 086). Leave blank if not yet planned.'
+      placeholder: '086'
 
   - type: input
     id: target_release
     attributes:
-      label: "Target Release"
-      description: "Semver target or leave blank."
-      placeholder: "v0.11.0"
+      label: 'Target Release'
+      description: 'Semver target or leave blank.'
+      placeholder: 'v0.11.0'
 
   - type: dropdown
     id: priority
     attributes:
-      label: "Priority"
+      label: 'Priority'
       options:
-        - "Low"
-        - "Medium"
-        - "High"
-        - "Critical"
+        - 'Low'
+        - 'Medium'
+        - 'High'
+        - 'Critical'
     validations:
       required: true

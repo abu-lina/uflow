@@ -2,25 +2,25 @@
 ID: 084
 Origin: 084
 UUID: e7a2c9f1
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique — Plan 084: GitHub Issues Integration for Workflow Pipeline
 
-| Field           | Value                                                              |
-| --------------- | ------------------------------------------------------------------ |
-| Artifact        | `agent-output/planning/084-github-issues-integration-plan.md`      |
-| Date            | 2026-04-06                                                         |
-| Status          | Initial Review                                                     |
-| Verdict         | **APPROVED**                                                       |
+| Field    | Value                                                         |
+| -------- | ------------------------------------------------------------- |
+| Artifact | `agent-output/planning/084-github-issues-integration-plan.md` |
+| Date     | 2026-04-06                                                    |
+| Status   | Initial Review                                                |
+| Verdict  | **APPROVED**                                                  |
 
 ## Changelog
 
-| Date               | Handoff         | Request                         | Summary                                         |
-| ------------------ | --------------- | ------------------------------- | ------------------------------------------------ |
-| 2026-04-06T15:45Z  | Planner → Critic | Review plan for completeness    | Initial review — APPROVED WITH MINOR CONDITIONS  |
-| 2026-04-06T15:50Z  | Critic → Planner | Revision requested             | M-1, L-1–L-4 findings to address                  |
-| 2026-04-06T15:55Z  | Planner → Critic | Revision complete              | All findings addressed — verdict upgraded to APPROVED |
+| Date              | Handoff          | Request                      | Summary                                               |
+| ----------------- | ---------------- | ---------------------------- | ----------------------------------------------------- |
+| 2026-04-06T15:45Z | Planner → Critic | Review plan for completeness | Initial review — APPROVED WITH MINOR CONDITIONS       |
+| 2026-04-06T15:50Z | Critic → Planner | Revision requested           | M-1, L-1–L-4 findings to address                      |
+| 2026-04-06T15:55Z | Planner → Critic | Revision complete            | All findings addressed — verdict upgraded to APPROVED |
 
 ---
 
@@ -53,6 +53,7 @@ The plan was revised mid-session to add M-7 (GitHub Issue templates for manual c
 ## Scope Assessment
 
 Scope is tight and appropriate. 7 milestones for what is essentially:
+
 1. One-time label setup (M-1)
 2. Three agent instruction edits (M-2, M-3, M-4)
 3. One header template update (M-5)
@@ -66,6 +67,7 @@ No runtime code, no source changes, no database changes. Risk is very low.
 ## Technical Debt Risks
 
 **LOW.** This plan adds minimal debt:
+
 - Agent instruction files grow slightly, but the plan acknowledges this risk and proposes concise sections.
 - The `plan` label on all agent-created issues may become noisy if hundreds of plans accumulate — but GitHub Issue search/filtering handles this well.
 - No new abstractions, no new patterns to maintain.
@@ -76,11 +78,11 @@ No runtime code, no source changes, no database changes. Risk is very low.
 
 ### M-1: `bugfix.yml` template missing `plan` label (LOW)
 
-| Field         | Value |
-| ------------- | ----- |
-| ID            | L-1 |
-| Status        | ADDRESSED |
-| Severity      | LOW |
+| Field    | Value     |
+| -------- | --------- |
+| ID       | L-1       |
+| Status   | ADDRESSED |
+| Severity | LOW       |
 
 **Issue**: In M-7's template table, `bugfix.yml` auto-applies `type:bugfix` but NOT `plan`. Meanwhile `feature.yml` and `refactor.yml` include `plan`. Bugfix plans created by agents would also get a `plan` label via the Planner's `gh issue create` instructions (M-2), but manually-created bugfix issues through the template would NOT get `plan`.
 
@@ -92,17 +94,18 @@ No runtime code, no source changes, no database changes. Risk is very low.
 
 ### M-2: `gh issue create` body content construction method unspecified (MEDIUM)
 
-| Field         | Value |
-| ------------- | ----- |
-| ID            | M-1 |
-| Status        | ADDRESSED |
-| Severity      | MEDIUM |
+| Field    | Value     |
+| -------- | --------- |
+| ID       | M-1       |
+| Status   | ADDRESSED |
+| Severity | MEDIUM    |
 
 **Issue**: The plan specifies the issue body should contain "value statement, plan ID, classification, milestones summary, link to local artifact path, and target release" but does not specify HOW the Planner agent constructs this body. The `gh issue create --body` flag requires the body as a string argument. For multi-line markdown content, this is fragile in shell (special characters, quotes, newlines).
 
 **Impact**: The Implementer must make this decision during implementation, which could lead to inconsistent or broken issue bodies. Shell quoting of markdown is a known problem in this repo (see DevOps agent's existing `Shell safety (MANDATORY)` section and the `commit` skill's prohibition on heredocs).
 
 **Recommendation**: The plan should specify the body construction method. Options:
+
 1. `gh issue create --body-file /tmp/uflow-issue-body-084.md` — write body to a temp file first (consistent with the commit message pattern in DevOps)
 2. Keep body minimal (< 5 lines, no complex markdown) to avoid shell quoting issues
 3. Use the `--template` flag with the YAML form templates from M-7
@@ -113,11 +116,11 @@ Option 1 (`--body-file`) is the safest and most consistent with existing repo co
 
 ### M-3: Orchestrator Workflow Card already contains `Type` field (LOW)
 
-| Field         | Value |
-| ------------- | ----- |
-| ID            | L-2 |
-| Status        | ADDRESSED |
-| Severity      | LOW |
+| Field    | Value     |
+| -------- | --------- |
+| ID       | L-2       |
+| Status   | ADDRESSED |
+| Severity | LOW       |
 
 **Issue**: M-3's objective says "Ensure the Workflow Card explicitly includes the task classification label." The Orchestrator's Workflow Card template already has `Type: {Feature|Bugfix|Refactor|Hotfix}` (line ~580 of orchestrator.agent.md). The plan notes "This may already be implicitly present" — but it IS explicitly present, not implicitly.
 
@@ -129,11 +132,11 @@ Option 1 (`--body-file`) is the safest and most consistent with existing repo co
 
 ### M-4: Issue number extraction from plan doc header not specified (LOW)
 
-| Field         | Value |
-| ------------- | ----- |
-| ID            | L-3 |
-| Status        | ADDRESSED |
-| Severity      | LOW |
+| Field    | Value     |
+| -------- | --------- |
+| ID       | L-3       |
+| Status   | ADDRESSED |
+| Severity | LOW       |
 
 **Issue**: M-4 says DevOps reads the plan document's `GitHub Issue` header field to find the issue number. But the plan doesn't specify the format of this field. Is it `GitHub Issue: #42`, `GitHub Issue: https://github.com/abu-lina/uflow/issues/42`, or `GitHub Issue: 42`?
 
@@ -145,11 +148,11 @@ Option 1 (`--body-file`) is the safest and most consistent with existing repo co
 
 ### M-7: `hotfix.yml` template may encourage non-urgent use (LOW)
 
-| Field         | Value |
-| ------------- | ----- |
-| ID            | L-4 |
-| Status        | ADDRESSED |
-| Severity      | LOW |
+| Field    | Value     |
+| -------- | --------- |
+| ID       | L-4       |
+| Status   | ADDRESSED |
+| Severity | LOW       |
 
 **Issue**: Hotfix has a specific meaning in the Orchestrator taxonomy ("urgent, production, critical, down, outage, ASAP, emergency, blocking users") and uses a Minimal 5-phase pipeline. Making it available as a template in the GitHub UI may lead to casual use for non-urgent bugs.
 
@@ -161,11 +164,11 @@ Option 1 (`--body-file`) is the safest and most consistent with existing repo co
 
 ### Process: Planner chatmode file missing (LOW — process note)
 
-| Field         | Value |
-| ------------- | ----- |
-| ID            | P-1 |
-| Status        | OPEN |
-| Severity      | LOW |
+| Field    | Value |
+| -------- | ----- |
+| ID       | P-1   |
+| Status   | OPEN  |
+| Severity | LOW   |
 
 **Issue**: `.github/chatmodes/planner.chatmode.md` does not exist. Per Critic instructions, this should be read at review start.
 
@@ -197,9 +200,9 @@ All 8 decisions are `[RESOLVED]`. No `[OPEN]` or `[DEFERRED]` decisions. **PASS.
 
 The risk table is adequate. The identified risks are realistic and mitigations are proportionate. One additional risk to consider:
 
-| Risk | Likelihood | Impact | Mitigation |
-| ---- | ---------- | ------ | ---------- |
-| Shell quoting breaks issue body content | Medium | Medium | Use `--body-file` instead of `--body` (see finding M-1) |
+| Risk                                    | Likelihood | Impact | Mitigation                                              |
+| --------------------------------------- | ---------- | ------ | ------------------------------------------------------- |
+| Shell quoting breaks issue body content | Medium     | Medium | Use `--body-file` instead of `--body` (see finding M-1) |
 
 ---
 
@@ -208,6 +211,7 @@ The risk table is adequate. The identified risks are realistic and mitigations a
 **"How will this plan result in a hotfix after deployment?"**
 
 Low risk. The changes are all to `.md` and `.yml` instruction/template files. Plausible failure modes:
+
 1. **Agent creates malformed `gh` command**: Agent surfaces shell error; user retries manually. No hotfix needed — the plan itself is unaffected.
 2. **Issue template YAML syntax error**: GitHub rejects the template with a validation error on push. Fix is a `docs(084): fix YAML syntax` patch. Not a production hotfix.
 3. **`gh` auth expires**: Agent degrades gracefully (instructions are conditional). No hotfix.
@@ -226,7 +230,7 @@ Low risk. The changes are all to `.md` and `.yml` instruction/template files. Pl
 
 ## Revision History
 
-| Rev | Date               | Artifact Changes | Findings Addressed | New Findings | Status Changes |
-| --- | ------------------ | ---------------- | ------------------ | ------------ | -------------- |
-| 0   | 2026-04-06T15:45Z  | Initial review   | —                  | M-1, L-1–L-4, P-1 | Initial → OPEN |
-| 1   | 2026-04-06T15:55Z  | Plan revised     | M-1, L-1, L-2, L-3, L-4 | None   | OPEN → APPROVED |
+| Rev | Date              | Artifact Changes | Findings Addressed      | New Findings      | Status Changes  |
+| --- | ----------------- | ---------------- | ----------------------- | ----------------- | --------------- |
+| 0   | 2026-04-06T15:45Z | Initial review   | —                       | M-1, L-1–L-4, P-1 | Initial → OPEN  |
+| 1   | 2026-04-06T15:55Z | Plan revised     | M-1, L-1, L-2, L-3, L-4 | None              | OPEN → APPROVED |
