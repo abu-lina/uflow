@@ -4,7 +4,7 @@ Origin: 081
 UUID: b4e91f3a
 Status: In Progress
 Target Release: next available patch after v0.10.9 (current origin/main); confirm at DevOps Stage 1
-Related Issues: Plan 081 (v0.10.9 — UAT failure: import fix was necessary but insufficient); Analysis 082 (6 findings, 5 weaknesses)
+Related Issues: Plan 081 (v0.10.9 — UAT failure: import fix was necessary but insufficient); Analysis 082 (6 findings, 5 weaknesses); Analysis 083 (F1: profile provider RLS — taken by this plan; F2: admin CS edit — deferred to Plan 083)
 ---
 
 # Plan 082 — Community Service Detail Page: Architectural + Design System Parity
@@ -17,6 +17,7 @@ Related Issues: Plan 081 (v0.10.9 — UAT failure: import fix was necessary but 
 | 2026-04-05T22:00Z | planner | Plan 082 created from Analysis 082; inherits ID/Origin/UUID |
 | 2026-04-05T18:58Z | critic | APPROVED WITH CONDITIONS — 2 medium findings (F1: ProviderDetailModal adapter gaps; F2: D8 deferral incomplete) |
 | 2026-04-05T19:05Z | planner | Revised: addressed F1 (implementation notes added to M3+M4) and F2 (D8 deferral completed); no re-review required |
+| 2026-04-06T00:30Z | planner | Revised: added M8 (profile provider RLS import fix from Analysis 083 F1). Admin CS edit (Analysis 083 F2) split to Plan 083. D10 added. |
 
 ## Value Statement and Business Objective
 
@@ -25,6 +26,8 @@ Related Issues: Plan 081 (v0.10.9 — UAT failure: import fix was necessary but 
 ## Release Strategy
 
 Standalone (no other known active plans for this version). Supersedes Plan 081 (v0.10.9) which addressed only the import-path subset. The v0.10.9 import fix remains valid and is retained; this plan extends it to achieve full parity.
+
+**Scope split (Analysis 083)**: Profile provider RLS fix (F1) included in this plan as M8. Full admin CS edit page (F2) deferred to Plan 083 (separate release). `AdminCommunityServiceDetailButtons` remains in place targeting the future route — Plan 083 builds that route.
 
 ## Decision Record
 
@@ -39,6 +42,7 @@ Standalone (no other known active plans for this version). Supersedes Plan 081 (
 | D7 | Admin action buttons for community services: Include where applicable | [RESOLVED] — User wants parity; admin buttons are part of the provider design system experience |
 | D8 | RLS edge case (W5: recommendation-mode services with `user_created_id = NULL`): OUT OF SCOPE | [DEFERRED: User — requires DB-level investigation to confirm if this affects real UAT data. Target artifact: `agent-output/planning/082-open-actions.md`. Trigger: after Plan 082 UAT confirms parity, or if UAT re-surfaces "Service nicht gefunden" specifically for recommendation-mode services (`user_created_id = NULL`).] |
 | D9 | Deprecation of `CommunityServiceDetailModal`: Mark as deprecated, do not delete in this plan | [RESOLVED] — Removal is a separate cleanup task after parity is confirmed in UAT |
+| D10 | Analysis 083 scope split: F1 (profile provider RLS) in Plan 082; F2 (admin CS edit page) in Plan 083 | [RESOLVED] — F2 is high effort (new feature, ~2-3 days); Plan 082 stays focused on parity bugfixes. `AdminCommunityServiceDetailButtons` targets the future route Plan 083 builds. |
 
 ## Objective
 
@@ -183,6 +187,23 @@ Transform the community service detail page from its current broken/divergent st
 - CHANGELOG entry reflects: architectural + design system parity for community service detail page
 - `package-lock.json` aligned
 
+### Milestone 8 — Fix Profile Provider Server Components: RLS Import (Analysis 083 F1)
+
+**Objective**: Fix profile provider pages that use the wrong Supabase client import, causing RLS failures for non-approved providers.
+
+**What**:
+- Change import from `@/services/providers` to `@/services/providers.server` in two profile Server Component files:
+  - `src/app/(public)/profile/providers/[provider_id]/page.tsx`
+  - `src/app/(public)/profile/providers/[provider_id]/edit/page.tsx`
+- Both files retain existing `notFound()` gate (profile pages, not public detail pages — behaviour is appropriate)
+- Same root cause as the original Plan 081 community service bug: Server Component using client Supabase module loses cookie-based auth context
+
+**Acceptance Criteria**:
+- Authenticated owner can view their non-approved provider from the profile page
+- Authenticated owner can navigate to the edit page for their non-approved provider from the profile page
+- Regression test verifies the server import is used (import path assertion or integration test)
+- No regressions on approved provider profile views
+
 ## Milestone Dependencies
 
 ```mermaid
@@ -193,17 +214,18 @@ graph LR
     M3 --> M5[M5: Deprecate Old Modal]
     M4 --> M6[M6: Tests + Quality Gates]
     M5 --> M6
+    M8[M8: Profile Provider<br>RLS Import Fix] --> M6
     M6 --> M7[M7: Version + Release]
 ```
 
-**Sequencing rule**: M1 and M2 can proceed in parallel. M3 depends on both. M4 and M5 depend on M3. M6 validates everything. M7 is final.
+**Sequencing rule**: M1 and M2 can proceed in parallel. M3 depends on both. M4 and M5 depend on M3. M8 is independent of M1-M5 and can proceed in parallel. M6 validates everything. M7 is final.
 
 ## Testing Strategy
 
-- **Unit tests**: React Query hook (loading, error, success, initialData hydration), data transform field coverage
+- **Unit tests**: React Query hook (loading, error, success, initialData hydration), data transform field coverage, profile provider import path regression
 - **Integration tests**: Build verification, type-check, lint
-- **Manual UAT**: Owner opens non-approved community service → renders with loading → displays content with design system components. Anonymous user opens approved community service → same quality as provider detail. Desktop + mobile both verified.
-- **Regression scope**: Provider detail page remains unaffected. Existing community service list/search flows unaffected.
+- **Manual UAT**: Owner opens non-approved community service → renders with loading → displays content with design system components. Anonymous user opens approved community service → same quality as provider detail. Owner opens own provider from profile page → renders correctly. Desktop + mobile both verified.
+- **Regression scope**: Provider detail page remains unaffected. Existing community service list/search flows unaffected. Profile provider pages verified with server import.
 
 ## Risks
 

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.11] - 2026-04-06
+
+### Fixed
+
+- **Profile provider pages: server Supabase client for RLS (Plan 082 M8)**: Profile provider detail (`/profile/providers/[id]`) and edit (`/profile/providers/[id]/edit`) pages were silently using the anonymous Supabase client in Server Components, causing RLS failures for non-approved providers. Both pages now import `getProviderById` from `@/services/providers.server` (cookie-based auth context), matching the fix applied to the public provider and community-service pages in Plan 081.
+
+### Added
+
+- **Admin community service edit page (Plan 083)**: Full admin CRUD surface for community services. Admins and moderators can now view (bypassing RLS), edit fields, and review (approve/reject/request revision) any community service from `/dashboard/community-services/[id]/edit`. New API routes: `GET /api/admin/community-services/[id]` and `PATCH /api/admin/edit-community-service` and `PATCH /api/admin/review-community-service`. New admin service layer at `src/services/admin/communityServices.ts` with sanitized partial-update and review functions. Zod validation schemas added to `src/lib/validations/adminSchemas.ts`. Resolves `AdminCommunityServiceDetailButtons` OA-1 (edit button now routes to a working page).
+
 ## [0.10.10] - 2026-04-05
 
 ### Fixed

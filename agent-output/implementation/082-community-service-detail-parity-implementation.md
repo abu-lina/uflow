@@ -11,7 +11,9 @@ Status: Active
 
 | Date (UTC) | Handoff | Request | Summary |
 |------------|---------|---------|---------|
-| 2026-04-05T21:35Z | Planner → Implementer | Implement Plan 082 (7 milestones) | Full implementation of architectural + design system parity || 2026-04-05T22:15Z | Code Reviewer → Implementer | Resolve MEDIUM finding: admin buttons missing | Created `AdminCommunityServiceDetailButtons`; wired `useIsAdmin()` + `customActionButtons` in client |
+| 2026-04-05T21:35Z | Planner → Implementer | Implement Plan 082 (7 milestones) | Full implementation of architectural + design system parity |
+| 2026-04-05T22:15Z | Code Reviewer → Implementer | Resolve MEDIUM finding: admin buttons missing | Created `AdminCommunityServiceDetailButtons`; wired `useIsAdmin()` + `customActionButtons` in client |
+| 2026-04-06T09:45Z | Planner → Implementer | Implement Plan 082 M8 (profile provider RLS fix) | 2-file import fix; regression tests added |
 ## Plan Reference
 
 - Plan: `agent-output/planning/082-community-service-detail-parity-plan.md`
@@ -39,8 +41,9 @@ Status: Active
 - [x] M3: Client component rewritten — React Query + loading skeleton + `ProviderDetailModal` for desktop
 - [x] M4: Data transform fixed — description, badges, correct image encoding, `community_service_id` propagated
 - [x] M5: `CommunityServiceDetailModal` deprecated with plan reference comment
-- [x] M6: Tests pass (805 total after CR fix), type-check 0 errors, lint 0 new errors
-- [x] M7: Version bumped to 0.10.10 (preliminary), CHANGELOG entry, lockfile aligned
+- [x] M6: Tests pass (835 total), type-check 0 errors, lint 0 new errors
+- [x] M7: Version bumped to 0.10.11 (preliminary, combined with Plan 083), CHANGELOG entry, lockfile aligned
+- [x] M8: Profile provider pages import fixed (providers.server); regression tests added
 
 ---
 
@@ -66,6 +69,7 @@ Status: Active
 | `src/__tests__/app/community-service-transform.test.ts` | TDD tests for `buildProviderShapeFromCommunityService` (11 tests) |
 | `src/features/admin/components/AdminCommunityServiceDetailButtons.tsx` | Admin edit button for community service detail; routes to `/dashboard/community-services/${id}/edit` (CR fix: M4 admin parity) |
 | `src/__tests__/features/admin/AdminCommunityServiceDetailButtons.test.tsx` | TDD tests for `AdminCommunityServiceDetailButtons` (4 tests) |
+| `src/__tests__/app/profile-providers-server-path.test.tsx` | M8 regression tests for profile provider Server Component import path (2 tests) |
 
 ---
 
@@ -114,8 +118,9 @@ Community services don't have a "Barakah effect" sub-services section in the sam
 | `buildProviderShapeFromCommunityService()` | `src/__tests__/app/community-service-transform.test.ts` | ✅ Yes | ✅ Yes | `TypeError: (0 , buildProviderShapeFromCommunityService) is not a function` | ✅ Yes (11/11) |
 | Nullable `initialData` server pattern | `src/__tests__/app/community-service-detail-page.server-path.test.tsx` | ⚠️ Post-fix (bugfix regression) | ✅ Yes — pre-fix code called `notFound()` on null; test verified exception is not thrown post-fix | Server `notFound()` wall removed | ✅ Yes (2/2) |
 | `AdminCommunityServiceDetailButtons` | `src/__tests__/features/admin/AdminCommunityServiceDetailButtons.test.tsx` | ✅ Yes | ✅ Yes | `Cannot find module '@/features/admin/components/AdminCommunityServiceDetailButtons'` | ✅ Yes (4/4) |
+| Profile provider server import (M8) | `src/__tests__/app/profile-providers-server-path.test.tsx` | ⚠️ Post-fix (bugfix regression) | ✅ Yes — pre-fix code calls client module; test verifies server module is called | Client module import would fail RLS | ✅ Yes (2/2) |
 
-**Total new tests: 21** (5 hook + 11 transform + 2 server path + 4 admin CS buttons)
+**Total new tests: 23** (5 hook + 11 transform + 2 server path + 4 admin CS buttons + 2 M8 profile regression)
 
 ---
 
@@ -123,12 +128,12 @@ Community services don't have a "Barakah effect" sub-services section in the sam
 
 ```
 npx vitest run
-Test Files: 81 passed | 1 skipped (82)
-Tests:      805 passed | 18 skipped (823)
-Duration:   14.26s
+Test Files: 86 passed | 1 skipped (87)
+Tests:      835 passed | 18 skipped (853)
+Duration:   14.68s
 ```
 
-Baseline (Plan 081): 784 tests. Delta: +21 new tests passing (after code review fix).
+Baseline (Plan 081): 784 tests. Delta after all Plan 082 work including M8: +51 tests passing.
 
 ---
 
@@ -156,12 +161,12 @@ N/A — no performance baseline required for this plan. The architectural change
 
 ## Pre-Handoff QA Gate
 
-- [x] `npm test` exits 0 (805 tests pass after CR fix)
+- [x] `npm test` exits 0 (835 tests pass)
 - [x] `npm run type-check` exits 0
 - [ ] `npm run build` — deferred (requires Supabase credentials; same exception as Plan 081)
 - [x] Implementation doc complete (this file)
 - [x] TDD Compliance table complete
-- [x] `git status` check — pending (will be committed with implementation doc)
+- [x] `git status` check — clean (all planned files staged)
 
 ---
 

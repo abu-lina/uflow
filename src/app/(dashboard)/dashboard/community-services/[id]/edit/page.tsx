@@ -21,7 +21,10 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
   const [communityService, setCommunityService] = useState<CommunityService | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rejectFeedback, setRejectFeedback] = useState('');
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   // Form state
   const [name, setName] = useState('');
@@ -123,6 +126,56 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
   const handleBack = () => {
     router.push(`/community-services/${communityServiceId}`);
   };
+
+  const handleReview = useCallback(
+    async (reviewStatus: 'approved' | 'rejected' | 'needs_revision', feedback?: string) => {
+      setReviewing(true);
+      try {
+        const response = await fetch('/api/admin/review-community-service', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            communityServiceId,
+            reviewStatus,
+            reviewFeedback: feedback ?? null,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({})) as { error?: string };
+          toast.error(errorData.error || 'Review action failed');
+          return;
+        }
+
+        const responseData = await response.json() as { data?: { review_status?: string } };
+        setCommunityService((prev) =>
+          prev
+            ? { ...prev, review_status: responseData.data?.review_status as CommunityService['review_status'] }
+            : prev
+        );
+
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['community-service', communityServiceId] }),
+          queryClient.invalidateQueries({ queryKey: ['community-services'] }),
+        ]);
+
+        toast.success(
+          reviewStatus === 'approved'
+            ? 'Community service approved'
+            : reviewStatus === 'rejected'
+            ? 'Community service rejected'
+            : 'Revision requested'
+        );
+        setShowRejectModal(false);
+        setRejectFeedback('');
+      } catch {
+        toast.error('Review action failed');
+      } finally {
+        setReviewing(false);
+      }
+    },
+    [communityServiceId, queryClient]
+  );
 
   if (loading) {
     return (
@@ -291,8 +344,43 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
         </div>
       </main>
 
-      {/* Sticky save footer */}
-      <div className="sticky bottom-0 border-t border-gray-200 bg-white px-6 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+      {/* Reject feedback modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="mb-3 text-base font-semibold text-gray-900">Ablehnen</h2>
+            <textarea
+              autoFocus
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="Begründung eingeben…"
+              rows={4}
+              value={rejectFeedback}
+              onChange={(e) => setRejectFeedback(e.target.value)}
+            />
+            <div className="mt-4 flex gap-2">
+              <button
+                className="flex-1 rounded-xl border border-gray-300 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+                disabled={reviewing}
+                type="button"
+                onClick={() => { setShowRejectModal(false); setRejectFeedback(''); }}
+              >
+                Abbrechen
+              </button>
+              <button
+                className="flex-1 rounded-xl bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                disabled={reviewing || !rejectFeedback.trim()}
+                type="button"
+                onClick={() => handleReview('rejected', rejectFeedback)}
+              >
+                {reviewing ? '…' : 'Ablehnen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky save + review footer */}
+      <div className="sticky bottom-0 border-t border-gray-200 bg-white px-6 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] space-y-2">
         <button
           className="w-full rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-darker disabled:opacity-50"
           disabled={saving || !name.trim()}
@@ -301,6 +389,32 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
         >
           {saving ? 'Speichern...' : 'Speichern'}
         </button>
+        <div className="flex gap-2">
+          <button
+            className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            disabled={reviewing || communityService?.review_status === 'approved'}
+            type="button"
+            onClick={() => handleReview('approved')}
+          >
+            {reviewing ? '…' : 'Genehmigen'}
+          </button>
+          <button
+            className="flex-1 rounded-xl bg-yellow-500 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:opacity-50"
+            disabled={reviewing}
+            type="button"
+            onClick={() => handleReview('needs_revision')}
+          >
+            Überarbeitung
+          </button>
+          <button
+            className="flex-1 rounded-xl bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            disabled={reviewing}
+            type="button"
+            onClick={() => setShowRejectModal(true)}
+          >
+            Ablehnen
+          </button>
+        </div>
       </div>
     </div>
   );

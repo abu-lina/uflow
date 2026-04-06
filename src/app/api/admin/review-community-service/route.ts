@@ -2,15 +2,25 @@ import { NextResponse } from 'next/server';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudit';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
-import { communityServiceEditUpdateSchema } from '@/lib/validations/adminSchemas';
-import { updateCommunityServiceFields } from '@/services/admin/communityServices';
+import { communityServiceReviewUpdateSchema } from '@/lib/validations/adminSchemas';
+import { updateCommunityServiceReview } from '@/services/admin/communityServices';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
- * PATCH /api/admin/edit-community-service
+ * PATCH /api/admin/review-community-service
  *
- * Update community service fields as admin/moderator.
+ * Update community service review status and feedback.
  * Only admins and moderators can access this endpoint.
+ *
+ * Rejection requires a non-empty feedback reason.
+ * Approval and needs_revision do not require feedback.
+ *
+ * Request body:
+ * {
+ *   communityServiceId: string (required)
+ *   reviewStatus: 'approved' | 'rejected' | 'needs_revision' (required)
+ *   reviewFeedback?: string (required for 'rejected', optional otherwise, max 5000 chars)
+ * }
  */
 export async function PATCH(request: Request) {
   try {
@@ -24,7 +34,7 @@ export async function PATCH(request: Request) {
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
       logger.warn(
-        'Forbidden access attempt to edit-community-service API',
+        'Forbidden access attempt to review-community-service API',
         { userId: user.id, ...getRequestMetadata(request) }
       );
       return NextResponse.json(
@@ -35,11 +45,12 @@ export async function PATCH(request: Request) {
 
     // Rate limiting — reuse the admin review limiter
     const identifier = getClientIdentifier(request, user.id);
-    const isRateLimited = !rateLimiters.adminReview.perHour(identifier) ||
-                          !rateLimiters.adminReview.perMinute(identifier);
+    const isRateLimited =
+      !rateLimiters.adminReview.perHour(identifier) ||
+      !rateLimiters.adminReview.perMinute(identifier);
     if (isRateLimited) {
       logger.warn(
-        'Rate limit exceeded for edit-community-service API',
+        'Rate limit exceeded for review-community-service API',
         { userId: user.id, identifier, ...getRequestMetadata(request) }
       );
       return NextResponse.json(
@@ -48,49 +59,51 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Guard against oversized payloads
-    const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > 1024 * 1024) {
-      return NextResponse.json({ error: 'Request too large' }, { status: 413 });
-    }
-
     const body = await request.json();
     let validatedData;
     try {
-      validatedData = communityServiceEditUpdateSchema.parse(body);
+      validatedData = communityServiceReviewUpdateSchema.parse(body);
     } catch (validationError) {
       if (validationError instanceof Error) {
         logger.warn(
-          'Invalid request body for edit-community-service',
-          { body, error: validationError.message },
+          'Invalid request body for review-community-service',
+          {
+            communityServiceId:
+              typeof body?.communityServiceId === 'string'
+                ? body.communityServiceId
+                : '[invalid]',
+            reviewStatus:
+              typeof body?.reviewStatus === 'string' ? body.reviewStatus : '[invalid]',
+            error: validationError.message,
+          },
           { ...getRequestMetadata(request), userId: user.id }
         );
       }
       return NextResponse.json(
         {
           error: 'Invalid request body',
-          details: validationError instanceof Error ? validationError.message : 'Validation failed',
+          details:
+            validationError instanceof Error ? validationError.message : 'Validation failed',
         },
         { status: 400 }
       );
     }
 
-    const { communityServiceId, ...editFields } = validatedData;
-
-    const updatedCS = await updateCommunityServiceFields(
-      communityServiceId,
-      editFields,
+    const updatedCS = await updateCommunityServiceReview(
+      validatedData.communityServiceId,
+      validatedData.reviewStatus,
+      validatedData.reviewFeedback ?? null,
       user.id
     );
 
-    // Audit log
     await logAdminAction(
       user.id,
-      'community_service_edit',
+      `community_service_review_${validatedData.reviewStatus}`,
       'provider', // closest target_type in the existing audit schema
-      communityServiceId,
+      validatedData.communityServiceId,
       {
-        editedFields: Object.keys(editFields),
+        reviewStatus: validatedData.reviewStatus,
+        reviewFeedback: validatedData.reviewFeedback || null,
         communityServiceName: updatedCS.community_service_name,
       },
       {
@@ -104,19 +117,20 @@ export async function PATCH(request: Request) {
         community_service_id: updatedCS.community_service_id,
         community_service_name: updatedCS.community_service_name,
         review_status: updatedCS.review_status,
+        review_feedback: updatedCS.review_feedback,
         updated_at: updatedCS.updated_at,
       },
     });
   } catch (error) {
     logger.error(
-      'Error in edit-community-service API',
+      'Error in review-community-service API',
       error instanceof Error ? error : new Error(String(error)),
       {},
       { ...getRequestMetadata(request) }
     );
 
     return NextResponse.json(
-      { error: 'Failed to update community service' },
+      { error: 'Failed to update community service review' },
       { status: 500 }
     );
   }

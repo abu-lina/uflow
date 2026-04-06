@@ -17,6 +17,7 @@ Status: Resolved
 | Date (UTC) | Handoff | Request | Summary |
 |------------|---------|---------|---------|
 | 2026-04-05T18:58Z | Planner → Critic | Review Plan 082 before implementation | Initial review; 0 critical, 2 medium, 3 low findings |
+| 2026-04-06T01:45Z | Planner → Critic | Review Plan 082 M8 revision (Analysis 083 F1) | Revision review; M8 clean, no new findings. D10 valid. Remains APPROVED. |
 
 ---
 
@@ -200,3 +201,4 @@ Once these two items are addressed, the plan is ready for implementation handoff
 |---|------|---------|
 | Initial | 2026-04-05T18:58Z | First review of Plan 082. 0 critical, 2 medium, 3 low findings. Verdict: APPROVED WITH CONDITIONS. |
 | Resolved | 2026-04-05T19:05Z | Planner addressed F1 (M3/M4 implementation notes) and F2 (D8 target artifact + trigger). No re-review required. |
+| Revision 2 | 2026-04-06T01:45Z | Re-review of M8 addition (profile provider RLS import fix from Analysis 083 F1) and D10 (scope split). **M8**: Well-scoped — 2-file import change, clear acceptance criteria, correct dependency edge (M8→M6). Retains `notFound()` gate appropriately for profile pages (distinct from public detail page pattern in M1). Regression test requirement prevents future drift. **D10**: Scope split rationale is sound — F2 is high effort, F1 is same bug class. Related Issues and Release Strategy updated correctly. Testing Strategy and Manual UAT sections updated to cover profile provider path. **No new findings.** Verdict remains APPROVED. |

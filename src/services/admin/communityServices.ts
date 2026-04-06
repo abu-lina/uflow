@@ -121,3 +121,38 @@ export async function updateCommunityServiceFields(
 
   return data as Record<string, unknown>;
 }
+
+/**
+ * Update community service review status (approve / reject / needs_revision).
+ * Uses service-role to bypass RLS.
+ */
+export async function updateCommunityServiceReview(
+  communityServiceId: string,
+  reviewStatus: 'approved' | 'rejected' | 'needs_revision',
+  reviewFeedback: string | null,
+  _adminUserId: string
+): Promise<Record<string, unknown>> {
+  const supabase = getSupabaseAdmin();
+
+  const updatePayload: Record<string, unknown> = {
+    review_status: reviewStatus,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (reviewFeedback !== null && reviewFeedback !== undefined) {
+    updatePayload.review_feedback = reviewFeedback;
+  }
+
+  const { data, error } = await supabase
+    .from('community_services')
+    .update(updatePayload)
+    .eq('community_service_id', communityServiceId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update community service review: ${error.message}`);
+  }
+
+  return data as Record<string, unknown>;
+}
