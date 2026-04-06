@@ -33,12 +33,15 @@ interface CommunityServiceDetailModalProps {
   communityService: CommunityService;
   onClose: () => void;
   onBookmarkChange?: (communityServiceId: string, isBookmarked: boolean) => void;
+  /** Optional admin action buttons rendered in the right-panel header area (desktop modal). */
+  customActionButtons?: React.ReactNode;
 }
 
 export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalProps> = ({
   communityService,
   onClose,
   onBookmarkChange,
+  customActionButtons,
 }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -449,6 +452,9 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
           >
             <X aria-hidden className="size-5" />
           </button>
+          {customActionButtons && (
+            <div className="absolute right-24 top-10 flex gap-2">{customActionButtons}</div>
+          )}
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
             {/* Barakah Effects Section */}
             {communityService.barakah_effects && communityService.barakah_effects.length > 0 && (

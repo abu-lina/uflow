@@ -6,7 +6,7 @@ vi.mock('@/lib/supabase/getUserFromCookie', () => ({
 vi.mock('@/lib/auth/roles', () => ({
   isAdminOrModerator: vi.fn(),
 }));
-vi.mock('@/services/admin/communityServices', () => ({
+vi.mock('@/services/admin/communityServiceEdit', () => ({
   updateCommunityServiceReview: vi.fn(),
 }));
 vi.mock('@/lib/validations/adminSchemas', () => ({
@@ -54,7 +54,7 @@ vi.mock('@/lib/rate-limit', () => ({
 import { PATCH } from '@/app/api/admin/review-community-service/route';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
-import { updateCommunityServiceReview } from '@/services/admin/communityServices';
+import { updateCommunityServiceReview } from '@/services/admin/communityServiceEdit';
 
 const mockGetUser = getUserFromCookie as ReturnType<typeof vi.fn>;
 const mockIsAdmin = isAdminOrModerator as ReturnType<typeof vi.fn>;

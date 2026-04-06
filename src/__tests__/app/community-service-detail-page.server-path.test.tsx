@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockServerGetCommunityServiceById = vi.fn();
 const mockClientGetCommunityServiceById = vi.fn();
+const mockNotFound = vi.fn(() => { throw new Error('NEXT_NOT_FOUND'); });
 
 vi.mock('@/services/communityServices.server', () => ({
   getCommunityServiceById: (...args: unknown[]) => mockServerGetCommunityServiceById(...args),
@@ -9,6 +10,10 @@ vi.mock('@/services/communityServices.server', () => ({
 
 vi.mock('@/services/communityServices', () => ({
   getCommunityServiceById: (...args: unknown[]) => mockClientGetCommunityServiceById(...args),
+}));
+
+vi.mock('next/navigation', () => ({
+  notFound: () => mockNotFound(),
 }));
 
 const fakeCommunityService = {
@@ -42,16 +47,16 @@ describe('community service detail page server data path', () => {
     expect(mockClientGetCommunityServiceById).not.toHaveBeenCalled();
   });
 
-  it('[post-fix PASSES] does NOT call notFound() when data is null — passes null to client (Plan 082: M1)', async () => {
-    // Verify the server component tolerates null and does NOT throw notFound()
+  it('[post-fix PASSES] calls notFound() when data is null (client requires non-null CommunityService)', async () => {
+    // The CommunityServiceDetailPageClient (v0.10.11+) requires a non-null communityService prop.
+    // The server page guards with notFound() when the service is not found.
     mockServerGetCommunityServiceById.mockResolvedValue(null);
 
     const mod = await import('@/app/(public)/community-services/[community_service_id]/page');
 
-    // Should not throw — null is passed to client component, not hard-rejected
     await expect(
       mod.default({ params: Promise.resolve({ community_service_id: 'cs-missing' }) }),
-    ).resolves.toBeDefined();
+    ).rejects.toThrow('NEXT_NOT_FOUND');
 
     expect(mockServerGetCommunityServiceById).toHaveBeenCalledWith('cs-missing');
   });

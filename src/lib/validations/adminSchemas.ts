@@ -68,9 +68,36 @@ export const providerEditUpdateSchema = z.object({
 });
 
 /**
- * Community service review update schema
+ * Community service edit update schema (admin/moderator editing community service fields)
+ * Plan 083 — M1
  *
- * Mirrors providerReviewUpdateSchema. reviewFeedback is required when reviewStatus is 'rejected'.
+ * Images are stored as Postgres TEXT[] (native array), not JSON string.
+ * The adapter layer (M2 edit page) converts between TEXT[] and JSON string
+ * for the ProviderEditForm, but the API contract uses the native format.
+ */
+export const communityServiceEditUpdateSchema = z.object({
+  communityServiceId: z.string().uuid('Invalid community service ID format'),
+  serviceName: z.string().min(1).max(200).optional(),
+  serviceDescription: z.string().max(5000).nullable().optional(),
+  categoryId: z.string().uuid().optional(),
+  addressStreet: z.string().max(500).nullable().optional(),
+  addressZip: z.string().max(20).nullable().optional(),
+  addressCity: z.string().max(200).nullable().optional(),
+  addressCountry: z.string().max(200).nullable().optional(),
+  contactEmail: z.string().email().max(320).nullable().optional(),
+  contactPhone: z.string().max(50).nullable().optional(),
+  socialWebsite: z.string().url().max(2000).nullable().optional(),
+  socialInstagram: z.string().max(200).nullable().optional(),
+  communityServiceImages: z.array(z.string().url()).max(20).nullable().optional(),
+  offersIds: z.array(z.string().uuid()).optional(),
+  needsIds: z.array(z.string().uuid()).optional(),
+});
+
+/**
+ * Community service review update schema (admin/moderator setting review status)
+ * Plan 083 — M1
+ *
+ * Mirrors providerReviewUpdateSchema with community-service-specific field names.
  */
 export const communityServiceReviewUpdateSchema = z.object({
   communityServiceId: z.string().uuid('Invalid community service ID format'),
@@ -78,6 +105,7 @@ export const communityServiceReviewUpdateSchema = z.object({
     errorMap: () => ({ message: 'reviewStatus must be one of: approved, rejected, needs_revision' }),
   }),
   reviewFeedback: z.string().max(5000).optional().nullable(),
+  expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
 }).refine(
   (data) => {
     if (data.reviewStatus === 'rejected') {
@@ -90,21 +118,3 @@ export const communityServiceReviewUpdateSchema = z.object({
     path: ['reviewFeedback'],
   },
 );
-
-/**
- * Community service edit update schema (admin/moderator editing community service fields)
- */
-export const communityServiceEditUpdateSchema = z.object({
-  communityServiceId: z.string().uuid('Invalid community service ID format'),
-  communityServiceName: z.string().min(1).max(200).optional(),
-  communityServiceDescription: z.string().max(5000).nullable().optional(),
-  categoryId: z.string().uuid().optional(),
-  addressStreet: z.string().max(500).nullable().optional(),
-  addressZip: z.string().max(20).nullable().optional(),
-  addressCity: z.string().max(200).nullable().optional(),
-  addressCountry: z.string().max(200).nullable().optional(),
-  contactEmail: z.string().email().max(320).nullable().optional(),
-  contactPhone: z.string().max(50).nullable().optional(),
-  socialWebsite: z.string().url().max(2000).nullable().optional(),
-  socialInstagram: z.string().max(200).nullable().optional(),
-});

@@ -34,6 +34,10 @@ interface ProviderEditFormProps {
     reject: ProviderEditFooterAction;
     approve: ProviderEditFooterAction;
   };
+  /** When true, hides the "Soziale Initiativen" button in the Media section.
+   *  Used by the community service edit adapter (D9) since CS are the initiatives themselves.
+   *  Defaults to false — existing provider edit flows are unaffected. */
+  hideSocialInitiatives?: boolean;
 }
 
 interface ProviderEditFooterAction {
@@ -72,6 +76,7 @@ export function ProviderEditForm({
   enableLocalStorage = true,
   localStoragePrefix = '',
   reviewFooterActions,
+  hideSocialInitiatives = false,
 }: ProviderEditFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const websiteInputRef = useRef<HTMLInputElement>(null);
@@ -721,8 +726,8 @@ export function ProviderEditForm({
               </div>
             </button>
 
-            {/* Soziale Initiativen Field */}
-            <button
+            {/* Soziale Initiativen Field — hidden for community service edit (D9) */}
+            {!hideSocialInitiatives && <button
               className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
               type="button"
               onClick={() => router.push(`${editBaseUrl}/social`)}
@@ -739,7 +744,7 @@ export function ProviderEditForm({
               <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
                 <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
               </div>
-            </button>
+            </button>}
           </div>
           )}
         </div>

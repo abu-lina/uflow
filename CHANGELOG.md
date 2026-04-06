@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.14] - 2026-04-06
+
+### Added
+
+- **Community services admin edit UI — full ProviderEditForm adapter (Plan 083)**: Augments the stub CS edit surface shipped in v0.10.11 with a complete adapter-based implementation. Admins and moderators can now edit community services using the identical form used for providers (4-section accordion: Basics, Standort, Kontakt, Media; Approve/Reject footer). Key additions:
+  - `PATCH /api/admin/edit-community-service` — update CS fields with rate-limiting, size guard, Zod validation, audit log, concurrency conflict (409)
+  - `PATCH /api/admin/review-community-service` — approve/reject with mandatory rejection feedback
+  - `src/services/admin/communityServiceEdit.ts` — service layer with `getCommunityServiceForAdmin`, `updateCommunityServiceFields`, `updateCommunityServiceReview`
+  - `communityServiceEditUpdateSchema` and `communityServiceReviewUpdateSchema` enhanced in `adminSchemas.ts` (images array, expectedUpdatedAt for concurrency)
+  - `src/app/(dashboard)/dashboard/community-services/[id]/edit/page.tsx` — CS↔Provider adapter page using `ProviderEditForm`
+  - Category, offers, needs, images sub-pages (each adapted to query `community_services` table + `admin_cs_edit_*` localStorage keys)
+  - Image format conversion: CS native `TEXT[]` ↔ ProviderEditForm `{urls:[...]}` JSON string
+  - `hideSocialInitiatives` prop on `ProviderEditForm` (default `false`, backward-compatible)
+
 ## [0.10.13] - 2026-04-06
 
 ### Added

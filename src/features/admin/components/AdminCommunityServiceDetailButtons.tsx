@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useLanguage } from '@/providers/LanguageProvider';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Icon } from '@iconify/react';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface AdminCommunityServiceDetailButtonsProps {
   communityServiceId: string;
@@ -11,6 +11,13 @@ interface AdminCommunityServiceDetailButtonsProps {
   variant: 'mobile' | 'desktop';
 }
 
+/**
+ * Admin edit button for community service detail views.
+ * Navigates to /dashboard/community-services/${communityServiceId}/edit.
+ *
+ * Plan 083 — M4. Mirrors AdminProviderDetailButtons for community services.
+ * Only rendered when the current user is admin (responsibility of the caller).
+ */
 export function AdminCommunityServiceDetailButtons({
   communityServiceId,
   variant,

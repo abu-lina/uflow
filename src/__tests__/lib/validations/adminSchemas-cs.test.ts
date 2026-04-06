@@ -74,10 +74,10 @@ describe('communityServiceEditUpdateSchema', () => {
     expect(JSON.stringify(result.error?.issues)).toContain('categoryId');
   });
 
-  it('rejects communityServiceName longer than 200 characters', () => {
+  it('rejects serviceName longer than 200 characters', () => {
     const result = communityServiceEditUpdateSchema.safeParse({
       communityServiceId: VALID_UUID,
-      communityServiceName: 'A'.repeat(201),
+      serviceName: 'A'.repeat(201),
     });
     expect(result.success).toBe(false);
   });

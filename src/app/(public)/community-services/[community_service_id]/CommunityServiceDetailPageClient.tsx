@@ -1,20 +1,18 @@
 'use client';
 
-import { notFound, useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
-import { useCommunityService } from '@/hooks/useCommunityServices';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import type { CommunityService } from '@/services/communityServices';
-import type { Provider } from '@/services/providers';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 import { AdminCommunityServiceDetailButtons } from '@/features/admin/components/AdminCommunityServiceDetailButtons';
 
-// Lazy load the ProviderDetailModal (Plan 082: M3/D4 — reuse provider design system for desktop)
-// @deprecated-replaced: CommunityServiceDetailModal is replaced by ProviderDetailModal for this page (Plan 082)
-const ProviderDetailModal = dynamic(
-  () => import('@/components/providers/ProviderDetailModal').then(mod => ({ default: mod.ProviderDetailModal })),
+// Lazy load heavy modal component - only loads when needed (desktop view)
+const CommunityServiceDetailModal = dynamic(
+  () => import('@/components/community-services/CommunityServiceDetailModal').then(mod => ({ default: mod.CommunityServiceDetailModal })),
   {
     loading: () => (
       <div className="flex min-h-screen items-center justify-center">
@@ -25,7 +23,7 @@ const ProviderDetailModal = dynamic(
   }
 );
 
-// Lazy load provider detail page component for mobile
+// Lazy load provider detail page component - only loads on mobile
 const ProviderDetailPageComponent = dynamic(
   () => import('@/components/providers/ProviderDetailPage').then(mod => ({ default: mod.ProviderDetailPage })),
   {
@@ -43,165 +41,92 @@ const ProviderDetailPageComponent = dynamic(
   }
 );
 
+interface CommunityServiceDetailPageClientProps {
+  communityService: CommunityService;
+}
+
 /**
- * Transform a CommunityService to the Provider shape required by ProviderDetailModal
- * and ProviderDetailPage. Exported for testability (Plan 082: M4).
- *
- * Key: community_service_id is propagated so ProviderDetailModal can detect the entity
- * type and use bookmarkableType: 'community_service' (Critic F1 fix).
+ * Transforms a CommunityService record into the Provider shape expected by
+ * ProviderDetailModal and ProviderDetailPage. Exported for unit testing.
  */
-export function buildProviderShapeFromCommunityService(cs: CommunityService): Provider {
+export function buildProviderShapeFromCommunityService(communityService: CommunityService) {
   return {
-    // Use community_service_id as provider_id so downstream components have a stable ID
-    provider_id: cs.community_service_id,
-    provider_name: cs.community_service_name,
-    // ProviderDetailModal parses provider_images as JSON string: { urls: string[] }
-    provider_images:
-      cs.community_service_images && cs.community_service_images.length > 0
-        ? JSON.stringify({ urls: cs.community_service_images })
-        : null,
-    category_id: cs.category_id ?? null,
-    address_city: cs.address_city ?? null,
-    address_street: cs.address_street ?? null,
-    address_zip: cs.address_zip ?? null,
-    address_country: cs.address_country ?? null,
-    social_website: cs.social_website ?? null,
-    social_instagram: cs.social_instagram ?? null,
-    contact_email: cs.contact_email ?? null,
-    contact_phone: cs.contact_phone ?? null,
-    location_latitude: cs.location_latitude ?? null,
-    location_longitude: cs.location_longitude ?? null,
-    created_at: cs.created_at,
-    updated_at: cs.updated_at,
-    barakah_effects: cs.barakah_effects ?? [],
-    offers_ids: cs.offers_ids ?? [],
-    needs_ids: cs.needs_ids ?? [],
-    // F6 fix: map description field so it's available if components render it
-    description: cs.community_service_description ?? null,
-    offers: cs.offers ?? [],
-    needs: cs.needs ?? [],
-    category: cs.category
-      ? {
-          name_de: cs.category.name_de ?? '',
-          name_en: cs.category.name_en,
-          category_images: cs.category.category_images,
-        }
-      : undefined,
-    show_address: cs.show_address,
-    badges: cs.badges ?? [],
-    // KEY: Must be set so ProviderDetailModal detects this as a community service
-    // and uses bookmarkableType: 'community_service' (Critic F1)
-    community_service_id: cs.community_service_id,
+    provider_id: communityService.community_service_id,
+    provider_name: communityService.community_service_name,
+    description: communityService.community_service_description ?? null,
+    provider_images: communityService.community_service_images ? JSON.stringify({ urls: communityService.community_service_images }) : null,
+    category_id: communityService.category_id || null,
+    address_city: communityService.address_city || null,
+    social_website: communityService.social_website || null,
+    social_instagram: communityService.social_instagram || null,
+    contact_email: communityService.contact_email || null,
+    contact_phone: communityService.contact_phone || null,
+    address_street: communityService.address_street || null,
+    address_country: communityService.address_country || null,
+    address_zip: communityService.address_zip || null,
+    location_latitude: communityService.location_latitude || null,
+    location_longitude: communityService.location_longitude || null,
+    created_at: communityService.created_at,
+    updated_at: communityService.updated_at,
+    barakah_effects: communityService.barakah_effects || [],
+    offers_ids: communityService.offers_ids || [],
+    needs_ids: communityService.needs_ids || [],
+    offers: communityService.offers || [],
+    needs: communityService.needs || [],
+    category: communityService.category ? {
+      name_de: communityService.category.name_de || '',
+      name_en: communityService.category.name_en,
+      category_images: communityService.category.category_images
+    } : undefined,
+    community_service_id: communityService.community_service_id,
+    badges: communityService.badges ?? [],
   };
 }
 
-interface CommunityServiceDetailPageClientProps {
-  communityServiceId: string;
-  initialData?: CommunityService | null;
-}
-
-/**
- * Client component for community service detail page (Plan 082: M3)
- *
- * Architecture parity with ProviderDetailPageClient:
- * - Uses useCommunityService React Query hook for client-side caching + re-fetch
- * - Shows loading skeleton when no initialData
- * - Calls notFound() only after React Query confirms error/null
- * - Desktop: renders via ProviderDetailModal for full design system compliance
- * - Mobile: renders via ProviderDetailPage (already supports community services)
- */
-export function CommunityServiceDetailPageClient({
-  communityServiceId,
-  initialData,
+export function CommunityServiceDetailPageClient({ 
+  communityService 
 }: CommunityServiceDetailPageClientProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { isAdmin } = useIsAdmin();
-  const { data: communityService, isLoading, error } = useCommunityService({
-    communityServiceId,
-    initialData,
-    enabled: true,
-  });
+
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = () => {
+      router.back();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [router]);
 
   const handleClose = () => {
     router.back();
   };
 
-  // Show loading skeleton while fetching (only if no initial data)
-  if (isLoading && !initialData) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <div className="sticky top-0 z-50 border-b border-neutral-200 bg-white px-6 pb-4 pt-[calc(env(safe-area-inset-top)+16px)]">
-          <Skeleton className="h-8 w-32" />
-        </div>
-        <div className="flex-1 px-6 py-8">
-          <div className="mx-auto max-w-[361px] space-y-6">
-            <Skeleton className="aspect-[4/3] w-full rounded-2xl" />
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-5 w-1/2" />
-            <div className="flex gap-3">
-              <Skeleton className="h-12 flex-1 rounded-xl" />
-              <Skeleton className="h-12 flex-1 rounded-xl" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Transform community service to Provider format for compatibility with ProviderDetailPage
+  const providerData = buildProviderShapeFromCommunityService(communityService);
 
-  // Graceful not-found: only after React Query confirms data is missing
-  if (error || (!isLoading && !communityService)) {
-    return notFound();
-  }
-
-  // Data available — build the provider-compatible shape
-  const providerShape = communityService
-    ? buildProviderShapeFromCommunityService(communityService)
-    : null;
-
-  if (!providerShape) {
-    return notFound();
-  }
-
-  // Desktop: render through ProviderDetailModal for full design system compliance
+  // On desktop, show modal; on mobile, show full page
   if (!isMobile) {
     return (
-      <ProviderDetailModal
+      <CommunityServiceDetailModal
+        communityService={communityService}
         customActionButtons={
-          isAdmin ? (
-            <AdminCommunityServiceDetailButtons
-              communityServiceId={communityServiceId}
-              variant="desktop"
-            />
-          ) : undefined
+          isAdmin ? <AdminCommunityServiceDetailButtons communityServiceId={communityService.community_service_id} variant="desktop" /> : undefined
         }
-        initialCommunityServices={[]} // Community services don't have sub-services
-        provider={providerShape}
         onClose={handleClose}
       />
     );
   }
 
-  // Mobile: render through ProviderDetailPage (already supports community services
-  // via isCommunityService check at line 141 of ProviderDetailPage.tsx)
   return (
     <ProviderDetailPageComponent
       customActionButtons={
-        isAdmin ? (
-          <AdminCommunityServiceDetailButtons
-            communityServiceId={communityServiceId}
-            variant="mobile"
-          />
-        ) : undefined
+        isAdmin ? <AdminCommunityServiceDetailButtons communityServiceId={communityService.community_service_id} variant="mobile" /> : undefined
       }
-      provider={providerShape}
+      provider={providerData}
     />
   );
 }
-
 
