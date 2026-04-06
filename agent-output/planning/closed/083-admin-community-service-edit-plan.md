@@ -2,8 +2,8 @@
 ID: 083
 Origin: 082
 UUID: d7f2a41c
-Status: Active
-Target Release: next available patch after current origin/main version (v0.10.9); confirm at DevOps Stage 1
+Status: Released
+Target Release: v0.10.11 (2026-04-06)
 Related Issues: Analysis 083 (F2: admin CS edit route — this plan); Plan 082 (F1: profile provider RLS — handled there as M8); Plan 082 D7 (admin action buttons already in place); Plan 082 open-actions OA-1 (admin CS edit route placeholder)
 ---
 
@@ -15,6 +15,9 @@ Related Issues: Analysis 083 (F2: admin CS edit route — this plan); Plan 082 (
 |------------|-------|-------|
 | 2026-04-06T00:15Z | analyst | Analysis 083 created — F1 (profile RLS) + F2 (admin CS edit route) |
 | 2026-04-06T01:30Z | planner | Plan 083 created from Analysis 083 F2; inherits ID/Origin/UUID. F1 taken by Plan 082 M8. |
+| 2026-04-06T10:20Z | code-reviewer | Re-review after implementer fix pass (`49f97fc3`) approved with comments; all prior findings resolved and QA gate opened. |
+| 2026-04-06T10:26Z | qa | All quality gates passed (853 tests, tsc 0 errors, lint 0 new, build success); all user workflows validated; QA Complete. |
+| 2026-04-06T10:30Z | uat | Value statement validated; all objectives delivered (M1-M7, M9-M10); M8 deferred with formal risk acceptance; release decision APPROVED FOR RELEASE. |
 
 ## Value Statement and Business Objective
 

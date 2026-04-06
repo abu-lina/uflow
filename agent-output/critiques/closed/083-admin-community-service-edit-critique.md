@@ -2,7 +2,7 @@
 ID: 083
 Origin: 082
 UUID: d7f2a41c
-Status: Open
+Status: Resolved
 ---
 
 # Critique 083 — Admin Community Service Edit Page

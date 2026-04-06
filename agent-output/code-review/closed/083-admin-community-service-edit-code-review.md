@@ -2,7 +2,7 @@
 ID: 083
 Origin: 082
 UUID: d7f2a41c
-Status: In Review
+Status: Committed
 ---
 
 # Code Review: Plan 083 — Admin Community Service Edit Page
@@ -18,6 +18,7 @@ Reviewer: Code Reviewer
 | Date | Agent Handoff | Request | Summary |
 |---|---|---|---|
 | 2026-04-06 | Implementer -> Code Reviewer | Review implementation before QA | 2 high, 2 medium, 1 low finding; verdict REJECTED |
+| 2026-04-06 | Implementer -> Code Reviewer | Re-review fix pass commit `49f97fc3` before QA | Verified all 5 findings resolved; verdict APPROVED_WITH_COMMENTS |
 
 ## Scope & Checklist Applicability
 
@@ -58,63 +59,39 @@ Reviewer: Code Reviewer
 
 ## Architecture Alignment
 
-Status: MINOR_DEVIATIONS
+Status: ALIGNED_WITH_ACCEPTED_RISK
 
 - Positive: Admin API/service layering aligns with existing provider moderation architecture and role-gated server routes.
-- Deviation: Planned scope includes Milestone 8 sub-pages (category/offers/needs/images/social) as in-scope and required in validation, but implementation explicitly defers M8.
+- Accepted risk: Planned Milestone 8 sub-pages remain deferred, but this now has explicit release-risk acceptance with approver and rationale in `agent-output/planning/083-open-actions.md` (OA-1).
 
 ## TDD Compliance Check
 
 - TDD table present in implementation doc: Yes
 - All rows complete: Yes
-- Concerns:
-  - Multiple rows are explicitly marked post-fix/retroactive rather than test-first.
-  - Schema validation behavior is not directly tested; API tests mock `adminSchemas` parse methods (see M2).
+- Notes:
+  - Multiple rows remain explicitly marked post-fix/retroactive rather than test-first.
+  - Prior schema-coverage gap is resolved with direct unit tests in `src/__tests__/lib/validations/adminSchemas-cs.test.ts` (18 tests, real Zod via `vi.unmock('zod')`).
 
 ## Findings
 
-### High
+No open blocking findings.
 
-1. Planned Milestone 8 scope not implemented (constraint-sensitive)
-- Severity: High
-- Location:
-  - `agent-output/planning/083-admin-community-service-edit-plan.md:189` (M8 declared in-scope)
-  - `agent-output/planning/083-admin-community-service-edit-plan.md:295` (Validation requires sub-page navigation functionality)
-  - `agent-output/implementation/083-admin-community-service-edit-implementation.md:45` (M8 marked deferred)
-  - `agent-output/implementation/083-admin-community-service-edit-implementation.md:189` (Outstanding: M8 deferred)
-  - `src/app/(dashboard)/dashboard/community-services/[id]/edit/page.tsx` is the only file under this route; no sub-page files exist.
-- Issue: The approved plan defines M8 sub-page routes as in-scope with explicit acceptance criteria and includes them in validation. The implementation defers M8 without an explicit "risk accepted for this release" disposition by an approver.
-- Recommendation: Either (a) implement M8 sub-pages before QA, or (b) obtain explicit release-risk acceptance and update plan + implementation + open-actions with approver and rationale.
+### Resolved Findings Verification
 
-2. Validation error logging captures raw request body (PII/log-injection risk)
-- Severity: High
-- Location: `src/app/api/admin/edit-community-service/route.ts:64`
-- Issue: On validation failure, logger records `{ body, error }` directly. This can persist unsanitized user input and contact fields (email/phone) to logs. Existing provider review route already avoids raw-body logging and logs whitelisted keys only.
-- Recommendation: Replace raw-body logging with whitelisted fields (e.g., `communityServiceId`, `reviewStatus`-style pattern) and never log full request payloads.
+1. H1 (M8 disposition): RESOLVED
+- Evidence: `agent-output/planning/083-open-actions.md` adds OA-1 with explicit risk acceptance, named approver, rationale, and trigger.
 
-### Medium
+2. H2 (raw body logging): RESOLVED
+- Evidence: `src/app/api/admin/edit-community-service/route.ts` now logs only whitelisted keys (`communityServiceId`, truncated `communityServiceName`, `error`) instead of raw payload.
 
-1. Review feedback can remain stale after approve/needs_revision transitions
-- Severity: Medium
-- Location: `src/services/admin/communityServices.ts:142`
-- Issue: `updateCommunityServiceReview` only sets `review_feedback` when non-null feedback is provided. For approve/needs_revision actions, route passes `null`, but service does not clear existing `review_feedback`, allowing stale rejection text to persist.
-- Recommendation: Align with provider semantics: always set `review_feedback` to sanitized value or `null` based on the validated payload.
+3. M1 (stale review feedback): RESOLVED
+- Evidence: `src/services/admin/communityServices.ts` now always sets `review_feedback` in update payload and sanitizes non-null input.
 
-2. Schema behavior is not truly covered by tests
-- Severity: Medium
-- Location:
-  - `src/__tests__/api/admin-edit-community-service.test.ts:13`
-  - `src/__tests__/api/admin-review-community-service.test.ts:13`
-- Issue: API tests mock `communityServiceEditUpdateSchema` and `communityServiceReviewUpdateSchema` parse methods, so real schema constraints in `src/lib/validations/adminSchemas.ts` are not validated by tests.
-- Recommendation: Add direct schema unit tests for valid/invalid payloads and rejection-feedback requirement; keep route tests focused on route behavior.
+4. M2 (schema coverage gap): RESOLVED
+- Evidence: `src/__tests__/lib/validations/adminSchemas-cs.test.ts` added with 18 direct schema tests; test file explicitly un-mocks Zod to exercise real validators.
 
-### Low / Info
-
-1. Stale document path after critique file move
-- Severity: Low
-- Location: `agent-output/implementation/082-community-service-detail-parity-implementation.md:21`
-- Issue: References `agent-output/critiques/082-community-service-detail-parity-critique.md`, but file was moved to `agent-output/critiques/closed/082-community-service-detail-parity-critique.md`.
-- Recommendation: Update the reference path for documentation integrity.
+5. L1 (stale critique path): RESOLVED
+- Evidence: `agent-output/implementation/082-community-service-detail-parity-implementation.md` now references the moved critique path under `agent-output/critiques/closed/`.
 
 ## Positive Observations
 
@@ -124,18 +101,14 @@ Status: MINOR_DEVIATIONS
 
 ## Verdict
 
-Status: REJECTED
+Status: APPROVED_WITH_COMMENTS
 
-Rationale: Two high-severity issues block QA handoff: (1) plan-constrained in-scope functionality (M8 sub-pages) is deferred without explicit risk acceptance, and (2) raw payload logging in an admin API route introduces avoidable security/privacy risk. Medium issues further indicate correctness and coverage gaps.
+Rationale: The implementer fix pass fully addresses the prior 2 high, 2 medium, and 1 low findings. Remaining deviation (M8 sub-pages deferred) now has explicit release risk acceptance and tracking, so it no longer blocks QA.
 
 ## Required Actions Before QA
 
-1. Resolve M8 disposition: implement sub-pages OR obtain explicit release risk acceptance with named approver and synchronized artifact updates.
-2. Remove raw request-body logging from `edit-community-service` validation failure path.
-3. Ensure review feedback is explicitly cleared when review status is approved/needs_revision.
-4. Add real schema unit tests for `communityServiceEditUpdateSchema` and `communityServiceReviewUpdateSchema`.
-5. Fix stale critique path reference in Implementation 082 doc.
+None.
 
 ## Next Step
 
-Handoff back to Implementer for fixes. QA should not start until re-review passes.
+Handing off to qa agent for test execution.

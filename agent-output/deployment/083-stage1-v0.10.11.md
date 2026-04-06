@@ -2,7 +2,7 @@
 ID: 083
 Origin: 082
 UUID: d7f2a41c
-Status: Stage 1 Complete
+Status: Released
 ---
 
 # Deployment: Plan 083 — Stage 1 (Local Commit)
@@ -16,6 +16,11 @@ Status: Stage 1 Complete
 | Date (UTC) | Agent | Event |
 |------------|-------|-------|
 | 2026-04-06T10:45Z | DevOps | Stage 1: acknowledged UAT APPROVED FOR RELEASE; executed pre-flight, lifecycle closures, local commit |
+| 2026-04-06T11:00Z | DevOps | Stage 2: User approved release v0.10.11 |
+| 2026-04-06T11:00Z | DevOps | Stage 2: Branch pushed — `12922809..54e6ac9d` to origin/session/81-community-service-open |
+| 2026-04-06T11:01Z | DevOps | Stage 2: Tag `v0.10.11` created and pushed to origin |
+| 2026-04-06T11:01Z | DevOps | Stage 2: UAT deploy workflow triggered (run ID: 24026052765) |
+| 2026-04-06T11:05Z | DevOps | Stage 2: Post-release docs updated; roadmap synced |
 
 ---
 
@@ -37,8 +42,8 @@ Status: Stage 1 Complete
 | **Version** | v0.10.11 |
 | **Type** | Feature (minor — new admin CRUD surface) + Bugfix (profile provider RLS import) |
 | **Plans** | Plan 083 (admin CS edit page, M1-M7+M9-M10); Plan 082 M8 (profile provider RLS fix) — bundled |
-| **Commits** | `6bf86d8c` + `49f97fc3` (local; not yet pushed) |
-| **Branch** | `session/81-community-service-open` (2 commits ahead of origin after Stage 1) |
+| **Commits** | `6bf86d8c` (feat 083) + `49f97fc3` (CR fix pass) + `54e6ac9d` (Stage 1 docs) |
+| **Branch** | `session/81-community-service-open` — pushed `12922809..54e6ac9d` to origin |
 | **Epic** | Session 81: Community Service Open |
 
 ---
@@ -156,7 +161,47 @@ Ahead count: 2
 
 ## User Confirmation Block
 
-**Stage 2 is NOT authorized until user explicitly approves.**
+| Field | Value |
+|-------|-------|
+| **Authorization** | ✅ APPROVED |
+| **Approver** | User (explicit "approved" response) |
+| **Timestamp** | 2026-04-06T11:00Z (approx.) |
+| **Summary presented** | Version v0.10.11, 3 commits, Plan 083 + Plan 082 M8, 853 tests passing, 0 vulnerabilities |
+
+---
+
+## Stage 2 Execution
+
+### Branch Push
+
+```
+git push -u origin session/81-community-service-open
+→ 12922809..54e6ac9d  session/81-community-service-open -> session/81-community-service-open
+→ 92 objects pushed (59.33 KiB)
+→ Upstream tracking set
+```
+
+**Pre-existing vulnerability note**: GitHub Dependabot #46 (1 moderate) on default branch — same pre-existing issue noted at Plan 081 Stage 2 (memory `a883dc7b`). Not introduced by this release.
+
+**PR comparison URL**: https://github.com/abu-lina/uflow/compare/main...session/81-community-service-open
+
+### Tag Creation
+
+```
+git tag -a v0.10.11 -m "Release v0.10.11 — Plan 083 admin community service edit/review + Plan 082 M8 profile provider RLS fix"
+git push origin v0.10.11
+→ * [new tag] v0.10.11 -> v0.10.11
+```
+
+Tag list post-push: `v0.10.5, v0.10.6, v0.10.7, v0.10.8, v0.10.9, v0.10.11` ✅
+
+### UAT Deploy Workflow
+
+```
+gh workflow run deploy-uat.yml --ref session/81-community-service-open
+→ ✓ Created workflow_dispatch event at session/81-community-service-open
+Run ID: 24026052765 — Status: in_progress (at time of doc update)
+```
 
 ---
 
@@ -172,11 +217,16 @@ Ahead count: 2
 
 ## Next Actions
 
-1. ✅ Stage 1 complete — commit `docs(083): stage 1 — close plan 083 and critique, qa, uat docs` local
-2. ⏳ Present Stage 2 summary to user for release approval
-3. After Stage 2 approval: push branch, create tag `v0.10.11`, trigger UAT deploy
-4. After Stage 2 push: update plan 083 status to Released, update roadmap
-5. Follow-on: Plan 082 UAT completion → separate Stage 1 commit
+1. ✅ Stage 1 complete — commit `docs(083): Stage 1 — close Plan 083 docs, commit for v0.10.11`
+2. ✅ Stage 2 approved — user "approved" 2026-04-06T11:00Z
+3. ✅ Branch pushed `12922809..54e6ac9d` to `origin/session/81-community-service-open`
+4. ✅ Tag `v0.10.11` created and pushed to origin
+5. ✅ UAT deploy triggered (run ID: 24026052765)
+6. ✅ Plan 083 status updated to Released; roadmap synced
+7. ⏳ Monitor UAT deploy workflow completion (run ID: 24026052765)
+8. ⏳ Manual browser smoke tests (PR comparison URL checked for conflicts)
+9. Follow-on: Plan 082 UAT completion → separate Stage 1 commit
+10. Follow-on: OA-1 M8 sub-pages (tracked in `agent-output/planning/083-open-actions.md`)
 
 ---
 
@@ -186,12 +236,18 @@ Ahead count: 2
 {
   "plan_id": "083",
   "version": "v0.10.11",
-  "stage": "Stage 1 (Committed)",
+  "stage": "Stage 2 (Released)",
   "branch": "session/81-community-service-open",
-  "commits": ["6bf86d8c", "49f97fc3"],
-  "date": "2026-04-06T10:45Z",
+  "commits": ["6bf86d8c", "49f97fc3", "54e6ac9d"],
+  "stage1_date": "2026-04-06T10:45Z",
+  "stage2_date": "2026-04-06T11:00Z",
+  "tag": "v0.10.11",
+  "tag_pushed": true,
+  "uat_workflow_run_id": "24026052765",
   "author": "DevOps Agent",
   "uat_approver": "UAT Agent",
-  "included_plans": ["083", "082-M8"]
+  "user_approver": "User (explicit approval)",
+  "included_plans": ["083", "082-M8"],
+  "pr_url": "https://github.com/abu-lina/uflow/compare/main...session/81-community-service-open"
 }
 ```
