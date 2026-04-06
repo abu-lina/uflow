@@ -2,7 +2,7 @@
 ID: 083
 Origin: 083
 UUID: f7a2d8c3
-Status: Testing In Progress
+Status: Committed
 ---
 
 # QA Report: 083 — Community Services Edit UI
@@ -93,7 +93,7 @@ Community services edit UI must match provider edit UI visually and functionally
 - `src/components/providers/ProviderEditForm.tsx` — Added `hideSocialInitiatives` prop
 - `src/components/community-services/CommunityServiceDetailModal.tsx` — Added `customActionButtons` prop
 - `src/app/(public)/community-services/[community_service_id]/CommunityServiceDetailPageClient.tsx` — Admin button integration
-- `package.json` — Version bump to 0.10.12
+- `package.json` — Version bump to 0.10.13 (bumped from 0.10.12 at DevOps Stage 1 — tag collision with session/82)
 - `package-lock.json` — Lockfile alignment
 - `CHANGELOG.md` — Release notes
 

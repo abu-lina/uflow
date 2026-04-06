@@ -2,7 +2,7 @@
 ID: 083
 Origin: 083
 UUID: f7a2d8c3
-Status: Active
+Status: Committed
 ---
 
 # 083 — Community Services Edit UI — Implementation
@@ -47,7 +47,7 @@ N/A — no performance targets specified in this plan.
 - [x] M2 — Admin Community Service Edit Page (adapter + `hideSocialInitiatives` prop)
 - [x] M3 — Edit Sub-Pages (category, offers, needs, images)
 - [x] M4 — Navigation Entry Point (AdminCommunityServiceDetailButtons + CommunityServiceDetailModal customActionButtons prop)
-- [x] M5 — Version and Release Artifacts (v0.10.12 preliminary, CHANGELOG entry)
+- [x] M5 — Version and Release Artifacts (v0.10.13, CHANGELOG entry; v0.10.12 collision resolved at DevOps Stage 1)
 
 ---
 
@@ -59,9 +59,9 @@ N/A — no performance targets specified in this plan.
 | `src/components/providers/ProviderEditForm.tsx` | Added `hideSocialInitiatives?: boolean` prop; conditional render of Soziale Initiativen button (D9) | +8 |
 | `src/components/community-services/CommunityServiceDetailModal.tsx` | Added `customActionButtons?: React.ReactNode` prop; renders near close button in desktop modal | +7 |
 | `src/app/(public)/community-services/[community_service_id]/CommunityServiceDetailPageClient.tsx` | Added `useIsAdmin` + `AdminCommunityServiceDetailButtons` imports; passes admin edit button to both modal and page | +15 |
-| `package.json` | Version bump: `0.10.8` → `0.10.12` (preliminary) | +1 |
+- `package.json` — Version bump: `0.10.8` → `0.10.13` (v0.10.12 collision resolved at DevOps Stage 1) | +1 |
 | `package-lock.json` | Lockfile alignment after version bump | auto |
-| `CHANGELOG.md` | Added v0.10.12 entry documenting all Plan 083 additions | +20 |
+| `CHANGELOG.md` | Added v0.10.13 entry documenting all Plan 083 additions (bumped from 0.10.12 at DevOps Stage 1 — tag collision) | +20 |
 
 ---
 
@@ -92,7 +92,7 @@ N/A — no performance targets specified in this plan.
 - [x] `npm run type-check` exits 0 (0 errors)
 - [x] `npm run lint` exits 0 (0 errors, 18 pre-existing warnings in unmodified files)
 - [x] `node_modules/.bin/vitest run` — 819 tests passed, 0 failed
-- [x] Lockfile aligned: `package-lock.json` shows `"version": "0.10.12"` matching `package.json`
+- [x] Lockfile aligned: `package-lock.json` shows `"version": "0.10.13"` matching `package.json`
 
 ---
 
@@ -171,8 +171,8 @@ Manual browser verification is QA/UAT responsibility. Validation steps per plan:
 
 ## Version Bump
 
-Version bumped to **0.10.12** (preliminary — final version confirmed at DevOps Stage 1).
-`package.json` and `package-lock.json` both show `"version": "0.10.12"`.
+Version bumped to **0.10.13** (v0.10.12 tag already existed on origin — Plan 082/session-82 released first; bumped at DevOps Stage 1 per §8c).
+`package.json` and `package-lock.json` both show `"version": "0.10.13"`.
 
 ---
 
