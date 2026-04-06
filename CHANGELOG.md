@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.15] - 2026-04-06
+
+### Fixed
+
+- **Profile page provider cards navigate to correct detail page (Plan 085 / Issue #125)**: Clicking a provider card in the "Deine Inhalte" or "Recommendations" sections of the profile page now navigates to the public detail page `/providers/:id` instead of the owner-scoped `/profile/providers/:id` (which returned a 404 or triggered a middleware redirect in early-access mode). Recommendations cards previously navigated directly to `/profile/providers/:id/edit` (the edit page) on click — these now correctly navigate to the public detail page as well. The desktop "Deine Inhalte" (created) tab provider cards, which had no click handler at all, now navigate to `/providers/:id` for parity with the mobile layout. All edit-flow internal navigation links (ProviderEditPage, ProviderEditForm, ProfileProviderDetailButtons, ProfileProviderDetailPage) are unchanged. Community service links in the same sections already routed correctly and are unaffected.
+
 ## [0.10.14] - 2026-04-06
 
 ### Added
