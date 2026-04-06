@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-06
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.12
+**Current Version**: v0.10.13
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -69,6 +69,7 @@
 | 2026-04-05       | Plan 081 released (v0.10.9): Community service open (partial)          | Community service detail page parity, ProviderDetailModal in CS view, profile provider RLS fix (M8); M9/M10 admin CS edit deferred to Plan 083 |
 | 2026-04-06       | Plan 083 released (v0.10.11): Admin community service edit/review       | Full admin CRUD for community services — edit fields, approve, reject with feedback, request revision; Plan 082 M8 profile provider RLS fix bundled |
 | 2026-04-06       | Plan 082 (S82) released (v0.10.12): Saved page search bar visibility fix | SearchBar now remains visible and interactive in no-results state on /saved; lifted out of conditional branch chain; eliminates dead-end search state on mobile |
+| 2026-04-06       | Plan 084 released (v0.10.13): GitHub Issues integration for workflow pipeline | Planner creates GitHub Issues on plan finalization; DevOps closes on release; 7 custom labels; 5 YAML issue form templates for manual issue creation |
 
 ---
 
@@ -89,12 +90,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.12 — Released 2026-04-06
+**Current Working Release**: v0.10.13 — Released 2026-04-06
 
-_Plan 082 S82 released (2026-04-06) — Saved page SearchBar visibility fix (Issue #82). SearchBar lifted outside conditional chain; no-results dead-end eliminated. Tag v0.10.12 pushed. PR: https://github.com/abu-lina/uflow/compare/main...session/82-saved-search-bar-disappears — DF-1/DF-2 (manual browser validation) tracked in 082-open-actions.md._
+_Plan 084 released (2026-04-06) — GitHub Issues integration for workflow pipeline. Planner agent now creates GitHub Issues via `gh issue create --body-file`; DevOps Stage 2 closes issues on release; 7 custom labels; 5 YAML issue form templates. Tag v0.10.13 pushed._
 
-**Release Status**: Released  
-**Ready for Release**: ✅ v0.10.12 complete  
+**Release Status**: Released
+**Ready for Release**: ✅ v0.10.13 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -111,6 +112,7 @@ _Plan 082 S82 released (2026-04-06) — Saved page SearchBar visibility fix (Iss
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.13 | 2026-04-06 | Plan 084 (GitHub Issues integration for workflow pipeline) | Released |
 | v0.10.12 | 2026-04-06 | Plan 082 S82 (Saved page SearchBar visibility fix — Issue #82) | Released |
 | v0.10.11 | 2026-04-06 | Plan 083 (Admin CS edit/review) + Plan 082 M8 (profile provider RLS fix) | Released |
 | v0.10.9 | 2026-04-05 | Plan 081 (Community service detail parity + ProviderDetailModal in CS view) | Released |
