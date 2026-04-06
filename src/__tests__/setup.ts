@@ -42,7 +42,10 @@ vi.mock('sonner', () => ({
   toast: vi.fn(),
 }));
 
-// Mock zod
+// Mock zod — speeds up route/API tests that import schemas.
+// IMPORTANT: Schema unit test files must call vi.unmock('zod') before the first
+// describe block, or parse() will always return { success: true } regardless of
+// actual validation constraints. See memories/repo/testing-conventions.md.
 const mockParse = vi.fn().mockReturnValue({
   email: 'test@example.com',
   password: 'password123',

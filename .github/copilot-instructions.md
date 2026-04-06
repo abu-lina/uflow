@@ -172,6 +172,8 @@ describe('Component', () => {
 });
 ```
 
+> **Global Zod mock warning**: `src/__tests__/setup.ts` mocks `zod` globally so route tests that import schemas stay fast. Schema unit test files **must** call `vi.unmock('zod')` before the first `describe` block, or all `parse()` calls silently return `{ success: true }` regardless of actual constraints. See `memories/repo/testing-conventions.md`.
+
 ### Bugfix Handoff Completeness
 
 For bugfix work, do not hand off to QA until all of the following exist when applicable:
@@ -192,6 +194,14 @@ When a bug is caused by client-side state precedence, stale context, URL-param r
 - Make the bug visible in the test naming, for example `[pre-fix FAILS]` and `[post-fix PASSES]`
 
 Use SSR or integration tests only as supplementary coverage when they actually exercise the bug path.
+
+#### Implementation Handoff Completeness (Feature + Milestone Work)
+
+Before submitting any implementation for code review, verify:
+
+- All plan milestones marked `[ ]` (deferred) that were **RESOLVED as in-scope** in the plan have a corresponding entry in `agent-output/planning/{ID}-open-actions.md` with a named approver and rationale
+- The implementation doc changelog has an entry noting the scope change
+- The Code Reviewer must check: for each RESOLVED in-scope milestone left `[ ]`, a matching open-actions entry exists — a missing entry is a **HIGH finding**
 
 ## Code Conventions
 
@@ -248,6 +258,7 @@ Detailed expert rules exist in `.cursor/rules/`:
 5. **Environment Variables**: All Supabase vars are in `.env.local` (never commit)
 6. **Premature Optimization**: Don't add Redis/queues before proving Postgres can't handle it
 7. **Parallel Sessions**: See the dedicated section below.
+8. **Admin route logging**: Never log raw `body`, `payload`, or the full request object in admin API error/validation paths — use whitelisted keys only (e.g., `{ id: body?.id, error: e.message }`). Raw request logging can persist PII to log storage.
 
 ## Parallel Session Awareness (All Agents)
 
