@@ -545,7 +545,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     likes={provider.bookmark_count || 0}
                     savedText={t('actions.saved')}
                     title={provider.provider_name}
-                    onClick={() => router.push(`/profile/providers/${provider.provider_id}`)}
+                    onClick={() => router.push(`/providers/${provider.provider_id}`)}
                   />
                 ))}
                 {createdCommunityServices.map((communityService) => (
@@ -590,7 +590,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     likes={provider.bookmark_count || 0}
                     savedText={t('actions.saved')}
                     title={provider.provider_name}
-                    onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit`)}
+                    onClick={() => router.push(`/providers/${provider.provider_id}`)}
                   />
                 ))}
                 {recommendedCommunityServices.map((communityService) => (
@@ -787,6 +787,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       category={getCategoryName(provider.category)}
                       imageUrl={getProviderImageUrl(provider)}
                       title={provider.provider_name}
+                      onClick={() => router.push(`/providers/${provider.provider_id}`)}
                     />
                   );
                 })}
@@ -882,7 +883,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       category={getCategoryName(provider.category)}
                       imageUrl={getProviderImageUrl(provider)}
                       title={provider.provider_name}
-                      onClick={() => router.push(`/profile/providers/${provider.provider_id}/edit`)}
+                      onClick={() => router.push(`/providers/${provider.provider_id}`)}
                     />
                   );
                 })}
