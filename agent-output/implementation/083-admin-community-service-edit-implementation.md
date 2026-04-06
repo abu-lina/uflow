@@ -12,6 +12,7 @@ Status: Active
 | Date (UTC) | Handoff | Request | Summary |
 |------------|---------|---------|---------|
 | 2026-04-06T09:30Z | Planner + Critic → Implementer | Implement Plan 083 (10 milestones) | Admin CRUD surface for community services |
+| 2026-04-06T10:00Z | Code Reviewer → Implementer | Fix 5 code review findings (REJECTED verdict) | H2: safe logging in edit route; H1: M8 deferral documented in 083-open-actions; M1: `review_feedback` always cleared; M2: 18 real schema tests added; L1: stale critique path fixed |
 
 ## Plan Reference
 
@@ -151,8 +152,11 @@ Sub-pages (category, offers, needs, images, social) are deferred. The custom for
 | `PATCH /api/admin/review-community-service` | `src/__tests__/api/admin-review-community-service.test.ts` | ✅ Yes | ✅ Yes | `Failed to resolve import "@/app/api/admin/review-community-service/route"` | ✅ Yes (7/7) |
 | Profile provider server import (Plan 082 M8) | `src/__tests__/app/profile-providers-server-path.test.tsx` | ⚠️ Post-fix (bugfix regression — pre-committed) | ✅ Yes — test verifies server module called; pre-fix client module would fail RLS | N/A (code pre-committed; regression test documents correct behaviour) | ✅ Yes (2/2) |
 
-**New tests this phase: 30** (4 TDD-first: updateCommunityServiceReview + review route × 4+7 = 11; 19 retroactive coverage)
-**Total suite: 835 tests passing**
+| `communityServiceEditUpdateSchema` | `src/__tests__/lib/validations/adminSchemas-cs.test.ts` | ⚠️ Post-fix (CR fix pass — schema pre-existed) | ✅ Yes — tests verify field constraints, UUID format, nullable fields, email/URL validation | N/A (schema pre-existed; tests added to resolve CR M2 finding) | ✅ Yes (9/9) |
+| `communityServiceReviewUpdateSchema` | `src/__tests__/lib/validations/adminSchemas-cs.test.ts` | ⚠️ Post-fix (CR fix pass — schema pre-existed) | ✅ Yes — tests verify rejection-without-feedback fails refinement, empty-string feedback rejected, invalid status rejected | N/A (schema pre-existed; tests added to resolve CR M2 finding) | ✅ Yes (9/9) |
+
+**New tests this phase: 30** (original) **+ 18** (CR fix pass schema tests) **= 48 net new tests**
+**Total suite: 853 tests passing (+18 schema unit tests from CR fix pass)**
 
 ---
 
@@ -160,9 +164,9 @@ Sub-pages (category, offers, needs, images, social) are deferred. The custom for
 
 ```
 npx vitest run
-Test Files: 86 passed | 1 skipped (87)
-Tests:      835 passed | 18 skipped (853)
-Duration:   14.68s
+Test Files: 87 passed | 1 skipped (88)
+Tests:      853 passed | 18 skipped (871)
+Duration:   13.79s
 ```
 
 ---
@@ -175,7 +179,7 @@ Duration:   14.68s
 
 ## Pre-Handoff QA Gate
 
-- [x] `npm test` exits 0 (835 tests pass)
+- [x] `npm test` exits 0 (853 tests pass)
 - [x] `npm run type-check` exits 0
 - [ ] `npm run build` — deferred (Supabase credential dependency)
 - [x] Implementation doc complete (this file)
@@ -186,7 +190,7 @@ Duration:   14.68s
 
 ## Outstanding Items
 
-- [ ] M8 sub-pages (category, offers, needs, images, social) — deferred per D-IMPL-5
+- [ ] M8 sub-pages (category, offers, needs, images, social) — deferred per D-IMPL-5; risk formally accepted, documented in `agent-output/planning/083-open-actions.md` OA-1 (approver: User, 2026-04-06)
 - [ ] `npm run build` — deferred to QA
 - [ ] Critique 083 F3: `removed_by_owner` review status — review buttons display for all statuses; UI handling deferred to follow-up
 - [ ] D-IMPL-4: `target_type: 'community_service'` in audit log — deferred pending audit schema update

@@ -62,7 +62,17 @@ export async function PATCH(request: Request) {
       if (validationError instanceof Error) {
         logger.warn(
           'Invalid request body for edit-community-service',
-          { body, error: validationError.message },
+          {
+            communityServiceId:
+              typeof body?.communityServiceId === 'string'
+                ? body.communityServiceId
+                : '[invalid]',
+            communityServiceName:
+              typeof body?.communityServiceName === 'string'
+                ? String(body.communityServiceName).slice(0, 100)
+                : '[absent]',
+            error: validationError.message,
+          },
           { ...getRequestMetadata(request), userId: user.id }
         );
       }

@@ -18,7 +18,7 @@ Status: Active
 
 - Plan: `agent-output/planning/082-community-service-detail-parity-plan.md`
 - Analysis: `agent-output/analysis/closed/082-community-service-detail-parity-analysis.md`
-- Critique: `agent-output/critiques/082-community-service-detail-parity-critique.md` (Status: Resolved)
+- Critique: `agent-output/critiques/closed/082-community-service-detail-parity-critique.md` (Status: Resolved)
 
 ## Value Statement Validation
 

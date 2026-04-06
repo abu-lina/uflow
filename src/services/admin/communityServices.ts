@@ -137,11 +137,9 @@ export async function updateCommunityServiceReview(
   const updatePayload: Record<string, unknown> = {
     review_status: reviewStatus,
     updated_at: new Date().toISOString(),
+    // Always set review_feedback — clears stale rejection text on approve/needs_revision
+    review_feedback: reviewFeedback ? sanitizeTextInput(reviewFeedback) : null,
   };
-
-  if (reviewFeedback !== null && reviewFeedback !== undefined) {
-    updatePayload.review_feedback = reviewFeedback;
-  }
 
   const { data, error } = await supabase
     .from('community_services')
