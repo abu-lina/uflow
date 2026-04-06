@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-05
+**Last Updated**: 2026-04-06
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.8
+**Current Version**: v0.10.11
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -66,6 +66,8 @@
 | 2026-04-04       | Plan 079 released (v0.10.8): Admin provider URL edit fix           | Normalized schemeless website URLs in edit/create flows so browser URL validation no longer blocks moderation approve/reject actions |
 | 2026-04-05T12:15Z | Plan 080 in progress: Agent Model Cost Optimization (internal tooling) | 4-tier model strategy reduces agent cost multiplier 42x → 20.66x (~51% savings); no version bump; all config gates passed; M-1 GPT-5.3-Codex runtime verification gating QA Complete |
 | 2026-04-05T12:30Z | Plan 080 closed (internal tooling): Agent Model Cost Optimization      | QA Complete, M-1 accepted risk (platform abstraction), committed locally; 50.8% agent cost savings delivered |
+| 2026-04-05       | Plan 081 released (v0.10.9): Community service open (partial)          | Community service detail page parity, ProviderDetailModal in CS view, profile provider RLS fix (M8); M9/M10 admin CS edit deferred to Plan 083 |
+| 2026-04-06       | Plan 083 released (v0.10.11): Admin community service edit/review       | Full admin CRUD for community services — edit fields, approve, reject with feedback, request revision; Plan 082 M8 profile provider RLS fix bundled |
 
 ---
 
@@ -86,12 +88,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: (none — ready for next topic)
+**Current Working Release**: v0.10.11 — Released 2026-04-06
 
-_Plan 080 closed (2026-04-05) — Agent model cost optimization committed; 50.8% savings delivered._
+_Plan 083 released (2026-04-06) — Admin community service edit/review (M1-M7+M9-M10) + Plan 082 M8 profile provider RLS fix. Tag v0.10.11 on commit 54e6ac9d pushed to origin. UAT deploy triggered (run ID: 24026052765)._
 
-**Release Status**: Ready for new planning  
-**Ready for Release**: N/A  
+**Release Status**: Released  
+**Ready for Release**: ✅ v0.10.11 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -108,6 +110,8 @@ _Plan 080 closed (2026-04-05) — Agent model cost optimization committed; 50.8%
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.11 | 2026-04-06 | Plan 083 (Admin CS edit/review) + Plan 082 M8 (profile provider RLS fix) | Released |
+| v0.10.9 | 2026-04-05 | Plan 081 (Community service detail parity + ProviderDetailModal in CS view) | Released |
 | v0.10.8 | 2026-04-04 | Plan 079 (Admin provider URL edit fix)               | Released |
 | v0.10.6 | 2026-04-04 | Plan 077 (Mobile header overlap fix)                 | Released |
 | v0.10.5 | 2026-04-03 | Plans 075+076 (iOS footer CTA overlay fixes)         | Released |

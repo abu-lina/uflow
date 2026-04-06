@@ -51,10 +51,18 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const isMobile = useIsMobile();
   const { t, language } = useLanguage();
 
+  // Determine entity type for bookmarking (Plan 082: M3 — Critic F1 fix)
+  // community_service_id being set means this provider shape wraps a community service
+  const isCommunityServiceEntity = !!provider.community_service_id;
+  const bookmarkableEntityId = isCommunityServiceEntity
+    ? (provider.community_service_id as string)
+    : provider.provider_id;
+  const bookmarkableEntityType = isCommunityServiceEntity ? 'community_service' : 'provider';
+
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
-    bookmarkableId: provider.provider_id,
-    bookmarkableType: 'provider',
+    bookmarkableId: bookmarkableEntityId,
+    bookmarkableType: bookmarkableEntityType,
     onBookmarkChange: (isBookmarked) => {
       setIsSaved(isBookmarked);
       if (typeof onBookmarkChange === 'function') {
@@ -180,11 +188,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   // Derive bookmark status from cached data (instant, no network request)
   useEffect(() => {
     if (user && bookmarkedProviderIds.length > 0) {
-      setIsSaved(bookmarkedProviderIds.includes(provider.provider_id));
+      setIsSaved(bookmarkedProviderIds.includes(bookmarkableEntityId));
     } else if (!user) {
       setIsSaved(false);
     }
-  }, [user, bookmarkedProviderIds, provider.provider_id]);
+  }, [user, bookmarkedProviderIds, bookmarkableEntityId]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -221,7 +229,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       void handleBookmark();
     }
     if (action === 'share') {
-      const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
+      // Use community-services path when rendering a community service entity (Plan 082: M3)
+      const shareUrl = isCommunityServiceEntity
+        ? `${window.location.origin}/community-services/${provider.community_service_id}`
+        : `${window.location.origin}/providers/${provider.provider_id}`;
 
       if (navigator.share) {
         try {

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.11] - 2026-04-06
+
+### Fixed
+
+- **Profile provider pages: server Supabase client for RLS (Plan 082 M8)**: Profile provider detail (`/profile/providers/[id]`) and edit (`/profile/providers/[id]/edit`) pages were silently using the anonymous Supabase client in Server Components, causing RLS failures for non-approved providers. Both pages now import `getProviderById` from `@/services/providers.server` (cookie-based auth context), matching the fix applied to the public provider and community-service pages in Plan 081.
+
+### Added
+
+- **Admin community service edit page (Plan 083)**: Full admin CRUD surface for community services. Admins and moderators can now view (bypassing RLS), edit fields, and review (approve/reject/request revision) any community service from `/dashboard/community-services/[id]/edit`. New API routes: `GET /api/admin/community-services/[id]` and `PATCH /api/admin/edit-community-service` and `PATCH /api/admin/review-community-service`. New admin service layer at `src/services/admin/communityServices.ts` with sanitized partial-update and review functions. Zod validation schemas added to `src/lib/validations/adminSchemas.ts`. Resolves `AdminCommunityServiceDetailButtons` OA-1 (edit button now routes to a working page).
+
+## [0.10.10] - 2026-04-05
+
+### Fixed
+
+- **Community service detail page: full architectural + design system parity (Plan 082)**: Achieved full UX parity between community service and provider detail pages. Removed the hard `notFound()` call in the Server Component that caused a permanent "Service nicht gefunden" wall for non-approved or auth-context-sensitive services; the component now passes nullable `initialData` to the client. Added `useCommunityService(id)` React Query hook (mirrors `useProvider()`) with 5-min stale time, SSR hydration, and graceful loading/error states. Rewrote `CommunityServiceDetailPageClient` to use the hook with loading skeleton and client-side not-found only after React Query confirms. Desktop now renders through `ProviderDetailModal` (eliminating the separate 714-line `CommunityServiceDetailModal`), giving community services full design system compliance: image carousel, analytics tracking, Skeleton states, and badges. Fixed `ProviderDetailModal` to dynamically use `bookmarkableType: 'community_service'` and the correct share URL when `provider.community_service_id` is set. Improved the community-service-to-provider data transform: description, badges, all social/contact fields, and correct image encoding. `CommunityServiceDetailModal` deprecated (not deleted) pending import-site audit.
+
 ## [0.10.9] - 2026-04-05
 
 ### Fixed
