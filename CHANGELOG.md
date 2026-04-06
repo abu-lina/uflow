@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.12] - 2026-04-06
+
+### Fixed
+
+- **Saved page search bar visibility on empty-results state (Plan 082 / Issue #82)**: The search bar now remains visible and interactive on `/saved` when a search term matches no saved providers. Previously the conditional rendering in `SavedProvidersPage` omitted the `SearchBar` component from the `no_results` branch, leaving users in a dead-end state unable to modify or clear their search without navigating away. Resolved by lifting `SearchBar` outside the branching conditional chain and rendering it once using a new `shouldShowSearchBar` state predicate. The `no_saved_items` and `queryError` branches continue to suppress the search bar (no searchable items in those states). Layout centering is now isolated to the empty-state message below the search bar via `shouldCenterWholePageContent`.
+
 ## [0.10.8] - 2026-04-04
 
 ### Fixed

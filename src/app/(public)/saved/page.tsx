@@ -366,6 +366,8 @@ export default function SavedProvidersPage() {
   // Always show page structure - never show full-page loading screen
   // Show skeleton loaders in content area if loading and no cached data
   const showSkeleton = isLoading && providers.length === 0 && !queryError && !userLoading;
+  const shouldShowSearchBar = showSkeleton || (!queryError && emptyStateType !== 'no_saved_items');
+  const shouldCenterWholePageContent = !showSkeleton && (!!queryError || emptyStateType === 'no_saved_items');
 
   // Render login-required state with PageLayout (matches login page design)
   if (emptyStateType === 'login_required') {
@@ -514,22 +516,23 @@ export default function SavedProvidersPage() {
       />
 
       <PageContent 
-        className={emptyStateType && !showSkeleton ? 'flex items-center justify-center min-h-[60vh]' : ''}
+        className={shouldCenterWholePageContent ? 'flex items-center justify-center min-h-[60vh]' : ''}
         maxWidth="full"
       >
+        {shouldShowSearchBar && (
+          <SearchBar
+            customCities={showSkeleton ? [] : bookmarkedCities}
+            hideCategoryFilter={true}
+          />
+        )}
+
         {showSkeleton ? (
           // Show skeleton grid while loading (only on true initial load with no cache)
-          <>
-            <SearchBar 
-              customCities={[]}
-              hideCategoryFilter={true}
-            />
-            <div className="grid w-full grid-cols-2 gap-4 mt-6 mobile-nav-spacing">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <SkeletonCard key={index} />
-              ))}
-            </div>
-          </>
+          <div className="grid w-full grid-cols-2 gap-4 mt-6 mobile-nav-spacing">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <SkeletonCard key={index} />
+            ))}
+          </div>
         ) : queryError ? (
           <EmptyState
             description={t('saved.errorLoadingDescription') || 'Failed to load your saved items. Please try again.'}
@@ -541,43 +544,38 @@ export default function SavedProvidersPage() {
             title={t('saved.noSavedProviders')}
           />
         ) : emptyStateType === 'no_results' ? (
-          <EmptyState
-            description={t('saved.noResultsDescription')}
-            title={t('saved.noResults')}
-          />
-        ) : (
-          <>
-            <SearchBar 
-              customCities={bookmarkedCities}
-              hideCategoryFilter={true}
+          <div className="flex w-full min-h-[60vh] items-center justify-center">
+            <EmptyState
+              description={t('saved.noResultsDescription')}
+              title={t('saved.noResults')}
             />
-            
-            <ul 
-              aria-label={t('saved.savedItemsList') || 'Saved items'}
-              className="grid w-full grid-cols-2 gap-4 mt-6 mobile-nav-spacing"
-              role="list"
-            >
-              {filteredProviders.map((provider) => {
-                const isCommunityService = provider.type === 'community_service';
-                const imageUrl = getFirstImageUrl(provider.images);
-                const address = formatProviderAddress(provider.address_street, provider.address_city);
-                
-                return (
-                  <li key={provider.id}>
-                    <SelectableCard
-                      actionType="unsave"
-                      bottomText={address}
-                      category={provider.category?.name_de || ''}
-                      imageUrl={imageUrl}
-                      title={provider.name}
-                      onAction={() => handleUnsave(provider.id, isCommunityService)}
-                      onClick={() => handleProviderClick(provider.id, isCommunityService)}
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          </>
+          </div>
+        ) : (
+          <ul 
+            aria-label={t('saved.savedItemsList') || 'Saved items'}
+            className="grid w-full grid-cols-2 gap-4 mt-6 mobile-nav-spacing"
+            role="list"
+          >
+            {filteredProviders.map((provider) => {
+              const isCommunityService = provider.type === 'community_service';
+              const imageUrl = getFirstImageUrl(provider.images);
+              const address = formatProviderAddress(provider.address_street, provider.address_city);
+              
+              return (
+                <li key={provider.id}>
+                  <SelectableCard
+                    actionType="unsave"
+                    bottomText={address}
+                    category={provider.category?.name_de || ''}
+                    imageUrl={imageUrl}
+                    title={provider.name}
+                    onAction={() => handleUnsave(provider.id, isCommunityService)}
+                    onClick={() => handleProviderClick(provider.id, isCommunityService)}
+                  />
+                </li>
+              );
+            })}
+          </ul>
         )}
       </PageContent>
     </ScrollablePageLayout>

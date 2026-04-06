@@ -2,7 +2,7 @@
 ID: 82
 Origin: 82
 UUID: d7e3a1f9
-Status: Active
+Status: Committed
 ---
 
 # 082 - Implementation: Saved SearchBar Persists on Empty Results
