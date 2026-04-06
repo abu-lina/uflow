@@ -3,7 +3,7 @@ import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudit';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { communityServiceReviewUpdateSchema } from '@/lib/validations/adminSchemas';
-import { updateCommunityServiceReview } from '@/services/admin/communityServices';
+import { updateCommunityServiceReview } from '@/services/admin/communityServiceEdit';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
-import { getCommunityServiceForAdmin } from '@/services/admin/communityServices';
+import { getCommunityServiceForAdmin } from '@/services/admin/communityServiceEdit';
 
 /**
  * GET /api/admin/community-services/[id]

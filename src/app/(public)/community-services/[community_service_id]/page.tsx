@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { getCommunityServiceById } from '@/services/communityServices.server';
@@ -48,16 +49,19 @@ export default async function CommunityServiceDetailPage({
   // React Query, allowing re-fetch and proper loading/error states.
   const communityService = await getCommunityServiceById(community_service_id);
 
+  if (!communityService) {
+    notFound();
+  }
+
   // Only preload the first image if we have data (ImagePreloader requires non-null)
-  const firstImageUrl = communityService ? getFirstImageUrl(communityService) : null;
+  const firstImageUrl = getFirstImageUrl(communityService);
 
   return (
     <>
       {firstImageUrl && <ImagePreloader imageUrl={firstImageUrl} />}
       <Suspense fallback={<div className="flex h-screen-fix items-center justify-center">Loading...</div>}>
         <CommunityServiceDetailPageClient
-          communityServiceId={community_service_id}
-          initialData={communityService}
+          communityService={communityService}
         />
       </Suspense>
     </>

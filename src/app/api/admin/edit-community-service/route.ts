@@ -3,7 +3,7 @@ import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudit';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { communityServiceEditUpdateSchema } from '@/lib/validations/adminSchemas';
-import { updateCommunityServiceFields } from '@/services/admin/communityServices';
+import { updateCommunityServiceFields } from '@/services/admin/communityServiceEdit';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
@@ -118,6 +118,13 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith('CONFLICT:')) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 409 }
+      );
+    }
+
     logger.error(
       'Error in edit-community-service API',
       error instanceof Error ? error : new Error(String(error)),
