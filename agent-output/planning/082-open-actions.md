@@ -22,3 +22,15 @@ Status: Active
 | MW-2 | Anonymous user opens approved community service → same design quality as provider detail (desktop + mobile) | Pending UAT |
 | MW-3 | Admin user opens any community service → admin action button visible; clicking routes to `/dashboard/community-services/[id]/edit` (✅ route built by Plan 083) | Pending UAT |
 | MW-4 | Bookmark a community service on the detail page → persists correctly as `community_service` type (not `provider`) | Pending UAT |
+
+---
+
+## Open Actions — Plan 082 (S82): Saved Search Bar Bugfix (v0.10.12)
+
+*Added by: devops | 2026-04-06T10:00Z | Release: v0.10.12*
+
+| Item | Owner | Trigger/Due | Evidence to close | Status |
+|---|---|---|---|---|
+| **S82-DF-1**: Manual browser functional test — verify SearchBar visible and interactive in no-results state on `/saved` page | QA Team | Before or shortly after v0.10.12 production deploy | Screenshot/video showing: (1) SearchBar at top with no-results state active, (2) user typing in search field, (3) EmptyState "Keine Ergebnisse" below SearchBar, (4) clearing search re-triggers filtering | Open |
+| **S82-DF-2**: Mobile responsive layout validation — SearchBar + EmptyState layout on small viewports (320px min-width) | QA/UAT Team | Included in S82-DF-1 session | Screenshots on iPhone 12 mini (≈375px) and Android mid-range device confirming no layout breakage | Open |
+

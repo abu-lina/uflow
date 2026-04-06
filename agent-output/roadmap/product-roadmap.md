@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-06
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.11
+**Current Version**: v0.10.12
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -68,6 +68,7 @@
 | 2026-04-05T12:30Z | Plan 080 closed (internal tooling): Agent Model Cost Optimization      | QA Complete, M-1 accepted risk (platform abstraction), committed locally; 50.8% agent cost savings delivered |
 | 2026-04-05       | Plan 081 released (v0.10.9): Community service open (partial)          | Community service detail page parity, ProviderDetailModal in CS view, profile provider RLS fix (M8); M9/M10 admin CS edit deferred to Plan 083 |
 | 2026-04-06       | Plan 083 released (v0.10.11): Admin community service edit/review       | Full admin CRUD for community services — edit fields, approve, reject with feedback, request revision; Plan 082 M8 profile provider RLS fix bundled |
+| 2026-04-06       | Plan 082 (S82) released (v0.10.12): Saved page search bar visibility fix | SearchBar now remains visible and interactive in no-results state on /saved; lifted out of conditional branch chain; eliminates dead-end search state on mobile |
 
 ---
 
@@ -88,12 +89,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.11 — Released 2026-04-06
+**Current Working Release**: v0.10.12 — Released 2026-04-06
 
-_Plan 083 released (2026-04-06) — Admin community service edit/review (M1-M7+M9-M10) + Plan 082 M8 profile provider RLS fix. Tag v0.10.11 on commit 54e6ac9d pushed to origin. UAT deploy triggered (run ID: 24026052765)._
+_Plan 082 S82 released (2026-04-06) — Saved page SearchBar visibility fix (Issue #82). SearchBar lifted outside conditional chain; no-results dead-end eliminated. Tag v0.10.12 pushed. PR: https://github.com/abu-lina/uflow/compare/main...session/82-saved-search-bar-disappears — DF-1/DF-2 (manual browser validation) tracked in 082-open-actions.md._
 
 **Release Status**: Released  
-**Ready for Release**: ✅ v0.10.11 complete  
+**Ready for Release**: ✅ v0.10.12 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -110,6 +111,7 @@ _Plan 083 released (2026-04-06) — Admin community service edit/review (M1-M7+M
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.12 | 2026-04-06 | Plan 082 S82 (Saved page SearchBar visibility fix — Issue #82) | Released |
 | v0.10.11 | 2026-04-06 | Plan 083 (Admin CS edit/review) + Plan 082 M8 (profile provider RLS fix) | Released |
 | v0.10.9 | 2026-04-05 | Plan 081 (Community service detail parity + ProviderDetailModal in CS view) | Released |
 | v0.10.8 | 2026-04-04 | Plan 079 (Admin provider URL edit fix)               | Released |
