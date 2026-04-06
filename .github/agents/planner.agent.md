@@ -210,6 +210,7 @@ If the plan fixes a bug inside a conditional render block (examples: AnimatePres
 10. Specify verification steps, handoff notes, rollback considerations.
 11. Verify all work delivers on value statement. Don't defer core value to future phases.
 12. **BEFORE HANDOFF**: Scan plan for any `OPEN QUESTION` items not marked as resolved/closed. If any exist, prominently list them and ask user: "The following open questions remain unresolved. Do you want to proceed to Critic/Implementer with these unresolved, or should we address them first?"
+   12b. **Within-milestone step consistency check (MANDATORY for multi-step milestones)**: For each milestone with more than 2 steps, scan for contradictory instructions about the same component, file, or object. Contradiction test: does any step say ADD or KEEP for X while another step says REMOVE X without a stated condition? If yes, resolve before handoff. The Critic cannot be expected to catch every internal plan contradiction; the Planner must perform this self-check first.
 
 ### Gate Integrity After Revisions (MANDATORY)
 

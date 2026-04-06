@@ -179,6 +179,7 @@ For bugfix work, do not hand off to QA until all of the following exist when app
 - `agent-output/implementation/<ID>-*.md` created and populated
 - TDD Compliance table completed
 - Regression tests added for the actual bug path, not only adjacent behavior
+- Regression tests for interactive or visible UI elements MUST assert real DOM behavior (`screen.getByRole`, `screen.getByPlaceholderText`, `screen.getByLabelText`, etc.) — not a `data-testid` that is only present because the component under test was replaced by a `vi.mock()` factory. Asserting a mocked component's marker proves tree composition only, not that the real component renders or is interactive.
 - Test evidence recorded (`vitest`, `tsc`, and any other relevant gate)
 
 Keep this scoped to handoff completeness and regression adequacy. Manual browser validation remains a QA/UAT responsibility unless the plan explicitly requires local verification.

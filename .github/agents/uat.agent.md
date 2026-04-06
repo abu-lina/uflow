@@ -98,6 +98,16 @@ If a state exists in the code but is not reachable in the live flow (examples: f
 
 This prevents a single unreachable screen from blocking an otherwise closed release gate.
 
+**Pipeline-Inaccessible Validation: Post-Merge Obligation (MANDATORY when applicable)**
+
+If interactive browser or device validation is required but cannot be executed within the pipeline (e.g., worktree session with no browser, no live deployment yet), classify the deferred item as a **post-merge obligation**, not a pre-merge gate:
+
+- Do NOT use language like "must close before Stage 1 commit" for items that have no execution path in the current pipeline.
+- Use this language instead: "DF-N: [description]. **Post-merge obligation** — merge may proceed. Owner: QA Team. Due: within 48h of first production deployment. Evidence: [specific observable outcome]."
+- DevOps will record the open-actions tracker reference in the deployment doc.
+
+A deferred item labeled as a pre-merge gate that is immediately acknowledged as deferred is not a gate — it is noise. Structural clarity about post-merge obligations prevents accumulation of permanently-open action items.
+
 ### Import Dry-Run Deferral Rule (MANDATORY when applicable)
 
 If a plan's primary value depends on a third-party import or ingestion dry-run and that dry-run cannot be executed, do not classify the residual risk as LOW.
@@ -193,11 +203,13 @@ Minimum evidence:
 
 If discoverability validation is incomplete, UAT must downgrade the decision to CONDITIONAL APPROVAL or REJECTED, with explicit next actions.
 
-### Release Version Discipline (SHOULD)
+### Release Version Discipline (MUST NOT hard-code version)
 
-When recommending a version in the release decision, reference the plan's version language (e.g., "next available patch after current origin/main") rather than hard-coding a specific version number. The authoritative version is confirmed only at DevOps Stage 1 after `git fetch --tags`. Hard-coding a version in the UAT doc that DevOps later overrides creates unnecessary doc churn.
+UAT MUST NOT state a specific version number (e.g., "v0.10.9") in the release recommendation unless DevOps Stage 1 has already confirmed that exact tag is available. The authoritative version is only known after `git fetch --tags` at DevOps Stage 1. Hard-coding a version creates collision risk: other parallel worktree sessions may have already claimed that version. When DevOps overrides, multiple documents require retroactive updates.
 
-Exception: If DevOps Stage 1 has already run and confirmed the version (e.g., the plan's Target Release field has been updated with a confirmed version), UAT may reference that confirmed version.
+**Required language**: "Recommend: next available patch after current `package.json` version — DevOps to confirm at Stage 1 via `git fetch --tags`."
+
+Exception: If DevOps Stage 1 has already run and confirmed the version (e.g., the plan's Target Release field explicitly records the confirmed tag), UAT may reference that confirmed version.
 
 Constraints:
 

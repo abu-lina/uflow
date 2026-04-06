@@ -256,7 +256,7 @@ Before approving any implementation, verify against The Iron Laws:
 
 **Red Flags to Catch:**
 
-- Assertions on `*-mock` test IDs
+- Assertions on `*-mock` test IDs, or any `data-testid` planted exclusively by a `vi.mock()` factory (regardless of name — the anti-pattern is asserting a mock's injected marker, not real rendered output)
 - Mock setup >50% of test
 - Methods only called in test files
 - "Implementation complete" before tests written

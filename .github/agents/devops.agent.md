@@ -265,6 +265,15 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 
 **Phase 2A: Release Readiness Verification**
 
+**0. Terminal/Git Pager Pre-Flight (MANDATORY — run before any git command in Stage 2)**
+
+VS Code integrated terminals may have `PAGER=less` or equivalent configured. Long-output git operations (rebase, merge, log, diff) can trigger an interactive pager that halts with **no visible output** — the command appears to return to the prompt immediately but has done nothing. To prevent silent pager locks, execute at the start of Stage 2:
+
+    export GIT_PAGER=''
+    export GIT_TERMINAL_PROMPT=0
+
+Symptom of pager blocking: git command returns instantly with no output. Diagnosis: `echo $PAGER`, `git config core.pager`. Resolution: set `GIT_PAGER=''` and retry. Alternatively, use `git --no-pager` prefix on any individual command.
+
 1. Query Roadmap for release status: All plans for target version must be "Committed".
 2. If any plans incomplete: Report status, list pending plans, await further commits.
 3. Verify version consistency across ALL committed changes.
