@@ -559,7 +559,7 @@ At the start of every workflow and at each phase transition, produce a Workflow 
 ║  WORKFLOW CARD — Task #{document_id}                        ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Task: {task description}                                   ║
-║  Type: {Feature|Bugfix|Refactor|Hotfix}                     ║
+║  Type: {Feature|Bugfix|Refactor|Hotfix|Verification|Security Audit} ║
 ║  Pipeline: {Full|Abbreviated|Focused|Minimal} ({N} phases)  ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  PIPELINE STATUS                                            ║

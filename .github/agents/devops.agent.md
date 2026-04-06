@@ -432,7 +432,24 @@ After release is confirmed complete, normalize the main deployment doc:
 - Ensure no open-language blocker text (e.g., "X is still required before push") survives unfalsified after the release is complete.
 - This normalization may be part of the final release-record commit or a separate docs-only commit.
 
-4. **Roadmap sync (MANDATORY in the same release window)**:
+4. **Close GitHub Issues for released plans (MANDATORY when applicable)**:
+   For each plan included in this release, check the plan document header for a `GitHub Issue` field containing a full URL (e.g., `GitHub Issue: https://github.com/abu-lina/uflow/issues/N`).
+
+   If the field is present and the issue is still open, close it with a release comment:
+
+   ```bash
+   # Extract issue number from the URL's last path segment
+   ISSUE_NUMBER=$(basename "https://github.com/abu-lina/uflow/issues/N")
+   gh issue close "$ISSUE_NUMBER" \
+     --repo abu-lina/uflow \
+     --comment "Released in v[X.Y.Z] 🎉"
+   ```
+
+   **Backward compatibility**: If a plan's header does not contain a `GitHub Issue` field (older plans), skip this step for that plan — do NOT fail or error.
+
+   Record which issues were closed (or skipped) in the deployment doc.
+
+5. **Roadmap sync (MANDATORY in the same release window)**:
    Update the product roadmap (`agent-output/roadmap/product-roadmap.md`) with:
    - `Current Version` → new released version
    - Release table entry for the new version (date, plans, version)
@@ -444,10 +461,10 @@ After release is confirmed complete, normalize the main deployment doc:
    - Due: before next plan's Stage 1 commit
    - Evidence to close: `Current Version` field updated to `[released version]` in roadmap doc
 
-5. Hand off to Retrospective.
-6. Store memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
+6. Hand off to Retrospective.
+7. Store memory (MANDATORY): After Stage 2 release — tag/push status, migration status, verification status.
 
-6b. **Post-release local sync (MANDATORY when Stage 2 used a clean release worktree)**:
+7b. **Post-release local sync (MANDATORY when Stage 2 used a clean release worktree)**:
 
 - Sync release-state documentation changes back to the session worktree, OR
 - Explicitly state in the final Stage 2 summary that local sync remains outstanding and list which docs are affected.

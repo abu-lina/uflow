@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/abu-lina/uflow/tree/main/docs
+    about: Browse the UFlow documentation for architecture, deployment, and feature guides.
+  - name: Security Vulnerability (Private)
+    url: https://github.com/abu-lina/uflow/security/advisories/new
+    about: Report a security vulnerability privately via GitHub's security advisory system.

@@ -1,0 +1,79 @@
+name: "🔒 Security"
+description: "Security vulnerability, audit finding, or compliance concern. Sensitive details may be reported privately."
+title: "[Security] "
+labels:
+  - "type:security"
+  - "plan"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Security Issue
+        > **If you believe this is a critical vulnerability that should not be disclosed publicly,**
+        > please use [GitHub's private security advisory](https://github.com/abu-lina/uflow/security/advisories/new) instead.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "Describe the security concern. Avoid including exploit details in a public issue."
+      placeholder: "The /api/providers endpoint does not validate the requesting user's role, allowing any authenticated user to approve providers."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: "OWASP Category (if known)"
+      options:
+        - "A01 — Broken Access Control"
+        - "A02 — Cryptographic Failures"
+        - "A03 — Injection"
+        - "A04 — Insecure Design"
+        - "A05 — Security Misconfiguration"
+        - "A06 — Vulnerable / Outdated Components"
+        - "A07 — Identification & Authentication Failures"
+        - "A08 — Software & Data Integrity Failures"
+        - "A09 — Security Logging & Monitoring Failures"
+        - "A10 — SSRF"
+        - "Dependency Vulnerability"
+        - "Other / Unknown"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "Each item on a new line starting with '- [ ]'."
+      placeholder: |
+        - [ ] Role check enforced at API layer
+        - [ ] npm audit exits 0 with no HIGH/CRITICAL
+    validations:
+      required: true
+
+  - type: input
+    id: plan_id
+    attributes:
+      label: "Plan ID"
+      description: "If linked to an agent-output plan, enter the ID. Leave blank if not yet planned."
+      placeholder: "088"
+
+  - type: input
+    id: target_release
+    attributes:
+      label: "Target Release"
+      description: "Semver target or leave blank."
+      placeholder: "v0.10.9"
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      options:
+        - "Critical"
+        - "High"
+        - "Medium"
+        - "Low"
+    validations:
+      required: true

@@ -1,0 +1,58 @@
+name: "✨ Feature"
+description: "New feature or capability request. For urgent production issues use the Hotfix template."
+title: "[Feature] "
+labels:
+  - "type:feature"
+  - "plan"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## New Feature Request
+        Use this template for new capabilities or enhancements. For bugs use **Bug Fix**; for urgent production issues use **Hotfix**.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description / Value Statement"
+      description: "As a [who], I want [what], so that [why]."
+      placeholder: "As a provider, I want to see my endorsement count, so that I can track trust-building progress."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "Observable, testable criteria. Each item on a new line starting with '- [ ]'."
+      placeholder: |
+        - [ ] Endorsement count visible on provider profile
+        - [ ] Count updates within 5 seconds of a new endorsement
+    validations:
+      required: true
+
+  - type: input
+    id: plan_id
+    attributes:
+      label: "Plan ID"
+      description: "If linked to an agent-output plan, enter the ID (e.g. 084). Leave blank if not yet planned."
+      placeholder: "084"
+
+  - type: input
+    id: target_release
+    attributes:
+      label: "Target Release"
+      description: "Semver target (e.g. v0.11.0). Leave blank if unknown."
+      placeholder: "v0.11.0"
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      options:
+        - "Low"
+        - "Medium"
+        - "High"
+        - "Critical"
+    validations:
+      required: true

@@ -1,0 +1,62 @@
+name: "🚨 Hotfix"
+description: "URGENT production issue — active outage, data loss risk, or security breach. For non-critical bugs use Bug Fix."
+title: "[Hotfix] "
+labels:
+  - "type:hotfix"
+  - "plan"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ Hotfix — URGENT Production Issues Only
+        **This template is for active production outages, data loss risk, or security breaches.**
+        For non-urgent broken behaviour, please use the **Bug Fix** template instead.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "What is broken in production?"
+      description: "Describe the impact and urgency. Who is affected? How many users?"
+      placeholder: "Login is failing for all users. 100% of auth attempts return 500 since deploy v0.10.7."
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: "User Impact"
+      description: "Scope of affected users/routes and business impact."
+      placeholder: "All logged-in users are locked out. Affects provider onboarding flow entirely."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "Minimal criteria to confirm the production issue is resolved."
+      placeholder: |
+        - [ ] Login succeeds for all auth providers
+        - [ ] No 500 errors on /api/auth routes
+        - [ ] Smoke test passes on production
+    validations:
+      required: true
+
+  - type: input
+    id: plan_id
+    attributes:
+      label: "Plan ID"
+      description: "If linked to an agent-output plan, enter the ID. Leave blank if not yet planned."
+      placeholder: "087"
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority"
+      options:
+        - "Critical"
+        - "High"
+        - "Medium"
+        - "Low"
+    validations:
+      required: true

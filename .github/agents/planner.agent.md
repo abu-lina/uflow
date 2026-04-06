@@ -356,6 +356,23 @@ Status: Active
 ---
 ```
 
+Plan header table MUST include (minimum required fields):
+
+```
+| Field          | Value                                                                  |
+| -------------- | ---------------------------------------------------------------------- |
+| Plan ID        | NNN                                                                    |
+| Target Release | next available patch after current origin/main version; confirm at DevOps Stage 1 |
+| Epic Alignment | [Epic name]                                                            |
+| Related Issues | None (or GitHub URL/ID)                                                |
+| Classification | Feature / Bugfix / Refactor / Hotfix / Verification / Security Audit  |
+| Pipeline       | Full / Abbreviated / Focused / Minimal / QA-Direct / Security-Direct  |
+| GitHub Issue   | (populated after creation — full URL: https://github.com/abu-lina/uflow/issues/N) |
+| Created        | YYYY-MM-DDTHH:MMZ                                                      |
+```
+
+The `GitHub Issue` field is **optional for backward compatibility** with older plans. Populate it after running `gh issue create` (see GitHub Issue Creation below).
+
 **Self-check on start**: Before starting work, scan `agent-output/planning/` for docs with terminal Status (Committed, Released, Abandoned, Deferred, Superseded) outside `closed/`. Move them to `closed/` first.
 
 **Closure**: DevOps closes your plan doc after successful commit.
@@ -385,6 +402,83 @@ At the start of work (before substantive decisions), run **one** uflow memory re
 - Store: `#uflow.uflow-memory/flowbaby_storeMemory { "topic": "3-7 words", "context": "what/why", "decisions": [...] }`
 
 Full contract details: `memory-contract` skill
+
+---
+
+# GitHub Issue Creation (MANDATORY when `gh` is available)
+
+After writing the plan document to `agent-output/planning/`, and **before** the handoff block, create a corresponding GitHub Issue to make the plan visible on GitHub.
+
+## When to run
+
+- After `agent-output/planning/{ID}-*.md` has been written
+- Once per plan (do NOT create if issue already exists — check first)
+- Skip gracefully if `gh` is unavailable or unauthenticated; log a warning
+
+## Duplicate check (MANDATORY)
+
+```bash
+gh issue list --repo abu-lina/uflow --label plan --search "[Plan {ID}]" --state open --json number,title 2>&1
+```
+
+If any result is returned, record the existing URL in the plan header and skip creation.
+
+## Label mapping
+
+Derive the `type:*` label from the Workflow Card `Type` field by lowercasing and replacing spaces with hyphens:
+
+| Workflow Card Type | GitHub Label        |
+| ------------------ | ------------------- |
+| Feature            | `type:feature`      |
+| Bugfix             | `type:bugfix`       |
+| Refactor           | `type:refactor`     |
+| Hotfix             | `type:hotfix`       |
+| Verification       | `type:verification` |
+| Security Audit     | `type:security`     |
+
+## Body construction (use `--body-file` — NEVER inline `--body` for multi-line content)
+
+```bash
+# 1. Write body to a temp file outside the repo
+cat > /tmp/uflow-issue-body-{ID}.md << 'BODY'
+## Plan {ID} — {Short Title}
+
+**Classification**: {Type}
+**Target Release**: {Target Release}
+**Artifact**: `agent-output/planning/{ID}-{slug}.md`
+
+### Value Statement
+{Value statement from plan}
+
+### Milestones
+{One-line summary per milestone}
+BODY
+
+# 2. Create the issue
+ISSUE_URL=$(gh issue create \
+  --repo abu-lina/uflow \
+  --title "[Plan {ID}] {Short Title}" \
+  --body-file /tmp/uflow-issue-body-{ID}.md \
+  --label "plan" \
+  --label "type:{classification}")
+
+echo "Created: $ISSUE_URL"
+
+# 3. Clean up temp file
+rm /tmp/uflow-issue-body-{ID}.md
+```
+
+> **Note**: Replace `{ID}`, `{Short Title}`, `{Type}`, `{Target Release}`, `{slug}`, `{classification}` with actual values. The `BODY` heredoc is safe here (no markdown table pipes inside it — if you need tables, use `create_file` to write the body file instead of a heredoc).
+
+## Back-reference (MANDATORY)
+
+After the issue is created, update the plan document header's `GitHub Issue` field with the full URL returned by `gh issue create`:
+
+```
+| GitHub Issue   | https://github.com/abu-lina/uflow/issues/N |
+```
+
+This creates a bidirectional link: plan → issue and issue (via body) → plan artifact path.
 
 ---
 
