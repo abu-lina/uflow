@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.16] - 2026-04-07
+
+### Fixed
+
+- **Community service detail page 404 for non-approved services (Plan 085)**: Admins and owners can now view community service detail pages regardless of `review_status`. Previously, when server-side auth context was anon (server-side Supabase client doesn't propagate user session), non-approved CS would trigger `notFound()` before the client could retry with the browser's actual session. Fixed by restoring the resilient fetch pattern from Plan 082: server page passes nullable `initialData` and `communityServiceId` to client → client uses `useCommunityService()` React Query hook → client-side Supabase has the user's session → RLS admin/owner clauses succeed. Matches the existing provider detail page architecture (Plan 081). No Supabase/RLS changes needed.
 ## [0.10.15] - 2026-04-06
 
 ### Fixed

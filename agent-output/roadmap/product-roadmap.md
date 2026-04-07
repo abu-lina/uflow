@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-06
+**Last Updated**: 2026-04-07
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.15
+**Current Version**: v0.10.16
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -72,6 +72,7 @@
 | 2026-04-06       | Plan 084 released (v0.10.13): GitHub Issues integration for workflow pipeline | Planner creates GitHub Issues on plan finalization; DevOps closes on release; 7 custom labels; 5 YAML issue form templates for manual issue creation |
 | 2026-04-06       | Plan 083 S83 released (v0.10.14): Full admin CS edit UI | Full ProviderEditForm adapter for community services — edit fields, PATCH APIs with rate-limiting/Zod/audit log, approve/reject with feedback, `hideSocialInitiatives` prop; released by Session 83 |
 | 2026-04-06       | Plan 085 released (v0.10.15): Fix profile provider navigation links | Fixed 4 broken provider card click handlers in ProfileContent.tsx — cards now navigate to `/providers/:id` (public detail) instead of `/profile/providers/:id` (404). Abbreviated pipeline; 8 regression tests; tag v0.10.15 pushed. Closes #125, #128 |
+| 2026-04-07       | Plan 085 released (v0.10.16): Restore resilient fetch pattern on CS detail page | Removed `notFound()` server-side guard on CS detail pages; wired `useCommunityService()` React Query hook client-side so admin/owner RLS clauses succeed with browser session. Admins can now view/approve/reject non-approved CS; owners see own pending submissions. Matches provider detail architecture (Plan 081). Tag v0.10.16 pushed. Closes #130 |
 
 ---
 
