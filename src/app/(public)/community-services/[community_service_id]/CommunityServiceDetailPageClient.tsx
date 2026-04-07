@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
+import { useCommunityService } from '@/hooks/useCommunityServices';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import type { CommunityService } from '@/services/communityServices';
@@ -42,7 +43,8 @@ const ProviderDetailPageComponent = dynamic(
 );
 
 interface CommunityServiceDetailPageClientProps {
-  communityService: CommunityService;
+  communityServiceId: string;
+  initialData?: CommunityService | null;
 }
 
 /**
@@ -84,11 +86,17 @@ export function buildProviderShapeFromCommunityService(communityService: Communi
 }
 
 export function CommunityServiceDetailPageClient({ 
-  communityService 
+  communityServiceId,
+  initialData
 }: CommunityServiceDetailPageClientProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { isAdmin } = useIsAdmin();
+  const { data: communityService, isLoading, error } = useCommunityService({
+    communityServiceId,
+    initialData, // Use SSR data if available
+    enabled: true,
+  });
 
   // Handle browser back button
   useEffect(() => {
@@ -103,6 +111,60 @@ export function CommunityServiceDetailPageClient({
   const handleClose = () => {
     router.back();
   };
+
+  // Show loading skeleton while fetching (only if no initial data)
+  if (isLoading && !initialData) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        {/* Header skeleton */}
+        <div className="sticky top-0 z-50 border-b border-neutral-200 bg-white px-6 pb-4 pt-[calc(env(safe-area-inset-top)+16px)]">
+          <Skeleton className="h-8 w-32" />
+        </div>
+
+        {/* Content skeleton */}
+        <div className="flex-1 px-6 py-8">
+          <div className="mx-auto max-w-[361px] space-y-6">
+            {/* Image skeleton */}
+            <Skeleton className="aspect-[4/3] w-full rounded-2xl" />
+
+            {/* Title skeleton */}
+            <Skeleton className="h-8 w-3/4" />
+
+            {/* Address skeleton */}
+            <Skeleton className="h-5 w-1/2" />
+
+            {/* Action buttons skeleton */}
+            <div className="flex gap-3">
+              <Skeleton className="h-12 flex-1 rounded-xl" />
+              <Skeleton className="h-12 flex-1 rounded-xl" />
+            </div>
+
+            {/* Description skeleton */}
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+
+            {/* Offers/Needs skeleton */}
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-24" />
+              <div className="flex flex-wrap gap-2">
+                <Skeleton className="h-8 w-20 rounded-full" />
+                <Skeleton className="h-8 w-24 rounded-full" />
+                <Skeleton className="h-8 w-28 rounded-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error or not found
+  if (error || !communityService) {
+    return notFound();
+  }
 
   // Transform community service to Provider format for compatibility with ProviderDetailPage
   const providerData = buildProviderShapeFromCommunityService(communityService);
