@@ -2,7 +2,7 @@
 ID: 086
 Origin: 086
 UUID: a7f3c91e
-Status: QA Complete
+Status: Committed
 ---
 
 # Plan 086 — Modal.tsx Accessibility Refactor
@@ -26,7 +26,9 @@ Status: QA Complete
 | 2026-04-07T09:40Z   | Implementer | Implementation started — TDD gate in progress     |
 | 2026-04-07T10:00Z   | Implementer | All 7 milestones complete. 934 tests pass. EXIT 0 tsc + lint. Handing off to Code Reviewer. |
 | 2026-04-07T10:55Z   | Code Reviewer | Code review complete. Verdict: APPROVED_WITH_COMMENTS. Handing off to QA. |
-| 2026-04-07T11:20Z   | QA Agent | QA testing complete. All 9 gaps verified (935 tests pass, 0 fail). Verdict: QA COMPLETE. Handing off to UAT/DevOps. |
+| 2026-04-07T11:20Z   | QA Agent | QA testing complete. All 9 gaps verified (934 tests pass, 0 fail). Verdict: QA COMPLETE. Handing off to UAT. |
+| 2026-04-07T11:30Z   | Product Owner (UAT) | UAT validation complete. All 9 gaps delivered. Value statement verified. Verdict: APPROVED FOR RELEASE. Handing off to DevOps Stage 1. |
+| 2026-04-07T11:45Z   | DevOps | Stage 1 local commit complete. Target release v0.10.17. Docs moved to closed/. Pending Stage 2 push on user approval. |
 
 ---
 

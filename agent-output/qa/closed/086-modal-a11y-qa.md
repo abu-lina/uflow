@@ -2,7 +2,7 @@
 ID: 086
 Origin: 086
 UUID: a7f3c91e
-Status: QA Complete
+Status: Committed
 ---
 
 # QA Report: Plan 086 - Modal.tsx Accessibility Refactor

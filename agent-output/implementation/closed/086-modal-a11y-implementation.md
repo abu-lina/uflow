@@ -2,7 +2,7 @@
 ID: 086
 Origin: 086
 UUID: a7f3c91e
-Status: Active
+Status: Committed
 ---
 
 # Implementation — Plan 086: Modal.tsx Accessibility Refactor
@@ -18,6 +18,7 @@ Status: Active
 | Date                | Handoff              | Request                       | Summary                                                                                                             |
 | ------------------- | -------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | 2026-04-07T09:40Z   | Critic → Implementer | Implementation of approved plan | All 7 milestones complete. 934 tests pass. type-check EXIT 0. lint EXIT 0 (pre-existing warnings only).            |
+| 2026-04-07T11:45Z   | DevOps | Stage 1 commit. Status → Committed. Moved to closed/. Target release v0.10.17. |
 
 ---
 
