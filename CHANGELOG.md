@@ -7,11 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.17] - 2026-04-07
+
+### Fixed
+
+- **Modal accessibility refactor — 9 identified gaps closed (Plan 086)**: Refactored `src/components/ui/Modal.tsx` and added four new reusable hooks in `src/hooks/` to meet WCAG 2.1 AA dialog requirements:
+  - **Focus trap** (`useFocusTrap`): Tab key is now contained inside the modal. Shift+Tab at the first focusable element wraps to the last, and Tab at the last wraps to the first.
+  - **Focus restoration** (`useFocusTrap`): When the modal closes, keyboard focus returns to the element that had focus before the modal opened.
+  - **Background `aria-hidden`** (`useAriaHidden`): All content outside the modal portal is marked `aria-hidden="true"` while the modal is open, preventing screen readers from reaching background content.
+  - **Escape key scoping**: The Escape handler moved from `keydown` (which fires on auto-repeat) to `keyup`, is now scoped via a `contains()` guard to only fire when focus is inside the modal, and calls `stopPropagation()` to prevent stacked modals from both closing simultaneously.
+  - **Drag-close prevention**: Dragging from inside the modal content to the backdrop no longer triggers `onClose`. Close via backdrop only fires when both `mousedown` and `click` originate on the backdrop element.
+  - **Stack-safe scroll lock** (`useScrollLock`): Replaced the naive `overflow: hidden` toggle with a module-level counter. Opening two modals simultaneously and closing one no longer restores scroll while the other is still open. The original `overflow` value is captured and restored (not hardcoded to empty string).
+  - **`aria-labelledby` wiring**: The `role="dialog"` element's `aria-labelledby` now points to a real element (a `sr-only` span rendered inside the modal, keyed by a `React.useId()` ID). Previously `aria-labelledby="modal-title"` was set but no element had that ID.
+  - **Exit animation** (`useDelayedUnmount`): The modal now remains in the DOM for 300ms after `isOpen` becomes `false` to allow CSS fade-out transitions. Respects `prefers-reduced-motion` (immediate unmount). Cancels the timer if the modal re-opens before the delay expires.
+  - **Z-index fix**: Backdrop uses `z-0` and content uses `z-10` within the wrapper's stacking context, eliminating the z-index collision where both layers shared `z-[999999]`.
+
 ## [0.10.16] - 2026-04-07
 
 ### Fixed
 
 - **Community service detail page 404 for non-approved services (Plan 085)**: Admins and owners can now view community service detail pages regardless of `review_status`. Previously, when server-side auth context was anon (server-side Supabase client doesn't propagate user session), non-approved CS would trigger `notFound()` before the client could retry with the browser's actual session. Fixed by restoring the resilient fetch pattern from Plan 082: server page passes nullable `initialData` and `communityServiceId` to client → client uses `useCommunityService()` React Query hook → client-side Supabase has the user's session → RLS admin/owner clauses succeed. Matches the existing provider detail page architecture (Plan 081). No Supabase/RLS changes needed.
+
 ## [0.10.15] - 2026-04-06
 
 ### Fixed

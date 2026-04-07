@@ -26,7 +26,7 @@ describe('ProviderDetailModal Component', () => {
         />,
       );
 
-      expect(screen.getByText('Bilal Moschee')).toBeInTheDocument();
+      expect(screen.getAllByText('Bilal Moschee').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should render provider address instead of description', () => {
