@@ -1,6 +1,6 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-03-29
+**Last Updated**: 2026-04-07
 **Status**: Active
 
 ## Changelog
@@ -17,6 +17,7 @@
 | 2026-03-08 | Captured Plausible analytics ADR | Make analytics deployment + privacy guardrails explicit for upcoming activation/instrumentation work | Arch 035 / Plan 036 |
 | 2026-03-24 | Removed legacy in-app admin panel UI | Reduce privileged UI surface; preserve API-only admin tools and newer review workflows | Arch 054            |
 | 2026-03-29 | Plan 065: Enrichment Pipeline — new subsystem, ADR-007 (staging-first), ADR-008 (pg_cron-in-migrations), Problem Areas 8–9 | First automated background actor in system; establishes scheduling, staging, and module-boundary constraints | Arch 065            |
+| 2026-04-07 | Modal.tsx a11y refactor — 9 gaps mapped: focus trap, focus restore, aria-hidden, escape scoping, drag-close, scroll lock, aria-labelledby, exit animation, z-index. 4 new hooks, 9 ADRs. Design debt: z-index proliferation, multiple modal impls, redundant ARIA. | Close critical/high a11y gaps in base Modal without breaking consumers; establish reusable dialog hooks | Arch 086            |
 
 ---
 

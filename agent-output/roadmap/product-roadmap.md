@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-07
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.16
+**Current Version**: v0.10.17
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -73,6 +73,7 @@
 | 2026-04-06       | Plan 083 S83 released (v0.10.14): Full admin CS edit UI | Full ProviderEditForm adapter for community services — edit fields, PATCH APIs with rate-limiting/Zod/audit log, approve/reject with feedback, `hideSocialInitiatives` prop; released by Session 83 |
 | 2026-04-06       | Plan 085 released (v0.10.15): Fix profile provider navigation links | Fixed 4 broken provider card click handlers in ProfileContent.tsx — cards now navigate to `/providers/:id` (public detail) instead of `/profile/providers/:id` (404). Abbreviated pipeline; 8 regression tests; tag v0.10.15 pushed. Closes #125, #128 |
 | 2026-04-07       | Plan 085 released (v0.10.16): Restore resilient fetch pattern on CS detail page | Removed `notFound()` server-side guard on CS detail pages; wired `useCommunityService()` React Query hook client-side so admin/owner RLS clauses succeed with browser session. Admins can now view/approve/reject non-approved CS; owners see own pending submissions. Matches provider detail architecture (Plan 081). Tag v0.10.16 pushed. Closes #130 |
+| 2026-04-07       | Plan 086 released (v0.10.17): Modal.tsx accessibility refactor (WCAG 2.1 AA) | Closed 9 accessibility gaps in the base Modal component: `useScrollLock`, `useAriaHidden`, `useFocusTrap`, `useDelayedUnmount` hooks; escape→keyup, drag-close via mouseDownTargetRef, `useId()` sr-only title, backdropRef z-index layering. 35 new tests (23 unit + 12 integration), 934 total. Tag v0.10.17 pushed. Closes #132 |
 
 ---
 
@@ -93,12 +94,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.15 — Released 2026-04-06
+**Current Working Release**: v0.10.17 — Released 2026-04-07
 
-_Plan 085 released (2026-04-06) — Fix profile page provider navigation links. Provider cards in the profile page now navigate to `/providers/:id` (public detail) instead of 404-producing `/profile/providers/:id` paths. Abbreviated pipeline. Tag v0.10.15 pushed. GitHub issue #125 closed via commit, issue #128 closed on release._
+_Plan 086 released (2026-04-07) — Modal.tsx accessibility refactor closing 9 WCAG 2.1 AA gaps. New hooks: `useScrollLock`, `useAriaHidden`, `useFocusTrap`, `useDelayedUnmount`. Escape fixed to keyup, drag-close via mouseDownTargetRef, `useId()` sr-only title span, backdropRef z-index layering. 35 new tests, 934 total. Tag v0.10.17 pushed. Issue #132 closed._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.15 complete  
+**Ready for Release**: ✅ v0.10.17 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -115,6 +116,8 @@ _Plan 085 released (2026-04-06) — Fix profile page provider navigation links. 
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.17 | 2026-04-07 | Plan 086 (Modal.tsx accessibility refactor — WCAG 2.1 AA — Issue #132) | Released |
+| v0.10.16 | 2026-04-07 | Plan 085 (Restore resilient fetch pattern on CS detail page — Issue #130) | Released |
 | v0.10.15 | 2026-04-06 | Plan 085 (Fix profile provider navigation links — Issue #125) | Released |
 | v0.10.14 | 2026-04-06 | Plan 083 S83 (Full admin CS edit UI — ProviderEditForm adapter, CS PATCH APIs) | Released |
 | v0.10.13 | 2026-04-06 | Plan 084 (GitHub Issues integration for workflow pipeline) | Released |
