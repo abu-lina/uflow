@@ -73,6 +73,10 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
         'social_website',
         'social_instagram',
         'offers_ids',
+        // Plan 089 M4: section fields are source-controlled
+        'listing_type',
+        'no_alcohol',
+        'halal_level',
       ].sort()
     );
   });

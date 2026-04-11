@@ -22,6 +22,10 @@ export const SOURCE_CONTROLLED_FIELDS = [
   'social_website',
   'social_instagram',
   'offers_ids',
+  // Plan 089 M4: section fields are source-controlled (JoinHalal always sets these)
+  'listing_type',
+  'no_alcohol',
+  'halal_level',
 ] as const;
 
 /** Fields preserved by the RPC function on conflict (admin/moderator state). */

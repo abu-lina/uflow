@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.18] - 2026-04-11
+
+### Added
+
+- **Three-Section Search & Listing Redesign — FOOD / UMMAH / BUSINESS (Plan 089 / Issue #137)**: Splits the unified provider listing into three purpose-built discovery sections:
+  - **Database (M1)**: New `listing_type_enum` ('food'|'business') on `providers` table; `halal_level SMALLINT`, `muslim_owned BOOLEAN`, and 10 filter-boolean columns (`no_alcohol`, `no_pork`, `no_gambling`, `has_prayer_space`, `family_friendly`, `women_friendly`, `children_friendly`, `accepts_donations`, `has_parking`, `solidarity_pricing`). Migration `067_three_section_search_schema.sql` backfills all existing providers by category, backfills `muslim_owned` from MUSLIM_OWNED badge data, backfills booleans from `barakah_effects` strings, and creates composite performance indexes.
+  - **Search Routing (M2)**: `searchProvidersAndCommunityServices()` accepts a `section` parameter; FOOD/BUSINESS routes to `providers` with `listing_type` filter, UMMAH routes to `community_services` table only. Default section is FOOD (D9). `searchProviders()` accepts `listingType` parameter. API route `/api/providers/search` forwards `?section=`.
+  - **Section Configuration (M3)**: `src/config/sectionFilters.ts` — `SECTION_FILTER_CONFIG`, `getDefaultFilters()`, `getAllowedFilters()`, `inferSectionFromCategory()` for category→section inference.
+  - **Section Selector UI (M6)**: `SectionSelector` component (tab bar: FOOD 🍽️ / UMMAH 🕌 / BUSINESS 🏪) integrated into `ProvidersPageHeader`. `SearchProvider` context extended with `selectedSection`/`setSelectedSection`.
+  - **Computed Badge Logic (M5)**: `src/utils/sectionBadges.ts` — `computeHalalStars()` (0–3 stars from `halal_level`) and `computeBarakahBadge()` (muslim_owned + ≥2 community attributes). Halal stars and Barakah badge rendered on `ProviderCard`.
+  - **JoinHalal Pipeline (M4)**: Import pipeline sets `listing_type='food'`, `no_alcohol=true`, `halal_level=1` for all JoinHalal records. `SOURCE_CONTROLLED_FIELDS` updated. Upsert RPC in migration updated.
+  - **Backward Compatibility (M8)**: Legacy `/providers?category=UUID` URLs without `?section=` infer section from category via `inferSectionFromCategory()`. Admin edit UI surfaces `listing_type` display field alongside category.
+  - **Verification SQL (M7)**: `sql/089_section_classification_verification.sql` with 6 verification queries for post-migration audit.
 ## [0.10.17] - 2026-04-07
 
 ### Fixed

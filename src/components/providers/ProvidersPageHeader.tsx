@@ -3,12 +3,18 @@
 import { useRef } from 'react';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { CategoryFilter } from '@/components/providers/CategoryFilter';
+import { SectionSelector } from '@/features/search/components/SectionSelector';
+import type { Section } from '@/providers/search-provider';
 
 interface ProvidersPageHeaderProps {
   onSearchSubmit: (query: string, category: string | null, location: string) => void;
   onClearSearch: () => void;
   onCategoryChange: (category: string | null) => void;
   onLocationChange: (location: string) => void;
+  /** Plan 089 M6: Active section for the section selector */
+  selectedSection?: Section;
+  /** Plan 089 M6: Callback when user switches section */
+  onSectionChange?: (section: Section) => void;
 }
 
 export function ProvidersPageHeader({
@@ -16,6 +22,8 @@ export function ProvidersPageHeader({
   onClearSearch,
   onCategoryChange,
   onLocationChange,
+  selectedSection = 'food',
+  onSectionChange,
 }: ProvidersPageHeaderProps) {
   const headerRef = useRef<HTMLElement>(null);
 
@@ -61,6 +69,14 @@ export function ProvidersPageHeader({
           onLocationChange={onLocationChange}
           onSearchSubmit={onSearchSubmit}
         />
+        {/* Plan 089 M6: Section Selector tab bar */}
+        {onSectionChange && (
+          <SectionSelector
+            className="mt-2 w-full"
+            selectedSection={selectedSection}
+            onSectionChange={onSectionChange}
+          />
+        )}
       </div>
 
       <div className="pb-1.5 pl-6 pr-0">

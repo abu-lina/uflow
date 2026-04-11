@@ -310,6 +310,10 @@ interface ProviderRecord {
   import_source_id: string | null;
   import_source_url: string | null;
   provider_description?: string | null;
+  // Plan 089 M4: section fields — all JoinHalal imports are food providers
+  listing_type: 'food';
+  no_alcohol: boolean;
+  halal_level: number;
 }
 
 interface UnmappedEntry {
@@ -509,6 +513,10 @@ export function transformPage(
     import_source: postId ? 'joinhalal' : null,
     import_source_id: postId,
     import_source_url: url,
+    // Plan 089 M4: All JoinHalal imports are food providers with no-alcohol flag
+    listing_type: 'food',
+    no_alcohol: true,
+    halal_level: 1,
   };
 
   if (includeDescription && schema.description) {
