@@ -19,6 +19,7 @@ Status: Active
 | Date               | Handoff | Request | Summary                                                              |
 | ------------------ | ------- | ------- | -------------------------------------------------------------------- |
 | 2026-04-10T18:50Z  | → CR    | Planner | All milestones M1–M9 implemented; all tests green; lint+type clean   |
+| 2026-04-11T18:10Z  | → CR    | Code Reviewer (Round 1) | Fixed CR-H1 (section lost on search submit), CR-H2 (moderation safety for UMMAH), CR-M1 (SQL comment contradiction); added 11 regression tests |
 
 ---
 
@@ -62,6 +63,8 @@ Implemented the full three-section search redesign (FOOD / UMMAH / BUSINESS) as 
 | `src/__tests__/api/providers-search.test.ts` | Updated call assertions to 7-arg signature (added `section` param) | +9 |
 | `src/__tests__/app/providers-page-location.test.tsx` | Updated call assertions to 7-arg signature with `section='food'` | +4 |
 | `src/__tests__/regression/plan045-category-filter-regression.test.ts` | Updated call assertion to 7-arg signature | +1 |
+| `src/app/(public)/providers/ProvidersContent.tsx` | CR-H1: `handleSearchSubmit` now preserves existing URL params; CR-H2: `cardMode` gated by `section !== 'ummah'` | +8 |
+| `sql/089_section_classification_verification.sql` | CR-M1: corrected query comments to reflect D11 intentional NULL strategy | +4 |
 | `CHANGELOG.md` | Added v0.10.18 entry | +20 |
 | `package.json` | Version bumped to 0.10.18 (preliminary) | +1 |
 | `package-lock.json` | Lockfile aligned | auto |
@@ -82,6 +85,7 @@ Implemented the full three-section search redesign (FOOD / UMMAH / BUSINESS) as 
 | `src/__tests__/lib/import/joinhalal-section-fields.test.ts` | M4 TDD: 4 tests for JoinHalal section fields (green) |
 | `src/__tests__/utils/sectionBadges.test.ts` | M5 TDD: 11 tests for computed badge utilities (green) |
 | `src/__tests__/components/SectionSelector.test.tsx` | M6 TDD: 4 tests for SectionSelector (green) |
+| `src/__tests__/regression/plan089-cr-findings-regression.test.ts` | CR Round 2 TDD: 11 regression tests for CR-H1 + CR-H2 (green) |
 
 ---
 
@@ -125,14 +129,16 @@ The plan does not include a baseline/measurement milestone. Schema performance e
 | `transformPage` section fields | `src/__tests__/lib/import/joinhalal-section-fields.test.ts` | ✅ Yes | ✅ Yes | `undefined !== 'food'` | ✅ Yes (4/4) |
 | `computeHalalStars`, `computeBarakahBadge` | `src/__tests__/utils/sectionBadges.test.ts` | ✅ Yes | ✅ Yes | ModuleNotFoundError | ✅ Yes (11/11) |
 | `SectionSelector` | `src/__tests__/components/SectionSelector.test.tsx` | ✅ Yes | ✅ Yes | ModuleNotFoundError | ✅ Yes (4/4) |
+| `handleSearchSubmit` (CR-H1) | `src/__tests__/regression/plan089-cr-findings-regression.test.ts` | ⚠️ Post-fix (bugfix regression) | ✅ Yes | Pre-fix drops section: `params.has('section') === false` | ✅ Yes (5 cases) |
+| `cardMode` UMMAH guard (CR-H2) | `src/__tests__/regression/plan089-cr-findings-regression.test.ts` | ⚠️ Post-fix (bugfix regression) | ✅ Yes | Pre-fix activates moderation for ummah: `resolveCardMode_prefixExpr(true,'pending') === 'moderation'` | ✅ Yes (6 cases) |
 
 ---
 
 ## Test Coverage
 
-**New tests added**: 43 tests across 5 files (all passing)
-**Regression updates**: 3 test files updated to match new 7-arg signature (no logic changes, just expected call args)
-**Total affected tests**: 960 (942 pass, 18 skip — integration tests requiring live Supabase)
+**New tests added**: 54 tests across 6 files (all passing)
+**Regression updates**: 3 test files updated to match new 7-arg signature; 1 new regression file for CR-H1/H2 (11 tests)
+**Total affected tests**: 971 (953 pass, 18 skip — integration tests requiring live Supabase)
 
 ---
 
@@ -140,9 +146,9 @@ The plan does not include a baseline/measurement milestone. Schema performance e
 
 ```
 ./node_modules/.bin/vitest run
-Test Files  99 passed | 1 skipped (100)
-     Tests  942 passed | 18 skipped (960)
-  Duration  ~20s
+Test Files  100 passed | 1 skipped (101)
+     Tests  953 passed | 18 skipped (971)
+  Duration  ~21s
 ```
 
 ```
