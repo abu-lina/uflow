@@ -2,6 +2,8 @@ import { Suspense } from 'react';
 
 import { searchProvidersAndCommunityServices } from '@/services/providers';
 import type { SearchResult } from '@/services/providers';
+import { inferSectionFromCategory } from '@/config/sectionFilters';
+import type { Section } from '@/providers/search-provider';
 
 import { ProvidersContent } from './ProvidersContent';
 
@@ -30,12 +32,23 @@ export default async function ProvidersPage({
   const isLegacyEverywhere = locationParam === 'Everywhere' || locationParam === 'Überall';
   const location = isLegacyEverywhere ? '' : locationParam;
 
+  // Plan 089 M8: Infer section from URL params with legacy URL fallback (D9)
+  // Priority: ?section= > infer from ?category= (only when category param IS present) > default 'food'
+  const sectionParam = typeof params.section === 'string' ? params.section : null;
+  const categoryParam = typeof params.category === 'string' ? params.category : null;
+  const section: Section =
+    sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'business'
+      ? sectionParam
+      : categoryParam
+        ? inferSectionFromCategory(categoryParam)
+        : 'food'; // D9: default when no section and no category
+
   // Server-side initial fetch — first page of results rendered into HTML
   let initialResults: SearchResult[] = [];
   let initialHasMore = false;
 
   try {
-    const data = await searchProvidersAndCommunityServices(query, category, location, 0, PAGE_SIZE);
+    const data = await searchProvidersAndCommunityServices(query, category, location, 0, PAGE_SIZE, undefined, section);
     initialResults = data.results;
     initialHasMore = data.hasMore;
   } catch (error) {

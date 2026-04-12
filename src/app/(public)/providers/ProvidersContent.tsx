@@ -31,6 +31,8 @@ const LegalLinksModal = dynamic(
   { ssr: false },
 );
 import { useSearch } from '@/providers/search-provider';
+import type { Section } from '@/providers/search-provider';
+import { inferSectionFromCategory } from '@/config/sectionFilters';
 import type { Provider, SearchResult } from '@/services/providers';
 
 /**
@@ -47,6 +49,7 @@ async function fetchProvidersFromAPI(
   page: number,
   pageSize: number,
   status?: ReviewStatusFilter,
+  section?: Section,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const params = new URLSearchParams();
   if (query) params.set('q', query);
@@ -56,6 +59,8 @@ async function fetchProvidersFromAPI(
   params.set('pageSize', String(pageSize));
   // Plan 058: Include status filter for admin users
   if (status) params.set('status', status);
+  // Plan 089: Include section filter
+  if (section) params.set('section', section);
 
   const response = await fetch(`/api/providers/search?${params.toString()}`);
   if (!response.ok) {
@@ -105,7 +110,16 @@ export function ProvidersContent({
     setSearchQuery,
     selectedLocation,
     setSelectedLocation,
+    selectedSection,
+    setSelectedSection,
   } = useSearch();
+
+  // Plan 089 M8: Infer section from URL params with legacy URL support
+  // Priority: ?section= > infer from ?category= (only when category param IS present) > default 'food' (D9)
+  const sectionParam = searchParams.get('section') as Section | null;
+  const categoryParam = searchParams.get('category');
+  const inferredSection: Section = sectionParam ?? (categoryParam ? inferSectionFromCategory(categoryParam) : 'food');
+  const section = inferredSection;
 
   // Resolve the location for use as a query transport value (not for display).
   // searchParams.get('location') returns null when absent, '' when ?location= is present.
@@ -137,12 +151,12 @@ export function ProvidersContent({
   // Page size: 12 provides good balance between initial load and frequent pagination
   const PAGE_SIZE = 12;
 
-  // Plan 058: Include status in query key for proper cache management
+  // Plan 058 + 089: Include status and section in query key for proper cache management
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } =
     useInfiniteQuery({
-      queryKey: ['providers', query, category, location, status],
+      queryKey: ['providers', query, category, location, status, section],
       queryFn: ({ pageParam = 0 }) =>
-        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE, status),
+        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE, status, section),
       getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
       initialPageParam: 0,
       // Use server-rendered initial data when available (Plan 010 P1a)
@@ -222,18 +236,26 @@ export function ProvidersContent({
     [router],
   );
 
-  // Handle search submission - update URL with new parameters
+  // Handle search submission - update URL with new parameters.
+  // Plan 089 CR-H1: Start from current URL params (not a fresh set) so that
+  // ?section=, ?status=, and other persistent params are preserved across submits.
   const handleSearchSubmit = useCallback(
     (query: string, category: string | null, location: string) => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams(window.location.search);
       if (query) {
         params.set('q', query);
+      } else {
+        params.delete('q');
       }
       if (category) {
         params.set('category', category);
+      } else {
+        params.delete('category');
       }
       if (location) {
         params.set('location', location);
+      } else {
+        params.delete('location');
       }
       router.replace(`/providers?${params.toString()}`, { scroll: false });
     },
@@ -283,6 +305,19 @@ export function ProvidersContent({
       router.replace(`/providers?${params.toString()}`, { scroll: false });
     },
     [router],
+  );
+
+  // Plan 089 M6: Handle section change - update URL and context
+  const handleSectionChange = useCallback(
+    (newSection: Section) => {
+      setSelectedSection(newSection);
+      const params = new URLSearchParams(window.location.search);
+      params.set('section', newSection);
+      // Clear category when switching sections to avoid cross-section contamination
+      params.delete('category');
+      router.replace(`/providers?${params.toString()}`, { scroll: false });
+    },
+    [router, setSelectedSection],
   );
 
   // Plan 058: Handle admin approve action
@@ -350,11 +385,15 @@ export function ProvidersContent({
     if (location !== selectedLocation) {
       setSelectedLocation(location);
     }
+    // Plan 089: Sync section from URL
+    if (section !== selectedSection) {
+      setSelectedSection(section);
+    }
     // ESLint warning is intentionally ignored here to prevent infinite loops
     // The setter functions are stable and don't need to be in dependencies
     // Including searchQuery, selectedCategory, selectedLocation would cause infinite re-renders
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, query, location, defaultLocation]); // Include defaultLocation to sync when it changes
+  }, [category, query, location, defaultLocation, section]); // Include defaultLocation to sync when it changes
 
   // Prefetch likely next pages after initial load (performance optimization)
   useEffect(() => {
@@ -396,8 +435,10 @@ export function ProvidersContent({
       );
     }
 
-    // Plan 058: Determine card mode - use moderation when admin has status filter active
-    const cardMode = isAdmin && status ? 'moderation' : 'bookmark';
+    // Plan 058: Determine card mode - use moderation when admin has status filter active.
+    // Plan 089 CR-H2: Exclude UMMAH section — UMMAH returns community_service rows which
+    // have no provider review lifecycle; provider moderation actions must not be rendered.
+    const cardMode = isAdmin && status && section !== 'ummah' ? 'moderation' : 'bookmark';
 
     // Show results (cached data shown immediately, background refetch doesn't block UI)
     return (
@@ -511,10 +552,12 @@ export function ProvidersContent({
       ) : (
         // Search bar and category filter header (fixed)
         <ProvidersPageHeader
+          selectedSection={section}
           onCategoryChange={handleCategoryChange}
           onClearSearch={handleClearSearch}
           onLocationChange={handleLocationChange}
           onSearchSubmit={handleSearchSubmit}
+          onSectionChange={handleSectionChange}
         />
       )}
 

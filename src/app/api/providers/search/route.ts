@@ -8,6 +8,7 @@ import {
 import { searchProvidersAndCommunityServices } from '@/services/providers';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
+import type { Section } from '@/providers/search-provider';
 
 /** Valid review status values for admin filtering (Plan 058) */
 const VALID_REVIEW_STATUSES = ['approved', 'pending', 'rejected', 'needs_revision'] as const;
@@ -65,6 +66,13 @@ export async function GET(request: Request): Promise<NextResponse> {
     // Plan 058: Admin status filter
     const statusParam = searchParams.get('status');
     let adminOptions: { status: ReviewStatus; isAdmin: true } | undefined;
+
+    // Plan 089: Section filter
+    const sectionParam = searchParams.get('section');
+    const section: Section | undefined =
+      sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'business'
+        ? sectionParam
+        : undefined;
     
     if (statusParam) {
       // Validate status value first
@@ -106,6 +114,7 @@ export async function GET(request: Request): Promise<NextResponse> {
           page,
           pageSize,
           adminOptions,
+          section,
         ),
     );
 

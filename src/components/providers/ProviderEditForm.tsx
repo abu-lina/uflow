@@ -434,6 +434,18 @@ export function ProviderEditForm({
               <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
             </div>
 
+            {/* Plan 089 M8: Section (listing_type) field — read-only display alongside category */}
+            {provider.listing_type !== undefined && (
+              <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-gray-50 px-3 py-2 shadow-sm">
+                <div className="flex flex-1 flex-col gap-1">
+                  <span className="text-xs font-normal text-[#999999] leading-[15px]">Section (listing_type)</span>
+                  <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] capitalize">
+                    {provider.listing_type ?? 'null (unclassified)'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Offers Field */}
             <div 
               className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"

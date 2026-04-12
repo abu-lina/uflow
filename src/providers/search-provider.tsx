@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState } from 'react';
 
+/** Section values for Three-Section Search (Plan 089) */
+export type Section = 'food' | 'ummah' | 'business';
+
 export type SearchContextType = {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -9,6 +12,9 @@ export type SearchContextType = {
   setSelectedCategory: (category: string | null) => void;
   selectedLocation: string;
   setSelectedLocation: (location: string) => void;
+  /** Plan 089: Active section. Defaults to 'food' per D9. */
+  selectedSection: Section;
+  setSelectedSection: (section: Section) => void;
 };
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
@@ -21,6 +27,8 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState(LOCATION_ALL);
+  // Plan 089: Default section is FOOD per D9
+  const [selectedSection, setSelectedSection] = useState<Section>('food');
 
   return (
     <SearchContext.Provider
@@ -31,6 +39,8 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
         setSelectedCategory,
         selectedLocation,
         setSelectedLocation,
+        selectedSection,
+        setSelectedSection,
       }}
     >
       {children}

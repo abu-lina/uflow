@@ -6,6 +6,7 @@ import { logSupabaseError } from '@/utils/errorUtils';
 import type { ProviderBadgeWithType } from '@/types/badges';
 import { EntityType } from '@/types/badges';
 import { getBadgesForEntities, getBadgesForEntity } from './badges';
+import type { Section } from '@/config/sectionFilters';
 
 export interface Provider {
   provider_id: string;
@@ -43,6 +44,20 @@ export interface Provider {
   review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   review_feedback?: string | null;
   badges?: ProviderBadgeWithType[];
+  // Plan 089: section classification columns
+  listing_type?: 'food' | 'business' | null;
+  halal_level?: number | null;
+  muslim_owned?: boolean;
+  no_alcohol?: boolean;
+  no_pork?: boolean;
+  no_gambling?: boolean;
+  has_prayer_space?: boolean;
+  family_friendly?: boolean;
+  women_friendly?: boolean;
+  children_friendly?: boolean;
+  accepts_donations?: boolean;
+  has_parking?: boolean;
+  solidarity_pricing?: boolean;
 }
 
 // Combined search result type
@@ -81,29 +96,20 @@ export interface SearchResult {
   review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   /** Review feedback (Plan 058: included for admin requests) */
   review_feedback?: string | null;
-}
-
-// Constants for better maintainability
-const CATEGORY_IDS = {
-  ALL: 'Alle',
-  GEMEINSCHAFT_SPENDEN: '4470c3e0-458f-40a6-a96e-ca0fbdf145d7',
-} as const;
-
-// Type for search strategy
-type SearchStrategy = 'providers_only' | 'community_services_only' | 'both';
-
-/**
- * Determines the search strategy based on category
- */
-function getSearchStrategy(category: string | null | undefined): SearchStrategy {
-  // If no category or "All"/"Alle", search both providers and community services
-  if (!category || category === CATEGORY_IDS.ALL || category === 'All' || category === 'Alle') {
-    return 'both';
-  }
-  if (category === CATEGORY_IDS.GEMEINSCHAFT_SPENDEN) {
-    return 'community_services_only';
-  }
-  return 'providers_only';
+  // Plan 089: section classification fields (passed through from Provider)
+  listing_type?: 'food' | 'business' | null;
+  halal_level?: number | null;
+  muslim_owned?: boolean;
+  no_alcohol?: boolean;
+  no_pork?: boolean;
+  no_gambling?: boolean;
+  has_prayer_space?: boolean;
+  family_friendly?: boolean;
+  women_friendly?: boolean;
+  children_friendly?: boolean;
+  accepts_donations?: boolean;
+  has_parking?: boolean;
+  solidarity_pricing?: boolean;
 }
 
 /**
@@ -140,6 +146,20 @@ function transformProviderToSearchResult(provider: Provider): SearchResult {
     // Plan 058: Include review fields when available (admin mode)
     review_status: provider.review_status,
     review_feedback: provider.review_feedback,
+    // Plan 089: section classification fields
+    listing_type: provider.listing_type,
+    halal_level: provider.halal_level,
+    muslim_owned: provider.muslim_owned,
+    no_alcohol: provider.no_alcohol,
+    no_pork: provider.no_pork,
+    no_gambling: provider.no_gambling,
+    has_prayer_space: provider.has_prayer_space,
+    family_friendly: provider.family_friendly,
+    women_friendly: provider.women_friendly,
+    children_friendly: provider.children_friendly,
+    accepts_donations: provider.accepts_donations,
+    has_parking: provider.has_parking,
+    solidarity_pricing: provider.solidarity_pricing,
   };
 }
 
@@ -228,9 +248,15 @@ export interface AdminSearchOptions {
 
 /**
  * Main search function that handles all entity types with pagination
- * 
+ *
  * Plan 058: When adminOptions is provided, filters by review_status and includes
  * review_status/review_feedback fields in results.
+ *
+ * Plan 089: Added `section` parameter for section-based routing.
+ *   - 'food'    → providers with listing_type = 'food'
+ *   - 'ummah'   → community_services table only
+ *   - 'business'→ providers with listing_type = 'business'
+ *   - undefined → defaults to 'food' per D9
  */
 export async function searchProvidersAndCommunityServices(
   query: string,
@@ -239,23 +265,28 @@ export async function searchProvidersAndCommunityServices(
   page: number = 0,
   pageSize: number = 5,
   adminOptions?: AdminSearchOptions,
+  section?: Section,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   try {
-    const strategy = getSearchStrategy(category);
-    // Normalize category: convert null/undefined to empty string, which is handled as "all" by search functions
     const normalizedCategory = category || '';
-    
-    switch (strategy) {
-      case 'community_services_only':
-        return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
-      
-      case 'both':
-        return await searchBoth(query, normalizedCategory, location, page, pageSize, adminOptions);
-      
-      case 'providers_only':
-      default:
-        return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions);
+
+    // Plan 089: Section-based routing takes precedence when provided.
+    if (section !== undefined) {
+      switch (section) {
+        case 'ummah':
+          return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
+        case 'food':
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food');
+        case 'business':
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'business');
+        default:
+          // D9: default section is FOOD
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food');
+      }
     }
+
+    // Plan 089 D9: when no section provided, default to FOOD section.
+    return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food');
   } catch (error) {
     // Log error for debugging
     console.error('[searchProvidersAndCommunityServices] Error:', error);
@@ -295,56 +326,17 @@ async function searchProvidersOnly(
   page: number = 0,
   pageSize: number = 5,
   adminOptions?: AdminSearchOptions,
+  listingType?: 'food' | 'business',
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const offset = page * pageSize;
   const limit = pageSize + 1; // Fetch one extra to check if there are more
   
-  const providers = await searchProviders(query, category, location, limit, offset, adminOptions);
+  const providers = await searchProviders(query, category, location, limit, offset, adminOptions, listingType);
   const hasMore = providers.length > pageSize;
   const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
   const sortedResults = sortByCreationDate(results);
   
   return { results: sortedResults, hasMore };
-}
-
-/**
- * Search both providers and community services with pagination
- * Plan 058: Supports admin filtering by review_status (providers only; community services out of scope)
- */
-async function searchBoth(
-  query: string,
-  category: string,
-  location: string,
-  page: number = 0,
-  pageSize: number = 5,
-  adminOptions?: AdminSearchOptions,
-): Promise<{ results: SearchResult[]; hasMore: boolean }> {
-  // Plan 058 fix: when admin is filtering by review status, community services are out of scope.
-  // Showing them alongside providers causes moderation buttons to appear on community service
-  // cards — clicking those buttons sends a community_service_id to the providers UPDATE query
-  // which matches 0 rows and throws a PostgREST error.
-  if (adminOptions?.status) {
-    return await searchProvidersOnly(query, category, location, page, pageSize, adminOptions);
-  }
-
-  const offset = page * pageSize;
-  const limit = pageSize + 1; // Fetch one extra to check if there are more
-  
-  // Fetch exactly what we need (not 2x)
-  // Note: adminOptions only applies to providers (community services out of scope per Plan 058)
-  const [providers, communityServices] = await Promise.all([
-    searchProviders(query, category, location, limit, offset, adminOptions),
-    searchCommunityServices(query, CATEGORY_IDS.ALL, location, limit, offset)
-  ]);
-
-  const providerResults = providers.map(transformProviderToSearchResult);
-  const communityServiceResults = communityServices.map(transformCommunityServiceToSearchResult);
-  
-  const combinedResults = sortByCreationDate([...providerResults, ...communityServiceResults]);
-  const hasMore = combinedResults.length > pageSize;
-  const results = combinedResults.slice(0, pageSize);
-  
-  return { results, hasMore };
 }
 
 export async function getProviders(limit?: number): Promise<Provider[]> {
@@ -459,6 +451,7 @@ export async function searchProviders(
   limit?: number,
   offset?: number,
   adminOptions?: AdminSearchOptions,
+  listingType?: 'food' | 'business',
 ): Promise<Provider[]> {
   // Plan 058: Include review fields when admin
   const selectFields = adminOptions?.isAdmin
@@ -488,6 +481,11 @@ export async function searchProviders(
   // Plan 058: Apply review_status filter when admin options provided
   if (adminOptions?.status) {
     req = req.eq('review_status', adminOptions.status);
+  }
+
+  // Plan 089: Apply listing_type filter when provided (section-based routing)
+  if (listingType) {
+    req = req.eq('listing_type', listingType);
   }
   
   // Apply pagination if provided

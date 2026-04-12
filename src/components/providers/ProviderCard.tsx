@@ -16,6 +16,7 @@ import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider, ReviewStatusFilter } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
+import { computeHalalStars, computeBarakahBadge } from '@/utils/sectionBadges';
 
 interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   className?: string;
@@ -67,6 +68,15 @@ export const ProviderCard = React.memo(
       onApprove,
       onReject,
       isReviewing = false,
+      // Plan 089: Section classification fields for computed badges
+      listing_type,
+      halal_level,
+      muslim_owned,
+      accepts_donations,
+      solidarity_pricing,
+      has_prayer_space,
+      family_friendly,
+      women_friendly,
     },
     ref,
   ) => {
@@ -411,6 +421,39 @@ export const ProviderCard = React.memo(
                 </div>
               </div>
             )}
+            {/* Plan 089 M5: Computed section badges — halal stars (FOOD) + Barakah (FOOD/BUSINESS) */}
+            {(() => {
+              const halalStars = listing_type === 'food' ? computeHalalStars({ halal_level }) : 0;
+              // Barakah badge applies to FOOD and BUSINESS (not community services — those have no listing_type)
+              const showBarakah = computeBarakahBadge({ muslim_owned, accepts_donations, solidarity_pricing, has_prayer_space, family_friendly, women_friendly });
+              if (!halalStars && !showBarakah) return null;
+              return (
+                <div className="flex h-6 w-full items-center gap-1.5 overflow-hidden">
+                  {halalStars > 0 && (
+                    <div
+                      aria-label={`Halal Level ${halalStars}`}
+                      className="flex h-6 shrink-0 items-center gap-0.5 rounded-[3px] border border-[#CDCDCD] bg-background/80 px-1.5 backdrop-blur-sm"
+                      role="img"
+                      title={`Halal Level ${halalStars}`}
+                    >
+                      {Array.from({ length: halalStars }).map((_, i) => (
+                        <Icon key={i} className="text-amber-500" height={12} icon="mdi:star" width={12} />
+                      ))}
+                    </div>
+                  )}
+                  {showBarakah && (
+                    <div
+                      aria-label="Barakah"
+                      className="flex h-6 shrink-0 items-center rounded-[3px] border border-emerald-300 bg-emerald-50/80 px-1.5 backdrop-blur-sm"
+                      role="img"
+                      title="Barakah"
+                    >
+                      <span className="font-inter-tight text-xs font-medium text-emerald-700">Barakah</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             {barakah_effects && barakah_effects.length > 0 && (
               <div className="flex h-7 w-full items-center gap-2 overflow-hidden">
                 <div className="flex items-center gap-2 overflow-hidden">
