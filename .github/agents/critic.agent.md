@@ -162,6 +162,7 @@ A `Deferred` finding does **NOT** count as an unresolved blocker for critique cl
 
 **Closure rule (MANDATORY)**: If the plan is now **APPROVED** and all findings are either RESOLVED or DEFERRED (with downstream owner + target artifact + trigger present), you MUST:
 
+0. **Update each finding's `Status` field**: Change every finding row from `OPEN` to `RESOLVED` (or `DEFERRED`, per the Deferred Findings Rule above). An APPROVED document with `Status: OPEN` finding rows is a documentation inconsistency — future agents and readers scanning the finding table will be misled. Do this **before** writing the changelog entry.
 1. Update critique `Status` to `Resolved`
 2. Add a changelog entry that lists any deferred items and their owners
 3. Move the critique to `agent-output/critiques/closed/`
