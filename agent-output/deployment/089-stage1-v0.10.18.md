@@ -2,7 +2,7 @@
 ID: 089
 Origin: 089
 UUID: a3f7c1d2
-Status: Active
+Status: Released
 ---
 
 # Deployment: Plan 089 — Stage 1 (Local Commit) — v0.10.18
@@ -347,13 +347,18 @@ If Stage 2 deployment causes issues:
   "stage": "1",
   "classification": "feature",
   "committed_at": "2026-04-11T19:05Z",
-  "commit_hash": "b12e9983",
+  "released_at": "2026-04-12T19:10Z",
+  "commit_hash": "12efe2a1",
+  "merge_commit": "aea36d2b",
   "branch": "session/89-three-section-search",
   "milestone_count": 9,
   "plans_included": ["089"],
-  "push_status": "not_pushed",
-  "tag_status": "not_tagged",
-  "deployment_status": "local_commit_only"
+  "push_status": "pushed",
+  "tag_status": "v0.10.18 tagged and pushed",
+  "deployment_status": "released",
+  "pr_url": "https://github.com/abu-lina/uflow/pull/138",
+  "merge_commit": "aea36d2b",
+  "tag": "v0.10.18"
 }
 ```
 

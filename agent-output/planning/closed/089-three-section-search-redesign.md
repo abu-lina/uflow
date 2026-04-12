@@ -2,7 +2,7 @@
 ID: 089
 Origin: 089
 UUID: a3f7c1d2
-Status: Committed
+Status: Released
 ---
 
 # Plan 089 — Three-Section Search & Listing Redesign (FOOD / UMMAH / BUSINESS)

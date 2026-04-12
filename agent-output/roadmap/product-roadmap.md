@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-07
+**Last Updated**: 2026-04-12
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.17
+**Current Version**: v0.10.18
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -74,6 +74,7 @@
 | 2026-04-06       | Plan 085 released (v0.10.15): Fix profile provider navigation links | Fixed 4 broken provider card click handlers in ProfileContent.tsx — cards now navigate to `/providers/:id` (public detail) instead of `/profile/providers/:id` (404). Abbreviated pipeline; 8 regression tests; tag v0.10.15 pushed. Closes #125, #128 |
 | 2026-04-07       | Plan 085 released (v0.10.16): Restore resilient fetch pattern on CS detail page | Removed `notFound()` server-side guard on CS detail pages; wired `useCommunityService()` React Query hook client-side so admin/owner RLS clauses succeed with browser session. Admins can now view/approve/reject non-approved CS; owners see own pending submissions. Matches provider detail architecture (Plan 081). Tag v0.10.16 pushed. Closes #130 |
 | 2026-04-07       | Plan 086 released (v0.10.17): Modal.tsx accessibility refactor (WCAG 2.1 AA) | Closed 9 accessibility gaps in the base Modal component: `useScrollLock`, `useAriaHidden`, `useFocusTrap`, `useDelayedUnmount` hooks; escape→keyup, drag-close via mouseDownTargetRef, `useId()` sr-only title, backdropRef z-index layering. 35 new tests (23 unit + 12 integration), 934 total. Tag v0.10.17 pushed. Closes #132 |
+| 2026-04-12       | Plan 089 released (v0.10.18): Three-section discovery redesign — FOOD / UMMAH / BUSINESS | Splits unified provider listing into three purpose-built discovery sections. DB migration 067: `listing_type` enum, 13 new columns (halal_level, muslim_owned, 10 filter booleans), 5 composite indexes. Section-aware search routing, SectionSelector UI, computed halal star badges, Barakah badge, JoinHalal pipeline updated to FOOD classification. Legacy category URLs inferred to sections (M8). Admin moderation constrained to provider entities only. 54 new tests (43 unit + 4 component + 11 CR regression), 988 total. Tag v0.10.18 pushed. PR #138 merged. Issue #137 closed |
 
 ---
 
@@ -94,12 +95,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.17 — Released 2026-04-07
+**Current Working Release**: v0.10.18 — Released 2026-04-12
 
-_Plan 086 released (2026-04-07) — Modal.tsx accessibility refactor closing 9 WCAG 2.1 AA gaps. New hooks: `useScrollLock`, `useAriaHidden`, `useFocusTrap`, `useDelayedUnmount`. Escape fixed to keyup, drag-close via mouseDownTargetRef, `useId()` sr-only title span, backdropRef z-index layering. 35 new tests, 934 total. Tag v0.10.17 pushed. Issue #132 closed._
+_Plan 089 released (2026-04-12) — Three-section discovery redesign (FOOD / UMMAH / BUSINESS). DB migration 067 adds `listing_type` discriminator, halal_level, muslim_owned, and 10 filter boolean columns. SectionSelector UI, section-aware search routing, halal star badges, Barakah badge, JoinHalal FOOD classification, legacy URL inference. 54 new tests, 988 total. PR #138 merged, tag v0.10.18 pushed. Issue #137 closed._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.17 complete  
+**Ready for Release**: ✅ v0.10.18 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -116,6 +117,7 @@ _Plan 086 released (2026-04-07) — Modal.tsx accessibility refactor closing 9 W
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.18 | 2026-04-12 | Plan 089 (Three-section discovery — FOOD/UMMAH/BUSINESS — Issue #137) | Released |
 | v0.10.17 | 2026-04-07 | Plan 086 (Modal.tsx accessibility refactor — WCAG 2.1 AA — Issue #132) | Released |
 | v0.10.16 | 2026-04-07 | Plan 085 (Restore resilient fetch pattern on CS detail page — Issue #130) | Released |
 | v0.10.15 | 2026-04-06 | Plan 085 (Fix profile provider navigation links — Issue #125) | Released |
