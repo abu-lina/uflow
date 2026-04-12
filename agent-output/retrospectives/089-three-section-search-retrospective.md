@@ -222,8 +222,8 @@ Moving the rebase earlier means: (a) conflicts are resolved before the Stage 1 c
 
 | ID       | Description                                                               | Owner                  | Trigger                                                | Status |
 | -------- | ------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------ | ------ |
-| 089-OA-1 | Apply migration 067 to production Supabase instance, run verification SQL | Operator/DevOps        | Manual step — do before enabling feature in production | OPEN   |
-| 089-OA-2 | Post-migration EXPLAIN ANALYZE for section-filtered queries               | QA/DevOps              | After 089-OA-1                                         | OPEN   |
+| 089-OA-1 | Apply migration 067 to production Supabase instance, run verification SQL | Operator/DevOps        | Manual step — do before enabling feature in production | DONE 2026-04-12 |
+| 089-OA-2 | Post-migration EXPLAIN ANALYZE for section-filtered queries               | QA/DevOps              | After 089-OA-1                                         | OPEN (unblocked) |
 | 089-OA-3 | i18n for SectionSelector labels (FOOD/UMMAH/BUSINESS)                     | Implementer / Plan 065 | Next i18n cycle                                        | OPEN   |
 | 089-OA-4 | Run 18 skipped integration tests against live staging Supabase            | QA                     | After 089-OA-1                                         | OPEN   |
 
