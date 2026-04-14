@@ -133,6 +133,16 @@ If the target version tag already exists, increment and update the plan's `Targe
   - correct an obvious typo before commit when ownership is clear, or
   - leave the source doc unchanged and record follow-up rationale (mark uncertain times as `approx.` rather than inventing exact times).
 
+4d. **Stage 1 origin sync (MANDATORY)**:
+- Before staging changes for the final Stage 1 commit, ensure the branch is current with origin:
+  ```
+  git fetch origin --tags
+  git rebase origin/main
+  ```
+- If the rebase produces conflicts: resolve them, then re-run `npm run type-check` and a representative test subset to confirm the post-rebase build is still clean before continuing.
+- **Rationale**: Moving the rebase to Stage 1 means conflicts are resolved before the commit structure is formed. Stage 2 push is then conflict-free and lower-risk. (Stage 2 step 8 remote-sync check remains as a final safety gate.)
+- Record the outcome in the Stage 1 deployment doc: "rebased X commits" or "already up-to-date".
+
 5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
 
 5b. **PWA dev-artifact check (MANDATORY if dev server ran)**:

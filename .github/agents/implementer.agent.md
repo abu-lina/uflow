@@ -182,7 +182,12 @@ Then verify both files show the same version:
 grep '"version"' package-lock.json | head -2
 ```
 
-Do NOT hand off to Code Review or QA without this step completed and verified. Failure to do this causes a guaranteed QA blocking finding. 14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly. 15. Retrieve/store memory. 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
+Do NOT hand off to Code Review or QA without this step completed and verified. Failure to do this causes a guaranteed QA blocking finding.
+13d. **CHANGELOG date convention (MANDATORY)**:
+When writing or updating a CHANGELOG entry, use **today's date** (the date the entry is written or committed) — NOT the date implementation work started.
+- If the release date is uncertain, use `Unreleased` as the date; DevOps will set the final date at Stage 1 (step 4b).
+- Do NOT use the date the plan was created or the date you began coding.
+14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly. 15. Retrieve/store memory. 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
 ### Dependency Override Guardrails (MANDATORY when applicable)
 
@@ -318,6 +323,30 @@ If the caller is intentionally deferred (rare):
 
 - Document the deferral explicitly in the Implementation doc (owner + trigger + evidence to close).
 - Do NOT claim the milestone is complete unless the plan explicitly allows deferral.
+
+### Search/Filter Client-Interaction Trace (MANDATORY when applicable)
+
+**Trigger**: When you add or modify a form submit handler, URL parameter builder, or inline action in a component that renders a result list that could contain mixed entity types (e.g., `provider` + `community_service` rows — identifiable by sections like UMMAH that route to a different table, or by `section !== 'ummah'`-style guards elsewhere in the file).
+
+Before handing off to Code Reviewer, verify and document:
+
+**URL Lifecycle Trace** (for every modified or new submit handler):
+1. Trace what query params are constructed in the submit handler.
+2. Explicitly verify: which params are **preserved** from the current URL, and which are **dropped**.
+3. Confirm that persistent navigation state (e.g., `section`, `status`, `location`) is NOT accidentally dropped by building from an empty `new URLSearchParams()` rather than `new URLSearchParams(window.location.search)`.
+4. Write a unit or regression test that validates persistent params survive a submit-and-navigate cycle.
+
+**Inline Action Entity-Type Guard** (for every inline action rendered in a result list):
+1. For every action button in a result list (e.g., Approve, Reject, Bookmark): identify which entity types can appear in that list.
+2. Confirm the action is statically or dynamically restricted to the correct entity type.
+3. If the list can contain mixed entity types, confirm the action is guarded (e.g., `section !== 'ummah' && ...` or `entityType === 'provider' && ...`).
+4. Write a test asserting the action does NOT render for the wrong entity type.
+
+**Evidence**: Record in the implementation doc (one-liner per item):
+- `URL lifecycle: section preserved via window.location.search reuse — ✅`
+- `Inline action guard: section !== 'ummah' confirmed — ✅`
+
+If the trigger does not apply, write: `Search/Filter Client-Interaction Trace: N/A — [reason]`.
 
 ### API Route Coverage Gate (MANDATORY when applicable)
 
