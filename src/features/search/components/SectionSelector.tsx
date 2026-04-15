@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { Section } from '@/providers/search-provider';
 
 interface SectionSelectorProps {
@@ -8,29 +9,45 @@ interface SectionSelectorProps {
   className?: string;
 }
 
-/** Section metadata for rendering labels and icons */
-const SECTIONS: { value: Section; label: string; icon: string }[] = [
-  { value: 'food', label: 'Food', icon: '🍽️' },
-  { value: 'ummah', label: 'Ummah', icon: '🕌' },
-  { value: 'business', label: 'Business', icon: '🏪' },
-];
+/** Section metadata for rendering icons (labels come from i18n) */
+const SECTION_ICONS: Record<Section, string> = {
+  food: '🍽️',
+  ummah: '🕌',
+  business: '🏪',
+};
+
+/** Section values in display order */
+const SECTION_ORDER: Section[] = ['food', 'ummah', 'business'];
 
 /**
- * Plan 089 M6: Section Selector tab bar.
+ * Plan 089 M6 / Plan 090 M1: Section Selector tab bar.
  *
- * Renders three tabs — FOOD / UMMAH / BUSINESS — and calls onSectionChange
+ * Renders three tabs — Food / Ummah / Stores — and calls onSectionChange
  * when a different section is selected.
+ *
+ * Labels are i18n-aware via useLanguage(). The internal section value
+ * for "Stores" remains 'business' throughout the data model.
  *
  * The active tab is marked with aria-selected=true per ARIA tablist pattern.
  */
 export function SectionSelector({ selectedSection, onSectionChange, className = '' }: SectionSelectorProps) {
+  const { t } = useLanguage();
+
+  const getSectionLabel = (section: Section): string => {
+    if (section === 'food') return t('sections.food');
+    if (section === 'ummah') return t('sections.ummah');
+    return t('sections.stores');
+  };
+
   return (
     <div
       aria-label="Browse sections"
       className={`flex items-center gap-1 rounded-full bg-muted p-1 ${className}`}
       role="tablist"
     >
-      {SECTIONS.map(({ value, label, icon }) => {
+      {SECTION_ORDER.map((value) => {
+        const label = getSectionLabel(value);
+        const icon = SECTION_ICONS[value];
         const isActive = selectedSection === value;
         return (
           <button

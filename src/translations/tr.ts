@@ -131,6 +131,15 @@ export const tr = {
     urdu: "Urduca",
     pashtu: "Peştuca"
   },
+  home: {
+    searchPlaceholder: "Aramaya başla",
+    searchAriaLabel: "Ümmette aramaya başla"
+  },
+  sections: {
+    food: "Yemek",
+    ummah: "Ümmet",
+    stores: "Mağazalar"
+  },
   search: {
     placeholder: "Ümmetinde ara",
     ariaLabel: "Ümmette ara",

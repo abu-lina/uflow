@@ -133,6 +133,15 @@ export const de = {
     urdu: "Urdu",
     pashtu: "Paschtu"
   },
+  home: {
+    searchPlaceholder: "Suche starten",
+    searchAriaLabel: "Suche in der Ummah starten"
+  },
+  sections: {
+    food: "Food",
+    ummah: "Ummah",
+    stores: "Stores"
+  },
   search: {
     placeholder: "In deiner Ummah suchen",
     ariaLabel: "Suche in der Ummah",

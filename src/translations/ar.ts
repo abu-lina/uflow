@@ -131,6 +131,15 @@ export const ar = {
     urdu: "الأردية",
     pashtu: "البشتوية"
   },
+  home: {
+    searchPlaceholder: "ابدأ البحث",
+    searchAriaLabel: "ابدأ البحث في الأمة"
+  },
+  sections: {
+    food: "طعام",
+    ummah: "أمة",
+    stores: "محلات"
+  },
   search: {
     placeholder: "ابحث في أمتك",
     ariaLabel: "البحث في الأمة",

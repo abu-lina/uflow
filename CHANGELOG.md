@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.19] - Unreleased
+
+### Added
+
+- **Home Screen Redesign — Merged Home + Search Page (Plan 090 / Issue #144)**: Redesigns the mobile home screen (Stage 3) to merge the Home and Search pages into a single discovery-first view:
+  - **i18n (M1)**: Added `home.searchPlaceholder`, `home.searchAriaLabel`, `sections.food`, `sections.ummah`, `sections.stores` keys to all 6 translation files (de, en, ar, tr, ur, ps). `sections.stores` globally renames "Business" to "Stores" across the app.
+  - **HomeSearchBar component (M2)**: New `src/features/search/components/HomeSearchBar.tsx` — tap-to-navigate affordance (`div[role="search"]`, not `<input>`) navigating to `/providers?section={activeSection}`. Avoids iOS PWA keyboard on home load.
+  - **Section-filtered category galleries (M3)**: `fetchCategoriesBySection(section)` in `src/services/categories.ts` queries categories via `providers.listing_type` (food/business) or `community_services` (ummah). `CategoryGallerySection` accepts optional `section` prop; when provided uses `fetchCategoriesBySection` with React Query key `['categories-by-section', section]`; category clicks preserve `?section=` in navigation URL.
+  - **Home page assembly (M4)**: Stage 3 block in `RootPageContent` replaced — removes `MobileGreetingHeader`, adds glassmorphism fixed header with `HomeSearchBar` + `SectionSelector` and active section state (`useState<Section>('food')`). Scrollable body renders `CategoryGallerySection` with `section={activeSection}`.
+  - **SectionSelector i18n (M1)**: `SectionSelector.tsx` now uses `useLanguage()` hook for tab labels replacing hardcoded strings.
+
 ## [0.10.18] - 2026-04-11
 
 ### Added

@@ -133,6 +133,15 @@ export const ur = {
     urdu: "اردو",
     pashtu: "پشتو"
   },
+  home: {
+    searchPlaceholder: "تلاش شروع کریں",
+    searchAriaLabel: "امت میں تلاش شروع کریں"
+  },
+  sections: {
+    food: "کھانا",
+    ummah: "امت",
+    stores: "دکانیں"
+  },
   search: {
     placeholder: "اپنی امت میں تلاش کریں",
     ariaLabel: "امت میں تلاش",
