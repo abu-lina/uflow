@@ -1,10 +1,10 @@
 /**
- * Plan 090 M2: HomeSearchBar component tests
+ * Plan 090 M2 / Plan 091 M3: HomeSearchBar component tests
  *
  * TDD Gate: written BEFORE creating HomeSearchBar component.
  * Tests that the HomeSearchBar:
  * - Renders as a navigation affordance (not a functional search input)
- * - Navigates to /providers with the active section param when clicked
+ * - Navigates to /search with the active section param when clicked
  * - Is keyboard accessible
  * - Has correct ARIA attributes
  */
@@ -52,28 +52,28 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     expect(screen.getByText('Suche starten')).toBeInTheDocument();
   });
 
-  it('navigates to /providers?section=food when clicked with food section', () => {
+  it('navigates to /search?section=food when clicked with food section', () => {
     render(<HomeSearchBar activeSection="food" />);
     fireEvent.click(screen.getByRole('search'));
-    expect(mockPush).toHaveBeenCalledWith('/providers?section=food');
+    expect(mockPush).toHaveBeenCalledWith('/search?section=food');
   });
 
-  it('navigates to /providers?section=ummah when clicked with ummah section', () => {
+  it('navigates to /search?section=ummah when clicked with ummah section', () => {
     render(<HomeSearchBar activeSection="ummah" />);
     fireEvent.click(screen.getByRole('search'));
-    expect(mockPush).toHaveBeenCalledWith('/providers?section=ummah');
+    expect(mockPush).toHaveBeenCalledWith('/search?section=ummah');
   });
 
-  it('navigates to /providers?section=business when clicked with business section', () => {
+  it('navigates to /search?section=business when clicked with business section', () => {
     render(<HomeSearchBar activeSection="business" />);
     fireEvent.click(screen.getByRole('search'));
-    expect(mockPush).toHaveBeenCalledWith('/providers?section=business');
+    expect(mockPush).toHaveBeenCalledWith('/search?section=business');
   });
 
   it('navigates when Enter key is pressed (keyboard accessible)', () => {
     render(<HomeSearchBar activeSection="food" />);
     fireEvent.keyDown(screen.getByRole('search'), { key: 'Enter' });
-    expect(mockPush).toHaveBeenCalledWith('/providers?section=food');
+    expect(mockPush).toHaveBeenCalledWith('/search?section=food');
   });
 
   it('does not navigate on other key presses', () => {

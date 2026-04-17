@@ -6,16 +6,17 @@ import type { Section } from '@/providers/search-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 interface HomeSearchBarProps {
-  /** The currently active section — passed to /providers as ?section= param */
+  /** The currently active section — passed to /search as ?section= param */
   activeSection: Section;
   className?: string;
 }
 
 /**
- * Plan 090 M2: Home screen search affordance.
+ * Plan 090 M2 / Plan 091 M3: Home screen search affordance.
  *
  * Renders a styled, non-functional search bar that navigates to the
- * /providers search results page on tap or Enter key press.
+ * /search page on tap or Enter key press. /suchen remains as a legacy
+ * redirect route for backward compatibility.
  * Passes the active section as a URL param so the user lands on the
  * correct section tab.
  *
@@ -30,7 +31,7 @@ export function HomeSearchBar({ activeSection, className = '' }: HomeSearchBarPr
   const ariaLabel = t('home.searchAriaLabel');
 
   const navigate = () => {
-    router.push(`/providers?section=${activeSection}`);
+    router.push(`/search?section=${activeSection}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
