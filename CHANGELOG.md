@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.21] - 2026-04-19
+
+### Added
+
+- **Provider Catalog Schema Evolution (Plan 094 / Issue #148)**: Introduces per-provider typed catalog tables as the data foundation for food menu and business service offerings:
+  - **`provider_menu_items` table (M1)**: Per-provider food catalog with typed ordering-ready fields — `price_cents INTEGER`, `is_available BOOLEAN NOT NULL DEFAULT true`, `allergens TEXT[]`, `is_halal BOOLEAN`, `image_path TEXT` (Supabase Storage), and `sort_order INTEGER`. German-language tsvector full-text search via `search_vector TSVECTOR GENERATED ALWAYS AS (...) STORED` with GIN index.
+  - **`provider_service_offers` table (M1)**: Per-provider service catalog with booking-ready fields — `price_cents INTEGER`, `is_available BOOLEAN NOT NULL DEFAULT true`, `duration_minutes INTEGER`, `booking_url TEXT`, and `sort_order INTEGER`. Same STORED tsvector GIN search pattern.
+  - **RLS security (M1)**: Owner-based row-level security on both tables — SELECT is public (USING true); INSERT/UPDATE/DELETE require `provider_id IN (SELECT provider_id FROM providers WHERE provider_owner_id = auth.uid())`, matching existing provider ownership model. 8 policies total.
+  - **`search_provider_items` RPC (M2)**: Unified full-text search across both catalog tables via `UNION ALL` with `item_type` discriminator (`'menu_item'` | `'service_offer'`). Accepts `search_query`, `listing_type_filter`, `provider_id_filter`, `limit_count`, `offset_count`. Uses `SECURITY INVOKER` to preserve RLS. Fallback ordering by `sort_order, name_de` for empty query.
+  - **`provider_stats` MV extension (M3)**: Materialized view extended with `menu_item_count BIGINT` and `service_offer_count BIGINT` columns for dashboard display. Singleton UNIQUE index preserved for `CONCURRENTLY` refresh support.
+  - **`offer_tag_id` vocabulary bridge (M1)**: Optional FK to global `offers` vocabulary entry on both tables — links provider-specific items to shared taxonomy without breaking existing vocabulary search.
+  - **Updated-at triggers (M1)**: BEFORE UPDATE triggers on both tables reuse existing `update_updated_at_column()` function, consistent with providers (migration 062) and badge tables (migration 016).
+
+### Technical
+
+- Migration 068 is additive and idempotent — uses `IF NOT EXISTS`, `CREATE OR REPLACE`, `DROP POLICY IF EXISTS` throughout; safe to re-run
+- Backward compatible: existing `offers` vocabulary table, `search_offers` RPC, and `providers.offers_ids[]` are unchanged
+- Ordering-ready schema: `price_cents`, `is_available`, `duration_minutes` are typed database columns (not JSONB) — prerequisite for Epic 4.2 (Simple Booking System)
+- Schema foundation for Epic 2.3 (Enhanced Provider Profiles) catalog display
+- GIN indexes on `search_vector` columns plus partial indexes (`WHERE is_available = true`) for hot-path menu display performance
+
 ## [0.10.20] - 2026-04-19
 
 ### Added
