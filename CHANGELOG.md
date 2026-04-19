@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **EmptyCityCard component (M1)**: New `src/features/search/components/EmptyCityCard.tsx` — renders in `/search` Wo section when city query has no matching providers. Shows warm unavailability message, one-tap "Notify me" button for authenticated users (email from session), or email input + button for anonymous users. Inline success/error feedback (no toast). Subtle secondary provider CTA link to `/recommend`. Accessibility: ARIA labels, `role="status"` + `aria-live="polite"` for success, `role="alert"` + `aria-live="assertive"` for errors. RTL support via `dir="auto"`. 14 component tests covering auth/anon flows, success/error states, accessibility, provider CTA.
   - **Search page integration (M1)**: Updated `src/app/(public)/search/page.tsx` to fetch user session (via `supabase.auth.getUser()`), pass `userEmail` to `EmptyCityCard`, and replace plain "noCitiesFound" text with `EmptyCityCard` component when city search returns no results.
 
-## [0.10.19] - Unreleased
+## [0.10.19] - 2026-04-19
 
 ### Added
 
