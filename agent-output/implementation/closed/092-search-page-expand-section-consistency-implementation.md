@@ -2,7 +2,7 @@
 ID: 092
 Origin: 092
 UUID: c7d5a1f3
-Status: Committed
+Status: Released
 ---
 
 # Implementation — Plan 092: Search Page: Replace Accordions with ExpandSection Component

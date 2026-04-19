@@ -2,7 +2,7 @@
 ID: 090
 Origin: 090
 UUID: a3f7b2e1
-Status: Committed
+Status: Released
 ---
 
 # Code Review: 090 — Home & Navigation Redesign: Merged Discovery Surface
