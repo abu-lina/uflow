@@ -5,19 +5,69 @@ target: vscode
 argument-hint: Reference the approved plan to implement (e.g., plan 002)
 tools:
   [
-    'vscode/vscodeAPI',
-    'execute',
-    'read',
-    'edit',
-    'search',
-    'web',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'ms-python.python/getPythonEnvironmentInfo',
-    'ms-python.python/getPythonExecutableCommand',
-    'ms-python.python/installPythonPackage',
-    'ms-python.python/configurePythonEnvironment',
-    'todo',
+    vscode/vscodeAPI,
+    execute/getTerminalOutput,
+    execute/killTerminal,
+    execute/sendToTerminal,
+    execute/createAndRunTask,
+    execute/runNotebookCell,
+    execute/testFailure,
+    execute/runInTerminal,
+    read/terminalSelection,
+    read/terminalLastCommand,
+    read/getNotebookSummary,
+    read/problems,
+    read/readFile,
+    read/viewImage,
+    edit/createDirectory,
+    edit/createFile,
+    edit/createJupyterNotebook,
+    edit/editFiles,
+    edit/editNotebook,
+    edit/rename,
+    search/changes,
+    search/codebase,
+    search/fileSearch,
+    search/listDirectory,
+    search/searchResults,
+    search/textSearch,
+    search/usages,
+    web/fetch,
+    web/githubRepo,
+    figma/add_code_connect_map,
+    figma/create_design_system_rules,
+    figma/get_code_connect_map,
+    figma/get_code_connect_suggestions,
+    figma/get_design_context,
+    figma/get_figjam,
+    figma/get_metadata,
+    figma/get_screenshot,
+    figma/get_variable_defs,
+    figma/send_code_connect_mappings,
+    com.figma.mcp/mcp/add_code_connect_map,
+    com.figma.mcp/mcp/create_design_system_rules,
+    com.figma.mcp/mcp/create_new_file,
+    com.figma.mcp/mcp/generate_diagram,
+    com.figma.mcp/mcp/generate_figma_design,
+    com.figma.mcp/mcp/get_code_connect_map,
+    com.figma.mcp/mcp/get_code_connect_suggestions,
+    com.figma.mcp/mcp/get_context_for_code_connect,
+    com.figma.mcp/mcp/get_design_context,
+    com.figma.mcp/mcp/get_figjam,
+    com.figma.mcp/mcp/get_metadata,
+    com.figma.mcp/mcp/get_screenshot,
+    com.figma.mcp/mcp/get_variable_defs,
+    com.figma.mcp/mcp/search_design_system,
+    com.figma.mcp/mcp/send_code_connect_mappings,
+    com.figma.mcp/mcp/use_figma,
+    com.figma.mcp/mcp/whoami,
+    ms-python.python/getPythonEnvironmentInfo,
+    ms-python.python/getPythonExecutableCommand,
+    ms-python.python/installPythonPackage,
+    ms-python.python/configurePythonEnvironment,
+    uflow.uflow-memory/flowbaby_storeMemory,
+    uflow.uflow-memory/flowbaby_retrieveMemory,
+    todo,
   ]
 model: GPT-5.3-Codex
 handoffs:
@@ -185,8 +235,10 @@ grep '"version"' package-lock.json | head -2
 Do NOT hand off to Code Review or QA without this step completed and verified. Failure to do this causes a guaranteed QA blocking finding.
 13d. **CHANGELOG date convention (MANDATORY)**:
 When writing or updating a CHANGELOG entry, use **today's date** (the date the entry is written or committed) — NOT the date implementation work started.
+
 - If the release date is uncertain, use `Unreleased` as the date; DevOps will set the final date at Stage 1 (step 4b).
 - Do NOT use the date the plan was created or the date you began coding.
+
 14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly. 15. Retrieve/store memory. 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
 ### Dependency Override Guardrails (MANDATORY when applicable)
@@ -331,18 +383,21 @@ If the caller is intentionally deferred (rare):
 Before handing off to Code Reviewer, verify and document:
 
 **URL Lifecycle Trace** (for every modified or new submit handler):
+
 1. Trace what query params are constructed in the submit handler.
 2. Explicitly verify: which params are **preserved** from the current URL, and which are **dropped**.
 3. Confirm that persistent navigation state (e.g., `section`, `status`, `location`) is NOT accidentally dropped by building from an empty `new URLSearchParams()` rather than `new URLSearchParams(window.location.search)`.
 4. Write a unit or regression test that validates persistent params survive a submit-and-navigate cycle.
 
 **Inline Action Entity-Type Guard** (for every inline action rendered in a result list):
+
 1. For every action button in a result list (e.g., Approve, Reject, Bookmark): identify which entity types can appear in that list.
 2. Confirm the action is statically or dynamically restricted to the correct entity type.
 3. If the list can contain mixed entity types, confirm the action is guarded (e.g., `section !== 'ummah' && ...` or `entityType === 'provider' && ...`).
 4. Write a test asserting the action does NOT render for the wrong entity type.
 
 **Evidence**: Record in the implementation doc (one-liner per item):
+
 - `URL lifecycle: section preserved via window.location.search reuse — ✅`
 - `Inline action guard: section !== 'ummah' confirmed — ✅`
 

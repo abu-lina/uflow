@@ -5,10 +5,11 @@ import { getOnboardingState, setOnboardingState } from '@/lib/utils/onboarding-s
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAppStage } from '@/hooks/useAppStage';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
-import { Stage2Content } from './Stage2Content';
 import { CategoryGallerySection } from './CategoryGallerySection';
-import { MobileGreetingHeader } from './MobileGreetingHeader';
+import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
+import { SectionSelector } from '@/features/search/components/SectionSelector';
 import { AboutSection } from './AboutSection';
+import type { Section } from '@/config/sectionFilters';
 import { DesktopWaitlistSection } from './DesktopWaitlistSection';
 import { ExploreSection } from './ExploreSection';
 import { LandingHero } from './LandingHero';
@@ -27,8 +28,8 @@ import { Skeleton } from '@/components/ui/skeleton/Skeleton';
  * 
  * Mobile (below md:):
  * - Stage 1 (0-5 providers): CityEarlyAccessEmptyState
- * - Stage 2 (6-14 providers): Stage2Content (CityCard + provider list)
- * - Stage 3 (15+ providers): CategoryGallerySection
+ * - Stage 2 (6-14 providers): Unified discovery home (search + tabs + section galleries)
+ * - Stage 3 (15+ providers): Unified discovery home (search + tabs + section galleries)
  * - Onboarding: Waitlist/onboarding content (MobileSplashScreen)
  * 
  * Onboarding is complete when:
@@ -41,11 +42,19 @@ export function RootPageContent() {
   const [shouldShowCityContent, setShouldShowCityContent] = useState<boolean | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [isRecovering, setIsRecovering] = useState(false);
+  const [activeSection, setActiveSection] = useState<Section>('food');
   
   // Get app stage to determine which content to show
   const { stage, cityName, isLoading: stageLoading } = useAppStage();
 
   useEffect(() => {
+    // When app is fully launched, bypass all onboarding/city gates
+    const isAppLaunched = getFeatureFlag('isAppLaunched');
+    if (isAppLaunched) {
+      setShouldShowCityContent(true);
+      return;
+    }
+
     // Check if waitlist should be skipped
     const skipWaitlist = getFeatureFlag('skipWaitlist');
     
@@ -207,19 +216,14 @@ export function RootPageContent() {
               />
             )}
 
-            {/* Stage 2: City Card + Provider List (6-14 providers) */}
-            {stage === 'stage2' && <Stage2Content cityName={displayCity} />}
-
-            {/* Stage 3: Category Gallery (15+ providers) */}
-            {stage === 'stage3' && (
+            {/* Stage 2/3: Category Discovery Home */}
+            {(stage === 'stage2' || stage === 'stage3') && (
               <div className="flex min-h-screen w-full flex-col bg-uflow-light">
-                {/* Greeting Header - Fixed at top (matches Stage 2 style) */}
-                <header 
+                {/* Fixed header: Search bar + Section selector */}
+                <header
                   className="fixed left-0 right-0 top-0 z-50 sm:hidden"
                   style={{
-                    // Smooth transition for all properties including backdrop-filter
                     transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
-                    // Glassy blur effect - always applied for consistent visual effect
                     background: 'rgba(255, 255, 255, 0.15)',
                     backdropFilter: 'blur(20px) saturate(180%)',
                     WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -231,31 +235,31 @@ export function RootPageContent() {
                     paddingRight: '1px',
                   }}
                 >
-                  <div 
-                    className="px-6 py-4 text-left"
+                  <div
+                    className="flex flex-col gap-3 px-4 pb-3"
                     style={{
-                      // Add safe area padding to content, not header background
-                      // Use max() to ensure minimum 24px padding on devices without safe area (like iPhone SE)
                       paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
                     }}
                   >
-                    <div className="max-w-72">
-                      <MobileGreetingHeader cityName={displayCity} />
-                    </div>
+                    <HomeSearchBar activeSection={activeSection} />
+                    <SectionSelector
+                      selectedSection={activeSection}
+                      onSectionChange={setActiveSection}
+                    />
                   </div>
                 </header>
 
-                {/* Category Gallery - Below header with proper spacing */}
-                {/* 
-                  Spacing breakdown for visual 32px gap:
-                  - Header top padding: max(24px, env(safe-area-inset-top) + 24px)
-                  - Header content height: ~69px (greeting + support text)
-                  - Header bottom padding: 16px (py-4 bottom)
-                  - Visual gap: 32px
-                  Using max() to ensure minimum 141px for devices without safe area
-                */}
-                <div className="w-full pt-[max(141px,calc(env(safe-area-inset-top)+141px))] px-6">
-                  <CategoryGallerySection />
+                {/* Scrollable body — offset for fixed header height */}
+                {/* Header: safe-area + 24px top pad + ~44px HomeSearchBar + 8px gap = ~76px + safe-area */}
+                {/* + ~40px SectionSelector + 12px bottom pad = ~128px + safe-area */}
+                <div
+                  className="w-full px-4"
+                  style={{
+                    paddingTop: 'max(152px, calc(env(safe-area-inset-top) + 152px))',
+                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
+                  }}
+                >
+                  <CategoryGallerySection section={activeSection} />
                 </div>
               </div>
             )}

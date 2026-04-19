@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
-import { fetchUsedCategories, type Category } from '@/services/categories';
+import { fetchUsedCategories, fetchCategoriesBySection, type Category } from '@/services/categories';
+import type { Section } from '@/config/sectionFilters';
 import { formatAllahText } from '@/utils/textUtils';
 import {
   getLocalizedDescription,
@@ -14,7 +15,11 @@ import {
 import UnifiedGallery from './UnifiedGallery';
 import { getEntityTypeForCategory } from '@/utils/entityTypeUtils';
 
-export function CategoryGallerySection() {
+interface CategoryGallerySectionProps {
+  section?: Section;
+}
+
+export function CategoryGallerySection({ section }: CategoryGallerySectionProps = {}) {
   const router = useRouter();
 
   // Use React Query to cache categories data and prevent refetching on navigation
@@ -23,8 +28,8 @@ export function CategoryGallerySection() {
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ['used-categories'],
-    queryFn: fetchUsedCategories,
+    queryKey: section ? ['categories-by-section', section] : ['used-categories'],
+    queryFn: section ? () => fetchCategoriesBySection(section) : fetchUsedCategories,
     staleTime: 10 * 60 * 1000, // 10 minutes - categories don't change often
     placeholderData: (previousData) => previousData, // Show cached data immediately
   });
@@ -78,7 +83,9 @@ export function CategoryGallerySection() {
   };
 
   const handleCategoryClick = (categoryId: string) => {
-    router.push(`/providers?category=${categoryId}`);
+    const params = new URLSearchParams({ category: categoryId });
+    if (section) params.set('section', section);
+    router.push(`/providers?${params.toString()}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, categoryId: string) => {
@@ -108,6 +115,16 @@ export function CategoryGallerySection() {
   }
 
   if (categories.length === 0) {
+    // Plan 090: when section filter is active, show a "coming soon" message rather than
+    // silently rendering nothing — required by plan acceptance criterion M3/Task 4.
+    if (section) {
+      const isEnglish = detectUserLanguage() === 'en';
+      return (
+        <section className="w-full px-6 py-12 text-center text-muted-foreground lg:hidden">
+          <p className="text-sm">{isEnglish ? 'Coming soon' : 'Demnächst verfügbar'}</p>
+        </section>
+      );
+    }
     return null;
   }
 

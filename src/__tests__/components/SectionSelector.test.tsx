@@ -16,6 +16,21 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
 }));
 
+// ─── Mock LanguageProvider (Plan 090 M1: SectionSelector now uses useLanguage) ──
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({
+    t: (key: string) => {
+      const map: Record<string, string> = {
+        'sections.food': 'Food',
+        'sections.ummah': 'Ummah',
+        'sections.stores': 'Stores',
+      };
+      return map[key] ?? key;
+    },
+    language: 'en',
+  }),
+}));
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('SectionSelector (Plan 089 M6)', () => {
@@ -23,14 +38,14 @@ describe('SectionSelector (Plan 089 M6)', () => {
     render(<SectionSelector selectedSection="food" onSectionChange={vi.fn()} />);
     expect(screen.getByRole('tab', { name: /food/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /ummah/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /business/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /stores/i })).toBeInTheDocument();
   });
 
   it('marks the active section with aria-selected=true', () => {
     render(<SectionSelector selectedSection="ummah" onSectionChange={vi.fn()} />);
     expect(screen.getByRole('tab', { name: /ummah/i })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: /food/i })).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByRole('tab', { name: /business/i })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: /stores/i })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('calls onSectionChange with food when food button is clicked', () => {
@@ -40,10 +55,10 @@ describe('SectionSelector (Plan 089 M6)', () => {
     expect(onSectionChange).toHaveBeenCalledWith('food');
   });
 
-  it('calls onSectionChange with business when business button is clicked', () => {
+  it('calls onSectionChange with business when stores button is clicked', () => {
     const onSectionChange = vi.fn();
     render(<SectionSelector selectedSection="food" onSectionChange={onSectionChange} />);
-    fireEvent.click(screen.getByRole('tab', { name: /business/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /stores/i }));
     expect(onSectionChange).toHaveBeenCalledWith('business');
   });
 });

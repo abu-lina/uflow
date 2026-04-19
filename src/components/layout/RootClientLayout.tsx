@@ -46,10 +46,12 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
   // Check feature flag on client-side only (use state to avoid webpack evaluation issues)
   const [isAppLaunched, setIsAppLaunched] = useState(false);
+  const [forceMobileFooter, setForceMobileFooter] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsAppLaunched(getFeatureFlag('isAppLaunched'));
+      setForceMobileFooter(getFeatureFlag('forceMobileFooter'));
     }
   }, []);
 
@@ -77,9 +79,16 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   );
   const showSubpageAction = shouldShowSubpageAction(pathname);
 
+  // Root discovery home must always show the bottom navbar once stage is resolved.
+  const isDiscoveryHome = pathname === '/' && (stage === 'stage2' || stage === 'stage3');
+
   // When not yet mounted use 'none' so slot reserves space without showing wrong UI; after mount show correct one
   const mobileUiMode = !isMounted
     ? 'none'
+    : forceMobileFooter
+      ? 'footer'
+    : isDiscoveryHome
+      ? 'footer'
     : showMobileFooter
       ? 'footer'
       : showCityEarlyAccessNavbar
@@ -93,12 +102,14 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         pathname,
         isSplashVisible,
         isAppLaunched,
+        forceMobileFooter,
         stage,
+        isDiscoveryHome,
         showMobileFooter,
         user: user ? 'authenticated' : 'not authenticated',
       });
     }
-  }, [pathname, isSplashVisible, isAppLaunched, stage, showMobileFooter, user]);
+  }, [pathname, isSplashVisible, isAppLaunched, forceMobileFooter, stage, isDiscoveryHome, showMobileFooter, user]);
 
   return (
     <LoadingProvider>

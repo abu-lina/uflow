@@ -609,6 +609,61 @@ export async function searchProviders(
   return providersWithBadges;
 }
 
+/**
+ * Fetch all valid cities from the cities table
+ * (includes cities that exist but may not have providers yet)
+ */
+export async function fetchAllValidCities(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('cities')
+      .select('city_name')
+      .returns<{ city_name: string }[]>();
+
+    if (error) {
+      throw error;
+    }
+
+    return (data || []).map(c => c.city_name).sort((a, b) => a.localeCompare(b, 'de'));
+  } catch (error) {
+    console.error('Error fetching valid cities:', error);
+    return [];
+  }
+}
+
+/**
+ * Check whether a city exists in the canonical cities table.
+ * Uses an exact, case-insensitive match and returns a boolean only.
+ */
+export async function checkCityExists(cityName: string): Promise<boolean> {
+  const normalizedCity = cityName.trim();
+
+  if (!normalizedCity) {
+    return false;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('cities')
+      .select('city_name')
+      .ilike('city_name', normalizedCity)
+      .limit(1);
+
+    if (error) {
+      throw error;
+    }
+
+    return (data?.length ?? 0) > 0;
+  } catch (error) {
+    console.error('Error checking city existence:', error);
+    return false;
+  }
+}
+
+/**
+ * Fetch cities that currently have providers or approved community services
+ * (subset of valid cities - these have actual listings)
+ */
 export async function fetchProviderCities(): Promise<string[]> {
   try {
     // Fetch cities from both providers and community_services tables

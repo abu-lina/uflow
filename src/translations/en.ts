@@ -133,14 +133,42 @@ export const en = {
     urdu: "Urdu",
     pashtu: "Pashtu"
   },
+  home: {
+    searchPlaceholder: "Start searching",
+    searchAriaLabel: "Start searching in the Ummah"
+  },
+  sections: {
+    food: "Food",
+    ummah: "Ummah",
+    stores: "Stores"
+  },
   search: {
     placeholder: "Search in your Ummah",
     ariaLabel: "Search in the Ummah",
     all: "All",
     everywhere: "Everywhere",
     unnamed: "Unnamed"
-  },
-  categories: {
+  },  suchen: {
+    title: "Search",
+    accordions: {
+      was: "What?",
+      wo: "Where: Near me",
+      wer: "Who: For me",
+      filter: "Filter"
+    },
+    clearAll: "Clear all",
+    searchButton: "Search",
+    citySearchPlaceholder: "Search for a city...",
+    searchCityPrompt: "Search for your city",
+    noCitiesFound: "No providers in this city yet.",
+    notifyMe: "Notify me",
+    notifyMeSuccess: "Done! We'll let you know when {{city}} goes live.",
+    notifyMeError: "Something went wrong. Please try again.",
+    notifyMeEmailPlaceholder: "Your email address",
+    notifyMeCityUnavailable: "No providers in {{city}} yet – we're working on it.",
+    providerCTA: "Are you a provider? Add your listing →",
+    cityNotRecognized: "{{city}} is not recognized. Please check the spelling."
+  },  categories: {
     // Add common category translations
     food: "Food",
     clothing: "Clothing", 

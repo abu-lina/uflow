@@ -65,6 +65,66 @@ export async function fetchUsedCategories(): Promise<Category[]> {
   return categoryResults;
 }
 
+/**
+ * Plan 090 M3: Fetch categories filtered by section.
+ *
+ * Resolves the D7 category-to-section mapping gap using strategy (b):
+ * queries categories through their associated providers/community_services
+ * filtered by listing_type (food/business) or the community_services table (ummah).
+ *
+ * - 'food': categories used by approved providers with listing_type = 'food'
+ * - 'ummah': categories used by approved community_services
+ * - 'business': categories used by approved providers with listing_type = 'business'
+ */
+export async function fetchCategoriesBySection(section: import('@/config/sectionFilters').Section): Promise<Category[]> {
+  let categoryIds: string[];
+
+  if (section === 'ummah') {
+    // Ummah: categories from community_services table
+    const { data, error } = await supabase
+      .from('community_services')
+      .select('category_id')
+      .eq('review_status', 'approved');
+
+    if (error) throw error;
+
+    const ids = Array.isArray(data)
+      ? data.map((r: { category_id: string | null }) => r.category_id)
+      : [];
+    categoryIds = Array.from(
+      new Set(ids.filter((id): id is string => typeof id === 'string' && id !== 'null' && id !== '')),
+    );
+  } else {
+    // Food or Business: categories from providers filtered by listing_type
+    const { data, error } = await supabase
+      .from('providers')
+      .select('category_id')
+      .eq('listing_type', section === 'food' ? 'food' : 'business')
+      .eq('review_status', 'approved');
+
+    if (error) throw error;
+
+    const ids = Array.isArray(data)
+      ? data.map((r: { category_id: string | null }) => r.category_id)
+      : [];
+    categoryIds = Array.from(
+      new Set(ids.filter((id): id is string => typeof id === 'string' && id !== 'null' && id !== '')),
+    );
+  }
+
+  if (categoryIds.length === 0) return [];
+
+  const { data: categories, error: categoriesError } = await supabase
+    .from('categories')
+    .select('*')
+    .in('category_id', categoryIds)
+    .returns<Category[]>();
+
+  if (categoriesError) throw categoriesError;
+
+  return Array.isArray(categories) ? categories : [];
+}
+
 // Fetch categories that have content based on current search filters.
 // Uses tsvector RPC search when a search query is provided (Plan 007:
 // replaces previous ILIKE usage to comply with Postgres-first search rules).

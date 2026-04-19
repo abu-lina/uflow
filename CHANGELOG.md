@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.20] - 2026-04-19
+
+### Added
+
+- **City Interest: "Notify Me" for Unavailable Cities (Plan 093 / Issue #147)**: Converts empty-city search dead-ends into interest capture opportunities for demand-side users:
+  - **i18n (M3)**: Added `notifyMe`, `notifyMeSuccess`, `notifyMeError`, `notifyMeEmailPlaceholder`, `notifyMeCityUnavailable`, `providerCTA` translation keys to all 6 language files (de, en, ar, tr, ur, ps). Updated existing `noCitiesFound` from placeholder-quality to proper messaging.
+  - **POST /api/city-interest/subscribe endpoint (M2)**: New API route at `src/app/api/city-interest/subscribe/route.ts` — handles city interest submissions for both authenticated (session-based, no email required) and anonymous users (email in body). Uses `getSupabaseAdmin()` service role client to upsert `waitlist.selected_city` directly (bypasses RLS). Includes rate limiting (20 req/hr per IP via `@/lib/rate-limit`), manual input validation (email format, cityName trim/max 100 chars), and idempotent upsert. 11 unit tests covering auth/anon paths, validation, error handling, idempotency.
+  - **EmptyCityCard component (M1)**: New `src/features/search/components/EmptyCityCard.tsx` — renders in `/search` Wo section when city query has no matching providers. Shows warm unavailability message, one-tap "Notify me" button for authenticated users (email from session), or email input + button for anonymous users. Inline success/error feedback (no toast). Subtle secondary provider CTA link to `/recommend`. Accessibility: ARIA labels, `role="status"` + `aria-live="polite"` for success, `role="alert"` + `aria-live="assertive"` for errors. RTL support via `dir="auto"`. 14 component tests covering auth/anon flows, success/error states, accessibility, provider CTA.
+  - **Search page integration (M1)**: Updated `src/app/(public)/search/page.tsx` to fetch user session (via `supabase.auth.getUser()`), pass `userEmail` to `EmptyCityCard`, and replace plain "noCitiesFound" text with `EmptyCityCard` component when city search returns no results.
+
+## [0.10.19] - 2026-04-19
+
+### Added
+
+- **Home Screen Redesign — Merged Home + Search Page (Plan 090 / Issue #144)**: Redesigns the mobile home screen (Stage 3) to merge the Home and Search pages into a single discovery-first view:
+  - **i18n (M1)**: Added `home.searchPlaceholder`, `home.searchAriaLabel`, `sections.food`, `sections.ummah`, `sections.stores` keys to all 6 translation files (de, en, ar, tr, ur, ps). `sections.stores` globally renames "Business" to "Stores" across the app.
+  - **HomeSearchBar component (M2)**: New `src/features/search/components/HomeSearchBar.tsx` — tap-to-navigate affordance (`div[role="search"]`, not `<input>`) navigating to `/providers?section={activeSection}`. Avoids iOS PWA keyboard on home load.
+  - **Section-filtered category galleries (M3)**: `fetchCategoriesBySection(section)` in `src/services/categories.ts` queries categories via `providers.listing_type` (food/business) or `community_services` (ummah). `CategoryGallerySection` accepts optional `section` prop; when provided uses `fetchCategoriesBySection` with React Query key `['categories-by-section', section]`; category clicks preserve `?section=` in navigation URL.
+  - **Home page assembly (M4)**: Stage 3 block in `RootPageContent` replaced — removes `MobileGreetingHeader`, adds glassmorphism fixed header with `HomeSearchBar` + `SectionSelector` and active section state (`useState<Section>('food')`). Scrollable body renders `CategoryGallerySection` with `section={activeSection}`.
+  - **SectionSelector i18n (M1)**: `SectionSelector.tsx` now uses `useLanguage()` hook for tab labels replacing hardcoded strings.
+  
+- **Home Redesign Increment 2 — SectionSelector Visual Polish + /suchen Stub (Plan 091 / Issue #145)**: Continues home redesign with Figma-aligned visual polish and dedicated search entry point:
+  - **SectionSelector visual restyle (M1)**: Restyled `SectionSelector` component to match Figma teal-pill design — white rounded container (`bg-background`, `h-14`, `rounded-2xl`), teal active tab (`bg-primary`, `h-10`, `rounded-xl`), grey inactive tabs (`text-neutral-500`), Inter Tight Medium 16px (`font-inter-tight font-medium text-base`).
+  - **/suchen search page stub (M2)**: New `src/app/(public)/suchen/page.tsx` — dedicated search entry point with back header ("← Suchen"), `SectionSelector`, 4 accordion sections (Was?/Wo:/Wer:/Filter; Was? open by default), and fixed bottom bar ("Clear all" + "♡ Suchen" button). Search execution deferred to future plan — accordions and buttons are styled stubs. Uses `<Suspense>` boundary for `useSearchParams()` per Next.js App Router requirement. Back button navigates to `/` when no history (direct URL access fallback).
+  - **HomeSearchBar URL update (M3)**: `HomeSearchBar` now navigates to `/suchen?section={activeSection}` instead of `/providers?section=...` (supersedes Plan 090 SC5). CategoryGallerySection category clicks still navigate to `/providers` (unchanged).
+  - **i18n (M2)**: Added `suchen.title`, `suchen.accordions.{was,wo,wer,filter}`, `suchen.clearAll`, `suchen.searchButton` keys to all 6 translation files (de, en, ar, tr, ur, ps).
+
+- **Search Page Accordion Consistency — ExpandSection Component (Plan 092 / Issue #146)**: Pre-QA UI consistency fix for `/search` page accordions to match provider detail expand pattern:
+  - **ExpandSection component (M1)**: New `src/components/ui/ExpandSection.tsx` — reusable expand/collapse card component extracted from the provider detail page expand pattern. Uses single rotating `ChevronDown` icon (no Up/Down swap), borderless `rounded-2xl bg-background shadow-sm` card, `font-inter-tight text-lg font-semibold text-content-heading` title. Accepts `title`, `defaultOpen`, and `children` props. Manages internal open/close state.
+  - **Search page update (M2)**: Updated `/search` page to use `ExpandSection` for all 4 accordion rows (Was?, Wo, Wer, Filter). Removed bespoke `open` state object, `toggle` function, `renderLabel` helper, and `rows` array. Was? accordion uses `defaultOpen` prop to remain open by default.
+  - **Unit tests (M3)**: Added `src/__tests__/components/ui/ExpandSection.test.tsx` with 5 tests covering render, default state, `defaultOpen` prop, toggle behavior, and icon rotation.
+
 ## [0.10.18] - 2026-04-11
 
 ### Added

@@ -131,14 +131,42 @@ export const tr = {
     urdu: "Urduca",
     pashtu: "Peştuca"
   },
+  home: {
+    searchPlaceholder: "Aramaya başla",
+    searchAriaLabel: "Ümmette aramaya başla"
+  },
+  sections: {
+    food: "Yemek",
+    ummah: "Ümmet",
+    stores: "Mağazalar"
+  },
   search: {
     placeholder: "Ümmetinde ara",
     ariaLabel: "Ümmette ara",
     all: "Tümü",
     everywhere: "Her yerde",
     unnamed: "İsimsiz"
-  },
-  categories: {
+  },  suchen: {
+    title: "Ara",
+    accordions: {
+      was: "Ne?",
+      wo: "Nerede: Yakınımda",
+      wer: "Kim: Benim için",
+      filter: "Filtre"
+    },
+    clearAll: "Tümünü temizle",
+    searchButton: "Ara",
+    citySearchPlaceholder: "Şehir ara...",
+    searchCityPrompt: "Şehrini ara",
+    noCitiesFound: "Bu şehirde henüz sağlayıcı yok.",
+    notifyMe: "Bana haber ver",
+    notifyMeSuccess: "Tamam! {{city}} hazır olduğunda sana haber vereceğiz.",
+    notifyMeError: "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    notifyMeEmailPlaceholder: "E-posta adresin",
+    notifyMeCityUnavailable: "{{city}} şehrinde henüz sağlayıcı yok – üzerinde çalışıyoruz.",
+    providerCTA: "Sağlayıcı mısın? Listelemenizi ekleyin →",
+    cityNotRecognized: "{{city}} tanınmadı. Lütfen yazımı kontrol edin."
+  },  categories: {
     food: "Yemek",
     clothing: "Giyim",
     electronics: "Elektronik",
