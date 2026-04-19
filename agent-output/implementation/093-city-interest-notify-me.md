@@ -280,8 +280,44 @@ None — all new API routes and components have comprehensive test coverage:
 
 ### Deployment Prerequisites
 - **Environment variables**: No new env vars required (uses existing Supabase keys)
-- **Database**: No new migrations required (reuses `waitlist` table + `get_city_interest_counts()` RPC from migration 018)
+- **Database migrations**: Migration 068 (GeoNames cities) requires **direct psql connection** (see below)
 - **Rate limiting**: Uses in-memory rate limit store (20 req/hr per IP) — production should consider Redis-based rate limiting for multi-instance deployments (noted in `@/lib/rate-limit.ts` comments, not a blocker)
+
+#### ⚠️ CRITICAL: Migration 068 Deployment
+
+**Issue**: Migration 068 is **1.1MB** (27,127 cities) — exceeds Supabase SQL Editor query size limit.
+
+**Solution**: Use **direct psql connection** (DevOps Stage 2/3):
+
+```bash
+# Step 1: Get connection string from Supabase Dashboard
+# Project Settings → Database → Connection String (Direct)
+# Format: postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+
+# Step 2: Apply migration via psql
+psql "postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres" \
+  -f supabase/migrations/068_add_international_cities.sql
+
+# Expected output: Series of "INSERT 0 500" messages, then "COMMENT" (completes in ~30-60 seconds)
+
+# Step 3: Verify cities imported
+psql "postgresql://..." -c "SELECT COUNT(*) FROM cities;"
+# Expected: 27129 cities (or 27127 + existing German cities)
+
+# Step 4: Spot-check key cities
+psql "postgresql://..." -c "SELECT city_name, country FROM cities WHERE city_name IN ('Los Angeles', 'New York City', 'London') ORDER BY city_name;"
+# Expected: All 3 cities returned
+```
+
+**Idempotency**: Migration uses `ON CONFLICT (city_name) DO NOTHING` — safe to re-run if interrupted.
+
+**Rollback** (if needed):
+```sql
+-- Delete GeoNames cities (keeps original 20 German cities from migration 017)
+DELETE FROM cities WHERE country != 'Germany';
+```
+
+**Local testing verified**: ✅ Migration applied successfully to local database in 0.4 seconds, 27,129 cities loaded.
 
 ---
 
