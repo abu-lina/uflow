@@ -147,6 +147,27 @@ export const ar = {
     everywhere: "في كل مكان",
     unnamed: "بدون اسم"
   },
+  suchen: {
+    title: "بحث",
+    accordions: {
+      was: "ماذا؟",
+      wo: "أين: بالقرب مني",
+      wer: "من: لي",
+      filter: "تصفية"
+    },
+    clearAll: "مسح الكل",
+    searchButton: "بحث",
+    citySearchPlaceholder: "ابحث عن مدينة...",
+    searchCityPrompt: "ابحث عن مدينتك",
+    noCitiesFound: "لا يوجد مقدمو خدمات في هذه المدينة بعد.",
+    notifyMe: "أخبرني",
+    notifyMeSuccess: "تم! سنخبرك عندما تصبح {{city}} متاحة.",
+    notifyMeError: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    notifyMeEmailPlaceholder: "عنوان بريدك الإلكتروني",
+    notifyMeCityUnavailable: "لا يوجد مقدمو خدمات في {{city}} بعد – نحن نعمل على ذلك.",
+    providerCTA: "هل أنت مقدم خدمة؟ أضف قائمتك →",
+    cityNotRecognized: "{{city}} غير معروفة. يرجى التحقق من الإملاء."
+  },
   categories: {
     food: "الطعام",
     clothing: "الملابس",

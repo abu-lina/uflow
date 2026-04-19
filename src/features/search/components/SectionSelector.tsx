@@ -1,6 +1,9 @@
 'use client';
 
+import type { ReactNode } from 'react';
+import { Hamburger, Store } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import type { Section } from '@/providers/search-provider';
 
 interface SectionSelectorProps {
@@ -10,10 +13,18 @@ interface SectionSelectorProps {
 }
 
 /** Section metadata for rendering icons (labels come from i18n) */
-const SECTION_ICONS: Record<Section, string> = {
-  food: '🍽️',
-  ummah: '🕌',
-  business: '🏪',
+const SECTION_ICONS: Record<Section, (isActive: boolean) => ReactNode> = {
+  food: () => <Hamburger aria-hidden="true" className="h-4 w-4 shrink-0" />,
+  // Reuse the exact Home icon component used by the mobile navbar.
+  ummah: (isActive) => (
+    <HomeIcon
+      className="h-4 w-4 shrink-0"
+      isActive={isActive}
+      size={16}
+      viewBox="12 12 24 24"
+    />
+  ),
+  business: () => <Store aria-hidden="true" className="h-4 w-4 shrink-0" />,
 };
 
 /** Section values in display order */
@@ -42,12 +53,12 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
   return (
     <div
       aria-label="Browse sections"
-      className={`flex items-center gap-1 rounded-full bg-muted p-1 ${className}`}
+      className={`flex items-center justify-between w-full border border-border-light bg-background h-14 rounded-2xl px-2 ${className}`}
       role="tablist"
     >
       {SECTION_ORDER.map((value) => {
         const label = getSectionLabel(value);
-        const icon = SECTION_ICONS[value];
+        const renderIcon = SECTION_ICONS[value];
         const isActive = selectedSection === value;
         return (
           <button
@@ -55,15 +66,15 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
             aria-label={label}
             aria-selected={isActive}
             className={[
-              'flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+              'flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 px-3 overflow-hidden font-inter-tight font-medium text-base transition-colors',
               isActive
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
+                ? 'bg-primary text-white'
+                : 'text-neutral-500 hover:text-neutral-700',
             ].join(' ')}
             role="tab"
             onClick={() => onSectionChange(value)}
           >
-            <span aria-hidden="true">{icon}</span>
+            {renderIcon(isActive)}
             <span>{label}</span>
           </button>
         );

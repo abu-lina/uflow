@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getFeatureFlag } from '@/config/feature-flags';
-import { HomeIcon } from '@/components/ui/icons/HomeIcon';
+import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
 import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
@@ -96,7 +96,7 @@ export function CityEarlyAccessNavbar() {
           href="/"
           scroll={false}
         >
-          <HomeIcon isActive={isHomeActive} />
+          <ExploreIcon isActive={isHomeActive} />
         </Link>
 
         {/* Create */}

@@ -5,7 +5,6 @@ import { getOnboardingState, setOnboardingState } from '@/lib/utils/onboarding-s
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAppStage } from '@/hooks/useAppStage';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
-import { Stage2Content } from './Stage2Content';
 import { CategoryGallerySection } from './CategoryGallerySection';
 import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 import { SectionSelector } from '@/features/search/components/SectionSelector';
@@ -29,8 +28,8 @@ import { Skeleton } from '@/components/ui/skeleton/Skeleton';
  * 
  * Mobile (below md:):
  * - Stage 1 (0-5 providers): CityEarlyAccessEmptyState
- * - Stage 2 (6-14 providers): Stage2Content (CityCard + provider list)
- * - Stage 3 (15+ providers): CategoryGallerySection
+ * - Stage 2 (6-14 providers): Unified discovery home (search + tabs + section galleries)
+ * - Stage 3 (15+ providers): Unified discovery home (search + tabs + section galleries)
  * - Onboarding: Waitlist/onboarding content (MobileSplashScreen)
  * 
  * Onboarding is complete when:
@@ -49,6 +48,13 @@ export function RootPageContent() {
   const { stage, cityName, isLoading: stageLoading } = useAppStage();
 
   useEffect(() => {
+    // When app is fully launched, bypass all onboarding/city gates
+    const isAppLaunched = getFeatureFlag('isAppLaunched');
+    if (isAppLaunched) {
+      setShouldShowCityContent(true);
+      return;
+    }
+
     // Check if waitlist should be skipped
     const skipWaitlist = getFeatureFlag('skipWaitlist');
     
@@ -210,11 +216,8 @@ export function RootPageContent() {
               />
             )}
 
-            {/* Stage 2: City Card + Provider List (6-14 providers) */}
-            {stage === 'stage2' && <Stage2Content cityName={displayCity} />}
-
-            {/* Stage 3: Category Discovery Home (15+ providers) */}
-            {stage === 'stage3' && (
+            {/* Stage 2/3: Category Discovery Home */}
+            {(stage === 'stage2' || stage === 'stage3') && (
               <div className="flex min-h-screen w-full flex-col bg-uflow-light">
                 {/* Fixed header: Search bar + Section selector */}
                 <header
@@ -252,7 +255,7 @@ export function RootPageContent() {
                 <div
                   className="w-full px-4"
                   style={{
-                    paddingTop: 'max(136px, calc(env(safe-area-inset-top) + 136px))',
+                    paddingTop: 'max(152px, calc(env(safe-area-inset-top) + 152px))',
                     paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
                   }}
                 >

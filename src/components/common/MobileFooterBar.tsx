@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
-import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
 import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
@@ -17,12 +16,6 @@ const navItems = [
   {
     label: 'Home',
     href: '/',
-    icon: (isActive: boolean) => <HomeIcon isActive={isActive} />,
-    noFrame: true,
-  },
-  {
-    label: 'Explore',
-    href: '/providers',
     icon: (isActive: boolean) => <ExploreIcon isActive={isActive} />,
     noFrame: true,
   },

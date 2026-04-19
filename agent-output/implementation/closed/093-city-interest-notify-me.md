@@ -2,7 +2,7 @@
 ID: 093
 Origin: 093
 UUID: b5e2a8c4
-Status: Active
+Status: Committed
 ---
 
 # Implementation: Plan 093 — City Interest: "Notify Me" for Unavailable Cities
@@ -27,6 +27,7 @@ Status: Active
 | 2026-04-19T16:35Z | Implementation complete | Pre-handoff QA gate | All tests (1042), type-check, build passing — ready for Code Review |
 | 2026-04-19T17:30Z | Enhancement | Two-step city validation | Added `fetchAllValidCities()` + cityNotRecognized translation (8th key) |
 | 2026-04-19T17:50Z | Enhancement | GeoNames import | Replaced manual city list with GeoNames cities15000 dataset (27,127 cities) |
+| 2026-04-19T20:30Z | Code review remediation | Rejected findings fix pass | Replaced full-table city prefetch with targeted `checkCityExists()` lookup, switched city-interest route to Zod validation, corrected artifact paths, localized de `clearAll` |
 
 ---
 
@@ -99,7 +100,8 @@ Status: Active
 
 **Key Technical Decisions**:
 - **Admin client upsert**: Used `getSupabaseAdmin()` for `waitlist` upsert to bypass RLS (F1 resolution from critique — RPC `update_waitlist_entry_with_token` is update-only)
-- **Manual validation**: Avoided Zod schema in M2 API route due to test transpilation issues; used manual validation function instead
+- **Zod validation**: M2 API route now uses Zod schema parsing for request validation; optional email remains flow-specific (auth vs anonymous)
+- **Targeted city validity check**: `/search` now validates non-provider city inputs with debounced `checkCityExists()` lookups instead of preloading all cities
 - **Client-side session**: Used `supabase.auth.getUser()` on client to pass user email to EmptyCityCard (F2 resolution)
 - **Provider CTA**: Links to `/recommend` route (F3 resolution)
 
@@ -124,8 +126,10 @@ Status: Active
 | `src/translations/tr.ts` | Added 8 translation keys (M3 + enhancement) | +8 |
 | `src/translations/ur.ts` | Added 8 translation keys (M3 + enhancement) | +8 |
 | `src/translations/ps.ts` | Added 8 translation keys (M3 + enhancement) | +8 |
-| `src/app/(public)/search/page.tsx` | Integrated EmptyCityCard + two-step validation (M1 + enhancement) | +45 |
-| `src/services/providers.ts` | Added `fetchAllValidCities()` function (enhancement) | +15 |
+| `src/app/(public)/search/page.tsx` | Reworked Wo flow to use targeted validity lookup (no full-table city prefetch) | +58 |
+| `src/services/providers.ts` | Added `checkCityExists()` targeted lookup helper | +34 |
+| `src/app/api/city-interest/subscribe/route.ts` | Replaced manual body validation with Zod-based validation | +16 |
+| `src/app/api/city-interest/subscribe/route.test.ts` | Ensured route tests use real Zod runtime (unmock + dynamic import) | +5 |
 | `package.json` | Version bump to 0.10.20 (M4) | +1 |
 | `CHANGELOG.md` | Added v0.10.20 entry (M4) | +12 |
 | `package-lock.json` | Lockfile alignment (M4) | +2 |
@@ -142,8 +146,7 @@ Status: Active
 | `src/app/api/city-interest/subscribe/route.test.ts` | API route tests (M2 — TDD) | 325 |
 | `src/features/search/components/EmptyCityCard.tsx` | Empty-city notification UI component (M1) | 165 |
 | `src/features/search/components/EmptyCityCard.test.tsx` | Component tests (M1) | 280 |
-| `src/services/providers.ts` (new function) | `fetchAllValidCities()` service function (enhancement) | 15 |
-| `tests/services/providers/fetchAllValidCities.test.ts` | Tests for city validation function (enhancement) | 95 |
+| `src/__tests__/services/fetchAllValidCities.test.ts` | Tests for city services (`fetchAllValidCities` + `checkCityExists`) | 120 |
 | `supabase/migrations/068_add_international_cities.sql` | GeoNames cities15000 import (27,127 cities) (enhancement) | 27,368 |
 
 **Total lines created**: ~28,333 (includes 27,368 lines from GeoNames migration)

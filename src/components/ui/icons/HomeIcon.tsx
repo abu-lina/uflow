@@ -3,17 +3,19 @@
 interface HomeIconProps {
   className?: string;
   isActive?: boolean;
+  size?: number;
+  viewBox?: string;
 }
 
-export function HomeIcon({ className = '', isActive = false }: HomeIconProps) {
+export function HomeIcon({ className = '', isActive = false, size = 48, viewBox = '0 0 48 48' }: HomeIconProps) {
   if (isActive) {
     return (
       <svg
         className={className}
         fill="none"
-        height="48"
-        viewBox="0 0 48 48"
-        width="48"
+        height={size}
+        viewBox={viewBox}
+        width={size}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
@@ -61,9 +63,9 @@ export function HomeIcon({ className = '', isActive = false }: HomeIconProps) {
     <svg
       className={className}
       fill="none"
-      height="48"
-      viewBox="0 0 48 48"
-      width="48"
+      height={size}
+      viewBox={viewBox}
+      width={size}
       xmlns="http://www.w3.org/2000/svg"
     >
       <path

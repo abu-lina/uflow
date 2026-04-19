@@ -511,7 +511,7 @@ VALUES
   ('Austin', 'United States', 0, 0, false),
   ('Bengbu', 'China', 0, 0, false),
   ('Salé', 'Morocco', 0, 0, false),
-  ('Jerusalem', 'Israel', 0, 0, false),
+  ('Jerusalem', 'Palestine', 0, 0, false),
   ('Chandigarh', 'India', 0, 0, false),
   ('Dnipro', 'Ukraine', 0, 0, false),
   ('Sanhe', 'China', 0, 0, false)

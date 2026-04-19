@@ -204,6 +204,7 @@ export const shouldShowMobileFooter = (
 
     // Check excluded patterns (page patterns that never show footer)
     const footerExcludedPatterns = [
+      '/search',
       '/providers/',
       '/community-services/',
       '/profile/providers/',
@@ -247,6 +248,7 @@ export const shouldShowMobileFooter = (
 
   // 5. Check excluded patterns (page patterns that never show footer)
   const footerExcludedPatterns = [
+    '/search',
     '/providers/',
     '/community-services/',
     '/profile/providers/',

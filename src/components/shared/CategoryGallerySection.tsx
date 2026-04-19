@@ -115,6 +115,16 @@ export function CategoryGallerySection({ section }: CategoryGallerySectionProps 
   }
 
   if (categories.length === 0) {
+    // Plan 090: when section filter is active, show a "coming soon" message rather than
+    // silently rendering nothing — required by plan acceptance criterion M3/Task 4.
+    if (section) {
+      const isEnglish = detectUserLanguage() === 'en';
+      return (
+        <section className="w-full px-6 py-12 text-center text-muted-foreground lg:hidden">
+          <p className="text-sm">{isEnglish ? 'Coming soon' : 'Demnächst verfügbar'}</p>
+        </section>
+      );
+    }
     return null;
   }
 

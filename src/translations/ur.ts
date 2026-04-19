@@ -148,8 +148,27 @@ export const ur = {
     all: "سب",
     everywhere: "ہر جگہ",
     unnamed: "بے نام"
-  },
-  categories: {
+  },  suchen: {
+    title: "تلاش کریں",
+    accordions: {
+      was: "کیا؟",
+      wo: "کہاں: میرے قریب",
+      wer: "کون: میرے لیے",
+      filter: "فلٹر"
+    },
+    clearAll: "سب صاف کریں",
+    searchButton: "تلاش کریں",
+    citySearchPlaceholder: "شہر تلاش کریں...",
+    searchCityPrompt: "اپنا شہر تلاش کریں",
+    noCitiesFound: "اس شہر میں ابھی کوئی فراہم کنندہ نہیں۔",
+    notifyMe: "مجھے اطلاع دیں",
+    notifyMeSuccess: "ہو گیا! جب {{city}} دستیاب ہو گا تو ہم آپ کو بتائیں گے۔",
+    notifyMeError: "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔",
+    notifyMeEmailPlaceholder: "آپ کا ایمیل پتہ",
+    notifyMeCityUnavailable: "{{city}} میں ابھی کوئی فراہم کنندہ نہیں – ہم اس پر کام کر رہے ہیں۔",
+    providerCTA: "کیا آپ فراہم کنندہ ہیں؟ اپنی فہرست شامل کریں →",
+    cityNotRecognized: "{{city}} پہچانا نہیں گیا۔ براہ کرم ہجے چیک کریں۔"
+  },  categories: {
     food: "کھانا",
     clothing: "کپڑے",
     electronics: "الیکٹرانکس",

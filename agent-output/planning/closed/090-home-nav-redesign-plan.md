@@ -2,7 +2,7 @@
 ID: 090
 Origin: 090
 UUID: a3f7b2e1
-Status: In Progress
+Status: Committed
 ---
 
 # Plan 090 — Home & Navigation Redesign: Merged Discovery Surface
@@ -24,6 +24,7 @@ Status: In Progress
 | ------------------ | ------- | ------------------------------- | ----------------------------------- |
 | 2026-04-15T10:00Z  | planner | Plan created                    | S090 session kickoff                |
 | 2026-04-15T11:30Z  | planner | Revised per Critique F1–F3      | F1: category mapping gap surfaced; F2: MobileGreetingHeader removal documented; F3: D7 milestone ref fixed |
+| 2026-04-16T09:00Z  | uat     | UAT Approved                    | All 8 success criteria delivered; value statement fulfilled; code review passed with 1 MEDIUM fixed-in-review |
 
 ---
 

@@ -149,6 +149,27 @@ export const de = {
     everywhere: "Überall",
     unnamed: "Unbenannt"
   },
+  suchen: {
+    title: "Suchen",
+    accordions: {
+      was: "Was?",
+      wo: "Wo: In meiner Nähe",
+      wer: "Wer: Für mich",
+      filter: "Filter"
+    },
+    clearAll: "Alles löschen",
+    searchButton: "Suchen",
+    citySearchPlaceholder: "Stadt suchen...",
+    searchCityPrompt: "Suche nach deiner Stadt",
+    noCitiesFound: "Noch keine Anbieter in dieser Stadt.",
+    notifyMe: "Benachrichtige mich",
+    notifyMeSuccess: "Super! Wir melden uns, sobald {{city}} verfügbar ist.",
+    notifyMeError: "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+    notifyMeEmailPlaceholder: "Deine E-Mail-Adresse",
+    notifyMeCityUnavailable: "In {{city}} sind noch keine Anbieter – wir arbeiten daran.",
+    providerCTA: "Bist du Anbieter? Jetzt eintragen →",
+    cityNotRecognized: "{{city}} ist uns nicht bekannt. Bitte überprüfe die Schreibweise."
+  },
   categories: {
     // Add common category translations
     food: "Essen",

@@ -148,8 +148,27 @@ export const ps = {
     all: "ټول",
     everywhere: "هر چیرته",
     unnamed: "بې نومه"
-  },
-  categories: {
+  },  suchen: {
+    title: "لټون",
+    accordions: {
+      was: "څه؟",
+      wo: "چیرته: زما سره نژدې",
+      wer: "څوک: زما لپاره",
+      filter: "فلټر"
+    },
+    clearAll: "ټول پاک کړ",
+    searchButton: "لټون",
+    citySearchPlaceholder: "ښار ولټوئ...",
+    searchCityPrompt: "خپل ښار ولټوئ",
+    noCitiesFound: "په دې ښار کې لا هم دمه چمتو چمتووونکي نه دی۔",
+    notifyMe: "ما ته خبر ورکړئ",
+    notifyMeSuccess: "بریالي! موږ درته خبر ورکوو کله چې {{city}} چمتو شي۔",
+    notifyMeError: "کوم شی غلط شو۔ مهرباني ووکړئ بیا کوښښ وکړئ۔",
+    notifyMeEmailPlaceholder: "ستاسو ایمیل پته",
+    notifyMeCityUnavailable: "په {{city}} کې لا هم دمه چمتو چمتووونکي نه دی – موږ پرې کار کوو۔",
+    providerCTA: "ایا تاسو دمه چمتو چمتووونکي یاست؟ خپل لیسټ زیات کړئ →",
+    cityNotRecognized: "{{city}} ونه پیژندل شو۔ مهرباني وکړئ املا چک کړئ۔"
+  },  categories: {
     food: "خواړه",
     clothing: "جامې",
     electronics: "برقیات",
