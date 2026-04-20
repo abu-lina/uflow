@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.22] - 2026-04-20
+
+### Added
+
+- **Unified Catalog Architecture — Ummah Section (Plan 095 / Issue #151)**: Completes the three-section catalog architecture by adding item-level publishing for ummah organisations, establishing a consistent `org → item` hierarchy across all sections (FOOD / STORES / UMMAH):
+  - **`community_projects` table**: Ummah item-level catalog under `community_services`, with typed fields for all ummah activity types — `project_type TEXT CHECK IN ('event', 'donation', 'class', 'volunteer')`, `ticket_price_cents INTEGER`, `donation_goal_cents INTEGER`, `raised_cents INTEGER DEFAULT 0`, `price_currency TEXT DEFAULT 'EUR'`, `is_active BOOLEAN DEFAULT true`, `start_date / end_date TIMESTAMPTZ`, `max_attendees INTEGER`, `sort_order INTEGER`, and German full-text search via `search_vector TSVECTOR GENERATED ALWAYS AS (...) STORED` with GIN index.
+  - **RLS security**: Owner-based row-level security — SELECT is public; INSERT/UPDATE/DELETE require ownership via 2-hop join `community_projects.community_service_id → community_services.provider_id → providers.provider_owner_id = auth.uid()`. 4 policies total.
+  - **`categories.applicable_section` column**: Section-scoped category filtering — CHECK constraint enforces `'food' | 'business' | 'ummah' | 'all'`; NULL allowed for legacy unscoped categories. Partial B-tree index for efficient section-filtered queries.
+  - **`search_community_projects` RPC**: Full-text search over `community_projects` with filters for `community_service_id`, `project_type`, `active_only`, `limit_count`, `offset_count`. Uses `plainto_tsquery('german', ...)` + `ts_rank` for relevance ranking. `SECURITY INVOKER` preserves RLS context.
+  - **`provider_stats` MV extension**: Extended with `community_project_count BIGINT` column (count of active projects) — backward compatible, all 8 existing columns preserved.
+  - **ADR-095**: Formal Architecture Decision Record codifying the three-section hierarchy, three-table ordering FK pattern, and CTI base table rejection rationale.
+
+### Technical
+
+- Migration 069 is additive and idempotent — `IF NOT EXISTS`, `CREATE OR REPLACE`, `DROP ... IF EXISTS` throughout; safe to re-run
+- Backward compatible: `community_services` table structure unchanged; `search_community_services_enhanced` RPC (migration 014) unmodified; all Plan 094 tables and RPCs unaffected
+- Ordering-ready schema: typed `ticket_price_cents`/`donation_goal_cents` are typed database columns (not JSONB) — prerequisite for Epic 4.2 ordering without destructive migration
+- Pre-QA ownership diagnostic: `DO $$ RAISE NOTICE $$` block logs any `community_services` rows with `provider_id IS NULL` at migration time
+
 ## [0.10.21] - 2026-04-19
 
 ### Added
