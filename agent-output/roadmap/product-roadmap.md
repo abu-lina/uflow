@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-19
+**Last Updated**: 2026-04-20
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.21
+**Current Version**: v0.10.22
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -78,6 +78,7 @@
 | 2026-04-19       | Plans 090+091+092 released (v0.10.19): Home Nav Redesign session bundle | Plan 090: merged discovery surface + HomeSearchBar; Plan 091: SectionSelector Figma polish + /suchen route; Plan 092: ExpandSection component + search accordion consistency. Tags v0.10.19 pushed. Closes #144 #145 #146 |
 | 2026-04-19       | Plan 093 released (v0.10.20): City Interest — Notify Me for Unavailable Cities | EmptyCityCard component, POST /api/city-interest/subscribe, GeoNames 27K cities dataset, checkCityExists() targeted lookup, 25 tests. Tag v0.10.20 pushed. Closes #147 |
 | 2026-04-19       | Plan 094 released (v0.10.21): Provider Catalog Schema Evolution | Added provider_menu_items and provider_service_offers tables with unified search_provider_items RPC, RLS policies, and extended provider_stats MV. Enables future ordering-system foundation. Tag v0.10.21 pushed. Closes #148 |
+| 2026-04-20       | Plan 095 released (v0.10.22): Unified Catalog Architecture — Ummah Section | Added community_projects table, categories.applicable_section scoping, search_community_projects RPC, and extended provider_stats MV with community_project_count. Completes three-section FOOD/STORES/UMMAH org→item hierarchy. Tag v0.10.22 pushed. Closes #151 |
 
 ---
 
@@ -98,9 +99,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.21 — Released 2026-04-19
+**Current Working Release**: v0.10.22 — Released 2026-04-20
 
-_Session S094 released (2026-04-19): Plan 094 — Provider Catalog Schema Evolution. Added provider_menu_items, provider_service_offers, search_provider_items RPC, RLS policies, extended provider_stats MV. Version bumped 2 cycles (v0.10.19 + v0.10.20 already existed) → v0.10.21. Issue #148 closed. Tag v0.10.21 pushed._
+_Session S094 released (2026-04-20): Plan 095 — Unified Catalog Architecture. Added community_projects table, categories.applicable_section, search_community_projects RPC, provider_stats community_project_count. Completes FOOD/STORES/UMMAH symmetry and establishes ordering-FK schema for Epic 4.2. Issue #151 closed. Tag v0.10.22 pushed._
 
 **Release Status**: Released
 **Ready for Release**: ✅ v0.10.20 complete  

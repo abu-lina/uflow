@@ -2,7 +2,7 @@
 ID: 095
 Origin: 095
 UUID: a7c3e91f
-Status: Committed
+Status: Released
 ---
 
 # Plan 095 — Unified Catalog Architecture: Community Projects + Category Scoping
