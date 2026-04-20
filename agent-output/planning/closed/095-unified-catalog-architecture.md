@@ -2,7 +2,7 @@
 ID: 095
 Origin: 095
 UUID: a7c3e91f
-Status: QA Complete
+Status: Committed
 ---
 
 # Plan 095 — Unified Catalog Architecture: Community Projects + Category Scoping
@@ -27,6 +27,7 @@ Status: QA Complete
 | 2026-04-20T15:40Z  | implementer | Implementation started                | TDD red gate opened for migration 069 + ADR-095 deliverables |
 | 2026-04-20T16:00Z  | code-reviewer | Code review APPROVED                | No blocking findings. 1 LOW doc note, 2 INFO. All M1-M4 ACs satisfied. |
 | 2026-04-20T16:50Z  | qa | QA testing COMPLETE               | All automated gates pass (tests 2/2, type-check, lint, build). DB tests deferred (migration 061 blocker). |
+| 2026-04-20T16:55Z  | uat | UAT APPROVED FOR RELEASE          | Value statement delivered. Schema complete with ordering-ready pattern. DF-1: migration 061 resolution 24h window. |
 
 ---
 

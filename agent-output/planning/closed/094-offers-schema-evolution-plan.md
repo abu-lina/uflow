@@ -2,7 +2,7 @@
 ID: 094
 Origin: 094
 UUID: b3e7a912
-Status: Committed
+Status: Released
 ---
 
 # Plan 094: Provider Catalog Schema Evolution (Menu Items + Service Offers)

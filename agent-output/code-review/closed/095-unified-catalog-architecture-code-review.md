@@ -2,7 +2,7 @@
 ID: 095
 Origin: 095
 UUID: a7c3e91f
-Status: Active
+Status: Committed
 ---
 
 # Code Review 095 — Unified Catalog Architecture

@@ -1,6 +1,6 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-04-07
+**Last Updated**: 2026-04-20
 **Status**: Active
 
 ## Changelog
@@ -19,6 +19,7 @@
 | 2026-03-29 | Plan 065: Enrichment Pipeline — new subsystem, ADR-007 (staging-first), ADR-008 (pg_cron-in-migrations), Problem Areas 8–9 | First automated background actor in system; establishes scheduling, staging, and module-boundary constraints | Arch 065            |
 | 2026-04-07 | Modal.tsx a11y refactor — 9 gaps mapped: focus trap, focus restore, aria-hidden, escape scoping, drag-close, scroll lock, aria-labelledby, exit animation, z-index. 4 new hooks, 9 ADRs. Design debt: z-index proliferation, multiple modal impls, redundant ARIA. | Close critical/high a11y gaps in base Modal without breaking consumers; establish reusable dialog hooks | Arch 086            |
 | 2026-04-19 | Offers schema evolution ADR (Plan 094): add `provider_menu_items` (food) + `provider_service_offers` (business) typed tables. Global `offers` vocabulary preserved. Was? search confirmed fully wired for vocabulary search; item-level search requires migration 068. | Current offers table is a shared tag vocabulary — insufficient for pricing, per-provider catalog, and future ordering. Separate instance tables with STORED TSVECTOR chosen over STI or JSONB. | ADR-094 |
+| 2026-04-20 | Three-section catalog hierarchy ADR (Plan 095): add `community_projects` under `community_services` (ummah item-level), `categories.applicable_section` for section scoping, three-table ordering FK pattern settled. `provider_stats` MV extended with `community_project_count`. | Completes FOOD/UMMAH/STORES symmetry. Three separate item tables (no CTI base) confirmed as the ordering-FK architecture. Supersedes ADR-094/D7 open question. | ADR-095 |
 
 ---
 
@@ -214,6 +215,7 @@ This is a known architecture risk; roles must be normalized behind a single auth
 7. **Agent memory tooling reliability**: Flowbaby memory tools frequently fail due to multi-window daemon ownership/lock contention, forcing NO-MEMORY MODE and reducing workflow quality.
 8. **Enrichment candidate table lifecycle**: `enrichment_candidates` is a staging table but has no defined archival or purge policy. Applied/rejected rows will accumulate over time. A periodic purge job or archival strategy should be added in M4 or a post-launch task.
 9. **Enrichment fetch origin (shared Supabase IPs)**: After M4, JoinHalal and Phase 2 source fetches originate from Supabase's shared Edge Function IP fleet rather than a controlled developer IP. Rate limit exposure changes; polite delays (200ms) and a meaningful `User-Agent` header partially mitigate this.
+10. **`provider_stats` naming drift**: MV name implies provider-only scope but now contains cross-entity counts (`menu_item_count`, `service_offer_count`, `community_project_count` after Plan 095). Rename to `platform_stats` in a future migration (breaking change for any dashboard queries referencing the MV name).
 
 ---
 
@@ -327,6 +329,22 @@ This is a known architecture risk; roles must be normalized behind a single auth
   - Local `supabase db reset` registers the cron job (harmless; safe to ignore in local context)
   - Cadence changes are diff-able and code-reviewed
 - **Related**: ADR-007, Arch Finding A-2
+
+### ADR-095: Three-Section Org→Item Catalog Hierarchy
+
+- **Status**: Accepted
+- **Context**: Plan 094 established food (`provider_menu_items`) and business (`provider_service_offers`) item tables under `providers`. The ummah section (`community_services`) had no equivalent item table, creating an asymmetry in the three-section model (FOOD / UMMAH / STORES). Category scoping across sections was also missing.
+- **Choice**: Add `community_projects` table under `community_services` (parallel to how 068 tables sit under `providers`). Add `categories.applicable_section` for cross-cutting section scoping. Maintain three separate item tables (no CTI base table) with the three-table ordering FK pattern for future Epic 4.2.
+- **Alternatives**:
+  - CTI base table `catalog_items` with type discriminator (rejected: < 50% type-specific column overlap, adds unnecessary base join)
+  - Add item columns to `community_services` directly (rejected: mixes org and item concerns, SRP violation)
+  - Defer until ordering system (rejected: zero-cost schema window closes as data accumulates)
+- **Consequences**:
+  - Completes three-section symmetry: every section has org→item hierarchy
+  - Future ordering system has clean FK targets across all three sections
+  - `provider_stats` MV becomes a platform-wide aggregation point (naming debt: Problem Area 10)
+  - RLS write policies for ummah items require a 2-hop join (community_services→providers) — acceptable at current scale
+- **Related**: ADR-094, Plan 095, Plan 094
 
 ---
 

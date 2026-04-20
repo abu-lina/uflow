@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-19
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.20
+**Current Version**: v0.10.21
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -77,6 +77,7 @@
 | 2026-04-11       | Plans 089 released (v0.10.18): Three-section discovery redesign — FOOD / UMMAH / BUSINESS | Restructured providers discovery into 3 sections with section-filtered search, URL-param routing, and i18n. Tag v0.10.18 pushed. |
 | 2026-04-19       | Plans 090+091+092 released (v0.10.19): Home Nav Redesign session bundle | Plan 090: merged discovery surface + HomeSearchBar; Plan 091: SectionSelector Figma polish + /suchen route; Plan 092: ExpandSection component + search accordion consistency. Tags v0.10.19 pushed. Closes #144 #145 #146 |
 | 2026-04-19       | Plan 093 released (v0.10.20): City Interest — Notify Me for Unavailable Cities | EmptyCityCard component, POST /api/city-interest/subscribe, GeoNames 27K cities dataset, checkCityExists() targeted lookup, 25 tests. Tag v0.10.20 pushed. Closes #147 |
+| 2026-04-19       | Plan 094 released (v0.10.21): Provider Catalog Schema Evolution | Added provider_menu_items and provider_service_offers tables with unified search_provider_items RPC, RLS policies, and extended provider_stats MV. Enables future ordering-system foundation. Tag v0.10.21 pushed. Closes #148 |
 
 ---
 
@@ -97,9 +98,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.20 — Released 2026-04-19
+**Current Working Release**: v0.10.21 — Released 2026-04-19
 
-_Session S090 bundle released (2026-04-19): Plans 090-093. v0.10.19: Home redesign (HomeSearchBar, SectionSelector teal-pill, /suchen route, ExpandSection). v0.10.20: City Interest notify-me (EmptyCityCard, /api/city-interest/subscribe, GeoNames 27K cities, 25 tests). Issues #144 #145 #146 #147 closed. Tags v0.10.19 + v0.10.20 pushed._
+_Session S094 released (2026-04-19): Plan 094 — Provider Catalog Schema Evolution. Added provider_menu_items, provider_service_offers, search_provider_items RPC, RLS policies, extended provider_stats MV. Version bumped 2 cycles (v0.10.19 + v0.10.20 already existed) → v0.10.21. Issue #148 closed. Tag v0.10.21 pushed._
 
 **Release Status**: Released
 **Ready for Release**: ✅ v0.10.20 complete  
@@ -119,6 +120,7 @@ _Session S090 bundle released (2026-04-19): Plans 090-093. v0.10.19: Home redesi
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.21 | 2026-04-19 | Plan 094 (Provider Catalog Schema Evolution — Issue #148) | Released |
 | v0.10.20 | 2026-04-19 | Plan 093 (City Interest: Notify Me for Unavailable Cities — Issue #147) | Released |
 | v0.10.19 | 2026-04-19 | Plans 090+091+092 (Home Nav Redesign bundle — Issues #144 #145 #146) | Released |
 | v0.10.18 | 2026-04-11 | Plan 089 (Three-section discovery redesign — FOOD / UMMAH / BUSINESS) | Released |
