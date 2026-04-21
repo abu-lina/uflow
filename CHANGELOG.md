@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.24] - 2026-04-21
+
+### Added
+
+- **Food concept search for `Was?` in `/search?section=food` (Plan 097 / Issue #154)**:
+  - Added migration `supabase/migrations/070_search_food_concepts_rpc.sql` with new RPC `search_food_concepts(search_query, limit_count)` returning canonical food concepts with `provider_count`.
+  - RPC searches offer names using German + English tsvector branches and filters to approved food providers using GIN-friendly array containment (`providers.offers_ids @> ARRAY[offer_id]`).
+  - Added typed `FoodConcept` model and `searchFoodConcepts()` service wrapper in `src/services/offers.ts`.
+  - Rewired `/search` Was flow in `src/app/(public)/search/page.tsx` from `searchProviderItems` to `searchFoodConcepts` with `limit_count: 10`.
+  - Removed provider lookup augmentation effect from search page; concept rows now render directly from RPC results.
+  - Updated `WasMealResults` to concept-level rendering (name + localized provider count) and switched row key from `item_id` to `offer_id`.
+  - Added new i18n key `suchen.was.providerCount` to all 6 locale files (`de`, `en`, `tr`, `ar`, `ps`, `ur`).
+
+### Tests
+
+- Added migration contract test: `src/__tests__/migrations/070-food-concept-search-tdd.test.ts`
+- Extended service tests: `src/__tests__/services/offers.test.ts` with `searchFoodConcepts` coverage
+- Updated component tests: `src/features/search/components/WasMealResults.test.tsx`
+- Updated page integration tests: `src/__tests__/app/(public)/search/page-meal-search.test.tsx`
+
+## [0.10.23] - 2026-04-21
+
+### Added
+
+- **Meal search in `Was?` accordion (`/search?section=food`) (Plan 096 / Issue #153)**:
+  - Added new service `src/services/provider-catalog.ts` with typed RPC wrapper `searchProviderItems()` for `search_provider_items`.
+  - Added `WasMealResults` component (`src/features/search/components/WasMealResults.tsx`) with 5 UI states: empty, loading, error, results, no-results.
+  - Wired debounced meal search (300ms) in `src/app/(public)/search/page.tsx` with a minimum 2-character guard and `listing_type_filter = 'food'` when food section is active.
+  - Implemented client-side `provider_id -> provider_name/provider_image` augmentation for RPC rows (frontend-only approach; no RPC schema change).
+  - Added i18n keys under `suchen.was.*` across all 6 locales (`de`, `en`, `tr`, `ar`, `ps`, `ur`):
+    - `searchPlaceholder`
+    - `loading`
+    - `noResults`
+    - `notFoundEncouragement`
+    - `searchError`
+
+### Tests
+
+- Added service tests: `src/__tests__/services/provider-catalog.test.ts`
+- Added component tests: `src/features/search/components/WasMealResults.test.tsx`
+- Added page integration tests: `src/__tests__/app/(public)/search/page-meal-search.test.tsx`
+
 ## [0.10.22] - 2026-04-20
 
 ### Added

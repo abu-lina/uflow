@@ -41,7 +41,7 @@ function setupChain() {
   mockLimit.mockResolvedValue({ data: [], error: null });
 }
 
-import { searchOffers } from '@/services/offers';
+import { searchFoodConcepts, searchOffers } from '@/services/offers';
 
 describe('offers service', () => {
   beforeEach(() => {
@@ -108,6 +108,50 @@ describe('offers service', () => {
       expect(result[0].offer_id).toBe('o1');
       // Fallback should NOT be called
       expect(mockFrom).not.toHaveBeenCalledWith('offers');
+    });
+  });
+
+  describe('searchFoodConcepts (Plan 097, M2)', () => {
+    it('calls search_food_concepts RPC with default limit 10', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: [
+          {
+            offer_id: 'offer-1',
+            name_de: 'Doener',
+            name_en: 'Doner',
+            provider_count: 3,
+          },
+        ],
+        error: null,
+      });
+
+      const result = await searchFoodConcepts({ search_query: 'doe' });
+
+      expect(mockRpc).toHaveBeenCalledWith('search_food_concepts', {
+        search_query: 'doe',
+        limit_count: 10,
+      });
+      expect(result).toEqual([
+        {
+          offer_id: 'offer-1',
+          name_de: 'Doener',
+          name_en: 'Doner',
+          provider_count: 3,
+        },
+      ]);
+    });
+
+    it('throws when RPC returns an error', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'rpc failed' },
+      });
+
+      await expect(searchFoodConcepts({ search_query: 'doe', limit_count: 20 })).rejects.toBeTruthy();
+      expect(mockRpc).toHaveBeenCalledWith('search_food_concepts', {
+        search_query: 'doe',
+        limit_count: 20,
+      });
     });
   });
 });
