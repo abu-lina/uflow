@@ -11,8 +11,10 @@ import { SectionSelector } from '@/features/search/components/SectionSelector';
 import { ExpandSection } from '@/components/ui/ExpandSection';
 import { Button } from '@/components/ui/Button';
 import { EmptyCityCard } from '@/features/search/components/EmptyCityCard';
+import { WasMealResults } from '@/features/search/components/WasMealResults';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
+import { type FoodConcept, searchFoodConcepts } from '@/services/offers';
 import { fetchProviderCities, checkCityExists } from '@/services/providers';
 
 /**
@@ -37,6 +39,9 @@ function SearchPageContent() {
   const urlSection = (searchParams.get('section') as Section) ?? 'food';
   const [selectedSection, setSelectedSection] = useState<Section>(urlSection);
   const [wasQuery, setWasQuery] = useState('');
+  const [wasResults, setWasResults] = useState<FoodConcept[]>([]);
+  const [isLoadingWas, setIsLoadingWas] = useState(false);
+  const [isErrorWas, setIsErrorWas] = useState(false);
   const [woQuery, setWoQuery] = useState('');
   const [cities, setCities] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
@@ -69,6 +74,53 @@ function SearchPageContent() {
     }
     void loadCities();
   }, []);
+
+  // Debounced meal search in the "Was?" accordion.
+  useEffect(() => {
+    let isCancelled = false;
+    const normalizedQuery = wasQuery.trim();
+
+    if (normalizedQuery.length < 2) {
+      setWasResults([]);
+      setIsErrorWas(false);
+      setIsLoadingWas(false);
+      return;
+    }
+
+    setIsLoadingWas(true);
+    setIsErrorWas(false);
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const rows = await searchFoodConcepts({
+          search_query: normalizedQuery,
+          limit_count: 10,
+        });
+
+        if (isCancelled) {
+          return;
+        }
+
+        setWasResults(rows);
+        setIsErrorWas(false);
+      } catch (error) {
+        if (!isCancelled) {
+          console.error('Failed to search food concepts:', error);
+          setIsErrorWas(true);
+          setWasResults([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingWas(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [wasQuery, selectedSection]);
 
   // Validate unknown city inputs with a targeted lookup instead of full-table prefetch.
   useEffect(() => {
@@ -149,19 +201,23 @@ function SearchPageContent() {
               <input
                 aria-label="Angebote suchen"
                 className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none border-0 focus:outline-none focus:ring-0"
-                placeholder="Angebote suchen"
+                placeholder={t('suchen.was.searchPlaceholder')}
                 type="search"
                 value={wasQuery}
                 onChange={(e) => setWasQuery(e.target.value)}
               />
             </div>
 
-            {/* Results — empty state until search connects to backend */}
-            {wasQuery.length === 0 && (
-              <p className="mt-4 text-sm text-text-muted text-center py-2">
-                Was suchst du?
-              </p>
-            )}
+            <WasMealResults
+              isError={isErrorWas}
+              isLoading={isLoadingWas}
+              items={wasResults}
+              query={wasQuery}
+              t={t}
+              onSelect={(itemName) => {
+                setWasQuery(itemName);
+              }}
+            />
           </div>
         </ExpandSection>
 
@@ -250,6 +306,9 @@ function SearchPageContent() {
           className="text-sm font-medium text-text-primary underline underline-offset-2 hover:opacity-70 transition-opacity"
           onClick={() => {
             setWasQuery('');
+            setWasResults([]);
+            setIsLoadingWas(false);
+            setIsErrorWas(false);
             setWoQuery('');
             setSelectedSection('food');
           }}

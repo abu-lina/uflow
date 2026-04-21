@@ -167,7 +167,15 @@ export const ps = {
     notifyMeEmailPlaceholder: "ستاسو ایمیل پته",
     notifyMeCityUnavailable: "په {{city}} کې لا هم دمه چمتو چمتووونکي نه دی – موږ پرې کار کوو۔",
     providerCTA: "ایا تاسو دمه چمتو چمتووونکي یاست؟ خپل لیسټ زیات کړئ →",
-    cityNotRecognized: "{{city}} ونه پیژندل شو۔ مهرباني وکړئ املا چک کړئ۔"
+    cityNotRecognized: "{{city}} ونه پیژندل شو۔ مهرباني وکړئ املا چک کړئ۔",
+    was: {
+      searchPlaceholder: "څه لټوې؟",
+      loading: "لټون روان دی...",
+      noResults: "تر اوسه څه ونه موندل شول - خو موږ وده کوو!",
+      notFoundEncouragement: "ښايي ژر موجود شي. وروسته بیا وګوره.",
+      providerCount: "{{count}} رستورانتونه",
+      searchError: "لټون اوس مهال شتون نه لري. مهرباني وکړئ بیا هڅه وکړئ."
+    }
   },  categories: {
     food: "خواړه",
     clothing: "جامې",

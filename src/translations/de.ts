@@ -168,7 +168,15 @@ export const de = {
     notifyMeEmailPlaceholder: "Deine E-Mail-Adresse",
     notifyMeCityUnavailable: "In {{city}} sind noch keine Anbieter – wir arbeiten daran.",
     providerCTA: "Bist du Anbieter? Jetzt eintragen →",
-    cityNotRecognized: "{{city}} ist uns nicht bekannt. Bitte überprüfe die Schreibweise."
+    cityNotRecognized: "{{city}} ist uns nicht bekannt. Bitte überprüfe die Schreibweise.",
+    was: {
+      searchPlaceholder: "Was suchst du?",
+      loading: "Suche läuft...",
+      noResults: "Noch nichts gefunden - aber wir wachsen!",
+      notFoundEncouragement: "Vielleicht bald verfügbar. Schau später nochmal rein.",
+      providerCount: "{{count}} Restaurants",
+      searchError: "Suche nicht verfügbar. Bitte versuche es erneut."
+    }
   },
   categories: {
     // Add common category translations

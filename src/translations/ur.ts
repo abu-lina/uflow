@@ -167,7 +167,15 @@ export const ur = {
     notifyMeEmailPlaceholder: "آپ کا ایمیل پتہ",
     notifyMeCityUnavailable: "{{city}} میں ابھی کوئی فراہم کنندہ نہیں – ہم اس پر کام کر رہے ہیں۔",
     providerCTA: "کیا آپ فراہم کنندہ ہیں؟ اپنی فہرست شامل کریں →",
-    cityNotRecognized: "{{city}} پہچانا نہیں گیا۔ براہ کرم ہجے چیک کریں۔"
+    cityNotRecognized: "{{city}} پہچانا نہیں گیا۔ براہ کرم ہجے چیک کریں۔",
+    was: {
+      searchPlaceholder: "آپ کیا تلاش کر رہے ہیں؟",
+      loading: "تلاش جاری ہے...",
+      noResults: "ابھی کچھ نہیں ملا - لیکن ہم بڑھ رہے ہیں!",
+      notFoundEncouragement: "ممکن ہے جلد دستیاب ہو۔ بعد میں دوبارہ دیکھیں۔",
+      providerCount: "{{count}} ریستوران",
+      searchError: "تلاش فی الحال دستیاب نہیں۔ براہ کرم دوبارہ کوشش کریں۔"
+    }
   },  categories: {
     food: "کھانا",
     clothing: "کپڑے",

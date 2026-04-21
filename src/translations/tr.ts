@@ -165,7 +165,15 @@ export const tr = {
     notifyMeEmailPlaceholder: "E-posta adresin",
     notifyMeCityUnavailable: "{{city}} şehrinde henüz sağlayıcı yok – üzerinde çalışıyoruz.",
     providerCTA: "Sağlayıcı mısın? Listelemenizi ekleyin →",
-    cityNotRecognized: "{{city}} tanınmadı. Lütfen yazımı kontrol edin."
+    cityNotRecognized: "{{city}} tanınmadı. Lütfen yazımı kontrol edin.",
+    was: {
+      searchPlaceholder: "Ne arıyorsun?",
+      loading: "Aranıyor...",
+      noResults: "Henüz bir sonuç yok - ama büyüyoruz!",
+      notFoundEncouragement: "Yakında mevcut olabilir. Daha sonra tekrar bak.",
+      providerCount: "{{count}} Restoran",
+      searchError: "Arama şu anda kullanılamıyor. Lütfen tekrar deneyin."
+    }
   },  categories: {
     food: "Yemek",
     clothing: "Giyim",

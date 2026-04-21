@@ -1,6 +1,13 @@
 import { supabase } from '@/lib/supabase/client';
 import type { Offer } from '@/types/offer';
 
+export interface FoodConcept {
+  offer_id: string;
+  name_de: string;
+  name_en: string | null;
+  provider_count: number;
+}
+
 export async function getOffers(limit?: number, offset?: number): Promise<Offer[]> {
   let query = supabase
     .from('offers')
@@ -122,4 +129,22 @@ export async function searchOffers(query: string): Promise<Offer[]> {
   }
   
   return Array.isArray(fallbackData) ? fallbackData : [];
+}
+
+export async function searchFoodConcepts(params: {
+  search_query: string;
+  limit_count?: number;
+}): Promise<FoodConcept[]> {
+  const { search_query, limit_count = 10 } = params;
+
+  const { data, error } = await supabase.rpc('search_food_concepts', {
+    search_query,
+    limit_count,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return Array.isArray(data) ? (data as FoodConcept[]) : [];
 }

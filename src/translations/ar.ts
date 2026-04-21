@@ -166,7 +166,15 @@ export const ar = {
     notifyMeEmailPlaceholder: "عنوان بريدك الإلكتروني",
     notifyMeCityUnavailable: "لا يوجد مقدمو خدمات في {{city}} بعد – نحن نعمل على ذلك.",
     providerCTA: "هل أنت مقدم خدمة؟ أضف قائمتك →",
-    cityNotRecognized: "{{city}} غير معروفة. يرجى التحقق من الإملاء."
+    cityNotRecognized: "{{city}} غير معروفة. يرجى التحقق من الإملاء.",
+    was: {
+      searchPlaceholder: "ماذا تبحث؟",
+      loading: "جارٍ البحث...",
+      noResults: "لا توجد نتائج بعد - لكننا نتوسع!",
+      notFoundEncouragement: "قد يتوفر قريبًا. تحقق مرة أخرى لاحقًا.",
+      providerCount: "{{count}} مطاعم",
+      searchError: "البحث غير متاح حاليًا. يرجى المحاولة مرة أخرى."
+    }
   },
   categories: {
     food: "الطعام",

@@ -1,9 +1,9 @@
 'use client';
 
-import type { ProviderMenuItem } from '@/services/provider-catalog';
+import type { FoodConcept } from '@/services/offers';
 
 interface WasMealResultsProps {
-  items: ProviderMenuItem[];
+  items: FoodConcept[];
   isLoading: boolean;
   isError: boolean;
   query: string;
@@ -55,25 +55,20 @@ export function WasMealResults({
   return (
     <div className="mt-4 max-h-64 space-y-1 overflow-y-auto">
       {items.map((item) => {
-        const imageSrc = item.provider_image?.trim() || '/images/placeholder.jpg';
         const itemLabel = item.name_de || item.name_en || '';
+        const providerCountLabel = t('suchen.was.providerCount', { count: item.provider_count });
 
         return (
           <button
-            key={item.item_id}
-            aria-label={`${itemLabel} - ${item.provider_name}`}
+            key={item.offer_id}
+            aria-label={`${itemLabel} - ${providerCountLabel}`}
             className="flex w-full items-center gap-4 rounded-lg px-2 py-2 text-left transition-colors hover:bg-neutral-muted"
             type="button"
             onClick={() => onSelect(item.name_de)}
           >
-            <img
-              alt={item.provider_name}
-              className="h-12 w-12 shrink-0 rounded-lg object-cover"
-              src={imageSrc}
-            />
             <div className="min-w-0">
               <p className="truncate text-base font-semibold text-text-primary">{itemLabel}</p>
-              <p className="truncate text-base font-light text-text-muted">{item.provider_name}</p>
+              <p className="truncate text-base font-light text-text-muted">{providerCountLabel}</p>
             </div>
           </button>
         );
