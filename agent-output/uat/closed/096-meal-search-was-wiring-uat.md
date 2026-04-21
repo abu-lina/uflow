@@ -2,7 +2,7 @@
 ID: 096
 Origin: 096
 UUID: a3f82c1d
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 096 — Meal Search Was Wiring

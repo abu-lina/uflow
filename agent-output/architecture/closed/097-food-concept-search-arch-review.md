@@ -3,7 +3,7 @@ ID: 097
 Origin: 097
 UUID: b9e14a3c
 DocType: ArchitectureReview
-Status: Committed
+Status: Released
 ---
 
 # Architecture Review — Plan 097: Food Concept Search

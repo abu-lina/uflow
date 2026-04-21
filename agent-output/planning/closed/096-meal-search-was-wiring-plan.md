@@ -2,7 +2,7 @@
 ID: 096
 Origin: 096
 UUID: a3f82c1d
-Status: Committed
+Status: Released
 ---
 
 # Plan 096 — Wire Up Meal Search in "Was?" Accordion

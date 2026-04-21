@@ -1,8 +1,8 @@
 ---
-Status: Active
+Status: Released
 Plans: 096, 097
 TargetVersion: v0.10.24
-Stage: Stage1-Committed
+Stage: Stage2-Released
 Date: 2026-04-21
 ---
 
@@ -206,13 +206,17 @@ None of the above block first real-world operation.
 
 ```json
 {
-  "stage": "Stage1-Committed",
+  "stage": "Stage2-Released",
   "version": "v0.10.24",
   "plans": ["096", "097"],
   "branch": "session/96-meal-search-was",
   "committedAt": "2026-04-21T19:35Z",
-  "authorizer": "pending (Stage 2 approval)",
-  "tags_created": [],
-  "notes": "Both plans bundled; migration 070 already deployed to production"
+  "releasedAt": "2026-04-21T19:40Z",
+  "authorizer": "user — explicit approval 2026-04-21T19:35Z",
+  "tags_created": ["v0.10.24"],
+  "push_url": "https://github.com/abu-lina/uflow/compare/main...session/96-meal-search-was",
+  "github_issues_closed": ["#153", "#154"],
+  "smoke_tests": "/ and /search returning HTML (200) from dev server port 3000",
+  "notes": "Migration 070 pre-deployed to production; no DB risk. Pre-existing Vite HIGH vulns in devDependencies (not introduced by this release)."
 }
 ```

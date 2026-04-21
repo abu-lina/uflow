@@ -2,7 +2,7 @@
 ID: 097
 Origin: 097
 UUID: b9e14a3c
-Status: Committed
+Status: Released
 ---
 
 # Implementation — Plan 097: Food Concept Search (Vocabulary-Backed Was? Search)
