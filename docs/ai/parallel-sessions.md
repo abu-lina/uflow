@@ -178,6 +178,85 @@ Each worker session must include the shared `.agent` root so the Orchestrator's 
 | **Worker allocates new ID** | `.next-id` in the worktree diverges from the canonical repo                 | Discard the worktree's `.next-id` change. Use the control window to allocate the next ID.                                                                  |
 | **Missing catalog skills**  | Workflow Card shows `Catalog: (none)`                                       | Ensure the `.agent` root is included in the session's `.code-workspace` file.                                                                              |
 | **Wrong-root file edits**   | Agent edits a file in `.agent/` instead of `uflow` worktree (or vice versa) | The Session Context Header's scope guardrail should prevent this. If it happens, undo the edit and re-prompt with an explicit path.                        |
+| **Session branch CONFLICTING at Stage 2 PR** | `gh pr view <n> --json mergeable` returns `CONFLICTING` even though no real code conflict exists | The session branch contains original commits for a previous plan that was already squash-merged into `origin/main`. Use the **Fresh-Branch Release Strategy** below. |
+
+---
+
+## Squash-Merge Worktree Conflict — Fresh-Branch Release Strategy
+
+> Documented in Retrospective 098 (2026-04-24). **This pattern recurs in every worktree session that spans a previous squash-merge PR.**
+
+### Root Cause
+
+When a session branch (`session/<N>-<topic>`) is active across a squash-merge PR for a prior plan (e.g., PR #155 squash-merges Plans 096+097 as a single commit on `origin/main`), the session branch still contains the original commits for those plans as distinct history. This makes the session branch appear to diverge from `main` at the squash point:
+
+```
+bca5937e (origin/main) ← squash commit of Plans 096+097
+ \
+  <original Plan 096 commit>    ← still in session branch history
+  <original Plan 097 commit>    ← still in session branch history
+  <new Plan 098 commit>         ← actual new work
+```
+
+A PR from `session/96-...` → `main` asks GitHub to merge all three commits, including the two that are already on main — GitHub reports `CONFLICTING`.
+
+### Detection
+
+At Stage 2, after pushing the session branch and opening a PR:
+
+```bash
+gh pr view <pr-number> --json mergeable,mergeStateStatus
+# "mergeable": "CONFLICTING"  ← apply this remedy
+# "mergeable": "MERGEABLE"    ← normal path, proceed
+```
+
+### Remedy: Fresh-Branch Release Strategy
+
+```bash
+# 1. Fetch latest origin/main
+git fetch origin
+
+# 2. Create a clean release branch from origin/main (no ghost history)
+git checkout -b release/vX.Y.Z origin/main
+
+# 3. Copy final file state from session branch (no commit history imported)
+git checkout <session-branch> -- <file1> <file2> <file3> ...
+
+# 4. Untrack any build-generated files that are now gitignored
+git rm <build-generated-file>        # only if applicable
+
+# 5. Single release commit — all plans in one squashable unit
+git commit -m "feat(release): vX.Y.Z — <plan summaries>"
+
+# 6. Push the release branch (not the session branch)
+git push origin release/vX.Y.Z
+
+# 7. Close the conflicting PR, open a new one from the clean branch
+gh pr close <old-pr-number> --comment "Superseded by #<new-pr-number> (release/vX.Y.Z — conflict-free)"
+gh pr create --base main --head release/vX.Y.Z --title "..."
+
+# 8. Verify mergeability, then merge + tag
+gh pr view <new-pr-number> --json mergeable    # expect MERGEABLE
+gh pr merge <new-pr-number> --squash
+git fetch origin --tags
+git tag -a vX.Y.Z origin/main -m "Release vX.Y.Z"
+git push origin vX.Y.Z
+```
+
+### Why not cherry-pick or rebase?
+
+- `git rebase origin/main` replays all session commits (including the ghost Plan 096/097 commits) and hits conflicts in `CHANGELOG.md`, version files, and translation files.
+- `git cherry-pick` of individual commits is fragile when many files changed across multiple plans.
+- The `git checkout <session-branch> -- <files>` approach copies only the **final file state** — no history import, no conflict surface.
+
+### Evidence from Session S96
+
+| Attempt | Result |
+|---------|--------|
+| PR #158 from `session/96-meal-search-was` | `CONFLICTING` |
+| PR #160 from `release/v0.10.25` (fresh branch) | `MERGEABLE` |
+
+**Overhead**: ~15 minutes to apply. Worthwhile at every release; do not attempt to fight the rebase.
 
 ---
 

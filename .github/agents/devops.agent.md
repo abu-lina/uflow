@@ -408,6 +408,17 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 1. Update ALL included plans' status to "Released".
 2. Record metadata (version, environment, timestamp, URLs, authorizer, included plans).
+   2b. **Migration applied status (MANDATORY when release includes migrations)**:
+   For every plan in the release that contains SQL migration files (`supabase/migrations/`):
+   - Determine whether migrations were applied to the target environment before or during this release.
+   - Record a `MIGRATION_APPLIED` field in the deployment doc for each migration set:
+     ```
+     MIGRATION_APPLIED: YES  — applied to production Supabase at release
+     MIGRATION_APPLIED: NO   — not applied (explains why and who will apply)
+     MIGRATION_APPLIED: DEFERRED — will be applied post-release (requires owner + trigger + evidence-to-close)
+     ```
+   - If `DEFERRED`: the deployment doc Known Limitations section MUST include an open-actions entry with owner, trigger condition, and evidence required to close (e.g., `pg_get_functiondef` output).
+   - If `NO`: treat as a release blocker unless the plan's functionality gracefully degrades without the migration and the user explicitly accepts the deferral.
 3. Verify success (installable, version matches, no errors).
    3b. **Functional Smoke Tests (MANDATORY)**: After deployment reports success (and before declaring Stage 2 complete), run a minimal set of functional smoke checks that cover server-rendered defaults:
 
@@ -483,7 +494,7 @@ After release is confirmed complete, normalize the main deployment doc:
   "Plan <ID> DevOps Stage 2 <version>"
   Confirm at least one result.
 
-Deployment Doc Format: `agent-output/deployment/[version].md` with: Plan Reference, Release Date, Release Summary (version/type/environment/epic), Pre-Release Verification (UAT/QA Approval, Version Consistency checklist, Packaging Integrity checklist, Gitignore Review checklist, Workspace Cleanliness checklist), User Confirmation (timestamp, summary presented, response/name/timestamp/decline reason), Release Execution (Git Tagging command/result/pushed, Package Publication registry/command/result/URL, Publication Verification checklist), Post-Release Status (status/timestamp, Known Issues, Rollback Plan), Deployment History Entry (JSON), Next Actions.
+Deployment Doc Format: `agent-output/deployment/[version].md` with: Plan Reference, Release Date, Release Summary (version/type/environment/epic), Pre-Release Verification (UAT/QA Approval, Version Consistency checklist, Packaging Integrity checklist, Gitignore Review checklist, Workspace Cleanliness checklist), User Confirmation (timestamp, summary presented, response/name/timestamp/decline reason), Release Execution (Git Tagging command/result/pushed, Package Publication registry/command/result/URL, Publication Verification checklist), **Migration Applied Status** (`MIGRATION_APPLIED: YES | NO | DEFERRED (reason + owner)` — required for every plan that includes SQL migrations; if DEFERRED, a Known Limitations entry with owner + trigger + evidence-to-close is mandatory), Post-Release Status (status/timestamp, Known Issues, Rollback Plan), Deployment History Entry (JSON), Next Actions.
 
 **Timestamp guidance (SHOULD)**:
 
