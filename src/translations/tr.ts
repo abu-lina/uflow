@@ -172,7 +172,16 @@ export const tr = {
       noResults: "Henüz bir sonuç yok - ama büyüyoruz!",
       notFoundEncouragement: "Yakında mevcut olabilir. Daha sonra tekrar bak.",
       providerCount: "{{count}} Restoran",
-      searchError: "Arama şu anda kullanılamıyor. Lütfen tekrar deneyin."
+      searchError: "Arama şu anda kullanılamıyor. Lütfen tekrar deneyin.",
+      categoryCount: "{{count}} Restoran",
+      cuisineLabel: "Mutfak",
+      browseCuisines: "Mutfak türlerini keşfet",
+      popularLabel: "POPÜLER",
+      recentLabel: "SON ARAMALAR",
+      selectionLabel: "SEÇİLEN",
+      selectedWhat: "Ne: {{item}}",
+      dishLabel: "Yemek",
+      removeSelection: "Seçimi kaldır"
     }
   },  categories: {
     food: "Yemek",

@@ -171,7 +171,7 @@ agent-output/deployment/100-background-selection-css-variable-stage1.md
 
 ### Post-Commit Hash
 
-- Recorded after commit: **[TBD — filled after commit]**
+- Commit: **`6da7df2f`** (session/96-meal-search-was)
 
 ---
 
@@ -229,7 +229,7 @@ Before Stage 2 release (push + tag):
   "title": "Convert background.selection to CSS Variable",
   "type": "Stage 1 — Local Commit Only",
   "version_target": "v0.10.25",
-  "commit_hash": "TBD",
+  "commit_hash": "6da7df2f",
   "timestamp": "2026-04-24T17:30Z (approx.)",
   "status": "Committed — awaiting Stage 2 with Plans 098 + 099"
 }

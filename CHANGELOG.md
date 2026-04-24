@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added migration contract test: `src/__tests__/migrations/075-food-category-images-rpc-tdd.test.ts`
 - Added component tests: `src/features/search/components/WasCategoryResults.test.tsx`
 
+### Fixed
+
+- **PWA fallback asset gitignore consistency (Plan 099 / Issue #157)**:
+  - Updated `.gitignore` to exclude all hashed PWA fallback files (`**/public/fallback-*.js`, `**/public/fallback-*.js.map`), consistent with other PWA build outputs (`sw.js`, `workbox-*.js`).
+  - Untracked `public/fallback-ce627215c0e4a9af.js` from git index — file remains on disk and is generated at build time.
+  - Removed obsolete `guard-fallback-assets` script and lint-staged hooks (root cause fixed by consistent gitignoring).
+
 ### Changed
 
 - **Design system: Convert `background.selection` token to CSS variable (Plan 100)**:

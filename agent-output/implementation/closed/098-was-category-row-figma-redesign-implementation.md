@@ -2,7 +2,7 @@
 ID: 098
 Origin: 098
 UUID: 4f2a8c1e
-Status: Active
+Status: Committed
 ---
 
 # Implementation: 098 — Was? Category Row Figma Redesign
@@ -22,6 +22,8 @@ Status: Active
 |---|---|---|---|
 | 2026-04-24T07:55Z | Critic -> Implementer | Implement approved Plan 098 | Started implementation with TDD red gates |
 | 2026-04-24T09:22Z | Implementer | M1-M5 complete | Migration 075, UI redesign, translations, version artifacts, validations |
+| 2026-04-24T09:36Z | Code Review -> Implementer | Address pre-QA findings | Added category count + persisted category images in selection state, fixed partial-error visibility, added regressions |
+| 2026-04-24T10:31Z | Code Review -> Implementer | Address low-severity test typing note | Replaced `as never` fixture casts with typed `WasSelection` fixtures and re-ran component tests |
 
 ---
 
@@ -38,6 +40,7 @@ What was delivered:
 
 Value delivery:
 - The selected cuisine row now visually matches category rows (icon/name/subtitle/remove action), making active selection clearer and consistent with Figma.
+- Post-review hardening now preserves selected/recent category icon metadata independent of current search results and surfaces meal-source partial failures instead of masking them.
 
 Version note:
 - Version bumped to `0.10.25` (preliminary - final version confirmed at DevOps Stage 1).
@@ -66,8 +69,9 @@ Version note:
 |---|---|---|
 | `src/services/offers.ts` | Added `category_images` to `FoodCategory` | +1 |
 | `src/features/search/components/WasCategoryResults.tsx` | Added `next/image`, Lucide icons, JSON parsing helper, icon slot, active-row redesign, remove aria-label, dish subtitle, divider | major |
-| `src/features/search/components/WasCategoryResults.test.tsx` | New component regression tests for selection row + dish subtitle behavior | +new |
-| `src/__tests__/app/(public)/search/page-meal-search.test.tsx` | Updated stale assertion to current selectedWas behavior (input clears after select) | small |
+| `src/features/search/components/WasCategoryResults.test.tsx` | New component regression tests for selection row + dish subtitle behavior; post-review regressions for selected category count and recent icon persistence; replaced `as never` with typed fixtures | +expanded |
+| `src/app/(public)/search/page.tsx` | Fixed partial-error handling for meal results (`||` instead of `&&`) | 1 |
+| `src/__tests__/app/(public)/search/page-meal-search.test.tsx` | Updated stale assertion and added regression for partial meal-source failure; expanded mocks for category/menu RPC + icon dependencies | medium |
 | `src/translations/de.ts` | Added `dishLabel`, `removeSelection` keys | +2 |
 | `src/translations/en.ts` | Added `dishLabel`, `removeSelection` keys | +2 |
 | `src/translations/tr.ts` | Added `dishLabel`, `removeSelection` keys | +2 |
@@ -124,10 +128,15 @@ Implementation result:
 | `getCategoryImageUrl()` | `src/features/search/components/WasCategoryResults.test.tsx` | ✅ Yes | ✅ Yes | active row class `bg-primary/10` missing before implementation | ✅ Yes |
 | `IconSlot` behavior via `WasCategoryResults` render path | `src/features/search/components/WasCategoryResults.test.tsx` | ✅ Yes | ✅ Yes | dish subtitle `Gericht` not rendered in recent row before implementation | ✅ Yes |
 | Regression alignment for existing Plan 096 search-page test | `src/__tests__/app/(public)/search/page-meal-search.test.tsx` | ⚠️ Post-fix (bugfix regression) | ✅ Yes | stale assertion expected old `wasQuery` fill behavior (`Doener`) | ✅ Yes |
+| Selected category metadata rendering (`WasSelection` category count) | `src/features/search/components/WasCategoryResults.test.tsx` | ⚠️ Post-fix (bugfix regression) | ✅ Yes | selected category row omitted `categoryCount` subtitle (`4 Restaurants`) | ✅ Yes |
+| Recent category icon persistence (`WasSelection.categoryImages`) | `src/features/search/components/WasCategoryResults.test.tsx` | ⚠️ Post-fix (bugfix regression) | ✅ Yes | recent category row failed to render image when `items` did not contain matching category | ✅ Yes |
+| Meal result partial error propagation (`isErrorWas || isErrorMenuItems`) | `src/__tests__/app/(public)/search/page-meal-search.test.tsx` | ⚠️ Post-fix (bugfix regression) | ✅ Yes | `lastWasMealProps.isError` remained `false` when only one source failed | ✅ Yes |
 
 TDD red evidence recorded:
 - `src/__tests__/migrations/075-food-category-images-rpc-tdd.test.ts`: failed because migration file did not exist.
 - `src/features/search/components/WasCategoryResults.test.tsx`: failed because `bg-primary/10` and `dishLabel` behavior were absent.
+- `src/features/search/components/WasCategoryResults.test.tsx`: failed because selected category count was missing and recent category image was not rendered from persisted metadata.
+- `src/__tests__/app/(public)/search/page-meal-search.test.tsx`: failed because meal error remained hidden when only menu-item search failed.
 
 ---
 
@@ -138,6 +147,8 @@ Unit / component:
   - Active selection row renders with `bg-primary/10` and remove button label.
   - Remove button triggers `onClearSelection`.
   - Dish recent row renders `dishLabel` subtitle and no remove button.
+  - Selected category row renders `categoryCount` subtitle from persisted selection metadata.
+  - Recent category row uses persisted `categoryImages` metadata when current result list is empty.
 
 Migration contract:
 - `src/__tests__/migrations/075-food-category-images-rpc-tdd.test.ts`
@@ -146,6 +157,7 @@ Migration contract:
 Regression maintenance:
 - `src/__tests__/app/(public)/search/page-meal-search.test.tsx`
   - Updated one stale assertion to match current selectedWas flow.
+  - Added regression ensuring meal-error UI is surfaced when either concept/menu source fails.
 
 ---
 
@@ -153,17 +165,19 @@ Regression maintenance:
 
 Commands executed:
 - `npx vitest run src/__tests__/migrations/075-food-category-images-rpc-tdd.test.ts src/features/search/components/WasCategoryResults.test.tsx`
+- `npx vitest run src/features/search/components/WasCategoryResults.test.tsx src/__tests__/app/(public)/search/page-meal-search.test.tsx`
+- `npx vitest run src/features/search/components/WasCategoryResults.test.tsx`
 - `npm run lint`
 - `npm run type-check`
 - `npm test -- --run`
-- `npm run clean && npm run build`
+- `npm run build`
 
 Results:
-- Targeted TDD tests: PASS (3/3)
+- Targeted TDD tests: PASS (8/8)
 - Lint: PASS (warnings only; no errors)
 - Type-check: PASS
-- Full tests: PASS (`120 passed`, `1 skipped`; `1065 passed`, `18 skipped`)
-- Build: PASS (`EXIT:0`)
+- Full tests: PASS (`120 passed`, `1 skipped`; `1068 passed`, `18 skipped`)
+- Build: PASS
 
 ---
 
