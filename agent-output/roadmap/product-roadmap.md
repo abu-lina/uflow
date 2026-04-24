@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-21
+**Last Updated**: 2026-04-24
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.24
+**Current Version**: v0.10.25
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -80,6 +80,7 @@
 | 2026-04-19       | Plan 094 released (v0.10.21): Provider Catalog Schema Evolution | Added provider_menu_items and provider_service_offers tables with unified search_provider_items RPC, RLS policies, and extended provider_stats MV. Enables future ordering-system foundation. Tag v0.10.21 pushed. Closes #148 |
 | 2026-04-20       | Plan 095 released (v0.10.22): Unified Catalog Architecture — Ummah Section | Added community_projects table, categories.applicable_section scoping, search_community_projects RPC, and extended provider_stats MV with community_project_count. Completes three-section FOOD/STORES/UMMAH org→item hierarchy. Tag v0.10.22 pushed. Closes #151 |
 | 2026-04-21       | Plans 096+097 released (v0.10.24): Food concept vocabulary search for Was? section | Plan 096: wired Was? accordion to live meal search with WasMealResults component and provider lookup augmentation. Plan 097: replaced broken provider_menu_items search with search_food_concepts RPC (dual-language tsvector, GIN array containment) returning deduplicated food concepts with provider counts. Migration 070 deployed to production. Tags v0.10.24 pushed. Closes #153 #154 |
+| 2026-04-24       | Plans 098+099+100 released (v0.10.25): Was? category row redesign, PWA gitignore fix, CSS design token | Plan 098: Figma-aligned AUSWAHL row with 48×48 icon slot, active bg, remove button, dish subtitle; migrations 071–075 (food category taxonomy + search RPCs + category images). Plan 099: .gitignore glob fix for PWA build-generated fallback files; untracks public/fallback-ce627215c0e4a9af.js. Plan 100: CSS variable token --color-background-selection replacing hardcoded hex in design system. Tags v0.10.25 pushed. Closes #156 #157 |
 
 ---
 
@@ -100,9 +101,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.24 — Released 2026-04-21
+**Current Working Release**: v0.10.25 — Released 2026-04-24
 
-_Session S096 released (2026-04-21): Plans 096+097 — Food concept vocabulary search for Was? section. Plan 096 wired Was? accordion to live meal search with WasMealResults component. Plan 097 introduced search_food_concepts RPC (migration 070) replacing broken provider_menu_items lookup with vocabulary-backed concept search using dual-language tsvector and GIN array containment. Döner/Burger searches return deduplicated provider counts. Issues #153 #154 closed. Tag v0.10.24 pushed._
+_Session S096 released (2026-04-24): Plans 098+099+100 — Was? category row Figma redesign, PWA fallback gitignore fix, and design system CSS variable token. Plan 098 redesigned the AUSWAHL category row (48×48 icon, active state, remove button, dish subtitle) and added migrations 071–075 (food category taxonomy, search RPCs, category images). Plan 099 fixed .gitignore to glob all PWA build-generated fallback files and untracks the stale tracked file. Plan 100 converted background.selection from hardcoded hex to CSS variable token. Issues #156 #157 closed. Tag v0.10.25 pushed._
 
 **Release Status**: Released
 **Ready for Release**: ✅ v0.10.20 complete  
@@ -122,6 +123,7 @@ _Session S096 released (2026-04-21): Plans 096+097 — Food concept vocabulary s
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.25 | 2026-04-24 | Plans 098+099+100 (Was? category redesign, PWA gitignore, CSS token — Issues #156 #157) | Released |
 | v0.10.24 | 2026-04-21 | Plans 096+097 (Was? food concept vocabulary search — Issues #153 #154) | Released |
 | v0.10.23 | 2026-04-21 | Plan 096 (Wire meal search Was? accordion — bundled into v0.10.24) | Released |
 | v0.10.22 | 2026-04-20 | Plan 095 (Unified Catalog Architecture — Ummah Section — Issue #151) | Released |

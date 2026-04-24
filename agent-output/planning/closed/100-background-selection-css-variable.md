@@ -2,7 +2,7 @@
 ID: 100
 Origin: 100
 UUID: 3c1a8f2e
-Status: Committed
+Status: Released
 ---
 
 # Plan 100 — Convert background.selection to CSS Variable

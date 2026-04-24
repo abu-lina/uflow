@@ -2,7 +2,7 @@
 ID: 098
 Origin: 098
 UUID: 4f2a8c1e
-Status: Committed
+Status: Released
 ---
 
 # Plan 098 — Was? Category Row Figma Redesign
