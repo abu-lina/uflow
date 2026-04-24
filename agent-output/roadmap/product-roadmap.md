@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-21
+**Last Updated**: 2026-04-24
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.24
+**Current Version**: v0.10.26
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -80,6 +80,8 @@
 | 2026-04-19       | Plan 094 released (v0.10.21): Provider Catalog Schema Evolution | Added provider_menu_items and provider_service_offers tables with unified search_provider_items RPC, RLS policies, and extended provider_stats MV. Enables future ordering-system foundation. Tag v0.10.21 pushed. Closes #148 |
 | 2026-04-20       | Plan 095 released (v0.10.22): Unified Catalog Architecture — Ummah Section | Added community_projects table, categories.applicable_section scoping, search_community_projects RPC, and extended provider_stats MV with community_project_count. Completes three-section FOOD/STORES/UMMAH org→item hierarchy. Tag v0.10.22 pushed. Closes #151 |
 | 2026-04-21       | Plans 096+097 released (v0.10.24): Food concept vocabulary search for Was? section | Plan 096: wired Was? accordion to live meal search with WasMealResults component and provider lookup augmentation. Plan 097: replaced broken provider_menu_items search with search_food_concepts RPC (dual-language tsvector, GIN array containment) returning deduplicated food concepts with provider counts. Migration 070 deployed to production. Tags v0.10.24 pushed. Closes #153 #154 |
+| 2026-04-24       | Plans 098+099+100 released (v0.10.25): Was? category redesign + PWA gitignore + background-selection token | Was category row Figma redesign (WasCategoryResults), PWA fallback-development.js gitignore fix, bg-background-selection CSS variable. Tag v0.10.25 pushed. |
+| 2026-04-24       | Plans 101+102 released (v0.10.26): Wo location default + city results redesign | Plan 101: pre-fill Wo field with onboarding city, Was/Wo state parity, dynamic header. Plan 102: WoCityResults component with popular cities idle state, recent searches, controlled accordion, 6-locale i18n. Tag v0.10.26 pushed. Closes #159 #162 |
 
 ---
 
@@ -100,12 +102,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.24 — Released 2026-04-21
+**Current Working Release**: v0.10.26 — Released 2026-04-24
 
-_Session S096 released (2026-04-21): Plans 096+097 — Food concept vocabulary search for Was? section. Plan 096 wired Was? accordion to live meal search with WasMealResults component. Plan 097 introduced search_food_concepts RPC (migration 070) replacing broken provider_menu_items lookup with vocabulary-backed concept search using dual-language tsvector and GIN array containment. Döner/Burger searches return deduplicated provider counts. Issues #153 #154 closed. Tag v0.10.24 pushed._
+_Session S101 released (2026-04-24): Plans 101+102 — Wo location default + city results redesign. Plan 101: pre-fill Wo field with onboarding city, Was/Wo state parity, dynamic 'Wo · {city}' header, clear button. Plan 102: WoCityResults component (5-state: loading/error/idle/results/empty), popular cities via fetchPopularCities(), recent Wo searches (localStorage, max 3), controlled accordion, 6-locale suchen.wo.* i18n namespace. 10 new regression tests, 1078 tests passing. Issues #159 #162 closed. Tag v0.10.26 pushed._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.20 complete  
+**Ready for Release**: ✅ v0.10.26 complete
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -122,6 +124,8 @@ _Session S096 released (2026-04-21): Plans 096+097 — Food concept vocabulary s
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.26 | 2026-04-24 | Plans 101+102 (Wo location default + city results redesign — Issues #159 #162) | Released |
+| v0.10.25 | 2026-04-24 | Plans 098+099+100 (Was? category redesign + PWA gitignore + background-selection token) | Released |
 | v0.10.24 | 2026-04-21 | Plans 096+097 (Was? food concept vocabulary search — Issues #153 #154) | Released |
 | v0.10.23 | 2026-04-21 | Plan 096 (Wire meal search Was? accordion — bundled into v0.10.24) | Released |
 | v0.10.22 | 2026-04-20 | Plan 095 (Unified Catalog Architecture — Ummah Section — Issue #151) | Released |
