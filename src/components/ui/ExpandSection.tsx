@@ -6,6 +6,8 @@ import { ChevronDown } from 'lucide-react';
 export interface ExpandSectionProps {
   title: string;
   defaultOpen?: boolean;
+  isOpen?: boolean;
+  onToggle?: (next: boolean) => void;
   children: ReactNode;
 }
 
@@ -17,21 +19,35 @@ export interface ExpandSectionProps {
  * - Rotating `ChevronDown` icon (no icon swap)
  * - `font-inter-tight font-semibold` title
  *
+ * Supports both uncontrolled (defaultOpen) and controlled (isOpen + onToggle) modes.
  * Used on the search page for Was?, Wo, Wer, and Filter accordions.
  */
 export function ExpandSection({
   title,
   defaultOpen = false,
+  isOpen: controlledOpen,
+  onToggle,
   children,
 }: ExpandSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+
+  const handleToggle = () => {
+    const next = !isOpen;
+    if (isControlled) {
+      onToggle?.(next);
+    } else {
+      setInternalOpen(next);
+    }
+  };
 
   return (
     <div className="rounded-2xl bg-background shadow-sm">
       <button
         aria-expanded={isOpen}
         className="flex w-full items-center justify-between p-4"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
       >
         <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
           {title}

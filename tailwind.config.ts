@@ -254,6 +254,7 @@ const config: Config = {
         background: {
           DEFAULT: 'hsl(var(--color-background))',
           dark: 'hsl(var(--color-neutral-800))',
+          selection: 'hsl(var(--color-background-selection))',
         },
 
         surface: 'hsl(var(--color-surface))',

@@ -3,9 +3,16 @@ import { fireEvent, render, screen, act } from '@testing-library/react';
 import SearchPage from '@/app/(public)/search/page';
 
 const mockSearchFoodConcepts = vi.fn();
+const mockSearchFoodCategories = vi.fn();
+const mockSearchFoodMenuItems = vi.fn();
 const mockFetchProviderCities = vi.fn();
 const mockCheckCityExists = vi.fn();
-const mockTranslate = (key: string) => {
+let lastWasMealProps: { isError?: boolean } | null = null;
+const mockTranslate = (key: string, variables?: Record<string, string | number>) => {
+  if (key === 'suchen.was.selectedWhat') {
+    return `Was: ${variables?.item ?? ''}`;
+  }
+
   const map: Record<string, string> = {
     'suchen.title': 'Suchen',
     'suchen.accordions.was': 'Was?',
@@ -22,6 +29,7 @@ const mockTranslate = (key: string) => {
     'suchen.was.noResults': 'Noch nichts gefunden - aber wir wachsen!',
     'suchen.was.notFoundEncouragement': 'Vielleicht bald verfuegbar.',
     'suchen.was.providerCount': '{{count}} Restaurants',
+    'suchen.was.selectedWhat': 'Was: {{item}}',
     'common.loading': 'Loading',
     'location.unnamed': 'Unbenannt',
   };
@@ -78,17 +86,33 @@ vi.mock('@/features/search/components/EmptyCityCard', () => ({
 }));
 
 vi.mock('@/features/search/components/WasMealResults', () => ({
-  WasMealResults: ({ onSelect, query }: { onSelect: (itemName: string) => void; query: string }) => (
-    <button type="button" onClick={() => onSelect('Doener')}>
-      Select result for {query}
-    </button>
-  ),
+  WasMealResults: ({
+    onSelect,
+    query,
+    isError,
+  }: {
+    onSelect: (itemName: string) => void;
+    query: string;
+    isError?: boolean;
+  }) => {
+    lastWasMealProps = { isError };
+    return (
+      <>
+        {isError ? <p>Meal error</p> : null}
+        <button type="button" onClick={() => onSelect('Doener')}>
+          Select result for {query}
+        </button>
+      </>
+    );
+  },
 }));
 
 vi.mock('lucide-react', () => ({
   Heart: () => <span>heart</span>,
   Search: () => <span>search</span>,
   MapPin: () => <span>pin</span>,
+  UtensilsCrossed: () => <span>utensils</span>,
+  X: () => <span>x</span>,
 }));
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -108,6 +132,8 @@ vi.mock('@/services/providers', () => ({
 
 vi.mock('@/services/offers', () => ({
   searchFoodConcepts: (...args: unknown[]) => mockSearchFoodConcepts(...args),
+  searchFoodCategories: (...args: unknown[]) => mockSearchFoodCategories(...args),
+  searchFoodMenuItems: (...args: unknown[]) => mockSearchFoodMenuItems(...args),
 }));
 
 describe('/search page meal search wiring (Plan 096)', () => {
@@ -116,6 +142,9 @@ describe('/search page meal search wiring (Plan 096)', () => {
     vi.clearAllMocks();
     mockFetchProviderCities.mockResolvedValue([]);
     mockCheckCityExists.mockResolvedValue(false);
+    lastWasMealProps = null;
+    mockSearchFoodCategories.mockResolvedValue([]);
+    mockSearchFoodMenuItems.mockResolvedValue([]);
     mockSearchFoodConcepts.mockResolvedValue([
       {
         offer_id: 'offer-1',
@@ -166,7 +195,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     });
   });
 
-  it('selecting a result fills wasQuery input', async () => {
+  it('selecting a result clears the Was input after selection', async () => {
     render(<SearchPage />);
 
     const input = screen.getByRole('searchbox', { name: 'Angebote suchen' }) as HTMLInputElement;
@@ -180,6 +209,24 @@ describe('/search page meal search wiring (Plan 096)', () => {
     const rowButton = screen.getByRole('button', { name: /Select result for doe/i });
     fireEvent.click(rowButton);
 
-    expect(input.value).toBe('Doener');
+    expect(input.value).toBe('');
+  });
+
+  it('shows meal error when either meal source fails', async () => {
+    mockSearchFoodConcepts.mockResolvedValue([]);
+    mockSearchFoodMenuItems.mockRejectedValue(new Error('menu rpc failed'));
+
+    render(<SearchPage />);
+
+    const input = screen.getByRole('searchbox', { name: 'Angebote suchen' });
+    fireEvent.change(input, { target: { value: 'doe' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(lastWasMealProps?.isError).toBe(true);
+    expect(screen.getByText('Meal error')).toBeInTheDocument();
   });
 });

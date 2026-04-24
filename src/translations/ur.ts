@@ -174,7 +174,16 @@ export const ur = {
       noResults: "ابھی کچھ نہیں ملا - لیکن ہم بڑھ رہے ہیں!",
       notFoundEncouragement: "ممکن ہے جلد دستیاب ہو۔ بعد میں دوبارہ دیکھیں۔",
       providerCount: "{{count}} ریستوران",
-      searchError: "تلاش فی الحال دستیاب نہیں۔ براہ کرم دوبارہ کوشش کریں۔"
+      searchError: "تلاش فی الحال دستیاب نہیں۔ براہ کرم دوبارہ کوشش کریں۔",
+      categoryCount: "{{count}} ریستوران",
+      cuisineLabel: "کھانا",
+      browseCuisines: "کھانوں میں تلاش کریں",
+      popularLabel: "مقبول",
+      recentLabel: "حالیہ تلاش",
+      selectionLabel: "منتخب",
+      selectedWhat: "کیا: {{item}}",
+      dishLabel: "ڈش",
+      removeSelection: "انتخاب ہٹائیں"
     }
   },  categories: {
     food: "کھانا",

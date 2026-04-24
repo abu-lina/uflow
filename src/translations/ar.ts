@@ -173,7 +173,16 @@ export const ar = {
       noResults: "لا توجد نتائج بعد - لكننا نتوسع!",
       notFoundEncouragement: "قد يتوفر قريبًا. تحقق مرة أخرى لاحقًا.",
       providerCount: "{{count}} مطاعم",
-      searchError: "البحث غير متاح حاليًا. يرجى المحاولة مرة أخرى."
+      searchError: "البحث غير متاح حاليًا. يرجى المحاولة مرة أخرى.",
+      categoryCount: "{{count}} مطاعم",
+      cuisineLabel: "مطبخ",
+      browseCuisines: "تصفح المطابخ",
+      popularLabel: "شائع",
+      recentLabel: "البحث الأخير",
+      selectionLabel: "المحدد",
+      selectedWhat: "ماذا: {{item}}",
+      dishLabel: "طبق",
+      removeSelection: "إزالة التحديد"
     }
   },
   categories: {

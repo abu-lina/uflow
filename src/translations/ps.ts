@@ -174,7 +174,16 @@ export const ps = {
       noResults: "تر اوسه څه ونه موندل شول - خو موږ وده کوو!",
       notFoundEncouragement: "ښايي ژر موجود شي. وروسته بیا وګوره.",
       providerCount: "{{count}} رستورانتونه",
-      searchError: "لټون اوس مهال شتون نه لري. مهرباني وکړئ بیا هڅه وکړئ."
+      searchError: "لټون اوس مهال شتون نه لري. مهرباني وکړئ بیا هڅه وکړئ.",
+      categoryCount: "{{count}} رستورانتونه",
+      cuisineLabel: "ورینه",
+      browseCuisines: "د ورینو لټون",
+      popularLabel: "مشهور",
+      recentLabel: "وروستي لټون",
+      selectionLabel: "غوره شوی",
+      selectedWhat: "څه: {{item}}",
+      dishLabel: "خواړه",
+      removeSelection: "ټاکنه لرې کول"
     }
   },  categories: {
     food: "خواړه",

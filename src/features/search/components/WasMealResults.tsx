@@ -7,6 +7,7 @@ interface WasMealResultsProps {
   isLoading: boolean;
   isError: boolean;
   query: string;
+  hasCategoryResults?: boolean;
   onSelect: (itemName: string) => void;
   t: (key: string, variables?: Record<string, string | number>) => string;
 }
@@ -16,10 +17,12 @@ export function WasMealResults({
   isLoading,
   isError,
   query,
+  hasCategoryResults = false,
   onSelect,
   t,
 }: WasMealResultsProps) {
   if (query.length === 0) {
+    if (hasCategoryResults) return null;
     return (
       <p className="mt-4 py-2 text-center text-sm text-text-muted">
         {t('suchen.was.searchPlaceholder')}

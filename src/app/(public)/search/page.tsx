@@ -12,9 +12,11 @@ import { ExpandSection } from '@/components/ui/ExpandSection';
 import { Button } from '@/components/ui/Button';
 import { EmptyCityCard } from '@/features/search/components/EmptyCityCard';
 import { WasMealResults } from '@/features/search/components/WasMealResults';
+import { WasCategoryResults } from '@/features/search/components/WasCategoryResults';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
-import { type FoodConcept, searchFoodConcepts } from '@/services/offers';
+import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
+import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 import { fetchProviderCities, checkCityExists } from '@/services/providers';
 
 /**
@@ -42,6 +44,22 @@ function SearchPageContent() {
   const [wasResults, setWasResults] = useState<FoodConcept[]>([]);
   const [isLoadingWas, setIsLoadingWas] = useState(false);
   const [isErrorWas, setIsErrorWas] = useState(false);
+  const [categoryResults, setCategoryResults] = useState<FoodCategory[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isErrorCategories, setIsErrorCategories] = useState(false);
+  const [menuItemResults, setMenuItemResults] = useState<FoodMenuItem[]>([]);
+  const [isLoadingMenuItems, setIsLoadingMenuItems] = useState(false);
+  const [isErrorMenuItems, setIsErrorMenuItems] = useState(false);
+  const [selectedWas, setSelectedWas] = useState<WasSelection | null>(null);
+  const [wasOpen, setWasOpen] = useState(true);
+  const [recentSearches, setRecentSearches] = useState<WasSelection[]>(() => {
+    try {
+      const stored = localStorage.getItem('uflow:recent-was-searches');
+      return stored ? (JSON.parse(stored) as WasSelection[]).slice(0, 3) : [];
+    } catch {
+      return [];
+    }
+  });
   const [woQuery, setWoQuery] = useState('');
   const [cities, setCities] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
@@ -122,6 +140,102 @@ function SearchPageContent() {
     };
   }, [wasQuery, selectedSection]);
 
+  // Debounced cuisine category search in the "Was?" accordion.
+  // Empty query (< 2 chars) → top categories by provider count.
+  // Non-empty → ranked text search.
+  useEffect(() => {
+    if (selectedSection !== 'food') {
+      setCategoryResults([]);
+      return;
+    }
+
+    let isCancelled = false;
+    const normalizedQuery = wasQuery.trim();
+    const queryForRpc = normalizedQuery.length >= 2 ? normalizedQuery : '';
+
+    setIsLoadingCategories(true);
+    setIsErrorCategories(false);
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const rows = await searchFoodCategories({
+          search_query: queryForRpc,
+          limit_count: 3,
+        });
+
+        if (isCancelled) {
+          return;
+        }
+
+        setCategoryResults(rows);
+        setIsErrorCategories(false);
+      } catch (error) {
+        if (!isCancelled) {
+          console.error('Failed to search food categories:', error);
+          setIsErrorCategories(true);
+          setCategoryResults([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingCategories(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [wasQuery, selectedSection]);
+
+  // Debounced menu item search in the "Was?" accordion.
+  // Only fires when query >= 2 chars; never called with empty string.
+  useEffect(() => {
+    let isCancelled = false;
+    const normalizedQuery = wasQuery.trim();
+
+    if (normalizedQuery.length < 2) {
+      setMenuItemResults([]);
+      setIsErrorMenuItems(false);
+      setIsLoadingMenuItems(false);
+      return;
+    }
+
+    setIsLoadingMenuItems(true);
+    setIsErrorMenuItems(false);
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const rows = await searchFoodMenuItems({
+          search_query: normalizedQuery,
+          limit_count: 10,
+        });
+
+        if (isCancelled) {
+          return;
+        }
+
+        setMenuItemResults(rows);
+        setIsErrorMenuItems(false);
+      } catch (error) {
+        if (!isCancelled) {
+          console.error('Failed to search food menu items:', error);
+          setIsErrorMenuItems(true);
+          setMenuItemResults([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingMenuItems(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [wasQuery, selectedSection]);
+
   // Validate unknown city inputs with a targeted lookup instead of full-table prefetch.
   useEffect(() => {
     let isCancelled = false;
@@ -166,6 +280,31 @@ function SearchPageContent() {
     }
   };
 
+  const handleWasSelect = (selection: WasSelection) => {
+    setSelectedWas(selection);
+    setWasQuery('');
+    setWasOpen(false);
+    // Persist to recent searches (max 3, deduplicated by label)
+    setRecentSearches((prev) => {
+      const deduped = [selection, ...prev.filter((r) => r.label !== selection.label)].slice(0, 3);
+      try {
+        localStorage.setItem('uflow:recent-was-searches', JSON.stringify(deduped));
+      } catch { /* storage unavailable */ }
+      return deduped;
+    });
+  };
+
+  const handleSearch = () => {
+    if (!selectedWas) return;
+    const params = new URLSearchParams({ section: selectedSection });
+    if (selectedWas.type === 'category' && selectedWas.categoryId) {
+      params.set('category', selectedWas.categoryId);
+    } else {
+      params.set('q', selectedWas.label);
+    }
+    router.push(`/providers?${params.toString()}`);
+  };
+
   const filteredCities = woQuery.length === 0
     ? []
     : cities
@@ -192,8 +331,16 @@ function SearchPageContent() {
 
         {/* ── Accordion body ───────────────────────────────────────────── */}
         <div className="flex flex-col gap-2">
-        {/* Was? — expanded by default, contains search input */}
-        <ExpandSection defaultOpen title={t('suchen.accordions.was')}>
+        {/* Was? — controlled accordion; title shows selection when closed */}
+        <ExpandSection
+          isOpen={wasOpen}
+          title={
+            selectedWas
+              ? t('suchen.was.selectedWhat', { item: selectedWas.label })
+              : t('suchen.accordions.was')
+          }
+          onToggle={setWasOpen}
+        >
           <div className="mt-3">
             {/* Search input */}
             <div className="flex items-center gap-3 px-3 h-10 rounded-xl bg-neutral-muted focus-within:ring-2 focus-within:ring-primary/20 transition-colors">
@@ -208,15 +355,47 @@ function SearchPageContent() {
               />
             </div>
 
+            <WasCategoryResults
+              isError={isErrorCategories}
+              isLoading={isLoadingCategories}
+              items={categoryResults}
+              query={wasQuery}
+              recentSearches={recentSearches}
+              selectedWas={selectedWas}
+              t={t}
+              onClearSelection={() => setSelectedWas(null)}
+              onSelect={handleWasSelect}
+            />
             <WasMealResults
-              isError={isErrorWas}
-              isLoading={isLoadingWas}
-              items={wasResults}
+              hasCategoryResults={categoryResults.length > 0}
+              isError={isErrorWas || isErrorMenuItems}
+              isLoading={isLoadingWas || isLoadingMenuItems}
+              items={(() => {
+                const menuAsConcepts: FoodConcept[] = menuItemResults.map((m) => ({
+                  offer_id: `mi:${m.name_de}`,
+                  name_de: m.name_de,
+                  name_en: m.name_en,
+                  provider_count: m.provider_count,
+                }));
+                const seen = new Map<string, FoodConcept>();
+                for (const item of [...wasResults, ...menuAsConcepts]) {
+                  const key = (item.name_de || '').toLowerCase();
+                  const existing = seen.get(key);
+                  if (!existing || item.provider_count > existing.provider_count) {
+                    seen.set(key, item);
+                  }
+                }
+                return Array.from(seen.values()).sort(
+                  (a, b) =>
+                    b.provider_count - a.provider_count ||
+                    (a.name_de || '').localeCompare(b.name_de || '')
+                );
+              })()}
               query={wasQuery}
               t={t}
-              onSelect={(itemName) => {
-                setWasQuery(itemName);
-              }}
+              onSelect={(itemName) =>
+                handleWasSelect({ label: itemName, type: 'dish', dishName: itemName })
+              }
             />
           </div>
         </ExpandSection>
@@ -309,6 +488,8 @@ function SearchPageContent() {
             setWasResults([]);
             setIsLoadingWas(false);
             setIsErrorWas(false);
+            setSelectedWas(null);
+            setWasOpen(true);
             setWoQuery('');
             setSelectedSection('food');
           }}
@@ -317,10 +498,9 @@ function SearchPageContent() {
         </button>
         <Button
           className="shadow-[0_8px_24px_rgba(88,157,150,0.25)]"
+          disabled={!selectedWas}
           icon={<Heart className="w-4 h-4" />}
-          onClick={() => {
-            /* Search execution deferred — route to results when wired */
-          }}
+          onClick={handleSearch}
         >
           {t('suchen.searchButton')}
         </Button>

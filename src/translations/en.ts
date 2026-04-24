@@ -174,7 +174,16 @@ export const en = {
       noResults: "Nothing yet - but we're growing!",
       notFoundEncouragement: "It might be available soon. Check back later.",
       providerCount: "{{count}} Restaurants",
-      searchError: "Search is currently unavailable. Please try again."
+      searchError: "Search is currently unavailable. Please try again.",
+      categoryCount: "{{count}} Restaurants",
+      cuisineLabel: "Cuisine",
+      browseCuisines: "Browse cuisines",
+      popularLabel: "POPULAR",
+      recentLabel: "RECENT SEARCHES",
+      selectionLabel: "SELECTED",
+      selectedWhat: "What: {{item}}",
+      dishLabel: "Dish",
+      removeSelection: "Remove selection"
     }
   },  categories: {
     // Add common category translations
