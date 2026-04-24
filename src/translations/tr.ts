@@ -150,7 +150,7 @@ export const tr = {
     title: "Ara",
     accordions: {
       was: "Ne?",
-      wo: "Nerede: Yakınımda",
+      wo: "Nerede",
       wer: "Kim: Benim için",
       filter: "Filtre"
     },
@@ -182,6 +182,17 @@ export const tr = {
       selectedWhat: "Ne: {{item}}",
       dishLabel: "Yemek",
       removeSelection: "Seçimi kaldır"
+    },
+    wo: {
+      loading: "Aranıyor...",
+      searchError: "Arama şu anda kullanılamıyor. Lütfen tekrar deneyin.",
+      providerCount: "{{count}} sağlayıcı",
+      popularLabel: "POPÜLER",
+      recentLabel: "SON ARAMALAR",
+      selectionLabel: "SEÇİLEN",
+      selectedWhere: "Nerede: {{city}}",
+      removeSelection: "Seçimi kaldır",
+      noResults: "Şehir bulunamadı"
     }
   },  categories: {
     food: "Yemek",

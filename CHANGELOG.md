@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.26] - 2026-04-24
+
+### Added
+
+- **Wo onboarding default + Was-parity city results redesign (Plans 101 + 102 / Issues #159 + #162)**:
+  - Added `fetchPopularCities(limit)` in `src/services/providers.ts` to aggregate city-level listing counts across `providers` and approved `community_services`.
+  - Added new `WoCityResults` component (`src/features/search/components/WoCityResults.tsx`) with 5-state rendering:
+    - loading
+    - error
+    - idle (popular cities + recent city searches + selected city card)
+    - query results
+    - empty/no-provider fallback
+  - Refactored `/search` Wo accordion in `src/app/(public)/search/page.tsx` to match Was interaction patterns:
+    - controlled accordion mode (`isOpen` + `onToggle`)
+    - persistent recent Wo searches via `localStorage['uflow:recent-wo-searches']` (max 3, deduplicated)
+    - selection row with remove action in idle state
+    - dynamic Wo header remains `Wo · {city}` when city selected
+  - Added Wo i18n namespace (`suchen.wo.*`) in all locales (`de`, `en`, `tr`, `ar`, `ps`, `ur`):
+    - `loading`
+    - `searchError`
+    - `providerCount`
+    - `popularLabel`
+    - `recentLabel`
+    - `selectionLabel`
+    - `selectedWhere`
+    - `removeSelection`
+    - `noResults`
+
+### Tests
+
+- Added component tests: `src/features/search/components/WoCityResults.test.tsx`
+- Extended service tests: `src/__tests__/services/providers.test.ts` with `fetchPopularCities` coverage
+- Updated page regression tests: `src/app/(public)/search/page.test.tsx`
+
 ## [0.10.25] - 2026-04-24
 
 ### Added

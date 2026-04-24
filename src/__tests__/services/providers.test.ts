@@ -74,7 +74,7 @@ function setupChain() {
   mockReturns.mockResolvedValue({ data: [], error: null });
 }
 
-import { fetchFilteredCities, fetchProviderCities } from '@/services/providers';
+import { fetchFilteredCities, fetchPopularCities, fetchProviderCities } from '@/services/providers';
 
 describe('providers service', () => {
   beforeEach(() => {
@@ -175,6 +175,77 @@ describe('providers service', () => {
 
       const result = await fetchProviderCities();
       expect(result).toEqual(['Berlin', 'Hamburg', 'München']);
+    });
+  });
+
+  describe('fetchPopularCities', () => {
+    it('returns cities sorted by provider_count desc with city name tie-break', async () => {
+      mockReturns
+        .mockResolvedValueOnce({
+          data: [
+            { address_city: 'Berlin' },
+            { address_city: 'Berlin' },
+            { address_city: 'Köln' },
+          ],
+          error: null,
+        })
+        .mockResolvedValueOnce({
+          data: [
+            { address_city: 'Hamburg' },
+            { address_city: 'Berlin' },
+            { address_city: 'Köln' },
+          ],
+          error: null,
+        });
+
+      const result = await fetchPopularCities();
+
+      expect(result).toEqual([
+        { city: 'Berlin', provider_count: 3 },
+        { city: 'Köln', provider_count: 2 },
+        { city: 'Hamburg', provider_count: 1 },
+      ]);
+    });
+
+    it('applies limit to the sorted result set', async () => {
+      mockReturns
+        .mockResolvedValueOnce({
+          data: [
+            { address_city: 'Berlin' },
+            { address_city: 'Berlin' },
+            { address_city: 'Köln' },
+          ],
+          error: null,
+        })
+        .mockResolvedValueOnce({
+          data: [
+            { address_city: 'Hamburg' },
+            { address_city: 'Berlin' },
+            { address_city: 'Köln' },
+          ],
+          error: null,
+        });
+
+      const result = await fetchPopularCities(2);
+      expect(result).toEqual([
+        { city: 'Berlin', provider_count: 3 },
+        { city: 'Köln', provider_count: 2 },
+      ]);
+    });
+
+    it('returns empty array when query errors and logs error', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      mockReturns
+        .mockResolvedValueOnce({ data: null, error: new Error('providers fail') })
+        .mockResolvedValueOnce({ data: [], error: null });
+
+      const result = await fetchPopularCities();
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalled();
+
+      errorSpy.mockRestore();
     });
   });
 });

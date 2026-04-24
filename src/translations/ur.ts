@@ -152,7 +152,7 @@ export const ur = {
     title: "تلاش کریں",
     accordions: {
       was: "کیا؟",
-      wo: "کہاں: میرے قریب",
+      wo: "کہاں",
       wer: "کون: میرے لیے",
       filter: "فلٹر"
     },
@@ -184,6 +184,17 @@ export const ur = {
       selectedWhat: "کیا: {{item}}",
       dishLabel: "ڈش",
       removeSelection: "انتخاب ہٹائیں"
+    },
+    wo: {
+      loading: "تلاش جاری ہے...",
+      searchError: "تلاش فی الحال دستیاب نہیں۔ براہ کرم دوبارہ کوشش کریں۔",
+      providerCount: "{{count}} فراہم کنندگان",
+      popularLabel: "مقبول",
+      recentLabel: "حالیہ تلاش",
+      selectionLabel: "منتخب",
+      selectedWhere: "کہاں: {{city}}",
+      removeSelection: "انتخاب ہٹائیں",
+      noResults: "کوئی شہر نہیں ملا"
     }
   },  categories: {
     food: "کھانا",
