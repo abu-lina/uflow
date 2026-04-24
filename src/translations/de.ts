@@ -175,7 +175,16 @@ export const de = {
       noResults: "Noch nichts gefunden - aber wir wachsen!",
       notFoundEncouragement: "Vielleicht bald verfügbar. Schau später nochmal rein.",
       providerCount: "{{count}} Restaurants",
-      searchError: "Suche nicht verfügbar. Bitte versuche es erneut."
+      searchError: "Suche nicht verfügbar. Bitte versuche es erneut.",
+      categoryCount: "{{count}} Restaurants",
+      cuisineLabel: "Küche",
+      browseCuisines: "Küchen durchsuchen",
+      popularLabel: "BELIEBT",
+      recentLabel: "ZULETZT GESUCHT",
+      selectionLabel: "AUSWAHL",
+      selectedWhat: "Was: {{item}}",
+      dishLabel: "Gericht",
+      removeSelection: "Auswahl entfernen"
     }
   },
   categories: {

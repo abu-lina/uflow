@@ -69,7 +69,10 @@ export const colorTokens = {
   },
 
   /** Surface / background colors */
-  background: '0 0% 100%',
+  background: {
+    DEFAULT: '0 0% 100%',
+    selection: '170 30% 96%',
+  },
   surface: '0 0% 98%',
   overlay: '0 0% 0%',
 

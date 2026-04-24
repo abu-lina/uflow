@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.25] - 2026-04-24
+
+### Added
+
+- **Was? category row Figma redesign (Plan 098 / Issue #156)**:
+  - Added migration `supabase/migrations/075_search_food_categories_add_images.sql` to extend RPC `search_food_categories(search_query, limit_count)` with additive `category_images` output for icon rendering.
+  - Extended `FoodCategory` type in `src/services/offers.ts` with `category_images: string | null`.
+  - Redesigned `WasCategoryResults` to match Figma selection/category row spec:
+    - 48x48 rounded icon slot per category row.
+    - Active AUSWAHL row with `bg-primary/10`, filled teal remove button, and divider before following sections.
+    - Accessible remove action via localized `aria-label` (`suchen.was.removeSelection`).
+    - Dish-type recent rows now render localized `dishLabel` subtitle and no icon slot.
+    - Fallback icon switched from emoji to Lucide `UtensilsCrossed` for cross-platform visual consistency.
+  - Added new i18n keys in all locales (`de`, `en`, `tr`, `ar`, `ps`, `ur`):
+    - `suchen.was.dishLabel`
+    - `suchen.was.removeSelection`
+
+### Tests
+
+- Added migration contract test: `src/__tests__/migrations/075-food-category-images-rpc-tdd.test.ts`
+- Added component tests: `src/features/search/components/WasCategoryResults.test.tsx`
+
+### Fixed
+
+- **PWA fallback asset gitignore consistency (Plan 099 / Issue #157)**:
+  - Updated `.gitignore` to exclude all hashed PWA fallback files (`**/public/fallback-*.js`, `**/public/fallback-*.js.map`), consistent with other PWA build outputs (`sw.js`, `workbox-*.js`).
+  - Untracked `public/fallback-ce627215c0e4a9af.js` from git index — file remains on disk and is generated at build time.
+  - Removed obsolete `guard-fallback-assets` script and lint-staged hooks (root cause fixed by consistent gitignoring).
+
+### Changed
+
+- **Design system: Convert `background.selection` token to CSS variable (Plan 100)**:
+  - Added CSS custom property `--color-background-selection: 170 30% 96%` to `:root` in `src/styles/globals.css`.
+  - Converted `background.selection` Tailwind token from hardcoded `#F2F8F7` to `hsl(var(--color-background-selection))`.
+  - Expanded `background` token in `src/design-system/tokens/colors.ts` from flat string to object with `DEFAULT` and `selection` keys.
+  - Token now participates in runtime theme switching alongside the rest of the design system.
+
 ## [0.10.24] - 2026-04-21
 
 ### Added

@@ -8,6 +8,22 @@ export interface FoodConcept {
   provider_count: number;
 }
 
+export interface FoodCategory {
+  category_id: string;
+  name_de: string;
+  name_en: string | null;
+  description_de: string | null;
+  description_en: string | null;
+  category_images: string | null;
+  provider_count: number;
+}
+
+export interface FoodMenuItem {
+  name_de: string;
+  name_en: string | null;
+  provider_count: number;
+}
+
 export async function getOffers(limit?: number, offset?: number): Promise<Offer[]> {
   let query = supabase
     .from('offers')
@@ -147,4 +163,40 @@ export async function searchFoodConcepts(params: {
   }
 
   return Array.isArray(data) ? (data as FoodConcept[]) : [];
+}
+
+export async function searchFoodCategories(params: {
+  search_query: string;
+  limit_count?: number;
+}): Promise<FoodCategory[]> {
+  const { search_query, limit_count = 8 } = params;
+
+  const { data, error } = await supabase.rpc('search_food_categories', {
+    search_query,
+    limit_count,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return Array.isArray(data) ? (data as FoodCategory[]) : [];
+}
+
+export async function searchFoodMenuItems(params: {
+  search_query: string;
+  limit_count?: number;
+}): Promise<FoodMenuItem[]> {
+  const { search_query, limit_count = 10 } = params;
+
+  const { data, error } = await supabase.rpc('search_food_menu_items', {
+    search_query,
+    limit_count,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return Array.isArray(data) ? (data as FoodMenuItem[]) : [];
 }

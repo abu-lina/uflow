@@ -368,17 +368,14 @@ export const ProviderCard = React.memo(
           )}
         </div>
         {showSkeleton ? (
-          <div className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5 outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300">
+          <div className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5">
             <div className="flex w-full flex-col items-start gap-3.5">
               <div className="h-6 w-3/4 animate-pulse rounded bg-neutral-200" />
               <div className="h-4 w-1/2 animate-pulse rounded bg-neutral-200" />
             </div>
           </div>
         ) : (
-          <div
-            className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5
-          outline outline-[0.84px] outline-offset-[-0.84px] outline-neutral-300"
-          >
+          <div className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5">
           <div className="flex w-full flex-col items-start gap-3.5">
             <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
               <span

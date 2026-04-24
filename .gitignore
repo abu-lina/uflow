@@ -72,7 +72,8 @@ Thumbs.db
 **/public/sw.js.map
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
-**/public/fallback-development.js
+**/public/fallback-*.js
+**/public/fallback-*.js.map
 
 # Supabase
 .branches

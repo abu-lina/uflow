@@ -59,6 +59,7 @@
     --color-background: 0 0% 100%;
     --color-surface: 0 0% 98%;
     --color-overlay: 0 0% 0%;
+    --color-background-selection: 170 30% 96%;
 
     /* ========== Design system: Text colors ========== */
     --color-text-primary: 0 0% 14%;
