@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Heart, Search, MapPin } from 'lucide-react';
+import { Heart, Search, MapPin, X } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
@@ -60,7 +60,8 @@ function SearchPageContent() {
       return [];
     }
   });
-  const [woQuery, setWoQuery] = useState('');
+  const [woInputQuery, setWoInputQuery] = useState('');
+  const [selectedWoCity, setSelectedWoCity] = useState<string | null>(null);
   const [cities, setCities] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [isCheckingCityValidity, setIsCheckingCityValidity] = useState(false);
@@ -236,10 +237,23 @@ function SearchPageContent() {
     };
   }, [wasQuery, selectedSection]);
 
+  // Hydrate Wo default from onboarding-selected city (client storage only).
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const storedCity = localStorage.getItem('selectedCity') ?? sessionStorage.getItem('selectedCity');
+    if (storedCity) {
+      setSelectedWoCity(storedCity);
+      setWoInputQuery(storedCity);
+    }
+  }, []);
+
   // Validate unknown city inputs with a targeted lookup instead of full-table prefetch.
   useEffect(() => {
     let isCancelled = false;
-    const normalizedQuery = woQuery.trim();
+    const normalizedQuery = woInputQuery.trim();
 
     if (!normalizedQuery) {
       setIsValidNoProviderCity(null);
@@ -270,7 +284,7 @@ function SearchPageContent() {
       isCancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [woQuery, cities, isLoadingCities]);
+  }, [woInputQuery, cities, isLoadingCities]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -305,11 +319,15 @@ function SearchPageContent() {
     router.push(`/providers?${params.toString()}`);
   };
 
-  const filteredCities = woQuery.length === 0
+  const shouldShowCityResults = !selectedWoCity && woInputQuery.length > 0;
+  const filteredCities = !shouldShowCityResults
     ? []
     : cities
-      .filter((city) => city.toLowerCase().includes(woQuery.toLowerCase()))
-      .slice(0, 10);
+        .filter((city) => city.toLowerCase().includes(woInputQuery.toLowerCase()))
+        .slice(0, 10);
+  const woAccordionTitle = selectedWoCity
+    ? `${t('suchen.accordions.wo')} · ${selectedWoCity}`
+    : t('suchen.accordions.wo');
 
   return (
     <ScrollablePageLayout background="bg-uflow-light">
@@ -401,7 +419,7 @@ function SearchPageContent() {
         </ExpandSection>
 
         {/* Wo / Wer / Filter — collapsed rows */}
-        <ExpandSection title={t('suchen.accordions.wo')}>
+        <ExpandSection title={woAccordionTitle}>
           <div className="mt-3">
             {/* City search input */}
             <div className="flex items-center gap-3 px-3 h-10 rounded-xl bg-neutral-muted focus-within:ring-2 focus-within:ring-primary/20 transition-colors">
@@ -411,17 +429,35 @@ function SearchPageContent() {
                 className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none border-0 focus:outline-none focus:ring-0"
                 placeholder={t('suchen.citySearchPlaceholder')}
                 type="search"
-                value={woQuery}
-                onChange={(e) => setWoQuery(e.target.value)}
+                value={woInputQuery}
+                onChange={(e) => {
+                  setWoInputQuery(e.target.value);
+                  if (selectedWoCity) {
+                    setSelectedWoCity(null);
+                  }
+                }}
               />
+              {selectedWoCity && (
+                <button
+                  aria-label="Clear city selection"
+                  className="text-text-muted hover:text-text-primary transition-colors"
+                  type="button"
+                  onClick={() => {
+                    setSelectedWoCity(null);
+                    setWoInputQuery('');
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* City results */}
-            {isLoadingCities ? (
+            {selectedWoCity ? null : isLoadingCities ? (
               <p className="mt-4 text-sm text-text-muted text-center py-2">
                 {t('common.loading')}...
               </p>
-            ) : woQuery.length === 0 ? (
+            ) : woInputQuery.length === 0 ? (
               <p className="mt-4 text-sm text-text-muted text-center py-2">
                 {t('suchen.searchCityPrompt')}
               </p>
@@ -432,7 +468,8 @@ function SearchPageContent() {
                     key={city}
                     className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-neutral-muted rounded-lg transition-colors"
                     onClick={() => {
-                      setWoQuery(city);
+                      setSelectedWoCity(city);
+                      setWoInputQuery(city);
                     }}
                   >
                     <MapPin className="w-4 h-4 inline-block mr-2 text-text-muted" />
@@ -445,11 +482,11 @@ function SearchPageContent() {
                 {t('common.loading')}...
               </p>
             ) : isValidNoProviderCity ? (
-              <EmptyCityCard cityName={woQuery} userEmail={userEmail} />
+              <EmptyCityCard cityName={woInputQuery} userEmail={userEmail} />
             ) : (
               <div className="mt-4 px-4 py-3 bg-neutral-50 dark:bg-neutral-900/30 rounded-lg border border-border-light">
                 <p className="text-sm text-text-muted text-center">
-                  {t('suchen.cityNotRecognized', { city: woQuery })}
+                  {t('suchen.cityNotRecognized', { city: woInputQuery })}
                 </p>
               </div>
             )}
@@ -490,7 +527,8 @@ function SearchPageContent() {
             setIsErrorWas(false);
             setSelectedWas(null);
             setWasOpen(true);
-            setWoQuery('');
+            setWoInputQuery('');
+            setSelectedWoCity(null);
             setSelectedSection('food');
           }}
         >
