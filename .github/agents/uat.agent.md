@@ -140,6 +140,25 @@ If the change can affect mobile input focus/keyboard/scroll behavior (direct `fo
 
 If manual mobile validation is deferred, UAT MUST document: owner, rationale, severity, and fallback execution path.
 
+### Accordion / Typeahead Idle-State Scenarios (WHEN APPLICABLE)
+
+**Trigger**: When the plan adds or modifies an accordion, typeahead, or controlled-open component that can have a pre-selected or pre-filled value (e.g., from onboarding data, localStorage, URL params, or a prior plan's state).
+
+UAT MUST include an **idle-state scenario** that covers:
+
+1. **Page load with pre-selected value** — Open the accordion/control WITHOUT typing. Verify:
+   - The pre-selected value is visually displayed (not empty, not showing a hardcoded default label)
+   - Idle content renders correctly (e.g., popular cities, recent searches, or the selection row)
+   - The collapsed header shows the dynamic selection (not a hardcoded placeholder)
+
+2. **No-selection idle state** — Open the accordion/control with no prior selection. Verify:
+   - Default idle content renders (e.g., popular items, empty state, or placeholder)
+   - No stale selection from another session bleeds in
+
+If manual validation is deferred (e.g., DF-N), UAT MUST document: owner, rationale, severity, and fallback execution path with a specific trigger window.
+
+**Applies to**: Was, Wo, Wer, Filter, and any future accordion or typeahead component on `/search` and similar surfaces.
+
 ### Design-Review UAT for CSS/Layout-Only Changes (CONDITIONALLY ALLOWED)
 
 If the change is **CSS/layout-only** (no TS/JS runtime behavior changes), UAT MAY rely primarily on doc/design verification **only when all of the following are true**:
