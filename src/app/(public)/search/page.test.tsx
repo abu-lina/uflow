@@ -64,6 +64,27 @@ vi.mock('@/providers/LanguageProvider', () => ({
       if (key === 'suchen.searchButton') {
         return 'Search';
       }
+      if (key === 'suchen.wer.forMe') {
+        return 'For me';
+      }
+      if (key === 'suchen.wer.subtitle') {
+        return 'Passende Angebote anzeigen';
+      }
+      if (key === 'suchen.wer.maennerLabel') {
+        return 'Männer';
+      }
+      if (key === 'suchen.wer.frauenLabel') {
+        return 'Frauen';
+      }
+      if (key === 'suchen.wer.kinderLabel') {
+        return 'Kinder';
+      }
+      if (key === 'suchen.wer.decrementAriaLabel') {
+        return `${String(params?.audience ?? '')} verringern`;
+      }
+      if (key === 'suchen.wer.incrementAriaLabel') {
+        return `${String(params?.audience ?? '')} erhöhen`;
+      }
       if (key === 'suchen.title') {
         return 'Search Page';
       }
@@ -110,10 +131,22 @@ vi.mock('@/features/search/components/SectionSelector', () => ({
 }));
 
 vi.mock('@/components/ui/ExpandSection', () => ({
-  ExpandSection: ({ title, children }: { title: string; children: React.ReactNode }) => (
+  ExpandSection: ({
+    title,
+    children,
+    isOpen,
+    onToggle,
+  }: {
+    title: string;
+    children: React.ReactNode;
+    isOpen?: boolean;
+    onToggle?: (next: boolean) => void;
+  }) => (
     <section>
-      <h3>{title}</h3>
-      <div>{children}</div>
+      <button type="button" onClick={() => onToggle?.(!isOpen)}>
+        <h3>{title}</h3>
+      </button>
+      {isOpen ? <div>{children}</div> : null}
     </section>
   ),
 }));
@@ -129,6 +162,17 @@ vi.mock('@/features/search/components/EmptyCityCard', () => ({
 }));
 
 describe('Search page Wo defaults and selection behavior', () => {
+  const openWoAccordion = () => {
+    const woHeading = screen.getByRole('heading', { name: /^Wo/ });
+    const woToggle = woHeading.closest('button');
+
+    if (!woToggle) {
+      throw new Error('Wo accordion toggle button not found');
+    }
+
+    fireEvent.click(woToggle);
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -141,8 +185,11 @@ describe('Search page Wo defaults and selection behavior', () => {
     render(<SearchPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Wo · Berlin' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
     });
+
+    openWoAccordion();
+    await screen.findByLabelText('Search city');
 
     // Selection should be visible immediately, matching Was UX (no typing needed).
     expect(screen.getByLabelText('Search city')).toHaveValue('');
@@ -151,18 +198,17 @@ describe('Search page Wo defaults and selection behavior', () => {
   });
 
   it('closes Wo city options after selecting a city and shows selection clear action', async () => {
+    localStorage.setItem('selectedCity', 'Berlin');
     render(<SearchPage />);
 
-    const cityInput = screen.getByLabelText('Search city');
-    fireEvent.change(cityInput, { target: { value: 'ber' } });
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    });
 
-    const berlinOption = await screen.findByRole('button', { name: /Berlin - 10 Anbieter/i });
-    fireEvent.click(berlinOption);
-
-    expect(screen.getByLabelText('Search city')).toHaveValue('');
+    openWoAccordion();
     expect(screen.getByText('AUSWAHL')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Auswahl entfernen' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Wo · Berlin' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
   });
 
   it('clear all resets Wo selected state and header', async () => {
@@ -171,13 +217,46 @@ describe('Search page Wo defaults and selection behavior', () => {
     render(<SearchPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Wo · Berlin' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+
+    expect(screen.getByRole('heading', { name: 'Wo' })).toBeInTheDocument();
+    expect(screen.queryByText('AUSWAHL')).not.toBeInTheDocument();
+  });
+
+  it('clear all resets Wer title and counters to default', async () => {
+    render(<SearchPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Frauen erhöhen' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Wer: Männer, Frauen' })).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
 
-    expect(screen.getByLabelText('Search city')).toHaveValue('');
-    expect(screen.getByRole('heading', { name: 'Wo' })).toBeInTheDocument();
-    expect(screen.queryByText('AUSWAHL')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wer: For me' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
+    expect(screen.getAllByText('1')).toHaveLength(1);
+    expect(screen.getAllByText('0')).toHaveLength(2);
+  });
+
+  it('keeps only one accordion open at a time', () => {
+    localStorage.removeItem('selectedCity');
+    render(<SearchPage />);
+
+    expect(screen.getByLabelText('Angebote suchen')).toBeInTheDocument();
+
+    openWoAccordion();
+    expect(screen.getByLabelText('Search city')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Angebote suchen')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
+    expect(screen.getByRole('button', { name: 'Männer erhöhen' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Search city')).not.toBeInTheDocument();
   });
 });

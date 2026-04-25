@@ -153,7 +153,7 @@ export const en = {
     accordions: {
       was: "What?",
       wo: "Where",
-      wer: "Who: For me",
+      wer: "Who",
       filter: "Filter"
     },
     clearAll: "Clear all",
@@ -195,6 +195,15 @@ export const en = {
       selectedWhere: "Where: {{city}}",
       removeSelection: "Remove selection",
       noResults: "No cities found"
+    },
+    wer: {
+      forMe: "For me",
+      maennerLabel: "Men",
+      frauenLabel: "Women",
+      kinderLabel: "Children",
+      subtitle: "Show matching offers",
+      decrementAriaLabel: "Decrease {{audience}}",
+      incrementAriaLabel: "Increase {{audience}}"
     }
   },  categories: {
     // Add common category translations
