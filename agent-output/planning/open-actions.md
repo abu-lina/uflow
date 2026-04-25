@@ -33,6 +33,23 @@ This file tracks low-priority technical debt, deferred improvements, and follow-
 
 ---
 
+### Wer Counter Reset via "Alles löschen" (Plan 103)
+
+**Source**: Plan 103, Decision D2 / Critic F1  
+**Priority**: MEDIUM  
+**Trigger**: Next touch to `search/page.tsx` state management, or a dedicated "Wer search integration" plan  
+
+**Context**: `WerAudienceFilter` (Plan 103) stores audience counter state locally via `useState`. The "Alles löschen" button in `search/page.tsx` (lines ~551–563) resets inline WAS/WO state but cannot reach `WerAudienceFilter`'s internal counters. After Plan 103 ships, pressing "Alles löschen" will leave Wer counters at non-zero values while WAS/WO fields appear empty — a cosmetic inconsistency. No search-result data integrity issue (search button requires `selectedWas`; counters are not yet wired to the query).
+
+**Steps to resolve**:
+1. Hoist `counts: { maenner: number; frauen: number; kinder: number }` state (or a `resetWer` callback) up to `search/page.tsx`
+2. Pass `counts` and `onCountChange` props down to `WerAudienceFilter` (or use a React `useImperativeHandle` / context approach)
+3. Add Wer counter reset calls to the "Alles löschen" `onClick` handler
+4. Update `WerAudienceFilter` unit tests for the controlled-component pattern
+5. Add a regression test proving "Alles löschen" resets all three counters to 0
+
+---
+
 ## Future Work (No Plan Yet)
 
 ### Cross-Surface Location Default Consistency (`/providers`, `/saved`)

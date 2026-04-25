@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.27] - 2026-04-25
+
+### Added
+
+- **Wer audience filter component — Plan 103 / Issue #164**:
+  - Added `WerAudienceFilter` client component (`src/features/search/components/WerAudienceFilter.tsx`) with three audience rows: Männer, Frauen, Kinder.
+  - Each row renders a colored 48×48 icon, bold label, subtitle, and a circular −/N/+ stepper counter.
+  - Steppers are fully independent per row; minimum of one total selected person enforced (cannot decrement below 0 or reach 0 total).
+  - Component accepts `onSelectionChange` callback and `resetSignal` prop for parent-driven clear-all integration.
+  - Wired into the existing `ExpandSection` Wer placeholder in `src/app/(public)/search/page.tsx`; "Alles löschen" now resets Wer counters to default (1 Männer) via `werResetSignal`.
+  - Added 6 translation keys under `suchen.wer.*` namespace in `de.ts` / `en.ts`: `maennerLabel`, `frauenLabel`, `kinderLabel`, `subtitle`, `decrementAriaLabel`, `incrementAriaLabel`.
+  - Added audience icon SVGs: `public/icons/audience/maenner.svg`, `frauen.svg`, `kinder.svg`.
+  - Added 3 unit tests (`WerAudienceFilter.test.tsx`) covering render, counter independence, and decrement guard.
+  - Added 2 page-level regression tests covering Wer clear-all reset path and single-open accordion invariant.
+
 ## [0.10.26] - 2026-04-24
 
 ### Added

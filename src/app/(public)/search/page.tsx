@@ -12,6 +12,7 @@ import { ExpandSection } from '@/components/ui/ExpandSection';
 import { Button } from '@/components/ui/Button';
 import { WasMealResults } from '@/features/search/components/WasMealResults';
 import { WasCategoryResults } from '@/features/search/components/WasCategoryResults';
+import { WerAudienceFilter, type WerAudienceSelectionChange } from '@/features/search/components/WerAudienceFilter';
 import { WoCityResults, type WoRecentSearch } from '@/features/search/components/WoCityResults';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
@@ -38,6 +39,8 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const { t } = useLanguage();
 
+  type AccordionKey = 'was' | 'wo' | 'wer' | 'filter';
+
   const urlSection = (searchParams.get('section') as Section) ?? 'food';
   const [selectedSection, setSelectedSection] = useState<Section>(urlSection);
   const [wasQuery, setWasQuery] = useState('');
@@ -51,7 +54,7 @@ function SearchPageContent() {
   const [isLoadingMenuItems, setIsLoadingMenuItems] = useState(false);
   const [isErrorMenuItems, setIsErrorMenuItems] = useState(false);
   const [selectedWas, setSelectedWas] = useState<WasSelection | null>(null);
-  const [wasOpen, setWasOpen] = useState(true);
+  const [openAccordion, setOpenAccordion] = useState<AccordionKey | null>('was');
   const [recentSearches, setRecentSearches] = useState<WasSelection[]>(() => {
     try {
       const stored = localStorage.getItem('uflow:recent-was-searches');
@@ -62,7 +65,6 @@ function SearchPageContent() {
   });
   const [woInputQuery, setWoInputQuery] = useState('');
   const [selectedWoCity, setSelectedWoCity] = useState<string | null>(null);
-  const [woOpen, setWoOpen] = useState(false);
   const [cityCounts, setCityCounts] = useState<PopularCity[]>([]);
   const [isLoadingPopularCities, setIsLoadingPopularCities] = useState(false);
   const [isErrorPopularCities, setIsErrorPopularCities] = useState(false);
@@ -83,6 +85,8 @@ function SearchPageContent() {
   const [isCheckingCityValidity, setIsCheckingCityValidity] = useState(false);
   const [isValidNoProviderCity, setIsValidNoProviderCity] = useState<boolean | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [werSelection, setWerSelection] = useState<WerAudienceSelectionChange | null>(null);
+  const [werResetSignal, setWerResetSignal] = useState(0);
 
   // Fetch user session for authenticated notify-me flow
   useEffect(() => {
@@ -333,7 +337,7 @@ function SearchPageContent() {
   const handleWasSelect = (selection: WasSelection) => {
     setSelectedWas(selection);
     setWasQuery('');
-    setWasOpen(false);
+    setOpenAccordion(null);
     // Persist to recent searches (max 3, deduplicated by label)
     setRecentSearches((prev) => {
       const deduped = [selection, ...prev.filter((r) => r.label !== selection.label)].slice(0, 3);
@@ -358,7 +362,7 @@ function SearchPageContent() {
   const handleWoSelect = (city: string) => {
     setSelectedWoCity(city);
     setWoInputQuery('');
-    setWoOpen(false);
+    setOpenAccordion(null);
 
     setRecentWoSearches((prev) => {
       const next = [{ city }, ...prev.filter((entry) => entry.city !== city)].slice(0, 3);
@@ -390,8 +394,11 @@ function SearchPageContent() {
         }));
   const popularCities = cityCounts.slice(0, 5);
   const woAccordionTitle = selectedWoCity
-    ? `${t('suchen.accordions.wo')} · ${selectedWoCity}`
+    ? `${t('suchen.accordions.wo')}: ${selectedWoCity}`
     : t('suchen.accordions.wo');
+  const werAccordionTitle = werSelection?.hasUserInteracted && werSelection.hasSelection
+    ? `${t('suchen.accordions.wer')}: ${werSelection.summary}`
+    : `${t('suchen.accordions.wer')}: ${t('suchen.wer.forMe')}`;
 
   return (
     <ScrollablePageLayout background="bg-uflow-light">
@@ -415,13 +422,13 @@ function SearchPageContent() {
         <div className="flex flex-col gap-2">
         {/* Was? — controlled accordion; title shows selection when closed */}
         <ExpandSection
-          isOpen={wasOpen}
+          isOpen={openAccordion === 'was'}
           title={
             selectedWas
               ? t('suchen.was.selectedWhat', { item: selectedWas.label })
               : t('suchen.accordions.was')
           }
-          onToggle={setWasOpen}
+          onToggle={(next) => setOpenAccordion(next ? 'was' : null)}
         >
           <div className="mt-3">
             {/* Search input */}
@@ -483,7 +490,11 @@ function SearchPageContent() {
         </ExpandSection>
 
         {/* Wo / Wer / Filter — collapsed rows */}
-        <ExpandSection isOpen={woOpen} title={woAccordionTitle} onToggle={setWoOpen}>
+        <ExpandSection
+          isOpen={openAccordion === 'wo'}
+          title={woAccordionTitle}
+          onToggle={(next) => setOpenAccordion(next ? 'wo' : null)}
+        >
           <div className="mt-3">
             {/* City search input */}
             <div className="flex items-center gap-3 px-3 h-10 rounded-xl bg-neutral-muted focus-within:ring-2 focus-within:ring-primary/20 transition-colors">
@@ -521,13 +532,23 @@ function SearchPageContent() {
           </div>
         </ExpandSection>
 
-        <ExpandSection title={t('suchen.accordions.wer')}>
-          <p className="mt-3 text-sm text-text-muted">
-            {/* Provider filter — to be implemented */}
-          </p>
+        <ExpandSection
+          isOpen={openAccordion === 'wer'}
+          title={werAccordionTitle}
+          onToggle={(next) => setOpenAccordion(next ? 'wer' : null)}
+        >
+          <WerAudienceFilter
+            resetSignal={werResetSignal}
+            t={t}
+            onSelectionChange={setWerSelection}
+          />
         </ExpandSection>
 
-        <ExpandSection title={t('suchen.accordions.filter')}>
+        <ExpandSection
+          isOpen={openAccordion === 'filter'}
+          title={t('suchen.accordions.filter')}
+          onToggle={(next) => setOpenAccordion(next ? 'filter' : null)}
+        >
           <p className="mt-3 text-sm text-text-muted">
             {/* Additional filters — to be implemented */}
           </p>
@@ -554,10 +575,11 @@ function SearchPageContent() {
             setIsLoadingWas(false);
             setIsErrorWas(false);
             setSelectedWas(null);
-            setWasOpen(true);
+            setOpenAccordion('was');
             setWoInputQuery('');
             setSelectedWoCity(null);
-            setWoOpen(false);
+            setWerSelection(null);
+            setWerResetSignal((prev) => prev + 1);
             setSelectedSection('food');
           }}
         >

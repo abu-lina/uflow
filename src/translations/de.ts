@@ -154,7 +154,7 @@ export const de = {
     accordions: {
       was: "Was?",
       wo: "Wo",
-      wer: "Wer: Für mich",
+      wer: "Wer",
       filter: "Filter"
     },
     clearAll: "Alles löschen",
@@ -196,6 +196,15 @@ export const de = {
       selectedWhere: "Wo: {{city}}",
       removeSelection: "Auswahl entfernen",
       noResults: "Keine Städte gefunden"
+    },
+    wer: {
+      forMe: "Für mich",
+      maennerLabel: "Männer",
+      frauenLabel: "Frauen",
+      kinderLabel: "Kinder",
+      subtitle: "Passende Angebote anzeigen",
+      decrementAriaLabel: "{{audience}} verringern",
+      incrementAriaLabel: "{{audience}} erhöhen"
     }
   },
   categories: {

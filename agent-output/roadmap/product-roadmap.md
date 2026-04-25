@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-25
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.26
+**Current Version**: v0.10.27
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -83,6 +83,7 @@
 | 2026-04-24       | Plans 098+099+100 released (v0.10.25): Was? category redesign + PWA gitignore + background-selection token | Was category row Figma redesign (WasCategoryResults), PWA fallback-development.js gitignore fix, bg-background-selection CSS variable. Tag v0.10.25 pushed. |
 | 2026-04-24       | Plans 101+102 released (v0.10.26): Wo location default + city results redesign | Plan 101: pre-fill Wo field with onboarding city, Was/Wo state parity, dynamic header. Plan 102: WoCityResults component with popular cities idle state, recent searches, controlled accordion, 6-locale i18n. Tag v0.10.26 pushed. Closes #159 #162 |
 | 2026-04-25       | Process improvements implemented (PI 101)                                       | PI-1: Accordion/Typeahead Idle-State Scenarios (UAT); PI-2: Accordion Mock Fidelity (QA); PI-3: Multi-Plan State Extension Audit (Implementer); PI-5: Post-UAT Re-Test Section Pattern (QA). PI-4 already codified in planner.agent.md 5e. Root cause: post-UAT idle-state bugs from Plan 102 state-coupling pattern. |
+| 2026-04-25       | Plan 103 released (v0.10.27): WerAudienceFilter — Wer? audience selector on search page | WerAudienceFilter component with 3 rows (Männer, Frauen, Kinder), each with colored icon, label, subtitle, and independent ±stepper counter. Min-one-person guard enforced. Clear-all resets Wer counters via werResetSignal. Single-open accordion invariant maintained. 6 translation keys, 3 SVG icons, 3 unit + 2 page regression tests. Tag v0.10.27 pushed. Closes #164 |
 
 ---
 
