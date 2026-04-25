@@ -1,6 +1,6 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-24
+**Last Updated**: 2026-04-25
 **Roadmap Owner**: roadmap agent
 **Current Version**: v0.10.26
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
@@ -82,6 +82,7 @@
 | 2026-04-21       | Plans 096+097 released (v0.10.24): Food concept vocabulary search for Was? section | Plan 096: wired Was? accordion to live meal search with WasMealResults component and provider lookup augmentation. Plan 097: replaced broken provider_menu_items search with search_food_concepts RPC (dual-language tsvector, GIN array containment) returning deduplicated food concepts with provider counts. Migration 070 deployed to production. Tags v0.10.24 pushed. Closes #153 #154 |
 | 2026-04-24       | Plans 098+099+100 released (v0.10.25): Was? category redesign + PWA gitignore + background-selection token | Was category row Figma redesign (WasCategoryResults), PWA fallback-development.js gitignore fix, bg-background-selection CSS variable. Tag v0.10.25 pushed. |
 | 2026-04-24       | Plans 101+102 released (v0.10.26): Wo location default + city results redesign | Plan 101: pre-fill Wo field with onboarding city, Was/Wo state parity, dynamic header. Plan 102: WoCityResults component with popular cities idle state, recent searches, controlled accordion, 6-locale i18n. Tag v0.10.26 pushed. Closes #159 #162 |
+| 2026-04-25       | Process improvements implemented (PI 101)                                       | PI-1: Accordion/Typeahead Idle-State Scenarios (UAT); PI-2: Accordion Mock Fidelity (QA); PI-3: Multi-Plan State Extension Audit (Implementer); PI-5: Post-UAT Re-Test Section Pattern (QA). PI-4 already codified in planner.agent.md 5e. Root cause: post-UAT idle-state bugs from Plan 102 state-coupling pattern. |
 
 ---
 
@@ -102,9 +103,11 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.26 — Released 2026-04-24
+**Current Working Release**: v0.10.26 — Released 2026-04-24 · Session S101 complete 2026-04-25
 
 _Session S101 released (2026-04-24): Plans 101+102 — Wo location default + city results redesign. Plan 101: pre-fill Wo field with onboarding city, Was/Wo state parity, dynamic 'Wo · {city}' header, clear button. Plan 102: WoCityResults component (5-state: loading/error/idle/results/empty), popular cities via fetchPopularCities(), recent Wo searches (localStorage, max 3), controlled accordion, 6-locale suchen.wo.* i18n namespace. 10 new regression tests, 1078 tests passing. Issues #159 #162 closed. Tag v0.10.26 pushed._
+
+_Process improvements (2026-04-25): PI-1 idle-state UAT scenario gate (uat.agent.md), PI-2 accordion mock fidelity audit (qa.agent.md), PI-3 multi-plan state extension audit (implementer.agent.md), PI-5 post-UAT re-test section pattern (qa.agent.md). All 4 applied to agent files; retrospective closed._
 
 **Release Status**: Released
 **Ready for Release**: ✅ v0.10.26 complete
