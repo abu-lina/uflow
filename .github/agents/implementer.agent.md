@@ -403,6 +403,26 @@ Before handing off to Code Reviewer, verify and document:
 
 If the trigger does not apply, write: `Search/Filter Client-Interaction Trace: N/A — [reason]`.
 
+### Multi-Plan State Extension Audit (MANDATORY when applicable)
+
+**Trigger**: When the current plan extends, depends on, or builds on top of state introduced or modified by a **prior plan** — including state set in `useEffect` hooks, `useState` initializers, localStorage hydration effects, or derived/computed state expressions.
+
+Before starting implementation, read all `useEffect`, `useState`, and localStorage hydration code that was introduced or modified by prior plans in the same component or hook. For each state mutation from prior plans, explicitly verify:
+
+1. **Semantic compatibility**: Does the current plan's new state semantics (e.g., new derived expressions, new idle/results/empty states) still work correctly when the prior plan's mutation runs? Example: if a prior plan sets `someQuery = city` during hydration and the current plan's idle state requires `someQuery = ''`, the mutation must be updated.
+
+2. **Derived state review**: If the current plan introduces a new computed/derived expression (e.g., `displayQuery = selected ? '' : inputQuery`), verify every upstream mutation that affects the inputs to that expression.
+
+3. **Idle-state compatibility**: If the current plan adds an idle state (i.e., a value is selected but no user input has occurred), verify that prior plan initialization does not bypass the idle state by setting both "selected" and "input" state simultaneously.
+
+**Evidence**: Record in the implementation doc:
+```
+Multi-Plan State Audit: Plan [prior IDs] mutations reviewed.
+- [mutation line/file]: compatible ✅ / updated [description] ✅ / incompatible ⚠️ [description]
+```
+
+If the trigger does not apply, write: `Multi-Plan State Audit: N/A — no prior-plan state mutations in scope`.
+
 ### API Route Coverage Gate (MANDATORY when applicable)
 
 If the plan adds or modifies a Next.js route handler (`src/app/api/**/route.ts`), the TDD Compliance table or verification section MUST include at least one route-level test row covering the route contract (status, body shape, timeout/error contract, or equivalent).

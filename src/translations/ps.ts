@@ -152,7 +152,7 @@ export const ps = {
     title: "لټون",
     accordions: {
       was: "څه؟",
-      wo: "چیرته: زما سره نژدې",
+      wo: "چیرته",
       wer: "څوک: زما لپاره",
       filter: "فلټر"
     },
@@ -184,6 +184,17 @@ export const ps = {
       selectedWhat: "څه: {{item}}",
       dishLabel: "خواړه",
       removeSelection: "ټاکنه لرې کول"
+    },
+    wo: {
+      loading: "لټون روان دی...",
+      searchError: "لټون اوس مهال شتون نه لري. مهرباني وکړئ بیا هڅه وکړئ.",
+      providerCount: "{{count}} چمتوکوونکي",
+      popularLabel: "مشهور",
+      recentLabel: "وروستي لټون",
+      selectionLabel: "غوره شوی",
+      selectedWhere: "چیرته: {{city}}",
+      removeSelection: "ټاکنه لرې کول",
+      noResults: "هیڅ ښار ونه موندل شو"
     }
   },  categories: {
     food: "خواړه",

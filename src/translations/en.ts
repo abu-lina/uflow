@@ -152,7 +152,7 @@ export const en = {
     title: "Search",
     accordions: {
       was: "What?",
-      wo: "Where: Near me",
+      wo: "Where",
       wer: "Who: For me",
       filter: "Filter"
     },
@@ -184,6 +184,17 @@ export const en = {
       selectedWhat: "What: {{item}}",
       dishLabel: "Dish",
       removeSelection: "Remove selection"
+    },
+    wo: {
+      loading: "Searching...",
+      searchError: "Search is currently unavailable. Please try again.",
+      providerCount: "{{count}} providers",
+      popularLabel: "POPULAR",
+      recentLabel: "RECENT SEARCHES",
+      selectionLabel: "SELECTED",
+      selectedWhere: "Where: {{city}}",
+      removeSelection: "Remove selection",
+      noResults: "No cities found"
     }
   },  categories: {
     // Add common category translations

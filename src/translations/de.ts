@@ -153,7 +153,7 @@ export const de = {
     title: "Suchen",
     accordions: {
       was: "Was?",
-      wo: "Wo: In meiner Nähe",
+      wo: "Wo",
       wer: "Wer: Für mich",
       filter: "Filter"
     },
@@ -185,6 +185,17 @@ export const de = {
       selectedWhat: "Was: {{item}}",
       dishLabel: "Gericht",
       removeSelection: "Auswahl entfernen"
+    },
+    wo: {
+      loading: "Suche läuft...",
+      searchError: "Suche nicht verfügbar. Bitte versuche es erneut.",
+      providerCount: "{{count}} Anbieter",
+      popularLabel: "BELIEBT",
+      recentLabel: "ZULETZT GESUCHT",
+      selectionLabel: "AUSWAHL",
+      selectedWhere: "Wo: {{city}}",
+      removeSelection: "Auswahl entfernen",
+      noResults: "Keine Städte gefunden"
     }
   },
   categories: {

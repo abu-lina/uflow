@@ -718,6 +718,67 @@ export async function fetchProviderCities(): Promise<string[]> {
   }
 }
 
+export interface PopularCity {
+  city: string;
+  provider_count: number;
+}
+
+/**
+ * Fetch most popular cities by listing count across providers and approved community services.
+ */
+export async function fetchPopularCities(limit = 5): Promise<PopularCity[]> {
+  if (limit <= 0) {
+    return [];
+  }
+
+  try {
+    const [providersResult, communityServicesResult] = await Promise.all([
+      supabase
+        .from('providers')
+        .select('address_city')
+        .returns<{ address_city: string | null }[]>(),
+      supabase
+        .from('community_services')
+        .select('address_city')
+        .eq('review_status', 'approved')
+        .returns<{ address_city: string | null }[]>(),
+    ]);
+
+    if (providersResult.error) {
+      throw providersResult.error;
+    }
+
+    if (communityServicesResult.error) {
+      throw communityServicesResult.error;
+    }
+
+    const providerCities = providersResult.data?.map((row) => row.address_city) ?? [];
+    const communityCities = communityServicesResult.data?.map((row) => row.address_city) ?? [];
+    const allCities = [...providerCities, ...communityCities].filter((city): city is string => {
+      return typeof city === 'string' && city.trim() !== '' && city !== 'null';
+    });
+
+    const countByCity = new Map<string, number>();
+    for (const city of allCities) {
+      countByCity.set(city, (countByCity.get(city) ?? 0) + 1);
+    }
+
+    return Array.from(countByCity.entries())
+      .map(([city, provider_count]) => ({ city, provider_count }))
+      .sort((a, b) => {
+        if (b.provider_count !== a.provider_count) {
+          return b.provider_count - a.provider_count;
+        }
+
+        return a.city.localeCompare(b.city, 'de');
+      })
+      .slice(0, limit);
+  } catch (error) {
+    console.error('Error fetching popular cities:', error);
+    return [];
+  }
+}
+
 // Fetch cities that have content based on current search filters.
 // Uses tsvector RPC search when a search query is provided (Plan 007:
 // replaces previous ILIKE usage to comply with Postgres-first search rules).

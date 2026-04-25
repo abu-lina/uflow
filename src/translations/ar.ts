@@ -151,7 +151,7 @@ export const ar = {
     title: "بحث",
     accordions: {
       was: "ماذا؟",
-      wo: "أين: بالقرب مني",
+      wo: "أين",
       wer: "من: لي",
       filter: "تصفية"
     },
@@ -183,6 +183,17 @@ export const ar = {
       selectedWhat: "ماذا: {{item}}",
       dishLabel: "طبق",
       removeSelection: "إزالة التحديد"
+    },
+    wo: {
+      loading: "جارٍ البحث...",
+      searchError: "البحث غير متاح حاليًا. يرجى المحاولة مرة أخرى.",
+      providerCount: "{{count}} مزودون",
+      popularLabel: "شائع",
+      recentLabel: "البحث الأخير",
+      selectionLabel: "المحدد",
+      selectedWhere: "أين: {{city}}",
+      removeSelection: "إزالة التحديد",
+      noResults: "لم يتم العثور على مدن"
     }
   },
   categories: {

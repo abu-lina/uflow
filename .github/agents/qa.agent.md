@@ -82,6 +82,69 @@ If the change uses `focus()` (or can indirectly trigger input focus/keyboard beh
 
 If manual mobile validation is deferred, QA MUST document: owner, rationale, severity, and fallback execution path.
 
+### Accordion / Controlled-Open Mock Fidelity (WHEN APPLICABLE)
+
+**Trigger**: When the plan adds or modifies a component rendered inside a controlled-open container (accordion, modal, collapsible, or any component with an `isOpen` / `open` / `expanded` prop that gates child visibility).
+
+QA MUST audit whether the test mock for the container respects the `isOpen` prop:
+
+**Failing pattern** (unconditional — masks idle-state bugs):
+```tsx
+vi.mock('@/components/ui/ExpandSection', () => ({
+  ExpandSection: ({ title, children }) => <section><h3>{title}</h3><div>{children}</div></section>,
+}));
+```
+
+**Correct pattern** (conditional — gates children on isOpen):
+```tsx
+vi.mock('@/components/ui/ExpandSection', () => ({
+  ExpandSection: ({ title, isOpen, children }) => (
+    <section>
+      <h3>{title}</h3>
+      {isOpen !== false && <div>{children}</div>}
+    </section>
+  ),
+}));
+```
+
+**If the test uses the unconditional pattern**:
+- Flag as QA finding (INFO/LOW) and document
+- Add at least one test asserting that children are hidden when `isOpen=false`
+- Tests using the unconditional mock cannot validate idle-state correctness — record this as a coverage limitation explicitly
+
+**Evidence to record**: State in the QA report which mock pattern is in use and whether idle-state (`isOpen=false`) coverage exists.
+
+### Post-UAT Re-Test Section Pattern (WHEN APPLICABLE)
+
+**Trigger**: When a post-UAT fix (code correction made after UAT approval, due to user-reported UX issues or delta-CR findings) requires QA re-validation of the **same plan** that already has a QA doc.
+
+**PREFERRED approach**: Append a `## Re-test: [short description]` section to the **existing QA doc** for that plan rather than creating a new QA document.
+
+```markdown
+## Re-test: [Short description of post-UAT fix]
+
+**Date**: YYYY-MM-DDTHH:MMZ
+**Trigger**: Post-UAT [issue list]
+**Changed files**: [list]
+**Changes**: [brief description]
+
+### Re-test Gates
+
+| Gate | Result | Evidence |
+|---|---|---|
+| npm run type-check | ✅ PASS | [output summary] |
+| npm test | ✅ PASS | [N tests, 0 failures] |
+| Delta lint | ✅ PASS | [evidence] |
+
+### Re-test Verdict
+
+[PASS / FAIL with rationale]
+```
+
+**Exception**: If the post-UAT fix is substantial enough to require a full strategy re-run (new feature scope, not just a UX correction), creating a new QA doc is appropriate. Record the reason for the new doc in the original QA doc's changelog.
+
+**Benefits**: Single source of truth per plan; simpler audit trail; delta-CR can reference re-test evidence in the same document.
+
 ### CSS/Layout-Only Changes (WHEN APPLICABLE)
 
 If the change is **CSS/layout-only** (no TS/JS runtime behavior changes), QA SHOULD treat automated gates as the primary evidence and avoid forcing unit tests that cannot validate the behavior in jsdom.

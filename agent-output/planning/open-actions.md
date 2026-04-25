@@ -35,4 +35,15 @@ This file tracks low-priority technical debt, deferred improvements, and follow-
 
 ## Future Work (No Plan Yet)
 
-_(empty)_
+### Cross-Surface Location Default Consistency (`/providers`, `/saved`)
+
+**Source**: Plan 101 critique, finding F-LOW-3  
+**Priority**: LOW  
+**Trigger**: Next touch to `SearchBar.tsx` or dedicated UX-consistency maintenance plan  
+
+**Context**: Plan 101 adds onboarding-city defaulting to the dedicated `/search` page Wo field. The shared `SearchBar.tsx` used by `/providers` and `/saved` still defaults to all locations (`LOCATION_ALL`), creating cross-surface inconsistency.
+
+**Follow-up scope**:
+1. Define a single source of truth for default-location hydration (likely `selectedCity` storage read with fallback precedence)
+2. Apply parity behavior to `SearchBar.tsx` consumers (`/providers`, `/saved`)
+3. Add regression tests to prove consistent default-location UX across all search surfaces
