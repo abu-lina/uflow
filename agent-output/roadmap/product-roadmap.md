@@ -104,14 +104,13 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.26 — Released 2026-04-24 · Session S101 complete 2026-04-25
+**Current Working Release**: v0.10.27 — Released 2026-04-25 · Session S103 complete 2026-04-26
 
-_Session S101 released (2026-04-24): Plans 101+102 — Wo location default + city results redesign. Plan 101: pre-fill Wo field with onboarding city, Was/Wo state parity, dynamic 'Wo · {city}' header, clear button. Plan 102: WoCityResults component (5-state: loading/error/idle/results/empty), popular cities via fetchPopularCities(), recent Wo searches (localStorage, max 3), controlled accordion, 6-locale suchen.wo.* i18n namespace. 10 new regression tests, 1078 tests passing. Issues #159 #162 closed. Tag v0.10.26 pushed._
-
-_Process improvements (2026-04-25): PI-1 idle-state UAT scenario gate (uat.agent.md), PI-2 accordion mock fidelity audit (qa.agent.md), PI-3 multi-plan state extension audit (implementer.agent.md), PI-5 post-UAT re-test section pattern (qa.agent.md). All 4 applied to agent files; retrospective closed._
+_Session S103 released (2026-04-25): Plan 103 — WerAudienceFilter audience selector. WerAudienceFilter client component with 3 rows (Männer, Frauen, Kinder), each with colored icon, label, subtitle, and independent ±stepper counter. Min-one-person guard, clear-all reset via werResetSignal, single-open accordion invariant. 6 translation keys, 3 SVG icons, 3 unit + 2 page regression tests. 1081 tests passing. Issue #164 closed. Tag v0.10.27 pushed. PR #165 open → main._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.26 complete
+**Ready for Release**: ✅ v0.10.27 complete
+**PR**: https://github.com/abu-lina/uflow/pull/165 (open, pending merge to main)
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -128,6 +127,7 @@ _Process improvements (2026-04-25): PI-1 idle-state UAT scenario gate (uat.agent
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.27 | 2026-04-25 | Plan 103 (WerAudienceFilter audience selector — Issue #164) | Released |
 | v0.10.26 | 2026-04-24 | Plans 101+102 (Wo location default + city results redesign — Issues #159 #162) | Released |
 | v0.10.25 | 2026-04-24 | Plans 098+099+100 (Was? category redesign + PWA gitignore + background-selection token) | Released |
 | v0.10.24 | 2026-04-21 | Plans 096+097 (Was? food concept vocabulary search — Issues #153 #154) | Released |
