@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-25
+**Last Updated**: 2026-04-26
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.27
+**Current Version**: v0.10.28
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -84,6 +84,7 @@
 | 2026-04-24       | Plans 101+102 released (v0.10.26): Wo location default + city results redesign | Plan 101: pre-fill Wo field with onboarding city, Was/Wo state parity, dynamic header. Plan 102: WoCityResults component with popular cities idle state, recent searches, controlled accordion, 6-locale i18n. Tag v0.10.26 pushed. Closes #159 #162 |
 | 2026-04-25       | Process improvements implemented (PI 101)                                       | PI-1: Accordion/Typeahead Idle-State Scenarios (UAT); PI-2: Accordion Mock Fidelity (QA); PI-3: Multi-Plan State Extension Audit (Implementer); PI-5: Post-UAT Re-Test Section Pattern (QA). PI-4 already codified in planner.agent.md 5e. Root cause: post-UAT idle-state bugs from Plan 102 state-coupling pattern. |
 | 2026-04-25       | Plan 103 released (v0.10.27): WerAudienceFilter — Wer? audience selector on search page | WerAudienceFilter component with 3 rows (Männer, Frauen, Kinder), each with colored icon, label, subtitle, and independent ±stepper counter. Min-one-person guard enforced. Clear-all resets Wer counters via werResetSignal. Single-open accordion invariant maintained. 6 translation keys, 3 SVG icons, 3 unit + 2 page regression tests. Tag v0.10.27 pushed. Closes #164 |
+| 2026-04-26       | Plan 104 released (v0.10.28): Filter accordion UI — 5 Islamic-context filter options | FilterSection accordion with 5 filter categories (audience/Wer stepper, prayer space, parking, delivery, dietary). Gebet icon updated to PrayerRug stroke-rounded design. 1086 tests passing. Tag v0.10.28 pushed. PR #167 merged. |
 
 ---
 
@@ -104,14 +105,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.26 — Released 2026-04-24 · Session S101 complete 2026-04-25
+**Current Working Release**: v0.10.28 — Released 2026-04-26 · Session S104 complete
 
-_Session S101 released (2026-04-24): Plans 101+102 — Wo location default + city results redesign. Plan 101: pre-fill Wo field with onboarding city, Was/Wo state parity, dynamic 'Wo · {city}' header, clear button. Plan 102: WoCityResults component (5-state: loading/error/idle/results/empty), popular cities via fetchPopularCities(), recent Wo searches (localStorage, max 3), controlled accordion, 6-locale suchen.wo.* i18n namespace. 10 new regression tests, 1078 tests passing. Issues #159 #162 closed. Tag v0.10.26 pushed._
-
-_Process improvements (2026-04-25): PI-1 idle-state UAT scenario gate (uat.agent.md), PI-2 accordion mock fidelity audit (qa.agent.md), PI-3 multi-plan state extension audit (implementer.agent.md), PI-5 post-UAT re-test section pattern (qa.agent.md). All 4 applied to agent files; retrospective closed._
+_Session S104 released (2026-04-26): Plan 104 — Filter accordion UI with 5 Islamic-context filter options (audience/Wer stepper, prayer space, parking, delivery, dietary). Gebet icon updated to prayer-rug-02 stroke-rounded design (PrayerRug component). FilterSection accordion, WerAudienceFilter integration, FilterSection.test.tsx + WerAudienceFilter.test.tsx. 1086 tests passing. Tag v0.10.28 pushed. PR #167 merged._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.26 complete
+**Ready for Release**: ✅ v0.10.28 complete
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -128,6 +127,8 @@ _Process improvements (2026-04-25): PI-1 idle-state UAT scenario gate (uat.agent
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.28 | 2026-04-26 | Plan 104 (Filter accordion UI — 5 Islamic-context options — PR #167) | Released |
+| v0.10.27 | 2026-04-25 | Plan 103 (WerAudienceFilter — Wer? audience selector — Issue #164) | Released |
 | v0.10.26 | 2026-04-24 | Plans 101+102 (Wo location default + city results redesign — Issues #159 #162) | Released |
 | v0.10.25 | 2026-04-24 | Plans 098+099+100 (Was? category redesign + PWA gitignore + background-selection token) | Released |
 | v0.10.24 | 2026-04-21 | Plans 096+097 (Was? food concept vocabulary search — Issues #153 #154) | Released |
