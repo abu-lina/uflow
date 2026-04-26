@@ -2,7 +2,7 @@
 ID: 105
 Origin: 105
 UUID: e6056b72
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 105 — Wire Values & Amenities Filters to Provider Search

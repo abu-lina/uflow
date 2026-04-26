@@ -2,7 +2,7 @@
 ID: 105
 Origin: 105
 UUID: e6056b72
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 105 — Values & Amenities Filter Wiring

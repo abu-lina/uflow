@@ -2,7 +2,7 @@
 ID: 105
 Origin: 105
 UUID: e6056b72
-Status: Committed
+Status: Released
 ---
 
 # Plan 105 — Wire Values & Amenities Filters to Provider Search
@@ -26,6 +26,7 @@ Status: Committed
 | 2026-04-26T19:45Z | implementer | Execution started; entering TDD Red phase |
 | 2026-04-26T22:30Z | uat | UAT approved; APPROVED FOR RELEASE |
 | 2026-04-26T22:45Z | devops | Committed for Release v0.10.29 |
+| 2026-04-26T22:55Z | devops | Released v0.10.29 — tag pushed, PR #169 created, Issue #168 closed |
 
 ---
 
