@@ -205,6 +205,30 @@ export const de = {
       subtitle: "Passende Angebote anzeigen",
       decrementAriaLabel: "{{audience}} verringern",
       incrementAriaLabel: "{{audience}} erhöhen"
+    },
+    filter: {
+      items: {
+        muslim: {
+          title: "Inhaber ist Muslim",
+          subtitle: "Muslimischer Inhaber"
+        },
+        spenden: {
+          title: "Spendet für Gute Zwecke",
+          subtitle: "Spendet für Gute Zwecke"
+        },
+        solidaritaet: {
+          title: "Unterstützt Muslime",
+          subtitle: "Solidarität mit der Ummah"
+        },
+        parken: {
+          title: "Bietet Parkmöglichkeiten",
+          subtitle: "Parkplätze vorhanden"
+        },
+        gebet: {
+          title: "Bietet Gebetsmöglichkeiten",
+          subtitle: "Gebetsraum vorhanden"
+        }
+      }
     }
   },
   categories: {

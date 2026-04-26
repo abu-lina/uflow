@@ -14,6 +14,7 @@ import { WasMealResults } from '@/features/search/components/WasMealResults';
 import { WasCategoryResults } from '@/features/search/components/WasCategoryResults';
 import { WerAudienceFilter, type WerAudienceSelectionChange } from '@/features/search/components/WerAudienceFilter';
 import { WoCityResults, type WoRecentSearch } from '@/features/search/components/WoCityResults';
+import { FilterSection } from '@/features/search/components/FilterSection';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
@@ -65,6 +66,8 @@ function SearchPageContent() {
   });
   const [woInputQuery, setWoInputQuery] = useState('');
   const [selectedWoCity, setSelectedWoCity] = useState<string | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(true);
   const [cityCounts, setCityCounts] = useState<PopularCity[]>([]);
   const [isLoadingPopularCities, setIsLoadingPopularCities] = useState(false);
   const [isErrorPopularCities, setIsErrorPopularCities] = useState(false);
@@ -380,6 +383,12 @@ function SearchPageContent() {
     setWoInputQuery('');
   };
 
+  const handleToggleFilter = (key: string) => {
+    setSelectedFilters((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    );
+  };
+
   const woSearchQuery = selectedWoCity ? '' : woInputQuery;
   const shouldShowCityResults = !selectedWoCity && woSearchQuery.length > 0;
   const countByCity = new Map(cityCounts.map((entry) => [entry.city, entry.provider_count]));
@@ -399,6 +408,9 @@ function SearchPageContent() {
   const werAccordionTitle = werSelection?.hasUserInteracted && werSelection.hasSelection
     ? `${t('suchen.accordions.wer')}: ${werSelection.summary}`
     : `${t('suchen.accordions.wer')}: ${t('suchen.wer.forMe')}`;
+  const filterAccordionTitle = selectedFilters.length > 0
+    ? `${t('suchen.accordions.filter')} · ${selectedFilters.length}`
+    : t('suchen.accordions.filter');
 
   return (
     <ScrollablePageLayout background="bg-uflow-light">
@@ -544,14 +556,12 @@ function SearchPageContent() {
           />
         </ExpandSection>
 
-        <ExpandSection
-          isOpen={openAccordion === 'filter'}
-          title={t('suchen.accordions.filter')}
-          onToggle={(next) => setOpenAccordion(next ? 'filter' : null)}
-        >
-          <p className="mt-3 text-sm text-text-muted">
-            {/* Additional filters — to be implemented */}
-          </p>
+        <ExpandSection isOpen={filterOpen} title={filterAccordionTitle} onToggle={setFilterOpen}>
+          <FilterSection
+            selectedFilters={selectedFilters}
+            t={t}
+            onToggleFilter={handleToggleFilter}
+          />
         </ExpandSection>
         </div>
       </PageContent>
@@ -580,6 +590,8 @@ function SearchPageContent() {
             setSelectedWoCity(null);
             setWerSelection(null);
             setWerResetSignal((prev) => prev + 1);
+            setSelectedFilters([]);
+            setFilterOpen(false);
             setSelectedSection('food');
           }}
         >

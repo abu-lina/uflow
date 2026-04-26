@@ -113,6 +113,11 @@ vi.mock('lucide-react', () => ({
   MapPin: () => <span>pin</span>,
   UtensilsCrossed: () => <span>utensils</span>,
   X: () => <span>x</span>,
+  Moon: () => <span>moon</span>,
+  HandHeart: () => <span>hand-heart</span>,
+  HeartHandshake: () => <span>heart-handshake</span>,
+  CircleParking: () => <span>circle-parking</span>,
+  Check: () => <span>check</span>,
 }));
 
 vi.mock('@/lib/supabase/client', () => ({

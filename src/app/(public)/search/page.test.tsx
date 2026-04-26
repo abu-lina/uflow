@@ -85,6 +85,36 @@ vi.mock('@/providers/LanguageProvider', () => ({
       if (key === 'suchen.wer.incrementAriaLabel') {
         return `${String(params?.audience ?? '')} erhöhen`;
       }
+      if (key === 'suchen.filter.items.muslim.title') {
+        return 'Inhaber ist Muslim';
+      }
+      if (key === 'suchen.filter.items.muslim.subtitle') {
+        return 'Muslimischer Inhaber';
+      }
+      if (key === 'suchen.filter.items.spenden.title') {
+        return 'Spendet fuer Gute Zwecke';
+      }
+      if (key === 'suchen.filter.items.spenden.subtitle') {
+        return 'Spendet fuer Gute Zwecke';
+      }
+      if (key === 'suchen.filter.items.solidaritaet.title') {
+        return 'Unterstuetzt Muslime';
+      }
+      if (key === 'suchen.filter.items.solidaritaet.subtitle') {
+        return 'Solidaritaet mit der Ummah';
+      }
+      if (key === 'suchen.filter.items.parken.title') {
+        return 'Bietet Parkmoeglichkeiten';
+      }
+      if (key === 'suchen.filter.items.parken.subtitle') {
+        return 'Parkplaetze vorhanden';
+      }
+      if (key === 'suchen.filter.items.gebet.title') {
+        return 'Bietet Gebetsmoeglichkeiten';
+      }
+      if (key === 'suchen.filter.items.gebet.subtitle') {
+        return 'Gebetsraum vorhanden';
+      }
       if (key === 'suchen.title') {
         return 'Search Page';
       }
@@ -258,5 +288,20 @@ describe('Search page Wo defaults and selection behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
     expect(screen.getByRole('button', { name: 'Männer erhöhen' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Search city')).not.toBeInTheDocument();
+  });
+
+  it('shows filter count in title and clears it with clear all', async () => {
+    render(<SearchPage />);
+
+    expect(screen.getByRole('heading', { name: 'Filter' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i }));
+
+    expect(screen.getByRole('heading', { name: 'Filter · 1' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+
+    expect(screen.getByRole('heading', { name: 'Filter' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Filter · 1' })).not.toBeInTheDocument();
   });
 });
