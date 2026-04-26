@@ -109,8 +109,8 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 _Session S103 released (2026-04-25): Plan 103 — WerAudienceFilter audience selector. WerAudienceFilter client component with 3 rows (Männer, Frauen, Kinder), each with colored icon, label, subtitle, and independent ±stepper counter. Min-one-person guard, clear-all reset via werResetSignal, single-open accordion invariant. 6 translation keys, 3 SVG icons, 3 unit + 2 page regression tests. 1081 tests passing. Issue #164 closed. Tag v0.10.27 pushed. PR #165 open → main._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.27 complete
-**PR**: https://github.com/abu-lina/uflow/pull/165 (open, pending merge to main)
+**Ready for Release**: ✅ v0.10.27 complete — merged to main 2026-04-25T20:16Z (c26ee7b9)
+**PR**: https://github.com/abu-lina/uflow/pull/165 ✅ MERGED
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
