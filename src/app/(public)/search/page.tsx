@@ -359,6 +359,9 @@ function SearchPageContent() {
     } else {
       params.set('q', selectedWas.label);
     }
+    if (selectedFilters.length > 0) {
+      params.set('filters', selectedFilters.join(','));
+    }
     router.push(`/providers?${params.toString()}`);
   };
 

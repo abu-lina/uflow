@@ -7,6 +7,7 @@ const mockSearchFoodCategories = vi.fn();
 const mockSearchFoodMenuItems = vi.fn();
 const mockFetchProviderCities = vi.fn();
 const mockCheckCityExists = vi.fn();
+const mockRouterPush = vi.fn();
 let lastWasMealProps: { isError?: boolean } | null = null;
 const mockTranslate = (key: string, variables?: Record<string, string | number>) => {
   if (key === 'suchen.was.selectedWhat') {
@@ -30,6 +31,16 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.was.notFoundEncouragement': 'Vielleicht bald verfuegbar.',
     'suchen.was.providerCount': '{{count}} Restaurants',
     'suchen.was.selectedWhat': 'Was: {{item}}',
+    'suchen.filter.items.muslim.title': 'Inhaber ist Muslim',
+    'suchen.filter.items.muslim.subtitle': 'Muslimischer Inhaber',
+    'suchen.filter.items.spenden.title': 'Spendet fuer Gute Zwecke',
+    'suchen.filter.items.spenden.subtitle': 'Spendet fuer Gute Zwecke',
+    'suchen.filter.items.solidaritaet.title': 'Unterstuetzt Muslime',
+    'suchen.filter.items.solidaritaet.subtitle': 'Solidaritaet mit der Ummah',
+    'suchen.filter.items.parken.title': 'Bietet Parkmoeglichkeiten',
+    'suchen.filter.items.parken.subtitle': 'Parkplaetze vorhanden',
+    'suchen.filter.items.gebet.title': 'Bietet Gebetsmoeglichkeiten',
+    'suchen.filter.items.gebet.subtitle': 'Gebetsraum vorhanden',
     'common.loading': 'Loading',
     'location.unnamed': 'Unbenannt',
   };
@@ -39,7 +50,7 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     back: vi.fn(),
-    push: vi.fn(),
+    push: mockRouterPush,
   }),
   useSearchParams: () => new URLSearchParams('section=food'),
 }));
@@ -145,6 +156,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    mockRouterPush.mockReset();
     mockFetchProviderCities.mockResolvedValue([]);
     mockCheckCityExists.mockResolvedValue(false);
     lastWasMealProps = null;
@@ -233,5 +245,24 @@ describe('/search page meal search wiring (Plan 096)', () => {
 
     expect(lastWasMealProps?.isError).toBe(true);
     expect(screen.getByText('Meal error')).toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS] includes selected filters in providers URL on search submit', async () => {
+    render(<SearchPage />);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i }));
+
+    const input = screen.getByRole('searchbox', { name: 'Angebote suchen' });
+    fireEvent.change(input, { target: { value: 'doe' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Select result for doe/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/providers?section=food&q=Doener&filters=muslim');
   });
 });

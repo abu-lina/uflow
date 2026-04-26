@@ -9,6 +9,7 @@ import { searchProvidersAndCommunityServices } from '@/services/providers';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import type { Section } from '@/providers/search-provider';
+import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
 
 /** Valid review status values for admin filtering (Plan 058) */
 const VALID_REVIEW_STATUSES = ['approved', 'pending', 'rejected', 'needs_revision'] as const;
@@ -73,6 +74,13 @@ export async function GET(request: Request): Promise<NextResponse> {
       sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'business'
         ? sectionParam
         : undefined;
+
+    const rawFilters = searchParams.get('filters') || '';
+    const parsedFilters = rawFilters
+      .split(',')
+      .map((key) => key.trim())
+      .filter((key): key is SearchFilterKey => SEARCH_FILTER_KEY_SET.has(key));
+    const filters = parsedFilters.length > 0 ? parsedFilters : undefined;
     
     if (statusParam) {
       // Validate status value first
@@ -115,12 +123,13 @@ export async function GET(request: Request): Promise<NextResponse> {
           pageSize,
           adminOptions,
           section,
+          filters,
         ),
     );
 
     // Apply caching headers per Plan 010/058 caching semantics
     // Admin-filtered responses must use no-store to prevent CDN from caching admin-only data
-    const cacheControl = query || statusParam
+    const cacheControl = query || statusParam || filters
       ? 'no-store'
       : 'public, s-maxage=60, stale-while-revalidate=30';
 

@@ -70,7 +70,7 @@ describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)'
       { community_service_id: 'cs-1', community_service_name: 'Test Mosque', barakah_effects: [], offers_ids: [], needs_ids: [], created_at: '2026-01-01', updated_at: '2026-01-01' },
     ]);
 
-    const { results } = await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'ummah');
+    const { results } = await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'ummah', undefined);
 
     expect(mockSearchCommunityServices).toHaveBeenCalled();
     expect(results).toHaveLength(1);
@@ -78,7 +78,7 @@ describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)'
   });
 
   it('[post-fix] FOOD section filters by listing_type = food', async () => {
-    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food');
+    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food', undefined);
 
     // Should NOT call community services for food section
     expect(mockSearchCommunityServices).not.toHaveBeenCalled();
@@ -87,20 +87,20 @@ describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)'
   });
 
   it('[post-fix] BUSINESS section filters by listing_type = business', async () => {
-    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'business');
+    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'business', undefined);
 
     expect(mockSearchCommunityServices).not.toHaveBeenCalled();
     expect(mockEq).toHaveBeenCalledWith('listing_type', 'business');
   });
 
   it("defaults to food section when section is undefined (D9)", async () => {
-    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, undefined);
+    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, undefined, undefined);
     expect(mockEq).toHaveBeenCalledWith('listing_type', 'food');
   });
 
   it('UMMAH section does NOT query providers table', async () => {
     const { supabase } = await import('@/lib/supabase/client');
-    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'ummah');
+    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'ummah', ['gebet']);
     expect(supabase.from).not.toHaveBeenCalledWith('providers');
   });
 
@@ -109,8 +109,24 @@ describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)'
       { community_service_id: 'cs-1', community_service_name: 'Mosque', barakah_effects: [], offers_ids: [], needs_ids: [], created_at: '2026-01-01', updated_at: '2026-01-01' },
     ]);
 
-    const { results } = await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food');
+    const { results } = await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food', undefined);
     const communityServiceResults = results.filter((r) => r.type === 'community_service');
     expect(communityServiceResults).toHaveLength(0);
+  });
+
+  it('[pre-fix FAILS] applies AND filter predicates for selected values in providers query', async () => {
+    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food', ['muslim', 'parken']);
+
+    expect(mockEq).toHaveBeenCalledWith('muslim_owned', true);
+    expect(mockEq).toHaveBeenCalledWith('has_parking', true);
+  });
+
+  it('ignores filters for UMMAH section without providers table access', async () => {
+    const { supabase } = await import('@/lib/supabase/client');
+
+    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'ummah', ['muslim']);
+
+    expect(supabase.from).not.toHaveBeenCalledWith('providers');
+    expect(mockEq).not.toHaveBeenCalledWith('muslim_owned', true);
   });
 });

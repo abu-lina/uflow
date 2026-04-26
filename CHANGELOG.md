@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.29] - 2026-04-26
+
+### Added
+
+- **Values & Amenities filter data wiring on `/search` and `/providers` (Plan 105 / Issue #168)**:
+  - Added search filter key mapping constants in `src/features/search/constants/filterKeys.ts`:
+    - `muslim` → `muslim_owned`
+    - `spenden` → `accepts_donations`
+    - `solidaritaet` → `solidarity_pricing`
+    - `parken` → `has_parking`
+    - `gebet` → `has_prayer_space`
+  - Wired `/search` submit flow (`src/app/(public)/search/page.tsx`) to include selected filters in URL as comma-separated `filters` query param.
+  - Wired `/providers` server initial fetch (`src/app/(public)/providers/page.tsx`) to parse, validate, and pass filters into provider search.
+  - Wired `/providers` client pagination (`src/app/(public)/providers/ProvidersContent.tsx`) to preserve filters across API requests and React Query cache keys.
+  - Wired API route `GET /api/providers/search` (`src/app/api/providers/search/route.ts`) to parse and allowlist-filter `filters`, silently strip unknown keys, forward validated keys to service layer, and apply `Cache-Control: no-store` when filters are present.
+  - Wired provider service search (`src/services/providers.ts`) to apply selected filters as AND predicates via boolean columns (`.eq(column, true)`), while preserving the `ummah` section behavior (community services unaffected by these provider-only filters).
+
+### Tests
+
+- Extended route tests: `src/__tests__/api/providers-search.test.ts` (validated filter forwarding, unknown-key stripping, filter cache-control semantics)
+- Extended SSR page tests: `src/__tests__/app/providers-page-location.test.tsx` (filters passthrough)
+- Extended service routing tests: `src/__tests__/services/providers-section-routing.test.ts` (AND semantics + ummah isolation)
+- Added regression test with explicit pre-fix naming in `src/__tests__/app/(public)/search/page-meal-search.test.tsx`:
+  - `[pre-fix FAILS] includes selected filters in providers URL on search submit`
+
 ## [0.10.28] - 2026-04-26
 
 ### Added

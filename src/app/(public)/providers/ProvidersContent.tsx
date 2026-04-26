@@ -34,6 +34,7 @@ import { useSearch } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { inferSectionFromCategory } from '@/config/sectionFilters';
 import type { Provider, SearchResult } from '@/services/providers';
+import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
 
 /**
  * Fetch search results from the server-side route handler.
@@ -50,6 +51,7 @@ async function fetchProvidersFromAPI(
   pageSize: number,
   status?: ReviewStatusFilter,
   section?: Section,
+  filters?: SearchFilterKey[],
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const params = new URLSearchParams();
   if (query) params.set('q', query);
@@ -61,6 +63,7 @@ async function fetchProvidersFromAPI(
   if (status) params.set('status', status);
   // Plan 089: Include section filter
   if (section) params.set('section', section);
+  if (filters && filters.length > 0) params.set('filters', filters.join(','));
 
   const response = await fetch(`/api/providers/search?${params.toString()}`);
   if (!response.ok) {
@@ -74,12 +77,14 @@ interface ProvidersContentProps {
   showGreeting?: boolean; // Show greeting header instead of search bar and category filter
   /** Server-rendered initial data for the first page of results (Plan 010 P1a) */
   initialData?: { results: SearchResult[]; hasMore: boolean };
+  initialFilters?: SearchFilterKey[];
 }
 
 export function ProvidersContent({
   defaultLocation,
   showGreeting = false,
   initialData,
+  initialFilters,
 }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -146,6 +151,14 @@ export function ProvidersContent({
   // Only applied when user is admin (non-admins can't use status filter)
   const statusParam = searchParams.get('status') as ReviewStatusFilter;
   const status = isAdmin ? statusParam : null;
+  const rawFilters = searchParams.get('filters') || '';
+  const filters = rawFilters
+    .split(',')
+    .map((key) => key.trim())
+    .filter((key): key is SearchFilterKey => SEARCH_FILTER_KEY_SET.has(key));
+  const normalizedFilters = filters.length > 0 ? filters : undefined;
+  const hasMatchingInitialFilters =
+    (initialFilters ?? []).join(',') === (normalizedFilters ?? []).join(',');
 
   // Use React Query infinite query for paginated search results
   // Page size: 12 provides good balance between initial load and frequent pagination
@@ -154,14 +167,14 @@ export function ProvidersContent({
   // Plan 058 + 089: Include status and section in query key for proper cache management
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } =
     useInfiniteQuery({
-      queryKey: ['providers', query, category, location, status, section],
+      queryKey: ['providers', query, category, location, status, section, normalizedFilters?.join(',') ?? ''],
       queryFn: ({ pageParam = 0 }) =>
-        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE, status, section),
+        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE, status, section, normalizedFilters),
       getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
       initialPageParam: 0,
       // Use server-rendered initial data when available (Plan 010 P1a)
       // Note: initialData only applies when no status filter is active
-      ...(!status && initialData && {
+      ...(!status && initialData && hasMatchingInitialFilters && {
         initialData: {
           pages: [initialData],
           pageParams: [0],

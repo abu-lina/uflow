@@ -64,7 +64,7 @@ vi.mock('next/image', () => ({
         (onLoad as () => void)();
       }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
-    // eslint-disable-next-line @next/next/no-img-element
+     
     return (
       <img
         src={String(src || '')}

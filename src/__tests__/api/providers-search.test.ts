@@ -74,7 +74,7 @@ describe('GET /api/providers/search', () => {
     expect(response.status).toBe(200);
     expectCorrelationIdHeader(response);
     expect(data).toEqual(mockResults);
-    expect(mockSearch).toHaveBeenCalledWith('test', null, '', 0, 12, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('test', null, '', 0, 12, undefined, undefined, undefined);
   });
 
   it('should apply Cache-Control: no-store when free-text query is present', async () => {
@@ -107,7 +107,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
   });
 
   it('should pass category and location params to search', async () => {
@@ -118,7 +118,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', 'cat-1', 'Berlin', 0, 12, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', 'cat-1', 'Berlin', 0, 12, undefined, undefined, undefined);
   });
 
   // --- Plan 044: location normalization regression tests ---
@@ -129,7 +129,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
   });
 
   // RC-2/RC-3: empty location param must preserve the LOCATION_ALL sentinel
@@ -139,7 +139,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search?location=');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
   });
 
   // RC-3: legacy 'Everywhere' label must normalise to empty string, not filter by city name
@@ -151,7 +151,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
   });
 
   // RC-3: legacy 'Überall' label must normalise to empty string, not filter by city name
@@ -163,7 +163,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
   });
 
   it('should return 500 on search failure', async () => {
@@ -231,8 +231,61 @@ describe('GET /api/providers/search', () => {
 
       expect(response.status).toBe(200);
       expect(mockSearch).toHaveBeenCalledWith(
-        '', null, '', 0, 12, { status: 'pending', isAdmin: true }, undefined
+        '', null, '', 0, 12, { status: 'pending', isAdmin: true }, undefined, undefined
       );
+    });
+
+    it('should parse and forward validated filters to service search', async () => {
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?filters=muslim,parken',
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(200);
+      expect(mockSearch).toHaveBeenCalledWith(
+        '',
+        null,
+        '',
+        0,
+        12,
+        undefined,
+        undefined,
+        ['muslim', 'parken'],
+      );
+    });
+
+    it('should silently strip unknown filters instead of returning 400', async () => {
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?filters=muslim,INVALID_KEY,parken',
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(200);
+      expect(mockSearch).toHaveBeenCalledWith(
+        '',
+        null,
+        '',
+        0,
+        12,
+        undefined,
+        undefined,
+        ['muslim', 'parken'],
+      );
+    });
+
+    it('should apply no-store cache-control when filters are present', async () => {
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?filters=gebet',
+      );
+      const response = await GET(request);
+
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
     });
 
     it('should apply no-store cache control when status param is present', async () => {

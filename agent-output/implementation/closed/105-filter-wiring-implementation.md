@@ -2,7 +2,7 @@
 ID: 105
 Origin: 105
 UUID: e6056b72
-Status: Active
+Status: Committed
 ---
 
 # Implementation: 105 — Values & Amenities Filter Wiring
@@ -23,6 +23,7 @@ Status: Active
 |---|---|---|---|
 | 2026-04-26T19:45Z | Critic -> Implementer | Implement Plan 105 | Started TDD Red phase; updated plan status to In Progress |
 | 2026-04-26T21:55Z | Implementer | Plan 105 complete | Filter wiring delivered end-to-end, tests/quality gates executed, version bump + changelog done |
+| 2026-04-26T22:45Z | devops | Committed for Release v0.10.29 | Stage 1 local commit — pending Stage 2 push |
 
 ## Implementation Summary
 
