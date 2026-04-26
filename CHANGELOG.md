@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added component test: `src/features/search/components/FilterSection.test.tsx`
 - Extended page integration tests: `src/app/(public)/search/page.test.tsx`
 
+### Fixed
+
+- Updated Gebet filter icon to use `prayer-rug-02` stroke-rounded design matching Figma node 245:11586. Prior implementation used a simplified rug shape; new design shows rectangular prayer mat with fringe tassels and mihrab arch motif (Hugeicons CDN, MIT).
+
 ### Notes
 
 - Filter UI is interactive (items toggle with visual feedback and collapsed title count) but does not execute backend queries yet.
