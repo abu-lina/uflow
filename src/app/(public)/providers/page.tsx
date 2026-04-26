@@ -4,6 +4,7 @@ import { searchProvidersAndCommunityServices } from '@/services/providers';
 import type { SearchResult } from '@/services/providers';
 import { inferSectionFromCategory } from '@/config/sectionFilters';
 import type { Section } from '@/providers/search-provider';
+import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
 
 import { ProvidersContent } from './ProvidersContent';
 
@@ -43,12 +44,19 @@ export default async function ProvidersPage({
         ? inferSectionFromCategory(categoryParam)
         : 'food'; // D9: default when no section and no category
 
+  const rawFilters = typeof params.filters === 'string' ? params.filters : '';
+  const parsedFilters = rawFilters
+    .split(',')
+    .map((key) => key.trim())
+    .filter((key): key is SearchFilterKey => SEARCH_FILTER_KEY_SET.has(key));
+  const filters = parsedFilters.length > 0 ? parsedFilters : undefined;
+
   // Server-side initial fetch — first page of results rendered into HTML
   let initialResults: SearchResult[] = [];
   let initialHasMore = false;
 
   try {
-    const data = await searchProvidersAndCommunityServices(query, category, location, 0, PAGE_SIZE, undefined, section);
+    const data = await searchProvidersAndCommunityServices(query, category, location, 0, PAGE_SIZE, undefined, section, filters);
     initialResults = data.results;
     initialHasMore = data.hasMore;
   } catch (error) {
@@ -63,6 +71,7 @@ export default async function ProvidersPage({
           results: initialResults,
           hasMore: initialHasMore,
         }}
+        initialFilters={filters}
       />
     </Suspense>
   );

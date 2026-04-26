@@ -7,6 +7,10 @@ import type { ProviderBadgeWithType } from '@/types/badges';
 import { EntityType } from '@/types/badges';
 import { getBadgesForEntities, getBadgesForEntity } from './badges';
 import type { Section } from '@/config/sectionFilters';
+import {
+  SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN,
+  type SearchFilterKey,
+} from '@/features/search/constants/filterKeys';
 
 export interface Provider {
   provider_id: string;
@@ -266,6 +270,7 @@ export async function searchProvidersAndCommunityServices(
   pageSize: number = 5,
   adminOptions?: AdminSearchOptions,
   section?: Section,
+  barakahFilters?: SearchFilterKey[],
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   try {
     const normalizedCategory = category || '';
@@ -276,17 +281,17 @@ export async function searchProvidersAndCommunityServices(
         case 'ummah':
           return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
         case 'food':
-          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food');
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters);
         case 'business':
-          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'business');
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'business', barakahFilters);
         default:
           // D9: default section is FOOD
-          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food');
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters);
       }
     }
 
     // Plan 089 D9: when no section provided, default to FOOD section.
-    return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food');
+    return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters);
   } catch (error) {
     // Log error for debugging
     console.error('[searchProvidersAndCommunityServices] Error:', error);
@@ -327,11 +332,12 @@ async function searchProvidersOnly(
   pageSize: number = 5,
   adminOptions?: AdminSearchOptions,
   listingType?: 'food' | 'business',
+  barakahFilters?: SearchFilterKey[],
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const offset = page * pageSize;
   const limit = pageSize + 1; // Fetch one extra to check if there are more
   
-  const providers = await searchProviders(query, category, location, limit, offset, adminOptions, listingType);
+  const providers = await searchProviders(query, category, location, limit, offset, adminOptions, listingType, barakahFilters);
   const hasMore = providers.length > pageSize;
   const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
   const sortedResults = sortByCreationDate(results);
@@ -452,6 +458,7 @@ export async function searchProviders(
   offset?: number,
   adminOptions?: AdminSearchOptions,
   listingType?: 'food' | 'business',
+  barakahFilters?: SearchFilterKey[],
 ): Promise<Provider[]> {
   // Plan 058: Include review fields when admin
   const selectFields = adminOptions?.isAdmin
@@ -486,6 +493,12 @@ export async function searchProviders(
   // Plan 089: Apply listing_type filter when provided (section-based routing)
   if (listingType) {
     req = req.eq('listing_type', listingType);
+  }
+
+  if (barakahFilters && barakahFilters.length > 0) {
+    for (const filterKey of barakahFilters) {
+      req = req.eq(SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN[filterKey], true);
+    }
   }
   
   // Apply pagination if provided
