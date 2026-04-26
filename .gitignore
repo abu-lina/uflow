@@ -88,6 +88,9 @@ logs
 .eslintcache
 .stylelintcache
 
+# Research reference snapshots (browser-saved pages, large assets)
+docs/references/
+
 # Build artifacts
 dist-ssr
 *.local

@@ -230,13 +230,14 @@ Single entry point for all development work. When invoked with a task descriptio
 
 ## Session Start Protocol
 
-1. Load `document-lifecycle` skill and `memory-contract` skill (MANDATORY)
-2. Retrieve uflow memory for prior workflow context
-3. Read `agent-output/.next-id` to understand current document state
-4. Scan `agent-output/` subdirectories for in-progress work
-5. **Release-ready stall detection (MANDATORY)**: Identify any plans with Status `UAT Approved` that are not yet `Committed`/`Released`. Surface them explicitly as “Ready for DevOps” and suggest handoff to `⑨ DevOps`. Note: long delays increase version drift and coordination cost.
-6. If resuming an existing workflow, display the current Workflow Card with updated status
-7. If starting fresh, proceed to Task Classification
+1. **Sync main (MANDATORY)**: Run `git pull origin main` in the control window to ensure the local main branch is up-to-date before any work begins or worktrees are created. If there are uncommitted local changes, warn the user and halt until resolved.
+2. Load `document-lifecycle` skill and `memory-contract` skill (MANDATORY)
+3. Retrieve uflow memory for prior workflow context
+4. Read `agent-output/.next-id` to understand current document state
+5. Scan `agent-output/` subdirectories for in-progress work
+6. **Release-ready stall detection (MANDATORY)**: Identify any plans with Status `UAT Approved` that are not yet `Committed`/`Released`. Surface them explicitly as "Ready for DevOps" and suggest handoff to `⑨ DevOps`. Note: long delays increase version drift and coordination cost.
+7. If resuming an existing workflow, display the current Workflow Card with updated status
+8. If starting fresh, proceed to Task Classification
 
 ---
 
@@ -320,6 +321,10 @@ If the user only asks to plan or preview, stay in preview mode.
 
 ```bash
 # Control window only
+
+# Step 1: Sync main to ensure the worktree branches from the latest code
+git pull origin main
+
 NEXT_ID=$(cat agent-output/.next-id)
 while find agent-output/ -name "${NEXT_ID}-*" -type f 2>/dev/null | grep -q .; do
   NEXT_ID=$((NEXT_ID + 1))

@@ -1,6 +1,6 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-04-20
+**Last Updated**: 2026-04-23
 **Status**: Active
 
 ## Changelog
@@ -20,6 +20,7 @@
 | 2026-04-07 | Modal.tsx a11y refactor — 9 gaps mapped: focus trap, focus restore, aria-hidden, escape scoping, drag-close, scroll lock, aria-labelledby, exit animation, z-index. 4 new hooks, 9 ADRs. Design debt: z-index proliferation, multiple modal impls, redundant ARIA. | Close critical/high a11y gaps in base Modal without breaking consumers; establish reusable dialog hooks | Arch 086            |
 | 2026-04-19 | Offers schema evolution ADR (Plan 094): add `provider_menu_items` (food) + `provider_service_offers` (business) typed tables. Global `offers` vocabulary preserved. Was? search confirmed fully wired for vocabulary search; item-level search requires migration 068. | Current offers table is a shared tag vocabulary — insufficient for pricing, per-provider catalog, and future ordering. Separate instance tables with STORED TSVECTOR chosen over STI or JSONB. | ADR-094 |
 | 2026-04-20 | Three-section catalog hierarchy ADR (Plan 095): add `community_projects` under `community_services` (ummah item-level), `categories.applicable_section` for section scoping, three-table ordering FK pattern settled. `provider_stats` MV extended with `community_project_count`. | Completes FOOD/UMMAH/STORES symmetry. Three separate item tables (no CTI base) confirmed as the ordering-FK architecture. Supersedes ADR-094/D7 open question. | ADR-095 |
+| 2026-04-23 | Food category model ADR (096): Single `category_id` per provider confirmed for nationality cuisines. 22 cuisine categories to be seeded as `applicable_section = 'food'`. No schema change; no junction table. Fusion edge case mitigated by item-level search (`provider_menu_items`). Extension path: `cuisine_tags TEXT[]` deferred until user feedback warrants it. | YAGNI/KISS: multi-category touches 7+ query/UI/filter layers for <5% of listings. Single category preserves all existing patterns and is consistent across sections. | ADR-096 |
 
 ---
 
