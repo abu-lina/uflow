@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.28] - 2026-04-26
+
+### Added
+
+- **Filter accordion UI redesign on `/search` (Plan 104 / Issue #166)**:
+  - Added new `FilterSection` component in `src/features/search/components/FilterSection.tsx` with 5 interactive filter rows:
+    - `muslim` (`Moon`)
+    - `spenden` (`HandHeart`)
+    - `solidaritaet` (`HeartHandshake`)
+    - `parken` (`CircleParking`)
+    - `gebet` (`PrayerRug` custom SVG)
+  - Added custom `PrayerRug` icon component in `src/components/icons/PrayerRug.tsx` with MIT attribution comment (Hugeicons source).
+  - Replaced `/search` filter stub with controlled accordion state in `src/app/(public)/search/page.tsx`:
+    - `selectedFilters` local state
+    - `filterOpen` accordion state
+    - required collapsed title badge `Filter · N` when filters are selected
+    - clear-all now resets filter state and title back to `Filter`
+  - Added `suchen.filter.items.*` translation keys for all 6 locales (`de`, `en`, `ar`, `tr`, `ur`, `ps`).
+
+### Tests
+
+- Added component test: `src/components/icons/PrayerRug.test.tsx`
+- Added component test: `src/features/search/components/FilterSection.test.tsx`
+- Extended page integration tests: `src/app/(public)/search/page.test.tsx`
+
+### Fixed
+
+- Updated Gebet filter icon to use `prayer-rug-02` stroke-rounded design matching Figma node 245:11586. Prior implementation used a simplified rug shape; new design shows rectangular prayer mat with fringe tassels and mihrab arch motif (Hugeicons CDN, MIT).
+
+### Notes
+
+- Filter UI is interactive (items toggle with visual feedback and collapsed title count) but does not execute backend queries yet.
+- Selected filters are not applied to search results in this release.
+- Full filter execution wiring is deferred to a future plan.
+
 ## [0.10.27] - 2026-04-25
 
 ### Added
