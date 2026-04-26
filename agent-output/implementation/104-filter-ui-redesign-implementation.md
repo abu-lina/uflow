@@ -32,6 +32,8 @@ Delivered:
 4. M4: Wired filter state into `SearchPageContent` (`selectedFilters`, `filterOpen`), replaced stub, added required collapsed title badge (`Filter · N`), and reset logic in `Clear all`.
 5. M5: Bumped version to `0.10.28`, aligned lockfile, and added `CHANGELOG` section with explicit note that backend filter execution is not yet wired.
 
+Version bumped to `0.10.28` (preliminary - final version confirmed at DevOps Stage 1).
+
 Value delivery: Users now see a complete, interactive filter accordion UI matching Figma structure and spacing, with visible selected-count feedback and proper reset behavior.
 
 ## Baseline & Measurements
