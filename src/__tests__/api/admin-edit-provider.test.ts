@@ -50,6 +50,17 @@ vi.mock('@/lib/validations/adminSchemas', () => ({
       if (!uuidRegex.test(data.providerId as string)) {
         throw new Error('Invalid provider ID format');
       }
+
+      const listingType = data.listingType;
+      if (
+        listingType !== undefined
+        && listingType !== null
+        && listingType !== 'food'
+        && listingType !== 'business'
+      ) {
+        throw new Error('listingType must be one of: food, business, null');
+      }
+
       return data;
     },
   },
@@ -117,6 +128,17 @@ describe('PATCH /api/admin/edit-provider', () => {
 
   it('returns 400 when providerId is not a valid UUID', async () => {
     const response = await PATCH(createRequest({ providerId: 'not-a-uuid', providerName: 'Test' }));
+    expect(response.status).toBe(400);
+  });
+
+  it('[pre-fix FAILS] returns 400 when listingType is outside allowed enum', async () => {
+    const response = await PATCH(
+      createRequest({
+        ...validBody,
+        listingType: 'other',
+      })
+    );
+
     expect(response.status).toBe(400);
   });
 

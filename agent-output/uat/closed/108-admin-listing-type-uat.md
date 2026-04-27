@@ -15,9 +15,10 @@ Status: Committed
 
 ## Changelog
 
-| Date       | Agent Handoff | Request              | Summary                                                                    |
+| Date (UTC) | Agent Handoff | Request              | Summary                                                                    |
 | ---------- | ------------- | -------------------- | -------------------------------------------------------------------------- |
-| 2026-04-27 | QA Complete   | Implementation + QA ready for UAT review | Created UAT document validating value delivery and release readiness |
+| 2026-04-27T17:40Z | QA Complete   | Implementation + QA ready for UAT review | Created UAT document validating value delivery and release readiness |
+| 2026-04-27T22:10Z | QA (DF-1/DF-2 Re-test) | Deferred fixes implementation verified | DF-1 (i18n keys) and DF-2 (route test schema) implemented, code-reviewed, and QA-verified; all 1144 tests pass; UAT decision remains APPROVED FOR RELEASE |
 
 ---
 
@@ -294,43 +295,39 @@ Status: Committed
 
 ## Deferred Follow-Up Items
 
-### DF-1: i18n Translation Keys (Optional Quality Improvement)
+### ✅ DF-1: i18n Translation Keys (COMPLETED & VERIFIED)
 
-**Severity**: MEDIUM (Quality, not functional)
+**Status**: **CLOSED** — Implementation completed and QA-verified (2026-04-27T22:10Z)
 
-**Details**: New Section field labels are hardcoded English; should migrate to LanguageProvider t() keys for multilingual consistency.
+**What Was Done**: Added 4 new i18n keys (`editProvider.sectionFieldLabel`, `editProvider.sectionUnclassified`, `editProvider.sectionFood`, `editProvider.sectionBusiness`) to all 6 locale files (en/de/ar/tr/ur/ps); replaced 9 hardcoded English strings in ProviderEditForm.tsx with `t()` calls
 
-**Owner**: Implementation Team / Localization
+**Verification**: 
+- ✅ Regression test "[pre-fix FAILS] moderation section selector uses translation keys..." now passes
+- ✅ All 6 locale files contain new keys
+- ✅ ProviderEditForm.tsx uses `t()` for all UI labels, options, and read-only displays
+- ✅ QA gates: 1144 tests pass (0 failures)
 
-**Due Window**: Next sprint or follow-up PR
-
-**Evidence Required**: Translation keys added for "Section (listing_type)", "Unclassified", "Food", "Business" in language provider configuration
-
-**Rationale**: Existing form fields use i18n; new field should match for consistency and future multilingual support
-
-**Release Impact**: None — English flows unaffected; existing translations unchanged
+**Release Impact**: Quality improvement — UI now ready for future language pack completeness audits
 
 ---
 
-### DF-2: Route Test Schema Mock Fidelity (Optional Test Hardening)
+### ✅ DF-2: Route Test Schema Mock Fidelity (COMPLETED & VERIFIED)
 
-**Severity**: MEDIUM (Test Coverage, not functional)
+**Status**: **CLOSED** — Implementation completed and QA-verified (2026-04-27T22:10Z)
 
-**Details**: Route-level tests for /api/admin/edit-provider mock Zod schema validation loosely (UUID-only check); should validate full schema including listingType contract.
+**What Was Done**: Enhanced mocked `providerEditUpdateSchema.parse()` in admin-edit-provider.test.ts to validate `listingType` enum (food, business, null); added regression test for invalid enum values returning HTTP 400
 
-**Owner**: QA Team / Test Infrastructure
+**Verification**:
+- ✅ Regression test "[pre-fix FAILS] returns 400 when listingType is outside allowed enum" now passes
+- ✅ Route mock validates enum values correctly
+- ✅ Invalid values (e.g., 'other') properly rejected
+- ✅ QA gates: 1144 tests pass (0 failures)
 
-**Due Window**: Next sprint or follow-up hardening PR
-
-**Evidence Required**: Route test enhanced to validate listingType field: accepts valid enum, rejects invalid values
-
-**Rationale**: Service-level tests compensate for route test gap; however, route test should validate API contract for regression prevention
-
-**Release Impact**: None — Service-layer tests provide functional coverage; route test gap is test infrastructure issue
+**Release Impact**: Quality improvement — Route-level API contracts now validated at test boundary for better regression coverage
 
 ---
 
-## Next Actions
+## Previous Deferred Items (Context Only)
 
 ✅ **UAT Complete** — Ready for DevOps Stage 1 (commit to git + prepare release)
 

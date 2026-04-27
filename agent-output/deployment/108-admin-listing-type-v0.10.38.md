@@ -2,14 +2,14 @@
 ID: 108
 Origin: 108
 UUID: a2e8f6d3
-Status: Committed
+Status: Released
 ---
 
 # Deployment: Plan 108 — Admin Listing Type Edit (v0.10.38)
 
-**Stage**: Stage 1 — Local Commit Complete
+**Stage**: Stage 2 — Released ✅
 
-**Date**: 2026-04-27T18:00Z
+**Date**: 2026-04-27T19:15Z
 
 **DevOps Agent**: devops
 
@@ -217,13 +217,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ## Post-Release Status
 
-[To be filled after Stage 2]
-
-- **Released**: [pending]
-- **Tag**: [pending]
-- **PR**: [pending]
-- **GitHub Release**: [pending]
-- **Timestamp**: [pending]
+- **Released**: ✅ 2026-04-27T19:15Z
+- **Final Commit SHA (squash)**: `dc6f8346`
+- **Tag**: `v0.10.39` (on squash-merge HEAD `dc6f8346`)
+- **PR**: [#180](https://github.com/abu-lina/uflow/pull/180) — Squash merged
+- **GitHub Release**: https://github.com/abu-lina/uflow/releases/tag/v0.10.39
+- **Version collision**: v0.10.38 was taken by Session/109 during Stage 2; bumped to v0.10.39
+- **Rebase count**: 2 (both due to concurrent releases landing on main during Stage 2)
 
 ## Known Limitations (Pre-Operation)
 

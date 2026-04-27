@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.40] - 2026-04-27
+
+### Changed
+
+- **i18n: Section (listing_type) field labels localised** (DF-1): The admin Section field labels (`Section (listing_type)`, `Unclassified`, `Food`, `Business`) now use the LanguageProvider translation system (`t()` keys) instead of hardcoded English strings. Translation keys added to all six locale files (en, de, ar, tr, ur, ps).
+
+### Tests
+
+- **Route test schema fidelity** (DF-2): Enhanced `providerEditUpdateSchema` mock in `admin-edit-provider.test.ts` to validate the `listingType` enum contract at route level. Added regression test `[pre-fix FAILS] returns 400 when listingType is outside allowed enum` confirming invalid values are rejected with HTTP 400.
+- Added i18n regression test `[pre-fix FAILS] moderation section selector uses translation keys for label and options` to `ProviderEditForm.regression.test.tsx` confirming all UI strings use `t()` keys.
+
 ## [0.10.39] - 2026-04-27
 
 ### Added
