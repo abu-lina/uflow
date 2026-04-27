@@ -227,9 +227,8 @@ export function ProvidersContent({
       queryClient.setQueryData(['bookmarks', user?.id], (old: string[] = []) => {
         if (isBookmarked) {
           return [...old, providerId];
-        } else {
-          return old.filter((id) => id !== providerId);
         }
+        return old.filter((id) => id !== providerId);
       });
     },
     [queryClient, user?.id],
@@ -249,62 +248,7 @@ export function ProvidersContent({
     [router],
   );
 
-  // Handle search submission - update URL with new parameters.
-  // Plan 089 CR-H1: Start from current URL params (not a fresh set) so that
-  // ?section=, ?status=, and other persistent params are preserved across submits.
-  const handleSearchSubmit = useCallback(
-    (query: string, category: string | null, location: string) => {
-      const params = new URLSearchParams(window.location.search);
-      if (query) {
-        params.set('q', query);
-      } else {
-        params.delete('q');
-      }
-      if (category) {
-        params.set('category', category);
-      } else {
-        params.delete('category');
-      }
-      if (location) {
-        params.set('location', location);
-      } else {
-        params.delete('location');
-      }
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
-    },
-    [router],
-  );
-
-  // Handle clear search - remove query from URL
-  const handleClearSearch = useCallback(() => {
-    const params = new URLSearchParams(window.location.search);
-    params.delete('q');
-    router.replace(`/providers?${params.toString()}`, { scroll: false });
-  }, [router]);
-
-  // Handle category change - update URL with new category
-  const handleCategoryChange = useCallback(
-    (category: string | null) => {
-      const params = new URLSearchParams(window.location.search);
-      if (category) {
-        params.set('category', category);
-      } else {
-        params.delete('category');
-      }
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
-    },
-    [router],
-  );
-
-  // Handle location change - update URL with new location
-  const handleLocationChange = useCallback(
-    (location: string) => {
-      const params = new URLSearchParams(window.location.search);
-      params.set('location', location);
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
-    },
-    [router],
-  );
+  const peopleSummary = searchParams.get('wer');
 
   // Plan 058: Handle admin status filter change - update URL with new status
   const handleStatusChange = useCallback(
@@ -318,19 +262,6 @@ export function ProvidersContent({
       router.replace(`/providers?${params.toString()}`, { scroll: false });
     },
     [router],
-  );
-
-  // Plan 089 M6: Handle section change - update URL and context
-  const handleSectionChange = useCallback(
-    (newSection: Section) => {
-      setSelectedSection(newSection);
-      const params = new URLSearchParams(window.location.search);
-      params.set('section', newSection);
-      // Clear category when switching sections to avoid cross-section contamination
-      params.delete('category');
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
-    },
-    [router, setSelectedSection],
   );
 
   // Plan 058: Handle admin approve action
@@ -565,12 +496,11 @@ export function ProvidersContent({
       ) : (
         // Search bar and category filter header (fixed)
         <ProvidersPageHeader
-          selectedSection={section}
-          onCategoryChange={handleCategoryChange}
-          onClearSearch={handleClearSearch}
-          onLocationChange={handleLocationChange}
-          onSearchSubmit={handleSearchSubmit}
-          onSectionChange={handleSectionChange}
+          categoryId={category}
+          location={location}
+          peopleSummary={peopleSummary}
+          searchTerm={query}
+          section={section}
         />
       )}
 

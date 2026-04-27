@@ -1,34 +1,17 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { Hamburger, Store } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import type { Section } from '@/providers/search-provider';
+import {
+  SECTION_ICON_RENDERERS,
+  SECTION_ORDER,
+} from '@/features/search/constants/sectionIconRenderers';
 
 interface SectionSelectorProps {
   selectedSection: Section;
   onSectionChange: (section: Section) => void;
   className?: string;
 }
-
-/** Section metadata for rendering icons (labels come from i18n) */
-const SECTION_ICONS: Record<Section, (isActive: boolean) => ReactNode> = {
-  food: () => <Hamburger aria-hidden="true" className="h-4 w-4 shrink-0" />,
-  // Reuse the exact Home icon component used by the mobile navbar.
-  ummah: (isActive) => (
-    <HomeIcon
-      className="h-4 w-4 shrink-0"
-      isActive={isActive}
-      size={16}
-      viewBox="12 12 24 24"
-    />
-  ),
-  business: () => <Store aria-hidden="true" className="h-4 w-4 shrink-0" />,
-};
-
-/** Section values in display order */
-const SECTION_ORDER: Section[] = ['food', 'ummah', 'business'];
 
 /**
  * Plan 089 M6 / Plan 090 M1: Section Selector tab bar.
@@ -58,7 +41,7 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
     >
       {SECTION_ORDER.map((value) => {
         const label = getSectionLabel(value);
-        const renderIcon = SECTION_ICONS[value];
+        const renderIcon = SECTION_ICON_RENDERERS[value];
         const isActive = selectedSection === value;
         return (
           <button
