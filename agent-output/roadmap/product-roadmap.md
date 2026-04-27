@@ -113,23 +113,24 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.36 — Released 2026-04-27 · Stores Wer accordion hidden (Plan 108)
+**Current Working Release**: None — v0.10.36 released 2026-04-27 (Plan 108). No active release cycle.
 
-_Stores search Wer accordion removal (2026-04-27): Wer (Männer/Frauen/Kinder) accordion is now hidden when Stores section is selected on /search. Accordion state reset guard prevents all-collapsed state when switching from food→business. 2 regression tests added. Closes #174. Tag v0.10.36 pushed._
+**Release Status**: Idle — awaiting next plan
+**Ready for Release**: N/A
+**Blocking Items**: None
 
-**Release Status**: Released
-**Ready for Release**: ✅ v0.10.33 complete
-**Blocking Items**:
+_Deferred open actions (carry-forward, pre-v0.10.36):_
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
 - **045-OA-3**: E2E browser tests for category filter — direct URL nav + SPA nav + back-button (Owner: QA/Implementer — next sprint)
-- **053-OA-1**: Live staging import validation for corrected JoinHalal parser + offer auto-creation before first corrected production import run (Owner: DevOps / Operator — evidence in `agent-output/planning/053-open-actions.md`)
-- **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
-- **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
-- **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject during a future admin moderation UX touch (Owner: Implementer / future sprint — evidence in `agent-output/planning/060-open-actions.md`)
-- **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
+- **053-OA-1**: Live staging import validation for corrected JoinHalal parser + offer auto-creation (Owner: DevOps / Operator — `agent-output/planning/053-open-actions.md`)
+- **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering (Owner: DevOps / Operator — `agent-output/planning/054-open-actions.md`)
+- **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — `agent-output/planning/055-open-actions.md`)
+- **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject — future admin UX touch (`agent-output/planning/060-open-actions.md`)
+- **Dependabot**: GitHub reports 3 high + 16 moderate on `abu-lina/uflow` — pre-existing; not introduced by Plan 108
 
-✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
+✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5  
+✅ **Plan 108** closed: v0.10.36 released 2026-04-27 — Stores Wer accordion hidden, #174 closed
 
 ### Previous Releases
 
