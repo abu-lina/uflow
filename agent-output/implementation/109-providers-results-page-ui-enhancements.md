@@ -87,8 +87,9 @@ N/A — no deployment scripts/workflows/image/runtime infra files changed.
   - [ ] Full build pass in local environment
 
 Build status detail:
-- Blocked by missing real Supabase env credentials during page-data collection (`NEXT_PUBLIC_SUPABASE_ANON_KEY` validation in API route imports).
-- Even with format-shaped placeholders, the project’s runtime validation rejects non-real keys.
+- Blocked during page-data collection for `/api/admin/badges/verify` due missing Supabase env variables in this shell context.
+- Latest failure: `Missing NEXT_PUBLIC_SUPABASE_URL environment variable`.
+- Full build validation requires a local environment with real Supabase credentials (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and service-role key where required by imported routes).
 
 ## Value Statement Validation
 
