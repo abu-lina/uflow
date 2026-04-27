@@ -2,7 +2,7 @@
 ID: ad-hoc-search-expand
 Origin: conversation-session
 UUID: search-expand-qa-001
-Status: Active
+Status: Released
 ---
 
 # Stage 1 Deployment: Search Expand Show-All Preview — v0.10.32
@@ -148,8 +148,9 @@ QA and UAT docs moved to closed/ as part of this Stage 1 commit. No formal plann
 ## Commit Details
 
 **Status**: Committed locally  
-**Commit Message**: `feat(search): Add search expand show-all preview and recent-priority UX (v0.10.32)`  
-**Commit Hash**: [to be filled after commit]
+**Commit Message**: `feat(search): Add search expand show-all preview and recent-priority UX`  
+**Commit Hash**: `7b336116`  
+**Docs-close commit**: `ec3aefaf`
 
 ## Post-Deployment Notes
 
@@ -164,3 +165,57 @@ None — feature is flag-gated and safe to deploy.
 ## Rollback Plan
 
 If issues arise after enabling the flag: set `NEXT_PUBLIC_FEATURE_ENABLESEARCHEXPANDSHOWALLPREVIEW=false` to revert to full-list behavior instantly. No database changes required.
+
+---
+
+## Stage 2 Release Record
+
+**User Confirmation**: Received 2026-04-27 (explicit "yes")  
+**Release Executed**: 2026-04-27T~10:58Z UTC
+
+### Security Audit
+
+`npm audit --audit-level=high` — 11 vulnerabilities (9 moderate, 2 high).  
+**Pre-existing**: `vite@7.3.1` and `svix` (via resend) were already on `origin/main` before this release.  
+No new HIGH/CRITICAL vulnerabilities introduced by this release. Risk accepted (pre-existing).
+
+### Branch Push
+
+```
+git push origin main
+37173757..ec3aefaf  main -> main
+```
+
+GitHub Dependabot notice: 19 pre-existing vulnerabilities (same set, not introduced here).
+
+### Tag
+
+```
+git tag -a v0.10.32 -m "Release v0.10.32 — search expand show-all preview and recent-priority UX"
+git push origin v0.10.32
+→ [new tag] v0.10.32 -> v0.10.32
+```
+
+### GitHub Release
+
+Published: https://github.com/abu-lina/uflow/releases/tag/v0.10.32
+
+### Functional Smoke Checks
+
+Dev server: existing instance (confirmed serving latest code on port 3000)
+
+| Check | Command | Result |
+|-------|---------|--------|
+| `/providers` HTTP status | `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/providers` | ✅ 200 |
+| `/providers` results render | `grep -c "providers\|Provider\|provider"` | ✅ 18 matches |
+| `/` search UI renders | `grep -c "search\|Search\|suchen\|Suchen"` | ✅ 2 matches |
+
+All smoke checks passed.
+
+### Post-Release Status
+
+**Status**: Released ✅  
+**Version**: v0.10.32  
+**Tag**: https://github.com/abu-lina/uflow/releases/tag/v0.10.32  
+**Roadmap**: Updated (`Current Version` → v0.10.32, release table entry added)  
+**Timestamp**: 2026-04-27T~11:00Z UTC
