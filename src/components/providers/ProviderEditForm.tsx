@@ -52,6 +52,7 @@ export interface ProviderEditFormData {
   providerName: string;
   providerDescription: string;
   categoryId: string;
+  listingType: 'food' | 'business' | null;
   street: string;
   zipCode: string;
   city: string;
@@ -108,6 +109,7 @@ export function ProviderEditForm({
     providerName: provider.provider_name || '',
     providerDescription: (provider as unknown as Record<string, unknown>).provider_description as string || provider.description || '',
     categoryId: provider.category_id || '',
+    listingType: provider.listing_type ?? null,
     street: provider.address_street || '',
     zipCode: provider.address_zip || '',
     city: provider.address_city || '',
@@ -221,7 +223,7 @@ export function ProviderEditForm({
     loadCommunityServices();
   }, [provider.provider_id]);
 
-  const handleInputChange = (field: string, value: string | boolean | string[]) => {
+  const handleInputChange = (field: string, value: string | boolean | string[] | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -434,16 +436,37 @@ export function ProviderEditForm({
               <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
             </div>
 
-            {/* Plan 089 M8: Section (listing_type) field — read-only display alongside category */}
-            {provider.listing_type !== undefined && (
-              <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-gray-50 px-3 py-2 shadow-sm">
-                <div className="flex flex-1 flex-col gap-1">
-                  <span className="text-xs font-normal text-[#999999] leading-[15px]">Section (listing_type)</span>
-                  <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] capitalize">
-                    {provider.listing_type ?? 'null (unclassified)'}
-                  </span>
+            {/* Plan 089 M8: Section (listing_type) field */}
+            {(provider.listing_type !== undefined || reviewFooterActions) && (
+              reviewFooterActions ? (
+                <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                  <div className="flex flex-1 flex-col gap-1">
+                    <label className="text-xs font-normal text-[#999999] leading-[15px]" htmlFor="provider-listing-type">
+                      Section (listing_type)
+                    </label>
+                    <select
+                      aria-label="Section (listing_type)"
+                      className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] outline-none bg-transparent p-0"
+                      id="provider-listing-type"
+                      value={formData.listingType ?? ''}
+                      onChange={(e) => handleInputChange('listingType', e.target.value === '' ? null : e.target.value)}
+                    >
+                      <option value="">Unclassified</option>
+                      <option value="food">Food</option>
+                      <option value="business">Business</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-gray-50 px-3 py-2 shadow-sm">
+                  <div className="flex flex-1 flex-col gap-1">
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Section (listing_type)</span>
+                    <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] capitalize">
+                      {formData.listingType ?? 'null (unclassified)'}
+                    </span>
+                  </div>
+                </div>
+              )
             )}
 
             {/* Offers Field */}

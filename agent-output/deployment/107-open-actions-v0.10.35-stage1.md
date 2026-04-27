@@ -2,7 +2,7 @@
 ID: 107
 Origin: 107
 UUID: a3f2c8b1
-Status: Active
+Status: Released
 ---
 
 # Stage 1 Deployment: Plan 107 Open Actions — v0.10.35
