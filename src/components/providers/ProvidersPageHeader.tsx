@@ -1,28 +1,23 @@
 'use client';
 
 import { useRef } from 'react';
-import { FigmaSearchBar } from '@/features/search/components/FigmaSearchBar';
-import { SectionSelector } from '@/features/search/components/SectionSelector';
+import { SearchContextBar } from '@/features/search/components/SearchContextBar';
 import type { Section } from '@/providers/search-provider';
 
 interface ProvidersPageHeaderProps {
-  onSearchSubmit: (query: string, category: string | null, location: string) => void;
-  onClearSearch: () => void;
-  onCategoryChange: (category: string | null) => void;
-  onLocationChange: (location: string) => void;
-  /** Plan 089 M6: Active section for the section selector */
-  selectedSection?: Section;
-  /** Plan 089 M6: Callback when user switches section */
-  onSectionChange?: (section: Section) => void;
+  section: Section;
+  searchTerm?: string | null;
+  categoryId?: string | null;
+  location?: string | null;
+  peopleSummary?: string | null;
 }
 
 export function ProvidersPageHeader({
-  onSearchSubmit,
-  onClearSearch,
-  onCategoryChange: _onCategoryChange,
-  onLocationChange,
-  selectedSection = 'food',
-  onSectionChange,
+  section,
+  searchTerm,
+  categoryId,
+  location,
+  peopleSummary,
 }: ProvidersPageHeaderProps) {
   const headerRef = useRef<HTMLElement>(null);
 
@@ -60,20 +55,14 @@ export function ProvidersPageHeader({
           paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
         }}
       >
-        <FigmaSearchBar
+        <SearchContextBar
+          categoryId={categoryId}
           className="border border-gray-200 shadow-sm"
-          onClearSearch={onClearSearch}
-          onLocationChange={onLocationChange}
-          onSearchSubmit={onSearchSubmit}
+          location={location}
+          peopleSummary={peopleSummary}
+          searchTerm={searchTerm}
+          section={section}
         />
-        {/* Plan 089 M6: Section Selector tab bar */}
-        {onSectionChange && (
-          <SectionSelector
-            className="mt-2 w-full"
-            selectedSection={selectedSection}
-            onSectionChange={onSectionChange}
-          />
-        )}
       </div>
     </header>
   );

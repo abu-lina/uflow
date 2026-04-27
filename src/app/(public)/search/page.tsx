@@ -467,6 +467,15 @@ function SearchPageContent() {
     if (selectedFilters.length > 0) {
       params.set('filters', selectedFilters.join(','));
     }
+
+    if (selectedWoCity) {
+      params.set('location', selectedWoCity);
+    }
+
+    if (werSelection?.hasUserInteracted && werSelection.hasSelection && werSelection.summary.trim()) {
+      params.set('wer', werSelection.summary.trim());
+    }
+
     router.push(`/providers?${params.toString()}`);
   };
 

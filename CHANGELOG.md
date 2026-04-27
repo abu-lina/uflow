@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.38] - 2026-04-27
+
+### Added
+
+- **Providers results search context bar (Plan 109 / Issue #175)**:
+  - Added `SearchContextBar` component at `src/features/search/components/SearchContextBar.tsx`.
+  - Added shared section icon renderers at `src/features/search/constants/sectionIconRenderers.tsx` and reused them in `SectionSelector`.
+  - Search context bar now shows section icon, search term fallback, location fallback (`Everywhere`), optional `wer` audience summary, and an edit affordance routing to `/search?section={section}`.
+
+### Changed
+
+- Updated `ProvidersPageHeader` to use `SearchContextBar` instead of `FigmaSearchBar`.
+- Removed redundant `SectionSelector` row from `/providers` header.
+- Updated `/search` submit URL builder to include:
+  - `location` when a city is selected (functional providers filter)
+  - `wer` when audience selection exists (display-only context transport)
+
+### Tests
+
+- Added `src/features/search/components/SearchContextBar.test.tsx`.
+- Added `src/components/providers/ProvidersPageHeader.test.tsx`.
+- Added `src/__tests__/components/MobileFooterBar.providers-active.test.tsx` to lock `/providers` active-nav behavior.
+- Extended `src/__tests__/app/(public)/search/page-meal-search.test.tsx` with regression coverage for `location` and `wer` URL params.
+
 ## [0.10.36] - 2026-04-27
 
 ### Fixed
