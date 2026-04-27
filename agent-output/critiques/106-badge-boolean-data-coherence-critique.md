@@ -2,7 +2,7 @@
 ID: 106
 Origin: 106
 UUID: d7e3a41f
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique — Plan 106: Badge/Boolean Data Coherence
@@ -19,6 +19,7 @@ Status: OPEN
 | Date              | Handoff   | Request                            | Summary                           |
 | ----------------- | --------- | ---------------------------------- | --------------------------------- |
 | 2026-04-27T17:15Z | Planner → Critic | Initial review of Plan 106   | First read; 2 MEDIUM, 3 LOW findings |
+| 2026-04-27T17:30Z | Critic | Plan revised by Planner; all findings addressed | F-1, F-2, F-3, F-5 RESOLVED; F-4 informational |
 
 ---
 
@@ -71,7 +72,7 @@ The plan intentionally defers STORES listing invariant enforcement (requiring `m
 | Field         | Value |
 | ------------- | ----- |
 | Severity      | **MEDIUM** |
-| Status        | OPEN |
+| Status        | RESOLVED |
 | Section       | Handoff Notes / M1 Deliverables |
 
 **Issue**: The handoff notes state "Use `NEW.badge_key` in the trigger." However, the `provider_badges` table does NOT have a `badge_key` column. It has `badge_type_id` (UUID FK to `badge_types.id`). The trigger function must JOIN `badge_types` to resolve the `badge_key`:
@@ -92,7 +93,7 @@ FROM badge_types bt WHERE bt.id = NEW.badge_type_id;
 | Field         | Value |
 | ------------- | ----- |
 | Severity      | **MEDIUM** |
-| Status        | OPEN |
+| Status        | RESOLVED |
 | Section       | M1 Acceptance Criteria |
 
 **Issue**: The `provider_badges` table is polymorphic — it holds badges for both `entity_type = 'provider'` and `entity_type = 'community_service'`. The trigger function must guard against firing for community service badges, which have no corresponding boolean columns on any table.
@@ -110,7 +111,7 @@ M1's deliverables say "Trigger function `sync_badge_to_boolean()` that maps `bad
 | Field         | Value |
 | ------------- | ----- |
 | Severity      | **LOW** |
-| Status        | OPEN |
+| Status        | RESOLVED |
 | Section       | M2 Deliverables / Risks |
 
 **Issue**: M2 requires badge INSERT after provider INSERT (needs `provider_id`). The Risks table (Risk 2) correctly identifies the partial-state risk and proposes "Wrap badge inserts in the same transaction scope; if badge insert fails, boolean fallback is set directly." However, the Supabase JS client (`supabase.from().insert()`) does NOT support multi-statement transactions. Each call is an independent HTTP request.
@@ -128,7 +129,7 @@ The plan doesn't specify how to achieve transactional semantics. Options include
 | Field         | Value |
 | ------------- | ----- |
 | Severity      | **LOW** |
-| Status        | OPEN |
+| Status        | INFORMATIONAL |
 | Section       | Process |
 
 **Issue**: `.github/chatmodes/planner.chatmode.md` does not exist. Per Critic instructions, this is recorded as a LOW process note.
@@ -144,7 +145,7 @@ The plan doesn't specify how to achieve transactional semantics. Options include
 | Field         | Value |
 | ------------- | ----- |
 | Severity      | **LOW** |
-| Status        | OPEN |
+| Status        | RESOLVED |
 | Section       | Decision Record |
 
 **Issue**: The coverage table labels `SUPPORTS_SADAQAH` as "partial" equivalent to `accepts_donations`, but no decision record entry explains this mapping. Sadaqah (voluntary charity) is broader than "accepts donations" (a mechanical capability). The plan treats them as equivalent for sync purposes without documenting the semantic trade-off.
@@ -204,8 +205,6 @@ All 7 decisions are marked `[RESOLVED]`. No `[OPEN]` or `[DEFERRED]` decisions f
 
 ## Verdict
 
-**APPROVED WITH COMMENTS**
+**APPROVED**
 
-The plan is well-structured, architecturally aligned, and addresses a genuine data coherence gap. The two MEDIUM findings (F-1, F-2) are correctness clarifications that the implementer can resolve during implementation — they don't require a plan revision. No blocking concerns.
-
-The plan is approved for implementation. The implementer should read this critique for the `badge_type_id` JOIN detail (F-1) and `entity_type` guard (F-2) before starting M1.
+All MEDIUM and LOW findings addressed in plan revision (2026-04-27T17:30Z). Plan is ready for implementation.
