@@ -104,7 +104,8 @@ jobs:
         run: npm ci --prefer-offline
 
       - name: Build application
-        run: npx next build 2>&1 | tee .next-build-output.txt
+        shell: bash
+        run: set -o pipefail && npx next build 2>&1 | tee .next-build-output.txt
 
       - name: Check build output
         run: |

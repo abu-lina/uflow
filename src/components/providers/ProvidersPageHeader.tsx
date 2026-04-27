@@ -19,7 +19,6 @@ interface ProvidersPageHeaderProps {
 export function ProvidersPageHeader({
   onSearchSubmit,
   onClearSearch,
-  onCategoryChange: _onCategoryChange,
   onLocationChange,
   selectedSection = 'food',
   onSectionChange,
