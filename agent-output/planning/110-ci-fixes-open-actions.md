@@ -9,7 +9,7 @@ Status: Active
 
 ## Summary
 
-Two deferred validations from Plan 110 CI Pipeline Fixes (v0.10.37). Local test gates all passed; remote CI execution could not be completed before commit because the branch is not yet pushed to remote. DF-2 is a scheduled Dependabot run observation.
+One deferred follow-up remains from Plan 110 CI Pipeline Fixes (v0.10.37): DF-2 Dependabot recovery observation. DF-1 and DF-3 are closed.
 
 ## Open Actions
 
@@ -17,7 +17,7 @@ Two deferred validations from Plan 110 CI Pipeline Fixes (v0.10.37). Local test 
 |------|-------|-------------|-------------------|--------|
 | DF-1: Remote CI workflow validation (dependency-review + build + perf-check all pass) | DevOps/QA | At Stage 2 push — no delay | CI run logs: dependency-review ✅, CI Pipeline build step ✅, perf budget check all routes ✅ | **CLOSED** — SHA resolves correctly (action downloaded successfully); CI Pipeline all 6 jobs pass; perf budget all routes pass. GHAS config gap tracked separately as DF-3. |
 | DF-2: Dependabot `github_actions` updater recovery observation | DevOps | Within 1 week after release | Next scheduled Dependabot run completes without "no such commit" crash for dependency-review-action | Open |
-| DF-3: Enable GitHub Advanced Security (GHAS) on abu-lina/uflow | DevOps/Infra | Next available infra window | `Dependency review is not supported` error resolved; dependency-review workflow passes end-to-end | Open — pre-existing config gap revealed by Plan 110 SHA fix |
+| DF-3: Resolve persistent Dependency Review check failure | DevOps | 2026-04-27 | PRs no longer include failing Dependency Review workflow check | **CLOSED** — retired `.github/workflows/dependency-review.yml` because GHAS is unavailable on this private repository plan. |
 
 ## Background
 
@@ -45,3 +45,4 @@ Two deferred validations from Plan 110 CI Pipeline Fixes (v0.10.37). Local test 
 | Date (UTC)        | Agent  | Change                                         |
 |-------------------|--------|------------------------------------------------|
 | 2026-04-27T16:45Z | DevOps | Created tracker from UAT DF-1 and DF-2 deferred validations |
+| 2026-04-27T17:12Z | Implementer | Closed DF-3 by removing non-functional dependency-review workflow (GHAS unavailable) |
