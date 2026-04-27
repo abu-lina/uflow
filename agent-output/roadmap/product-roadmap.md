@@ -88,6 +88,7 @@
 | 2026-04-26       | Plan 105 released (v0.10.29): Wire Values & Amenities filters to provider search results | Wired 5 filter keys (muslim→muslim_owned, spenden→accepts_donations, solidaritaet→solidarity_pricing, parken→has_parking, gebet→has_prayer_space) from /search UI through URL→API→service layer AND predicates. AND semantics, silent-strip unknown keys, ummah section isolated, React Query cache partitioned. 39/39 filter tests pass. Tag v0.10.29 pushed. PR #169. Closes #168 |
 | 2026-04-27       | Plan 106 released (v0.10.30): Badge/Boolean Data Coherence | M1: badge-to-boolean sync trigger (migration 076 — AFTER INSERT/DELETE on provider_badges); M2: creation path wiring (providerService.ts writes badge rows + boolean columns on provider creation); M3: section-aware FilterSection (ummah hides all provider filters, business hides muslim filter). Tag v0.10.30 pushed. Closes #170 |
 | 2026-04-27       | Plan 107 released (v0.10.31): Ummah Tab Section-Conditional Search | New WasServiceTypeResults (10 static community service types, query filtering) and UmmahFilterSection (5 Ummah-specific filters: kostenlos, online, sprache, zertifiziert, geschlechtergetrennt). Section-conditional rendering in /search page — Ummah tab now distinct from Food/Business. State-reset guards on section change; food RPC effects guarded. i18n parity across 6 locales. Staged delivery: providers wiring is follow-up. Tag v0.10.31 pushed. Closes #172 |
+| 2026-04-27T09:56Z | Session S106 closed — window safe to close | All Plan 107 pipeline stages complete (Planner→Critic→Implementer→Code Reviewer→QA→UAT→DevOps). v0.10.31 tag pushed. Branch session/106-ummah-search on origin. 3 open-action trackers active (107-DF-1 providers wiring, 107-DF-2 translation quality, 107-DF-3 mobile validation). 2 pre-existing HIGH vulns (Next.js DoS + Vite dev-server path traversal) to address in a future security plan. |
 
 ---
 
@@ -122,7 +123,10 @@ _Session S106 released (2026-04-27): Plan 107 — Ummah Tab Section-Conditional 
 - **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
 - **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
 - **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject during a future admin moderation UX touch (Owner: Implementer / future sprint — evidence in `agent-output/planning/060-open-actions.md`)
-- **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
+- **107-DF-1** ⚠️ **HIGHEST PRIORITY**: Ummah provider results wiring — `SEARCH_FILTER_KEY_SET` must include Ummah keys; `/providers` page must execute Ummah-specific search; E2E test required (Owner: Architecture/Implementer — next sprint — evidence in `agent-output/planning/107-open-actions.md`)
+- **107-DF-2**: Non-German translation quality review for en/tr/ur/ps/ar Ummah labels (Owner: Localization/Product — EOQ 2026 — evidence in `agent-output/planning/107-open-actions.md`)
+- **107-DF-3**: Mobile responsiveness live validation on iOS 14+ / Android 10+ (Owner: QA/Product — first live user session — evidence in `agent-output/planning/107-open-actions.md`)
+- **Dependabot / npm audit**: 2 HIGH pre-existing vulns confirmed — `GHSA-q4gf-8mx6-v5v3` (Next.js DoS via Server Components) + `GHSA-4w7w-66w2-5vf9` (Vite path traversal, dev-only). Not introduced by Plan 107. Recommend dedicated security remediation plan.
 
 ✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
 
