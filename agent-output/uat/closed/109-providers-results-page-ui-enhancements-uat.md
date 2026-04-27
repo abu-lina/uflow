@@ -2,7 +2,7 @@
 ID: 109
 Origin: 109
 UUID: b7e3f91a
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 109 — Providers Results Page UI Enhancements
