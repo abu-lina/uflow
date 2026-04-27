@@ -2,12 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SearchPage from './page';
 
+let mockSection: 'food' | 'ummah' | 'business' = 'food';
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
     back: vi.fn(),
+    replace: vi.fn(),
   }),
-  useSearchParams: () => new URLSearchParams('section=food'),
+  useSearchParams: () => new URLSearchParams(`section=${mockSection}`),
 }));
 
 vi.mock('@/providers/LanguageProvider', () => ({
@@ -160,7 +163,13 @@ vi.mock('@/components/layout/PageContent', () => ({
 }));
 
 vi.mock('@/features/search/components/SectionSelector', () => ({
-  SectionSelector: () => <div>Section selector</div>,
+  SectionSelector: ({ onSectionChange }: { onSectionChange: (section: 'food' | 'ummah' | 'business') => void }) => (
+    <div>
+      <button type="button" onClick={() => onSectionChange('food')}>Section food</button>
+      <button type="button" onClick={() => onSectionChange('ummah')}>Section ummah</button>
+      <button type="button" onClick={() => onSectionChange('business')}>Section business</button>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/ui/ExpandSection', () => ({
@@ -208,8 +217,37 @@ describe('Search page Wo defaults and selection behavior', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSection = 'food';
     localStorage.clear();
     sessionStorage.clear();
+  });
+
+  it('hides Wer accordion when business section is active from initial URL', async () => {
+    mockSection = 'business';
+
+    render(<SearchPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Wer: For me' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('resets to Was accordion when switching from Wer-open food to business', async () => {
+    // Plan 107 made selectedSection URL-authoritative: router.replace is called but the
+    // mock doesn't navigate. Simulate the full flow by updating mockSection + rerender,
+    // which matches what would happen after the URL changes in a real browser.
+    const { rerender } = render(<SearchPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
+    expect(screen.getByRole('button', { name: 'Männer erhöhen' })).toBeInTheDocument();
+
+    // Simulate URL param update to business after router.replace resolves
+    mockSection = 'business';
+    rerender(<SearchPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Wer: For me' })).not.toBeInTheDocument();
+    });
   });
 
   it('uses onboarding selectedCity as active Wo selection without requiring typing', async () => {

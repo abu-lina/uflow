@@ -398,6 +398,7 @@ function SearchPageContent() {
     setWasQuery('');
     setSelectedWas(null);
     setSelectedFilters([]);
+    setOpenAccordion((prev) => (selectedSection === 'business' && prev === 'wer' ? 'was' : prev));
   }, [selectedSection]);
 
   useEffect(() => {
@@ -668,17 +669,19 @@ function SearchPageContent() {
           </div>
         </ExpandSection>
 
-        <ExpandSection
-          isOpen={openAccordion === 'wer'}
-          title={werAccordionTitle}
-          onToggle={(next) => setOpenAccordion(next ? 'wer' : null)}
-        >
-          <WerAudienceFilter
-            resetSignal={werResetSignal}
-            t={t}
-            onSelectionChange={setWerSelection}
-          />
-        </ExpandSection>
+        {selectedSection !== 'business' ? (
+          <ExpandSection
+            isOpen={openAccordion === 'wer'}
+            title={werAccordionTitle}
+            onToggle={(next) => setOpenAccordion(next ? 'wer' : null)}
+          >
+            <WerAudienceFilter
+              resetSignal={werResetSignal}
+              t={t}
+              onSelectionChange={setWerSelection}
+            />
+          </ExpandSection>
+        ) : null}
 
         <ExpandSection
           isOpen={openAccordion === 'filter'}

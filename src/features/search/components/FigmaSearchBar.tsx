@@ -181,6 +181,7 @@ export function FigmaSearchBar({
             role="listbox"
           >
             <button
+              aria-selected={!selectedLocation || selectedLocation === LOCATION_ALL}
               className={`block w-full px-4 py-2 text-left text-sm hover:bg-gray-50 ${
                 !selectedLocation || selectedLocation === LOCATION_ALL
                   ? 'font-semibold text-primary'
@@ -188,7 +189,6 @@ export function FigmaSearchBar({
               }`}
               role="option"
               type="button"
-              aria-selected={!selectedLocation || selectedLocation === LOCATION_ALL}
               onClick={() => handleLocationSelect(LOCATION_ALL)}
             >
               {t('search.everywhere')}
@@ -196,12 +196,12 @@ export function FigmaSearchBar({
             {locations.map((loc) => (
               <button
                 key={loc}
+                aria-selected={selectedLocation === loc}
                 className={`block w-full px-4 py-2 text-left text-sm hover:bg-gray-50 ${
                   selectedLocation === loc ? 'font-semibold text-primary' : 'text-[#585858]'
                 }`}
                 role="option"
                 type="button"
-                aria-selected={selectedLocation === loc}
                 onClick={() => handleLocationSelect(loc)}
               >
                 {loc}

@@ -2,7 +2,7 @@
 ID: 108
 Origin: 108
 UUID: b7e3a91f
-Status: Active
+Status: Committed
 ---
 
 # Implementation — Plan 108: Hide Wer Accordion for Stores Section on /search
