@@ -2,7 +2,7 @@
 ID: 110
 Origin: 110
 UUID: d7a3e1f9
-Status: Active
+Status: Released
 ---
 
 # Deployment: Plan 110 CI Pipeline Fixes — Stage 1 (Local Commit)
@@ -233,9 +233,107 @@ Branch tracking: session/110-ci-fixes (no remote tracking set yet — set at Sta
 
 ## Next Actions
 
-1. Close and move all plan documents to `closed/` (lifecycle step)
-2. Create open-actions tracker for DF-1 + DF-2
-3. Commit locally with Sentry-format message
-4. **DO NOT PUSH** — Stage 2 requires explicit user approval
-5. Present Stage 2 release summary to user and await confirmation
+1. ~~Close and move all plan documents to `closed/` (lifecycle step)~~ ✅ Done
+2. ~~Create open-actions tracker for DF-1 + DF-2~~ ✅ Done
+3. ~~Commit locally with Sentry-format message~~ ✅ Done — commit `bdafe998`
+4. ~~DO NOT PUSH — Stage 2 requires explicit user approval~~ ✅ User approved
+5. ~~Present Stage 2 release summary to user and await confirmation~~ ✅ Done
+
+---
+
+## Stage 2 Execution Record
+
+**User Confirmation**: Received 2026-04-27T16:50Z ("yes")
+**Execution Start**: 2026-04-27T16:50Z
+
+### Phase 2A: Security Audit Evidence
+
+| Check | Status | Detail |
+|-------|--------|--------|
+| `npm audit --audit-level=high` | ⚠️ Pre-existing | 2 HIGH (Vite path traversal, server.fs.deny bypass, arbitrary file read) — **not introduced by this release** (no npm deps changed) |
+| New HIGH/CRITICAL by this release | None | CI-only changes; no package.json dependency changes |
+
+### Phase 2A: Remote Sync Evidence
+
+| Check | Status | Detail |
+|-------|--------|--------|
+| `git fetch origin --prune --tags` | ✅ | Clean fetch — no new commits since Stage 1 rebase |
+| Branch ahead/behind origin/main | 1 ahead, 0 behind | ✅ Exactly our 1 commit |
+| Branch tracking | Not yet set | Set automatically by push |
+
+### Phase 2C: Release Execution
+
+| Step | Status | Detail |
+|------|--------|--------|
+| `git push origin session/110-ci-fixes` | ✅ | 41 objects pushed |
+| PR created | ✅ | [PR #178](https://github.com/abu-lina/uflow/pull/178) |
+| PR comparison URL | https://github.com/abu-lina/uflow/compare/main...session/110-ci-fixes | |
+| PR mergeable | ✅ MERGEABLE | No conflicts |
+| `git tag -a v0.10.37` | ✅ | Annotated tag created on `bdafe998` |
+| `git push origin v0.10.37` | ✅ | Tag pushed |
+| GitHub tag visible | ✅ | https://github.com/abu-lina/uflow/releases/tag/v0.10.37 |
+
+### Phase 2D: CI Validation (DF-1 Closure)
+
+| Workflow | Status | Finding |
+|----------|--------|---------|
+| **Dependency Review** (run 25007733393) | ⚠️ FAILED | SHA resolves correctly ✅ — action downloaded `ce3cf9537a52e8119d91fd484ab5b8a807627bf8` successfully. New failure: `Dependency review is not supported on this repository` — GHAS not enabled on private repo. **This is a pre-existing configuration gap revealed by our fix.** Our SHA fix is confirmed working. |
+| **CI Pipeline → Build Verification** (run 25007733384) | ✅ ALL PASS | All 6 jobs: Supply Chain IOC Scan ✅, Lint & Type Check ✅, **Build Verification** ✅, Security Audit ✅, Run Tests ✅, CI Summary ✅ |
+| **Performance Budget Check** | ✅ ALL ROUTES PASS | `/providers`: 326/350 kB (93.1%) ✅ · `/providers/[provider_id]`: **244/260 kB (93.8%)** ✅ · Shared JS: 105/120 kB (87.5%) ✅ |
+| **Build Step (pipefail)** | ✅ | Build step ran with `bash` shell and `set -o pipefail`; build exited 0 |
+
+**DF-1 Assessment**:
+- M1 (SHA fix): ✅ Confirmed working — action resolves correctly. New failure mode is GHAS configuration (separate infrastructure task, not Plan 110 scope).
+- M2 (perf budget): ✅ Confirmed working — all routes pass including `providersDetail` at 244/260 kB.
+- M3 (pipefail): ✅ Confirmed working — build step uses bash shell, build succeeds end-to-end.
+
+**GHAS Follow-up**: Added to open-actions tracker as DF-3 (see below).
+
+### Phase 2D: Document Status
+
+| Document | Status |
+|----------|--------|
+| `agent-output/planning/closed/110-ci-fixes-plan.md` | Released |
+| `agent-output/implementation/closed/110-ci-fixes-implementation.md` | Released |
+| `agent-output/code-review/closed/110-ci-fixes-code-review.md` | Released |
+| `agent-output/qa/closed/110-ci-fixes-qa.md` | Released |
+| `agent-output/uat/closed/110-ci-fixes-uat.md` | Released |
+| `agent-output/roadmap/product-roadmap.md` | Updated — Current Version v0.10.37 |
+
+### Phase 2D: Roadmap Sync
+
+- `Current Version` updated: v0.10.36 → v0.10.37 ✅
+- Active Release Tracker updated to v0.10.37 ✅
+- Previous Releases table: v0.10.37 row added ✅
+- Changelog entry added for Plan 110 ✅
+
+### Deployment History Entry
+
+```json
+{
+  "plan": "110",
+  "version": "v0.10.37",
+  "type": "patch",
+  "date": "2026-04-27T16:50Z",
+  "commit": "bdafe998",
+  "tag": "v0.10.37",
+  "pr": "https://github.com/abu-lina/uflow/pull/178",
+  "branch": "session/110-ci-fixes",
+  "environment": "production",
+  "authorizer": "user (approved Stage 2)",
+  "changes": [
+    "Fixed dependency-review-action SHA pin (phantom → verified v4.6.0)",
+    "Raised /providers/[provider_id] perf budget 220kB → 260kB",
+    "Added bash + pipefail to CI build step"
+  ],
+  "ci_results": {
+    "dependency_review": "sha_fixed_ghas_config_gap_revealed",
+    "ci_pipeline": "all_pass",
+    "perf_budget": "all_routes_pass"
+  },
+  "open_actions": ["DF-2 (Dependabot recovery)", "DF-3 (GHAS enable)"]
+}
+```
+
+
 

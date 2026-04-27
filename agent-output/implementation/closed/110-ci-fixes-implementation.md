@@ -2,7 +2,7 @@
 ID: 110
 Origin: 110
 UUID: d7a3e1f9
-Status: Committed
+Status: Released
 ---
 
 # Plan 110 Implementation — CI Pipeline Fixes

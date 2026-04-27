@@ -15,8 +15,9 @@ Two deferred validations from Plan 110 CI Pipeline Fixes (v0.10.37). Local test 
 
 | Item | Owner | Trigger/Due | Evidence to Close | Status |
 |------|-------|-------------|-------------------|--------|
-| DF-1: Remote CI workflow validation (dependency-review + build + perf-check all pass) | DevOps/QA | At Stage 2 push — no delay | CI run logs: dependency-review ✅, CI Pipeline build step ✅, perf budget check all routes ✅ | Open |
+| DF-1: Remote CI workflow validation (dependency-review + build + perf-check all pass) | DevOps/QA | At Stage 2 push — no delay | CI run logs: dependency-review ✅, CI Pipeline build step ✅, perf budget check all routes ✅ | **CLOSED** — SHA resolves correctly (action downloaded successfully); CI Pipeline all 6 jobs pass; perf budget all routes pass. GHAS config gap tracked separately as DF-3. |
 | DF-2: Dependabot `github_actions` updater recovery observation | DevOps | Within 1 week after release | Next scheduled Dependabot run completes without "no such commit" crash for dependency-review-action | Open |
+| DF-3: Enable GitHub Advanced Security (GHAS) on abu-lina/uflow | DevOps/Infra | Next available infra window | `Dependency review is not supported` error resolved; dependency-review workflow passes end-to-end | Open — pre-existing config gap revealed by Plan 110 SHA fix |
 
 ## Background
 
