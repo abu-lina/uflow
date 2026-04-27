@@ -2,7 +2,7 @@
 ID: 108
 Origin: 108
 UUID: a2e8f6d3
-Status: Active
+Status: Released
 ---
 
 # Deployment: v0.10.40 — Plan 108 Deferred Quality Improvements (DF-1 & DF-2)
@@ -167,7 +167,7 @@ v0.10.32  v0.10.33  v0.10.34  v0.10.35  v0.10.36  v0.10.37  v0.10.38  v0.10.39
 
 ## Stage 2 Readiness
 
-**Status**: ⏳ Awaiting user confirmation to push and release v0.10.40
+**Status**: ✅ Released v0.10.40
 
 **Planned Release Actions**:
 1. `git push origin session/107-fastline`
@@ -192,10 +192,11 @@ None — DF-1 and DF-2 are backward-compatible quality improvements (i18n keys +
   "type": "patch",
   "plan": "108-open-actions",
   "summary": "i18n translation keys for Section field (DF-1) + route test schema mock fidelity (DF-2)",
-  "stage": "Stage 1 — Committed locally, awaiting Stage 2 approval",
-  "commit": "TBD",
-  "tag": "TBD",
-  "pr": "TBD"
+  "stage": "Stage 2 — Released",
+  "commit": "842278cb",
+  "tag": "v0.10.40",
+  "github_release": "https://github.com/abu-lina/uflow/releases/tag/v0.10.40",
+  "pr": "N/A — branch ahead of main; squash merge pending"
 }
 ```
 
@@ -204,3 +205,4 @@ None — DF-1 and DF-2 are backward-compatible quality improvements (i18n keys +
 | Date (UTC) | Agent | Change |
 |------------|-------|--------|
 | 2026-04-27T20:22Z | devops | Stage 1 deployment doc created; version bumped 0.10.39→0.10.40; lifecycle docs updated and staged for commit |
+| 2026-04-27T20:35Z | devops | Stage 2 executed: rebase onto origin/main (2 commits dropped as upstream, clean); force-pushed; tag v0.10.40 on 842278cb; GitHub release created; roadmap updated to v0.10.40; Status: Released |
