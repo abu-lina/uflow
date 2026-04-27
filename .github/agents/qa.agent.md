@@ -168,6 +168,12 @@ When `npm run build` fails due to missing environment variables required for pag
 
 If QA accepts this exception, QA MUST explicitly document it in the QA report (owner + rationale + evidence). This exception is NOT a general allowance to ship with failing builds.
 
+   **DF-3 resolution path**: When accepting this exception, QA SHOULD indicate the preferred resolution path in the QA report so DevOps can close it cleanly:
+   - **CI (preferred)**: "Build gate deferred to CI — PR must pass GitHub Actions build job before merge."
+   - **OR manual**: "Owner: [name]; Timeline: [date/trigger]; Evidence: `npm run build` exit 0 with real Supabase env."
+
+   Recording a resolution path here ensures the deferred gate has a named owner rather than silently remaining open.
+
 ### PWA / Service-Worker Runtime Validation Gate (MANDATORY when applicable)
 
 If the change touches **PWA/service-worker runtime behavior** (examples: `next.config.js` `workboxOptions`, Workbox routes, `public/sw.js` behavior, cross-origin asset fetch routing, offline fallback, or browser privacy/network restrictions), QA MUST ensure there is browser-runtime evidence for at least one real request path.
