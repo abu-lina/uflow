@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.36] - 2026-04-27
+
+### Fixed
+
+- **Stores search Wer accordion removal**: The `Wer` (audience) accordion is now hidden when the Stores (`business`) section is selected on `/search`, so users no longer see irrelevant Männer/Frauen/Kinder audience controls for stores.
+- **Accordion section-switch behavior**: Switching from an open `Wer` accordion to Stores now resets the open panel to `Was`, preventing an all-collapsed accordion state.
+
+### Tests
+
+- Added regression coverage in `src/app/(public)/search/page.test.tsx` for hidden `Wer` in Stores and section-switch reset behavior.
+
 ## [0.10.35] - 2026-04-27
 
 ### Fixed
