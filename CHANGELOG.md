@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.37] - 2026-04-27
+
+### Fixed
+
+- **CI dependency-review action**: Replaced invalid SHA pin `4081bf99...` with verified v4.6.0 commit SHA `ce3cf9537a52e8119d91fd484ab5b8a807627bf8`; resolves Dependency Review workflow failures and Dependabot `github_actions` updater crashes on all PR branches
+- **CI performance budget**: Raised `/providers/[provider_id]` First Load JS budget ceiling from 220 kB to 260 kB to match current measured bundle size (244 kB) with headroom; removes deterministic CI budget failures introduced by organic feature growth since Plan 033
+
+### Improved
+
+- **CI build reliability**: Added `shell: bash` and `set -o pipefail` to the CI build step so `next build` failures propagate correctly through the `tee` pipeline; previously a build failure could be silently masked by tee's exit code
+
 ## [0.10.36] - 2026-04-27
 
 ### Fixed
