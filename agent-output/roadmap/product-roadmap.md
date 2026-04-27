@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-27
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.32
+**Current Version**: v0.10.33
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -88,6 +88,7 @@
 | 2026-04-26       | Plan 105 released (v0.10.29): Wire Values & Amenities filters to provider search results | Wired 5 filter keys (muslim→muslim_owned, spenden→accepts_donations, solidaritaet→solidarity_pricing, parken→has_parking, gebet→has_prayer_space) from /search UI through URL→API→service layer AND predicates. AND semantics, silent-strip unknown keys, ummah section isolated, React Query cache partitioned. 39/39 filter tests pass. Tag v0.10.29 pushed. PR #169. Closes #168 |
 | 2026-04-27       | Plan 106 released (v0.10.30): Badge/Boolean Data Coherence | M1: badge-to-boolean sync trigger (migration 076 — AFTER INSERT/DELETE on provider_badges); M2: creation path wiring (providerService.ts writes badge rows + boolean columns on provider creation); M3: section-aware FilterSection (ummah hides all provider filters, business hides muslim filter). Tag v0.10.30 pushed. Closes #170 |
 | 2026-04-27       | Plan 107 released (v0.10.31): Ummah Tab Section-Conditional Search | New WasServiceTypeResults (10 static community service types, query filtering) and UmmahFilterSection (5 Ummah-specific filters: kostenlos, online, sprache, zertifiziert, geschlechtergetrennt). Section-conditional rendering in /search page — Ummah tab now distinct from Food/Business. State-reset guards on section change; food RPC effects guarded. i18n parity across 6 locales. Staged delivery: providers wiring is follow-up. Tag v0.10.31 pushed. Closes #172 |
+| 2026-04-27       | Ad-hoc search quality fixes released (v0.10.33): Food recents filter + Wo empty-state i18n | Fixed cross-section contamination in food "What" recent history (non-food service-type entries filtered out). Added localized "Wo?" question-form label for Where accordion across 6 locales. 2 regression tests added. Tag v0.10.33 pushed. |
 | 2026-04-27       | Search expand show-all preview released (v0.10.32): Feature-flagged 3-item preview UX + FigmaSearchBar | WasMealResults/WasCategoryResults/WoCityResults/FilterSection: 3-item show-all preview behind `enableSearchExpandShowAllPreview` flag (default off). Recent-priority UX: recent searches shown over popular items; state resets on query change. FigmaSearchBar: compact mobile search bar with hamburger collapse/expand. Provider grid: 2-col mobile layout. i18n 6 locales. 1120 tests passing. Tag v0.10.32 pushed. |
 
 ---
@@ -109,12 +110,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.32 — Released 2026-04-27 · Ad-hoc search expand session complete
+**Current Working Release**: v0.10.33 — Released 2026-04-27 · Ad-hoc search quality fixes
 
-_Search expand show-all preview released (2026-04-27): Feature-flagged 3-item preview in WasMealResults, WasCategoryResults, WoCityResults, and FilterSection. Recent-priority UX (recent searches over popular, state reset on query change). FigmaSearchBar: compact mobile search bar with hamburger collapse/expand and SearchProvider context integration. Provider card grid: 2-col mobile layout. i18n updates across 6 locales (de/en/ar/tr/ur/ps). 1120 tests passing. Tag v0.10.32 pushed. Feature flag `enableSearchExpandShowAllPreview` defaults to false — zero production impact until enabled._
+_Food recents filter + Wo empty-state i18n (2026-04-27): Fixed cross-section contamination where non-food service-type entries leaked into food "What" recent history. Added localized question-form label for Where accordion ("Wo?", "Where?", "أين؟", "Nerede?", "کہاں؟", "چیرته؟") across 6 locales. 2 regression tests added. Tag v0.10.33 pushed._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.32 complete
+**Ready for Release**: ✅ v0.10.33 complete
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)

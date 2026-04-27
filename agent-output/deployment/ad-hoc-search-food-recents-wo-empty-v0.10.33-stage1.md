@@ -1,5 +1,5 @@
 ---
-Status: Committed
+Status: Released
 ---
 
 # Stage 1 Deployment: v0.10.33 — Search Food Recents Filter + Wo Empty State
@@ -136,14 +136,28 @@ npm run build → ✓ Compiled successfully in 16.2s
 
 ## User Confirmation (Stage 2)
 
-**Stage 2 trigger**: Awaiting user explicit release approval for v0.10.33.  
-**Stage 1 outcome**: Changes committed locally. No push yet.
+**Stage 2 trigger**: User confirmed "yes" — 2026-04-27T11:45Z  
+**Authorizer**: User  
+**Stage 1 outcome**: Changes committed and pushed.
 
 ---
 
 ## Post-Release Status
 
-_To be completed at Stage 2._
+**Status**: ✅ Released  
+**Released at**: 2026-04-27T11:45Z  
+**Commit**: `a35a1ac1`  
+**Tag**: `v0.10.33` (pushed)  
+**GitHub Release**: https://github.com/abu-lina/uflow/releases/tag/v0.10.33  
+**PR Compare**: https://github.com/abu-lina/uflow/compare/main...main (fast-forward push)
+
+**Security audit**: 2 HIGH pre-existing vulnerabilities (Next.js DoS advisory + Vite dev-server path traversal) — not introduced by this release. Vite is dev-only. No new HIGH/CRITICAL introduced.
+
+**Smoke tests**:
+- `/search` renders with default state ✅ (dev server running, validated during QA)
+- `/` renders primary search UI ✅
+
+**Known Issues**: None introduced by this release.
 
 ---
 
