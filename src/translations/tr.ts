@@ -145,14 +145,17 @@ export const tr = {
     ariaLabel: "Ümmette ara",
     all: "Tümü",
     everywhere: "Her yerde",
-    unnamed: "İsimsiz"
+    unnamed: "İsimsiz",
+    open: "Aramayı aç",
+    submit: "Aramayı gönder",
+    filter: "Konuma göre filtrele"
   },  suchen: {
     title: "Ara",
     accordions: {
       was: "Ne?",
       wo: "Nerede",
       wer: "Kim: Benim için",
-      filter: "Filtre"
+      filter: "Değerler ve Olanaklar"
     },
     clearAll: "Tümünü temizle",
     searchButton: "Ara",
@@ -182,6 +185,8 @@ export const tr = {
       selectedWhat: "Ne: {{item}}",
       dishLabel: "Yemek",
       removeSelection: "Seçimi kaldır",
+      showAllCuisines: "Tüm mutfakları göster",
+      showAllDishes: "Tüm yemekleri göster",
       ummah: {
         searchPlaceholder: "Hangi hizmeti arıyorsun?",
         serviceTypeLabel: "Hizmet",
@@ -209,9 +214,11 @@ export const tr = {
       selectionLabel: "SEÇİLEN",
       selectedWhere: "Nerede: {{city}}",
       removeSelection: "Seçimi kaldır",
-      noResults: "Şehir bulunamadı"
+      noResults: "Şehir bulunamadı",
+      showAllCities: "Tüm şehirleri göster"
     },
     filter: {
+      showAllFilters: "Tüm filtreleri göster",
       items: {
         muslim: {
           title: "Inhaber ist Muslim",

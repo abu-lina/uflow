@@ -145,7 +145,10 @@ export const ar = {
     ariaLabel: "البحث في الأمة",
     all: "الكل",
     everywhere: "في كل مكان",
-    unnamed: "بدون اسم"
+    unnamed: "بدون اسم",
+    open: "فتح البحث",
+    submit: "تنفيذ البحث",
+    filter: "تصفية حسب الموقع"
   },
   suchen: {
     title: "بحث",
@@ -153,7 +156,7 @@ export const ar = {
       was: "ماذا؟",
       wo: "أين",
       wer: "من: لي",
-      filter: "تصفية"
+      filter: "القيم والمرافق"
     },
     clearAll: "مسح الكل",
     searchButton: "بحث",
@@ -183,6 +186,8 @@ export const ar = {
       selectedWhat: "ماذا: {{item}}",
       dishLabel: "طبق",
       removeSelection: "إزالة التحديد",
+      showAllCuisines: "عرض كل المطابخ",
+      showAllDishes: "عرض كل الأطباق",
       ummah: {
         searchPlaceholder: "ما الخدمة التي تبحث عنها؟",
         serviceTypeLabel: "خدمة",
@@ -210,9 +215,11 @@ export const ar = {
       selectionLabel: "المحدد",
       selectedWhere: "أين: {{city}}",
       removeSelection: "إزالة التحديد",
-      noResults: "لم يتم العثور على مدن"
+      noResults: "لم يتم العثور على مدن",
+      showAllCities: "عرض كل المدن"
     },
     filter: {
+      showAllFilters: "عرض كل الفلاتر",
       items: {
         muslim: {
           title: "Inhaber ist Muslim",

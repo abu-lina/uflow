@@ -1,8 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { SearchBar } from '@/features/search/components/SearchBar';
-import { CategoryFilter } from '@/components/providers/CategoryFilter';
+import { FigmaSearchBar } from '@/features/search/components/FigmaSearchBar';
 import { SectionSelector } from '@/features/search/components/SectionSelector';
 import type { Section } from '@/providers/search-provider';
 
@@ -61,10 +60,8 @@ export function ProvidersPageHeader({
           paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
         }}
       >
-        <SearchBar
-          className="rounded-lg border border-gray-200 shadow-sm"
-          hideCategoryFilter={true}
-          onCategoryChange={onCategoryChange}
+        <FigmaSearchBar
+          className="border border-gray-200 shadow-sm"
           onClearSearch={onClearSearch}
           onLocationChange={onLocationChange}
           onSearchSubmit={onSearchSubmit}
@@ -77,10 +74,6 @@ export function ProvidersPageHeader({
             onSectionChange={onSectionChange}
           />
         )}
-      </div>
-
-      <div className="pb-1.5 pl-6 pr-0">
-        <CategoryFilter />
       </div>
     </header>
   );

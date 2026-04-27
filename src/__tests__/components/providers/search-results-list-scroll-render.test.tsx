@@ -117,8 +117,8 @@ describe('SearchResultsList — layout rendering contract (Plan 053)', () => {
     // The CSS grid container should be present
     const gridContainer = container.querySelector('.grid');
     expect(gridContainer).toBeTruthy();
-    // Should have responsive column classes
-    expect(gridContainer?.className).toContain('grid-cols-1');
+    // Should have responsive column classes (2-column on mobile for better UX)
+    expect(gridContainer?.className).toContain('grid-cols-2');
 
     // All provider cards should render
     expect(screen.getAllByTestId('provider-card')).toHaveLength(12);
@@ -134,7 +134,7 @@ describe('SearchResultsList — layout rendering contract (Plan 053)', () => {
     // at 50+ items, losing the CSS grid. Post-fix, the grid must persist.
     const gridContainer = container.querySelector('.grid');
     expect(gridContainer).toBeTruthy();
-    expect(gridContainer?.className).toContain('grid-cols-1');
+    expect(gridContainer?.className).toContain('grid-cols-2');
 
     // All 60 cards should render in the grid (no virtualization hiding items)
     expect(screen.getAllByTestId('provider-card')).toHaveLength(60);

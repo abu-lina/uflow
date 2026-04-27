@@ -27,7 +27,7 @@ export const SkeletonGrid = memo(function SkeletonGrid({ count = 8, className = 
 
   return (
     <div
-      className={`grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4 ${className}`}
+      className={`grid grid-cols-2 gap-3 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 xl:grid-cols-4 ${className}`}
     >
       {skeletonCards}
     </div>

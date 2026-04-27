@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { getFeatureFlag } from '@/config/feature-flags';
 import type { FoodConcept } from '@/services/offers';
 
 interface WasMealResultsProps {
@@ -21,6 +23,13 @@ export function WasMealResults({
   onSelect,
   t,
 }: WasMealResultsProps) {
+  const isShowAllPreviewEnabled = getFeatureFlag('enableSearchExpandShowAllPreview');
+  const [showAllDishes, setShowAllDishes] = useState(false);
+
+  useEffect(() => {
+    setShowAllDishes(false);
+  }, [query]);
+
   if (query.length === 0) {
     if (hasCategoryResults) return null;
     return (
@@ -55,9 +64,14 @@ export function WasMealResults({
     );
   }
 
+  const visibleItems = isShowAllPreviewEnabled
+    ? (showAllDishes ? items : items.slice(0, 3))
+    : items;
+  const hasMoreDishes = isShowAllPreviewEnabled && !showAllDishes && items.length > 3;
+
   return (
     <div className="mt-4 max-h-64 space-y-1 overflow-y-auto">
-      {items.map((item) => {
+      {visibleItems.map((item) => {
         const itemLabel = item.name_de || item.name_en || '';
         const providerCountLabel = t('suchen.was.providerCount', { count: item.provider_count });
 
@@ -76,6 +90,16 @@ export function WasMealResults({
           </button>
         );
       })}
+
+      {hasMoreDishes ? (
+        <button
+          className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+          type="button"
+          onClick={() => setShowAllDishes(true)}
+        >
+          {t('suchen.was.showAllDishes')}
+        </button>
+      ) : null}
     </div>
   );
 }

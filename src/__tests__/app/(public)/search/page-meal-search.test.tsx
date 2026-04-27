@@ -19,7 +19,7 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.accordions.was': 'Was?',
     'suchen.accordions.wo': 'Wo',
     'suchen.accordions.wer': 'Wer',
-    'suchen.accordions.filter': 'Filter',
+    'suchen.accordions.filter': 'Values & Amenities',
     'suchen.clearAll': 'Alles loeschen',
     'suchen.searchButton': 'Suchen',
     'suchen.citySearchPlaceholder': 'Stadt suchen',

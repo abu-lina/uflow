@@ -147,14 +147,17 @@ export const en = {
     ariaLabel: "Search in the Ummah",
     all: "All",
     everywhere: "Everywhere",
-    unnamed: "Unnamed"
+    unnamed: "Unnamed",
+    open: "Open search",
+    submit: "Submit search",
+    filter: "Filter by location"
   },  suchen: {
     title: "Search",
     accordions: {
       was: "What?",
       wo: "Where",
       wer: "Who",
-      filter: "Filter"
+      filter: "Values & Amenities"
     },
     clearAll: "Clear all",
     searchButton: "Search",
@@ -184,6 +187,8 @@ export const en = {
       selectedWhat: "What: {{item}}",
       dishLabel: "Dish",
       removeSelection: "Remove selection",
+      showAllCuisines: "Show all cuisines",
+      showAllDishes: "Show all dishes",
       ummah: {
         searchPlaceholder: "Which service are you looking for?",
         serviceTypeLabel: "Service",
@@ -211,7 +216,8 @@ export const en = {
       selectionLabel: "SELECTED",
       selectedWhere: "Where: {{city}}",
       removeSelection: "Remove selection",
-      noResults: "No cities found"
+      noResults: "No cities found",
+      showAllCities: "Show all cities"
     },
     wer: {
       forMe: "For me",
@@ -223,6 +229,7 @@ export const en = {
       incrementAriaLabel: "Increase {{audience}}"
     },
     filter: {
+      showAllFilters: "Show all filters",
       items: {
         muslim: {
           title: "Inhaber ist Muslim",

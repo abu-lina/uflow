@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { MapPin, X } from 'lucide-react';
+import { getFeatureFlag } from '@/config/feature-flags';
 import { EmptyCityCard } from '@/features/search/components/EmptyCityCard';
 import type { PopularCity } from '@/services/providers';
 
@@ -42,16 +44,16 @@ function CityRow({
   return (
     <button
       aria-label={`${city} - ${countLabel}`}
-      className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-neutral-muted ${className ?? ''}`}
+      className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-background-selection/50 focus:outline-none focus:ring-2 focus:ring-primary/30 ${className ?? ''}`}
       type="button"
       onClick={() => onSelect(city)}
     >
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
-        <MapPin aria-hidden="true" className="h-5 w-5" />
+        <MapPin aria-hidden="true" className="h-6 w-6" />
       </div>
       <div className="min-w-0">
         <p className="truncate font-inter-tight text-base font-semibold text-text-primary">{city}</p>
-        <p className="truncate font-inter text-sm text-text-muted">{countLabel}</p>
+        <p className="truncate font-inter text-base font-light text-text-muted">{countLabel}</p>
       </div>
     </button>
   );
@@ -72,6 +74,17 @@ export function WoCityResults({
   onClearSelection,
   t,
 }: WoCityResultsProps) {
+  const isShowAllPreviewEnabled = getFeatureFlag('enableSearchExpandShowAllPreview');
+  const [showAllPopularCities, setShowAllPopularCities] = useState(false);
+  const [showAllRecentCities, setShowAllRecentCities] = useState(false);
+  const [showAllFilteredCities, setShowAllFilteredCities] = useState(false);
+
+  useEffect(() => {
+    setShowAllPopularCities(false);
+    setShowAllRecentCities(false);
+    setShowAllFilteredCities(false);
+  }, [query]);
+
   if (isLoading) {
     return (
       <p className="py-2 text-center text-sm text-text-muted">
@@ -90,6 +103,17 @@ export function WoCityResults({
 
   if (query.length < 2) {
     const countByCity = new Map(popularCities.map((entry) => [entry.city, entry.provider_count]));
+
+    const visiblePopularCities = isShowAllPreviewEnabled
+      ? (showAllPopularCities ? popularCities : popularCities.slice(0, 3))
+      : popularCities.slice(0, 5);
+    const visibleRecentSearches = isShowAllPreviewEnabled
+      ? (showAllRecentCities ? recentSearches : recentSearches.slice(0, 3))
+      : recentSearches.slice(0, 3);
+    const shouldShowRecent = recentSearches.length > 0;
+    const shouldShowPopular = !shouldShowRecent && popularCities.length > 0;
+    const hasMorePopularCities = isShowAllPreviewEnabled && !showAllPopularCities && popularCities.length > 3;
+    const hasMoreRecentSearches = isShowAllPreviewEnabled && !showAllRecentCities && recentSearches.length > 3;
 
     if (popularCities.length === 0 && recentSearches.length === 0 && !selectedCity) {
       return null;
@@ -124,13 +148,13 @@ export function WoCityResults({
           </>
         )}
 
-        {popularCities.length > 0 && (
+        {shouldShowPopular && (
           <>
             <p className="mb-1 mt-4 px-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
               {t('suchen.wo.popularLabel')}
             </p>
             <div className="space-y-1">
-              {popularCities.slice(0, 5).map((entry) => (
+              {visiblePopularCities.map((entry) => (
                 <CityRow
                   key={`popular:${entry.city}`}
                   city={entry.city}
@@ -140,16 +164,25 @@ export function WoCityResults({
                 />
               ))}
             </div>
+            {hasMorePopularCities ? (
+              <button
+                className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+                type="button"
+                onClick={() => setShowAllPopularCities(true)}
+              >
+                {t('suchen.wo.showAllCities')}
+              </button>
+            ) : null}
           </>
         )}
 
-        {recentSearches.length > 0 && (
+        {shouldShowRecent && (
           <>
             <p className="mb-1 mt-4 px-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
               {t('suchen.wo.recentLabel')}
             </p>
             <div className="space-y-1">
-              {recentSearches.slice(0, 3).map((recent) => (
+              {visibleRecentSearches.map((recent) => (
                 <CityRow
                   key={`recent:${recent.city}`}
                   city={recent.city}
@@ -159,6 +192,15 @@ export function WoCityResults({
                 />
               ))}
             </div>
+            {hasMoreRecentSearches ? (
+              <button
+                className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+                type="button"
+                onClick={() => setShowAllRecentCities(true)}
+              >
+                {t('suchen.wo.showAllCities')}
+              </button>
+            ) : null}
           </>
         )}
       </div>
@@ -168,7 +210,7 @@ export function WoCityResults({
   if (filteredCities.length > 0) {
     return (
       <div className="mt-4 space-y-1">
-        {filteredCities.map((entry) => (
+        {(isShowAllPreviewEnabled ? (showAllFilteredCities ? filteredCities : filteredCities.slice(0, 3)) : filteredCities).map((entry) => (
           <CityRow
             key={`filtered:${entry.city}`}
             city={entry.city}
@@ -177,6 +219,15 @@ export function WoCityResults({
             onSelect={onSelect}
           />
         ))}
+        {isShowAllPreviewEnabled && !showAllFilteredCities && filteredCities.length > 3 ? (
+          <button
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+            type="button"
+            onClick={() => setShowAllFilteredCities(true)}
+          >
+            {t('suchen.wo.showAllCities')}
+          </button>
+        ) : null}
       </div>
     );
   }

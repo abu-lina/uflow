@@ -69,7 +69,6 @@ function SearchPageContent() {
   const [woInputQuery, setWoInputQuery] = useState('');
   const [selectedWoCity, setSelectedWoCity] = useState<string | null>(null);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [filterOpen, setFilterOpen] = useState(true);
   const [cityCounts, setCityCounts] = useState<PopularCity[]>([]);
   const [isLoadingPopularCities, setIsLoadingPopularCities] = useState(false);
   const [isErrorPopularCities, setIsErrorPopularCities] = useState(false);
@@ -434,7 +433,7 @@ function SearchPageContent() {
     ? `${t('suchen.accordions.wer')}: ${werSelection.summary}`
     : `${t('suchen.accordions.wer')}: ${t('suchen.wer.forMe')}`;
   const filterAccordionTitle = selectedFilters.length > 0
-    ? `${t('suchen.accordions.filter')} · ${selectedFilters.length}`
+    ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
     : t('suchen.accordions.filter');
 
   return (
@@ -597,7 +596,11 @@ function SearchPageContent() {
           />
         </ExpandSection>
 
-        <ExpandSection isOpen={filterOpen} title={filterAccordionTitle} onToggle={setFilterOpen}>
+        <ExpandSection
+          isOpen={openAccordion === 'filter'}
+          title={filterAccordionTitle}
+          onToggle={(next) => setOpenAccordion(next ? 'filter' : null)}
+        >
           {selectedSection === 'ummah' ? (
             <UmmahFilterSection
               selectedFilters={selectedFilters}
@@ -641,7 +644,6 @@ function SearchPageContent() {
             setWerSelection(null);
             setWerResetSignal((prev) => prev + 1);
             setSelectedFilters([]);
-            setFilterOpen(false);
             setSelectedSection('food');
           }}
         >

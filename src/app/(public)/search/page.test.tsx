@@ -26,7 +26,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
         return 'Wer';
       }
       if (key === 'suchen.accordions.filter') {
-        return 'Filter';
+        return 'Values & Amenities';
       }
       if (key === 'suchen.citySearchPlaceholder') {
         return 'Search city';
@@ -288,20 +288,29 @@ describe('Search page Wo defaults and selection behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
     expect(screen.getByRole('button', { name: 'Männer erhöhen' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Search city')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Values & Amenities' }));
+    expect(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Männer erhöhen' })).not.toBeInTheDocument();
+
+    openWoAccordion();
+    expect(screen.getByLabelText('Search city')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /Inhaber ist Muslim/i })).not.toBeInTheDocument();
   });
 
   it('shows filter count in title and clears it with clear all', async () => {
     render(<SearchPage />);
 
-    expect(screen.getByRole('heading', { name: 'Filter' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Values & Amenities' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Values & Amenities' }));
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i }));
 
-    expect(screen.getByRole('heading', { name: 'Filter · 1' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Values & Amenities: 1' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
 
-    expect(screen.getByRole('heading', { name: 'Filter' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Filter · 1' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Values & Amenities' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Values & Amenities: 1' })).not.toBeInTheDocument();
   });
 });

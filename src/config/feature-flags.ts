@@ -15,6 +15,7 @@ export interface FeatureFlags {
   enableQuickImport: boolean;
   enableProviderSelectionModal: boolean;
   enableOSMImport: boolean;
+  enableSearchExpandShowAllPreview: boolean;
   
   // Development features
   enableDebugMode: boolean;
@@ -40,6 +41,7 @@ export const defaultFeatureFlags: FeatureFlags = {
   enableQuickImport: false, // Disabled by default - Beta feature
   enableProviderSelectionModal: false, // Disabled by default - Skip provider question
   enableOSMImport: true, // Enabled for testing - Beta feature
+  enableSearchExpandShowAllPreview: false, // Disabled by default - staged rollout for search expand previews
   
   // Development features - disabled by default
   enableDebugMode: false,
@@ -86,6 +88,7 @@ export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFl
     enableQuickImport: getFeatureFlag('enableQuickImport', overrides),
     enableProviderSelectionModal: getFeatureFlag('enableProviderSelectionModal', overrides),
     enableOSMImport: getFeatureFlag('enableOSMImport', overrides),
+    enableSearchExpandShowAllPreview: getFeatureFlag('enableSearchExpandShowAllPreview', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),
     isAppLaunched: getFeatureFlag('isAppLaunched', overrides),
     skipWaitlist: getFeatureFlag('skipWaitlist', overrides),

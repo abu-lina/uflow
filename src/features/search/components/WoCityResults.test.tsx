@@ -1,7 +1,18 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { WoCityResults } from './WoCityResults';
+
+let enableSearchExpandShowAllPreview = false;
+
+vi.mock('@/config/feature-flags', () => ({
+  getFeatureFlag: (key: string) => {
+    if (key === 'enableSearchExpandShowAllPreview') {
+      return enableSearchExpandShowAllPreview;
+    }
+    return false;
+  },
+}));
 
 const t = (key: string, variables?: Record<string, string | number>) => {
   const map: Record<string, string> = {
@@ -14,6 +25,7 @@ const t = (key: string, variables?: Record<string, string | number>) => {
     'suchen.wo.removeSelection': 'Auswahl entfernen',
     'suchen.wo.noResults': 'Keine Staedte gefunden',
     'suchen.cityNotRecognized': `${variables?.city ?? ''} ist uns nicht bekannt`,
+    'suchen.wo.showAllCities': 'Show all cities',
   };
 
   return map[key] ?? key;
@@ -24,6 +36,10 @@ vi.mock('@/features/search/components/EmptyCityCard', () => ({
 }));
 
 describe('WoCityResults (Plan 102)', () => {
+  beforeEach(() => {
+    enableSearchExpandShowAllPreview = false;
+  });
+
   it('renders loading state', () => {
     render(
       <WoCityResults
@@ -46,7 +62,7 @@ describe('WoCityResults (Plan 102)', () => {
     expect(screen.getByText('Suche laeuft...')).toBeInTheDocument();
   });
 
-  it('renders idle state with popular and recent rows', () => {
+  it('renders only recent rows when recent searches exist', () => {
     const onSelect = vi.fn();
 
     render(
@@ -70,13 +86,40 @@ describe('WoCityResults (Plan 102)', () => {
       />, 
     );
 
-    expect(screen.getByText('BELIEBT')).toBeInTheDocument();
     expect(screen.getByText('ZULETZT GESUCHT')).toBeInTheDocument();
-    expect(screen.getByText('Berlin')).toBeInTheDocument();
-    expect(screen.getByText('12 Anbieter')).toBeInTheDocument();
+    expect(screen.queryByText('BELIEBT')).not.toBeInTheDocument();
+    expect(screen.queryByText('Berlin')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Köln - 0 Anbieter' }));
     expect(onSelect).toHaveBeenCalledWith('Köln');
+  });
+
+  it('falls back to popular rows when no recent searches exist', () => {
+    render(
+      <WoCityResults
+        filteredCities={[]}
+        isCheckingCityValidity={false}
+        isError={false}
+        isLoading={false}
+        isValidNoProviderCity={null}
+        popularCities={[
+          { city: 'Berlin', provider_count: 12 },
+          { city: 'Hamburg', provider_count: 8 },
+        ]}
+        query=""
+        recentSearches={[]}
+        selectedCity={null}
+        t={t}
+        userEmail={null}
+        onClearSelection={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('BELIEBT')).toBeInTheDocument();
+    expect(screen.queryByText('ZULETZT GESUCHT')).not.toBeInTheDocument();
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
+    expect(screen.getByText('12 Anbieter')).toBeInTheDocument();
   });
 
   it('renders active selection row with remove action', () => {
@@ -125,5 +168,41 @@ describe('WoCityResults (Plan 102)', () => {
     );
 
     expect(screen.getByText('Empty city: Mannheim')).toBeInTheDocument();
+  });
+
+  it('shows only first three query cities with show-all action when more exist', () => {
+    enableSearchExpandShowAllPreview = true;
+
+    render(
+      <WoCityResults
+        filteredCities={[
+          { city: 'Berlin', provider_count: 12 },
+          { city: 'Hamburg', provider_count: 8 },
+          { city: 'Koeln', provider_count: 7 },
+          { city: 'Bonn', provider_count: 3 },
+        ]}
+        isCheckingCityValidity={false}
+        isError={false}
+        isLoading={false}
+        isValidNoProviderCity={null}
+        popularCities={[]}
+        query="be"
+        recentSearches={[]}
+        selectedCity={null}
+        t={t}
+        userEmail={null}
+        onClearSelection={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
+    expect(screen.getByText('Hamburg')).toBeInTheDocument();
+    expect(screen.getByText('Koeln')).toBeInTheDocument();
+    expect(screen.queryByText('Bonn')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show all cities' }));
+
+    expect(screen.getByText('Bonn')).toBeInTheDocument();
   });
 });

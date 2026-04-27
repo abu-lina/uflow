@@ -1,5 +1,7 @@
 import { Check, CircleParking, HandHeart, HeartHandshake, Moon } from 'lucide-react';
 import type { SVGProps } from 'react';
+import { useState } from 'react';
+import { getFeatureFlag } from '@/config/feature-flags';
 import { PrayerRug } from '@/components/icons/PrayerRug';
 import type { Section } from '@/providers/search-provider';
 
@@ -51,12 +53,19 @@ const FILTER_ITEMS: FilterItem[] = [
 ];
 
 export function FilterSection({ selectedSection, selectedFilters, onToggleFilter, t }: FilterSectionProps) {
-  const visibleFilterItems =
+  const isShowAllPreviewEnabled = getFeatureFlag('enableSearchExpandShowAllPreview');
+  const [showAllFilters, setShowAllFilters] = useState(false);
+
+  const sectionFilterItems =
     selectedSection === 'ummah'
       ? []
       : selectedSection === 'business'
         ? FILTER_ITEMS.filter((item) => item.key !== 'muslim')
         : FILTER_ITEMS;
+
+  const visibleFilterItems = isShowAllPreviewEnabled
+    ? (showAllFilters ? sectionFilterItems : sectionFilterItems.slice(0, 3))
+    : sectionFilterItems;
 
   return (
     <div className="mt-3 flex flex-col gap-3">
@@ -91,6 +100,16 @@ export function FilterSection({ selectedSection, selectedFilters, onToggleFilter
           </button>
         );
       })}
+
+      {isShowAllPreviewEnabled && !showAllFilters && sectionFilterItems.length > 3 ? (
+        <button
+          className="mt-1 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+          type="button"
+          onClick={() => setShowAllFilters(true)}
+        >
+          {t('suchen.filter.showAllFilters')}
+        </button>
+      ) : null}
     </div>
   );
 }

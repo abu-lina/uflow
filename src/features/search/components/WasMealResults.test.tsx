@@ -1,7 +1,18 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { WasMealResults } from './WasMealResults';
+
+let enableSearchExpandShowAllPreview = false;
+
+vi.mock('@/config/feature-flags', () => ({
+  getFeatureFlag: (key: string) => {
+    if (key === 'enableSearchExpandShowAllPreview') {
+      return enableSearchExpandShowAllPreview;
+    }
+    return false;
+  },
+}));
 
 const t = (key: string, variables?: Record<string, string | number>) => {
   const map: Record<string, string> = {
@@ -11,11 +22,16 @@ const t = (key: string, variables?: Record<string, string | number>) => {
     'suchen.was.noResults': 'Noch nichts gefunden - aber wir wachsen!',
     'suchen.was.notFoundEncouragement': 'Vielleicht bald verfuegbar.',
     'suchen.was.providerCount': `${variables?.count ?? 0} Restaurants`,
+    'suchen.was.showAllDishes': 'Show all dishes',
   };
   return map[key] ?? key;
 };
 
 describe('WasMealResults (Plan 096)', () => {
+  beforeEach(() => {
+    enableSearchExpandShowAllPreview = false;
+  });
+
   it('renders empty-query placeholder', () => {
     render(
       <WasMealResults
@@ -86,6 +102,56 @@ describe('WasMealResults (Plan 096)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Doener/ }));
     expect(onSelect).toHaveBeenCalledWith('Doener');
+  });
+
+  it('shows only first three dishes with show-all action when more exist', () => {
+    enableSearchExpandShowAllPreview = true;
+
+    render(
+      <WasMealResults
+        items={[
+          { offer_id: 'offer-1', name_de: 'Doener', name_en: 'Doner', provider_count: 3 },
+          { offer_id: 'offer-2', name_de: 'Pizza', name_en: 'Pizza', provider_count: 2 },
+          { offer_id: 'offer-3', name_de: 'Falafel', name_en: 'Falafel', provider_count: 4 },
+          { offer_id: 'offer-4', name_de: 'Lahmacun', name_en: 'Lahmacun', provider_count: 1 },
+        ]}
+        isLoading={false}
+        isError={false}
+        query="do"
+        onSelect={vi.fn()}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('Doener')).toBeInTheDocument();
+    expect(screen.getByText('Pizza')).toBeInTheDocument();
+    expect(screen.getByText('Falafel')).toBeInTheDocument();
+    expect(screen.queryByText('Lahmacun')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show all dishes' }));
+
+    expect(screen.getByText('Lahmacun')).toBeInTheDocument();
+  });
+
+  it('keeps show-all preview inactive by default behind feature flag', () => {
+    render(
+      <WasMealResults
+        items={[
+          { offer_id: 'offer-1', name_de: 'Doener', name_en: 'Doner', provider_count: 3 },
+          { offer_id: 'offer-2', name_de: 'Pizza', name_en: 'Pizza', provider_count: 2 },
+          { offer_id: 'offer-3', name_de: 'Falafel', name_en: 'Falafel', provider_count: 4 },
+          { offer_id: 'offer-4', name_de: 'Lahmacun', name_en: 'Lahmacun', provider_count: 1 },
+        ]}
+        isLoading={false}
+        isError={false}
+        query="do"
+        onSelect={vi.fn()}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('Lahmacun')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show all dishes' })).not.toBeInTheDocument();
   });
 
   it('renders no-results encouragement', () => {

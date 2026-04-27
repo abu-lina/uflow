@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.32] - 2026-04-27
+
+### Added
+
+- **Search expand show-all preview** (feature-flagged, default OFF — `NEXT_PUBLIC_FEATURE_ENABLESEARCHEXPANDSHOWALLPREVIEW`):
+  - `WasMealResults`, `WasCategoryResults`, `WoCityResults`, `FilterSection` sections now show max 3 items in idle state when flag enabled, with a section-specific reveal button
+  - Section-aware "Show all" CTA labels across 6 locales (DE, EN, AR, TR, UR, PS): `suchen.was.showAllCuisines`, `suchen.was.showAllDishes`, `suchen.wo.showAllCities`, `suchen.filter.showAllFilters`
+  - `FilterSection` preview respects `selectedSection` context (ummah = empty, business = no muslim filter, others = all)
+  - **Recent-over-Popular mutual exclusivity**: Recent searches hide Popular listings when any recent search history exists; Popular renders only as fallback when recent list is empty — enforced in both `WasCategoryResults` and `WoCityResults`
+  - **FigmaSearchBar** new compact search bar component with hamburger collapse/expand and location filtering, integrated into `ProvidersPageHeader`
+
+### Improved
+
+- Provider search result grid uses 2-column layout on mobile for better card density
+- City rows in `WoCityResults` styled with `hover:bg-background-selection/50`, `focus:ring-2 focus:ring-primary/30`, `h-6 w-6` map icon, and `text-base font-light` subtitle for visual alignment with filter rows
+- Search action aria-labels (`search.open`, `search.submit`, `search.filter`) localized across all 6 locales
+
+### Tests
+
+- Added feature-flag ON/OFF tests for `WasMealResults`, `WasCategoryResults`, `WoCityResults`, `FilterSection`
+- Added business-section and ummah-section filter hiding tests for `FilterSection`
+- Added recent-priority + popular-fallback tests for `WasCategoryResults` and `WoCityResults`
+- Added `FigmaSearchBar.test.tsx` covering localized labels, submit, and location dropdown
+
 ## [0.10.31] - 2026-04-27
 
 ### Added

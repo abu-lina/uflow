@@ -147,14 +147,17 @@ export const ps = {
     ariaLabel: "په امت کې لټون",
     all: "ټول",
     everywhere: "هر چیرته",
-    unnamed: "بې نومه"
+    unnamed: "بې نومه",
+    open: "لټون پرانیزه",
+    submit: "لټون واستوه",
+    filter: "د ځای له مخې فلټر کړه"
   },  suchen: {
     title: "لټون",
     accordions: {
       was: "څه؟",
       wo: "چیرته",
       wer: "څوک: زما لپاره",
-      filter: "فلټر"
+      filter: "ارزښتونه او اسانتياوې"
     },
     clearAll: "ټول پاک کړ",
     searchButton: "لټون",
@@ -184,6 +187,8 @@ export const ps = {
       selectedWhat: "څه: {{item}}",
       dishLabel: "خواړه",
       removeSelection: "ټاکنه لرې کول",
+      showAllCuisines: "ټول پخلنځي وښیه",
+      showAllDishes: "ټول خواړه وښیه",
       ummah: {
         searchPlaceholder: "کوم خدمت لټوې؟",
         serviceTypeLabel: "خدمت",
@@ -211,9 +216,11 @@ export const ps = {
       selectionLabel: "غوره شوی",
       selectedWhere: "چیرته: {{city}}",
       removeSelection: "ټاکنه لرې کول",
-      noResults: "هیڅ ښار ونه موندل شو"
+      noResults: "هیڅ ښار ونه موندل شو",
+      showAllCities: "ټول ښارونه وښیه"
     },
     filter: {
+      showAllFilters: "ټول فلټرونه وښیه",
       items: {
         muslim: {
           title: "Inhaber ist Muslim",

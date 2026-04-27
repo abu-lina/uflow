@@ -311,26 +311,25 @@ export const ProviderCard = React.memo(
     const showSkeleton = !imageLoaded && !gradient;
 
     return (
-      <div ref={ref} className={`inline-flex shrink-0 flex-col items-start ${className || ''}`}>
-        <div className="relative flex h-64 w-72 flex-col items-center justify-between">
+      <div ref={ref} className={`flex w-full flex-col items-start ${className || ''}`}>
+        <div className="relative flex h-36 w-full flex-col items-center justify-between sm:h-64">
           {gradient ? (
             <div
-              className="\ absolute left-0 top-0 flex h-64 w-72 flex-col items-center justify-between
-              rounded-t-3xl bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500"
+              className="absolute inset-0 flex flex-col items-center justify-between rounded-t-3xl bg-gradient-to-r from-orange-300 via-orange-200 to-stone-500"
             />
           ) : (
             <>
               {showSkeleton && (
-                <div className="absolute left-0 top-0 h-64 w-72 animate-pulse rounded-t-3xl bg-neutral-200" />
+                <div className="absolute inset-0 animate-pulse rounded-t-3xl bg-neutral-200" />
               )}
-              <div className={`border-uFlowWhite absolute left-0 top-0 h-64 w-72 overflow-hidden rounded-t-3xl border ${showSkeleton ? 'opacity-0' : 'opacity-100'}`}>
+              <div className={`border-uFlowWhite absolute inset-0 overflow-hidden rounded-t-3xl border ${showSkeleton ? 'opacity-0' : 'opacity-100'}`}>
                 <Image
                   fill
                   alt={provider_name}
                   className="object-cover"
                   loading={loading}
                   priority={priority}
-                  sizes="(max-width: 768px) 100vw, 288px"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 288px"
                   src={getImageUrl()}
                   onLoad={() => setImageLoaded(true)}
                 />
@@ -368,24 +367,24 @@ export const ProviderCard = React.memo(
           )}
         </div>
         {showSkeleton ? (
-          <div className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5">
+          <div className="flex w-full flex-col items-center rounded-b-3xl bg-white p-2 sm:p-3.5">
             <div className="flex w-full flex-col items-start gap-3.5">
               <div className="h-6 w-3/4 animate-pulse rounded bg-neutral-200" />
               <div className="h-4 w-1/2 animate-pulse rounded bg-neutral-200" />
             </div>
           </div>
         ) : (
-          <div className="flex w-72 flex-col items-center rounded-b-3xl bg-white p-3.5">
+          <div className="flex w-full flex-col items-center rounded-b-3xl bg-white p-2 sm:p-3.5">
           <div className="flex w-full flex-col items-start gap-3.5">
             <div className="flex w-full min-w-0 flex-col items-start gap-0.5">
               <span
-                className="w-full min-w-0 truncate font-inter-tight text-xl font-semibold text-content"
+                className="w-full min-w-0 truncate font-inter-tight text-base font-semibold text-content sm:text-xl"
                 title={provider_name}
               >
                 {provider_name}
               </span>
               <button
-                className="w-full min-w-0 truncate text-uFlowText2 font-inter text-sm font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left"
+                className="w-full min-w-0 truncate text-uFlowText2 font-inter text-xs font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left sm:text-sm"
                 disabled={!isAddressNavigable(address_street ?? undefined, address_zip ?? undefined, address_city ?? undefined)}
                 title={address ? `${address} - ${t('providers.addressTapToNavigate')}` : ''}
                 onClick={() => {

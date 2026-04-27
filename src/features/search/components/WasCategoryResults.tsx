@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { UtensilsCrossed, X } from 'lucide-react';
+import { getFeatureFlag } from '@/config/feature-flags';
 import type { FoodCategory } from '@/services/offers';
 import { safeJsonParse } from '@/utils/json';
 
@@ -79,6 +81,17 @@ export function WasCategoryResults({
   onClearSelection,
   t,
 }: WasCategoryResultsProps) {
+  const isShowAllPreviewEnabled = getFeatureFlag('enableSearchExpandShowAllPreview');
+  const [showAllPopular, setShowAllPopular] = useState(false);
+  const [showAllRecent, setShowAllRecent] = useState(false);
+  const [showAllCuisines, setShowAllCuisines] = useState(false);
+
+  useEffect(() => {
+    setShowAllPopular(false);
+    setShowAllRecent(false);
+    setShowAllCuisines(false);
+  }, [query]);
+
   if (isLoading) {
     return (
       <p className="py-2 text-center text-sm text-text-muted">
@@ -99,8 +112,16 @@ export function WasCategoryResults({
     return null;
   }
 
-  const visiblePopularItems = items.slice(0, 3);
-  const visibleRecentSearches = recentSearches.slice(0, 3);
+  const visibleRecentSearches = isShowAllPreviewEnabled
+    ? (showAllRecent ? recentSearches : recentSearches.slice(0, 3))
+    : recentSearches.slice(0, 3);
+  const visiblePopularItems = isShowAllPreviewEnabled
+    ? (showAllPopular ? items : items.slice(0, 3))
+    : items.slice(0, 3);
+  const shouldShowRecent = recentSearches.length > 0;
+  const shouldShowPopular = !shouldShowRecent && items.length > 0;
+  const hasMorePopularItems = isShowAllPreviewEnabled && !showAllPopular && items.length > 3;
+  const hasMoreRecentSearches = isShowAllPreviewEnabled && !showAllRecent && recentSearches.length > 3;
 
   const CategoryRow = ({ category }: { category: FoodCategory }) => {
     const label = category.name_de || category.name_en || '';
@@ -180,7 +201,7 @@ export function WasCategoryResults({
             </div>
           </>
         )}
-        {visiblePopularItems.length > 0 && (
+        {shouldShowPopular && (
           <>
             <p className="mb-1 mt-4 px-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
               {t('suchen.was.popularLabel')}
@@ -190,9 +211,18 @@ export function WasCategoryResults({
                 <CategoryRow key={category.category_id} category={category} />
               ))}
             </div>
+            {hasMorePopularItems ? (
+              <button
+                className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+                type="button"
+                onClick={() => setShowAllPopular(true)}
+              >
+                {t('suchen.was.showAllCuisines')}
+              </button>
+            ) : null}
           </>
         )}
-        {visibleRecentSearches.length > 0 && (
+        {shouldShowRecent && (
           <>
             <p className="mb-1 mt-4 px-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
               {t('suchen.was.recentLabel')}
@@ -226,6 +256,15 @@ export function WasCategoryResults({
                 </button>
               ))}
             </div>
+            {hasMoreRecentSearches ? (
+              <button
+                className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+                type="button"
+                onClick={() => setShowAllRecent(true)}
+              >
+                {t('suchen.was.showAllCuisines')}
+              </button>
+            ) : null}
           </>
         )}
       </div>
@@ -239,10 +278,19 @@ export function WasCategoryResults({
         {t('suchen.was.cuisineLabel')}
       </p>
       <div className="space-y-1">
-        {items.map((category) => (
+        {(isShowAllPreviewEnabled ? (showAllCuisines ? items : items.slice(0, 3)) : items).map((category) => (
           <CategoryRow key={category.category_id} category={category} />
         ))}
       </div>
+      {isShowAllPreviewEnabled && !showAllCuisines && items.length > 3 ? (
+        <button
+          className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+          type="button"
+          onClick={() => setShowAllCuisines(true)}
+        >
+          {t('suchen.was.showAllCuisines')}
+        </button>
+      ) : null}
     </div>
   );
 }

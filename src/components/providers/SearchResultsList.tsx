@@ -117,7 +117,7 @@ export const SearchResultsList = memo(function SearchResultsList({
 
   return (
     <>
-      <div className="grid grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
         {filteredResults.map((result, index) => {
           const provider = searchResultToProvider(result);
           return (
@@ -161,7 +161,7 @@ export const SearchResultsList = memo(function SearchResultsList({
         <div ref={loadMoreRef} className="flex flex-col items-center gap-4 py-8">
           {isFetchingNextPage ? (
             // Show skeleton cards while loading (better perceived performance)
-            <div className="grid w-full grid-cols-1 justify-items-center gap-8 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid w-full grid-cols-2 gap-3 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <SkeletonCard key={`skeleton-${i}`} />
               ))}

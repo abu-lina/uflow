@@ -147,14 +147,17 @@ export const ur = {
     ariaLabel: "امت میں تلاش",
     all: "سب",
     everywhere: "ہر جگہ",
-    unnamed: "بے نام"
+    unnamed: "بے نام",
+    open: "تلاش کھولیں",
+    submit: "تلاش بھیجیں",
+    filter: "مقام کے لحاظ سے فلٹر کریں"
   },  suchen: {
     title: "تلاش کریں",
     accordions: {
       was: "کیا؟",
       wo: "کہاں",
       wer: "کون: میرے لیے",
-      filter: "فلٹر"
+      filter: "اقدار اور سہولیات"
     },
     clearAll: "سب صاف کریں",
     searchButton: "تلاش کریں",
@@ -184,6 +187,8 @@ export const ur = {
       selectedWhat: "کیا: {{item}}",
       dishLabel: "ڈش",
       removeSelection: "انتخاب ہٹائیں",
+      showAllCuisines: "تمام کھانے دکھائیں",
+      showAllDishes: "تمام ڈشز دکھائیں",
       ummah: {
         searchPlaceholder: "آپ کون سی خدمت تلاش کر رہے ہیں؟",
         serviceTypeLabel: "خدمت",
@@ -211,9 +216,11 @@ export const ur = {
       selectionLabel: "منتخب",
       selectedWhere: "کہاں: {{city}}",
       removeSelection: "انتخاب ہٹائیں",
-      noResults: "کوئی شہر نہیں ملا"
+      noResults: "کوئی شہر نہیں ملا",
+      showAllCities: "تمام شہر دکھائیں"
     },
     filter: {
+      showAllFilters: "تمام فلٹرز دکھائیں",
       items: {
         muslim: {
           title: "Inhaber ist Muslim",
