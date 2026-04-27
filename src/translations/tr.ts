@@ -181,7 +181,24 @@ export const tr = {
       selectionLabel: "SEÇİLEN",
       selectedWhat: "Ne: {{item}}",
       dishLabel: "Yemek",
-      removeSelection: "Seçimi kaldır"
+      removeSelection: "Seçimi kaldır",
+      ummah: {
+        searchPlaceholder: "Hangi hizmeti arıyorsun?",
+        serviceTypeLabel: "Hizmet",
+        browseServiceTypes: "Hizmetlere göz at",
+        items: {
+          islamischeBildung: "İslami eğitim",
+          beratung: "Danışmanlık",
+          rechtshilfe: "Hukuki yardım",
+          jugenddienste: "Gençlik hizmetleri",
+          gesundheitsversorgung: "Sağlık hizmetleri",
+          eheberatung: "Evlilik danışmanlığı",
+          bestattungsdienste: "Cenaze hizmetleri",
+          sozialeHilfe: "Sosyal destek",
+          sprachkurse: "Dil kursları",
+          quranUnterricht: "Kur'an dersleri"
+        }
+      }
     },
     wo: {
       loading: "Aranıyor...",
@@ -215,6 +232,28 @@ export const tr = {
         gebet: {
           title: "Bietet Gebetsmoeglichkeiten",
           subtitle: "Gebetsraum vorhanden"
+        }
+      },
+      ummahItems: {
+        kostenlos: {
+          title: "Ücretsiz",
+          subtitle: "Ücretsiz hizmet"
+        },
+        online: {
+          title: "Çevrimiçi mevcut",
+          subtitle: "Uzaktan danışmanlık mümkün"
+        },
+        sprache: {
+          title: "Çok dilli",
+          subtitle: "Arapça, Türkçe, Urduca ve daha fazlası"
+        },
+        zertifiziert: {
+          title: "Sertifikalı",
+          subtitle: "Tanınan nitelik"
+        },
+        geschlechtergetrennt: {
+          title: "Cinsiyete göre ayrı",
+          subtitle: "Erkekler ve kadınlar için ayrı alanlar"
         }
       }
     }

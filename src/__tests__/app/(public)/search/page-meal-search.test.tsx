@@ -25,12 +25,27 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.citySearchPlaceholder': 'Stadt suchen',
     'suchen.searchCityPrompt': 'Suche nach deiner Stadt',
     'suchen.was.searchPlaceholder': 'Was suchst du?',
+    'suchen.was.ummah.searchPlaceholder': 'Welchen Dienst suchst du?',
     'suchen.was.loading': 'Suche laeuft...',
     'suchen.was.searchError': 'Suche nicht verfuegbar. Bitte versuche es erneut.',
     'suchen.was.noResults': 'Noch nichts gefunden - aber wir wachsen!',
     'suchen.was.notFoundEncouragement': 'Vielleicht bald verfuegbar.',
     'suchen.was.providerCount': '{{count}} Restaurants',
     'suchen.was.selectedWhat': 'Was: {{item}}',
+    'suchen.was.selectionLabel': 'AUSWAHL',
+    'suchen.was.removeSelection': 'Auswahl entfernen',
+    'suchen.was.ummah.browseServiceTypes': 'Dienste durchsuchen',
+    'suchen.was.ummah.serviceTypeLabel': 'Dienst',
+    'suchen.was.ummah.items.islamischeBildung': 'Islamische Bildung',
+    'suchen.was.ummah.items.beratung': 'Beratung',
+    'suchen.was.ummah.items.rechtshilfe': 'Rechtshilfe',
+    'suchen.was.ummah.items.jugenddienste': 'Jugenddienste',
+    'suchen.was.ummah.items.gesundheitsversorgung': 'Gesundheitsversorgung',
+    'suchen.was.ummah.items.eheberatung': 'Eheberatung',
+    'suchen.was.ummah.items.bestattungsdienste': 'Bestattungsdienste',
+    'suchen.was.ummah.items.sozialeHilfe': 'Soziale Hilfe',
+    'suchen.was.ummah.items.sprachkurse': 'Sprachkurse',
+    'suchen.was.ummah.items.quranUnterricht': 'Quran-Unterricht',
     'suchen.filter.items.muslim.title': 'Inhaber ist Muslim',
     'suchen.filter.items.muslim.subtitle': 'Muslimischer Inhaber',
     'suchen.filter.items.spenden.title': 'Spendet fuer Gute Zwecke',
@@ -41,6 +56,16 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.filter.items.parken.subtitle': 'Parkplaetze vorhanden',
     'suchen.filter.items.gebet.title': 'Bietet Gebetsmoeglichkeiten',
     'suchen.filter.items.gebet.subtitle': 'Gebetsraum vorhanden',
+    'suchen.filter.ummahItems.kostenlos.title': 'Kostenlos',
+    'suchen.filter.ummahItems.kostenlos.subtitle': 'Kostenfreies Angebot',
+    'suchen.filter.ummahItems.online.title': 'Online verfügbar',
+    'suchen.filter.ummahItems.online.subtitle': 'Fernberatung möglich',
+    'suchen.filter.ummahItems.sprache.title': 'Mehrsprachig',
+    'suchen.filter.ummahItems.sprache.subtitle': 'Arabisch, Türkisch, Urdu u.v.m.',
+    'suchen.filter.ummahItems.zertifiziert.title': 'Zertifiziert',
+    'suchen.filter.ummahItems.zertifiziert.subtitle': 'Anerkannte Qualifikation',
+    'suchen.filter.ummahItems.geschlechtergetrennt.title': 'Geschlechtergetrennt',
+    'suchen.filter.ummahItems.geschlechtergetrennt.subtitle': 'Separate Bereiche für Männer & Frauen',
     'common.loading': 'Loading',
     'location.unnamed': 'Unbenannt',
   };
@@ -74,7 +99,20 @@ vi.mock('@/components/layout/PageContent', () => ({
 }));
 
 vi.mock('@/features/search/components/SectionSelector', () => ({
-  SectionSelector: () => <div>SectionSelector</div>,
+  SectionSelector: ({
+    selectedSection,
+    onSectionChange,
+  }: {
+    selectedSection: 'food' | 'ummah' | 'business';
+    onSectionChange: (section: 'food' | 'ummah' | 'business') => void;
+  }) => (
+    <div>
+      <p>SectionSelector: {selectedSection}</p>
+      <button type="button" onClick={() => onSectionChange('food')}>Go Food</button>
+      <button type="button" onClick={() => onSectionChange('ummah')}>Go Ummah</button>
+      <button type="button" onClick={() => onSectionChange('business')}>Go Business</button>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/ui/ExpandSection', () => ({
@@ -87,8 +125,16 @@ vi.mock('@/components/ui/ExpandSection', () => ({
 }));
 
 vi.mock('@/components/ui/Button', () => ({
-  Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
-    <button type="button" onClick={onClick}>{children}</button>
+  Button: ({
+    children,
+    disabled,
+    onClick,
+  }: {
+    children: React.ReactNode;
+    disabled?: boolean;
+    onClick?: () => void;
+  }) => (
+    <button disabled={disabled} type="button" onClick={onClick}>{children}</button>
   ),
 }));
 
@@ -129,6 +175,12 @@ vi.mock('lucide-react', () => ({
   HeartHandshake: () => <span>heart-handshake</span>,
   CircleParking: () => <span>circle-parking</span>,
   Check: () => <span>check</span>,
+  Gift: () => <span>gift</span>,
+  Globe: () => <span>globe</span>,
+  Languages: () => <span>languages</span>,
+  BadgeCheck: () => <span>badge-check</span>,
+  Users: () => <span>users</span>,
+  BriefcaseBusiness: () => <span>briefcase-business</span>,
 }));
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -264,5 +316,27 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
     expect(mockRouterPush).toHaveBeenCalledWith('/providers?section=food&q=Doener&filters=muslim');
+  });
+
+  it('clears food WAS selection when switching from food to ummah section', async () => {
+    render(<SearchPage />);
+
+    const input = screen.getByRole('searchbox', { name: 'Angebote suchen' });
+    fireEvent.change(input, { target: { value: 'doe' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Select result for doe/i }));
+    expect(screen.getByText('Was: Doener')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go Ummah' }));
+
+    expect(screen.queryByText('Was: Doener')).not.toBeInTheDocument();
+    expect(screen.getByText('Was?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Suchen' })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: /Kostenlos/i })).toBeInTheDocument();
   });
 });

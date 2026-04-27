@@ -184,7 +184,24 @@ export const de = {
       selectionLabel: "AUSWAHL",
       selectedWhat: "Was: {{item}}",
       dishLabel: "Gericht",
-      removeSelection: "Auswahl entfernen"
+      removeSelection: "Auswahl entfernen",
+      ummah: {
+        searchPlaceholder: "Welchen Dienst suchst du?",
+        serviceTypeLabel: "Dienst",
+        browseServiceTypes: "Dienste durchsuchen",
+        items: {
+          islamischeBildung: "Islamische Bildung",
+          beratung: "Beratung",
+          rechtshilfe: "Rechtshilfe",
+          jugenddienste: "Jugenddienste",
+          gesundheitsversorgung: "Gesundheitsversorgung",
+          eheberatung: "Eheberatung",
+          bestattungsdienste: "Bestattungsdienste",
+          sozialeHilfe: "Soziale Hilfe",
+          sprachkurse: "Sprachkurse",
+          quranUnterricht: "Quran-Unterricht"
+        }
+      }
     },
     wo: {
       loading: "Suche läuft...",
@@ -227,6 +244,28 @@ export const de = {
         gebet: {
           title: "Bietet Gebetsmöglichkeiten",
           subtitle: "Gebetsraum vorhanden"
+        }
+      },
+      ummahItems: {
+        kostenlos: {
+          title: "Kostenlos",
+          subtitle: "Kostenfreies Angebot"
+        },
+        online: {
+          title: "Online verfügbar",
+          subtitle: "Fernberatung möglich"
+        },
+        sprache: {
+          title: "Mehrsprachig",
+          subtitle: "Arabisch, Türkisch, Urdu u.v.m."
+        },
+        zertifiziert: {
+          title: "Zertifiziert",
+          subtitle: "Anerkannte Qualifikation"
+        },
+        geschlechtergetrennt: {
+          title: "Geschlechtergetrennt",
+          subtitle: "Separate Bereiche für Männer & Frauen"
         }
       }
     }
