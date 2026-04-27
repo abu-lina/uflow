@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-26
+**Last Updated**: 2026-04-27
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.29
+**Current Version**: v0.10.30
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -86,6 +86,7 @@
 | 2026-04-25       | Plan 103 released (v0.10.27): WerAudienceFilter — Wer? audience selector on search page | WerAudienceFilter component with 3 rows (Männer, Frauen, Kinder), each with colored icon, label, subtitle, and independent ±stepper counter. Min-one-person guard enforced. Clear-all resets Wer counters via werResetSignal. Single-open accordion invariant maintained. 6 translation keys, 3 SVG icons, 3 unit + 2 page regression tests. Tag v0.10.27 pushed. Closes #164 |
 | 2026-04-26       | Plan 104 released (v0.10.28): Filter accordion UI — 5 Islamic-context filter options | FilterSection accordion with 5 filter categories (audience/Wer stepper, prayer space, parking, delivery, dietary). Gebet icon updated to PrayerRug stroke-rounded design. 1086 tests passing. Tag v0.10.28 pushed. PR #167 merged. |
 | 2026-04-26       | Plan 105 released (v0.10.29): Wire Values & Amenities filters to provider search results | Wired 5 filter keys (muslim→muslim_owned, spenden→accepts_donations, solidaritaet→solidarity_pricing, parken→has_parking, gebet→has_prayer_space) from /search UI through URL→API→service layer AND predicates. AND semantics, silent-strip unknown keys, ummah section isolated, React Query cache partitioned. 39/39 filter tests pass. Tag v0.10.29 pushed. PR #169. Closes #168 |
+| 2026-04-27       | Plan 106 released (v0.10.30): Badge/Boolean Data Coherence | M1: badge-to-boolean sync trigger (migration 076 — AFTER INSERT/DELETE on provider_badges); M2: creation path wiring (providerService.ts writes badge rows + boolean columns on provider creation); M3: section-aware FilterSection (ummah hides all provider filters, business hides muslim filter). Tag v0.10.30 pushed. Closes #170 |
 
 ---
 
@@ -106,12 +107,12 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.29 — Released 2026-04-26 · Session S105 complete
+**Current Working Release**: v0.10.30 — Released 2026-04-27 · Session S105 complete
 
-_Session S105 released (2026-04-26): Plan 105 — Values & Amenities filter data wiring. Wired 5 filter keys (muslim, spenden, solidaritaet, parken, gebet) from /search UI through URL, API route validation, and service layer AND predicates against provider boolean columns. AND semantics, silent-strip unknown keys, ummah section isolated. 39/39 filter tests + 1092 total pass. Tag v0.10.29 pushed. PR #169. Issue #168 closed._
+_Session S105 released (2026-04-27): Plan 106 — Badge/Boolean Data Coherence. M1: badge-to-boolean sync trigger (migration 076); M2: creation path badge + boolean wiring in providerService.ts; M3: section-aware FilterSection (ummah hides all provider filters, business hides muslim filter). 1101/1119 tests pass. Tag v0.10.30 pushed. Issue #170 closed._
 
 **Release Status**: Released
-**Ready for Release**: ✅ v0.10.29 complete
+**Ready for Release**: ✅ v0.10.30 complete
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -128,6 +129,7 @@ _Session S105 released (2026-04-26): Plan 105 — Values & Amenities filter data
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.30 | 2026-04-27 | Plan 106 (Badge/Boolean Data Coherence — sync trigger + creation path wiring + section-aware filters — Closes #170) | Released |
 | v0.10.29 | 2026-04-26 | Plan 105 (Values & Amenities filter wiring — PR #169, Closes #168) | Released |
 | v0.10.28 | 2026-04-26 | Plan 104 (Filter accordion UI — 5 Islamic-context options — PR #167) | Released |
 | v0.10.27 | 2026-04-25 | Plan 103 (WerAudienceFilter — Wer? audience selector — Issue #164) | Released |

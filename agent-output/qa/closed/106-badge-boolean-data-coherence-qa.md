@@ -2,7 +2,7 @@
 ID: 106
 Origin: 106
 UUID: d7e3a41f
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 106 — Badge/Boolean Data Coherence
