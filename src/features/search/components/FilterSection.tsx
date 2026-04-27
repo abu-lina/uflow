@@ -65,7 +65,7 @@ export function FilterSection({ selectedSection, selectedFilters, onToggleFilter
 
   const visibleFilterItems = isShowAllPreviewEnabled
     ? (showAllFilters ? sectionFilterItems : sectionFilterItems.slice(0, 3))
-    : sectionFilterItems;
+    : sectionFilterItems.slice(0, 3);
 
   return (
     <div className="mt-3 flex flex-col gap-3">

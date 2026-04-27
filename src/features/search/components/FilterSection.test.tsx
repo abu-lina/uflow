@@ -80,7 +80,7 @@ describe('FilterSection', () => {
     expect(screen.getByRole('checkbox', { name: /Spendet fuer Gute Zwecke/i })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Unterstuetzt Muslime/i })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Bietet Parkmoeglichkeiten/i })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Bietet Gebetsmoeglichkeiten/i })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /Bietet Gebetsmoeglichkeiten/i })).not.toBeInTheDocument();
   });
 
   it('hides all provider filters in ummah section', () => {
@@ -109,8 +109,8 @@ describe('FilterSection', () => {
     expect(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Spendet fuer Gute Zwecke/i })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Unterstuetzt Muslime/i })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Bietet Parkmoeglichkeiten/i })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Bietet Gebetsmoeglichkeiten/i })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /Bietet Parkmoeglichkeiten/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /Bietet Gebetsmoeglichkeiten/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Show all filters' })).not.toBeInTheDocument();
   });
 });

@@ -122,6 +122,36 @@ describe('WoCityResults (Plan 102)', () => {
     expect(screen.getByText('12 Anbieter')).toBeInTheDocument();
   });
 
+  it('[regression] shows max 3 popular cities when no recent searches exist', () => {
+    render(
+      <WoCityResults
+        filteredCities={[]}
+        isCheckingCityValidity={false}
+        isError={false}
+        isLoading={false}
+        isValidNoProviderCity={null}
+        popularCities={[
+          { city: 'Berlin', provider_count: 12 },
+          { city: 'Hamburg', provider_count: 8 },
+          { city: 'Koeln', provider_count: 7 },
+          { city: 'Bonn', provider_count: 3 },
+        ]}
+        query=""
+        recentSearches={[]}
+        selectedCity={null}
+        t={t}
+        userEmail={null}
+        onClearSelection={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
+    expect(screen.getByText('Hamburg')).toBeInTheDocument();
+    expect(screen.getByText('Koeln')).toBeInTheDocument();
+    expect(screen.queryByText('Bonn')).not.toBeInTheDocument();
+  });
+
   it('renders active selection row with remove action', () => {
     const onClearSelection = vi.fn();
 

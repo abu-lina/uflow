@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.35] - 2026-04-27
+
+### Fixed
+
+- **Ummah section tab state rollback**: Switching between search sections (Food/Ummah) no longer transiently reverts to the previous section during async `router.replace` propagation; URL is now the authoritative state source
+- **Redundant tab navigation**: Clicking the already-active search section tab no longer triggers a `router.replace` (no-op guard added)
+
+### Improved
+
+- **3-item preview parity**: All search sections (WAS service types, filter rows, and popular cities) now cap to 3 items in the idle/empty-query state, matching the existing food categories and meal preview behavior
+- **Ummah service type recent searches**: Selecting an Ummah community service type (e.g., Beratung, Islamische Bildung) now persists to localStorage (`uflow:recent-ummah-service-types`, max 3, deduped) and surfaces as recent-first suggestions on next open
+- **Section switch state clearing**: Stale WAS selections, query text, and filter toggles from the previous section are cleared when switching sections
+
+### Tests
+
+- Added `[regression] section switching updates URL section param` test
+- Added `[regression] no router.replace when clicking already-active section tab` test
+- Added `[regression] mounted URL sync updates selectedSection` test
+- Added `[regression] delayed router.replace does not revert section state` test
+- Added `[regression] food WAS selection cleared on switch to Ummah` test
+- Extended `WasServiceTypeResults`, `UmmahFilterSection`, `WoCityResults` test suites for 3-item preview and recent-search behavior
+
 ## [0.10.34] - 2026-04-27
 
 ### Fixed

@@ -50,7 +50,14 @@ function SearchPageContent() {
 
   type AccordionKey = 'was' | 'wo' | 'wer' | 'filter';
 
-  const urlSection = (searchParams.get('section') as Section) ?? 'food';
+  const resolveSection = (rawSection: string | null): Section => {
+    if (rawSection === 'ummah' || rawSection === 'business') {
+      return rawSection;
+    }
+    return 'food';
+  };
+
+  const urlSection = resolveSection(searchParams.get('section'));
   const [selectedSection, setSelectedSection] = useState<Section>(urlSection);
   const [wasQuery, setWasQuery] = useState('');
   const [wasResults, setWasResults] = useState<FoodConcept[]>([]);
@@ -73,6 +80,19 @@ function SearchPageContent() {
 
       const parsed = JSON.parse(stored) as WasSelection[];
       return toFoodRecentSearches(parsed);
+    } catch {
+      return [];
+    }
+  });
+  const [recentUmmahSearches, setRecentUmmahSearches] = useState<WasSelection[]>(() => {
+    try {
+      const stored = localStorage.getItem('uflow:recent-ummah-service-types');
+      if (!stored) {
+        return [];
+      }
+
+      const parsed = JSON.parse(stored) as WasSelection[];
+      return parsed.filter((entry) => entry.type === 'service-type').slice(0, 3);
     } catch {
       return [];
     }
@@ -380,6 +400,22 @@ function SearchPageContent() {
     setSelectedFilters([]);
   }, [selectedSection]);
 
+  useEffect(() => {
+    if (selectedSection !== urlSection) {
+      setSelectedSection(urlSection);
+    }
+  }, [selectedSection, urlSection]);
+
+  const handleSectionChange = (section: Section) => {
+    if (section === urlSection) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('section', section);
+    router.replace(`/search?${params.toString()}`);
+  };
+
   const handleBack = () => {
     if (window.history.length > 1) {
       router.back();
@@ -399,6 +435,18 @@ function SearchPageContent() {
         const deduped = [selection, ...prev.filter((r) => r.label !== selection.label)].slice(0, 3);
         try {
           localStorage.setItem('uflow:recent-was-searches', JSON.stringify(deduped));
+        } catch {
+          // Storage access can fail in private mode; keep UI state-only fallback.
+        }
+        return deduped;
+      });
+    }
+
+    if (selectedSection === 'ummah' && selection.type === 'service-type') {
+      setRecentUmmahSearches((prev) => {
+        const deduped = [selection, ...prev.filter((r) => r.label !== selection.label)].slice(0, 3);
+        try {
+          localStorage.setItem('uflow:recent-ummah-service-types', JSON.stringify(deduped));
         } catch {
           // Storage access can fail in private mode; keep UI state-only fallback.
         }
@@ -460,7 +508,7 @@ function SearchPageContent() {
           city,
           provider_count: countByCity.get(city) ?? 0,
         }));
-  const popularCities = cityCounts.slice(0, 5);
+  const popularCities = cityCounts.slice(0, 3);
   const woAccordionTitle = selectedWoCity
     ? `${t('suchen.accordions.wo')}: ${selectedWoCity}`
     : t('suchen.accordions.woEmpty');
@@ -485,7 +533,7 @@ function SearchPageContent() {
         <div className="sticky top-[calc(env(safe-area-inset-top)+64px)] z-40 bg-uflow-light pb-4">
           <SectionSelector
             selectedSection={selectedSection}
-            onSectionChange={setSelectedSection}
+            onSectionChange={handleSectionChange}
           />
         </div>
 
@@ -522,6 +570,7 @@ function SearchPageContent() {
             {selectedSection === 'ummah' ? (
               <WasServiceTypeResults
                 query={wasQuery}
+                recentSearches={recentUmmahSearches}
                 selectedServiceType={selectedWas}
                 t={t}
                 onClearSelection={() => setSelectedWas(null)}
@@ -679,7 +728,7 @@ function SearchPageContent() {
             setWerSelection(null);
             setWerResetSignal((prev) => prev + 1);
             setSelectedFilters([]);
-            setSelectedSection('food');
+            handleSectionChange('food');
           }}
         >
           {t('suchen.clearAll')}

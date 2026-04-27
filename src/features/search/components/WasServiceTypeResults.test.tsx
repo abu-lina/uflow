@@ -6,6 +6,7 @@ import { WasServiceTypeResults } from './WasServiceTypeResults';
 const t = (key: string) => {
   const map: Record<string, string> = {
     'suchen.was.selectionLabel': 'AUSWAHL',
+    'suchen.was.recentLabel': 'ZULETZT GESUCHT',
     'suchen.was.removeSelection': 'Auswahl entfernen',
     'suchen.was.ummah.serviceTypeLabel': 'Dienst',
     'suchen.was.ummah.browseServiceTypes': 'Dienste durchsuchen',
@@ -25,10 +26,11 @@ const t = (key: string) => {
 };
 
 describe('WasServiceTypeResults', () => {
-  it('renders all service types when query is empty', () => {
+  it('renders max 3 service types when query is empty', () => {
     render(
       <WasServiceTypeResults
         query=""
+        recentSearches={[]}
         selectedServiceType={null}
         t={t}
         onClearSelection={vi.fn()}
@@ -38,13 +40,15 @@ describe('WasServiceTypeResults', () => {
 
     expect(screen.getByText('Islamische Bildung')).toBeInTheDocument();
     expect(screen.getByText('Beratung')).toBeInTheDocument();
-    expect(screen.getByText('Quran-Unterricht')).toBeInTheDocument();
+    expect(screen.getByText('Rechtshilfe')).toBeInTheDocument();
+    expect(screen.queryByText('Quran-Unterricht')).not.toBeInTheDocument();
   });
 
   it('filters service types by query', () => {
     render(
       <WasServiceTypeResults
         query="Berat"
+        recentSearches={[]}
         selectedServiceType={null}
         t={t}
         onClearSelection={vi.fn()}
@@ -62,6 +66,7 @@ describe('WasServiceTypeResults', () => {
     render(
       <WasServiceTypeResults
         query=""
+        recentSearches={[]}
         selectedServiceType={null}
         t={t}
         onClearSelection={vi.fn()}
@@ -86,6 +91,7 @@ describe('WasServiceTypeResults', () => {
     render(
       <WasServiceTypeResults
         query=""
+        recentSearches={[]}
         selectedServiceType={{
           label: 'Beratung',
           type: 'service-type',
@@ -99,5 +105,26 @@ describe('WasServiceTypeResults', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Auswahl entfernen' }));
     expect(onClearSelection).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefers recent service types over popular list when recent entries exist', () => {
+    render(
+      <WasServiceTypeResults
+        query=""
+        recentSearches={[
+          { label: 'Beratung', type: 'service-type', serviceTypeId: 'beratung' },
+          { label: 'Rechtshilfe', type: 'service-type', serviceTypeId: 'rechtshilfe' },
+        ]}
+        selectedServiceType={null}
+        t={t}
+        onClearSelection={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('ZULETZT GESUCHT')).toBeInTheDocument();
+    expect(screen.queryByText('Dienste durchsuchen')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Beratung$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Rechtshilfe$/i })).toBeInTheDocument();
   });
 });
