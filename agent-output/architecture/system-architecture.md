@@ -1,6 +1,6 @@
 # UFlow System Architecture (Evergreen)
 
-**Last Updated**: 2026-04-23
+**Last Updated**: 2026-04-27
 **Status**: Active
 
 ## Changelog
@@ -21,6 +21,7 @@
 | 2026-04-19 | Offers schema evolution ADR (Plan 094): add `provider_menu_items` (food) + `provider_service_offers` (business) typed tables. Global `offers` vocabulary preserved. Was? search confirmed fully wired for vocabulary search; item-level search requires migration 068. | Current offers table is a shared tag vocabulary — insufficient for pricing, per-provider catalog, and future ordering. Separate instance tables with STORED TSVECTOR chosen over STI or JSONB. | ADR-094 |
 | 2026-04-20 | Three-section catalog hierarchy ADR (Plan 095): add `community_projects` under `community_services` (ummah item-level), `categories.applicable_section` for section scoping, three-table ordering FK pattern settled. `provider_stats` MV extended with `community_project_count`. | Completes FOOD/UMMAH/STORES symmetry. Three separate item tables (no CTI base) confirmed as the ordering-FK architecture. Supersedes ADR-094/D7 open question. | ADR-095 |
 | 2026-04-23 | Food category model ADR (096): Single `category_id` per provider confirmed for nationality cuisines. 22 cuisine categories to be seeded as `applicable_section = 'food'`. No schema change; no junction table. Fusion edge case mitigated by item-level search (`provider_menu_items`). Extension path: `cuisine_tags TEXT[]` deferred until user feedback warrants it. | YAGNI/KISS: multi-category touches 7+ query/UI/filter layers for <5% of listings. Single category preserves all existing patterns and is consistent across sections. | ADR-096 |
+| 2026-04-27 | Badge/Boolean data coherence ADR (105): Creation path writes `barakah_effects` only — never sets boolean columns or creates badge rows. Badge endorsement triggers don't propagate to booleans. One-time backfill (migration 067) has no ongoing sync. Section-specific filter semantics differ (STORES requires `muslim_owned`, FOOD treats it as optional, UMMAH has no boolean columns). Problem Area 11 added. | Plan 105 filter wiring surfaced that the three data systems (booleans, badges, barakah_effects) are disconnected — new providers are invisible to search filters. | ADR-105 |
 
 ---
 
@@ -139,6 +140,38 @@ Use badges as the primitive for trust signals:
 - **Community confirmed**: community endorsements reach threshold
 - **UFlow verified**: admin/authority verification
 
+### Data Coherence Gap (ADR-105)
+
+Three disconnected data systems currently represent provider attributes:
+
+| System | Write Path | Read Path | Sync |
+|---|---|---|---|
+| `barakah_effects` (TEXT[]) | Creation form | Legacy display | None to booleans or badges |
+| `providers.*` boolean columns | Migration 067 backfill (one-time) | Search filters (Plan 105) | No ongoing sync |
+| `provider_badges` rows | Manual/admin creation | Detail page trust display | Triggers update own trust_level only |
+
+**Result**: Providers created after migration 067 have all boolean columns defaulting to `false`, regardless of what the owner claims or consumers endorse. Plan 105's filters will miss them.
+
+**Target data flow** (see ADR-105):
+```
+Creation Form → badge row (SELF_DECLARED) → Postgres trigger → boolean column
+Endorsement  → trust_level upgrade      → boolean unchanged (already true)
+Search Filter → reads boolean (fast, indexed)
+Detail Page   → reads badge (trust level, confirmation count)
+```
+
+### Section-Specific Filter Semantics
+
+| Attribute | FOOD | STORES | UMMAH |
+|---|---|---|---|
+| `muslim_owned` | Optional filter | **Listing invariant** (must be true) | N/A (no column) |
+| `has_prayer_space` | Optional filter | Optional filter | N/A |
+| `has_parking` | Optional filter | Optional filter | N/A |
+| `accepts_donations` | Optional filter | Optional filter | Built into section |
+| `solidarity_pricing` | Optional filter | Optional filter | N/A |
+
+Filter UI must be section-aware: hide `muslim_owned` toggle for STORES (invariant), hide all provider-boolean filters for UMMAH.
+
 ### Required Read Model Boundary (Recommended)
 
 For performance and privacy, the UI should consume:
@@ -217,6 +250,7 @@ This is a known architecture risk; roles must be normalized behind a single auth
 8. **Enrichment candidate table lifecycle**: `enrichment_candidates` is a staging table but has no defined archival or purge policy. Applied/rejected rows will accumulate over time. A periodic purge job or archival strategy should be added in M4 or a post-launch task.
 9. **Enrichment fetch origin (shared Supabase IPs)**: After M4, JoinHalal and Phase 2 source fetches originate from Supabase's shared Edge Function IP fleet rather than a controlled developer IP. Rate limit exposure changes; polite delays (200ms) and a meaningful `User-Agent` header partially mitigate this.
 10. **`provider_stats` naming drift**: MV name implies provider-only scope but now contains cross-entity counts (`menu_item_count`, `service_offer_count`, `community_project_count` after Plan 095). Rename to `platform_stats` in a future migration (breaking change for any dashboard queries referencing the MV name).
+11. **Badge/Boolean data coherence gap (ADR-105)**: Provider creation (`providerService.ts`) writes `barakah_effects` but never sets boolean filter columns or creates `provider_badges` rows. Badge endorsement triggers update only `provider_badges.trust_level`, not `providers.*` booleans. Migration 067 performed a one-time backfill with no ongoing sync trigger. New providers are invisible to Plan 105 search filters. Fix: badges become the write model, booleans the read model, with a Postgres trigger propagating `provider_badges` inserts to boolean columns. `barakah_effects` must be deprecated as a structured data source.
 
 ---
 
@@ -346,6 +380,33 @@ This is a known architecture risk; roles must be normalized behind a single auth
   - `provider_stats` MV becomes a platform-wide aggregation point (naming debt: Problem Area 10)
   - RLS write policies for ummah items require a 2-hop join (community_services→providers) — acceptable at current scale
 - **Related**: ADR-094, Plan 095, Plan 094
+
+### ADR-105: Badge/Boolean Data Coherence — Badges as Write Model, Booleans as Read Model
+
+- **Status**: Accepted
+- **Context**: Plan 105 wired search filters to 5 boolean columns on `providers` (migration 067). Post-release analysis revealed three disconnected data systems:
+  1. **Creation path** (`providerService.ts`): sets `barakah_effects: formData.tags` but never sets boolean columns or creates badge rows. New providers default to `false` for all filter columns.
+  2. **Badge endorsement path** (`badges.ts`): triggers update `provider_badges.confirmation_count` and `trust_level`, but never propagate to `providers.*` booleans.
+  3. **Backfill** (migration 067): one-time `UPDATE providers SET muslim_owned = true FROM provider_badges WHERE badge_key = 'MUSLIM_OWNED'`. No ongoing sync trigger.
+  4. **Section semantics**: STORES requires `muslim_owned = true` as a listing invariant (not a filter). FOOD treats it as an optional filter. UMMAH has no boolean columns at all.
+  5. **Coverage asymmetry**: `has_parking` and `solidarity_pricing` have no badge equivalents; they must remain direct boolean attributes.
+- **Choice**: Establish badges as the **write model** and booleans as the **read model** with a Postgres trigger for synchronization:
+  - Provider creation form writes a `provider_badges` row with `trust_level = SELF_DECLARED` for each claimed attribute that has a badge equivalent.
+  - A new Postgres trigger on `provider_badges` INSERT/DELETE propagates to the corresponding boolean column on `providers`.
+  - Attributes without badge equivalents (`has_parking`, `solidarity_pricing`) continue to be set directly as boolean columns during creation.
+  - `barakah_effects` is deprecated as a structured data source; retained only for free-form tags.
+  - Filter UI becomes section-aware: STORES hides `muslim_owned` toggle (invariant), UMMAH hides all provider-boolean filters.
+- **Alternatives**:
+  - Badges only, no booleans (rejected: `has_parking`/`solidarity_pricing` have no badge type; badge JOIN for every search query adds complexity for marginal benefit)
+  - Booleans only, deprecate badges (rejected: loses trust-level progression and community endorsement UX)
+  - Materialized view combining both (rejected: adds refresh latency; simple trigger is sufficient at current scale)
+- **Consequences**:
+  - Requires a new migration: trigger function + section-aware creation logic
+  - `providerService.ts` must be updated to write badges and direct booleans at creation time
+  - Existing providers are already backfilled (migration 067); only new providers are affected
+  - Trust level remains a display/UX concern; boolean answers "does this provider claim this attribute?" regardless of trust level
+  - Future: if badge types expand to cover parking/solidarity, the direct-boolean path can be retired for those too
+- **Related**: Plan 105, Migration 067, Migration 016, Problem Area 11
 
 ---
 
