@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.34] - 2026-04-27
+
+### Fixed
+
+- **Food search prefix matching**: Typing partial cuisine names (e.g., "Afgh") now returns matching results in all three food search RPCs (`search_food_concepts`, `search_food_categories`, `search_food_menu_items`); previously, `plainto_tsquery` only matched whole lexemes
+
+### Improved
+
+- **Cuisine label normalization**: Food category labels no longer include the redundant "Küche" suffix; "-ische" endings are normalized to "-isch" (e.g., "Afghanische Küche" → "Afghanisch")
+
+### Tests
+
+- Added TDD migration contract test for food search prefix matching RPC (migration 077)
+
 ## [0.10.33] - 2026-04-27
 
 ### Fixed
