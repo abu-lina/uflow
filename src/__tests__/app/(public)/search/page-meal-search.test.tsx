@@ -179,6 +179,33 @@ vi.mock('@/features/search/components/WasMealResults', () => ({
   },
 }));
 
+vi.mock('@/features/search/components/WerAudienceFilter', () => ({
+  WerAudienceFilter: ({
+    onSelectionChange,
+  }: {
+    onSelectionChange?: (selection: {
+      counts: { maenner: number; frauen: number; kinder: number };
+      summary: string;
+      hasSelection: boolean;
+      hasUserInteracted: boolean;
+    }) => void;
+  }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onSelectionChange?.({
+          counts: { maenner: 2, frauen: 0, kinder: 1 },
+          summary: '2 Maenner, 1 Kind',
+          hasSelection: true,
+          hasUserInteracted: true,
+        })
+      }
+    >
+      Set Wer Selection
+    </button>
+  ),
+}));
+
 vi.mock('lucide-react', () => ({
   Heart: () => <span>heart</span>,
   Search: () => <span>search</span>,
@@ -226,6 +253,8 @@ describe('/search page meal search wiring (Plan 096)', () => {
     mockSearchParams = new URLSearchParams('section=food');
     replaceDelayMs = 0;
     localStorage.removeItem('uflow:recent-was-searches');
+    localStorage.removeItem('selectedCity');
+    sessionStorage.removeItem('selectedCity');
     mockRouterPush.mockReset();
     mockRouterReplace.mockReset();
     mockFetchProviderCities.mockResolvedValue([]);
@@ -335,6 +364,29 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
     expect(mockRouterPush).toHaveBeenCalledWith('/providers?section=food&q=Doener&filters=muslim');
+  });
+
+  it('[regression] includes location and wer params in providers URL on search submit', async () => {
+    localStorage.setItem('selectedCity', 'Berlin');
+
+    render(<SearchPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Set Wer Selection' }));
+
+    const input = screen.getByRole('searchbox', { name: 'Angebote suchen' });
+    fireEvent.change(input, { target: { value: 'doe' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Select result for doe/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
+
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      '/providers?section=food&q=Doener&location=Berlin&wer=2+Maenner%2C+1+Kind',
+    );
   });
 
   it('[regression] excludes non-food recent items from food What section', async () => {
