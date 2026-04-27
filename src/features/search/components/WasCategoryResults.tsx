@@ -7,11 +7,12 @@ import { safeJsonParse } from '@/utils/json';
 
 export interface WasSelection {
   label: string;
-  type: 'category' | 'dish';
+  type: 'category' | 'dish' | 'service-type';
   categoryId?: string;
   categoryImages?: string | null;
   providerCount?: number;
   dishName?: string;
+  serviceTypeId?: string;
 }
 
 interface WasCategoryResultsProps {

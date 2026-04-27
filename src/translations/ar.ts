@@ -182,7 +182,24 @@ export const ar = {
       selectionLabel: "المحدد",
       selectedWhat: "ماذا: {{item}}",
       dishLabel: "طبق",
-      removeSelection: "إزالة التحديد"
+      removeSelection: "إزالة التحديد",
+      ummah: {
+        searchPlaceholder: "ما الخدمة التي تبحث عنها؟",
+        serviceTypeLabel: "خدمة",
+        browseServiceTypes: "تصفح الخدمات",
+        items: {
+          islamischeBildung: "التعليم الإسلامي",
+          beratung: "الإرشاد",
+          rechtshilfe: "المساعدة القانونية",
+          jugenddienste: "خدمات الشباب",
+          gesundheitsversorgung: "الخدمات الصحية",
+          eheberatung: "الإرشاد الأسري",
+          bestattungsdienste: "خدمات الجنازة",
+          sozialeHilfe: "الدعم الاجتماعي",
+          sprachkurse: "دورات اللغة",
+          quranUnterricht: "دروس القرآن"
+        }
+      }
     },
     wo: {
       loading: "جارٍ البحث...",
@@ -216,6 +233,28 @@ export const ar = {
         gebet: {
           title: "Bietet Gebetsmoeglichkeiten",
           subtitle: "Gebetsraum vorhanden"
+        }
+      },
+      ummahItems: {
+        kostenlos: {
+          title: "مجاني",
+          subtitle: "خدمة بدون تكلفة"
+        },
+        online: {
+          title: "متاح عبر الإنترنت",
+          subtitle: "إرشاد عن بُعد متاح"
+        },
+        sprache: {
+          title: "متعدد اللغات",
+          subtitle: "العربية، التركية، الأوردية والمزيد"
+        },
+        zertifiziert: {
+          title: "معتمد",
+          subtitle: "مؤهل معترف به"
+        },
+        geschlechtergetrennt: {
+          title: "فصل بين الجنسين",
+          subtitle: "مساحات منفصلة للرجال والنساء"
         }
       }
     }

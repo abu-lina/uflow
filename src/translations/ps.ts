@@ -183,7 +183,24 @@ export const ps = {
       selectionLabel: "غوره شوی",
       selectedWhat: "څه: {{item}}",
       dishLabel: "خواړه",
-      removeSelection: "ټاکنه لرې کول"
+      removeSelection: "ټاکنه لرې کول",
+      ummah: {
+        searchPlaceholder: "کوم خدمت لټوې؟",
+        serviceTypeLabel: "خدمت",
+        browseServiceTypes: "خدمتونه وپلټئ",
+        items: {
+          islamischeBildung: "اسلامي زده کړه",
+          beratung: "مشوره",
+          rechtshilfe: "حقوقي مرسته",
+          jugenddienste: "د ځوانانو خدمتونه",
+          gesundheitsversorgung: "روغتیايي خدمتونه",
+          eheberatung: "د واده مشوره",
+          bestattungsdienste: "د جنازې خدمتونه",
+          sozialeHilfe: "ټولنیزه مرسته",
+          sprachkurse: "د ژبې کورسونه",
+          quranUnterricht: "د قرآن درسونه"
+        }
+      }
     },
     wo: {
       loading: "لټون روان دی...",
@@ -217,6 +234,28 @@ export const ps = {
         gebet: {
           title: "Bietet Gebetsmoeglichkeiten",
           subtitle: "Gebetsraum vorhanden"
+        }
+      },
+      ummahItems: {
+        kostenlos: {
+          title: "وړیا",
+          subtitle: "بې لګښته خدمت"
+        },
+        online: {
+          title: "آنلاین شته",
+          subtitle: "لرې مشوره ممکنه ده"
+        },
+        sprache: {
+          title: "څو ژبنی",
+          subtitle: "عربي، ترکي، اردو او نورې"
+        },
+        zertifiziert: {
+          title: "تصدیق شوی",
+          subtitle: "منل شوی تصدیق"
+        },
+        geschlechtergetrennt: {
+          title: "د جنس له مخې جلا",
+          subtitle: "د نارینه وو او ښځو لپاره جلا ځایونه"
         }
       }
     }

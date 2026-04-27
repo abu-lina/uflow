@@ -183,7 +183,24 @@ export const en = {
       selectionLabel: "SELECTED",
       selectedWhat: "What: {{item}}",
       dishLabel: "Dish",
-      removeSelection: "Remove selection"
+      removeSelection: "Remove selection",
+      ummah: {
+        searchPlaceholder: "Which service are you looking for?",
+        serviceTypeLabel: "Service",
+        browseServiceTypes: "Browse services",
+        items: {
+          islamischeBildung: "Islamic education",
+          beratung: "Counseling",
+          rechtshilfe: "Legal aid",
+          jugenddienste: "Youth services",
+          gesundheitsversorgung: "Health services",
+          eheberatung: "Marriage counseling",
+          bestattungsdienste: "Funeral services",
+          sozialeHilfe: "Social support",
+          sprachkurse: "Language courses",
+          quranUnterricht: "Quran lessons"
+        }
+      }
     },
     wo: {
       loading: "Searching...",
@@ -226,6 +243,28 @@ export const en = {
         gebet: {
           title: "Bietet Gebetsmoeglichkeiten",
           subtitle: "Gebetsraum vorhanden"
+        }
+      },
+      ummahItems: {
+        kostenlos: {
+          title: "Free",
+          subtitle: "No-cost service"
+        },
+        online: {
+          title: "Available online",
+          subtitle: "Remote counseling available"
+        },
+        sprache: {
+          title: "Multilingual",
+          subtitle: "Arabic, Turkish, Urdu and more"
+        },
+        zertifiziert: {
+          title: "Certified",
+          subtitle: "Recognized qualification"
+        },
+        geschlechtergetrennt: {
+          title: "Gender-separated",
+          subtitle: "Separate spaces for men and women"
         }
       }
     }

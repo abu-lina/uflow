@@ -183,7 +183,24 @@ export const ur = {
       selectionLabel: "منتخب",
       selectedWhat: "کیا: {{item}}",
       dishLabel: "ڈش",
-      removeSelection: "انتخاب ہٹائیں"
+      removeSelection: "انتخاب ہٹائیں",
+      ummah: {
+        searchPlaceholder: "آپ کون سی خدمت تلاش کر رہے ہیں؟",
+        serviceTypeLabel: "خدمت",
+        browseServiceTypes: "خدمات براؤز کریں",
+        items: {
+          islamischeBildung: "اسلامی تعلیم",
+          beratung: "مشاورت",
+          rechtshilfe: "قانونی مدد",
+          jugenddienste: "نوجوانوں کی خدمات",
+          gesundheitsversorgung: "صحت کی خدمات",
+          eheberatung: "ازدواجی مشاورت",
+          bestattungsdienste: "تدفین کی خدمات",
+          sozialeHilfe: "سماجی مدد",
+          sprachkurse: "زبان کے کورسز",
+          quranUnterricht: "قرآن کی تعلیم"
+        }
+      }
     },
     wo: {
       loading: "تلاش جاری ہے...",
@@ -217,6 +234,28 @@ export const ur = {
         gebet: {
           title: "Bietet Gebetsmoeglichkeiten",
           subtitle: "Gebetsraum vorhanden"
+        }
+      },
+      ummahItems: {
+        kostenlos: {
+          title: "مفت",
+          subtitle: "بلامعاوضہ خدمت"
+        },
+        online: {
+          title: "آن لائن دستیاب",
+          subtitle: "آن لائن مشاورت ممکن"
+        },
+        sprache: {
+          title: "کثیر لسانی",
+          subtitle: "عربی، ترکی، اردو اور مزید"
+        },
+        zertifiziert: {
+          title: "تصدیق شدہ",
+          subtitle: "تسلیم شدہ قابلیت"
+        },
+        geschlechtergetrennt: {
+          title: "صنفی طور پر علیحدہ",
+          subtitle: "مردوں اور خواتین کے لیے الگ جگہیں"
         }
       }
     }

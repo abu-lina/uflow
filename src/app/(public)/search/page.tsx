@@ -12,9 +12,11 @@ import { ExpandSection } from '@/components/ui/ExpandSection';
 import { Button } from '@/components/ui/Button';
 import { WasMealResults } from '@/features/search/components/WasMealResults';
 import { WasCategoryResults } from '@/features/search/components/WasCategoryResults';
+import { WasServiceTypeResults } from '@/features/search/components/WasServiceTypeResults';
 import { WerAudienceFilter, type WerAudienceSelectionChange } from '@/features/search/components/WerAudienceFilter';
 import { WoCityResults, type WoRecentSearch } from '@/features/search/components/WoCityResults';
 import { FilterSection } from '@/features/search/components/FilterSection';
+import { UmmahFilterSection } from '@/features/search/components/UmmahFilterSection';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
@@ -139,6 +141,13 @@ function SearchPageContent() {
 
   // Debounced meal search in the "Was?" accordion.
   useEffect(() => {
+    if (selectedSection !== 'food') {
+      setWasResults([]);
+      setIsLoadingWas(false);
+      setIsErrorWas(false);
+      return;
+    }
+
     let isCancelled = false;
     const normalizedQuery = wasQuery.trim();
 
@@ -235,6 +244,13 @@ function SearchPageContent() {
   // Debounced menu item search in the "Was?" accordion.
   // Only fires when query >= 2 chars; never called with empty string.
   useEffect(() => {
+    if (selectedSection !== 'food') {
+      setMenuItemResults([]);
+      setIsLoadingMenuItems(false);
+      setIsErrorMenuItems(false);
+      return;
+    }
+
     let isCancelled = false;
     const normalizedQuery = wasQuery.trim();
 
@@ -328,6 +344,12 @@ function SearchPageContent() {
       window.clearTimeout(timeoutId);
     };
   }, [woInputQuery, selectedWoCity, cities, isLoadingCities]);
+
+  useEffect(() => {
+    setWasQuery('');
+    setSelectedWas(null);
+    setSelectedFilters([]);
+  }, [selectedSection]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -452,55 +474,71 @@ function SearchPageContent() {
               <input
                 aria-label="Angebote suchen"
                 className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none border-0 focus:outline-none focus:ring-0"
-                placeholder={t('suchen.was.searchPlaceholder')}
+                placeholder={
+                  selectedSection === 'ummah'
+                    ? t('suchen.was.ummah.searchPlaceholder')
+                    : t('suchen.was.searchPlaceholder')
+                }
                 type="search"
                 value={wasQuery}
                 onChange={(e) => setWasQuery(e.target.value)}
               />
             </div>
 
-            <WasCategoryResults
-              isError={isErrorCategories}
-              isLoading={isLoadingCategories}
-              items={categoryResults}
-              query={wasQuery}
-              recentSearches={recentSearches}
-              selectedWas={selectedWas}
-              t={t}
-              onClearSelection={() => setSelectedWas(null)}
-              onSelect={handleWasSelect}
-            />
-            <WasMealResults
-              hasCategoryResults={categoryResults.length > 0}
-              isError={isErrorWas || isErrorMenuItems}
-              isLoading={isLoadingWas || isLoadingMenuItems}
-              items={(() => {
-                const menuAsConcepts: FoodConcept[] = menuItemResults.map((m) => ({
-                  offer_id: `mi:${m.name_de}`,
-                  name_de: m.name_de,
-                  name_en: m.name_en,
-                  provider_count: m.provider_count,
-                }));
-                const seen = new Map<string, FoodConcept>();
-                for (const item of [...wasResults, ...menuAsConcepts]) {
-                  const key = (item.name_de || '').toLowerCase();
-                  const existing = seen.get(key);
-                  if (!existing || item.provider_count > existing.provider_count) {
-                    seen.set(key, item);
+            {selectedSection === 'ummah' ? (
+              <WasServiceTypeResults
+                query={wasQuery}
+                selectedServiceType={selectedWas}
+                t={t}
+                onClearSelection={() => setSelectedWas(null)}
+                onSelect={handleWasSelect}
+              />
+            ) : (
+              <>
+                <WasCategoryResults
+                  isError={isErrorCategories}
+                  isLoading={isLoadingCategories}
+                  items={categoryResults}
+                  query={wasQuery}
+                  recentSearches={recentSearches}
+                  selectedWas={selectedWas}
+                  t={t}
+                  onClearSelection={() => setSelectedWas(null)}
+                  onSelect={handleWasSelect}
+                />
+                <WasMealResults
+                  hasCategoryResults={categoryResults.length > 0}
+                  isError={isErrorWas || isErrorMenuItems}
+                  isLoading={isLoadingWas || isLoadingMenuItems}
+                  items={(() => {
+                    const menuAsConcepts: FoodConcept[] = menuItemResults.map((m) => ({
+                      offer_id: `mi:${m.name_de}`,
+                      name_de: m.name_de,
+                      name_en: m.name_en,
+                      provider_count: m.provider_count,
+                    }));
+                    const seen = new Map<string, FoodConcept>();
+                    for (const item of [...wasResults, ...menuAsConcepts]) {
+                      const key = (item.name_de || '').toLowerCase();
+                      const existing = seen.get(key);
+                      if (!existing || item.provider_count > existing.provider_count) {
+                        seen.set(key, item);
+                      }
+                    }
+                    return Array.from(seen.values()).sort(
+                      (a, b) =>
+                        b.provider_count - a.provider_count ||
+                        (a.name_de || '').localeCompare(b.name_de || '')
+                    );
+                  })()}
+                  query={wasQuery}
+                  t={t}
+                  onSelect={(itemName) =>
+                    handleWasSelect({ label: itemName, type: 'dish', dishName: itemName })
                   }
-                }
-                return Array.from(seen.values()).sort(
-                  (a, b) =>
-                    b.provider_count - a.provider_count ||
-                    (a.name_de || '').localeCompare(b.name_de || '')
-                );
-              })()}
-              query={wasQuery}
-              t={t}
-              onSelect={(itemName) =>
-                handleWasSelect({ label: itemName, type: 'dish', dishName: itemName })
-              }
-            />
+                />
+              </>
+            )}
           </div>
         </ExpandSection>
 
@@ -560,12 +598,20 @@ function SearchPageContent() {
         </ExpandSection>
 
         <ExpandSection isOpen={filterOpen} title={filterAccordionTitle} onToggle={setFilterOpen}>
-          <FilterSection
-            selectedFilters={selectedFilters}
-            selectedSection={selectedSection}
-            t={t}
-            onToggleFilter={handleToggleFilter}
-          />
+          {selectedSection === 'ummah' ? (
+            <UmmahFilterSection
+              selectedFilters={selectedFilters}
+              t={t}
+              onToggleFilter={handleToggleFilter}
+            />
+          ) : (
+            <FilterSection
+              selectedFilters={selectedFilters}
+              selectedSection={selectedSection}
+              t={t}
+              onToggleFilter={handleToggleFilter}
+            />
+          )}
         </ExpandSection>
         </div>
       </PageContent>

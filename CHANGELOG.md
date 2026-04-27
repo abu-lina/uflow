@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.31] - 2026-04-27
+
+### Added
+
+- **Ummah tab section-conditional search options (Plan 107 / Issue #172)**:
+  - Added `WasServiceTypeResults` component in `src/features/search/components/WasServiceTypeResults.tsx` for Ummah WAS discovery.
+  - Added static Ummah service types with client-side filtering (`islamische-bildung`, `beratung`, `rechtshilfe`, `jugenddienste`, `gesundheitsversorgung`, `eheberatung`, `bestattungsdienste`, `soziale-hilfe`, `sprachkurse`, `quran-unterricht`).
+  - Added `UmmahFilterSection` component in `src/features/search/components/UmmahFilterSection.tsx` with Ummah-specific filters:
+    - `kostenlos`
+    - `online`
+    - `sprache`
+    - `zertifiziert`
+    - `geschlechtergetrennt`
+  - Added Ummah filter key constants in `src/features/search/constants/ummahFilterKeys.ts`.
+  - Added Ummah translations under `suchen.was.ummah.*` and `suchen.filter.ummahItems.*` in all locales (`de`, `en`, `tr`, `ur`, `ps`, `ar`).
+
+### Changed
+
+- Updated `/search` page (`src/app/(public)/search/page.tsx`) to render section-conditional WAS and Filter content:
+  - Ummah section now renders `WasServiceTypeResults` and `UmmahFilterSection`.
+  - Food/Business sections retain existing `WasCategoryResults`/`WasMealResults` and `FilterSection` behavior.
+- Added section-change state hygiene via `useEffect` to clear stale WAS/filter state when switching sections.
+- Guarded food RPC effects (`searchFoodConcepts`, `searchFoodMenuItems`) to avoid requests when section is not `food`.
+- Extended `WasSelection` union in `src/features/search/components/WasCategoryResults.tsx` to include `'service-type'` with optional `serviceTypeId`.
+
+### Tests
+
+- Added `src/features/search/components/WasServiceTypeResults.test.tsx`.
+- Added `src/features/search/components/UmmahFilterSection.test.tsx`.
+- Extended `src/__tests__/app/(public)/search/page-meal-search.test.tsx` with regression coverage for Food -> Ummah switch clearing stale WAS selection.
+
 ## [0.10.30] - 2026-04-27
 
 ### Added
