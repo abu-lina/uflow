@@ -155,6 +155,7 @@ export const ar = {
     accordions: {
       was: "ماذا؟",
       wo: "أين",
+      woEmpty: "أين؟",
       wer: "من: لي",
       filter: "القيم والمرافق"
     },

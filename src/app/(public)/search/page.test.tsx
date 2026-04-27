@@ -19,6 +19,9 @@ vi.mock('@/providers/LanguageProvider', () => ({
       if (key === 'suchen.accordions.wo') {
         return 'Wo';
       }
+      if (key === 'suchen.accordions.woEmpty') {
+        return 'Wo?';
+      }
       if (key === 'suchen.accordions.was') {
         return 'Was';
       }
@@ -253,7 +256,7 @@ describe('Search page Wo defaults and selection behavior', () => {
     expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
 
-    expect(screen.getByRole('heading', { name: 'Wo' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Wo?' })).toBeInTheDocument();
     expect(screen.queryByText('AUSWAHL')).not.toBeInTheDocument();
   });
 

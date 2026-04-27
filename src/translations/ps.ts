@@ -156,6 +156,7 @@ export const ps = {
     accordions: {
       was: "څه؟",
       wo: "چیرته",
+      woEmpty: "چیرته؟",
       wer: "څوک: زما لپاره",
       filter: "ارزښتونه او اسانتياوې"
     },

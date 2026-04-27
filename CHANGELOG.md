@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.33] - 2026-04-27
+
+### Fixed
+
+- **Food search recent history contamination**: Non-food items (service-type entries) no longer appear in the Food "What" section recent history; only `category` and `dish` type entries are stored and displayed
+- **Legacy storage cleanup**: Mixed-section recent entries written by older app versions are automatically cleaned from localStorage on mount
+- **Food-only persistence guard**: Selections in non-food sections no longer write to the food recent searches key
+
+### Improved
+
+- **"Wo?" empty-state label**: The "Where" accordion now shows a localized question form ("Wo?", "Where?", "أين؟", "Nerede?", "کہاں؟", "چیرته؟") when no city is selected, matching the "Was?" accordion style, across all 6 supported locales
+
+### Tests
+
+- Added `[regression] excludes non-food recent items from food What section` test
+- Added `[regression] shows Wo? when no Wo city is selected` test
+
 ## [0.10.32] - 2026-04-27
 
 ### Added

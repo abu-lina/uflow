@@ -18,6 +18,7 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.title': 'Suchen',
     'suchen.accordions.was': 'Was?',
     'suchen.accordions.wo': 'Wo',
+    'suchen.accordions.woEmpty': 'Wo?',
     'suchen.accordions.wer': 'Wer',
     'suchen.accordions.filter': 'Values & Amenities',
     'suchen.clearAll': 'Alles loeschen',
@@ -208,6 +209,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    localStorage.removeItem('uflow:recent-was-searches');
     mockRouterPush.mockReset();
     mockFetchProviderCities.mockResolvedValue([]);
     mockCheckCityExists.mockResolvedValue(false);
@@ -299,7 +301,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     expect(screen.getByText('Meal error')).toBeInTheDocument();
   });
 
-  it('[pre-fix FAILS] includes selected filters in providers URL on search submit', async () => {
+  it('[regression] includes selected filters in providers URL on search submit', async () => {
     render(<SearchPage />);
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i }));
@@ -316,6 +318,32 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
     expect(mockRouterPush).toHaveBeenCalledWith('/providers?section=food&q=Doener&filters=muslim');
+  });
+
+  it('[regression] excludes non-food recent items from food What section', async () => {
+    localStorage.setItem(
+      'uflow:recent-was-searches',
+      JSON.stringify([
+        { label: 'Burger', type: 'dish', dishName: 'Burger' },
+        { label: 'Islamic Education', type: 'service-type', serviceTypeId: 'islamic-education' },
+      ]),
+    );
+
+    render(<SearchPage />);
+
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(screen.getByText('Burger')).toBeInTheDocument();
+    expect(screen.queryByText('Islamic Education')).not.toBeInTheDocument();
+  });
+
+  it('[regression] shows Wo? when no Wo city is selected', () => {
+    render(<SearchPage />);
+
+    expect(screen.getByRole('heading', { name: 'Wo?' })).toBeInTheDocument();
   });
 
   it('clears food WAS selection when switching from food to ummah section', async () => {

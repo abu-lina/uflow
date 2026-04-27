@@ -23,6 +23,12 @@ import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConce
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 import { type PopularCity, fetchPopularCities, fetchProviderCities, checkCityExists } from '@/services/providers';
 
+function toFoodRecentSearches(entries: WasSelection[]): WasSelection[] {
+  return entries
+    .filter((entry) => entry.type === 'category' || entry.type === 'dish')
+    .slice(0, 3);
+}
+
 /**
  * /search — dedicated search detail page (Figma node 212:785 "CreateSouk").
  *
@@ -61,7 +67,12 @@ function SearchPageContent() {
   const [recentSearches, setRecentSearches] = useState<WasSelection[]>(() => {
     try {
       const stored = localStorage.getItem('uflow:recent-was-searches');
-      return stored ? (JSON.parse(stored) as WasSelection[]).slice(0, 3) : [];
+      if (!stored) {
+        return [];
+      }
+
+      const parsed = JSON.parse(stored) as WasSelection[];
+      return toFoodRecentSearches(parsed);
     } catch {
       return [];
     }
@@ -99,6 +110,25 @@ function SearchPageContent() {
       setUserEmail(user?.email ?? null);
     }
     void checkAuth();
+  }, []);
+
+  // Clean legacy mixed-section entries from storage after initial render.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('uflow:recent-was-searches');
+      if (!stored) {
+        return;
+      }
+
+      const parsed = JSON.parse(stored) as WasSelection[];
+      const foodRecentSearches = toFoodRecentSearches(parsed);
+
+      if (foodRecentSearches.length !== parsed.length) {
+        localStorage.setItem('uflow:recent-was-searches', JSON.stringify(foodRecentSearches));
+      }
+    } catch {
+      // Ignore storage parsing failures to keep search page usable.
+    }
   }, []);
 
   // Fetch cities for location search (cities that currently have listings)
@@ -362,14 +392,19 @@ function SearchPageContent() {
     setSelectedWas(selection);
     setWasQuery('');
     setOpenAccordion(null);
-    // Persist to recent searches (max 3, deduplicated by label)
-    setRecentSearches((prev) => {
-      const deduped = [selection, ...prev.filter((r) => r.label !== selection.label)].slice(0, 3);
-      try {
-        localStorage.setItem('uflow:recent-was-searches', JSON.stringify(deduped));
-      } catch { /* storage unavailable */ }
-      return deduped;
-    });
+
+    // Persist food-only recent searches (max 3, deduplicated by label).
+    if (selectedSection === 'food') {
+      setRecentSearches((prev) => {
+        const deduped = [selection, ...prev.filter((r) => r.label !== selection.label)].slice(0, 3);
+        try {
+          localStorage.setItem('uflow:recent-was-searches', JSON.stringify(deduped));
+        } catch {
+          // Storage access can fail in private mode; keep UI state-only fallback.
+        }
+        return deduped;
+      });
+    }
   };
 
   const handleSearch = () => {
@@ -428,7 +463,7 @@ function SearchPageContent() {
   const popularCities = cityCounts.slice(0, 5);
   const woAccordionTitle = selectedWoCity
     ? `${t('suchen.accordions.wo')}: ${selectedWoCity}`
-    : t('suchen.accordions.wo');
+    : t('suchen.accordions.woEmpty');
   const werAccordionTitle = werSelection?.hasUserInteracted && werSelection.hasSelection
     ? `${t('suchen.accordions.wer')}: ${werSelection.summary}`
     : `${t('suchen.accordions.wer')}: ${t('suchen.wer.forMe')}`;

@@ -156,6 +156,7 @@ export const ur = {
     accordions: {
       was: "کیا؟",
       wo: "کہاں",
+      woEmpty: "کہاں؟",
       wer: "کون: میرے لیے",
       filter: "اقدار اور سہولیات"
     },

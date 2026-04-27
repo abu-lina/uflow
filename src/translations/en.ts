@@ -156,6 +156,7 @@ export const en = {
     accordions: {
       was: "What?",
       wo: "Where",
+      woEmpty: "Where?",
       wer: "Who",
       filter: "Values & Amenities"
     },

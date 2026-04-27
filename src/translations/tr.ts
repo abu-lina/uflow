@@ -154,6 +154,7 @@ export const tr = {
     accordions: {
       was: "Ne?",
       wo: "Nerede",
+      woEmpty: "Nerede?",
       wer: "Kim: Benim için",
       filter: "Değerler ve Olanaklar"
     },
