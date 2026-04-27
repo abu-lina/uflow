@@ -101,6 +101,10 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'editProvider.discardChanges': 'Discard changes',
         'editProvider.mustBeLoggedIn': 'Must be logged in',
         'editProvider.errorUpdating': 'Error updating provider',
+        'editProvider.sectionFieldLabel': 'Section Label (i18n)',
+        'editProvider.sectionUnclassified': 'Unclassified (i18n)',
+        'editProvider.sectionFood': 'Food (i18n)',
+        'editProvider.sectionBusiness': 'Business (i18n)',
       };
       return translations[key] || key;
     },
@@ -278,6 +282,29 @@ describe('ProviderEditForm regressions', () => {
     expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
   });
 
+  it('[pre-fix FAILS] moderation section selector uses translation keys for label and options', () => {
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        provider={baseProvider}
+        reviewFooterActions={{
+          reject: { label: 'Reject', onClick: vi.fn() },
+          approve: { label: 'Approve', onClick: vi.fn() },
+        }}
+      />
+    );
+
+    expect(screen.getByText('Section Label (i18n)')).toBeInTheDocument();
+
+    const select = screen.getByRole('combobox', {
+      name: 'Section Label (i18n)',
+    });
+
+    expect(select).toHaveTextContent('Unclassified (i18n)');
+    expect(select).toHaveTextContent('Food (i18n)');
+    expect(select).toHaveTextContent('Business (i18n)');
+  });
+
   it('[post-fix PASSES] moderation footer sends current form data to the selected action', async () => {
     const approveAction = vi.fn().mockResolvedValue(undefined);
     const rejectAction = vi.fn().mockResolvedValue(undefined);
@@ -348,7 +375,7 @@ describe('ProviderEditForm regressions', () => {
     });
   });
 
-  it('[pre-fix FAILS] admin moderation flow should allow editing Section (listing_type)', async () => {
+  it('[post-fix PASSES] admin moderation flow should allow editing Section (listing_type)', async () => {
     const approveAction = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -368,7 +395,7 @@ describe('ProviderEditForm regressions', () => {
       />
     );
 
-    const sectionSelect = screen.getByLabelText('Section (listing_type)');
+    const sectionSelect = screen.getByLabelText('Section Label (i18n)');
     fireEvent.change(sectionSelect, { target: { value: 'business' } });
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
 

@@ -442,27 +442,31 @@ export function ProviderEditForm({
                 <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                   <div className="flex flex-1 flex-col gap-1">
                     <label className="text-xs font-normal text-[#999999] leading-[15px]" htmlFor="provider-listing-type">
-                      Section (listing_type)
+                      {t('editProvider.sectionFieldLabel')}
                     </label>
                     <select
-                      aria-label="Section (listing_type)"
+                      aria-label={t('editProvider.sectionFieldLabel')}
                       className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] outline-none bg-transparent p-0"
                       id="provider-listing-type"
                       value={formData.listingType ?? ''}
                       onChange={(e) => handleInputChange('listingType', e.target.value === '' ? null : e.target.value)}
                     >
-                      <option value="">Unclassified</option>
-                      <option value="food">Food</option>
-                      <option value="business">Business</option>
+                      <option value="">{t('editProvider.sectionUnclassified')}</option>
+                      <option value="food">{t('editProvider.sectionFood')}</option>
+                      <option value="business">{t('editProvider.sectionBusiness')}</option>
                     </select>
                   </div>
                 </div>
               ) : (
                 <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-gray-50 px-3 py-2 shadow-sm">
                   <div className="flex flex-1 flex-col gap-1">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Section (listing_type)</span>
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.sectionFieldLabel')}</span>
                     <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] capitalize">
-                      {formData.listingType ?? 'null (unclassified)'}
+                      {formData.listingType === 'food'
+                        ? t('editProvider.sectionFood')
+                        : formData.listingType === 'business'
+                          ? t('editProvider.sectionBusiness')
+                          : t('editProvider.sectionUnclassified')}
                     </span>
                   </div>
                 </div>
