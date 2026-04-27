@@ -2,7 +2,7 @@
 ID: ad-hoc-food-search-prefix-matching
 Origin: ad-hoc-food-search-prefix-matching
 UUID: c2e8f5a1
-Status: Active
+Status: Released
 ---
 
 # Deployment: Food Search Prefix Matching — v0.10.34 Stage 1
