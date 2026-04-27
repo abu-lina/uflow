@@ -2,7 +2,7 @@
 ID: 107
 Origin: 107
 UUID: a3f2c8b1
-Status: Committed
+Status: Released
 ---
 
 # Plan 107 — Ummah Tab Section-Conditional Search Options
@@ -32,6 +32,7 @@ Status: Committed
 | 2026-04-27T11:40Z | qa | QA complete. All tests pass (7 unit, 6 integration, 129 full suite). Status: QA Complete. | QA Complete |
 | 2026-04-27T11:50Z | uat | UAT complete. Value statement delivered; all objectives met. Status: UAT Approved. Ready for DevOps release. | UAT Approved |
 | 2026-04-27T09:55Z | devops | Stage 1 commit: all changes staged and committed locally for v0.10.31. Docs moved to closed/. | Committed |
+| 2026-04-27T09:55Z | devops | Stage 2 release executed: pushed session/106-ummah-search, tagged v0.10.31, closed issue #172. | Released |
 
 ---
 

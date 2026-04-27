@@ -217,19 +217,33 @@ Documents moved to `closed/` as part of this Stage 1 commit:
 
 ## Commit
 
-**Commit hash**: TBD (populated after commit)
+**Commit hash**: `77ab4f92`
 
 **Commit type**: `feat(search)`
 
-**Subject**: `Add Ummah tab section-conditional search options (Plan 107)`
+**Subject**: `Add Ummah tab section-conditional search options`
 
 **Refs**: `Refs PLAN-107`
+
+**Files changed**: 25 files, 2705 insertions(+), 62 deletions(-)
 
 ---
 
 ## Post-Release Status
 
-**Stage 1 Status**: Active (committed locally, awaiting Stage 2 release approval)
+**Stage 1 Status**: Released (committed, pushed, tagged v0.10.31)
+
+**Release Execution**:
+- Branch pushed: `git push origin session/106-ummah-search` ✅
+- PR URL: https://github.com/abu-lina/uflow/compare/main...session/106-ummah-search
+- Tag created: `git tag -a v0.10.31` on commit `77ab4f92` ✅
+- Tag pushed: `git push origin v0.10.31` ✅
+- GitHub Issue #172: Closed with release comment ✅
+- All plan docs: Updated to Released status ✅
+- Roadmap: Updated — Current Version → v0.10.31 ✅
+- Security audit: 2 HIGH pre-existing (Next.js DoS + Vite path traversal, dev-only) — not introduced by this plan ✅
+
+**Release Timestamp**: 2026-04-27T09:55Z
 
 **Next**: Stage 2 release requires explicit user approval.
 
