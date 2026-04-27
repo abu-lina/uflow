@@ -562,6 +562,7 @@ function SearchPageContent() {
         <ExpandSection isOpen={filterOpen} title={filterAccordionTitle} onToggle={setFilterOpen}>
           <FilterSection
             selectedFilters={selectedFilters}
+            selectedSection={selectedSection}
             t={t}
             onToggleFilter={handleToggleFilter}
           />

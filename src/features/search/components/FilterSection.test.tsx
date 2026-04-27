@@ -25,6 +25,7 @@ describe('FilterSection', () => {
 
     render(
       <FilterSection
+        selectedSection="food"
         selectedFilters={[]}
         t={t}
         onToggleFilter={onToggleFilter}
@@ -40,5 +41,35 @@ describe('FilterSection', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i }));
 
     expect(onToggleFilter).toHaveBeenCalledWith('muslim');
+  });
+
+  it('hides muslim filter in business section', () => {
+    render(
+      <FilterSection
+        selectedSection="business"
+        selectedFilters={[]}
+        t={t}
+        onToggleFilter={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('checkbox', { name: /Inhaber ist Muslim/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Spendet fuer Gute Zwecke/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Unterstuetzt Muslime/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Bietet Parkmoeglichkeiten/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Bietet Gebetsmoeglichkeiten/i })).toBeInTheDocument();
+  });
+
+  it('hides all provider filters in ummah section', () => {
+    render(
+      <FilterSection
+        selectedSection="ummah"
+        selectedFilters={[]}
+        t={t}
+        onToggleFilter={vi.fn()}
+      />
+    );
+
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
   });
 });

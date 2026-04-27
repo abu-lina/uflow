@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { createProviderCommunityServiceRelationship } from './communityServices';
+import { TrustLevel } from '@/types/badges';
 
 // Extended form data type that may include userEmail for anonymous recommendations
 type ExtendedProviderFormData = ProviderFormData & {
@@ -12,6 +13,20 @@ export interface CreateProviderResult {
   provider_id?: string;
   community_service_id?: string;
 }
+
+const TAG_SYNONYMS = {
+  muslim: new Set(['muslim', 'muslim_owned', 'muslim-owned']),
+  prayer: new Set(['gebet', 'gebetsraum', 'gebetsfreundlich', 'prayer', 'prayer_space', 'prayer-friendly']),
+  donations: new Set(['spenden', 'spendenbereit', 'accepts_donations', 'supports_sadaqah', 'sadaqah']),
+  parking: new Set(['parken', 'parking', 'has_parking']),
+  solidarity: new Set(['solidaritaet', 'solidarity', 'solidarity_pricing']),
+} as const;
+
+const FORM_TAG_TO_BADGE_KEY = {
+  muslim: 'MUSLIM_OWNED',
+  prayer: 'PRAYER_FRIENDLY',
+  donations: 'SUPPORTS_SADAQAH',
+} as const;
 
 /**
  * Creates a provider or community service from form data
@@ -114,6 +129,23 @@ export async function createProviderOrService(
     // Generate UUID client-side to avoid needing SELECT after INSERT
     // This bypasses the SELECT policy issue for pending reviews
     const generatedProviderId = crypto.randomUUID();
+
+    const normalizedTags = new Set(
+      (formData.tags || [])
+        .map((tag) => tag.trim().toLowerCase())
+        .filter((tag) => tag.length > 0),
+    );
+
+    const hasMuslimOwnedTag = Array.from(TAG_SYNONYMS.muslim).some((tag) => normalizedTags.has(tag));
+    const hasPrayerTag = Array.from(TAG_SYNONYMS.prayer).some((tag) => normalizedTags.has(tag));
+    const hasDonationsTag = Array.from(TAG_SYNONYMS.donations).some((tag) => normalizedTags.has(tag));
+    const hasParkingTag = Array.from(TAG_SYNONYMS.parking).some((tag) => normalizedTags.has(tag));
+    const hasSolidarityTag = Array.from(TAG_SYNONYMS.solidarity).some((tag) => normalizedTags.has(tag));
+
+    const requestedBadgeKeys: string[] = [];
+    if (hasMuslimOwnedTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.muslim);
+    if (hasPrayerTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.prayer);
+    if (hasDonationsTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.donations);
     
     // For anonymous users, explicitly set both ID fields to null to satisfy RLS policy
     // IMPORTANT: We must use explicit null (not undefined) and ensure fields are always present
@@ -132,6 +164,8 @@ export async function createProviderOrService(
       social_website: formData.website || null,
       social_instagram: formData.instagram || null,
       barakah_effects: formData.tags || [],
+      has_parking: hasParkingTag,
+      solidarity_pricing: hasSolidarityTag,
       provider_images: uploadedUrls.length > 0 ? JSON.stringify({ urls: uploadedUrls }) : null,
       offers_ids: formData.offers_ids || [],
       needs_ids: formData.needs_ids || [],
@@ -171,6 +205,55 @@ export async function createProviderOrService(
     if (providerError) {
       console.error('Error creating provider:', providerError);
       throw providerError;
+    }
+
+    if (requestedBadgeKeys.length > 0) {
+      const { data: badgeTypes, error: badgeTypesError } = await supabase
+        .from('badge_types')
+        .select('id, badge_key')
+        .in('badge_key', requestedBadgeKeys);
+
+      let badgeInsertFailed = false;
+
+      if (badgeTypesError) {
+        badgeInsertFailed = true;
+        console.error('Error fetching badge types for provider creation:', badgeTypesError);
+      } else if (badgeTypes && badgeTypes.length > 0) {
+        const badgeRows = badgeTypes.map((badgeType) => ({
+          entity_id: generatedProviderId,
+          entity_type: 'provider',
+          badge_type_id: badgeType.id,
+          trust_level: TrustLevel.SELF_DECLARED,
+          confirmation_count: 0,
+        }));
+
+        const { error: providerBadgesError } = await supabase
+          .from('provider_badges')
+          .insert(badgeRows);
+
+        if (providerBadgesError) {
+          badgeInsertFailed = true;
+          console.error('Error creating provider badges during provider creation:', providerBadgesError);
+        }
+      }
+
+      if (badgeInsertFailed) {
+        const fallbackBooleans: Record<string, boolean> = {};
+        if (hasMuslimOwnedTag) fallbackBooleans.muslim_owned = true;
+        if (hasPrayerTag) fallbackBooleans.has_prayer_space = true;
+        if (hasDonationsTag) fallbackBooleans.accepts_donations = true;
+
+        if (Object.keys(fallbackBooleans).length > 0) {
+          const { error: fallbackError } = await supabase
+            .from('providers')
+            .update(fallbackBooleans)
+            .eq('provider_id', generatedProviderId);
+
+          if (fallbackError) {
+            console.error('Error applying fallback provider booleans after badge insert failure:', fallbackError);
+          }
+        }
+      }
     }
 
     // Create provider-community service relationships for all selected services

@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.30] - 2026-04-27
+
+### Added
+
+- **Badge/Boolean data coherence for provider filters (Plan 106 / Issue #170)**:
+  - Added migration `supabase/migrations/076_provider_badge_boolean_sync_trigger.sql`:
+    - New trigger function `sync_provider_badge_to_boolean()` on `public.provider_badges` (`AFTER INSERT OR DELETE`)
+    - Resolves `badge_key` via `badge_types` JOIN (`provider_badges` stores `badge_type_id`)
+    - Applies provider-only mapping (`entity_type = 'provider'`):
+      - `MUSLIM_OWNED` → `providers.muslim_owned`
+      - `PRAYER_FRIENDLY` → `providers.has_prayer_space`
+      - `SUPPORTS_SADAQAH` → `providers.accepts_donations`
+    - Insert path sets mapped booleans to `true`
+    - Delete path unsets mapped booleans only when the deleted badge was the last provider badge of that type
+  - Updated provider creation flow in `src/services/providerService.ts`:
+    - Added form-tag normalization and mapping for filter-relevant attributes
+    - Writes direct booleans for non-badge attributes on provider INSERT:
+      - `has_parking`
+      - `solidarity_pricing`
+    - Creates `provider_badges` rows with `trust_level = SELF_DECLARED` for badge-mapped attributes after provider INSERT
+    - Adds fallback strategy: if badge creation fails, directly updates corresponding provider booleans (`muslim_owned`, `has_prayer_space`, `accepts_donations`) so search filtering remains correct
+
+### Changed
+
+- Made `FilterSection` section-aware:
+  - `src/features/search/components/FilterSection.tsx` now accepts `selectedSection`
+  - FOOD shows all 5 filters
+  - BUSINESS/STORES hides `muslim` filter
+  - UMMAH hides provider-only filters
+- Wired `selectedSection` through `src/app/(public)/search/page.tsx` into `FilterSection`.
+
+### Tests
+
+- Extended `src/features/search/components/FilterSection.test.tsx` with section-visibility coverage.
+- Added `src/__tests__/services/providerService.badges.test.ts` for creation-path badge/boolean wiring and fallback behavior.
+
 ## [0.10.29] - 2026-04-26
 
 ### Added

@@ -1,8 +1,10 @@
 import { Check, CircleParking, HandHeart, HeartHandshake, Moon } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { PrayerRug } from '@/components/icons/PrayerRug';
+import type { Section } from '@/providers/search-provider';
 
 interface FilterSectionProps {
+  selectedSection: Section;
   selectedFilters: string[];
   onToggleFilter: (key: string) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
@@ -48,10 +50,17 @@ const FILTER_ITEMS: FilterItem[] = [
   },
 ];
 
-export function FilterSection({ selectedFilters, onToggleFilter, t }: FilterSectionProps) {
+export function FilterSection({ selectedSection, selectedFilters, onToggleFilter, t }: FilterSectionProps) {
+  const visibleFilterItems =
+    selectedSection === 'ummah'
+      ? []
+      : selectedSection === 'business'
+        ? FILTER_ITEMS.filter((item) => item.key !== 'muslim')
+        : FILTER_ITEMS;
+
   return (
     <div className="mt-3 flex flex-col gap-3">
-      {FILTER_ITEMS.map(({ key, titleKey, subtitleKey, Icon }) => {
+      {visibleFilterItems.map(({ key, titleKey, subtitleKey, Icon }) => {
         const selected = selectedFilters.includes(key);
 
         return (
