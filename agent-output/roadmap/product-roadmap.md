@@ -87,6 +87,7 @@
 | 2026-04-26       | Plan 104 released (v0.10.28): Filter accordion UI — 5 Islamic-context filter options | FilterSection accordion with 5 filter categories (audience/Wer stepper, prayer space, parking, delivery, dietary). Gebet icon updated to PrayerRug stroke-rounded design. 1086 tests passing. Tag v0.10.28 pushed. PR #167 merged. |
 | 2026-04-26       | Plan 105 released (v0.10.29): Wire Values & Amenities filters to provider search results | Wired 5 filter keys (muslim→muslim_owned, spenden→accepts_donations, solidaritaet→solidarity_pricing, parken→has_parking, gebet→has_prayer_space) from /search UI through URL→API→service layer AND predicates. AND semantics, silent-strip unknown keys, ummah section isolated, React Query cache partitioned. 39/39 filter tests pass. Tag v0.10.29 pushed. PR #169. Closes #168 |
 | 2026-04-27       | Plan 106 released (v0.10.30): Badge/Boolean Data Coherence | M1: badge-to-boolean sync trigger (migration 076 — AFTER INSERT/DELETE on provider_badges); M2: creation path wiring (providerService.ts writes badge rows + boolean columns on provider creation); M3: section-aware FilterSection (ummah hides all provider filters, business hides muslim filter). Tag v0.10.30 pushed. Closes #170 |
+| 2026-04-27       | Session S105 closed | Plans 105 + 106 fully released (v0.10.29, v0.10.30). Full pipeline completed: Critique → Plan → Implement → Code Review → QA → UAT → DevOps Stage 1+2. Retrospective deferred to next session. |
 
 ---
 
