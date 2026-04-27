@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-27
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.38
+**Current Version**: v0.10.39
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -93,6 +93,7 @@
 | 2026-04-27       | Plan 108 released (v0.10.36): Hide Wer accordion for Stores section | Wer (audience) accordion hidden when selectedSection === 'business'; accordion reset guard on section switch prevents all-collapsed state. Closes #174. Tag v0.10.36 pushed. |
 | 2026-04-27       | Plan 110 released (v0.10.37): CI pipeline fixes | Fixed invalid dependency-review-action SHA pin; raised /providers/[provider_id] perf budget 220→260 kB; added pipefail to CI build step. All CI Pipeline jobs pass. Tag v0.10.37 pushed. |
 | 2026-04-27       | Plan 109 released (v0.10.38): Providers results page UI enhancements | SearchContextBar on /providers header shows section icon, search term, location, wer audience; quick-edit button routes to /search with section preserved; location+wer URL params transported from /search; mobile nav active-state locked on /providers. v0.10.37 (CI fixes) was claimed by session/110 concurrently, so v0.10.38 used. Tag v0.10.38 pushed. Closes #175. |
+| 2026-04-27       | Plan 108 released (v0.10.39): Admin Section (listing_type) editing in provider moderation | Admin moderators can now change provider Section classification (Food/Business/Unclassified) from /dashboard/providers/[id]/edit. Previously read-only; now editable select in admin moderation context (reviewFooterActions prop); owner edit flow unchanged. 19/19 regression tests. No DB migrations. Deferred: DF-1 i18n, DF-2 route test (108-open-actions.md). PR #180. Tag v0.10.39 pushed. |
 | 2026-04-27       | Ad-hoc search quality fixes released (v0.10.33): Food recents filter + Wo empty-state i18n | Fixed cross-section contamination in food "What" recent history (non-food service-type entries filtered out). Added localized "Wo?" question-form label for Where accordion across 6 locales. 2 regression tests added. Tag v0.10.33 pushed. |
 | 2026-04-27       | Search expand show-all preview released (v0.10.32): Feature-flagged 3-item preview UX + FigmaSearchBar | WasMealResults/WasCategoryResults/WoCityResults/FilterSection: 3-item show-all preview behind `enableSearchExpandShowAllPreview` flag (default off). Recent-priority UX: recent searches shown over popular items; state resets on query change. FigmaSearchBar: compact mobile search bar with hamburger collapse/expand. Provider grid: 2-col mobile layout. i18n 6 locales. 1120 tests passing. Tag v0.10.32 pushed. |
 
@@ -115,9 +116,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.38 — Released 2026-04-27 · Providers search context bar + location/wer transport (Plan 109)
+**Current Working Release**: v0.10.39 — Released 2026-04-27 · Admin Section (listing_type) editing in provider moderation (Plan 108)
 
-_Providers results UX (2026-04-27): SearchContextBar shows section icon, search term, location, and wer audience summary on /providers mobile header. Quick-edit button returns to /search with section preserved. location (functional filter) and wer (display-only) params now transported from /search. Mobile nav active-state correct on /providers. 1140 tests passing. Closes #175. Tag v0.10.38 pushed._
+_Admin moderation UX (2026-04-27): Admin moderators can now change a provider's Section classification (Food / Business / Unclassified) from the provider edit dashboard. The field was previously read-only for all users; now rendered as an editable select in admin moderation context (reviewFooterActions prop), read-only for owner profile edit flow (backward compatible). 19/19 regression tests pass. No DB migrations. Deferred: DF-1 i18n keys, DF-2 route test coverage (108-open-actions.md). Tag v0.10.39 pushed. PR #180._
 
 **Release Status**: Released
 **Ready for Release**: ✅ v0.10.33 complete
@@ -137,6 +138,8 @@ _Providers results UX (2026-04-27): SearchContextBar shows section icon, search 
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.10.39 | 2026-04-27 | Plan 108 (Admin Section listing_type editing in provider moderation — PR #180) | Released |
+| v0.10.38 | 2026-04-27 | Plan 109 (Providers search context bar + location/wer transport — Closes #175) | Released |
 | v0.10.37 | 2026-04-27 | Plan 110 (CI pipeline fixes — SHA pin, perf budget, pipefail) | Released |
 | v0.10.36 | 2026-04-27 | Plan 108 (Stores Wer accordion hidden — Closes #174) | Released |
 | v0.10.35 | 2026-04-27 | Plan 107 (Ummah tab state rollback fix + 3-item preview parity — Closes #174 predecessor) | Released |
