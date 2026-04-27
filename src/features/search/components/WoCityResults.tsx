@@ -106,7 +106,7 @@ export function WoCityResults({
 
     const visiblePopularCities = isShowAllPreviewEnabled
       ? (showAllPopularCities ? popularCities : popularCities.slice(0, 3))
-      : popularCities.slice(0, 5);
+      : popularCities.slice(0, 3);
     const visibleRecentSearches = isShowAllPreviewEnabled
       ? (showAllRecentCities ? recentSearches : recentSearches.slice(0, 3))
       : recentSearches.slice(0, 3);

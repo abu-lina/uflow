@@ -8,6 +8,19 @@ const mockSearchFoodMenuItems = vi.fn();
 const mockFetchProviderCities = vi.fn();
 const mockCheckCityExists = vi.fn();
 const mockRouterPush = vi.fn();
+let mockSearchParams = new URLSearchParams('section=food');
+let replaceDelayMs = 0;
+const mockRouterReplace = vi.fn((url: string) => {
+  const query = url.split('?')[1] ?? '';
+  if (replaceDelayMs > 0) {
+    window.setTimeout(() => {
+      mockSearchParams = new URLSearchParams(query);
+    }, replaceDelayMs);
+    return;
+  }
+
+  mockSearchParams = new URLSearchParams(query);
+});
 let lastWasMealProps: { isError?: boolean } | null = null;
 const mockTranslate = (key: string, variables?: Record<string, string | number>) => {
   if (key === 'suchen.was.selectedWhat') {
@@ -77,8 +90,9 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     back: vi.fn(),
     push: mockRouterPush,
+    replace: mockRouterReplace,
   }),
-  useSearchParams: () => new URLSearchParams('section=food'),
+  useSearchParams: () => mockSearchParams,
 }));
 
 vi.mock('@/providers/LanguageProvider', () => ({
@@ -209,8 +223,11 @@ describe('/search page meal search wiring (Plan 096)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    mockSearchParams = new URLSearchParams('section=food');
+    replaceDelayMs = 0;
     localStorage.removeItem('uflow:recent-was-searches');
     mockRouterPush.mockReset();
+    mockRouterReplace.mockReset();
     mockFetchProviderCities.mockResolvedValue([]);
     mockCheckCityExists.mockResolvedValue(false);
     lastWasMealProps = null;
@@ -347,7 +364,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
   });
 
   it('clears food WAS selection when switching from food to ummah section', async () => {
-    render(<SearchPage />);
+    const { rerender } = render(<SearchPage />);
 
     const input = screen.getByRole('searchbox', { name: 'Angebote suchen' });
     fireEvent.change(input, { target: { value: 'doe' } });
@@ -362,9 +379,64 @@ describe('/search page meal search wiring (Plan 096)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Go Ummah' }));
 
+    await act(async () => {
+      rerender(<SearchPage />);
+      await vi.runOnlyPendingTimersAsync();
+    });
+
     expect(screen.queryByText('Was: Doener')).not.toBeInTheDocument();
     expect(screen.getByText('Was?')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Suchen' })).toBeDisabled();
     expect(screen.getByRole('checkbox', { name: /Kostenlos/i })).toBeInTheDocument();
+  });
+
+  it('[regression] syncs search URL section when switching to ummah and stores', () => {
+    render(<SearchPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go Ummah' }));
+    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=ummah');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go Business' }));
+    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=business');
+  });
+
+  it('[regression] does not call replace when clicking already-active section tab', () => {
+    render(<SearchPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go Food' }));
+
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+  });
+
+  it('[regression] syncs selected section from URL changes while mounted', async () => {
+    const { rerender } = render(<SearchPage />);
+
+    expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
+
+    mockSearchParams = new URLSearchParams('section=ummah');
+    await act(async () => {
+      rerender(<SearchPage />);
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(screen.getByText('SectionSelector: ummah')).toBeInTheDocument();
+  });
+
+  it('[regression] handles delayed router.replace section updates without state rollback', async () => {
+    replaceDelayMs = 100;
+    const { rerender } = render(<SearchPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go Ummah' }));
+
+    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=ummah');
+    expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+      await vi.runOnlyPendingTimersAsync();
+      rerender(<SearchPage />);
+    });
+
+    expect(screen.getByText('SectionSelector: ummah')).toBeInTheDocument();
   });
 });

@@ -1,5 +1,7 @@
 import { BadgeCheck, Check, Gift, Globe, Languages, Users } from 'lucide-react';
 import type { SVGProps } from 'react';
+import { useState } from 'react';
+import { getFeatureFlag } from '@/config/feature-flags';
 
 interface UmmahFilterSectionProps {
   selectedFilters: string[];
@@ -48,9 +50,16 @@ const UMMAH_FILTER_ITEMS: FilterItem[] = [
 ];
 
 export function UmmahFilterSection({ selectedFilters, onToggleFilter, t }: UmmahFilterSectionProps) {
+  const isShowAllPreviewEnabled = getFeatureFlag('enableSearchExpandShowAllPreview');
+  const [showAllFilters, setShowAllFilters] = useState(false);
+
+  const visibleFilterItems = isShowAllPreviewEnabled
+    ? (showAllFilters ? UMMAH_FILTER_ITEMS : UMMAH_FILTER_ITEMS.slice(0, 3))
+    : UMMAH_FILTER_ITEMS.slice(0, 3);
+
   return (
     <div className="mt-3 flex flex-col gap-3">
-      {UMMAH_FILTER_ITEMS.map(({ key, titleKey, subtitleKey, Icon }) => {
+      {visibleFilterItems.map(({ key, titleKey, subtitleKey, Icon }) => {
         const selected = selectedFilters.includes(key);
 
         return (
@@ -81,6 +90,16 @@ export function UmmahFilterSection({ selectedFilters, onToggleFilter, t }: Ummah
           </button>
         );
       })}
+
+      {isShowAllPreviewEnabled && !showAllFilters && UMMAH_FILTER_ITEMS.length > 3 ? (
+        <button
+          className="mt-1 flex h-11 w-full items-center justify-center rounded-xl bg-[#eee] px-5 text-center font-inter-tight text-base font-medium text-text-primary shadow-[0px_8px_24px_0px_rgba(238,238,238,0.25)] transition-colors hover:bg-neutral-200"
+          type="button"
+          onClick={() => setShowAllFilters(true)}
+        >
+          {t('suchen.filter.showAllFilters')}
+        </button>
+      ) : null}
     </div>
   );
 }

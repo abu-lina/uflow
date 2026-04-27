@@ -3,6 +3,7 @@ import type { WasSelection } from '@/features/search/components/WasCategoryResul
 
 interface WasServiceTypeResultsProps {
   query: string;
+  recentSearches: WasSelection[];
   selectedServiceType: WasSelection | null;
   onSelect: (selection: WasSelection) => void;
   onClearSelection: () => void;
@@ -29,15 +30,19 @@ const SERVICE_TYPES: ServiceTypeItem[] = [
 
 export function WasServiceTypeResults({
   query,
+  recentSearches,
   selectedServiceType,
   onSelect,
   onClearSelection,
   t,
 }: WasServiceTypeResultsProps) {
   const normalizedQuery = query.trim().toLowerCase();
-  const visibleItems = normalizedQuery.length < 2
+  const matchingItems = normalizedQuery.length < 2
     ? SERVICE_TYPES
     : SERVICE_TYPES.filter((item) => t(item.labelKey).toLowerCase().includes(normalizedQuery));
+  const visibleItems = matchingItems.slice(0, 3);
+  const shouldShowRecent = normalizedQuery.length < 2 && recentSearches.length > 0;
+  const shouldShowPopular = !shouldShowRecent;
 
   return (
     <div className="mb-2">
@@ -74,7 +79,7 @@ export function WasServiceTypeResults({
         </>
       ) : null}
 
-      {visibleItems.length > 0 ? (
+      {shouldShowPopular && visibleItems.length > 0 ? (
         <>
           <p className="mb-1 mt-4 px-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
             {t('suchen.was.ummah.browseServiceTypes')}
@@ -108,6 +113,35 @@ export function WasServiceTypeResults({
                 </button>
               );
             })}
+          </div>
+        </>
+      ) : null}
+
+      {shouldShowRecent ? (
+        <>
+          <p className="mb-1 mt-4 px-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+            {t('suchen.was.recentLabel')}
+          </p>
+          <div className="space-y-1">
+            {recentSearches.slice(0, 3).map((item) => (
+              <button
+                key={`recent:${item.serviceTypeId ?? item.label}`}
+                aria-label={item.label}
+                className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-neutral-muted"
+                type="button"
+                onClick={() => onSelect(item)}
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                  <BriefcaseBusiness aria-hidden="true" className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-inter-tight text-base font-semibold text-text-primary">{item.label}</p>
+                  <p className="truncate font-inter text-sm text-text-muted">
+                    {t('suchen.was.ummah.serviceTypeLabel')}
+                  </p>
+                </div>
+              </button>
+            ))}
           </div>
         </>
       ) : null}
