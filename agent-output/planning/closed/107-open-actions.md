@@ -2,7 +2,7 @@
 ID: 107
 Origin: 107
 UUID: a3f2c8b1
-Status: Committed
+Status: Released
 ---
 
 # Open Actions 107: Deferred Post-Deploy Follow-ups
