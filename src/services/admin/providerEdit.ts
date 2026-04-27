@@ -14,6 +14,7 @@ export interface AdminProviderEditData {
   providerName?: string;
   providerDescription?: string | null;
   categoryId?: string;
+  listingType?: 'food' | 'business' | null;
   addressStreet?: string | null;
   addressZip?: string | null;
   addressCity?: string | null;
@@ -54,6 +55,9 @@ export async function updateProviderFields(
   }
   if (editData.categoryId !== undefined) {
     updatePayload.category_id = editData.categoryId;
+  }
+  if (editData.listingType !== undefined) {
+    updatePayload.listing_type = editData.listingType;
   }
   if (editData.addressStreet !== undefined) {
     updatePayload.address_street = editData.addressStreet

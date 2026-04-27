@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.39] - 2026-04-27
+
+### Added
+
+- **Admin Section (listing_type) editing**: Admin moderators can now change a provider's Section classification (Food / Business / Unclassified) directly from the provider edit dashboard (`/dashboard/providers/[id]/edit`). The field was previously read-only for all users; it is now an editable dropdown in the admin moderation context.
+
+### Tests
+
+- Added regression test `[pre-fix FAILS] admin moderation flow should allow editing Section (listing_type)` to `ProviderEditForm.regression.test.tsx`.
+- Added regression test `[pre-fix FAILS] includes listing_type when explicitly provided by admin edit flow` to `admin-provider-edit.test.ts`.
+
 ## [0.10.38] - 2026-04-27
 
 ### Added

@@ -347,6 +347,39 @@ describe('ProviderEditForm regressions', () => {
       );
     });
   });
+
+  it('[pre-fix FAILS] admin moderation flow should allow editing Section (listing_type)', async () => {
+    const approveAction = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        provider={{ ...baseProvider, listing_type: 'food' }}
+        reviewFooterActions={{
+          reject: {
+            label: 'Reject',
+            onClick: vi.fn().mockResolvedValue(undefined),
+          },
+          approve: {
+            label: 'Approve',
+            onClick: approveAction,
+          },
+        }}
+      />
+    );
+
+    const sectionSelect = screen.getByLabelText('Section (listing_type)');
+    fireEvent.change(sectionSelect, { target: { value: 'business' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+    await waitFor(() => {
+      expect(approveAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          listingType: 'business',
+        })
+      );
+    });
+  });
 });
 
 describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {

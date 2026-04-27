@@ -100,6 +100,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       providerName: formData.providerName,
       providerDescription: formData.providerDescription || null,
       categoryId: formData.categoryId || undefined,
+      listingType: formData.listingType,
       addressStreet: formData.isOnlineBusiness ? null : (formData.street || null),
       addressZip: formData.isOnlineBusiness ? null : (formData.zipCode || null),
       addressCity: formData.isOnlineBusiness ? null : (formData.city || null),

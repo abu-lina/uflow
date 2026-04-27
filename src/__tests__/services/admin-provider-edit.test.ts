@@ -160,4 +160,28 @@ describe('updateProviderFields', () => {
     expect(updatePayload).not.toHaveProperty('address_street');
     expect(updatePayload).not.toHaveProperty('category_id');
   });
+
+  it('[pre-fix FAILS] includes listing_type when explicitly provided by admin edit flow', async () => {
+    const mockProvider = {
+      provider_id: validProviderId,
+      provider_name: 'Name Only',
+      updated_at: new Date().toISOString(),
+    };
+    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
+
+    await updateProviderFields(
+      validProviderId,
+      {
+        providerName: 'Name Only',
+        listingType: 'business',
+      } as AdminProviderEditData & { listingType: 'food' | 'business' | null },
+      validAdminId
+    );
+
+    const updatePayload = mockUpdate.mock.calls[0][0];
+    expect(updatePayload).toMatchObject({
+      provider_name: 'Name Only',
+      listing_type: 'business',
+    });
+  });
 });
