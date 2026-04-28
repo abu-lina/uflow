@@ -16,18 +16,26 @@ import { FormInput } from '@/components/ui/FormInput';
 import { Button } from '@/components/ui/Button';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { useAuth } from '@/providers/auth-provider';
-import { useLanguage } from '@/hooks/useLanguage';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { resetPasswordWithLanguage } from '@/lib/auth';
 
 export function ForgotPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const mapForgotPasswordError = (errorMessage?: string | null) => {
+    if (errorMessage === 'EMAIL_NOT_FOUND') {
+      return t('forgotPassword.emailNotFound');
+    }
+
+    return t('forgotPassword.genericError');
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -41,6 +49,13 @@ export function ForgotPasswordPageContent() {
     }
   }, [user, router, searchParams]);
 
+  useEffect(() => {
+    const prefillEmail = searchParams.get('email');
+    if (prefillEmail) {
+      setEmail(prefillEmail);
+    }
+  }, [searchParams]);
+
   // Don't render if already logged in (to prevent flash)
   if (user) {
     return null;
@@ -50,7 +65,7 @@ export function ForgotPasswordPageContent() {
     e.preventDefault();
     
     if (!email) {
-      setError(language === 'de' ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Please enter your email address.');
+      setError(t('forgotPassword.emailRequired'));
       return;
     }
 
@@ -61,7 +76,7 @@ export function ForgotPasswordPageContent() {
       const { error } = await resetPasswordWithLanguage(email, language);
       
       if (error) {
-        setError(error.message || (language === 'de' ? 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.' : 'An error occurred. Please try again.'));
+        setError(mapForgotPasswordError(error.message));
         setIsLoading(false);
         return;
       }
@@ -72,17 +87,15 @@ export function ForgotPasswordPageContent() {
       
       // Show success toast
       toast.success(
-        language === 'de' ? 'E-Mail gesendet' : 'Email sent',
+        t('forgotPassword.emailSentToastTitle'),
         {
-          description: language === 'de' 
-            ? 'Eine Passwort-Zurücksetzungs-E-Mail wurde an deine E-Mail-Adresse gesendet.'
-            : 'A password reset email has been sent to your email address.',
+          description: t('forgotPassword.emailSentToastDescription'),
           duration: 5000,
         }
       );
     } catch (error) {
       console.error('Password reset error:', error);
-      setError(language === 'de' ? 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.' : 'An unexpected error occurred. Please try again.');
+      setError(t('forgotPassword.genericError'));
       setIsLoading(false);
     }
   };
@@ -98,7 +111,7 @@ export function ForgotPasswordPageContent() {
 
   const handleResendEmail = async () => {
     if (!email) {
-      setError(language === 'de' ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Please enter your email address.');
+      setError(t('forgotPassword.emailRequired'));
       return;
     }
 
@@ -109,24 +122,22 @@ export function ForgotPasswordPageContent() {
       const { error } = await resetPasswordWithLanguage(email, language);
       
       if (error) {
-        setError(error.message || (language === 'de' ? 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.' : 'An error occurred. Please try again.'));
+        setError(mapForgotPasswordError(error.message));
         setIsLoading(false);
         return;
       }
       
       // Show success toast
       toast.success(
-        language === 'de' ? 'E-Mail erneut gesendet' : 'Email resent',
+        t('forgotPassword.emailResentToastTitle'),
         {
-          description: language === 'de' 
-            ? 'Eine neue Passwort-Zurücksetzungs-E-Mail wurde gesendet.'
-            : 'A new password reset email has been sent.',
+          description: t('forgotPassword.emailResentToastDescription'),
           duration: 4000,
         }
       );
     } catch (error) {
       console.error('Resend password reset error:', error);
-      setError(language === 'de' ? 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.' : 'An unexpected error occurred. Please try again.');
+      setError(t('forgotPassword.genericError'));
       setIsLoading(false);
     }
   };
@@ -134,7 +145,7 @@ export function ForgotPasswordPageContent() {
   return (
     <PageLayout hasBackground={false}>
       <PageHeader
-        title={language === 'de' ? 'Passwort vergessen' : 'Forgot password'}
+        title={t('forgotPassword.pageTitle')}
         variant="back-and-title"
         onBack={handleBackToLogin}
       />
@@ -145,11 +156,8 @@ export function ForgotPasswordPageContent() {
         {/* Title + Paragraph with proper spacing */}
         <TitleSection>
           <TitleAndText
-            description={language === 'de' 
-              ? 'Kein Problem! Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen deines Passworts.'
-              : 'No problem! Enter your email address and we\'ll send you a link to reset your password.'
-            }
-            title={language === 'de' ? 'Passwort vergessen?' : 'Forgot your password?'}
+            description={t('forgotPassword.heroDescription')}
+            title={t('forgotPassword.heroTitle')}
           />
         </TitleSection>
 
@@ -162,8 +170,8 @@ export function ForgotPasswordPageContent() {
                 <div className="mb-6">
                   <FormInput
                     required
-                    label={language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
-                    placeholder={language === 'de' ? 'deine@email.com' : 'your@email.com'}
+                    label={t('forgotPassword.emailLabel')}
+                    placeholder={t('forgotPassword.emailPlaceholder')}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -193,11 +201,11 @@ export function ForgotPasswordPageContent() {
                   <Button
                     fullWidth
                     loading={isLoading}
-                    loadingText={language === 'de' ? 'E-Mail wird gesendet...' : 'Sending email...'}
+                    loadingText={t('forgotPassword.submitLoading')}
                     type="submit"
                     variant="auth"
                   >
-                    {language === 'de' ? 'Passwort zurücksetzen' : 'Reset password'}
+                    {t('forgotPassword.submit')}
                   </Button>
                 </div>
 
@@ -207,7 +215,7 @@ export function ForgotPasswordPageContent() {
                     type="button"
                     onClick={handleBackToLogin}
                   >
-                    {language === 'de' ? 'Zurück zur Anmeldung' : 'Back to login'}
+                    {t('forgotPassword.backToLogin')}
                   </LinkButton>
                 </div>
               </form>
@@ -221,13 +229,10 @@ export function ForgotPasswordPageContent() {
                 {/* Success Message */}
                 <div className="mb-8">
                   <h2 className="mb-3 text-xl font-semibold text-content-heading">
-                    {language === 'de' ? 'E-Mail gesendet!' : 'Email sent!'}
+                    {t('forgotPassword.successTitle')}
                   </h2>
                   <p className="text-content text-base leading-6">
-                    {language === 'de' 
-                      ? 'Wir haben dir eine E-Mail mit einem Link zum Zurücksetzen deines Passworts gesendet. Bitte überprüfe deinen Posteingang und folge den Anweisungen.'
-                      : 'We\'ve sent you an email with a link to reset your password. Please check your inbox and follow the instructions.'
-                    }
+                    {t('forgotPassword.successDescription')}
                   </p>
                 </div>
 
@@ -236,29 +241,26 @@ export function ForgotPasswordPageContent() {
                   <Button
                     fullWidth
                     loading={isLoading}
-                    loadingText={language === 'de' ? 'Wird gesendet...' : 'Sending...'}
+                    loadingText={t('forgotPassword.resendLoading')}
                     variant="auth"
                     onClick={handleResendEmail}
                   >
                     <Mail className="h-5 w-5" />
-                    {language === 'de' ? 'E-Mail erneut senden' : 'Resend email'}
+                    {t('forgotPassword.resend')}
                   </Button>
 
                   <LinkButton
                     type="button"
                     onClick={handleBackToLogin}
                   >
-                    {language === 'de' ? 'Zurück zur Anmeldung' : 'Back to login'}
+                    {t('forgotPassword.backToLogin')}
                   </LinkButton>
                 </div>
 
                 {/* Help Text */}
                 <div className="mt-6 rounded-2xl border border-border bg-neutral-light/50 p-4">
                   <p className="text-sm text-content">
-                    {language === 'de' 
-                      ? 'E-Mail nicht erhalten? Überprüfe auch deinen Spam-Ordner oder versuche es in ein paar Minuten erneut.'
-                      : 'Didn\'t receive the email? Check your spam folder or try again in a few minutes.'
-                    }
+                    {t('forgotPassword.helpText')}
                   </p>
                 </div>
               </div>

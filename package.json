@@ -1,6 +1,6 @@
 {
   "name": "ummah-flow",
-  "version": "0.10.41",
+  "version": "0.10.42",
   "private": true,
   "engines": {
     "node": ">=18.0.0",
@@ -29,6 +29,7 @@
     "lint:watch": "eslint . --watch",
     "lint:check": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
+    "i18n:check": "node scripts/check-i18n.mjs",
     "check-all": "npm run type-check && npm run lint:check",
     "lint:staged": "lint-staged",
     "format": "prettier --write .",

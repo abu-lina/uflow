@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.42] - 2026-04-28
+
+### Fixed
+
+- **i18n: All 6 locales now have full key parity with the EN canonical reference** (Plan 111 M1): Key-diff script (`npm run i18n:check`) now reports 0 missing keys for de, ar, tr, ur, ps. Closes the key-structure gap that caused raw translation keys to render for non-DE/EN users.
+- **i18n: Forgot-password and reset-password pages fully localised** (Plan 111 M2): Replaced all `language === 'de' ? ... : ...` ternaries with `t()` calls from `LanguageProvider`. Auth recovery pages now render correctly in all 6 supported locales.
+- **i18n: Auth error messages now localised** (Plan 111 M2): Backend error codes (`EMAIL_NOT_FOUND`, `INVALID_OR_EXPIRED_TOKEN`) are now mapped to human-readable localized messages instead of being rendered raw to the user.
+- **i18n: Reset→forgot-password email prefill** (Plan 111 M2): After a reset-password failure, navigation to the forgot-password page now pre-populates the email field via query param, completing the cross-page user journey.
+- **i18n: Bookmark toast messages now locale-aware** (Plan 111 M2): `useBookmarkWithAuth` hook migrated from legacy 2-language (`de`/`en`) fallback to `LanguageProvider`, enabling toast messages for all 6 supported locales.
+
+### Added
+
+- **i18n: Deterministic locale parity checker** (`scripts/check-i18n.mjs`, `npm run i18n:check`): Automated script verifies all locale files have identical key structure to the EN canonical. Exits with code 1 if gaps are detected.
+- **i18n: Regression test for parity checker** (`tests/scripts/check-i18n.test.ts`): Vitest unit test covering `collectMissingKeys()` detection logic.
+- **i18n: `forgotPassword.*` and `resetPassword.*` translation namespaces** added to all 6 locale files (en, de, ar, tr, ur, ps) with localised strings.
+
 ## [0.10.41] - 2026-04-28
 
 ### Changed

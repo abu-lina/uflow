@@ -17,7 +17,7 @@ import { FormInputGroup } from '@/components/ui/FormInputGroup';
 import { Button } from '@/components/ui/Button';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { useAuth } from '@/providers/auth-provider';
-import { useLanguage } from '@/hooks/useLanguage';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface FormData {
   password: string;
@@ -28,7 +28,7 @@ export function ResetPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState<FormData>({
     password: '',
     confirmPassword: '',
@@ -40,6 +40,18 @@ export function ResetPasswordPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
+
+  const mapResetPasswordError = (errorMessage?: string | null) => {
+    if (errorMessage === 'EMAIL_NOT_FOUND') {
+      return t('resetPassword.emailNotFound');
+    }
+
+    if (errorMessage === 'INVALID_OR_EXPIRED_TOKEN') {
+      return t('resetPassword.invalidLinkError');
+    }
+
+    return t('resetPassword.genericError');
+  };
 
   const handleInputChange = useCallback((field: keyof FormData, value: string) => {
     setFormData(prev => ({
@@ -54,16 +66,13 @@ export function ResetPasswordPageContent() {
     const emailParam = searchParams.get('email');
     
     if (!tokenParam || !emailParam) {
-      setError(language === 'de' 
-        ? 'Ungültiger oder fehlender Reset-Link. Bitte fordere einen neuen Link an.'
-        : 'Invalid or missing reset link. Please request a new link.'
-      );
+      setError(t('resetPassword.invalidLinkError'));
       return;
     }
     
     setToken(tokenParam);
     setEmail(emailParam);
-  }, [searchParams, language]);
+  }, [searchParams, t]);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -84,15 +93,15 @@ export function ResetPasswordPageContent() {
 
   const validateForm = () => {
     if (!formData.password) {
-      setError(language === 'de' ? 'Bitte gib ein neues Passwort ein.' : 'Please enter a new password.');
+      setError(t('resetPassword.newPasswordRequired'));
       return false;
     }
     if (formData.password.length < 6) {
-      setError(language === 'de' ? 'Das Passwort muss mindestens 6 Zeichen lang sein.' : 'Password must be at least 6 characters long.');
+      setError(t('resetPassword.passwordMinLength'));
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError(language === 'de' ? 'Die Passwörter stimmen nicht überein.' : 'Passwords do not match.');
+      setError(t('resetPassword.passwordsMismatch'));
       return false;
     }
     setError(null);
@@ -125,7 +134,7 @@ export function ResetPasswordPageContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || (language === 'de' ? 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.' : 'An error occurred. Please try again.'));
+        setError(mapResetPasswordError(data.error));
         setIsLoading(false);
         return;
       }
@@ -136,17 +145,15 @@ export function ResetPasswordPageContent() {
       
       // Show success toast
       toast.success(
-        language === 'de' ? 'Passwort aktualisiert' : 'Password updated',
+        t('resetPassword.successToastTitle'),
         {
-          description: language === 'de' 
-            ? 'Dein Passwort wurde erfolgreich aktualisiert. Du kannst dich jetzt anmelden.'
-            : 'Your password has been successfully updated. You can now log in.',
+          description: t('resetPassword.successToastDescription'),
           duration: 5000,
         }
       );
     } catch (error) {
       console.error('Password reset error:', error);
-      setError(language === 'de' ? 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.' : 'An unexpected error occurred. Please try again.');
+      setError(t('resetPassword.genericError'));
       setIsLoading(false);
     }
   };
@@ -167,7 +174,7 @@ export function ResetPasswordPageContent() {
     return (
       <PageLayout hasBackground={false}>
         <PageHeader
-          title={language === 'de' ? 'Ungültiger Link' : 'Invalid Link'}
+          title={t('resetPassword.invalidLinkTitle')}
           variant="back-and-title"
           onBack={handleBackToLogin}
         />
@@ -178,11 +185,8 @@ export function ResetPasswordPageContent() {
           <div className="flex w-full flex-col">
             <TitleSection>
               <TitleAndText
-                description={language === 'de' 
-                  ? 'Der Passwort-Reset-Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.'
-                  : 'The password reset link is invalid or expired. Please request a new link.'
-                }
-                title={language === 'de' ? 'Ungültiger Link' : 'Invalid Link'}
+                description={t('resetPassword.invalidLinkDescription')}
+                title={t('resetPassword.invalidLinkTitle')}
               />
             </TitleSection>
 
@@ -200,14 +204,14 @@ export function ResetPasswordPageContent() {
                     variant="auth"
                     onClick={handleRequestNewLink}
                   >
-                    {language === 'de' ? 'Neuen Link anfordern' : 'Request new link'}
+                    {t('resetPassword.requestNewLink')}
                   </Button>
 
                   <LinkButton
                     type="button"
                     onClick={handleBackToLogin}
                   >
-                    {language === 'de' ? 'Zurück zur Anmeldung' : 'Back to login'}
+                    {t('resetPassword.backToLogin')}
                   </LinkButton>
                 </div>
               </div>
@@ -221,7 +225,7 @@ export function ResetPasswordPageContent() {
   return (
     <PageLayout hasBackground={false}>
       <PageHeader
-        title={language === 'de' ? 'Neues Passwort setzen' : 'Set new password'}
+        title={t('resetPassword.pageTitle')}
         variant="back-and-title"
         onBack={handleBackToLogin}
       />
@@ -232,11 +236,8 @@ export function ResetPasswordPageContent() {
         {/* Title + Paragraph with proper spacing */}
         <TitleSection>
           <TitleAndText
-            description={language === 'de' 
-              ? 'Gib dein neues Passwort ein. Es muss mindestens 6 Zeichen lang sein.'
-              : 'Enter your new password. It must be at least 6 characters long.'
-            }
-            title={language === 'de' ? 'Neues Passwort setzen' : 'Set new password'}
+            description={t('resetPassword.heroDescription')}
+            title={t('resetPassword.heroTitle')}
           />
         </TitleSection>
 
@@ -249,8 +250,8 @@ export function ResetPasswordPageContent() {
                 <FormInputGroup gap="gap-3">
                   <FormInput
                     required
-                    label={language === 'de' ? 'Neues Passwort' : 'New password'}
-                    placeholder={language === 'de' ? 'Neues Passwort eingeben' : 'Enter new password'}
+                    label={t('resetPassword.newPasswordLabel')}
+                    placeholder={t('resetPassword.newPasswordPlaceholder')}
                     rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
@@ -260,8 +261,8 @@ export function ResetPasswordPageContent() {
                   />
                   <FormInput
                     required
-                    label={language === 'de' ? 'Passwort bestätigen' : 'Confirm password'}
-                    placeholder={language === 'de' ? 'Passwort bestätigen' : 'Confirm password'}
+                    label={t('resetPassword.confirmPasswordLabel')}
+                    placeholder={t('resetPassword.confirmPasswordPlaceholder')}
                     rightIcon={showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={formData.confirmPassword}
@@ -294,11 +295,11 @@ export function ResetPasswordPageContent() {
                   <Button
                     fullWidth
                     loading={isLoading}
-                    loadingText={language === 'de' ? 'Passwort wird aktualisiert...' : 'Updating password...'}
+                    loadingText={t('resetPassword.updateLoading')}
                     type="submit"
                     variant="auth"
                   >
-                    {language === 'de' ? 'Passwort aktualisieren' : 'Update password'}
+                    {t('resetPassword.updateSubmit')}
                   </Button>
                 </div>
               </form>
@@ -312,13 +313,10 @@ export function ResetPasswordPageContent() {
                 {/* Success Message */}
                 <div className="mb-8">
                   <h2 className="mb-3 text-xl font-semibold text-content-heading">
-                    {language === 'de' ? 'Passwort aktualisiert!' : 'Password updated!'}
+                    {t('resetPassword.successTitle')}
                   </h2>
                   <p className="text-content text-base leading-6">
-                    {language === 'de' 
-                      ? 'Dein Passwort wurde erfolgreich aktualisiert. Du kannst dich jetzt mit deinem neuen Passwort anmelden.'
-                      : 'Your password has been successfully updated. You can now log in with your new password.'
-                    }
+                    {t('resetPassword.successDescription')}
                   </p>
                 </div>
 
@@ -329,7 +327,7 @@ export function ResetPasswordPageContent() {
                     variant="auth"
                     onClick={handleBackToLogin}
                   >
-                    {language === 'de' ? 'Zur Anmeldung' : 'Go to login'}
+                    {t('resetPassword.goToLogin')}
                   </Button>
                 </div>
               </div>
