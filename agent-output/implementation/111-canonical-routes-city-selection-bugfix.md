@@ -2,7 +2,7 @@
 ID: 111
 Origin: 111
 UUID: c4a8e7f2
-Status: Active
+Status: QA Complete
 ---
 
 # Implementation 111 — Canonical Section Routes & City-Selection Bugfixes
@@ -58,6 +58,7 @@ Not applicable for this plan (no performance target milestone).
 | `src/components/providers/ProvidersPageHeader.tsx` | SearchContextBar `categoryLabel` wiring | +3/-0 |
 | `src/features/search/components/SearchContextBar.tsx` | Context label rendering adjustment | +3/-1 |
 | `src/features/search/components/SearchContextBar.test.tsx` | Regression coverage for category label behavior | +14/-0 |
+| `src/__tests__/app/(public)/search/page-meal-search.test.tsx` | Updated routing assertions to canonical section paths (`/food?...`) | +2/-2 |
 | `src/__tests__/config/sectionFilters.test.ts` | Added locale-prefixed canonical route regression tests | +28/-0 |
 | `src/__tests__/utils/navigationUtils-063.test.ts` | Added locale city-selection navbar exclusion regression test | +4/-0 |
 
