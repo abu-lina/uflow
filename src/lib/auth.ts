@@ -66,7 +66,7 @@ export const signUpWithLanguage = async (
 
 export const resetPasswordWithLanguage = async (
   email: string,
-  language: 'en' | 'de' | 'ar' | 'tr' = 'en'
+  language: Language = 'en'
 ) => {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
   

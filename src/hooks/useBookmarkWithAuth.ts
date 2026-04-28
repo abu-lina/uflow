@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
-import { useLanguage } from '@/hooks/useLanguage';
-import { showBookmarkSuccessToast, showBookmarkRemovedToast } from '@/utils/toastMessages';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface UseBookmarkWithAuthOptions {
   bookmarkableId: string;
@@ -16,7 +16,7 @@ export const useBookmarkWithAuth = ({
   onBookmarkChange: _onBookmarkChange,
 }: UseBookmarkWithAuthOptions) => {
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const handleBookmarkAction = useCallback(async () => {
@@ -32,12 +32,12 @@ export const useBookmarkWithAuth = ({
   }, [user, router]);
 
   const showBookmarkSuccess = useCallback(() => {
-    showBookmarkSuccessToast(language);
-  }, [language]);
+    toast.success(t('providers.saved'));
+  }, [t]);
 
   const showBookmarkRemoved = useCallback(() => {
-    showBookmarkRemovedToast(language);
-  }, [language]);
+    toast.info(t('providers.removeSaved'));
+  }, [t]);
 
   return {
     handleBookmarkAction,
