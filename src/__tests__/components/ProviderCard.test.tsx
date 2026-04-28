@@ -4,6 +4,7 @@ import { render } from '../utils/test-utils';
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import { mockProviders } from '../mocks/providerData';
 import type { Provider } from '@/services/providers';
+import * as AuthProviderModule from '@/providers/auth-provider';
 
 describe('ProviderCard Component', () => {
   const mockProvider = mockProviders[0]; // Bilal Moschee
@@ -115,7 +116,7 @@ describe('ProviderCard Component', () => {
       expect(addressButton.tagName).toBe('BUTTON');
     });
 
-    it('should render website button', () => {
+    it('should not render website button in bookmark mode', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -124,11 +125,10 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      const websiteButton = screen.getByRole('button', { name: /website/i });
-      expect(websiteButton).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /website/i })).not.toBeInTheDocument();
     });
 
-    it('should render save action area', () => {
+    it('should render top-right save icon button', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -137,7 +137,24 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      expect(screen.getByText('Save')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+    });
+
+    it('should match figma bookmark shell style', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      expect(saveButton.className).toContain('rounded-[6px]');
+      expect(saveButton.className).toContain('border-neutral');
+      expect(saveButton.className).toContain('border-[0.8px]');
+      expect(saveButton.className).toContain('bg-white/70');
+      expect(saveButton.className).toContain('backdrop-blur-[2px]');
     });
 
     it('should render card container', () => {
@@ -155,7 +172,7 @@ describe('ProviderCard Component', () => {
   });
 
   describe('Bookmark Functionality', () => {
-    it('should show save text when not bookmarked', () => {
+    it('should expose save icon label when not bookmarked', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -164,10 +181,11 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      expect(screen.getByText('Save')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+      expect(screen.queryByText('Save')).not.toBeInTheDocument();
     });
 
-    it('should show saved text when bookmarked', () => {
+    it('should expose saved icon label when bookmarked', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -176,10 +194,11 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      expect(screen.getByText('Saved')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^saved$/i })).toBeInTheDocument();
+      expect(screen.queryByText('Saved')).not.toBeInTheDocument();
     });
 
-    it('should render save area as clickable', () => {
+    it('should render save icon as clickable button', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -188,11 +207,11 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      const saveText = screen.getByText('Save');
-      expect(saveText).toBeInTheDocument();
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      expect(saveButton).toBeInTheDocument();
     });
 
-    it('should render both save and website actions', () => {
+    it('should render save icon and hide website action', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -201,8 +220,30 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      expect(screen.getByText('Save')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /website/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /website/i })).not.toBeInTheDocument();
+    });
+
+    it('should not render full Allahuma Barik text after first save click', async () => {
+      const authSpy = vi.spyOn(AuthProviderModule, 'useAuth').mockReturnValue({
+        user: { id: 'user-1' },
+      } as ReturnType<typeof AuthProviderModule.useAuth>);
+
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByText('Allahuma Barik')).not.toBeInTheDocument();
+      });
+
+      authSpy.mockRestore();
     });
   });
 
@@ -233,7 +274,7 @@ describe('ProviderCard Component', () => {
       expect(screen.queryByText('info@bilal-moschee.de')).not.toBeInTheDocument();
     });
 
-    it('should render website button', () => {
+    it('should not render website button in bookmark mode', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -242,9 +283,7 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      // Website is rendered as a Button component, not a link
-      const websiteButton = screen.getByRole('button', { name: /website/i });
-      expect(websiteButton).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /website/i })).not.toBeInTheDocument();
     });
 
     it('should not render contact info when not available', () => {
@@ -316,9 +355,9 @@ describe('ProviderCard Component', () => {
 
       expect(screen.getByText(mockProvider.provider_name)).toBeInTheDocument();
 
-      // Website button has aria-label
-      const websiteButton = screen.getByRole('button', { name: /website/i });
-      expect(websiteButton).toBeInTheDocument();
+      // Bookmark action has aria-label
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      expect(saveButton).toBeInTheDocument();
     });
 
     it('should be keyboard navigable', () => {
@@ -332,9 +371,9 @@ describe('ProviderCard Component', () => {
 
       expect(screen.getByText(mockProvider.provider_name)).toBeInTheDocument();
 
-      // Website button is keyboard accessible
-      const websiteButton = screen.getByRole('button', { name: /website/i });
-      expect(websiteButton).toBeInTheDocument();
+      // Save button is keyboard accessible
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      expect(saveButton).toBeInTheDocument();
     });
 
     it('should have proper focus management', () => {
@@ -369,10 +408,10 @@ describe('ProviderCard Component', () => {
       );
 
       expect(screen.getByText(mockProvider.provider_name)).toBeInTheDocument();
-      const websiteButton = screen.getByRole('button', { name: /website/i });
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
 
       // Verify elements are present and accessible
-      expect(websiteButton).toBeInTheDocument();
+      expect(saveButton).toBeInTheDocument();
 
       // Test touch interaction simulation on the main card area
       const cardArea = screen.getByText(mockProvider.provider_name).closest('div');
@@ -486,8 +525,11 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      // Default mode shows Save button
-      expect(screen.getByText('Save')).toBeInTheDocument();
+      // Bookmark mode uses top-right heart overlay and hides bottom action row.
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+      expect(screen.queryByText('Save')).not.toBeInTheDocument();
+      expect(screen.queryByText('Saved')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /website/i })).not.toBeInTheDocument();
       // Should NOT show moderation buttons
       expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();

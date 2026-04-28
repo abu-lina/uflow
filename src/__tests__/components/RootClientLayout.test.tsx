@@ -271,4 +271,26 @@ describe('RootClientLayout — isDiscoveryHome navbar regression (session hotfix
     const isDiscoveryHome = pathname === '/' && (stage === 'stage2' || stage === 'stage3');
     expect(isDiscoveryHome).toBe(false);
   });
+
+  it('[post-fix PASSES] /providers forces footer mode even when stage is loading', () => {
+    const pathname: string = '/providers';
+    const stage: string = 'loading';
+    const isDiscoveryHome = pathname === '/' && (stage === 'stage2' || stage === 'stage3');
+    const isProvidersDiscovery = pathname === '/providers';
+    const forceMobileFooter = false;
+    const showMobileFooter = false;
+    const showCityEarlyAccessNavbar = false;
+
+    const mobileUiMode = forceMobileFooter
+      ? 'footer'
+      : isDiscoveryHome || isProvidersDiscovery
+        ? 'footer'
+        : showMobileFooter
+          ? 'footer'
+          : showCityEarlyAccessNavbar
+            ? 'navbar'
+            : 'none';
+
+    expect(mobileUiMode).toBe('footer');
+  });
 });

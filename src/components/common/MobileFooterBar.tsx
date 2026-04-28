@@ -69,6 +69,9 @@ export function MobileFooterBar() {
     [router, pathname, isNavigating],
   );
 
+  const isExploreActive =
+    pathname === '/' || pathname.startsWith('/city/') || pathname === '/providers';
+
   return (
     <>
       <nav
@@ -127,7 +130,9 @@ export function MobileFooterBar() {
                           pathname === '/signup'
                       : item.href === '/create'
                         ? pathname.startsWith('/create') || pathname === '/create'
-                        : pathname === item.href,
+                        : item.href === '/'
+                          ? isExploreActive
+                          : pathname === item.href,
                   )}
               </Link>
             </div>

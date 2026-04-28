@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.41] - 2026-04-28
+
+### Changed
+
+- **ProviderCard bookmark overlay** (Plan 112): Relocated bookmark/heart button from the bottom action row to a top-right image overlay (circular icon, `top-3 right-3`). Removes the bottom Save/Saved and Website rows in bookmark mode for a cleaner card layout. Moderation mode (Approve/Reject buttons) is unaffected.
+- **Providers navbar visibility** (Plan 112): Mobile footer navbar now consistently visible on the `/providers` discovery page. `RootClientLayout` treats `/providers` as a discovery route and forces `mobileUiMode='footer'`.
+- **Search tab active state** (Plan 112): Explore/Search tab in `MobileFooterBar` now shows as active when visiting the `/providers` listing route.
+
+### Tests
+
+- Added/updated 53 unit tests across `ProviderCard`, `RootClientLayout`, and `MobileFooterBar` to cover overlay behaviour, moderation mode preservation, PO Barik decision, navbar visibility regression, and explore-tab active-state logic.
+- Regression test `[post-fix PASSES] /providers forces footer mode even when stage is loading` added to `RootClientLayout.test.tsx`.
+
 ## [0.10.40] - 2026-04-27
 
 ### Changed

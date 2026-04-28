@@ -2,12 +2,10 @@ import React, { forwardRef, useState, useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 
 import { Icon } from '@iconify/react';
 
-import { AnimatedHeartIcon } from '@/components/ui/AnimatedHeartIcon';
-import { BarikButton } from '@/components/ui/BarikButton';
 import { Button } from '@/components/ui/Button';
 import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { useAuth } from '@/providers/auth-provider';
@@ -56,7 +54,6 @@ export const ProviderCard = React.memo(
       provider_id,
       className,
       hideActions = false,
-      hideWebsiteButton = false,
       isBookmarked = false,
       onBookmarkChange,
       bookmarkableType = 'provider',
@@ -88,9 +85,7 @@ export const ProviderCard = React.memo(
     // Initialize bookmarked state from prop to prevent flash on mount
     const [bookmarked, setBookmarked] = useState(() => isBookmarked);
     const [showAllahumaBarik, setShowAllahumaBarik] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
-    const [wasBookmarked, setWasBookmarked] = useState(false);
     const [isPressed, setIsPressed] = useState(false);
     const [shouldAnimateFill, setShouldAnimateFill] = useState(false);
     const [isTransiting, setIsTransiting] = useState(false);
@@ -216,8 +211,7 @@ export const ProviderCard = React.memo(
           }
         }, 1500);
       } else {
-        // Track that we were bookmarked before toggling
-        setWasBookmarked(true);
+
         // If already bookmarked, hide Allahuma Barik and toggle off
         setShowAllahumaBarik(false);
       setIsLoading(true);
@@ -227,8 +221,7 @@ export const ProviderCard = React.memo(
         console.error('Error toggling bookmark:', error);
       } finally {
         setIsLoading(false);
-          setWasBookmarked(false);
-        }
+      }
       }
     };
 
@@ -363,6 +356,46 @@ export const ProviderCard = React.memo(
                   {reviewStatus.replace('_', ' ')}
                 </span>
               </div>
+            </div>
+          )}
+          {!showSkeleton && mode === 'bookmark' && !hideActions && (
+            <div className="absolute top-3 right-3 z-20">
+              <motion.button
+                aria-label={displayBookmarked ? t('providers.saved') : t('providers.save')}
+                className="relative flex size-9 items-center justify-center overflow-clip rounded-[6px] border-[0.8px] border-neutral bg-white/70 backdrop-blur-[2px]"
+                disabled={isLoading || isAnimating}
+                style={{
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitTransform: 'translateZ(0)',
+                  transform: 'translateZ(0)',
+                  willChange: 'transform',
+                }}
+                transition={{ duration: 0.15 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleBookmark}
+                onMouseDown={() => setIsPressed(true)}
+                onMouseLeave={() => setIsPressed(false)}
+                onMouseUp={() => setIsPressed(false)}
+                onTouchEnd={() => setIsPressed(false)}
+                onTouchStart={() => setIsPressed(true)}
+              >
+                <motion.div
+                  animate={{
+                    opacity: isPressed ? 0.7 : 1,
+                    scale: shouldAnimateFill ? [1, 1.12, 1] : 1,
+                  }}
+                  className="relative flex items-center justify-center"
+                  transition={{ duration: shouldAnimateFill ? 0.35 : 0.15 }}
+                >
+                  <Icon
+                    className={displayBookmarked ? 'text-primary' : 'text-content-muted'}
+                    height={16}
+                    icon={displayBookmarked ? 'mdi:heart' : 'lucide:heart'}
+                    width={16}
+                  />
+                </motion.div>
+              </motion.button>
             </div>
           )}
         </div>
@@ -513,211 +546,7 @@ export const ProviderCard = React.memo(
                       Reject
                     </Button>
                   </div>
-                ) : (
-                  /* Default bookmark mode */
-                  <>
-                <div className="relative flex-1 h-12">
-                  <motion.div
-                    className="size-full cursor-pointer relative"
-                    style={{ 
-                      pointerEvents: (isLoading || isAnimating) ? 'none' : 'auto',
-                      WebkitTapHighlightColor: 'transparent',
-                      WebkitTouchCallout: 'none',
-                      WebkitTransform: 'translateZ(0)',
-                      transform: 'translateZ(0)',
-                      willChange: 'transform',
-                    }}
-                    transition={{ duration: 0.15 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleBookmark}
-                    onHoverEnd={() => setIsHovered(false)}
-                    onHoverStart={() => setIsHovered(true)}
-                    onMouseDown={() => setIsPressed(true)}
-                    onMouseLeave={() => setIsPressed(false)}
-                    onMouseUp={() => setIsPressed(false)}
-                    onTouchEnd={() => setIsPressed(false)}
-                    onTouchStart={() => setIsPressed(true)}
-                  >
-                    {/* Pressed state overlay */}
-                    <motion.div
-                      animate={{ opacity: isPressed ? 0.7 : 0 }}
-                      className="absolute inset-0 z-10 pointer-events-none"
-                      style={{
-                        background: '#49837D',
-                        borderRadius: displayBookmarked ? '9.6px' : '12px',
-                        WebkitTransform: 'translateZ(0)',
-                        transform: 'translateZ(0)',
-                        WebkitBackfaceVisibility: 'hidden',
-                        backfaceVisibility: 'hidden',
-                      }}
-                      transition={{ duration: 0.1 }}
-                    />
-                    {showAllahumaBarik ? (
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key="barik"
-                          animate={{ scale: 1 }}
-                          className="size-full"
-                          exit={{ opacity: 0, scale: 1.02 }}
-                          initial={{ scale: 0.98 }}
-                          style={{ opacity: 1 }}
-                          transition={{ 
-                            duration: 0.5, 
-                            ease: [0.25, 0.1, 0.25, 1]
-                          }}
-                        >
-                          <BarikButton />
-                        </motion.div>
-                      </AnimatePresence>
-                    ) : displayBookmarked ? (
-                      <div
-                        className="size-full"
-                        style={{
-                          WebkitTapHighlightColor: 'transparent',
-                          WebkitTouchCallout: 'none',
-                        }}
-                      >
-                        <div 
-                          className="relative rounded-[9.6px] size-full overflow-hidden"
-                          style={{
-                            backgroundColor: '#49837D',
-                            isolation: 'isolate',
-                            WebkitBackfaceVisibility: 'hidden',
-                            backfaceVisibility: 'hidden',
-                            WebkitTransform: 'translateZ(0)',
-                            transform: 'translateZ(0)',
-                            willChange: 'transform',
-                            WebkitMaskImage: '-webkit-radial-gradient(white, white)',
-                            maskImage: 'radial-gradient(white, white)',
-                          }}
-                        >
-                          <div 
-                            className="absolute inset-0"
-                            style={{
-                              background: '#49837D',
-                              borderRadius: '9.6px',
-                              opacity: 1,
-                            }}
-                          />
-                          <div 
-                            className="relative size-full"
-                            style={{
-                              boxShadow: isHovered 
-                                ? '0 2px 8px rgba(73, 131, 125, 0.15)' 
-                                : '0 1px 4px rgba(73, 131, 125, 0.1)',
-                            }}
-                          >
-                            <div className="flex flex-row items-center justify-center size-full">
-                              <div 
-                                className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
-                              >
-                                <AnimatedHeartIcon 
-                                  animate={false}
-                                  animateFill={shouldAnimateFill}
-                                  className=""
-                                  filled={true}
-                                  size={24}
-                                  useFigmaPath={true}
-                                />
-                                <div 
-                                  className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
-                                >
-                                  <p className="leading-[normal] whitespace-pre">{t('providers.saved')}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                    </div>
-                    ) : (
-                      <motion.div
-                        key="speichern"
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="size-full"
-                        exit={{ opacity: 0, scale: 0.97, zIndex: 0 }}
-                        initial={false}
-                        style={{ 
-                          zIndex: 1,
-                          WebkitTransform: 'translateZ(0)',
-                          transform: 'translateZ(0)',
-                          willChange: 'transform',
-                        }}
-                        transition={{ duration: 0.3, ease: 'easeOut' }}
-                >
-                        <div 
-                          className="relative rounded-[9.6px] size-full overflow-hidden"
-                          style={{
-                            WebkitTransform: 'translateZ(0)',
-                            transform: 'translateZ(0)',
-                            willChange: 'transform',
-                            WebkitMaskImage: '-webkit-radial-gradient(white, white)',
-                            maskImage: 'radial-gradient(white, white)',
-                            isolation: 'isolate',
-                            WebkitBackfaceVisibility: 'hidden',
-                            backfaceVisibility: 'hidden',
-                          }}
-                        >
-                          <motion.div 
-                            animate={{
-                              opacity: 1,
-                            }}
-                            className="absolute inset-0"
-                            style={{
-                              background: "#589d96",
-                              borderRadius: '9.6px',
-                              WebkitTransform: 'translateZ(0)',
-                              transform: 'translateZ(0)',
-                            }}
-                            transition={{ duration: 0.5, ease: "easeInOut" }}
-                          />
-                          <motion.div 
-                            animate={{
-                              boxShadow: isHovered 
-                                ? '0 2px 8px rgba(88, 157, 150, 0.15)' 
-                                : '0 1px 4px rgba(88, 157, 150, 0.1)',
-                            }}
-                            className="relative size-full"
-                            transition={{ duration: 0.2 }}
-                          >
-                            <div className="flex flex-row items-center justify-center size-full">
-                              <div 
-                                className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
-                              >
-                                <AnimatedHeartIcon 
-                                  animate={wasBookmarked}
-                                  filled={false}
-                                  size={24}
-                                  useFigmaPath={true}
-                                />
-                                <div 
-                                  className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
-                                >
-                                  <p className="leading-[normal] whitespace-pre">{t('providers.save')}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        </div>
-                      </motion.div>
-                  )}
-                </motion.div>
-              </div>
-                {!hideWebsiteButton && (
-                  <Button
-                    aria-label="Website"
-                    className="flex-1 items-center justify-center gap-1.5"
-                    icon={
-                      <div className="flex items-center">
-                        <Icon height={16} icon="mdi:web" width={16} />
-                      </div>
-                    }
-                    variant={gradient ? 'gradient' : 'default'}
-                  >
-                    Website
-                  </Button>
-                )}
-                  </>
-                )}
+                ) : null}
               </div>
             )}
           </div>
