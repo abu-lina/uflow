@@ -149,7 +149,6 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
         location_longitude: provider.location_longitude,
         created_at: provider.created_at,
         updated_at: provider.updated_at,
-        barakah_effects: provider.barakah_effects || [],
         offers_ids: provider.offers_ids || [],
         needs_ids: provider.needs_ids || [],
         category: provider.category,
@@ -175,7 +174,6 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
         location_longitude: service.location_longitude || null,
         created_at: service.created_at,
         updated_at: service.updated_at,
-        barakah_effects: service.barakah_effects || [],
         offers_ids: service.offers_ids || [],
         needs_ids: service.needs_ids || [],
         category: service.category ? {

@@ -185,7 +185,6 @@ const baseProvider: Provider = {
   location_longitude: null,
   created_at: null,
   updated_at: null,
-  barakah_effects: [],
   offers_ids: [],
   needs_ids: [],
   show_address: true,

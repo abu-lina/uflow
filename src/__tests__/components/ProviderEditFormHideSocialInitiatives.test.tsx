@@ -133,7 +133,7 @@ const mockProvider = {
   review_status: 'pending' as const,
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
-  barakah_effects: [],
+
   offers_ids: [],
   needs_ids: [],
   show_address: true,

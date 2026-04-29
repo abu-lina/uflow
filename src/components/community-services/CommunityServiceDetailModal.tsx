@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Icon } from '@iconify/react';
-import { ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag, ChevronDown, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -283,7 +283,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
     location_longitude: communityService.location_longitude || null,
     created_at: communityService.created_at,
     updated_at: communityService.updated_at,
-    barakah_effects: communityService.barakah_effects || [],
     offers_ids: communityService.offers_ids || [],
     needs_ids: communityService.needs_ids || [],
     offers: communityService.offers || [],
@@ -456,32 +455,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
             <div className="absolute right-24 top-10 flex gap-2">{customActionButtons}</div>
           )}
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
-            {/* Barakah Effects Section */}
-            {communityService.barakah_effects && communityService.barakah_effects.length > 0 && (
-              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
-                <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                  <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                    {t('providers.ourBarakahEffect')}:
-                  </div>
-                  <div className="flex min-h-[120px] flex-col flex-wrap items-start gap-2">
-                    {communityService.barakah_effects.map((effect, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-2 rounded border border-[#CDCDCD] bg-white px-3 py-1 font-inter-tight text-[16px] font-medium text-[#232323] shadow-sm"
-                      >
-                        {effect === 'Iman' && <Sparkles className="h-4 w-4 text-gray-600" />}
-                        {effect === 'Zakat' && <Moon className="h-4 w-4 text-gray-600" />}
-                        {effect === 'Sunnah' && <Building2 className="h-4 w-4 text-gray-600" />}
-                        {!(effect === 'Iman' || effect === 'Zakat' || effect === 'Sunnah') && (
-                          <Tag className="h-4 w-4 text-gray-600" />
-                        )}
-                        {effect}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Supporting Providers Section */}
             {supportingProviders.length > 0 && (

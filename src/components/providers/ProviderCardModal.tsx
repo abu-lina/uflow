@@ -34,7 +34,6 @@ interface ProviderCardModalProps {
     address_street?: string | null;
     address_zip?: string | null;
     address_city?: string | null;
-    barakah_effects?: string[];
     contact_phone?: string | null;
     social_website?: string | null;
     category?: { name_de?: string; name_en?: string } | null;
@@ -717,49 +716,8 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                     </span>
                   </div>
                 </button>
-                {/* Barakah Badges */}
-                {Array.isArray(provider.barakah_effects) && provider.barakah_effects.length > 0 && (
-                  <div className="mt-2 flex w-full flex-row flex-wrap gap-[9.8px]">
-                    {provider.barakah_effects.map((effect, idx) => (
-                      <div
-                        key={idx}
-                        className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]"
-                      >
-                        <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
-                          {effect}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
-            {/* Barakah Effects Section (when no zakat project but has effects) - with fade-in animation */}
-            {communityServices.length === 0 &&
-              Array.isArray(provider.barakah_effects) &&
-              provider.barakah_effects.length > 0 && (
-                <div
-                  className="animate-fadeIn flex w-full flex-col items-start gap-2"
-                  style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
-                >
-                  <div className="font-inter-tight text-[20px] font-semibold leading-6 text-[#232323]">
-                    {t('providers.ourBarakahEffect')}:
-                  </div>
-                  <div className="flex w-full flex-row flex-wrap gap-[9.8px]">
-                    {provider.barakah_effects.map((effect, idx) => (
-                      <div
-                        key={idx}
-                        className="flex flex-row items-center gap-[12.25px] rounded-[4.9px] border border-[#CDCDCD] px-[5.3px] py-[2.6px]"
-                      >
-                        <span className="font-inter-tight text-[18.5px] font-medium text-[#232323]">
-                          {effect}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
             {/* Opening Hours Section - with fade-in animation */}
             <div
               className="animate-fadeIn flex w-full flex-col gap-2 rounded-[16px] border border-[#EEEEEE] p-4"

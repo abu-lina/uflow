@@ -30,7 +30,6 @@ export interface Provider {
   location_longitude: number | null;
   created_at: string | null;
   updated_at: string | null;
-  barakah_effects: string[];
   offers_ids: string[];
   needs_ids: string[];
   show_address?: boolean;
@@ -84,7 +83,6 @@ export interface SearchResult {
   location_longitude: number | null;
   created_at: string | null;
   updated_at: string | null;
-  barakah_effects: string[];
   offers_ids: string[];
   needs_ids: string[];
   offers?: Array<{ name_de: string }>;
@@ -140,7 +138,6 @@ function transformProviderToSearchResult(provider: Provider): SearchResult {
     location_longitude: provider.location_longitude,
     created_at: provider.created_at,
     updated_at: provider.updated_at,
-    barakah_effects: provider.barakah_effects,
     offers_ids: provider.offers_ids,
     needs_ids: provider.needs_ids,
     offers: provider.offers,
@@ -190,7 +187,6 @@ function transformCommunityServiceToSearchResult(communityService: CommunityServ
     location_longitude: communityService.location_longitude || null,
     created_at: communityService.created_at,
     updated_at: communityService.updated_at,
-    barakah_effects: communityService.barakah_effects || [],
     offers_ids: communityService.offers_ids || [],
     needs_ids: communityService.needs_ids || [],
     offers: communityService.offers,
@@ -602,7 +598,6 @@ export async function searchProviders(
     needs: (provider.needs_ids || []).map(id => needsMap.get(id)).filter(Boolean) as Array<{ name_de: string }>,
     offers_ids: provider.offers_ids || [],
     needs_ids: provider.needs_ids || [],
-    barakah_effects: provider.barakah_effects || [],
   }));
 
   // Batch fetch badges for all providers in one query

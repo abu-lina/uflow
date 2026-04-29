@@ -309,7 +309,7 @@ describe('ProviderCard Component', () => {
   });
 
   describe('Tags and Categories', () => {
-    it('should render barakah effects when available', () => {
+    it('should render provider name and address when available', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -318,12 +318,8 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      // ProviderCard shows barakah_effects (first 2 + count)
-      // Mock data has: ['Iman', 'Zakat', 'Sunnah']
-      expect(screen.getByText('Iman')).toBeInTheDocument();
-      expect(screen.getByText('Zakat')).toBeInTheDocument();
-      // Third effect shown as "+1"
-      expect(screen.getByText('+1')).toBeInTheDocument();
+      // ProviderCard shows provider name and address (barakah_effects display removed in Plan 114 Phase 2)
+      expect(screen.getByText(mockProvider.provider_name)).toBeInTheDocument();
     });
 
     it('should not render tags when not available', () => {
@@ -465,7 +461,6 @@ describe('ProviderCard Component', () => {
         location_longitude: null,
         created_at: null,
         updated_at: null,
-        barakah_effects: [],
         offers_ids: [],
         needs_ids: [],
       };

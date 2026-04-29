@@ -26,7 +26,6 @@ const fakeCommunityService = {
   community_service_images: [],
   created_at: '2026-01-01T00:00:00.000Z',
   updated_at: '2026-01-01T00:00:00.000Z',
-  barakah_effects: [],
   offers_ids: [],
   needs_ids: [],
   offers: [],

@@ -67,7 +67,7 @@ beforeEach(() => {
 describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)', () => {
   it('[pre-fix] UMMAH section routes to community services ONLY', async () => {
     mockSearchCommunityServices.mockResolvedValue([
-      { community_service_id: 'cs-1', community_service_name: 'Test Mosque', barakah_effects: [], offers_ids: [], needs_ids: [], created_at: '2026-01-01', updated_at: '2026-01-01' },
+      { community_service_id: 'cs-1', community_service_name: 'Test Mosque', offers_ids: [], needs_ids: [], created_at: '2026-01-01', updated_at: '2026-01-01' },
     ]);
 
     const { results } = await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'ummah', undefined);
@@ -106,7 +106,7 @@ describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)'
 
   it('no cross-section leakage: FOOD does not return community services', async () => {
     mockSearchCommunityServices.mockResolvedValue([
-      { community_service_id: 'cs-1', community_service_name: 'Mosque', barakah_effects: [], offers_ids: [], needs_ids: [], created_at: '2026-01-01', updated_at: '2026-01-01' },
+      { community_service_id: 'cs-1', community_service_name: 'Mosque', offers_ids: [], needs_ids: [], created_at: '2026-01-01', updated_at: '2026-01-01' },
     ]);
 
     const { results } = await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food', undefined);

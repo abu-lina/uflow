@@ -70,7 +70,6 @@ export function buildProviderShapeFromCommunityService(communityService: Communi
     location_longitude: communityService.location_longitude || null,
     created_at: communityService.created_at,
     updated_at: communityService.updated_at,
-    barakah_effects: communityService.barakah_effects || [],
     offers_ids: communityService.offers_ids || [],
     needs_ids: communityService.needs_ids || [],
     offers: communityService.offers || [],
