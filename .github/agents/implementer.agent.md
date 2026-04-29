@@ -284,6 +284,23 @@ If you create or modify a migration that references **existing** tables/columns 
 - If schema drift is detected, STOP and resolve (update migration, or align schemas) before handoff.
 - Document the verification evidence in the implementation doc.
 
+### Migration Safety Self-Check (MANDATORY for data-modifying migrations)
+
+Before handing off any migration that performs one or more of the following:
+- `NOT NULL` constraint addition on an existing column
+- `ALTER COLUMN ... SET NOT NULL`
+- Any FK addition or modification
+
+Run through this checklist and record evidence in the implementation doc:
+
+- [ ] **NOT NULL transitions**: Every column transitioning to NOT NULL has either:
+  - A `RAISE EXCEPTION` precondition check that aborts if NULLs exist and cannot be safely defaulted, **or**
+  - An explicit normalization UPDATE that backfills NULLs before the constraint is set
+- [ ] **FK columns**: Every FK column has an explicit `ON DELETE` clause (`SET NULL`, `CASCADE`, or `RESTRICT`) with the choice documented (e.g., "ON DELETE SET NULL — preserves audit trail after user deletion")
+- [ ] **All DDL is idempotent**: Every statement is wrapped in `IF NOT EXISTS` / `IF EXISTS` / `ADD COLUMN IF NOT EXISTS` guards so the migration can be re-applied safely across environments with divergent states
+
+If any item is ❌, fix it before proceeding to code review. Do not rely on the code reviewer to catch these patterns.
+
 ### DB Plan Evidence Gate (Search) (MANDATORY WHEN APPLICABLE)
 
 If a plan adds/changes search-related indexes or RPCs, you MUST provide one of:
@@ -328,6 +345,13 @@ Immediately after storing a memory checkpoint, run a retrieval query that should
   - Then re-run retrieval to confirm discoverability.
 
 1. Read complete plan from `agent-output/planning/` + analysis (if exists) in full. These—not chat—are authoritative.
+
+1a. **If porting artifacts from a sibling worktree**: Before treating ported files as implementation-complete, assert their review status in the source worktree:
+   - Check the source worktree's `agent-output/code-review/` for a review artifact covering the ported files.
+   - If an **APPROVED** or **APPROVED_WITH_COMMENTS** review exists: treat the port as implementation-complete and proceed to your own code review gate (which may be faster/confirmatory).
+   - If **no review exists** or review was **REJECTED** in source: treat the port as a first-pass implementation — the code reviewer must perform a full (not confirmatory) review. State this in the handoff: "Ported from `<worktree>` — no prior code review; treat as first-pass."
+   - If review status is **unknown**: assume no review. Err on the side of full review.
+
 2. Read evaluation criteria: `~/.config/Code/User/prompts/qa.agent.md` + `~/.config/Code/User/prompts/uat.agent.md` to understand evaluation.
 3. When addressing QA findings: Read complete QA report from `agent-output/qa/` + `~/.config/Code/User/prompts/qa.agent.md`. QA report—not chat—is authoritative.
 4. Confirm Value Statement understanding. State how implementation delivers value.
