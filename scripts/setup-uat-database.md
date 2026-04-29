@@ -19,47 +19,47 @@ If you prefer to apply migrations one by one, follow this order:
 
 1. ✅ `sql/queries/supabase-schema.sql` (base schema - already done in Step 1)
 
-2. ✅ `supabase/migrations/000_create_offers_needs_tables.sql`
+2. ✅ `supabase/migrations/archive/000_create_offers_needs_tables.sql`
    - Creates `offers` and `needs` tables (required before migration 001)
 
-3. ✅ `supabase/migrations/001_create_offers_and_needs_tables.sql`
+3. ✅ `supabase/migrations/archive/001_create_offers_and_needs_tables.sql`
    - Creates `offers` and `needs` tables
    - Adds `offers_ids` and `needs_ids` to providers
 
-4. ✅ `supabase/migrations/002_create_provider_community_services_relationship.sql`
+4. ✅ `supabase/migrations/archive/002_create_provider_community_services_relationship.sql`
    - Creates `provider_community_services` junction table
 
-5. ✅ `supabase/migrations/003_create_category_suggestions_tables.sql`
+5. ✅ `supabase/migrations/archive/003_create_category_suggestions_tables.sql`
    - Creates `category_suggested_offers` and `category_suggested_needs` tables
 
-6. ✅ `supabase/migrations/004_add_created_by_to_offers_needs.sql`
+6. ✅ `supabase/migrations/archive/004_add_created_by_to_offers_needs.sql`
    - Adds `created_by` column to offers and needs
 
-7. ✅ `supabase/migrations/005_add_category_to_offers_needs.sql`
+7. ✅ `supabase/migrations/archive/005_add_category_to_offers_needs.sql`
    - Adds `category_id` to offers and needs
 
-8. ✅ `supabase/migrations/006_fill_missing_categories.sql`
+8. ✅ `supabase/migrations/archive/006_fill_missing_categories.sql`
    - Data migration (can skip if no data needed)
 
-9. ✅ `supabase/migrations/007_categorize_existing_offers.sql`
+9. ✅ `supabase/migrations/archive/007_categorize_existing_offers.sql`
    - Data migration (can skip if no data needed)
 
-10. ✅ `supabase/migrations/008_fix_offer_categorizations.sql`
+10. ✅ `supabase/migrations/archive/008_fix_offer_categorizations.sql`
     - Data migration (can skip if no data needed)
 
-11. ✅ `supabase/migrations/009_merge_synonym_offers_needs.sql`
+11. ✅ `supabase/migrations/archive/009_merge_synonym_offers_needs.sql`
     - Data migration (can skip if no data needed)
 
-12. ✅ `supabase/migrations/010_create_push_subscriptions.sql`
+12. ✅ `supabase/migrations/archive/010_create_push_subscriptions.sql`
     - Creates `push_subscriptions` table
 
-13. ✅ `supabase/migrations/011_add_providers_performance_indexes.sql`
+13. ✅ `supabase/migrations/archive/011_add_providers_performance_indexes.sql`
     - Adds performance indexes
 
-14. ✅ `supabase/migrations/012_create_consent_logs.sql`
+14. ✅ `supabase/migrations/archive/012_create_consent_logs.sql`
     - Creates `consent_logs` table
 
-15. ✅ `supabase/migrations/20251120_admin_audit_logs.sql`
+15. ✅ `supabase/migrations/archive/20251120_admin_audit_logs.sql`
     - Creates `admin_audit_logs` table
 
 16. ✅ `supabase/migrations/20251120_providers_indexes.sql`

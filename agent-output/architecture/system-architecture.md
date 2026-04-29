@@ -22,6 +22,9 @@
 | 2026-04-20 | Three-section catalog hierarchy ADR (Plan 095): add `community_projects` under `community_services` (ummah item-level), `categories.applicable_section` for section scoping, three-table ordering FK pattern settled. `provider_stats` MV extended with `community_project_count`. | Completes FOOD/UMMAH/STORES symmetry. Three separate item tables (no CTI base) confirmed as the ordering-FK architecture. Supersedes ADR-094/D7 open question. | ADR-095 |
 | 2026-04-23 | Food category model ADR (096): Single `category_id` per provider confirmed for nationality cuisines. 22 cuisine categories to be seeded as `applicable_section = 'food'`. No schema change; no junction table. Fusion edge case mitigated by item-level search (`provider_menu_items`). Extension path: `cuisine_tags TEXT[]` deferred until user feedback warrants it. | YAGNI/KISS: multi-category touches 7+ query/UI/filter layers for <5% of listings. Single category preserves all existing patterns and is consistent across sections. | ADR-096 |
 | 2026-04-27 | Badge/Boolean data coherence ADR (105): Creation path writes `barakah_effects` only — never sets boolean columns or creates badge rows. Badge endorsement triggers don't propagate to booleans. One-time backfill (migration 067) has no ongoing sync. Section-specific filter semantics differ (STORES requires `muslim_owned`, FOOD treats it as optional, UMMAH has no boolean columns). Problem Area 11 added. | Plan 105 filter wiring surfaced that the three data systems (booleans, badges, barakah_effects) are disconnected — new providers are invisible to search filters. | ADR-105 |
+| 2026-04-29 | Full public schema audit (Plan 114) — live-verified against Supabase DB: 8 severity-ranked findings across 29 tables, 159 indexes, 10 enums. CRITICAL: dual-PK anti-pattern (6 tables), migration 076 badge→boolean trigger MISSING from live DB. HIGH: UUID array columns (4 cols), barakah_effects triple-source incoherence, polymorphic FK without enforcement (2 tables). MEDIUM: boolean flag proliferation (45-col providers), schema cohesion. LOW: 10 redundant indexes. Problem Area 12 added. | Structural debt assessment before staged schema refactor. F-8 (missing trigger) is immediate; F-3 (new providers invisible to search) is most urgent user-facing issue. | Arch 114 |
+| 2026-04-30 | Cross-environment audit (Plan 114, prod + dev) — F-8 downgraded from CRITICAL to LOW (badge sync trigger exists on prod+dev, local-only gap). Two new findings: F-9 MEDIUM (schema divergence — `consent_logs` on local+dev only, `deletion_logs` on prod only), F-10 LOW (duplicate `updated_at` triggers on `providers`). Index drift: local=159, prod=163, dev=173. Trigger drift: local=13, prod=19, dev=24. Total: 10 findings (1 CRITICAL, 3 HIGH, 3 MEDIUM, 3 LOW). | Environment parity is now a known risk. Migration hygiene issues confirmed across all three environments. | Arch 114 |
+| 2026-04-29 | ADR-114: Migration Baseline Squash — prod schema as canonical baseline. Historical 81-file migration chain to be archived; prod dump becomes `001_baseline.sql`. New F-11 finding (HIGH): three environments have completely independent migration management (prod=no tracking, dev=4 timestamp migrations, local=81 numeric migrations). Problem Area 13 added. | 81-migration replay encodes past decisions, not target schema. Patching historical chain is backwards; prod is the only authoritative state. Confirmed via MCP: prod has no `supabase_migrations.schema_migrations`, dev tracks 4 unrelated migrations. | ADR-114 / Arch 114 |
 
 ---
 
@@ -251,6 +254,8 @@ This is a known architecture risk; roles must be normalized behind a single auth
 9. **Enrichment fetch origin (shared Supabase IPs)**: After M4, JoinHalal and Phase 2 source fetches originate from Supabase's shared Edge Function IP fleet rather than a controlled developer IP. Rate limit exposure changes; polite delays (200ms) and a meaningful `User-Agent` header partially mitigate this.
 10. **`provider_stats` naming drift**: MV name implies provider-only scope but now contains cross-entity counts (`menu_item_count`, `service_offer_count`, `community_project_count` after Plan 095). Rename to `platform_stats` in a future migration (breaking change for any dashboard queries referencing the MV name).
 11. **Badge/Boolean data coherence gap (ADR-105)**: Provider creation (`providerService.ts`) writes `barakah_effects` but never sets boolean filter columns or creates `provider_badges` rows. Badge endorsement triggers update only `provider_badges.trust_level`, not `providers.*` booleans. Migration 067 performed a one-time backfill with no ongoing sync trigger. New providers are invisible to Plan 105 search filters. Fix: badges become the write model, booleans the read model, with a Postgres trigger propagating `provider_badges` inserts to boolean columns. `barakah_effects` must be deprecated as a structured data source.
+12. **Schema-wide structural debt (Arch-114)**: Full schema audit verified against live Supabase DB + cross-environment audit (prod/dev via MCP). 10 findings total (1 CRITICAL, 3 HIGH, 3 MEDIUM, 3 LOW). CRITICAL: dual-PK anti-pattern on 6 core tables. HIGH: UUID array columns without FK enforcement, barakah_effects triple-source incoherence, polymorphic FK without enforcement. MEDIUM: boolean flag proliferation, schema cohesion, cross-environment schema divergence (`consent_logs`/`deletion_logs` mismatch). LOW: 10 redundant indexes, duplicate `updated_at` triggers, local-only migration 076 gap. Environment drift confirmed: index counts (159/163/173) and trigger counts (13/19/24) across local/prod/dev. See `114-db-schema-architecture-review.md`.
+13. **Migration management gap (ADR-114)**: The three environments use completely independent migration strategies. Prod has no `supabase_migrations.schema_migrations` table — migrations were applied manually (Dashboard SQL editor or psql). Dev tracks only 4 timestamp-format migrations unrelated to the local chain. Local has 81 numeric-prefix migration files. This means: (a) the migration chain in `supabase/migrations/` is NOT a deployment mechanism for prod or dev, (b) patching historical migrations to make `supabase db reset` work encodes past decisions as permanent constraints, (c) new environments cannot bootstrap deterministically. Resolution: prod schema dump as `001_baseline.sql`, archive historical chain, future migrations forward-only from baseline. See ADR-114.
 
 ---
 
@@ -381,6 +386,34 @@ This is a known architecture risk; roles must be normalized behind a single auth
   - RLS write policies for ummah items require a 2-hop join (community_services→providers) — acceptable at current scale
 - **Related**: ADR-094, Plan 095, Plan 094
 
+### ADR-114: Migration Baseline Squash — Prod Schema as Canonical Baseline
+
+- **Status**: Accepted
+- **Context**: The UFlow `supabase/migrations/` directory contains 81 SQL files with numeric prefixes (0000 through 078 + legacy timestamp files). These accumulated over 2+ years of development. Investigation on 2026-04-29 revealed:
+  - **Prod** (`rdtdtcfntopcxcigkqoq`): No `supabase_migrations.schema_migrations` table exists. Schema was applied via Dashboard SQL editor or manual psql. Zero migration tracking.
+  - **Dev** (`qrekonfhaenjdnjhwdum`): Has `supabase_migrations.schema_migrations` but contains only 4 entries with timestamp-format versions (`20251208...`, `20260108...`, `20260111...`) — completely unrelated to the 81 local numeric-prefix files.
+  - **Local**: 81 migration files. Chain required 6 patches to replay via `supabase db reset` (duplicate version collisions, missing columns, SQL bugs, function signature changes). These patches fixed historical accidents, not schema design.
+  - **Result**: The three environments have **no shared migration lineage**. The migration chain is a historical changelog, not a deployment mechanism.
+- **Choice**: Adopt a **baseline squash** strategy:
+  1. Take a `pg_dump --schema-only` of prod (authoritative state) — prod is the live system with real data.
+  2. Archive all 81 historical migrations to `supabase/migrations/archive/` (preserve for reference).
+  3. Promote the prod dump as `001_baseline.sql` — this becomes the canonical starting point for all environments.
+  4. All Plan 114 refactoring migrations (Phase 1+) are authored against this baseline, not against accumulated history.
+  5. Phase 0 cleanup (migration 078: redundant indexes, duplicate triggers, composite indexes) is absorbed into the baseline if those changes are applied to prod first, OR remains as `002_phase0_schema_hygiene.sql` if applied after baseline creation.
+  6. `supabase db reset` replays baseline + forward migrations. New developers get a deterministic, fast bootstrap.
+- **Alternatives**:
+  - Patch historical chain indefinitely (rejected: encodes past decisions as permanent constraints; fragile and backwards)
+  - Forward-only discipline without squash (rejected: still requires 81 files to replay for new environments; `supabase db reset` fragility persists)
+  - Rebuild schema from scratch as target-state DDL (rejected: risks missing prod-only objects like `deletion_logs` or ad-hoc indexes; prod dump is safer)
+- **Consequences**:
+  - Requires operator access to run `pg_dump --schema-only` against prod (or use MCP `execute_sql` to reconstruct DDL)
+  - Historical migration files become reference-only artifacts
+  - `supabase_migrations.schema_migrations` on dev has 4 entries that won't match the new chain — dev must be reset or the tracking table cleared
+  - All future migrations are numbered from 002+ (or 003+ if Phase 0 is separate)
+  - Seed data (cities, categories, badge types, etc.) must be extracted from prod and included in the baseline or as a separate `002_seed.sql`
+  - Cross-environment parity becomes enforceable: everyone starts from the same known-good state
+- **Related**: Plan 114, F-11, Problem Area 13
+
 ### ADR-105: Badge/Boolean Data Coherence — Badges as Write Model, Booleans as Read Model
 
 - **Status**: Accepted
@@ -426,3 +459,5 @@ Epic 2.1 (Provider Trust & Verification) is architecturally feasible because fou
 2. Replace public SELECT on confirmation rows with public aggregates.
 3. Implement a trust summary read model and DB-side ordering for search.
 4. Add minimal trust workflow telemetry (normal + debug) before rollout.
+5. **[PRIORITY] Execute migration baseline squash (ADR-114)** before Plan 114 Phase 1 begins. Prod schema dump → `001_baseline.sql` → archive historical chain → all future migrations forward-only from baseline. This is prerequisite to any structural refactoring having cross-environment parity.
+6. **Establish migration tracking on prod**: After baseline, ensure `supabase_migrations.schema_migrations` is populated on prod so future migrations are tracked consistently across all environments.

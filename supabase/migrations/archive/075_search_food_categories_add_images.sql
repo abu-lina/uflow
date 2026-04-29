@@ -11,6 +11,8 @@
 -- - SECURITY INVOKER (consistent with other search RPCs)
 -- =====================================================
 
+DROP FUNCTION IF EXISTS public.search_food_categories(TEXT, INTEGER);
+
 CREATE OR REPLACE FUNCTION public.search_food_categories(
   search_query TEXT DEFAULT '',
   limit_count  INTEGER DEFAULT 8

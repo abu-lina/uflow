@@ -133,6 +133,6 @@ WITH CHECK (
 
 ## Related Files
 
-- Migration: `supabase/migrations/033_fix_security_advisories.sql`
-- Waitlist RPC function: `supabase/migrations/018_fix_waitlist_rls_policies.sql`
-- Provider RLS policies: `supabase/migrations/028_fix_provider_suggestion_error.sql`
+- Migration: `supabase/migrations/archive/033_fix_security_advisories.sql`
+- Waitlist RPC function: `supabase/migrations/archive/018_fix_waitlist_rls_policies.sql`
+- Provider RLS policies: `supabase/migrations/archive/028_fix_provider_suggestion_error.sql`

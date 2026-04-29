@@ -4,24 +4,7 @@ name: Architect
 target: vscode
 argument-hint: Describe the feature, component, or system area requiring architectural review
 tools:
-  [
-    'execute/getTerminalOutput',
-    'execute/getTaskOutput',
-    'execute/createAndRunTask',
-    'execute/runInTerminal',
-    'read/problems',
-    'read/readFile',
-    'read/terminalSelection',
-    'read/terminalLastCommand',
-    'edit/createDirectory',
-    'edit/createFile',
-    'edit/editFiles',
-    'search',
-    'web',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'todo',
-  ]
+  [execute/getTerminalOutput, execute/createAndRunTask, execute/runInTerminal, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, edit/createDirectory, edit/createFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, web/fetch, web/githubRepo, supabase-dev/apply_migration, supabase-dev/create_branch, supabase-dev/delete_branch, supabase-dev/deploy_edge_function, supabase-dev/execute_sql, supabase-dev/generate_typescript_types, supabase-dev/get_advisors, supabase-dev/get_edge_function, supabase-dev/get_logs, supabase-dev/get_project_url, supabase-dev/get_publishable_keys, supabase-dev/list_branches, supabase-dev/list_edge_functions, supabase-dev/list_extensions, supabase-dev/list_migrations, supabase-dev/list_tables, supabase-dev/merge_branch, supabase-dev/rebase_branch, supabase-dev/reset_branch, supabase-dev/search_docs, supabase/apply_migration, supabase/create_branch, supabase/delete_branch, supabase/deploy_edge_function, supabase/execute_sql, supabase/generate_typescript_types, supabase/get_advisors, supabase/get_edge_function, supabase/get_logs, supabase/get_project_url, supabase/get_publishable_keys, supabase/list_branches, supabase/list_edge_functions, supabase/list_extensions, supabase/list_migrations, supabase/list_tables, supabase/merge_branch, supabase/rebase_branch, supabase/reset_branch, supabase/search_docs, supabase-prod/apply_migration, supabase-prod/create_branch, supabase-prod/delete_branch, supabase-prod/deploy_edge_function, supabase-prod/execute_sql, supabase-prod/generate_typescript_types, supabase-prod/get_advisors, supabase-prod/get_edge_function, supabase-prod/get_logs, supabase-prod/get_project_url, supabase-prod/get_publishable_keys, supabase-prod/list_branches, supabase-prod/list_edge_functions, supabase-prod/list_extensions, supabase-prod/list_migrations, supabase-prod/list_tables, supabase-prod/merge_branch, supabase-prod/rebase_branch, supabase-prod/reset_branch, supabase-prod/search_docs, uflow.uflow-memory/flowbaby_storeMemory, uflow.uflow-memory/flowbaby_retrieveMemory, todo]
 model: Claude Opus 4.6
 handoffs:
   - label: Validate Roadmap Alignment

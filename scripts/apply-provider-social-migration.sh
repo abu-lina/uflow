@@ -6,14 +6,21 @@
 echo "🚀 Setting up Provider-Social Project Relationships..."
 echo ""
 
+MIGRATION_ACTIVE="supabase/migrations/002_create_provider_community_services_relationship.sql"
+MIGRATION_ARCHIVED="supabase/migrations/archive/002_create_provider_community_services_relationship.sql"
+
 # Check if we're in the right directory
-if [ ! -f "supabase/migrations/002_create_provider_community_services_relationship.sql" ]; then
+if [ -f "$MIGRATION_ACTIVE" ]; then
+    MIGRATION_FILE="$MIGRATION_ACTIVE"
+elif [ -f "$MIGRATION_ARCHIVED" ]; then
+    MIGRATION_FILE="$MIGRATION_ARCHIVED"
+else
     echo "❌ Error: Migration file not found!"
     echo "Please run this script from the project root directory."
     exit 1
 fi
 
-echo "📁 Found migration file: supabase/migrations/002_create_provider_community_services_relationship.sql"
+echo "📁 Found migration file: $MIGRATION_FILE"
 echo ""
 
 # Check if supabase CLI is available
@@ -52,7 +59,7 @@ else
     echo "1. Go to your Supabase project dashboard"
     echo "2. Navigate to SQL Editor"
     echo "3. Copy and paste the contents of:"
-    echo "   supabase/migrations/002_create_provider_community_services_relationship.sql"
+    echo "   $MIGRATION_FILE"
     echo "4. Run the SQL script"
     echo "5. Then run the setup script:"
     echo "   setup-provider-social-relationships.sql"

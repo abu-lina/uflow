@@ -3,14 +3,19 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('Plan 094 migration 068 contract', () => {
-  const migrationPath = path.resolve(
-    process.cwd(),
+  const migrationPath = [
     'supabase/migrations/068_provider_catalog_tables.sql',
-  );
+    'supabase/migrations/archive/068_provider_catalog_tables.sql',
+  ]
+    .map((candidate) => path.resolve(process.cwd(), candidate))
+    .find((candidate) => existsSync(candidate));
 
   it('creates migration 068 with catalog tables and RPC', () => {
     // TDD red gate: this should fail until migration 068 is implemented.
-    expect(existsSync(migrationPath)).toBe(true);
+    expect(migrationPath).toBeDefined();
+    if (!migrationPath) {
+      throw new Error('Migration 068 file not found in active or archive path.');
+    }
 
     const sql = readFileSync(migrationPath, 'utf8');
 

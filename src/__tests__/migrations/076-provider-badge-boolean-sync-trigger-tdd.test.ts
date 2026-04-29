@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 describe('migration 076 provider badge boolean sync trigger', () => {
-  const migrationPath = join(
-    process.cwd(),
-    'supabase',
-    'migrations',
-    '076_provider_badge_boolean_sync_trigger.sql',
-  );
+  const migrationPath = [
+    join(process.cwd(), 'supabase', 'migrations', '076_provider_badge_boolean_sync_trigger.sql'),
+    join(process.cwd(), 'supabase', 'migrations', 'archive', '076_provider_badge_boolean_sync_trigger.sql'),
+  ].find((candidate) => existsSync(candidate));
+  if (!migrationPath) {
+    throw new Error('Migration 076 file not found in active or archive path.');
+  }
   const sql = readFileSync(migrationPath, 'utf8');
 
   it('defines provider-only guard and badge key resolution through badge_types join', () => {

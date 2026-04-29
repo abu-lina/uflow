@@ -254,7 +254,10 @@ AS $$
   ORDER BY
     CASE WHEN btrim(COALESCE(search_query, '')) = '' THEN cp.sort_order END ASC,
     CASE WHEN btrim(COALESCE(search_query, '')) = '' THEN cp.name_de END ASC,
-    CASE WHEN btrim(COALESCE(search_query, '')) <> '' THEN rank END DESC,
+    CASE
+      WHEN btrim(COALESCE(search_query, '')) <> ''
+      THEN ts_rank(cp.search_vector, plainto_tsquery('german', search_query))
+    END DESC,
     cp.name_de ASC
   LIMIT GREATEST(limit_count, 0)
   OFFSET GREATEST(offset_count, 0);

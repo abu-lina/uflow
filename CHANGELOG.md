@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-04-29
+
+### Changed
+
+- **Infrastructure: Deterministic migration baseline established** (Plan 114 Phase 0-prime): Prod schema captured as canonical baseline (`001_baseline.sql`, 158 KB). All three environments (local/dev/prod) now share identical schema lineage via a forward-only migration chain (`001` → `002` → `003`). Eliminates the zero-shared-lineage problem that previously made cross-environment schema verification impossible.
+- **Infrastructure: Historical migration chain archived** (Plan 114 Phase 0-prime): 84 historical migration files moved to `supabase/migrations/archive/`. Active root now contains only the forward migration chain. Historical chain preserved for audit/traceability.
+- **Infrastructure: Phase 0 schema hygiene migration added** (Plan 114 Phase 0-prime): `003_phase0_schema_hygiene.sql` removes 10 redundant indexes and a duplicate `update_providers_updated_at` trigger that were present in the prod-derived baseline. Adds 2 composite indexes for query performance.
+- **Infrastructure: Supabase config aligned to Postgres 17** (Plan 114 Phase 0-prime): `supabase/config.toml` `major_version` updated from 15 → 17 to match linked prod.
+
+### Fixed
+
+- **Migration tooling: Archive-aware path resolution** (Plan 114 Phase 0-prime): `scripts/apply-provider-social-migration.sh` now resolves migration files from both active root and `archive/` paths via fallback logic. Prevents operational failure when migration files are reorganised.
+- **Migration tooling: Seed replication role safety** (Plan 114 Phase 0-prime): `002_seed.sql` now explicitly restores `session_replication_role = origin` before `RESET ALL`, ensuring FK/trigger enforcement is preserved in downstream migration-runner sessions.
+- **Migration tooling: Stale path references swept** (Plan 114 Phase 0-prime): 20 docs/scripts files updated to reference archived migration paths after historical chain moved to `archive/`.
+
+### Tests
+
+- Updated 6 migration contract test files (`068`–`077`) with archive-aware path resolution: tests now locate migration files from either active root or `archive/` path, preventing test breakage after migration file reorganisation.
+
 ## [0.11.0] - 2026-04-29
 
 ### Added

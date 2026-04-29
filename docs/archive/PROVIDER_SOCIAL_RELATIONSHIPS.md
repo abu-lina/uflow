@@ -14,7 +14,7 @@ Created a many-to-many relationship using a junction table `provider_community_s
 
 ## 📁 **Files Created**
 
-1. **`supabase/migrations/002_create_provider_community_services_relationship.sql`** - Database migration
+1. **`supabase/migrations/archive/002_create_provider_community_services_relationship.sql`** - Database migration
 2. **`setup-provider-social-relationships.sql`** - Setup script with sample data
 3. **Updated `src/services/community_services.ts`** - Service functions for the new relationship
 
@@ -35,7 +35,7 @@ supabase db reset
 ### Option 2: Using Supabase Dashboard
 1. Go to your Supabase project dashboard
 2. Navigate to SQL Editor
-3. Copy and paste the contents of `supabase/migrations/002_create_provider_community_services_relationship.sql`
+3. Copy and paste the contents of `supabase/migrations/archive/002_create_provider_community_services_relationship.sql`
 4. Run the SQL script
 
 ### Option 3: Using the setup script

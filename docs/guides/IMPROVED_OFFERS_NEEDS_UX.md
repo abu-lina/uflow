@@ -244,7 +244,7 @@ console.error('Error creating offer:', error);
 ### 1. Apply Database Migration
 
 ```bash
-psql $DATABASE_URL -f supabase/migrations/004_add_created_by_to_offers_needs.sql
+psql $DATABASE_URL -f supabase/migrations/archive/004_add_created_by_to_offers_needs.sql
 ```
 
 ### 2. Update Existing Data (Optional)
@@ -273,7 +273,7 @@ The changes are backward compatible. No downtime required.
 - `src/app/(public)/create/basics/needs/page.tsx` - Unified UX
 
 ### New
-- `supabase/migrations/004_add_created_by_to_offers_needs.sql` - Schema
+- `supabase/migrations/archive/004_add_created_by_to_offers_needs.sql` - Schema
 - `docs/guides/IMPROVED_OFFERS_NEEDS_UX.md` - This guide
 
 ## Support

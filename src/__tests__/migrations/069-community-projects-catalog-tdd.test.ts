@@ -3,10 +3,12 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('Plan 095 migration 069 contract', () => {
-  const migrationPath = path.resolve(
-    process.cwd(),
+  const migrationPath = [
     'supabase/migrations/069_community_projects_category_scoping.sql',
-  );
+    'supabase/migrations/archive/069_community_projects_category_scoping.sql',
+  ]
+    .map((candidate) => path.resolve(process.cwd(), candidate))
+    .find((candidate) => existsSync(candidate));
   const adrPath = path.resolve(
     process.cwd(),
     'agent-output/architecture/095-unified-catalog-adr.md',
@@ -14,8 +16,11 @@ describe('Plan 095 migration 069 contract', () => {
 
   it('creates migration 069 and ADR-095 with required schema contracts', () => {
     // TDD red gate: this should fail until migration 069 and ADR-095 are implemented.
-    expect(existsSync(migrationPath)).toBe(true);
+    expect(migrationPath).toBeDefined();
     expect(existsSync(adrPath)).toBe(true);
+    if (!migrationPath) {
+      throw new Error('Migration 069 file not found in active or archive path.');
+    }
 
     const sql = readFileSync(migrationPath, 'utf8');
 

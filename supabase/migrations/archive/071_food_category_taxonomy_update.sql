@@ -19,6 +19,13 @@
 
 BEGIN;
 
+-- Ensure category metadata columns exist before this migration writes/reads them.
+ALTER TABLE public.categories
+  ADD COLUMN IF NOT EXISTS description_de TEXT,
+  ADD COLUMN IF NOT EXISTS description_en TEXT,
+  ADD COLUMN IF NOT EXISTS category_images JSONB,
+  ADD COLUMN IF NOT EXISTS applicable_to TEXT[];
+
 -- ─────────────────────────────────────────────────────────────
 -- 0. NULL-OUT providers referencing the categories to be deleted
 --    so the FK RESTRICT constraint does not block the DELETE.
@@ -128,43 +135,49 @@ WHERE category_id = '232c2870-7929-43eb-a909-6cac90203192';
 -- 3. INSERT new cuisine regions
 -- ─────────────────────────────────────────────────────────────
 INSERT INTO public.categories (
-  id, category_id, name_de, name_en,
+  id, category_id, name, name_de, name_en,
   description_de, description_en,
   category_images, applicable_to, applicable_section,
   created_at, updated_at
 )
 VALUES
   (gen_random_uuid(), gen_random_uuid(),
+   'Nordafrikanische Küche',
    'Nordafrikanische Küche', 'North African Cuisine',
    'Tajine, Couscous und maghrebinische Tradition',
    'Tagine, couscous and Maghreb tradition',
    NULL, ARRAY['provider'], 'food', now(), now()),
 
   (gen_random_uuid(), gen_random_uuid(),
+   'Afghanische Küche',
    'Afghanische Küche', 'Afghan Cuisine',
    'Kabuli Pulao, Mantu und herzhafte Gastfreundschaft',
    'Kabuli pulao, mantu and hearty hospitality',
    NULL, ARRAY['provider'], 'food', now(), now()),
 
   (gen_random_uuid(), gen_random_uuid(),
+   'Persische Küche',
    'Persische Küche', 'Persian Cuisine',
    'Elegante Aromen mit langer Tradition',
    'Elegant flavours steeped in tradition',
    NULL, ARRAY['provider'], 'food', now(), now()),
 
   (gen_random_uuid(), gen_random_uuid(),
+   'Balkan-Küche',
    'Balkan-Küche', 'Balkan Cuisine',
    'Ćevapi, Burek und südosteuropäische Herzlichkeit',
    'Ćevapi, burek and Southeast European warmth',
    NULL, ARRAY['provider'], 'food', now(), now()),
 
   (gen_random_uuid(), gen_random_uuid(),
+   'Westafrikanische Küche',
    'Westafrikanische Küche', 'West African Cuisine',
    'Thiéboudienne, Jollof und westafrikanische Tradition',
    'Thiéboudienne, jollof and West African tradition',
    NULL, ARRAY['provider'], 'food', now(), now()),
 
   (gen_random_uuid(), gen_random_uuid(),
+   'Deutsche Küche (Halal)',
    'Deutsche Küche (Halal)', 'German Cuisine (Halal)',
    'Klassisch deutsch – halal zubereitet',
    'Classic German – prepared the halal way',
