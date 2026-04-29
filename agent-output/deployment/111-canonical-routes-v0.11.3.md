@@ -2,13 +2,13 @@
 ID: 111
 Origin: 111
 UUID: c4a8e7f2
-Status: Stage 1 Complete
+Status: Released
 ---
 
 # Deployment: Plan 111 — Canonical Routes & City-Selection Bugfixes (v0.11.3)
 
 **Stage 1 Date**: 2026-04-29T10:30Z  
-**Stage 2 Date**: [PENDING USER APPROVAL]  
+**Stage 2 Date**: 2026-04-29T11:00Z  
 **DevOps Agent**: devops
 
 ## Plan Reference
@@ -155,13 +155,13 @@ Status: Stage 1 Complete
 
 ## Stage 2 Pre-conditions (For User Approval)
 
-- [ ] User explicitly approves release of v0.11.3
-- [ ] `git push origin session/107-fastline` (branch push)
-- [ ] `git tag -a v0.11.3 -m "Release v0.11.3 — Plan 111: Canonical section routes + city-selection bugfixes"`
-- [ ] `git push origin v0.11.3` (tag push)
-- [ ] GitHub Issue #188 closed via `gh issue close`
-- [ ] Roadmap updated: Current Version → v0.11.3 + release table entry
-- [ ] Post-release smoke check (compilation evidence — DF-3 constraint applies)
+- [x] User explicitly approves release of v0.11.3
+- [x] `git push origin session/107-fastline` (branch push)
+- [x] `git tag -a v0.11.3 -m "Release v0.11.3 — Plan 111: Canonical section routes + city-selection bugfixes"`
+- [x] `git push origin v0.11.3` (tag push)
+- [x] GitHub Issue #188 closed via `gh issue close`
+- [x] Roadmap updated: Current Version → v0.11.3 + release table entry
+- [x] Post-release smoke check (type-check: 0 errors, ummah-flow@0.11.3)
 
 ## Deferred Validation Tracker
 
@@ -191,7 +191,7 @@ See `agent-output/planning/111-open-actions.md` for the 12-scenario manual brows
   "version": "v0.11.3",
   "plan": "111",
   "type": "patch",
-  "date": "[PENDING_STAGE2]",
+  "date": "2026-04-29",
   "environment": "production",
   "changes": [
     "City-selection CTA redirects to / instead of broken /city/{name}",
@@ -203,8 +203,8 @@ See `agent-output/planning/111-open-actions.md` for the 12-scenario manual brows
   ],
   "tests": "1152/1170 pass",
   "github_issue": "https://github.com/abu-lina/uflow/issues/188",
-  "tag": "[PENDING_STAGE2]",
-  "authorizer": "[PENDING_USER_APPROVAL]"
+  "tag": "v0.11.3",
+  "authorizer": "user-approved-2026-04-29"
 }
 ```
 

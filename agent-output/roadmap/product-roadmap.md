@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-27
+**Last Updated**: 2026-04-29
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.40
+**Current Version**: v0.11.3
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -28,6 +28,7 @@
 | 2026-02-23       | Plan 015 released (v0.6.1): MIUI PWA form rendering fix            | Unblocked Xiaomi/MIUI PWA users from blank recommend form via defensive viewport + layout containment fixes                                               |
 | 2026-02-23       | Process improvements identified (Retro 015)                        | Pending codification: design-review UAT for CSS fixes, automated-first QA for CSS, DevOps evidence template reuse, UTC timestamps, related-issues linking |
 | 2026-03-02       | Plan 032 released: DIY Agent Memory System (tooling)               | Standalone tooling release — memory-extension-v0.1.0 replaces Flowbaby backend, eliminates daemon lock failures, local-first SQLite WAL                   |
+| 2026-04-29 11:00 | Plan 111 released (v0.11.3): Canonical Section Routes + City-Selection Bugfixes | City-selection CTA fixed (→ /), navbar excluded via locale-safe suffix, /food /stores /ummah canonical routes, section resolver centralized. Issue #188 closed. |
 | 2026-03-03       | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                |
 | 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
 | 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |
@@ -117,7 +118,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.40 — Released 2026-04-27 · Section field i18n + route test schema fidelity (Plan 108 open-actions DF-1/DF-2)
+**Current Working Release**: v0.11.3 — Released 2026-04-29 · Canonical Section Routes + City-Selection Bugfixes (Plan 111)
 
 _Quality improvements (2026-04-27): DF-1: Section field labels localised via LanguageProvider t() keys across all 6 locales (en/de/ar/tr/ur/ps). DF-2: Route-level test mock for /api/admin/edit-provider now validates listingType enum contract. 1144/1144 tests pass. Backward-compatible patch. Tag v0.10.40 pushed._
 
@@ -139,7 +140,12 @@ _Quality improvements (2026-04-27): DF-1: Section field labels localised via Lan
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
-| v0.10.39 | 2026-04-27 | Plan 108 (Admin Section listing_type editing in provider moderation — PR #180) | Released |
+| v0.11.3 | 2026-04-29 | Plan 111 (Canonical Section Routes & City-Selection Bugfixes — Closes #188) | Released |
+| v0.11.2 | 2026-04-29 | Plan 114 Phase 1 (Environment alignment for F-9 compliance tables — PR #192) | Released |
+| v0.11.1 | 2026-04-29 | Plan 114 Phase 0-prime (Deterministic migration baseline — PR #191) | Released |
+| v0.11.0 | 2026-04-29 | Plan 113 (Provider Details: open/closed status, accordion sections, Halal Trust popup — PR #190) | Released |
+| v0.10.42 | 2026-04-28 | Plan 111/i18n (6-locale key parity + auth recovery localisation — PR #186) | Released |
+| v0.10.40 | 2026-04-27 | Plan 108 (Admin Section listing_type editing in provider moderation — PR #180) | Released |
 | v0.10.38 | 2026-04-27 | Plan 109 (Providers search context bar + location/wer transport — Closes #175) | Released |
 | v0.10.37 | 2026-04-27 | Plan 110 (CI pipeline fixes — SHA pin, perf budget, pipefail) | Released |
 | v0.10.36 | 2026-04-27 | Plan 108 (Stores Wer accordion hidden — Closes #174) | Released |
