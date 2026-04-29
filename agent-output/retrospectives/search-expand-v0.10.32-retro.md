@@ -2,7 +2,7 @@
 ID: ad-hoc-search-expand
 Origin: conversation-session
 UUID: search-expand-qa-001
-Status: Active
+Status: Committed
 ---
 
 # Retrospective: Search Expand Show-All Preview — v0.10.32
