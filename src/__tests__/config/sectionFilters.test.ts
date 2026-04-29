@@ -8,6 +8,7 @@ import {
   getDefaultFilters,
   getAllowedFilters,
   inferSectionFromCategory,
+  resolveSectionFromRoute,
   type SectionFilter,
 } from '@/config/sectionFilters';
 
@@ -120,5 +121,32 @@ describe('inferSectionFromCategory', () => {
   it('returns business for null/undefined category', () => {
     expect(inferSectionFromCategory(null)).toBe('business');
     expect(inferSectionFromCategory(undefined)).toBe('business');
+  });
+});
+
+describe('resolveSectionFromRoute', () => {
+  it('resolves stores pathname to business when section and category are absent', () => {
+    const params = new URLSearchParams('');
+    expect(resolveSectionFromRoute('/stores', params)).toBe('business');
+  });
+
+  it('resolves ummah pathname when section and category are absent', () => {
+    const params = new URLSearchParams('');
+    expect(resolveSectionFromRoute('/ummah', params)).toBe('ummah');
+  });
+
+  it('keeps explicit section as highest priority', () => {
+    const params = new URLSearchParams('section=food');
+    expect(resolveSectionFromRoute('/ummah', params)).toBe('food');
+  });
+
+  it('uses category inference before pathname fallback when section is absent', () => {
+    const params = new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`);
+    expect(resolveSectionFromRoute('/stores', params)).toBe('food');
+  });
+
+  it('resolves locale-prefixed stores pathname to business when section and category are absent', () => {
+    const params = new URLSearchParams('');
+    expect(resolveSectionFromRoute('/de/stores', params)).toBe('business');
   });
 });

@@ -4,7 +4,11 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchUsedCategories, fetchCategoriesBySection, type Category } from '@/services/categories';
-import type { Section } from '@/config/sectionFilters';
+import {
+  getResultsPathForSection,
+  inferSectionFromCategory,
+  type Section,
+} from '@/config/sectionFilters';
 import { formatAllahText } from '@/utils/textUtils';
 import {
   getLocalizedDescription,
@@ -83,9 +87,9 @@ export function CategoryGallerySection({ section }: CategoryGallerySectionProps 
   };
 
   const handleCategoryClick = (categoryId: string) => {
-    const params = new URLSearchParams({ category: categoryId });
-    if (section) params.set('section', section);
-    router.push(`/providers?${params.toString()}`);
+    const resolvedSection = section ?? inferSectionFromCategory(categoryId);
+    const params = new URLSearchParams({ category: categoryId, section: resolvedSection });
+    router.push(`${getResultsPathForSection(resolvedSection)}?${params.toString()}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, categoryId: string) => {

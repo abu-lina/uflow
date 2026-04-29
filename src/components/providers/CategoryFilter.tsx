@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { motion } from 'motion/react';
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +11,10 @@ import { useSearch } from '@/providers/search-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { fetchUsedCategories } from '@/services/categories';
 import type { Category } from '@/types/supabase';
+import {
+  getResultsPathForSection,
+  resolveSectionFromRoute,
+} from '@/config/sectionFilters';
 
 interface CategoryFilterProps {
   className?: string;
@@ -18,6 +22,7 @@ interface CategoryFilterProps {
 
 export function CategoryFilter({ className = '' }: CategoryFilterProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { selectedCategory, setSelectedCategory } = useSearch();
   const { t, language } = useLanguage();
@@ -127,8 +132,9 @@ export function CategoryFilter({ className = '' }: CategoryFilterProps) {
     } else {
       params.delete('category');
     }
-
-    router.replace(`/providers?${params.toString()}`, { scroll: false });
+    const section = resolveSectionFromRoute(pathname, params);
+    params.set('section', section);
+    router.replace(`${getResultsPathForSection(section)}?${params.toString()}`, { scroll: false });
   };
 
   if (loading) {

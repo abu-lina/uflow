@@ -96,3 +96,43 @@ export function inferSectionFromCategory(categoryId: string | null | undefined):
   if (categoryId === GEMEINSCHAFT_SPENDEN_CATEGORY_ID) return 'ummah';
   return 'business';
 }
+
+/** Maps a section to its canonical public results route. */
+export function getResultsPathForSection(section: Section): '/food' | '/stores' | '/ummah' {
+  if (section === 'food') return '/food';
+  if (section === 'ummah') return '/ummah';
+  return '/stores';
+}
+
+/** Resolves section from URL params with legacy category fallback (D9 default: food). */
+export function resolveSectionFromSearchParams(params: URLSearchParams): Section {
+  const sectionParam = params.get('section');
+  if (sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'business') {
+    return sectionParam;
+  }
+
+  const categoryParam = params.get('category');
+  if (categoryParam) {
+    return inferSectionFromCategory(categoryParam);
+  }
+
+  return 'food';
+}
+
+/** Resolves section from route context (query/category first, then canonical pathname fallback). */
+export function resolveSectionFromRoute(
+  pathname: string | null | undefined,
+  params: URLSearchParams,
+): Section {
+  const fromParams = resolveSectionFromSearchParams(params);
+  if (params.has('section') || params.has('category')) {
+    return fromParams;
+  }
+
+  const routePath = pathname || '';
+  if (routePath === '/food' || routePath.endsWith('/food')) return 'food';
+  if (routePath === '/ummah' || routePath.endsWith('/ummah')) return 'ummah';
+  if (routePath === '/stores' || routePath.endsWith('/stores')) return 'business';
+
+  return fromParams;
+}

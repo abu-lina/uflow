@@ -54,7 +54,7 @@ Implemented Plan 091 — Home Redesign Increment 2 per approved plan + Critic re
 ## Code Review Iteration
 
 **Review Date**: 2026-04-17T17:30Z  
-**Review Artifact**: [agent-output/code-review/091-home-redesign-increment-2-code-review.md](../code-review/091-home-redesign-increment-2-code-review.md)  
+**Review Artifact**: [agent-output/code-review/closed/091-home-redesign-increment-2-code-review-rerun-2026-04-29.md](../code-review/closed/091-home-redesign-increment-2-code-review-rerun-2026-04-29.md)  
 **Verdict**: REJECTED → Fixes Applied → Ready for Re-Review
 
 ### Findings Addressed
@@ -106,7 +106,7 @@ Implemented Plan 091 — Home Redesign Increment 2 per approved plan + Critic re
 ## Code Review Iteration - Cycle 4 (Post-Approval Route Migration)
 
 **Review Date**: 2026-04-17T17:53Z  
-**Review Artifact**: [agent-output/code-review/091-home-redesign-increment-2-code-review.md](../code-review/091-home-redesign-increment-2-code-review.md) (Cycle 4)  
+**Review Artifact**: [agent-output/code-review/closed/091-home-redesign-increment-2-code-review-rerun-2026-04-29.md](../code-review/closed/091-home-redesign-increment-2-code-review-rerun-2026-04-29.md) (Cycle 4)  
 **Verdict**: REJECTED → Fixes Applied → Ready for Re-Review
 
 **Context**: After Code Review Cycles 1-3 approval, implementation migrated canonical route from `/suchen` to `/search` and converted `/suchen` to a redirect-only compatibility layer. This introduced test/implementation misalignment and deleted a tracked PWA asset.
