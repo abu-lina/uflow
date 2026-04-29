@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-28
+**Last Updated**: 2026-04-29
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.10.41
+**Current Version**: v0.11.0
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -95,6 +95,7 @@
 | 2026-04-27       | Plan 109 released (v0.10.38): Providers results page UI enhancements | SearchContextBar on /providers header shows section icon, search term, location, wer audience; quick-edit button routes to /search with section preserved; location+wer URL params transported from /search; mobile nav active-state locked on /providers. v0.10.37 (CI fixes) was claimed by session/110 concurrently, so v0.10.38 used. Tag v0.10.38 pushed. Closes #175. |
 | 2026-04-27       | Plan 108 released (v0.10.39): Admin Section (listing_type) editing in provider moderation | Admin moderators can now change provider Section classification (Food/Business/Unclassified) from /dashboard/providers/[id]/edit. Previously read-only; now editable select in admin moderation context (reviewFooterActions prop); owner edit flow unchanged. 19/19 regression tests. No DB migrations. Deferred: DF-1 i18n, DF-2 route test (108-open-actions.md). PR #180. Tag v0.10.39 pushed. |
 | 2026-04-27       | Plan 108 open-actions released (v0.10.40): Section field i18n + route test schema fidelity | DF-1: Section field labels migrated to LanguageProvider t() keys across all 6 locale files (en/de/ar/tr/ur/ps); 9 hardcoded strings replaced with t() calls. DF-2: providerEditUpdateSchema route test mock enhanced to validate listingType enum; regression test confirms invalid values return HTTP 400. 1144/1144 tests pass. Backward-compatible. Tag v0.10.40 pushed. Closes 108-open-actions DF-1/DF-2. |
+| 2026-04-29       | Plan 113 released (v0.11.0): Provider Details Enhancement — open status, 6 accordion sections, Halal trust banner/popup, scroll fixes, DB migration 078. Closes #187 |
 | 2026-04-28       | Plan 112 released (v0.10.41): ProviderCard heart button overlay + providers navbar fix | Bookmark/heart button relocated from bottom action row to top-right image overlay (circular icon, top-3 right-3) in bookmark mode. Bottom Save/Saved and Website rows removed for cleaner cards. Mobile footer navbar now consistently visible on /providers discovery page (RootClientLayout force-footer). Explore/Search tab active state on /providers in MobileFooterBar. Moderation mode (Approve/Reject) unchanged. 53 unit tests (ProviderCard 38, RootClientLayout 13, MobileFooterBar 2). PO decision: no full Barik animation in overlay. Tag v0.10.41 pushed. |
 | 2026-04-27       | Ad-hoc search quality fixes released (v0.10.33): Food recents filter + Wo empty-state i18n | Fixed cross-section contamination in food "What" recent history (non-food service-type entries filtered out). Added localized "Wo?" question-form label for Where accordion across 6 locales. 2 regression tests added. Tag v0.10.33 pushed. |
 | 2026-04-27       | Search expand show-all preview released (v0.10.32): Feature-flagged 3-item preview UX + FigmaSearchBar | WasMealResults/WasCategoryResults/WoCityResults/FilterSection: 3-item show-all preview behind `enableSearchExpandShowAllPreview` flag (default off). Recent-priority UX: recent searches shown over popular items; state resets on query change. FigmaSearchBar: compact mobile search bar with hamburger collapse/expand. Provider grid: 2-col mobile layout. i18n 6 locales. 1120 tests passing. Tag v0.10.32 pushed. |
@@ -118,9 +119,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.10.41 — Released 2026-04-28 · ProviderCard heart button overlay + providers navbar fix + search tab active state (Plan 112)
+**Current Working Release**: v0.11.0 — Released 2026-04-29 · Provider Details Enhancement (Plan 113)
 
-_UX improvement (2026-04-28): Bookmark/heart button relocated to top-right image overlay in provider cards. Bottom Save/Saved + Website rows removed in bookmark mode. Mobile footer navbar visible on /providers. Explore tab active on /providers. 53 unit tests. Non-breaking patch. Tag v0.10.41 pushed._
+_Feature release (2026-04-29): 9 user-facing features — real-time open/closed status, 6 accordion sections (values, menu, hours, feedback, certifications, nearby), Halal Trust Banner and Popup (first-10-opens counter, full focus trap). DB migration 078 (opening_hours JSONB column). Scroll/gesture fixes (body+html lock, swipe drag guard). 1161 tests. Tag v0.11.0 pushed. Issue #187 closed._
 
 **Release Status**: Released
 **Ready for Release**: ✅ v0.10.33 complete
@@ -140,6 +141,10 @@ _UX improvement (2026-04-28): Bookmark/heart button relocated to top-right image
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.11.0 | 2026-04-29 | Plan 113 (Provider Details Enhancement — 9 features + DB schema + scroll fixes — Closes #187) | Released |
+| v0.10.42 | 2026-04-28 | Plan 111 (i18n 6-locale key parity + auth recovery flows localisation — PR #186) | Released |
+| v0.10.41 | 2026-04-28 | Plan 112 (ProviderCard heart button overlay + providers navbar fix) | Released |
+| v0.10.40 | 2026-04-28 | Plan 108 open-actions (Section field i18n + route test schema fidelity) | Released |
 | v0.10.39 | 2026-04-27 | Plan 108 (Admin Section listing_type editing in provider moderation — PR #180) | Released |
 | v0.10.38 | 2026-04-27 | Plan 109 (Providers search context bar + location/wer transport — Closes #175) | Released |
 | v0.10.37 | 2026-04-27 | Plan 110 (CI pipeline fixes — SHA pin, perf budget, pipefail) | Released |
