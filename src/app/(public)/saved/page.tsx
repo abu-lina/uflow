@@ -140,15 +140,14 @@ export default function SavedProvidersPage() {
     if (!user) return;
     
     try {
-      const bookmarkableType = isCommunityService ? 'community_service' : 'provider';
-      
-      const { data: bookmark, error: fetchError } = await supabase
+      let bookmarkQuery = supabase
         .from('bookmarks')
         .select('id')
-        .eq('bookmarkable_id', providerId)
-        .eq('bookmarkable_type', bookmarkableType)
         .eq('user_id', user.id)
-        .maybeSingle();
+        .eq(isCommunityService ? 'community_service_id' : 'provider_id', providerId)
+        .is(isCommunityService ? 'provider_id' : 'community_service_id', null);
+
+      const { data: bookmark, error: fetchError } = await bookmarkQuery.maybeSingle();
       
       if (fetchError) {
         console.error('Error fetching bookmark:', fetchError);

@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Active
+Status: Committed
 ---
 
 # Plan 114 Phase 3 Implementation - Referential Integrity (F-2 + F-4)
@@ -19,6 +19,7 @@ Status: Active
 | Date (UTC) | Handoff/Request | Summary |
 | --- | --- | --- |
 | 2026-04-29 | Implement Plan 114 Phase 3 | Implemented migration and service-layer refactor for explicit FKs/junctions, added regression/TDD tests, and completed verification gates. |
+| 2026-04-29 | Address code-review findings | Migrated remaining runtime bookmark queries to typed FK columns and added regression guardrail test for dropped bookmarkable columns. |
 
 ## Implementation Summary
 Implemented Phase 3 referential integrity end-to-end across schema, services, hooks, and tests.
@@ -62,6 +63,11 @@ This delivers the plan value by making relationship integrity enforceable at the
 | `src/__tests__/services/providerService.badges.test.ts` | Updated write-path expectations for typed/junction refs | ~30 |
 | `src/__tests__/services/admin-provider-edit.test.ts` | Updated admin edit expectations for junction sync | ~25 |
 | `src/__tests__/services/badges.server.test.ts` | Updated fixture for typed FK response mapping | ~15 |
+| `src/app/(public)/saved/page.tsx` | Replaced bookmark polymorphic filter with typed FK bookmark lookup for unsave flow | ~10 |
+| `src/app/(public)/providers/ProvidersContent.tsx` | Replaced bookmark polymorphic select with typed FK select/map for cached IDs | ~8 |
+| `src/components/community-services/CommunityServiceDetailModal.tsx` | Replaced bookmark polymorphic select/filter with typed FK query for community services | ~8 |
+| `src/components/providers/ProviderDetailPage.tsx` | Replaced bookmark polymorphic select with typed FK select/map + type-safe bookmark check | ~9 |
+| `src/components/providers/ProviderDetailModal.tsx` | Replaced bookmark polymorphic select with typed FK select/map for cached IDs | ~8 |
 
 ## Files Created
 
@@ -72,6 +78,7 @@ This delivers the plan value by making relationship integrity enforceable at the
 | `src/__tests__/services/bookmarks.phase3.test.ts` | Regression tests for typed bookmark query/insert/toggle behavior |
 | `src/__tests__/services/badges.phase3.test.ts` | Regression tests for typed badge query/insert behavior |
 | `src/__tests__/services/matching.phase3.test.ts` | Regression test for junction-based matching behavior |
+| `src/__tests__/regression/plan114-bookmark-typed-fk-runtime.test.ts` | Regression guardrail: runtime bookmark query paths must not use dropped polymorphic columns |
 
 ## Deployment Path Audit
 - N/A - no deployment scripts, workflows, Docker, or runtime deployment surfaces were modified.
@@ -118,6 +125,7 @@ Build note:
 | Command | Result | Notes |
 | --- | --- | --- |
 | `npx vitest run src/__tests__/services/badges.phase3.test.ts src/__tests__/services/badges.server.test.ts` | ✅ Pass | Targeted verification for previously failing Phase 3 regressions |
+| `npx vitest run src/__tests__/regression/plan114-bookmark-typed-fk-runtime.test.ts src/__tests__/services/bookmarks.phase3.test.ts` | ✅ Pass | Targeted verification for code-review bookmark residue remediation |
 | `npm test -- --run` | ✅ Pass | Full suite green after badge regression fixes |
 | `npm run type-check` | ✅ Pass | No TypeScript errors |
 | `npm run lint` | ✅ Pass (warnings only) | 0 errors; warnings pre-existing |

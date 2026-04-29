@@ -170,9 +170,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       if (!user) return [];
       const { data: bookmarks } = await supabase
         .from('bookmarks')
-        .select('bookmarkable_id, bookmarkable_type')
+        .select('provider_id, community_service_id')
         .eq('user_id', user.id);
-      return bookmarks?.map((b) => b.bookmarkable_id) || [];
+      return bookmarks?.flatMap((b) => [b.provider_id, b.community_service_id].filter((id): id is string => !!id)) || [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes

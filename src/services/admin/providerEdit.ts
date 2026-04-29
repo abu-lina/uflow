@@ -105,11 +105,43 @@ export async function updateProviderFields(
       ? sanitizeTextInput(editData.providerImages)
       : null;
   }
+
   if (editData.offersIds !== undefined) {
-    updatePayload.offers_ids = editData.offersIds;
+    const { error: clearOffersError } = await supabase
+      .from('provider_offers')
+      .delete()
+      .eq('provider_id', providerId);
+
+    if (clearOffersError) {
+      throw new Error(`Failed to clear provider offers: ${clearOffersError.message}`);
+    }
+
+    if (editData.offersIds.length > 0) {
+      const offerRows = editData.offersIds.map((offerId) => ({ provider_id: providerId, offer_id: offerId }));
+      const { error: insertOffersError } = await supabase.from('provider_offers').insert(offerRows);
+      if (insertOffersError) {
+        throw new Error(`Failed to update provider offers: ${insertOffersError.message}`);
+      }
+    }
   }
+
   if (editData.needsIds !== undefined) {
-    updatePayload.needs_ids = editData.needsIds;
+    const { error: clearNeedsError } = await supabase
+      .from('provider_needs')
+      .delete()
+      .eq('provider_id', providerId);
+
+    if (clearNeedsError) {
+      throw new Error(`Failed to clear provider needs: ${clearNeedsError.message}`);
+    }
+
+    if (editData.needsIds.length > 0) {
+      const needRows = editData.needsIds.map((needId) => ({ provider_id: providerId, need_id: needId }));
+      const { error: insertNeedsError } = await supabase.from('provider_needs').insert(needRows);
+      if (insertNeedsError) {
+        throw new Error(`Failed to update provider needs: ${insertNeedsError.message}`);
+      }
+    }
   }
 
   // Update community service relationships if provided

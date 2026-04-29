@@ -125,11 +125,57 @@ export async function updateCommunityServiceFields(
     // Accept as TEXT[] (native Postgres array) — no JSON wrapping
     updatePayload.community_service_images = editData.communityServiceImages ?? null;
   }
+
   if (editData.offersIds !== undefined) {
-    updatePayload.offers_ids = editData.offersIds;
+    const { error: clearOffersError } = await supabase
+      .from('community_service_offers')
+      .delete()
+      .eq('community_service_id', communityServiceId);
+
+    if (clearOffersError) {
+      throw new Error(`Failed to clear community service offers: ${clearOffersError.message}`);
+    }
+
+    if (editData.offersIds.length > 0) {
+      const offerRows = editData.offersIds.map((offerId) => ({
+        community_service_id: communityServiceId,
+        offer_id: offerId,
+      }));
+
+      const { error: insertOffersError } = await supabase
+        .from('community_service_offers')
+        .insert(offerRows);
+
+      if (insertOffersError) {
+        throw new Error(`Failed to update community service offers: ${insertOffersError.message}`);
+      }
+    }
   }
+
   if (editData.needsIds !== undefined) {
-    updatePayload.needs_ids = editData.needsIds;
+    const { error: clearNeedsError } = await supabase
+      .from('community_service_needs')
+      .delete()
+      .eq('community_service_id', communityServiceId);
+
+    if (clearNeedsError) {
+      throw new Error(`Failed to clear community service needs: ${clearNeedsError.message}`);
+    }
+
+    if (editData.needsIds.length > 0) {
+      const needRows = editData.needsIds.map((needId) => ({
+        community_service_id: communityServiceId,
+        need_id: needId,
+      }));
+
+      const { error: insertNeedsError } = await supabase
+        .from('community_service_needs')
+        .insert(needRows);
+
+      if (insertNeedsError) {
+        throw new Error(`Failed to update community service needs: ${insertNeedsError.message}`);
+      }
+    }
   }
 
   const { data: rows, error } = await supabase

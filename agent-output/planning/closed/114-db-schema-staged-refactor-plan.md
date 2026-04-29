@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Released
+Status: Committed
 ---
 
 # Plan 114 — Database Schema Staged Refactor
@@ -33,6 +33,8 @@ Status: Released
 | 2026-04-29T13:10Z   | code-reviewer | Code Review Approved: remediation verified (archive-aware script fallback, replication-role reset in seed, stale-path sweep closure in high-risk surfaces). |
 | 2026-04-29T10:55Z   | qa | QA Testing Complete: all quality gates passed (lint, type-check, build, vitest). 1148 tests passed, 18 skipped. Migration files validated; archive-aware path resolution confirmed; replication role scoping verified. Approved for UAT. |
 | 2026-04-29T11:00Z   | uat | UAT Approved: Phase 0-prime objective fully achieved. Deterministic baseline established; structural parity verified; archival complete; all deliverables on-target. **APPROVED FOR RELEASE** as v0.10.43. Ready for DevOps deployment. |
+| 2026-04-30T00:15Z   | qa | Phase 3 QA Complete: All 8 validation gates PASSED. 1185 tests passing (0 failures, 18 skipped). Migration contract verified (4/4). Service-layer refactoring validated (5/5). Regression coverage confirmed (3/3). No stale column references. Type-check: 0 errors. Lint: 0 errors. Build: PWA generation complete (DF-4 exception). **APPROVED FOR UAT**. |
+| 2026-04-30T00:30Z   | uat | Phase 3 UAT Complete: Value delivery verified. All acceptance criteria met (F-2 junctions + F-4 typed FKs with integrity enforcement). Zero scope drift. Risk profile acceptable. **APPROVED FOR RELEASE** as next patch after v0.10.42 (confirm version at DevOps Stage 1). Handoff to devops agent. |
 
 ---
 

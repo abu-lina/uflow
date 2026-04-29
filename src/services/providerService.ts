@@ -14,6 +14,37 @@ export interface CreateProviderResult {
   community_service_id?: string;
 }
 
+async function syncEntityRelations(
+  table: 'provider_offers' | 'provider_needs' | 'community_service_offers' | 'community_service_needs',
+  entityColumn: 'provider_id' | 'community_service_id',
+  relationColumn: 'offer_id' | 'need_id',
+  entityId: string,
+  relationIds: string[]
+): Promise<void> {
+  const { error: deleteError } = await supabase
+    .from(table)
+    .delete()
+    .eq(entityColumn, entityId);
+
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  if (relationIds.length === 0) {
+    return;
+  }
+
+  const rows = relationIds.map((relationId) => ({
+    [entityColumn]: entityId,
+    [relationColumn]: relationId,
+  }));
+
+  const { error: insertError } = await supabase.from(table).insert(rows);
+  if (insertError) {
+    throw insertError;
+  }
+}
+
 const TAG_SYNONYMS = {
   muslim: new Set(['muslim', 'muslim_owned', 'muslim-owned']),
   prayer: new Set(['gebet', 'gebetsraum', 'gebetsfreundlich', 'prayer', 'prayer_space', 'prayer-friendly']),
@@ -101,8 +132,6 @@ export async function createProviderOrService(
       social_website: formData.website || null,
       social_instagram: formData.instagram || null,
       community_service_images: uploadedUrls.length > 0 ? uploadedUrls : null,
-      offers_ids: formData.offers_ids || [],
-      needs_ids: formData.needs_ids || [],
       review_status: 'pending' as const, // All submissions go through review
       // CRITICAL: Always explicitly set these fields, even if null
       // The RLS policy requires user_created_id to be NULL for anonymous users
@@ -121,6 +150,23 @@ export async function createProviderOrService(
       console.error('Error creating community service:', serviceError);
       throw serviceError;
     }
+
+    await Promise.all([
+      syncEntityRelations(
+        'community_service_offers',
+        'community_service_id',
+        'offer_id',
+        generatedServiceId,
+        formData.offers_ids || [],
+      ),
+      syncEntityRelations(
+        'community_service_needs',
+        'community_service_id',
+        'need_id',
+        generatedServiceId,
+        formData.needs_ids || [],
+      ),
+    ]);
 
     return { community_service_id: generatedServiceId };
   } else {
@@ -165,8 +211,6 @@ export async function createProviderOrService(
       has_parking: hasParkingTag,
       solidarity_pricing: hasSolidarityTag,
       provider_images: uploadedUrls.length > 0 ? JSON.stringify({ urls: uploadedUrls }) : null,
-      offers_ids: formData.offers_ids || [],
-      needs_ids: formData.needs_ids || [],
       review_status: 'pending' as const, // Providers need review
       // Store recommender email for anonymous recommendations (with consent)
       recommender_email: isAnonymous && formData.userEmail ? formData.userEmail : null,
@@ -205,6 +249,23 @@ export async function createProviderOrService(
       throw providerError;
     }
 
+    await Promise.all([
+      syncEntityRelations(
+        'provider_offers',
+        'provider_id',
+        'offer_id',
+        generatedProviderId,
+        formData.offers_ids || [],
+      ),
+      syncEntityRelations(
+        'provider_needs',
+        'provider_id',
+        'need_id',
+        generatedProviderId,
+        formData.needs_ids || [],
+      ),
+    ]);
+
     if (requestedBadgeKeys.length > 0) {
       const { data: badgeTypes, error: badgeTypesError } = await supabase
         .from('badge_types')
@@ -218,8 +279,8 @@ export async function createProviderOrService(
         console.error('Error fetching badge types for provider creation:', badgeTypesError);
       } else if (badgeTypes && badgeTypes.length > 0) {
         const badgeRows = badgeTypes.map((badgeType) => ({
-          entity_id: generatedProviderId,
-          entity_type: 'provider',
+          provider_id: generatedProviderId,
+          community_service_id: null,
           badge_type_id: badgeType.id,
           trust_level: TrustLevel.SELF_DECLARED,
           confirmation_count: 0,

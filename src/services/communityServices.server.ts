@@ -40,20 +40,26 @@ export async function getCommunityServiceById(id: string): Promise<CommunityServ
       return null;
     }
 
-    // Fetch offers and needs in parallel
+    const [serviceOffersResult, serviceNeedsResult] = await Promise.all([
+      supabase
+        .from('community_service_offers')
+        .select('offer_id')
+        .eq('community_service_id', id),
+      supabase
+        .from('community_service_needs')
+        .select('need_id')
+        .eq('community_service_id', id),
+    ]);
+
+    const offerIds = (serviceOffersResult.data || []).map((row) => row.offer_id);
+    const needIds = (serviceNeedsResult.data || []).map((row) => row.need_id);
+
     const [offersResult, needsResult] = await Promise.all([
-      data.offers_ids && data.offers_ids.length > 0
-        ? supabase
-            .from('offers')
-            .select('name_de')
-            .in('offer_id', data.offers_ids)
+      offerIds.length > 0
+        ? supabase.from('offers').select('name_de').in('offer_id', offerIds)
         : Promise.resolve({ data: [], error: null }),
-      
-      data.needs_ids && data.needs_ids.length > 0
-        ? supabase
-            .from('needs')
-            .select('name_de')
-            .in('need_id', data.needs_ids)
+      needIds.length > 0
+        ? supabase.from('needs').select('name_de').in('need_id', needIds)
         : Promise.resolve({ data: [], error: null }),
     ]);
 
@@ -62,6 +68,8 @@ export async function getCommunityServiceById(id: string): Promise<CommunityServ
 
     return {
       ...data,
+      offers_ids: offerIds,
+      needs_ids: needIds,
       offers,
       needs,
     };

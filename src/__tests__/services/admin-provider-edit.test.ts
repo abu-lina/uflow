@@ -77,8 +77,6 @@ describe('updateProviderFields', () => {
       socialWebsite: 'https://example.com',
       socialInstagram: '@example',
       providerImages: '{"urls":[]}',
-      offersIds: ['offer-1', 'offer-2'],
-      needsIds: ['need-1'],
     };
 
     await updateProviderFields(validProviderId, editData, validAdminId);
@@ -98,8 +96,6 @@ describe('updateProviderFields', () => {
       social_website: 'https://example.com',
       social_instagram: '@example',
       provider_images: '{"urls":[]}',
-      offers_ids: ['offer-1', 'offer-2'],
-      needs_ids: ['need-1'],
     });
     expect(updatePayload.updated_at).toBeDefined();
   });

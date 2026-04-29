@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.5] - 2026-04-29
+
+### Changed
+
+- **F-2 referential integrity: junction tables replace UUID array columns** (Plan 114 Phase 3): Created four junction tables (`provider_offers`, `provider_needs`, `community_service_offers`, `community_service_needs`) with FK constraints and ON DELETE CASCADE. Backfilled from existing `offers_ids`/`needs_ids` arrays then dropped the array columns and GIN indexes. All service-layer queries and matching logic updated to join via junction tables.
+- **F-4 referential integrity: typed FK columns replace polymorphic associations** (Plan 114 Phase 3): Added `provider_id` and `community_service_id` typed FK columns to `bookmarks` and `provider_badges`, replacing polymorphic `bookmarkable_id`/`bookmarkable_type` and `entity_id`/`entity_type` pairs. Mutual exclusion CHECK (`num_nonnulls = 1`) enforced at DB level. Legacy polymorphic columns and `entity_type` enum dropped. All runtime bookmark query paths (five UI components + one hook) migrated to typed FK columns. Service layer provides backward-compatible field mapping for consumers expecting legacy response shapes.
+
 ## [0.11.4] - 2026-04-29
 
 ### Fixed

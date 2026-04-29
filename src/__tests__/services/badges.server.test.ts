@@ -22,8 +22,8 @@ describe('badges.server getBadgesForEntityServer', () => {
     const rows = [
       {
         id: 'badge-1',
-        entity_id: 'provider-1',
-        entity_type: 'provider',
+        provider_id: 'provider-1',
+        community_service_id: null,
         trust_level: 'SELF_DECLARED',
         badge_type: { id: 'bt-1', badge_key: 'MUSLIM_OWNED' },
       },
@@ -65,7 +65,13 @@ describe('badges.server getBadgesForEntityServer', () => {
     const { getBadgesForEntityServer } = await import('@/services/badges.server');
     const result = await getBadgesForEntityServer('provider-1', EntityType.PROVIDER);
 
-    expect(result).toEqual(rows);
+    expect(result).toEqual([
+      {
+        ...rows[0],
+        entity_id: 'provider-1',
+        entity_type: 'provider',
+      },
+    ]);
     expect(logSupabaseErrorMock).not.toHaveBeenCalled();
   });
 });

@@ -33,6 +33,17 @@ function getSupabaseClient(client?: SupabaseClient): SupabaseClient {
   return client || defaultClient;
 }
 
+function mapBadgeRowWithLegacyFields<T extends Record<string, unknown>>(row: T): T {
+  const providerId = (row.provider_id as string | null | undefined) ?? null;
+  const communityServiceId = (row.community_service_id as string | null | undefined) ?? null;
+
+  return {
+    ...row,
+    entity_id: providerId ?? communityServiceId,
+    entity_type: providerId ? 'provider' : 'community_service',
+  };
+}
+
 // ============================================================================
 // BADGE TYPES
 // ============================================================================
@@ -144,22 +155,27 @@ export async function getBadgesForEntity(
 ): Promise<ProviderBadgeWithType[]> {
   try {
     const supabase = getSupabaseClient(client);
-    const { data, error } = await supabase
+    let query = supabase
       .from('provider_badges')
       .select(`
         *,
         badge_type:badge_types(*)
-      `)
-      .eq('entity_id', entityId)
-      .eq('entity_type', entityType)
-      .order('created_at', { ascending: false });
+      `);
+
+    if (entityType === 'provider') {
+      query = query.eq('provider_id', entityId).eq('community_service_id', null);
+    } else {
+      query = query.eq('community_service_id', entityId).eq('provider_id', null);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       logSupabaseError('getBadgesForEntity', error);
       throw error;
     }
 
-    return (data || []) as ProviderBadgeWithType[];
+    return ((data || []).map((row: Record<string, unknown>) => mapBadgeRowWithLegacyFields(row)) as unknown) as ProviderBadgeWithType[];
   } catch (error) {
     console.error('Error in getBadgesForEntity:', error);
     throw error;
@@ -183,14 +199,19 @@ export async function getBadgesForEntities(
 
   try {
     const supabase = getSupabaseClient(client);
-    const { data, error } = await supabase
+    const baseQuery = supabase
       .from('provider_badges')
       .select(`
         *,
         badge_type:badge_types(*)
-      `)
-      .in('entity_id', entityIds)
-      .eq('entity_type', entityType)
+      `);
+
+    const entityColumn = entityType === 'provider' ? 'provider_id' : 'community_service_id';
+    const oppositeColumn = entityType === 'provider' ? 'community_service_id' : 'provider_id';
+
+    const { data, error } = await baseQuery
+      .in(entityColumn, entityIds)
+      .is(oppositeColumn, null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -200,10 +221,12 @@ export async function getBadgesForEntities(
 
     // Group badges by entity_id for O(1) lookup
     const badgesByEntity = new Map<string, ProviderBadgeWithType[]>();
-    (data || []).forEach((badge: { entity_id: string }) => {
-      const badges = badgesByEntity.get(badge.entity_id) || [];
-      badges.push(badge as ProviderBadgeWithType);
-      badgesByEntity.set(badge.entity_id, badges);
+    (data || []).forEach((row: Record<string, unknown>) => {
+      const badge = mapBadgeRowWithLegacyFields(row) as unknown as ProviderBadgeWithType;
+      const key = badge.entity_id;
+      const badges = badgesByEntity.get(key) || [];
+      badges.push(badge);
+      badgesByEntity.set(key, badges);
     });
 
     return badgesByEntity;
@@ -317,15 +340,17 @@ export async function createProviderBadge(
 ): Promise<ProviderBadge> {
   try {
     const supabase = getSupabaseClient(client);
+    const insertPayload = {
+      provider_id: input.entity_type === 'provider' ? input.entity_id : null,
+      community_service_id: input.entity_type === 'community_service' ? input.entity_id : null,
+      badge_type_id: input.badge_type_id,
+      trust_level: TrustLevel.SELF_DECLARED,
+      confirmation_count: 0,
+    };
+
     const { data, error } = await supabase
       .from('provider_badges')
-      .insert({
-        entity_id: input.entity_id,
-        entity_type: input.entity_type,
-        badge_type_id: input.badge_type_id,
-        trust_level: TrustLevel.SELF_DECLARED,
-        confirmation_count: 0,
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
@@ -334,7 +359,7 @@ export async function createProviderBadge(
       throw error;
     }
 
-    return data;
+    return mapBadgeRowWithLegacyFields(data) as ProviderBadge;
   } catch (error) {
     console.error('Error in createProviderBadge:', error);
     throw error;
