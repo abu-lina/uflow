@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Committed
+Status: Released
 ---
 
 # Plan 114 — Database Schema Staged Refactor
