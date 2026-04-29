@@ -170,7 +170,7 @@ describe('updateProviderFields', () => {
       {
         providerName: 'Name Only',
         listingType: 'business',
-      } as AdminProviderEditData & { listingType: 'food' | 'business' | null },
+      } as AdminProviderEditData & { listingType: 'food' | 'business' | 'ummah' | null },
       validAdminId
     );
 
@@ -178,6 +178,30 @@ describe('updateProviderFields', () => {
     expect(updatePayload).toMatchObject({
       provider_name: 'Name Only',
       listing_type: 'business',
+    });
+  });
+
+  it('allows ummah as listing_type in admin edit payload', async () => {
+    const mockProvider = {
+      provider_id: validProviderId,
+      provider_name: 'Name Only',
+      updated_at: new Date().toISOString(),
+    };
+    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
+
+    await updateProviderFields(
+      validProviderId,
+      {
+        providerName: 'Name Only',
+        listingType: 'ummah',
+      },
+      validAdminId
+    );
+
+    const updatePayload = mockUpdate.mock.calls[0][0];
+    expect(updatePayload).toMatchObject({
+      provider_name: 'Name Only',
+      listing_type: 'ummah',
     });
   });
 });

@@ -52,7 +52,7 @@ export interface ProviderEditFormData {
   providerName: string;
   providerDescription: string;
   categoryId: string;
-  listingType: 'food' | 'business' | null;
+  listingType: 'food' | 'business' | 'ummah' | null;
   street: string;
   zipCode: string;
   city: string;
