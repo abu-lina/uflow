@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-29
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.11.1
+**Current Version**: v0.11.2
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -96,7 +96,8 @@
 | 2026-04-27       | Plan 108 released (v0.10.39): Admin Section (listing_type) editing in provider moderation | Admin moderators can now change provider Section classification (Food/Business/Unclassified) from /dashboard/providers/[id]/edit. Previously read-only; now editable select in admin moderation context (reviewFooterActions prop); owner edit flow unchanged. 19/19 regression tests. No DB migrations. Deferred: DF-1 i18n, DF-2 route test (108-open-actions.md). PR #180. Tag v0.10.39 pushed. |
 | 2026-04-27       | Plan 108 open-actions released (v0.10.40): Section field i18n + route test schema fidelity | DF-1: Section field labels migrated to LanguageProvider t() keys across all 6 locale files (en/de/ar/tr/ur/ps); 9 hardcoded strings replaced with t() calls. DF-2: providerEditUpdateSchema route test mock enhanced to validate listingType enum; regression test confirms invalid values return HTTP 400. 1144/1144 tests pass. Backward-compatible. Tag v0.10.40 pushed. Closes 108-open-actions DF-1/DF-2. |
 | 2026-04-29       | Plan 113 released (v0.11.0): Provider Details Enhancement — open status, 6 accordion sections, Halal trust banner/popup, scroll fixes, DB migration 078. Closes #187 |
-| 2026-04-29       | Plan 114 released (v0.11.1): DB Schema Staged Refactor Phase 0-prime — Migration Baseline Squash. Prod-derived canonical baseline (001_baseline.sql), scoped seed migration (002_seed.sql), Phase 0 hygiene migration (003). 84 historical migrations archived. Archive-aware tooling. Tag v0.11.1 pushed. Issue #189 closed. |
+| 2026-04-29       | Plan 114 released (v0.11.1): DB Schema Staged Refactor Phase 0-prime — Migration Baseline Squash. Prod-derived canonical schema (001_baseline.sql), scoped seed migration (002_seed.sql), Phase 0 hygiene migration (003). 84 historical migrations archived. Tag v0.11.1 pushed. Issue #189 closed. |
+| 2026-04-29       | Plan 114 Phase 1 released (v0.11.2): F-9 Environment Alignment — migration 004 reconciles consent_type enum, consent_logs table, deletion_logs table across all environments with idempotent IF NOT EXISTS guards, NOT NULL precondition checks, RLS policies, and FK ON DELETE SET NULL for audit retention. Tag v0.11.2 pushed. PR #192. |
 | 2026-04-28       | Plan 112 released (v0.10.41): ProviderCard heart button overlay + providers navbar fix | Bookmark/heart button relocated from bottom action row to top-right image overlay (circular icon, top-3 right-3) in bookmark mode. Bottom Save/Saved and Website rows removed for cleaner cards. Mobile footer navbar now consistently visible on /providers discovery page (RootClientLayout force-footer). Explore/Search tab active state on /providers in MobileFooterBar. Moderation mode (Approve/Reject) unchanged. 53 unit tests (ProviderCard 38, RootClientLayout 13, MobileFooterBar 2). PO decision: no full Barik animation in overlay. Tag v0.10.41 pushed. |
 | 2026-04-27       | Ad-hoc search quality fixes released (v0.10.33): Food recents filter + Wo empty-state i18n | Fixed cross-section contamination in food "What" recent history (non-food service-type entries filtered out). Added localized "Wo?" question-form label for Where accordion across 6 locales. 2 regression tests added. Tag v0.10.33 pushed. |
 | 2026-04-27       | Search expand show-all preview released (v0.10.32): Feature-flagged 3-item preview UX + FigmaSearchBar | WasMealResults/WasCategoryResults/WoCityResults/FilterSection: 3-item show-all preview behind `enableSearchExpandShowAllPreview` flag (default off). Recent-priority UX: recent searches shown over popular items; state resets on query change. FigmaSearchBar: compact mobile search bar with hamburger collapse/expand. Provider grid: 2-col mobile layout. i18n 6 locales. 1120 tests passing. Tag v0.10.32 pushed. |
@@ -120,9 +121,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.11.1 — Released 2026-04-29 · DB Schema Staged Refactor Phase 0-prime (Plan 114)
+**Current Working Release**: v0.11.2 — Released 2026-04-29 · F-9 Environment Alignment (Plan 114 Phase 1)
 
-_Infrastructure patch (2026-04-29): Migration baseline squash — prod-derived canonical schema established as 001_baseline.sql (158 KB). Scoped reference seed migration (002_seed.sql). Phase 0 schema hygiene migration (003 — drops 10 redundant indexes, duplicate trigger, adds 2 composite indexes). 84 historical migrations archived to supabase/migrations/archive/. Archive-aware path resolution in scripts and tests. Session replication role scoped in seed. All three environments aligned to shared baseline. Tag v0.11.1 pushed. Issue #189 closed._
+_Schema patch (2026-04-29): Idempotent migration 004 reconciles consent_type enum, consent_logs table, and deletion_logs table across local/dev/prod environments. IF NOT EXISTS guards throughout. NOT NULL precondition checks before unsafe transitions. FK deletion_logs_user_id_fkey ON DELETE SET NULL for audit retention. 5 RLS policies. Grants to anon/authenticated/service_role. Migration contract test added. Tag v0.11.2 pushed. PR #192._
 
 **Release Status**: Released
 **Ready for Release**: ✅ v0.10.33 complete
@@ -142,6 +143,7 @@ _Infrastructure patch (2026-04-29): Migration baseline squash — prod-derived c
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.11.2 | 2026-04-29 | Plan 114 Phase 1 (F-9 Environment Alignment — migration 004, consent_type/consent_logs/deletion_logs parity — PR #192) | Released |
 | v0.11.1 | 2026-04-29 | Plan 114 (DB Schema Staged Refactor Phase 0-prime — Migration Baseline Squash — Closes #189) | Released |
 | v0.11.0 | 2026-04-29 | Plan 113 (Provider Details Enhancement — 9 features + DB schema + scroll fixes — Closes #187) | Released |
 | v0.10.42 | 2026-04-28 | Plan 111 (i18n 6-locale key parity + auth recovery flows localisation — PR #186) | Released |

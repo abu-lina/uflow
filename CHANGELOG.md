@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-04-29
+
+### Changed
+
+- **Infrastructure: Cross-environment schema alignment for compliance tables** (Plan 114 Phase 1, F-9): Added `004_phase1_environment_alignment.sql` — idempotent migration that reconciles `consent_type` enum, `consent_logs` table, and `deletion_logs` table across local, dev, and prod environments. Resolves schema divergence where `consent_logs` was absent from prod and `deletion_logs` was prod-only. All three environments now share identical schema for compliance tables.
+
+### Added
+
+- **Migration contract test** (Plan 114 Phase 1): `004-phase1-environment-alignment-tdd.test.ts` validates migration 004 presence and required schema markers across environments.
+
 ## [0.11.1] - 2026-04-29
 
 ### Changed
