@@ -925,6 +925,87 @@ export const en = {
       "cityChanged": "City changed"
     }
   },
+  "providerDetail": {
+    "sections": {
+      "valuesAmenities": "Values & Amenities",
+      "menu": "Menu",
+      "openingHours": "Opening Hours",
+      "feedback": "Feedback",
+      "proofs": "Proofs",
+      "nearby": "Nearby"
+    },
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "openStatus": {
+      "open": "Open",
+      "closed": "Closed",
+      "untilOpen": "Open until {{time}}",
+      "opensTomorrow": "Opens at {{time}} tomorrow",
+      "opensOnDay": "Opens at {{time}} on {{day}}"
+    },
+    "amenities": {
+      "muslimOwned": "Muslim owned",
+      "prayerSpace": "Prayer space",
+      "parking": "Parking",
+      "noAlcohol": "No alcohol",
+      "noPork": "No pork",
+      "familyFriendly": "Family-friendly",
+      "womenFriendly": "Women-friendly",
+      "childrenFriendly": "Children-friendly",
+      "acceptsDonations": "Accepts donations",
+      "solidarityPricing": "Solidarity pricing"
+    },
+    "empty": {
+      "noOpeningHours": "No opening hours available.",
+      "noValuesAmenities": "No values or amenities available.",
+      "noMenu": "No menu items available.",
+      "noFeedback": "No reviews yet.",
+      "noProofs": "No proofs available.",
+      "noNearby": "No nearby providers found."
+    },
+    "loading": {
+      "nearby": "Loading providers..."
+    },
+    "halal": {
+      "title": "Restaurants on Ummah Flow are checked for halal compliance",
+      "description": "A restaurant is only listed if it offers no alcohol, no prohibited meat, and no gambling. The meat must be slaughtered halal.",
+      "learnMore": "Learn more"
+    },
+    "popup": {
+      "closeAria": "Close"
+    },
+    "container": {
+      "addressTapToNavigate": "Tap address to navigate",
+      "online": "Online",
+      "shareProviderAria": "Share provider",
+      "back": "Back",
+      "website": "Website",
+      "call": "Call",
+      "share": "Share",
+      "supporters": "Supporters",
+      "instagram": "Instagram",
+      "communityServiceAlt": "Community service",
+      "ariaProviderDetails": "Provider details",
+      "ariaProviderDetailsLoaded": "Provider details loaded",
+      "previousImage": "Previous image",
+      "nextImage": "Next image",
+      "selectImage": "Select image {{index}}",
+      "imageGalleryAria": "{{name}} image gallery with {{count}} images",
+      "goToImageAria": "Go to image {{index}} of {{total}}",
+      "toastLinkCopied": "Link copied to clipboard!",
+      "toastCopyLinkError": "Error copying link",
+      "toastNoPhone": "No phone number available",
+      "toastPhoneCopied": "Phone number copied: {{phone}}",
+      "toastOpenPhoneError": "Error opening phone number"
+    }
+  },
   "welcome": {
     "title": "Welcome to the Ummah Flow Community",
     "subtitle": "Install the app for the best experience",

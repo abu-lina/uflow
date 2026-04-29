@@ -925,6 +925,87 @@ export const ar = {
       "subscribeError": "خطأ في الاشتراك. يرجى المحاولة مرة أخرى."
     }
   },
+  "providerDetail": {
+    "sections": {
+      "valuesAmenities": "القيم والمرافق",
+      "menu": "القائمة",
+      "openingHours": "ساعات العمل",
+      "feedback": "التقييمات",
+      "proofs": "الإثباتات",
+      "nearby": "بالقرب"
+    },
+    "days": {
+      "monday": "الاثنين",
+      "tuesday": "الثلاثاء",
+      "wednesday": "الأربعاء",
+      "thursday": "الخميس",
+      "friday": "الجمعة",
+      "saturday": "السبت",
+      "sunday": "الأحد"
+    },
+    "openStatus": {
+      "open": "مفتوح",
+      "closed": "مغلق",
+      "untilOpen": "مفتوح حتى {{time}}",
+      "opensTomorrow": "يفتح عند {{time}} غدًا",
+      "opensOnDay": "يفتح عند {{time}} يوم {{day}}"
+    },
+    "amenities": {
+      "muslimOwned": "مملوك لمسلم",
+      "prayerSpace": "مكان للصلاة",
+      "parking": "مواقف سيارات",
+      "noAlcohol": "بدون كحول",
+      "noPork": "بدون لحم خنزير",
+      "familyFriendly": "مناسب للعائلات",
+      "womenFriendly": "مناسب للنساء",
+      "childrenFriendly": "مناسب للأطفال",
+      "acceptsDonations": "يقبل التبرعات",
+      "solidarityPricing": "تسعير تضامني"
+    },
+    "empty": {
+      "noOpeningHours": "لا توجد ساعات عمل متاحة.",
+      "noValuesAmenities": "لا توجد قيم أو مرافق متاحة.",
+      "noMenu": "لا توجد عناصر قائمة متاحة.",
+      "noFeedback": "لا توجد تقييمات بعد.",
+      "noProofs": "لا توجد إثباتات متاحة.",
+      "noNearby": "لم يتم العثور على مزودين قريبين."
+    },
+    "loading": {
+      "nearby": "جاري تحميل المزودين..."
+    },
+    "halal": {
+      "title": "يتم التحقق من مطاعم Ummah Flow للتوافق مع الحلال",
+      "description": "لا يتم إدراج أي مطعم إلا إذا كان لا يقدّم الكحول ولا اللحوم المحرمة ولا القمار. ويجب أن يكون اللحم مذبوحًا على الطريقة الحلال.",
+      "learnMore": "اعرف المزيد"
+    },
+    "popup": {
+      "closeAria": "إغلاق"
+    },
+    "container": {
+      "addressTapToNavigate": "اضغط على العنوان للتنقل",
+      "online": "متصل",
+      "shareProviderAria": "مشاركة المزود",
+      "back": "رجوع",
+      "website": "الموقع",
+      "call": "اتصال",
+      "share": "مشاركة",
+      "supporters": "الداعمون",
+      "instagram": "إنستغرام",
+      "communityServiceAlt": "خدمة مجتمعية",
+      "ariaProviderDetails": "تفاصيل المزود",
+      "ariaProviderDetailsLoaded": "تم تحميل تفاصيل المزود",
+      "previousImage": "الصورة السابقة",
+      "nextImage": "الصورة التالية",
+      "selectImage": "اختر الصورة {{index}}",
+      "imageGalleryAria": "معرض صور {{name}} مع {{count}} صور",
+      "goToImageAria": "انتقل إلى الصورة {{index}} من {{total}}",
+      "toastLinkCopied": "تم نسخ الرابط إلى الحافظة!",
+      "toastCopyLinkError": "خطأ في نسخ الرابط",
+      "toastNoPhone": "لا يوجد رقم هاتف متاح",
+      "toastPhoneCopied": "تم نسخ رقم الهاتف: {{phone}}",
+      "toastOpenPhoneError": "خطأ في فتح رقم الهاتف"
+    }
+  },
   "welcome": {
     "title": "مرحباً بك في مجتمع أمة فلو",
     "subtitle": "قم بتثبيت التطبيق للحصول على أفضل تجربة",

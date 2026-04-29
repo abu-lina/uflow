@@ -925,6 +925,87 @@ export const ps = {
     "errorServerError": "Server error. Please try again later.",
     "retry": "Try Again"
   },
+  "providerDetail": {
+    "sections": {
+      "valuesAmenities": "ارزښتونه او اسانتياوې",
+      "menu": "مېنو",
+      "openingHours": "د کار وختونه",
+      "feedback": "فیډبک",
+      "proofs": "ثبوتونه",
+      "nearby": "نږدې"
+    },
+    "days": {
+      "monday": "دوشنبه",
+      "tuesday": "سه شنبه",
+      "wednesday": "چهارشنبه",
+      "thursday": "پنجشنبه",
+      "friday": "جمعه",
+      "saturday": "شنبه",
+      "sunday": "یکشنبه"
+    },
+    "openStatus": {
+      "open": "پرانستی",
+      "closed": "تړلی",
+      "untilOpen": "تر {{time}} پورې پرانستی",
+      "opensTomorrow": "سبا په {{time}} پرانیستل کیږي",
+      "opensOnDay": "د {{day}} په ورځ په {{time}} پرانیستل کیږي"
+    },
+    "amenities": {
+      "muslimOwned": "مسلمان ملکیت",
+      "prayerSpace": "د لمانځه ځای",
+      "parking": "پارکینګ",
+      "noAlcohol": "الکول نشته",
+      "noPork": "د خوک غوښه نشته",
+      "familyFriendly": "د کورنۍ لپاره مناسب",
+      "womenFriendly": "د ښځو لپاره مناسب",
+      "childrenFriendly": "د ماشومانو لپاره مناسب",
+      "acceptsDonations": "مرستې مني",
+      "solidarityPricing": "د پیوستون بیه"
+    },
+    "empty": {
+      "noOpeningHours": "د کار وختونه شتون نه لري.",
+      "noValuesAmenities": "ارزښتونه یا اسانتياوې شتون نه لري.",
+      "noMenu": "د مېنو توکي شتون نه لري.",
+      "noFeedback": "لا تر اوسه بیاکتنې نشته.",
+      "noProofs": "هیڅ ثبوت شتون نه لري.",
+      "noNearby": "نږدې هیڅ وړاندې کوونکی ونه موندل شو."
+    },
+    "loading": {
+      "nearby": "وړاندې کوونکي لوډیږي..."
+    },
+    "halal": {
+      "title": "په Ummah Flow کې رستورانتونه د حلال مطابقت لپاره ارزول کیږي",
+      "description": "یو رستورانت یوازې هغه وخت لېست کېږي چې نه الکول، نه حرامه غوښه او نه هم قمار وړاندې کوي. غوښه باید د حلال طریقې سره ذبح شوې وي.",
+      "learnMore": "نور زده کړئ"
+    },
+    "popup": {
+      "closeAria": "تړل"
+    },
+    "container": {
+      "addressTapToNavigate": "د تګ راتګ لپاره پر پته ټک وکړئ",
+      "online": "آنلاین",
+      "shareProviderAria": "وړاندې کوونکی شریک کړئ",
+      "back": "بیرته",
+      "website": "وېبپاڼه",
+      "call": "زنګ ووهئ",
+      "share": "شریکول",
+      "supporters": "ملاتړي",
+      "instagram": "انسټاګرام",
+      "communityServiceAlt": "د ټولنې خدمت",
+      "ariaProviderDetails": "د وړاندې کوونکي جزییات",
+      "ariaProviderDetailsLoaded": "د وړاندې کوونکي جزییات پورته شول",
+      "previousImage": "مخکینی انځور",
+      "nextImage": "راتلونکی انځور",
+      "selectImage": "{{index}} انځور وټاکئ",
+      "imageGalleryAria": "د {{name}} انځوریز ګالري د {{count}} انځورونو سره",
+      "goToImageAria": "له {{total}} څخه {{index}} انځور ته لاړ شئ",
+      "toastLinkCopied": "لینک کلپبورډ ته کاپي شو!",
+      "toastCopyLinkError": "د لینک کاپي کولو تېروتنه",
+      "toastNoPhone": "د تلیفون شمېره شتون نه لري",
+      "toastPhoneCopied": "د تلیفون شمېره کاپي شوه: {{phone}}",
+      "toastOpenPhoneError": "د تلیفون شمېره پرانیستلو تېروتنه"
+    }
+  },
   "welcome": {
     "title": "امت فلو ټولنې ته ښه راغلاست",
     "subtitle": "د غوره تجربې لپاره اپلیکیشن نصب کړئ",

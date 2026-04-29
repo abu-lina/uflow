@@ -73,10 +73,12 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
       <div className="flex w-full flex-col items-start gap-2">
         {/* Image Container */}
         <div 
-          aria-label={`${provider.provider_name} image gallery with ${allImageUrls.length} images`}
-          className="relative h-[312.52px] w-full overflow-hidden rounded-3xl touch-pan-x"
+          aria-label={t('providerDetail.container.imageGalleryAria', {
+            name: provider.provider_name,
+            count: allImageUrls.length,
+          })}
+          className="relative h-[312.52px] w-full overflow-hidden rounded-3xl"
           role="img"
-          style={{ touchAction: 'pan-x' }}
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft' && selectedImageIdx > 0) {
@@ -146,7 +148,10 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
               <button
                 key={index}
                 aria-current={selectedImageIdx === index ? 'true' : 'false'}
-                aria-label={`Go to image ${index + 1} of ${allImageUrls.length}`}
+                aria-label={t('providerDetail.container.goToImageAria', {
+                  index: index + 1,
+                  total: allImageUrls.length,
+                })}
                 className={`flex items-end justify-center focus:outline-none ${
                   selectedImageIdx === index ? 'h-[16px] w-[16px]' : 'h-[12px] w-[12px]'
                 }`}

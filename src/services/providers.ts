@@ -11,6 +11,7 @@ import {
   SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN,
   type SearchFilterKey,
 } from '@/features/search/constants/filterKeys';
+import type { OpeningHours } from '@/types/openingHours';
 
 export interface Provider {
   provider_id: string;
@@ -62,6 +63,7 @@ export interface Provider {
   accepts_donations?: boolean;
   has_parking?: boolean;
   solidarity_pricing?: boolean;
+  opening_hours?: OpeningHours | null;
 }
 
 // Combined search result type

@@ -925,6 +925,87 @@ export const tr = {
       "subscribeError": "Abone olma hatası. Lütfen tekrar deneyin."
     }
   },
+  "providerDetail": {
+    "sections": {
+      "valuesAmenities": "Değerler ve Olanaklar",
+      "menu": "Menü",
+      "openingHours": "Çalışma Saatleri",
+      "feedback": "Geri Bildirim",
+      "proofs": "Kanıtlar",
+      "nearby": "Yakında"
+    },
+    "days": {
+      "monday": "Pazartesi",
+      "tuesday": "Salı",
+      "wednesday": "Çarşamba",
+      "thursday": "Perşembe",
+      "friday": "Cuma",
+      "saturday": "Cumartesi",
+      "sunday": "Pazar"
+    },
+    "openStatus": {
+      "open": "Açık",
+      "closed": "Kapalı",
+      "untilOpen": "{{time}} saatine kadar açık",
+      "opensTomorrow": "Yarın {{time}}'de açılır",
+      "opensOnDay": "{{day}} günü {{time}}'de açılır"
+    },
+    "amenities": {
+      "muslimOwned": "Müslüman işletme",
+      "prayerSpace": "Namaz alanı",
+      "parking": "Otopark",
+      "noAlcohol": "Alkol yok",
+      "noPork": "Domuz eti yok",
+      "familyFriendly": "Aile dostu",
+      "womenFriendly": "Kadın dostu",
+      "childrenFriendly": "Çocuk dostu",
+      "acceptsDonations": "Bağış kabul edilir",
+      "solidarityPricing": "Dayanışma fiyatlandırması"
+    },
+    "empty": {
+      "noOpeningHours": "Çalışma saatleri mevcut değil.",
+      "noValuesAmenities": "Değer veya olanak bulunamadı.",
+      "noMenu": "Menü öğesi bulunamadı.",
+      "noFeedback": "Henüz değerlendirme yok.",
+      "noProofs": "Kanıt bulunamadı.",
+      "noNearby": "Yakında sağlayıcı bulunamadı."
+    },
+    "loading": {
+      "nearby": "Sağlayıcılar yükleniyor..."
+    },
+    "halal": {
+      "title": "Ummah Flow'daki restoranlar helal uygunluğu için kontrol edilir",
+      "description": "Bir restoran yalnızca alkol, haram et ve kumar sunmuyorsa listelenir. Etin helal usule göre kesilmiş olması gerekir.",
+      "learnMore": "Daha fazla bilgi"
+    },
+    "popup": {
+      "closeAria": "Kapat"
+    },
+    "container": {
+      "addressTapToNavigate": "Navigasyon için adrese dokunun",
+      "online": "Çevrimiçi",
+      "shareProviderAria": "Sağlayıcıyı paylaş",
+      "back": "Geri",
+      "website": "Web sitesi",
+      "call": "Ara",
+      "share": "Paylaş",
+      "supporters": "Destekleyenler",
+      "instagram": "Instagram",
+      "communityServiceAlt": "Topluluk hizmeti",
+      "ariaProviderDetails": "Sağlayıcı ayrıntıları",
+      "ariaProviderDetailsLoaded": "Sağlayıcı ayrıntıları yüklendi",
+      "previousImage": "Önceki resim",
+      "nextImage": "Sonraki resim",
+      "selectImage": "{{index}}. resmi seç",
+      "imageGalleryAria": "{{name}} için {{count}} resimli galeri",
+      "goToImageAria": "{{total}} içinden {{index}}. resme git",
+      "toastLinkCopied": "Bağlantı panoya kopyalandı!",
+      "toastCopyLinkError": "Bağlantı kopyalanırken hata oluştu",
+      "toastNoPhone": "Telefon numarası mevcut değil",
+      "toastPhoneCopied": "Telefon numarası kopyalandı: {{phone}}",
+      "toastOpenPhoneError": "Telefon numarası açılırken hata oluştu"
+    }
+  },
   "welcome": {
     "title": "Ummah Flow Topluluğuna Hoş Geldiniz",
     "subtitle": "En iyi deneyim için uygulamayı yükleyin",
