@@ -2,7 +2,7 @@
 ID: 111
 Origin: 111
 UUID: c4a8e7f2
-Status: QA Complete
+Status: Committed
 ---
 
 # Plan 111 — Canonical Section Routes & City-Selection Bugfixes
@@ -27,6 +27,8 @@ Status: QA Complete
 | 2026-04-28T22:24Z | implementer | Milestone 1 completed; Milestone 2 code-review re-submission artifact created under ID 111 |
 | 2026-04-28T22:55Z | code-review | Independent code review completed; checklist sweeps passed; no blocking findings. Status: Code Review Approved. |
 | 2026-04-28T23:45Z | qa | QA testing complete: all gates pass (vitest 1152/1170, type-check, lint 0 errors, build OK). Manual browser validation deferred to UAT. Status: QA Complete. |
+| 2026-04-29T00:15Z | uat | Value statement delivery confirmed, objective alignment verified, all gates pass. Status: UAT Approved. Ready for DevOps release. |
+| 2026-04-29T10:30Z | devops | Stage 1 commit: version bumped to v0.11.3, CHANGELOG updated, all lifecycle docs moved to closed/. Status: Committed for v0.11.3. |
 
 ---
 
@@ -53,7 +55,7 @@ Status: QA Complete
 
 ## Release Strategy
 
-Standalone (no other known active plans targeting v0.10.43). Builds on top of released Plan 109 (v0.10.38) which delivered the SearchContextBar and section-aware navigation foundation.
+Standalone (no other known active plans targeting v0.11.3). Builds on top of released Plan 109 (v0.10.38) which delivered the SearchContextBar and section-aware navigation foundation.
 
 ---
 

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.3] - 2026-04-29
+
+### Fixed
+
+- **City-selection redirect fix** (Plan 111): CTA now navigates to `/` (home) instead of the broken `/city/{name}` route. City is stored in context/cookie; URL-based city routing was removed in an earlier architecture cycle.
+- **Navbar/footer hidden on city-selection page** (Plan 111): `shouldShowMobileFooter` and `shouldShowCityEarlyAccessNavbar` now use suffix-based matching (`pathname.endsWith('/city-selection')`) so locale-prefixed paths (e.g. `/de/city-selection`) are correctly excluded.
+
+### Added
+
+- **Canonical section routes** (Plan 111): `/food`, `/stores`, and `/ummah` are now first-class bookmarkable routes. Each is a thin Next.js App Router alias page that delegates to `ProvidersContent` with the correct section forced via `searchParams`. Legacy `/providers` routes are fully preserved for backward compatibility.
+- **Locale-safe route resolver** (Plan 111): `sectionFilters.ts` gains three new helpers — `getResultsPathForSection()`, `resolveSectionFromSearchParams()`, and `resolveSectionFromRoute()` — all using suffix matching so locale prefixes (e.g. `/de/food`) resolve correctly.
+- **Section-aware navigation** (Plan 111): Header, CategoryFilter, ProvidersContent, Search page, and gallery components updated to push canonical routes; `categoryLabel` prop wired into `SearchContextBar` for section context display.
+
+### Tests
+
+- Added `src/app/city-selection/page.test.tsx` (120 lines): regression suite for the redirect-to-home fix.
+- Updated `src/__tests__/utils/navigationUtils-063.test.ts` (12 tests): suffix-matching navbar exclusion coverage including locale-prefixed paths.
+- Updated `src/__tests__/config/sectionFilters.test.ts` (23 tests): canonical route resolution with locale prefix edge cases.
+- Updated `src/features/search/components/SearchContextBar.test.tsx`: 14 lines of category label regression coverage.
+- Updated `src/__tests__/app/(public)/search/page-meal-search.test.tsx`: routing assertions updated for canonical `/food` paths.
+
 ## [0.11.2] - 2026-04-29
 
 ### Changed

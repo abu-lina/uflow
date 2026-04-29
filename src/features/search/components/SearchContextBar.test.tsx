@@ -75,6 +75,20 @@ describe('SearchContextBar', () => {
     expect(screen.getByText('Everywhere')).toBeInTheDocument();
   });
 
+  it('prefers selected category label over section label when category is selected without q', () => {
+    render(
+      <SearchContextBar
+        categoryId="a8d3cf09-b606-4de9-8744-b8c584c5e172"
+        categoryLabel="Halal Restaurants"
+        location=""
+        section="food"
+      />,
+    );
+
+    expect(screen.getByText('Halal Restaurants')).toBeInTheDocument();
+    expect(screen.queryByText('Food')).not.toBeInTheDocument();
+  });
+
   it('navigates back to /search with section when edit button is clicked', () => {
     render(
       <SearchContextBar

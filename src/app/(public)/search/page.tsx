@@ -19,6 +19,7 @@ import { FilterSection } from '@/features/search/components/FilterSection';
 import { UmmahFilterSection } from '@/features/search/components/UmmahFilterSection';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
+import { getResultsPathForSection } from '@/config/sectionFilters';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 import { type PopularCity, fetchPopularCities, fetchProviderCities, checkCityExists } from '@/services/providers';
@@ -476,7 +477,7 @@ function SearchPageContent() {
       params.set('wer', werSelection.summary.trim());
     }
 
-    router.push(`/providers?${params.toString()}`);
+    router.push(`${getResultsPathForSection(selectedSection)}?${params.toString()}`);
   };
 
   const handleWoSelect = (city: string) => {

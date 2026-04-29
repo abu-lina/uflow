@@ -189,6 +189,11 @@ export const shouldShowMobileFooter = (
   isAppLaunched: boolean = false,
   stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading'
 ): boolean => {
+  // City selection is an onboarding step; never show bottom navigation here.
+  if (pathname.endsWith('/city-selection')) {
+    return false;
+  }
+
   // 1. Stage 3 (Full Access): Show footer if app is launched OR stage is stage3 (provider count >= 15)
   // This bypasses onboarding check since Stage 3 means full access
   const isStage3 = isAppLaunched || stage === 'stage3';
@@ -336,6 +341,12 @@ export const shouldShowCityEarlyAccessNavbar = (
   _user: User | null,
   stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading'
 ): boolean => {
+  // City selection is an onboarding step; never show this navbar here.
+  // Use suffix check so locale-prefixed routes (e.g. /de/city-selection) are also excluded.
+  if (pathname.endsWith('/city-selection')) {
+    return false;
+  }
+
   // Never show in Stage 3 (Full Access) - either from isAppLaunched or provider count >= 15
   const isStage3 = isAppLaunched || stage === 'stage3';
   if (isStage3) {
