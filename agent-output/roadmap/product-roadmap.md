@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-29
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.11.4
+**Current Version**: v0.11.5
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -30,6 +30,7 @@
 | 2026-03-02       | Plan 032 released: DIY Agent Memory System (tooling)               | Standalone tooling release — memory-extension-v0.1.0 replaces Flowbaby backend, eliminates daemon lock failures, local-first SQLite WAL                   |
 | 2026-04-29 11:00 | Plan 111 released (v0.11.3): Canonical Section Routes + City-Selection Bugfixes | City-selection CTA fixed (→ /), navbar excluded via locale-safe suffix, /food /stores /ummah canonical routes, section resolver centralized. Issue #188 closed. |
 | 2026-04-29 22:25Z | Plan 114 Phase 2 released (v0.11.4): F-3 data coherence fix — boolean columns as sole source of truth | Dropped `barakah_effects TEXT[]` from `providers` and `community_services`. Updated `get_community_services_for_provider` and `upsert_joinhalal_providers` RPCs. Removed all app-layer references (31 files). Providers created via form are now immediately searchable via boolean filters. PR #194, tag v0.11.4. |
+| 2026-04-30T00:55Z | Plan 114 Phase 3 released (v0.11.5): F-2 junction tables + F-4 typed FKs — referential integrity at DB level | Created 4 junction tables (provider_offers, provider_needs, community_service_offers, community_service_needs) with FK constraints + CASCADE. Typed FK columns added to bookmarks + provider_badges with mutual exclusion CHECK. All polymorphic and array columns dropped. 13 service files + 5 UI components migrated. 1185 tests passing. Tag v0.11.5. |
 | 2026-03-03       | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                |
 | 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
 | 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |
@@ -119,7 +120,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.11.4 — Released 2026-04-29 · F-3 Data Coherence Fix — boolean columns as sole source of truth (Plan 114 Phase 2)
+**Current Working Release**: v0.11.5 — Released 2026-04-29 · Plan 114 Phase 3: Referential integrity — junction tables (F-2) + typed FKs (F-4)
 
 _Quality improvements (2026-04-27): DF-1: Section field labels localised via LanguageProvider t() keys across all 6 locales (en/de/ar/tr/ur/ps). DF-2: Route-level test mock for /api/admin/edit-provider now validates listingType enum contract. 1144/1144 tests pass. Backward-compatible patch. Tag v0.10.40 pushed._
 
@@ -141,6 +142,7 @@ _Quality improvements (2026-04-27): DF-1: Section field labels localised via Lan
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.11.5 | 2026-04-29 | Plan 114 Phase 3 (F-2 junction tables + F-4 typed FKs — referential integrity at DB level — PR session/114p3-referential-integrity) | Released |
 | v0.11.4 | 2026-04-29 | Plan 114 Phase 2 (F-3 data coherence: drop barakah_effects, boolean columns sole source of truth — PR #194) | Released |
 | v0.11.3 | 2026-04-29 | Plan 111 (Canonical Section Routes & City-Selection Bugfixes — Closes #188) | Released |
 | v0.11.2 | 2026-04-29 | Plan 114 Phase 1 (Environment alignment for F-9 compliance tables — PR #192) | Released |

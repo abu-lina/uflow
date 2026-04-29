@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 114 Phase 3 — Referential Integrity (F-2 + F-4)
