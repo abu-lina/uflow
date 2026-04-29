@@ -20,7 +20,6 @@ describe('isAdminField', () => {
       'provider_owner_id',
       'created_at',
       'provider_images',
-      'barakah_effects',
       'needs_ids',
       'show_address',
     ];
@@ -57,9 +56,10 @@ describe('ADMIN_CONTROLLED_FIELDS', () => {
     expect(ADMIN_CONTROLLED_FIELDS).toContain('provider_owner_id');
     expect(ADMIN_CONTROLLED_FIELDS).toContain('created_at');
     expect(ADMIN_CONTROLLED_FIELDS).toContain('provider_images');
-    expect(ADMIN_CONTROLLED_FIELDS).toContain('barakah_effects');
     expect(ADMIN_CONTROLLED_FIELDS).toContain('needs_ids');
     expect(ADMIN_CONTROLLED_FIELDS).toContain('show_address');
+    // Plan 114 Phase 2: barakah_effects column dropped; booleans are sole source of truth
+    expect(ADMIN_CONTROLLED_FIELDS).not.toContain('barakah_effects');
   });
 });
 

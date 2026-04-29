@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.4] - 2026-04-29
+
+### Fixed
+
+- **F-3 data coherence: boolean columns now sole source of truth for provider attributes** (Plan 114 Phase 2): Eliminated the triple-source incoherence bug where providers created via the form were invisible to search filters. Dropped `barakah_effects TEXT[]` from `providers` and `community_services` tables (migration 005). All writes to this field removed from create forms, import scripts, and RPC functions. Boolean columns (`muslim_owned`, `family_friendly`, etc.) remain the authoritative filter source. Updated `get_community_services_for_provider` and `upsert_joinhalal_providers` RPC signatures to exclude the dropped column.
+
 ## [0.11.3] - 2026-04-29
 
 ### Fixed

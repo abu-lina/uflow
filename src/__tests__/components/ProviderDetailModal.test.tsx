@@ -626,7 +626,7 @@ describe('ProviderDetailModal Component', () => {
     });
 
     it('should show empty state when provider has no badges', () => {
-      const providerWithoutBadges = { ...mockProvider, badges: [], barakah_effects: [] };
+      const providerWithoutBadges = { ...mockProvider, badges: [] };
 
       render(
         <ProviderDetailModal
@@ -659,7 +659,7 @@ describe('ProviderDetailModal Component', () => {
     });
 
     it('should show empty state text when no badges exist [post-fix]', () => {
-      const providerWithoutBadges = { ...mockProvider, badges: [], barakah_effects: [] };
+      const providerWithoutBadges = { ...mockProvider, badges: [] };
 
       render(
         <ProviderDetailModal
@@ -755,7 +755,6 @@ describe('ProviderDetailModal Component', () => {
         location_longitude: null,
         created_at: null,
         updated_at: null,
-        barakah_effects: [],
         offers_ids: [],
         needs_ids: [],
       } as Provider;

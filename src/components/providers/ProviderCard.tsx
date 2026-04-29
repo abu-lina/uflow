@@ -48,7 +48,6 @@ export const ProviderCard = React.memo(
       category,
       gradient = false,
       provider_images,
-      barakah_effects = [],
       badges = [],
       provider_name,
       provider_id,
@@ -483,29 +482,6 @@ export const ProviderCard = React.memo(
                 </div>
               );
             })()}
-            {barakah_effects && barakah_effects.length > 0 && (
-              <div className="flex h-7 w-full items-center gap-2 overflow-hidden">
-                <div className="flex items-center gap-2 overflow-hidden">
-                  {(barakah_effects || []).slice(0, 2).map((effect: string, index: number) => (
-                    <div
-                      key={index}
-                      className="flex shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-background/80 px-1 py-0.5 backdrop-blur-sm"
-                    >
-                      <span className="font-inter-tight text-sm font-medium text-content-heading">
-                        {effect}
-                      </span>
-                    </div>
-                  ))}
-                  {barakah_effects && barakah_effects.length > 2 && (
-                    <div className="flex shrink-0 items-center rounded-[4.9px] border border-[#CDCDCD] bg-background/80 px-1 py-0.5 backdrop-blur-sm">
-                      <span className="font-inter-tight text-sm font-medium text-content-heading">
-                        +{barakah_effects.length - 2}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
             {!hideActions && (
               <div className="flex w-full gap-3.5">
                 {/* Plan 058: Moderation Mode - Show Approve/Reject buttons for admin review */}

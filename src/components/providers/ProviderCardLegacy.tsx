@@ -24,7 +24,6 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
       category,
       gradient = false,
       provider_images,
-      barakah_effects = [],
       provider_name,
       className,
     },
@@ -136,15 +135,6 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
               <span className="w-full min-w-0 truncate text-uFlowText2 font-inter text-sm font-normal" title={address}>{address}</span>
             </div>
             <div className="flex gap-2">
-              {(barakah_effects || []).map((effect, index) => (
-                <span
-                  key={index}
-                  className="outline-uFlowDarkGrey text-uFlowText \ flex items-center rounded px-1 py-0.5
-                  font-inter-tight text-sm font-medium leading-none outline outline-1 outline-offset-[-0.93px]"
-                >
-                  {effect}
-                </span>
-              ))}
               <span
                 className="outline-uFlowDarkGrey text-uFlowText \ flex size-5 items-center justify-center rounded px-2 py-1
               font-inter-tight text-sm font-medium leading-none outline outline-1 outline-offset-[-0.93px]"

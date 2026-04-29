@@ -37,5 +37,4 @@ export const ADMIN_CONTROLLED_FIELDS = [
   'provider_images',
   'show_address',
   'needs_ids',
-  'barakah_effects',
 ] as const;

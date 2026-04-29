@@ -32,7 +32,6 @@ export interface CommunityService {
   location_longitude?: number;
   review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   review_feedback?: string;
-  barakah_effects?: string[];
   offers_ids?: string[];
   needs_ids?: string[];
   offers?: Array<{ name_de: string }>;

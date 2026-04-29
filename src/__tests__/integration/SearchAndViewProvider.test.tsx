@@ -576,7 +576,6 @@ describe.skip('Complete User Journey: Search and View Provider', () => {
             location_longitude: null,
             created_at: null,
             updated_at: null,
-            barakah_effects: [],
             offers_ids: [],
             needs_ids: [],
           }

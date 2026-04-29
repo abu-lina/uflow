@@ -223,7 +223,6 @@ export function ProviderCreateForm({ onNextStep }: ProviderCreateFormProps) {
       contact_phone: formData.phone || null,
       social_website: normalizedWebsite,
       social_instagram: formData.instagram || null,
-      barakah_effects: formData.tags,
       // user_created_id: ALWAYS set to track who created this database entry
       // provider_owner_id: Only set in owner mode (when user is the actual business owner)
       user_created_id: user.id,

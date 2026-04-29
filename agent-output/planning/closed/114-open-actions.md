@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Active
+Status: Released
 ---
 
 # Open Actions 114: Deferred Post-Deploy Follow-ups
@@ -25,3 +25,6 @@ Release context: v0.10.43 (patch, infrastructure-only, migration baseline squash
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-04-29 | devops | Created tracker from UAT deferred validations (DF-1, DF-2, DF-3) |
+| 2026-04-29 | code-reviewer | Plan status updated to Code Review Approved after remediation re-review |
+| 2026-04-29 | qa | QA Complete: All gates passed (type-check, lint, 1166 tests, migration validation, cross-layer integration) — approved for release |
+| 2026-04-29 | uat | UAT Approved: Value statement delivered (boolean columns sole authoritative source); F-3 bug eliminated; no blocking findings; approved for DevOps merge

@@ -18,7 +18,6 @@ export const ADMIN_CONTROLLED_FIELDS: ReadonlyArray<string> = [
   'provider_owner_id',
   'created_at',
   'provider_images',
-  'barakah_effects',
   'needs_ids',
   'show_address',
 ] as const;

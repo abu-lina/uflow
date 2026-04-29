@@ -305,7 +305,6 @@ interface ProviderRecord {
   show_address: boolean;
   offers_ids: string[];
   needs_ids: string[];
-  barakah_effects: string[];
   import_source: string | null;
   import_source_id: string | null;
   import_source_url: string | null;
@@ -509,7 +508,6 @@ export function transformPage(
     show_address: true,
     offers_ids: matchedIds,
     needs_ids: [],
-    barakah_effects: [],
     import_source: postId ? 'joinhalal' : null,
     import_source_id: postId,
     import_source_url: url,

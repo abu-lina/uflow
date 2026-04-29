@@ -86,7 +86,6 @@ function ReviewPageContent() {
         social_instagram: editedData.instagram || null,
         user_created_id: user.id,
         provider_owner_id: user.id, // Assuming owner mode for quick create
-        barakah_effects: [],
       };
 
       console.log('Creating provider with data:', insertData);

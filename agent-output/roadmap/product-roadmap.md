@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-04-29
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.11.3
+**Current Version**: v0.11.4
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -29,6 +29,7 @@
 | 2026-02-23       | Process improvements identified (Retro 015)                        | Pending codification: design-review UAT for CSS fixes, automated-first QA for CSS, DevOps evidence template reuse, UTC timestamps, related-issues linking |
 | 2026-03-02       | Plan 032 released: DIY Agent Memory System (tooling)               | Standalone tooling release — memory-extension-v0.1.0 replaces Flowbaby backend, eliminates daemon lock failures, local-first SQLite WAL                   |
 | 2026-04-29 11:00 | Plan 111 released (v0.11.3): Canonical Section Routes + City-Selection Bugfixes | City-selection CTA fixed (→ /), navbar excluded via locale-safe suffix, /food /stores /ummah canonical routes, section resolver centralized. Issue #188 closed. |
+| 2026-04-29 22:25Z | Plan 114 Phase 2 released (v0.11.4): F-3 data coherence fix — boolean columns as sole source of truth | Dropped `barakah_effects TEXT[]` from `providers` and `community_services`. Updated `get_community_services_for_provider` and `upsert_joinhalal_providers` RPCs. Removed all app-layer references (31 files). Providers created via form are now immediately searchable via boolean filters. PR #194, tag v0.11.4. |
 | 2026-03-03       | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                |
 | 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
 | 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |
@@ -118,7 +119,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.11.3 — Released 2026-04-29 · Canonical Section Routes + City-Selection Bugfixes (Plan 111)
+**Current Working Release**: v0.11.4 — Released 2026-04-29 · F-3 Data Coherence Fix — boolean columns as sole source of truth (Plan 114 Phase 2)
 
 _Quality improvements (2026-04-27): DF-1: Section field labels localised via LanguageProvider t() keys across all 6 locales (en/de/ar/tr/ur/ps). DF-2: Route-level test mock for /api/admin/edit-provider now validates listingType enum contract. 1144/1144 tests pass. Backward-compatible patch. Tag v0.10.40 pushed._
 
@@ -140,6 +141,7 @@ _Quality improvements (2026-04-27): DF-1: Section field labels localised via Lan
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.11.4 | 2026-04-29 | Plan 114 Phase 2 (F-3 data coherence: drop barakah_effects, boolean columns sole source of truth — PR #194) | Released |
 | v0.11.3 | 2026-04-29 | Plan 111 (Canonical Section Routes & City-Selection Bugfixes — Closes #188) | Released |
 | v0.11.2 | 2026-04-29 | Plan 114 Phase 1 (Environment alignment for F-9 compliance tables — PR #192) | Released |
 | v0.11.1 | 2026-04-29 | Plan 114 Phase 0-prime (Deterministic migration baseline — PR #191) | Released |
