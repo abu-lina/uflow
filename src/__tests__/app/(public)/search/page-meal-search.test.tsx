@@ -363,7 +363,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Select result for doe/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
-    expect(mockRouterPush).toHaveBeenCalledWith('/providers?section=food&q=Doener&filters=muslim');
+    expect(mockRouterPush).toHaveBeenCalledWith('/food?section=food&q=Doener&filters=muslim');
   });
 
   it('[regression] includes location and wer params in providers URL on search submit', async () => {
@@ -385,7 +385,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
     expect(mockRouterPush).toHaveBeenCalledWith(
-      '/providers?section=food&q=Doener&location=Berlin&wer=2+Maenner%2C+1+Kind',
+      '/food?section=food&q=Doener&location=Berlin&wer=2+Maenner%2C+1+Kind',
     );
   });
 

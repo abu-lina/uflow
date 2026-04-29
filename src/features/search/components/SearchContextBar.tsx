@@ -11,6 +11,7 @@ interface SearchContextBarProps {
   section: Section;
   searchTerm?: string | null;
   categoryId?: string | null;
+  categoryLabel?: string | null;
   location?: string | null;
   peopleSummary?: string | null;
   className?: string;
@@ -20,6 +21,7 @@ export function SearchContextBar({
   section,
   searchTerm,
   categoryId,
+  categoryLabel,
   location,
   peopleSummary,
   className = '',
@@ -43,7 +45,7 @@ export function SearchContextBar({
   const everywhereLabel = everywhereLabelCandidate === everywhereKey ? 'Everywhere' : everywhereLabelCandidate;
 
   const resolvedSearchTerm =
-    searchTerm?.trim() || (categoryId ? sectionLabel : allResultsLabel);
+    searchTerm?.trim() || (categoryId ? categoryLabel?.trim() || sectionLabel : allResultsLabel);
 
   const resolvedLocation = location && location.trim() ? location : everywhereLabel;
   const renderIcon = SECTION_ICON_RENDERERS[section];

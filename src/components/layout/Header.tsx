@@ -16,6 +16,11 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useAuth } from '@/providers/auth-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
+import {
+  getResultsPathForSection,
+  inferSectionFromCategory,
+  resolveSectionFromRoute,
+} from '@/config/sectionFilters';
 
 // Dynamic imports for modals (Plan 007: reduce shared bundle)
 const SignupModal = dynamic(
@@ -40,26 +45,54 @@ export function Header() {
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();
 
+  const pushResultsRoute = (params: URLSearchParams) => {
+    const section = resolveSectionFromRoute(pathname, params);
+    params.set('section', section);
+    router.push(`${getResultsPathForSection(section)}?${params.toString()}`);
+  };
+
+  const buildSearchSubmitParams = () => {
+    const current = new URLSearchParams(window.location.search);
+    const next = new URLSearchParams();
+    // Preserve only user-facing context that should survive a new search submit.
+    const preservedKeys: Array<'filters' | 'wer'> = ['filters', 'wer'];
+    for (const key of preservedKeys) {
+      const value = current.get(key);
+      if (value) {
+        next.set(key, value);
+      }
+    }
+    return next;
+  };
+
   // Handle search submission - navigate to providers page
   const handleSearchSubmit = (query: string, category: string | null, location: string) => {
-    const params = new URLSearchParams();
+    const params = buildSearchSubmitParams();
+    const section = category ? inferSectionFromCategory(category) : resolveSectionFromRoute(pathname, params);
+    params.set('section', section);
     if (query) {
       params.set('q', query);
+    } else {
+      params.delete('q');
     }
     if (category) {
       params.set('category', category);
+    } else {
+      params.delete('category');
     }
     if (location) {
       params.set('location', location);
+    } else {
+      params.delete('location');
     }
-    router.push(`/providers?${params.toString()}`);
+    router.push(`${getResultsPathForSection(section)}?${params.toString()}`);
   };
 
   // Handle clear search - navigate to providers without query
   const handleClearSearch = () => {
     const params = new URLSearchParams(window.location.search);
     params.delete('q');
-    router.push(`/providers?${params.toString()}`);
+    pushResultsRoute(params);
   };
 
   // Handle category change - navigate to providers with new category
@@ -67,17 +100,18 @@ export function Header() {
     const params = new URLSearchParams(window.location.search);
     if (category) {
       params.set('category', category);
+      params.set('section', inferSectionFromCategory(category));
     } else {
       params.delete('category');
     }
-    router.push(`/providers?${params.toString()}`);
+    pushResultsRoute(params);
   };
 
   // Handle location change - navigate to providers with new location
   const handleLocationChange = (location: string) => {
     const params = new URLSearchParams(window.location.search);
     params.set('location', location);
-    router.push(`/providers?${params.toString()}`);
+    pushResultsRoute(params);
   };
 
   // Close dropdown on outside click

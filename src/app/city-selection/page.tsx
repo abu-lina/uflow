@@ -400,10 +400,10 @@ export default function CitySelectionPage() {
     }
   };
 
-  // Handle discover CTA - navigate to city page (early access page)
+  // Handle discover CTA - navigate to home discovery page
   const handleDiscoverClick = () => {
     if (selectedCityName) {
-      router.push(`/city/${encodeURIComponent(selectedCityName)}`);
+      router.push('/');
     }
   };
 

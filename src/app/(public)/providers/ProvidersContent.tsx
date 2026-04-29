@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -32,7 +32,8 @@ const LegalLinksModal = dynamic(
 );
 import { useSearch } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
-import { inferSectionFromCategory } from '@/config/sectionFilters';
+import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';
+import { getCategories } from '@/services/categories';
 import type { Provider, SearchResult } from '@/services/providers';
 import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
 
@@ -90,7 +91,8 @@ export function ProvidersContent({
   const queryClient = useQueryClient();
   const { user, isLoading: userLoading } = useAuth();
   const { isAdmin } = useIsAdmin();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
@@ -121,10 +123,7 @@ export function ProvidersContent({
 
   // Plan 089 M8: Infer section from URL params with legacy URL support
   // Priority: ?section= > infer from ?category= (only when category param IS present) > default 'food' (D9)
-  const sectionParam = searchParams.get('section') as Section | null;
-  const categoryParam = searchParams.get('category');
-  const inferredSection: Section = sectionParam ?? (categoryParam ? inferSectionFromCategory(categoryParam) : 'food');
-  const section = inferredSection;
+  const section = resolveSectionFromRoute(pathname, new URLSearchParams(searchParams.toString()));
 
   // Resolve the location for use as a query transport value (not for display).
   // searchParams.get('location') returns null when absent, '' when ?location= is present.
@@ -196,6 +195,31 @@ export function ProvidersContent({
     [data],
   );
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', 'providers-header'],
+    queryFn: getCategories,
+    staleTime: 10 * 60 * 1000,
+    enabled: !!category,
+  });
+
+  const selectedCategoryLabel = useMemo(() => {
+    if (!category) return null;
+
+    const resultCategory = searchResults.find((result) => result.category_id === category)?.category;
+    if (resultCategory) {
+      return language === 'en'
+        ? resultCategory.name_en || resultCategory.name_de
+        : resultCategory.name_de || resultCategory.name_en || null;
+    }
+
+    const matchedCategory = categories.find((item) => item.category_id === category);
+    if (!matchedCategory) return null;
+
+    return language === 'en'
+      ? matchedCategory.name_en || matchedCategory.name_de
+      : matchedCategory.name_de || matchedCategory.name_en || null;
+  }, [category, categories, language, searchResults]);
+
   // Use React Query for bookmarks - includes both providers and community services
   const { data: bookmarkedProviderIds = [] } = useQuery({
     queryKey: ['bookmarks', user?.id],
@@ -259,9 +283,13 @@ export function ProvidersContent({
       } else {
         params.delete('status');
       }
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
+      const resolvedSection = resolveSectionFromRoute(pathname, params);
+      params.set('section', resolvedSection);
+      router.replace(`${getResultsPathForSection(resolvedSection)}?${params.toString()}`, {
+        scroll: false,
+      });
     },
-    [router],
+    [pathname, router],
   );
 
   // Plan 058: Handle admin approve action
@@ -497,6 +525,7 @@ export function ProvidersContent({
         // Search bar and category filter header (fixed)
         <ProvidersPageHeader
           categoryId={category}
+          categoryLabel={selectedCategoryLabel}
           location={location}
           peopleSummary={peopleSummary}
           searchTerm={query}

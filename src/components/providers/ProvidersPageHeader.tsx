@@ -8,6 +8,7 @@ interface ProvidersPageHeaderProps {
   section: Section;
   searchTerm?: string | null;
   categoryId?: string | null;
+  categoryLabel?: string | null;
   location?: string | null;
   peopleSummary?: string | null;
 }
@@ -16,6 +17,7 @@ export function ProvidersPageHeader({
   section,
   searchTerm,
   categoryId,
+  categoryLabel,
   location,
   peopleSummary,
 }: ProvidersPageHeaderProps) {
@@ -57,6 +59,7 @@ export function ProvidersPageHeader({
       >
         <SearchContextBar
           categoryId={categoryId}
+          categoryLabel={categoryLabel}
           className="border border-gray-200 shadow-sm"
           location={location}
           peopleSummary={peopleSummary}
