@@ -38,6 +38,10 @@ import { EndorseBadgeButton } from '@/components/providers/EndorseBadgeButton';
 import { getBadgesForEntityWithConfirmationStatus } from '@/services/badges';
 import { EntityType } from '@/types/badges';
 import type { BadgeWithConfirmationStatus } from '@/types/badges';
+import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
+import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
+import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
+import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
 
 interface ProviderDetailPageProps {
   provider: Provider;
@@ -52,6 +56,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   backPath,
   initialCommunityServices,
 }) => {
+  const HALAL_POPUP_VIEW_COUNT_KEY = 'uf_halal_popup_view_count';
+  const HALAL_POPUP_MAX_VIEWS = 10;
+
   const router = useRouter();
   const { t, language } = useLanguage();
 
@@ -112,6 +119,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [shouldAnimateFill, setShouldAnimateFill] = useState(false);
   const [isTransiting, setIsTransiting] = useState(false);
+  const [showHalalPopup, setShowHalalPopup] = useState(false);
 
   // Refs to store timeout IDs for cleanup
   const timeoutRefs = useRef<{
@@ -130,6 +138,24 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
         clearTimeout(refs.stateTimeout);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const parsedCount = Number.parseInt(
+      window.localStorage.getItem(HALAL_POPUP_VIEW_COUNT_KEY) ?? '0',
+      10,
+    );
+    const currentCount = Number.isNaN(parsedCount) || parsedCount < 0 ? 0 : parsedCount;
+
+    if (currentCount < HALAL_POPUP_MAX_VIEWS) {
+      window.localStorage.setItem(HALAL_POPUP_VIEW_COUNT_KEY, String(currentCount + 1));
+      setShowHalalPopup(true);
+      return;
+    }
+
+    setShowHalalPopup(false);
   }, []);
 
   const [expandedOffers, setExpandedOffers] = useState(false);
@@ -323,11 +349,15 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
     }
   };
 
+  const handleCloseHalalPopup = () => {
+    setShowHalalPopup(false);
+  };
+
   // Mobile version
   if (isMobile) {
     return (
       <>
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-none bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+        <div className="bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
           {/* Mobile Content */}
           <div className="pb-24">
             <MobileProviderDetail provider={provider} onBack={handleBack} />
@@ -337,6 +367,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             <h2 className="font-inter-tight text-xl font-semibold text-content-heading">
               {provider.provider_name}
             </h2>
+            <OpenStatusLine provider={provider} />
             {provider.address_city ? (
               <button
                 className="mt-1 text-left text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline"
@@ -347,7 +378,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                     provider.address_city ?? undefined,
                   )
                 }
-                title="Adresse antippen zum Navigieren"
+                title={t('providerDetail.container.addressTapToNavigate')}
                 onClick={() => {
                   const address = formatAddress(
                     provider.address_street ?? undefined,
@@ -370,7 +401,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                   : provider.address_city}
               </button>
             ) : (
-              <div className="mt-1 text-gray-600">Online</div>
+              <div className="mt-1 text-gray-600">{t('providerDetail.container.online')}</div>
             )}
 
             {/* Contact Icons */}
@@ -586,6 +617,15 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               )}
             </div>
           )}
+
+          <div className="mx-6 mt-4 space-y-4">
+            <ProviderDetailSections
+              badges={badgesWithStatus}
+              isLoadingBadges={isLoadingBadges}
+              provider={provider}
+            />
+            <HalalTrustBanner />
+          </div>
         </div>
         </div>
 
@@ -612,7 +652,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
 
               {/* Share Button */}
               <button
-                aria-label="Provider teilen"
+                aria-label={t('providerDetail.container.shareProviderAria')}
                 className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#CDCDCD] bg-white/70 backdrop-blur-sm"
                 onClick={handleShareAction}
               >
@@ -621,12 +661,14 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             </div>
           </div>
         )}
+        <HalalTrustPopup isOpen={showHalalPopup} onClose={handleCloseHalalPopup} />
       </>
     );
   }
 
   // Desktop version - similar to existing modal but as a page
   return (
+    <>
     <div className="min-h-screen bg-gray-50">
       {/* Desktop Header */}
       <div className="border-b border-gray-200 bg-white">
@@ -637,7 +679,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               onClick={handleBack}
             >
               <ArrowLeft className="h-5 w-5" />
-              <span className="font-inter-tight">Zurück</span>
+              <span className="font-inter-tight">{t('providerDetail.container.back')}</span>
             </button>
             <h1 className="font-inter-tight text-2xl font-bold text-content-heading">
               {provider.provider_name}
@@ -654,8 +696,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
           <div className="space-y-4">
             {/* Main Image */}
             <div
-              className="relative h-[480px] w-full cursor-grab touch-pan-x overflow-hidden rounded-3xl bg-gray-200 active:cursor-grabbing"
-              style={{ touchAction: 'pan-x', userSelect: 'none' }}
+              className="relative h-[480px] w-full cursor-grab overflow-hidden rounded-3xl bg-gray-200 active:cursor-grabbing"
+              style={{ userSelect: 'none' }}
               onMouseDown={handleMouseDown}
               onMouseLeave={handleMouseUp}
               onMouseMove={handleMouseMove}
@@ -741,6 +783,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               <h2 className="font-inter-tight text-3xl font-bold text-content-heading">
                 {provider.provider_name}
               </h2>
+              <OpenStatusLine provider={provider} />
               <p className="mt-2 text-gray-600">{getCategoryName(provider.category)}</p>
 
               {/* Contact Actions */}
@@ -753,7 +796,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                     }
                   >
                     <Icon className="h-4 w-4" icon="mdi:internet" />
-                    Website
+                    {t('providerDetail.container.website')}
                   </button>
                 )}
                 {provider.contact_phone && (
@@ -762,7 +805,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                     onClick={() => window.open(`tel:${provider.contact_phone}`)}
                   >
                     <Icon className="h-4 w-4" icon="entypo:old-phone" />
-                    Anrufen
+                    {t('providerDetail.container.call')}
                   </button>
                 )}
               </div>
@@ -899,7 +942,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                   onClick={() => setExpandedProviders(!expandedProviders)}
                 >
                   <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
-                    Supporters
+                    {t('providerDetail.container.supporters')}
                   </h3>
                   <ChevronDown
                     className={`h-7 w-7 text-gray-600 transition-transform ${
@@ -1027,6 +1070,14 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               </div>
             )}
 
+            <ProviderDetailSections
+              badges={badgesWithStatus}
+              isLoadingBadges={isLoadingBadges}
+              provider={provider}
+            />
+
+            <HalalTrustBanner />
+
             {/* Action Buttons */}
             {customActionButtons ? (
               <div className="flex gap-4">{customActionButtons}</div>
@@ -1052,7 +1103,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                   onClick={handleShareAction}
                 >
                   <Icon className="h-5 w-5" icon="material-symbols:share" />
-                  Teilen
+                  {t('providerDetail.container.share')}
                 </button>
               </div>
             )}
@@ -1060,5 +1111,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
         </div>
       </div>
     </div>
+    <HalalTrustPopup isOpen={showHalalPopup} onClose={handleCloseHalalPopup} />
+    </>
   );
 };

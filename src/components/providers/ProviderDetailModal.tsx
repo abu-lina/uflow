@@ -31,6 +31,10 @@ import {
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 import { trackEvent } from '@/lib/analytics/plausible';
 import { BadgeLabel } from '@/components/ui/BadgeLabel';
+import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
+import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
+import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
+import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -47,6 +51,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   initialCommunityServices,
   customActionButtons,
 }) => {
+  const HALAL_POPUP_VIEW_COUNT_KEY = 'uf_halal_popup_view_count';
+  const HALAL_POPUP_MAX_VIEWS = 10;
+
   const router = useRouter();
   const isMobile = useIsMobile();
   const { t, language } = useLanguage();
@@ -148,6 +155,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [expandedOffers, setExpandedOffers] = useState(false);
   const [expandedNeeds, setExpandedNeeds] = useState(false);
+  const [showHalalPopup, setShowHalalPopup] = useState(false);
 
   // Track image loading states for skeleton display
   const [mainImagesLoaded, setMainImagesLoaded] = useState<Record<number, boolean>>({});
@@ -194,6 +202,26 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     }
   }, [user, bookmarkedProviderIds, bookmarkableEntityId]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const parsedCount = Number.parseInt(
+      window.localStorage.getItem(HALAL_POPUP_VIEW_COUNT_KEY) ?? '0',
+      10,
+    );
+    const currentCount = Number.isNaN(parsedCount) || parsedCount < 0 ? 0 : parsedCount;
+
+    if (currentCount < HALAL_POPUP_MAX_VIEWS) {
+      window.localStorage.setItem(HALAL_POPUP_VIEW_COUNT_KEY, String(currentCount + 1));
+      setShowHalalPopup(true);
+      return;
+    }
+
+    setShowHalalPopup(false);
+  }, []);
+
   // Keyboard navigation
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -220,6 +248,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     } catch (error) {
       console.error('Error toggling bookmark:', error);
     }
+  };
+
+  const handleCloseHalalPopup = () => {
+    setShowHalalPopup(false);
   };
 
   // Action handlers
@@ -251,15 +283,15 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         // Fallback: Copy to clipboard
         try {
           await navigator.clipboard.writeText(shareUrl);
-          toast.success('Link in Zwischenablage kopiert!');
+          toast.success(t('providerDetail.container.toastLinkCopied'));
         } catch (error) {
           console.error('Failed to copy to clipboard:', error);
-          toast.error('Fehler beim Kopieren des Links');
+          toast.error(t('providerDetail.container.toastCopyLinkError'));
         }
       }
     } else if (action === 'call') {
       if (!provider.contact_phone) {
-        toast.error('Keine Telefonnummer verfügbar');
+        toast.error(t('providerDetail.container.toastNoPhone'));
         return;
       }
 
@@ -294,10 +326,14 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         // Fallback: Copy phone number to clipboard on desktop
         try {
           await navigator.clipboard.writeText(phoneNumber);
-          toast.success(`Telefonnummer kopiert: ${phoneNumber}`);
+          toast.success(
+            t('providerDetail.container.toastPhoneCopied', {
+              phone: phoneNumber,
+            }),
+          );
         } catch (clipboardError) {
           console.error('Failed to copy to clipboard:', clipboardError);
-          toast.error('Fehler beim Öffnen der Telefonnummer');
+          toast.error(t('providerDetail.container.toastOpenPhoneError'));
         }
       }
     } else if (action === 'website' && provider.social_website) {
@@ -336,6 +372,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const isLoading = isLoadingCommunityServices || !mainImagesLoaded[selectedImageIdx];
 
   return (
+    <>
     <Modal
       isOpen={true}
       title={communityServices[0]?.community_service_name || provider.provider_name}
@@ -343,7 +380,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     >
       <section
         aria-busy={isLoading}
-        aria-label="Provider details"
+        aria-label={t('providerDetail.container.ariaProviderDetails')}
         aria-modal="true"
         className="relative flex h-[900px] w-[1200px] cursor-default bg-transparent"
         role="dialog"
@@ -352,7 +389,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       >
         {/* Screen reader announcement for loaded content */}
         <div aria-atomic="true" aria-live="polite" className="sr-only">
-          {!isLoading && 'Provider details loaded'}
+          {!isLoading && t('providerDetail.container.ariaProviderDetailsLoaded')}
         </div>
         {/* Left Section */}
         <div className="absolute left-0 top-0 inline-flex h-[900px] w-[704px] flex-col items-start justify-start gap-8 rounded-l-[48px] bg-white py-10 pl-12 pr-4">
@@ -363,6 +400,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 {provider.provider_name}
               </div>
             </div>
+            <OpenStatusLine provider={provider} />
             {formatAddress(
               provider.address_street ?? undefined,
               provider.address_zip ?? undefined,
@@ -377,7 +415,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     provider.address_city ?? undefined,
                   )
                 }
-                title="Adresse antippen zum Navigieren"
+                title={t('providerDetail.container.addressTapToNavigate')}
                 onClick={() => {
                   const address = formatAddress(
                     provider.address_street ?? undefined,
@@ -453,7 +491,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   <>
                     {selectedImageIdx > 0 && (
                       <button
-                        aria-label="Vorheriges Bild"
+                        aria-label={t('providerDetail.container.previousImage')}
                         className="absolute left-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
                         type="button"
                         onClick={(e) => {
@@ -466,7 +504,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     )}
                     {selectedImageIdx < allImageUrls.length - 1 && (
                       <button
-                        aria-label="Nächstes Bild"
+                        aria-label={t('providerDetail.container.nextImage')}
                         className="absolute right-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
                         type="button"
                         onClick={(e) => {
@@ -488,7 +526,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 {allImageUrls.map((img, i) => (
                   <button
                     key={i}
-                    aria-label={`Bild ${i + 1} auswählen`}
+                    aria-label={t('providerDetail.container.selectImage', { index: i + 1 })}
                     className={`relative overflow-hidden rounded-[8px] border-2 transition-all hover:scale-105 ${
                       selectedImageIdx === i ? 'scale-105 border-primary' : 'border-transparent'
                     }`}
@@ -519,10 +557,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           </div>
         </div>
         {/* Right Section */}
-        <div className="absolute left-[704px] top-0 inline-flex h-[900px] w-[496px] flex-col items-start justify-start gap-4 rounded-r-[48px] bg-white py-36 pl-4 pr-12">
+        <div className="absolute left-[704px] top-0 inline-flex h-[900px] w-[496px] flex-col items-start justify-start gap-4 overflow-y-auto rounded-r-[48px] bg-white py-36 pl-4 pr-12">
           {/* Close Button */}
           <button
-            aria-label="Schließen"
+            aria-label={t('providerDetail.popup.closeAria')}
             className="absolute right-12 top-9 flex size-10 items-center justify-center rounded-full text-content transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             type="button"
             onClick={onClose}
@@ -535,7 +573,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               {customActionButtons}
             </div>
           )}
-          <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
+          <div className="flex flex-col items-start justify-start gap-8 self-stretch">
             {/* Barakah Effekt Section - with fade-in animation */}
             {communityServices.length > 0 && (
             <div
@@ -566,7 +604,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                       )}
                       <Image
                         fill
-                        alt={communityServices[0]?.community_service_name || 'Community Service'}
+                        alt={
+                          communityServices[0]?.community_service_name ||
+                          t('providerDetail.container.communityServiceAlt')
+                        }
                         className={`rounded-[18px] object-cover transition-opacity duration-300 ${
                           communityImageLoaded ? 'opacity-100' : 'opacity-0'
                         }`}
@@ -691,6 +732,14 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 </div>
               </div>
             )}
+
+            <ProviderDetailSections
+              badges={provider.badges ?? []}
+              isLoadingBadges={false}
+              provider={provider}
+            />
+
+            <HalalTrustBanner />
           </div>
         </div>
         {/* Actions Bar - moved outside left/right panels for true modal centering */}
@@ -746,7 +795,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               width={20}
             />
             {expandedAction === 'share' && (
-              <span className="font-inter-tight text-base font-medium text-white">Teilen</span>
+              <span className="font-inter-tight text-base font-medium text-white">
+                {t('providerDetail.container.share')}
+              </span>
             )}
           </button>
           {/* Phone Button */}
@@ -767,7 +818,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               width={20}
             />
             {expandedAction === 'call' && (
-              <span className="font-inter-tight text-base font-medium text-white">Anrufen</span>
+              <span className="font-inter-tight text-base font-medium text-white">
+                {t('providerDetail.container.call')}
+              </span>
             )}
           </button>
           {/* Website Button */}
@@ -788,14 +841,16 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               width={20}
             />
             {expandedAction === 'website' && (
-              <span className="font-inter-tight text-base font-medium text-white">Website</span>
+              <span className="font-inter-tight text-base font-medium text-white">
+                {t('providerDetail.container.website')}
+              </span>
             )}
           </button>
           {/* Instagram Button — conditionally rendered */}
           {provider.social_instagram && (
           <button
             aria-expanded={expandedAction === 'instagram'}
-            aria-label="Instagram"
+            aria-label={t('providerDetail.container.instagram')}
             className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'instagram' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('instagram')}
@@ -811,12 +866,16 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               width={20}
             />
             {expandedAction === 'instagram' && (
-              <span className="font-inter-tight text-base font-medium text-white">Instagram</span>
+              <span className="font-inter-tight text-base font-medium text-white">
+                {t('providerDetail.container.instagram')}
+              </span>
             )}
           </button>
           )}
         </div>
       </section>
     </Modal>
+    <HalalTrustPopup isOpen={showHalalPopup} onClose={handleCloseHalalPopup} />
+    </>
   );
 };

@@ -24,17 +24,24 @@ export async function getBadgesForEntityServer(
 ): Promise<ProviderBadgeWithType[]> {
   try {
     const supabase = createSupabaseServerClient();
-    
-    const { data, error } = await supabase
-      .from('provider_badges')
-      .select(`
-        *,
-        badge_type:badge_types(*)
-      `)
-      .eq('entity_id', entityId)
-      .eq('entity_type', entityType)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+
+    const createBaseQuery = () =>
+      supabase
+        .from('provider_badges')
+        .select(`
+          *,
+          badge_type:badge_types(*)
+        `)
+        .eq('entity_id', entityId)
+        .eq('entity_type', entityType)
+        .order('created_at', { ascending: false });
+
+    let { data, error } = await createBaseQuery().eq('is_active', true);
+
+    // Backward compatibility: some environments do not yet have provider_badges.is_active.
+    if (error?.code === '42703') {
+      ({ data, error } = await createBaseQuery());
+    }
 
     if (error) {
       logSupabaseError('Error fetching badges:', error);

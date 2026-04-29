@@ -925,6 +925,87 @@ export const ur = {
     "errorServerError": "Server error. Please try again later.",
     "retry": "Try Again"
   },
+  "providerDetail": {
+    "sections": {
+      "valuesAmenities": "اقدار اور سہولیات",
+      "menu": "مینیو",
+      "openingHours": "اوقاتِ کار",
+      "feedback": "فیڈبیک",
+      "proofs": "ثبوت",
+      "nearby": "قریب"
+    },
+    "days": {
+      "monday": "پیر",
+      "tuesday": "منگل",
+      "wednesday": "بدھ",
+      "thursday": "جمعرات",
+      "friday": "جمعہ",
+      "saturday": "ہفتہ",
+      "sunday": "اتوار"
+    },
+    "openStatus": {
+      "open": "کھلا",
+      "closed": "بند",
+      "untilOpen": "{{time}} تک کھلا",
+      "opensTomorrow": "کل {{time}} پر کھلے گا",
+      "opensOnDay": "{{day}} کو {{time}} پر کھلے گا"
+    },
+    "amenities": {
+      "muslimOwned": "مسلم ملکیت",
+      "prayerSpace": "نماز کی جگہ",
+      "parking": "پارکنگ",
+      "noAlcohol": "بغیر الکحل",
+      "noPork": "بغیر سور کے گوشت",
+      "familyFriendly": "خاندانی دوستانہ",
+      "womenFriendly": "خواتین دوستانہ",
+      "childrenFriendly": "بچوں کے لیے موزوں",
+      "acceptsDonations": "عطیات قبول ہیں",
+      "solidarityPricing": "یکجہتی قیمتیں"
+    },
+    "empty": {
+      "noOpeningHours": "اوقاتِ کار دستیاب نہیں ہیں۔",
+      "noValuesAmenities": "اقدار یا سہولیات دستیاب نہیں۔",
+      "noMenu": "مینیو آئٹمز دستیاب نہیں۔",
+      "noFeedback": "ابھی تک کوئی جائزہ نہیں۔",
+      "noProofs": "کوئی ثبوت دستیاب نہیں۔",
+      "noNearby": "قریب کوئی فراہم کنندہ نہیں ملا۔"
+    },
+    "loading": {
+      "nearby": "فراہم کنندگان لوڈ ہو رہے ہیں..."
+    },
+    "halal": {
+      "title": "Ummah Flow پر ریسٹورنٹس کی حلال مطابقت کی جانچ کی جاتی ہے",
+      "description": "کوئی ریسٹورنٹ اسی وقت فہرست میں شامل کیا جاتا ہے جب وہ نہ الکحل پیش کرے، نہ حرام گوشت اور نہ جوا۔ گوشت کا حلال طریقے سے ذبح ہونا ضروری ہے۔",
+      "learnMore": "مزید جانیں"
+    },
+    "popup": {
+      "closeAria": "بند کریں"
+    },
+    "container": {
+      "addressTapToNavigate": "نیویگیشن کے لیے پتے پر ٹیپ کریں",
+      "online": "آن لائن",
+      "shareProviderAria": "فراہم کنندہ شیئر کریں",
+      "back": "واپس",
+      "website": "ویب سائٹ",
+      "call": "کال کریں",
+      "share": "شیئر کریں",
+      "supporters": "حامی",
+      "instagram": "انسٹاگرام",
+      "communityServiceAlt": "کمیونٹی سروس",
+      "ariaProviderDetails": "فراہم کنندہ کی تفصیلات",
+      "ariaProviderDetailsLoaded": "فراہم کنندہ کی تفصیلات لوڈ ہو گئیں",
+      "previousImage": "پچھلی تصویر",
+      "nextImage": "اگلی تصویر",
+      "selectImage": "تصویر {{index}} منتخب کریں",
+      "imageGalleryAria": "{{name}} کی تصویری گیلری، {{count}} تصاویر کے ساتھ",
+      "goToImageAria": "{{total}} میں سے تصویر {{index}} پر جائیں",
+      "toastLinkCopied": "لنک کلپ بورڈ میں کاپی ہو گیا!",
+      "toastCopyLinkError": "لنک کاپی کرنے میں خرابی",
+      "toastNoPhone": "کوئی فون نمبر دستیاب نہیں",
+      "toastPhoneCopied": "فون نمبر کاپی ہوا: {{phone}}",
+      "toastOpenPhoneError": "فون نمبر کھولنے میں خرابی"
+    }
+  },
   "welcome": {
     "title": "امت فلو کمیونٹی میں خوش آمدید",
     "subtitle": "بہترین تجربے کے لیے ایپ انسٹال کریں",

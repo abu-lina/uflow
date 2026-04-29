@@ -14,6 +14,7 @@ describe('ProviderDetailModal Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.setItem('preferred-language', 'de');
   });
 
   describe('Basic Rendering', () => {
@@ -510,7 +511,7 @@ describe('ProviderDetailModal Component', () => {
         />,
       );
 
-      const saveButton = screen.getByRole('button', { name: /save/i });
+      const saveButton = screen.getByRole('button', { name: /save|speichern/i });
       expect(saveButton).toBeInTheDocument();
     });
 
@@ -523,8 +524,8 @@ describe('ProviderDetailModal Component', () => {
         />,
       );
 
-      // Check that save button is present (English locale in tests)
-      const saveButton = screen.getByRole('button', { name: /save/i });
+      // Check that save button is present (supports both EN/DE locale)
+      const saveButton = screen.getByRole('button', { name: /save|speichern/i });
       expect(saveButton).toBeInTheDocument();
 
       // The other buttons don't show text until expanded, but we can check they exist

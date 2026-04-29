@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-04-29
+
+### Added
+
+- **Provider Details: Real-time open/closed status line** (Plan 113 M2): Displays green "Geöffnet" or red "Geschlossen" label beneath provider title, derived from `opening_hours` JSONB data. Shows next opening time when closed. Hidden gracefully when no schedule data exists.
+- **Provider Details: 6 accordion sections** (Plan 113 M3): Structured collapsible sections — Werte & Amenities, Angebote (menu), Öffnungszeiten (full week schedule), Feedback (placeholder), Nachweise (trust certificates), In der Nähe (same-city providers). Applied to both mobile and desktop detail paths.
+- **Provider Details: Halal Trust Banner** (Plan 113 M4): Static section at page bottom with teal Halal seal, headline, body text, and `/halal` info link. Matches Figma design specification.
+- **Provider Details: Halal Trust Popup** (Plan 113 M5): First-visit popup displayed for the first 10 provider detail opens (global counter via `localStorage`). Dismissible via close button, ESC key, or click-outside. Includes full keyboard focus trap and ARIA accessibility attributes.
+- **Provider Details: Keyboard-accessible popup focus trap** (Plan 113 M5): Tab/Shift+Tab cycles within popup; focus does not escape to background; ESC closes popup; `aria-modal="true"` present.
+- **Database: `opening_hours` JSONB column on `providers` table** (Plan 113 M1, migration 078): Nullable JSONB column stores structured weekly schedule. Backward-compatible — existing providers unaffected.
+
+### Fixed
+
+- **Provider Detail: Scroll-lock extends to `<html>` element** (Plan 113 M6): `useScrollLock` now locks both `body` and `html` overflow to prevent page scroll in all browsers. Includes DOM-attribute counter (`data-scroll-lock-count`) for HMR/dev-mode recovery when module state resets but DOM remains locked.
+- **Provider Detail: Image carousel swipe no longer blocks vertical scroll** (Plan 113 M6): `useImageSwipe` move handler now gates `preventDefault()` behind an active drag-session ref. Touch moves that are not part of a swipe gesture allow native vertical scroll to proceed.
+- **Provider Detail: Touch-pan override removed from image container** (Plan 113 M6): Removed `touch-pan-x` Tailwind class and `touchAction: 'pan-x'` style from mobile and desktop image containers — vertical panning was blocked on some devices.
+- **Provider Detail: Nearby section loading state** (Plan 113 M3): "In der Nähe" section now shows loading text while the city-match query is in-flight instead of a premature empty-state message.
+- **Provider Detail: Trust badges 42703 fallback** (Plan 113 M6): `getBadgesForEntityServer()` now uses independent query builders for its primary and fallback paths, preventing a stale `is_active` filter from persisting across the retry and causing a PostgreSQL 42703 (undefined column) error.
+- **Provider Detail: ARIA labels localised in image gallery** (Plan 113 M6): Image gallery container and pagination dots now use `t()` i18n calls instead of hardcoded English strings.
+
 ## [0.10.42] - 2026-04-28
 
 ### Fixed
