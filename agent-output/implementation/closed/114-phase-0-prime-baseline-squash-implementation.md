@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Active
+Status: Committed
 ---
 
 # Implementation: 114 - Phase 0-prime Migration Baseline Squash
@@ -24,6 +24,7 @@ Status: Active
 | 2026-04-29T12:28Z | Implementer | Absorption decision + forward migration | Verified baseline still contains redundant indexes and duplicate providers trigger; created `003_phase0_schema_hygiene.sql`. |
 | 2026-04-29T12:31Z | Implementer | Validation | Verified schema parity hash for baseline vs local dump and validated migration versions `001`, `002`, `003` applied locally. |
 | 2026-04-29T12:50Z | Implementer | Test compatibility + quality gates | Updated migration contract tests to resolve archived migration paths after baseline squash. Ran lint/type-check/build/vitest: all pass. |
+| 2026-04-29T12:43Z | Code Review -> Implementer | Address review findings before QA | Fixed archive-aware provider-social helper script path handling, restored `session_replication_role` in `002_seed.sql`, and rewrote stale migration references across docs/scripts to `supabase/migrations/archive/*` where applicable. Re-ran lint/type-check/build/vitest: all pass. |
 
 ## Implementation Summary
 
@@ -72,6 +73,8 @@ This delivers the plan value by establishing deterministic baseline lineage and 
 | `agent-output/planning/114-db-schema-staged-refactor-plan.md` | Added implementer changelog entry for Phase 0-prime execution | +1 |
 | `supabase/config.toml` | Updated `[db].major_version` from `15` to `17` to match linked prod | 1 |
 | `supabase/migrations/002_seed.sql` | Rebuilt as INSERT-based scoped seed migration (migration-runner safe) | replaced |
+| `scripts/apply-provider-social-migration.sh` | Added archive-aware migration path resolution with active+archived fallback constants and unified manual instruction output | +12/-4 |
+| `docs/**` + `scripts/**` (20 files) | Rewrote stale migration path references from `supabase/migrations/<archived_file>.sql` to `supabase/migrations/archive/<archived_file>.sql` | bulk replace |
 | `src/__tests__/migrations/068-provider-catalog-tdd.test.ts` | Archive-aware migration path lookup (`active` or `archive`) | +11/-4 |
 | `src/__tests__/migrations/069-community-projects-catalog-tdd.test.ts` | Archive-aware migration path lookup (`active` or `archive`) | +13/-4 |
 | `src/__tests__/migrations/070-food-concept-search-tdd.test.ts` | Archive-aware migration path lookup (`active` or `archive`) | +11/-4 |
@@ -108,6 +111,9 @@ N/A - No deployment surface changes in Docker/workflows/scripts for this phase.
 - [x] `npm run type-check` exits 0
 - [x] `npm run build` exits 0
 - [x] `npx vitest run` exits 0
+- [x] `supabase/migrations/002_seed.sql` now restores `session_replication_role` to `origin` before `RESET ALL`
+- [x] Stale migration path sweep in docs/scripts/workflows/deploy reduced to intentional examples only (4 remaining matches: generic migration creation example + archived starter docs)
+- [x] Provider-social helper script now resolves both active and archived migration file paths safely
 - [ ] `supabase db reset` exit code stability: currently returns exit 1 due post-migration container restart 502 (migrations still apply successfully)
 
 ## Value Statement Validation
@@ -148,11 +154,14 @@ Commands executed:
 - `npm run type-check` -> exit 0
 - `npm run build` -> exit 0
 - `npx vitest run` -> exit 0 (135 passed, 1 skipped; 1148 passed, 18 skipped)
+- `grep_search` (`docs/**,scripts/**,.github/workflows/**,deploy/**`) for archived-style stale paths -> 4 residual matches, all intentional non-actionable examples
+- `grep_search` (`supabase/migrations/002_seed.sql`) for `session_replication_role` -> both `replica` and `origin` statements present
 
 Observed issues:
 - Initial seed strategy used COPY blocks and failed under migration runner (`protocol synchronization was lost`). Resolved by regenerating seed as INSERT statements.
 - `supabase db reset` currently exits with code 1 due post-migration container restart (`Error status 502`), but migration application completes and DB state is correct.
 - Test regression after archival: migration contract tests expected legacy files in active root. Resolved by updating tests to search active and archived paths.
+- Post-review remediation corrected a stale helper-script hardcoded path and completed docs/scripts migration-path rewrite. A transient bulk-rewrite side effect changed `MIGRATION_ACTIVE` to the archived path; corrected in follow-up so active+archive fallback remains intact.
 
 ## Outstanding Items
 

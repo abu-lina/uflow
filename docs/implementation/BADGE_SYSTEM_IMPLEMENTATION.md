@@ -11,7 +11,7 @@ The badge and trust system has been fully implemented according to the approved 
 
 ### ✅ Phase 1: Database Schema & Migrations
 
-**File**: `supabase/migrations/016_create_badge_trust_system.sql`
+**File**: `supabase/migrations/archive/016_create_badge_trust_system.sql`
 
 **Created**:
 - 5 database tables with proper relationships
@@ -540,7 +540,7 @@ Confirmation counts are hidden from public API responses:
 For questions or issues with the badge system:
 1. Check this documentation
 2. Review the plan document: `badge.plan.md`
-3. Inspect database schema: `supabase/migrations/016_create_badge_trust_system.sql`
+3. Inspect database schema: `supabase/migrations/archive/016_create_badge_trust_system.sql`
 4. Review service layer: `src/services/badges.ts`
 
 ---

@@ -3,14 +3,19 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('Food search prefix matching migration contract', () => {
-  const migrationPath = path.resolve(
-    process.cwd(),
+  const migrationPath = [
     'supabase/migrations/077_food_search_prefix_matching.sql',
-  );
+    'supabase/migrations/archive/077_food_search_prefix_matching.sql',
+  ]
+    .map((candidate) => path.resolve(process.cwd(), candidate))
+    .find((candidate) => existsSync(candidate));
 
   it('creates migration 077 to enable prefix matching for food RPC search', () => {
     // TDD red gate: this should fail until migration 077 is implemented.
-    expect(existsSync(migrationPath)).toBe(true);
+    expect(migrationPath).toBeDefined();
+    if (!migrationPath) {
+      throw new Error('Migration 077 file not found in active or archive path.');
+    }
 
     const sql = readFileSync(migrationPath, 'utf8');
 

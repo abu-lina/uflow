@@ -219,7 +219,7 @@ When creating a new RPC function:
 
 ## Related Files
 
-- Migration: `supabase/migrations/018_fix_waitlist_rls_policies.sql`
+- Migration: `supabase/migrations/archive/018_fix_waitlist_rls_policies.sql`
 - API Endpoint: `src/app/api/waitlist/update/route.ts`
 - API Endpoint: `src/app/api/cities/route.ts`
 

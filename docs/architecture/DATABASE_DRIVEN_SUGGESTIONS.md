@@ -53,7 +53,7 @@ const offers = await getSuggestedOffersForCategory(categoryId);
 supabase db push
 
 # Or manually
-psql $DATABASE_URL -f supabase/migrations/003_create_category_suggestions_tables.sql
+psql $DATABASE_URL -f supabase/migrations/archive/003_create_category_suggestions_tables.sql
 
 # Seed data
 psql $DATABASE_URL -f sql/migrations/004_seed_category_suggestions.sql
@@ -216,7 +216,7 @@ Track suggestion usage:
 ## Files
 
 ### New Files
-- `supabase/migrations/003_create_category_suggestions_tables.sql` - Schema
+- `supabase/migrations/archive/003_create_category_suggestions_tables.sql` - Schema
 - `sql/migrations/004_seed_category_suggestions.sql` - Data
 - `src/services/category-suggestions.ts` - Service layer
 - `docs/guides/CATEGORY_SUGGESTIONS_MIGRATION.md` - Detailed guide
@@ -244,7 +244,7 @@ Keep the constants file temporarily until fully confident in the migration.
 
 For detailed information:
 - **Migration Guide**: `docs/guides/CATEGORY_SUGGESTIONS_MIGRATION.md`
-- **Database Schema**: `supabase/migrations/003_create_category_suggestions_tables.sql`
+- **Database Schema**: `supabase/migrations/archive/003_create_category_suggestions_tables.sql`
 - **Seed Data**: `sql/migrations/004_seed_category_suggestions.sql`
 
 ## Conclusion

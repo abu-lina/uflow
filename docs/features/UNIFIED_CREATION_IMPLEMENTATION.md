@@ -13,7 +13,7 @@ Run these SQL scripts in order:
 #### **A. Standardize Image Storage**
 
 ```sql
--- File: supabase/migrations/057_standardize_image_storage.sql
+-- File: supabase/migrations/archive/057_standardize_image_storage.sql
 -- Converts community_services.community_service_images from text[] to jsonb
 -- This ensures consistency with providers.provider_images
 ```
@@ -86,7 +86,7 @@ Both entity types use the same form fields:
 
 ```bash
 # Run in Supabase SQL Editor
-1. Execute supabase/migrations/057_standardize_image_storage.sql
+1. Execute supabase/migrations/archive/057_standardize_image_storage.sql
 2. Execute add-missing-fields-community-services.sql
 ```
 

@@ -8,16 +8,16 @@ Created a consolidated database schema file (`sql/queries/supabase-schema-consol
 
 ### Files Combined
 - `sql/queries/supabase-schema.sql` (base schema)
-- `supabase/migrations/000_create_offers_needs_tables.sql`
-- `supabase/migrations/001_create_offers_and_needs_tables.sql`
-- `supabase/migrations/002_create_provider_community_services_relationship.sql`
-- `supabase/migrations/003_create_category_suggestions_tables.sql`
-- `supabase/migrations/004_add_created_by_to_offers_needs.sql`
-- `supabase/migrations/005_add_category_to_offers_needs.sql`
-- `supabase/migrations/010_create_push_subscriptions.sql`
-- `supabase/migrations/011_add_providers_performance_indexes.sql`
-- `supabase/migrations/012_create_consent_logs.sql`
-- `supabase/migrations/20251120_admin_audit_logs.sql`
+- `supabase/migrations/archive/000_create_offers_needs_tables.sql`
+- `supabase/migrations/archive/001_create_offers_and_needs_tables.sql`
+- `supabase/migrations/archive/002_create_provider_community_services_relationship.sql`
+- `supabase/migrations/archive/003_create_category_suggestions_tables.sql`
+- `supabase/migrations/archive/004_add_created_by_to_offers_needs.sql`
+- `supabase/migrations/archive/005_add_category_to_offers_needs.sql`
+- `supabase/migrations/archive/010_create_push_subscriptions.sql`
+- `supabase/migrations/archive/011_add_providers_performance_indexes.sql`
+- `supabase/migrations/archive/012_create_consent_logs.sql`
+- `supabase/migrations/archive/20251120_admin_audit_logs.sql`
 - `supabase/migrations/20251120_providers_indexes.sql`
 - `sql/migrations/create-email-confirmation-tokens-table.sql`
 

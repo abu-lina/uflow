@@ -20,7 +20,7 @@ VAPID_EMAIL=your-email@example.com
 
 Apply the database migration:
 ```sql
--- Run: supabase/migrations/010_create_push_subscriptions.sql
+-- Run: supabase/migrations/archive/010_create_push_subscriptions.sql
 ```
 
 ## 4. Test It
