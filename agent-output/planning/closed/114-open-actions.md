@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Committed for Release v0.11.4
+Status: Released
 ---
 
 # Open Actions 114: Deferred Post-Deploy Follow-ups
