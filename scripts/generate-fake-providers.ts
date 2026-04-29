@@ -61,7 +61,6 @@ interface FakeProvider {
   contact_phone: string | null;
   social_website: string | null;
   social_instagram: string | null;
-  barakah_effects: string[];
   provider_owner_id: string | null;
   user_created_id: string | null;
   review_status: 'pending' | 'approved' | 'rejected';
@@ -137,20 +136,6 @@ function generateFakeProvider(
   const numNeeds = faker.number.int({ min: 0, max: Math.min(3, needs.length) });
   const selectedNeeds = faker.helpers.arrayElements(needs, numNeeds);
 
-  // Random barakah effects (0-5)
-  const barakahEffects = [
-    'Umweltschutz',
-    'Gemeinschaft',
-    'Bildung',
-    'Soziale Gerechtigkeit',
-    'Gesundheit',
-    'Kultur',
-    'Wirtschaft',
-    'Spiritualität',
-  ];
-  const numBarakah = faker.number.int({ min: 0, max: Math.min(5, barakahEffects.length) });
-  const selectedBarakah = faker.helpers.arrayElements(barakahEffects, numBarakah);
-
   // Random review status (mostly approved for testing)
   const reviewStatuses: Array<'pending' | 'approved' | 'rejected'> = ['approved', 'approved', 'approved', 'pending', 'rejected'];
   const reviewStatus = faker.helpers.arrayElement(reviewStatuses);
@@ -203,7 +188,6 @@ function generateFakeProvider(
     contact_phone: hasPhone ? `+49${faker.string.numeric(10)}` : null,
     social_website: hasWebsite ? `https://${faker.internet.domainName()}` : null,
     social_instagram: hasInstagram ? `@${faker.internet.username()}` : null,
-    barakah_effects: selectedBarakah,
     provider_owner_id: null, // Can be set if you want to test ownership
     user_created_id: null, // Can be set if you want to test user tracking
     review_status: reviewStatus,

@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Active
+Status: Committed
 ---
 
 # Implementation: Plan 114 Phase 2 — Drop `barakah_effects` (F-3 Data Coherence)
@@ -16,6 +16,7 @@ Status: Active
 | Date (UTC) | Agent | Handoff | Request | Summary |
 |---|---|---|---|---|
 | 2026-04-29T21:30Z | Implementer | — | Execute Plan 114 Phase 2 (F-3 barakah_effects triple-source data coherence) | Full implementation: 29 files changed, DB migration written, all gates passed |
+| 2026-04-29T22:25Z | Implementer | Code Reviewer | Address F-CR-1/F-CR-2 before QA | Updated migration 005 to re-create `upsert_joinhalal_providers` without `barakah_effects`; removed stale script payload fields in 3 scripts; re-ran type-check/lint |
 
 ---
 
@@ -40,6 +41,7 @@ Status: Active
 - [x] Import/enrichment: `joinhalal.ts`, `joinhalal-fields.ts`, `enrichment-fields.ts` updated
 - [x] 13 test files updated (mocks + assertions)
 - [x] DB migration `005_drop_barakah_effects.sql` written
+- [x] Code review findings addressed (F-CR-1 HIGH, F-CR-2 MEDIUM)
 - [x] All 1166 tests pass
 - [x] `npm run type-check` exits 0
 - [x] `npm run lint` exits 0 (0 errors, 57 pre-existing warnings)
@@ -78,12 +80,15 @@ Status: Active
 | `src/__tests__/integration/SearchAndViewProvider.test.tsx` | Removed from search result mock | −1 |
 | `src/__tests__/lib/enrichment/enrichment-fields.test.ts` | Updated assertions to assert `barakah_effects` NOT in admin fields | −2/+2 |
 | `src/__tests__/lib/import/joinhalal-upsert-fields.test.ts` | Removed from import payload list; updated admin fields assertion to exclude `barakah_effects` | −2/+2 |
+| `scripts/generate-fake-providers.ts` | Removed stale `barakah_effects` field from generated provider shape and payload | −12 |
+| `scripts/import-joinhalal.ts` | Removed stale `barakah_effects` from import payload type and transform output | −2 |
+| `scripts/import-muslimbusiness.ts` | Removed stale `barakah_effects` from import payload type and transform output | −2 |
 
 ## Files Created
 
 | Path | Purpose |
 |---|---|
-| `supabase/migrations/005_drop_barakah_effects.sql` | Drops `barakah_effects` column from `providers` and `community_services`, drops GIN index, updates `get_community_services_for_provider` RPC |
+| `supabase/migrations/005_drop_barakah_effects.sql` | Drops `barakah_effects` column from `providers` and `community_services`, drops GIN index, updates `get_community_services_for_provider` and `upsert_joinhalal_providers` RPCs |
 
 ---
 
@@ -128,7 +133,9 @@ Status: Active
 
 The migration uses `DROP COLUMN IF EXISTS` and `DROP INDEX IF EXISTS` — both are safe to apply even if columns were already absent. No EXPLAIN ANALYZE needed (DDL, not query change).
 
-RPC change: `get_community_services_for_provider` return type loses `barakah_effects text[]` column. Callers in `ProviderCardModal.tsx` fetch community services via this RPC; those callers have already had `barakah_effects` removed from their code, so the contract is aligned.
+RPC changes:
+- `get_community_services_for_provider` return type loses `barakah_effects text[]` column. Callers in `ProviderCardModal.tsx` fetch community services via this RPC; those callers have already had `barakah_effects` removed from their code, so the contract is aligned.
+- `upsert_joinhalal_providers` no longer includes `barakah_effects` in its INSERT column list or payload parsing. This prevents post-migration runtime failures in JoinHalal import flows after the column drop (Code Review F-CR-1).
 
 ### Schema Divergence Note
 
@@ -155,4 +162,4 @@ None. All in-scope references removed.
 
 ## Next Steps
 
-➡️ Code Reviewer → QA → DevOps (apply migration 005 to dev/prod)
+➡️ Code Reviewer (re-review) → QA → DevOps (apply migration 005 to dev/prod)

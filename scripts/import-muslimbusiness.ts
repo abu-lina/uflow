@@ -121,7 +121,6 @@ interface ProviderUpsert {
   show_address: boolean;
   offers_ids: string[];
   needs_ids: string[];
-  barakah_effects: string[];
 }
 
 interface ImportStats {
@@ -607,7 +606,6 @@ function transformCardToProvider(
     show_address: true,
     offers_ids: [],
     needs_ids: [],
-    barakah_effects: [],
   };
 
   const unmappedBranchen = !categoryId && branchen.length > 0

@@ -60,3 +60,104 @@ $$;
 
 COMMENT ON FUNCTION public.get_community_services_for_provider(uuid) IS
   'Returns all community services supported by a specific provider (Plan 114 Phase 2: barakah_effects removed)';
+
+-- ─── 5. Update RPC: upsert_joinhalal_providers ──────────────────────────────
+-- Remove barakah_effects from INSERT column list and payload parsing.
+CREATE OR REPLACE FUNCTION public.upsert_joinhalal_providers(p_providers jsonb)
+RETURNS TABLE(inserted_count bigint, updated_count bigint)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF p_providers IS NULL OR jsonb_array_length(p_providers) = 0 THEN
+    inserted_count := 0;
+    updated_count := 0;
+    RETURN NEXT;
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  WITH upserted AS (
+    INSERT INTO public.providers (
+      provider_name,
+      category_id,
+      address_street,
+      address_zip,
+      address_city,
+      address_country,
+      contact_email,
+      contact_phone,
+      social_website,
+      social_instagram,
+      offers_ids,
+      review_status,
+      user_created_id,
+      provider_owner_id,
+      show_address,
+      needs_ids,
+      import_source,
+      import_source_id,
+      import_source_url,
+      listing_type,
+      no_alcohol,
+      halal_level
+    )
+    SELECT
+      elem->>'provider_name',
+      (elem->>'category_id')::UUID,
+      elem->>'address_street',
+      elem->>'address_zip',
+      elem->>'address_city',
+      elem->>'address_country',
+      elem->>'contact_email',
+      elem->>'contact_phone',
+      elem->>'social_website',
+      elem->>'social_instagram',
+      CASE
+        WHEN elem->'offers_ids' IS NOT NULL
+             AND jsonb_typeof(elem->'offers_ids') = 'array'
+        THEN ARRAY(SELECT (jsonb_array_elements_text(elem->'offers_ids'))::UUID)
+        ELSE '{}'::UUID[]
+      END,
+      COALESCE((elem->>'review_status')::review_status, 'pending'),
+      (elem->>'user_created_id')::UUID,
+      (elem->>'provider_owner_id')::UUID,
+      COALESCE((elem->>'show_address')::BOOLEAN, true),
+      CASE
+        WHEN elem->'needs_ids' IS NOT NULL
+             AND jsonb_typeof(elem->'needs_ids') = 'array'
+        THEN ARRAY(SELECT (jsonb_array_elements_text(elem->'needs_ids'))::UUID)
+        ELSE '{}'::UUID[]
+      END,
+      elem->>'import_source',
+      elem->>'import_source_id',
+      elem->>'import_source_url',
+      'food'::listing_type_enum,
+      TRUE,
+      COALESCE((elem->>'halal_level')::SMALLINT, 1)
+    FROM jsonb_array_elements(p_providers) AS elem
+    ON CONFLICT (import_source, import_source_id)
+      WHERE import_source IS NOT NULL AND import_source_id IS NOT NULL
+    DO UPDATE SET
+      provider_name       = EXCLUDED.provider_name,
+      category_id         = EXCLUDED.category_id,
+      address_street      = EXCLUDED.address_street,
+      address_zip         = EXCLUDED.address_zip,
+      address_city        = EXCLUDED.address_city,
+      address_country     = EXCLUDED.address_country,
+      contact_email       = EXCLUDED.contact_email,
+      contact_phone       = EXCLUDED.contact_phone,
+      social_website      = EXCLUDED.social_website,
+      social_instagram    = EXCLUDED.social_instagram,
+      offers_ids          = EXCLUDED.offers_ids,
+      import_source_url   = EXCLUDED.import_source_url,
+      listing_type        = EXCLUDED.listing_type,
+      no_alcohol          = EXCLUDED.no_alcohol,
+      halal_level         = EXCLUDED.halal_level
+    RETURNING (xmax = 0) AS was_insert
+  )
+  SELECT
+    COALESCE(COUNT(*) FILTER (WHERE was_insert), 0)      AS inserted_count,
+    COALESCE(COUNT(*) FILTER (WHERE NOT was_insert), 0)  AS updated_count
+  FROM upserted;
+END;
+$$;
