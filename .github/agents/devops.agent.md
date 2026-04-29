@@ -178,6 +178,11 @@ If the target version tag already exists, increment and update the plan's `Targe
 - Create or update the Stage 1 deployment doc before the final `git add` / `git commit` step.
 - For the current plan, update lifecycle statuses and move the plan's docs to `closed/` before the final staged-set verification.
 - Verify the staged set includes the plan changes, the deployment doc, and the lifecycle doc moves for that same plan.
+- **Staged-set completeness check (MANDATORY)**: After staging all changes, run `git diff --cached --name-status` and verify:
+  - All intended **deletions** (file moves to `closed/`, archived migrations) show as `D` or `R` entries.
+  - No unstaged deletions remain (check `git status` for "deleted:" under "Changes not staged").
+  - If unstaged deletions are found, run `git add -u <directory>` for the affected paths before committing.
+  This prevents the "unstaged deletion in Stage 1 commit" problem that requires `git commit --amend` mid-Stage-2. (Added per Retrospective 114, PI-P3.)
 - Exception: if you discover unrelated orphaned documents from older plans, keep those in a separate docs-only commit.
 
 7. **Commit locally** using Sentry commit conventions (load `commit` skill from `.agent/skills/skills/commit/SKILL.md`):
@@ -391,6 +396,15 @@ If a follow-up push is still required (for example: unavoidable docs corrections
   - the migration applied (or scheduled), and
   - the required RPCs visible in schema cache.
 - If any RPC referenced by the app is missing, block release until migration is applied.
+
+10b. **Prod migration push (MANDATORY when release includes `supabase/migrations/` files)**:
+
+- If the release includes new files under `supabase/migrations/` (not just archived ones), the migrations must be applied to prod as part of Stage 2 — code release alone is not sufficient for infrastructure/migration-only changes.
+- **Baseline migrations** (migrations derived from prod's existing state, e.g., `001_baseline.sql`, seed data): Register as already-applied in `supabase_migrations.schema_migrations` WITHOUT re-executing (they would fail — the objects already exist on prod).
+- **Forward migrations** (new schema changes not yet on prod): Execute via `supabase-prod/apply_migration` MCP tool, `supabase db push --linked` CLI, or `supabase-prod/execute_sql` MCP.
+- After all migrations are applied or registered, verify: `SELECT version, name FROM supabase_migrations.schema_migrations ORDER BY version` shows all expected entries.
+- Record migration application evidence in the deployment doc.
+- If migration application fails, treat as a release blocker — do not mark Stage 2 complete.
 
 **Phase 2B: User Confirmation (MANDATORY)**
 

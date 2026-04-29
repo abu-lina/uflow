@@ -130,6 +130,15 @@ If the plan (or hotfix) addresses a **PWA/service-worker**, **cross-origin asset
 
 If runtime evidence is missing, UAT MUST downgrade the decision to **CONDITIONAL APPROVAL** or **NOT APPROVED** and record the missing evidence as a deferred follow-up with owner + trigger + closure evidence.
 
+### Migration-Only Release Evidence Gate (MANDATORY when applicable)
+
+If the plan's **primary deliverable is a database migration** (no user-facing UI/code changes), UAT MUST NOT issue an unqualified `APPROVED FOR RELEASE` without one of:
+
+- Evidence that migrations have been applied to at least one non-local environment (dev or prod) — e.g., `supabase_migrations.schema_migrations` query result showing the migration versions.
+- An explicit **DEFERRED** post-release gate with: (a) owner (DevOps/Operator), (b) trigger ("after prod migration push"), (c) closure evidence ("schema_migrations query shows 001/002/003 applied"), recorded as a DF-N item in the UAT report.
+
+For migration-only releases, the entire value delivery is the database change. Code-only verification (lint/type-check/build/tests passing) proves the *code* is safe but does not prove the *schema change* is live. (Added per Retrospective 114, PI-P5.)
+
 ### Focus/Scroll Side-Effects Scenarios (WHEN APPLICABLE)
 
 If the change can affect mobile input focus/keyboard/scroll behavior (direct `focus()` calls or equivalent effects), UAT MUST include scenarios for:

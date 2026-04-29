@@ -246,6 +246,13 @@ If the plan fixes a bug inside a conditional render block (examples: AnimatePres
 10. Specify verification steps, handoff notes, rollback considerations.
 11. Verify all work delivers on value statement. Don't defer core value to future phases.
 12. **BEFORE HANDOFF**: Scan plan for any `OPEN QUESTION` items not marked as resolved/closed. If any exist, prominently list them and ask user: "The following open questions remain unresolved. Do you want to proceed to Critic/Implementer with these unresolved, or should we address them first?"
+13. **Schema/migration plan self-review (MANDATORY when plan includes `supabase/migrations/` changes)**:
+    Before handing off to Critic, verify:
+    - Are acceptance criteria **column-level** (names, types, nullability, defaults), not just table/index count-level?
+    - Does each acceptance criterion have a **testable, non-trivial verification method** (e.g., `pg_get_functiondef()` comparison, not "check it looks right")?
+    - Are all **inter-phase dependencies** explicit (e.g., "Phase 2 depends on Phase 0-prime baseline being live on prod")?
+    - Are **environment-specific considerations** documented (which environments does the migration target? which are register-only vs execute?)?
+    This checklist reduces critique cycle overhead for schema-heavy plans. (Added per Retrospective 114, PI-P2.)
 
 ### Gate Integrity After Revisions (MANDATORY)
 
