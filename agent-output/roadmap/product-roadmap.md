@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-29
+**Last Updated**: 2026-04-30
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.11.6
+**Current Version**: v0.11.7
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -32,6 +32,7 @@
 | 2026-04-29 22:25Z | Plan 114 Phase 2 released (v0.11.4): F-3 data coherence fix — boolean columns as sole source of truth | Dropped `barakah_effects TEXT[]` from `providers` and `community_services`. Updated `get_community_services_for_provider` and `upsert_joinhalal_providers` RPCs. Removed all app-layer references (31 files). Providers created via form are now immediately searchable via boolean filters. PR #194, tag v0.11.4. |
 | 2026-04-30T00:55Z | Plan 114 Phase 3 released (v0.11.5): F-2 junction tables + F-4 typed FKs — referential integrity at DB level | Created 4 junction tables (provider_offers, provider_needs, community_service_offers, community_service_needs) with FK constraints + CASCADE. Typed FK columns added to bookmarks + provider_badges with mutual exclusion CHECK. All polymorphic and array columns dropped. 13 service files + 5 UI components migrated. 1185 tests passing. Tag v0.11.5. |
 | 2026-04-30T08:40Z | Plan 114 Phase 4 released (v0.11.6): F-5 semantic constraints — listing_type_enum + CHECK constraints | Extended listing_type_enum with ummah, backfilled all NULL listing_type rows, enforced NOT NULL, added 3 section-scoped CHECK constraints (food-only, business-only, ummah-only). Type unions widened in service/admin/form layers. Migration contract + behavioral tests added. Version collision with Phase 3 resolved: bumped to v0.11.6. Tag v0.11.6. |
+| 2026-04-30T11:15Z | Plan 114 Phase 5 released (v0.11.7): F-1 dual-PK consolidation — eliminate dual-primary-key anti-pattern | Promoted `<entity>_id` as sole PRIMARY KEY on 4 tables (categories, users, community_services, providers); dropped vestigial `id` columns. FK-safe cutover: 26+ inbound FKs on providers remain valid. Fixed admin badge verify/unverify auth (users.role). 8 app-code files updated. Phase 4 migration renamed 0061 to resolve version-prefix collision. Tag v0.11.7. |
 | 2026-03-03       | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                |
 | 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
 | 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |
@@ -121,12 +122,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.11.5 — Released 2026-04-29 · Plan 114 Phase 3: Referential integrity — junction tables (F-2) + typed FKs (F-4)
+**Current Working Release**: v0.11.7 — Released 2026-04-30 · Plan 114 Phase 5: F-1 dual-PK consolidation (categories, users, community_services, providers)
 
-_Quality improvements (2026-04-27): DF-1: Section field labels localised via LanguageProvider t() keys across all 6 locales (en/de/ar/tr/ur/ps). DF-2: Route-level test mock for /api/admin/edit-provider now validates listingType enum contract. 1144/1144 tests pass. Backward-compatible patch. Tag v0.10.40 pushed._
-
-**Release Status**: Released
-**Ready for Release**: ✅ v0.10.33 complete
+**Release Status**: Released  
+**Ready for Release**: ✅ v0.11.7 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -143,6 +142,8 @@ _Quality improvements (2026-04-27): DF-1: Section field labels localised via Lan
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.11.7 | 2026-04-30 | Plan 114 Phase 5 (F-1 dual-PK consolidation: categories, users, community_services, providers — branch session/116-114p5-dual-pk) | Released |
+| v0.11.6 | 2026-04-30 | Plan 114 Phase 4 (F-5 semantic constraints — listing_type_enum + CHECK constraints — PR #197) | Released |
 | v0.11.5 | 2026-04-29 | Plan 114 Phase 3 (F-2 junction tables + F-4 typed FKs — referential integrity at DB level — PR session/114p3-referential-integrity) | Released |
 | v0.11.4 | 2026-04-29 | Plan 114 Phase 2 (F-3 data coherence: drop barakah_effects, boolean columns sole source of truth — PR #194) | Released |
 | v0.11.3 | 2026-04-29 | Plan 111 (Canonical Section Routes & City-Selection Bugfixes — Closes #188) | Released |
