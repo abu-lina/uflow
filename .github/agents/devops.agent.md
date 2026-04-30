@@ -4,22 +4,7 @@ name: DevOps
 target: vscode
 argument-hint: Specify the version to release or deployment task to perform
 tools:
-  [
-    'execute/getTerminalOutput',
-    'execute/runInTerminal',
-    'read/problems',
-    'read/readFile',
-    'read/terminalSelection',
-    'read/terminalLastCommand',
-    'edit/createDirectory',
-    'edit/createFile',
-    'edit/editFiles',
-    'search',
-    'web/fetch',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'todo',
-  ]
+  [execute/getTerminalOutput, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/problems, read/readFile, supabase/apply_migration, supabase/create_branch, supabase/delete_branch, supabase/deploy_edge_function, supabase/execute_sql, supabase/generate_typescript_types, supabase/get_advisors, supabase/get_edge_function, supabase/get_logs, supabase/get_project_url, supabase/get_publishable_keys, supabase/list_branches, supabase/list_edge_functions, supabase/list_extensions, supabase/list_migrations, supabase/list_tables, supabase/merge_branch, supabase/rebase_branch, supabase/reset_branch, supabase/search_docs, edit/createDirectory, edit/createFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, todo, uflow.uflow-memory/flowbaby_storeMemory, uflow.uflow-memory/flowbaby_retrieveMemory]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Request Implementation Fixes
@@ -476,6 +461,32 @@ After release is confirmed complete, normalize the main deployment doc:
    - Closure evidence ("npm run build exit 0 in CI build job")
 
    Neither option is a general allowance to skip build verification permanently. Option (b) creates a named obligation that must be closed before the next plan's Stage 1 commit.
+
+   3g. **PROD migration apply (MANDATORY when release includes migration files)**:
+
+   The GitHub Actions deploy workflow builds and pushes a Docker image only — it does NOT run `supabase db push`. Migrations must be applied manually after every release that includes migration files.
+
+   **Tool options** (use whichever is available in the session):
+   - MCP: `mcp_supabase_apply_migration` per migration file, in filename-sort order
+   - CLI: `supabase db push --linked` against the PROD project ref
+
+   **Known environment mapping** (confirm in `docs/architecture/ENVIRONMENTS.md` or from user if uncertain):
+   - DEV: `qrekonfhaenjdnjhwdum` (CLI-linked, `.env.local`)
+   - PROD: `rdtdtcfntopcxcigkqoq` (MCP tool default)
+
+   **Apply order**: Filename sort order (same as Supabase CLI). When using MCP tools, apply each migration individually and verify each returns `{"success":true}` before continuing.
+
+   **Verification SQL** (run after all migrations applied):
+   ```sql
+   SELECT table_name, constraint_type, constraint_name
+   FROM information_schema.table_constraints
+   WHERE table_schema = 'public' AND constraint_type = 'PRIMARY KEY'
+   ORDER BY table_name;
+   ```
+
+   **Record in deployment doc**: tool used, project ref, each migration applied (filename + result), verification SQL output.
+
+   If a migration was already applied (idempotent-safe with `IF NOT EXISTS` guards): note it and continue — do not treat as an error.
 
 4. **Close GitHub Issues for released plans (MANDATORY when applicable)**:
    For each plan included in this release, check the plan document header for a `GitHub Issue` field containing a full URL (e.g., `GitHub Issue: https://github.com/abu-lina/uflow/issues/N`).
