@@ -4,7 +4,68 @@ name: DevOps
 target: vscode
 argument-hint: Specify the version to release or deployment task to perform
 tools:
-  [execute/getTerminalOutput, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/problems, read/readFile, supabase/apply_migration, supabase/create_branch, supabase/delete_branch, supabase/deploy_edge_function, supabase/execute_sql, supabase/generate_typescript_types, supabase/get_advisors, supabase/get_edge_function, supabase/get_logs, supabase/get_project_url, supabase/get_publishable_keys, supabase/list_branches, supabase/list_edge_functions, supabase/list_extensions, supabase/list_migrations, supabase/list_tables, supabase/merge_branch, supabase/rebase_branch, supabase/reset_branch, supabase/search_docs, edit/createDirectory, edit/createFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, todo, uflow.uflow-memory/flowbaby_storeMemory, uflow.uflow-memory/flowbaby_retrieveMemory]
+  [
+    execute/getTerminalOutput,
+    execute/runInTerminal,
+    read/terminalSelection,
+    read/terminalLastCommand,
+    read/problems,
+    read/readFile,
+    edit/createDirectory,
+    edit/createFile,
+    edit/editFiles,
+    search/changes,
+    search/codebase,
+    search/fileSearch,
+    search/listDirectory,
+    search/textSearch,
+    search/searchSubagent,
+    search/usages,
+    web/fetch,
+    supabase-prod/apply_migration,
+    supabase-prod/create_branch,
+    supabase-prod/delete_branch,
+    supabase-prod/deploy_edge_function,
+    supabase-prod/execute_sql,
+    supabase-prod/generate_typescript_types,
+    supabase-prod/get_advisors,
+    supabase-prod/get_edge_function,
+    supabase-prod/get_logs,
+    supabase-prod/get_project_url,
+    supabase-prod/get_publishable_keys,
+    supabase-prod/list_branches,
+    supabase-prod/list_edge_functions,
+    supabase-prod/list_extensions,
+    supabase-prod/list_migrations,
+    supabase-prod/list_tables,
+    supabase-prod/merge_branch,
+    supabase-prod/rebase_branch,
+    supabase-prod/reset_branch,
+    supabase-prod/search_docs,
+    supabase-dev/apply_migration,
+    supabase-dev/create_branch,
+    supabase-dev/delete_branch,
+    supabase-dev/deploy_edge_function,
+    supabase-dev/execute_sql,
+    supabase-dev/generate_typescript_types,
+    supabase-dev/get_advisors,
+    supabase-dev/get_edge_function,
+    supabase-dev/get_logs,
+    supabase-dev/get_project_url,
+    supabase-dev/get_publishable_keys,
+    supabase-dev/list_branches,
+    supabase-dev/list_edge_functions,
+    supabase-dev/list_extensions,
+    supabase-dev/list_migrations,
+    supabase-dev/list_tables,
+    supabase-dev/merge_branch,
+    supabase-dev/rebase_branch,
+    supabase-dev/reset_branch,
+    supabase-dev/search_docs,
+    uflow.uflow-memory/flowbaby_storeMemory,
+    uflow.uflow-memory/flowbaby_retrieveMemory,
+    todo,
+  ]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Request Implementation Fixes
@@ -109,15 +170,17 @@ git show origin/main:package.json | grep '"version"'
 
 If the target version tag already exists, increment and update the plan's `Target Release` field before continuing. Document the adjustment in the Stage 1 deployment doc.
 
-   **Working target formula (MANDATORY, run before editing any files)**: Determine the correct version target *before* touching `package.json`, `CHANGELOG.md`, or any other file:
-   ```
-   git tag --list "v*" | sort -V | tail -1
-   ```
-   The working target is that result + 1 patch. For example, if `v0.10.37` is the highest tag, the target is `v0.10.38`. This prevents stale-target conflicts when parallel sessions have merged to main since planning — the collision is discovered before any file is edited rather than requiring an amend cycle after.
+**Working target formula (MANDATORY, run before editing any files)**: Determine the correct version target _before_ touching `package.json`, `CHANGELOG.md`, or any other file:
+
+```
+git tag --list "v*" | sort -V | tail -1
+```
+
+The working target is that result + 1 patch. For example, if `v0.10.37` is the highest tag, the target is `v0.10.38`. This prevents stale-target conflicts when parallel sessions have merged to main since planning — the collision is discovered before any file is edited rather than requiring an amend cycle after.
 
 4. Check version consistency for target release per `release-procedures` skill.
-4b. **CHANGELOG date sanity-check (MANDATORY)**: - If the latest `CHANGELOG.md` entry includes a date, verify it matches the actual release day. - Preferred check: compare against `date -u +%Y-%m-%d` and correct obvious mismatches before committing. - If you intentionally do not correct it, record rationale in the Stage 1 deployment doc.
-4c. **Chain timestamp sanity-check (MANDATORY)**:
+   4b. **CHANGELOG date sanity-check (MANDATORY)**: - If the latest `CHANGELOG.md` entry includes a date, verify it matches the actual release day. - Preferred check: compare against `date -u +%Y-%m-%d` and correct obvious mismatches before committing. - If you intentionally do not correct it, record rationale in the Stage 1 deployment doc.
+   4c. **Chain timestamp sanity-check (MANDATORY)**:
 
 - Review the current plan's implementation, code-review, QA, and UAT docs for UTC timestamps in status changes, timeline tables, or changelog entries.
 - Verify timestamps are **causally monotonic** across the handoff order (do not allow later phases to appear earlier than predecessor phases).
@@ -127,6 +190,7 @@ If the target version tag already exists, increment and update the plan's `Targe
   - leave the source doc unchanged and record follow-up rationale (mark uncertain times as `approx.` rather than inventing exact times).
 
 4d. **Stage 1 origin sync (MANDATORY)**:
+
 - Before staging changes for the final Stage 1 commit, ensure the branch is current with origin:
   ```
   git fetch origin --tags
@@ -346,7 +410,7 @@ If a follow-up push is still required (for example: unavoidable docs corrections
   3. Run `npm install --package-lock-only`
   4. Rename and update Stage 1 deployment doc to reflect new version
   5. Update plan's `Target Release` field and all changelog references
-  5b. Scan the implementation doc for any "Version updated to [X]" or "version bump to [X]" text. If the recorded version differs from the final bumped version, update it in the same amend pass. This keeps the implementation doc accurate for future audit — the bump is already an amend cycle so the cost is negligible.
+     5b. Scan the implementation doc for any "Version updated to [X]" or "version bump to [X]" text. If the recorded version differs from the final bumped version, update it in the same amend pass. This keeps the implementation doc accurate for future audit — the bump is already an amend cycle so the cost is negligible.
   6. `git commit --amend` to fold the version bump into the fix commit (squash one layer only)
   7. Resume rebase
      Document the collision source, bumped version, and resolution steps in the deployment doc.
@@ -391,13 +455,16 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 **Phase 2C: Release Execution (After Approval)**
 
 1. **Final pre-push sync guard (MANDATORY)**: Immediately before pushing, confirm the branch is still current with `origin/main`. Parallel sessions can merge between Phase 2A and the actual push — especially during the Phase 2B user-confirmation window:
+
    ```
    git fetch origin main --tags
    git merge-base --is-ancestor origin/main HEAD || echo "⚠️ REBASE NEEDED"
    ```
+
    If the check prints `REBASE NEEDED`, rebase onto `origin/main`, resolve any conflicts, and re-run the full post-rebase integrity gate (Step 8e: conflict markers, JSON parse, type-check, audit) before proceeding. Do not push into a known-conflict state — the PR will show "can't auto-merge" and require a second force-push cycle.
 
    Push branch: `git push origin [branch]`.
+
 2. **Surface PR URL (MANDATORY)**: After every branch push, include the PR comparison URL in the agent response: `https://github.com/<org>/<repo>/compare/main...<branch>`. Do not rely on GitHub's transient "create a pull request" banner.
 3. Verify the PR comparison has no merge conflicts. If conflicts exist, rebase onto `origin/main`, resolve, and force-push with `--force-with-lease` before proceeding.
 4. Tag: `git tag -a v[X.Y.Z] -m "Release v[X.Y.Z] - [plan summaries]"`, push tag. If a post-push rebase changes `HEAD`, delete and recreate the tag on the new `HEAD` before pushing it.
@@ -423,13 +490,14 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 If any smoke check fails: stop and treat as a release failure. Coordinate rollback or hotfix before marking Stage 2 complete.
 
-   **Worktree / DF-3 exception (WHEN APPLICABLE)**: If the plan's open-actions tracker includes an accepted DF-3 constraint (Supabase env vars unavailable in the worktree), HTTP 200 smoke checks cannot succeed. Use compilation evidence as the substitute signal:
-   1. Start a **fresh** dev server instance from current HEAD
-   2. Wait for `✓ Compiled /` and `✓ Compiled /providers` in server output
-   3. Record module counts (e.g., "2073 modules") — zero import/TS errors is the meaningful signal
-   4. Document in the deployment doc: "HTTP 500 — env constraint per DF-3 (accepted). Compilation clean: X modules / Y modules. Not a Plan regression."
+**Worktree / DF-3 exception (WHEN APPLICABLE)**: If the plan's open-actions tracker includes an accepted DF-3 constraint (Supabase env vars unavailable in the worktree), HTTP 200 smoke checks cannot succeed. Use compilation evidence as the substitute signal:
 
-   This exception applies **only** when DF-3 is already a pre-accepted, documented risk in the open-actions tracker. It does **not** apply when env vars are available — HTTP validation remains the gold standard in environments with real credentials.
+1.  Start a **fresh** dev server instance from current HEAD
+2.  Wait for `✓ Compiled /` and `✓ Compiled /providers` in server output
+3.  Record module counts (e.g., "2073 modules") — zero import/TS errors is the meaningful signal
+4.  Document in the deployment doc: "HTTP 500 — env constraint per DF-3 (accepted). Compilation clean: X modules / Y modules. Not a Plan regression."
+
+This exception applies **only** when DF-3 is already a pre-accepted, documented risk in the open-actions tracker. It does **not** apply when env vars are available — HTTP validation remains the gold standard in environments with real credentials.
 
 3c. **Deferred validation follow-ups (MANDATORY when applicable)**:
 
@@ -453,14 +521,15 @@ After release is confirmed complete, normalize the main deployment doc:
 
 3f. **DF-3 build gate acceptance procedure (WHEN APPLICABLE)**: When `npm run build` cannot be verified in the worktree due to missing Supabase env vars (DF-3), the release owner MUST explicitly choose one of the following before declaring Stage 2 complete:
 
-   **(a) CI verification (preferred)**: Confirm the GitHub Actions build job on the PR passes with full env vars. Reference the CI run URL in the deployment doc.
+**(a) CI verification (preferred)**: Confirm the GitHub Actions build job on the PR passes with full env vars. Reference the CI run URL in the deployment doc.
 
-   **(b) Named owner acceptance**: Record in the deployment doc and open-actions tracker:
-   - Owner (name or role)
-   - Timeline (e.g., "Verify on merge CI within 24h")
-   - Closure evidence ("npm run build exit 0 in CI build job")
+**(b) Named owner acceptance**: Record in the deployment doc and open-actions tracker:
 
-   Neither option is a general allowance to skip build verification permanently. Option (b) creates a named obligation that must be closed before the next plan's Stage 1 commit.
+- Owner (name or role)
+- Timeline (e.g., "Verify on merge CI within 24h")
+- Closure evidence ("npm run build exit 0 in CI build job")
+
+Neither option is a general allowance to skip build verification permanently. Option (b) creates a named obligation that must be closed before the next plan's Stage 1 commit.
 
    3g. **PROD migration apply (MANDATORY when release includes migration files)**:
 
