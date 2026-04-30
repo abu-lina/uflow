@@ -23,8 +23,17 @@ Two items were deferred from Plan 114 Phase 5 UAT and are non-blocking for the v
 
 | Item | Owner | Trigger/Due | Evidence to close | Status |
 |------|-------|-------------|-------------------|--------|
-| EXPLAIN ANALYZE query benchmarks on 4 Phase 5 tables | QA / DevOps | Before next schema migration touching these tables, or within 7 days of prod deploy | EXPLAIN ANALYZE output for `categories`, `users`, `community_services`, `providers` — each query ≤10% regression vs pre-Phase-5 baseline | Open |
+| EXPLAIN ANALYZE query benchmarks on 4 Phase 5 tables | QA / DevOps | Within 7 days of prod deploy (due 2026-05-07), or before next schema migration on these tables | EXPLAIN ANALYZE output for `categories`, `users`, `community_services`, `providers` on PROD (`rdtdtcfntopcxcigkqoq`) — each query ≤10% regression vs pre-Phase-5 baseline | Open |
 | Migration 005 local-reset blocker | Planner / Implementer | Next schema refactor session (separate ticket) | `supabase db reset --local` succeeds through all migrations including 005 | Open |
+
+---
+
+## Environment Reference
+
+| Environment | Supabase Project | Migrations Status |
+|-------------|-----------------|------------------|
+| DEV | `qrekonfhaenjdnjhwdum` | ✅ Applied via CLI |
+| PROD (UAT+Prod combined) | `rdtdtcfntopcxcigkqoq` | ✅ Applied via MCP tools 2026-04-30 |
 
 ---
 
@@ -33,3 +42,4 @@ Two items were deferred from Plan 114 Phase 5 UAT and are non-blocking for the v
 | Date (UTC) | Agent | Change |
 |------------|-------|--------|
 | 2026-04-30 | devops | Created tracker from deferred UAT validations and pre-existing migration blocker |
+| 2026-04-30 | devops | Confirmed environment mapping: PROD=`rdtdtcfntopcxcigkqoq` (UAT+Prod combined). Both envs migrated. Updated due date for DF-1 to 2026-05-07. |

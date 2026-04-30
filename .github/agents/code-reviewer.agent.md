@@ -120,6 +120,23 @@ Core Responsibilities:
   - if deleted modules were part of a user-visible feature, verify no obvious entry-point references remain in navigation or account/profile surfaces
 - If stale references remain, record at least a MEDIUM finding unless the plan explicitly documents them as intentional follow-up work.
 
+  6i. **Migration Filename Reference Check (MANDATORY when applicable)**:
+
+- Trigger when the implementation creates, renames, or renumbers migration files under `supabase/migrations/`.
+- Search for the exact migration filename(s) as literal strings in test files:
+  ```bash
+  grep -r "<migration_filename>" src/__tests__/ tests/
+  ```
+- If any test file hardcodes a migration filename, flag as a finding (MEDIUM if file still exists at a different path, HIGH if file no longer exists at the referenced path).
+- Recommended fix: tests should locate migration files by pattern rather than exact name:
+  ```ts
+  // ✅ Correct — survives renaming
+  const files = fs.readdirSync(migrationsDir).filter(f => f.includes('phase4'));
+  // ❌ Fragile — breaks on rename
+  const file = '006_phase4_semantic_constraints.sql';
+  ```
+- Scope: check `src/__tests__/migrations/`, `tests/`, and any vitest config that enumerates migration paths.
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions

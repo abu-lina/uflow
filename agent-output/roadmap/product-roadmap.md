@@ -142,7 +142,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
-| v0.11.7 | 2026-04-30 | Plan 114 Phase 5 (F-1 dual-PK consolidation: categories, users, community_services, providers — branch session/116-114p5-dual-pk) | Released |
+| v0.11.7 | 2026-04-30 | Plan 114 Phase 5 (F-1 dual-PK consolidation: categories, users, community_services, providers — PR #198) | Released |
 | v0.11.6 | 2026-04-30 | Plan 114 Phase 4 (F-5 semantic constraints — listing_type_enum + CHECK constraints — PR #197) | Released |
 | v0.11.5 | 2026-04-29 | Plan 114 Phase 3 (F-2 junction tables + F-4 typed FKs — referential integrity at DB level — PR session/114p3-referential-integrity) | Released |
 | v0.11.4 | 2026-04-29 | Plan 114 Phase 2 (F-3 data coherence: drop barakah_effects, boolean columns sole source of truth — PR #194) | Released |

@@ -248,6 +248,44 @@ Minimum evidence:
 
 If residue remains, QA cannot classify the implementation as QA Complete.
 
+### Migration Prefix Collision Check (MANDATORY before `supabase db push`)
+
+Before executing `supabase db push --include-all` or any bulk migration apply, verify no two migration files share the same numeric prefix:
+
+```bash
+ls supabase/migrations/*.sql | sed 's/_[^/]*$//' | sort | uniq -d
+```
+
+Any output = collision. Rename the newer file to the next available prefix before continuing.
+
+**Why**: `supabase db push` applies files in filename sort order. Two files sharing a prefix cause unpredictable apply order or apply failure — not reported as an error, silently corrupts migration ordering.
+
+**Cascade risk**: A mid-QA rename breaks any test file that hardcodes the old filename as a literal string. If you rename a migration file, immediately search for the old filename in `src/__tests__/` and `tests/`:
+
+```bash
+grep -r "<old_migration_filename>" src/__tests__/ tests/
+```
+
+Fix any matches before the rename is committed.
+
+### EXPLAIN ANALYZE Gate (MANDATORY for schema-affecting migrations)
+
+**Trigger**: When the plan includes migrations that change PRIMARY KEY structure, drop/add indexed columns, or restructure table constraints on frequently-queried tables.
+
+QA MUST provide one of:
+
+- **Option A (preferred)**: `EXPLAIN (ANALYZE, BUFFERS)` output for the primary query on each affected table — before and after migration — showing index scan vs seq scan and estimated cost. Record evidence in QA report.
+
+- **Option B (deferral)**: When the execution environment lacks direct DB access:
+  - Owner (name or role)
+  - Trigger/due window (example: "within 7 days of PROD deploy")
+  - Exact evidence required: `EXPLAIN ANALYZE` for `<table>` query showing ≤10% cost regression vs pre-migration baseline
+  - Tracked in `agent-output/planning/[ID]-open-actions.md`
+
+**Why this matters**: PK promotion changes index structure. Without a before/after baseline it is impossible to detect query regressions introduced by the migration. Option B deferral is a named obligation, not a silent waiver.
+
+**Scope**: Applies to tables with >100 rows of production data or that appear in search RPCs. Pure static reference tables with <100 rows may use a lighter gate (sequential scan on small tables is not a regression).
+
 ### SSR / Server-Defaults Check (MANDATORY when applicable)
 
 If the change touches URL param parsing, “sentinel” values (e.g., _all locations_), or any Next.js Server Component page that reads `searchParams`, QA MUST validate:

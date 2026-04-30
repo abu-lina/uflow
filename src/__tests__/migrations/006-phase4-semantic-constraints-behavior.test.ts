@@ -7,6 +7,13 @@ import { spawnSync } from 'node:child_process';
 
 const PGHOST = process.env.PGHOST || '127.0.0.1';
 const PGPORT = process.env.PGPORT || '54322';
+
+// Skip this suite when local Supabase Postgres is not reachable (e.g. CI without supabase start)
+const pgReady = spawnSync('pg_isready', ['-h', PGHOST, '-p', PGPORT], {
+  encoding: 'utf8',
+  env: { ...process.env, PGHOST, PGPORT },
+});
+const LOCAL_POSTGRES = pgReady.status === 0;
 const PGUSER = process.env.PGUSER || 'postgres';
 const PGPASSWORD = process.env.PGPASSWORD || 'postgres';
 
@@ -38,11 +45,11 @@ function runSqlExpectFailure(dbName: string, sql: string) {
   return runCommand('psql', ['-d', dbName, '-v', 'ON_ERROR_STOP=1', '-Atq'], sql);
 }
 
-describe('migration 006 semantic constraints behavioral checks', () => {
+describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral checks', () => {
   const dbName = `phase4_semantic_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
   const scratchDir = mkdtempSync(join(tmpdir(), 'phase4-semantic-'));
-  const migrationPath = join(process.cwd(), 'supabase', 'migrations', '006_phase4_semantic_constraints.sql');
-  const migrationSqlPath = join(scratchDir, '006_phase4_semantic_constraints.sql');
+  const migrationPath = join(process.cwd(), 'supabase', 'migrations', '0061_phase4_semantic_constraints.sql');
+  const migrationSqlPath = join(scratchDir, '0061_phase4_semantic_constraints.sql');
 
   beforeAll(() => {
     const migrationSql = readFileSync(migrationPath, 'utf8');
