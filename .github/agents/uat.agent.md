@@ -4,17 +4,7 @@ name: UAT
 target: vscode
 argument-hint: Reference the implementation or plan to validate (e.g., plan 002)
 tools:
-  [
-    'read/problems',
-    'read/readFile',
-    'search',
-    'edit/createDirectory',
-    'edit/createFile',
-    'edit/editFiles',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'todo',
-  ]
+  [read/problems, read/readFile, supabase/apply_migration, supabase/create_branch, supabase/delete_branch, supabase/deploy_edge_function, supabase/execute_sql, supabase/generate_typescript_types, supabase/get_advisors, supabase/get_edge_function, supabase/get_logs, supabase/get_project_url, supabase/get_publishable_keys, supabase/list_branches, supabase/list_edge_functions, supabase/list_extensions, supabase/list_migrations, supabase/list_tables, supabase/merge_branch, supabase/rebase_branch, supabase/reset_branch, supabase/search_docs, edit/createDirectory, edit/createFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, todo, uflow.uflow-memory/flowbaby_storeMemory, uflow.uflow-memory/flowbaby_retrieveMemory]
 model: Claude Haiku 4.5
 handoffs:
   - label: Report UAT Failure

@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: QA Complete
+Status: Committed
 ---
 
 # Plan 114 — Database Schema Staged Refactor
@@ -43,6 +43,7 @@ Status: QA Complete
 | 2026-04-29T23:32Z   | uat | **Phase 4 UAT**: APPROVED FOR RELEASE. Plan objective fully achieved. F-5 semantic constraints enforced at DB level. All predecessors passed. |
 | 2026-04-30T00:00Z   | devops | **Phase 4 Stage 2**: Version bumped to 0.11.6 (collision with Phase 3 v0.11.5 resolved during rebase). Committed and pushing as v0.11.6. |
 | 2026-04-30T11:20Z   | qa | **Phase 5 QA Complete**: All gates PASSED. Dev deployment applied (0061+007–010). C-3 smoke tests PASS (categories, users, community_services, providers + search_providers RPC). C-5 auth gate PASS (users.user_id PK confirmed, auth bridge intact). Regression audit PASS (0 stale id refs). Phase 4 migration renamed 0061 to resolve version collision. EXPLAIN ANALYZE deferred per plan. **APPROVED FOR UAT**. |
+| 2026-04-30T11:30Z   | uat | **Phase 5 UAT Complete**: Value Statement fully delivered — dual-PK anti-pattern eliminated on 4 tables (categories, users, community_services, providers). Schema now has single canonical PK per table matching FK graph. Admin authorization fixed (users.role column). All acceptance criteria met; zero scope drift; release-ready. **APPROVED FOR RELEASE** as v0.11.7 patch. Handoff to DevOps Stage 1. |
 
 ---
 
