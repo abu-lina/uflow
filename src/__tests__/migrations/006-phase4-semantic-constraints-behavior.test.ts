@@ -41,8 +41,8 @@ function runSqlExpectFailure(dbName: string, sql: string) {
 describe('migration 006 semantic constraints behavioral checks', () => {
   const dbName = `phase4_semantic_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
   const scratchDir = mkdtempSync(join(tmpdir(), 'phase4-semantic-'));
-  const migrationPath = join(process.cwd(), 'supabase', 'migrations', '006_phase4_semantic_constraints.sql');
-  const migrationSqlPath = join(scratchDir, '006_phase4_semantic_constraints.sql');
+  const migrationPath = join(process.cwd(), 'supabase', 'migrations', '0061_phase4_semantic_constraints.sql');
+  const migrationSqlPath = join(scratchDir, '0061_phase4_semantic_constraints.sql');
 
   beforeAll(() => {
     const migrationSql = readFileSync(migrationPath, 'utf8');

@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 describe('migration 006 phase4 semantic constraints', () => {
-  const migrationPath = join(process.cwd(), 'supabase', 'migrations', '006_phase4_semantic_constraints.sql');
+  const migrationPath = join(process.cwd(), 'supabase', 'migrations', '0061_phase4_semantic_constraints.sql');
 
   if (!existsSync(migrationPath)) {
     throw new Error('Migration 006 file not found in active migrations path.');
