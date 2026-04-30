@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Active
+Status: Released
 ---
 
 # Retrospective 114: Database Schema Staged Refactor — Phase 5 (Dual-PK Consolidation)
@@ -201,3 +201,4 @@ All timestamps approximate unless explicitly marked with source. ADR-114 entries
 | Date (UTC) | Agent | Change |
 |------------|-------|--------|
 | 2026-04-30T00:00Z approx. | retrospective | Document created — Plan 114 Phase 5 retrospective |
+| 2026-04-30T17:00Z | devops (closeout) | Status set to Released; moved to closed/ — PI docs created (R1–R5 applied in fc859ce4) |
