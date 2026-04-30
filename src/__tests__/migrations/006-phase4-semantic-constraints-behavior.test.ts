@@ -10,6 +10,22 @@ const PGPORT = process.env.PGPORT || '54322';
 const PGUSER = process.env.PGUSER || 'postgres';
 const PGPASSWORD = process.env.PGPASSWORD || 'postgres';
 
+/**
+ * Check if Postgres is reachable on the configured host/port.
+ * Returns false in CI environments that don't have a local Supabase instance.
+ * Tests are skipped (not failed) when Postgres is unavailable.
+ */
+function isPgReachable(): boolean {
+  const result = spawnSync('psql', ['-d', 'postgres', '-c', 'SELECT 1', '-Atq'], {
+    encoding: 'utf8',
+    env: { ...process.env, PGHOST, PGPORT, PGUSER, PGPASSWORD },
+    timeout: 3000,
+  });
+  return result.status === 0;
+}
+
+const pgAvailable = isPgReachable();
+
 function runCommand(command: string, args: string[], input?: string) {
   const result = spawnSync(command, args, {
     encoding: 'utf8',
@@ -38,7 +54,7 @@ function runSqlExpectFailure(dbName: string, sql: string) {
   return runCommand('psql', ['-d', dbName, '-v', 'ON_ERROR_STOP=1', '-Atq'], sql);
 }
 
-describe('migration 006 semantic constraints behavioral checks', () => {
+describe.skipIf(!pgAvailable)('migration 006 semantic constraints behavioral checks', () => {
   const dbName = `phase4_semantic_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
   const scratchDir = mkdtempSync(join(tmpdir(), 'phase4-semantic-'));
   const migrationPath = join(process.cwd(), 'supabase', 'migrations', '006_phase4_semantic_constraints.sql');
