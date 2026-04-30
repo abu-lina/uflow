@@ -1,6 +1,6 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-04-29
+**Last Updated**: 2026-04-30
 **Roadmap Owner**: roadmap agent
 **Current Version**: v0.11.6
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
@@ -32,6 +32,8 @@
 | 2026-04-29 22:25Z | Plan 114 Phase 2 released (v0.11.4): F-3 data coherence fix — boolean columns as sole source of truth | Dropped `barakah_effects TEXT[]` from `providers` and `community_services`. Updated `get_community_services_for_provider` and `upsert_joinhalal_providers` RPCs. Removed all app-layer references (31 files). Providers created via form are now immediately searchable via boolean filters. PR #194, tag v0.11.4. |
 | 2026-04-30T00:55Z | Plan 114 Phase 3 released (v0.11.5): F-2 junction tables + F-4 typed FKs — referential integrity at DB level | Created 4 junction tables (provider_offers, provider_needs, community_service_offers, community_service_needs) with FK constraints + CASCADE. Typed FK columns added to bookmarks + provider_badges with mutual exclusion CHECK. All polymorphic and array columns dropped. 13 service files + 5 UI components migrated. 1185 tests passing. Tag v0.11.5. |
 | 2026-04-30T08:40Z | Plan 114 Phase 4 released (v0.11.6): F-5 semantic constraints — listing_type_enum + CHECK constraints | Extended listing_type_enum with ummah, backfilled all NULL listing_type rows, enforced NOT NULL, added 3 section-scoped CHECK constraints (food-only, business-only, ummah-only). Type unions widened in service/admin/form layers. Migration contract + behavioral tests added. Version collision with Phase 3 resolved: bumped to v0.11.6. Tag v0.11.6. |
+| 2026-04-30T09:10Z | CI hotfix (commit 348e415a): behavioral migration test CI portability fix | Added isPgReachable() pre-flight + describe.skipIf(!pgAvailable) to 006-phase4-semantic-constraints-behavior.test.ts. Suite skips in CI (no Supabase on port 54322); runs 4/4 locally. Pushed to session/114p4-semantic-constraints; new CI run triggered. |
+| 2026-04-30T09:15Z | Process improvements PI-115 (PI-1, PI-4): DevOps Stage 2 CI-gated DF check + Implementer behavioral test CI portability pattern | Added Step 0 to devops.agent.md Phase 2C: block push when CI-triggered deferred items unresolved. Added Migration Behavioral Test CI Portability section to implementer.agent.md with isPgReachable + describe.skipIf pattern. Retrospective 114 closed. |
 | 2026-03-03       | memory-extension-v0.1.1 hotfix released                            | Fixed multi-root workspace detection, added OutputChannel, Electron ABI rebuild, caching bug fix — 4 post-release activation bugs resolved                |
 | 2026-03-07       | Versions v0.6.2–v0.6.11 backfilled in roadmap                      | 10 patch releases exist as git tags with detailed changelogs — see CHANGELOG.md for full release notes. Roadmap tracking established after v0.6.1         |
 | 2026-03-07       | Plan 034 released (v0.6.12): Provider image load performance fix   | Eliminated >10s hero image load latency via WebP-only format (no AVIF cold encoding), correct sizes/priority attributes, Docker volume cache persistence  |

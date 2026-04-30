@@ -405,6 +405,12 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 **Phase 2C: Release Execution (After Approval)**
 
+0. **CI-gated deferred item check (MANDATORY)**: Before pushing, inspect the Deferred Post-Deploy Tracker (deployment doc or open-actions tracker) for any item with trigger `CI` or `CI configuration` that is not yet resolved. If any such item exists and is unresolved:
+   - Resolve it now — a trigger of "CI" means it will fail on the first push.
+   - Do NOT treat "trigger: CI" deferred items as post-push follow-ups; they become failures the moment the branch reaches the runner.
+   - If already resolved (Status: ✅ / Closed), confirm closure and proceed.
+   - Exception: if the deferred item requires CI infrastructure changes (e.g., adding a Postgres service to the runner) that cannot be resolved in a single commit, document a concrete resolution plan with a follow-up commit SHA or issue reference before proceeding.
+
 1. **Final pre-push sync guard (MANDATORY)**: Immediately before pushing, confirm the branch is still current with `origin/main`. Parallel sessions can merge between Phase 2A and the actual push — especially during the Phase 2B user-confirmation window:
    ```
    git fetch origin main --tags

@@ -572,6 +572,42 @@ Silent drops are not allowed: if measurement work is not done, it must be explic
 - ❌ Any row with "No" or missing = **TDD violation, implementation incomplete**
 - If a row shows "No" for "Test Written First?", you must delete the implementation and restart with TDD
 
+### Migration Behavioral Test CI Portability (MANDATORY when applicable)
+
+**Applies when**: You add a test file that shells out directly to `psql`, `createdb`, or `dropdb` against a local Postgres instance (not via the Supabase JS client). These tests cannot run in standard CI runners that have no local Supabase/Postgres service.
+
+**Required pattern** — wrap the `describe` block with a pre-flight reachability guard:
+
+```typescript
+import { spawnSync } from 'node:child_process';
+
+const PGHOST = process.env.PGHOST || '127.0.0.1';
+const PGPORT = process.env.PGPORT || '54322';
+const PGUSER = process.env.PGUSER || 'postgres';
+const PGPASSWORD = process.env.PGPASSWORD || 'postgres';
+
+function isPgReachable(): boolean {
+  const result = spawnSync('psql', ['-d', 'postgres', '-c', 'SELECT 1', '-Atq'], {
+    encoding: 'utf8',
+    env: { ...process.env, PGHOST, PGPORT, PGUSER, PGPASSWORD },
+    timeout: 3000,
+  });
+  return result.status === 0;
+}
+
+const pgAvailable = isPgReachable();
+
+describe.skipIf(!pgAvailable)('your behavioral suite name', () => {
+  // ...tests
+});
+```
+
+**Rules:**
+- This guard MUST be present from the start — not added as a post-push hotfix.
+- The test file must pass locally (Postgres available on port 54322) and skip gracefully in CI (suite counted as skipped, not failed).
+- Include this in the TDD Compliance table: note "CI portability guard applied" in the Failure Reason column for the behavioral suite row.
+- Contract/structure tests (no live DB connection) do not need this guard; apply only to files using `spawnSync`/`execSync` for Postgres CLI commands.
+
 ## Agent Workflow
 
 - Execute plan step-by-step (plan is primary)
