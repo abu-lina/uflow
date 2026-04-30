@@ -284,6 +284,20 @@ If you create or modify a migration that references **existing** tables/columns 
 - If schema drift is detected, STOP and resolve (update migration, or align schemas) before handoff.
 - Document the verification evidence in the implementation doc.
 
+### FK-Safe PK Cutover (MANDATORY when promoting a column to PRIMARY KEY)
+
+Before writing any migration that promotes a column to PRIMARY KEY or changes PK structure:
+
+1. **Enumerate inbound FKs**: Query `information_schema.referential_constraints` or `pg_constraint` to list all FKs pointing at the table.
+2. **Preserve UNIQUE constraints**: Do NOT drop UNIQUE constraints on the target column before the PK promotion — doing so breaks FK validation mid-transaction. Correct sequence:
+   - Drop old PK constraint (`DROP CONSTRAINT <table>_pkey`)
+   - Add new PK on the target column (`ADD CONSTRAINT <table>_pkey PRIMARY KEY (<entity_id>)`)
+   - Only then drop the now-redundant UNIQUE constraint (if desired)
+3. **Wrap in a transaction**: All constraint changes in one migration should be inside `BEGIN; ... COMMIT;` for atomic rollback.
+4. **Document inbound FK count** in the implementation doc (example: "26 inbound FKs to `providers.provider_id` — all already target `<entity_id>`; no FK remapping needed").
+
+**Why**: Dropping a UNIQUE constraint that FKs depend on before the new PK is in place causes `ERROR: there is no unique constraint matching given keys for referenced table`. This is a known Postgres migration anti-pattern.
+
 ### DB Plan Evidence Gate (Search) (MANDATORY WHEN APPLICABLE)
 
 If a plan adds/changes search-related indexes or RPCs, you MUST provide one of:
