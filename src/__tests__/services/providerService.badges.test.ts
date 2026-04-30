@@ -11,6 +11,12 @@ const mockProviderUpdateEq = vi.fn();
 const mockBadgeTypeSelect = vi.fn();
 const mockBadgeTypeIn = vi.fn();
 const mockProviderBadgeInsert = vi.fn();
+const mockProviderOffersDelete = vi.fn();
+const mockProviderOffersEq = vi.fn();
+const mockProviderOffersInsert = vi.fn();
+const mockProviderNeedsDelete = vi.fn();
+const mockProviderNeedsEq = vi.fn();
+const mockProviderNeedsInsert = vi.fn();
 
 vi.mock('@/lib/supabase/client', () => ({
   supabase: {
@@ -37,6 +43,20 @@ vi.mock('@/lib/supabase/client', () => ({
       if (table === 'provider_badges') {
         return {
           insert: (...args: unknown[]) => mockProviderBadgeInsert(...args),
+        };
+      }
+
+      if (table === 'provider_offers') {
+        return {
+          delete: (...args: unknown[]) => mockProviderOffersDelete(...args),
+          insert: (...args: unknown[]) => mockProviderOffersInsert(...args),
+        };
+      }
+
+      if (table === 'provider_needs') {
+        return {
+          delete: (...args: unknown[]) => mockProviderNeedsDelete(...args),
+          insert: (...args: unknown[]) => mockProviderNeedsInsert(...args),
         };
       }
 
@@ -104,6 +124,18 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
     });
 
     mockProviderBadgeInsert.mockResolvedValue({ error: null });
+
+    mockProviderOffersEq.mockResolvedValue({ error: null });
+    mockProviderOffersDelete.mockReturnValue({
+      eq: (...args: unknown[]) => mockProviderOffersEq(...args),
+    });
+    mockProviderOffersInsert.mockResolvedValue({ error: null });
+
+    mockProviderNeedsEq.mockResolvedValue({ error: null });
+    mockProviderNeedsDelete.mockReturnValue({
+      eq: (...args: unknown[]) => mockProviderNeedsEq(...args),
+    });
+    mockProviderNeedsInsert.mockResolvedValue({ error: null });
   });
 
   it('[pre-fix FAILS] writes direct booleans and creates self-declared badge rows from form tags', async () => {

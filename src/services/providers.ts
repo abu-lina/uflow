@@ -202,6 +202,45 @@ function transformCommunityServiceToSearchResult(communityService: CommunityServ
   };
 }
 
+async function loadProviderRelationIds(providerIds: string[]): Promise<{
+  offersByProvider: Map<string, string[]>;
+  needsByProvider: Map<string, string[]>;
+}> {
+  if (providerIds.length === 0) {
+    return {
+      offersByProvider: new Map<string, string[]>(),
+      needsByProvider: new Map<string, string[]>(),
+    };
+  }
+
+  const [providerOffersResult, providerNeedsResult] = await Promise.all([
+    supabase
+      .from('provider_offers')
+      .select('provider_id, offer_id')
+      .in('provider_id', providerIds),
+    supabase
+      .from('provider_needs')
+      .select('provider_id, need_id')
+      .in('provider_id', providerIds),
+  ]);
+
+  const offersByProvider = new Map<string, string[]>();
+  for (const row of providerOffersResult.data || []) {
+    const offerIds = offersByProvider.get(row.provider_id) || [];
+    offerIds.push(row.offer_id);
+    offersByProvider.set(row.provider_id, offerIds);
+  }
+
+  const needsByProvider = new Map<string, string[]>();
+  for (const row of providerNeedsResult.data || []) {
+    const needIds = needsByProvider.get(row.provider_id) || [];
+    needIds.push(row.need_id);
+    needsByProvider.set(row.provider_id, needIds);
+  }
+
+  return { offersByProvider, needsByProvider };
+}
+
 /**
  * Sorts search results by creation date (newest first)
  */
@@ -401,26 +440,21 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
     // If found in providers table, process and return
     if (data) {
-      // Fetch offers, needs, and badges in parallel for better performance
-      const [offersResult, needsResult, badges] = await Promise.all([
-        // Fetch offers if they exist
-        data.offers_ids && data.offers_ids.length > 0
-          ? supabase
-              .from('offers')
-              .select('name_de')
-              .in('offer_id', data.offers_ids)
-          : Promise.resolve({ data: [], error: null }),
-        
-        // Fetch needs if they exist
-        data.needs_ids && data.needs_ids.length > 0
-          ? supabase
-              .from('needs')
-              .select('name_de')
-              .in('need_id', data.needs_ids)
-          : Promise.resolve({ data: [], error: null }),
-
-        // Fetch badges for the provider
+      const [{ offersByProvider, needsByProvider }, badges] = await Promise.all([
+        loadProviderRelationIds([id]),
         getBadgesForEntity(id, EntityType.PROVIDER),
+      ]);
+
+      const offerIds = offersByProvider.get(id) || [];
+      const needIds = needsByProvider.get(id) || [];
+
+      const [offersResult, needsResult] = await Promise.all([
+        offerIds.length > 0
+          ? supabase.from('offers').select('name_de').in('offer_id', offerIds)
+          : Promise.resolve({ data: [], error: null }),
+        needIds.length > 0
+          ? supabase.from('needs').select('name_de').in('need_id', needIds)
+          : Promise.resolve({ data: [], error: null }),
       ]);
 
       const offers = offersResult.data || [];
@@ -428,6 +462,8 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
       return {
         ...data,
+        offers_ids: offerIds,
+        needs_ids: needIds,
         offers,
         needs,
         badges,
@@ -525,6 +561,24 @@ export async function searchProviders(
       ? matchingProviderNames.data.map((p: { provider_id: string }) => p.provider_id)
       : [];
 
+    const [providerOfferMatches, providerNeedMatches] = await Promise.all([
+      matchingOfferIds.length > 0
+        ? supabase
+            .from('provider_offers')
+            .select('provider_id')
+            .in('offer_id', matchingOfferIds)
+        : Promise.resolve({ data: [], error: null }),
+      matchingNeedIds.length > 0
+        ? supabase
+            .from('provider_needs')
+            .select('provider_id')
+            .in('need_id', matchingNeedIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    const providersByOffers = (providerOfferMatches.data || []).map((row) => row.provider_id);
+    const providersByNeeds = (providerNeedMatches.data || []).map((row) => row.provider_id);
+
     // Build the search condition to include:
     // 1. Provider name matches (using tsvector RPC — replaces previous ILIKE)
     // 2. Provider offers any of the matching offers (tsvector search)
@@ -535,12 +589,12 @@ export async function searchProviders(
       searchConditions.push(`provider_id.in.(${matchingProviderIds.join(',')})`);
     }
 
-    if (matchingOfferIds.length > 0) {
-      searchConditions.push(`offers_ids.cs.{${matchingOfferIds.join(',')}}`);
+    if (providersByOffers.length > 0) {
+      searchConditions.push(`provider_id.in.(${Array.from(new Set(providersByOffers)).join(',')})`);
     }
 
-    if (matchingNeedIds.length > 0) {
-      searchConditions.push(`needs_ids.cs.{${matchingNeedIds.join(',')}}`);
+    if (providersByNeeds.length > 0) {
+      searchConditions.push(`provider_id.in.(${Array.from(new Set(providersByNeeds)).join(',')})`);
     }
 
     if (searchConditions.length > 0) {
@@ -565,9 +619,12 @@ export async function searchProviders(
     return [];
   }
 
+  const providerIds = data.map((provider) => provider.provider_id);
+  const { offersByProvider, needsByProvider } = await loadProviderRelationIds(providerIds);
+
   // Batch fetch all offers and needs at once to avoid N+1 query problem
-  const allOfferIds = Array.from(new Set(data.flatMap(p => p.offers_ids || [])));
-  const allNeedIds = Array.from(new Set(data.flatMap(p => p.needs_ids || [])));
+  const allOfferIds = Array.from(new Set(Array.from(offersByProvider.values()).flat()));
+  const allNeedIds = Array.from(new Set(Array.from(needsByProvider.values()).flat()));
 
   // Batch queries with proper error handling
   const [offersResult, needsResult] = await Promise.all([
@@ -594,16 +651,15 @@ export async function searchProviders(
   // Map back to providers efficiently
   const providersWithOffersAndNeeds = data.map(provider => ({
     ...provider,
-    offers: (provider.offers_ids || []).map(id => offersMap.get(id)).filter(Boolean) as Array<{ name_de: string }>,
-    needs: (provider.needs_ids || []).map(id => needsMap.get(id)).filter(Boolean) as Array<{ name_de: string }>,
-    offers_ids: provider.offers_ids || [],
-    needs_ids: provider.needs_ids || [],
+    offers: (offersByProvider.get(provider.provider_id) || []).map(id => offersMap.get(id)).filter(Boolean) as Array<{ name_de: string }>,
+    needs: (needsByProvider.get(provider.provider_id) || []).map(id => needsMap.get(id)).filter(Boolean) as Array<{ name_de: string }>,
+    offers_ids: offersByProvider.get(provider.provider_id) || [],
+    needs_ids: needsByProvider.get(provider.provider_id) || [],
   }));
 
   // Batch fetch badges for all providers in one query
-  const allProviderIds = data.map(p => p.provider_id);
   const badgesMap = await getBadgesForEntities(
-    allProviderIds,
+    providerIds,
     EntityType.PROVIDER
   ).catch(error => {
     console.error('Error fetching badges:', error);
@@ -945,7 +1001,7 @@ export async function getRecommendations(userId: string): Promise<Provider[]> {
 export async function getAllBookmarkedItems(userId: string): Promise<SearchResult[]> {
   const query = supabase
     .from('bookmarks')
-    .select('bookmarkable_id, bookmarkable_type')
+    .select('provider_id, community_service_id')
     .eq('user_id', userId);
   
   const { data: bookmarks, error: bookmarksError } = await query;
@@ -961,12 +1017,12 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
 
   // Separate providers and community services
   const providerIds = bookmarks
-    .filter(b => b.bookmarkable_type === 'provider')
-    .map(b => b.bookmarkable_id);
+    .map((b) => b.provider_id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
   
   const communityServiceIds = bookmarks
-    .filter(b => b.bookmarkable_type === 'community_service')
-    .map(b => b.bookmarkable_id);
+    .map((b) => b.community_service_id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
   const results: SearchResult[] = [];
 
@@ -996,8 +1052,8 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
               const { error } = await supabase
                 .from('bookmarks')
                 .delete()
-                .in('bookmarkable_id', missingIds)
-                .eq('bookmarkable_type', 'provider');
+                .in('provider_id', missingIds)
+                .is('community_service_id', null);
               
               if (error) {
                 console.error('[getAllBookmarkedItems] Error cleaning up orphaned bookmarks:', error);

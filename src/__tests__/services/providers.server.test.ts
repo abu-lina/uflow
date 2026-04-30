@@ -31,13 +31,27 @@ describe('providers.server.getProviderById', () => {
                 data: {
                   provider_id: 'p-1',
                   provider_name: 'Provider One',
-                  offers_ids: ['offer-1'],
-                  needs_ids: ['need-1'],
                   category: { name_de: 'Kategorie', name_en: 'Category' },
                 },
                 error: null,
               }),
             }),
+          }),
+        };
+      }
+
+      if (table === 'provider_offers') {
+        return {
+          select: () => ({
+            eq: async () => ({ data: [{ offer_id: 'offer-1' }], error: null }),
+          }),
+        };
+      }
+
+      if (table === 'provider_needs') {
+        return {
+          select: () => ({
+            eq: async () => ({ data: [{ need_id: 'need-1' }], error: null }),
           }),
         };
       }

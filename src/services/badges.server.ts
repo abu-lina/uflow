@@ -25,16 +25,21 @@ export async function getBadgesForEntityServer(
   try {
     const supabase = createSupabaseServerClient();
 
-    const createBaseQuery = () =>
-      supabase
+    const createBaseQuery = () => {
+      const baseQuery = supabase
         .from('provider_badges')
         .select(`
           *,
           badge_type:badge_types(*)
         `)
-        .eq('entity_id', entityId)
-        .eq('entity_type', entityType)
         .order('created_at', { ascending: false });
+
+      if (entityType === 'provider') {
+        return baseQuery.eq('provider_id', entityId).eq('community_service_id', null);
+      }
+
+      return baseQuery.eq('community_service_id', entityId).eq('provider_id', null);
+    };
 
     let { data, error } = await createBaseQuery().eq('is_active', true);
 
@@ -48,7 +53,11 @@ export async function getBadgesForEntityServer(
       return [];
     }
 
-    return (data || []) as ProviderBadgeWithType[];
+    return ((data || []).map((badge) => ({
+      ...badge,
+      entity_id: badge.provider_id ?? badge.community_service_id,
+      entity_type: badge.provider_id ? 'provider' : 'community_service',
+    }))) as ProviderBadgeWithType[];
   } catch (error) {
     console.error('Error in getBadgesForEntityServer:', error);
     return [];

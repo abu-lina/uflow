@@ -42,20 +42,22 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
   // Fetch offers, needs, and badges in parallel to keep SSR initialData shape
   // aligned with the client-side providers service.
-  const [offersResult, needsResult, badges] = await Promise.all([
-    data.offers_ids && data.offers_ids.length > 0
-      ? supabase
-          .from('offers')
-          .select('name_de')
-          .in('offer_id', data.offers_ids)
-      : Promise.resolve({ data: [], error: null }),
-    data.needs_ids && data.needs_ids.length > 0
-      ? supabase
-          .from('needs')
-          .select('name_de')
-          .in('need_id', data.needs_ids)
-      : Promise.resolve({ data: [], error: null }),
+  const [providerOffersResult, providerNeedsResult, badges] = await Promise.all([
+    supabase.from('provider_offers').select('offer_id').eq('provider_id', id),
+    supabase.from('provider_needs').select('need_id').eq('provider_id', id),
     getBadgesForEntityServer(id, EntityType.PROVIDER),
+  ]);
+
+  const offerIds = (providerOffersResult.data || []).map((row) => row.offer_id);
+  const needIds = (providerNeedsResult.data || []).map((row) => row.need_id);
+
+  const [offersResult, needsResult] = await Promise.all([
+    offerIds.length > 0
+      ? supabase.from('offers').select('name_de').in('offer_id', offerIds)
+      : Promise.resolve({ data: [], error: null }),
+    needIds.length > 0
+      ? supabase.from('needs').select('name_de').in('need_id', needIds)
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   const offers = offersResult.data || [];
@@ -63,6 +65,8 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
   return {
     ...data,
+    offers_ids: offerIds,
+    needs_ids: needIds,
     offers,
     needs,
     badges,
@@ -149,8 +153,8 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
         location_longitude: provider.location_longitude,
         created_at: provider.created_at,
         updated_at: provider.updated_at,
-        offers_ids: provider.offers_ids || [],
-        needs_ids: provider.needs_ids || [],
+        offers_ids: [],
+        needs_ids: [],
         category: provider.category,
         type: 'provider' as const,
         originalProvider: provider,
@@ -174,8 +178,8 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
         location_longitude: service.location_longitude || null,
         created_at: service.created_at,
         updated_at: service.updated_at,
-        offers_ids: service.offers_ids || [],
-        needs_ids: service.needs_ids || [],
+        offers_ids: [],
+        needs_ids: [],
         category: service.category ? {
           name_de: service.category.name_de || 'Unbekannt',
           name_en: service.category.name_en,

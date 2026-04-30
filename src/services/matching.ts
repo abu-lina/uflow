@@ -26,27 +26,37 @@ export async function findProvidersNeedingMyOffers(
   providerId: string
 ): Promise<MatchResult[]> {
   try {
-    // 1. Get current provider's offers
-    const { data: provider } = await supabase
-      .from('providers')
-      .select('offers_ids, category_id')
-      .eq('provider_id', providerId)
-      .single();
+    // 1. Get current provider's offers from junction table
+    const { data: providerOffers } = await supabase
+      .from('provider_offers')
+      .select('offer_id')
+      .eq('provider_id', providerId);
 
-    if (!provider?.offers_ids || provider.offers_ids.length === 0) {
+    const offeredIds = (providerOffers || []).map((row) => row.offer_id);
+    if (offeredIds.length === 0) {
       return [];
     }
 
-    // 2. Find providers whose needs_ids contain any of my offers_ids
-    // Using PostgreSQL array overlap operator (&&) which is fast with GIN indexes
+    // 2. Find providers whose needs contain any of my offers
+    const { data: matchingNeeds } = await supabase
+      .from('provider_needs')
+      .select('provider_id, need_id')
+      .in('need_id', offeredIds)
+      .neq('provider_id', providerId);
+
+    if (!matchingNeeds || matchingNeeds.length === 0) {
+      return [];
+    }
+
+    const matchedProviderIds = Array.from(new Set(matchingNeeds.map((row) => row.provider_id)));
+
     const { data: matchedProviders } = await supabase
       .from('providers')
       .select(`
         *,
         category:categories(name_de, name_en)
       `)
-      .neq('provider_id', providerId)
-      .overlaps('needs_ids', provider.offers_ids);
+      .in('provider_id', matchedProviderIds);
 
     if (!matchedProviders || matchedProviders.length === 0) {
       return [];
@@ -56,7 +66,7 @@ export async function findProvidersNeedingMyOffers(
     const { data: allOffers } = await supabase
       .from('offers')
       .select('offer_id, name_de, name_en')
-      .in('offer_id', provider.offers_ids);
+      .in('offer_id', offeredIds);
 
     const offersMap = new Map(
       (allOffers || []).map(o => [o.offer_id, { offer_id: o.offer_id, name_de: o.name_de, name_en: o.name_en }])
@@ -65,11 +75,15 @@ export async function findProvidersNeedingMyOffers(
     // 4. Build match results
     const results: MatchResult[] = [];
 
+    const needsByProvider = new Map<string, string[]>();
+    for (const row of matchingNeeds) {
+      const ids = needsByProvider.get(row.provider_id) || [];
+      ids.push(row.need_id);
+      needsByProvider.set(row.provider_id, ids);
+    }
+
     for (const matchedProvider of matchedProviders) {
-      // Find which of my offers match their needs
-      const matchingOfferIds = matchedProvider.needs_ids.filter(
-        (needId: string) => provider.offers_ids.includes(needId)
-      );
+      const matchingOfferIds = needsByProvider.get(matchedProvider.provider_id) || [];
 
       if (matchingOfferIds.length > 0) {
         // Get the first matching offer for display
@@ -104,26 +118,37 @@ export async function findProvidersOfferingMyNeeds(
   providerId: string
 ): Promise<MatchResult[]> {
   try {
-    // 1. Get current provider's needs
-    const { data: provider } = await supabase
-      .from('providers')
-      .select('needs_ids, category_id')
-      .eq('provider_id', providerId)
-      .single();
+    // 1. Get current provider's needs from junction table
+    const { data: providerNeeds } = await supabase
+      .from('provider_needs')
+      .select('need_id')
+      .eq('provider_id', providerId);
 
-    if (!provider?.needs_ids || provider.needs_ids.length === 0) {
+    const neededIds = (providerNeeds || []).map((row) => row.need_id);
+    if (neededIds.length === 0) {
       return [];
     }
 
-    // 2. Find providers whose offers_ids contain any of my needs_ids
+    // 2. Find providers whose offers contain any of my needs
+    const { data: matchingOffers } = await supabase
+      .from('provider_offers')
+      .select('provider_id, offer_id')
+      .in('offer_id', neededIds)
+      .neq('provider_id', providerId);
+
+    if (!matchingOffers || matchingOffers.length === 0) {
+      return [];
+    }
+
+    const matchedProviderIds = Array.from(new Set(matchingOffers.map((row) => row.provider_id)));
+
     const { data: matchedProviders } = await supabase
       .from('providers')
       .select(`
         *,
         category:categories(name_de, name_en)
       `)
-      .neq('provider_id', providerId)
-      .overlaps('offers_ids', provider.needs_ids);
+      .in('provider_id', matchedProviderIds);
 
     if (!matchedProviders || matchedProviders.length === 0) {
       return [];
@@ -133,7 +158,7 @@ export async function findProvidersOfferingMyNeeds(
     const { data: allNeeds } = await supabase
       .from('needs')
       .select('need_id, name_de, name_en')
-      .in('need_id', provider.needs_ids);
+      .in('need_id', neededIds);
 
     const needsMap = new Map(
       (allNeeds || []).map(n => [n.need_id, { need_id: n.need_id, name_de: n.name_de, name_en: n.name_en }])
@@ -142,11 +167,15 @@ export async function findProvidersOfferingMyNeeds(
     // 4. Build match results
     const results: MatchResult[] = [];
 
+    const offersByProvider = new Map<string, string[]>();
+    for (const row of matchingOffers) {
+      const ids = offersByProvider.get(row.provider_id) || [];
+      ids.push(row.offer_id);
+      offersByProvider.set(row.provider_id, ids);
+    }
+
     for (const matchedProvider of matchedProviders) {
-      // Find which of my needs match their offers
-      const matchingNeedIds = matchedProvider.offers_ids.filter(
-        (offerId: string) => provider.needs_ids.includes(offerId)
-      );
+      const matchingNeedIds = offersByProvider.get(matchedProvider.provider_id) || [];
 
       if (matchingNeedIds.length > 0) {
         // Get the first matching need for display

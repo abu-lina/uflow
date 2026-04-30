@@ -230,9 +230,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
       if (!user) return [];
       const { data: bookmarks } = await supabase
         .from('bookmarks')
-        .select('bookmarkable_id, bookmarkable_type')
+        .select('provider_id, community_service_id')
         .eq('user_id', user.id);
-      return bookmarks?.map((b) => b.bookmarkable_id) || [];
+      return bookmarks?.flatMap((b) => [b.provider_id, b.community_service_id].filter((id): id is string => !!id)) || [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -241,7 +241,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
 
   // Derive bookmark status from cached data (instant, no network request)
   useEffect(() => {
-    if (user && bookmarkedProviderIds.length > 0) {
+    if (user && bookmarkableId && bookmarkedProviderIds.length > 0) {
       setIsSaved(bookmarkedProviderIds.includes(bookmarkableId));
     } else if (!user) {
       setIsSaved(false);
