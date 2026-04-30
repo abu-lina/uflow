@@ -87,7 +87,7 @@ export async function GET() {
     const supabase = createSupabaseServerClient();
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, user_id, email, role, created_at')
+      .select('user_id, email, role, created_at')
       .eq('user_id', user.id)
       .single();
 
@@ -98,7 +98,7 @@ export async function GET() {
       const supabaseAdmin = getSupabaseAdmin();
       const { data, error } = await supabaseAdmin
         .from('users')
-        .select('id, user_id, email, role, created_at')
+        .select('user_id, email, role, created_at')
         .eq('user_id', user.id)
         .single();
 
@@ -114,7 +114,7 @@ export async function GET() {
       const supabaseAdmin = getSupabaseAdmin();
       const { data } = await supabaseAdmin
         .from('users')
-        .select('id, user_id, email, role')
+        .select('user_id, email, role')
         .in('role', ['admin', 'moderator'])
         .limit(10);
 

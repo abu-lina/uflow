@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.7] - 2026-04-30
+
+### Changed
+
+- **F-1 dual-PK anti-pattern eliminated** (Plan 114 Phase 5): Promoted `<entity>_id` as the sole PRIMARY KEY on four tables (`categories`, `users`, `community_services`, `providers`) and dropped the vestigial `id` column from each. All inbound FK references already targeted `<entity>_id` — no FK remapping required. FK-safe cutover strategy preserved UNIQUE constraints during PK promotion (26+ inbound FKs on `providers` remain valid). Phase 4 migration file renamed from `006_phase4_semantic_constraints.sql` to `0061_phase4_semantic_constraints.sql` to resolve a version-prefix collision during dev push.
+- **Admin authorization fix** (Plan 114 Phase 5): Updated badge `verify` and `unverify` endpoints (`/api/admin/badges/verify`, `/api/admin/badges/unverify`) to authorize via `public.users.role` column instead of non-existent `raw_user_meta_data`. Also cleaned stale `id` column references from `roles.ts`, `check-role`, `debug-auth`, `set-role`, and `diagnose` admin routes. Service layer `getCategoryById()` now uses `.eq('category_id', id)`.
+
 ## [0.11.6] - 2026-04-30
 
 ### Changed

@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Committed
+Status: Released
 ---
 
 # Plan 114 — Database Schema Staged Refactor
@@ -38,9 +38,12 @@ Status: Committed
 | 2026-04-30T00:55Z   | devops | Phase 3 Stage 1: Local commit 64c3ceba (37 files, v0.11.5). Stage 2: pushed branch, tagged v0.11.5, published GitHub release. **RELEASED as v0.11.5**. PR: https://github.com/abu-lina/uflow/compare/main...session/114p3-referential-integrity |
 | 2026-04-29T23:07Z   | implementer | **Phase 4 Implementation Complete**: Migration 006 with enum extension (ummah), backfill, normalization, violation audit, NOT NULL + CHECK constraints. Type unions updated. Behavioral + contract tests added. Version bumped to 0.11.6 (adjusted from 0.11.5 — version collision with Phase 3). |
 | 2026-04-29T23:30Z   | code-reviewer | **Phase 4 Code Review**: APPROVED_WITH_COMMENTS. Behavioral tests verify runtime constraint enforcement. Migration defect (ON COMMIT DROP) fixed. No blocking findings. |
+| 2026-04-30T10:05Z   | code-reviewer | **Phase 5 Code Review Re-review**: APPROVED_WITH_COMMENTS. Previous HIGH findings resolved (FK-safe PK cutover sequencing, badge admin auth column fix). Residual LOW note: pre-existing migration 005 replay blocker tracked separately. |
 | 2026-04-29T23:31Z   | qa | **Phase 4 QA**: QA COMPLETE. All acceptance criteria met: enum extended, backfill + NOT NULL verified, constraints enforce correctly, type unions consistent, 1183/1201 tests pass, 0 failures. |
 | 2026-04-29T23:32Z   | uat | **Phase 4 UAT**: APPROVED FOR RELEASE. Plan objective fully achieved. F-5 semantic constraints enforced at DB level. All predecessors passed. |
 | 2026-04-30T00:00Z   | devops | **Phase 4 Stage 2**: Version bumped to 0.11.6 (collision with Phase 3 v0.11.5 resolved during rebase). Committed and pushing as v0.11.6. |
+| 2026-04-30T11:20Z   | qa | **Phase 5 QA Complete**: All gates PASSED. Dev deployment applied (0061+007–010). C-3 smoke tests PASS (categories, users, community_services, providers + search_providers RPC). C-5 auth gate PASS (users.user_id PK confirmed, auth bridge intact). Regression audit PASS (0 stale id refs). Phase 4 migration renamed 0061 to resolve version collision. EXPLAIN ANALYZE deferred per plan. **APPROVED FOR UAT**. |
+| 2026-04-30T11:30Z   | uat | **Phase 5 UAT Complete**: Value Statement fully delivered — dual-PK anti-pattern eliminated on 4 tables (categories, users, community_services, providers). Schema now has single canonical PK per table matching FK graph. Admin authorization fixed (users.role column). All acceptance criteria met; zero scope drift; release-ready. **APPROVED FOR RELEASE** as v0.11.7 patch. Handoff to DevOps Stage 1. |
 
 ---
 

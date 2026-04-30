@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     // Check if user exists in users table
     const { data: existingUser } = await supabaseAdmin
       .from('users')
-      .select('id, user_id, email, role')
+      .select('user_id, email, role')
       .eq('user_id', targetUserId)
       .single();
 
