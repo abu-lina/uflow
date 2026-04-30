@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // 2. Admin authorization check
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('raw_user_meta_data')
+      .select('role')
       .eq('user_id', user.id)
       .single();
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isAdmin = userData.raw_user_meta_data?.role === 'admin';
+    const isAdmin = userData.role === 'admin';
 
     if (!isAdmin) {
       return NextResponse.json(

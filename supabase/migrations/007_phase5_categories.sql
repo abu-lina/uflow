@@ -13,16 +13,15 @@
 --
 -- Steps:
 --   1. Drop PK constraint on `id` (implicit index dropped automatically)
---   2. Drop UNIQUE constraint on `category_id` (its implicit index also dropped)
---   3. Promote `category_id` to PRIMARY KEY
---   4. Drop explicit btree index on `category_id` (now redundant with PK)
---   5. Drop the vestigial `id` column
+--   2. Promote `category_id` to PRIMARY KEY while preserving existing UNIQUE
+--      (FK-safe cutover: inbound FKs may depend on existing unique constraint)
+--   3. Drop explicit btree index on `category_id` (now redundant with UNIQUE/PK)
+--   4. Drop the vestigial `id` column
 --
 -- Rollback (before step 5 executes):
 --   ALTER TABLE public.categories ADD COLUMN id uuid DEFAULT gen_random_uuid() NOT NULL;
 --   ALTER TABLE public.categories DROP CONSTRAINT categories_pkey;
 --   ALTER TABLE public.categories ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
---   ALTER TABLE public.categories ADD CONSTRAINT categories_category_id_key UNIQUE (category_id);
 --   CREATE INDEX IF NOT EXISTS idx_categories_category_id ON public.categories USING btree (category_id);
 -- ---------------------------------------------------------------------------
 
@@ -32,18 +31,15 @@ BEGIN;
 ALTER TABLE public.categories
   DROP CONSTRAINT IF EXISTS categories_pkey;
 
--- Step 2: Drop UNIQUE constraint on category_id (frees up implicit index)
-ALTER TABLE public.categories
-  DROP CONSTRAINT IF EXISTS categories_category_id_key;
-
--- Step 3: Promote category_id to PRIMARY KEY
+-- Step 2: Promote category_id to PRIMARY KEY
+--         Keep categories_category_id_key for FK dependency safety.
 ALTER TABLE public.categories
   ADD CONSTRAINT categories_pkey PRIMARY KEY (category_id);
 
--- Step 4: Drop now-redundant explicit btree index on category_id
+-- Step 3: Drop now-redundant explicit btree index on category_id
 DROP INDEX IF EXISTS public.idx_categories_category_id;
 
--- Step 5: Drop vestigial id column (point of no return for this table)
+-- Step 4: Drop vestigial id column (point of no return for this table)
 ALTER TABLE public.categories
   DROP COLUMN IF EXISTS id;
 

@@ -21,6 +21,7 @@ Status: Active
 | Date              | Handoff            | Request                        | Summary                                                                                               |
 | ----------------- | ------------------ | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | 2026-04-30T00:00Z | Orchestrator→Impl  | Execute Phase 5 end-to-end     | App-code audit + 8 file fixes + 4 migration files (categories, users, community_services, providers). Version bumped to v0.11.7 (preliminary). Implementation doc created. |
+| 2026-04-30T09:55Z | Code Review→Impl   | Resolve 2 HIGH findings before QA | Fixed migration cutover sequencing (preserved UNIQUE constraints during PK promotion), fixed admin badge endpoints to authorize via `public.users.role`, validated 007–010 apply successfully on local DB. |
 
 ---
 
@@ -61,10 +62,12 @@ Phase 5 promotes `<entity>_id` as the sole PRIMARY KEY on 4 tables (not 6 — `o
 - [x] `users` migration created (`008_phase5_users.sql`) with C-5 gate embedded
 - [x] `community_services` migration created (`009_phase5_community_services.sql`)
 - [x] `providers` migration created (`010_phase5_providers.sql`)
+- [x] Code review HIGH-1 fixed: PK cutover sequencing updated to be FK-safe (preserve UNIQUE constraints)
+- [x] Code review HIGH-2 fixed: admin badge verify/unverify now authorize using `users.role`
+- [x] Local DB evidence: migrations `007`–`010` applied successfully via `psql` (no FK dependency failure)
 - [x] `package.json` version bumped to `0.11.7` (preliminary)
 - [x] `package-lock.json` aligned to `0.11.7`
-- [x] TypeScript type-check: 0 errors
-- [x] ESLint: 0 errors on modified files
+- [x] VS Code Problems check: no errors on modified files
 
 ---
 
@@ -77,8 +80,8 @@ Phase 5 promotes `<entity>_id` as the sole PRIMARY KEY on 4 tables (not 6 — `o
 | `src/app/api/admin/debug-auth/route.ts`           | 3× `.select('id, user_id, ...)` → remove `id` from select string | 90, 101, 117 |
 | `src/app/api/admin/set-role/route.ts`             | `.select('id, user_id, ...)` → `.select('user_id, ...)` | 84 |
 | `src/app/api/admin/diagnose/route.ts`             | 3× `.select('id, user_id, ...)` → remove `id` | 73, 79, 85 |
-| `src/app/api/admin/badges/verify/route.ts`        | `.eq('id', user.id)` → `.eq('user_id', user.id)` on `users` table | 34 |
-| `src/app/api/admin/badges/unverify/route.ts`      | `.eq('id', user.id)` → `.eq('user_id', user.id)` on `users` table | 33 |
+| `src/app/api/admin/badges/verify/route.ts`        | `.eq('id', user.id)` → `.eq('user_id', user.id)` and authorization source `raw_user_meta_data` → `role` | 31-34 |
+| `src/app/api/admin/badges/unverify/route.ts`      | `.eq('id', user.id)` → `.eq('user_id', user.id)` and authorization source `raw_user_meta_data` → `role` | 31-33 |
 | `src/services/categories.ts`                      | `getCategoryById()`: `.eq('id', id)` → `.eq('category_id', id)` | 226 |
 | `package.json`                                    | version `0.11.6` → `0.11.7` (preliminary)                    | 1    |
 | `package-lock.json`                               | lockfile aligned to `0.11.7`                                  | —    |
@@ -122,7 +125,7 @@ Phase 5 promotes `<entity>_id` as the sole PRIMARY KEY on 4 tables (not 6 — `o
 
 ### Additional notes
 - `bookmarks.id`, `enrichment_candidates.id`, `badge_confirmations.id`, `badge_types.id`, `cities.id`, `provider_owner_action_tokens.id` — all verified to be on tables **NOT in Phase 5 scope**. No changes.
-- `admin/badges/verify` and `admin/badges/unverify` had a pre-existing bug: `.select('raw_user_meta_data')` on `public.users` which has no such column. Phase 5 fix is limited to correcting the `.eq('id')` filter; the pre-existing bug is noted in Outstanding Items.
+- `admin/badges/verify` and `admin/badges/unverify` now use `.select('role')` from `public.users` for authorization; non-existent `raw_user_meta_data` selection has been removed.
 
 ---
 
@@ -130,8 +133,9 @@ Phase 5 promotes `<entity>_id` as the sole PRIMARY KEY on 4 tables (not 6 — `o
 
 | Gate              | Command                              | Result                           |
 | ----------------- | ------------------------------------ | -------------------------------- |
-| TypeScript        | `npx tsc --noEmit --pretty false`    | ✅ 0 errors                      |
-| ESLint            | `npx eslint [8 modified files]`      | ✅ 0 errors (no output = clean)  |
+| TypeScript        | `npm run type-check`                 | ⚠️ Blocked in this shell (`tsc` missing from local node_modules path) |
+| ESLint            | `npm run lint`                       | ⚠️ Blocked in this shell (`eslint` missing from local node_modules path) |
+| Editor diagnostics| VS Code `get_errors` on modified files | ✅ No errors on modified files |
 | Tests             | Deferred — see Outstanding Items     | ⚠️ Blocked (env issue, below)    |
 | Build             | Not run — migration-only phase       | ⚠️ Deferred to QA               |
 
@@ -174,10 +178,12 @@ The dual-PK anti-pattern (F-1) is fully addressed. All 4 migrations are wrapped 
 
 | Command                              | Result                      | Notes                                                   |
 | ------------------------------------ | --------------------------- | ------------------------------------------------------- |
-| `npx tsc --noEmit --pretty false`    | ✅ Exit 0, 0 errors         | All type annotations remain valid after id removal      |
-| `npx eslint [modified files]`        | ✅ No output (clean)        | No lint errors on 8 modified source files               |
+| `npm run type-check`                 | ⚠️ Exit 127                | `tsc: command not found` in current shell context       |
+| `npm run lint`                       | ⚠️ Exit 127                | `eslint: command not found` in current shell context    |
+| VS Code `get_errors` (6 changed files) | ✅ No errors              | No diagnostics on modified route/migration files        |
 | `npx vitest run`                     | ⚠️ Not run                 | Environment issue (see Outstanding Items)               |
-| Dev DB migration apply               | ⚠️ Deferred to DevOps      | Supabase dev MCP not available in impl environment      |
+| `supabase db reset --local`          | ⚠️ Fails at `005_drop_barakah_effects.sql` | Pre-existing unrelated migration issue (`cannot change return type of existing function`) |
+| Direct apply `007`–`010` via `psql`  | ✅ Success                  | All four migrations committed without FK dependency errors |
 | EXPLAIN ANALYZE before/after         | ⚠️ Deferred to DevOps      | Requires dev DB apply; queries documented below         |
 
 ### EXPLAIN ANALYZE queries to run at DevOps apply (per table)
@@ -287,6 +293,13 @@ After applying each migration to dev, the following RPCs and queries must return
 - **Owner**: QA (first gate after code review)
 - **Risk**: LOW — changes are string literal removals; no logic changes
 
+### Full local chain apply blocker (pre-existing, unrelated to Phase 5 fixes)
+- `supabase db reset --local` currently fails at `005_drop_barakah_effects.sql` with `cannot change return type of existing function`.
+- This failure occurs before Phase 5 in the migration chain and is unrelated to the two code review findings addressed here.
+- Phase 5 verification was performed by directly applying `007`–`010` on local DB, all successful.
+- **Owner**: Implementer/Planner follow-up for migration 005 compatibility, before full-chain reset is used as QA gate.
+- **Risk**: MEDIUM — impacts full-chain replay confidence, not the specific Phase 5 cutover logic.
+
 ### EXPLAIN ANALYZE evidence
 - Deferred to DevOps dev apply (Option B)
 - **Owner**: DevOps Stage 1 — run queries above before and after each migration apply on dev
@@ -297,11 +310,8 @@ After applying each migration to dev, the following RPCs and queries must return
 - **Owner**: DevOps Stage 1 — verify login/signup on dev after 008 apply
 - **Risk**: MEDIUM — `handle_new_user()` trigger verified in baseline (uses `user_id` not `id`), but live test is mandatory
 
-### `admin/badges/verify` + `admin/badges/unverify` pre-existing bug
-- These routes select `raw_user_meta_data` from `public.users` which has no such column
-- Phase 5 fixes the `.eq('id')` → `.eq('user_id')` filter only
-- The broader logic bug (always evaluates `isAdmin = false`) is pre-existing; out of scope for Phase 5
-- **Owner**: Follow-up ticket (separate from Phase 5)
+### `admin/badges/verify` + `admin/badges/unverify` authorization source
+- **Resolved in this pass**: both endpoints now authorize via `public.users.role`; invalid `raw_user_meta_data` selection removed.
 
 ### `offers` / `needs` tables
 - Already consolidated (no dual-PK) in baseline — confirmed by column inspection

@@ -20,16 +20,15 @@
 --
 -- Steps:
 --   1. Drop PK constraint on `id`
---   2. Drop UNIQUE constraint on `provider_id`
---   3. Promote `provider_id` to PRIMARY KEY
---   4. Drop explicit btree index on `provider_id` (redundant with PK)
---   5. Drop the vestigial `id` column
+--   2. Promote `provider_id` to PRIMARY KEY while preserving existing UNIQUE
+--      (FK-safe cutover: inbound FKs may depend on existing unique constraint)
+--   3. Drop explicit btree index on `provider_id` (redundant with UNIQUE/PK)
+--   4. Drop the vestigial `id` column
 --
 -- Rollback (before step 5):
 --   ALTER TABLE public.providers ADD COLUMN id uuid DEFAULT gen_random_uuid() NOT NULL;
 --   ALTER TABLE public.providers DROP CONSTRAINT providers_pkey;
 --   ALTER TABLE public.providers ADD CONSTRAINT providers_pkey PRIMARY KEY (id);
---   ALTER TABLE public.providers ADD CONSTRAINT providers_provider_id_key UNIQUE (provider_id);
 --   CREATE INDEX IF NOT EXISTS idx_providers_provider_id ON public.providers USING btree (provider_id);
 -- ---------------------------------------------------------------------------
 
@@ -39,18 +38,15 @@ BEGIN;
 ALTER TABLE public.providers
   DROP CONSTRAINT IF EXISTS providers_pkey;
 
--- Step 2: Drop UNIQUE constraint on provider_id
-ALTER TABLE public.providers
-  DROP CONSTRAINT IF EXISTS providers_provider_id_key;
-
--- Step 3: Promote provider_id to PRIMARY KEY
+-- Step 2: Promote provider_id to PRIMARY KEY
+--         Keep providers_provider_id_key for FK dependency safety.
 ALTER TABLE public.providers
   ADD CONSTRAINT providers_pkey PRIMARY KEY (provider_id);
 
--- Step 4: Drop now-redundant explicit btree index on provider_id
+-- Step 3: Drop now-redundant explicit btree index on provider_id
 DROP INDEX IF EXISTS public.idx_providers_provider_id;
 
--- Step 5: Drop vestigial id column (point of no return for providers)
+-- Step 4: Drop vestigial id column (point of no return for providers)
 ALTER TABLE public.providers
   DROP COLUMN IF EXISTS id;
 
