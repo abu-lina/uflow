@@ -49,7 +49,7 @@ export interface Provider {
   review_feedback?: string | null;
   badges?: ProviderBadgeWithType[];
   // Plan 089: section classification columns
-  listing_type?: 'food' | 'business' | null;
+  listing_type?: 'food' | 'business' | 'ummah' | null;
   halal_level?: number | null;
   muslim_owned?: boolean;
   no_alcohol?: boolean;
@@ -101,7 +101,7 @@ export interface SearchResult {
   /** Review feedback (Plan 058: included for admin requests) */
   review_feedback?: string | null;
   // Plan 089: section classification fields (passed through from Provider)
-  listing_type?: 'food' | 'business' | null;
+  listing_type?: 'food' | 'business' | 'ummah' | null;
   halal_level?: number | null;
   muslim_owned?: boolean;
   no_alcohol?: boolean;
@@ -368,7 +368,7 @@ async function searchProvidersOnly(
   page: number = 0,
   pageSize: number = 5,
   adminOptions?: AdminSearchOptions,
-  listingType?: 'food' | 'business',
+  listingType?: 'food' | 'business' | 'ummah',
   barakahFilters?: SearchFilterKey[],
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const offset = page * pageSize;
@@ -491,7 +491,7 @@ export async function searchProviders(
   limit?: number,
   offset?: number,
   adminOptions?: AdminSearchOptions,
-  listingType?: 'food' | 'business',
+  listingType?: 'food' | 'business' | 'ummah',
   barakahFilters?: SearchFilterKey[],
 ): Promise<Provider[]> {
   // Plan 058: Include review fields when admin

@@ -2,7 +2,7 @@
 ID: 114
 Origin: 114
 UUID: d7e3a41b
-Status: Released
+Status: Committed
 ---
 
 # Plan 114 — Database Schema Staged Refactor
@@ -36,6 +36,11 @@ Status: Released
 | 2026-04-30T00:15Z   | qa | Phase 3 QA Complete: All 8 validation gates PASSED. 1185 tests passing (0 failures, 18 skipped). Migration contract verified (4/4). Service-layer refactoring validated (5/5). Regression coverage confirmed (3/3). No stale column references. Type-check: 0 errors. Lint: 0 errors. Build: PWA generation complete (DF-4 exception). **APPROVED FOR UAT**. |
 | 2026-04-30T00:30Z   | uat | Phase 3 UAT Complete: Value delivery verified. All acceptance criteria met (F-2 junctions + F-4 typed FKs with integrity enforcement). Zero scope drift. Risk profile acceptable. **APPROVED FOR RELEASE** as next patch after v0.10.42 (confirm version at DevOps Stage 1). Handoff to devops agent. |
 | 2026-04-30T00:55Z   | devops | Phase 3 Stage 1: Local commit 64c3ceba (37 files, v0.11.5). Stage 2: pushed branch, tagged v0.11.5, published GitHub release. **RELEASED as v0.11.5**. PR: https://github.com/abu-lina/uflow/compare/main...session/114p3-referential-integrity |
+| 2026-04-29T23:07Z   | implementer | **Phase 4 Implementation Complete**: Migration 006 with enum extension (ummah), backfill, normalization, violation audit, NOT NULL + CHECK constraints. Type unions updated. Behavioral + contract tests added. Version bumped to 0.11.6 (adjusted from 0.11.5 — version collision with Phase 3). |
+| 2026-04-29T23:30Z   | code-reviewer | **Phase 4 Code Review**: APPROVED_WITH_COMMENTS. Behavioral tests verify runtime constraint enforcement. Migration defect (ON COMMIT DROP) fixed. No blocking findings. |
+| 2026-04-29T23:31Z   | qa | **Phase 4 QA**: QA COMPLETE. All acceptance criteria met: enum extended, backfill + NOT NULL verified, constraints enforce correctly, type unions consistent, 1183/1201 tests pass, 0 failures. |
+| 2026-04-29T23:32Z   | uat | **Phase 4 UAT**: APPROVED FOR RELEASE. Plan objective fully achieved. F-5 semantic constraints enforced at DB level. All predecessors passed. |
+| 2026-04-30T00:00Z   | devops | **Phase 4 Stage 2**: Version bumped to 0.11.6 (collision with Phase 3 v0.11.5 resolved during rebase). Committed and pushing as v0.11.6. |
 
 ---
 

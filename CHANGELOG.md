@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.6] - 2026-04-30
+
+### Changed
+
+- **F-5 semantic constraints for provider section fields** (Plan 114 Phase 4): Added migration `006_phase4_semantic_constraints.sql` to extend `listing_type_enum` with `ummah`, backfill `providers.listing_type` from `NULL` to `ummah`, enforce `listing_type NOT NULL`, and add section-scoped CHECK constraints that prevent invalid boolean/section combinations (`food`-only, `business`-only, `ummah`-only attributes).
+
+### Tests
+
+- Added migration contract test `src/__tests__/migrations/006-phase4-semantic-constraints-tdd.test.ts` validating enum extension, backfill + NOT NULL enforcement, and all three semantic CHECK constraints.
+
 ## [0.11.5] - 2026-04-29
 
 ### Changed
