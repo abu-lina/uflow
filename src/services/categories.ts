@@ -223,7 +223,7 @@ export async function getCategoryById(id: string): Promise<Category | null> {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .eq('id', id)
+    .eq('category_id', id)
     .single<Category>();
   if (error) {
     throw error;

@@ -70,19 +70,19 @@ export async function GET() {
           // Get all matching rows with regular client (respects RLS)
           const { data: allUserData, error: allError } = await supabase
             .from('users')
-            .select('id, user_id, email, role, created_at')
+            .select('user_id, email, role, created_at')
             .eq('user_id', user.id);
 
           // Get all matching rows with admin client (bypasses RLS)
           const { data: adminUserData, error: adminError } = await supabaseAdmin
             .from('users')
-            .select('id, user_id, email, role, created_at')
+            .select('user_id, email, role, created_at')
             .eq('user_id', user.id);
 
           // Try single query with regular client
           const { data: singleUserData, error: singleError } = await supabase
             .from('users')
-            .select('id, user_id, email, role')
+            .select('user_id, email, role')
             .eq('user_id', user.id)
             .single();
 

@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('raw_user_meta_data')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (userError || !userData) {

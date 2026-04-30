@@ -14,7 +14,7 @@ export async function getUserRole(userId: string): Promise<UserRole> {
   // First, try to get all rows to see if there are duplicates
   const { data: allRows, error: queryError } = await supabase
     .from('users')
-    .select('role, id, email')
+    .select('role, user_id, email')
     .eq('user_id', userId);
 
   if (process.env.NODE_ENV === 'development') {
