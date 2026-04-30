@@ -102,6 +102,17 @@ CREATE INDEX idx_providers_name_search
 ON providers USING gin(to_tsvector('german', provider_name));
 ```
 
+#### Column-Drop Migrations — Runtime Audit Required
+
+When a migration **drops a column**, audit every direct Supabase query site — not only `src/services/`:
+
+```bash
+# Run once per dropped column name
+grep -r '<column_name>' src/app/ src/components/ src/hooks/ src/services/
+```
+
+Any file with a match must be updated before the migration ships. Add a static file-scan regression test to guard against reintroduction.
+
 ### DO NOT Add Services Prematurely
 
 **Before adding Redis/Elasticsearch/queues**, ask: "Is our DAU > 5,000?"
@@ -177,7 +188,7 @@ describe('Component', () => {
 For bugfix work, do not hand off to QA until all of the following exist when applicable:
 
 - `agent-output/implementation/<ID>-*.md` created and populated
-- TDD Compliance table completed
+- TDD Compliance table completed — must cover **all direct DB query sites**: service functions AND any UI components in `src/app/`, `src/components/`, or `src/hooks/` that call Supabase directly for affected tables/columns
 - Regression tests added for the actual bug path, not only adjacent behavior
 - Test evidence recorded (`vitest`, `tsc`, and any other relevant gate)
 
@@ -248,6 +259,7 @@ Detailed expert rules exist in `.cursor/rules/`:
 5. **Environment Variables**: All Supabase vars are in `.env.local` (never commit)
 6. **Premature Optimization**: Don't add Redis/queues before proving Postgres can't handle it
 7. **Parallel Sessions**: See the dedicated section below.
+8. **Schema-Drop Column Audit**: When a migration drops columns, run `grep -r '<column_name>' src/app/ src/components/ src/hooks/` — not only `src/services/`. UI components that call Supabase directly will fail at runtime if they reference dropped columns. Sweep all query sites before shipping.
 
 ## Parallel Session Awareness (All Agents)
 
