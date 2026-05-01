@@ -71,11 +71,11 @@ export async function fetchUsedCategories(): Promise<Category[]> {
  *
  * Resolves the D7 category-to-section mapping gap using strategy (b):
  * queries categories through their associated providers/community_services
- * filtered by listing_type (food/business) or the community_services table (ummah).
+ * filtered by listing_type (food/store) on providers.
  *
  * - 'food': categories used by approved providers with listing_type = 'food'
- * - 'ummah': categories used by approved community_services
- * - 'business': categories used by approved providers with listing_type = 'business'
+ * - 'ummah': categories used by approved providers with listing_type = 'ummah'
+ * - 'store': categories used by approved providers with listing_type = 'store'
  */
 export async function fetchCategoriesBySection(section: import('@/config/sectionFilters').Section): Promise<Category[]> {
   let categoryIds: string[];
@@ -97,11 +97,11 @@ export async function fetchCategoriesBySection(section: import('@/config/section
       new Set(ids.filter((id): id is string => typeof id === 'string' && id !== 'null' && id !== '')),
     );
   } else {
-    // Food or Business: categories from providers filtered by listing_type
+    // Food or Store: categories from providers filtered by listing_type
     const { data, error } = await supabase
       .from('providers')
       .select('category_id')
-      .eq('listing_type', section === 'food' ? 'food' : 'business')
+      .eq('listing_type', section === 'food' ? 'food' : 'store')
       .eq('review_status', 'approved');
 
     if (error) throw error;

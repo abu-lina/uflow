@@ -2,7 +2,7 @@
 ID: 116
 Origin: 118
 UUID: e7a3f1c9
-Status: Committed
+Status: UAT Approved
 ---
 
 # Plan 116 — Field-Level Schema Remediation

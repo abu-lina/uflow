@@ -29,4 +29,15 @@ describe('Plan 114 bookmark typed FK runtime regression', () => {
       expect(code).toMatch(/provider_id|community_service_id/);
     }
   });
+
+  it('does not select dropped community_service_id from bookmarks in runtime queries', () => {
+    const modalPath = join(
+      process.cwd(),
+      'src/components/community-services/CommunityServiceDetailModal.tsx',
+    );
+    const modalCode = readFileSync(modalPath, 'utf8');
+
+    expect(modalCode).not.toContain(".select('community_service_id')");
+    expect(modalCode).not.toContain('.select("community_service_id")');
+  });
 });

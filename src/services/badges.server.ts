@@ -20,7 +20,7 @@ import type { ProviderBadgeWithType, EntityType } from '@/types/badges';
  */
 export async function getBadgesForEntityServer(
   entityId: string,
-  entityType: EntityType
+  _entityType: EntityType
 ): Promise<ProviderBadgeWithType[]> {
   try {
     const supabase = createSupabaseServerClient();
