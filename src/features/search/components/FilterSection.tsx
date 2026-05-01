@@ -59,7 +59,7 @@ export function FilterSection({ selectedSection, selectedFilters, onToggleFilter
   const sectionFilterItems =
     selectedSection === 'ummah'
       ? []
-      : selectedSection === 'business'
+      : selectedSection === 'store'
         ? FILTER_ITEMS.filter((item) => item.key !== 'muslim')
         : FILTER_ITEMS;
 

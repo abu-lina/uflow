@@ -64,7 +64,7 @@ describe('badges service phase 3 typed FKs', () => {
     expect(mockEq).toHaveBeenCalledWith('provider_id', 'provider-1');
   });
 
-  it('[pre-fix FAILS] createProviderBadge inserts typed FK payload', async () => {
+  it('[post-fix PASSES] createProviderBadge inserts typed FK payload (M-5a: community_service_id removed)', async () => {
     const { createProviderBadge } = await import('@/services/badges');
 
     await createProviderBadge({
@@ -76,7 +76,6 @@ describe('badges service phase 3 typed FKs', () => {
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         provider_id: 'provider-1',
-        community_service_id: null,
         badge_type_id: 'bt-1',
       })
     );

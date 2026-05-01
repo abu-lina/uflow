@@ -557,7 +557,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
                     onClick={() =>
-                      router.push(`/community-services/${communityService.community_service_id}`)
+                      router.push(`/providers/${communityService.community_service_id}`)
                     }
                   />
                 ))}
@@ -602,7 +602,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
                     onClick={() =>
-                      router.push(`/community-services/${communityService.community_service_id}`)
+                      router.push(`/providers/${communityService.community_service_id}`)
                     }
                   />
                 ))}
@@ -807,7 +807,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
                       onClick={() =>
-                        router.push(`/community-services/${communityService.community_service_id}`)
+                        router.push(`/providers/${communityService.community_service_id}`)
                       }
                     />
                   );
@@ -844,11 +844,8 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     imageUrl={getFirstImageUrl(provider.images)}
                     title={provider.name}
                     onClick={() => {
-                      if (provider.type === 'community_service') {
-                        router.push(`/community-services/${provider.id}`);
-                      } else {
-                        router.push(`/providers/${provider.id}`);
-                      }
+                      // M-5a: ummah providers now at /providers/[id]
+                      router.push(`/providers/${provider.id}`);
                     }}
                     onRemove={() => handleRemoveFromSaved(provider.id)}
                   />
@@ -903,7 +900,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
                       onClick={() =>
-                        router.push(`/community-services/${communityService.community_service_id}`)
+                        router.push(`/providers/${communityService.community_service_id}`)
                       }
                     />
                   );

@@ -11,8 +11,8 @@ interface HalalStarsInput {
 
 interface BarakahBadgeInput {
   muslim_owned?: boolean;
-  accepts_donations?: boolean;
-  solidarity_pricing?: boolean;
+  makes_donations?: boolean;
+  economic_solidarity?: boolean;
   has_prayer_space?: boolean;
   family_friendly?: boolean;
   women_friendly?: boolean;
@@ -36,7 +36,7 @@ export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 {
  *
  * Criteria (Plan 089 M5):
  *   - `muslim_owned = true`, AND
- *   - At least 2 of: `accepts_donations`, `solidarity_pricing`,
+ *   - At least 2 of: `makes_donations`, `economic_solidarity`,
  *     `has_prayer_space`, `family_friendly`, `women_friendly`
  *
  * Applicable to FOOD and BUSINESS sections only.
@@ -45,8 +45,8 @@ export function computeBarakahBadge(provider: BarakahBadgeInput): boolean {
   if (!provider.muslim_owned) return false;
 
   const communityAttributes = [
-    provider.accepts_donations,
-    provider.solidarity_pricing,
+    provider.makes_donations,
+    provider.economic_solidarity,
     provider.has_prayer_space,
     provider.family_friendly,
     provider.women_friendly,

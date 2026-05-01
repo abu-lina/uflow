@@ -82,9 +82,14 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
       .mockReturnValueOnce(providersChain)   // providers query
       .mockReturnValueOnce(categoriesChain); // categories query
 
-    const result = await fetchCategoriesBySection('business');
+    const result = await fetchCategoriesBySection('store');
     expect(result).toHaveLength(1);
     expect(result[0].category_id).toBe(BUSINESS_CATEGORY_UUID);
+
+    const eqCalls = (providersChain.eq as ReturnType<typeof vi.fn>).mock.calls;
+    const listingTypeCall = eqCalls.find(([column]) => column === 'listing_type');
+    expect(listingTypeCall).toBeDefined();
+    expect(listingTypeCall?.[1]).toBe('store');
   });
 
   it('returns empty array when no categories exist for a section', async () => {

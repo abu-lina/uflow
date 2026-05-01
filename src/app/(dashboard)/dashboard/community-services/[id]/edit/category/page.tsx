@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react';
 
 import type { Category } from '@/types/supabase';
 import { supabase } from '@/lib/supabase/client';
-import { getProviderCategories } from '@/services/categories';
+import { getSocialProjectCategories } from '@/services/categories';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 /**
@@ -33,13 +33,14 @@ export default function CsEditCategoryPage({ params }: { params: Promise<{ id: s
     async function fetchCategories() {
       setCategoriesLoading(true);
       try {
-        const categoriesData = await getProviderCategories();
+        const categoriesData = await getSocialProjectCategories();
         setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);
         const { data, error: fallbackError } = await supabase
           .from('categories')
           .select('*')
+          .in('applicable_section', ['ummah', 'all'])
           .order('name_de', { ascending: true });
         if (!fallbackError && data) {
           setCategories(data);
@@ -60,11 +61,12 @@ export default function CsEditCategoryPage({ params }: { params: Promise<{ id: s
           return;
         }
 
-        // CS-specific table and ID column
+        // M-5a: community_services dropped; ummah providers in providers table
         const { data, error } = await supabase
-          .from('community_services')
+          .from('providers')
           .select('category_id')
-          .eq('community_service_id', communityServiceId)
+          .eq('provider_id', communityServiceId)
+          .eq('listing_type', 'ummah')
           .single();
 
         if (!error && data?.category_id) {

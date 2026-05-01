@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-05-02
+
+### Changed — Schema Remediation (Plan 116, Architecture 118, 28 findings)
+
+This is a MINOR release. All 28 field-level schema findings from Architecture Review 118 are resolved.
+The primary breaking structural changes (supertype unification, table drops, enum rename) were applied
+to PROD before app-code changes, making each schema step individually safe during the pre-consumer window.
+
+**M-1 — Phase A Quick Wins** (migration 079, FL-14, FL-15, FL-17, FL-18, FL-22, FL-3)
+- Dropped 3 redundant UNIQUE constraints on PK columns (`categories`, `providers`, `users`)
+- Added FK on `enrichment_candidates.run_id → enrichment_run_logs.id ON DELETE SET NULL` (FL-14)
+- Added EUR-only CHECK constraints on `provider_menu.price_currency`, `provider_catalog.price_currency`, `community_projects.price_currency` (FL-22; tables renamed in M-6)
+- Backfilled `waitlist.is_provider` NULLs → `false` and enforced `NOT NULL DEFAULT false` (FL-18)
+- Dropped dead column `categories.applicable_to` and its GIN index (FL-3)
+
+**M-2 — Phase B Nullable Boolean Backfills** (migration 080, FL-5, FL-7, FL-8, FL-9, FL-13)
+- Backfilled `providers.review_status` NULLs → `'pending'`, enforced `NOT NULL` (FL-7)
+- Backfilled `providers.show_address` NULLs → `true`, enforced `NOT NULL DEFAULT true` (FL-13)
+- Backfilled `categories.applicable_section` NULLs → `'all'`, enforced `NOT NULL DEFAULT 'all'` (FL-5)
+- Added verified `admin_audit_logs.action` CHECK constraint based on live value audit (FL-9)
+
+**M-3 — Phase C Column Renames** (migration 081, FL-24, FL-25)
+- Renamed `providers.solidarity_pricing` → `economic_solidarity` (FL-24)
+- Renamed `providers.accepts_donations` → `makes_donations` (FL-25)
+- Dropped all three section-scoped CHECK constraints (`food_only_ck`, `business_only_ck`, `ummah_only_ck`) from `providers` supertype — structurally replaced by extension tables in M-5
+
+**M-4 — FK Integrity, Enum, Badge Registry** (migration 082, FL-4, FL-10, FL-11, FL-23)
+- Changed `needs.category_id` and `offers.category_id` FK to `ON DELETE RESTRICT` (FL-4)
+- Changed `providers.category_id` FK to `ON DELETE SET NULL` (FL-11)
+- Created `task_status_enum` and migrated `provider_outreach_tasks.task_status` from TEXT+CHECK (FL-10)
+- Added `attribute_category`, `provider_column_name`, `is_filterable` columns to `badge_types` (FL-23)
+- Inserted 6 new badge type rows (`CHILDREN_FRIENDLY`, `ECONOMIC_SOLIDARITY`, `HAS_PARKING`, `NO_ALCOHOL`, `NO_GAMBLING`, `NO_PORK`)
+- Rewrote `sync_provider_badge_to_boolean()` trigger as data-driven via `badge_types.provider_column_name` registry (fixes live regression where stale `accepts_donations` reference caused silent badge sync failures)
+
+**M-5a — Supertype Unification + Enum Rename** (migration 083, FL-26, FL-28 Part 1)
+- Renamed `listing_type_enum` value `'business'` → `'store'` (with strict DROP/RENAME/RECREATE ordering per AF-1)
+- Created 1:1 extension tables `food_providers`, `store_providers`, `ummah_providers` with RLS enabled
+- Migrated food/store type-exclusive columns (`halal_level`, `no_alcohol`, `no_pork`, `no_gambling`) to extension tables; dropped from `providers` supertype
+- Migrated `community_services` (8 rows) → `providers` with `listing_type = 'ummah'`; populated `ummah_providers` extension
+- Created `provider_engagements` table (replaces `provider_community_services`); migrated 3 rows
+- Merged `community_service_offers` and `community_service_needs` → `provider_offers` / `provider_needs`; dropped CS junction tables
+- Simplified `bookmarks`: merged `community_service_id` → `provider_id`, dropped CS FK column, enforced `provider_id NOT NULL`
+- Dropped `community_services` and `provider_community_services` tables
+- Renamed `community_projects.community_service_id` → `provider_id` with FK to `providers`
+
+**M-5b/c — App Code Layer** (no migration, service + component rewrites)
+- All 50+ source files referencing dropped tables/columns updated to use `providers` unified supertype
+- `from('community_services')` → `from('providers').eq('listing_type', 'ummah')` across all services
+- `community_service_id` → `provider_id`, `community_service_name` → `provider_name`, etc.
+- Bookmark and badge hooks simplified to `bookmarkableType: 'provider'` only
+- Navigation: all CS routes unified under `/providers/[id]`
+
+**M-6 — Table Renames** (migration 084, FL-28 Parts 2+3)
+- Renamed `provider_menu_items` → `provider_menu`
+- Renamed `provider_service_offers` → `provider_catalog`
+- Rewrote `search_food_menu_items()` and `search_provider_items()` RPCs to reference new table names
+
+**M-7 — Advisory Documentation** (migration 085, FL-6, FL-12, FL-21)
+- Added SQL comment on `providers.listing_type`: no DEFAULT by design, app-layer validation required
+- Added SQL comment on `deletion_logs.user_id`: intentional FK absence (user deleted before log written)
+- Added SQL comment on `provider_owner_outreach.dispatch_after`: 24h cool-down business rule
+
+### Deferred (YAGNI)
+- FL-16: `category_suggested_offers/needs` surrogate PK retained; composite PK migration deferred
+- FL-19: `email_confirmation_tokens.type` TEXT+CHECK retained; enum migration deferred
+- FL-20: `community_service_view_count` moved to `ummah_providers`; `provider_stats` MV decision deferred
+- FL-27: `category-suggestions.ts` RPC optimisation deferred to next opportunity
+
 ## [0.11.7] - 2026-04-30
 
 ### Changed

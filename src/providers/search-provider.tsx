@@ -1,9 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
+import type { Section } from '@/config/sectionFilters';
 
-/** Section values for Three-Section Search (Plan 089) */
-export type Section = 'food' | 'ummah' | 'business';
+// Re-export so callers that import Section from here continue to work
+export type { Section };
 
 export type SearchContextType = {
   searchQuery: string;

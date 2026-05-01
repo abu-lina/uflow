@@ -136,16 +136,15 @@ export default function SavedProvidersPage() {
     return filtered;
   }, [providers, searchQuery, selectedLocation]);
 
-  const handleUnsave = useCallback(async (providerId: string, isCommunityService: boolean) => {
+  const handleUnsave = useCallback(async (providerId: string, _isCommunityService: boolean) => {
     if (!user) return;
     
     try {
-      let bookmarkQuery = supabase
+      const bookmarkQuery = supabase
         .from('bookmarks')
         .select('id')
         .eq('user_id', user.id)
-        .eq(isCommunityService ? 'community_service_id' : 'provider_id', providerId)
-        .is(isCommunityService ? 'provider_id' : 'community_service_id', null);
+        .eq('provider_id', providerId);
 
       const { data: bookmark, error: fetchError } = await bookmarkQuery.maybeSingle();
       
@@ -171,8 +170,8 @@ export default function SavedProvidersPage() {
     }
   }, [user, queryClient, t]);
 
-  const handleProviderClick = useCallback((providerId: string, isCommunityService: boolean) => {
-    const detailPath = isCommunityService 
+  const handleProviderClick = useCallback((providerId: string, isUmmah: boolean) => {
+    const detailPath = isUmmah 
       ? `/community-services/${providerId}`
       : `/providers/${providerId}`;
     router.push(detailPath);
@@ -556,7 +555,7 @@ export default function SavedProvidersPage() {
             role="list"
           >
             {filteredProviders.map((provider) => {
-              const isCommunityService = provider.type === 'community_service';
+              const isUmmah = provider.listing_type === 'ummah';
               const imageUrl = getFirstImageUrl(provider.images);
               const address = formatProviderAddress(provider.address_street, provider.address_city);
               
@@ -568,8 +567,8 @@ export default function SavedProvidersPage() {
                     category={provider.category?.name_de || ''}
                     imageUrl={imageUrl}
                     title={provider.name}
-                    onAction={() => handleUnsave(provider.id, isCommunityService)}
-                    onClick={() => handleProviderClick(provider.id, isCommunityService)}
+                    onAction={() => handleUnsave(provider.id, isUmmah)}
+                    onClick={() => handleProviderClick(provider.id, isUmmah)}
                   />
                 </li>
               );

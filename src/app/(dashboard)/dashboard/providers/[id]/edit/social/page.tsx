@@ -46,12 +46,13 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
         }
 
         const { data, error } = await supabase
-          .from('provider_community_services')
-          .select('community_service_id')
-          .eq('provider_id', providerId);
+          // M-5a: provider_community_services dropped; use provider_engagements
+          .from('provider_engagements')
+          .select('engaged_provider_id')
+          .eq('initiating_provider_id', providerId);
 
         if (!error && data) {
-          const serviceIds = data.map(rel => rel.community_service_id);
+          const serviceIds = data.map((rel: { engaged_provider_id: string }) => rel.engaged_provider_id);
           setSelectedServiceIds(serviceIds);
         }
       } catch (error) {

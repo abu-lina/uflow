@@ -46,18 +46,18 @@ describe('bookmarks service phase 3 typed FKs', () => {
     mockDelete.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
   });
 
-  it('[pre-fix FAILS] getBookmarkForProvider filters on provider_id (typed FK)', async () => {
+  it('[post-fix PASSES] getBookmarkForProvider filters on provider_id (no community_service_id)', async () => {
     const { getBookmarkForProvider } = await import('@/services/bookmarks');
     await getBookmarkForProvider('p1', 'u1');
 
-    expect(mockSelect).toHaveBeenCalledWith('id, provider_id, community_service_id, user_id, created_at');
+    expect(mockSelect).toHaveBeenCalledWith('id, provider_id, user_id, created_at');
     expect(mockEq).toHaveBeenCalledWith('provider_id', 'p1');
   });
 
-  it('[pre-fix FAILS] toggleBookmarkForProvider inserts provider_id instead of polymorphic columns', async () => {
+  it('[post-fix PASSES] toggleBookmarkForProvider inserts provider_id only (community_service_id dropped)', async () => {
     const { toggleBookmarkForProvider } = await import('@/services/bookmarks');
     await toggleBookmarkForProvider('p1', 'u1');
 
-    expect(mockInsert).toHaveBeenCalledWith([{ provider_id: 'p1', community_service_id: null, user_id: 'u1' }]);
+    expect(mockInsert).toHaveBeenCalledWith([{ provider_id: 'p1', user_id: 'u1' }]);
   });
 });

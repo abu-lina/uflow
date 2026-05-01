@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 
-export interface ProviderMenuItemRaw {
+export interface StoreCatalogItemRaw {
   item_id: string;
   provider_id: string;
   item_type: string;
@@ -12,22 +12,22 @@ export interface ProviderMenuItemRaw {
   rank: number;
 }
 
-export interface ProviderMenuItem extends ProviderMenuItemRaw {
+export interface StoreCatalogItem extends StoreCatalogItemRaw {
   provider_name: string;
   provider_image: string | null;
 }
 
-export interface SearchProviderItemsParams {
+export interface SearchStoreCatalogItemsParams {
   search_query: string;
-  listing_type_filter: 'food' | 'business' | 'ummah' | null;
+  listing_type_filter: 'food' | 'store' | 'ummah' | null;
   provider_id_filter?: string | null;
   limit_count?: number;
   offset_count?: number;
 }
 
 export async function searchProviderItems(
-  params: SearchProviderItemsParams,
-): Promise<ProviderMenuItemRaw[]> {
+  params: SearchStoreCatalogItemsParams,
+): Promise<StoreCatalogItemRaw[]> {
   const {
     search_query,
     listing_type_filter,
@@ -48,5 +48,5 @@ export async function searchProviderItems(
     throw error;
   }
 
-  return Array.isArray(data) ? (data as ProviderMenuItemRaw[]) : [];
+  return Array.isArray(data) ? (data as StoreCatalogItemRaw[]) : [];
 }

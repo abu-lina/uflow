@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase/client';
-import { searchCommunityServices, type CommunityService } from './communityServices';
 import { searchOffers } from './offers';
 import { searchNeeds } from './needs';
 import { logSupabaseError } from '@/utils/errorUtils';
@@ -41,31 +40,31 @@ export interface Provider {
     name_en?: string;
     category_images?: Record<string, unknown>;
   };
-  community_service_id?: string | null;
   bookmark_count?: number;
   provider_owner_id?: string | null;
   user_created_id?: string | null;
   review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   review_feedback?: string | null;
   badges?: ProviderBadgeWithType[];
+  /** @deprecated Dropped in M-5a schema migration — always undefined at runtime */
+  community_service_id?: string | null;
   // Plan 089: section classification columns
-  listing_type?: 'food' | 'business' | 'ummah' | null;
-  halal_level?: number | null;
+  listing_type?: 'food' | 'store' | 'ummah' | null;
   muslim_owned?: boolean;
-  no_alcohol?: boolean;
-  no_pork?: boolean;
-  no_gambling?: boolean;
   has_prayer_space?: boolean;
   family_friendly?: boolean;
   women_friendly?: boolean;
   children_friendly?: boolean;
-  accepts_donations?: boolean;
+  makes_donations?: boolean;
   has_parking?: boolean;
-  solidarity_pricing?: boolean;
+  economic_solidarity?: boolean;
+  // M-5 extension table columns (now in food_providers / store_providers; undefined when not joined)
+  halal_level?: number | null;
+  no_alcohol?: boolean;
+  no_pork?: boolean;
+  no_gambling?: boolean;
   opening_hours?: OpeningHours | null;
 }
-
-// Combined search result type
 export interface SearchResult {
   id: string;
   name: string;
@@ -93,27 +92,22 @@ export interface SearchResult {
     name_en?: string;
     category_images?: Record<string, unknown>;
   };
-  type: 'provider' | 'community_service';
+  type: 'provider';
   originalProvider?: Provider;
-  originalCommunityService?: CommunityService;
   /** Review status (Plan 058: included for admin requests) */
   review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   /** Review feedback (Plan 058: included for admin requests) */
   review_feedback?: string | null;
   // Plan 089: section classification fields (passed through from Provider)
-  listing_type?: 'food' | 'business' | 'ummah' | null;
-  halal_level?: number | null;
+  listing_type?: 'food' | 'store' | 'ummah' | null;
   muslim_owned?: boolean;
-  no_alcohol?: boolean;
-  no_pork?: boolean;
-  no_gambling?: boolean;
   has_prayer_space?: boolean;
   family_friendly?: boolean;
   women_friendly?: boolean;
   children_friendly?: boolean;
-  accepts_donations?: boolean;
+  makes_donations?: boolean;
   has_parking?: boolean;
-  solidarity_pricing?: boolean;
+  economic_solidarity?: boolean;
 }
 
 /**
@@ -151,54 +145,14 @@ function transformProviderToSearchResult(provider: Provider): SearchResult {
     review_feedback: provider.review_feedback,
     // Plan 089: section classification fields
     listing_type: provider.listing_type,
-    halal_level: provider.halal_level,
     muslim_owned: provider.muslim_owned,
-    no_alcohol: provider.no_alcohol,
-    no_pork: provider.no_pork,
-    no_gambling: provider.no_gambling,
     has_prayer_space: provider.has_prayer_space,
     family_friendly: provider.family_friendly,
     women_friendly: provider.women_friendly,
     children_friendly: provider.children_friendly,
-    accepts_donations: provider.accepts_donations,
+    makes_donations: provider.makes_donations,
     has_parking: provider.has_parking,
-    solidarity_pricing: provider.solidarity_pricing,
-  };
-}
-
-/**
- * Transforms a community service to SearchResult format
- */
-function transformCommunityServiceToSearchResult(communityService: CommunityService): SearchResult {
-  return {
-    id: communityService.community_service_id,
-    name: communityService.community_service_name,
-    images: communityService.community_service_images ? JSON.stringify(communityService.community_service_images) : null,
-    category_id: communityService.category_id || null,
-    address_city: communityService.address_city || null,
-    social_website: communityService.social_website || null,
-    social_instagram: communityService.social_instagram || null,
-    contact_email: communityService.contact_email || null,
-    contact_phone: communityService.contact_phone || null,
-    address_street: communityService.address_street || null,
-    address_country: communityService.address_country || null,
-    address_zip: communityService.address_zip || null,
-    location_latitude: communityService.location_latitude || null,
-    location_longitude: communityService.location_longitude || null,
-    created_at: communityService.created_at,
-    updated_at: communityService.updated_at,
-    offers_ids: communityService.offers_ids || [],
-    needs_ids: communityService.needs_ids || [],
-    offers: communityService.offers,
-    needs: communityService.needs,
-    badges: communityService.badges,
-    category: communityService.category ? {
-      name_de: communityService.category.name_de || 'Unbekannt',
-      name_en: communityService.category.name_en,
-      category_images: communityService.category.category_images,
-    } : undefined,
-    type: 'community_service' as const,
-    originalCommunityService: communityService,
+    economic_solidarity: provider.economic_solidarity,
   };
 }
 
@@ -319,8 +273,8 @@ export async function searchProvidersAndCommunityServices(
           return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
         case 'food':
           return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters);
-        case 'business':
-          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'business', barakahFilters);
+        case 'store':
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'store', barakahFilters);
         default:
           // D9: default section is FOOD
           return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters);
@@ -338,7 +292,8 @@ export async function searchProvidersAndCommunityServices(
 }
 
 /**
- * Search only community services with pagination
+ * Search only ummah community services with pagination.
+ * Delegates to searchProvidersOnly with listingType='ummah' for consistency.
  */
 async function searchCommunityServicesOnly(
   query: string,
@@ -347,14 +302,7 @@ async function searchCommunityServicesOnly(
   page: number = 0,
   pageSize: number = 5,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
-  const offset = page * pageSize;
-  const limit = pageSize + 1; // Fetch one extra to check if there are more
-  
-  const communityServices = await searchCommunityServices(query, category, location, limit, offset);
-  const hasMore = communityServices.length > pageSize;
-  const results = communityServices.slice(0, pageSize).map(transformCommunityServiceToSearchResult);
-  
-  return { results, hasMore };
+  return searchProvidersOnly(query, category, location, page, pageSize, undefined, 'ummah');
 }
 
 /**
@@ -368,7 +316,7 @@ async function searchProvidersOnly(
   page: number = 0,
   pageSize: number = 5,
   adminOptions?: AdminSearchOptions,
-  listingType?: 'food' | 'business' | 'ummah',
+  listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const offset = page * pageSize;
@@ -491,7 +439,7 @@ export async function searchProviders(
   limit?: number,
   offset?: number,
   adminOptions?: AdminSearchOptions,
-  listingType?: 'food' | 'business' | 'ummah',
+  listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
 ): Promise<Provider[]> {
   // Plan 058: Include review fields when admin
@@ -727,36 +675,20 @@ export async function checkCityExists(cityName: string): Promise<boolean> {
 }
 
 /**
- * Fetch cities that currently have providers or approved community services
- * (subset of valid cities - these have actual listings)
+ * Fetch cities that currently have providers (includes all listing_types: food, store, ummah).
  */
 export async function fetchProviderCities(): Promise<string[]> {
   try {
-    // Fetch cities from both providers and community_services tables
-    const [providersResult, communityServicesResult] = await Promise.all([
-      supabase
-        .from('providers')
-        .select('address_city')
-        .returns<{ address_city: string | null }[]>(),
-      supabase
-        .from('community_services')
-        .select('address_city')
-        .eq('review_status', 'approved') // Only include approved services
-        .returns<{ address_city: string | null }[]>(),
-    ]);
+    const { data, error } = await supabase
+      .from('providers')
+      .select('address_city')
+      .returns<{ address_city: string | null }[]>();
 
-    if (providersResult.error) {
-      throw providersResult.error;
+    if (error) {
+      throw error;
     }
 
-    if (communityServicesResult.error) {
-      throw communityServicesResult.error;
-    }
-
-    // Combine cities from both sources
-    const providerCities = providersResult.data?.map((p) => p.address_city) ?? [];
-    const communityServiceCities = communityServicesResult.data?.map((cs) => cs.address_city) ?? [];
-    const allCities = [...providerCities, ...communityServiceCities];
+    const allCities = data?.map((p) => p.address_city) ?? [];
 
     const uniqueCities = Array.from(
       new Set(
@@ -790,7 +722,7 @@ export interface PopularCity {
 }
 
 /**
- * Fetch most popular cities by listing count across providers and approved community services.
+ * Fetch most popular cities by listing count across all providers (food, store, ummah).
  */
 export async function fetchPopularCities(limit = 5): Promise<PopularCity[]> {
   if (limit <= 0) {
@@ -798,31 +730,20 @@ export async function fetchPopularCities(limit = 5): Promise<PopularCity[]> {
   }
 
   try {
-    const [providersResult, communityServicesResult] = await Promise.all([
-      supabase
-        .from('providers')
-        .select('address_city')
-        .returns<{ address_city: string | null }[]>(),
-      supabase
-        .from('community_services')
-        .select('address_city')
-        .eq('review_status', 'approved')
-        .returns<{ address_city: string | null }[]>(),
-    ]);
+    const { data, error } = await supabase
+      .from('providers')
+      .select('address_city')
+      .returns<{ address_city: string | null }[]>();
 
-    if (providersResult.error) {
-      throw providersResult.error;
+    if (error) {
+      throw error;
     }
 
-    if (communityServicesResult.error) {
-      throw communityServicesResult.error;
-    }
-
-    const providerCities = providersResult.data?.map((row) => row.address_city) ?? [];
-    const communityCities = communityServicesResult.data?.map((row) => row.address_city) ?? [];
-    const allCities = [...providerCities, ...communityCities].filter((city): city is string => {
-      return typeof city === 'string' && city.trim() !== '' && city !== 'null';
-    });
+    const allCities = (data ?? [])
+      .map((row) => row.address_city)
+      .filter((city): city is string => {
+        return typeof city === 'string' && city.trim() !== '' && city !== 'null';
+      });
 
     const countByCity = new Map<string, number>();
     for (const city of allCities) {
@@ -883,37 +804,21 @@ export async function fetchFilteredCities(
       return cities.sort((a: string, b: string) => a.localeCompare(b, 'de'));
     }
 
-    // No search query — use direct queries (no ILIKE needed)
+    // No search query — use direct query on providers only
     let providersReq = supabase.from('providers').select('address_city');
-    let communityServicesReq = supabase
-      .from('community_services')
-      .select('address_city')
-      .eq('review_status', 'approved');
 
     // Apply category filter if specified
     if (selectedCategory && selectedCategory !== 'Alle') {
       providersReq = providersReq.eq('category_id', selectedCategory);
-      communityServicesReq = communityServicesReq.eq('category_id', selectedCategory);
     }
 
-    // Execute both queries in parallel
-    const [providersResult, communityServicesResult] = await Promise.all([
-      providersReq.returns<{ address_city: string | null }[]>(),
-      communityServicesReq.returns<{ address_city: string | null }[]>(),
-    ]);
+    const { data, error: providersError } = await providersReq.returns<{ address_city: string | null }[]>();
 
-    if (providersResult.error) {
-      throw providersResult.error;
+    if (providersError) {
+      throw providersError;
     }
 
-    if (communityServicesResult.error) {
-      throw communityServicesResult.error;
-    }
-
-    // Combine cities from both sources
-    const providerCities = providersResult.data?.map((p) => p.address_city) ?? [];
-    const communityServiceCities = communityServicesResult.data?.map((cs) => cs.address_city) ?? [];
-    const allCities = [...providerCities, ...communityServiceCities];
+    const allCities = data?.map((p) => p.address_city) ?? [];
 
     const uniqueCities = Array.from(
       new Set(
@@ -997,14 +902,12 @@ export async function getRecommendations(userId: string): Promise<Provider[]> {
   return filtered;
 }
 
-// Get all bookmarked items (providers and community services) for a user
+// Get all bookmarked providers for a user
 export async function getAllBookmarkedItems(userId: string): Promise<SearchResult[]> {
-  const query = supabase
+  const { data: bookmarks, error: bookmarksError } = await supabase
     .from('bookmarks')
-    .select('provider_id, community_service_id')
+    .select('provider_id')
     .eq('user_id', userId);
-  
-  const { data: bookmarks, error: bookmarksError } = await query;
 
   if (bookmarksError) {
     console.error('[getAllBookmarkedItems] Error:', bookmarksError);
@@ -1015,18 +918,12 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
     return [];
   }
 
-  // Separate providers and community services
   const providerIds = bookmarks
     .map((b) => b.provider_id)
-    .filter((id): id is string => typeof id === 'string' && id.length > 0);
-  
-  const communityServiceIds = bookmarks
-    .map((b) => b.community_service_id)
     .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
   const results: SearchResult[] = [];
 
-  // Fetch bookmarked providers
   if (providerIds.length > 0) {
     const { data: providers, error: providersError } = await supabase
       .from('providers')
@@ -1039,22 +936,18 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
     } else if (providers && providers.length > 0) {
       const transformed = providers.map(transformProviderToSearchResult);
       results.push(...transformed);
-      
-      // Check if any requested providers are missing and clean up orphaned bookmarks
+
+      // Clean up orphaned bookmarks in the background
       if (providers.length < providerIds.length) {
-        const foundIds = new Set(providers.map(p => p.provider_id));
-        const missingIds = providerIds.filter(id => !foundIds.has(id));
-        
-        // Clean up orphaned bookmarks in the background
+        const foundIds = new Set(providers.map((p) => p.provider_id));
+        const missingIds = providerIds.filter((id) => !foundIds.has(id));
         if (missingIds.length > 0) {
           void (async () => {
             try {
               const { error } = await supabase
                 .from('bookmarks')
                 .delete()
-                .in('provider_id', missingIds)
-                .is('community_service_id', null);
-              
+                .in('provider_id', missingIds);
               if (error) {
                 console.error('[getAllBookmarkedItems] Error cleaning up orphaned bookmarks:', error);
               }
@@ -1064,22 +957,6 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
           })();
         }
       }
-    }
-  }
-
-  // Fetch bookmarked community services
-  if (communityServiceIds.length > 0) {
-    const { data: communityServices, error: communityServicesError } = await supabase
-      .from('community_services')
-      .select('*, category:categories(name_de, name_en)')
-      .in('community_service_id', communityServiceIds)
-      .returns<CommunityService[]>();
-
-    if (communityServicesError) {
-      console.error('[getAllBookmarkedItems] Error fetching bookmarked community services:', communityServicesError);
-    } else if (communityServices) {
-      const transformed = communityServices.map(transformCommunityServiceToSearchResult);
-      results.push(...transformed);
     }
   }
 

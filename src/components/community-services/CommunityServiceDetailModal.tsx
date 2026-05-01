@@ -50,7 +50,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: communityService.community_service_id,
-    bookmarkableType: 'community_service',
+    bookmarkableType: 'provider',
     onBookmarkChange: (isBookmarked) => {
       setIsSaved(isBookmarked);
       if (typeof onBookmarkChange === 'function') {
@@ -121,10 +121,10 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
       if (!user) return [];
       const { data: bookmarks } = await supabase
         .from('bookmarks')
-        .select('community_service_id')
+        .select('provider_id')
         .eq('user_id', user.id)
-        .is('provider_id', null);
-      return bookmarks?.map((b) => b.community_service_id).filter((id): id is string => !!id) || [];
+        .not('provider_id', 'is', null);
+      return bookmarks?.map((b) => b.provider_id).filter((id): id is string => !!id) || [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes

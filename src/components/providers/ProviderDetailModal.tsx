@@ -58,18 +58,13 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const isMobile = useIsMobile();
   const { t, language } = useLanguage();
 
-  // Determine entity type for bookmarking (Plan 082: M3 — Critic F1 fix)
-  // community_service_id being set means this provider shape wraps a community service
-  const isCommunityServiceEntity = !!provider.community_service_id;
-  const bookmarkableEntityId = isCommunityServiceEntity
-    ? (provider.community_service_id as string)
-    : provider.provider_id;
-  const bookmarkableEntityType = isCommunityServiceEntity ? 'community_service' : 'provider';
+  // M-5a: all providers (including ummah) bookmark via provider_id
+  const bookmarkableEntityId = provider.provider_id;
 
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: bookmarkableEntityId,
-    bookmarkableType: bookmarkableEntityType,
+    bookmarkableType: 'provider',
     onBookmarkChange: (isBookmarked) => {
       setIsSaved(isBookmarked);
       if (typeof onBookmarkChange === 'function') {
@@ -170,9 +165,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       if (!user) return [];
       const { data: bookmarks } = await supabase
         .from('bookmarks')
-        .select('provider_id, community_service_id')
+        .select('provider_id')
         .eq('user_id', user.id);
-      return bookmarks?.flatMap((b) => [b.provider_id, b.community_service_id].filter((id): id is string => !!id)) || [];
+      return bookmarks?.map((b) => b.provider_id).filter((id): id is string => !!id) || [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -262,9 +257,8 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     }
     if (action === 'share') {
       // Use community-services path when rendering a community service entity (Plan 082: M3)
-      const shareUrl = isCommunityServiceEntity
-        ? `${window.location.origin}/community-services/${provider.community_service_id}`
-        : `${window.location.origin}/providers/${provider.provider_id}`;
+      // M-5a: ummah providers now at /providers/[id] (community-services route still accessible for legacy URLs)
+      const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
 
       if (navigator.share) {
         try {

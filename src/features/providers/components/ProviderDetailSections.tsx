@@ -37,8 +37,8 @@ function buildAmenityLabels(provider: Provider, t: (key: string) => string): str
     [provider.family_friendly, 'providerDetail.amenities.familyFriendly'],
     [provider.women_friendly, 'providerDetail.amenities.womenFriendly'],
     [provider.children_friendly, 'providerDetail.amenities.childrenFriendly'],
-    [provider.accepts_donations, 'providerDetail.amenities.acceptsDonations'],
-    [provider.solidarity_pricing, 'providerDetail.amenities.solidarityPricing'],
+    [provider.makes_donations, 'providerDetail.amenities.acceptsDonations'],
+    [provider.economic_solidarity, 'providerDetail.amenities.solidarityPricing'],
   ];
 
   return entries.filter(([enabled]) => Boolean(enabled)).map(([, labelKey]) => t(labelKey));

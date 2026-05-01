@@ -12,7 +12,6 @@ import { logSupabaseError } from '@/utils/errorUtils';
 import { EntityType } from '@/types/badges';
 import { getBadgesForEntityServer } from '@/services/badges.server';
 import type { Provider, SearchResult } from './providers';
-import type { CommunityService } from './communityServices';
 
 /**
  * Get a single provider by ID (server-side)
@@ -103,23 +102,15 @@ export async function getProviders(limit?: number): Promise<Provider[]> {
 }
 
 /**
- * Get all bookmarked items for a user (server-side)
- * 
- * @param userId - User ID
- * @returns Array of bookmarked items
+ * Get all bookmarked providers for a user (server-side).
+ * bookmarks.provider_id is now NOT NULL — no CS join needed.
  */
 export async function getAllBookmarkedItems(userId: string): Promise<SearchResult[]> {
   const supabase = createSupabaseServerClient();
-  
+
   const { data: bookmarks, error } = await supabase
     .from('bookmarks')
-    .select(`
-      bookmark_id,
-      provider_id,
-      community_service_id,
-      providers(*, category:categories(name_de, name_en)),
-      community_services(*, category:categories(name_de, name_en))
-    `)
+    .select('provider_id, providers(*, category:categories(name_de, name_en))')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -130,9 +121,8 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
 
   if (!bookmarks) return [];
 
-  // Transform bookmarks to SearchResult format
   const results: SearchResult[] = [];
-  
+
   for (const bookmark of bookmarks) {
     if (bookmark.provider_id && bookmark.providers) {
       const provider = bookmark.providers as unknown as Provider;
@@ -159,35 +149,6 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
         type: 'provider' as const,
         originalProvider: provider,
       });
-    } else if (bookmark.community_service_id && bookmark.community_services) {
-      const service = bookmark.community_services as unknown as CommunityService;
-      results.push({
-        id: service.community_service_id,
-        name: service.community_service_name,
-        images: service.community_service_images ? JSON.stringify(service.community_service_images) : null,
-        category_id: service.category_id || null,
-        address_city: service.address_city || null,
-        social_website: service.social_website || null,
-        social_instagram: service.social_instagram || null,
-        contact_email: service.contact_email || null,
-        contact_phone: service.contact_phone || null,
-        address_street: service.address_street || null,
-        address_country: service.address_country || null,
-        address_zip: service.address_zip || null,
-        location_latitude: service.location_latitude || null,
-        location_longitude: service.location_longitude || null,
-        created_at: service.created_at,
-        updated_at: service.updated_at,
-        offers_ids: [],
-        needs_ids: [],
-        category: service.category ? {
-          name_de: service.category.name_de || 'Unbekannt',
-          name_en: service.category.name_en,
-          category_images: service.category.category_images,
-        } : undefined,
-        type: 'community_service' as const,
-        originalCommunityService: service,
-      });
     }
   }
 
@@ -195,20 +156,14 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
 }
 
 /**
- * Get bookmarked cities for a user (server-side)
- * 
- * @param userId - User ID
- * @returns Array of unique city names
+ * Get bookmarked provider cities for a user (server-side).
  */
 export async function fetchBookmarkedCities(userId: string): Promise<string[]> {
   const supabase = createSupabaseServerClient();
-  
+
   const { data: bookmarks, error } = await supabase
     .from('bookmarks')
-    .select(`
-      providers(address_city),
-      community_services(address_city)
-    `)
+    .select('providers(address_city)')
     .eq('user_id', userId);
 
   if (error) {
@@ -219,15 +174,10 @@ export async function fetchBookmarkedCities(userId: string): Promise<string[]> {
   if (!bookmarks) return [];
 
   const cities = new Set<string>();
-  
   for (const bookmark of bookmarks) {
     if (bookmark.providers) {
       const provider = bookmark.providers as unknown as Provider;
       if (provider.address_city) cities.add(provider.address_city);
-    }
-    if (bookmark.community_services) {
-      const service = bookmark.community_services as unknown as CommunityService;
-      if (service.address_city) cities.add(service.address_city);
     }
   }
 

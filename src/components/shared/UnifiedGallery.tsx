@@ -10,7 +10,7 @@ const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 interface UnifiedGalleryProps {
   categoryId: string;
   category?: Category;
-  entityType: 'provider' | 'community_service';
+  entityType?: 'provider'; // M-5a: community_service entityType removed
   className?: string;
 }
 

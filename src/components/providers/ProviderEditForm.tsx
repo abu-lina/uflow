@@ -10,7 +10,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/types/supabase';
 import type { Provider } from '@/services/providers';
-import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
+// M-5a: createProviderCommunityServiceRelationship removed (community_services table dropped)
 import { Button } from '@/components/ui/Button';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -52,7 +52,7 @@ export interface ProviderEditFormData {
   providerName: string;
   providerDescription: string;
   categoryId: string;
-  listingType: 'food' | 'business' | 'ummah' | null;
+  listingType: 'food' | 'store' | 'ummah' | null;
   street: string;
   zipCode: string;
   city: string;
@@ -202,16 +202,17 @@ export function ProviderEditForm({
       }
     };
 
-    // Load current community service relationships
+    // Load current community service relationships via provider_engagements
     const loadCommunityServices = async () => {
       try {
+        // M-5a: provider_community_services dropped; use provider_engagements
         const { data, error } = await supabase
-          .from('provider_community_services')
-          .select('community_service_id')
-          .eq('provider_id', provider.provider_id);
+          .from('provider_engagements')
+          .select('engaged_provider_id')
+          .eq('initiating_provider_id', provider.provider_id);
         
         if (!error && data) {
-          const serviceIds = data.map(rel => rel.community_service_id);
+          const serviceIds = data.map((rel: { engaged_provider_id: string }) => rel.engaged_provider_id);
           handleInputChange('selectedCommunityServiceIds', serviceIds);
         }
       } catch (error) {
@@ -295,26 +296,27 @@ export function ProviderEditForm({
 
       if (error) throw error;
 
-      // Update community service relationships if changed
+      // Update community service relationships via provider_engagements
       if (submitData.selectedCommunityServiceIds && submitData.selectedCommunityServiceIds.length > 0) {
-        // First, delete existing relationships
+        // Delete existing engagements
         await supabase
-          .from('provider_community_services')
+          .from('provider_engagements')
           .delete()
-          .eq('provider_id', provider.provider_id);
+          .eq('initiating_provider_id', provider.provider_id);
 
-        // Then create new relationships
-        const relationshipPromises = submitData.selectedCommunityServiceIds.map(serviceId =>
-          createProviderCommunityServiceRelationship(provider.provider_id, serviceId)
-        );
-        
-        await Promise.allSettled(relationshipPromises);
+        // Insert new engagements
+        const rows = submitData.selectedCommunityServiceIds.map(serviceId => ({
+          initiating_provider_id: provider.provider_id,
+          engaged_provider_id: serviceId,
+          engagement_type: 'support',
+        }));
+        await supabase.from('provider_engagements').insert(rows);
       } else {
-        // If no services selected, delete all existing relationships
+        // Clear all engagements
         await supabase
-          .from('provider_community_services')
+          .from('provider_engagements')
           .delete()
-          .eq('provider_id', provider.provider_id);
+          .eq('initiating_provider_id', provider.provider_id);
       }
 
       
@@ -453,7 +455,7 @@ export function ProviderEditForm({
                     >
                       <option value="">{t('editProvider.sectionUnclassified')}</option>
                       <option value="food">{t('editProvider.sectionFood')}</option>
-                      <option value="business">{t('editProvider.sectionBusiness')}</option>
+                      <option value="store">{t('editProvider.sectionBusiness')}</option>
                     </select>
                   </div>
                 </div>
@@ -464,7 +466,7 @@ export function ProviderEditForm({
                     <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] capitalize">
                       {formData.listingType === 'food'
                         ? t('editProvider.sectionFood')
-                        : formData.listingType === 'business'
+                        : formData.listingType === 'store'
                           ? t('editProvider.sectionBusiness')
                           : t('editProvider.sectionUnclassified')}
                     </span>

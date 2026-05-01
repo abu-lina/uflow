@@ -15,7 +15,7 @@ export const SECTION_ICON_RENDERERS: Record<Section, (isActive: boolean) => Reac
       viewBox="12 12 24 24"
     />
   ),
-  business: () => <Store aria-hidden="true" className="h-4 w-4 shrink-0" />,
+  store: () => <Store aria-hidden="true" className="h-4 w-4 shrink-0" />,
 };
 
-export const SECTION_ORDER: Section[] = ['food', 'ummah', 'business'];
+export const SECTION_ORDER: Section[] = ['food', 'ummah', 'store'];

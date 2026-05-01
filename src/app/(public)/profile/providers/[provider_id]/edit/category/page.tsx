@@ -44,6 +44,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ provide
         const { data, error: fallbackError } = await supabase
           .from('categories')
           .select('*')
+          .in('applicable_section', ['food', 'business', 'all'])
           .order('name_de', { ascending: true });
         if (!fallbackError && data) {
           setCategories(data);

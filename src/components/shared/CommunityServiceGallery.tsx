@@ -7,10 +7,6 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/services/categories';
 
-interface CommunityServiceImage {
-  community_service_images: string | null;
-}
-
 interface CommunityServiceGalleryProps {
   category?: Category; // Optional category data for fallback images
 }
@@ -23,40 +19,33 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        // Priority 1: Get community service images
+        // M-5a: community_services dropped; ummah providers in providers table
         const { data, error } = await supabase
-          .from('community_services')
-          .select('community_service_images')
+          .from('providers')
+          .select('provider_images')
+          .eq('listing_type', 'ummah')
           .eq('review_status', 'approved')
           .limit(3);
 
         if (error) throw error;
 
         const communityServiceImages = data
-          .map((item: CommunityServiceImage) => {
+          .map((item: { provider_images: string | string[] | null }) => {
             try {
-              if (!item.community_service_images) return null;
+              if (!item.provider_images) return null;
 
-              // Handle different data formats
-              if (typeof item.community_service_images === 'string') {
-                // If it's a direct URL string
-                if (item.community_service_images.startsWith('http')) {
-                  return item.community_service_images;
+              if (typeof item.provider_images === 'string') {
+                if (item.provider_images.startsWith('http')) {
+                  return item.provider_images;
                 }
-                // If it's a JSON string
-                const parsed = JSON.parse(item.community_service_images);
-                if (Array.isArray(parsed)) {
-                  return parsed[0] || null;
-                }
-                if (parsed.urls && Array.isArray(parsed.urls)) {
-                  return parsed.urls[0] || null;
-                }
+                const parsed = JSON.parse(item.provider_images);
+                if (Array.isArray(parsed)) return parsed[0] || null;
+                if (parsed.urls && Array.isArray(parsed.urls)) return parsed.urls[0] || null;
                 return null;
               }
 
-              // If it's already an array
-              if (Array.isArray(item.community_service_images)) {
-                return item.community_service_images[0] || null;
+              if (Array.isArray(item.provider_images)) {
+                return item.provider_images[0] || null;
               }
 
               return null;

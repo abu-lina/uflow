@@ -8,7 +8,7 @@ export interface Category {
   description_de?: string;
   description_en?: string;
   category_images?: Record<string, unknown>; // JSONB for category images
-  applicable_to?: string[];
+  applicable_section: 'food' | 'business' | 'ummah' | 'all';
   created_at: string;
   updated_at: string;
 }

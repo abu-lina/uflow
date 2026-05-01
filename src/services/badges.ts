@@ -35,12 +35,11 @@ function getSupabaseClient(client?: SupabaseClient): SupabaseClient {
 
 function mapBadgeRowWithLegacyFields<T extends Record<string, unknown>>(row: T): T {
   const providerId = (row.provider_id as string | null | undefined) ?? null;
-  const communityServiceId = (row.community_service_id as string | null | undefined) ?? null;
 
   return {
     ...row,
-    entity_id: providerId ?? communityServiceId,
-    entity_type: providerId ? 'provider' : 'community_service',
+    entity_id: providerId,
+    entity_type: 'provider' as const,
   };
 }
 
@@ -162,11 +161,8 @@ export async function getBadgesForEntity(
         badge_type:badge_types(*)
       `);
 
-    if (entityType === 'provider') {
-      query = query.eq('provider_id', entityId).eq('community_service_id', null);
-    } else {
-      query = query.eq('community_service_id', entityId).eq('provider_id', null);
-    }
+    // M-5a: provider_badges.community_service_id dropped; all badges use provider_id
+    query = query.eq('provider_id', entityId);
 
     const { data, error } = await query.order('created_at', { ascending: false });
 
@@ -206,12 +202,9 @@ export async function getBadgesForEntities(
         badge_type:badge_types(*)
       `);
 
-    const entityColumn = entityType === 'provider' ? 'provider_id' : 'community_service_id';
-    const oppositeColumn = entityType === 'provider' ? 'community_service_id' : 'provider_id';
-
+    // M-5a: all badges use provider_id; entityType distinction removed
     const { data, error } = await baseQuery
-      .in(entityColumn, entityIds)
-      .is(oppositeColumn, null)
+      .in('provider_id', entityIds)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -341,8 +334,7 @@ export async function createProviderBadge(
   try {
     const supabase = getSupabaseClient(client);
     const insertPayload = {
-      provider_id: input.entity_type === 'provider' ? input.entity_id : null,
-      community_service_id: input.entity_type === 'community_service' ? input.entity_id : null,
+      provider_id: input.entity_id,
       badge_type_id: input.badge_type_id,
       trust_level: TrustLevel.SELF_DECLARED,
       confirmation_count: 0,

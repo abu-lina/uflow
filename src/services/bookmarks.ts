@@ -2,31 +2,27 @@ import { supabase } from '@/lib/supabase/client';
 
 export interface Bookmark {
   id: string;
-  provider_id: string | null;
-  community_service_id: string | null;
+  provider_id: string;
   user_id: string;
   created_at: string | null;
 
   // Backward-compatible derived fields for existing callers
   bookmarkable_id?: string;
-  bookmarkable_type?: 'provider' | 'community_service';
+  bookmarkable_type?: 'provider';
 }
 
 function withLegacyFields(bookmark: Bookmark): Bookmark {
-  const bookmarkableType = bookmark.provider_id ? 'provider' : 'community_service';
-  const bookmarkableId = bookmark.provider_id ?? bookmark.community_service_id ?? '';
-
   return {
     ...bookmark,
-    bookmarkable_id: bookmarkableId,
-    bookmarkable_type: bookmarkableType,
+    bookmarkable_id: bookmark.provider_id,
+    bookmarkable_type: 'provider',
   };
 }
 
 export async function getBookmarkForProvider(providerId: string, userId: string): Promise<Bookmark | null> {
   const { data, error } = await supabase
     .from('bookmarks')
-    .select('id, provider_id, community_service_id, user_id, created_at')
+    .select('id, provider_id, user_id, created_at')
     .eq('provider_id', providerId)
     .eq('user_id', userId)
     .single<Bookmark>();
@@ -37,17 +33,9 @@ export async function getBookmarkForProvider(providerId: string, userId: string)
 }
 
 export async function createBookmark(data: Omit<Bookmark, 'id' | 'created_at'>): Promise<Bookmark> {
-  const insertPayload = data.bookmarkable_type === 'community_service'
-    ? { community_service_id: data.bookmarkable_id, provider_id: null, user_id: data.user_id }
-    : {
-        provider_id: data.bookmarkable_id ?? data.provider_id,
-        community_service_id: null,
-        user_id: data.user_id,
-      };
-
   const { data: inserted, error } = await supabase
     .from('bookmarks')
-    .insert([insertPayload])
+    .insert([{ provider_id: data.bookmarkable_id ?? data.provider_id, user_id: data.user_id }])
     .select()
     .single<Bookmark>();
   if (error) {
@@ -71,7 +59,6 @@ export async function toggleBookmarkForProvider(providerId: string, userId: stri
   } else {
     await createBookmark({
       provider_id: providerId,
-      community_service_id: null,
       bookmarkable_id: providerId,
       bookmarkable_type: 'provider',
       user_id: userId,
@@ -79,3 +66,4 @@ export async function toggleBookmarkForProvider(providerId: string, userId: stri
     return true;
   }
 }
+
