@@ -7,10 +7,6 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/services/categories';
 
-interface CommunityServiceImage {
-  community_service_images: string | string[] | null;
-}
-
 interface CommunityServiceGalleryProps {
   category?: Category; // Optional category data for fallback images
 }
