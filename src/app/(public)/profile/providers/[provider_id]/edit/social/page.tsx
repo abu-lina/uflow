@@ -48,14 +48,14 @@ export default function EditSocialPage({ params }: { params: Promise<{ provider_
           return;
         }
 
-        // If no localStorage value, fetch current provider community services
+        // M-5a: provider_community_services dropped; use provider_engagements
         const { data, error } = await supabase
-          .from('provider_community_services')
-          .select('community_service_id')
-          .eq('provider_id', resolvedParams.provider_id);
+          .from('provider_engagements')
+          .select('engaged_provider_id')
+          .eq('initiating_provider_id', resolvedParams.provider_id);
 
         if (!error && data) {
-          const serviceIds = data.map(rel => rel.community_service_id);
+          const serviceIds = data.map(rel => rel.engaged_provider_id);
           setSelectedServiceIds(serviceIds);
         }
       } catch (error) {

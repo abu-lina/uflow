@@ -14,7 +14,7 @@ interface ProviderActionBarProps {
   websiteUrl?: string;
   className?: string;
   bookmarkableId?: string;
-  bookmarkableType?: 'provider' | 'community_service';
+  bookmarkableType?: 'provider';
 }
 
 export const ProviderActionBar: React.FC<ProviderActionBarProps> = ({

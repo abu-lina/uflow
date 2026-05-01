@@ -111,7 +111,7 @@ export const SearchResultsList = memo(function SearchResultsList({
     offers_ids: result.offers_ids,
     needs_ids: result.needs_ids,
     category: result.category,
-    community_service_id: result.type === 'community_service' ? result.id : undefined,
+    community_service_id: result.listing_type === 'ummah' ? result.id : undefined,
   }), []);
 
   return (

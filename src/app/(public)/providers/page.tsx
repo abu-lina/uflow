@@ -38,8 +38,8 @@ export default async function ProvidersPage({
   const sectionParam = typeof params.section === 'string' ? params.section : null;
   const categoryParam = typeof params.category === 'string' ? params.category : null;
   const section: Section =
-    sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'business'
-      ? sectionParam
+    sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'store' || sectionParam === 'business'
+      ? (sectionParam === 'business' ? 'store' : sectionParam)
       : categoryParam
         ? inferSectionFromCategory(categoryParam)
         : 'food'; // D9: default when no section and no category

@@ -48,15 +48,17 @@ async function syncEntityRelations(
 const TAG_SYNONYMS = {
   muslim: new Set(['muslim', 'muslim_owned', 'muslim-owned']),
   prayer: new Set(['gebet', 'gebetsraum', 'gebetsfreundlich', 'prayer', 'prayer_space', 'prayer-friendly']),
-  donations: new Set(['spenden', 'spendenbereit', 'accepts_donations', 'supports_sadaqah', 'sadaqah']),
+  donations: new Set(['spenden', 'spendenbereit', 'makes_donations', 'supports_sadaqah', 'sadaqah']),
   parking: new Set(['parken', 'parking', 'has_parking']),
-  solidarity: new Set(['solidaritaet', 'solidarity', 'solidarity_pricing']),
+  solidarity: new Set(['solidaritaet', 'solidarity', 'economic_solidarity']),
 } as const;
 
 const FORM_TAG_TO_BADGE_KEY = {
   muslim: 'MUSLIM_OWNED',
   prayer: 'PRAYER_FRIENDLY',
   donations: 'SUPPORTS_SADAQAH',
+  parking: 'HAS_PARKING',
+  solidarity: 'ECONOMIC_SOLIDARITY',
 } as const;
 
 /**
@@ -110,17 +112,14 @@ export async function createProviderOrService(
   }
 
   if (isCommunityService) {
-    // Create community service
-    // Generate UUID client-side to avoid needing SELECT after INSERT
-    // This bypasses the SELECT policy issue for pending reviews
+    // M-5a: community_services table dropped — ummah providers created in providers table
     const generatedServiceId = crypto.randomUUID();
-    
-    // CRITICAL: Always explicitly set user_created_id and provider_id directly in the object
-    // The RLS policy requires user_created_id to be NULL for anonymous users
+
     const insertData: Record<string, unknown> = {
-      community_service_id: generatedServiceId,
-      community_service_name: formData.title,
-      community_service_description: formData.description || null,
+      provider_id: generatedServiceId,
+      listing_type: 'ummah',
+      provider_name: formData.title,
+      provider_description: formData.description || null,
       address_street: formData.isOnlineBusiness ? null : (formData.street || null),
       address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
       address_city: formData.isOnlineBusiness ? null : (formData.city || null),
@@ -131,37 +130,32 @@ export async function createProviderOrService(
       contact_phone: formData.phone || null,
       social_website: formData.website || null,
       social_instagram: formData.instagram || null,
-      community_service_images: uploadedUrls.length > 0 ? uploadedUrls : null,
-      review_status: 'pending' as const, // All submissions go through review
-      // CRITICAL: Always explicitly set these fields, even if null
-      // The RLS policy requires user_created_id to be NULL for anonymous users
+      provider_images: uploadedUrls.length > 0 ? uploadedUrls : null,
+      review_status: 'pending' as const,
       user_created_id: isAnonymous ? null : (user?.id ?? null),
-      provider_id: isAnonymous ? null : ((isOwner && user?.id) ? user.id : null),
-      // Store recommender email for anonymous recommendations (with consent)
       recommender_email: isAnonymous && formData.userEmail ? formData.userEmail : null,
     };
 
-    // Insert without SELECT to avoid SELECT policy blocking pending reviews
     const { error: serviceError } = await supabase
-      .from('community_services')
+      .from('providers')
       .insert([insertData]);
 
     if (serviceError) {
-      console.error('Error creating community service:', serviceError);
+      console.error('Error creating ummah provider:', serviceError);
       throw serviceError;
     }
 
     await Promise.all([
       syncEntityRelations(
-        'community_service_offers',
-        'community_service_id',
+        'provider_offers',
+        'provider_id',
         'offer_id',
         generatedServiceId,
         formData.offers_ids || [],
       ),
       syncEntityRelations(
-        'community_service_needs',
-        'community_service_id',
+        'provider_needs',
+        'provider_id',
         'need_id',
         generatedServiceId,
         formData.needs_ids || [],
@@ -191,6 +185,8 @@ export async function createProviderOrService(
     if (hasMuslimOwnedTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.muslim);
     if (hasPrayerTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.prayer);
     if (hasDonationsTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.donations);
+    if (hasParkingTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.parking);
+    if (hasSolidarityTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.solidarity);
     
     // For anonymous users, explicitly set both ID fields to null to satisfy RLS policy
     // IMPORTANT: We must use explicit null (not undefined) and ensure fields are always present
@@ -208,8 +204,6 @@ export async function createProviderOrService(
       contact_phone: formData.phone || null,
       social_website: formData.website || null,
       social_instagram: formData.instagram || null,
-      has_parking: hasParkingTag,
-      solidarity_pricing: hasSolidarityTag,
       provider_images: uploadedUrls.length > 0 ? JSON.stringify({ urls: uploadedUrls }) : null,
       review_status: 'pending' as const, // Providers need review
       // Store recommender email for anonymous recommendations (with consent)
@@ -300,7 +294,9 @@ export async function createProviderOrService(
         const fallbackBooleans: Record<string, boolean> = {};
         if (hasMuslimOwnedTag) fallbackBooleans.muslim_owned = true;
         if (hasPrayerTag) fallbackBooleans.has_prayer_space = true;
-        if (hasDonationsTag) fallbackBooleans.accepts_donations = true;
+        if (hasDonationsTag) fallbackBooleans.makes_donations = true;
+        if (hasParkingTag) fallbackBooleans.has_parking = true;
+        if (hasSolidarityTag) fallbackBooleans.economic_solidarity = true;
 
         if (Object.keys(fallbackBooleans).length > 0) {
           const { error: fallbackError } = await supabase

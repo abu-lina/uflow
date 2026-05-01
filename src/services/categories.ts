@@ -8,7 +8,7 @@ export interface Category {
   description_de?: string;
   description_en?: string;
   category_images?: Record<string, unknown>; // JSONB for category images
-  applicable_to?: string[]; // Array of entity types: 'provider', 'community_service'
+  applicable_section: 'food' | 'business' | 'ummah' | 'all';
   created_at: string;
   updated_at: string;
 }
@@ -24,10 +24,11 @@ export async function fetchUsedCategories(): Promise<Category[]> {
     throw providersError;
   }
 
-  // 2. Get all category_ids from community services
+  // 2. Get all category_ids from ummah providers (M-5a: community_services dropped)
   const { data: communityServices, error: communityServicesError } = await supabase
-    .from('community_services')
+    .from('providers')
     .select('category_id')
+    .eq('listing_type', 'ummah')
     .eq('review_status', 'approved');
   if (communityServicesError) {
     throw communityServicesError;
@@ -80,10 +81,11 @@ export async function fetchCategoriesBySection(section: import('@/config/section
   let categoryIds: string[];
 
   if (section === 'ummah') {
-    // Ummah: categories from community_services table
+    // Ummah: categories from providers with listing_type='ummah' (M-5a: community_services dropped)
     const { data, error } = await supabase
-      .from('community_services')
+      .from('providers')
       .select('category_id')
+      .eq('listing_type', 'ummah')
       .eq('review_status', 'approved');
 
     if (error) throw error;
@@ -231,49 +233,40 @@ export async function getCategoryById(id: string): Promise<Category | null> {
   return data ?? null;
 }
 
-// Fetch categories filtered by entity type (provider or community_service)
-export async function getCategoriesForEntity(entityType: 'provider' | 'community_service'): Promise<Category[]> {
-  // First try to get categories that explicitly contain the entity type
-  const { data: explicitData, error: explicitError } = await supabase
+// Fetch categories filtered by section (food, business, ummah)
+export async function getCategoriesForSection(section: 'food' | 'business' | 'ummah'): Promise<Category[]> {
+  const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .contains('applicable_to', [entityType])
-    .order('name_de', { ascending: true })
-    .returns<Category[]>();
-  
-  if (explicitError) {
-    console.error('Error fetching categories for entity:', entityType, explicitError);
-    throw explicitError;
-  }
-
-  // Also get categories with null applicable_to (available for all entity types)
-  const { data: nullData, error: nullError } = await supabase
-    .from('categories')
-    .select('*')
-    .is('applicable_to', null)
+    .in('applicable_section', [section, 'all'])
     .order('name_de', { ascending: true })
     .returns<Category[]>();
 
-  if (nullError) {
-    console.error('Error fetching null applicable_to categories:', nullError);
-    // Don't throw here, just log the error and continue with explicit data
+  if (error) {
+    console.error('Error fetching categories for section:', section, error);
+    throw error;
   }
 
-  // Combine and deduplicate results
-  const allCategories = [...(explicitData || []), ...(nullData || [])];
-  const uniqueCategories = allCategories.filter((category, index, self) => 
-    index === self.findIndex(c => c.category_id === category.category_id)
-  );
-
-  return uniqueCategories;
+  return data || [];
 }
 
-// Fetch categories for provider creation
-export async function getProviderCategories(): Promise<Category[]> {
-  return getCategoriesForEntity('provider');
+// Fetch categories for provider creation. If listingType provided, scoped to that section; otherwise returns all provider-applicable categories (food + business + all).
+export async function getProviderCategories(listingType?: 'food' | 'business'): Promise<Category[]> {
+  if (listingType) {
+    return getCategoriesForSection(listingType);
+  }
+  // Return all categories except ummah-only
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .in('applicable_section', ['food', 'business', 'all'])
+    .order('name_de', { ascending: true })
+    .returns<Category[]>();
+  if (error) throw error;
+  return data || [];
 }
 
-// Fetch categories for social project creation
+// Fetch categories for social project creation (ummah section)
 export async function getSocialProjectCategories(): Promise<Category[]> {
-  return getCategoriesForEntity('community_service');
+  return getCategoriesForSection('ummah');
 }

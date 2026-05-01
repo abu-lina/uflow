@@ -8,5 +8,5 @@ export default async function StoresPage({
   searchParams: Promise<RouteSearchParams>;
 }) {
   const params = await searchParams;
-  return ProvidersPage({ searchParams: Promise.resolve({ ...params, section: 'business' }) });
+  return ProvidersPage({ searchParams: Promise.resolve({ ...params, section: 'store' }) });
 }

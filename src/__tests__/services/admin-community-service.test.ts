@@ -28,8 +28,9 @@ const validCsId = '123e4567-e89b-12d3-a456-426614174000';
 const adminUserId = '223e4567-e89b-12d3-a456-426614174001';
 
 const fakeCommunityService = {
-  community_service_id: validCsId,
-  community_service_name: 'Test Service',
+  provider_id: validCsId,
+  provider_name: 'Test Service',
+  listing_type: 'ummah',
   review_status: 'pending',
   updated_at: '2026-01-01T00:00:00Z',
 };
@@ -39,16 +40,17 @@ const fakeCommunityService = {
 describe('getCommunityServiceForAdmin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // GET chain: .from().select().eq(provider_id).eq(listing_type) resolves
+    mockEq.mockReturnValueOnce({ eq: mockEq }).mockResolvedValue({ data: [fakeCommunityService], error: null });
     mockSelect.mockReturnValue({ eq: mockEq });
-    mockEq.mockResolvedValue({ data: [fakeCommunityService], error: null });
     mockFrom.mockReturnValue({ select: mockSelect });
   });
 
   it('[post-fix PASSES] uses service-role client to bypass RLS', async () => {
     const result = await getCommunityServiceForAdmin(validCsId);
 
-    expect(mockFrom).toHaveBeenCalledWith('community_services');
-    expect(result).toMatchObject({ community_service_id: validCsId });
+    expect(mockFrom).toHaveBeenCalledWith('providers');
+    expect(result).toMatchObject({ provider_id: validCsId });
   });
 
   it('[post-fix PASSES] returns null when community service does not exist', async () => {
@@ -74,7 +76,9 @@ describe('updateCommunityServiceFields', () => {
 
     mockSingle.mockResolvedValue({ data: fakeCommunityService, error: null });
     const mockSelectChain = { single: mockSingle };
-    mockEq.mockReturnValue({ select: () => mockSelectChain });
+    // UPDATE chain: .from().update().eq(provider_id).eq(listing_type).select().single()
+    // First eq chains; second eq returns { select: ... }
+    mockEq.mockReturnValueOnce({ eq: mockEq }).mockReturnValue({ select: () => mockSelectChain });
     mockUpdate.mockReturnValue({ eq: mockEq });
     mockFrom.mockReturnValue({ update: mockUpdate });
   });
@@ -89,8 +93,8 @@ describe('updateCommunityServiceFields', () => {
 
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        community_service_name: 'Updated Name',
-        community_service_description: 'Updated description',
+        provider_name: 'Updated Name',
+        provider_description: 'Updated description',
       }),
     );
   });
@@ -103,8 +107,8 @@ describe('updateCommunityServiceFields', () => {
     await updateCommunityServiceFields(validCsId, editData, adminUserId);
 
     const updateArg = mockUpdate.mock.calls[0][0] as Record<string, unknown>;
-    expect(Object.keys(updateArg)).toContain('community_service_name');
-    expect(Object.keys(updateArg)).not.toContain('community_service_description');
+    expect(Object.keys(updateArg)).toContain('provider_name');
+    expect(Object.keys(updateArg)).not.toContain('provider_description');
   });
 
   it('[post-fix PASSES] always sets updated_at', async () => {
@@ -132,7 +136,8 @@ describe('updateCommunityServiceReview', () => {
 
     mockSingle.mockResolvedValue({ data: { ...fakeCommunityService, review_status: 'approved' }, error: null });
     const mockSelectChain = { single: mockSingle };
-    mockEq.mockReturnValue({ select: () => mockSelectChain });
+    // UPDATE chain: .from().update().eq(provider_id).eq(listing_type).select().single()
+    mockEq.mockReturnValueOnce({ eq: mockEq }).mockReturnValue({ select: () => mockSelectChain });
     mockUpdate.mockReturnValue({ eq: mockEq });
     mockFrom.mockReturnValue({ update: mockUpdate });
   });
@@ -140,7 +145,7 @@ describe('updateCommunityServiceReview', () => {
   it('[TDD RED] updates review_status to approved', async () => {
     const result = await updateCommunityServiceReview(validCsId, 'approved', null, adminUserId);
 
-    expect(mockFrom).toHaveBeenCalledWith('community_services');
+    expect(mockFrom).toHaveBeenCalledWith('providers');
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ review_status: 'approved' }),
     );

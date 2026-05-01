@@ -113,9 +113,11 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
 
     mockBadgeTypeIn.mockResolvedValue({
       data: [
-        { id: 'bt-muslim', badge_key: 'MUSLIM_OWNED' },
-        { id: 'bt-prayer', badge_key: 'PRAYER_FRIENDLY' },
-        { id: 'bt-sadaqah', badge_key: 'SUPPORTS_SADAQAH' },
+        { id: 'bt-muslim',      badge_key: 'MUSLIM_OWNED' },
+        { id: 'bt-prayer',      badge_key: 'PRAYER_FRIENDLY' },
+        { id: 'bt-sadaqah',    badge_key: 'SUPPORTS_SADAQAH' },
+        { id: 'bt-parking',    badge_key: 'HAS_PARKING' },
+        { id: 'bt-solidarity', badge_key: 'ECONOMIC_SOLIDARITY' },
       ],
       error: null,
     });
@@ -138,7 +140,10 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
     mockProviderNeedsInsert.mockResolvedValue({ error: null });
   });
 
-  it('[pre-fix FAILS] writes direct booleans and creates self-declared badge rows from form tags', async () => {
+  it('[post-fix PASSES] routes all attribute tags through badge system — no direct boolean injection', async () => {
+    // FL-23: has_parking and economic_solidarity are no longer set directly in
+    // the provider insert payload. They are routed through the badge system and
+    // the sync_provider_badge_to_boolean trigger sets the boolean columns.
     const user = { id: 'user-1' } as User;
 
     await createProviderOrService(
@@ -153,22 +158,26 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
 
     const providerInsertPayload = mockProviderInsert.mock.calls[0][0][0];
-    expect(providerInsertPayload.has_parking).toBe(true);
-    expect(providerInsertPayload.solidarity_pricing).toBe(true);
+    // Parking and solidarity are no longer set directly (FL-23 badge routing)
+    expect(providerInsertPayload.has_parking).toBeUndefined();
+    expect(providerInsertPayload.economic_solidarity).toBeUndefined();
 
     expect(mockProviderBadgeInsert).toHaveBeenCalledTimes(1);
     const badgeRows = mockProviderBadgeInsert.mock.calls[0][0];
 
+    // All 5 attribute tags now go through the badge system
     expect(badgeRows).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ badge_type_id: 'bt-muslim', trust_level: 'SELF_DECLARED' }),
-        expect.objectContaining({ badge_type_id: 'bt-prayer', trust_level: 'SELF_DECLARED' }),
-        expect.objectContaining({ badge_type_id: 'bt-sadaqah', trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-muslim',      trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-prayer',      trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-sadaqah',    trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-parking',    trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-solidarity', trust_level: 'SELF_DECLARED' }),
       ]),
     );
   });
 
-  it('[pre-fix FAILS] falls back to direct provider boolean update when badge insert fails', async () => {
+  it('[post-fix PASSES] falls back to direct provider boolean update when badge insert fails', async () => {
     const user = { id: 'user-1' } as User;
 
     mockProviderBadgeInsert.mockResolvedValue({ error: { message: 'insert failed' } });
@@ -186,7 +195,7 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
       expect.objectContaining({
         muslim_owned: true,
         has_prayer_space: true,
-        accepts_donations: true,
+        makes_donations: true,
       }),
     );
     expect(mockProviderUpdateEq).toHaveBeenCalledWith('provider_id', expect.any(String));

@@ -229,7 +229,7 @@ export function ProvidersContent({
       // Fetch all bookmarks (providers and community services)
       const { data: bookmarks, error } = await supabase
         .from('bookmarks')
-        .select('provider_id, community_service_id')
+        .select('provider_id')
         .eq('user_id', user.id);
 
       if (error) {
@@ -238,7 +238,7 @@ export function ProvidersContent({
       }
 
       // Return all bookmarked IDs (both providers and community services)
-      return bookmarks?.flatMap((b) => [b.provider_id, b.community_service_id].filter((id): id is string => !!id)) || [];
+      return bookmarks?.map((b) => b.provider_id).filter((id): id is string => !!id) || [];
     },
     enabled: !!user && !userLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -260,14 +260,8 @@ export function ProvidersContent({
 
   const handleProviderClick = useCallback(
     (provider: Provider) => {
-      // Navigate to appropriate detail page based on type
-      if (provider.community_service_id) {
-        // This is a community service
-        router.push(`/community-services/${provider.community_service_id}`);
-      } else {
-        // This is a provider
-        router.push(`/providers/${provider.provider_id}`);
-      }
+      // M-5a: all providers (including ummah) navigate via /providers/[id]
+      router.push(`/providers/${provider.provider_id}`);
     },
     [router],
   );

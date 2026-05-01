@@ -23,7 +23,7 @@ interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   hideWebsiteButton?: boolean;
   isBookmarked?: boolean;
   onBookmarkChange?: (isBookmarked: boolean) => void;
-  bookmarkableType?: 'provider' | 'community_service';
+  bookmarkableType?: 'provider';
   priority?: boolean;
   loading?: 'eager' | 'lazy';
   /** Card mode: 'bookmark' (default) shows Save/Saved, 'moderation' shows Approve/Reject */
@@ -68,8 +68,8 @@ export const ProviderCard = React.memo(
       listing_type,
       halal_level,
       muslim_owned,
-      accepts_donations,
-      solidarity_pricing,
+      makes_donations,
+      economic_solidarity,
       has_prayer_space,
       family_friendly,
       women_friendly,
@@ -453,7 +453,7 @@ export const ProviderCard = React.memo(
             {(() => {
               const halalStars = listing_type === 'food' ? computeHalalStars({ halal_level }) : 0;
               // Barakah badge applies to FOOD and BUSINESS (not community services — those have no listing_type)
-              const showBarakah = computeBarakahBadge({ muslim_owned, accepts_donations, solidarity_pricing, has_prayer_space, family_friendly, women_friendly });
+              const showBarakah = computeBarakahBadge({ muslim_owned, makes_donations, economic_solidarity, has_prayer_space, family_friendly, women_friendly });
               if (!halalStars && !showBarakah) return null;
               return (
                 <div className="flex h-6 w-full items-center gap-1.5 overflow-hidden">

@@ -33,15 +33,17 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     const loadExistingImages = async () => {
       try {
+        // M-5a: community_services dropped; ummah providers in providers table
         const { data, error } = await supabase
-          .from('community_services')
-          .select('community_service_images')
-          .eq('community_service_id', communityServiceId)
+          .from('providers')
+          .select('provider_images')
+          .eq('provider_id', communityServiceId)
+          .eq('listing_type', 'ummah')
           .single();
 
-        if (!error && data?.community_service_images) {
-          // community_service_images is already a TEXT[] — no JSON.parse needed (D3 / M3 key difference)
-          const images = data.community_service_images;
+        if (!error && data?.provider_images) {
+          // provider_images is TEXT[] in Postgres
+          const images = data.provider_images;
           if (Array.isArray(images)) {
             setExistingImageUrls(images);
           }

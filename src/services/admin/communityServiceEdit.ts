@@ -3,15 +3,14 @@
  * Handles admin/moderator updates to community service fields via service-role client.
  *
  * Plan 083 — M1
+ * M-5a: community_services table dropped — ummah providers now in providers
+ * WHERE listing_type = 'ummah'. Offers/needs now in provider_offers/provider_needs.
  *
  * Write model decision: Uses service-role (getSupabaseAdmin) for consistency
  * with Plan 061's admin read path. The server boundary validates admin
  * authorization before any write, so bypassing RLS is controlled.
  *
- * Image format: community_service_images is a Postgres TEXT[] column.
- * The API accepts string[] directly — no JSON wrapping needed here.
- * The ProviderEditForm adapter (M2) handles conversions between TEXT[] and
- * the JSON string format the form expects.
+ * Image format: provider_images is a Postgres TEXT[] column.
  */
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
@@ -29,7 +28,7 @@ export interface AdminCommunityServiceEditData {
   contactPhone?: string | null;
   socialWebsite?: string | null;
   socialInstagram?: string | null;
-  communityServiceImages?: string[] | null;
+  providerImages?: string[] | null;
   offersIds?: string[];
   needsIds?: string[];
 }
@@ -44,9 +43,10 @@ export async function getCommunityServiceForAdmin(
   const supabase = getSupabaseAdmin();
 
   const { data: rows, error } = await supabase
-    .from('community_services')
+    .from('providers')
     .select('*, category:categories(name_de, name_en, category_images)')
-    .eq('community_service_id', communityServiceId);
+    .eq('provider_id', communityServiceId)
+    .eq('listing_type', 'ummah');
 
   if (error) {
     throw new Error(`Failed to fetch community service: ${error.message}`);
@@ -71,10 +71,10 @@ export async function updateCommunityServiceFields(
   };
 
   if (editData.serviceName !== undefined) {
-    updatePayload.community_service_name = sanitizeTextInput(editData.serviceName);
+    updatePayload.provider_name = sanitizeTextInput(editData.serviceName);
   }
   if (editData.serviceDescription !== undefined) {
-    updatePayload.community_service_description = editData.serviceDescription
+    updatePayload.provider_description = editData.serviceDescription
       ? sanitizeTextInput(editData.serviceDescription)
       : null;
   }
@@ -121,16 +121,16 @@ export async function updateCommunityServiceFields(
       ? sanitizeTextInput(editData.socialInstagram)
       : null;
   }
-  if (editData.communityServiceImages !== undefined) {
+  if (editData.providerImages !== undefined) {
     // Accept as TEXT[] (native Postgres array) — no JSON wrapping
-    updatePayload.community_service_images = editData.communityServiceImages ?? null;
+    updatePayload.provider_images = editData.providerImages ?? null;
   }
 
   if (editData.offersIds !== undefined) {
     const { error: clearOffersError } = await supabase
-      .from('community_service_offers')
+      .from('provider_offers')
       .delete()
-      .eq('community_service_id', communityServiceId);
+      .eq('provider_id', communityServiceId);
 
     if (clearOffersError) {
       throw new Error(`Failed to clear community service offers: ${clearOffersError.message}`);
@@ -138,12 +138,12 @@ export async function updateCommunityServiceFields(
 
     if (editData.offersIds.length > 0) {
       const offerRows = editData.offersIds.map((offerId) => ({
-        community_service_id: communityServiceId,
+        provider_id: communityServiceId,
         offer_id: offerId,
       }));
 
       const { error: insertOffersError } = await supabase
-        .from('community_service_offers')
+        .from('provider_offers')
         .insert(offerRows);
 
       if (insertOffersError) {
@@ -154,9 +154,9 @@ export async function updateCommunityServiceFields(
 
   if (editData.needsIds !== undefined) {
     const { error: clearNeedsError } = await supabase
-      .from('community_service_needs')
+      .from('provider_needs')
       .delete()
-      .eq('community_service_id', communityServiceId);
+      .eq('provider_id', communityServiceId);
 
     if (clearNeedsError) {
       throw new Error(`Failed to clear community service needs: ${clearNeedsError.message}`);
@@ -164,12 +164,12 @@ export async function updateCommunityServiceFields(
 
     if (editData.needsIds.length > 0) {
       const needRows = editData.needsIds.map((needId) => ({
-        community_service_id: communityServiceId,
+        provider_id: communityServiceId,
         need_id: needId,
       }));
 
       const { error: insertNeedsError } = await supabase
-        .from('community_service_needs')
+        .from('provider_needs')
         .insert(needRows);
 
       if (insertNeedsError) {
@@ -179,9 +179,10 @@ export async function updateCommunityServiceFields(
   }
 
   const { data: rows, error } = await supabase
-    .from('community_services')
+    .from('providers')
     .update(updatePayload)
-    .eq('community_service_id', communityServiceId)
+    .eq('provider_id', communityServiceId)
+    .eq('listing_type', 'ummah')
     .select();
 
   if (error) {
@@ -224,9 +225,10 @@ export async function updateCommunityServiceReview(
   }
 
   let query = supabase
-    .from('community_services')
+    .from('providers')
     .update(updateData)
-    .eq('community_service_id', communityServiceId);
+    .eq('provider_id', communityServiceId)
+    .eq('listing_type', 'ummah');
 
   if (expectedUpdatedAt) {
     query = query.eq('updated_at', expectedUpdatedAt);

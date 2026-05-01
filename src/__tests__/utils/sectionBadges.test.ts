@@ -42,8 +42,8 @@ describe('computeBarakahBadge (Plan 089 M5)', () => {
     expect(
       computeBarakahBadge({
         muslim_owned: false,
-        accepts_donations: true,
-        solidarity_pricing: true,
+        makes_donations: true,
+        economic_solidarity: true,
       }),
     ).toBe(false);
   });
@@ -52,8 +52,8 @@ describe('computeBarakahBadge (Plan 089 M5)', () => {
     expect(
       computeBarakahBadge({
         muslim_owned: true,
-        accepts_donations: true,
-        solidarity_pricing: false,
+        makes_donations: true,
+        economic_solidarity: false,
         has_prayer_space: false,
         family_friendly: false,
         women_friendly: false,
@@ -65,8 +65,8 @@ describe('computeBarakahBadge (Plan 089 M5)', () => {
     expect(
       computeBarakahBadge({
         muslim_owned: true,
-        accepts_donations: true,
-        solidarity_pricing: true,
+        makes_donations: true,
+        economic_solidarity: true,
         has_prayer_space: false,
         family_friendly: false,
         women_friendly: false,
@@ -78,8 +78,8 @@ describe('computeBarakahBadge (Plan 089 M5)', () => {
     expect(
       computeBarakahBadge({
         muslim_owned: true,
-        accepts_donations: true,
-        solidarity_pricing: true,
+        makes_donations: true,
+        economic_solidarity: true,
         has_prayer_space: true,
         family_friendly: false,
         women_friendly: false,

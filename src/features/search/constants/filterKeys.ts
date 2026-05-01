@@ -1,7 +1,7 @@
 export const SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN = {
   muslim: 'muslim_owned',
-  spenden: 'accepts_donations',
-  solidaritaet: 'solidarity_pricing',
+  spenden: 'makes_donations',
+  solidaritaet: 'economic_solidarity',
   parken: 'has_parking',
   gebet: 'has_prayer_space',
 } as const;

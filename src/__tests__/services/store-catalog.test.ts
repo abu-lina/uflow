@@ -8,7 +8,7 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
-import { searchProviderItems } from '@/services/provider-catalog';
+import { searchProviderItems } from '@/services/store-catalog';
 
 describe('searchProviderItems (Plan 096)', () => {
   beforeEach(() => {

@@ -6,7 +6,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 
 interface UseBookmarkWithAuthOptions {
   bookmarkableId: string;
-  bookmarkableType: 'provider' | 'community_service';
+  bookmarkableType: 'provider';
   onBookmarkChange?: (isBookmarked: boolean) => void;
 }
 

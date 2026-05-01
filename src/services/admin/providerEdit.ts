@@ -144,13 +144,14 @@ export async function updateProviderFields(
     }
   }
 
-  // Update community service relationships if provided
+  // Update community service relationships via provider_engagements
+  // M-5a: provider_community_services dropped; now use provider_engagements
   if (editData.communityServiceIds !== undefined) {
-    // Delete existing relationships
+    // Delete existing engagement relationships
     const { error: deleteError } = await supabase
-      .from('provider_community_services')
+      .from('provider_engagements')
       .delete()
-      .eq('provider_id', providerId);
+      .eq('initiating_provider_id', providerId);
 
     if (deleteError) {
       throw new Error(`Failed to clear community services: ${deleteError.message}`);
@@ -159,11 +160,12 @@ export async function updateProviderFields(
     // Insert new relationships
     if (editData.communityServiceIds.length > 0) {
       const rows = editData.communityServiceIds.map(serviceId => ({
-        provider_id: providerId,
-        community_service_id: serviceId,
+        initiating_provider_id: providerId,
+        engaged_provider_id: serviceId,
+        engagement_type: 'support',
       }));
       const { error: insertError } = await supabase
-        .from('provider_community_services')
+        .from('provider_engagements')
         .insert(rows);
 
       if (insertError) {

@@ -163,15 +163,14 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   const [expandedBarakah, setExpandedBarakah] = useState(true);
   const [expandedProviders, setExpandedProviders] = useState(false);
 
-  // Determine if this is a community service or provider
-  const isCommunityService = !!provider.community_service_id;
-  const bookmarkableType = isCommunityService ? 'community_service' : 'provider';
-  const bookmarkableId = isCommunityService ? provider.community_service_id : provider.provider_id;
+  // M-5a: community_service_id dropped — ummah providers detected via listing_type
+  const isCommunityService = provider.listing_type === 'ummah';
+  const bookmarkableId = provider.provider_id;
 
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: bookmarkableId || '',
-    bookmarkableType,
+    bookmarkableType: 'provider',
     onBookmarkChange: (isBookmarked) => {
       setIsSaved(isBookmarked);
     },
@@ -183,8 +182,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
     useCommunityServicesForProvider(provider.provider_id, initialCommunityServices);
 
   // Fetch badges with user confirmation status for endorsement UX
-  const entityId = isCommunityService ? provider.community_service_id : provider.provider_id;
-  const entityType = isCommunityService ? EntityType.COMMUNITY_SERVICE : EntityType.PROVIDER;
+  const entityId = provider.provider_id;
+  const entityType = EntityType.PROVIDER;
   const {
     data: badgesWithStatus = [],
     isLoading: isLoadingBadges,
@@ -198,7 +197,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
     refetchOnWindowFocus: false,
   });
 
-  // Use React Query for providers supporting this community service (only for community services)
+  // Use React Query for providers supporting this ummah provider (engagement graph)
   const { data: supportingProviders = [] } = useQuery<
     Array<{
       provider_id: string;
@@ -208,14 +207,12 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
       category?: { name_de?: string; name_en?: string; category_images?: unknown };
     }>
   >({
-    queryKey: ['providers', 'community-service', provider.community_service_id],
+    queryKey: ['providers', 'community-service', provider.provider_id],
     queryFn: () => {
-      if (!provider.community_service_id) {
-        return Promise.resolve([]);
-      }
-      return getProvidersForCommunityService(provider.community_service_id);
+      if (!isCommunityService) return Promise.resolve([]);
+      return getProvidersForCommunityService(provider.provider_id);
     },
-    enabled: isCommunityService && !!provider.community_service_id,
+    enabled: isCommunityService,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -230,9 +227,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
       if (!user) return [];
       const { data: bookmarks } = await supabase
         .from('bookmarks')
-        .select('provider_id, community_service_id')
+        .select('provider_id')
         .eq('user_id', user.id);
-      return bookmarks?.flatMap((b) => [b.provider_id, b.community_service_id].filter((id): id is string => !!id)) || [];
+      return bookmarks?.map((b) => b.provider_id).filter((id): id is string => !!id) || [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -332,11 +329,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   };
 
   const handleShareAction = () => {
-    // Generate the correct URL based on type
-    const path = isCommunityService
-      ? `/community-services/${provider.community_service_id}`
-      : `/providers/${provider.provider_id}`;
-    const shareUrl = `${window.location.origin}${path}`;
+    // M-5a: ummah providers use /providers/[id] route
+    const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
 
     if (navigator.share) {
       void navigator.share({
@@ -502,7 +496,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                         key={index}
                         className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
                         onClick={() =>
-                          router.push(`/community-services/${service.community_service_id}`)
+                          router.push(`/providers/${service.community_service_id}`)
                         }
                       >
                         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">

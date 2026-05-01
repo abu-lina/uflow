@@ -55,10 +55,10 @@ describe('SectionSelector (Plan 089 M6)', () => {
     expect(onSectionChange).toHaveBeenCalledWith('food');
   });
 
-  it('calls onSectionChange with business when stores button is clicked', () => {
+  it('calls onSectionChange with store when stores button is clicked', () => {
     const onSectionChange = vi.fn();
     render(<SectionSelector selectedSection="food" onSectionChange={onSectionChange} />);
     fireEvent.click(screen.getByRole('tab', { name: /stores/i }));
-    expect(onSectionChange).toHaveBeenCalledWith('business');
+    expect(onSectionChange).toHaveBeenCalledWith('store');
   });
 });

@@ -34,11 +34,8 @@ export async function getBadgesForEntityServer(
         `)
         .order('created_at', { ascending: false });
 
-      if (entityType === 'provider') {
-        return baseQuery.eq('provider_id', entityId).eq('community_service_id', null);
-      }
-
-      return baseQuery.eq('community_service_id', entityId).eq('provider_id', null);
+      // M-5a: provider_badges.community_service_id dropped; all badges use provider_id
+      return baseQuery.eq('provider_id', entityId);
     };
 
     let { data, error } = await createBaseQuery().eq('is_active', true);
@@ -55,8 +52,8 @@ export async function getBadgesForEntityServer(
 
     return ((data || []).map((badge) => ({
       ...badge,
-      entity_id: badge.provider_id ?? badge.community_service_id,
-      entity_type: badge.provider_id ? 'provider' : 'community_service',
+      entity_id: badge.provider_id,
+      entity_type: 'provider' as const,
     }))) as ProviderBadgeWithType[];
   } catch (error) {
     console.error('Error in getBadgesForEntityServer:', error);

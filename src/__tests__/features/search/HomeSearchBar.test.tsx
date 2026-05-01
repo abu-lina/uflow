@@ -64,10 +64,10 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     expect(mockPush).toHaveBeenCalledWith('/search?section=ummah');
   });
 
-  it('navigates to /search?section=business when clicked with business section', () => {
-    render(<HomeSearchBar activeSection="business" />);
+  it('navigates to /search?section=store when clicked with store section', () => {
+    render(<HomeSearchBar activeSection="store" />);
     fireEvent.click(screen.getByRole('search'));
-    expect(mockPush).toHaveBeenCalledWith('/search?section=business');
+    expect(mockPush).toHaveBeenCalledWith('/search?section=store');
   });
 
   it('navigates when Enter key is pressed (keyboard accessible)', () => {

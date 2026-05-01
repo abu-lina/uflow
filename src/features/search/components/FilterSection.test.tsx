@@ -69,7 +69,7 @@ describe('FilterSection', () => {
   it('hides muslim filter in business section', () => {
     render(
       <FilterSection
-        selectedSection="business"
+        selectedSection="store"
         selectedFilters={[]}
         t={t}
         onToggleFilter={vi.fn()}

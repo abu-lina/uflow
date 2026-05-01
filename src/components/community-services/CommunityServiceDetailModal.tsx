@@ -50,7 +50,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: communityService.community_service_id,
-    bookmarkableType: 'community_service',
+    bookmarkableType: 'provider',
     onBookmarkChange: (isBookmarked) => {
       setIsSaved(isBookmarked);
       if (typeof onBookmarkChange === 'function') {

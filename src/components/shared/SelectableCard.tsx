@@ -27,7 +27,7 @@ interface SelectableCardProps {
   
   // Bookmark removal props (for saved items)
   bookmarkableId?: string;
-  bookmarkableType?: 'provider' | 'community_service';
+  bookmarkableType?: 'provider';
   onRemove?: () => void;
 }
 

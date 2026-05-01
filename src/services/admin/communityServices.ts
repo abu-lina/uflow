@@ -2,6 +2,9 @@
  * Admin community service service
  * Business logic for admin community service operations.
  * Uses service-role to bypass RLS (can load non-approved community services).
+ *
+ * M-5a: community_services table dropped — ummah providers now in providers
+ * WHERE listing_type = 'ummah'. All CS IDs are now provider IDs.
  */
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
@@ -10,15 +13,16 @@ import type { CommunityService } from '@/services/communityServices';
 
 /**
  * Fetch a community service by ID for admin editing.
- * Uses service-role to bypass RLS (can load non-approved community services).
+ * community_service_id = provider_id for ummah providers.
  */
 export async function getCommunityServiceForAdmin(communityServiceId: string): Promise<CommunityService | null> {
   const supabase = getSupabaseAdmin();
 
   const { data: rows, error } = await supabase
-    .from('community_services')
+    .from('providers')
     .select('*, category:categories(name_de, name_en, category_images)')
-    .eq('community_service_id', communityServiceId);
+    .eq('provider_id', communityServiceId)
+    .eq('listing_type', 'ummah');
 
   if (error) {
     throw new Error(`Failed to fetch community service: ${error.message}`);
@@ -57,10 +61,10 @@ export async function updateCommunityServiceFields(
   };
 
   if (editData.communityServiceName !== undefined) {
-    updatePayload.community_service_name = sanitizeTextInput(editData.communityServiceName);
+    updatePayload.provider_name = sanitizeTextInput(editData.communityServiceName);
   }
   if (editData.communityServiceDescription !== undefined) {
-    updatePayload.community_service_description = editData.communityServiceDescription
+    updatePayload.provider_description = editData.communityServiceDescription
       ? sanitizeTextInput(editData.communityServiceDescription)
       : null;
   }
@@ -109,9 +113,10 @@ export async function updateCommunityServiceFields(
   }
 
   const { data, error } = await supabase
-    .from('community_services')
+    .from('providers')
     .update(updatePayload)
-    .eq('community_service_id', communityServiceId)
+    .eq('provider_id', communityServiceId)
+    .eq('listing_type', 'ummah')
     .select()
     .single();
 
@@ -142,9 +147,10 @@ export async function updateCommunityServiceReview(
   };
 
   const { data, error } = await supabase
-    .from('community_services')
+    .from('providers')
     .update(updatePayload)
-    .eq('community_service_id', communityServiceId)
+    .eq('provider_id', communityServiceId)
+    .eq('listing_type', 'ummah')
     .select()
     .single();
 

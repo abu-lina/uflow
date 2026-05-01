@@ -89,11 +89,12 @@ export async function GET(request: Request) {
     }
     userData.consentLogs = consentLogs || [];
 
-    // 3.6 Community services created by user (if applicable)
+    // 3.6 Ummah providers created by user (M-5a: community_services table dropped)
     const { data: communityServices, error: communityServicesError } = await supabase
-      .from('community_services')
+      .from('providers')
       .select('*')
-      .eq('user_created_id', user.id);
+      .eq('user_created_id', user.id)
+      .eq('listing_type', 'ummah');
 
     if (communityServicesError && communityServicesError.code !== 'PGRST116') {
       console.error('[EXPORT] Error fetching community services:', communityServicesError);

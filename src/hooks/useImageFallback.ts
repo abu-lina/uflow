@@ -5,7 +5,7 @@ import type { Category } from '@/services/categories';
 interface ImageFallbackOptions {
   categoryId: string;
   category?: Category;
-  entityType: 'provider' | 'community_service';
+  entityType?: 'provider'; // M-5a: community_service_images dropped; all entities use providers
   limit?: number;
 }
 
@@ -76,13 +76,14 @@ export function useImageFallback({
 /**
  * Fetch images from the appropriate entity table
  */
+// M-5a: community_services table dropped; always fetch from providers
 async function fetchEntityImages(
-  entityType: 'provider' | 'community_service',
+  _entityType: 'provider' | undefined,
   categoryId: string,
   limit: number
 ): Promise<string[]> {
-  const tableName = entityType === 'provider' ? 'providers' : 'community_services';
-  const imageColumn = entityType === 'provider' ? 'provider_images' : 'community_service_images';
+  const tableName = 'providers';
+  const imageColumn = 'provider_images';
 
   const { data, error } = await supabase
     .from(tableName)

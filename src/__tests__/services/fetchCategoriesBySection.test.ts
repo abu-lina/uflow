@@ -82,7 +82,7 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
       .mockReturnValueOnce(providersChain)   // providers query
       .mockReturnValueOnce(categoriesChain); // categories query
 
-    const result = await fetchCategoriesBySection('business');
+    const result = await fetchCategoriesBySection('store');
     expect(result).toHaveLength(1);
     expect(result[0].category_id).toBe(BUSINESS_CATEGORY_UUID);
   });

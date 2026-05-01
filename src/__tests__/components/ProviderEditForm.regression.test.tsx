@@ -395,13 +395,13 @@ describe('ProviderEditForm regressions', () => {
     );
 
     const sectionSelect = screen.getByLabelText('Section Label (i18n)');
-    fireEvent.change(sectionSelect, { target: { value: 'business' } });
+    fireEvent.change(sectionSelect, { target: { value: 'store' } });
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
 
     await waitFor(() => {
       expect(approveAction).toHaveBeenCalledWith(
         expect.objectContaining({
-          listingType: 'business',
+          listingType: 'store',
         })
       );
     });

@@ -52,8 +52,8 @@ function SearchPageContent() {
   type AccordionKey = 'was' | 'wo' | 'wer' | 'filter';
 
   const resolveSection = (rawSection: string | null): Section => {
-    if (rawSection === 'ummah' || rawSection === 'business') {
-      return rawSection;
+    if (rawSection === 'ummah' || rawSection === 'store' || rawSection === 'business') {
+      return rawSection === 'business' ? 'store' : rawSection;
     }
     return 'food';
   };
@@ -399,7 +399,7 @@ function SearchPageContent() {
     setWasQuery('');
     setSelectedWas(null);
     setSelectedFilters([]);
-    setOpenAccordion((prev) => (selectedSection === 'business' && prev === 'wer' ? 'was' : prev));
+    setOpenAccordion((prev) => (selectedSection === 'store' && prev === 'wer' ? 'was' : prev));
   }, [selectedSection]);
 
   useEffect(() => {
@@ -679,7 +679,7 @@ function SearchPageContent() {
           </div>
         </ExpandSection>
 
-        {selectedSection !== 'business' ? (
+        {selectedSection !== 'store' ? (
           <ExpandSection
             isOpen={openAccordion === 'wer'}
             title={werAccordionTitle}

@@ -71,8 +71,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     // Plan 089: Section filter
     const sectionParam = searchParams.get('section');
     const section: Section | undefined =
-      sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'business'
-        ? sectionParam
+      sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'store' || sectionParam === 'business'
+        ? (sectionParam === 'business' ? 'store' : sectionParam as Section)
         : undefined;
 
     const rawFilters = searchParams.get('filters') || '';
