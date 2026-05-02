@@ -177,6 +177,34 @@ For each surface, state one of:
 
 Do not treat route deletion alone as proof that the feature is no longer discoverable.
 
+### Schema Mutation Inventories (MANDATORY when applicable)
+
+If a plan includes an enum value rename, column drop, or table rename, the plan MUST enumerate **both** a write inventory and a read inventory for the mutated value or column.
+
+**Write inventory** — all locations that write, filter, or insert using the old enum value or column:
+- DB queries with `.eq('column', 'old_value')` or equivalent filters
+- Supabase RPC calls passing the old value
+- Migration files referencing the old label
+
+**Read inventory** — all locations that read or SELECT using the old enum value or column:
+- `.select('column_name')` in app queries
+- Destructuring or mapping of the old column (`row.column_name`)
+- Test fixtures or mocks that assert on the old column name
+
+**Verification command pattern** (run before writing milestones, record output in plan):
+```bash
+# Enum rename 'old_value' → 'new_value':
+grep -rn "'old_value'" src/ supabase/
+grep -rn '"old_value"' src/ supabase/
+
+# Column or table drop:
+grep -rn "column_name" src/ supabase/
+```
+
+For each match: classify as write-path, read-path, or irrelevant. Document in the plan milestone that covers the rename/drop. Any file in the inventory that is NOT updated by the plan milestone is a guaranteed QA blocker.
+
+**Applies to**: Any plan milestone containing `ALTER TYPE ... RENAME VALUE`, `ALTER TABLE ... DROP COLUMN`, `ALTER TABLE ... RENAME TO`, or equivalent table/column/enum mutations.
+
 14. Include version management milestone. Update release artifacts to match roadmap target version.
 15. Retrieve/store memory.
 16. **Status tracking**: When incorporating analysis into a plan, update the analysis doc's Status field to "Planned" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.

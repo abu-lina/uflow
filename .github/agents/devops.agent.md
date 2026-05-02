@@ -406,7 +406,17 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 2. **Surface PR URL (MANDATORY)**: After every branch push, include the PR comparison URL in the agent response: `https://github.com/<org>/<repo>/compare/main...<branch>`. Do not rely on GitHub's transient "create a pull request" banner.
 3. Verify the PR comparison has no merge conflicts. If conflicts exist, rebase onto `origin/main`, resolve, and force-push with `--force-with-lease` before proceeding.
-4. Tag: `git tag -a v[X.Y.Z] -m "Release v[X.Y.Z] - [plan summaries]"`, push tag. If a post-push rebase changes `HEAD`, delete and recreate the tag on the new `HEAD` before pushing it.
+4a. **Wait for CI** before merging. Monitor with `gh pr checks <PR#> --repo <org>/<repo>` until all required checks show ✓. Do not merge while checks are pending or failing.
+
+4b. **PR merge and tag (squash-merge workflow)**:
+   - Merge the PR: `gh pr merge <PR#> --repo <org>/<repo> --squash --delete-branch`
+   - Fetch the squash commit: `git fetch origin --tags`
+   - Confirm squash commit SHA: `git rev-parse origin/main`
+   - Create annotated tag on the squash commit: `git tag -a v[X.Y.Z] <squash-sha> -m "Release v[X.Y.Z] — [plan summary]"`
+   - Push tag: `git push origin v[X.Y.Z]`
+
+   **NEVER** create the tag on the session branch before merge. On squash-merge the session branch commit is not in `main`'s history and the tag becomes orphaned. If a pre-merge tag was created by mistake: `git tag -d v[X.Y.Z] && git push origin :refs/tags/v[X.Y.Z]` then recreate on the squash commit after merge.
+
 5. Publish: vsce/npm/twine/GitHub (environment-specific).
 6. Verify: visible, version correct, assets accessible.
 7. Update log with timestamp/URLs.
