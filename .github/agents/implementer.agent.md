@@ -198,9 +198,9 @@ If you change a canonical sentinel value (example: “Everywhere/Überall” →
   - assignment/param parsing sites (`searchParams`, `selectedLocation`, `location =`)
 - Add at least one regression test covering the highest-risk path (typically **no-param SSR default**)
 
-### Schema Verification Gate (DB migrations) (MANDATORY)
+### Schema Verification Gate (DB migrations + schema-filtered app code) (MANDATORY)
 
-If you create or modify a migration that references **existing** tables/columns (not newly created in the same migration), you MUST verify the target schema _before_ finalizing the DDL.
+If you create or modify a migration that references **existing** tables/columns (not newly created in the same migration), **or write application code that filters by enum / CHECK-constrained column values** (e.g., `.in('applicable_section', [...])`, `.eq('listing_type', ...)`), you MUST verify the target schema _before_ finalizing the DDL or filter expression.
 
 - Run (or request the user/DevOps to run) a schema check against the deployment Supabase project:
   - Column existence:
@@ -216,6 +216,25 @@ If you create or modify a migration that references **existing** tables/columns 
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public'
     AND p.proname = '<function_name>';
+
+  - Enum values (before writing any filter that uses an enum value):
+    SELECT enumlabel FROM pg_enum
+    WHERE enumtypid = '<enum_name>'::regtype
+    ORDER BY enumsortorder;
+
+  - CHECK constraint allowed values (before writing filters on CHECK-constrained columns):
+    SELECT pg_get_constraintdef(oid)
+    FROM pg_constraint
+    WHERE conrelid = '<table>'::regclass
+    AND contype = 'c'
+    AND conname LIKE '%<column_name>%';
+
+  - Column type (before applying aggregate functions such as min/max in migrations):
+    SELECT data_type FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = '<table>'
+    AND column_name = '<column>';
+    -- Note: min() / max() are invalid on uuid columns — use ORDER BY + LIMIT 1 or target by PK instead.
 
 - If schema drift is detected, STOP and resolve (update migration, or align schemas) before handoff.
 - Document the verification evidence in the implementation doc.

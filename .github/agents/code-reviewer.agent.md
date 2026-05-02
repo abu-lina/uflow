@@ -137,6 +137,16 @@ Core Responsibilities:
   ```
 - Scope: check `src/__tests__/migrations/`, `tests/`, and any vitest config that enumerates migration paths.
 
+  6j. **Migration SQL Correctness Review (MANDATORY when applicable)**:
+
+- Trigger when the implementation creates or modifies migration files under `supabase/migrations/`.
+- Review the SQL for these common error classes:
+  - **Invalid aggregates**: Does any SELECT use `min()`, `max()`, `count()`, etc. on a `uuid` or `text` column? If so, is the aggregate valid for that type? (`min(uuid)` is invalid in Postgres — use `ORDER BY + LIMIT 1` or target by name/PK instead.)
+  - **Mutable display-name targeting**: Does the migration UPDATE/DELETE rows by matching a mutable display name (e.g., `WHERE name_de = 'Example'`)? If so, is a **uniqueness guard** present (e.g., a `SELECT count(*) = 1` check before the update)?
+  - **Idempotence**: If the migration is run twice, does it error or produce a different result? Guards like `IF NOT EXISTS`, `ON CONFLICT DO NOTHING`, or count-before-update patterns are required.
+- If any of the above issues are found, record as **MEDIUM** finding (or **HIGH** if the migration targets production data without a guard).
+- Record in the Code Review doc (one-liner per check): `Migration SQL: no invalid aggregates ✅ / uniqueness guard present ✅ / idempotent ✅`.
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions
