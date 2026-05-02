@@ -84,7 +84,8 @@ describe('ProviderCard Component', () => {
       );
     });
 
-    it('should render placeholder image when no images available', () => {
+    it('should render dynamic fallback when no images available', () => {
+      // M1b: ornament-masked placeholder (Figma node 460:2818)
       const providerWithoutImages = { ...mockProvider, provider_images: null };
 
       render(
@@ -95,8 +96,10 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      const placeholderImage = screen.getByAltText('Bilal Moschee');
-      expect(placeholderImage).toHaveAttribute('src', '/images/placeholder.jpg');
+      const fallback = screen.getByTestId('provider-image-fallback');
+      expect(fallback).toBeInTheDocument();
+      expect(screen.getByTestId('provider-fallback-ornament')).toBeInTheDocument();
+      expect(screen.getByTestId('provider-fallback-logo-mark')).toBeInTheDocument();
     });
   });
 
