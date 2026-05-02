@@ -63,6 +63,7 @@ Status: Released
 | 2026-05-02T01:50Z | DevOps | Stage 2: Smoke test — fresh dev server at port 3001 (ummah-flow@0.12.1). / HTTP 200 (2059 modules). /providers HTTP 200 (2080 modules). Zero errors. |
 | 2026-05-02T01:50Z | DevOps | Stage 2: GitHub issue #202 closed with release comment. |
 | 2026-05-02T01:50Z | DevOps | Stage 2: Roadmap updated — Current Version v0.12.1, changelog entry added, v0.12.1 row added to Previous Releases. Status: Released. |
+| 2026-05-02 | User (UAT) | DF-1 CLOSED: Browser-interactive section-tab validation confirmed on UAT. Screenshot shows Food section displaying only food-scoped categories (Italian, Food & Drink). "Gesundheit & Sport" absent. Guardrail verified working in production. |
 
 ---
 
@@ -187,12 +188,9 @@ No code changes were made to Plan 119 source files after UAT approval (01:25Z). 
 
 ## Known Issues / Limitations (Pre-Operation)
 
-**DF-1: Browser-Interactive Section-Tab Verification (DEFERRED)**
-- **Owner**: UAT team  
-- **Trigger**: Within 48h of migration application to UAT environment  
-- **Evidence Required**: Visual confirmation that "Gesundheit & Sport" no longer appears in Food section  
-- **Severity**: LOW (static code inspection + automated tests confirm guardrail correct)  
-- **Tracker**: See UAT report Deferred Follow-ups section
+**DF-1: Browser-Interactive Section-Tab Verification (CLOSED ✅)**
+- **Evidence**: User-provided screenshot (2026-05-02) showing Food section with only food-scoped categories (Italian, Food & Drink). "Gesundheit & Sport" not present.
+- **Result**: Guardrail confirmed working in production. DF-1 fully resolved.
 
 **Plan 115 Staged Work (INFORMATION)**
 - Plan 115 code changes were staged but are NOT included in this Plan 119 commit

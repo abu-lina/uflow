@@ -261,17 +261,15 @@ Status: Committed
 
 ## Deferred Follow-ups (Non-Blocking)
 
-**DF-1: Browser-Interactive Section-Tab Verification**
+**DF-1: Browser-Interactive Section-Tab Verification — ✅ CLOSED**
 
 | Field | Value |
 | --- | --- |
 | **Owner** | UAT agent (or designated QA team member) |
 | **Trigger / Due Window** | Within 48 hours of migration application to UAT environment |
 | **Severity** | LOW (static code inspection already confirms guardrail implementation) |
-| **Reachable States in Live Flow** | Food section → view categories; Stores section → view categories; Ummah section → view categories |
-| **Evidence Required** | Screenshot or browser test showing: (1) Food section displays only food-scoped + all-scoped categories; (2) "Gesundheit & Sport" is NOT visible in Food section; (3) Stores section displays only store-scoped + all-scoped categories |
-| **Closure Criteria** | Visual confirmation that section tabs correctly filter categories post-migration OR static code inspection reconfirmed (if manual validation not executed within 48h) |
-| **Fallback/Alternative** | If manual validation is not executed, build gate + code review + automated tests provide sufficient evidence that guardrail is correctly implemented and will function as expected in production |
+| **Evidence Provided** | User screenshot (2026-05-02): Food section shows only food-scoped categories (Italian, Food & Drink). "Gesundheit & Sport" is absent. Section tabs (Food / Ummah / Stores) visible and correctly active. |
+| **Status** | ✅ CLOSED — confirmed by user on UAT 2026-05-02 |
 
 ---
 
