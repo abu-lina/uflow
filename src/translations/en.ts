@@ -962,6 +962,15 @@ export const en = {
       "acceptsDonations": "Accepts donations",
       "solidarityPricing": "Solidarity pricing"
     },
+    "trustBadges": {
+      "muslimOwned": "Muslim",
+      "acceptsDonations": "Donates",
+      "solidarity": "Solidarity",
+      "prayerSpace": "Prayer",
+      "parking": "Parking",
+      "familyFriendly": "Family",
+      "womenFriendly": "Women"
+    },
     "empty": {
       "noOpeningHours": "No opening hours available.",
       "noValuesAmenities": "No values or amenities available.",

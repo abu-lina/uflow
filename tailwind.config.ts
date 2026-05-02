@@ -254,7 +254,6 @@ const config: Config = {
         background: {
           DEFAULT: 'hsl(var(--color-background))',
           dark: 'hsl(var(--color-neutral-800))',
-          selection: 'hsl(var(--color-background-selection))',
         },
 
         surface: 'hsl(var(--color-surface))',
@@ -291,6 +290,65 @@ const config: Config = {
         input: 'hsl(var(--color-border-default))',
         accent: 'hsl(var(--color-primary))',
         'accent-foreground': 'hsl(var(--color-text-inverse))',
+
+        // ============================================
+        // Base Color Palettes (Raw — prefer semantic tokens above)
+        // ============================================
+        'silver-tree': {
+          '50':  '#f3faf7',
+          '100': '#d8efe5',
+          '200': '#b2ddcb',
+          '300': '#7bc1a7',
+          '400': '#59a88d',
+          '500': '#408c73',
+          '600': '#31705d',
+          '700': '#2a5b4d',
+          '800': '#254a40',
+          '900': '#233e36',
+          '950': '#0f241f',
+        },
+
+        'glacier': {
+          '50':  '#f2f7f9',
+          '100': '#ddebf0',
+          '200': '#bfd9e2',
+          '300': '#79aec3',
+          '400': '#5e99b2',
+          '500': '#427d98',
+          '600': '#3a6780',
+          '700': '#34556a',
+          '800': '#314959',
+          '900': '#2d3e4c',
+          '950': '#1a2732',
+        },
+
+        'new-york-pink': {
+          '50':  '#fcf4f4',
+          '100': '#fae6e6',
+          '200': '#f7d1d1',
+          '300': '#f0b1b1',
+          '400': '#e68989',
+          '500': '#d75c5c',
+          '600': '#c24040',
+          '700': '#a33232',
+          '800': '#872d2d',
+          '900': '#712b2b',
+          '950': '#3d1212',
+        },
+
+        'rob-roy': {
+          '50':  '#fdf9ef',
+          '100': '#fbf1d9',
+          '200': '#f7dfb1',
+          '300': '#f0c375',
+          '400': '#eba74c',
+          '500': '#e58e2a',
+          '600': '#d7751f',
+          '700': '#b25a1c',
+          '800': '#8e481e',
+          '900': '#733c1b',
+          '950': '#3e1d0c',
+        },
 
         // Legacy aliases (prefer text-content-heading, text-content, text-content-muted)
         uFlowText: 'hsl(var(--color-text-primary))',

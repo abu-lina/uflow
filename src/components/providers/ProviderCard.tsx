@@ -14,7 +14,8 @@ import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider, ReviewStatusFilter } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
-import { computeHalalStars, computeBarakahBadge } from '@/utils/sectionBadges';
+import { computeHalalStars } from '@/utils/sectionBadges';
+import { getOpenStatus } from '@/utils/openStatus';
 
 interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   className?: string;
@@ -73,6 +74,9 @@ export const ProviderCard = React.memo(
       has_prayer_space,
       family_friendly,
       women_friendly,
+      has_parking,
+      opening_hours,
+      offers,
     },
     ref,
   ) => {
@@ -168,6 +172,38 @@ export const ProviderCard = React.memo(
       return category.name_en || category.name_de || t('search.unnamed');
     };
     const categoryName = getCategoryName();
+    const specialtyNames = (offers || []).map((offer) => offer.name_de).filter(Boolean);
+    const visibleSpecialties = specialtyNames.slice(0, 2);
+    const specialtiesOverflow = specialtyNames.length > 2 ? specialtyNames.length - 2 : 0;
+    const openStatus = getOpenStatus(opening_hours ?? null);
+    const openStatusLabel = openStatus.isOpen
+      ? t('providerDetail.openStatus.open')
+      : t('providerDetail.openStatus.closed');
+    const trustValues = [
+      muslim_owned
+        ? { id: 'muslimOwned', label: t('providerDetail.trustBadges.muslimOwned') }
+        : null,
+      makes_donations
+        ? { id: 'acceptsDonations', label: t('providerDetail.trustBadges.acceptsDonations') }
+        : null,
+      economic_solidarity
+        ? { id: 'solidarity', label: t('providerDetail.trustBadges.solidarity') }
+        : null,
+      has_prayer_space
+        ? { id: 'prayerSpace', label: t('providerDetail.trustBadges.prayerSpace') }
+        : null,
+      has_parking
+        ? { id: 'parking', label: t('providerDetail.trustBadges.parking') }
+        : null,
+      family_friendly
+        ? { id: 'familyFriendly', label: t('providerDetail.trustBadges.familyFriendly') }
+        : null,
+      women_friendly
+        ? { id: 'womenFriendly', label: t('providerDetail.trustBadges.womenFriendly') }
+        : null,
+    ].filter((value): value is { id: string; label: string } => value !== null);
+    const visibleTrustValues = trustValues.slice(0, 2);
+    const hiddenTrustValuesCount = Math.max(0, trustValues.length - visibleTrustValues.length);
 
     const handleBookmark = async (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -415,6 +451,13 @@ export const ProviderCard = React.memo(
               >
                 {provider_name}
               </span>
+              {openStatus.visible && (
+                <div className="mt-0.5 flex items-center" data-testid="provider-open-status">
+                  <span className={`font-inter text-sm font-medium leading-normal ${openStatus.isOpen ? 'text-success-dark' : 'text-danger-dark'}`}>
+                    {openStatusLabel}
+                  </span>
+                </div>
+              )}
               <button
                 className="w-full min-w-0 truncate text-uFlowText2 font-inter text-xs font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left sm:text-sm"
                 disabled={!isAddressNavigable(address_street ?? undefined, address_zip ?? undefined, address_city ?? undefined)}
@@ -427,7 +470,38 @@ export const ProviderCard = React.memo(
               >
                 {address}
               </button>
+              {trustValues.length > 0 && (
+                <div className="mt-1 w-full" data-testid="provider-trust-values">
+                  <div className="flex w-full min-w-0 items-center gap-1 overflow-hidden">
+                    {visibleTrustValues.map((value) => (
+                      <span
+                        key={value.id}
+                        className={`inline-flex h-5 min-w-0 shrink items-center justify-center rounded-[3.7px] border border-[#CDCDCD] bg-[#F4F4F4] px-[4px] font-inter-tight text-[11px] font-medium leading-4 uppercase text-[#152E2C] ${visibleTrustValues.length === 2 ? 'max-w-[calc(50%-0.25rem)]' : 'max-w-full'}`}
+                        data-chip-type="trust-value"
+                        title={value.label}
+                      >
+                        <span className="truncate">{value.label}</span>
+                      </span>
+                    ))}
+                    {hiddenTrustValuesCount > 0 && (
+                      <span className="inline-flex aspect-square h-5 shrink-0 items-center justify-center rounded-[3.7px] border border-[#CDCDCD] bg-[#F4F4F4] p-0 font-inter-tight text-[11px] font-medium leading-4 text-[#152E2C]" data-chip-type="trust-overflow">
+                        +{hiddenTrustValuesCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+            {specialtyNames.length > 0 && (
+              <div className="w-full min-w-0">
+                <p
+                  className="w-full truncate font-inter text-xs font-medium text-text-muted sm:text-sm"
+                  title={specialtyNames.join(' · ')}
+                >
+                  {visibleSpecialties.join(' · ')}{specialtiesOverflow > 0 ? ` · +${specialtiesOverflow}` : ''}
+                </p>
+              </div>
+            )}
             {badges && badges.length > 0 && (
               <div className="flex h-6 w-full items-center gap-1.5 overflow-hidden">
                 <div className="flex items-center gap-1.5 overflow-hidden">
@@ -449,12 +523,10 @@ export const ProviderCard = React.memo(
                 </div>
               </div>
             )}
-            {/* Plan 089 M5: Computed section badges — halal stars (FOOD) + Barakah (FOOD/BUSINESS) */}
+            {/* Plan 089 M5: Computed section badges — halal stars (FOOD) */}
             {(() => {
               const halalStars = listing_type === 'food' ? computeHalalStars({ halal_level }) : 0;
-              // Barakah badge applies to FOOD and BUSINESS (not community services — those have no listing_type)
-              const showBarakah = computeBarakahBadge({ muslim_owned, makes_donations, economic_solidarity, has_prayer_space, family_friendly, women_friendly });
-              if (!halalStars && !showBarakah) return null;
+              if (!halalStars) return null;
               return (
                 <div className="flex h-6 w-full items-center gap-1.5 overflow-hidden">
                   {halalStars > 0 && (
@@ -467,16 +539,6 @@ export const ProviderCard = React.memo(
                       {Array.from({ length: halalStars }).map((_, i) => (
                         <Icon key={i} className="text-amber-500" height={12} icon="mdi:star" width={12} />
                       ))}
-                    </div>
-                  )}
-                  {showBarakah && (
-                    <div
-                      aria-label="Barakah"
-                      className="flex h-6 shrink-0 items-center rounded-[3px] border border-emerald-300 bg-emerald-50/80 px-1.5 backdrop-blur-sm"
-                      role="img"
-                      title="Barakah"
-                    >
-                      <span className="font-inter-tight text-xs font-medium text-emerald-700">Barakah</span>
                     </div>
                   )}
                 </div>

@@ -2,7 +2,7 @@
 ID: 115
 Origin: 115
 UUID: b7e3a91f
-Status: Active
+Status: Committed
 ---
 
 # Implementation 115 — Provider Card Specialties + Open Status
@@ -26,6 +26,7 @@ Status: Active
 | 2026-04-29T23:12Z | Implementer | TDD RED | Added failing regression tests for `SearchResultsList` pass-through and `ProviderCard` open-status marker |
 | 2026-04-29T23:15Z | Implementer | TDD GREEN | Wired `offers` + `opening_hours` to card and implemented specialty/open-status rendering |
 | 2026-04-29T23:40Z | Implementer | Quality gates | Ran full tests, type-check, build; fixed lint blocking by excluding third-party reference snapshot path |
+| 2026-04-30T08:10Z | Code Review -> Implementer | Address review findings | Added missing `ProviderCard` regressions for specialties/open-status and documented non-search call-site verification outcomes |
 
 ## Implementation Summary
 
@@ -57,10 +58,10 @@ This directly delivers the plan value: users can decide faster from the card sur
 | `src/services/providers.ts` | Added `opening_hours` to `SearchResult`; passed through in provider transform; set null in community service transform | +3 |
 | `src/components/providers/SearchResultsList.tsx` | Passed `offers` and `opening_hours` through `searchResultToProvider()` | +2 |
 | `src/components/providers/ProviderCard.tsx` | Added specialties row rendering and compact open-status rendering via `getOpenStatus` | +30 |
-| `src/__tests__/components/ProviderCard.test.tsx` | Added Plan 115 regression tests for specialties and open-status marker | +58 |
+| `src/__tests__/components/ProviderCard.test.tsx` | Added Plan 115 regressions for specialties (top-2 + overflow), open-status visible, and open-status hidden states | +95 |
 | `src/__tests__/components/providers/search-results-list-scroll-render.test.tsx` | Added pass-through regression test for `offers` + `opening_hours` to `ProviderCard` | +48 |
 | `eslint.config.mjs` | Ignored `docs/references/**` third-party snapshot bundle to unblock lint gate | +1 |
-| `CHANGELOG.md` | Added Plan 115 release notes under `0.11.4` | +5 |
+| `CHANGELOG.md` | Added Plan 115 release notes under `0.12.2` | +5 |
 | `agent-output/planning/115-provider-card-specialties-open-status.md` | Set `Status: In Progress` and added implementation-start changelog line | +2 |
 
 ## Files Created
@@ -94,6 +95,12 @@ This directly delivers the plan value: users can decide faster from the card sur
 
 - N/A — no submit handlers, URL builders, or result-list inline action guards were modified.
 
+## ProviderCard Call-Site Verification (M1 Task 4)
+
+- `SearchResultsList` -> `ProviderCard`: ✅ passes `offers` and `opening_hours` (`result.opening_hours ?? result.originalProvider?.opening_hours ?? null`).
+- `ProvidersList` -> `ProviderCard`: ✅ verified path; passes provider object from caller unchanged. Behavior is graceful empty state when upstream provider payload omits resolved `offers`/`opening_hours`.
+- `ExploreSection` -> `ProviderCard`: ✅ verified path uses `getProviders(20)` and therefore may omit resolved `offers` names; accepted per plan as graceful empty state (no runtime errors, no extra whitespace).
+
 ## Multi-Plan State Audit
 
 - N/A — no new `useEffect`/hydration/localStorage precedence semantics introduced in search/page state.
@@ -104,11 +111,11 @@ This directly delivers the plan value: users can decide faster from the card sur
 
 ## Code Quality Validation
 
-- [x] `npx vitest run` -> pass (`143 passed`, `1 skipped`; `1175 passed`, `18 skipped`)
+- [x] `npx vitest run` -> pass (`143 passed`, `1 skipped`; `1178 passed`, `18 skipped`)
 - [x] `npm run lint` -> pass (`0 errors`, warnings only)
 - [x] `npm run type-check` -> pass
 - [x] `npm run build` -> pass
-- [x] Targeted Plan 115 tests -> pass (`48/48`)
+- [x] Targeted Plan 115 tests -> pass (`51/51`)
 
 ## Value Statement Validation
 
@@ -124,13 +131,15 @@ This directly delivers the plan value: users can decide faster from the card sur
 | --- | --- | --- | --- | --- | --- |
 | `SearchResultsList.searchResultToProvider()` pass-through (`offers`, `opening_hours`) | `src/__tests__/components/providers/search-results-list-scroll-render.test.tsx` | ✅ Yes | ✅ Yes | AssertionError: `offers` was `undefined` in `ProviderCard` props | ✅ Yes |
 | `ProviderCard` specialties rendering (top-2 + overflow) | `src/__tests__/components/ProviderCard.test.tsx` | ✅ Yes | ✅ Yes | AssertionError: specialties text row missing | ✅ Yes |
-| `ProviderCard` compact open-status marker | `src/__tests__/components/ProviderCard.test.tsx` | ✅ Yes | ✅ Yes | AssertionError: `data-testid=provider-open-status` missing | ✅ Yes |
+| `ProviderCard` compact open-status marker visible when schedule exists | `src/__tests__/components/ProviderCard.test.tsx` | ✅ Yes | ✅ Yes | AssertionError: `data-testid=provider-open-status` missing | ✅ Yes |
+| `ProviderCard` compact open-status marker hidden when schedule is absent | `src/__tests__/components/ProviderCard.test.tsx` | ✅ Yes | ✅ Yes | AssertionError: marker unexpectedly present with null `opening_hours` | ✅ Yes |
 
 ## Test Coverage
 
 - Unit/component:
   - Specialty string rendering and overflow counter on card
   - Open-status marker visibility when opening hours exist
+  - Open-status marker hidden state when opening hours are absent
 - Integration:
   - Search result to card props mapping now includes `offers` and `opening_hours`
 
@@ -138,8 +147,8 @@ This directly delivers the plan value: users can decide faster from the card sur
 
 | Command | Result | Notes |
 | --- | --- | --- |
-| `npx vitest run src/__tests__/components/ProviderCard.test.tsx src/__tests__/components/providers/search-results-list-scroll-render.test.tsx` | ✅ Pass | `48 passed` |
-| `npx vitest run` | ✅ Pass | `143 files passed`, `1 skipped`; `1175 tests passed`, `18 skipped` |
+| `npx vitest run src/__tests__/components/ProviderCard.test.tsx src/__tests__/components/providers/search-results-list-scroll-render.test.tsx` | ✅ Pass | `51 passed` |
+| `npx vitest run` | ✅ Pass | `143 files passed`, `1 skipped`; `1178 tests passed`, `18 skipped` |
 | `npm run lint` | ✅ Pass | `0 errors`, warnings only; third-party snapshot path now ignored |
 | `npm run type-check` | ✅ Pass | no TS errors |
 | `npm run build` | ✅ Pass | production build completed |

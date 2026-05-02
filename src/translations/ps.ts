@@ -962,6 +962,15 @@ export const ps = {
       "acceptsDonations": "مرستې مني",
       "solidarityPricing": "د پیوستون بیه"
     },
+    "trustBadges": {
+      "muslimOwned": "مسلمان",
+      "acceptsDonations": "مرسته",
+      "solidarity": "پیوستون",
+      "prayerSpace": "لمانځه",
+      "parking": "پارکینګ",
+      "familyFriendly": "کورنۍ",
+      "womenFriendly": "ښځې"
+    },
     "empty": {
       "noOpeningHours": "د کار وختونه شتون نه لري.",
       "noValuesAmenities": "ارزښتونه یا اسانتياوې شتون نه لري.",

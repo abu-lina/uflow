@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-05-02
+
+### Added
+
+- **Provider cards: specialty tags on list cards** (Plan 115): Discovery cards now show up to two dish/specialty tags from provider `offers` (for example `Shawarma · Falafel`) with `+N` overflow when more specialties exist.
+- **Provider cards: compact open/closed status indicator** (Plan 115): Discovery cards now show a localized `Open`/`Closed` status chip with a green/red dot when `opening_hours` is available, using existing `getOpenStatus()` logic.
+- **Provider trust chip i18n** (Plan 115): Trust attribute labels (e.g. Muslim-owned, family-friendly) are now fully localized across all six supported languages (EN/DE/AR/TR/UR/PS).
+
 ## [0.12.1] - 2026-05-02
 
 ### Fixed

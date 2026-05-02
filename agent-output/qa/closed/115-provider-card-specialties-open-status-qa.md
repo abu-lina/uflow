@@ -2,7 +2,7 @@
 ID: 115
 Origin: 115
 UUID: b7e3a91f
-Status: QA Complete
+Status: Committed
 ---
 
 # QA Report: Plan 115 — Provider Card Specialties + Open Status
@@ -10,7 +10,7 @@ Status: QA Complete
 **Plan Reference**: [agent-output/planning/115-provider-card-specialties-open-status.md](../planning/115-provider-card-specialties-open-status.md)
 **Implementation Reference**: [agent-output/implementation/115-provider-card-specialties-open-status-implementation.md](../implementation/115-provider-card-specialties-open-status-implementation.md)
 **Code Review Reference**: [agent-output/code-review/115-provider-card-specialties-open-status-code-review.md](../code-review/115-provider-card-specialties-open-status-code-review.md)
-**QA Status**: Test Strategy Development
+**QA Status**: QA Complete
 **QA Specialist**: qa
 
 ## Changelog
@@ -18,13 +18,16 @@ Status: QA Complete
 | Date       | Agent Handoff       | Request                            | Summary                                         |
 | ---------- | ------------------- | ---------------------------------- | ----------------------------------------------- |
 | 2026-05-02 | Code Reviewer -> QA | Code review approved; ready for QA | Created test strategy for specialty + open-status features |
+| 2026-05-02 | Code Reviewer -> QA | Re-verify CR remediation changes   | Re-tested all CR fixes; all automated gates pass |
 
 ## Timeline
 
 - **Test Strategy Created**: 2026-05-02T07:35Z
-- **Implementation Received**: Complete (code-review approved as of 2026-04-30T08:45Z)
-- **Testing Started**: Pending execution
-- **Testing Status**: Strategy phase
+- **Initial Testing Completed**: 2026-05-02T07:40Z (all gates passed)
+- **CR Remediation**: 2026-05-02T09:56Z (CR re-approved after fixes)
+- **Re-test Started**: 2026-05-02T10:05Z
+- **Re-test Completed**: 2026-05-02T10:10Z (all gates re-verified passing)
+- **Final Status**: QA Complete — Ready for UAT
 
 ---
 
@@ -199,6 +202,31 @@ QA validates the provider card enhancements from the **user perspective**:
 
 - **LOW**: Pre-existing CLI script timeout in test suite (unrelated to Plan 115; affects overall test count but not Plan 115 gates)
 - **NONE**: No Plan 115-specific quality issues identified
+
+---
+
+## Re-test: Code Review Remediation
+
+**Date**: 2026-05-02T10:10Z UTC
+**Trigger**: Post-CR re-approval for remediations applied to fix 3 prior CR findings (HIGH i18n labels, MEDIUM truncation, MEDIUM test coverage)
+**Changed files**: ProviderCard.tsx (i18n labels, conditional width), ProviderCard.test.tsx (focused +N and single-chip regression tests), all 6 translation files (trustBadges key group)
+**Changes**: 
+- i18n trust labels: Replaced hardcoded English literals with translation keys `providerDetail.trustBadges.*`
+- Single-chip truncation: Made max-width conditional (`max-w-full` for 1 chip, half-width cap only for 2 chips)
+- Regression adequacy: Added focused tests asserting max-2 trust-chip contract and +N overflow behavior
+
+### Re-test Gates
+
+| Gate | Result | Evidence |
+|---|---|---|
+| npm test (vitest run) | ✅ PASS | 1205 tests passed, 18 skipped; all Plan 115 tests green (41 ProviderCard + 10 SearchResultsList) |
+| npm run type-check | ✅ PASS | Exit code 0; no type errors |
+| npm run lint | ✅ PASS | Exit code 0; 0 errors, 57 warnings (pre-existing, unrelated to Plan 115) |
+| npm run build | ✅ PASS | Exit code 0; production bundle generated successfully |
+
+### Re-test Verdict
+
+✅ **PASS** — All CR remediation changes verified passing all automated gates. No regressions introduced. Code quality concerns from prior CR iteration fully resolved.
 
 ---
 

@@ -60,6 +60,7 @@ vi.mock('@/components/ui/Button', () => ({
 
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import type { SearchResult } from '@/services/providers';
+import { ProviderCard } from '@/components/providers/ProviderCard';
 
 /**
  * Helper: generate N mock SearchResult items for testing threshold behavior
@@ -238,5 +239,46 @@ describe('SearchResultsList — data filtering', () => {
 
     // Should only render the 3 valid results
     expect(screen.getAllByTestId('provider-card')).toHaveLength(3);
+  });
+
+  it('[pre-fix FAILS] [post-fix PASSES] passes offers and opening_hours through to ProviderCard', () => {
+    const openingHours = {
+      monday: { open: '09:00', close: '21:00' },
+    };
+
+    const providerResult = {
+      ...generateMockResults(1)[0],
+      offers: [{ name_de: 'Shawarma' }, { name_de: 'Falafel' }],
+      originalProvider: {
+        provider_id: 'provider-0',
+        provider_name: 'Provider 0',
+        provider_images: null,
+        category_id: 'cat-1',
+        address_city: 'Berlin',
+        social_website: null,
+        social_instagram: null,
+        contact_email: null,
+        contact_phone: null,
+        address_street: null,
+        address_country: null,
+        address_zip: null,
+        location_latitude: null,
+        location_longitude: null,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        barakah_effects: [],
+        offers_ids: [],
+        needs_ids: [],
+        opening_hours: openingHours,
+      },
+    } as SearchResult;
+
+    render(<SearchResultsList {...defaultProps} searchResults={[providerResult]} />);
+
+    const providerCardMock = vi.mocked(ProviderCard);
+    const firstCallProps = providerCardMock.mock.calls[0]?.[0] as Record<string, unknown>;
+
+    expect(firstCallProps.offers).toEqual(providerResult.offers);
+    expect(firstCallProps.opening_hours).toEqual(openingHours);
   });
 });

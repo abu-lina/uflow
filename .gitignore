@@ -133,3 +133,7 @@ imports/lottie/.temp-gif-frames/.flowbaby/
 
 # VS Code workspace files (worktree-specific, not shared)
 *.code-workspace
+
+# AI agent configuration directories (local tool installs, not project source)
+.agents/
+.claude/

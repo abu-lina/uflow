@@ -962,6 +962,15 @@ export const tr = {
       "acceptsDonations": "Bağış kabul edilir",
       "solidarityPricing": "Dayanışma fiyatlandırması"
     },
+    "trustBadges": {
+      "muslimOwned": "Müslüman",
+      "acceptsDonations": "Bağış",
+      "solidarity": "Dayanışma",
+      "prayerSpace": "Namaz",
+      "parking": "Otopark",
+      "familyFriendly": "Aile",
+      "womenFriendly": "Kadın"
+    },
     "empty": {
       "noOpeningHours": "Çalışma saatleri mevcut değil.",
       "noValuesAmenities": "Değer veya olanak bulunamadı.",

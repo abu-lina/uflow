@@ -337,6 +337,157 @@ describe('ProviderCard Component', () => {
     });
   });
 
+  describe('Plan 115 — specialties and open status', () => {
+    it('[pre-fix FAILS] [post-fix PASSES] renders top-2 specialties with +N overflow', () => {
+      const providerWithSpecialties = {
+        ...mockProvider,
+        offers: [
+          { name_de: 'Shawarma' },
+          { name_de: 'Falafel' },
+          { name_de: 'Manti' },
+        ],
+      };
+
+      render(
+        <ProviderCard
+          {...providerWithSpecialties}
+          isBookmarked={false}
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      expect(screen.getByText('Shawarma · Falafel · +1')).toBeInTheDocument();
+      expect(screen.queryByText(/Shawarma · Falafel · Manti/)).not.toBeInTheDocument();
+    });
+
+    it('[pre-fix FAILS] [post-fix PASSES] renders open-status marker when opening_hours exists', () => {
+      const providerWithOpeningHours = {
+        ...mockProvider,
+        opening_hours: {
+          monday: { open: '00:00', close: '23:59' },
+          tuesday: { open: '00:00', close: '23:59' },
+          wednesday: { open: '00:00', close: '23:59' },
+          thursday: { open: '00:00', close: '23:59' },
+          friday: { open: '00:00', close: '23:59' },
+          saturday: { open: '00:00', close: '23:59' },
+          sunday: { open: '00:00', close: '23:59' },
+        },
+      };
+
+      render(
+        <ProviderCard
+          {...providerWithOpeningHours}
+          isBookmarked={false}
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      const statusLine = screen.getByTestId('provider-open-status');
+      expect(statusLine).toBeInTheDocument();
+      expect(screen.getByText(/^(open|closed|geöffnet|geschlossen)$/i)).toBeInTheDocument();
+      expect(screen.queryByText('●')).not.toBeInTheDocument();
+      expect(screen.queryByText(/open until|opens on|opens tomorrow/i)).not.toBeInTheDocument();
+    });
+
+    it('[pre-fix FAILS] [post-fix PASSES] hides open-status marker when opening_hours is absent', () => {
+      const providerWithoutOpeningHours = {
+        ...mockProvider,
+        opening_hours: null,
+      };
+
+      render(
+        <ProviderCard
+          {...providerWithoutOpeningHours}
+          isBookmarked={false}
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      expect(screen.queryByTestId('provider-open-status')).not.toBeInTheDocument();
+    });
+
+    it('[pre-fix FAILS] [post-fix PASSES] renders at most two trust chips with +N overflow', () => {
+      const previousLanguage = localStorage.getItem('preferred-language');
+      localStorage.setItem('preferred-language', 'de');
+
+      const providerWithTrustValues = {
+        ...mockProvider,
+        muslim_owned: true,
+        makes_donations: true,
+        has_parking: true,
+      };
+
+      try {
+        render(
+          <ProviderCard
+            {...providerWithTrustValues}
+            isBookmarked={false}
+            onBookmarkChange={mockOnBookmarkChange}
+          />,
+        );
+
+        const trustValuesLine = screen.getByTestId('provider-trust-values');
+        expect(trustValuesLine).toBeInTheDocument();
+
+        const visibleTrustChips = trustValuesLine.querySelectorAll('[data-chip-type="trust-value"]');
+        expect(visibleTrustChips).toHaveLength(2);
+        expect(visibleTrustChips[0].className).toContain('uppercase');
+        expect(visibleTrustChips[0].textContent).toMatch(/^(muslim|MUSLIM)$/i);
+        expect(visibleTrustChips[1].textContent).toMatch(/^(spendet|SPENDET)$/i);
+
+        const overflowChip = trustValuesLine.querySelector('[data-chip-type="trust-overflow"]');
+        expect(overflowChip).toBeInTheDocument();
+        expect(overflowChip?.textContent).toBe('+1');
+        expect(trustValuesLine.textContent).not.toContain(',');
+      } finally {
+        if (previousLanguage === null) {
+          localStorage.removeItem('preferred-language');
+        } else {
+          localStorage.setItem('preferred-language', previousLanguage);
+        }
+      }
+    });
+
+    it('[pre-fix FAILS] [post-fix PASSES] does not force half-width truncation for a single trust chip', () => {
+      const previousLanguage = localStorage.getItem('preferred-language');
+      localStorage.setItem('preferred-language', 'de');
+
+      const providerWithSingleTrustValue = {
+        ...mockProvider,
+        muslim_owned: true,
+        makes_donations: false,
+        economic_solidarity: false,
+        has_prayer_space: false,
+        has_parking: false,
+        family_friendly: false,
+        women_friendly: false,
+      };
+
+      try {
+        render(
+          <ProviderCard
+            {...providerWithSingleTrustValue}
+            isBookmarked={false}
+            onBookmarkChange={mockOnBookmarkChange}
+          />,
+        );
+
+        const trustValuesLine = screen.getByTestId('provider-trust-values');
+        const visibleTrustChips = trustValuesLine.querySelectorAll('[data-chip-type="trust-value"]');
+        expect(visibleTrustChips).toHaveLength(1);
+        expect(visibleTrustChips[0].className).toContain('max-w-full');
+        expect(visibleTrustChips[0].className).not.toContain('max-w-[calc(50%-0.25rem)]');
+        expect(trustValuesLine.querySelector('[data-chip-type="trust-overflow"]')).not.toBeInTheDocument();
+      } finally {
+        if (previousLanguage === null) {
+          localStorage.removeItem('preferred-language');
+        } else {
+          localStorage.setItem('preferred-language', previousLanguage);
+        }
+      }
+    });
+  });
+
   // Verification status tests removed - component doesn't have verification badges
 
   describe('Accessibility', () => {

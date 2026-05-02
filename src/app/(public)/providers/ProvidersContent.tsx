@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -23,13 +22,8 @@ import { AdminStatusFilter, type ReviewStatusFilter } from '@/features/admin/com
 import { toast } from 'sonner';
 import { useProviderReview } from '@/features/admin/hooks/useProviderReview';
 import { RejectModal } from '@/features/admin/components/RejectModal';
+import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 
-// Dynamic import for modal (Plan 007: reduce shared bundle)
-const LegalLinksModal = dynamic(
-  () =>
-    import('@/components/shared/LegalLinksModal').then((mod) => ({ default: mod.LegalLinksModal })),
-  { ssr: false },
-);
 import { useSearch } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';

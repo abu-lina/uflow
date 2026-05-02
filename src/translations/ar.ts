@@ -962,6 +962,15 @@ export const ar = {
       "acceptsDonations": "يقبل التبرعات",
       "solidarityPricing": "تسعير تضامني"
     },
+    "trustBadges": {
+      "muslimOwned": "مسلم",
+      "acceptsDonations": "تبرع",
+      "solidarity": "تضامن",
+      "prayerSpace": "صلاة",
+      "parking": "مواقف",
+      "familyFriendly": "عائلة",
+      "womenFriendly": "نساء"
+    },
     "empty": {
       "noOpeningHours": "لا توجد ساعات عمل متاحة.",
       "noValuesAmenities": "لا توجد قيم أو مرافق متاحة.",

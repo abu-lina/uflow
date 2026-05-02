@@ -108,6 +108,7 @@ export interface SearchResult {
   makes_donations?: boolean;
   has_parking?: boolean;
   economic_solidarity?: boolean;
+  opening_hours?: OpeningHours | null;
 }
 
 /**
@@ -153,6 +154,7 @@ function transformProviderToSearchResult(provider: Provider): SearchResult {
     makes_donations: provider.makes_donations,
     has_parking: provider.has_parking,
     economic_solidarity: provider.economic_solidarity,
+    opening_hours: provider.opening_hours ?? null,
   };
 }
 

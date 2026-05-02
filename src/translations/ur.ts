@@ -962,6 +962,15 @@ export const ur = {
       "acceptsDonations": "عطیات قبول ہیں",
       "solidarityPricing": "یکجہتی قیمتیں"
     },
+    "trustBadges": {
+      "muslimOwned": "مسلم",
+      "acceptsDonations": "عطیہ",
+      "solidarity": "یکجہتی",
+      "prayerSpace": "نماز",
+      "parking": "پارکنگ",
+      "familyFriendly": "خاندان",
+      "womenFriendly": "خواتین"
+    },
     "empty": {
       "noOpeningHours": "اوقاتِ کار دستیاب نہیں ہیں۔",
       "noValuesAmenities": "اقدار یا سہولیات دستیاب نہیں۔",
