@@ -2,7 +2,7 @@
 ID: 115
 Origin: 115
 UUID: b7e3a91f
-Status: Active
+Status: Released
 ---
 
 # Stage 1 Deployment Doc — Plan 115 / v0.12.2
@@ -38,7 +38,10 @@ Status: Active
 | QA (Re-test post-CR) | QA | ✅ Pass | 2026-05-02T10:10Z |
 | UAT (Post-remediation) | UAT | ✅ Approved | 2026-05-02T10:15Z |
 | Stage 1 Start | DevOps | ✅ Complete | 2026-05-02T10:20Z |
-| Stage 2 — Push | DevOps | ⏳ Pending user approval | — |
+| Stage 2 — Push | DevOps | ✅ Complete | 2026-05-02T10:25Z |
+| Stage 2 — Tag | DevOps | ✅ Complete | 2026-05-02T10:25Z |
+| Stage 2 — Smoke Test | DevOps | ✅ HTTP 200 ✓ | 2026-05-02T10:25Z |
+| Stage 2 — Issue Close | DevOps | ✅ #195 Closed | 2026-05-02T10:25Z |
 
 ## Stage 1 Changelog
 
@@ -55,6 +58,14 @@ Status: Active
 | 2026-05-02T10:20Z | DevOps | Lifecycle docs closed: planning, implementation, code-review, qa, uat, critique, analysis moved to closed/. |
 | 2026-05-02T10:20Z | DevOps | Stage 1 deployment doc created: agent-output/deployment/115-stage1-v0.12.2.md |
 | 2026-05-02T10:20Z | DevOps | Stage 1 commit executed locally. No push. Awaiting Stage 2 user approval. |
+| 2026-05-02T10:25Z | DevOps | **User approved release.** Stage 2 initiated. |
+| 2026-05-02T10:25Z | DevOps | Final pre-push sync guard: `git merge-base --is-ancestor origin/main HEAD` → PASS. No conflict markers. JSON parse OK. |
+| 2026-05-02T10:25Z | DevOps | `git push origin main` — PUSH OK (`371e9a71..37f9d5ec`). |
+| 2026-05-02T10:25Z | DevOps | `git tag -a v0.12.2 37f9d5ec -m "Release v0.12.2..."` + `git push origin v0.12.2` — TAG OK. |
+| 2026-05-02T10:25Z | DevOps | Smoke test (fresh dev server, port 3002): `✓ Compiled / (2037 modules)`, `✓ Compiled /providers (2080 modules)`. HTTP 200 on `/` and `/providers`. PASS. |
+| 2026-05-02T10:25Z | DevOps | GitHub issue #195 closed with comment "Released in v0.12.2 🎉". |
+| 2026-05-02T10:25Z | DevOps | Roadmap updated: Current Version → v0.12.2; changelog entry added; release table entry added. |
+| 2026-05-02T10:25Z | DevOps | Deployment doc status updated to Released. Post-release records commit pushed. Stage 2 complete. |
 
 ## Stage 1 Version Pre-Flight
 
@@ -196,7 +207,35 @@ Review of handoff chain timestamps:
 | --- | --- | --- | --- | --- |
 | DF-1 | Visual validation of specialty tags + open-status rendering on production cards | DevOps / Release Lead | Within 24h of production deployment | Verify: (a) specialty tags render on ≥1 food provider card per section; (b) open-status dot+text visible when opening_hours present; (c) graceful empty state: no layout breaks when data absent |
 
-## Stage 2 Readiness Summary (For User Confirmation)
+## Stage 2 Smoke Test Evidence
+
+| Route | HTTP Status | Compilation | Modules |
+|-------|-------------|-------------|---------|
+| `/` | ✅ 200 | ✓ Compiled in 3.5s | 2037 |
+| `/providers` | ✅ 200 | ✓ Compiled in 3.6s | 2080 |
+| middleware | ✅ | ✓ Compiled in 134ms | 158 |
+
+**Server instance**: Fresh dev server started from HEAD `37f9d5ec` (port 3002). No env constraint issues.
+**Zero import/TS errors**: 2080 modules at `/providers` — clean signal for ProviderCard changes.
+
+## Stage 2 Post-Release Evidence
+
+| Item | Result |
+|------|--------|
+| `git push origin main` | ✅ `371e9a71..37f9d5ec` |
+| `git push origin v0.12.2` | ✅ New tag created on `37f9d5ec` |
+| GitHub issue #195 | ✅ Closed: "Released in v0.12.2 🎉" |
+| Roadmap Current Version | ✅ Updated to v0.12.2 |
+| Release table entry | ✅ Added v0.12.2 row |
+| GitHub Release URL | https://github.com/abu-lina/uflow/releases/tag/v0.12.2 |
+
+## Deferred Post-Release (DF-1)
+
+**Status**: Open — Owner: User/Release Lead
+**Trigger**: Within 24h of production deployment to ummahflow.com
+**Evidence to close**: Visual confirmation that specialty tags and open-status indicator render on at least one food provider card in production.
+
+---
 
 **Release Version**: v0.12.2
 **Plan Included**: Plan 115 — Provider Card Specialty Tags + Open/Closed Status

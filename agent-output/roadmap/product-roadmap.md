@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-05-02
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.12.1
+**Current Version**: v0.12.2
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -104,6 +104,7 @@
 | 2026-04-27       | Search expand show-all preview released (v0.10.32): Feature-flagged 3-item preview UX + FigmaSearchBar | WasMealResults/WasCategoryResults/WoCityResults/FilterSection: 3-item show-all preview behind `enableSearchExpandShowAllPreview` flag (default off). Recent-priority UX: recent searches shown over popular items; state resets on query change. FigmaSearchBar: compact mobile search bar with hamburger collapse/expand. Provider grid: 2-col mobile layout. i18n 6 locales. 1120 tests passing. Tag v0.10.32 pushed. |
 | 2026-05-02T01:45Z | Plan 116 released (v0.12.0): Field-Level Schema Remediation — all 28 findings (Architecture 118) | Merged `community_services` into `providers` (listing_type='ummah'); renamed enum 'business'→'store' with backward-compat URL mapping; created 3 extension tables (food_providers, store_providers, ummah_providers); renamed tables to food_menu/store_catalog; unified badge registry (data-driven sync trigger); 8 column renames/drops, FK fixes, NOT NULL backfills, CHECK constraints; 50+ app files updated; 8 migrations (079–086) applied to PROD+DEV. 1194 tests pass. GitHub issue #200 closed. Tag v0.12.0 pushed. Branch: session/118-field-schema-review. |
 | 2026-05-02T01:50Z | Plan 119 released (v0.12.1): Category filter section guardrail + data remediation | Added `applicable_section` guardrail to `fetchCategoriesBySection()` so wrong-section categories (e.g. Gesundheit & Sport) no longer appear in Food tab. Normalised store/business semantics across both provider edit flows via shared scope constant. Removed dead `CategoryFilter.tsx`. Migration 087 applied to PROD: 0 remaining provider/category mismatches. 1203 tests pass. GitHub issue #202 closed. Tag v0.12.1 pushed. |
+| 2026-05-02T10:20Z | Plan 115 released (v0.12.2): Provider card specialty tags + open/closed status indicator | Discovery cards now show up to 2 offer names (e.g. "Shawarma · Falafel · +1") from provider offers, plus a compact open/closed status indicator (green/red dot + localized text) when opening_hours is available. Trust chip labels fully i18n across 6 languages (EN/DE/AR/TR/UR/PS). No DB migrations. 1205 tests pass. GitHub issue #195 closed. Tag v0.12.2 pushed. |
 
 ---
 
@@ -124,10 +125,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.12.1 — Released 2026-05-02 · Plan 119: Category filter section guardrail + data remediation
+**Current Working Release**: v0.12.2 — Released 2026-05-02 · Plan 115: Provider card specialty tags + open/closed status indicator
 
 **Release Status**: Released  
-**Ready for Release**: ✅ v0.12.1 complete  
+**Ready for Release**: ✅ v0.12.2 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -144,6 +145,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.12.2 | 2026-05-02 | Plan 115 (Provider card specialty tags + open/closed status — Closes #195) | Released |
 | v0.12.1 | 2026-05-02 | Plan 119 (Category filter section guardrail + data remediation — Closes #202) | Released |
 | v0.12.0 | 2026-05-02 | Plan 116 (Field-Level Schema Remediation — 28 findings, Architecture 118 — Closes #200) | Released |
 | v0.11.7 | 2026-04-30 | Plan 114 Phase 5 (F-1 dual-PK consolidation: categories, users, community_services, providers — PR #198) | Released |
