@@ -2,7 +2,7 @@
 ID: 119
 Origin: 119
 UUID: b7c3e2f1
-Status: Committed
+Status: Released
 ---
 
 # Plan 119 — Category Filter Shows Wrong Section Categories

@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-05-02
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.12.0
+**Current Version**: v0.12.1
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -103,6 +103,7 @@
 | 2026-04-27       | Ad-hoc search quality fixes released (v0.10.33): Food recents filter + Wo empty-state i18n | Fixed cross-section contamination in food "What" recent history (non-food service-type entries filtered out). Added localized "Wo?" question-form label for Where accordion across 6 locales. 2 regression tests added. Tag v0.10.33 pushed. |
 | 2026-04-27       | Search expand show-all preview released (v0.10.32): Feature-flagged 3-item preview UX + FigmaSearchBar | WasMealResults/WasCategoryResults/WoCityResults/FilterSection: 3-item show-all preview behind `enableSearchExpandShowAllPreview` flag (default off). Recent-priority UX: recent searches shown over popular items; state resets on query change. FigmaSearchBar: compact mobile search bar with hamburger collapse/expand. Provider grid: 2-col mobile layout. i18n 6 locales. 1120 tests passing. Tag v0.10.32 pushed. |
 | 2026-05-02T01:45Z | Plan 116 released (v0.12.0): Field-Level Schema Remediation — all 28 findings (Architecture 118) | Merged `community_services` into `providers` (listing_type='ummah'); renamed enum 'business'→'store' with backward-compat URL mapping; created 3 extension tables (food_providers, store_providers, ummah_providers); renamed tables to food_menu/store_catalog; unified badge registry (data-driven sync trigger); 8 column renames/drops, FK fixes, NOT NULL backfills, CHECK constraints; 50+ app files updated; 8 migrations (079–086) applied to PROD+DEV. 1194 tests pass. GitHub issue #200 closed. Tag v0.12.0 pushed. Branch: session/118-field-schema-review. |
+| 2026-05-02T01:50Z | Plan 119 released (v0.12.1): Category filter section guardrail + data remediation | Added `applicable_section` guardrail to `fetchCategoriesBySection()` so wrong-section categories (e.g. Gesundheit & Sport) no longer appear in Food tab. Normalised store/business semantics across both provider edit flows via shared scope constant. Removed dead `CategoryFilter.tsx`. Migration 087 applied to PROD: 0 remaining provider/category mismatches. 1203 tests pass. GitHub issue #202 closed. Tag v0.12.1 pushed. |
 
 ---
 
@@ -123,10 +124,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.11.7 — Released 2026-04-30 · Plan 114 Phase 5: F-1 dual-PK consolidation (categories, users, community_services, providers)
+**Current Working Release**: v0.12.1 — Released 2026-05-02 · Plan 119: Category filter section guardrail + data remediation
 
 **Release Status**: Released  
-**Ready for Release**: ✅ v0.11.7 complete  
+**Ready for Release**: ✅ v0.12.1 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -143,6 +144,8 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.12.1 | 2026-05-02 | Plan 119 (Category filter section guardrail + data remediation — Closes #202) | Released |
+| v0.12.0 | 2026-05-02 | Plan 116 (Field-Level Schema Remediation — 28 findings, Architecture 118 — Closes #200) | Released |
 | v0.11.7 | 2026-04-30 | Plan 114 Phase 5 (F-1 dual-PK consolidation: categories, users, community_services, providers — PR #198) | Released |
 | v0.11.6 | 2026-04-30 | Plan 114 Phase 4 (F-5 semantic constraints — listing_type_enum + CHECK constraints — PR #197) | Released |
 | v0.11.5 | 2026-04-29 | Plan 114 Phase 3 (F-2 junction tables + F-4 typed FKs — referential integrity at DB level — PR session/114p3-referential-integrity) | Released |
