@@ -100,6 +100,42 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
     expect(result).toHaveLength(0);
   });
 
+  it('[pre-fix FAILS] [post-fix PASSES] applies applicable_section guardrail for food query', async () => {
+    const providersChain = chainResolving([{ category_id: FOOD_CATEGORY_UUID }]);
+    const categoriesChain = chainResolving([mockCategories[0]]);
+
+    mockSupabase.from
+      .mockReturnValueOnce(providersChain)
+      .mockReturnValueOnce(categoriesChain);
+
+    await fetchCategoriesBySection('food');
+
+    const inCalls = (categoriesChain.in as ReturnType<typeof vi.fn>).mock.calls;
+    expect(inCalls).toEqual(
+      expect.arrayContaining([
+        ['applicable_section', ['food', 'all']],
+      ]),
+    );
+  });
+
+  it('[pre-fix FAILS] [post-fix PASSES] uses store scope (plus legacy compatibility) for applicable_section guardrail', async () => {
+    const providersChain = chainResolving([{ category_id: BUSINESS_CATEGORY_UUID }]);
+    const categoriesChain = chainResolving([mockCategories[2]]);
+
+    mockSupabase.from
+      .mockReturnValueOnce(providersChain)
+      .mockReturnValueOnce(categoriesChain);
+
+    await fetchCategoriesBySection('store');
+
+    const inCalls = (categoriesChain.in as ReturnType<typeof vi.fn>).mock.calls;
+    expect(inCalls).toEqual(
+      expect.arrayContaining([
+        ['applicable_section', ['store', 'business', 'all']],
+      ]),
+    );
+  });
+
   it('deduplicates category IDs before fetching categories', async () => {
     const providersChain = chainResolving([
       { category_id: FOOD_CATEGORY_UUID },

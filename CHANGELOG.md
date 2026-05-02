@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-05-02
+
+### Fixed
+
+- **Category gallery section leakage fixed** (Plan 119): `fetchCategoriesBySection()` now enforces `applicable_section` guardrails so categories are filtered by section scope (`food`, `store`, `ummah`) while still allowing shared (`all`) categories.
+- **Data alignment for wrong-section category exposure** (Plan 119): Added migration `087_plan_119_category_section_alignment.sql` to scope legacy `Gesundheit & Sport` from `all` to `store` when present and to reconcile all provider/category section mismatches by aligning provider `listing_type` to the linked category scope (`food`, `store`, `ummah`).
+- **Dead category filter cleanup** (Plan 119): Removed unused `src/components/providers/CategoryFilter.tsx` to reduce stale code paths and maintenance surface.
+
 ## [0.12.0] - 2026-05-02
 
 ### Changed — Schema Remediation (Plan 116, Architecture 118, 28 findings)

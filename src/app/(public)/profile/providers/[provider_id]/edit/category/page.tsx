@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react';
 
 import type { Category } from '@/types/supabase';
 import { supabase } from '@/lib/supabase/client';
-import { getProviderCategories } from '@/services/categories';
+import { getProviderCategories, PROVIDER_CATEGORY_SECTION_SCOPES } from '@/services/categories';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function EditCategoryPage({ params }: { params: Promise<{ provider_id: string }> }) {
@@ -44,7 +44,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ provide
         const { data, error: fallbackError } = await supabase
           .from('categories')
           .select('*')
-          .in('applicable_section', ['food', 'business', 'all'])
+          .in('applicable_section', [...PROVIDER_CATEGORY_SECTION_SCOPES])
           .order('name_de', { ascending: true });
         if (!fallbackError && data) {
           setCategories(data);

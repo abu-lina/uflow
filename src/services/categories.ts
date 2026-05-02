@@ -8,10 +8,12 @@ export interface Category {
   description_de?: string;
   description_en?: string;
   category_images?: Record<string, unknown>; // JSONB for category images
-  applicable_section: 'food' | 'business' | 'ummah' | 'all';
+  applicable_section: 'food' | 'store' | 'business' | 'ummah' | 'all';
   created_at: string;
   updated_at: string;
 }
+
+export const PROVIDER_CATEGORY_SECTION_SCOPES = ['food', 'store', 'business', 'all'] as const;
 
 // Fetch categories that are referenced by providers OR community services
 export async function fetchUsedCategories(): Promise<Category[]> {
@@ -116,10 +118,14 @@ export async function fetchCategoriesBySection(section: import('@/config/section
 
   if (categoryIds.length === 0) return [];
 
+  const applicableSectionScopes =
+    section === 'store' ? ['store', 'business', 'all'] : [section, 'all'];
+
   const { data: categories, error: categoriesError } = await supabase
     .from('categories')
     .select('*')
     .in('category_id', categoryIds)
+    .in('applicable_section', applicableSectionScopes)
     .returns<Category[]>();
 
   if (categoriesError) throw categoriesError;
@@ -233,12 +239,17 @@ export async function getCategoryById(id: string): Promise<Category | null> {
   return data ?? null;
 }
 
-// Fetch categories filtered by section (food, business, ummah)
-export async function getCategoriesForSection(section: 'food' | 'business' | 'ummah'): Promise<Category[]> {
+// Fetch categories filtered by section (food, store/business, ummah)
+export async function getCategoriesForSection(section: 'food' | 'store' | 'business' | 'ummah'): Promise<Category[]> {
+  const normalizedSection = section === 'business' ? 'store' : section;
+  const sectionScopes = normalizedSection === 'store'
+    ? ['store', 'business', 'all']
+    : [normalizedSection, 'all'];
+
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .in('applicable_section', [section, 'all'])
+    .in('applicable_section', sectionScopes)
     .order('name_de', { ascending: true })
     .returns<Category[]>();
 
@@ -251,7 +262,7 @@ export async function getCategoriesForSection(section: 'food' | 'business' | 'um
 }
 
 // Fetch categories for provider creation. If listingType provided, scoped to that section; otherwise returns all provider-applicable categories (food + business + all).
-export async function getProviderCategories(listingType?: 'food' | 'business'): Promise<Category[]> {
+export async function getProviderCategories(listingType?: 'food' | 'store' | 'business'): Promise<Category[]> {
   if (listingType) {
     return getCategoriesForSection(listingType);
   }
@@ -259,7 +270,7 @@ export async function getProviderCategories(listingType?: 'food' | 'business'): 
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .in('applicable_section', ['food', 'business', 'all'])
+    .in('applicable_section', [...PROVIDER_CATEGORY_SECTION_SCOPES])
     .order('name_de', { ascending: true })
     .returns<Category[]>();
   if (error) throw error;
