@@ -147,6 +147,15 @@ Core Responsibilities:
 - If any of the above issues are found, record as **MEDIUM** finding (or **HIGH** if the migration targets production data without a guard).
 - Record in the Code Review doc (one-liner per check): `Migration SQL: no invalid aggregates ✅ / uniqueness guard present ✅ / idempotent ✅`.
 
+  6k. **i18n String Literal Scan (MANDATORY when applicable)**:
+
+- Trigger: When the implementation modifies any UI component that renders text visible to the user (JSX/TSX files in `src/components/`, `src/features/`, or `src/app/`).
+- For each modified component file, scan for bare string literals in JSX context:
+  - Look for quoted strings used directly as rendered content (e.g., `>"Open"<`, `>"Closed"<`, chip labels, button text, badge labels, placeholder text).
+  - For each found: verify it is wrapped in `t()`, a translation key lookup, or is explicitly exempted (e.g., debug-only output, purely numeric, symbol-only such as `+`, `/`, `·`).
+  - If any user-visible label is hardcoded in a single language, record as a **HIGH** finding — not a concern, not a note.
+- Record in the Code Review doc: `i18n scan: [n] components checked — [n] hardcoded labels found / none found`.
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions
@@ -163,7 +172,10 @@ Workflow:
    a. Read the file
    b. Evaluate against Review Focus Areas (from `code-review-standards` skill)
    c. Document findings with severity, location, and fix suggestion
-5. Verify TDD Compliance table is present and complete
+5. Verify TDD Compliance table is present and complete.
+   - If the plan's **primary value-delivery behavior** (the core "user can now do X" feature contract) lacks a direct regression test, record this as a **blocking MEDIUM finding** — not a concern, not a note. Do not approve with an implicit "add tests later" expectation.
+   - "Primary behavior" = the test that would fail if the feature were entirely reverted. For example: if the plan adds specialty tags to a card, there must be a test that asserts specialty tags render with real offer data.
+   - A concern without an explicit severity rating does not block QA. Use `MEDIUM` severity to ensure it blocks.
 6. Synthesize findings into verdict
 7. Create Code Review document using template from `code-review-standards` skill
 8. If REJECTED: handoff to Implementer with specific fixes required

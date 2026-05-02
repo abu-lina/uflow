@@ -266,6 +266,35 @@ If live validation is infeasible at UAT time, UAT MUST:
 - Downgrade the release decision to **CONDITIONAL APPROVAL** with explicit next actions
 - NOT issue an unqualified "APPROVED FOR RELEASE"
 
+### UI Visual Validation Gate (MANDATORY when applicable)
+
+**Trigger**: When the plan adds or modifies user-visible UI that is rendered from **database records** (e.g., provider cards, result lists, detail pages, status indicators) and the plan's value statement is about what the user *sees* on that surface.
+
+UAT MUST complete all of the following before issuing APPROVED FOR RELEASE:
+
+1. **Verify dev data exists**: Use `supabase-dev/execute_sql` to confirm at least one record in the dev database has the relevant fields populated (e.g., `offers` array non-empty, `opening_hours` non-null). Example query:
+   ```sql
+   SELECT provider_id, offers, opening_hours
+   FROM providers
+   WHERE offers IS NOT NULL AND array_length(offers, 1) > 0
+   LIMIT 3;
+   ```
+2. **Provision if needed**: If no suitable record exists, use `supabase-dev/execute_sql` to INSERT or UPDATE one test provider record with representative data. Note the provider ID used.
+3. **Navigate the live route**: Confirm the dev server is running (`npm run dev`) and navigate to the route that renders the feature (e.g., `/providers?section=food`, `/providers/[id]`).
+4. **Visually confirm**: Verify the new UI element renders correctly with real data — not just mock props in a test.
+5. **Record evidence in the UAT doc**:
+   ```
+   Visual validation: Provider [ID] at /providers?section=food showed [observed output].
+   ```
+   A text note suffices; a screenshot is not required.
+
+**If visual validation cannot be completed** (dev server unavailable, Supabase dev unreachable), UAT MUST:
+- Downgrade to **CONDITIONAL APPROVAL** (not unqualified APPROVED FOR RELEASE)
+- Record as a DF-N with: owner, trigger window, and exact closure evidence required
+- State explicitly why dev validation was skipped
+
+This gate eliminates the deferred-visual-validation anti-pattern where DF-N open actions depend on production data coincidentally including the relevant records.
+
 ### Removed Capability Discoverability Gate (MANDATORY when applicable)
 
 If the release removes or hides a user-visible capability, UAT MUST NOT issue an unqualified "APPROVED FOR RELEASE" unless there is evidence that the capability is no longer discoverable in the primary user-facing surfaces identified by the plan/QA report.
@@ -277,9 +306,11 @@ Minimum evidence:
 
 If discoverability validation is incomplete, UAT must downgrade the decision to CONDITIONAL APPROVAL or REJECTED, with explicit next actions.
 
-### Release Version Discipline (SHOULD)
+### Release Version Discipline (MANDATORY)
 
-When recommending a version in the release decision, reference the plan's version language (e.g., "next available patch after current origin/main") rather than hard-coding a specific version number. The authoritative version is confirmed only at DevOps Stage 1 after `git fetch --tags`. Hard-coding a version in the UAT doc that DevOps later overrides creates unnecessary doc churn.
+Do **NOT** recommend a specific semver (e.g., `v0.11.4`) in the UAT release decision. Version selection is exclusively DevOps's responsibility and is confirmed only after `git fetch --tags` at Stage 1. Instead use: `"next available patch after current origin/main"`.
+
+Reason: hard-coding a version that turns out to be already released forces a DevOps correction and creates CHANGELOG block misplacement risk (the implementer targets the wrong block header based on the stale UAT version recommendation).
 
 Exception: If DevOps Stage 1 has already run and confirmed the version (e.g., the plan's Target Release field has been updated with a confirmed version), UAT may reference that confirmed version.
 

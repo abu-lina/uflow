@@ -298,6 +298,7 @@ When writing or updating a CHANGELOG entry, use **today's date** (the date the e
 
 - If the release date is uncertain, use `Unreleased` as the date; DevOps will set the final date at Stage 1 (step 4b).
 - Do NOT use the date the plan was created or the date you began coding.
+- Use `[Unreleased]` as the CHANGELOG **version block header** (the `## [x.y.z]` part), not an anticipated version number. Example: `## [Unreleased] - 2026-05-02`. DevOps Stage 1 renames this to the confirmed semver at step 4b. Reason: the correct version is only known after `git fetch --tags` at DevOps Stage 1; any version written earlier is a prediction and risks placing entries inside an already-released block.
 
 14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly. 15. Retrieve/store memory. 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
