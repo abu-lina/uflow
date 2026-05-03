@@ -141,6 +141,78 @@ describe('approveCandidate — ownership guard', () => {
 
     expect(result.success).toBe(true);
   });
+
+  it('applies image enrichment candidates for provider_images with append-only semantics', async () => {
+    const candidateChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: makePendingCandidate({
+          field_name: 'provider_images',
+          enrichment_type: 'image',
+          source_service: 'unsplash',
+          source_category: 'Turkish',
+          image_url: 'https://cdn.example.com/new-image.webp',
+          proposed_value: { urls: ['https://cdn.example.com/new-image.webp'] },
+          current_value: { urls: ['https://cdn.example.com/old-image.webp'] },
+        }),
+        error: null,
+      }),
+    };
+
+    const ownershipChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { provider_owner_id: null },
+        error: null,
+      }),
+    };
+
+    const providerUpdateEq = vi.fn().mockResolvedValue({ error: null });
+    const providerUpdateChain = {
+      update: vi.fn(() => ({
+        eq: providerUpdateEq,
+      })),
+    };
+
+    const candidateUpdateChain = {
+      update: vi.fn(() => ({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      })),
+    };
+
+    let providersCalls = 0;
+    let candidatesCalls = 0;
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'enrichment_candidates') {
+        candidatesCalls++;
+        if (candidatesCalls === 1) return candidateChain;
+        return candidateUpdateChain;
+      }
+      if (table === 'providers') {
+        providersCalls++;
+        if (providersCalls === 1) return ownershipChain;
+        return providerUpdateChain;
+      }
+      return candidateChain;
+    });
+
+    const result = await approveCandidate(CANDIDATE_ID, REVIEWER_ID);
+
+    expect(result.success).toBe(true);
+    expect(providerUpdateChain.update).toHaveBeenCalledTimes(1);
+    expect(providerUpdateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider_images: {
+          urls: [
+            'https://cdn.example.com/old-image.webp',
+            'https://cdn.example.com/new-image.webp',
+          ],
+        },
+      })
+    );
+  });
 });
 
 // ─── bulkApproveByProvider: ownership guard ───────────────────────────────────

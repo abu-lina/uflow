@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { getCategoryCardBackgroundColor, getCategoryStaticImageUrl } from '@/utils/categoryImages';
 import type { Provider } from '@/services/providers';
 
 interface CategoryInfo {
@@ -40,12 +41,18 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
     }
   };
   
-  // Process images using shared utility with category fallback
-  const imageUrls = getAllTrustedImageUrlsWithFallback(
-    provider.provider_images, 
-    provider.category?.category_images
-  );
-  const allImageUrls = imageUrls.length > 0 ? imageUrls : [PLACEHOLDER_IMAGE];
+  const providerImageUrls = getAllTrustedImageUrls(provider.provider_images);
+  const categoryFallbackImageUrl = getCategoryStaticImageUrl(provider.category_id, provider.provider_id);
+  const allImageUrls =
+    providerImageUrls.length > 0
+      ? providerImageUrls
+      : categoryFallbackImageUrl
+        ? [categoryFallbackImageUrl]
+        : [PLACEHOLDER_IMAGE];
+  const isUsingCategoryFallbackImage = providerImageUrls.length === 0 && !!categoryFallbackImageUrl;
+  const categoryFallbackBackground = isUsingCategoryFallbackImage
+    ? getCategoryCardBackgroundColor(provider.category_id, provider.provider_id)
+    : undefined;
 
   // Use the centralized image swipe hook
   const {
@@ -77,8 +84,9 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
             name: provider.provider_name,
             count: allImageUrls.length,
           })}
-          className="relative h-[312.52px] w-full overflow-hidden rounded-3xl"
+          className="relative h-[312.52px] w-full overflow-hidden rounded-3xl bg-neutral-100"
           role="img"
+          style={categoryFallbackBackground ? { backgroundColor: categoryFallbackBackground } : undefined}
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft' && selectedImageIdx > 0) {
@@ -105,7 +113,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
               >
                 <Image
                   fill
-                  alt={`${provider.provider_name} image ${index + 1}`}
+                  alt={t('providers.providerImageAlt', { name: provider.provider_name, index: index + 1 })}
                   className="object-cover"
                   loading={index === 0 ? 'eager' : 'lazy'}
                   sizes="(max-width: 768px) 100vw, 393px"

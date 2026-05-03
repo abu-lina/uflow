@@ -2,7 +2,7 @@
 ID: 119
 Origin: 119
 UUID: e5c1d7a4
-Status: APPROVED
+Status: Resolved
 ---
 
 # Critique 119 — Provider Image UX: Engaging Fallbacks + Image Enrichment

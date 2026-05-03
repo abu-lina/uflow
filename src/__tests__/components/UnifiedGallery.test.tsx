@@ -38,6 +38,30 @@ vi.mock('@/hooks/useImageFallback', () => ({
   useImageFallback: vi.fn(),
 }));
 
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({
+    t: (key: string, params?: { index?: number }) => {
+      if (key === 'providers.categoryImage') {
+        return `Category image ${params?.index}`;
+      }
+      if (key === 'providers.providerImage') {
+        return `Provider image ${params?.index}`;
+      }
+      if (key === 'providers.placeholderImage') {
+        return `Placeholder image ${params?.index}`;
+      }
+      if (key === 'providers.communityServiceImage') {
+        return `Community service image ${params?.index}`;
+      }
+      if (key === 'providers.failedToLoadImages') {
+        return 'Failed to load images';
+      }
+
+      return key;
+    },
+  }),
+}));
+
 // Mock the entityTypeUtils
 vi.mock('@/utils/entityTypeUtils', () => ({
   getEntityTypeForCategory: vi.fn(() => 'provider'),
@@ -141,5 +165,42 @@ describe('UnifiedGallery — image error fallback [Plan 055]', () => {
     expect(images[0]).toHaveAttribute('src', 'https://example.com/valid1.jpg');
     expect(images[1]).toHaveAttribute('src', 'https://example.com/valid2.jpg');
     expect(images[2]).toHaveAttribute('src', 'https://example.com/valid3.jpg');
+  });
+
+  it('applies one of the approved palette colors for category static images', () => {
+    mockUseImageFallback.mockReturnValue({
+      images: [
+        '/images/categories/turkish/fallback-1.jpg',
+        '/images/placeholder.jpg',
+        '/images/placeholder.jpg',
+      ],
+      loading: false,
+      error: null,
+    });
+
+    render(<UnifiedGallery categoryId="category-palette-test" entityType="provider" />);
+
+    const categoryImage = screen.getByAltText('Category image 1');
+    expect(categoryImage.className).toContain('object-contain');
+
+    const palette = new Set([
+      'rgb(203, 230, 226)',
+      'rgb(221, 235, 240)',
+      'rgb(251, 241, 217)',
+      'rgb(250, 230, 230)',
+    ]);
+    expect(palette.has((categoryImage.parentElement as HTMLElement).style.backgroundColor)).toBe(true);
+  });
+
+  it('renders localized error text from hook translation key', () => {
+    mockUseImageFallback.mockReturnValue({
+      images: [],
+      loading: false,
+      error: 'providers.failedToLoadImages',
+    });
+
+    render(<UnifiedGallery categoryId="test-category-id" entityType="provider" />);
+
+    expect(screen.getByText('Failed to load images')).toBeInTheDocument();
   });
 });

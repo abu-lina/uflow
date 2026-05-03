@@ -18,6 +18,11 @@ export interface EnrichmentCandidateRow {
   field_name: string;
   proposed_value: unknown;
   current_value: unknown;
+  enrichment_type?: 'data' | 'image';
+  image_url?: string | null;
+  source_service?: string | null;
+  source_category?: string | null;
+  attribution?: unknown;
   status: 'pending' | 'approved' | 'rejected' | 'applied';
   enriched_at: string;
   reviewed_at: string | null;
@@ -58,6 +63,11 @@ export async function getPendingCandidates(
       field_name,
       proposed_value,
       current_value,
+      enrichment_type,
+      image_url,
+      source_service,
+      source_category,
+      attribution,
       status,
       enriched_at,
       reviewed_at,
@@ -117,15 +127,7 @@ export async function approveCandidate(
     return { success: false, error: 'Candidate not found or not pending' };
   }
 
-  // 2. Admin-field preservation check (server-side enforcement)
-  if (isAdminField(candidate.field_name)) {
-    return {
-      success: false,
-      error: `Cannot apply enrichment to admin-controlled field: ${candidate.field_name}`,
-    };
-  }
-
-  // 2b. Ownership guard: fail closed if provider now has an owner (Plan 065 scope revision)
+  // 2. Ownership guard: fail closed if provider now has an owner (Plan 065 scope revision)
   const { data: providerCheck, error: ownerCheckError } = await supabase
     .from('providers')
     .select('provider_owner_id')
@@ -143,13 +145,54 @@ export async function approveCandidate(
     };
   }
 
+  const isImageEnrichment =
+    candidate.enrichment_type === 'image' && candidate.field_name === 'provider_images';
+
   // 3. Apply the proposed value to the provider
+  let providerUpdatePayload: Record<string, unknown> = {
+    [candidate.field_name]: candidate.proposed_value,
+    last_enriched_at: new Date().toISOString(),
+  };
+
+  // Image enrichment is allowed to update provider_images with append-only semantics.
+  if (isImageEnrichment) {
+    const getUrls = (value: unknown): string[] => {
+      if (Array.isArray(value)) {
+        return value.filter((v): v is string => typeof v === 'string');
+      }
+
+      if (
+        value !== null &&
+        typeof value === 'object' &&
+        'urls' in value &&
+        Array.isArray((value as { urls?: unknown }).urls)
+      ) {
+        return ((value as { urls: unknown[] }).urls).filter(
+          (v): v is string => typeof v === 'string'
+        );
+      }
+
+      return [];
+    };
+
+    const currentUrls = getUrls(candidate.current_value);
+    const proposedUrls = getUrls(candidate.proposed_value);
+    const mergedUrls = Array.from(new Set([...currentUrls, ...proposedUrls]));
+
+    providerUpdatePayload = {
+      provider_images: { urls: mergedUrls },
+      last_enriched_at: new Date().toISOString(),
+    };
+  } else if (isAdminField(candidate.field_name)) {
+    return {
+      success: false,
+      error: `Cannot apply enrichment to admin-controlled field: ${candidate.field_name}`,
+    };
+  }
+
   const { error: updateError } = await supabase
     .from('providers')
-    .update({
-      [candidate.field_name]: candidate.proposed_value,
-      last_enriched_at: new Date().toISOString(),
-    })
+    .update(providerUpdatePayload)
     .eq('provider_id', candidate.provider_id);
 
   if (updateError) {

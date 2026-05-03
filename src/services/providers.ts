@@ -446,8 +446,8 @@ export async function searchProviders(
 ): Promise<Provider[]> {
   // Plan 058: Include review fields when admin
   const selectFields = adminOptions?.isAdmin
-    ? '*, category:categories(name_de, name_en), review_status, review_feedback'
-    : '*, category:categories(name_de, name_en)';
+    ? '*, category:categories(name_de, name_en, category_images), review_status, review_feedback'
+    : '*, category:categories(name_de, name_en, category_images)';
 
   // Plan 058 fix: admin queries must use the service-role client to bypass RLS.
   // The anon client only sees approved providers; non-approved rows are invisible to it
@@ -769,8 +769,8 @@ export async function fetchPopularCities(limit = 5): Promise<PopularCity[]> {
 }
 
 // Fetch cities that have content based on current search filters.
-// Uses tsvector RPC search when a search query is provided (Plan 007:
-// replaces previous ILIKE usage to comply with Postgres-first search rules).
+// Uses providers-only full-text search path (searchProviders) when a search query is provided
+// to avoid legacy dependencies on removed community_services artifacts.
 export async function fetchFilteredCities(
   selectedCategory?: string | null,
   searchQuery?: string | null,
@@ -779,31 +779,23 @@ export async function fetchFilteredCities(
     const trimmedQuery = searchQuery?.trim() || '';
 
     if (trimmedQuery) {
-      // Use RPC-based tsvector search — replaces previous ILIKE on provider_name / community_service_name
-      const categoryFilter = (selectedCategory && selectedCategory !== 'Alle')
-        ? selectedCategory
-        : null;
+      const normalizedCategory =
+        selectedCategory && selectedCategory !== 'Alle' ? selectedCategory : '';
 
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'get_filtered_cities_by_search',
-        {
-          search_query: trimmedQuery,
-          category_filter: categoryFilter,
-        },
+      const providers = await searchProviders(trimmedQuery, normalizedCategory, '');
+
+      const cities = Array.from(
+        new Set(
+          providers
+            .map((provider) => provider.address_city)
+            .filter(
+              (city): city is string =>
+                typeof city === 'string' && city.trim() !== '' && city !== 'null',
+            ),
+        ),
       );
 
-      if (rpcError) {
-        throw rpcError;
-      }
-
-      const cities = Array.isArray(rpcData)
-        ? rpcData
-            .map((row: { city: string }) => row.city)
-            .filter((city: string): city is string =>
-              typeof city === 'string' && city.trim() !== '' && city !== 'null')
-        : [];
-
-      return cities.sort((a: string, b: string) => a.localeCompare(b, 'de'));
+      return cities.sort((a, b) => a.localeCompare(b, 'de'));
     }
 
     // No search query — use direct query on providers only

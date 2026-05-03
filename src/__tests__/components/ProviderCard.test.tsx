@@ -85,7 +85,7 @@ describe('ProviderCard Component', () => {
     });
 
     it('should render dynamic fallback when no images available', () => {
-      // M1b: ornament-masked placeholder (Figma node 460:2818)
+      // Final fallback should be the placeholder image when neither provider nor category image exists
       const providerWithoutImages = { ...mockProvider, provider_images: null };
 
       render(
@@ -96,10 +96,73 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      const fallback = screen.getByTestId('provider-image-fallback');
-      expect(fallback).toBeInTheDocument();
-      expect(screen.getByTestId('provider-fallback-ornament')).toBeInTheDocument();
-      expect(screen.getByTestId('provider-fallback-logo-mark')).toBeInTheDocument();
+      const img = screen.getByAltText(providerWithoutImages.provider_name);
+      expect(img).toBeInTheDocument();
+      expect(img.getAttribute('src')).toContain('/images/placeholder.jpg');
+    });
+
+    it('should render category stock image as normal card image when provider has no uploaded image', () => {
+      // Turkish category has local static images (count: 2 in categoryImages.ts)
+      const providerWithoutImages = {
+        ...mockProvider,
+        provider_images: null,
+        category_id: '65a3e4e8-5dac-41a9-94c4-f65b33c6e59b', // Turkish — has static images
+        category: {
+          ...mockProvider.category,
+          name_de: mockProvider.category?.name_de || 'Tuerkisch',
+          name_en: mockProvider.category?.name_en || 'Turkish',
+        },
+      };
+
+      render(
+        <ProviderCard
+          {...providerWithoutImages}
+          isBookmarked={false}
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      // Should NOT render the fallback placeholder — the static image takes its place
+      expect(screen.queryByTestId('provider-image-fallback')).not.toBeInTheDocument();
+      // The Next.js Image component renders an <img> with the provider name as alt
+      const img = screen.getByAltText(providerWithoutImages.provider_name);
+      expect(img.getAttribute('src')).toBeTruthy();
+      expect(img.className).toContain('object-cover');
+      expect((img.parentElement as HTMLElement).style.backgroundColor).toBeTruthy();
+    });
+
+    it('[regression] provider-owned image wins over category fallback when both are available', () => {
+      // Pre-fix: category-first logic set isCategoryFallbackImage=true whenever a category static
+      // image existed — even when the provider had uploaded their own image. This caused scale-[1.08]
+      // to be applied to a real provider photo (visual bug + semantic regression).
+      // Post-fix: provider image takes priority; scale-[1.08] only applied when no provider image.
+      const providerWithBothImages = {
+        ...mockProvider,
+        provider_images: JSON.stringify({
+          urls: ['https://mock-supabase-url.com/storage/v1/object/public/images/own-photo.jpg'],
+        }),
+        category_id: '65a3e4e8-5dac-41a9-94c4-f65b33c6e59b', // Turkish — has static fallback images
+        category: {
+          ...mockProvider.category,
+          category_id: '65a3e4e8-5dac-41a9-94c4-f65b33c6e59b',
+          name_de: 'Türkisch',
+          name_en: 'Turkish',
+        },
+      };
+
+      render(
+        <ProviderCard
+          {...providerWithBothImages}
+          isBookmarked={false}
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      const img = screen.getByAltText(providerWithBothImages.provider_name);
+      expect(img).toBeInTheDocument();
+      // Category fallback adds 'scale-[1.08] px-3 py-0'; provider-owned image uses plain object-cover.
+      // If this assertion fails, the category image is still overriding the provider's own image.
+      expect(img.className).not.toContain('scale-[1.08]');
     });
   });
 

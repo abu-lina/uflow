@@ -334,7 +334,16 @@ export const ur = {
     "ourBarakahEffect": "ہمارا برکت اثر",
     "noBadges": "کوئی برکت اثرات نہیں",
     "selectCategory": "زمرہ منتخب کریں",
-    "adminFilterLabel": "ایڈمن فلٹر:"
+    "adminFilterLabel": "ایڈمن فلٹر:",
+    "genericName": "فراہم کنندہ",
+    "fallbackImageFor": "{{name}} کے لئے متبادل تصویر",
+    "failedToLoadImages": "تصاویر لوڈ نہ ہو سکیں",
+    "placeholderImage": "پلیس ہولڈر تصویر {{index}}",
+    "providerImage": "فراہم کنندہ تصویر {{index}}",
+    "categoryImage": "زمرہ تصویر {{index}}",
+    "communityServiceImage": "کمیونٹی سروس تصویر {{index}}",
+    "providerThumbnailAlt": "{{name}} تھمب نیل {{index}}",
+    "providerImageAlt": "{{name}} تصویر {{index}}"
   },
   "create": {
     "title": "فراہم کنندہ شامل کریں",

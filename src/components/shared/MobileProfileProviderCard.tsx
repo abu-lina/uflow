@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 
 interface MobileProfileProviderCardProps {
   imageUrl: string;
@@ -25,7 +26,7 @@ export function MobileProfileProviderCard({
   // Validate and normalize image URL
   const normalizedImageUrl = (() => {
     if (!imageUrl || imageUrl.trim() === '' || imageError) {
-      return '/images/placeholder.jpg';
+      return PLACEHOLDER_IMAGE;
     }
     // If it's already a full URL (starts with http:// or https://), use it as-is
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {

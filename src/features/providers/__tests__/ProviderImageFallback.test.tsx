@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { ProviderImageFallback } from '@/features/providers/components/ProviderImageFallback';
 
 describe('ProviderImageFallback', () => {
-  // M1b: ornament-masked placeholder design (Figma node 460:2818)
+  // Simple fallback placeholder (no ornament overlay)
 
   it('renders the fallback container with correct test id', () => {
     render(
@@ -18,8 +18,8 @@ describe('ProviderImageFallback', () => {
     expect(screen.getByTestId('provider-image-fallback')).toBeInTheDocument();
   });
 
-  it('renders the ornament overlay SVG', () => {
-    render(
+  it('renders neutral background without decorative overlays', () => {
+    const { container } = render(
       <ProviderImageFallback
         providerName="Bilal Moschee"
         categoryId="mosque"
@@ -27,61 +27,20 @@ describe('ProviderImageFallback', () => {
       />,
     );
 
-    const ornament = screen.getByTestId('provider-fallback-ornament');
-    expect(ornament).toBeInTheDocument();
-    expect(ornament).toHaveAttribute('src', '/images/ornament-mask.svg');
+    const fallback = screen.getByTestId('provider-image-fallback');
+    // Verify the fallback has a background color (default or provided)
+    expect(fallback).toHaveStyle('background-color: #f3f4f6');
+    // Verify no ornament or logo SVGs are rendered
+    expect(screen.queryByTestId('provider-fallback-ornament')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('provider-fallback-logo-mark')).not.toBeInTheDocument();
   });
 
-  it('renders the UFlow logo mark SVG', () => {
-    render(
-      <ProviderImageFallback
-        providerName="Bilal Moschee"
-        categoryId="mosque"
-        providerId="provider-1"
-      />,
-    );
-
-    const logoMark = screen.getByTestId('provider-fallback-logo-mark');
-    expect(logoMark).toBeInTheDocument();
-    expect(logoMark).toHaveAttribute('src', '/images/uflow-logo-mark.svg');
-  });
-
-  it('renders stock image when stockImageUrl is provided', () => {
-    const url =
-      'https://mock-supabase-url.com/storage/v1/object/public/provider-images/enrichment/stock/food/photo-1.webp';
+  it('does not render stock images', () => {
     render(
       <ProviderImageFallback
         providerName="Kebab Palace"
         categoryId="20c10efe-404b-4a39-bb81-5089a0332d78"
         providerId="provider-2"
-        stockImageUrl={url}
-      />,
-    );
-
-    const stockImg = screen.getByTestId('provider-fallback-stock-image');
-    expect(stockImg).toBeInTheDocument();
-    expect(stockImg).toHaveAttribute('src', url);
-  });
-
-  it('does not render stock image when stockImageUrl is null', () => {
-    render(
-      <ProviderImageFallback
-        providerName="Kebab Palace"
-        categoryId="food"
-        providerId="provider-3"
-        stockImageUrl={null}
-      />,
-    );
-
-    expect(screen.queryByTestId('provider-fallback-stock-image')).not.toBeInTheDocument();
-  });
-
-  it('does not render stock image when stockImageUrl is omitted', () => {
-    render(
-      <ProviderImageFallback
-        providerName="Kebab Palace"
-        categoryId="food"
-        providerId="provider-4"
       />,
     );
 
@@ -120,20 +79,59 @@ describe('ProviderImageFallback', () => {
     ).not.toThrow();
 
     expect(() =>
-      render(<ProviderImageFallback providerName="" categoryId="" providerId="" />),
-    ).not.toThrow();
-    expect(() =>
-      render(<ProviderImageFallback providerName="مسجد" categoryId="ummah" providerId="p5" />),
-    ).not.toThrow();
-    expect(() =>
       render(
-        <ProviderImageFallback providerName="☪️ Bakery" categoryId="food" providerId="p6" />,
+        <ProviderImageFallback
+          providerName=""
+          categoryId=""
+          providerId=""
+          anonymousName="Test"
+        />,
       ),
     ).not.toThrow();
+
     expect(() =>
       render(
-        <ProviderImageFallback providerName={veryLongName} categoryId="food" providerId="p7" />,
+        <ProviderImageFallback
+          providerName="مرحبا"
+          categoryId="food"
+          providerId="p5"
+          anonymousName="العربية"
+        />,
       ),
     ).not.toThrow();
+
+    expect(() =>
+      render(
+        <ProviderImageFallback
+          providerName="Emoji 🍕🎉"
+          categoryId="food"
+          providerId="p6"
+        />,
+      ),
+    ).not.toThrow();
+
+    expect(() =>
+      render(
+        <ProviderImageFallback
+          providerName={veryLongName}
+          categoryId="food"
+          providerId="p7"
+        />,
+      ),
+    ).not.toThrow();
+  });
+
+  it('applies custom backgroundColor prop when provided', () => {
+    render(
+      <ProviderImageFallback
+        providerName="Test Provider"
+        categoryId="food"
+        providerId="p1"
+        backgroundColor="#FBF1D9"
+      />,
+    );
+
+    const fallback = screen.getByTestId('provider-image-fallback');
+    expect(fallback).toHaveStyle('background-color: #FBF1D9');
   });
 });

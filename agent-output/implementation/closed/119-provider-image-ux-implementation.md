@@ -2,7 +2,7 @@
 ID: 119
 Origin: 119
 UUID: e5c1d7a4
-Status: Active
+Status: Committed
 ---
 
 # Implementation 119 — Provider Image UX: Engaging Fallbacks + Image Enrichment
@@ -25,6 +25,7 @@ Status: Active
 | 2026-05-02T14:45Z | M3 execution | Implemented Unsplash category-based enrichment foundation: new image enrichment helper module + tests, image enrichment migration, `scripts/enrich-images.ts` (`--curate`/`--assign`), admin approval support for image candidates with append-only `provider_images`, environment template updates, and full gate validation (lint/type-check/tests/build). |
 | 2026-05-02T16:35Z | Code review remediation | Addressed pre-QA review findings: removed download-tracking bypass, added idempotent candidate staging guard for assign writes, replaced hardcoded image labels with i18n keys in touched UI files, added direct script regression tests, and re-ran full gates. |
 | 2026-05-02T17:11Z | M1b execution | Implemented M1b ornament placeholder redesign per Figma (node 460:2818): exported two static SVG assets from Figma, rewrote `ProviderImageFallback` visual rendering (4-layer ornament design), adapted ProviderImageFallback and ProviderCard tests. Full gates: lint 0 errors, type-check clean, 1222 tests passed. |
+| 2026-05-03T18:15Z | Code review blocker remediation | Fixed remaining HIGH i18n blockers from latest code review: localized `UnifiedGallery` alt/error rendering paths, changed `useImageFallback` error output to translation key, added regression test for localized hook error rendering, and resolved repository lint blockers (`jsx-sort-props`) in touched provider image components. Re-ran gates (lint/type-check/build/full vitest). |
 
 ## Implementation Summary
 
@@ -99,6 +100,12 @@ N/A for M1 (visual fallback feature; no explicit performance target in plan).
 | `env.template` | Added `UNSPLASH_ACCESS_KEY` | +4 / 0 |
 | `env.uat.template` | Added `UNSPLASH_ACCESS_KEY` | +4 / 0 |
 | `env.production.template` | Added `UNSPLASH_ACCESS_KEY` | +4 / 0 |
+| `src/components/shared/UnifiedGallery.tsx` | Localized all alt labels and error rendering via `useLanguage().t(...)` | +7 / -4 |
+| `src/hooks/useImageFallback.ts` | Returned i18n error key token (`providers.failedToLoadImages`) instead of hardcoded English string | +1 / -1 |
+| `src/__tests__/components/UnifiedGallery.test.tsx` | Added LanguageProvider mock + regression test for localized error token rendering | +34 / 0 |
+| `src/components/providers/MobileProviderDetail.tsx` | Reordered JSX props to satisfy lint rule (`react/jsx-sort-props`) | +2 / -2 |
+| `src/components/providers/ProviderDetailModal.tsx` | Reordered JSX props to satisfy lint rule (`react/jsx-sort-props`) | +2 / -2 |
+| `src/features/providers/components/ProviderImageFallback.tsx` | Reordered JSX props to satisfy lint rule (`react/jsx-sort-props`) | +1 / -1 |
 
 ## Files Created
 
@@ -128,7 +135,7 @@ N/A — no deployment surface files changed (`Dockerfile`, deploy scripts, workf
 
 ## Local Verification
 
-Local verification: N/A for this M3 step. Current work is schema + script + admin service logic and does not introduce direct UI/CSS changes requiring browser interaction. CLI live-run verification against Unsplash/Supabase is pending valid runtime credentials and operator execution.
+Local verification: ⚠️ Blocked for this remediation. This delta includes user-visible i18n text changes in `UnifiedGallery`, but interactive browser validation was not executable within this terminal-only run. Automated evidence is attached via targeted and full test gates.
 
 ## Value Statement Validation
 
@@ -152,6 +159,7 @@ Implementation delivery:
 | `stageImageCandidate` | `src/__tests__/scripts/enrich-images.test.ts` | ✅ Yes | ✅ Yes | Module import side-effect exited early (`process.exit unexpectedly called with "1"`) before import-safe refactor | ✅ Yes |
 | `ProviderImageFallback` i18n label injection | `src/features/providers/__tests__/ProviderImageFallback.test.tsx` | ✅ Yes | ✅ Yes | Assertion failure: expected injected aria label (`Fallback-Bild fuer Anbieter`) but received hardcoded default | ✅ Yes |
 | `ProviderImageFallback` M1b ornament redesign | `src/features/providers/__tests__/ProviderImageFallback.test.tsx` | ✅ Yes | ✅ Yes | 3 tests failed: `provider-fallback-ornament`, `provider-fallback-logo-mark`, `provider-fallback-stock-image` testids not found in M1 DOM | ✅ Yes |
+| `UnifiedGallery` i18n alt/error localization | `src/__tests__/components/UnifiedGallery.test.tsx` | ⚠️ Post-fix (bugfix regression) | ✅ Yes | Code-review finding: hardcoded alt strings in gallery and hardcoded hook error message (`Failed to load images`) | ✅ Yes |
 
 ## Test Coverage
 
@@ -190,6 +198,11 @@ Implementation delivery:
 | `npm run type-check` (post-M1b) | ✅ Passed | None |
 | `npm run lint` (post-M1b) | ✅ Passed | 0 errors, 57 warnings (all pre-existing) |
 | `npm run build` | ✅ Passed | Dynamic route warnings (`DYNAMIC_SERVER_USAGE`) emitted but build completed successfully |
+| `npm run test -- src/__tests__/components/UnifiedGallery.test.tsx` | ✅ Passed | 6/6 tests passed |
+| `npx vitest run --silent` | ✅ Passed | 1225 passed, 22 skipped |
+| `npm run lint` (post-CR remediation) | ✅ Passed with warnings | 0 errors, 58 warnings |
+| `npm run type-check` (post-CR remediation) | ✅ Passed | None |
+| `npm run build` (post-CR remediation) | ✅ Passed | Dynamic route warnings (`DYNAMIC_SERVER_USAGE`) emitted but build completed successfully |
 
 ## Outstanding Items
 

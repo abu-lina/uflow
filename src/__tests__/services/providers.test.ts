@@ -38,6 +38,7 @@ const mockLimit = vi.fn();
 const mockRange = vi.fn();
 const mockReturns = vi.fn();
 const mockIlike = vi.fn();
+const mockIn = vi.fn();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockFrom = vi.fn((..._args: any[]) => ({
@@ -62,6 +63,7 @@ function setupChain() {
     range: mockRange,
     returns: mockReturns,
     ilike: mockIlike,
+    in: mockIn,
   };
 
   mockSelect.mockReturnValue(chain);
@@ -71,10 +73,11 @@ function setupChain() {
   mockLimit.mockReturnValue(chain);
   mockRange.mockReturnValue(chain);
   mockIlike.mockReturnValue(chain);
+  mockIn.mockReturnValue(chain);
   mockReturns.mockResolvedValue({ data: [], error: null });
 }
 
-import { fetchFilteredCities, fetchPopularCities, fetchProviderCities } from '@/services/providers';
+import { fetchFilteredCities, fetchPopularCities, fetchProviderCities, searchProviders } from '@/services/providers';
 
 describe('providers service', () => {
   beforeEach(() => {
@@ -119,19 +122,38 @@ describe('providers service', () => {
       expect(result).toContain('Berlin');
     });
 
-    it('uses RPC search when search query is provided', async () => {
-      // After refactor, should use RPC instead of ILIKE
+    it('uses providers-only search path when search query is provided', async () => {
+      const { searchOffers } = await import('@/services/offers');
+      const { searchNeeds } = await import('@/services/needs');
+      const { getBadgesForEntities } = await import('@/services/badges');
+
+      vi.mocked(searchOffers).mockResolvedValueOnce([]);
+      vi.mocked(searchNeeds).mockResolvedValueOnce([]);
+      vi.mocked(getBadgesForEntities).mockResolvedValueOnce(new Map());
+
+      // searchProviders() internals call this provider-name RPC
       mockRpc.mockResolvedValueOnce({
-        data: [{ city: 'Berlin' }, { city: 'Hamburg' }],
+        data: [{ provider_id: 'p-1' }, { provider_id: 'p-2' }],
+        error: null,
+      });
+
+      // providers result set used to derive unique cities
+      mockReturns.mockResolvedValueOnce({
+        data: [
+          { provider_id: 'p-1', address_city: 'Berlin' },
+          { provider_id: 'p-2', address_city: 'Hamburg' },
+          { provider_id: 'p-3', address_city: 'Berlin' },
+        ],
         error: null,
       });
 
       const result = await fetchFilteredCities(null, 'test query');
-      expect(Array.isArray(result)).toBe(true);
-      // Must call the RPC, NOT use ILIKE
-      expect(mockRpc).toHaveBeenCalledWith('get_filtered_cities_by_search', expect.objectContaining({
+
+      expect(result).toEqual(['Berlin', 'Hamburg']);
+      expect(mockRpc).toHaveBeenCalledWith('search_provider_ids_by_name', {
         search_query: 'test query',
-      }));
+      });
+      expect(mockIlike).not.toHaveBeenCalled();
     });
 
     it('filters out null and empty cities', async () => {
@@ -163,6 +185,16 @@ describe('providers service', () => {
 
       const result = await fetchProviderCities();
       expect(result).toEqual(['Berlin', 'Hamburg', 'München']);
+    });
+  });
+
+  describe('searchProviders', () => {
+    it('[post-fix PASSES] selects category_images for overview fallback stock image rendering', async () => {
+      await searchProviders('', '', '', 12, 0);
+
+      expect(mockSelect).toHaveBeenCalledWith(
+        expect.stringContaining('category:categories(name_de, name_en, category_images)'),
+      );
     });
   });
 

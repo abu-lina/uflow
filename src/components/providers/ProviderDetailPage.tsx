@@ -11,10 +11,12 @@ import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import {
+  getAllTrustedImageUrls,
   getAllTrustedImageUrlsWithFallback,
   PLACEHOLDER_IMAGE,
   type CategoryImages,
 } from '@/utils/imageUtils';
+import { getCategoryCardBackgroundColor, getCategoryStaticImageUrl } from '@/utils/categoryImages';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
@@ -82,12 +84,18 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   const isMobile = useIsMobile();
   const { user } = useAuth();
 
-  // Process images using shared utility with category fallback
-  const imageUrls = getAllTrustedImageUrlsWithFallback(
-    provider.provider_images,
-    provider.category?.category_images,
-  );
-  const allImageUrls = imageUrls.length > 0 ? imageUrls : [PLACEHOLDER_IMAGE];
+  const providerImageUrls = getAllTrustedImageUrls(provider.provider_images);
+  const categoryFallbackImageUrl = getCategoryStaticImageUrl(provider.category_id, provider.provider_id);
+  const allImageUrls =
+    providerImageUrls.length > 0
+      ? providerImageUrls
+      : categoryFallbackImageUrl
+        ? [categoryFallbackImageUrl]
+        : [PLACEHOLDER_IMAGE];
+  const isUsingCategoryFallbackImage = providerImageUrls.length === 0 && !!categoryFallbackImageUrl;
+  const categoryFallbackBackground = isUsingCategoryFallbackImage
+    ? getCategoryCardBackgroundColor(provider.category_id, provider.provider_id)
+    : '#e5e7eb';
 
   // Use the centralized image swipe hook
   const {
@@ -690,8 +698,11 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
           <div className="space-y-4">
             {/* Main Image */}
             <div
-              className="relative h-[480px] w-full cursor-grab overflow-hidden rounded-3xl bg-gray-200 active:cursor-grabbing"
-              style={{ userSelect: 'none' }}
+              className="relative h-[480px] w-full cursor-grab overflow-hidden rounded-3xl active:cursor-grabbing"
+              style={{
+                backgroundColor: categoryFallbackBackground,
+                userSelect: 'none',
+              }}
               onMouseDown={handleMouseDown}
               onMouseLeave={handleMouseUp}
               onMouseMove={handleMouseMove}
@@ -760,7 +771,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                   >
                     <Image
                       fill
-                      alt={`${provider.provider_name} thumbnail ${i + 1}`}
+                      alt={t('providers.providerThumbnailAlt', { name: provider.provider_name, index: i + 1 })}
                       className="object-cover"
                       src={img}
                     />
