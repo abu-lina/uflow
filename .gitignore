@@ -120,6 +120,12 @@ memories/
 imports/**/*.backup
 imports/**/*.processed
 imports/**/*.tmp
+# Category image source files (PNG/JPG dropped by operator — do not commit)
+imports/category-images/**/*.png
+imports/category-images/**/*.jpg
+imports/category-images/**/*.jpeg
+imports/category-images/**/*.webp
+imports/category-images/**/*.avif
 
 # Lottie conversion temporary files
 imports/lottie/.temp-gif-frames/.flowbaby/
