@@ -2,7 +2,7 @@
 ID: 122
 Origin: 122
 UUID: a3f7c82d
-Status: Committed
+Status: Released
 ---
 
 # Code Review: Plan 122 Category Image Unification
