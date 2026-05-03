@@ -31,12 +31,9 @@ const ROOT = resolve(__dirname, '..');
 
 // ─── Load env ───────────────────────────────────────────────────────────────
 const envPath = join(ROOT, '.env.local');
-if (!existsSync(envPath)) {
-  console.error('ERROR: .env.local not found at', envPath);
-  process.exit(1);
-}
-const envContent = readFileSync(envPath, 'utf-8');
+const envContent = existsSync(envPath) ? readFileSync(envPath, 'utf-8') : '';
 function getEnv(key) {
+  if (!envContent) return null;
   const match = envContent.match(new RegExp(`^${key}=(.+)$`, 'm'));
   return match ? match[1].trim() : null;
 }
@@ -47,7 +44,9 @@ const SOURCE_STORAGE_BASE =
   'https://qrekonfhaenjdnjhwdum.supabase.co/storage/v1/object/public/category-images';
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error('ERROR: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local');
+  console.error(
+    'ERROR: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (provide env vars or .env.local values)',
+  );
   process.exit(1);
 }
 

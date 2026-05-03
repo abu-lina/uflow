@@ -2,7 +2,7 @@
 ID: 122
 Origin: 122
 UUID: a3f7c82d
-Status: Active
+Status: Committed
 ---
 
 # Plan 122 — Category Image Unification (Supabase Storage)
@@ -17,7 +17,7 @@ Status: Active
 | Pipeline       | Abbreviated (Planner → Critic → Implementer → QA → DevOps)                        |
 | GitHub Issue   | https://github.com/abu-lina/uflow/issues/207                                      |
 | Created        | 2026-05-03T18:15Z                                                                 |
-| Status         | In Progress                                                                        |
+| Status         | Committed for Release v0.12.6                                                       |
 
 ## Changelog
 
@@ -25,6 +25,8 @@ Status: Active
 | ------------------ | ------- | ------------------------------- | ------------------------------------------------------ |
 | 2026-05-03T18:15Z  | planner | Initial plan created            | Category image unification scoped from Architect findings |
 | 2026-05-03T18:27Z  | planner | Revision per Critique 122       | Addressed F1–F6: added UnifiedGallery callsite, resolved bg color + American images, expanded test inventory, noted dual parseCategoryImages |
+| 2026-05-03T21:05Z  | code-reviewer | Status updated                 | Code review re-check passed after remediations; QA gate opened |
+| 2026-05-04T21:45Z  | qa      | QA Complete                     | All gates passing (type-check, lint, build, 1236 tests), TDD compliance verified, no regressions, approved for release |
 
 ---
 
