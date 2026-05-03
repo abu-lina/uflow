@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-05-02
+**Last Updated**: 2026-05-03
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.12.2
+**Current Version**: v0.12.3
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -105,6 +105,7 @@
 | 2026-05-02T01:45Z | Plan 116 released (v0.12.0): Field-Level Schema Remediation — all 28 findings (Architecture 118) | Merged `community_services` into `providers` (listing_type='ummah'); renamed enum 'business'→'store' with backward-compat URL mapping; created 3 extension tables (food_providers, store_providers, ummah_providers); renamed tables to food_menu/store_catalog; unified badge registry (data-driven sync trigger); 8 column renames/drops, FK fixes, NOT NULL backfills, CHECK constraints; 50+ app files updated; 8 migrations (079–086) applied to PROD+DEV. 1194 tests pass. GitHub issue #200 closed. Tag v0.12.0 pushed. Branch: session/118-field-schema-review. |
 | 2026-05-02T01:50Z | Plan 119 released (v0.12.1): Category filter section guardrail + data remediation | Added `applicable_section` guardrail to `fetchCategoriesBySection()` so wrong-section categories (e.g. Gesundheit & Sport) no longer appear in Food tab. Normalised store/business semantics across both provider edit flows via shared scope constant. Removed dead `CategoryFilter.tsx`. Migration 087 applied to PROD: 0 remaining provider/category mismatches. 1203 tests pass. GitHub issue #202 closed. Tag v0.12.1 pushed. |
 | 2026-05-02T10:20Z | Plan 115 released (v0.12.2): Provider card specialty tags + open/closed status indicator | Discovery cards now show up to 2 offer names (e.g. "Shawarma · Falafel · +1") from provider offers, plus a compact open/closed status indicator (green/red dot + localized text) when opening_hours is available. Trust chip labels fully i18n across 6 languages (EN/DE/AR/TR/UR/PS). No DB migrations. 1205 tests pass. GitHub issue #195 closed. Tag v0.12.2 pushed. |
+| 2026-05-03T18:55Z | Plan 109 released (v0.12.3): Search header fixed + scrollable section tabs + i18n compliance | Search bar and context summary (query · location · audience) are now pinned at the top of the screen on home (Stage 2/3) and providers listing pages. Section tabs moved to the scrollable content area — no longer frozen in the fixed header layer. Two focused layout regression tests lock this contract. Back-to-home aria-label and admin filter label fully translated across 6 locales (EN/DE/AR/TR/UR/PS). 12 targeted tests pass. Commit a3f55581. Tag v0.12.3 pushed. |
 
 ---
 
