@@ -15,8 +15,9 @@ import type { Provider, ReviewStatusFilter } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
 import {
   getCategoryCardBackgroundColor,
-  getCategoryStaticImageUrl,
-} from '@/utils/categoryImages';
+} from '@/utils/imageUtils';
+import { parseCategoryImages } from '@/hooks/useImageFallback';
+import { hashId } from '@/utils/imageUtils';
 import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
 import { computeHalalStars } from '@/utils/sectionBadges';
@@ -313,7 +314,10 @@ export const ProviderCard = React.memo(
     };
 
     const providerImageUrl = getProviderImageUrl();
-    const fallbackStockImageUrl = getCategoryStaticImageUrl(category_id, provider_id);
+    const categoryUrls = parseCategoryImages(category?.category_images ?? null);
+    const fallbackStockImageUrl = categoryUrls.length > 0
+      ? categoryUrls[hashId(`${category_id ?? ''}-${provider_id}`) % categoryUrls.length]
+      : null;
     const displayImageUrl = providerImageUrl || fallbackStockImageUrl || PLACEHOLDER_IMAGE;
     const isUsingCategoryFallbackImage = providerImageUrl === null && !!fallbackStockImageUrl;
     const hasImage = typeof displayImageUrl === 'string' && displayImageUrl.length > 0;

@@ -6,10 +6,6 @@ import { useImageFallback } from '@/hooks/useImageFallback';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Category } from '@/services/categories';
 import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
-import {
-  getCategoryCardBackgroundColor,
-  isCategoryStaticImageUrl,
-} from '@/utils/categoryImages';
 
 interface UnifiedGalleryProps {
   categoryId: string;
@@ -60,15 +56,10 @@ export default function UnifiedGallery({
     <div className={className}>
       {displayImages.slice(0, 3).map((imageUrl, index) => {
         const effectiveSrc = failedIndexes.has(index) ? PLACEHOLDER_IMAGE : imageUrl;
-        const isCategoryImage = isCategoryStaticImageUrl(effectiveSrc);
-        const categoryBackground = isCategoryImage
-          ? getCategoryCardBackgroundColor(categoryId, `${categoryId}-${index}`)
-          : undefined;
         return (
           <div
             key={index}
             className="relative h-full w-1/3 overflow-hidden"
-            style={categoryBackground ? { backgroundColor: categoryBackground } : undefined}
           >
             <Image
               fill
@@ -81,7 +72,7 @@ export default function UnifiedGallery({
                   ? t('providers.communityServiceImage', { index: index + 1 })
                   : t('providers.categoryImage', { index: index + 1 })
               }
-              className={`border border-white ${isCategoryImage ? 'object-contain p-2' : 'object-cover'}`}
+              className="border border-white object-cover"
               loading={index === 0 ? 'eager' : 'lazy'}
               priority={index === 0}
               sizes="(max-width: 640px) 33vw, (max-width: 768px) 33vw, 33vw"

@@ -167,10 +167,10 @@ describe('UnifiedGallery — image error fallback [Plan 055]', () => {
     expect(images[2]).toHaveAttribute('src', 'https://example.com/valid3.jpg');
   });
 
-  it('applies one of the approved palette colors for category static images', () => {
+  it('[Plan 122] renders category Storage images with object-cover (no static image detection)', () => {
     mockUseImageFallback.mockReturnValue({
       images: [
-        '/images/categories/turkish/fallback-1.jpg',
+        'https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/232c2870/1.webp',
         '/images/placeholder.jpg',
         '/images/placeholder.jpg',
       ],
@@ -181,15 +181,11 @@ describe('UnifiedGallery — image error fallback [Plan 055]', () => {
     render(<UnifiedGallery categoryId="category-palette-test" entityType="provider" />);
 
     const categoryImage = screen.getByAltText('Category image 1');
-    expect(categoryImage.className).toContain('object-contain');
-
-    const palette = new Set([
-      'rgb(203, 230, 226)',
-      'rgb(221, 235, 240)',
-      'rgb(251, 241, 217)',
-      'rgb(250, 230, 230)',
-    ]);
-    expect(palette.has((categoryImage.parentElement as HTMLElement).style.backgroundColor)).toBe(true);
+    // Plan 122: all images use object-cover — no special contain/padding for category images
+    expect(categoryImage.className).toContain('object-cover');
+    expect(categoryImage.className).not.toContain('object-contain');
+    // No palette background coloring on container either
+    expect((categoryImage.parentElement as HTMLElement).style.backgroundColor).toBe('');
   });
 
   it('renders localized error text from hook translation key', () => {

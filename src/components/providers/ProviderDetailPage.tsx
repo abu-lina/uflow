@@ -14,9 +14,11 @@ import {
   getAllTrustedImageUrls,
   getAllTrustedImageUrlsWithFallback,
   PLACEHOLDER_IMAGE,
+  getCategoryCardBackgroundColor,
+  hashId,
   type CategoryImages,
 } from '@/utils/imageUtils';
-import { getCategoryCardBackgroundColor, getCategoryStaticImageUrl } from '@/utils/categoryImages';
+import { parseCategoryImages } from '@/hooks/useImageFallback';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
@@ -85,7 +87,10 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   const { user } = useAuth();
 
   const providerImageUrls = getAllTrustedImageUrls(provider.provider_images);
-  const categoryFallbackImageUrl = getCategoryStaticImageUrl(provider.category_id, provider.provider_id);
+  const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
+  const categoryFallbackImageUrl = categoryUrls.length > 0
+    ? categoryUrls[hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length]
+    : null;
   const allImageUrls =
     providerImageUrls.length > 0
       ? providerImageUrls

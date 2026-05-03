@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
-import { getCategoryCardBackgroundColor, getCategoryStaticImageUrl } from '@/utils/categoryImages';
+import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId } from '@/utils/imageUtils';
+import { parseCategoryImages } from '@/hooks/useImageFallback';
 import type { Provider } from '@/services/providers';
 
 interface CategoryInfo {
@@ -42,7 +42,10 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
   };
   
   const providerImageUrls = getAllTrustedImageUrls(provider.provider_images);
-  const categoryFallbackImageUrl = getCategoryStaticImageUrl(provider.category_id, provider.provider_id);
+  const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
+  const categoryFallbackImageUrl = categoryUrls.length > 0
+    ? categoryUrls[hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length]
+    : null;
   const allImageUrls =
     providerImageUrls.length > 0
       ? providerImageUrls

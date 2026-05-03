@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/services/categories';
-import { getCategoryStaticImageUrl } from '@/utils/categoryImages';
-import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { PLACEHOLDER_IMAGE, hashId } from '@/utils/imageUtils';
 
 interface ImageFallbackOptions {
   categoryId: string;
@@ -26,7 +25,7 @@ interface ImageFallbackResult {
  */
 export function useImageFallback({
   categoryId,
-  category: _category,
+  category,
   entityType,
   limit = 3,
 }: ImageFallbackOptions): ImageFallbackResult {
@@ -36,7 +35,9 @@ export function useImageFallback({
   const { data: images = [], isLoading, error: queryError } = useQuery({
     queryKey: ['gallery-images', entityType, categoryId, limit],
     queryFn: async () => {
-      const entityImages = await fetchEntityImages(entityType, categoryId, limit);
+      // Pass category.category_images (DB-driven JSONB) for fallback resolution
+      const categoryImages = category?.category_images ?? null;
+      const entityImages = await fetchEntityImages(entityType, categoryId, limit, categoryImages);
       if (entityImages.length >= limit) {
         return entityImages.slice(0, limit);
       }
@@ -62,7 +63,8 @@ export function useImageFallback({
 async function fetchEntityImages(
   _entityType: 'provider' | undefined,
   categoryId: string,
-  limit: number
+  limit: number,
+  categoryImages: unknown,
 ): Promise<string[]> {
   const tableName = 'providers';
   const imageColumn = 'provider_images';
@@ -79,14 +81,22 @@ async function fetchEntityImages(
   return data
     .map((item: Record<string, unknown>) => {
       const providerId = typeof item.provider_id === 'string' ? item.provider_id : '';
-      return resolveGalleryImage(item[imageColumn], categoryId, providerId);
+      return resolveGalleryImage(item[imageColumn], categoryImages, providerId);
     })
     .filter((url): url is string => typeof url === 'string' && url.length > 0);
 }
 
+/**
+ * Resolves the best available image URL for a provider.
+ * Priority: provider-owned image → category DB image (Supabase Storage) → placeholder.
+ *
+ * @param providerImages - provider_images field (JSONB/string/array)
+ * @param categoryImages - categories.category_images JSONB ({urls: string[]})
+ * @param providerId     - used for deterministic variant selection
+ */
 export function resolveGalleryImage(
   providerImages: unknown,
-  categoryId: string,
+  categoryImages: unknown,
   providerId: string,
 ): string {
   const providerImageUrl = extractFirstProviderImageUrl(providerImages);
@@ -94,9 +104,10 @@ export function resolveGalleryImage(
     return providerImageUrl;
   }
 
-  const categoryImageUrl = getCategoryStaticImageUrl(categoryId, providerId);
-  if (categoryImageUrl) {
-    return categoryImageUrl;
+  const urls = parseCategoryImages(categoryImages as string | Record<string, unknown> | null | undefined);
+  if (urls.length > 0) {
+    const idx = hashId(providerId || 'default') % urls.length;
+    return urls[idx];
   }
 
   return PLACEHOLDER_IMAGE;
