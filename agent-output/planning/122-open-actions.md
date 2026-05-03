@@ -2,7 +2,7 @@
 ID: 122
 Origin: 122
 UUID: a3f7c82d
-Status: Active
+Status: Closed
 ---
 
 # Open Actions 122: Deferred Post-Deploy Follow-ups
@@ -17,7 +17,7 @@ Release context: v0.12.6 released 2026-05-03, PR #208 merged, tag v0.12.6 pushed
 
 | Item | Owner | Trigger/Due | Evidence to Close | Status |
 |------|-------|-------------|------------------|--------|
-| Upload 18 WebP food images to production `category-images` Storage bucket (Turkish: 8, Arabic: 6, Italian: 4) | Operator / DevOps | Before/at production deployment promotion | Script exits 0; all 18 files accessible at production Storage URLs listed in JSONB | Open |
+| Upload 18 WebP food images to production `category-images` Storage bucket (Turkish: 8, Arabic: 6, Italian: 4) | Operator / DevOps | Before/at production deployment promotion | Script exits 0; all 18 files accessible at production Storage URLs listed in JSONB | **Closed 2026-05-03T20:00Z** |
 
 ## Command to Run
 
@@ -51,3 +51,4 @@ Turkish, Arabic, and Italian category providers display the ornament placeholder
 | Date (UTC)        | Agent  | Change                                                     |
 | ----------------- | ------ | ---------------------------------------------------------- |
 | 2026-05-03T22:30Z | devops | Created tracker from DF-1 deferred production Storage upload |
+| 2026-05-03T20:00Z | devops | DF-1 CLOSED — 18 WebP files uploaded via Edge Function `upload-category-images`; verified in `storage.objects` (18 rows); production JSONB URLs now live |
