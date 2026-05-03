@@ -393,6 +393,24 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 **Phase 2C: Release Execution (After Approval)**
 
+0. **Draft Stage 2 execution block before pushing (MANDATORY — PI-121)**:
+   Before executing `git push origin main`, add the Stage 2 execution block template to the deployment doc. Use placeholder values for fields not yet known (SHA, timestamp, CI URL):
+
+   ```markdown
+   ## Stage 2: Release Execution
+   **User Confirmation**: "[exact confirmation text]" — [timestamp]
+   **Confirmed by**: User (explicit)
+
+   ### Release Execution Log
+   | Step | Command | Result |
+   | ---- | ------- | ------ |
+   | Push branch | `git push origin main` | ⏳ Pending |
+   | Tag creation | `git tag -a v[X.Y.Z] <sha> -m "..."` | ⏳ Pending |
+   | Tag push | `git push origin v[X.Y.Z]` | ⏳ Pending |
+   ```
+
+   After each push/tag command completes, immediately update the corresponding row with the actual result, SHA, and timestamp. Stage the completed deployment doc and commit it in the same session. If a follow-up commit is unavoidable (e.g., post-push doc correction), keep it scoped: single file, `chore(devops):` prefix, explanation of why it was unavoidable.
+
 1. **Final pre-push sync guard (MANDATORY)**: Immediately before pushing, confirm the branch is still current with `origin/main`. Parallel sessions can merge between Phase 2A and the actual push — especially during the Phase 2B user-confirmation window:
 
    ```
@@ -450,7 +468,7 @@ This exception applies **only** when DF-3 is already a pre-accepted, documented 
 
 3c. **Deferred validation follow-ups (MANDATORY when applicable)**:
 
-- If the UAT report records any **DEFERRED** measurable performance targets (timing gates), capture the follow-up evidence post-deploy (or explicitly assign and timebox an owner) before declaring the release fully complete.
+- If the UAT report records any **DEFERRED** validations — including measurable performance targets (timing gates), visual browser checks (mobile viewport, device rendering, safe-area padding), or integration flows (browser end-to-end) — capture the follow-up evidence post-deploy (or explicitly assign and timebox an owner with a concrete due date) before declaring the release fully complete. (PI-121: scope extended from timing gates only to all deferred validation types.)
 - Document: what was measured, where, numbers observed, and any rollback trigger if targets are missed.
 - Ensure any deferred post-deploy validations have a visible tracker (`agent-output/planning/[ID]-open-actions.md`) with owner + closure criteria.
 

@@ -264,7 +264,7 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 8. Run/report tests, linters, checks per plan.
 9. Build/run test coverage for all work. Create unit + integration tests per `testing-patterns` skill.
 10. NOT complete until tests pass. Verify all tests before handoff.
-    10b. **Pre-QA Static Gate (MANDATORY before any Code Review or QA handoff)**: Run both commands and confirm each exits 0 before handoff:
+    10b. **Pre-QA Static Gate (MANDATORY before any Code Review or QA handoff)**: Run all checks below and confirm each exits 0 / clean before handoff:
 
 ```
 npm run lint
@@ -273,7 +273,22 @@ npm run type-check
 
 > ⚠️ Always run `npm run lint` (full-repo). Do NOT substitute with a delta-only command such as `npx eslint [explicit-file-list]` — manual file lists silently miss files touched indirectly (e.g. via migration or import changes). Only full-repo lint provides a reliable gate.
 
-If either fails, fix all errors before handoff. Do not hand off to Code Review or QA with known lint or type errors. QA remains the authoritative lint and type gate; this is a mandatory self-check only to prevent resetting QA on IDE-level warnings. 11. Track deviations. Refuse to proceed without updated guidance. 12. Validate implementation delivers value statement before complete. 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
+If either fails, fix all errors before handoff. Do not hand off to Code Review or QA with known lint or type errors. QA remains the authoritative lint and type gate; this is a mandatory self-check only to prevent resetting QA on IDE-level warnings.
+
+    **i18n self-scan (MANDATORY for any plan that touches UI component files — PI-121)**:
+    Before requesting code review, scan every modified component file for hardcoded user-visible string literals:
+    - Any quoted string rendered directly to the DOM (not a class name, key name, or config value) MUST use `t()`.
+    - Common offenders: button labels, aria-labels, placeholder text, error messages, section headers.
+    - If found: replace with a translation key and add that key to all 6 locale files (`en/de/ar/tr/ur/ps`) before handoff.
+    - This mirrors the code-reviewer's step 6k check — catch it yourself first; do not rely on the reviewer to catch it for you.
+    - Rule: if your PR would cause code-reviewer step 6k to fire, fix it here instead.
+
+    **Implementation artifact pre-flight (MANDATORY before any Code Review handoff — PI-121)**:
+    Confirm `agent-output/implementation/<ID>-*.md` exists and is populated before initiating the code review handoff:
+    - [ ] All milestones listed and marked complete
+    - [ ] Files modified table populated
+    - [ ] TDD compliance table present (per `copilot-instructions.md` Bugfix Handoff Completeness)
+    If any item is missing, create or complete the artifact BEFORE sending the code review handoff. A missing implementation doc is a blocking MEDIUM finding at code review. 11. Track deviations. Refuse to proceed without updated guidance. 12. Validate implementation delivers value statement before complete. 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
 13c. **Version bump is preliminary (MANDATORY)**:
 The version number in the plan is a placeholder until DevOps Stage 1 confirms it via `git fetch --tags`.
 When bumping, note in the implementation doc: `Version bumped to X.Y.Z (preliminary - final version confirmed at DevOps Stage 1)`.

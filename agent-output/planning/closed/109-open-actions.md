@@ -2,7 +2,7 @@
 ID: 109
 Origin: 109
 UUID: b7e3f91a
-Status: Committed
+Status: Released
 ---
 
 # Open Actions 109: Deferred Pre-Release Validations
