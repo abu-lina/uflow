@@ -2,7 +2,7 @@
 ID: 119
 Origin: 119
 UUID: e5c1d7a4
-Status: Active
+Status: Released
 ---
 
 # Stage 1 Deployment Doc — Plan 119 / v0.12.4
@@ -23,6 +23,10 @@ Status: Active
 | 2026-05-03T16:24Z | devops | Orphan deployment doc `119-stage1-v0.12.1.md` (Status: Released) moved to `closed/` per housekeeping note |
 | 2026-05-03T16:30Z | devops | Stage 1 local commit created: `d2c44e41` — 73 files changed, 2 commits ahead of origin/main |
 | 2026-05-03T16:35Z | devops | Version collision detected: `v0.12.3` taken by Plan 109. Bumped to `v0.12.4`. Amended commit, rebasing onto updated origin/main. |
+| 2026-05-03T17:02Z | devops | CI failures diagnosed: pre-existing Plan 096 search tests on `origin/main` plus temporary translation syntax conflict from rebase resolution. Fixed translation syntax and stabilized `/search` URL-query sync behavior. |
+| 2026-05-03T17:14Z | devops | PR #204 merged via squash after all checks green (build/lint/tests/security/supply chain). |
+| 2026-05-03T17:15Z | devops | Release tag `v0.12.4` created on squash commit `54caf50f` and pushed to origin. |
+| 2026-05-03T17:16Z | devops | PROD migration applied: `088_plan_119_image_enrichment_columns` (success), schema verified (`enrichment_type`, `image_url`, `source_service`, `source_category`, `attribution`). |
 
 ---
 
