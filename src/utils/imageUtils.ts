@@ -11,7 +11,7 @@ export interface CategoryImageData {
 }
 
 export type ProviderImages = string | string[] | ImageData | null | undefined;
-export type CategoryImages = string | CategoryImageData | null | undefined;
+export type CategoryImages = string | CategoryImageData | Record<string, unknown> | null | undefined;
 
 /**
  * Utility functions for handling image URLs and processing
@@ -117,7 +117,7 @@ export function getAllTrustedImageUrlsWithFallback(
 /**
  * Parse category images from various data structures
  */
-function parseCategoryImages(categoryImages: CategoryImages): string[] {
+export function parseCategoryImages(categoryImages: CategoryImages): string[] {
   if (!categoryImages) return [];
 
   try {

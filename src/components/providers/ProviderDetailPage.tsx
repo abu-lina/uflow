@@ -16,9 +16,9 @@ import {
   PLACEHOLDER_IMAGE,
   getCategoryCardBackgroundColor,
   hashId,
+  parseCategoryImages,
   type CategoryImages,
 } from '@/utils/imageUtils';
-import { parseCategoryImages } from '@/hooks/useImageFallback';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';

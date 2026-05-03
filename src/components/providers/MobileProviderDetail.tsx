@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId } from '@/utils/imageUtils';
-import { parseCategoryImages } from '@/hooks/useImageFallback';
+import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId, parseCategoryImages } from '@/utils/imageUtils';
 import type { Provider } from '@/services/providers';
 
 interface CategoryInfo {

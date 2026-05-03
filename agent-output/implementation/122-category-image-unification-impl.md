@@ -8,7 +8,7 @@ Status: Active
 # Implementation Doc — Plan 122: Category Image Unification (Supabase Storage)
 
 **Date**: 2026-05-04T20:47Z  
-**Plan**: `agent-output/planning/122-category-image-unification.md`  
+**Plan**: `agent-output/planning/122-category-image-unification-plan.md`  
 **GitHub Issue**: #207  
 **Branch**: `hotfix/119-category-images-assets`
 
@@ -19,6 +19,7 @@ Status: Active
 | Date | Handoff | Request | Summary |
 |------|---------|---------|---------|
 | 2026-05-04 | Implementer→QA | Plan 122 | All milestones complete. 7.2 MB of static PNGs removed, DB-driven JSONB system live, all gates passing. |
+| 2026-05-04 | Implementer→Code Review rework | Address findings | Fixed upload script release-path blocker, decoupled parser from hook layer, corrected plan path reference. |
 
 ---
 
@@ -49,8 +50,8 @@ Eliminated the fragile hardcoded UUID→static-PNG map (`categoryImages.ts`) tha
 
 | Path | Changes | Lines affected |
 |------|---------|---------------|
-| `src/utils/imageUtils.ts` | Added `hashId`, `CARD_BACKGROUND_COLORS`, `getCategoryCardBackgroundColor` (relocated from categoryImages.ts) | +18 |
-| `src/hooks/useImageFallback.ts` | `resolveGalleryImage` 2nd param `categoryId:string` → `categoryImages:unknown`; `fetchEntityImages` passes JSONB; `category` prop no longer ignored | ~20 |
+| `src/utils/imageUtils.ts` | Added `hashId`, `CARD_BACKGROUND_COLORS`, `getCategoryCardBackgroundColor` (relocated from categoryImages.ts); exported shared `parseCategoryImages` utility | +18 |
+| `src/hooks/useImageFallback.ts` | `resolveGalleryImage` 2nd param `categoryId:string` → `categoryImages:unknown`; `fetchEntityImages` passes JSONB; parser moved to utility module and re-exported for compatibility | ~20 |
 | `src/components/providers/ProviderCard.tsx` | Removed `categoryImages.ts` import; added `parseCategoryImages`+`hashId` from new locations; replaced `getCategoryStaticImageUrl` call with JSONB-driven resolution | ~8 |
 | `src/components/providers/ProviderDetailPage.tsx` | Same pattern as ProviderCard. Added `getCategoryCardBackgroundColor`+`hashId` to `imageUtils` import, added `parseCategoryImages` import | ~10 |
 | `src/components/providers/ProviderDetailModal.tsx` | Same pattern as ProviderCard | ~8 |
@@ -62,7 +63,7 @@ Eliminated the fragile hardcoded UUID→static-PNG map (`categoryImages.ts`) tha
 | `package.json` | Version 0.12.4 → 0.12.6 (preliminary) | 1 |
 | `package-lock.json` | Version aligned via `npm install --package-lock-only` | auto |
 | `CHANGELOG.md` | Added `[Unreleased] - 2026-05-04` entry for Plan 122 | ~12 |
-| `scripts/upload-category-images.mjs` | Added `/* global console, process */` for ESLint Node env compliance | 1 |
+| `scripts/upload-category-images.mjs` | Reworked upload flow to mirror WebP files from a stable source bucket URL; executable after deleting local static PNGs; supports `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` env override | ~70 |
 
 ---
 
@@ -70,7 +71,7 @@ Eliminated the fragile hardcoded UUID→static-PNG map (`categoryImages.ts`) tha
 
 | Path | Purpose |
 |------|---------|
-| `scripts/upload-category-images.mjs` | M1 operator script — converts PNGs to WebP via `cwebp`, uploads to Supabase Storage `category-images` bucket. Run by DevOps against production. |
+| `scripts/upload-category-images.mjs` | M1 operator script — mirrors existing category WebP images from source Storage bucket to target project `category-images` bucket. Run by DevOps against production. |
 
 ---
 
@@ -145,6 +146,8 @@ No failures. Pre-plan baseline was ~1222 tests; delta = +14 new tests.
 ### Production Storage Upload (DevOps action required)
 
 M1 images were uploaded to **dev** Supabase Storage (`qrekonfhaenjdnjhwdum`). Production JSONB was pre-populated with production Storage URLs (via MCP) but the actual WebP files have not been uploaded to production Storage yet.
+
+The upload script now mirrors WebP files from a stable source bucket URL (default: dev `category-images`) and no longer depends on deleted `public/images/categories/**` PNG assets.
 
 **DevOps must run before or at deployment:**
 ```bash

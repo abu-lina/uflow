@@ -15,8 +15,8 @@ import type { Provider, ReviewStatusFilter } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
 import {
   getCategoryCardBackgroundColor,
+  parseCategoryImages,
 } from '@/utils/imageUtils';
-import { parseCategoryImages } from '@/hooks/useImageFallback';
 import { hashId } from '@/utils/imageUtils';
 import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';

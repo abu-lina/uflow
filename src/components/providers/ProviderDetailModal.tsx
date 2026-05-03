@@ -35,8 +35,7 @@ import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
 import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
 import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
-import { PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId } from '@/utils/imageUtils';
-import { parseCategoryImages } from '@/hooks/useImageFallback';
+import { PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId, parseCategoryImages } from '@/utils/imageUtils';
 
 interface ProviderDetailModalProps {
   provider: Provider;

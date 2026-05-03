@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/services/categories';
-import { PLACEHOLDER_IMAGE, hashId } from '@/utils/imageUtils';
+import { PLACEHOLDER_IMAGE, hashId, parseCategoryImages } from '@/utils/imageUtils';
 
 interface ImageFallbackOptions {
   categoryId: string;
@@ -113,6 +113,8 @@ export function resolveGalleryImage(
   return PLACEHOLDER_IMAGE;
 }
 
+export { parseCategoryImages };
+
 function extractFirstProviderImageUrl(providerImages: unknown): string | null {
   try {
     if (!providerImages) return null;
@@ -158,35 +160,3 @@ function extractFirstProviderImageUrl(providerImages: unknown): string | null {
   }
 }
 
-/**
- * Parse category images from various data structures
- */
-export function parseCategoryImages(categoryImages: string | Record<string, unknown> | null | undefined): string[] {
-  if (!categoryImages) return [];
-
-  try {
-    let parsedImages;
-
-    if (typeof categoryImages === 'string') {
-      parsedImages = JSON.parse(categoryImages);
-    } else {
-      parsedImages = categoryImages;
-    }
-
-    if (Array.isArray(parsedImages)) {
-      return parsedImages;
-    }
-
-    if (parsedImages.urls && Array.isArray(parsedImages.urls)) {
-      return parsedImages.urls;
-    }
-
-    if (parsedImages.url) {
-      return [parsedImages.url];
-    }
-
-    return [];
-  } catch {
-    return [];
-  }
-}
