@@ -27,7 +27,11 @@ import { useQuery } from '@tanstack/react-query';
 import type { CommunityService } from '@/services/communityServices';
 import { getProvidersForCommunityService } from '@/services/communityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
-import { getAllTrustedImageUrlsWithFallback, type CategoryImages } from '@/utils/imageUtils';
+import {
+  getAllTrustedImageUrlsWithFallback,
+  PLACEHOLDER_IMAGE,
+  type CategoryImages,
+} from '@/utils/imageUtils';
 
 interface CommunityServiceDetailModalProps {
   communityService: CommunityService;
@@ -69,8 +73,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
       return false;
     }
   }
-
-  const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 
   const allImageUrls = (() => {
     try {

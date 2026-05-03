@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { OrnamentIcon } from '@/components/ui/OrnamentIcon';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
+import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 
 interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
   className?: string;
@@ -55,7 +56,7 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
     const getImageUrl = () => {
       try {
         if (!provider_images) {
-          return '/images/placeholder.jpg';
+          return PLACEHOLDER_IMAGE;
         }
 
         let imagesData: { urls?: string[] } = {};
@@ -75,10 +76,10 @@ export const ProviderCard = forwardRef<HTMLDivElement, ProviderCardProps>(
           return imagesData.urls[0];
         }
 
-        return '/images/placeholder.jpg';
+        return PLACEHOLDER_IMAGE;
       } catch (error) {
         console.error('Error parsing image data:', error);
-        return '/images/placeholder.jpg';
+        return PLACEHOLDER_IMAGE;
       }
     };
 

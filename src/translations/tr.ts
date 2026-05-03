@@ -334,7 +334,16 @@ export const tr = {
     "ourBarakahEffect": "Bereket Etkimiz",
     "noBadges": "Bereket etkisi yok",
     "selectCategory": "Kategori seç",
-    "adminFilterLabel": "Yönetici filtresi:"
+    "adminFilterLabel": "Yönetici filtresi:",
+    "genericName": "Saglayici",
+    "fallbackImageFor": "{{name}} icin yedek gorsel",
+    "failedToLoadImages": "Gorseller yuklenemedi",
+    "placeholderImage": "Yer tutucu gorsel {{index}}",
+    "providerImage": "Saglayici gorseli {{index}}",
+    "categoryImage": "Kategori gorseli {{index}}",
+    "communityServiceImage": "Topluluk hizmeti gorseli {{index}}",
+    "providerThumbnailAlt": "{{name}} kucuk resmi {{index}}",
+    "providerImageAlt": "{{name}} gorseli {{index}}"
   },
   "create": {
     "title": "Sağlayıcı Ekle",

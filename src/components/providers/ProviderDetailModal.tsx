@@ -35,6 +35,8 @@ import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
 import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
 import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
+import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { getCategoryCardBackgroundColor, getCategoryStaticImageUrl } from '@/utils/categoryImages';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -92,13 +94,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     }
   }
 
-  const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
-
   // Memoize image URL processing to avoid recomputation on every render
-  const allImageUrls = useMemo(() => {
+  const providerImageUrls = useMemo(() => {
     try {
       if (!provider.provider_images) {
-        return [PLACEHOLDER_IMAGE];
+        return [];
       }
       let imagesData: { urls?: string[] } = {};
       if (typeof provider.provider_images === 'string') {
@@ -114,13 +114,25 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       }
       if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
         const trusted = imagesData.urls.filter(isTrustedUrl);
-        return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
+        return trusted;
       }
-      return [PLACEHOLDER_IMAGE];
+      return [];
     } catch {
-      return [PLACEHOLDER_IMAGE];
+      return [];
     }
   }, [provider.provider_images]);
+
+  const categoryFallbackImageUrl = getCategoryStaticImageUrl(provider.category_id, provider.provider_id);
+  const allImageUrls =
+    providerImageUrls.length > 0
+      ? providerImageUrls
+      : categoryFallbackImageUrl
+        ? [categoryFallbackImageUrl]
+        : [PLACEHOLDER_IMAGE];
+  const isUsingCategoryFallbackImage = providerImageUrls.length === 0 && !!categoryFallbackImageUrl;
+  const categoryFallbackBackground = isUsingCategoryFallbackImage
+    ? getCategoryCardBackgroundColor(provider.category_id, provider.provider_id)
+    : '#f5f5f5';
 
   // Use the centralized image swipe hook
   const {
@@ -445,8 +457,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               {/* Main Image Container with Swipe Support */}
               <div
                 ref={imageContainerRef}
-                className="bg-uFlowAccent relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
+                className="relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
                 data-testid="image-container"
+                style={{ backgroundColor: categoryFallbackBackground }}
                 onTouchEnd={handleTouchEnd}
                 onTouchMove={handleTouchMove}
                 onTouchStart={handleTouchStart}
@@ -534,7 +547,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     )}
                     <Image
                       fill
-                      alt={`${provider.provider_name} thumbnail ${i + 1}`}
+                      alt={t('providers.providerThumbnailAlt', { name: provider.provider_name, index: i + 1 })}
                       className={`rounded-[8px] object-cover transition-opacity duration-200 ${
                         thumbnailsLoaded[i] ? 'opacity-100' : 'opacity-0'
                       }`}

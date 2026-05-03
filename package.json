@@ -1,6 +1,6 @@
 {
   "name": "ummah-flow",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "private": true,
   "engines": {
     "node": ">=18.0.0",
@@ -48,6 +48,7 @@
     "build:local": "export $(cat .env.local | xargs) && NODE_ENV=production next build",
     "refine-tasks-from-top-epic": "npx tsx scripts/refine-top-epic-tasks.ts",
     "remove-watermark": "tsx scripts/remove-lottie-watermark.ts",
+    "enrich:images": "npx tsx scripts/enrich-images.ts",
     "perf:test": "bash tests/performance/run-tests.sh",
     "perf:baseline": "bash tests/performance/run-tests.sh baseline",
     "perf:load": "bash tests/performance/run-tests.sh load",

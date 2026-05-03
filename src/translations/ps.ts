@@ -334,7 +334,16 @@ export const ps = {
     "ourBarakahEffect": "زموږ د برکت اغیزه",
     "noBadges": "د برکت اغیزې نشته",
     "selectCategory": "کټګوري غوره کړئ",
-    "adminFilterLabel": "د اډمین فلټر:"
+    "adminFilterLabel": "د اډمین فلټر:",
+    "genericName": "وړاندې کوونکی",
+    "fallbackImageFor": "د {{name}} لپاره بديل انځور",
+    "failedToLoadImages": "انځورونه لوډ نه شول",
+    "placeholderImage": "ځايناستی انځور {{index}}",
+    "providerImage": "د وړاندې کوونکي انځور {{index}}",
+    "categoryImage": "د کټګورۍ انځور {{index}}",
+    "communityServiceImage": "د ټولنې خدمت انځور {{index}}",
+    "providerThumbnailAlt": "{{name}} کوچنی انځور {{index}}",
+    "providerImageAlt": "{{name}} انځور {{index}}"
   },
   "create": {
     "title": "وړاندې کوونکی اضافه کړئ",

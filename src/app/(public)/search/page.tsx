@@ -410,10 +410,8 @@ function SearchPageContent() {
   }, [selectedSection, urlSection]);
 
   useEffect(() => {
-    if (wasQuery !== urlQuery) {
-      setWasQuery(urlQuery);
-    }
-  }, [wasQuery, urlQuery]);
+    setWasQuery(urlQuery);
+  }, [urlQuery]);
 
   const handleSectionChange = (section: Section) => {
     if (section === urlSection) {

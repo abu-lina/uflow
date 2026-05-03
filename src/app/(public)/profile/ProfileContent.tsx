@@ -63,7 +63,7 @@ const MobileAboutModal = dynamic(
   { ssr: false },
 );
 import { authService } from '@/features/auth/services/authService';
-import { getFirstImageUrl } from '@/utils/imageUtils';
+import { getFirstImageUrl, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { dataExportService } from '@/services/dataExport';
 import { toast } from 'sonner';
 import type { SupabaseUser } from '@/types/supabase-user';
@@ -126,7 +126,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         'No community_service_images for:',
         communityService.community_service_name || 'unknown',
       );
-      return '/images/placeholder.jpg';
+      return PLACEHOLDER_IMAGE;
     }
 
     // Handle array format (TEXT[] from database)
@@ -137,7 +137,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
           'Empty images array for:',
           communityService.community_service_name || 'unknown',
         );
-        return '/images/placeholder.jpg';
+        return PLACEHOLDER_IMAGE;
       }
       // Get first image and validate it's a non-empty string
       const firstImage = images[0];
@@ -168,7 +168,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
     }
 
     // Fallback to placeholder
-    return '/images/placeholder.jpg';
+    return PLACEHOLDER_IMAGE;
   };
 
   // Helper function to get provider image URL using the utility function

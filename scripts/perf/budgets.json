@@ -8,8 +8,8 @@
         "description": "First Load JS for /providers (browse)"
       },
       "providersDetail": {
-        "max": 260000,
-        "description": "First Load JS for /providers/[provider_id]"
+        "max": 265000,
+        "description": "First Load JS for /providers/[provider_id] (baseline updated Plan 119: +ProviderImageFallback + categoryImages)"
       },
       "shared": {
         "max": 120000,

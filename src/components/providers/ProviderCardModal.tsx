@@ -21,6 +21,7 @@ import {
   isAddressNavigable,
   normalizeWebsiteUrl,
 } from '@/utils/navigationUtils';
+import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
@@ -120,9 +121,6 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
   const [dragOffset, setDragOffset] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
-
-  // Process images
-  const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 
   function isTrustedUrl(url: string) {
     try {
@@ -705,7 +703,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
                       communityServices[0].community_service_images &&
                       communityServices[0].community_service_images.length > 0
                         ? communityServices[0].community_service_images[0]
-                        : '/images/placeholder.jpg'
+                        : PLACEHOLDER_IMAGE
                     }
                     onLoad={() => setCommunityImageLoaded(true)}
                   />

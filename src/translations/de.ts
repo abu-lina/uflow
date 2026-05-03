@@ -334,7 +334,16 @@ export const de = {
     "ourBarakahEffect": "Unser Barakah Effekt",
     "noBadges": "Keine Barakah Effekte",
     "selectCategory": "Kategorie auswählen",
-    "adminFilterLabel": "Admin-Filter:"
+    "adminFilterLabel": "Admin-Filter:",
+    "genericName": "Anbieter",
+    "fallbackImageFor": "Fallback-Bild fuer {{name}}",
+    "failedToLoadImages": "Bilder konnten nicht geladen werden",
+    "placeholderImage": "Platzhalterbild {{index}}",
+    "providerImage": "Anbieterbild {{index}}",
+    "categoryImage": "Kategoriebild {{index}}",
+    "communityServiceImage": "Community-Service-Bild {{index}}",
+    "providerThumbnailAlt": "{{name}} Vorschaubild {{index}}",
+    "providerImageAlt": "{{name}} Bild {{index}}"
   },
   "create": {
     "title": "Anbieter hinzufügen",

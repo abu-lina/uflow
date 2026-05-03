@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.4] - 2026-05-03
+
+### Added
+
+- **Provider image fallback redesign — ornament placeholder (Plan 119 M1b)**: Provider cards and detail pages now display a branded ornament-masked placeholder instead of a generic gray image when no provider image is available. The design follows the Figma spec (node 460:2818): mint background (`#d8efe5`), optional category stock photo visible through Islamic geometric ornament diamond-grid cutouts, and a UFlow logo mark with luminosity blend. All 10 placeholder.jpg callsites replaced. Responsive 320 px – 1920 px. Graceful degradation when no stock image is available.
+- **Category-based stock image pool (Plan 119 M1b)**: 20 production categories mapped to local PNG image variants in `public/images/categories/`. Deterministic per-provider image selection ensures visual variety across cards in the same category.
+- **Unsplash image enrichment workflow — CLI (Plan 119 M3)**: New `npm run enrich:images` script with `--curate` (search, download, upload to Supabase Storage) and `--assign` (deterministically stage candidates per provider) modes. Reuses Plan 065 `enrichment_candidates` admin review flow with append-only merge into `provider_images`. Ownership fail-close enforced (unclaimed providers only).
+- **Provider image label i18n (Plan 119)**: Added translation keys for provider image labels (`providers.placeholderImage`, `providers.providerImage`, `providers.communityServiceImage`, `providers.categoryImage`, `providers.failedToLoadImages`, and others) across all 6 supported locales (en, de, ar, tr, ur, ps). `UnifiedGallery` alt/error text and `useImageFallback` error token are now fully localized.
+- **Image enrichment schema extension (Plan 119 M3)**: Migration 088 adds `enrichment_type`, `image_url`, `source_service`, `source_category`, and `attribution` columns to `enrichment_candidates` table with idempotent guards.
+
 ## [0.12.3] - 2026-05-03
 
 ### Changed

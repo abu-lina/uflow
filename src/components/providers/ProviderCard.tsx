@@ -13,11 +13,16 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider, ReviewStatusFilter } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
+import {
+  getCategoryCardBackgroundColor,
+  getCategoryStaticImageUrl,
+} from '@/utils/categoryImages';
+import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
 import { computeHalalStars } from '@/utils/sectionBadges';
 import { getOpenStatus } from '@/utils/openStatus';
 
-interface ProviderCardProps extends Omit<Provider, 'id' | 'category_id'> {
+interface ProviderCardProps extends Omit<Provider, 'id'> {
   className?: string;
   gradient?: boolean;
   hideActions?: boolean;
@@ -46,6 +51,7 @@ export const ProviderCard = React.memo(
       address_street,
       address_zip,
       address_city,
+      category_id,
       category,
       gradient = false,
       provider_images,
@@ -269,9 +275,8 @@ export const ProviderCard = React.memo(
       );
     }
 
-    const getImageUrl = () => {
+    const getProviderImageUrl = (): string | null => {
       try {
-        // Priority 1: Provider images
         if (provider_images) {
           let imagesData: { urls?: string[] } = {};
           if (typeof provider_images === 'string') {
@@ -300,43 +305,21 @@ export const ProviderCard = React.memo(
           }
         }
 
-        // Priority 2: Category fallback images
-        if (category?.category_images) {
-          try {
-            let parsedCategoryImages;
-            
-            if (typeof category.category_images === 'string') {
-              parsedCategoryImages = JSON.parse(category.category_images);
-            } else {
-              parsedCategoryImages = category.category_images;
-            }
-            
-            // Handle different possible structures
-            if (Array.isArray(parsedCategoryImages) && parsedCategoryImages.length > 0) {
-              // Direct array of URLs
-              return parsedCategoryImages[0];
-            } else if (parsedCategoryImages.urls && Array.isArray(parsedCategoryImages.urls) && parsedCategoryImages.urls.length > 0) {
-              // Object with urls property
-              return parsedCategoryImages.urls[0];
-            } else if (parsedCategoryImages.url) {
-              // Single URL
-              return parsedCategoryImages.url;
-            }
-          } catch (err) {
-            console.warn('Error parsing category images in ProviderCard:', err);
-          }
-        }
-
-        // Priority 3: Placeholder
-        return '/images/placeholder.jpg';
+        return null;
       } catch (error) {
-        console.error('Error parsing image data:', error);
-        return '/images/placeholder.jpg';
+        console.error('Error parsing provider image data:', error);
+        return null;
       }
     };
 
+    const providerImageUrl = getProviderImageUrl();
+    const fallbackStockImageUrl = getCategoryStaticImageUrl(category_id, provider_id);
+    const displayImageUrl = providerImageUrl || fallbackStockImageUrl || PLACEHOLDER_IMAGE;
+    const isUsingCategoryFallbackImage = providerImageUrl === null && !!fallbackStockImageUrl;
+    const hasImage = typeof displayImageUrl === 'string' && displayImageUrl.length > 0;
+
     // Show skeleton while image is loading (but keep image loading in background)
-    const showSkeleton = !imageLoaded && !gradient;
+    const showSkeleton = !gradient && hasImage && !imageLoaded;
 
     return (
       <div ref={ref} className={`flex w-full flex-col items-start ${className || ''}`}>
@@ -350,18 +333,27 @@ export const ProviderCard = React.memo(
               {showSkeleton && (
                 <div className="absolute inset-0 animate-pulse rounded-t-3xl bg-neutral-200" />
               )}
-              <div className={`border-uFlowWhite absolute inset-0 overflow-hidden rounded-t-3xl border ${showSkeleton ? 'opacity-0' : 'opacity-100'}`}>
-                <Image
-                  fill
-                  alt={provider_name}
-                  className="object-cover"
-                  loading={loading}
-                  priority={priority}
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 288px"
-                  src={getImageUrl()}
-                  onLoad={() => setImageLoaded(true)}
-                />
-              </div>
+              {hasImage ? (
+                <div
+                  className={`border-uFlowWhite absolute inset-0 overflow-hidden rounded-t-3xl border ${showSkeleton ? 'opacity-0' : 'opacity-100'}`}
+                  style={
+                    isUsingCategoryFallbackImage
+                      ? { backgroundColor: getCategoryCardBackgroundColor(category_id, provider_id) }
+                      : undefined
+                  }
+                >
+                  <Image
+                    fill
+                    alt={provider_name}
+                    className="object-cover"
+                    loading={loading}
+                    priority={priority}
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 288px"
+                    src={displayImageUrl ?? ''}
+                    onLoad={() => setImageLoaded(true)}
+                  />
+                </div>
+              ) : null}
             </>
           )}
           {!showSkeleton && (

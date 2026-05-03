@@ -334,7 +334,16 @@ export const ar = {
     "ourBarakahEffect": "تأثير البركة لدينا",
     "noBadges": "لا توجد تأثيرات بركة",
     "selectCategory": "اختر الفئة",
-    "adminFilterLabel": "فلتر المشرف:"
+    "adminFilterLabel": "فلتر المشرف:",
+    "genericName": "مزود",
+    "fallbackImageFor": "صورة بديلة لـ {{name}}",
+    "failedToLoadImages": "فشل تحميل الصور",
+    "placeholderImage": "صورة بديلة {{index}}",
+    "providerImage": "صورة المزود {{index}}",
+    "categoryImage": "صورة الفئة {{index}}",
+    "communityServiceImage": "صورة خدمة المجتمع {{index}}",
+    "providerThumbnailAlt": "{{name}} صورة مصغرة {{index}}",
+    "providerImageAlt": "{{name}} صورة {{index}}"
   },
   "create": {
     "title": "إضافة مزود",

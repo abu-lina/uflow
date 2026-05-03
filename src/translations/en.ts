@@ -334,7 +334,16 @@ export const en = {
     "ourBarakahEffect": "Our Barakah Effect",
     "noBadges": "No Barakah Effects",
     "selectCategory": "Select category",
-    "adminFilterLabel": "Admin Filter:"
+    "adminFilterLabel": "Admin Filter:",
+    "genericName": "Provider",
+    "fallbackImageFor": "Fallback image for {{name}}",
+    "failedToLoadImages": "Failed to load images",
+    "placeholderImage": "Placeholder image {{index}}",
+    "providerImage": "Provider image {{index}}",
+    "categoryImage": "Category image {{index}}",
+    "communityServiceImage": "Community service image {{index}}",
+    "providerThumbnailAlt": "{{name}} thumbnail {{index}}",
+    "providerImageAlt": "{{name}} image {{index}}"
   },
   "create": {
     "title": "Add Provider",
