@@ -35,8 +35,7 @@ import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
 import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
 import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
-import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
-import { getCategoryCardBackgroundColor, getCategoryStaticImageUrl } from '@/utils/categoryImages';
+import { PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId, parseCategoryImages } from '@/utils/imageUtils';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -122,7 +121,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     }
   }, [provider.provider_images]);
 
-  const categoryFallbackImageUrl = getCategoryStaticImageUrl(provider.category_id, provider.provider_id);
+  const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
+  const categoryFallbackImageUrl = categoryUrls.length > 0
+    ? categoryUrls[hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length]
+    : null;
   const allImageUrls =
     providerImageUrls.length > 0
       ? providerImageUrls

@@ -101,16 +101,23 @@ describe('ProviderCard Component', () => {
       expect(img.getAttribute('src')).toContain('/images/placeholder.jpg');
     });
 
-    it('should render category stock image as normal card image when provider has no uploaded image', () => {
-      // Turkish category has local static images (count: 8 in categoryImages.ts)
+    it('should render category storage image as normal card image when provider has no uploaded image', () => {
+      // Turkish category now uses DB-driven Supabase Storage URLs (Plan 122)
+      const TURKISH_CATEGORY_IMAGES = {
+        urls: [
+          'https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/232c2870-7929-43eb-a909-6cac90203192/1.webp',
+          'https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/232c2870-7929-43eb-a909-6cac90203192/2.webp',
+        ],
+      };
       const providerWithoutImages = {
         ...mockProvider,
         provider_images: null,
-        category_id: '232c2870-7929-43eb-a909-6cac90203192', // Turkish — has static images (real DB ID)
+        category_id: '232c2870-7929-43eb-a909-6cac90203192', // Turkish — has Storage images in DB
         category: {
           ...mockProvider.category,
           name_de: mockProvider.category?.name_de || 'Tuerkisch',
           name_en: mockProvider.category?.name_en || 'Turkish',
+          category_images: TURKISH_CATEGORY_IMAGES,
         },
       };
 
@@ -122,11 +129,12 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      // Should NOT render the fallback placeholder — the static image takes its place
+      // Should NOT render the fallback placeholder — Storage image takes its place
       expect(screen.queryByTestId('provider-image-fallback')).not.toBeInTheDocument();
       // The Next.js Image component renders an <img> with the provider name as alt
       const img = screen.getByAltText(providerWithoutImages.provider_name);
       expect(img.getAttribute('src')).toBeTruthy();
+      expect(img.getAttribute('src')).toContain('category-images');
       expect(img.className).toContain('object-cover');
       expect((img.parentElement as HTMLElement).style.backgroundColor).toBeTruthy();
     });

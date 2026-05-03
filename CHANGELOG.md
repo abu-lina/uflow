@@ -5,7 +5,13 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] - 2026-05-03
+
+### Changed
+
+- **Category image unification — DB-driven Supabase Storage (Plan 122)**: Eliminated the hardcoded UUID→static-PNG map (`categoryImages.ts`, 7.2 MB of PNGs) that caused the v0.12.4 Turkish category image bug. All 5 callsites (ProviderCard, ProviderDetailPage, ProviderDetailModal, MobileProviderDetail, UnifiedGallery) now resolve category images from `categories.category_images` JSONB in the database. Images are served from the Supabase Storage `category-images` bucket (Turkish: 8 images, Arabic: 6 images, Italian: 4 images). Adding or changing category images no longer requires a code change or Docker rebuild.
+- **Removed static category PNG assets**: `public/images/categories/` directory (22 PNGs, 7.2 MB) removed from repository; images migrated to Supabase Storage as WebP.
+- **Background color utility relocated**: `getCategoryCardBackgroundColor`, `CARD_BACKGROUND_COLORS`, and `hashId` moved from the deleted `categoryImages.ts` to `imageUtils.ts`. Category image rendering in `UnifiedGallery` simplified to always use `object-cover` (real food photos from Storage).
 
 ## [0.12.4] - 2026-05-03
 
