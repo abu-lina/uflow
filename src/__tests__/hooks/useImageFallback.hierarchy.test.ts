@@ -4,7 +4,7 @@ import { resolveGalleryImage } from '@/hooks/useImageFallback';
 import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 
 describe('resolveGalleryImage hierarchy', () => {
-  const CATEGORY_WITH_STATIC_IMAGES = '65a3e4e8-5dac-41a9-94c4-f65b33c6e59b';
+  const CATEGORY_WITH_STATIC_IMAGES = '232c2870-7929-43eb-a909-6cac90203192'; // Turkish (real DB ID)
   const CATEGORY_WITHOUT_STATIC_IMAGES = '20c10efe-404b-4a39-bb81-5089a0332d78';
 
   it('uses provider-owned image first when present', () => {

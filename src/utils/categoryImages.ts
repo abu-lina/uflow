@@ -24,10 +24,10 @@ const CARD_BACKGROUND_COLORS = ['#CBE6E2', '#DDEBF0', '#FBF1D9', '#FAE6E6'] as c
  */
 const CATEGORY_IMAGES: Record<string, CategoryImageConfig> = {
   // ── Food ──────────────────────────────────────────────────────────────
-  '65a3e4e8-5dac-41a9-94c4-f65b33c6e59b': { section: 'food', folder: 'turkish',            count: 8 },
+  '232c2870-7929-43eb-a909-6cac90203192': { section: 'food', folder: 'turkish',            count: 8 },
   '0814f0b7-585b-42f8-b4c8-c225582571b4': { section: 'food', folder: 'afghan',             count: 0 },
   '8550d193-5623-49da-b8c9-1187f8fe5e6c': { section: 'food', folder: 'african',            count: 0 },
-  '8c0bad33-ebc9-4cc7-b3cf-237453fc8498': { section: 'food', folder: 'arabic',             count: 6 },
+  'a8d3cf09-b606-4de9-8744-b8c584c5e172': { section: 'food', folder: 'arabic',             count: 6 },
   '6bf91875-5934-4ddd-93c6-11c014d278ef': { section: 'food', folder: 'asian',              count: 0 },
   'aeec899a-65b5-4201-8f1b-b278bd6ef30f': { section: 'food', folder: 'bakery-pastries',    count: 0 },
   '88d60ec2-497e-40ea-bce7-9c1ec8b4d007': { section: 'food', folder: 'balkan',             count: 0 },
@@ -45,7 +45,8 @@ const CATEGORY_IMAGES: Record<string, CategoryImageConfig> = {
   'de5b71c6-cdc6-4a38-a135-4b151df54fc7': { section: 'food', folder: 'meat-dishes',        count: 0 },
   '4aa30403-895a-4d68-b617-6882c0a20adf': { section: 'food', folder: 'north-african',      count: 0 },
   '4403dafb-eb0c-4447-8224-94f34e827b78': { section: 'food', folder: 'oriental',           count: 0 },
-  '5a7a6576-297c-4f84-9e39-571c811ed406': { section: 'food', folder: 'turkish',            count: 8 }, // TEMP: using turkish images until pakistani-indian folder is ready
+  'f0118e0e-1b6d-4691-b5d9-aa1a5c2aa9ae': { section: 'food', folder: 'turkish',            count: 8 }, // TEMP: using turkish images until indian-pakistani folder is ready
+  'b35965ed-fdb0-4bc5-a872-ab3bbc5139de': { section: 'food', folder: 'italian',            count: 4 },
   'ae7f10c1-62da-446a-8912-b36966650ef6': { section: 'food', folder: 'pasta-noodles',      count: 0 },
   '549ee1f0-a2fb-4c05-b548-0e702456ea16': { section: 'food', folder: 'persian',            count: 0 },
   'd1d0ba2a-98c6-43f5-bd15-4c0b232eae56': { section: 'food', folder: 'pizza-tarte',        count: 0 },
