@@ -2,7 +2,7 @@
 ID: 119
 Origin: 119
 UUID: e5c1d7a4
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Plan 119 — Provider Image UX (M1b + M3)

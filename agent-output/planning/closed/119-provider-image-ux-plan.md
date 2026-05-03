@@ -2,7 +2,7 @@
 ID: 119
 Origin: 119
 UUID: e5c1d7a4
-Status: Committed
+Status: Released
 ---
 
 # Plan 119 — Provider Image UX: Engaging Fallbacks + Image Enrichment
@@ -33,7 +33,7 @@ Status: Committed
 | Field          | Value                                                                       |
 | -------------- | --------------------------------------------------------------------------- |
 | Plan ID        | 119                                                                         |
-| Target Release | Next available patch after current `origin/main` version (v0.12.2); confirm at DevOps Stage 1 |
+| Target Release | `v0.12.4` (released 2026-05-03)                                             |
 | Epic Alignment | Provider Profile Quality / Provider Discovery UX                            |
 | Related Issues | None (GitHub issue to be created after plan is written)                     |
 | Classification | Feature                                                                     |
