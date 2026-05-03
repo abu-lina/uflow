@@ -102,11 +102,11 @@ describe('ProviderCard Component', () => {
     });
 
     it('should render category stock image as normal card image when provider has no uploaded image', () => {
-      // Turkish category has local static images (count: 2 in categoryImages.ts)
+      // Turkish category has local static images (count: 8 in categoryImages.ts)
       const providerWithoutImages = {
         ...mockProvider,
         provider_images: null,
-        category_id: '65a3e4e8-5dac-41a9-94c4-f65b33c6e59b', // Turkish — has static images
+        category_id: '232c2870-7929-43eb-a909-6cac90203192', // Turkish — has static images (real DB ID)
         category: {
           ...mockProvider.category,
           name_de: mockProvider.category?.name_de || 'Tuerkisch',
@@ -141,10 +141,10 @@ describe('ProviderCard Component', () => {
         provider_images: JSON.stringify({
           urls: ['https://mock-supabase-url.com/storage/v1/object/public/images/own-photo.jpg'],
         }),
-        category_id: '65a3e4e8-5dac-41a9-94c4-f65b33c6e59b', // Turkish — has static fallback images
+        category_id: '232c2870-7929-43eb-a909-6cac90203192', // Turkish — has static fallback images (real DB ID)
         category: {
           ...mockProvider.category,
-          category_id: '65a3e4e8-5dac-41a9-94c4-f65b33c6e59b',
+          category_id: '232c2870-7929-43eb-a909-6cac90203192',
           name_de: 'Türkisch',
           name_en: 'Turkish',
         },
