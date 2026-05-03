@@ -8,6 +8,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
+import { SectionSelector } from '@/features/search/components/SectionSelector';
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
@@ -261,6 +262,18 @@ export function ProvidersContent({
   );
 
   const peopleSummary = searchParams.get('wer');
+
+  const handleSectionChange = useCallback(
+    (nextSection: Section) => {
+      if (nextSection === section) return;
+      const params = new URLSearchParams(window.location.search);
+      params.set('section', nextSection);
+      params.delete('category');
+      const nextPath = getResultsPathForSection(nextSection);
+      router.replace(`${nextPath}?${params.toString()}`, { scroll: false });
+    },
+    [section, router],
+  );
 
   // Plan 058: Handle admin status filter change - update URL with new status
   const handleStatusChange = useCallback(
@@ -524,15 +537,31 @@ export function ProvidersContent({
       <main
         className={`mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden ${
           showGreeting
-            ? 'pt-0 sm:pt-8 md:pt-28' // No top padding - CityCard pb-8 provides the gap, fixed header overlays
-            : 'pt-[max(128px,calc(env(safe-area-inset-top)+128px))] sm:pt-8 md:pt-28' // Plan 077: safe-area-aware padding for notch devices
+            ? 'pt-0 sm:pt-8 md:pt-28'
+            : 'pt-0 sm:pt-8 md:pt-28'
         }`}
       >
+        {!showGreeting && (
+          <>
+            {/* Spacer pushes content below fixed search bar on mobile */}
+            <div
+              className="sm:hidden"
+              style={{ height: 'max(88px, calc(env(safe-area-inset-top) + 88px))' }}
+            />
+            {/* Section tabs scroll with content */}
+            <div className="px-4 pb-3 sm:hidden">
+              <SectionSelector
+                selectedSection={section}
+                onSectionChange={handleSectionChange}
+              />
+            </div>
+          </>
+        )}
         {/* Plan 058: Admin status filter - only visible to admin/moderator users */}
         {isAdmin && (
           <div className="mb-6 px-4 sm:px-6">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-content-heading">Admin Filter:</span>
+              <span className="text-sm font-medium text-content-heading">{t('providers.adminFilterLabel')}</span>
               <AdminStatusFilter
                 selectedStatus={status}
                 onStatusChange={handleStatusChange}

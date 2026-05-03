@@ -135,7 +135,8 @@ export const de = {
   },
   "home": {
     "searchPlaceholder": "Suche starten",
-    "searchAriaLabel": "Suche in der Ummah starten"
+    "searchAriaLabel": "Suche in der Ummah starten",
+    "searchFiltersAriaLabel": "Suchfilter öffnen"
   },
   "sections": {
     "food": "Food",
@@ -153,7 +154,8 @@ export const de = {
     "filter": "Nach Ort filtern",
     "context": {
       "allResults": "Alle Ergebnisse",
-      "edit": "Suche bearbeiten"
+      "edit": "Suche bearbeiten",
+      "backToHome": "Zur Startseite"
     }
   },
   "suchen": {
@@ -331,7 +333,8 @@ export const de = {
     "weAreLookingFor": "Wir suchen",
     "ourBarakahEffect": "Unser Barakah Effekt",
     "noBadges": "Keine Barakah Effekte",
-    "selectCategory": "Kategorie auswählen"
+    "selectCategory": "Kategorie auswählen",
+    "adminFilterLabel": "Admin-Filter:"
   },
   "create": {
     "title": "Anbieter hinzufügen",

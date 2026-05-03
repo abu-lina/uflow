@@ -6,6 +6,8 @@ import { SearchContextBar } from './SearchContextBar';
 const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/providers',
+  useSearchParams: () => new URLSearchParams('section=food&location=Berlin'),
   useRouter: () => ({
     push: mockPush,
   }),
@@ -20,6 +22,9 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'sections.ummah': 'Ummah',
         'sections.stores': 'Stores',
         'search.context.edit': 'Edit search',
+        'search.context.backToHome': 'Back to home',
+        'search.ariaLabel': 'Search in the Ummah',
+        'suchen.clearAll': 'Clear all',
       };
       return map[key] ?? key;
     },
@@ -31,7 +36,7 @@ describe('SearchContextBar', () => {
     vi.clearAllMocks();
   });
 
-  it('renders search term, location, and people summary', () => {
+  it('renders search input value, location, and people summary', () => {
     render(
       <SearchContextBar
         location="Berlin"
@@ -41,10 +46,9 @@ describe('SearchContextBar', () => {
       />,
     );
 
-    expect(screen.getByText('Doner')).toBeInTheDocument();
-    expect(screen.getByText('Berlin')).toBeInTheDocument();
+    expect(screen.getByRole('searchbox')).toHaveValue('Doner');
+    expect(screen.getByRole('combobox')).toHaveValue('Berlin');
     expect(screen.getByText('2 Adults')).toBeInTheDocument();
-    expect(screen.getAllByText('•')).toHaveLength(2);
   });
 
   it('hides people summary segment when no people summary is provided', () => {
@@ -56,10 +60,9 @@ describe('SearchContextBar', () => {
       />,
     );
 
-    expect(screen.getByText('Doner')).toBeInTheDocument();
-    expect(screen.getByText('Berlin')).toBeInTheDocument();
+    expect(screen.getByRole('searchbox')).toHaveValue('Doner');
+    expect(screen.getByRole('combobox')).toHaveValue('Berlin');
     expect(screen.queryByText('2 Adults')).not.toBeInTheDocument();
-    expect(screen.getAllByText('•')).toHaveLength(1);
   });
 
   it('falls back to section label when category id exists without q', () => {
@@ -71,8 +74,8 @@ describe('SearchContextBar', () => {
       />,
     );
 
-    expect(screen.getByText('Food')).toBeInTheDocument();
-    expect(screen.getByText('Everywhere')).toBeInTheDocument();
+    expect(screen.getByRole('searchbox')).toHaveAttribute('placeholder', 'Food');
+    expect(screen.getByRole('combobox')).toHaveValue('');
   });
 
   it('prefers selected category label over section label when category is selected without q', () => {
@@ -85,8 +88,51 @@ describe('SearchContextBar', () => {
       />,
     );
 
-    expect(screen.getByText('Halal Restaurants')).toBeInTheDocument();
-    expect(screen.queryByText('Food')).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox')).toHaveAttribute('placeholder', 'Halal Restaurants');
+  });
+
+  it('updates q param on Enter when user edits search term', () => {
+    render(
+      <SearchContextBar
+        location="Berlin"
+        searchTerm="Doner"
+        section="food"
+      />,
+    );
+
+    const input = screen.getByRole('searchbox');
+    fireEvent.change(input, { target: { value: 'Indigo' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(mockPush).toHaveBeenCalledWith('/providers?section=food&location=Berlin&q=Indigo');
+  });
+
+  it('clears q param via x button to show all results', () => {
+    render(
+      <SearchContextBar
+        location="Berlin"
+        searchTerm="Indigo"
+        section="food"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+
+    expect(mockPush).toHaveBeenCalledWith('/providers?section=food&location=Berlin');
+  });
+
+  it('updates location via dropdown and removes location filter when set to everywhere', () => {
+    render(
+      <SearchContextBar
+        location="Berlin"
+        searchTerm="Indigo"
+        section="food"
+      />,
+    );
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '' } });
+
+    expect(mockPush).toHaveBeenCalledWith('/providers?section=food');
   });
 
   it('navigates back to /search with section when edit button is clicked', () => {
@@ -101,5 +147,19 @@ describe('SearchContextBar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit search' }));
 
     expect(mockPush).toHaveBeenCalledWith('/search?section=ummah');
+  });
+
+  it('navigates back to home when the left icon button is clicked', () => {
+    render(
+      <SearchContextBar
+        location="Berlin"
+        searchTerm="Doner"
+        section="food"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to home' }));
+
+    expect(mockPush).toHaveBeenCalledWith('/');
   });
 });

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-05-03
+
+### Changed
+
+- **Search header fixed + section tabs scroll with content** (Plan 109): The search bar and context summary (query · location · audience) are now pinned at the top of the screen on both the home page (Stage 2/3) and the providers listing page. Section tabs were moved to the scrollable content area so they scroll naturally with results instead of overlapping the fixed header.
+- **i18n: Search context and providers UI labels localized** (Plan 109): Back-to-home aria-label and admin filter label are now fully translated across all six supported languages (EN/DE/AR/TR/UR/PS). Removes the last hardcoded English fallback strings from the search/providers UI surface.
+
 ## [0.12.2] - 2026-05-02
 
 ### Added

@@ -70,7 +70,12 @@ export function MobileFooterBar() {
   );
 
   const isExploreActive =
-    pathname === '/' || pathname.startsWith('/city/') || pathname === '/providers';
+    pathname === '/' ||
+    pathname.startsWith('/city/') ||
+    pathname === '/providers' ||
+    pathname === '/food' ||
+    pathname === '/stores' ||
+    pathname === '/ummah';
 
   return (
     <>

@@ -59,8 +59,9 @@ function SearchPageContent() {
   };
 
   const urlSection = resolveSection(searchParams.get('section'));
+  const urlQuery = (searchParams.get('q') || '').trim();
   const [selectedSection, setSelectedSection] = useState<Section>(urlSection);
-  const [wasQuery, setWasQuery] = useState('');
+  const [wasQuery, setWasQuery] = useState(urlQuery);
   const [wasResults, setWasResults] = useState<FoodConcept[]>([]);
   const [isLoadingWas, setIsLoadingWas] = useState(false);
   const [isErrorWas, setIsErrorWas] = useState(false);
@@ -407,6 +408,12 @@ function SearchPageContent() {
       setSelectedSection(urlSection);
     }
   }, [selectedSection, urlSection]);
+
+  useEffect(() => {
+    if (wasQuery !== urlQuery) {
+      setWasQuery(urlQuery);
+    }
+  }, [wasQuery, urlQuery]);
 
   const handleSectionChange = (section: Section) => {
     if (section === urlSection) {

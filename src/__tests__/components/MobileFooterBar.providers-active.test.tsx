@@ -61,6 +61,14 @@ describe('MobileFooterBar providers active state (Plan 109)', () => {
     expect(screen.getByTestId('explore-icon')).toHaveTextContent('active');
   });
 
+  it('marks Explore icon active on /food', () => {
+    mocks.pathname = '/food';
+
+    render(<MobileFooterBar />);
+
+    expect(screen.getByTestId('explore-icon')).toHaveTextContent('active');
+  });
+
   it('does not mark Explore icon active on provider detail path', () => {
     mocks.pathname = '/providers/123';
 

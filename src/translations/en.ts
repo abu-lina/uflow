@@ -135,7 +135,8 @@ export const en = {
   },
   "home": {
     "searchPlaceholder": "Start searching",
-    "searchAriaLabel": "Start searching in the Ummah"
+    "searchAriaLabel": "Start searching in the Ummah",
+    "searchFiltersAriaLabel": "Open search filters"
   },
   "sections": {
     "food": "Food",
@@ -153,7 +154,8 @@ export const en = {
     "filter": "Filter by location",
     "context": {
       "allResults": "All results",
-      "edit": "Edit search"
+      "edit": "Edit search",
+      "backToHome": "Back to home"
     }
   },
   "suchen": {
@@ -331,7 +333,8 @@ export const en = {
     "weAreLookingFor": "We are looking for",
     "ourBarakahEffect": "Our Barakah Effect",
     "noBadges": "No Barakah Effects",
-    "selectCategory": "Select category"
+    "selectCategory": "Select category",
+    "adminFilterLabel": "Admin Filter:"
   },
   "create": {
     "title": "Add Provider",

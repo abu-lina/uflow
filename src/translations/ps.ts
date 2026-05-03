@@ -135,7 +135,8 @@ export const ps = {
   },
   "home": {
     "searchPlaceholder": "لټون پیل کړئ",
-    "searchAriaLabel": "د امت کې لټون پیل کړئ"
+    "searchAriaLabel": "د امت کې لټون پیل کړئ",
+    "searchFiltersAriaLabel": "د لټون فلټرونه پرانیزه"
   },
   "sections": {
     "food": "خواړه",
@@ -153,7 +154,8 @@ export const ps = {
     "filter": "د ځای له مخې فلټر کړه",
     "context": {
       "allResults": "All results",
-      "edit": "Edit search"
+      "edit": "Edit search",
+      "backToHome": "کور ته بېرته"
     }
   },
   "suchen": {
@@ -331,7 +333,8 @@ export const ps = {
     "weAreLookingFor": "موږ لټون کوو",
     "ourBarakahEffect": "زموږ د برکت اغیزه",
     "noBadges": "د برکت اغیزې نشته",
-    "selectCategory": "کټګوري غوره کړئ"
+    "selectCategory": "کټګوري غوره کړئ",
+    "adminFilterLabel": "د اډمین فلټر:"
   },
   "create": {
     "title": "وړاندې کوونکی اضافه کړئ",

@@ -135,7 +135,8 @@ export const ar = {
   },
   "home": {
     "searchPlaceholder": "ابدأ البحث",
-    "searchAriaLabel": "ابدأ البحث في الأمة"
+    "searchAriaLabel": "ابدأ البحث في الأمة",
+    "searchFiltersAriaLabel": "فتح فلاتر البحث"
   },
   "sections": {
     "food": "طعام",
@@ -153,7 +154,8 @@ export const ar = {
     "filter": "تصفية حسب الموقع",
     "context": {
       "allResults": "جميع النتائج",
-      "edit": "تعديل البحث"
+      "edit": "تعديل البحث",
+      "backToHome": "العودة إلى الرئيسية"
     }
   },
   "suchen": {
@@ -331,7 +333,8 @@ export const ar = {
     "weAreLookingFor": "نحن نبحث عن",
     "ourBarakahEffect": "تأثير البركة لدينا",
     "noBadges": "لا توجد تأثيرات بركة",
-    "selectCategory": "اختر الفئة"
+    "selectCategory": "اختر الفئة",
+    "adminFilterLabel": "فلتر المشرف:"
   },
   "create": {
     "title": "إضافة مزود",

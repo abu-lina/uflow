@@ -219,7 +219,7 @@ export function RootPageContent() {
             {/* Stage 2/3: Category Discovery Home */}
             {(stage === 'stage2' || stage === 'stage3') && (
               <div className="flex min-h-screen w-full flex-col bg-uflow-light">
-                {/* Fixed header: Search bar + Section selector */}
+                {/* Fixed header: search bar only */}
                 <header
                   className="fixed left-0 right-0 top-0 z-50 sm:hidden"
                   style={{
@@ -236,30 +236,37 @@ export function RootPageContent() {
                   }}
                 >
                   <div
-                    className="flex flex-col gap-3 px-4 pb-3"
+                    className="px-4 pb-3"
                     style={{
                       paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
                     }}
                   >
                     <HomeSearchBar activeSection={activeSection} />
+                  </div>
+                </header>
+
+                {/* Scrollable body: spacer + section tabs + gallery */}
+                <div
+                  className="w-full"
+                  style={{
+                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
+                  }}
+                >
+                  {/* Spacer to push content below fixed search bar */}
+                  <div
+                    className="sm:hidden"
+                    style={{ height: 'max(88px, calc(env(safe-area-inset-top) + 88px))' }}
+                  />
+                  {/* Section tabs scroll with content */}
+                  <div className="px-4 pb-3 sm:hidden">
                     <SectionSelector
                       selectedSection={activeSection}
                       onSectionChange={setActiveSection}
                     />
                   </div>
-                </header>
-
-                {/* Scrollable body — offset for fixed header height */}
-                {/* Header: safe-area + 24px top pad + ~44px HomeSearchBar + 8px gap = ~76px + safe-area */}
-                {/* + ~40px SectionSelector + 12px bottom pad = ~128px + safe-area */}
-                <div
-                  className="w-full px-4"
-                  style={{
-                    paddingTop: 'max(152px, calc(env(safe-area-inset-top) + 152px))',
-                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
-                  }}
-                >
-                  <CategoryGallerySection section={activeSection} />
+                  <div className="px-4">
+                    <CategoryGallerySection section={activeSection} />
+                  </div>
                 </div>
               </div>
             )}

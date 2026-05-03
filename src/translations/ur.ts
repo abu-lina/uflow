@@ -135,7 +135,8 @@ export const ur = {
   },
   "home": {
     "searchPlaceholder": "تلاش شروع کریں",
-    "searchAriaLabel": "امت میں تلاش شروع کریں"
+    "searchAriaLabel": "امت میں تلاش شروع کریں",
+    "searchFiltersAriaLabel": "تلاش فلٹر کھولیں"
   },
   "sections": {
     "food": "کھانا",
@@ -153,7 +154,8 @@ export const ur = {
     "filter": "مقام کے لحاظ سے فلٹر کریں",
     "context": {
       "allResults": "All results",
-      "edit": "Edit search"
+      "edit": "Edit search",
+      "backToHome": "ہوم پر واپس جائیں"
     }
   },
   "suchen": {
@@ -331,7 +333,8 @@ export const ur = {
     "weAreLookingFor": "ہم تلاش کر رہے ہیں",
     "ourBarakahEffect": "ہمارا برکت اثر",
     "noBadges": "کوئی برکت اثرات نہیں",
-    "selectCategory": "زمرہ منتخب کریں"
+    "selectCategory": "زمرہ منتخب کریں",
+    "adminFilterLabel": "ایڈمن فلٹر:"
   },
   "create": {
     "title": "فراہم کنندہ شامل کریں",

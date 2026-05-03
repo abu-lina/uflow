@@ -82,7 +82,8 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   // Root discovery home must always show the bottom navbar once stage is resolved.
   const isDiscoveryHome = pathname === '/' && (stage === 'stage2' || stage === 'stage3');
   // Providers listing is the primary discovery surface and must always show bottom nav on mobile.
-  const isProvidersDiscovery = pathname === '/providers';
+  const isProvidersDiscovery =
+    pathname === '/providers' || pathname === '/food' || pathname === '/stores' || pathname === '/ummah';
 
   // When not yet mounted use 'none' so slot reserves space without showing wrong UI; after mount show correct one
   const mobileUiMode = !isMounted

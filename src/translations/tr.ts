@@ -135,7 +135,8 @@ export const tr = {
   },
   "home": {
     "searchPlaceholder": "Aramaya başla",
-    "searchAriaLabel": "Ümmette aramaya başla"
+    "searchAriaLabel": "Ümmette aramaya başla",
+    "searchFiltersAriaLabel": "Arama filtrelerini aç"
   },
   "sections": {
     "food": "Yemek",
@@ -153,7 +154,8 @@ export const tr = {
     "filter": "Konuma göre filtrele",
     "context": {
       "allResults": "Tüm sonuçlar",
-      "edit": "Aramayı düzenle"
+      "edit": "Aramayı düzenle",
+      "backToHome": "Ana sayfaya dön"
     }
   },
   "suchen": {
@@ -331,7 +333,8 @@ export const tr = {
     "weAreLookingFor": "Aradığımız",
     "ourBarakahEffect": "Bereket Etkimiz",
     "noBadges": "Bereket etkisi yok",
-    "selectCategory": "Kategori seç"
+    "selectCategory": "Kategori seç",
+    "adminFilterLabel": "Yönetici filtresi:"
   },
   "create": {
     "title": "Sağlayıcı Ekle",

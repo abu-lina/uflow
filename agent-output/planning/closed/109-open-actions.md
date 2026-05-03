@@ -2,7 +2,7 @@
 ID: 109
 Origin: 109
 UUID: b7e3f91a
-Status: Active
+Status: Committed
 ---
 
 # Open Actions 109: Deferred Pre-Release Validations
@@ -81,3 +81,6 @@ NEXT_PUBLIC_SUPABASE_URL=... NEXT_PUBLIC_SUPABASE_ANON_KEY=... npm run build
 | --- | --- | --- |
 | 2026-04-27T20:40Z | devops | Created tracker from deferred UAT validations DF-1, DF-2, DF-3 at Stage 1 commit |
 | 2026-04-28T16:50Z | implementer | Corrected status from QA Complete to Active pending formal QA gate |
+| 2026-05-03T16:14Z | code-reviewer | Re-review passed after remediation; status set to Code Review Approved for QA handoff |
+| 2026-05-03T18:15Z | qa | QA Complete: All automated gates PASS (type-check, lint, 12 tests). Layout regression tests lock fixed-header/scrollable-tabs contract. i18n verified (12/12 keys in 6 locales). Deferred validations (DF-1/2/3) assigned with owner rationale. Status: QA Complete — APPROVED FOR UAT. |
+| 2026-05-03T18:30Z | uat | UAT APPROVED FOR RELEASE: All acceptance criteria met. Fixed header + scrollable tabs implemented and tested. Value statement delivered. Risk: LOW. Ready for DevOps Stage 1 (DF-3 build gate). |

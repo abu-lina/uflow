@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
 import { SearchContextBar } from '@/features/search/components/SearchContextBar';
 import type { Section } from '@/providers/search-provider';
 
@@ -21,11 +20,8 @@ export function ProvidersPageHeader({
   location,
   peopleSummary,
 }: ProvidersPageHeaderProps) {
-  const headerRef = useRef<HTMLElement>(null);
-
   return (
-    <header 
-      ref={headerRef}
+    <header
       className="fixed left-0 right-0 top-0 z-50 sm:hidden"
       style={{
         // Smooth transition for all properties including backdrop-filter
@@ -47,13 +43,9 @@ export function ProvidersPageHeader({
         paddingRight: '1px',
       }}
     >
-      <div 
+      <div
         className="px-4 pb-3"
         style={{
-          // Add safe area padding to content, not header background
-          // Use max() to ensure minimum 24px padding on devices without safe area (like iPhone SE)
-          // On iPhone SE: max(24px, calc(0 + 24px)) = 24px
-          // On iPhone 15 Pro: max(24px, calc(59px + 24px)) = 83px
           paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
         }}
       >

@@ -1,11 +1,11 @@
 'use client';
 
-import { SlidersHorizontal } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { ChevronLeft, SlidersHorizontal, X } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Section } from '@/providers/search-provider';
-import { SECTION_ICON_RENDERERS } from '@/features/search/constants/sectionIconRenderers';
 
 interface SearchContextBarProps {
   section: Section;
@@ -27,6 +27,8 @@ export function SearchContextBar({
   className = '',
 }: SearchContextBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
 
   const sectionLabel =
@@ -46,31 +48,120 @@ export function SearchContextBar({
 
   const resolvedSearchTerm =
     searchTerm?.trim() || (categoryId ? categoryLabel?.trim() || sectionLabel : allResultsLabel);
+  const [draftQuery, setDraftQuery] = useState(searchTerm?.trim() ?? '');
+
+  useEffect(() => {
+    setDraftQuery(searchTerm?.trim() ?? '');
+  }, [searchTerm]);
 
   const resolvedLocation = location && location.trim() ? location : everywhereLabel;
-  const renderIcon = SECTION_ICON_RENDERERS[section];
+  const resolvedLocationValue = location && location.trim() ? location.trim() : '';
+  const backHomeLabel = t('search.context.backToHome');
+
+  const navigateWithQuery = (nextQuery: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('section', section);
+
+    const trimmed = nextQuery.trim();
+    if (trimmed) {
+      params.set('q', trimmed);
+    } else {
+      params.delete('q');
+    }
+
+    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.push(nextUrl);
+  };
+
+  const handleQuerySubmit = () => {
+    navigateWithQuery(draftQuery);
+  };
+
+  const handleQueryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleQuerySubmit();
+    }
+  };
+
+  const handleClearQuery = () => {
+    setDraftQuery('');
+    navigateWithQuery('');
+  };
+
+  const handleLocationChange = (nextLocation: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('section', section);
+
+    if (nextLocation) {
+      params.set('location', nextLocation);
+    } else {
+      params.delete('location');
+    }
+
+    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.push(nextUrl);
+  };
 
   return (
     <div
       className={`flex items-center justify-between rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 shadow-sm ${className}`}
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
-        {renderIcon(true)}
-      </div>
+      <button
+        aria-label={backHomeLabel}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-neutral-100 text-content-heading transition-colors hover:bg-neutral-200"
+        type="button"
+        onClick={() => router.push('/')}
+      >
+        <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+      </button>
 
       <div className="mx-2 min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-1 text-left text-sm font-medium text-[#585858]">
-          <span className="truncate">{resolvedSearchTerm}</span>
-          <span aria-hidden="true">•</span>
-          <span className="truncate">{resolvedLocation}</span>
+        <div className="flex min-w-0 items-center text-left text-sm font-medium text-[#585858]">
+          <div className="flex min-w-0 flex-1 items-center">
+            <input
+              aria-label={t('search.ariaLabel')}
+              className="min-w-0 flex-1 border-0 bg-transparent text-left text-sm font-medium text-[#585858] outline-none ring-0 placeholder:text-[#8a8a8a] focus:outline-none focus:ring-0"
+              placeholder={resolvedSearchTerm}
+              type="search"
+              value={draftQuery}
+              onChange={(e) => setDraftQuery(e.target.value)}
+              onKeyDown={handleQueryKeyDown}
+            />
+
+            {draftQuery.trim() ? (
+              <button
+                aria-label={t('suchen.clearAll')}
+                className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-[#585858] transition-opacity hover:opacity-70"
+                type="button"
+                onClick={handleClearQuery}
+              >
+                <X aria-hidden="true" className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+
+          <span aria-hidden="true" className="mx-2 h-5 w-px shrink-0 bg-gray-300" />
+
+          <select
+            aria-label={t('search.filter')}
+            className="max-w-28 border-0 bg-transparent text-sm font-medium text-[#8a8a8a] outline-none ring-0 focus:outline-none focus:ring-0"
+            value={resolvedLocationValue}
+            onChange={(e) => handleLocationChange(e.target.value)}
+          >
+            {resolvedLocationValue ? <option value={resolvedLocationValue}>{resolvedLocation}</option> : null}
+            <option value="">{everywhereLabel}</option>
+          </select>
+
           {peopleSummary?.trim() ? (
             <>
-              <span aria-hidden="true">•</span>
-              <span className="truncate">{peopleSummary}</span>
+              <span aria-hidden="true" className="mx-2 h-5 w-px shrink-0 bg-gray-300" />
+              <span className="truncate text-[#8a8a8a]">{peopleSummary}</span>
             </>
           ) : null}
         </div>
       </div>
+
+      <span aria-hidden="true" className="mr-1 h-5 w-px shrink-0 bg-gray-300" />
 
       <button
         aria-label={editLabel}
