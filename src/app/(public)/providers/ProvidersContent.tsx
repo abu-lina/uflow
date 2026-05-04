@@ -527,7 +527,6 @@ export function ProvidersContent({
         <ProvidersPageHeader
           categoryId={category}
           categoryLabel={selectedCategoryLabel}
-          location={location}
           peopleSummary={peopleSummary}
           searchTerm={query}
           section={section}

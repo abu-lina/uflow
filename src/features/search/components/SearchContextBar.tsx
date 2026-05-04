@@ -12,7 +12,6 @@ interface SearchContextBarProps {
   searchTerm?: string | null;
   categoryId?: string | null;
   categoryLabel?: string | null;
-  location?: string | null;
   peopleSummary?: string | null;
   className?: string;
 }
@@ -22,7 +21,6 @@ export function SearchContextBar({
   searchTerm,
   categoryId,
   categoryLabel,
-  location,
   peopleSummary,
   className = '',
 }: SearchContextBarProps) {
@@ -40,11 +38,7 @@ export function SearchContextBar({
 
   const editKey = 'search.context.edit';
   const editLabelCandidate = t(editKey);
-  const editLabel = editLabelCandidate === editKey ? 'Edit search' : editLabelCandidate;
-
-  const everywhereKey = 'search.everywhere';
-  const everywhereLabelCandidate = t(everywhereKey);
-  const everywhereLabel = everywhereLabelCandidate === everywhereKey ? 'Everywhere' : everywhereLabelCandidate;
+  const editLabel = editLabelCandidate;
 
   const resolvedSearchTerm =
     searchTerm?.trim() || (categoryId ? categoryLabel?.trim() || sectionLabel : allResultsLabel);
@@ -54,8 +48,6 @@ export function SearchContextBar({
     setDraftQuery(searchTerm?.trim() ?? '');
   }, [searchTerm]);
 
-  const resolvedLocation = location && location.trim() ? location : everywhereLabel;
-  const resolvedLocationValue = location && location.trim() ? location.trim() : '';
   const backHomeLabel = t('search.context.backToHome');
 
   const navigateWithQuery = (nextQuery: string) => {
@@ -86,20 +78,6 @@ export function SearchContextBar({
   const handleClearQuery = () => {
     setDraftQuery('');
     navigateWithQuery('');
-  };
-
-  const handleLocationChange = (nextLocation: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('section', section);
-
-    if (nextLocation) {
-      params.set('location', nextLocation);
-    } else {
-      params.delete('location');
-    }
-
-    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    router.push(nextUrl);
   };
 
   return (
@@ -140,18 +118,6 @@ export function SearchContextBar({
             ) : null}
           </div>
 
-          <span aria-hidden="true" className="mx-2 h-5 w-px shrink-0 bg-gray-300" />
-
-          <select
-            aria-label={t('search.filter')}
-            className="max-w-28 border-0 bg-transparent text-sm font-medium text-[#8a8a8a] outline-none ring-0 focus:outline-none focus:ring-0"
-            value={resolvedLocationValue}
-            onChange={(e) => handleLocationChange(e.target.value)}
-          >
-            {resolvedLocationValue ? <option value={resolvedLocationValue}>{resolvedLocation}</option> : null}
-            <option value="">{everywhereLabel}</option>
-          </select>
-
           {peopleSummary?.trim() ? (
             <>
               <span aria-hidden="true" className="mx-2 h-5 w-px shrink-0 bg-gray-300" />
@@ -160,8 +126,6 @@ export function SearchContextBar({
           ) : null}
         </div>
       </div>
-
-      <span aria-hidden="true" className="mr-1 h-5 w-px shrink-0 bg-gray-300" />
 
       <button
         aria-label={editLabel}

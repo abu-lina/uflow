@@ -8,7 +8,6 @@ interface ProvidersPageHeaderProps {
   searchTerm?: string | null;
   categoryId?: string | null;
   categoryLabel?: string | null;
-  location?: string | null;
   peopleSummary?: string | null;
 }
 
@@ -17,7 +16,6 @@ export function ProvidersPageHeader({
   searchTerm,
   categoryId,
   categoryLabel,
-  location,
   peopleSummary,
 }: ProvidersPageHeaderProps) {
   return (
@@ -53,7 +51,6 @@ export function ProvidersPageHeader({
           categoryId={categoryId}
           categoryLabel={categoryLabel}
           className="border border-gray-200 shadow-sm"
-          location={location}
           peopleSummary={peopleSummary}
           searchTerm={searchTerm}
           section={section}

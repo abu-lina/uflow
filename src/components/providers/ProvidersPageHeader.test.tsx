@@ -17,7 +17,6 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'sections.food': 'Food',
         'sections.ummah': 'Ummah',
         'sections.stores': 'Stores',
-        'search.everywhere': 'Everywhere',
         'search.context.edit': 'Edit search',
         'search.context.allResults': 'All results',
       };
@@ -33,7 +32,6 @@ describe('ProvidersPageHeader (Plan 109)', () => {
     render(
       <ProvidersPageHeader
         categoryId="cat-1"
-        location="Berlin"
         peopleSummary="2 Adults"
         searchTerm="Doner"
         section="food"
@@ -41,7 +39,7 @@ describe('ProvidersPageHeader (Plan 109)', () => {
     );
 
     expect(screen.getByRole('searchbox')).toHaveValue('Doner');
-    expect(screen.getByRole('combobox')).toHaveValue('Berlin');
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     // Section tabs are now rendered in ProvidersContent (scrolls with page, not inside fixed header)
     expect(screen.queryByRole('tablist', { name: /browse sections/i })).not.toBeInTheDocument();
   });
