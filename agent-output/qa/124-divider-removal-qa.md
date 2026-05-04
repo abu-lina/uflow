@@ -2,7 +2,7 @@
 ID: 124
 Origin: 124
 UUID: 7f6a8e3b
-Status: QA Complete
+Status: Released
 ---
 
 # QA Report: Redundant Divider Removal in Providers Search Header

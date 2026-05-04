@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-05-04
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.12.7
+**Current Version**: v0.12.9
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -129,10 +129,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.12.6 — Released 2026-05-03 · Plan 122: Category image unification — DB-driven Supabase Storage
+**Current Working Release**: v0.12.9 — Released 2026-05-04 · Plan 124: Remove location field from providers search bar
 
 **Release Status**: Released  
-**Ready for Release**: ✅ v0.12.6 complete  
+**Ready for Release**: ✅ v0.12.9 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -149,7 +149,9 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
-| v0.12.2 | 2026-05-02 | Plan 115 (Provider card specialty tags + open/closed status — Closes #195) | Released |
+| v0.12.9 | 2026-05-04 | Plan 124 (Remove location field from providers search bar + divider cleanup) | Released |
+| v0.12.8 | 2026-05-04 | Plan 123 Iteration 2 (Profile route exemption in early-access middleware) | Released |
+| v0.12.7 | 2026-05-04 | Plan 123 (Navbar auth race condition fix + profile route exemption) | Released |
 | v0.12.1 | 2026-05-02 | Plan 119 (Category filter section guardrail + data remediation — Closes #202) | Released |
 | v0.12.0 | 2026-05-02 | Plan 116 (Field-Level Schema Remediation — 28 findings, Architecture 118 — Closes #200) | Released |
 | v0.11.7 | 2026-04-30 | Plan 114 Phase 5 (F-1 dual-PK consolidation: categories, users, community_services, providers — PR #198) | Released |

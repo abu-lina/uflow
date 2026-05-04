@@ -2,7 +2,7 @@
 ID: 124
 Origin: 124
 UUID: 7f6a8e3b
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Remove Location Field from Providers Search Bar
