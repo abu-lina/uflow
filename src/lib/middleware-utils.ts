@@ -192,6 +192,12 @@ export async function shouldRedirectToWaitlist(
     return false; // Allow access, let page component handle auth/authorization
   }
 
+  // Special case: Allow access to /profile routes in early access mode.
+  // Profile pages apply their own auth guards and redirect unauthenticated users to /login.
+  if (!isAppLaunched && (pathname === '/profile' || pathname.startsWith('/profile/'))) {
+    return false;
+  }
+
   // Special case: Legal pages must always be publicly accessible (GDPR/TMG compliance)
   // These pages should be accessible regardless of app launch status or waitlist token
   if (pathname === '/terms' || pathname === '/privacy-policy' || pathname === '/impressum') {

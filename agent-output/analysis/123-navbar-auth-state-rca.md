@@ -2,7 +2,7 @@
 ID: 123
 Origin: 123
 UUID: 4f8e1a2c
-Status: Planned
+Status: Active
 ---
 
 # Plan 123 — RCA: Navbar Auth State Not Updating Reactively Post-Login
@@ -11,6 +11,7 @@ Status: Planned
 | Rev | Date | Author | Summary |
 |-----|------|--------|---------|
 | 0.1 | 2026-05-04 | Analyst | Initial RCA — code investigation complete |
+| 0.2 | 2026-05-04 | Analyst | Iteration 2 — user reports fix insufficient; discovered middleware `/profile` redirect blocker (F6) |
 
 ---
 
@@ -305,3 +306,131 @@ The fix must address the race condition at its source. Two approaches are viable
 - **Option C (Architectural)**: Replace `createClient` (non-SSR) with `createBrowserClient` from `@supabase/ssr`. This stores sessions in cookies natively, removes the need for `AuthSyncer` manual sync, and makes the system consistent with the server client. Larger scope.
 
 Planner should evaluate which option is appropriate given risk tolerance and sprint scope.
+
+---
+---
+
+## Iteration 2 — Post-Fix Re-Investigation
+
+**Trigger**: User reports Plan 123 fix (Iteration 1, v0.12.7) has not resolved the issue: "if I login and try to switch to my profile I'm not able to do so before I have reloaded the app."
+
+**Scope**: Re-investigate the login → profile navigation flow after the Iteration 1 fix was applied. Identify why the symptom persists.
+
+### Iteration 2 Methodology
+
+1. Verified Iteration 1 fix is in the codebase (git diff against `main`, confirmed `router.push` removed from `handleSubmit` success path)
+2. Traced full auth state propagation: `signInWithPassword` → `_notifyAllSubscribers` → `AuthProvider.setUser` → `useEffect([user])` → `router.replace('/profile')`
+3. Verified Supabase `_notifyAllSubscribers` awaits ALL callbacks (including AuthSyncer's cookie-setting fetch) before `signInWithPassword` returns
+4. Inspected middleware (`src/middleware.ts`) route handling for `/profile`
+5. Inspected `shouldRedirectToWaitlist` logic in `src/lib/middleware-utils.ts`
+
+### Iteration 2 Findings
+
+#### F6 — Middleware Blocks `/profile` in Early Access Mode (NEW ROOT CAUSE)
+
+**Confidence: L1 Proven** (direct code inspection of `src/middleware.ts` and `src/lib/middleware-utils.ts`)
+
+The Next.js middleware intercepts ALL route navigations (including client-side soft navigations via RSC payload fetches). For `/profile`, when `isAppLaunched = false`:
+
+**File**: `src/lib/middleware-utils.ts`
+
+1. `/profile` is listed in `APP_ROUTES` (line 11) → `isAppRoute('/profile')` returns `true`
+2. `/profile` is NOT in `isExcludedRoute` → returns `false`
+3. `/profile` has **NO special case exemption** in `shouldRedirectToWaitlist` — unlike:
+   - `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/auth/*` (auth routes — explicitly exempted)
+   - `/providers`, `/providers/*`, `/community-services/*` (discovery routes — exempted)
+   - `/saved` (bookmarks — exempted)
+   - `/create`, `/create/*` (recommendation flow — exempted)
+   - Legal pages (GDPR compliance — exempted)
+4. The only escape path is `accessToken` check: middleware reads `sb-access-token` cookie → validates → checks `isAdminOrModerator`
+5. **Result**: For any non-admin user → `shouldRedirectToWaitlist` returns `true` → middleware redirects to `/providers`
+
+**Code trace** (`shouldRedirectToWaitlist` decision path for `/profile`, `isAppLaunched = false`):
+
+```
+pathname = '/profile'
+├─ pathname === '/' → false
+├─ isAppLaunched → false → continue
+├─ isExcludedRoute('/profile') → false → continue
+├─ isAppRoute('/profile') → true → continue
+├─ waitlistToken + isEarlyAccessRoute('/profile') → /profile NOT in EARLY_ACCESS_ROUTES → continue
+├─ special cases: /create, /recommend-provider, /providers, /saved, legal, auth → NONE match /profile
+├─ accessToken check:
+│   ├─ cookie absent → return true (REDIRECT)
+│   ├─ cookie present, user valid, isAdmin → return false (ALLOW)
+│   └─ cookie present, user valid, NOT admin → return true (REDIRECT)
+└─ return true → REDIRECT TO /providers
+```
+
+**Impact on user flow**:
+
+After Iteration 1 fix:
+1. User logs in → `handleSubmit` returns without navigation ✓
+2. `onAuthStateChange(SIGNED_IN)` fires → `setUser(session.user)` ✓
+3. `useEffect([user])` fires → `router.replace('/profile')` ✓
+4. Next.js makes RSC payload request to `/profile` → **middleware intercepts** → redirect to `/providers` ✗
+5. User ends up on `/providers` instead of `/profile`
+6. User clicks Profile icon in navbar → `href="/profile"` → **middleware redirects again** ✗
+
+The Plan 123 Iteration 1 fix (removing premature `router.push`) was correct for the auth race condition but was **masked by this independent middleware blocker** operating at a different layer.
+
+#### F7 — Iteration 1 Fix Verified Correct
+
+**Confidence: L1 Proven** (git diff and code inspection)
+
+The Plan 123 Iteration 1 changes are confirmed in the codebase:
+
+- `LoginPageContent.handleSubmit`: success path does `return;` (no `router.push`) — verified via `git diff main`
+- `LoginModal.handleSubmit`: success path calls `onClose()` only (no `router.push`) — verified by reading source
+- `useEffect([user])` in `LoginPageContent` correctly fires `router.replace('/profile')` when `user` becomes non-null
+- `AuthProvider.onAuthStateChange` callback correctly sets `user` state on `SIGNED_IN` event
+- Supabase `_notifyAllSubscribers` (in `@supabase/auth-js`) awaits ALL subscriber callbacks (including AuthSyncer's cookie-setting fetch) before `signInWithPassword` returns — the `sb-access-token` cookie IS set before `handleSubmit` completes
+
+The auth race condition fix is architecturally sound. The remaining symptom is caused by F6 (middleware redirect), not by the auth state propagation.
+
+#### F8 — Cookie Timing Is Not the Issue
+
+**Confidence: L1 Proven** (Supabase `@supabase/auth-js` source code inspection at `node_modules/@supabase/auth-js/dist/module/GoTrueClient.js`)
+
+`_notifyAllSubscribers` (line 2010) calls all registered `onAuthStateChange` callbacks via `Promise.all`. The AuthSyncer's subscription callback (which does `await fetch('/api/auth/set')`) is included. The `signInWithPassword` function awaits `_notifyAllSubscribers`. Therefore:
+
+- `signInWithPassword` does NOT return until the cookie-setting fetch completes
+- `signInWithEmailConfirmation` does NOT return until `signInWithPassword` returns
+- `handleSubmit` does NOT finish until `signInWithEmailConfirmation` returns
+- `router.replace('/profile')` (in `useEffect`) fires AFTER React re-renders
+- By this point, the `sb-access-token` cookie is already set in the browser
+
+The cookie IS available for the subsequent RSC payload fetch to `/profile`. The middleware DOES see the cookie. But for non-admin users, the middleware STILL redirects because `isAdminOrModerator` returns false.
+
+### Iteration 2 Root Cause
+
+**Primary**: F6 — Middleware redirects `/profile` to `/providers` for all non-admin users when `isAppLaunched = false`. The `/profile` route was never added to the special case exemptions in `shouldRedirectToWaitlist`.
+
+**Relationship to Iteration 1**: The Iteration 1 fix (F1/F2 race condition) was correct but insufficient. The middleware blocker (F6) is a **separate, independent issue** at the server/Edge layer that prevents the client-side fix from taking effect for the `/profile` route.
+
+**Why reload might appear to help**: If the user is admin/moderator AND the `sb-access-token` cookie wasn't set in time for the first navigation (unlikely but possible), reload ensures the cookie is present. For non-admin users, reload does NOT help — the middleware always redirects.
+
+### Iteration 2 Remaining Gaps
+
+| # | Unknown | Blocker | Required Action | Owner |
+|---|---------|---------|-----------------|-------|
+| G5 | What is `isAppLaunched` on the user's actual test environment? | If `true`, F6 doesn't apply and there's a different issue | Check `.env.local` or UAT env vars for `NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED` | User |
+| G6 | Is the user admin/moderator? | If admin, middleware allows access with cookie | Verify user role in Supabase `profiles` table | User |
+| G7 | Does Next.js 15 middleware actually run on RSC payload fetches during soft navigation? | Affects whether F6 applies to `router.replace` navigations | Check browser Network tab for redirect responses on `/profile` RSC fetch | User |
+
+### Iteration 2 Analysis Recommendations
+
+1. **Confirm F6 empirically** (highest priority): Open browser DevTools → Network tab → log in → watch for the `/profile` RSC payload request → check if middleware returns a 307/308 redirect to `/providers`. This would conclusively prove F6.
+
+2. **Check `isAppLaunched` value**: Run `console.log(process.env.NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED)` in the browser console or check the `.env.local` file. If `true`, F6 doesn't apply and investigation should continue on the client side.
+
+3. **If F6 confirmed**: Add `/profile` to the special case exemptions in `shouldRedirectToWaitlist` (same pattern as `/saved` — allow access, let page component handle auth/authorization). This is a minimal fix.
+
+### Iteration 2 Handoff to Planner
+
+**Gate satisfied**: New root cause (F6) identified with file references and decision path trace.
+
+**Fix scope for Planner**:
+- Add `/profile` (and subpaths) to the middleware exemptions in `src/lib/middleware-utils.ts`
+- Pattern: same as the existing `/saved` exemption — allow access, let `ProfileContent`'s own `useEffect` guard handle unauthorized users
+- Alternatively, add `/profile` to the auth routes exemption block alongside `/login` and `/signup`
