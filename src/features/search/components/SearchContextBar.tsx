@@ -127,8 +127,6 @@ export function SearchContextBar({
         </div>
       </div>
 
-      <span aria-hidden="true" className="mr-1 h-5 w-px shrink-0 bg-gray-300" />
-
       <button
         aria-label={editLabel}
         className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[#585858] transition-opacity hover:opacity-70"
