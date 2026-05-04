@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -19,7 +18,6 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
-  const router = useRouter();
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
@@ -40,16 +38,16 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
       
       if (signInError) {
         if (signInError.message === 'EMAIL_NOT_CONFIRMED') {
-          setError('Bitte überprüfe deine E-Mail und bestätige deine Registrierung vor der Anmeldung.');
+          setError(t('login.emailNotConfirmed'));
           setIsEmailConfirmationError(true);
         } else if (signInError.message === 'EMAIL_NOT_FOUND') {
-          setError('Diese E-Mail-Adresse ist nicht registriert. Bitte erstelle zuerst ein Konto.');
+          setError(t('login.emailNotFound'));
           setIsEmailConfirmationError(false);
         } else {
-          setError('Ungültige E-Mail oder Passwort. Bitte versuche es erneut.');
+          setError(t('login.invalidCredentials'));
           setIsEmailConfirmationError(false);
-          toast.error('Anmeldung fehlgeschlagen', {
-            description: 'Bitte überprüfe deine Anmeldedaten und versuche es erneut.',
+          toast.error(t('login.loginFailedToast'), {
+            description: t('login.loginFailedDescription'),
             duration: 4000,
           });
         }
@@ -58,11 +56,10 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
 
       if (data) {
         onClose();
-        router.push('/profile');
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.');
+      setError(t('login.unexpectedError'));
       setIsEmailConfirmationError(false);
     } finally {
       setIsLoading(false);
@@ -71,7 +68,7 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
 
   const handleResendConfirmation = async () => {
     if (!formData.email) {
-      setError('Bitte gib zuerst deine E-Mail-Adresse ein.');
+      setError(t('login.enterEmailFirst'));
       return;
     }
 
@@ -91,9 +88,9 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
       });
 
       if (!tokenResponse.ok) {
-        setError('Bestätigungs-E-Mail konnte nicht gesendet werden.');
-        toast.error('E-Mail konnte nicht gesendet werden', {
-          description: 'Bitte versuche es später erneut.',
+        setError(t('login.confirmationEmailFailed'));
+        toast.error(t('login.emailFailedToast'), {
+          description: t('login.emailFailedDescription'),
           duration: 4000,
         });
         return;
@@ -117,24 +114,24 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
       });
 
       if (emailResponse.ok) {
-        setError('Bestätigungs-E-Mail wurde gesendet. Bitte überprüfe dein Postfach.');
+        setError(t('login.confirmationEmailSent'));
         setIsEmailConfirmationError(false);
-        toast.success('E-Mail gesendet', {
-          description: 'Bitte überprüfe dein Postfach.',
+        toast.success(t('login.emailSentToast'), {
+          description: t('login.emailSentDescription'),
           duration: 4000,
         });
       } else {
-        setError('Bestätigungs-E-Mail konnte nicht gesendet werden.');
-        toast.error('E-Mail konnte nicht gesendet werden', {
-          description: 'Bitte versuche es später erneut.',
+        setError(t('login.confirmationEmailFailed'));
+        toast.error(t('login.emailFailedToast'), {
+          description: t('login.emailFailedDescription'),
           duration: 4000,
         });
       }
     } catch (error) {
       console.error('Resend confirmation error:', error);
-      setError('Bestätigungs-E-Mail konnte nicht gesendet werden.');
-      toast.error('Ein Fehler ist aufgetreten', {
-        description: 'Bitte versuche es später erneut.',
+      setError(t('login.confirmationEmailFailed'));
+      toast.error(t('login.errorOccurredToast'), {
+        description: t('login.errorOccurredDescription'),
         duration: 4000,
       });
     } finally {
@@ -160,10 +157,10 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
         <div className="flex h-full w-[571px] flex-col justify-center rounded-tr-[48px] bg-white p-16 overflow-y-auto">
           <div className="mb-8">
             <h1 className="font-inter-tight text-3xl font-semibold text-content-heading">
-              Willkommen zurück
+              {t('login.welcomeTitle')}
             </h1>
             <p className="mt-4 font-inter text-lg text-content-muted">
-              Melde dich an, um fortzufahren.
+              {t('login.welcomeDescription')}
             </p>
           </div>
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -171,8 +168,8 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
               <FormInput
                 required
                 disabled={isLoading}
-                label={t('login.emailLabel') || 'E-Mail'}
-                placeholder={t('login.emailPlaceholder') || 'Email eingeben'}
+                label={t('login.emailLabel')}
+                placeholder={t('login.emailPlaceholder')}
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -180,8 +177,8 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
               <FormInput
                 required
                 disabled={isLoading}
-                label={t('login.passwordLabel') || 'Passwort'}
-                placeholder={t('login.passwordPlaceholder') || 'Passwort eingeben'}
+                label={t('login.passwordLabel')}
+                placeholder={t('login.passwordPlaceholder')}
                 rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
@@ -220,19 +217,19 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
               disabled={isLoading}
               type="submit"
             >
-              {isLoading ? t('login.loginButtonLoading') || 'Wird angemeldet...' : t('login.loginButton') || 'Anmelden'}
+              {isLoading ? t('login.loginButtonLoading') : t('login.loginButton')}
             </button>
           </form>
           <div className="mt-8 flex w-full flex-col items-center gap-3">
             <p className="text-center text-[11px] leading-[13px] text-content-muted">
-              {t('legal.privacyStatement') || 'Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.'}
+              {t('legal.privacyStatement')}
             </p>
             {onSwitchMode && (
               <LinkButton
                 type="button"
                 onClick={onSwitchMode}
               >
-                {t('login.noAccount') || 'Noch kein Konto? Jetzt registrieren.'}
+                {t('login.noAccount')}
               </LinkButton>
             )}
           </div>
