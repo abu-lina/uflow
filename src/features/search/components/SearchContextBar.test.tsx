@@ -36,10 +36,9 @@ describe('SearchContextBar', () => {
     vi.clearAllMocks();
   });
 
-  it('renders search input value, location, and people summary', () => {
+  it('renders search input value and people summary without location field', () => {
     render(
       <SearchContextBar
-        location="Berlin"
         peopleSummary="2 Adults"
         searchTerm="Doner"
         section="food"
@@ -47,21 +46,20 @@ describe('SearchContextBar', () => {
     );
 
     expect(screen.getByRole('searchbox')).toHaveValue('Doner');
-    expect(screen.getByRole('combobox')).toHaveValue('Berlin');
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     expect(screen.getByText('2 Adults')).toBeInTheDocument();
   });
 
   it('hides people summary segment when no people summary is provided', () => {
     render(
       <SearchContextBar
-        location="Berlin"
         searchTerm="Doner"
         section="food"
       />,
     );
 
     expect(screen.getByRole('searchbox')).toHaveValue('Doner');
-    expect(screen.getByRole('combobox')).toHaveValue('Berlin');
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     expect(screen.queryByText('2 Adults')).not.toBeInTheDocument();
   });
 
@@ -69,15 +67,12 @@ describe('SearchContextBar', () => {
     render(
       <SearchContextBar
         categoryId="8204a370-26fb-4c8d-8183-2e5550a09dcb"
-        location=""
         section="food"
       />,
     );
 
     expect(screen.getByRole('searchbox')).toHaveAttribute('placeholder', 'Food');
-    expect(screen.getByRole('combobox')).toHaveValue('__none__');
-    expect(screen.getByRole('combobox')).toBeDisabled();
-    expect(screen.getByRole('option', { name: 'Where?' })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
   it('prefers selected category label over section label when category is selected without q', () => {
@@ -85,7 +80,6 @@ describe('SearchContextBar', () => {
       <SearchContextBar
         categoryId="a8d3cf09-b606-4de9-8744-b8c584c5e172"
         categoryLabel="Halal Restaurants"
-        location=""
         section="food"
       />,
     );
@@ -96,7 +90,6 @@ describe('SearchContextBar', () => {
   it('updates q param on Enter when user edits search term', () => {
     render(
       <SearchContextBar
-        location="Berlin"
         searchTerm="Doner"
         section="food"
       />,
@@ -112,7 +105,6 @@ describe('SearchContextBar', () => {
   it('clears q param via x button to show all results', () => {
     render(
       <SearchContextBar
-        location="Berlin"
         searchTerm="Indigo"
         section="food"
       />,
@@ -123,26 +115,22 @@ describe('SearchContextBar', () => {
     expect(mockPush).toHaveBeenCalledWith('/providers?section=food&location=Berlin');
   });
 
-  it('does not expose an all-locations option in the providers location selector', () => {
+  it('does not render any location field in the providers search context bar', () => {
     render(
       <SearchContextBar
-        location="Berlin"
         searchTerm="Indigo"
         section="food"
       />,
     );
 
-    const locationSelect = screen.getByRole('combobox');
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Everywhere' })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Überall' })).not.toBeInTheDocument();
-    expect(locationSelect).toHaveValue('Berlin');
-    expect(locationSelect).not.toBeDisabled();
   });
 
   it('navigates back to /search with section when edit button is clicked', () => {
     render(
       <SearchContextBar
-        location="Berlin"
         searchTerm="Doner"
         section="ummah"
       />,
@@ -156,7 +144,6 @@ describe('SearchContextBar', () => {
   it('navigates back to home when the left icon button is clicked', () => {
     render(
       <SearchContextBar
-        location="Berlin"
         searchTerm="Doner"
         section="food"
       />,

@@ -5,7 +5,13 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-05-04
+## [0.12.8] - 2026-05-04
+
+### Changed
+
+- **Remove location field from providers search bar (Plan 124)**: The location selector is completely removed from the `/providers` fixed search header. The search bar now shows query input, section tabs, and people summary only — no location dropdown. Existing URL parameters (`?location=Berlin`) continue to work for backend filtering. Regression tests confirm location combobox is absent from the DOM.
+
+## [0.12.7] - 2026-05-04
 
 ### Changed
 
