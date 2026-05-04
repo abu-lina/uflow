@@ -42,10 +42,6 @@ export function SearchContextBar({
   const editLabelCandidate = t(editKey);
   const editLabel = editLabelCandidate === editKey ? 'Edit search' : editLabelCandidate;
 
-  const everywhereKey = 'search.everywhere';
-  const everywhereLabelCandidate = t(everywhereKey);
-  const everywhereLabel = everywhereLabelCandidate === everywhereKey ? 'Everywhere' : everywhereLabelCandidate;
-
   const resolvedSearchTerm =
     searchTerm?.trim() || (categoryId ? categoryLabel?.trim() || sectionLabel : allResultsLabel);
   const [draftQuery, setDraftQuery] = useState(searchTerm?.trim() ?? '');
@@ -54,8 +50,10 @@ export function SearchContextBar({
     setDraftQuery(searchTerm?.trim() ?? '');
   }, [searchTerm]);
 
-  const resolvedLocation = location && location.trim() ? location : everywhereLabel;
-  const resolvedLocationValue = location && location.trim() ? location.trim() : '';
+  const resolvedLocation = location && location.trim() ? location.trim() : '';
+  const hasResolvedLocation = !!resolvedLocation;
+  const resolvedLocationValue = hasResolvedLocation ? resolvedLocation : '__none__';
+  const emptyLocationLabel = t('suchen.accordions.woEmpty');
   const backHomeLabel = t('search.context.backToHome');
 
   const navigateWithQuery = (nextQuery: string) => {
@@ -89,6 +87,10 @@ export function SearchContextBar({
   };
 
   const handleLocationChange = (nextLocation: string) => {
+    if (nextLocation === '__none__') {
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     params.set('section', section);
 
@@ -145,11 +147,15 @@ export function SearchContextBar({
           <select
             aria-label={t('search.filter')}
             className="max-w-28 border-0 bg-transparent text-sm font-medium text-[#8a8a8a] outline-none ring-0 focus:outline-none focus:ring-0"
+            disabled={!hasResolvedLocation}
             value={resolvedLocationValue}
             onChange={(e) => handleLocationChange(e.target.value)}
           >
-            {resolvedLocationValue ? <option value={resolvedLocationValue}>{resolvedLocation}</option> : null}
-            <option value="">{everywhereLabel}</option>
+            {hasResolvedLocation ? (
+              <option value={resolvedLocationValue}>{resolvedLocation}</option>
+            ) : (
+              <option value="__none__">{emptyLocationLabel}</option>
+            )}
           </select>
 
           {peopleSummary?.trim() ? (

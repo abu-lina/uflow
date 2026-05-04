@@ -17,7 +17,6 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'sections.food': 'Food',
         'sections.ummah': 'Ummah',
         'sections.stores': 'Stores',
-        'search.everywhere': 'Everywhere',
         'search.context.edit': 'Edit search',
         'search.context.allResults': 'All results',
       };

@@ -17,13 +17,13 @@ vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({
     t: (key: string) => {
       const map: Record<string, string> = {
-        'search.everywhere': 'Everywhere',
         'sections.food': 'Food',
         'sections.ummah': 'Ummah',
         'sections.stores': 'Stores',
         'search.context.edit': 'Edit search',
         'search.context.backToHome': 'Back to home',
         'search.ariaLabel': 'Search in the Ummah',
+        'suchen.accordions.woEmpty': 'Where?',
         'suchen.clearAll': 'Clear all',
       };
       return map[key] ?? key;
@@ -75,7 +75,9 @@ describe('SearchContextBar', () => {
     );
 
     expect(screen.getByRole('searchbox')).toHaveAttribute('placeholder', 'Food');
-    expect(screen.getByRole('combobox')).toHaveValue('');
+    expect(screen.getByRole('combobox')).toHaveValue('__none__');
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    expect(screen.getByRole('option', { name: 'Where?' })).toBeInTheDocument();
   });
 
   it('prefers selected category label over section label when category is selected without q', () => {
@@ -121,7 +123,7 @@ describe('SearchContextBar', () => {
     expect(mockPush).toHaveBeenCalledWith('/providers?section=food&location=Berlin');
   });
 
-  it('updates location via dropdown and removes location filter when set to everywhere', () => {
+  it('does not expose an all-locations option in the providers location selector', () => {
     render(
       <SearchContextBar
         location="Berlin"
@@ -130,9 +132,11 @@ describe('SearchContextBar', () => {
       />,
     );
 
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: '' } });
-
-    expect(mockPush).toHaveBeenCalledWith('/providers?section=food');
+    const locationSelect = screen.getByRole('combobox');
+    expect(screen.queryByRole('option', { name: 'Everywhere' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Überall' })).not.toBeInTheDocument();
+    expect(locationSelect).toHaveValue('Berlin');
+    expect(locationSelect).not.toBeDisabled();
   });
 
   it('navigates back to /search with section when edit button is clicked', () => {
