@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-05-03
+**Last Updated**: 2026-05-04
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.12.6
+**Current Version**: v0.12.7
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -30,6 +30,7 @@
 | 2026-03-02       | Plan 032 released: DIY Agent Memory System (tooling)               | Standalone tooling release — memory-extension-v0.1.0 replaces Flowbaby backend, eliminates daemon lock failures, local-first SQLite WAL                   |
 | 2026-04-29 11:00 | Plan 111 released (v0.11.3): Canonical Section Routes + City-Selection Bugfixes | City-selection CTA fixed (→ /), navbar excluded via locale-safe suffix, /food /stores /ummah canonical routes, section resolver centralized. Issue #188 closed. |
 | 2026-05-03T22:30Z | Plan 122 released (v0.12.6): Category image unification — DB-driven Supabase Storage | Eliminated hardcoded UUID→static-PNG map; all 5 callsites (ProviderCard, ProviderDetailPage, ProviderDetailModal, MobileProviderDetail, UnifiedGallery) wired to `categories.category_images` JSONB. 7.2 MB static PNGs removed from repo. Turkish (8), Arabic (6), Italian (4) images in Supabase Storage. Production JSONB pre-populated; Storage upload to complete post-deploy. PR #208 squash-merged (f1fe880a). Tag v0.12.6 pushed. Issue #207 closed. |
+| 2026-05-04T11:20Z | Plan 123 released (v0.12.7): Fix navbar auth state race condition on post-login | Removed premature `router.push()` from `LoginPageContent.handleSubmit` and `LoginModal.handleSubmit` success paths. Navigation now deferred to `useEffect([user])`, firing only after `onAuthStateChange(SIGNED_IN)` commits user to React context — eliminating redirect-loop and logged-out navbar flash on mobile PWA login. i18n: 5 new login error/toast keys across 6 locales (en/de/ar/tr/ur/ps). 3 TDD regression tests (RED→GREEN). PR #213 squash-merged (`8eda1f73`). Tag v0.12.7 pushed. |
 | 2026-05-03T17:15Z | Plan 119 released (v0.12.4): Provider Image UX — ornament fallback + image enrichment | Shipped Figma-aligned ornament-masked provider placeholder (M1b), deterministic category stock imagery, Unsplash curate/assign enrichment workflow (M3), and migration 088 enrichment metadata schema extension. PR #204 squash-merged, tag v0.12.4 pushed, issue #203 closed. |
 | 2026-04-29 22:25Z | Plan 114 Phase 2 released (v0.11.4): F-3 data coherence fix — boolean columns as sole source of truth | Dropped `barakah_effects TEXT[]` from `providers` and `community_services`. Updated `get_community_services_for_provider` and `upsert_joinhalal_providers` RPCs. Removed all app-layer references (31 files). Providers created via form are now immediately searchable via boolean filters. PR #194, tag v0.11.4. |
 | 2026-04-30T00:55Z | Plan 114 Phase 3 released (v0.11.5): F-2 junction tables + F-4 typed FKs — referential integrity at DB level | Created 4 junction tables (provider_offers, provider_needs, community_service_offers, community_service_needs) with FK constraints + CASCADE. Typed FK columns added to bookmarks + provider_badges with mutual exclusion CHECK. All polymorphic and array columns dropped. 13 service files + 5 UI components migrated. 1185 tests passing. Tag v0.11.5. |
