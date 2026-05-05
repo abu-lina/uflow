@@ -17,8 +17,8 @@ Status: Active
 
 **Value Statement**: Remove the location field from the `/providers` search bar to simplify the search interface. Users should no longer see a location selector in the fixed header.
 **Value Delivered**: YES — Location selector completely absent from search bar; search/section/people functionality fully preserved; backward-compatible with legacy location URL params.
-**Implementation Duration**: Multi-session (~6h total from initial scope to Stage 1 commit `659d00f3`)
-**Overall Assessment**: Multi-session plan with scope evolution (partial → full field removal). Each phase executed correctly within its session, but inter-session handoff created cumulative state that required careful integration at Stage 1: version collision, CHANGELOG conflict, stash-before-rebase, and double lifecycle docs. New deployment process improvements identified. Prior process improvements confirmed by recurrence.
+**Implementation Duration**: Multi-session (~7h total from initial scope to v0.12.9 tag)
+**Overall Assessment**: Multi-session plan with scope evolution (partial → full field removal). Entire lifecycle completed. Stage 1 resolved a v0.12.7→v0.12.8 collision. Stage 2 resolved a second collision (v0.12.8→v0.12.9) caused by a parallel plan merging between Stage 1 commit and Stage 2 push. Both PI-1 (stash-before-rebase) and PI-3 (second fetch before push) from the prior retrospective were applied and confirmed effective. Released as v0.12.9 via PR #217, squash SHA `e0463150`.
 **Focus**: Emphasises repeatable process improvements — particularly multi-session and parallel-session DevOps patterns.
 
 ---
@@ -36,15 +36,19 @@ Status: Active
 | Code Review | Session 2 | ~20min | APPROVED_WITH_COMMENTS; 10/10 tests |
 | QA | Session 2 | ~15min | 1,236 tests; all pass |
 | UAT | Session 2 | ~15min | APPROVED FOR RELEASE (v0.12.8 scope) |
-| DevOps Stage 1 (v0.12.8) | Session 2 | ~35min | Version collision detected + resolved; rebase + CHANGELOG conflict + amend |
-| **Total (Session 2 only)** | — | **~2.5h** | — |
-| **Total (both sessions)** | — | **~6h** | Includes scope evolution overhead |
+| DevOps Stage 1 (v0.12.8) | Session 2 | ~35min | Version collision v0.12.7→v0.12.8 detected + resolved; rebase + CHANGELOG conflict + amend |
+| Divider cleanup + CR + QA + UAT | Session 3 | ~45min | Cosmetic follow-up pipeline; 10/10 + 1,238 tests pass |
+| DevOps Stage 2 (v0.12.9) | Session 3 | ~30min | Second collision v0.12.8→v0.12.9 at push; PI-1 + PI-3 applied; PR #217 merged; tag pushed |
+| **Total (Session 3 only)** | — | **~1.5h** | — |
+| **Total (all sessions)** | — | **~7h** | Includes scope evolution + two collision resolutions |
 
 ---
 
 ## What Went Well (Process Focus)
 
 ### Workflow and Communication
+
+- **PI-1 and PI-3 applied and confirmed effective.** The stash-before-rebase pattern (PI-1) unblocked a Stage 2 rebase when the deployment doc had uncommitted edits. The second `git fetch --tags` before push (PI-3) detected the v0.12.8 collision from a parallel plan that merged between Stage 1 and Stage 2. Both patterns resolved the blockers cleanly without rework. This is the first confirmed instance of retro-documented PIs preventing failures in a subsequent session.
 
 - **Fix-in-review protocol effective.** Both code review sessions caught residual issues (separator residue, hardcoded i18n fallback) and applied fixes in-review rather than issuing separate implementer handoffs. This kept the blast radius small and avoided extra loop cycles.
 
@@ -216,6 +220,21 @@ Or: Always overwrite with a single canonical filename and archive prior with a `
 
 ---
 
+### PI-7 (HIGH): Version collision can occur at Stage 2 push, not only Stage 1 rebase
+
+**Observed**: Stage 1 resolved v0.12.7→v0.12.8. By Stage 2 push, a parallel plan had merged and tagged `v0.12.8` on `origin/main` (`9bcc660a` — middleware fix) in the window between Stage 1 commit and Stage 2 push. The PI-3 pre-push fetch guard caught it; without it the push would have been silently rejected or tagged over a live release.
+**Current procedure**: PI-3 is scoped to Stage 1 rebase. The Stage 2 remote-sync check (step 8) runs `git fetch origin --prune --tags` but does not explicitly recheck the version target.
+**Recommended fix**: Add an explicit version collision guard immediately before `git push` in Stage 2 step 8:
+```bash
+git fetch origin --tags
+LATEST=$(git tag --list "v*" | sort -V | tail -1)
+# If $LATEST >= $TARGET_VERSION: bump, update CHANGELOG + packages, amend commit
+```
+**Priority**: HIGH — a push-time collision is more disruptive than a Stage 1 collision because the branch is already approved and the PR window has opened.
+**Status**: ✅ **Codified in `devops.agent.md` Stage 2 step 8 (2026-05-05)**
+
+---
+
 ### Confirmed Recurrences from Prior Retrospective
 
 The following items were identified in the memory record of a prior Plan 124 retrospective (v0.12.7 session) and have now recurred or been confirmed:
@@ -237,20 +256,22 @@ The following items were identified in the memory record of a prior Plan 124 ret
 3. **Backward compat preserved proactively.** Keeping SSR/API location handling intact while removing the UI field prevents breakage without requiring extra planning.
 4. **Post-rebase integrity gate.** Conflict markers check + JSON parse + type-check + targeted tests after rebase is a reliable multi-layer validation that caught all conflict artifacts in this session.
 5. **Explicit absence testing.** `queryByRole('combobox').not.toBeInTheDocument()` is clearer than implicitly omitting the assertion.
+6. **Documented PIs applied and confirmed.** PI-1 and PI-3 from the prior retrospective were retrieved from memory and applied when the same failure modes recurred at Stage 2. This confirms the retrospective→PI→codification cycle has measurable process value.
 
 ---
 
 ## Next Actions
 
-| Action | Priority | Owner |
-|---|---|---|
-| Codify PI-1 (stash-before-rebase) into DevOps Stage 1 procedure | HIGH | ProcessImprovement |
-| Codify PI-2 (CHANGELOG conflict pattern) into DevOps Stage 1 procedure | HIGH | ProcessImprovement |
-| Codify PI-3 (second `git fetch --tags` before rebase) into DevOps Stage 1 procedure | HIGH | ProcessImprovement |
-| Codify PI-4 (scope-change artifact update gate) into implementation handoff | MEDIUM | ProcessImprovement |
-| Codify PI-5 (multi-session lifecycle doc naming) into document-lifecycle instructions | MEDIUM | ProcessImprovement |
-| Close DF-1 (manual browser verification) with named owner + concrete trigger | LOW | DevOps at Stage 2 |
-| Push branch + create PR for Plan 124 v0.12.8 (Stage 2) | BLOCKING | DevOps (awaiting user approval) |
+| Action | Priority | Owner | Status |
+|---|---|---|---|
+| Codify PI-1 (stash-before-rebase) into DevOps Stage 1 procedure | HIGH | ProcessImprovement | ✅ Done |
+| Codify PI-2 (CHANGELOG conflict pattern) into DevOps Stage 1 procedure | HIGH | ProcessImprovement | ✅ Done |
+| Codify PI-3 (second `git fetch --tags` before rebase) into DevOps Stage 1 procedure | HIGH | ProcessImprovement | ✅ Done |
+| Codify PI-4 (scope-change artifact update gate) into implementation handoff | MEDIUM | ProcessImprovement | Open |
+| Codify PI-5 (multi-session lifecycle doc naming) into document-lifecycle instructions | MEDIUM | ProcessImprovement | Open |
+| Codify PI-7 (pre-push version collision guard) into DevOps Stage 2 step 8 | HIGH | ProcessImprovement | ✅ Done |
+| Close DF-1 (manual browser verification) with named owner + concrete trigger | LOW | DevOps | Open (post-release monitoring) |
+| Push branch + create PR for Plan 124 v0.12.9 (Stage 2) | BLOCKING | DevOps | ✅ Done (PR #217, `e0463150`) |
 
 ---
 
@@ -259,3 +280,4 @@ The following items were identified in the memory record of a prior Plan 124 ret
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-05-04T13:00Z | retrospective | Created retrospective for Plan 124 v0.12.8; incorporated prior memory PIs + new deployment lessons |
+| 2026-05-05 | pi | Stage 2 addendum: PI-7 added; timeline and What Went Well updated; v0.12.9 release details added; PI-1/PI-3 confirmed effective; Next Actions updated with status column |

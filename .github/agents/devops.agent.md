@@ -131,11 +131,28 @@ The working target is that result + 1 patch. For example, if `v0.10.37` is the h
 4d. **Stage 1 origin sync (MANDATORY)**:
 
 - Before staging changes for the final Stage 1 commit, ensure the branch is current with origin:
-  ```
+  ```bash
+  # PI-3: second fetch immediately before rebase (not just at session start)
+  # catches tags pushed by concurrent plans after initial pre-flight
   git fetch origin --tags
+  git tag --list "v*" | sort -V | tail -1   # collision check before touching files
+
+  # PI-1: stash uncommitted working changes before rebase
+  # git rebase fails silently if M or ?? entries exist in the working tree
+  git status --short
+  # If any M or ?? entries exist that are NOT yet committed:
+  git stash push -u -m "plan-NNN-working-state"
   git rebase origin/main
+  git stash pop   # restore working changes after rebase
   ```
 - If the rebase produces conflicts: resolve them, then re-run `npm run type-check` and a representative test subset to confirm the post-rebase build is still clean before continuing.
+- **PI-2 — CHANGELOG conflict during rebase**: If `git rebase origin/main` produces a conflict in `CHANGELOG.md` (common when two plans are active simultaneously and both have modified CHANGELOG):
+  1. Run the version pre-flight formula again: `git tag --list "v*" | sort -V | tail -1` → determine new target version
+  2. Accept `origin/main`'s content as base; add `## [NEW_VERSION] - DATE` header above it with the current plan's entry
+  3. Remove all conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) — ensure no `[Unreleased]` header remains in the merged result
+  4. `git add CHANGELOG.md && git rebase --continue`
+  5. `npm version NEW_VERSION --no-git-tag-version` to align `package.json` and `package-lock.json`
+  6. Document the collision source, new version, and resolution steps in the Stage 1 deployment doc.
 - **Rationale**: Moving the rebase to Stage 1 means conflicts are resolved before the commit structure is formed. Stage 2 push is then conflict-free and lower-risk. (Stage 2 step 8 remote-sync check remains as a final safety gate.)
 - Record the outcome in the Stage 1 deployment doc: "rebased X commits" or "already up-to-date".
 
@@ -253,6 +270,10 @@ Status: Active
 | Date (UTC) | Agent  | Change                                    |
 | ---------- | ------ | ----------------------------------------- |
 | YYYY-MM-DD | devops | Created tracker from deferred validations |
+| 2026-05-05 | pi     | PI-1: stash-before-rebase guard added to Stage 1 step 4d (Plan 124 retrospective) |
+| 2026-05-05 | pi     | PI-2: CHANGELOG conflict resolution pattern added to Stage 1 step 4d (Plan 124 retrospective) |
+| 2026-05-05 | pi     | PI-3: second `git fetch --tags` immediately before rebase added to Stage 1 step 4d (Plan 124 retrospective) |
+| 2026-05-05 | pi     | PI-7: pre-push version collision guard added to Stage 2 step 8 (Plan 124 Stage 2 — second collision at push time) |
 ```
 
 10. Update plan status to "Committed for Release [X.Y.Z]".
@@ -320,6 +341,20 @@ If a follow-up push is still required (for example: unavoidable docs corrections
    - Run `git branch -vv` and verify the tracking info is present
    - If missing, set upstream before continuing (example): `git branch --set-upstream-to=origin/main main`
 8. **Remote sync check (MANDATORY)**: Run `git fetch origin --prune --tags`, then confirm your branch is not behind `origin/main` (or the target branch). If behind, rebase/merge **before** the first Stage 2 push (default) and **before** tagging.
+
+  **PI-7 — Pre-push version collision guard (MANDATORY immediately before `git push`)**: A parallel session may merge and tag between your Stage 1 commit and your Stage 2 push window. Always re-check the latest tag _immediately_ before the push command — not only at session start:
+  ```bash
+  git fetch origin --tags
+  LATEST=$(git tag --list "v*" | sort -V | tail -1)
+  echo "Collision check: is $TARGET_VERSION > $LATEST?"
+  ```
+  If `$LATEST >= $TARGET_VERSION`:
+  1. Bump `package.json` and `CHANGELOG.md` to next patch (`npm version NEWVER --no-git-tag-version`)
+  2. Amend the top commit to fold the bump: `git commit -a --amend --no-edit`
+  3. Re-run post-rebase integrity gate (conflict markers, JSON parse, type-check, targeted tests)
+  4. Update all version references in the Stage 1/2 deployment docs
+  5. Then push
+  Limit to 2 bump cycles. If a third collision occurs, pause and involve user.
    8b. **Stage adherence evidence (MANDATORY)**: Capture minimal evidence in the readiness doc that Stage 1/Stage 2 gates were respected:
 
 - `git status`
