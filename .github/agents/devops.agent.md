@@ -130,16 +130,26 @@ The working target is that result + 1 patch. For example, if `v0.10.37` is the h
 
 4d. **Stage 1 origin sync (MANDATORY)**:
 
-- Before staging changes for the final Stage 1 commit, ensure the branch is current with origin:
-  ```
-  git fetch origin --tags
-  git rebase origin/main
-  ```
+   First, check for branch divergence (PI-7 — mandatory for all plans, including multi-iteration follow-ons where the previous iteration's squash-merge produces a guaranteed ahead/behind state):
+
+   ```bash
+   git fetch origin --tags
+   git rev-list --left-right --count origin/main...HEAD
+   # Expected: "0  K" (0 behind, K ahead).
+   # If left count > 0: rebase before staging (see sequence below).
+   ```
+
+   If behind (`N  K` where N > 0), rebase:
+
+   ```bash
+   git stash --include-untracked
+   git rebase origin/main
+   git stash pop
+   ```
+
 - If the rebase produces conflicts: resolve them, then re-run `npm run type-check` and a representative test subset to confirm the post-rebase build is still clean before continuing.
 - **Rationale**: Moving the rebase to Stage 1 means conflicts are resolved before the commit structure is formed. Stage 2 push is then conflict-free and lower-risk. (Stage 2 step 8 remote-sync check remains as a final safety gate.)
-- Record the outcome in the Stage 1 deployment doc: "rebased X commits" or "already up-to-date".
-
-5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
+- Record the outcome in the Stage 1 deployment doc: "rebased X commits", "already up-to-date", or "stash → rebase → pop (diverged after previous iteration squash-merge)".
 
 5b. **PWA dev-artifact check (MANDATORY if dev server ran)**:
 
@@ -275,7 +285,20 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 2. If any plans incomplete: Report status, list pending plans, await further commits.
 3. Verify version consistency across ALL committed changes.
    3b. **Security audit evidence (MANDATORY)**:
-   - Run `npm audit` (or an equivalent audit command agreed for this repo).
+   - Run `npm audit --audit-level=high` (or an equivalent audit command agreed for this repo).
+   - If HIGH or CRITICAL vulnerabilities appear, **verify whether they are pre-existing on `origin/main` before treating them as a blocker** (PI-8):
+
+     ```bash
+     git show origin/main:package-lock.json | \
+       python3 -c "import json,sys; d=json.load(sys.stdin); \
+       pkg=d.get('packages',{}).get('node_modules/<package>',{}); \
+       print('version on main:', pkg.get('version','not found'))"
+     ```
+
+     - **Same version as `origin/main`** → pre-existing; document in deployment doc; do NOT block release.
+     - **Newer version (bumped by this release)** → investigate; potentially a blocker.
+     - **New package not present on `origin/main`** → investigate before releasing.
+
    - Record whether any **new** HIGH/CRITICAL vulnerabilities appear compared to the start of Stage 2.
    - If new HIGH/CRITICAL vulnerabilities are introduced by this release work, treat as a blocker unless the user explicitly accepts the risk.
 4. Validate packaging: Build, package, verify all bundled changes.
@@ -424,7 +447,14 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 2. **Surface PR URL (MANDATORY)**: After every branch push, include the PR comparison URL in the agent response: `https://github.com/<org>/<repo>/compare/main...<branch>`. Do not rely on GitHub's transient "create a pull request" banner.
 3. Verify the PR comparison has no merge conflicts. If conflicts exist, rebase onto `origin/main`, resolve, and force-push with `--force-with-lease` before proceeding.
-4a. **Wait for CI** before merging. Monitor with `gh pr checks <PR#> --repo <org>/<repo>` until all required checks show ✓. Do not merge while checks are pending or failing.
+4a. **Wait for CI** before merging. Monitor CI with the non-interactive polling pattern:
+
+   ```bash
+   # Standard CI poll — works in all terminal contexts (PI-5)
+   sleep 90 && gh pr checks <PR#> --repo <org>/<repo> 2>&1 | cat
+   ```
+
+   Set `N=90` for standard pipelines; `N=150` for test-heavy suites. Repeat with longer delays if still pending. **Never use `gh pr checks --watch`** — it opens the terminal alternate buffer and is inaccessible to automated polling. Do not merge while checks are pending or failing.
 
 4b. **PR merge and tag (squash-merge workflow)**:
    - Merge the PR: `gh pr merge <PR#> --repo <org>/<repo> --squash --delete-branch`
@@ -657,7 +687,23 @@ If a referenced skill path is missing or appears stale:
 - If the critique exists and all findings are resolved, ensure it is closed per the Critic closure rule (Status → `Resolved`, move to `agent-output/critiques/closed/`).
 - If the critique cannot be closed yet (OPEN findings remain, or resolution is unclear), explicitly record that status in the Stage 1 deployment doc (do not silently leave it ambiguous).
 
-2. Move all to their respective `closed/` folders:
+2. Move all to their respective `closed/` folders (PI-6 — avoid double-staging):
+
+   **For tracked files** (previously committed to git): use `git mv`:
+   ```bash
+   git mv agent-output/planning/<file> agent-output/planning/closed/<file>
+   ```
+
+   **For new files** (never committed — created during this pipeline): do NOT `git add` the original path first. Use the safe sequence:
+   ```bash
+   # Option A (preferred): create directly in closed/ from the start
+   # Option B: if already created at original path
+   git rm --cached <original_path>   # deindex original
+   mv <original_path> closed/
+   git add closed/<filename>          # index only the closed/ path
+   ```
+
+   Double-staging (adding both original and `closed/` path) creates orphaned index entries that require `git restore --staged` cleanup and obscure the final diff.
 
 - `agent-output/planning/closed/`
 - `agent-output/implementation/closed/`
