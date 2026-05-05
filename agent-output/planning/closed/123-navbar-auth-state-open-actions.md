@@ -2,7 +2,7 @@
 ID: 123
 Origin: 123
 UUID: 4f8e1a2c
-Status: Committed
+Status: Released
 ---
 
 # Plan 123 — Iteration 2 Fix: Profile Route Middleware Exemption
