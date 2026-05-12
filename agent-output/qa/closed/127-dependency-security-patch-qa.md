@@ -2,7 +2,7 @@
 ID: 127
 Origin: 127
 UUID: a7e3c1f0
-Status: QA Complete
+Status: Committed
 ---
 
 # QA Report: Plan 127 Dependency Security Patch

@@ -5,6 +5,12 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.10] - 2026-05-12
+
+### Security
+
+- **Dependency security patch (Plan 127)**: Applied safe semver-compatible dependency updates to resolve all high-severity npm audit advisories. Updated `next` from `^15.5.9` to `^15.5.18` (patch) and `resend` from `^6.6.0` to `^6.12.3` (minor). Added `.npmrc` with `audit-level=high` to align local developer audit behavior with CI threshold. Zero breaking changes; all 1243 tests pass. Two residual moderate advisories (postcss <8.5.10 in Next.js internals) are accepted — build-time only, no runtime exposure.
+
 ## [0.12.9] - 2026-05-04
 
 ### Changed
