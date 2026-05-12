@@ -390,9 +390,19 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
     // If found in providers table, process and return
     if (data) {
-      const [{ offersByProvider, needsByProvider }, badges] = await Promise.all([
+      const [{ offersByProvider, needsByProvider }, badges, foodProvider, storeProvider] = await Promise.all([
         loadProviderRelationIds([id]),
         getBadgesForEntity(id, EntityType.PROVIDER),
+        supabase
+          .from('food_providers')
+          .select('halal_level, no_alcohol, no_pork')
+          .eq('provider_id', id)
+          .maybeSingle(),
+        supabase
+          .from('store_providers')
+          .select('no_gambling')
+          .eq('provider_id', id)
+          .maybeSingle(),
       ]);
 
       const offerIds = offersByProvider.get(id) || [];
@@ -412,6 +422,8 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
       return {
         ...data,
+        ...(foodProvider.data ?? {}),
+        ...(storeProvider.data ?? {}),
         offers_ids: offerIds,
         needs_ids: needIds,
         offers,

@@ -5,6 +5,16 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.13] - 2026-05-12
+
+### Added
+
+- **Nachweise attestation display card (Plan 126, #219)**: Added `AttestationCard` to the provider detail Nachweise section to show declared halal commitments (`no_alcohol`, `no_pork`, `no_gambling`) for eligible `food` and `store` providers. The card renders only when at least one commitment is declared and is fully localized across all 6 locales (`en`, `de`, `ar`, `tr`, `ur`, `ps`).
+
+### Changed
+
+- **Provider detail attestation data hydration (Plan 126)**: Updated both `getProviderById()` implementations (client and server) to fetch extension-table fields from `food_providers` and `store_providers` with parallel `maybeSingle()` reads by `provider_id`, ensuring attestation booleans are available at runtime.
+
 ## [0.12.12] - 2026-05-12
 
 ### Fixed

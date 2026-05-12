@@ -979,6 +979,13 @@ export const ps = {
       "acceptsDonations": "مرستې مني",
       "solidarityPricing": "د پیوستون بیه"
     },
+    "attestation": {
+      "title": "اعلان شوې ژمنې",
+      "subtitle": "دا ژمنې د وړاندې کوونکي له خوا اعلان شوې دي.",
+      "noAlcohol": "الکول نشته",
+      "noPork": "د خوک غوښه نشته",
+      "noGambling": "قمار نشته"
+    },
     "trustBadges": {
       "muslimOwned": "مسلمان",
       "acceptsDonations": "مرسته",

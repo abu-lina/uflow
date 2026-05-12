@@ -979,6 +979,13 @@ export const de = {
       "acceptsDonations": "Spenden möglich",
       "solidarityPricing": "Solidaritätspreise"
     },
+    "attestation": {
+      "title": "Erklärte Verpflichtungen",
+      "subtitle": "Diese Angaben wurden vom Anbieter erklärt.",
+      "noAlcohol": "Kein Alkohol",
+      "noPork": "Kein Schweinefleisch",
+      "noGambling": "Kein Glücksspiel"
+    },
     "trustBadges": {
       "muslimOwned": "Muslim",
       "acceptsDonations": "Spendet",

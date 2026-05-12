@@ -979,6 +979,13 @@ export const ur = {
       "acceptsDonations": "عطیات قبول ہیں",
       "solidarityPricing": "یکجہتی قیمتیں"
     },
+    "attestation": {
+      "title": "اعلان کردہ وعدے",
+      "subtitle": "یہ وعدے فراہم کنندہ نے خود بیان کیے ہیں۔",
+      "noAlcohol": "بغیر الکحل",
+      "noPork": "بغیر سور کے گوشت",
+      "noGambling": "بغیر جوئے"
+    },
     "trustBadges": {
       "muslimOwned": "مسلم",
       "acceptsDonations": "عطیہ",

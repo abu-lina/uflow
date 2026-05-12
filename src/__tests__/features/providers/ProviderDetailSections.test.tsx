@@ -46,4 +46,29 @@ describe('ProviderDetailSections', () => {
     expect(screen.getByText('Loading providers...')).toBeInTheDocument();
     expect(screen.queryByText('No nearby providers found.')).not.toBeInTheDocument();
   });
+
+  it('[post-fix PASSES] renders noAlcohol and noPork in amenities when provider flags are true', () => {
+    useQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+    });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{
+          ...mockProviders[0],
+          no_alcohol: true,
+          no_pork: true,
+          offers: [],
+          needs: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('No alcohol')).toBeInTheDocument();
+    expect(screen.getByText('No pork')).toBeInTheDocument();
+  });
 });

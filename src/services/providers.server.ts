@@ -39,12 +39,22 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
   if (!data) return null;
 
-  // Fetch offers, needs, and badges in parallel to keep SSR initialData shape
+  // Fetch offers, needs, badges, and extension-table fields in parallel to keep SSR initialData shape
   // aligned with the client-side providers service.
-  const [providerOffersResult, providerNeedsResult, badges] = await Promise.all([
+  const [providerOffersResult, providerNeedsResult, badges, foodProvider, storeProvider] = await Promise.all([
     supabase.from('provider_offers').select('offer_id').eq('provider_id', id),
     supabase.from('provider_needs').select('need_id').eq('provider_id', id),
     getBadgesForEntityServer(id, EntityType.PROVIDER),
+    supabase
+      .from('food_providers')
+      .select('halal_level, no_alcohol, no_pork')
+      .eq('provider_id', id)
+      .maybeSingle(),
+    supabase
+      .from('store_providers')
+      .select('no_gambling')
+      .eq('provider_id', id)
+      .maybeSingle(),
   ]);
 
   const offerIds = (providerOffersResult.data || []).map((row) => row.offer_id);
@@ -64,6 +74,8 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
   return {
     ...data,
+    ...(foodProvider.data ?? {}),
+    ...(storeProvider.data ?? {}),
     offers_ids: offerIds,
     needs_ids: needIds,
     offers,

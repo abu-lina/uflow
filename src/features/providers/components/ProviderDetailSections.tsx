@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { ExpandSection } from '@/components/ui/ExpandSection';
 import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
+import { AttestationCard } from '@/features/providers/components/AttestationCard';
 import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
@@ -143,7 +144,13 @@ export function ProviderDetailSections({
       </ExpandSection>
 
       <ExpandSection title={t('providerDetail.sections.proofs')}>
-        <div className="pt-3">
+        <div className="space-y-3 pt-3">
+          <AttestationCard
+            listingType={provider.listing_type}
+            noAlcohol={provider.no_alcohol}
+            noGambling={provider.no_gambling}
+            noPork={provider.no_pork}
+          />
           {badges.length === 0 && !isLoadingBadges ? (
             <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noProofs')}</p>
           ) : (
