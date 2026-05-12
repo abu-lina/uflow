@@ -14,7 +14,7 @@ export interface AdminProviderEditData {
   providerName?: string;
   providerDescription?: string | null;
   categoryId?: string;
-  listingType?: 'food' | 'business' | 'ummah' | null;
+  listingType?: 'food' | 'store' | 'ummah' | null;
   addressStreet?: string | null;
   addressZip?: string | null;
   addressCity?: string | null;

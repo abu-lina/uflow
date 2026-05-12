@@ -56,9 +56,9 @@ vi.mock('@/lib/validations/adminSchemas', () => ({
         listingType !== undefined
         && listingType !== null
         && listingType !== 'food'
-        && listingType !== 'business'
+        && listingType !== 'store'
       ) {
-        throw new Error('listingType must be one of: food, business, null');
+        throw new Error('listingType must be one of: food, store, null');
       }
 
       return data;

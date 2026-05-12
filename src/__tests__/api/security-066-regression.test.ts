@@ -259,6 +259,47 @@ describe('M-3: UUID validation on array fields in adminSchemas', () => {
   });
 });
 
+describe('Plan 128 listingType enum regression in providerEditUpdateSchema', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doUnmock('zod');
+  });
+
+  it('[pre-fix FAILS] should accept listingType store after enum rename migration', async () => {
+    const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
+    const result = providerEditUpdateSchema.safeParse({
+      providerId: '550e8400-e29b-41d4-a716-446655440000',
+      listingType: 'store',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should still accept listingType food and null', async () => {
+    const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
+
+    const foodResult = providerEditUpdateSchema.safeParse({
+      providerId: '550e8400-e29b-41d4-a716-446655440000',
+      listingType: 'food',
+    });
+    expect(foodResult.success).toBe(true);
+
+    const nullResult = providerEditUpdateSchema.safeParse({
+      providerId: '550e8400-e29b-41d4-a716-446655440000',
+      listingType: null,
+    });
+    expect(nullResult.success).toBe(true);
+  });
+
+  it('should reject invalid listingType values', async () => {
+    const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
+    const result = providerEditUpdateSchema.safeParse({
+      providerId: '550e8400-e29b-41d4-a716-446655440000',
+      listingType: 'unknown',
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
 // ─── M-1: providerImages JSON Validation ─────────────────────────────────────
 // These tests need real Zod (not the global mock from setup.ts)
 

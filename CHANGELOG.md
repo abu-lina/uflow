@@ -5,6 +5,12 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.11] - 2026-05-12
+
+### Fixed
+
+- **Admin edit-provider section save no longer fails with HTTP 400 (Plan 128, #221)**: Updated provider edit validation and related typing/tests to align listing type values with the post-migration enum rename (`business` -> `store`). Admins can now change section to Business/Store from the edit panel without triggering "Invalid request body".
+
 ## [0.12.10] - 2026-05-12
 
 ### Security
