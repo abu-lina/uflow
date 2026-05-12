@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-05-12
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.12.10
+**Current Version**: v0.12.11
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -110,6 +110,7 @@
 | 2026-05-02T01:50Z | Plan 119 released (v0.12.1): Category filter section guardrail + data remediation | Added `applicable_section` guardrail to `fetchCategoriesBySection()` so wrong-section categories (e.g. Gesundheit & Sport) no longer appear in Food tab. Normalised store/business semantics across both provider edit flows via shared scope constant. Removed dead `CategoryFilter.tsx`. Migration 087 applied to PROD: 0 remaining provider/category mismatches. 1203 tests pass. GitHub issue #202 closed. Tag v0.12.1 pushed. |
 | 2026-05-02T10:20Z | Plan 115 released (v0.12.2): Provider card specialty tags + open/closed status indicator | Discovery cards now show up to 2 offer names (e.g. "Shawarma · Falafel · +1") from provider offers, plus a compact open/closed status indicator (green/red dot + localized text) when opening_hours is available. Trust chip labels fully i18n across 6 languages (EN/DE/AR/TR/UR/PS). No DB migrations. 1205 tests pass. GitHub issue #195 closed. Tag v0.12.2 pushed. |
 | 2026-05-03T18:55Z | Plan 109 released (v0.12.3): Search header fixed + scrollable section tabs + i18n compliance | Search bar and context summary (query · location · audience) are now pinned at the top of the screen on home (Stage 2/3) and providers listing pages. Section tabs moved to the scrollable content area — no longer frozen in the fixed header layer. Two focused layout regression tests lock this contract. Back-to-home aria-label and admin filter label fully translated across 6 locales (EN/DE/AR/TR/UR/PS). 12 targeted tests pass. Commit a3f55581. Tag v0.12.3 pushed. |
+| 2026-05-12T13:35Z | Plan 128 released (v0.12.11): Admin edit-provider section HTTP 400 bugfix | Admin section dropdown now correctly accepts 'store' listing type. Real-Zod regression test added. GitHub issues #222 and #221 closed. Tag v0.12.11 pushed. |
 | 2026-05-12T09:55Z | Plan 127 released (v0.12.10): Dependency Security Patch | Resolved all high-severity npm audit advisories via semver-compatible dependency updates (next ^15.5.18, resend ^6.12.3). Added .npmrc with audit-level=high for local developer UX alignment with CI threshold. npm audit --audit-level=high exits 0. Zero breaking changes; 1243/1243 tests pass. 2 moderate postcss advisories accepted (build-time only). GitHub issue #220 closed. Tag v0.12.10 pushed. |
 
 ---
@@ -131,10 +132,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.12.10 — Released 2026-05-12 · Plan 127: Dependency Security Patch — resolve all high-severity npm audit advisories
+**Current Working Release**: v0.12.11 — Released 2026-05-12 · Plan 128: Admin edit-provider section HTTP 400 bugfix — Closes #221
 
 **Release Status**: Released  
-**Ready for Release**: ✅ v0.12.10 complete  
+**Ready for Release**: ✅ v0.12.11 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -152,6 +153,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.12.11 | 2026-05-12 | Plan 128 (Admin edit-provider section HTTP 400 bugfix — Closes #222, #221) | Released |
 | v0.12.10 | 2026-05-12 | Plan 127 (Dependency security patch — resolve high-severity npm advisories — Closes #220) | Released |
 | v0.12.9 | 2026-05-04 | Plan 124 (Remove location field from providers search bar — PR #217) | Released |
 | v0.12.8 | 2026-05-04 | Plan 123 Iteration 2 (Profile route middleware exemption — /profile blocked for non-admin users in early-access mode — PR #216) | Released |
