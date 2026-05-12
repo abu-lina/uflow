@@ -1,8 +1,8 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-05-04
+**Last Updated**: 2026-05-12
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.12.8
+**Current Version**: v0.12.10
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -110,6 +110,7 @@
 | 2026-05-02T01:50Z | Plan 119 released (v0.12.1): Category filter section guardrail + data remediation | Added `applicable_section` guardrail to `fetchCategoriesBySection()` so wrong-section categories (e.g. Gesundheit & Sport) no longer appear in Food tab. Normalised store/business semantics across both provider edit flows via shared scope constant. Removed dead `CategoryFilter.tsx`. Migration 087 applied to PROD: 0 remaining provider/category mismatches. 1203 tests pass. GitHub issue #202 closed. Tag v0.12.1 pushed. |
 | 2026-05-02T10:20Z | Plan 115 released (v0.12.2): Provider card specialty tags + open/closed status indicator | Discovery cards now show up to 2 offer names (e.g. "Shawarma · Falafel · +1") from provider offers, plus a compact open/closed status indicator (green/red dot + localized text) when opening_hours is available. Trust chip labels fully i18n across 6 languages (EN/DE/AR/TR/UR/PS). No DB migrations. 1205 tests pass. GitHub issue #195 closed. Tag v0.12.2 pushed. |
 | 2026-05-03T18:55Z | Plan 109 released (v0.12.3): Search header fixed + scrollable section tabs + i18n compliance | Search bar and context summary (query · location · audience) are now pinned at the top of the screen on home (Stage 2/3) and providers listing pages. Section tabs moved to the scrollable content area — no longer frozen in the fixed header layer. Two focused layout regression tests lock this contract. Back-to-home aria-label and admin filter label fully translated across 6 locales (EN/DE/AR/TR/UR/PS). 12 targeted tests pass. Commit a3f55581. Tag v0.12.3 pushed. |
+| 2026-05-12T09:55Z | Plan 127 released (v0.12.10): Dependency Security Patch | Resolved all high-severity npm audit advisories via semver-compatible dependency updates (next ^15.5.18, resend ^6.12.3). Added .npmrc with audit-level=high for local developer UX alignment with CI threshold. npm audit --audit-level=high exits 0. Zero breaking changes; 1243/1243 tests pass. 2 moderate postcss advisories accepted (build-time only). GitHub issue #220 closed. Tag v0.12.10 pushed. |
 
 ---
 
@@ -130,10 +131,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.12.8 — Released 2026-05-04 · Plan 123 Iteration 2: Fix /profile middleware exemption in early-access mode
+**Current Working Release**: v0.12.10 — Released 2026-05-12 · Plan 127: Dependency Security Patch — resolve all high-severity npm audit advisories
 
 **Release Status**: Released  
-**Ready for Release**: ✅ v0.12.8 complete  
+**Ready for Release**: ✅ v0.12.10 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
@@ -143,14 +144,16 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 - **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
 - **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject during a future admin moderation UX touch (Owner: Implementer / future sprint — evidence in `agent-output/planning/060-open-actions.md`)
 - **123-DF-1**: Real-device PWA validation post v0.12.8 deploy — login on mobile PWA → profile icon → /profile renders without redirect (Owner: User/DevOps — evidence in `agent-output/planning/123-navbar-auth-state-open-actions.md`)
-- **Dependabot**: GitHub reports 3 high + 4 moderate on `abu-lina/uflow` — investigate delta vs local npm audit (local shows 0 HIGH, 1 moderate)
 
 ✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
+✅ **Dependabot HIGH advisories resolved**: Plan 127 (v0.12.10) — `npm audit --audit-level=high` exits 0; 2 moderate postcss residual accepted (build-time only)
 
 ### Previous Releases
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
+| v0.12.10 | 2026-05-12 | Plan 127 (Dependency security patch — resolve high-severity npm advisories — Closes #220) | Released |
+| v0.12.9 | 2026-05-04 | Plan 124 (Remove location field from providers search bar — PR #217) | Released |
 | v0.12.8 | 2026-05-04 | Plan 123 Iteration 2 (Profile route middleware exemption — /profile blocked for non-admin users in early-access mode — PR #216) | Released |
 | v0.12.7 | 2026-05-04 | Plan 123 Iteration 1 (Navbar auth state race condition on post-login — PR #213) | Released |
 | v0.12.6 | 2026-05-03 | Plan 122 (Category image unification — DB-driven Supabase Storage — PR #208) | Released |
