@@ -60,6 +60,13 @@ describe('SearchBar Component', () => {
       // Category filter is rendered with "All" text
       expect(screen.getByText('All')).toBeInTheDocument();
     });
+
+    it('[post-review fix] uses gap-0 in search icon/input row', () => {
+      const { container } = renderSearchBar();
+      const searchRow = container.querySelector('div.relative.flex.flex-1.flex-row.items-center.gap-0');
+      expect(searchRow).toBeTruthy();
+      expect(searchRow?.className).not.toContain('sm:gap-4');
+    });
   });
 
   describe('Search Functionality', () => {

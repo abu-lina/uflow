@@ -233,7 +233,7 @@ function SearchBarContent({
     >
       <div suppressHydrationWarning className="flex w-full flex-row items-center justify-between">
         {/* Search Section */}
-        <div className="relative flex flex-1 flex-row items-center gap-0 sm:gap-4">
+        <div className="relative flex flex-1 flex-row items-center gap-0">
           <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
           <input
             ref={inputRef}
@@ -423,7 +423,7 @@ export function SearchBar(props: SearchBarProps) {
           className={`flex h-10 w-full flex-row items-center gap-4 rounded-lg bg-white px-2 ${props.className} `}
         >
           <div className="flex w-full flex-row items-center justify-between">
-            <div className="relative flex flex-1 flex-row items-center gap-4">
+            <div className="relative flex flex-1 flex-row items-center gap-0">
               <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
               <input
                 disabled

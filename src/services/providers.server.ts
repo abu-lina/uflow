@@ -8,6 +8,7 @@
  */
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { logSupabaseError } from '@/utils/errorUtils';
 import { EntityType } from '@/types/badges';
 import { getBadgesForEntityServer } from '@/services/badges.server';
@@ -57,8 +58,26 @@ export async function getProviderById(id: string): Promise<Provider | null> {
       .maybeSingle(),
   ]);
 
-  const offerIds = (providerOffersResult.data || []).map((row) => row.offer_id);
-  const needIds = (providerNeedsResult.data || []).map((row) => row.need_id);
+  let offerIds = (providerOffersResult.data || []).map((row) => row.offer_id);
+  let needIds = (providerNeedsResult.data || []).map((row) => row.need_id);
+
+  // Some environments restrict anon/server-cookie reads on relation tables.
+  // If relation reads are empty, retry just these lookups with admin client so
+  // provider detail SSR can still hydrate menu/needs for publicly readable providers.
+  if (offerIds.length === 0 && needIds.length === 0) {
+    try {
+      const admin = getSupabaseAdmin();
+      const [adminOffersResult, adminNeedsResult] = await Promise.all([
+        admin.from('provider_offers').select('offer_id').eq('provider_id', id),
+        admin.from('provider_needs').select('need_id').eq('provider_id', id),
+      ]);
+
+      offerIds = (adminOffersResult.data || []).map((row) => row.offer_id);
+      needIds = (adminNeedsResult.data || []).map((row) => row.need_id);
+    } catch {
+      // Keep anon-read result when admin env vars are not available.
+    }
+  }
 
   const [offersResult, needsResult] = await Promise.all([
     offerIds.length > 0
