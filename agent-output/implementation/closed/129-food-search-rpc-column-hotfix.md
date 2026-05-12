@@ -2,7 +2,7 @@
 ID: 129
 Origin: 129
 UUID: c7e3a91f
-Status: Active
+Status: Committed
 ---
 
 # 129 - search_food_concepts RPC column hotfix implementation
