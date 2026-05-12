@@ -979,6 +979,13 @@ export const ar = {
       "acceptsDonations": "يقبل التبرعات",
       "solidarityPricing": "تسعير تضامني"
     },
+    "attestation": {
+      "title": "التزامات مُعلنة",
+      "subtitle": "هذه الالتزامات صرّح بها مقدم الخدمة.",
+      "noAlcohol": "بدون كحول",
+      "noPork": "بدون لحم خنزير",
+      "noGambling": "بدون قمار"
+    },
     "trustBadges": {
       "muslimOwned": "مسلم",
       "acceptsDonations": "تبرع",

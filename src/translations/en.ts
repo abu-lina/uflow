@@ -979,6 +979,13 @@ export const en = {
       "acceptsDonations": "Accepts donations",
       "solidarityPricing": "Solidarity pricing"
     },
+    "attestation": {
+      "title": "Declared commitments",
+      "subtitle": "These commitments were declared by the provider.",
+      "noAlcohol": "No alcohol",
+      "noPork": "No pork",
+      "noGambling": "No gambling"
+    },
     "trustBadges": {
       "muslimOwned": "Muslim",
       "acceptsDonations": "Donates",

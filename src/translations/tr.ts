@@ -979,6 +979,13 @@ export const tr = {
       "acceptsDonations": "Bağış kabul edilir",
       "solidarityPricing": "Dayanışma fiyatlandırması"
     },
+    "attestation": {
+      "title": "Beyan edilen taahhütler",
+      "subtitle": "Bu taahhütler sağlayıcı tarafından beyan edilmiştir.",
+      "noAlcohol": "Alkol yok",
+      "noPork": "Domuz eti yok",
+      "noGambling": "Kumar yok"
+    },
     "trustBadges": {
       "muslimOwned": "Müslüman",
       "acceptsDonations": "Bağış",

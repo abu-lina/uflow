@@ -72,6 +72,29 @@ describe('providers.server.getProviderById', () => {
         };
       }
 
+      if (table === 'food_providers') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { halal_level: 2, no_alcohol: true, no_pork: true },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'store_providers') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: { no_gambling: false }, error: null }),
+            }),
+          }),
+        };
+      }
+
       throw new Error(`Unexpected table: ${table}`);
     });
   });
