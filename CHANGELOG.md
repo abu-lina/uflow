@@ -5,6 +5,12 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.12] - 2026-05-12
+
+### Fixed
+
+- **Food search RPC restored — `search_food_concepts` junction-table hotfix (Plan 129)**: Production `/search?section=food` was returning HTTP 400 with Postgres error 42703 (`column p.offers_ids does not exist`). Root cause: migration 006 replaced `providers.offers_ids` uuid[] with the `provider_offers` junction table but did not update the `search_food_concepts` SQL function. New migration 089 recreates the function with the correct `INNER JOIN public.provider_offers` join pattern. Function signature, ranking logic, and all GRANT/REVOKE permissions are preserved. Other food search RPCs (`search_food_categories`, `search_food_menu_items`) are unaffected.
+
 ## [0.12.11] - 2026-05-12
 
 ### Fixed
