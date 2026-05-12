@@ -8,6 +8,14 @@ import { BadgeKey, EntityType, TrustLevel } from '@/types/badges';
 
 const useQueryMock = vi.fn();
 
+vi.mock('@/components/providers/TrustBadgesSection', () => ({
+  TrustBadgesSection: ({ badges, isLoading }: { badges: unknown[]; isLoading: boolean }) => (
+    <div data-testid="trust-badges-section-mock">
+      badges:{badges.length};loading:{String(isLoading)}
+    </div>
+  ),
+}));
+
 vi.mock('@tanstack/react-query', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@tanstack/react-query')>();
 
@@ -32,6 +40,8 @@ describe('ProviderDetailSections', () => {
 
     render(
       <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
           offers: [],
@@ -55,6 +65,8 @@ describe('ProviderDetailSections', () => {
 
     render(
       <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
           no_alcohol: true,
@@ -78,6 +90,8 @@ describe('ProviderDetailSections', () => {
 
     const { container } = render(
       <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
           muslim_owned: true,
@@ -112,6 +126,8 @@ describe('ProviderDetailSections', () => {
 
     render(
       <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
           offers: [],
@@ -144,11 +160,13 @@ describe('ProviderDetailSections', () => {
 
     render(
       <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
+          listing_type: 'ummah',
           offers: [],
           needs: [],
-          badges: [],
         }}
       />,
     );
@@ -167,37 +185,79 @@ describe('ProviderDetailSections', () => {
 
     render(
       <ProviderDetailSections
+        badges={[
+          {
+            id: 'badge-1',
+            entity_id: 'provider-1',
+            entity_type: EntityType.PROVIDER,
+            badge_type_id: 'type-1',
+            trust_level: TrustLevel.SELF_DECLARED,
+            confirmation_count: 0,
+            created_at: '2026-01-01T00:00:00.000Z',
+            updated_at: '2026-01-01T00:00:00.000Z',
+            badge_type: {
+              id: 'type-1',
+              badge_key: BadgeKey.MUSLIM_OWNED,
+              labels: { de: 'Muslim geführt', en: 'Muslim-owned' },
+              description: null,
+              icon_name: 'moon',
+              is_active: true,
+              created_at: '2026-01-01T00:00:00.000Z',
+              updated_at: '2026-01-01T00:00:00.000Z',
+            },
+          },
+        ]}
+        isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
           offers: [],
           needs: [],
-          badges: [
-            {
-              id: 'badge-1',
-              entity_id: 'provider-1',
-              entity_type: EntityType.PROVIDER,
-              badge_type_id: 'type-1',
-              trust_level: TrustLevel.SELF_DECLARED,
-              confirmation_count: 0,
-              created_at: '2026-01-01T00:00:00.000Z',
-              updated_at: '2026-01-01T00:00:00.000Z',
-              badge_type: {
-                id: 'type-1',
-                badge_key: BadgeKey.MUSLIM_OWNED,
-                labels: { de: 'Muslim geführt', en: 'Muslim-owned' },
-                description: null,
-                icon_name: 'moon',
-                is_active: true,
-                created_at: '2026-01-01T00:00:00.000Z',
-                updated_at: '2026-01-01T00:00:00.000Z',
-              },
-            },
-          ],
         }}
       />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Nachweise' }));
-    expect(screen.getByText('Muslim geführt')).toBeInTheDocument();
+    expect(screen.getByTestId('trust-badges-section-mock')).toBeInTheDocument();
+    expect(screen.getByText(/badges:1/)).toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS] renders trust badges in proofs section when attestation is not applicable and badges exist', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[{ id: 'badge-1', trust_level: 'community_confirmed', confirmation_count: 2 } as never]}
+        isLoadingBadges={false}
+        provider={{ ...mockProviders[0], listing_type: 'ummah', offers: [], needs: [] }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Proofs' }));
+    expect(screen.getByTestId('trust-badges-section-mock')).toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS] does not show no proofs fallback when attestation card is rendered', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{
+          ...mockProviders[0],
+          listing_type: 'food',
+          halal_level: null,
+          no_alcohol: false,
+          no_pork: false,
+          no_gambling: false,
+          offers: [],
+          needs: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Proofs' }));
+    expect(screen.queryByText('No proofs available.')).not.toBeInTheDocument();
+    expect(screen.getByText('Only halal meat')).toBeInTheDocument();
   });
 });

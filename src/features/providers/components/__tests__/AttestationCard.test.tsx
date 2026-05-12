@@ -15,6 +15,7 @@ type ListingType = Provider['listing_type'];
 
 function renderCard(
   listingType: ListingType,
+  halalLevel?: number | null,
   noAlcohol?: boolean,
   noPork?: boolean,
   noGambling?: boolean,
@@ -22,6 +23,7 @@ function renderCard(
   return render(
     <AttestationCard
       listingType={listingType}
+      halalLevel={halalLevel}
       noAlcohol={noAlcohol}
       noPork={noPork}
       noGambling={noGambling}
@@ -30,75 +32,53 @@ function renderCard(
 }
 
 describe('AttestationCard', () => {
-  it('renders all three labels for food provider when all values are true', () => {
-    renderCard('food', true, true, true);
+  it('renders declared variant when at least one commitment is declared', () => {
+    renderCard('food', 2, true, true, true);
 
-    expect(screen.getByText('providerDetail.attestation.title')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.attestation.subtitle')).toBeInTheDocument();
+    expect(screen.getByLabelText('providerDetail.attestation.title')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.attestation.subtitleDeclared')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.attestation.halalOnly')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.attestation.noAlcohol')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.attestation.noPork')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.attestation.noGambling')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.attestation.noAlcoholDeclaredDetail')).toBeInTheDocument();
   });
 
-  it('renders only noAlcohol label when only noAlcohol is true', () => {
-    renderCard('food', true, false, false);
+  it('renders fallback variant when no commitment is declared', () => {
+    renderCard('food', null, false, false, false);
 
+    expect(screen.getByText('providerDetail.attestation.subtitleFallback')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.attestation.halalOnly')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.attestation.noAlcohol')).toBeInTheDocument();
-    expect(screen.queryByText('providerDetail.attestation.noPork')).not.toBeInTheDocument();
-    expect(screen.queryByText('providerDetail.attestation.noGambling')).not.toBeInTheDocument();
-  });
-
-  it('renders only noPork label when only noPork is true', () => {
-    renderCard('food', false, true, false);
-
     expect(screen.getByText('providerDetail.attestation.noPork')).toBeInTheDocument();
-    expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
-    expect(screen.queryByText('providerDetail.attestation.noGambling')).not.toBeInTheDocument();
-  });
-
-  it('renders only noGambling label when only noGambling is true', () => {
-    renderCard('food', false, false, true);
-
     expect(screen.getByText('providerDetail.attestation.noGambling')).toBeInTheDocument();
-    expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
-    expect(screen.queryByText('providerDetail.attestation.noPork')).not.toBeInTheDocument();
+    expect(screen.getByText('providerDetail.attestation.noAlcoholFallbackDetail')).toBeInTheDocument();
   });
 
-  it('renders card for store listing type when at least one value is true', () => {
-    renderCard('store', true, false, false);
+  it('renders card for store listing type', () => {
+    renderCard('store', null, false, false, true);
 
-    expect(screen.getByText('providerDetail.attestation.title')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.attestation.noAlcohol')).toBeInTheDocument();
-  });
-
-  it('returns null for food listing type when all values are false', () => {
-    const { container } = renderCard('food', false, false, false);
-
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('returns null for food listing type when all values are undefined', () => {
-    const { container } = renderCard('food', undefined, undefined, undefined);
-
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByLabelText('providerDetail.attestation.title')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.attestation.noPork')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.attestation.noGamblingDeclaredDetail')).toBeInTheDocument();
   });
 
   it('returns null for ummah listing type even when values are true', () => {
-    const { container } = renderCard('ummah', true, true, true);
+    const { container } = renderCard('ummah', 2, true, true, true);
 
     expect(container.firstChild).toBeNull();
   });
 
   it('returns null for undefined listing type even when values are true', () => {
-    const { container } = renderCard(undefined, true, true, true);
+    const { container } = renderCard(undefined, 2, true, true, true);
 
     expect(container.firstChild).toBeNull();
   });
 
-  it('uses translation keys from useLanguage() for rendered text', () => {
-    renderCard('food', true, false, false);
+  it('uses translation keys from useLanguage() for rendered text in declared state', () => {
+    renderCard('food', 1, true, false, false);
 
-    expect(screen.getByText('providerDetail.attestation.title')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.attestation.subtitle')).toBeInTheDocument();
+    expect(screen.getByLabelText('providerDetail.attestation.title')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.attestation.subtitleDeclared')).toBeInTheDocument();
   });
 });

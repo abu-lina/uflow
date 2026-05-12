@@ -982,9 +982,20 @@ export const ps = {
     "attestation": {
       "title": "اعلان شوې ژمنې",
       "subtitle": "دا ژمنې د وړاندې کوونکي له خوا اعلان شوې دي.",
+      "subtitleDeclared": "زه د الله په نوم شاهدي ورکوم چې:",
+      "subtitleFallback": "وړاندې کوونکي تر اوسه کوم ثبوت نه دی اضافه کړی. مهرباني وکړئ د لومړي لیدنې مخکې وپوښتئ چې ایا:",
+      "halalOnly": "یوازې حلاله غوښه",
       "noAlcohol": "الکول نشته",
       "noPork": "د خوک غوښه نشته",
-      "noGambling": "قمار نشته"
+      "noGambling": "قمار نشته",
+      "halalOnlyDeclaredDetail": "پلورم او پروسس کوم",
+      "noAlcoholDeclaredDetail": "پلورم یا پروسس کوم",
+      "noPorkDeclaredDetail": "پلورم یا پروسس کوم",
+      "noGamblingDeclaredDetail": "وړاندې کوم",
+      "halalOnlyFallbackDetail": "پلورل او پروسس کېدل",
+      "noAlcoholFallbackDetail": "پلورل یا پروسس کېدل",
+      "noPorkFallbackDetail": "پلورل یا پروسس کېدل",
+      "noGamblingFallbackDetail": "وړاندې کېدل"
     },
     "trustBadges": {
       "muslimOwned": "مسلمان",

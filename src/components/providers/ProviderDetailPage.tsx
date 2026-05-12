@@ -589,7 +589,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
           )}
 
           <div className="mx-6 mt-4 space-y-4">
-            <ProviderDetailSections provider={provider} />
+            <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
             <HalalTrustBanner />
           </div>
         </div>
@@ -1025,7 +1025,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               </div>
             )}
 
-            <ProviderDetailSections provider={provider} />
+            <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
 
             <HalalTrustBanner />
 

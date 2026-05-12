@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { UtensilsCrossed, X } from 'lucide-react';
+import { RowItem } from '@/components/ui/RowItem';
 import { getFeatureFlag } from '@/config/feature-flags';
 import type { FoodCategory } from '@/services/offers';
 import { safeJsonParse } from '@/utils/json';
@@ -129,12 +130,15 @@ export function WasCategoryResults({
     const imageUrl = getCategoryImageUrl(category.category_images);
 
     return (
-      <button
+      <RowItem
         key={category.category_id}
-        aria-label={`${label} - ${countLabel}`}
-        className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-neutral-muted"
-        type="button"
-        onClick={() =>
+        selectable
+        ariaLabel={`${label} - ${countLabel}`}
+        className="transition-colors hover:bg-neutral-muted"
+        icon={<IconSlot imageUrl={imageUrl} label={label} />}
+        subtitle={countLabel}
+        title={label}
+        onSelect={() =>
           onSelect({
             label,
             type: 'category',
@@ -143,13 +147,7 @@ export function WasCategoryResults({
             providerCount: category.provider_count,
           })
         }
-      >
-        <IconSlot imageUrl={imageUrl} label={label} />
-        <div className="min-w-0">
-          <p className="truncate font-inter-tight text-base font-semibold text-text-primary">{label}</p>
-          <p className="truncate font-inter text-sm text-text-muted">{countLabel}</p>
-        </div>
-      </button>
+      />
     );
   };
 
@@ -229,31 +227,27 @@ export function WasCategoryResults({
             </p>
             <div className="space-y-1">
               {visibleRecentSearches.map((recent) => (
-                <button
+                <RowItem
                   key={`${recent.type}:${recent.label}`}
-                  className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-neutral-muted"
-                  type="button"
-                  onClick={() => onSelect(recent)}
-                >
-                  {recent.type === 'category' ? (
-                    <IconSlot
-                      imageUrl={getCategoryImageUrl(
-                        recent.categoryImages ??
-                          items.find((item) => item.category_id === recent.categoryId)?.category_images ??
-                          null,
-                      )}
-                      label={recent.label}
-                    />
-                  ) : null}
-                  <div className="min-w-0">
-                    <p className="truncate font-inter-tight text-base font-semibold text-text-primary">
-                      {recent.label}
-                    </p>
-                    {recent.type === 'dish' ? (
-                      <p className="truncate font-inter text-sm text-text-muted">{t('suchen.was.dishLabel')}</p>
-                    ) : null}
-                  </div>
-                </button>
+                  selectable
+                  ariaLabel={recent.label}
+                  className="transition-colors hover:bg-neutral-muted"
+                  icon={
+                    recent.type === 'category' ? (
+                      <IconSlot
+                        imageUrl={getCategoryImageUrl(
+                          recent.categoryImages ??
+                            items.find((item) => item.category_id === recent.categoryId)?.category_images ??
+                            null,
+                        )}
+                        label={recent.label}
+                      />
+                    ) : null
+                  }
+                  subtitle={recent.type === 'dish' ? t('suchen.was.dishLabel') : undefined}
+                  title={recent.label}
+                  onSelect={() => onSelect(recent)}
+                />
               ))}
             </div>
             {hasMoreRecentSearches ? (

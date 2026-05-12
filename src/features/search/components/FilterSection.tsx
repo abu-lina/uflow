@@ -1,6 +1,7 @@
-import { Check, CircleParking, HandHeart, HeartHandshake, Moon } from 'lucide-react';
+import { CircleParking, HandHeart, HeartHandshake, Moon } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { useState } from 'react';
+import { RowItem } from '@/components/ui/RowItem';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { PrayerRug } from '@/components/icons/PrayerRug';
 import type { Section } from '@/providers/search-provider';
@@ -73,31 +74,21 @@ export function FilterSection({ selectedSection, selectedFilters, onToggleFilter
         const selected = selectedFilters.includes(key);
 
         return (
-          <button
+          <RowItem
             key={key}
-            aria-checked={selected}
-            className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-background-selection/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-            role="checkbox"
-            type="button"
-            onClick={() => onToggleFilter(key)}
-          >
-            <span
-              className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary ${
-                selected ? 'ring-2 ring-primary' : ''
-              }`}
-            >
-              <Icon aria-hidden className="h-6 w-6" />
-              {selected ? <Check aria-hidden="true" className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-primary p-0.5 text-white" /> : null}
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-base font-semibold text-content-heading">
-                {t(titleKey)}
+            multiSelect
+            selectable
+            className="transition-colors hover:bg-background-selection/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            icon={
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                <Icon aria-hidden className="h-6 w-6" />
               </span>
-              <span className="text-base font-light text-text-muted">
-                {t(subtitleKey)}
-              </span>
-            </span>
-          </button>
+            }
+            selected={selected}
+            subtitle={t(subtitleKey)}
+            title={t(titleKey)}
+            onSelect={() => onToggleFilter(key)}
+          />
         );
       })}
 

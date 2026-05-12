@@ -980,11 +980,22 @@ export const de = {
       "solidarityPricing": "Solidaritätspreise"
     },
     "attestation": {
-      "title": "Erklärte Verpflichtungen",
+      "title": "Nachweise",
       "subtitle": "Diese Angaben wurden vom Anbieter erklärt.",
+      "subtitleDeclared": "Ich bezeuge bei Allah, dass ich:",
+      "subtitleFallback": "Der Anbieter hat bisher noch keine Nachweise hinterlegt. Bitte informiere euch vor dem ersten Besuch ob:",
+      "halalOnly": "Nur Halal Fleisch",
       "noAlcohol": "Kein Alkohol",
       "noPork": "Kein Schweinefleisch",
-      "noGambling": "Kein Glücksspiel"
+      "noGambling": "Kein Glücksspiel",
+      "halalOnlyDeclaredDetail": "Verkaufe und verarbeite",
+      "noAlcoholDeclaredDetail": "Verkaufe oder verarbeite",
+      "noPorkDeclaredDetail": "Verkaufe oder verarbeite",
+      "noGamblingDeclaredDetail": "Anbiete",
+      "halalOnlyFallbackDetail": "Verkauft und verarbeitet wird",
+      "noAlcoholFallbackDetail": "Verkauft und verarbeitet wird",
+      "noPorkFallbackDetail": "Verkauft und verarbeitet wird",
+      "noGamblingFallbackDetail": "Anbietet"
     },
     "trustBadges": {
       "muslimOwned": "Muslim",

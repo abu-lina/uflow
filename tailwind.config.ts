@@ -258,6 +258,11 @@ const config: Config = {
 
         surface: 'hsl(var(--color-surface))',
 
+        // Icon surface colors
+        icon: {
+          surface: 'hsl(var(--color-icon-surface))',
+        },
+
         // Text colors (semantic)
         text: {
           primary: 'hsl(var(--color-text-primary))',

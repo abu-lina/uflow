@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { MapPin, X } from 'lucide-react';
+import { RowItem } from '@/components/ui/RowItem';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { EmptyCityCard } from '@/features/search/components/EmptyCityCard';
 import type { PopularCity } from '@/services/providers';
@@ -42,20 +43,19 @@ function CityRow({
   const countLabel = t('suchen.wo.providerCount', { count: providerCount });
 
   return (
-    <button
-      aria-label={`${city} - ${countLabel}`}
-      className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-background-selection/50 focus:outline-none focus:ring-2 focus:ring-primary/30 ${className ?? ''}`}
-      type="button"
-      onClick={() => onSelect(city)}
-    >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
-        <MapPin aria-hidden="true" className="h-6 w-6" />
-      </div>
-      <div className="min-w-0">
-        <p className="truncate font-inter-tight text-base font-semibold text-text-primary">{city}</p>
-        <p className="truncate font-inter text-base font-light text-text-muted">{countLabel}</p>
-      </div>
-    </button>
+    <RowItem
+      selectable
+      ariaLabel={`${city} - ${countLabel}`}
+      className={`transition-colors hover:bg-background-selection/50 focus:outline-none focus:ring-2 focus:ring-primary/30 ${className ?? ''}`}
+      icon={
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+          <MapPin aria-hidden="true" className="h-6 w-6" />
+        </div>
+      }
+      subtitle={countLabel}
+      title={city}
+      onSelect={() => onSelect(city)}
+    />
   );
 }
 

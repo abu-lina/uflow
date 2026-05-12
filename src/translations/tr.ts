@@ -982,9 +982,20 @@ export const tr = {
     "attestation": {
       "title": "Beyan edilen taahhütler",
       "subtitle": "Bu taahhütler sağlayıcı tarafından beyan edilmiştir.",
+      "subtitleDeclared": "Allah adına şahitlik ederim ki:",
+      "subtitleFallback": "Sağlayıcı henüz kanıt eklemedi. Lütfen ilk ziyaretinizden önce şunları sorunuz:",
+      "halalOnly": "Sadece helal et",
       "noAlcohol": "Alkol yok",
       "noPork": "Domuz eti yok",
-      "noGambling": "Kumar yok"
+      "noGambling": "Kumar yok",
+      "halalOnlyDeclaredDetail": "satar ve işlerim",
+      "noAlcoholDeclaredDetail": "satar veya işlerim",
+      "noPorkDeclaredDetail": "satar veya işlerim",
+      "noGamblingDeclaredDetail": "sunarım",
+      "halalOnlyFallbackDetail": "satılır ve işlenir",
+      "noAlcoholFallbackDetail": "satılır veya işlenir",
+      "noPorkFallbackDetail": "satılır veya işlenir",
+      "noGamblingFallbackDetail": "sunulur"
     },
     "trustBadges": {
       "muslimOwned": "Müslüman",

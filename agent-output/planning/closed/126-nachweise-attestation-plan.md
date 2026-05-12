@@ -2,7 +2,7 @@
 ID: 126
 Origin: 126
 UUID: a3f2c891
-Status: Committed
+Status: Released
 ---
 
 # Plan 126 — Nachweise Attestation Display
