@@ -37,11 +37,6 @@ import {
   getProvidersForCommunityService,
   type CommunityService,
 } from '@/services/communityServices';
-import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
-import { EndorseBadgeButton } from '@/components/providers/EndorseBadgeButton';
-import { getBadgesForEntityWithConfirmationStatus } from '@/services/badges';
-import { EntityType } from '@/types/badges';
-import type { BadgeWithConfirmationStatus } from '@/types/badges';
 import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
 import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
@@ -193,22 +188,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   // Use prefetched data from server to avoid client-side waterfall
   const { data: communityServices = [], isLoading: isLoadingCommunityServices } =
     useCommunityServicesForProvider(provider.provider_id, initialCommunityServices);
-
-  // Fetch badges with user confirmation status for endorsement UX
-  const entityId = provider.provider_id;
-  const entityType = EntityType.PROVIDER;
-  const {
-    data: badgesWithStatus = [],
-    isLoading: isLoadingBadges,
-    refetch: refetchBadges,
-  } = useQuery<BadgeWithConfirmationStatus[]>({
-    queryKey: ['badges', entityId, user?.id],
-    queryFn: () =>
-      getBadgesForEntityWithConfirmationStatus(entityId || '', entityType, user?.id || null),
-    enabled: !!entityId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    refetchOnWindowFocus: false,
-  });
 
   // Use React Query for providers supporting this ummah provider (engagement graph)
   const { data: supportingProviders = [] } = useQuery<
@@ -446,22 +425,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             </div>
           </div>
 
-          {/* Trust & Verification Badges Section */}
-          <div className="mx-6 mt-4">
-            <TrustBadgesSection
-              badges={badgesWithStatus}
-              isLoading={isLoadingBadges}
-              renderEndorsement={(badge) => (
-                <EndorseBadgeButton
-                  badge={badge as BadgeWithConfirmationStatus}
-                  userId={user?.id || null}
-                  onEndorsementChange={() => void refetchBadges()}
-                  onLoginRequired={() => router.push('/auth/login')}
-                />
-              )}
-            />
-          </div>
-
           {/* Barakah Effect Section */}
           {isLoadingCommunityServices ? (
             <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
@@ -626,11 +589,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
           )}
 
           <div className="mx-6 mt-4 space-y-4">
-            <ProviderDetailSections
-              badges={badgesWithStatus}
-              isLoadingBadges={isLoadingBadges}
-              provider={provider}
-            />
+            <ProviderDetailSections provider={provider} />
             <HalalTrustBanner />
           </div>
         </div>
@@ -820,20 +779,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                 )}
               </div>
             </div>
-
-            {/* Trust & Verification Badges Section */}
-            <TrustBadgesSection
-              badges={badgesWithStatus}
-              isLoading={isLoadingBadges}
-              renderEndorsement={(badge) => (
-                <EndorseBadgeButton
-                  badge={badge as BadgeWithConfirmationStatus}
-                  userId={user?.id || null}
-                  onEndorsementChange={() => void refetchBadges()}
-                  onLoginRequired={() => router.push('/auth/login')}
-                />
-              )}
-            />
 
             {/* Barakah Effect - Show loading state or content */}
             {isLoadingCommunityServices ? (
@@ -1080,11 +1025,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               </div>
             )}
 
-            <ProviderDetailSections
-              badges={badgesWithStatus}
-              isLoadingBadges={isLoadingBadges}
-              provider={provider}
-            />
+            <ProviderDetailSections provider={provider} />
 
             <HalalTrustBanner />
 

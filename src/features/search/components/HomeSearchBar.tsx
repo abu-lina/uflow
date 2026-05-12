@@ -57,7 +57,7 @@ export function HomeSearchBar({ activeSection, className = '' }: HomeSearchBarPr
   return (
     <div
       aria-label={ariaLabel}
-      className={`flex h-12 items-center gap-3 rounded-xl border border-gray-200 bg-white/80 px-4 shadow-sm backdrop-blur-sm transition-all hover:border-gray-300 hover:shadow-md ${className}`}
+      className={`flex h-12 items-center gap-0 rounded-xl border border-gray-200 bg-white/80 px-4 shadow-sm backdrop-blur-sm transition-all hover:border-gray-300 hover:shadow-md ${className}`}
       role="search"
     >
       <Search aria-hidden="true" className="h-5 w-5 shrink-0 text-gray-400" />

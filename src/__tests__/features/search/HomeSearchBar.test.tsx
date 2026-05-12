@@ -105,4 +105,11 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     const region = screen.getByRole('search');
     expect(region.className).toContain('custom-class');
   });
+
+  it('[post-review fix] uses gap-0 between icon and input', () => {
+    render(<HomeSearchBar activeSection="food" />);
+    const region = screen.getByRole('search');
+    expect(region.className).toContain('gap-0');
+    expect(region.className).not.toContain('gap-3');
+  });
 });

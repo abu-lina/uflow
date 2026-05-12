@@ -569,7 +569,7 @@ export default function CitySelectionPage() {
                     <label className="sr-only" htmlFor="city-search-input">
                       {t('waitlist.citySelection.searchPlaceholder')}
                     </label>
-                    <div className="flex h-[54px] items-center gap-1 rounded-sm border border-border bg-white px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
+                    <div className="flex h-[54px] items-center gap-0 rounded-sm border border-border bg-white px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2">
                       <Search aria-hidden="true" className="size-6 shrink-0 text-content-muted" />
                       <input
                         ref={searchInputRef}

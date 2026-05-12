@@ -5,6 +5,12 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.14] - 2026-05-12
+
+### Changed
+
+- **Provider detail UI polish — icon+text rows, Nachweise accordion, search spacing (Plan 125)**: Refactored Values & Amenities and Menu sections to render as icon+text rows with teal pill icon containers (`DetailListItem`). Added Nachweise/proofs accordion with language-aware badge label display. Normalized search bar spacing to `gap-0` across `HomeSearchBar`, `SearchBar`, and city-selection. Removed `TrustBadgesSection` from provider detail page and modal. Added server-side admin fallback for offers/needs SSR hydration when anon relation reads fail. Fixed stale `badges`/`isLoadingBadges` props causing `ReferenceError` on desktop provider detail.
+
 ## [0.12.13] - 2026-05-12
 
 ### Added

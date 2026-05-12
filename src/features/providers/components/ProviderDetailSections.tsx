@@ -1,21 +1,19 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, type ComponentType, type ReactNode, type SVGProps } from 'react';
+import { BadgeCheck, CircleParking, HandHeart, HeartHandshake, Moon, UtensilsCrossed, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { ExpandSection } from '@/components/ui/ExpandSection';
-import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
 import { AttestationCard } from '@/features/providers/components/AttestationCard';
+import { PrayerRug } from '@/components/icons/PrayerRug';
 import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
-import type { ProviderBadgeWithType, BadgeWithConfirmationStatus } from '@/types/badges';
 import type { OpeningHours } from '@/types/openingHours';
 
 interface ProviderDetailSectionsProps {
   provider: Provider;
-  badges: Array<ProviderBadgeWithType | BadgeWithConfirmationStatus>;
-  isLoadingBadges: boolean;
 }
 
 const DAY_ORDER: Array<{ key: keyof OpeningHours; labelKey: string }> = [
@@ -28,21 +26,32 @@ const DAY_ORDER: Array<{ key: keyof OpeningHours; labelKey: string }> = [
   { key: 'sunday', labelKey: 'providerDetail.days.sunday' },
 ];
 
-function buildAmenityLabels(provider: Provider, t: (key: string) => string): string[] {
-  const entries: Array<[boolean | undefined, string]> = [
-    [provider.muslim_owned, 'providerDetail.amenities.muslimOwned'],
-    [provider.has_prayer_space, 'providerDetail.amenities.prayerSpace'],
-    [provider.has_parking, 'providerDetail.amenities.parking'],
-    [provider.no_alcohol, 'providerDetail.amenities.noAlcohol'],
-    [provider.no_pork, 'providerDetail.amenities.noPork'],
-    [provider.family_friendly, 'providerDetail.amenities.familyFriendly'],
-    [provider.women_friendly, 'providerDetail.amenities.womenFriendly'],
-    [provider.children_friendly, 'providerDetail.amenities.childrenFriendly'],
-    [provider.makes_donations, 'providerDetail.amenities.acceptsDonations'],
-    [provider.economic_solidarity, 'providerDetail.amenities.solidarityPricing'],
+type AmenityItem = {
+  enabled: boolean | undefined;
+  labelKey: string;
+  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+};
+
+function buildAmenityLabels(provider: Provider, t: (key: string) => string): Array<{ label: string; Icon: AmenityItem['Icon'] }> {
+  const entries: AmenityItem[] = [
+    { enabled: provider.muslim_owned, labelKey: 'providerDetail.amenities.muslimOwned', Icon: Moon },
+    { enabled: provider.has_prayer_space, labelKey: 'providerDetail.amenities.prayerSpace', Icon: PrayerRug },
+    { enabled: provider.has_parking, labelKey: 'providerDetail.amenities.parking', Icon: CircleParking },
+    { enabled: provider.no_alcohol, labelKey: 'providerDetail.amenities.noAlcohol', Icon: Moon },
+    { enabled: provider.no_pork, labelKey: 'providerDetail.amenities.noPork', Icon: Moon },
+    { enabled: provider.family_friendly, labelKey: 'providerDetail.amenities.familyFriendly', Icon: Users },
+    { enabled: provider.women_friendly, labelKey: 'providerDetail.amenities.womenFriendly', Icon: Users },
+    { enabled: provider.children_friendly, labelKey: 'providerDetail.amenities.childrenFriendly', Icon: Users },
+    { enabled: provider.makes_donations, labelKey: 'providerDetail.amenities.acceptsDonations', Icon: HandHeart },
+    { enabled: provider.economic_solidarity, labelKey: 'providerDetail.amenities.solidarityPricing', Icon: HeartHandshake },
   ];
 
-  return entries.filter(([enabled]) => Boolean(enabled)).map(([, labelKey]) => t(labelKey));
+  return entries
+    .filter((entry) => Boolean(entry.enabled))
+    .map((entry) => ({
+      label: t(entry.labelKey),
+      Icon: entry.Icon,
+    }));
 }
 
 function renderOpeningHours(
@@ -54,7 +63,7 @@ function renderOpeningHours(
   }
 
   return (
-    <div className="space-y-2 pt-3 text-sm">
+    <div className="space-y-3 pt-3">
       {DAY_ORDER.map(({ key, labelKey }) => {
         const value = openingHours[key];
         const display =
@@ -64,8 +73,8 @@ function renderOpeningHours(
 
         return (
           <div key={key} className="flex items-center justify-between gap-4">
-            <span className="font-medium text-content-heading">{t(labelKey)}</span>
-            <span className="text-[#7a7a7a]">{display}</span>
+            <span className="text-base font-semibold text-content-heading">{t(labelKey)}</span>
+            <span className="text-base font-normal text-content">{display}</span>
           </div>
         );
       })}
@@ -73,13 +82,44 @@ function renderOpeningHours(
   );
 }
 
+function DetailListItem({
+  label,
+  icon,
+}: {
+  label: string;
+  icon: ReactNode;
+}) {
+  return (
+    <div className="flex w-full items-center gap-3 rounded-xl p-2">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E3F2EF] text-primary">
+        {icon}
+      </span>
+      <span className="text-base font-semibold text-content-heading">{label}</span>
+    </div>
+  );
+}
+
 export function ProviderDetailSections({
   provider,
-  badges,
-  isLoadingBadges,
 }: ProviderDetailSectionsProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
+  const proofs = useMemo(() => {
+    if (!Array.isArray(provider.badges)) return [];
+
+    return provider.badges
+      .map((badge) => {
+        const labels = badge.badge_type?.labels;
+        if (!labels) return null;
+
+        if (language === 'de') {
+          return labels.de || labels.en || null;
+        }
+
+        return labels.en || labels.de || null;
+      })
+      .filter((label): label is string => Boolean(label));
+  }, [provider.badges, language]);
 
   const { data: nearbyProviders = [], isLoading: isLoadingNearbyProviders, isFetching: isFetchingNearbyProviders } = useQuery({
     queryKey: ['provider-nearby-city', provider.provider_id, provider.address_city],
@@ -113,9 +153,11 @@ export function ProviderDetailSections({
             <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noValuesAmenities')}</p>
           ) : (
             amenities.map((item) => (
-              <p key={item} className="text-sm text-content-heading">
-                {item}
-              </p>
+              <DetailListItem
+                key={item.label}
+                icon={<item.Icon aria-hidden={true} className="h-6 w-6" />}
+                label={item.label}
+              />
             ))
           )}
         </div>
@@ -124,10 +166,12 @@ export function ProviderDetailSections({
       <ExpandSection title={t('providerDetail.sections.menu')}>
         <div className="space-y-2 pt-3">
           {provider.offers?.length ? (
-            provider.offers.map((offer) => (
-              <p key={offer.name_de} className="text-sm text-content-heading">
-                {offer.name_de}
-              </p>
+            provider.offers.map((offer, index) => (
+              <DetailListItem
+                key={`${offer.name_de}-${index}`}
+                icon={<UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
+                label={offer.name_de}
+              />
             ))
           ) : (
             <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noMenu')}</p>
@@ -139,24 +183,30 @@ export function ProviderDetailSections({
         {renderOpeningHours(provider.opening_hours, t)}
       </ExpandSection>
 
-      <ExpandSection title={t('providerDetail.sections.feedback')}>
-        <p className="pt-3 text-sm text-[#7a7a7a]">{t('providerDetail.empty.noFeedback')}</p>
+      <ExpandSection title={t('providerDetail.sections.proofs')}>
+          <div className="space-y-2 pt-3">
+            <AttestationCard
+              listingType={provider.listing_type}
+              noAlcohol={provider.no_alcohol}
+              noGambling={provider.no_gambling}
+              noPork={provider.no_pork}
+            />
+            {proofs.length ? (
+              proofs.map((proof, index) => (
+                <DetailListItem
+                  key={`${proof}-${index}`}
+                  icon={<BadgeCheck aria-hidden="true" className="h-6 w-6" />}
+                  label={proof}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noProofs')}</p>
+            )}
+        </div>
       </ExpandSection>
 
-      <ExpandSection title={t('providerDetail.sections.proofs')}>
-        <div className="space-y-3 pt-3">
-          <AttestationCard
-            listingType={provider.listing_type}
-            noAlcohol={provider.no_alcohol}
-            noGambling={provider.no_gambling}
-            noPork={provider.no_pork}
-          />
-          {badges.length === 0 && !isLoadingBadges ? (
-            <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noProofs')}</p>
-          ) : (
-            <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
-          )}
-        </div>
+      <ExpandSection title={t('providerDetail.sections.feedback')}>
+        <p className="pt-3 text-sm text-[#7a7a7a]">{t('providerDetail.empty.noFeedback')}</p>
       </ExpandSection>
 
       <ExpandSection title={t('providerDetail.sections.nearby')}>

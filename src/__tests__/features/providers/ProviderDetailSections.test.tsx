@@ -4,6 +4,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { render } from '@/__tests__/utils/test-utils';
 import { mockProviders } from '@/__tests__/mocks/providerData';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
+import { BadgeKey, EntityType, TrustLevel } from '@/types/badges';
 
 const useQueryMock = vi.fn();
 
@@ -31,8 +32,6 @@ describe('ProviderDetailSections', () => {
 
     render(
       <ProviderDetailSections
-        badges={[]}
-        isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
           offers: [],
@@ -56,8 +55,6 @@ describe('ProviderDetailSections', () => {
 
     render(
       <ProviderDetailSections
-        badges={[]}
-        isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
           no_alcohol: true,
@@ -70,5 +67,137 @@ describe('ProviderDetailSections', () => {
 
     expect(screen.getByText('No alcohol')).toBeInTheDocument();
     expect(screen.getByText('No pork')).toBeInTheDocument();
+  });
+
+  it('[post-review fix] renders values and menu as icon + text rows', () => {
+    useQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+    });
+
+    const { container } = render(
+      <ProviderDetailSections
+        provider={{
+          ...mockProviders[0],
+          muslim_owned: true,
+          offers: [{ name_de: 'Falafel Teller' }],
+          needs: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+
+    const menuItem = screen.getByText('Falafel Teller');
+    expect(menuItem).toBeInTheDocument();
+    expect(menuItem).toHaveClass('text-base', 'font-semibold', 'text-content-heading');
+
+    const menuItemRow = menuItem.closest('div');
+    expect(menuItemRow).toBeTruthy();
+    expect(menuItemRow?.firstElementChild).toHaveClass('bg-[#E3F2EF]');
+    expect(menuItemRow?.firstElementChild).toHaveClass('h-12', 'w-12');
+
+    // At least one values/amenities row should also render with icon container.
+    const iconSlots = container.querySelectorAll('span.bg-\\[\\#E3F2EF\\]');
+    expect(iconSlots.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('[figma alignment] renders opening-hours rows with stronger day/time typography', () => {
+    useQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+    });
+
+    render(
+      <ProviderDetailSections
+        provider={{
+          ...mockProviders[0],
+          offers: [],
+          needs: [],
+          opening_hours: {
+            monday: { open: '10:00', close: '22:00' },
+            tuesday: { open: '10:00', close: '22:00' },
+            wednesday: { open: '10:00', close: '22:00' },
+            thursday: { open: '10:00', close: '22:00' },
+            friday: { open: '10:00', close: '22:00' },
+            saturday: { open: '10:00', close: '22:00' },
+            sunday: { open: '10:00', close: '22:00' },
+          },
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Opening Hours' }));
+
+    expect(screen.getByText('Monday')).toHaveClass('text-base', 'font-semibold', 'text-content-heading');
+    expect(screen.getAllByText('10:00 - 22:00')[0]).toHaveClass('text-base', 'font-normal', 'text-content');
+  });
+
+  it('[pre-fix FAILS] renders proofs section and fallback empty state', () => {
+    useQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+    });
+
+    render(
+      <ProviderDetailSections
+        provider={{
+          ...mockProviders[0],
+          offers: [],
+          needs: [],
+          badges: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Proofs' }));
+    expect(screen.getByText('No proofs available.')).toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS] renders German Nachweise section label and badge rows', () => {
+    useQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+    });
+    localStorage.setItem('preferred-language', 'de');
+
+    render(
+      <ProviderDetailSections
+        provider={{
+          ...mockProviders[0],
+          offers: [],
+          needs: [],
+          badges: [
+            {
+              id: 'badge-1',
+              entity_id: 'provider-1',
+              entity_type: EntityType.PROVIDER,
+              badge_type_id: 'type-1',
+              trust_level: TrustLevel.SELF_DECLARED,
+              confirmation_count: 0,
+              created_at: '2026-01-01T00:00:00.000Z',
+              updated_at: '2026-01-01T00:00:00.000Z',
+              badge_type: {
+                id: 'type-1',
+                badge_key: BadgeKey.MUSLIM_OWNED,
+                labels: { de: 'Muslim geführt', en: 'Muslim-owned' },
+                description: null,
+                icon_name: 'moon',
+                is_active: true,
+                created_at: '2026-01-01T00:00:00.000Z',
+                updated_at: '2026-01-01T00:00:00.000Z',
+              },
+            },
+          ],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nachweise' }));
+    expect(screen.getByText('Muslim geführt')).toBeInTheDocument();
   });
 });

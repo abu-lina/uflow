@@ -742,11 +742,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               </div>
             )}
 
-            <ProviderDetailSections
-              badges={provider.badges ?? []}
-              isLoadingBadges={false}
-              provider={provider}
-            />
+            <ProviderDetailSections provider={provider} />
 
             <HalalTrustBanner />
           </div>

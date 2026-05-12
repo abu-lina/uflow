@@ -61,6 +61,12 @@ describe('Provider detail enhancements (Plan 113)', () => {
     expect(screen.getByText('Nearby')).toBeInTheDocument();
   });
 
+  it('[post-review fix] does not render trust and verification section on provider detail page', () => {
+    render(<ProviderDetailPage provider={providerWithEnhancements} />);
+
+    expect(screen.queryByText(/Trust & Verification|Vertrauen & Verifizierung/)).not.toBeInTheDocument();
+  });
+
   it('shows halal popup on first open and tracks open count', async () => {
     render(<ProviderDetailPage provider={providerWithEnhancements} />);
 
