@@ -5,13 +5,15 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.12.14] - 2026-05-12
+## [Unreleased] - 2026-05-12
 
 ### Changed
 
-- **Provider detail UI polish — icon+text rows, Nachweise accordion, search spacing (Plan 125)**: Refactored Values & Amenities and Menu sections to render as icon+text rows with teal pill icon containers (`DetailListItem`). Added Nachweise/proofs accordion with language-aware badge label display. Normalized search bar spacing to `gap-0` across `HomeSearchBar`, `SearchBar`, and city-selection. Removed `TrustBadgesSection` from provider detail page and modal. Added server-side admin fallback for offers/needs SSR hydration when anon relation reads fail. Fixed stale `badges`/`isLoadingBadges` props causing `ReferenceError` on desktop provider detail.
+- **Reusable IconListRow layout primitive (Plan 130, #227)**: Added `IconListRow` in `src/components/ui/` and refactored repeated icon-label-detail row layouts to use it across search sections (`WasCategoryResults`, `WasServiceTypeResults`, `WoCityResults`, `FilterSection`) and provider detail attestation display (`AttestationCard`).
+- **Provider attestation token alignment (Plan 130)**: Replaced hardcoded attestation row text and icon background colors with semantic design tokens (`text-text-primary`, `bg-background-selection`, `text-primary-dark`) to keep row styling consistent with search surface patterns while preserving attestation-specific typography.
+- **RowItem component system rollout (Plan 131, #228)**: Added `RowItem`, `InfoTrailing`, and controlled `CounterTrailing` components in `src/components/ui/`, then migrated search/provider consumers (`WasCategoryResults`, `WasServiceTypeResults`, `WoCityResults`, `FilterSection`, `AttestationCard`, `WerAudienceFilter`) from ad-hoc row markup to shared semantics with standardized subtitle typography and consistent selectable/multi-select state handling.
 
-## [0.12.13] - 2026-05-12
+## [0.12.14] - 2026-05-12
 
 ### Added
 

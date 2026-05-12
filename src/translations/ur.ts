@@ -982,9 +982,20 @@ export const ur = {
     "attestation": {
       "title": "اعلان کردہ وعدے",
       "subtitle": "یہ وعدے فراہم کنندہ نے خود بیان کیے ہیں۔",
+      "subtitleDeclared": "میں اللہ کو گواہ بنا کر کہتا ہوں کہ میں:",
+      "subtitleFallback": "فراہم کنندہ نے ابھی تک کوئی ثبوت شامل نہیں کیا۔ براہ کرم پہلی بار آنے سے پہلے پوچھیں کہ آیا یہ چیزیں:",
+      "halalOnly": "صرف حلال گوشت",
       "noAlcohol": "بغیر الکحل",
       "noPork": "بغیر سور کے گوشت",
-      "noGambling": "بغیر جوئے"
+      "noGambling": "بغیر جوئے",
+      "halalOnlyDeclaredDetail": "بیچتا اور تیار کرتا ہوں",
+      "noAlcoholDeclaredDetail": "بیچتا یا تیار کرتا ہوں",
+      "noPorkDeclaredDetail": "بیچتا یا تیار کرتا ہوں",
+      "noGamblingDeclaredDetail": "پیش کرتا ہوں",
+      "halalOnlyFallbackDetail": "فروخت اور تیاری کی جاتی ہے",
+      "noAlcoholFallbackDetail": "فروخت یا تیاری کی جاتی ہے",
+      "noPorkFallbackDetail": "فروخت یا تیاری کی جاتی ہے",
+      "noGamblingFallbackDetail": "پیش کی جاتی ہے"
     },
     "trustBadges": {
       "muslimOwned": "مسلم",

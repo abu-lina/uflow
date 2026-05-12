@@ -982,9 +982,20 @@ export const ar = {
     "attestation": {
       "title": "التزامات مُعلنة",
       "subtitle": "هذه الالتزامات صرّح بها مقدم الخدمة.",
+      "subtitleDeclared": "أُشهد بالله أنني:",
+      "subtitleFallback": "لم يضف مقدم الخدمة أدلة حتى الآن. يرجى الاستفسار قبل زيارتك الأولى عمّا إذا كان:",
+      "halalOnly": "لحم حلال فقط",
       "noAlcohol": "بدون كحول",
       "noPork": "بدون لحم خنزير",
-      "noGambling": "بدون قمار"
+      "noGambling": "بدون قمار",
+      "halalOnlyDeclaredDetail": "أبيع وأُعالج",
+      "noAlcoholDeclaredDetail": "أبيع أو أُعالج",
+      "noPorkDeclaredDetail": "أبيع أو أُعالج",
+      "noGamblingDeclaredDetail": "أُقدّم",
+      "halalOnlyFallbackDetail": "يتم بيعُه ومعالجتُه",
+      "noAlcoholFallbackDetail": "يتم بيعُه أو معالجتُه",
+      "noPorkFallbackDetail": "يتم بيعُه أو معالجتُه",
+      "noGamblingFallbackDetail": "يتم تقديمه"
     },
     "trustBadges": {
       "muslimOwned": "مسلم",

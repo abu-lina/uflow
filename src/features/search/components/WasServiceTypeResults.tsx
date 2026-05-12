@@ -1,4 +1,5 @@
 import { BriefcaseBusiness, X } from 'lucide-react';
+import { RowItem } from '@/components/ui/RowItem';
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 
 interface WasServiceTypeResultsProps {
@@ -88,29 +89,26 @@ export function WasServiceTypeResults({
             {visibleItems.map((item) => {
               const label = t(item.labelKey);
               return (
-                <button
+                <RowItem
                   key={item.id}
-                  aria-label={label}
-                  className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-neutral-muted"
-                  type="button"
-                  onClick={() =>
+                  selectable
+                  ariaLabel={label}
+                  className="transition-colors hover:bg-neutral-muted"
+                  icon={
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                      <BriefcaseBusiness aria-hidden="true" className="h-5 w-5" />
+                    </div>
+                  }
+                  subtitle={t('suchen.was.ummah.serviceTypeLabel')}
+                  title={label}
+                  onSelect={() =>
                     onSelect({
                       label,
                       type: 'service-type',
                       serviceTypeId: item.id,
                     })
                   }
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
-                    <BriefcaseBusiness aria-hidden="true" className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-inter-tight text-base font-semibold text-text-primary">{label}</p>
-                    <p className="truncate font-inter text-sm text-text-muted">
-                      {t('suchen.was.ummah.serviceTypeLabel')}
-                    </p>
-                  </div>
-                </button>
+                />
               );
             })}
           </div>
@@ -124,23 +122,20 @@ export function WasServiceTypeResults({
           </p>
           <div className="space-y-1">
             {recentSearches.slice(0, 3).map((item) => (
-              <button
+              <RowItem
                 key={`recent:${item.serviceTypeId ?? item.label}`}
-                aria-label={item.label}
-                className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-neutral-muted"
-                type="button"
-                onClick={() => onSelect(item)}
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
-                  <BriefcaseBusiness aria-hidden="true" className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate font-inter-tight text-base font-semibold text-text-primary">{item.label}</p>
-                  <p className="truncate font-inter text-sm text-text-muted">
-                    {t('suchen.was.ummah.serviceTypeLabel')}
-                  </p>
-                </div>
-              </button>
+                selectable
+                ariaLabel={item.label}
+                className="transition-colors hover:bg-neutral-muted"
+                icon={
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                    <BriefcaseBusiness aria-hidden="true" className="h-5 w-5" />
+                  </div>
+                }
+                subtitle={t('suchen.was.ummah.serviceTypeLabel')}
+                title={item.label}
+                onSelect={() => onSelect(item)}
+              />
             ))}
           </div>
         </>

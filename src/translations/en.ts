@@ -982,9 +982,20 @@ export const en = {
     "attestation": {
       "title": "Declared commitments",
       "subtitle": "These commitments were declared by the provider.",
+      "subtitleDeclared": "I testify by Allah, that I:",
+      "subtitleFallback": "The provider has not yet left any proof. Please ask before your first visit whether they:",
+      "halalOnly": "Only halal meat",
       "noAlcohol": "No alcohol",
       "noPork": "No pork",
-      "noGambling": "No gambling"
+      "noGambling": "No gambling",
+      "halalOnlyDeclaredDetail": "sell and process",
+      "noAlcoholDeclaredDetail": "sell or process",
+      "noPorkDeclaredDetail": "sell or process",
+      "noGamblingDeclaredDetail": "offer",
+      "halalOnlyFallbackDetail": "will be sold and processed",
+      "noAlcoholFallbackDetail": "will be sold or processed",
+      "noPorkFallbackDetail": "will be sold or processed",
+      "noGamblingFallbackDetail": "be offered"
     },
     "trustBadges": {
       "muslimOwned": "Muslim",

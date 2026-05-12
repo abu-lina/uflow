@@ -4,6 +4,7 @@ import { useMemo, type ComponentType, type ReactNode, type SVGProps } from 'reac
 import { BadgeCheck, CircleParking, HandHeart, HeartHandshake, Moon, UtensilsCrossed, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
+import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
 import { ExpandSection } from '@/components/ui/ExpandSection';
 import { AttestationCard } from '@/features/providers/components/AttestationCard';
 import { PrayerRug } from '@/components/icons/PrayerRug';
@@ -11,9 +12,12 @@ import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import type { OpeningHours } from '@/types/openingHours';
+import type { BadgeWithConfirmationStatus, ProviderBadgeWithType } from '@/types/badges';
 
 interface ProviderDetailSectionsProps {
   provider: Provider;
+  badges: (BadgeWithConfirmationStatus | ProviderBadgeWithType)[];
+  isLoadingBadges: boolean;
 }
 
 const DAY_ORDER: Array<{ key: keyof OpeningHours; labelKey: string }> = [
@@ -101,25 +105,12 @@ function DetailListItem({
 
 export function ProviderDetailSections({
   provider,
+  badges,
+  isLoadingBadges,
 }: ProviderDetailSectionsProps) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
-  const proofs = useMemo(() => {
-    if (!Array.isArray(provider.badges)) return [];
-
-    return provider.badges
-      .map((badge) => {
-        const labels = badge.badge_type?.labels;
-        if (!labels) return null;
-
-        if (language === 'de') {
-          return labels.de || labels.en || null;
-        }
-
-        return labels.en || labels.de || null;
-      })
-      .filter((label): label is string => Boolean(label));
-  }, [provider.badges, language]);
+  const supportsAttestation = provider.listing_type === 'food' || provider.listing_type === 'store';
 
   const { data: nearbyProviders = [], isLoading: isLoadingNearbyProviders, isFetching: isFetchingNearbyProviders } = useQuery({
     queryKey: ['provider-nearby-city', provider.provider_id, provider.address_city],
@@ -184,24 +175,19 @@ export function ProviderDetailSections({
       </ExpandSection>
 
       <ExpandSection title={t('providerDetail.sections.proofs')}>
-          <div className="space-y-2 pt-3">
-            <AttestationCard
-              listingType={provider.listing_type}
-              noAlcohol={provider.no_alcohol}
-              noGambling={provider.no_gambling}
-              noPork={provider.no_pork}
-            />
-            {proofs.length ? (
-              proofs.map((proof, index) => (
-                <DetailListItem
-                  key={`${proof}-${index}`}
-                  icon={<BadgeCheck aria-hidden="true" className="h-6 w-6" />}
-                  label={proof}
-                />
-              ))
-            ) : (
-              <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noProofs')}</p>
-            )}
+        <div className="space-y-3 pt-3">
+          <AttestationCard
+            halalLevel={provider.halal_level}
+            listingType={provider.listing_type}
+            noAlcohol={provider.no_alcohol}
+            noGambling={provider.no_gambling}
+            noPork={provider.no_pork}
+          />
+          {!supportsAttestation && badges.length === 0 && !isLoadingBadges ? (
+            <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noProofs')}</p>
+          ) : (
+            <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
+          )}
         </div>
       </ExpandSection>
 
