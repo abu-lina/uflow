@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, type ComponentType, type ReactNode, type SVGProps } from 'react';
-import { BadgeCheck, CircleParking, HandHeart, HeartHandshake, Moon, UtensilsCrossed, Users } from 'lucide-react';
+import { CircleParking, HandHeart, HeartHandshake, Moon, UtensilsCrossed, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
