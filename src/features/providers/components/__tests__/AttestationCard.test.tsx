@@ -81,4 +81,26 @@ describe('AttestationCard', () => {
     expect(screen.getByLabelText('providerDetail.attestation.title')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.attestation.subtitleDeclared')).toBeInTheDocument();
   });
+
+  it('[regression] proofs icon wrapper does not have background class bg-icon-surface', () => {
+    const { container } = renderCard('food', 2, true, true, false);
+
+    // Find the icon wrapper spans specifically: they have h-12 and w-12 classes
+    const iconWrappers = container.querySelectorAll('span.h-12.w-12[aria-hidden]');
+
+    // Verify at least one icon wrapper exists (expect 3: halalOnly, noAlcohol, noPork)
+    expect(iconWrappers.length).toBeGreaterThan(0);
+
+    // Verify NO icon wrapper contains the bg-icon-surface class
+    iconWrappers.forEach((wrapper) => {
+      const classList = wrapper.className;
+      expect(classList).not.toContain('bg-icon-surface');
+      // Verify expected styling classes are present (icon wrapper structure)
+      expect(classList).toContain('flex');
+      expect(classList).toContain('h-12');
+      expect(classList).toContain('w-12');
+      expect(classList).toContain('rounded-xl');
+      expect(classList).toContain('text-primary-dark');
+    });
+  });
 });

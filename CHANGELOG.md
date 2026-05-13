@@ -5,7 +5,15 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-05-12
+## [Unreleased]
+
+## [0.12.16] - 2026-05-13
+
+### Fixed
+
+- **Attestation proofs icon background removed (Plan 131 delta)**: Removed `bg-icon-surface` class from the proofs commitment icon wrapper in `AttestationCard`. The halalOnly, noAlcohol, noPork, and noGambling icons now render without a colored background square, delivering the intended flat icon-on-surface visual presentation globally across all food/store providers with declared attestations.
+
+## [0.12.15] - 2026-05-12
 
 ### Changed
 

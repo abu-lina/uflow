@@ -124,7 +124,7 @@ export function AttestationCard({
             icon={
               <span
                 aria-hidden
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-icon-surface text-primary-dark"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary-dark"
               >
                 {renderIcon('h-6 w-6')}
               </span>
