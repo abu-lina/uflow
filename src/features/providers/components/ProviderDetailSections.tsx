@@ -41,8 +41,6 @@ function buildAmenityLabels(provider: Provider, t: (key: string) => string): Arr
     { enabled: provider.muslim_owned, labelKey: 'providerDetail.amenities.muslimOwned', Icon: Moon },
     { enabled: provider.has_prayer_space, labelKey: 'providerDetail.amenities.prayerSpace', Icon: PrayerRug },
     { enabled: provider.has_parking, labelKey: 'providerDetail.amenities.parking', Icon: CircleParking },
-    { enabled: provider.no_alcohol, labelKey: 'providerDetail.amenities.noAlcohol', Icon: Moon },
-    { enabled: provider.no_pork, labelKey: 'providerDetail.amenities.noPork', Icon: Moon },
     { enabled: provider.family_friendly, labelKey: 'providerDetail.amenities.familyFriendly', Icon: Users },
     { enabled: provider.women_friendly, labelKey: 'providerDetail.amenities.womenFriendly', Icon: Users },
     { enabled: provider.children_friendly, labelKey: 'providerDetail.amenities.childrenFriendly', Icon: Users },

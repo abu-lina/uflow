@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.17] - 2026-05-14
+
+### Fixed
+
+- **Amenities dietary restrictions removed (Plan 132)**: Removed `no_alcohol` and `no_pork` entries from the Values & Amenities section in the provider detail page. These dietary attestation flags belong to the Nachweise/Proofs section where they are already displayed as attestation commitments, not in the general amenities list.
+
 ## [0.12.16] - 2026-05-13
 
 ### Fixed
