@@ -948,7 +948,6 @@ export const tr = {
       "menu": "Menü",
       "openingHours": "Çalışma Saatleri",
       "feedback": "Geri Bildirim",
-      "proofs": "Kanıtlar",
       "nearby": "Yakında"
     },
     "days": {
@@ -997,6 +996,30 @@ export const tr = {
       "noPorkFallbackDetail": "satılır veya işlenir",
       "noGamblingFallbackDetail": "sunulur"
     },
+    // Provisional translation - requires native speaker review before production.
+    "proofTier": {
+      "sectionTitle": "Helal Kontrolü",
+      "tier1Title": "Çevrimiçi kontrol edildi",
+      "tier1Detail": "Helal kriterleri, kayıt öncesinde menü ve çevrimiçi inceleme ile doğrulandı.",
+      "tier2Title": "Yerinde kontrol edildi",
+      "tier2Detail": "Bu restoranı ziyaret ettik ve helal uygulamalarını doğrulamak için işletme sahibiyle konuştuk.",
+      "tier3Title": "Sertifika mevcut",
+      "tier3Detail": "Bu restoran tanınmış bir kuruluştan helal sertifikası sunmuştur.",
+      "sealAltBronze": "Bronz mühür – çevrimiçi doğrulandı",
+      "sealAltSilver": "Gümüş mühür – yerinde doğrulandı",
+      "sealAltGold": "Altın mühür – sertifika doğrulandı",
+      "summaryBronze": "Bu sağlayıcı {{highlight}}çevrimiçi{{/highlight}} kontrol edildi.",
+      "summarySilver": "Bu sağlayıcı {{highlight}}yerinde{{/highlight}} kontrol edildi.",
+      "summaryGoldCert": "Bu sağlayıcı {{highlight}}yerinde{{/highlight}} kontrol edildi ve {{highlight}}helal sertifikası{{/highlight}} sundu.",
+      "summaryGoldCertOnly": "Bu sağlayıcı {{highlight}}çevrimiçi{{/highlight}} kontrol edildi ve {{highlight}}helal sertifikası{{/highlight}} sundu.",
+      "whatWeVerified": "Neyi doğruladık",
+      "checkMenuReviewed": "Menü çevrimiçi incelendi",
+      "checkCertificateOnFile": "Helal sertifikası dosyada",
+      "checkOnsiteVisit": "Yerinde ziyaret tamamlandı",
+      "checkOwnerConfirmed": "İşletme sahibi helal uygulamaları doğruladı",
+      "whatIsThis": "Nasıl kontrol ediyoruz?",
+      "explanation": "Ummah Flow üzerindeki her kayıt helal gereksinimlerimizi karşılar. Güven seviyesi bunu ne kadar kapsamlı doğruladığımızı gösterir."
+    },
     "trustBadges": {
       "muslimOwned": "Müslüman",
       "acceptsDonations": "Bağış",
@@ -1011,7 +1034,6 @@ export const tr = {
       "noValuesAmenities": "Değer veya olanak bulunamadı.",
       "noMenu": "Menü öğesi bulunamadı.",
       "noFeedback": "Henüz değerlendirme yok.",
-      "noProofs": "Kanıt bulunamadı.",
       "noNearby": "Yakında sağlayıcı bulunamadı."
     },
     "loading": {

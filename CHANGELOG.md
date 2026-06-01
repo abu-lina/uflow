@@ -5,7 +5,21 @@ All notable changes to UFlow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] - 2026-06-01
+
+### Changed
+
+- **Halal Check trust model rework (Plan 133 + Plan 134)**: Provider detail now presents a clearer trust hierarchy. `HalalTrustBanner` remains the baseline gate above detail sections, while the `Halal Check` section shows tiered platform verification in `ProofTierCard` followed by supporting provider attestation rows.
+- **Trust-centered wording update (Plan 133 delta)**: Updated proof-tier messaging across all six locales to trust-focused labels: section title `Halal Check`, tier labels `Online Checked`, `On-site Checked`, and `Certificate Provided`, with matching explainer copy.
+- **Attestation visual hierarchy refinement (Plan 134)**: Reduced attestation row visual weight (smaller icon footprint and subtler separation) so proof tier remains the dominant trust signal while keeping all attestation commitments visible and accessible.
+- **Verification UX rethink (Plan 135)**: Reworked provider-detail verification from a single tier number to a two-dimensional model (`verification_method` + `has_certificate`) with a 4-level visual scale (`Online`, `Online + Certificate`, `On-site`, `On-site + Certificate`) and a new "What we verified" checklist.
+- **Wax Seal Trust Tiers (Plan 138)**: Replaced the arc gauge + dimension matrix in `ProofTierCard` with three progressive wax seal images (Bronze / Silver / Gold), a highlight-formatted summary sentence, and inline gold-tier attestation. Falls back to coloured circles when seal images are absent. Old arc SVG (`VerificationArc`) and dimension status chips fully removed. Plans 136 and 137 closed as superseded.
+
+### Fixed
+
+- **Proof tier fallback semantics (Plan 133 delta)**: `NULL`/undefined `proof_tier` now defaults to Tier 1 (`Online Checked`) instead of a pending state, matching the actual listing workflow where online checks happen before publication.
+- **JoinHalal RPC compatibility (Plan 133)**: `upsert_joinhalal_providers` no longer references dropped legacy columns and now writes proof-tier and related data through current schema paths.
+- **Empty attestation noise removed (Plan 135)**: `AttestationCard` now returns `null` when no declarations exist, removing fallback placeholder content and keeping focus on concrete verification evidence.
 
 ## [0.12.17] - 2026-05-14
 
@@ -113,6 +127,7 @@ The primary breaking structural changes (supertype unification, table drops, enu
 to PROD before app-code changes, making each schema step individually safe during the pre-consumer window.
 
 **M-1 — Phase A Quick Wins** (migration 079, FL-14, FL-15, FL-17, FL-18, FL-22, FL-3)
+
 - Dropped 3 redundant UNIQUE constraints on PK columns (`categories`, `providers`, `users`)
 - Added FK on `enrichment_candidates.run_id → enrichment_run_logs.id ON DELETE SET NULL` (FL-14)
 - Added EUR-only CHECK constraints on `provider_menu.price_currency`, `provider_catalog.price_currency`, `community_projects.price_currency` (FL-22; tables renamed in M-6)
@@ -120,17 +135,20 @@ to PROD before app-code changes, making each schema step individually safe durin
 - Dropped dead column `categories.applicable_to` and its GIN index (FL-3)
 
 **M-2 — Phase B Nullable Boolean Backfills** (migration 080, FL-5, FL-7, FL-8, FL-9, FL-13)
+
 - Backfilled `providers.review_status` NULLs → `'pending'`, enforced `NOT NULL` (FL-7)
 - Backfilled `providers.show_address` NULLs → `true`, enforced `NOT NULL DEFAULT true` (FL-13)
 - Backfilled `categories.applicable_section` NULLs → `'all'`, enforced `NOT NULL DEFAULT 'all'` (FL-5)
 - Added verified `admin_audit_logs.action` CHECK constraint based on live value audit (FL-9)
 
 **M-3 — Phase C Column Renames** (migration 081, FL-24, FL-25)
+
 - Renamed `providers.solidarity_pricing` → `economic_solidarity` (FL-24)
 - Renamed `providers.accepts_donations` → `makes_donations` (FL-25)
 - Dropped all three section-scoped CHECK constraints (`food_only_ck`, `business_only_ck`, `ummah_only_ck`) from `providers` supertype — structurally replaced by extension tables in M-5
 
 **M-4 — FK Integrity, Enum, Badge Registry** (migration 082, FL-4, FL-10, FL-11, FL-23)
+
 - Changed `needs.category_id` and `offers.category_id` FK to `ON DELETE RESTRICT` (FL-4)
 - Changed `providers.category_id` FK to `ON DELETE SET NULL` (FL-11)
 - Created `task_status_enum` and migrated `provider_outreach_tasks.task_status` from TEXT+CHECK (FL-10)
@@ -139,6 +157,7 @@ to PROD before app-code changes, making each schema step individually safe durin
 - Rewrote `sync_provider_badge_to_boolean()` trigger as data-driven via `badge_types.provider_column_name` registry (fixes live regression where stale `accepts_donations` reference caused silent badge sync failures)
 
 **M-5a — Supertype Unification + Enum Rename** (migration 083, FL-26, FL-28 Part 1)
+
 - Renamed `listing_type_enum` value `'business'` → `'store'` (with strict DROP/RENAME/RECREATE ordering per AF-1)
 - Created 1:1 extension tables `food_providers`, `store_providers`, `ummah_providers` with RLS enabled
 - Migrated food/store type-exclusive columns (`halal_level`, `no_alcohol`, `no_pork`, `no_gambling`) to extension tables; dropped from `providers` supertype
@@ -150,6 +169,7 @@ to PROD before app-code changes, making each schema step individually safe durin
 - Renamed `community_projects.community_service_id` → `provider_id` with FK to `providers`
 
 **M-5b/c — App Code Layer** (no migration, service + component rewrites)
+
 - All 50+ source files referencing dropped tables/columns updated to use `providers` unified supertype
 - `from('community_services')` → `from('providers').eq('listing_type', 'ummah')` across all services
 - `community_service_id` → `provider_id`, `community_service_name` → `provider_name`, etc.
@@ -157,16 +177,19 @@ to PROD before app-code changes, making each schema step individually safe durin
 - Navigation: all CS routes unified under `/providers/[id]`
 
 **M-6 — Table Renames** (migration 084, FL-28 Parts 2+3)
+
 - Renamed `provider_menu_items` → `provider_menu`
 - Renamed `provider_service_offers` → `provider_catalog`
 - Rewrote `search_food_menu_items()` and `search_provider_items()` RPCs to reference new table names
 
 **M-7 — Advisory Documentation** (migration 085, FL-6, FL-12, FL-21)
+
 - Added SQL comment on `providers.listing_type`: no DEFAULT by design, app-layer validation required
 - Added SQL comment on `deletion_logs.user_id`: intentional FK absence (user deleted before log written)
 - Added SQL comment on `provider_owner_outreach.dispatch_after`: 24h cool-down business rule
 
 ### Deferred (YAGNI)
+
 - FL-16: `category_suggested_offers/needs` surrogate PK retained; composite PK migration deferred
 - FL-19: `email_confirmation_tokens.type` TEXT+CHECK retained; enum migration deferred
 - FL-20: `community_service_view_count` moved to `ummah_providers`; `provider_stats` MV decision deferred
@@ -761,7 +784,6 @@ to PROD before app-code changes, making each schema step individually safe durin
   - **Section-filtered category galleries (M3)**: `fetchCategoriesBySection(section)` in `src/services/categories.ts` queries categories via `providers.listing_type` (food/business) or `community_services` (ummah). `CategoryGallerySection` accepts optional `section` prop; when provided uses `fetchCategoriesBySection` with React Query key `['categories-by-section', section]`; category clicks preserve `?section=` in navigation URL.
   - **Home page assembly (M4)**: Stage 3 block in `RootPageContent` replaced — removes `MobileGreetingHeader`, adds glassmorphism fixed header with `HomeSearchBar` + `SectionSelector` and active section state (`useState<Section>('food')`). Scrollable body renders `CategoryGallerySection` with `section={activeSection}`.
   - **SectionSelector i18n (M1)**: `SectionSelector.tsx` now uses `useLanguage()` hook for tab labels replacing hardcoded strings.
-  
 - **Home Redesign Increment 2 — SectionSelector Visual Polish + /suchen Stub (Plan 091 / Issue #145)**: Continues home redesign with Figma-aligned visual polish and dedicated search entry point:
   - **SectionSelector visual restyle (M1)**: Restyled `SectionSelector` component to match Figma teal-pill design — white rounded container (`bg-background`, `h-14`, `rounded-2xl`), teal active tab (`bg-primary`, `h-10`, `rounded-xl`), grey inactive tabs (`text-neutral-500`), Inter Tight Medium 16px (`font-inter-tight font-medium text-base`).
   - **/suchen search page stub (M2)**: New `src/app/(public)/suchen/page.tsx` — dedicated search entry point with back header ("← Suchen"), `SectionSelector`, 4 accordion sections (Was?/Wo:/Wer:/Filter; Was? open by default), and fixed bottom bar ("Clear all" + "♡ Suchen" button). Search execution deferred to future plan — accordions and buttons are styled stubs. Uses `<Suspense>` boundary for `useSearchParams()` per Next.js App Router requirement. Back button navigates to `/` when no history (direct URL access fallback).
@@ -786,6 +808,7 @@ to PROD before app-code changes, making each schema step individually safe durin
   - **JoinHalal Pipeline (M4)**: Import pipeline sets `listing_type='food'`, `no_alcohol=true`, `halal_level=1` for all JoinHalal records. `SOURCE_CONTROLLED_FIELDS` updated. Upsert RPC in migration updated.
   - **Backward Compatibility (M8)**: Legacy `/providers?category=UUID` URLs without `?section=` infer section from category via `inferSectionFromCategory()`. Admin edit UI surfaces `listing_type` display field alongside category.
   - **Verification SQL (M7)**: `sql/089_section_classification_verification.sql` with 6 verification queries for post-migration audit.
+
 ## [0.10.17] - 2026-04-07
 
 ### Fixed
@@ -846,6 +869,7 @@ to PROD before app-code changes, making each schema step individually safe durin
 - **Profile provider pages: server Supabase client for RLS (Plan 082 M8)**: Profile provider detail (`/profile/providers/[id]`) and edit (`/profile/providers/[id]/edit`) pages were silently using the anonymous Supabase client in Server Components, causing RLS failures for non-approved providers. Both pages now import `getProviderById` from `@/services/providers.server` (cookie-based auth context), matching the fix applied to the public provider and community-service pages in Plan 081.
 
 ### Added
+
 ### Added
 
 - **Admin community service edit page (Plan 083)**: Full admin CRUD surface for community services. Admins and moderators can now view (bypassing RLS), edit fields, and review (approve/reject/request revision) any community service from `/dashboard/community-services/[id]/edit`. New API routes: `GET /api/admin/community-services/[id]` and `PATCH /api/admin/edit-community-service` and `PATCH /api/admin/review-community-service`. New admin service layer at `src/services/admin/communityServices.ts` with sanitized partial-update and review functions. Zod validation schemas added to `src/lib/validations/adminSchemas.ts`. Resolves `AdminCommunityServiceDetailButtons` OA-1 (edit button now routes to a working page).

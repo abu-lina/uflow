@@ -948,7 +948,6 @@ export const de = {
       "menu": "Menu",
       "openingHours": "Öffnungszeiten",
       "feedback": "Feedback",
-      "proofs": "Nachweise",
       "nearby": "In der Nähe"
     },
     "days": {
@@ -997,6 +996,29 @@ export const de = {
       "noPorkFallbackDetail": "Verkauft und verarbeitet wird",
       "noGamblingFallbackDetail": "Anbietet"
     },
+    "proofTier": {
+      "sectionTitle": "Halal-Prüfung",
+      "tier1Title": "Online geprüft",
+      "tier1Detail": "Halal-Kriterien vor der Aufnahme über Speisekarte und Online-Recherche bestätigt.",
+      "tier2Title": "Vor-Ort geprüft",
+      "tier2Detail": "Wir haben dieses Restaurant besucht und mit dem Inhaber über die Halal-Praktiken gesprochen.",
+      "tier3Title": "Zertifikat vorhanden",
+      "tier3Detail": "Dieses Restaurant hat ein Halal-Zertifikat einer anerkannten Stelle vorgelegt.",
+      "sealAltBronze": "Bronze-Siegel – Online geprüft",
+      "sealAltSilver": "Silber-Siegel – Vor-Ort geprüft",
+      "sealAltGold": "Gold-Siegel – Zertifikat bestätigt",
+      "summaryBronze": "Dieser Anbieter wurde {{highlight}}Online{{/highlight}} geprüft.",
+      "summarySilver": "Dieser Anbieter wurde {{highlight}}Vor Ort{{/highlight}} geprüft.",
+      "summaryGoldCert": "Dieser Anbieter wurde {{highlight}}Vor Ort{{/highlight}} geprüft und hat ein {{highlight}}Halal-Zertifikat{{/highlight}} nachgewiesen.",
+      "summaryGoldCertOnly": "Dieser Anbieter wurde {{highlight}}Online{{/highlight}} geprüft und hat ein {{highlight}}Halal-Zertifikat{{/highlight}} nachgewiesen.",
+      "whatWeVerified": "Was wir geprüft haben",
+      "checkMenuReviewed": "Speisekarte online geprüft",
+      "checkCertificateOnFile": "Halal-Zertifikat liegt vor",
+      "checkOnsiteVisit": "Vor-Ort-Besuch durchgeführt",
+      "checkOwnerConfirmed": "Inhaber hat Halal-Praxis bestätigt",
+      "whatIsThis": "Wie prüfen wir?",
+      "explanation": "Jeder Eintrag auf Ummah Flow erfüllt unsere Halal-Anforderungen. Die Vertrauensstufe zeigt, wie gründlich wir das bestätigt haben."
+    },
     "trustBadges": {
       "muslimOwned": "Muslim",
       "acceptsDonations": "Spendet",
@@ -1011,7 +1033,6 @@ export const de = {
       "noValuesAmenities": "Keine Werte oder Amenities hinterlegt.",
       "noMenu": "Keine Menüpunkte vorhanden.",
       "noFeedback": "Noch keine Bewertungen.",
-      "noProofs": "Keine Nachweise vorhanden.",
       "noNearby": "Keine Anbieter in deiner Nähe gefunden."
     },
     "loading": {
