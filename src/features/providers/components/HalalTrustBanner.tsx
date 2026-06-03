@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 interface HalalTrustBannerProps {
@@ -37,9 +36,6 @@ export function HalalTrustBanner({ compact = false }: HalalTrustBannerProps) {
           <p className="mt-2 font-inter text-base leading-6 text-uFlowText2">
             {t('providerDetail.halal.description')}
           </p>
-          <Link className="mt-1 inline-block font-inter text-base leading-6 text-uFlowText2 underline underline-offset-4" href="/halal">
-            {t('providerDetail.halal.learnMore')}
-          </Link>
         </div>
       </div>
     </section>

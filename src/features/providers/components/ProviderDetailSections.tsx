@@ -13,7 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
 import { ExpandSection } from '@/components/ui/ExpandSection';
-import { ProofTierCard } from '@/features/providers/components/ProofTierCard';
+import { ProofTierCard, computeSealTier } from '@/features/providers/components/ProofTierCard';
 import { PrayerRug } from '@/components/icons/PrayerRug';
 import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -144,7 +144,12 @@ export function ProviderDetailSections({
 }: ProviderDetailSectionsProps) {
   const { t } = useLanguage();
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
-  const supportsAttestation = provider.listing_type === 'food' || provider.listing_type === 'store';
+  const tier = computeSealTier(provider.verification_method, provider.has_certificate);
+  const tierTitleKey = tier === 'bronze'
+    ? 'providerDetail.proofTier.tier1Title'
+    : tier === 'silver'
+      ? 'providerDetail.proofTier.tier2Title'
+      : 'providerDetail.proofTier.tier3Title';
 
   const {
     data: nearbyProviders = [],
@@ -212,7 +217,7 @@ export function ProviderDetailSections({
         {renderOpeningHours(provider.opening_hours, t)}
       </ExpandSection>
 
-      <ExpandSection title={t('providerDetail.proofTier.sectionTitle')}>
+      <ExpandSection title={`${t('providerDetail.proofTier.sectionTitle')} · ${t(tierTitleKey)}`}>
         <div className="space-y-3 pt-3">
           <ProofTierCard
             hasCertificate={provider.has_certificate}
@@ -222,12 +227,10 @@ export function ProviderDetailSections({
             noPork={provider.no_pork}
             verificationMethod={provider.verification_method}
           />
-
-          {!supportsAttestation && badges.length === 0 && !isLoadingBadges ? null : (
-            <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
-          )}
         </div>
       </ExpandSection>
+
+      <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
 
       <ExpandSection title={t('providerDetail.sections.feedback')}>
         <p className="pt-3 text-sm text-[#7a7a7a]">{t('providerDetail.empty.noFeedback')}</p>

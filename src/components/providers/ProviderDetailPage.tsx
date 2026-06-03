@@ -589,8 +589,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
           )}
 
           <div className="mx-6 mt-4 space-y-4">
-            <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
             <HalalTrustBanner />
+            <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
           </div>
         </div>
         </div>
@@ -1025,9 +1025,9 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               </div>
             )}
 
+            <HalalTrustBanner />
             <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
 
-            <HalalTrustBanner />
 
             {/* Action Buttons */}
             {customActionButtons ? (
