@@ -233,39 +233,87 @@ export function ProofTierCard({
   const supportsAttestation = listingType === 'food' || listingType === 'store';
 
   return (
-    <section aria-label={t('providerDetail.proofTier.sectionTitle')} className="space-y-3">
+    <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
       <SealRow activeTier={tier} altText={t(`providerDetail.proofTier.sealAlt${tier.charAt(0).toUpperCase() + tier.slice(1)}`)} />
 
       <SummaryText text={t(summaryKey)} />
 
-      <div className="rounded-lg border border-border/50 bg-white p-3">
-        <p className="mb-2 text-sm font-semibold text-content-heading">
-          {t('providerDetail.proofTier.whatWeVerified')}
-        </p>
-        <ul className="space-y-1.5 text-sm text-content">
-          <li className="flex items-start gap-2">
-            <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-            <span>{t('providerDetail.proofTier.checkMenuReviewed')}</span>
-          </li>
-          {Boolean(hasCertificate) ? (
-            <li className="flex items-start gap-2">
-              <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-              <span>{t('providerDetail.proofTier.checkCertificateOnFile')}</span>
-            </li>
-          ) : null}
-          {onsiteVerified ? (
-            <>
-              <li className="flex items-start gap-2">
-                <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                <span>{t('providerDetail.proofTier.checkOnsiteVisit')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                <span>{t('providerDetail.proofTier.checkOwnerConfirmed')}</span>
-              </li>
-            </>
-          ) : null}
-        </ul>
+      <div className="space-y-3">
+        <div className="rounded-lg border border-border/50 bg-white p-3">
+          <p className="mb-2 text-sm font-semibold text-content-heading">
+            {t('providerDetail.proofTier.whatWeVerified')}
+          </p>
+          <ul className="space-y-1.5 text-sm text-content">
+            {/* Bronze tier: online-checked items */}
+            {tier === 'bronze' ? (
+              <>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkMenuReviewed')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkSellsNoAlcohol')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkSellsNoPork')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkClaimsMeatHalal')}</span>
+                </li>
+              </>
+            ) : null}
+
+            {/* Silver tier: onsite-checked items */}
+            {tier === 'silver' ? (
+              <>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkMenuReviewedOnsite')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkSellsProcessNoAlcohol')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkSellsProcessNoPork')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkMeatIsHalal')}</span>
+                </li>
+              </>
+            ) : null}
+
+            {/* Gold tier: full verification items (existing) */}
+            {tier === 'gold' ? (
+              <>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkMenuReviewed')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                  <span>{t('providerDetail.proofTier.checkCertificateOnFile')}</span>
+                </li>
+                {onsiteVerified ? (
+                  <>
+                    <li className="flex items-start gap-2">
+                      <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                      <span>{t('providerDetail.proofTier.checkOnsiteVisit')}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
+                      <span>{t('providerDetail.proofTier.checkOwnerConfirmed')}</span>
+                    </li>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+          </ul>
 
         {tier === 'gold' && supportsAttestation ? (
           <GoldAttestationSection
@@ -275,6 +323,7 @@ export function ProofTierCard({
             t={t}
           />
         ) : null}
+        </div>
       </div>
 
       <button
