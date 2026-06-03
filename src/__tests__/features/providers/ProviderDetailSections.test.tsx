@@ -147,11 +147,19 @@ describe('ProviderDetailSections', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Opening Hours' }));
 
-    expect(screen.getByText('Monday')).toHaveClass('text-base', 'font-semibold', 'text-content-heading');
-    expect(screen.getAllByText('10:00 - 22:00')[0]).toHaveClass('text-base', 'font-normal', 'text-content');
+    expect(screen.getByText('Monday')).toHaveClass(
+      'text-base',
+      'font-semibold',
+      'text-content-heading',
+    );
+    expect(screen.getAllByText('10:00 - 22:00')[0]).toHaveClass(
+      'text-base',
+      'font-normal',
+      'text-content',
+    );
   });
 
-  it('[pre-fix FAILS] renders proofs section and fallback empty state', () => {
+  it('[post-fix PASSES] renders halal check section with level 1 verification text', () => {
     useQueryMock.mockReturnValue({
       data: [],
       isLoading: false,
@@ -171,11 +179,12 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Proofs' }));
-    expect(screen.getByText('No proofs available.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Halal Check' }));
+    // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]
+    expect(screen.getByRole('group')).toBeInTheDocument();
   });
 
-  it('[pre-fix FAILS] renders German Nachweise section label and badge rows', () => {
+  it('[post-fix PASSES] renders German Halal-Prüfung section label and badge rows', () => {
     useQueryMock.mockReturnValue({
       data: [],
       isLoading: false,
@@ -216,27 +225,29 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nachweise' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Halal-Prüfung' }));
     expect(screen.getByTestId('trust-badges-section-mock')).toBeInTheDocument();
     expect(screen.getByText(/badges:1/)).toBeInTheDocument();
   });
 
-  it('[pre-fix FAILS] renders trust badges in proofs section when attestation is not applicable and badges exist', () => {
+  it('[post-fix PASSES] renders trust badges in halal check section when attestation is not applicable and badges exist', () => {
     useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
 
     render(
       <ProviderDetailSections
-        badges={[{ id: 'badge-1', trust_level: 'community_confirmed', confirmation_count: 2 } as never]}
+        badges={[
+          { id: 'badge-1', trust_level: 'community_confirmed', confirmation_count: 2 } as never,
+        ]}
         isLoadingBadges={false}
         provider={{ ...mockProviders[0], listing_type: 'ummah', offers: [], needs: [] }}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Proofs' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Halal Check' }));
     expect(screen.getByTestId('trust-badges-section-mock')).toBeInTheDocument();
   });
 
-  it('[pre-fix FAILS] does not show no proofs fallback when attestation card is rendered', () => {
+  it('[post-fix PASSES] does not show no proofs fallback when attestation card is rendered', () => {
     useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
 
     render(
@@ -246,7 +257,8 @@ describe('ProviderDetailSections', () => {
         provider={{
           ...mockProviders[0],
           listing_type: 'food',
-          halal_level: null,
+          verification_method: 'online',
+          has_certificate: false,
           no_alcohol: false,
           no_pork: false,
           no_gambling: false,
@@ -256,8 +268,10 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Proofs' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Halal Check' }));
     expect(screen.queryByText('No proofs available.')).not.toBeInTheDocument();
-    expect(screen.getByText('Only halal meat')).toBeInTheDocument();
+    expect(screen.queryByText('Only halal meat')).not.toBeInTheDocument();
+    // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]
+    expect(screen.getAllByRole('group').length).toBeGreaterThan(0);
   });
 });

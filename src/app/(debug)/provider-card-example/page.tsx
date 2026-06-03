@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { ProviderCard } from '@/components/providers/ProviderCard';
 import type { Provider } from '@/services/providers';
@@ -28,7 +28,8 @@ const sampleProvider: Provider = {
     name_en: 'Fast Food',
   },
   listing_type: 'food',
-  halal_level: 5,
+  verification_method: 'onsite',
+  has_certificate: true,
   muslim_owned: true,
   family_friendly: true,
   women_friendly: true,
@@ -52,7 +53,8 @@ export default function ProviderCardExamplePage() {
       <div className="mx-auto max-w-3xl space-y-6">
         <h1 className="text-2xl font-semibold text-gray-900">Provider Card Example (Plan 115)</h1>
         <p className="text-sm text-gray-600">
-          This page is a local debug example so you can verify specialty tags and open status rendering.
+          This page is a local debug example so you can verify specialty tags and open status
+          rendering.
         </p>
 
         <div className="max-w-md">

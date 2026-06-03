@@ -948,7 +948,6 @@ export const en = {
       "menu": "Menu",
       "openingHours": "Opening Hours",
       "feedback": "Feedback",
-      "proofs": "Proofs",
       "nearby": "Nearby"
     },
     "days": {
@@ -997,6 +996,29 @@ export const en = {
       "noPorkFallbackDetail": "will be sold or processed",
       "noGamblingFallbackDetail": "be offered"
     },
+    "proofTier": {
+      "sectionTitle": "Halal Check",
+      "tier1Title": "Online Checked",
+      "tier1Detail": "Halal criteria confirmed through menu and online review before listing.",
+      "tier2Title": "On-site Checked",
+      "tier2Detail": "We visited this restaurant and spoke with the owner to confirm halal practices.",
+      "tier3Title": "Certificate Provided",
+      "tier3Detail": "This restaurant has provided a halal certificate from a recognized body.",
+      "sealAltBronze": "Bronze seal – online verified",
+      "sealAltSilver": "Silver seal – on-site verified",
+      "sealAltGold": "Gold seal – certificate verified",
+      "summaryBronze": "This provider was checked {{highlight}}online{{/highlight}}.",
+      "summarySilver": "This provider was checked {{highlight}}on-site{{/highlight}}.",
+      "summaryGoldCert": "This provider was checked {{highlight}}on-site{{/highlight}} and has provided a {{highlight}}Halal certificate{{/highlight}}.",
+      "summaryGoldCertOnly": "This provider was checked {{highlight}}online{{/highlight}} and has provided a {{highlight}}Halal certificate{{/highlight}}.",
+      "whatWeVerified": "What we verified",
+      "checkMenuReviewed": "Menu reviewed online",
+      "checkCertificateOnFile": "Halal certificate on file",
+      "checkOnsiteVisit": "On-site visit completed",
+      "checkOwnerConfirmed": "Owner confirmed halal practices",
+      "whatIsThis": "How do we check?",
+      "explanation": "Every listing on Ummah Flow meets our halal requirements. The trust level shows how thoroughly we've confirmed this."
+    },
     "trustBadges": {
       "muslimOwned": "Muslim",
       "acceptsDonations": "Donates",
@@ -1011,7 +1033,6 @@ export const en = {
       "noValuesAmenities": "No values or amenities available.",
       "noMenu": "No menu items available.",
       "noFeedback": "No reviews yet.",
-      "noProofs": "No proofs available.",
       "noNearby": "No nearby providers found."
     },
     "loading": {

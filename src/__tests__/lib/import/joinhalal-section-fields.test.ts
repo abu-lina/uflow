@@ -4,7 +4,8 @@
  * Verifies that transformPage() sets the new section fields:
  *   - listing_type: 'food'   (all JoinHalal imports are food providers)
  *   - no_alcohol: true       (JoinHalal is a halal-food directory; alcohol = rejection)
- *   - halal_level: 1         (default; upgrading to 2/3 is a future manual step)
+ *   - verification_method: 'online' (default)
+ *   - has_certificate: false (default)
  *
  * TDD Gate: written BEFORE implementation changes to transformPage.
  */
@@ -62,9 +63,27 @@ describe('transformPage — Plan 089 section fields (M4)', () => {
     expect((record as unknown as Record<string, unknown>).no_alcohol).toBe(true);
   });
 
-  it('sets halal_level = 1 as default', () => {
+  it('sets verification_method = online as default', () => {
     const { record } = transformPage(makeHtmlWithHalalMerkmale(null), TEST_URL, CATEGORIES, false, OFFERS);
     expect(record).not.toBeNull();
-    expect((record as unknown as Record<string, unknown>).halal_level).toBe(1);
+    expect((record as unknown as Record<string, unknown>).verification_method).toBe('online');
+  });
+
+  it('sets has_certificate = false as default', () => {
+    const { record } = transformPage(makeHtmlWithHalalMerkmale(null), TEST_URL, CATEGORIES, false, OFFERS);
+    expect(record).not.toBeNull();
+    expect((record as unknown as Record<string, unknown>).has_certificate).toBe(false);
+  });
+
+  it('sets no_pork = false as default', () => {
+    const { record } = transformPage(makeHtmlWithHalalMerkmale(null), TEST_URL, CATEGORIES, false, OFFERS);
+    expect(record).not.toBeNull();
+    expect((record as unknown as Record<string, unknown>).no_pork).toBe(false);
+  });
+
+  it('sets no_gambling = false as default', () => {
+    const { record } = transformPage(makeHtmlWithHalalMerkmale(null), TEST_URL, CATEGORIES, false, OFFERS);
+    expect(record).not.toBeNull();
+    expect((record as unknown as Record<string, unknown>).no_gambling).toBe(false);
   });
 });

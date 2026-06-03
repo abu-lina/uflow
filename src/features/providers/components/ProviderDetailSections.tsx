@@ -1,12 +1,19 @@
 'use client';
 
 import { useMemo, type ComponentType, type ReactNode, type SVGProps } from 'react';
-import { CircleParking, HandHeart, HeartHandshake, Moon, UtensilsCrossed, Users } from 'lucide-react';
+import {
+  CircleParking,
+  HandHeart,
+  HeartHandshake,
+  Moon,
+  UtensilsCrossed,
+  Users,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
 import { ExpandSection } from '@/components/ui/ExpandSection';
-import { AttestationCard } from '@/features/providers/components/AttestationCard';
+import { ProofTierCard } from '@/features/providers/components/ProofTierCard';
 import { PrayerRug } from '@/components/icons/PrayerRug';
 import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -36,16 +43,51 @@ type AmenityItem = {
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
 };
 
-function buildAmenityLabels(provider: Provider, t: (key: string) => string): Array<{ label: string; Icon: AmenityItem['Icon'] }> {
+function buildAmenityLabels(
+  provider: Provider,
+  t: (key: string) => string,
+): Array<{ label: string; Icon: AmenityItem['Icon'] }> {
   const entries: AmenityItem[] = [
-    { enabled: provider.muslim_owned, labelKey: 'providerDetail.amenities.muslimOwned', Icon: Moon },
-    { enabled: provider.has_prayer_space, labelKey: 'providerDetail.amenities.prayerSpace', Icon: PrayerRug },
-    { enabled: provider.has_parking, labelKey: 'providerDetail.amenities.parking', Icon: CircleParking },
-    { enabled: provider.family_friendly, labelKey: 'providerDetail.amenities.familyFriendly', Icon: Users },
-    { enabled: provider.women_friendly, labelKey: 'providerDetail.amenities.womenFriendly', Icon: Users },
-    { enabled: provider.children_friendly, labelKey: 'providerDetail.amenities.childrenFriendly', Icon: Users },
-    { enabled: provider.makes_donations, labelKey: 'providerDetail.amenities.acceptsDonations', Icon: HandHeart },
-    { enabled: provider.economic_solidarity, labelKey: 'providerDetail.amenities.solidarityPricing', Icon: HeartHandshake },
+    {
+      enabled: provider.muslim_owned,
+      labelKey: 'providerDetail.amenities.muslimOwned',
+      Icon: Moon,
+    },
+    {
+      enabled: provider.has_prayer_space,
+      labelKey: 'providerDetail.amenities.prayerSpace',
+      Icon: PrayerRug,
+    },
+    {
+      enabled: provider.has_parking,
+      labelKey: 'providerDetail.amenities.parking',
+      Icon: CircleParking,
+    },
+    {
+      enabled: provider.family_friendly,
+      labelKey: 'providerDetail.amenities.familyFriendly',
+      Icon: Users,
+    },
+    {
+      enabled: provider.women_friendly,
+      labelKey: 'providerDetail.amenities.womenFriendly',
+      Icon: Users,
+    },
+    {
+      enabled: provider.children_friendly,
+      labelKey: 'providerDetail.amenities.childrenFriendly',
+      Icon: Users,
+    },
+    {
+      enabled: provider.makes_donations,
+      labelKey: 'providerDetail.amenities.acceptsDonations',
+      Icon: HandHeart,
+    },
+    {
+      enabled: provider.economic_solidarity,
+      labelKey: 'providerDetail.amenities.solidarityPricing',
+      Icon: HeartHandshake,
+    },
   ];
 
   return entries
@@ -84,13 +126,7 @@ function renderOpeningHours(
   );
 }
 
-function DetailListItem({
-  label,
-  icon,
-}: {
-  label: string;
-  icon: ReactNode;
-}) {
+function DetailListItem({ label, icon }: { label: string; icon: ReactNode }) {
   return (
     <div className="flex w-full items-center gap-3 rounded-xl p-2">
       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E3F2EF] text-primary">
@@ -110,7 +146,11 @@ export function ProviderDetailSections({
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
   const supportsAttestation = provider.listing_type === 'food' || provider.listing_type === 'store';
 
-  const { data: nearbyProviders = [], isLoading: isLoadingNearbyProviders, isFetching: isFetchingNearbyProviders } = useQuery({
+  const {
+    data: nearbyProviders = [],
+    isLoading: isLoadingNearbyProviders,
+    isFetching: isFetchingNearbyProviders,
+  } = useQuery({
     queryKey: ['provider-nearby-city', provider.provider_id, provider.address_city],
     queryFn: async () => {
       if (!provider.address_city) {
@@ -172,18 +212,18 @@ export function ProviderDetailSections({
         {renderOpeningHours(provider.opening_hours, t)}
       </ExpandSection>
 
-      <ExpandSection title={t('providerDetail.sections.proofs')}>
+      <ExpandSection title={t('providerDetail.proofTier.sectionTitle')}>
         <div className="space-y-3 pt-3">
-          <AttestationCard
-            halalLevel={provider.halal_level}
+          <ProofTierCard
+            hasCertificate={provider.has_certificate}
             listingType={provider.listing_type}
             noAlcohol={provider.no_alcohol}
             noGambling={provider.no_gambling}
             noPork={provider.no_pork}
+            verificationMethod={provider.verification_method}
           />
-          {!supportsAttestation && badges.length === 0 && !isLoadingBadges ? (
-            <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noProofs')}</p>
-          ) : (
+
+          {!supportsAttestation && badges.length === 0 && !isLoadingBadges ? null : (
             <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
           )}
         </div>

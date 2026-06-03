@@ -948,7 +948,6 @@ export const ps = {
       "menu": "مېنو",
       "openingHours": "د کار وختونه",
       "feedback": "فیډبک",
-      "proofs": "ثبوتونه",
       "nearby": "نږدې"
     },
     "days": {
@@ -997,6 +996,30 @@ export const ps = {
       "noPorkFallbackDetail": "پلورل یا پروسس کېدل",
       "noGamblingFallbackDetail": "وړاندې کېدل"
     },
+    // Provisional translation - requires native speaker review before production.
+    "proofTier": {
+      "sectionTitle": "د حلال ازموینه",
+      "tier1Title": "آنلاین ازمول شوی",
+      "tier1Detail": "د لېست کولو دمخه د مېنو او آنلاین بیاکتنې له لارې د حلال معیارونه تایید شوي.",
+      "tier2Title": "په ځای ازمول شوی",
+      "tier2Detail": "موږ دا رستورانت ولیدلو او د حلال طریقو تایید لپاره له مالک سره خبرې وکړلې.",
+      "tier3Title": "سند ورکړل شوی",
+      "tier3Detail": "دا رستورانت د یوې پیژندل شوې ادارې څخه د حلال سند وړاندې کړی دی.",
+      "sealAltBronze": "د برونزو مهر – آنلاین تصدیق شوی",
+      "sealAltSilver": "د سپینو زرو مهر – په ځای تصدیق شوی",
+      "sealAltGold": "د زرو مهر – د حلال سند تصدیق شوی",
+      "summaryBronze": "دا چمتو کوونکی {{highlight}}آنلاین{{/highlight}} تایید شوی دی.",
+      "summarySilver": "دا چمتو کوونکی {{highlight}}په ځای{{/highlight}} تایید شوی دی.",
+      "summaryGoldCert": "دا چمتو کوونکی {{highlight}}په ځای{{/highlight}} تایید شوی دی او د {{highlight}}حلال سند{{/highlight}} وړاندې کړی دی.",
+      "summaryGoldCertOnly": "دا چمتو کوونکی {{highlight}}آنلاین{{/highlight}} تایید شوی دی او د {{highlight}}حلال سند{{/highlight}} وړاندې کړی دی.",
+      "whatWeVerified": "موږ څه تایید کړل",
+      "checkMenuReviewed": "مېنو آنلاین وکتل شو",
+      "checkCertificateOnFile": "د حلال سند په دوسیه کې شته",
+      "checkOnsiteVisit": "په ځای لیدنه ترسره شوه",
+      "checkOwnerConfirmed": "مالک د حلال کړنې تایید کړې",
+      "whatIsThis": "موږ څنګه ازموینه کوو؟",
+      "explanation": "په Ummah Flow کې هر لېست زموږ د حلال شرطونه پوره کوي. د باور کچه ښيي چې موږ دا څومره ښه تایید کړی دی."
+    },
     "trustBadges": {
       "muslimOwned": "مسلمان",
       "acceptsDonations": "مرسته",
@@ -1011,7 +1034,6 @@ export const ps = {
       "noValuesAmenities": "ارزښتونه یا اسانتياوې شتون نه لري.",
       "noMenu": "د مېنو توکي شتون نه لري.",
       "noFeedback": "لا تر اوسه بیاکتنې نشته.",
-      "noProofs": "هیڅ ثبوت شتون نه لري.",
       "noNearby": "نږدې هیڅ وړاندې کوونکی ونه موندل شو."
     },
     "loading": {

@@ -103,7 +103,13 @@ describe('providers.server.getProviderById', () => {
           select: () => ({
             eq: () => ({
               maybeSingle: async () => ({
-                data: { halal_level: 2, no_alcohol: true, no_pork: true },
+                data: {
+                  verification_method: 'onsite',
+                  has_certificate: false,
+                  no_alcohol: true,
+                  no_pork: true,
+                  no_gambling: false,
+                },
                 error: null,
               }),
             }),

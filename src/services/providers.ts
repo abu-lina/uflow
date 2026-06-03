@@ -59,7 +59,8 @@ export interface Provider {
   has_parking?: boolean;
   economic_solidarity?: boolean;
   // M-5 extension table columns (now in food_providers / store_providers; undefined when not joined)
-  halal_level?: number | null;
+  verification_method?: 'online' | 'onsite' | null;
+  has_certificate?: boolean;
   no_alcohol?: boolean;
   no_pork?: boolean;
   no_gambling?: boolean;
@@ -395,7 +396,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
         getBadgesForEntity(id, EntityType.PROVIDER),
         supabase
           .from('food_providers')
-          .select('halal_level, no_alcohol, no_pork')
+          .select('verification_method, has_certificate, no_alcohol, no_pork, no_gambling')
           .eq('provider_id', id)
           .maybeSingle(),
         supabase

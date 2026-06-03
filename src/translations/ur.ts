@@ -948,7 +948,6 @@ export const ur = {
       "menu": "مینیو",
       "openingHours": "اوقاتِ کار",
       "feedback": "فیڈبیک",
-      "proofs": "ثبوت",
       "nearby": "قریب"
     },
     "days": {
@@ -997,6 +996,30 @@ export const ur = {
       "noPorkFallbackDetail": "فروخت یا تیاری کی جاتی ہے",
       "noGamblingFallbackDetail": "پیش کی جاتی ہے"
     },
+    // Provisional translation - requires native speaker review before production.
+    "proofTier": {
+      "sectionTitle": "حلال جانچ",
+      "tier1Title": "آن لائن جانچ شدہ",
+      "tier1Detail": "لسٹنگ سے پہلے مینیو اور آن لائن جائزے کے ذریعے حلال معیارات کی تصدیق کی گئی۔",
+      "tier2Title": "مقامی جانچ شدہ",
+      "tier2Detail": "ہم نے اس ریستوران کا دورہ کیا اور حلال طریقوں کی تصدیق کے لیے مالک سے بات کی۔",
+      "tier3Title": "سرٹیفیکیٹ فراہم",
+      "tier3Detail": "اس ریستوران نے ایک تسلیم شدہ ادارے سے حلال سرٹیفیکیٹ فراہم کیا ہے۔",
+      "sealAltBronze": "کانسی کی مہر – آن لائن تصدیق شدہ",
+      "sealAltSilver": "چاندی کی مہر – موقع پر تصدیق شدہ",
+      "sealAltGold": "سونے کی مہر – حلال سرٹیفیکیٹ تصدیق شدہ",
+      "summaryBronze": "اس فراہم کنندہ کی {{highlight}}آن لائن{{/highlight}} جانچ کی گئی۔",
+      "summarySilver": "اس فراہم کنندہ کی {{highlight}}موقع پر{{/highlight}} جانچ کی گئی۔",
+      "summaryGoldCert": "اس فراہم کنندہ کی {{highlight}}موقع پر{{/highlight}} جانچ کی گئی اور انہوں نے {{highlight}}حلال سرٹیفیکیٹ{{/highlight}} فراہم کیا۔",
+      "summaryGoldCertOnly": "اس فراہم کنندہ کی {{highlight}}آن لائن{{/highlight}} جانچ کی گئی اور انہوں نے {{highlight}}حلال سرٹیفیکیٹ{{/highlight}} فراہم کیا۔",
+      "whatWeVerified": "ہم نے کیا تصدیق کی",
+      "checkMenuReviewed": "مینیو آن لائن جائزہ لیا گیا",
+      "checkCertificateOnFile": "حلال سرٹیفیکیٹ دستیاب ہے",
+      "checkOnsiteVisit": "موقع پر دورہ مکمل کیا گیا",
+      "checkOwnerConfirmed": "مالک نے حلال طریقوں کی تصدیق کی",
+      "whatIsThis": "ہم کیسے جانچتے ہیں؟",
+      "explanation": "Ummah Flow پر ہر لسٹنگ ہماری حلال ضروریات پوری کرتی ہے۔ اعتماد کی سطح بتاتی ہے کہ ہم نے اسے کتنی اچھی طرح تصدیق کیا۔"
+    },
     "trustBadges": {
       "muslimOwned": "مسلم",
       "acceptsDonations": "عطیہ",
@@ -1011,7 +1034,6 @@ export const ur = {
       "noValuesAmenities": "اقدار یا سہولیات دستیاب نہیں۔",
       "noMenu": "مینیو آئٹمز دستیاب نہیں۔",
       "noFeedback": "ابھی تک کوئی جائزہ نہیں۔",
-      "noProofs": "کوئی ثبوت دستیاب نہیں۔",
       "noNearby": "قریب کوئی فراہم کنندہ نہیں ملا۔"
     },
     "loading": {

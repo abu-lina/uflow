@@ -6,7 +6,8 @@
  */
 
 interface HalalStarsInput {
-  halal_level?: number | null;
+  verification_method?: 'online' | 'onsite' | null;
+  has_certificate?: boolean;
 }
 
 interface BarakahBadgeInput {
@@ -19,16 +20,23 @@ interface BarakahBadgeInput {
 }
 
 /**
- * Returns the halal star level (0–3) for a FOOD provider.
- * Returns 0 when `halal_level` is null or undefined (no stars shown).
+ * Returns the verification star level (0–4) for a FOOD provider.
+ * Returns 0 when `verification_method` is null or undefined (no stars shown).
  *
  * Only display halal stars for `listing_type = 'food'` providers.
  */
-export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 {
-  const level = provider.halal_level ?? 0;
-  if (level <= 0) return 0;
-  if (level >= 3) return 3;
-  return level as 1 | 2;
+export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 | 4 {
+  if (provider.verification_method == null) {
+    return 0;
+  }
+
+  const hasCertificate = Boolean(provider.has_certificate);
+
+  if (provider.verification_method === 'online') {
+    return hasCertificate ? 2 : 1;
+  }
+
+  return hasCertificate ? 4 : 3;
 }
 
 /**

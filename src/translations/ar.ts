@@ -948,7 +948,6 @@ export const ar = {
       "menu": "القائمة",
       "openingHours": "ساعات العمل",
       "feedback": "التقييمات",
-      "proofs": "الإثباتات",
       "nearby": "بالقرب"
     },
     "days": {
@@ -997,6 +996,30 @@ export const ar = {
       "noPorkFallbackDetail": "يتم بيعُه أو معالجتُه",
       "noGamblingFallbackDetail": "يتم تقديمه"
     },
+    // Provisional translation - requires native speaker review before production.
+    "proofTier": {
+      "sectionTitle": "فحص الحلال",
+      "tier1Title": "تم الفحص عبر الإنترنت",
+      "tier1Detail": "تم التأكد من معايير الحلال من خلال مراجعة القائمة والموقع قبل الإدراج.",
+      "tier2Title": "تم الفحص في الموقع",
+      "tier2Detail": "قمنا بزيارة هذا المطعم والتحدث مع المالك للتأكد من ممارسات الحلال.",
+      "tier3Title": "شهادة مقدمة",
+      "tier3Detail": "قدم هذا المطعم شهادة حلال من جهة معترف بها.",
+      "sealAltBronze": "ختم برونزي – تم التحقق عبر الإنترنت",
+      "sealAltSilver": "ختم فضي – تم التحقق ميدانياً",
+      "sealAltGold": "ختم ذهبي – شهادة حلال موثقة",
+      "summaryBronze": "تم التحقق من هذا المزود {{highlight}}عبر الإنترنت{{/highlight}}.",
+      "summarySilver": "تم التحقق من هذا المزود {{highlight}}ميدانياً{{/highlight}}.",
+      "summaryGoldCert": "تم التحقق من هذا المزود {{highlight}}ميدانياً{{/highlight}} وقدّم {{highlight}}شهادة حلال{{/highlight}}.",
+      "summaryGoldCertOnly": "تم التحقق من هذا المزود {{highlight}}عبر الإنترنت{{/highlight}} وقدّم {{highlight}}شهادة حلال{{/highlight}}.",
+      "whatWeVerified": "ما الذي تحققنا منه",
+      "checkMenuReviewed": "تمت مراجعة القائمة عبر الإنترنت",
+      "checkCertificateOnFile": "شهادة حلال محفوظة",
+      "checkOnsiteVisit": "تمت زيارة الموقع",
+      "checkOwnerConfirmed": "المالك أكد ممارسات الحلال",
+      "whatIsThis": "كيف نتحقق؟",
+      "explanation": "كل إدراج في Ummah Flow يفي بمتطلبات الحلال لدينا. مستوى الثقة يوضح مدى دقة تأكيدنا لذلك."
+    },
     "trustBadges": {
       "muslimOwned": "مسلم",
       "acceptsDonations": "تبرع",
@@ -1011,7 +1034,6 @@ export const ar = {
       "noValuesAmenities": "لا توجد قيم أو مرافق متاحة.",
       "noMenu": "لا توجد عناصر قائمة متاحة.",
       "noFeedback": "لا توجد تقييمات بعد.",
-      "noProofs": "لا توجد إثباتات متاحة.",
       "noNearby": "لم يتم العثور على مزودين قريبين."
     },
     "loading": {

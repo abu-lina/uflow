@@ -56,7 +56,7 @@ export const SearchResultsList = memo(function SearchResultsList({
   // Infinite scroll using Intersection Observer with debouncing
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
-    
+
     const observer = new IntersectionObserver(
       (entries) => {
         const firstEntry = entries[0];
@@ -69,7 +69,7 @@ export const SearchResultsList = memo(function SearchResultsList({
       {
         rootMargin: '200px', // Trigger 200px before reaching the element for smoother UX
         threshold: 0.1,
-      }
+      },
     );
 
     const currentRef = loadMoreRef.current;
@@ -87,44 +87,51 @@ export const SearchResultsList = memo(function SearchResultsList({
 
   const filteredResults = useMemo(
     () => searchResults.filter((result) => result != null && result.id != null),
-    [searchResults]
+    [searchResults],
   );
 
-  const searchResultToProvider = useCallback((result: SearchResult): Provider => ({
-    provider_id: result.id,
-    provider_name: result.name,
-    provider_images: result.images,
-    category_id: result.category_id,
-    address_city: result.address_city,
-    social_website: result.social_website,
-    social_instagram: result.social_instagram,
-    contact_email: result.contact_email,
-    contact_phone: result.contact_phone,
-    address_street: result.address_street,
-    address_country: result.address_country,
-    address_zip: result.address_zip,
-    location_latitude: result.location_latitude,
-    location_longitude: result.location_longitude,
-    created_at: result.created_at,
-    updated_at: result.updated_at,
-    badges: result.badges,
-    offers_ids: result.offers_ids,
-    needs_ids: result.needs_ids,
-    offers: result.offers,
-    listing_type: result.listing_type,
-    muslim_owned: result.muslim_owned,
-    has_prayer_space: result.has_prayer_space,
-    family_friendly: result.family_friendly,
-    women_friendly: result.women_friendly,
-    children_friendly: result.children_friendly,
-    makes_donations: result.makes_donations,
-    has_parking: result.has_parking,
-    economic_solidarity: result.economic_solidarity,
-    halal_level: result.originalProvider?.halal_level,
-    opening_hours: result.opening_hours ?? result.originalProvider?.opening_hours ?? null,
-    category: result.category,
-    community_service_id: result.listing_type === 'ummah' ? result.id : undefined,
-  }), []);
+  const searchResultToProvider = useCallback(
+    (result: SearchResult): Provider => ({
+      provider_id: result.id,
+      provider_name: result.name,
+      provider_images: result.images,
+      category_id: result.category_id,
+      address_city: result.address_city,
+      social_website: result.social_website,
+      social_instagram: result.social_instagram,
+      contact_email: result.contact_email,
+      contact_phone: result.contact_phone,
+      address_street: result.address_street,
+      address_country: result.address_country,
+      address_zip: result.address_zip,
+      location_latitude: result.location_latitude,
+      location_longitude: result.location_longitude,
+      created_at: result.created_at,
+      updated_at: result.updated_at,
+      badges: result.badges,
+      offers_ids: result.offers_ids,
+      needs_ids: result.needs_ids,
+      offers: result.offers,
+      listing_type: result.listing_type,
+      muslim_owned: result.muslim_owned,
+      has_prayer_space: result.has_prayer_space,
+      family_friendly: result.family_friendly,
+      women_friendly: result.women_friendly,
+      children_friendly: result.children_friendly,
+      makes_donations: result.makes_donations,
+      has_parking: result.has_parking,
+      economic_solidarity: result.economic_solidarity,
+      verification_method: result.originalProvider?.verification_method,
+      has_certificate: result.originalProvider?.has_certificate,
+      no_alcohol: result.originalProvider?.no_alcohol,
+      no_pork: result.originalProvider?.no_pork,
+      no_gambling: result.originalProvider?.no_gambling,
+      opening_hours: result.opening_hours ?? result.originalProvider?.opening_hours ?? null,
+      category: result.category,
+      community_service_id: result.listing_type === 'ummah' ? result.id : undefined,
+    }),
+    [],
+  );
 
   return (
     <>
@@ -166,7 +173,7 @@ export const SearchResultsList = memo(function SearchResultsList({
           );
         })}
       </div>
-      
+
       {/* Infinite scroll trigger - auto-loads as user approaches bottom */}
       {hasNextPage && (
         <div ref={loadMoreRef} className="flex flex-col items-center gap-4 py-8">
@@ -180,9 +187,7 @@ export const SearchResultsList = memo(function SearchResultsList({
           ) : error ? (
             // Error state with retry option (only time we show a button)
             <div className="flex flex-col items-center gap-4">
-              <p className="text-sm text-danger">
-                Fehler beim Laden weiterer Ergebnisse
-              </p>
+              <p className="text-sm text-danger">Fehler beim Laden weiterer Ergebnisse</p>
               {onRetry && (
                 <Button size="sm" variant="primary" onClick={onRetry}>
                   Erneut versuchen

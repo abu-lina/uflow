@@ -303,7 +303,7 @@ interface ProviderRecord {
   user_created_id: string;
   provider_owner_id: null;
   show_address: boolean;
-  offers_ids: string[];
+  offer_ids: string[];
   needs_ids: string[];
   import_source: string | null;
   import_source_id: string | null;
@@ -312,7 +312,10 @@ interface ProviderRecord {
   // Plan 089 M4: section fields — all JoinHalal imports are food providers
   listing_type: 'food';
   no_alcohol: boolean;
-  halal_level: number;
+  no_pork: boolean;
+  no_gambling: boolean;
+  verification_method: 'online' | 'onsite';
+  has_certificate: boolean;
 }
 
 interface UnmappedEntry {
@@ -506,7 +509,7 @@ export function transformPage(
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
-    offers_ids: matchedIds,
+    offer_ids: matchedIds,
     needs_ids: [],
     import_source: postId ? 'joinhalal' : null,
     import_source_id: postId,
@@ -514,7 +517,10 @@ export function transformPage(
     // Plan 089 M4: All JoinHalal imports are food providers with no-alcohol flag
     listing_type: 'food',
     no_alcohol: true,
-    halal_level: 1,
+    no_pork: false,
+    no_gambling: false,
+    verification_method: 'online',
+    has_certificate: false,
   };
 
   if (includeDescription && schema.description) {
@@ -701,7 +707,7 @@ export async function runJoinHalalDryRun(
         address_street: record.address_street,
         social_website: record.social_website,
         contact_email: record.contact_email,
-        offers_matched: record.offers_ids.length,
+        offers_matched: record.offer_ids.length,
       });
     }
 
