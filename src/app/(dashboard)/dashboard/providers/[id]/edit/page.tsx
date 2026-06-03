@@ -54,7 +54,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     loadProvider();
   }, [providerId]);
 
-  const saveProviderEdits = async (formData: ProviderEditFormData) => {
+  const saveProviderEdits = useCallback(async (formData: ProviderEditFormData) => {
     // Plan 073 M1: Normalise providerImages to avoid contract drift
     // Empty/invalid → omit field (undefined = no DB change in service layer)
     // Valid {urls: string[]} → send as-is
@@ -144,9 +144,9 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     return {
       updatedAt: responseData.data?.updated_at,
     };
-  };
+  }, [providerId, t]);
 
-  const reviewProvider = async (reviewStatus: 'approved' | 'rejected', expectedUpdatedAt?: string, reviewFeedback?: string) => {
+  const reviewProvider = useCallback(async (reviewStatus: 'approved' | 'rejected', expectedUpdatedAt?: string, reviewFeedback?: string) => {
     const response = await fetch('/api/admin/review-provider', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -168,9 +168,9 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }
-  };
+  }, [providerId]);
 
-  const finishModerationAction = async (
+  const finishModerationAction = useCallback(async (
     formData: ProviderEditFormData,
     reviewStatus: 'approved' | 'rejected',
     reviewFeedback?: string
@@ -186,7 +186,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
 
     toast.success(reviewStatus === 'approved' ? 'Provider approved successfully' : 'Provider rejected');
     router.push(`/providers`);
-  };
+  }, [saveProviderEdits, reviewProvider, queryClient, providerId, router]);
 
   const handleRejectClick = useCallback(async (formData: ProviderEditFormData) => {
     setRejectModal({ isOpen: true, formData, isLoading: false });
@@ -207,6 +207,10 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       setRejectModal({ isOpen: false, formData: null, isLoading: false });
     }
   }, [rejectModal.isLoading]);
+
+  const handleApproveConfirm = useCallback(async (formData: ProviderEditFormData) => {
+    await finishModerationAction(formData, 'approved');
+  }, [finishModerationAction]);
 
   if (loading) {
     return (
@@ -266,7 +270,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
             approve: {
               label: 'Approve',
               variant: 'success',
-              onClick: async (formData) => finishModerationAction(formData, 'approved'),
+              onClick: handleApproveConfirm,
               'aria-label': 'Approve provider and save changes',
             },
           }}
