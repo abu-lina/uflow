@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 
 export function useScrollDirection() {
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
   useEffect(() => {
+    let lastScrollY = 0;
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const threshold = 64; // px before header can hide
@@ -20,12 +19,12 @@ export function useScrollDirection() {
         // Scrolling up
         setIsVisible(true);
       }
-      setLastScrollY(currentScrollY);
+      lastScrollY = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   return { isVisible };
 }
