@@ -35,7 +35,12 @@ import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
 import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
 import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
-import { PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId, parseCategoryImages } from '@/utils/imageUtils';
+import {
+  PLACEHOLDER_IMAGE,
+  getCategoryCardBackgroundColor,
+  hashId,
+  parseCategoryImages,
+} from '@/utils/imageUtils';
 
 interface ProviderDetailModalProps {
   provider: Provider;
@@ -122,9 +127,12 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   }, [provider.provider_images]);
 
   const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
-  const categoryFallbackImageUrl = categoryUrls.length > 0
-    ? categoryUrls[hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length]
-    : null;
+  const categoryFallbackImageUrl =
+    categoryUrls.length > 0
+      ? categoryUrls[
+          hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length
+        ]
+      : null;
   const allImageUrls =
     providerImageUrls.length > 0
       ? providerImageUrls
@@ -156,9 +164,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
     minSwipeDistance: 30,
   });
 
-  const [expandedAction, setExpandedAction] = useState<'save' | 'share' | 'call' | 'website' | 'instagram'>(
-    'save',
-  );
+  const [expandedAction, setExpandedAction] = useState<
+    'save' | 'share' | 'call' | 'website' | 'instagram'
+  >('save');
 
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
@@ -381,506 +389,511 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
 
   return (
     <>
-    <Modal
-      isOpen={true}
-      title={communityServices[0]?.community_service_name || provider.provider_name}
-      onClose={onClose}
-    >
-      <section
-        aria-busy={isLoading}
-        aria-label={t('providerDetail.container.ariaProviderDetails')}
-        aria-modal="true"
-        className="relative flex h-[900px] w-[1200px] cursor-default bg-transparent"
-        role="dialog"
-        tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
+      <Modal
+        isOpen={true}
+        title={communityServices[0]?.community_service_name || provider.provider_name}
+        onClose={onClose}
       >
-        {/* Screen reader announcement for loaded content */}
-        <div aria-atomic="true" aria-live="polite" className="sr-only">
-          {!isLoading && t('providerDetail.container.ariaProviderDetailsLoaded')}
-        </div>
-        {/* Left Section */}
-        <div className="absolute left-0 top-0 inline-flex h-[900px] w-[704px] flex-col items-start justify-start gap-8 rounded-l-[48px] bg-white py-10 pl-12 pr-4">
-          {/* Title & Subtitle */}
-          <div className="flex flex-col items-start justify-start gap-2 self-stretch">
-            <div className="inline-flex items-center justify-start gap-8 self-stretch">
-              <div className="justify-start font-inter-tight text-3xl font-bold text-uFlowText">
-                {provider.provider_name}
+        <section
+          aria-busy={isLoading}
+          aria-label={t('providerDetail.container.ariaProviderDetails')}
+          aria-modal="true"
+          className="relative flex h-[900px] w-[1200px] cursor-default bg-transparent"
+          role="dialog"
+          tabIndex={-1}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Screen reader announcement for loaded content */}
+          <div aria-atomic="true" aria-live="polite" className="sr-only">
+            {!isLoading && t('providerDetail.container.ariaProviderDetailsLoaded')}
+          </div>
+          {/* Left Section */}
+          <div className="absolute left-0 top-0 inline-flex h-[900px] w-[704px] flex-col items-start justify-start gap-8 rounded-l-[48px] bg-white py-10 pl-12 pr-4">
+            {/* Title & Subtitle */}
+            <div className="flex flex-col items-start justify-start gap-2 self-stretch">
+              <div className="inline-flex items-center justify-start gap-8 self-stretch">
+                <div className="justify-start font-inter-tight text-3xl font-bold text-uFlowText">
+                  {provider.provider_name}
+                </div>
               </div>
-            </div>
-            <OpenStatusLine provider={provider} />
-            {formatAddress(
-              provider.address_street ?? undefined,
-              provider.address_zip ?? undefined,
-              provider.address_city ?? undefined,
-            ) ? (
-              <button
-                className="justify-start self-stretch text-left font-inter text-base font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline"
-                disabled={
-                  !isAddressNavigable(
-                    provider.address_street ?? undefined,
-                    provider.address_zip ?? undefined,
-                    provider.address_city ?? undefined,
-                  )
-                }
-                title={t('providerDetail.container.addressTapToNavigate')}
-                onClick={() => {
-                  const address = formatAddress(
-                    provider.address_street ?? undefined,
-                    provider.address_zip ?? undefined,
-                    provider.address_city ?? undefined,
-                  );
-                  if (
-                    isAddressNavigable(
+              <OpenStatusLine provider={provider} />
+              {formatAddress(
+                provider.address_street ?? undefined,
+                provider.address_zip ?? undefined,
+                provider.address_city ?? undefined,
+              ) ? (
+                <button
+                  className="justify-start self-stretch text-left font-inter text-base font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline"
+                  disabled={
+                    !isAddressNavigable(
                       provider.address_street ?? undefined,
                       provider.address_zip ?? undefined,
                       provider.address_city ?? undefined,
                     )
-                  ) {
-                    openNavigation(address);
                   }
-                }}
-              >
-                {formatAddress(
-                  provider.address_street ?? undefined,
-                  provider.address_zip ?? undefined,
-                  provider.address_city ?? undefined,
-                )}
-              </button>
-            ) : (
-              <div className="justify-start self-stretch font-inter text-base font-normal text-uFlowText2">
-                {provider.category?.name_de || ''}
-              </div>
-            )}
-          </div>
-          {/* Enhanced Image Carousel */}
-          <div className="flex h-[640px] flex-col items-start justify-start gap-4">
-            <div className="relative">
-              {/* Main Image Container with Swipe Support */}
-              <div
-                ref={imageContainerRef}
-                className="relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
-                data-testid="image-container"
-                style={{ backgroundColor: categoryFallbackBackground }}
-                onTouchEnd={handleTouchEnd}
-                onTouchMove={handleTouchMove}
-                onTouchStart={handleTouchStart}
-              >
-                {/* Image Carousel Container */}
-                <div className="flex h-full w-full" style={getTransformStyle()}>
-                  {allImageUrls.map((imageUrl, index) => (
-                    <div
-                      key={index}
-                      className="relative h-full w-full flex-shrink-0"
-                      style={{ minWidth: '100%' }}
-                    >
-                      {/* Skeleton loader */}
-                      {!mainImagesLoaded[index] && (
-                        <Skeleton className="absolute inset-0 rounded-[32px]" />
-                      )}
-                      <Image
-                        fill
-                        alt={`${provider.provider_name} ${index + 1}`}
-                        className={`rounded-[32px] object-cover transition-opacity duration-300 ${
-                          mainImagesLoaded[index] ? 'opacity-100' : 'opacity-0'
-                        }`}
-                        priority={index === 0}
-                        sizes="640px"
-                        src={imageUrl}
-                        onLoad={() => {
-                          setMainImagesLoaded((prev) => ({ ...prev, [index]: true }));
-                        }}
-                      />
-                    </div>
-                  ))}
+                  title={t('providerDetail.container.addressTapToNavigate')}
+                  onClick={() => {
+                    const address = formatAddress(
+                      provider.address_street ?? undefined,
+                      provider.address_zip ?? undefined,
+                      provider.address_city ?? undefined,
+                    );
+                    if (
+                      isAddressNavigable(
+                        provider.address_street ?? undefined,
+                        provider.address_zip ?? undefined,
+                        provider.address_city ?? undefined,
+                      )
+                    ) {
+                      openNavigation(address);
+                    }
+                  }}
+                >
+                  {formatAddress(
+                    provider.address_street ?? undefined,
+                    provider.address_zip ?? undefined,
+                    provider.address_city ?? undefined,
+                  )}
+                </button>
+              ) : (
+                <div className="justify-start self-stretch font-inter text-base font-normal text-uFlowText2">
+                  {provider.category?.name_de || ''}
                 </div>
-
-                {/* Navigation Arrows (only show if multiple images and not at boundaries) */}
-                {allImageUrls.length > 1 && (
-                  <>
-                    {selectedImageIdx > 0 && (
-                      <button
-                        aria-label={t('providerDetail.container.previousImage')}
-                        className="absolute left-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          goToPrevious();
-                        }}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                    )}
-                    {selectedImageIdx < allImageUrls.length - 1 && (
-                      <button
-                        aria-label={t('providerDetail.container.nextImage')}
-                        className="absolute right-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          goToNext();
-                        }}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
+              )}
             </div>
+            {/* Enhanced Image Carousel */}
+            <div className="flex h-[640px] flex-col items-start justify-start gap-4">
+              <div className="relative">
+                {/* Main Image Container with Swipe Support */}
+                <div
+                  ref={imageContainerRef}
+                  className="relative h-[480px] w-[640px] overflow-hidden rounded-[32px]"
+                  data-testid="image-container"
+                  style={{ backgroundColor: categoryFallbackBackground }}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchMove={handleTouchMove}
+                  onTouchStart={handleTouchStart}
+                >
+                  {/* Image Carousel Container */}
+                  <div className="flex h-full w-full" style={getTransformStyle()}>
+                    {allImageUrls.map((imageUrl, index) => (
+                      <div
+                        key={index}
+                        className="relative h-full w-full flex-shrink-0"
+                        style={{ minWidth: '100%' }}
+                      >
+                        {/* Skeleton loader */}
+                        {!mainImagesLoaded[index] && (
+                          <Skeleton className="absolute inset-0 rounded-[32px]" />
+                        )}
+                        <Image
+                          fill
+                          alt={`${provider.provider_name} ${index + 1}`}
+                          className={`rounded-[32px] object-cover transition-opacity duration-300 ${
+                            mainImagesLoaded[index] ? 'opacity-100' : 'opacity-0'
+                          }`}
+                          priority={index === 0}
+                          sizes="640px"
+                          src={imageUrl}
+                          onLoad={() => {
+                            setMainImagesLoaded((prev) => ({ ...prev, [index]: true }));
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
 
-            {/* Enhanced Thumbnails */}
-            {allImageUrls.length > 1 && (
-              <div className="flex items-start gap-4" style={{ gap: '16px' }}>
-                {allImageUrls.map((img, i) => (
-                  <button
-                    key={i}
-                    aria-label={t('providerDetail.container.selectImage', { index: i + 1 })}
-                    className={`relative overflow-hidden rounded-[8px] border-2 transition-all hover:scale-105 ${
-                      selectedImageIdx === i ? 'scale-105 border-primary' : 'border-transparent'
-                    }`}
-                    style={{ width: 80, height: 60 }}
-                    type="button"
-                    onClick={() => goToImage(i)}
-                  >
-                    {/* Skeleton for thumbnails */}
-                    {!thumbnailsLoaded[i] && (
-                      <Skeleton className="absolute inset-0 rounded-[8px]" />
-                    )}
-                    <Image
-                      fill
-                      alt={t('providers.providerThumbnailAlt', { name: provider.provider_name, index: i + 1 })}
-                      className={`rounded-[8px] object-cover transition-opacity duration-200 ${
-                        thumbnailsLoaded[i] ? 'opacity-100' : 'opacity-0'
+                  {/* Navigation Arrows (only show if multiple images and not at boundaries) */}
+                  {allImageUrls.length > 1 && (
+                    <>
+                      {selectedImageIdx > 0 && (
+                        <button
+                          aria-label={t('providerDetail.container.previousImage')}
+                          className="absolute left-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            goToPrevious();
+                          }}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                      )}
+                      {selectedImageIdx < allImageUrls.length - 1 && (
+                        <button
+                          aria-label={t('providerDetail.container.nextImage')}
+                          className="absolute right-4 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            goToNext();
+                          }}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Enhanced Thumbnails */}
+              {allImageUrls.length > 1 && (
+                <div className="flex items-start gap-4" style={{ gap: '16px' }}>
+                  {allImageUrls.map((img, i) => (
+                    <button
+                      key={i}
+                      aria-label={t('providerDetail.container.selectImage', { index: i + 1 })}
+                      className={`relative overflow-hidden rounded-[8px] border-2 transition-all hover:scale-105 ${
+                        selectedImageIdx === i ? 'scale-105 border-primary' : 'border-transparent'
                       }`}
-                      loading="lazy"
-                      src={img}
-                      onLoad={() => {
-                        setThumbnailsLoaded((prev) => ({ ...prev, [i]: true }));
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        {/* Right Section */}
-        <div className="absolute left-[704px] top-0 inline-flex h-[900px] w-[496px] flex-col items-start justify-start gap-4 overflow-y-auto rounded-r-[48px] bg-white py-36 pl-4 pr-12">
-          {/* Close Button */}
-          <button
-            aria-label={t('providerDetail.popup.closeAria')}
-            className="absolute right-12 top-9 flex size-10 items-center justify-center rounded-full text-content transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            type="button"
-            onClick={onClose}
-          >
-            <X aria-hidden className="size-5" />
-          </button>
-          {/* Admin action buttons (e.g., edit) — positioned in the right panel header zone */}
-          {customActionButtons && (
-            <div className="absolute right-12 top-20">
-              {customActionButtons}
-            </div>
-          )}
-          <div className="flex flex-col items-start justify-start gap-8 self-stretch">
-            {/* Barakah Effekt Section - with fade-in animation */}
-            {communityServices.length > 0 && (
-            <div
-              className="animate-fadeIn flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100"
-              style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
-            >
-              <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
-                  {t('providers.ourBarakahEffect')}:
-                </div>
-                <div className="flex w-full flex-row items-start gap-6">
-                  {/* Left: Zakat image, name, subtitle */}
-                  <button
-                    className="flex w-[160px] flex-shrink-0 flex-col items-start transition-transform active:scale-[0.98]"
-                    onClick={() => {
-                      onClose();
-                      if (communityServices[0]?.community_service_id) {
-                        router.push(
-                          `/community-services/${communityServices[0].community_service_id}`,
-                        );
-                      }
-                    }}
-                  >
-                    <div className="relative mb-2 h-[120px] w-[160px] overflow-hidden rounded-[18px]">
-                      {/* Skeleton for community service image */}
-                      {!communityImageLoaded && (
-                        <Skeleton className="absolute inset-0 rounded-[18px]" />
+                      style={{ width: 80, height: 60 }}
+                      type="button"
+                      onClick={() => goToImage(i)}
+                    >
+                      {/* Skeleton for thumbnails */}
+                      {!thumbnailsLoaded[i] && (
+                        <Skeleton className="absolute inset-0 rounded-[8px]" />
                       )}
                       <Image
                         fill
-                        alt={
-                          communityServices[0]?.community_service_name ||
-                          t('providerDetail.container.communityServiceAlt')
-                        }
-                        className={`rounded-[18px] object-cover transition-opacity duration-300 ${
-                          communityImageLoaded ? 'opacity-100' : 'opacity-0'
+                        alt={t('providers.providerThumbnailAlt', {
+                          name: provider.provider_name,
+                          index: i + 1,
+                        })}
+                        className={`rounded-[8px] object-cover transition-opacity duration-200 ${
+                          thumbnailsLoaded[i] ? 'opacity-100' : 'opacity-0'
                         }`}
                         loading="lazy"
-                        src={
-                          communityServices[0]?.community_service_images &&
-                          communityServices[0].community_service_images.length > 0
-                            ? communityServices[0].community_service_images[0]
-                            : PLACEHOLDER_IMAGE
-                        }
-                        onLoad={() => setCommunityImageLoaded(true)}
+                        src={img}
+                        onLoad={() => {
+                          setThumbnailsLoaded((prev) => ({ ...prev, [i]: true }));
+                        }}
                       />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Right Section */}
+          <div className="absolute left-[704px] top-0 inline-flex h-[900px] w-[496px] flex-col items-start justify-start gap-4 overflow-y-auto rounded-r-[48px] bg-white py-36 pl-4 pr-12">
+            {/* Close Button */}
+            <button
+              aria-label={t('providerDetail.popup.closeAria')}
+              className="absolute right-12 top-9 flex size-10 items-center justify-center rounded-full text-content transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              type="button"
+              onClick={onClose}
+            >
+              <X aria-hidden className="size-5" />
+            </button>
+            {/* Admin action buttons (e.g., edit) — positioned in the right panel header zone */}
+            {customActionButtons && (
+              <div className="absolute right-12 top-20">{customActionButtons}</div>
+            )}
+            <div className="flex flex-col items-start justify-start gap-8 self-stretch">
+              {/* Barakah Effekt Section - with fade-in animation */}
+              {communityServices.length > 0 && (
+                <div
+                  className="animate-fadeIn flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100"
+                  style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
+                >
+                  <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
+                    <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
+                      {t('providers.ourBarakahEffect')}:
                     </div>
-                    <div className="mb-0.5 font-inter-tight text-lg font-semibold text-uFlowText">
-                      {communityServices[0]?.community_service_name}
-                    </div>
-                  </button>
-                  {/* Divider */}
-                  <div className="mx-4 h-[120px] w-px bg-zinc-200" />
-                  {/* Right: Badge visuals */}
-                  <div className="flex min-h-[120px] flex-col flex-wrap items-start gap-2">
-                    {Array.isArray(provider.badges) && provider.badges.length > 0 ? (
-                      <div className="flex flex-col gap-2">
-                        {provider.badges.map((badge) => (
-                          <BadgeLabel
-                            key={badge.id}
-                            badge={badge}
-                            language={language === 'de' ? 'de' : 'en'}
-                            size="md"
+                    <div className="flex w-full flex-row items-start gap-6">
+                      {/* Left: Zakat image, name, subtitle */}
+                      <button
+                        className="flex w-[160px] flex-shrink-0 flex-col items-start transition-transform active:scale-[0.98]"
+                        onClick={() => {
+                          onClose();
+                          if (communityServices[0]?.community_service_id) {
+                            router.push(
+                              `/community-services/${communityServices[0].community_service_id}`,
+                            );
+                          }
+                        }}
+                      >
+                        <div className="relative mb-2 h-[120px] w-[160px] overflow-hidden rounded-[18px]">
+                          {/* Skeleton for community service image */}
+                          {!communityImageLoaded && (
+                            <Skeleton className="absolute inset-0 rounded-[18px]" />
+                          )}
+                          <Image
+                            fill
+                            alt={
+                              communityServices[0]?.community_service_name ||
+                              t('providerDetail.container.communityServiceAlt')
+                            }
+                            className={`rounded-[18px] object-cover transition-opacity duration-300 ${
+                              communityImageLoaded ? 'opacity-100' : 'opacity-0'
+                            }`}
+                            loading="lazy"
+                            src={
+                              communityServices[0]?.community_service_images &&
+                              communityServices[0].community_service_images.length > 0
+                                ? communityServices[0].community_service_images[0]
+                                : PLACEHOLDER_IMAGE
+                            }
+                            onLoad={() => setCommunityImageLoaded(true)}
                           />
-                        ))}
+                        </div>
+                        <div className="mb-0.5 font-inter-tight text-lg font-semibold text-uFlowText">
+                          {communityServices[0]?.community_service_name}
+                        </div>
+                      </button>
+                      {/* Divider */}
+                      <div className="mx-4 h-[120px] w-px bg-zinc-200" />
+                      {/* Right: Badge visuals */}
+                      <div className="flex min-h-[120px] flex-col flex-wrap items-start gap-2">
+                        {Array.isArray(provider.badges) && provider.badges.length > 0 ? (
+                          <div className="flex flex-col gap-2">
+                            {provider.badges.map((badge) => (
+                              <BadgeLabel
+                                key={badge.id}
+                                badge={badge}
+                                language={language === 'de' ? 'de' : 'en'}
+                                size="md"
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="font-inter text-base text-uFlowText2">
+                            {t('providers.noBadges')}
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <span className="font-inter text-base text-uFlowText2">
-                        {t('providers.noBadges')}
-                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Offers & Needs Section - with fade-in animation */}
+              {((provider.offers && provider.offers.length > 0) ||
+                (provider.needs && provider.needs.length > 0)) && (
+                <div
+                  className="animate-fadeIn flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100"
+                  style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}
+                >
+                  <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
+                    {/* Offers Section */}
+                    {provider.offers && provider.offers.length > 0 && (
+                      <div className="flex w-full flex-col gap-2.5">
+                        <button
+                          className="flex w-full items-center justify-between"
+                          onClick={() => setExpandedOffers(!expandedOffers)}
+                        >
+                          <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
+                            {t('providers.weOffer')}
+                          </div>
+                          <ChevronDown
+                            className={`h-6 w-6 text-gray-600 transition-transform ${
+                              expandedOffers ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
+                        {expandedOffers && (
+                          <div className="mt-2">
+                            <div className="flex flex-wrap gap-2">
+                              {provider.offers.map((offer, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
+                                >
+                                  {offer.name_de}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Divider */}
+                    {provider.offers &&
+                      provider.offers.length > 0 &&
+                      provider.needs &&
+                      provider.needs.length > 0 && <hr className="w-full border-gray-200" />}
+
+                    {/* Needs Section */}
+                    {provider.needs && provider.needs.length > 0 && (
+                      <div className="flex w-full flex-col gap-2.5">
+                        <button
+                          className="flex w-full items-center justify-between"
+                          onClick={() => setExpandedNeeds(!expandedNeeds)}
+                        >
+                          <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
+                            {t('providers.weAreLookingFor')}
+                          </div>
+                          <ChevronDown
+                            className={`h-6 w-6 text-gray-600 transition-transform ${
+                              expandedNeeds ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
+                        {expandedNeeds && (
+                          <div className="mt-2">
+                            <div className="flex flex-wrap gap-2">
+                              {provider.needs.map((need, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
+                                >
+                                  {need.name_de}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
-              </div>
+              )}
+
+              <HalalTrustBanner />
+
+              <ProviderDetailSections
+                badges={provider.badges ?? []}
+                isLoadingBadges={false}
+                provider={provider}
+              />
             </div>
-            )}
-            {/* Offers & Needs Section - with fade-in animation */}
-            {((provider.offers && provider.offers.length > 0) ||
-              (provider.needs && provider.needs.length > 0)) && (
-              <div
-                className="animate-fadeIn flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100"
-                style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}
-              >
-                <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                  {/* Offers Section */}
-                  {provider.offers && provider.offers.length > 0 && (
-                    <div className="flex w-full flex-col gap-2.5">
-                      <button
-                        className="flex w-full items-center justify-between"
-                        onClick={() => setExpandedOffers(!expandedOffers)}
-                      >
-                        <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
-                          {t('providers.weOffer')}
-                        </div>
-                        <ChevronDown
-                          className={`h-6 w-6 text-gray-600 transition-transform ${
-                            expandedOffers ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
-                      {expandedOffers && (
-                        <div className="mt-2">
-                          <div className="flex flex-wrap gap-2">
-                            {provider.offers.map((offer, index) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                              >
-                                {offer.name_de}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Divider */}
-                  {provider.offers &&
-                    provider.offers.length > 0 &&
-                    provider.needs &&
-                    provider.needs.length > 0 && <hr className="w-full border-gray-200" />}
-
-                  {/* Needs Section */}
-                  {provider.needs && provider.needs.length > 0 && (
-                    <div className="flex w-full flex-col gap-2.5">
-                      <button
-                        className="flex w-full items-center justify-between"
-                        onClick={() => setExpandedNeeds(!expandedNeeds)}
-                      >
-                        <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
-                          {t('providers.weAreLookingFor')}
-                        </div>
-                        <ChevronDown
-                          className={`h-6 w-6 text-gray-600 transition-transform ${
-                            expandedNeeds ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
-                      {expandedNeeds && (
-                        <div className="mt-2">
-                          <div className="flex flex-wrap gap-2">
-                            {provider.needs.map((need, index) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                              >
-                                {need.name_de}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
-
-            <HalalTrustBanner />
           </div>
-        </div>
-        {/* Actions Bar - moved outside left/right panels for true modal centering */}
-        <div className="absolute bottom-10 left-1/2 flex h-[56px] w-auto -translate-x-1/2 items-center gap-0 rounded-[16.8px] border border-[#EEEEEE] bg-white px-2">
-          {/* Save Button */}
-          <button
-            aria-expanded={expandedAction === 'save'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
-            type="button"
-            onClick={() => handleExpand('save')}
-          >
-            <Icon
-              className={
-                expandedAction === 'save'
-                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
-                  : isSaved
-                    ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-black'
+          {/* Actions Bar - moved outside left/right panels for true modal centering */}
+          <div className="absolute bottom-10 left-1/2 flex h-[56px] w-auto -translate-x-1/2 items-center gap-0 rounded-[16.8px] border border-[#EEEEEE] bg-white px-2">
+            {/* Save Button */}
+            <button
+              aria-expanded={expandedAction === 'save'}
+              className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
+              type="button"
+              onClick={() => handleExpand('save')}
+            >
+              <Icon
+                className={
+                  expandedAction === 'save'
+                    ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                    : isSaved
+                      ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-black'
+                      : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#333333]'
+                }
+                height={20}
+                icon={
+                  expandedAction === 'save'
+                    ? isSaved
+                      ? 'iconamoon:heart-fill'
+                      : 'iconamoon:heart'
+                    : isSaved
+                      ? 'iconamoon:heart-fill'
+                      : 'iconamoon:heart'
+                }
+                width={20}
+              />
+              {expandedAction === 'save' && (
+                <span className="font-inter-tight text-base font-medium text-white">
+                  {isSaved ? t('providers.saved') : t('providers.save')}
+                </span>
+              )}
+            </button>
+            {/* Share Button */}
+            <button
+              aria-expanded={expandedAction === 'share'}
+              className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
+              type="button"
+              onClick={() => handleExpand('share')}
+            >
+              <Icon
+                className={
+                  expandedAction === 'share'
+                    ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
                     : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#333333]'
-              }
-              height={20}
-              icon={
-                expandedAction === 'save'
-                  ? isSaved
-                    ? 'iconamoon:heart-fill'
-                    : 'iconamoon:heart'
-                  : isSaved
-                    ? 'iconamoon:heart-fill'
-                    : 'iconamoon:heart'
-              }
-              width={20}
-            />
-            {expandedAction === 'save' && (
-              <span className="font-inter-tight text-base font-medium text-white">
-                {isSaved ? t('providers.saved') : t('providers.save')}
-              </span>
+                }
+                height={20}
+                icon="material-symbols:share"
+                width={20}
+              />
+              {expandedAction === 'share' && (
+                <span className="font-inter-tight text-base font-medium text-white">
+                  {t('providerDetail.container.share')}
+                </span>
+              )}
+            </button>
+            {/* Phone Button */}
+            <button
+              aria-expanded={expandedAction === 'call'}
+              className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
+              type="button"
+              onClick={() => handleExpand('call')}
+            >
+              <Icon
+                className={
+                  expandedAction === 'call'
+                    ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                    : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
+                }
+                height={20}
+                icon="entypo:old-phone"
+                width={20}
+              />
+              {expandedAction === 'call' && (
+                <span className="font-inter-tight text-base font-medium text-white">
+                  {t('providerDetail.container.call')}
+                </span>
+              )}
+            </button>
+            {/* Website Button */}
+            <button
+              aria-expanded={expandedAction === 'website'}
+              className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
+              type="button"
+              onClick={() => handleExpand('website')}
+            >
+              <Icon
+                className={
+                  expandedAction === 'website'
+                    ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                    : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
+                }
+                height={20}
+                icon="mdi:internet"
+                width={20}
+              />
+              {expandedAction === 'website' && (
+                <span className="font-inter-tight text-base font-medium text-white">
+                  {t('providerDetail.container.website')}
+                </span>
+              )}
+            </button>
+            {/* Instagram Button — conditionally rendered */}
+            {provider.social_instagram && (
+              <button
+                aria-expanded={expandedAction === 'instagram'}
+                aria-label={t('providerDetail.container.instagram')}
+                className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'instagram' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
+                type="button"
+                onClick={() => handleExpand('instagram')}
+              >
+                <Icon
+                  className={
+                    expandedAction === 'instagram'
+                      ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
+                      : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
+                  }
+                  height={20}
+                  icon="mdi:instagram"
+                  width={20}
+                />
+                {expandedAction === 'instagram' && (
+                  <span className="font-inter-tight text-base font-medium text-white">
+                    {t('providerDetail.container.instagram')}
+                  </span>
+                )}
+              </button>
             )}
-          </button>
-          {/* Share Button */}
-          <button
-            aria-expanded={expandedAction === 'share'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
-            type="button"
-            onClick={() => handleExpand('share')}
-          >
-            <Icon
-              className={
-                expandedAction === 'share'
-                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
-                  : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#333333]'
-              }
-              height={20}
-              icon="material-symbols:share"
-              width={20}
-            />
-            {expandedAction === 'share' && (
-              <span className="font-inter-tight text-base font-medium text-white">
-                {t('providerDetail.container.share')}
-              </span>
-            )}
-          </button>
-          {/* Phone Button */}
-          <button
-            aria-expanded={expandedAction === 'call'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
-            type="button"
-            onClick={() => handleExpand('call')}
-          >
-            <Icon
-              className={
-                expandedAction === 'call'
-                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
-                  : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
-              }
-              height={20}
-              icon="entypo:old-phone"
-              width={20}
-            />
-            {expandedAction === 'call' && (
-              <span className="font-inter-tight text-base font-medium text-white">
-                {t('providerDetail.container.call')}
-              </span>
-            )}
-          </button>
-          {/* Website Button */}
-          <button
-            aria-expanded={expandedAction === 'website'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
-            type="button"
-            onClick={() => handleExpand('website')}
-          >
-            <Icon
-              className={
-                expandedAction === 'website'
-                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
-                  : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
-              }
-              height={20}
-              icon="mdi:internet"
-              width={20}
-            />
-            {expandedAction === 'website' && (
-              <span className="font-inter-tight text-base font-medium text-white">
-                {t('providerDetail.container.website')}
-              </span>
-            )}
-          </button>
-          {/* Instagram Button — conditionally rendered */}
-          {provider.social_instagram && (
-          <button
-            aria-expanded={expandedAction === 'instagram'}
-            aria-label={t('providerDetail.container.instagram')}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'instagram' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
-            type="button"
-            onClick={() => handleExpand('instagram')}
-          >
-            <Icon
-              className={
-                expandedAction === 'instagram'
-                  ? 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-white'
-                  : 'size-5 min-h-[20px] min-w-[20px] shrink-0 text-[#272727]'
-              }
-              height={20}
-              icon="mdi:instagram"
-              width={20}
-            />
-            {expandedAction === 'instagram' && (
-              <span className="font-inter-tight text-base font-medium text-white">
-                {t('providerDetail.container.instagram')}
-              </span>
-            )}
-          </button>
-          )}
-        </div>
-      </section>
-    </Modal>
-    <HalalTrustPopup isOpen={showHalalPopup} onClose={handleCloseHalalPopup} />
+          </div>
+        </section>
+      </Modal>
+      <HalalTrustPopup isOpen={showHalalPopup} onClose={handleCloseHalalPopup} />
     </>
   );
 };

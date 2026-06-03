@@ -37,87 +37,33 @@ interface ProofTierCardProps {
 }
 
 // ---------------------------------------------------------------------------
-// SealImage: individual seal with onError fallback (colored circle + initial)
+// SealRow: single combined seal image per active tier
 // ---------------------------------------------------------------------------
 
-const SEAL_FALLBACK: Record<SealTier, { bg: string; color: string; initial: string }> = {
-  bronze: { bg: '#CD7F32', color: '#fff', initial: 'B' },
-  silver: { bg: '#A8A9AD', color: '#fff', initial: 'S' },
-  gold: { bg: '#C8A848', color: '#fff', initial: 'G' },
+const SEAL_COMBINED: Record<SealTier, string> = {
+  bronze: '/images/seals/seals-bronze-active.png',
+  silver: '/images/seals/seals-silver-active.png',
+  gold: '/images/seals/seals-gold-active.png',
 };
-
-function SealImage({
-  tier,
-  isActive,
-  altText,
-}: {
-  tier: SealTier;
-  isActive: boolean;
-  altText: string;
-}) {
-  const [failed, setFailed] = useState(false);
-  const sizeClass = isActive ? 'h-24 w-24' : 'h-16 w-16';
-  const stateClass = isActive ? 'opacity-100 scale-110' : 'opacity-40 grayscale scale-100';
-  const { bg, color, initial } = SEAL_FALLBACK[tier];
-
-  if (failed) {
-    return (
-      <div
-        aria-label={altText}
-        className={`flex items-center justify-center rounded-full text-sm font-bold transition-all ${sizeClass} ${stateClass}`}
-        role="img"
-        style={{ backgroundColor: bg, color }}
-      >
-        {initial}
-      </div>
-    );
-  }
-
-  return (
-    <Image
-      alt={altText}
-      className={`object-contain transition-all ${sizeClass} ${stateClass}`}
-      height={96}
-      priority={false}
-      src={`/images/seals/seal-${tier}.webp`}
-      width={96}
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
-// SealRow: all 3 seals in order; RTL reverses layout
-// ---------------------------------------------------------------------------
-
-const TIER_ORDER: SealTier[] = ['bronze', 'silver', 'gold'];
 
 function SealRow({
   activeTier,
-  altBronze,
-  altSilver,
-  altGold,
-  isRtl,
+  altText,
 }: {
   activeTier: SealTier;
-  altBronze: string;
-  altSilver: string;
-  altGold: string;
-  isRtl: boolean;
+  altText: string;
 }) {
-  const alts: Record<SealTier, string> = { bronze: altBronze, silver: altSilver, gold: altGold };
-  const displayOrder = isRtl ? [...TIER_ORDER].reverse() : TIER_ORDER;
-
+  const src = SEAL_COMBINED[activeTier];
   return (
-    <div className="flex items-end justify-center gap-4" role="group">
-      {displayOrder.map((tier) => (
-        <SealImage
-          key={tier}
-          altText={alts[tier]}
-          isActive={tier === activeTier}
-          tier={tier}
-        />
-      ))}
+    <div className="mx-auto flex w-fit items-center justify-center" role="group">
+      <Image
+        alt={altText}
+        className="block"
+        height={120}
+        priority={false}
+        src={src}
+        width={320}
+      />
     </div>
   );
 }
@@ -269,12 +215,10 @@ export function ProofTierCard({
   noPork,
   noGambling,
 }: ProofTierCardProps) {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const tier = computeSealTier(verificationMethod, hasCertificate);
-  const isRtl = language === 'ar' || language === 'ur' || language === 'ps';
-  const certOnFile = Boolean(hasCertificate);
   const onsiteVerified = (verificationMethod ?? 'online') === 'onsite';
 
   const summaryKey =
@@ -289,17 +233,8 @@ export function ProofTierCard({
   const supportsAttestation = listingType === 'food' || listingType === 'store';
 
   return (
-    <section
-      aria-label={t('providerDetail.proofTier.sectionTitle')}
-      className="space-y-3"
-    >
-      <SealRow
-        activeTier={tier}
-        altBronze={t('providerDetail.proofTier.sealAltBronze')}
-        altGold={t('providerDetail.proofTier.sealAltGold')}
-        altSilver={t('providerDetail.proofTier.sealAltSilver')}
-        isRtl={isRtl}
-      />
+    <section aria-label={t('providerDetail.proofTier.sectionTitle')} className="space-y-3">
+      <SealRow activeTier={tier} altText={t(`providerDetail.proofTier.sealAlt${tier.charAt(0).toUpperCase() + tier.slice(1)}`)} />
 
       <SummaryText text={t(summaryKey)} />
 
@@ -312,7 +247,7 @@ export function ProofTierCard({
             <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
             <span>{t('providerDetail.proofTier.checkMenuReviewed')}</span>
           </li>
-          {certOnFile ? (
+          {Boolean(hasCertificate) ? (
             <li className="flex items-start gap-2">
               <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
               <span>{t('providerDetail.proofTier.checkCertificateOnFile')}</span>

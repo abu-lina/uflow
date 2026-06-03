@@ -57,16 +57,12 @@ describe('ProofTierCard', () => {
   it('[TDD gate] active seal carries alt text with tier meaning from translation key', () => {
     render(<ProofTierCard verificationMethod="online" hasCertificate={false} />);
     // Bronze tier is active — alt text uses translation key for bronze
-    expect(
-      screen.getByAltText('providerDetail.proofTier.sealAltBronze'),
-    ).toBeInTheDocument();
+    expect(screen.getByAltText('providerDetail.proofTier.sealAltBronze')).toBeInTheDocument();
   });
 
   it('[TDD gate] defaults to bronze (online/no-cert) when verification data is missing', () => {
     render(<ProofTierCard verificationMethod={null} hasCertificate={undefined} />);
-    expect(
-      screen.getByAltText('providerDetail.proofTier.sealAltBronze'),
-    ).toBeInTheDocument();
+    expect(screen.getByAltText('providerDetail.proofTier.sealAltBronze')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
     expect(
       screen.queryByText('providerDetail.proofTier.checkCertificateOnFile'),
@@ -75,21 +71,15 @@ describe('ProofTierCard', () => {
 
   it('[TDD gate] renders silver seal as active for onsite/no-cert', () => {
     render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} />);
-    expect(
-      screen.getByAltText('providerDetail.proofTier.sealAltSilver'),
-    ).toBeInTheDocument();
+    expect(screen.getByAltText('providerDetail.proofTier.sealAltSilver')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkOnsiteVisit')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkOwnerConfirmed')).toBeInTheDocument();
   });
 
   it('[TDD gate] renders gold seal as active for any hasCertificate=true', () => {
     render(<ProofTierCard verificationMethod="online" hasCertificate={true} />);
-    expect(
-      screen.getByAltText('providerDetail.proofTier.sealAltGold'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('providerDetail.proofTier.checkCertificateOnFile'),
-    ).toBeInTheDocument();
+    expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
   });
 
   it('[TDD gate] renders summary sentence translation key for current tier', () => {
@@ -150,9 +140,7 @@ describe('ProofTierCard', () => {
         verificationMethod="online"
       />,
     );
-    expect(
-      screen.queryByText('providerDetail.attestation.noAlcohol'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
   });
 
   it('[TDD gate] does NOT show attestation for gold tier with no declarations', () => {
@@ -166,9 +154,7 @@ describe('ProofTierCard', () => {
         verificationMethod="onsite"
       />,
     );
-    expect(
-      screen.queryByText('providerDetail.attestation.noAlcohol'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
   });
 
   it('[TDD gate] does NOT show attestation for gold tier with ummah listing type', () => {
@@ -182,9 +168,7 @@ describe('ProofTierCard', () => {
         verificationMethod="onsite"
       />,
     );
-    expect(
-      screen.queryByText('providerDetail.attestation.noAlcohol'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
   });
 
   it('[TDD gate] retains checklist and expandable explanation', () => {

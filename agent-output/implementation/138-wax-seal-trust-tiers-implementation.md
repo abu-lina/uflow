@@ -17,8 +17,8 @@ Status: Active
 
 ## Changelog
 
-| Date | Handoff | Request | Summary |
-|------|---------|---------|---------|
+| Date       | Handoff     | Request               | Summary                                                                                  |
+| ---------- | ----------- | --------------------- | ---------------------------------------------------------------------------------------- |
 | 2026-06-02 | Implementer | Planner → Implementer | Full implementation of Plan 138 — replaced arc gauge + dimension matrix with wax seal UI |
 
 ---
@@ -43,27 +43,27 @@ Replaced the arc gauge + dimension matrix in `ProofTierCard` with three progress
 
 ## Files Modified
 
-| Path | Change | Lines |
-|------|--------|-------|
-| `src/features/providers/components/ProofTierCard.tsx` | Full rewrite — replaced `VerificationArc`, `computeVerificationLevel`, dimension chips with `computeSealTier`, `SealImage`, `SealRow`, `SummaryText`, `HalalIcon`, `GoldAttestationSection`; new props `listingType`, `noAlcohol`, `noPork`, `noGambling` | ~363 |
-| `src/features/providers/components/ProviderDetailSections.tsx` | Added 4 new props to `<ProofTierCard>` call; removed unused `AttestationCard` import | +5 / -2 |
-| `src/__tests__/features/providers/ProviderDetailSections.test.tsx` | Updated 2 stale assertions that checked for old `level1Label` value `'Online Check'` — replaced with `getByRole('group')` / `getAllByRole('group')` | +2 / -2 |
-| `src/features/providers/components/__tests__/ProofTierCard.test.tsx` | Fixed unused `onError` in mock (`_onError`) | +1 / -1 |
-| `src/translations/en.ts` | Replaced 12 dead keys with 7 new keys (`sealAltBronze`, `sealAltSilver`, `sealAltGold`, `summaryBronze`, `summarySilver`, `summaryGoldCert`, `summaryGoldCertOnly`) | +7 / -12 |
-| `src/translations/de.ts` | Same as en.ts | +7 / -12 |
-| `src/translations/ar.ts` | Same as en.ts | +7 / -12 |
-| `src/translations/tr.ts` | Same as en.ts | +7 / -12 |
-| `src/translations/ur.ts` | Same as en.ts | +7 / -12 |
-| `src/translations/ps.ts` | Same as en.ts | +7 / -12 |
-| `CHANGELOG.md` | Added Plan 138 entry under `[Unreleased]`; removed Plans 136 + 137 entries | +2 / -2 |
-| `agent-output/planning/137-prooftiercard-verification-matrix-plan.md` | Status changed to `Superseded` then moved to `closed/` | — |
+| Path                                                                  | Change                                                                                                                                                                                                                                                    | Lines    |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `src/features/providers/components/ProofTierCard.tsx`                 | Full rewrite — replaced `VerificationArc`, `computeVerificationLevel`, dimension chips with `computeSealTier`, `SealImage`, `SealRow`, `SummaryText`, `HalalIcon`, `GoldAttestationSection`; new props `listingType`, `noAlcohol`, `noPork`, `noGambling` | ~363     |
+| `src/features/providers/components/ProviderDetailSections.tsx`        | Added 4 new props to `<ProofTierCard>` call; removed unused `AttestationCard` import                                                                                                                                                                      | +5 / -2  |
+| `src/__tests__/features/providers/ProviderDetailSections.test.tsx`    | Updated 2 stale assertions that checked for old `level1Label` value `'Online Check'` — replaced with `getByRole('group')` / `getAllByRole('group')`                                                                                                       | +2 / -2  |
+| `src/features/providers/components/__tests__/ProofTierCard.test.tsx`  | Fixed unused `onError` in mock (`_onError`)                                                                                                                                                                                                               | +1 / -1  |
+| `src/translations/en.ts`                                              | Replaced 12 dead keys with 7 new keys (`sealAltBronze`, `sealAltSilver`, `sealAltGold`, `summaryBronze`, `summarySilver`, `summaryGoldCert`, `summaryGoldCertOnly`)                                                                                       | +7 / -12 |
+| `src/translations/de.ts`                                              | Same as en.ts                                                                                                                                                                                                                                             | +7 / -12 |
+| `src/translations/ar.ts`                                              | Same as en.ts                                                                                                                                                                                                                                             | +7 / -12 |
+| `src/translations/tr.ts`                                              | Same as en.ts                                                                                                                                                                                                                                             | +7 / -12 |
+| `src/translations/ur.ts`                                              | Same as en.ts                                                                                                                                                                                                                                             | +7 / -12 |
+| `src/translations/ps.ts`                                              | Same as en.ts                                                                                                                                                                                                                                             | +7 / -12 |
+| `CHANGELOG.md`                                                        | Added Plan 138 entry under `[Unreleased]`; removed Plans 136 + 137 entries                                                                                                                                                                                | +2 / -2  |
+| `agent-output/planning/137-prooftiercard-verification-matrix-plan.md` | Status changed to `Superseded` then moved to `closed/`                                                                                                                                                                                                    | —        |
 
 ## Files Created
 
-| Path | Purpose |
-|------|---------|
-| `public/images/seals/README.md` | Placeholder explaining expected `seal-bronze.webp`, `seal-silver.webp`, `seal-gold.webp` files (pending product owner delivery) |
-| `agent-output/implementation/138-wax-seal-trust-tiers-implementation.md` | This document |
+| Path                                                                     | Purpose                                                                                                                         |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `public/images/seals/README.md`                                          | Placeholder explaining expected `seal-bronze.webp`, `seal-silver.webp`, `seal-gold.webp` files (pending product owner delivery) |
+| `agent-output/implementation/138-wax-seal-trust-tiers-implementation.md` | This document                                                                                                                   |
 
 ---
 
@@ -91,6 +91,7 @@ Search/Filter Client-Interaction Trace: N/A — ProofTierCard is a purely presen
 **Original value statement**: Replace the arc gauge + dimension matrix with three wax-seal images (Bronze / Silver / Gold) that give users an instant, recognisable trust signal. Simplify the UI to a single summary sentence + expandable evidence checklist. Move gold-tier attestation inline.
 
 **How implementation delivers it**:
+
 - The arc gauge SVG (`VerificationArc`) and dimension chips are fully removed — no dead code remains
 - Three seals render in a `role="group"` row; the active tier is scaled up and fully opaque; inactive seals are dimmed and greyscale
 - `computeSealTier` derives tier from `hasCertificate` (gold) → `verificationMethod === 'onsite'` (silver) → bronze, matching the plan's priority order
@@ -103,13 +104,13 @@ Search/Filter Client-Interaction Trace: N/A — ProofTierCard is a purely presen
 
 ## TDD Compliance
 
-| Function/Class | Test File | Test Written First? | Failure Verified? | Failure Reason | Pass After Impl? |
-|---|---|---|---|---|---|
-| `computeSealTier` | `ProofTierCard.test.tsx` | ✅ Yes | ✅ Yes | `SyntaxError: The requested module … does not provide an export named 'computeSealTier'` | ✅ Yes |
-| `SealRow` / `SealImage` | `ProofTierCard.test.tsx` | ✅ Yes | ✅ Yes | `Unable to find an element with the role "group"` / `querySelectorAll('img[data-src]').length = 0` | ✅ Yes |
-| `SummaryText` | `ProofTierCard.test.tsx` | ✅ Yes | ✅ Yes | `Unable to find an element with the text: 'providerDetail.proofTier.summaryBronze'` | ✅ Yes |
-| `GoldAttestationSection` | `ProofTierCard.test.tsx` | ✅ Yes | ✅ Yes | `Unable to find an element with the text: 'providerDetail.attestation.noAlcohol'` | ✅ Yes |
-| `ProofTierCard` (updated) | `ProofTierCard.test.tsx` | ✅ Yes | ✅ Yes | Multiple assertion errors (12/16 failing) | ✅ Yes |
+| Function/Class            | Test File                | Test Written First? | Failure Verified? | Failure Reason                                                                                     | Pass After Impl? |
+| ------------------------- | ------------------------ | ------------------- | ----------------- | -------------------------------------------------------------------------------------------------- | ---------------- |
+| `computeSealTier`         | `ProofTierCard.test.tsx` | ✅ Yes              | ✅ Yes            | `SyntaxError: The requested module … does not provide an export named 'computeSealTier'`           | ✅ Yes           |
+| `SealRow` / `SealImage`   | `ProofTierCard.test.tsx` | ✅ Yes              | ✅ Yes            | `Unable to find an element with the role "group"` / `querySelectorAll('img[data-src]').length = 0` | ✅ Yes           |
+| `SummaryText`             | `ProofTierCard.test.tsx` | ✅ Yes              | ✅ Yes            | `Unable to find an element with the text: 'providerDetail.proofTier.summaryBronze'`                | ✅ Yes           |
+| `GoldAttestationSection`  | `ProofTierCard.test.tsx` | ✅ Yes              | ✅ Yes            | `Unable to find an element with the text: 'providerDetail.attestation.noAlcohol'`                  | ✅ Yes           |
+| `ProofTierCard` (updated) | `ProofTierCard.test.tsx` | ✅ Yes              | ✅ Yes            | Multiple assertion errors (12/16 failing)                                                          | ✅ Yes           |
 
 Pre-implementation failure evidence: `12 failed | 4 passed (16)` — confirmed correct failure reasons before any implementation code was written.
 

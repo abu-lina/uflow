@@ -48,7 +48,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
     getBadgesForEntityServer(id, EntityType.PROVIDER),
     supabase
       .from('food_providers')
-      .select('halal_level, no_alcohol, no_pork')
+      .select('verification_method, has_certificate, no_alcohol, no_pork, no_gambling')
       .eq('provider_id', id)
       .maybeSingle(),
     supabase
