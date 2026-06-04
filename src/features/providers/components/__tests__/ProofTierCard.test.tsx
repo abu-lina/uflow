@@ -43,7 +43,7 @@ describe('computeSealTier', () => {
 });
 
 describe('ProofTierCard', () => {
-  it('[TDD gate] renders 3 seal images/fallbacks in a group', () => {
+  it('[TDD gate] renders combined seal image', () => {
     const { container } = render(
       <ProofTierCard verificationMethod="online" hasCertificate={false} />,
     );
@@ -51,7 +51,7 @@ describe('ProofTierCard', () => {
     expect(sealGroup).toBeInTheDocument();
     // There should be 3 seal visuals (img elements or fallback divs)
     const imgs = container.querySelectorAll('img[data-src]');
-    expect(imgs).toHaveLength(3);
+    expect(imgs).toHaveLength(1);
   });
 
   it('[TDD gate] active seal carries alt text with tier meaning from translation key', () => {
