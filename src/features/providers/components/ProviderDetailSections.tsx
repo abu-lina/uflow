@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, type ComponentType, type ReactNode, type SVGProps } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CircleParking,
   HandHeart,
@@ -127,14 +128,18 @@ function renderOpeningHours(
   );
 }
 
-function DetailListItem({ label, icon }: { label: string; icon: ReactNode }) {
+function DetailListItem({ label, icon, onClick }: { label: string; icon: ReactNode; onClick?: () => void }) {
+  const Component = onClick ? 'button' : 'div';
   return (
-    <div className="flex w-full items-center gap-3 rounded-xl p-2">
+    <Component
+      onClick={onClick}
+      className="flex w-full cursor-pointer items-center gap-3 rounded-xl p-2"
+    >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E3F2EF] text-primary">
         {icon}
       </span>
       <span className="text-base font-semibold text-content-heading">{label}</span>
-    </div>
+    </Component>
   );
 }
 
@@ -144,6 +149,7 @@ export function ProviderDetailSections({
   isLoadingBadges,
 }: ProviderDetailSectionsProps) {
   const { t } = useLanguage();
+  const router = useRouter();
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
   const {
     data: nearbyProviders = [],
@@ -160,7 +166,7 @@ export function ProviderDetailSections({
           p_lon: provider.location_longitude,
           p_exclude_id: provider.provider_id,
           p_radius_km: 10,
-          p_limit: 5,
+          p_limit: 3,
         });
 
         if (!error && data && data.length > 0) {
@@ -180,7 +186,7 @@ export function ProviderDetailSections({
         .eq('listing_type', 'food')
         .eq('review_status', 'approved')
         .neq('provider_id', provider.provider_id)
-        .limit(5);
+        .limit(3);
 
       if (error) {
         console.error('[find_nearby_food_providers] Fallback error:', error);
@@ -257,6 +263,7 @@ export function ProviderDetailSections({
                 key={nearby.provider_id}
                 icon={<MapPin aria-hidden="true" className="h-6 w-6" />}
                 label={nearby.provider_name}
+                onClick={() => router.push(`/providers/${nearby.provider_id}`)}
               />
             ))
           )}
