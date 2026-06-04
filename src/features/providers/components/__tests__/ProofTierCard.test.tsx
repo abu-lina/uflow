@@ -72,8 +72,10 @@ describe('ProofTierCard', () => {
   it('[TDD gate] renders silver seal as active for onsite/no-cert', () => {
     render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltSilver')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.proofTier.checkOnsiteVisit')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.proofTier.checkOwnerConfirmed')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.checkMenuReviewedOnsite')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.checkSellsProcessNoAlcohol')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.checkSellsProcessNoPork')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.checkMeatIsHalal')).toBeInTheDocument();
   });
 
   it('[TDD gate] renders gold seal as active for any hasCertificate=true', () => {
@@ -173,7 +175,7 @@ describe('ProofTierCard', () => {
 
   it('[TDD gate] retains checklist and expandable explanation', () => {
     render(<ProofTierCard verificationMethod="online" hasCertificate={false} />);
-    expect(screen.getByText('providerDetail.proofTier.whatWeVerified')).toBeInTheDocument();
+    expect(screen.getByText(v => v.startsWith('providerDetail.proofTier.whatWeVerified'))).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'providerDetail.proofTier.whatIsThis' }),
     ).toBeInTheDocument();

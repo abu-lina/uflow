@@ -179,12 +179,12 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Halal Check' }));
+    fireEvent.click(screen.getByRole('button', { name: /Halal Check/ }));
     // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]
     expect(screen.getByRole('group')).toBeInTheDocument();
   });
 
-  it('[post-fix PASSES] renders German Halal-Prüfung section label and badge rows', () => {
+  it('[post-fix PASSES] renders German Halal-Prüfung section and trust badges', () => {
     useQueryMock.mockReturnValue({
       data: [],
       isLoading: false,
@@ -225,7 +225,7 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Halal-Prüfung' }));
+    fireEvent.click(screen.getByRole('button', { name: /Halal-Prüfung/ }));
     expect(screen.getByTestId('trust-badges-section-mock')).toBeInTheDocument();
     expect(screen.getByText(/badges:1/)).toBeInTheDocument();
   });
@@ -243,7 +243,7 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Halal Check' }));
+    fireEvent.click(screen.getByRole('button', { name: /Halal Check/ }));
     expect(screen.getByTestId('trust-badges-section-mock')).toBeInTheDocument();
   });
 
@@ -268,7 +268,7 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Halal Check' }));
+    fireEvent.click(screen.getByRole('button', { name: /Halal Check/ }));
     expect(screen.queryByText('No proofs available.')).not.toBeInTheDocument();
     expect(screen.queryByText('Only halal meat')).not.toBeInTheDocument();
     // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]

@@ -33,7 +33,6 @@ import { trackEvent } from '@/lib/analytics/plausible';
 import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
-import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
 import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
 import {
   PLACEHOLDER_IMAGE,
@@ -750,8 +749,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   </div>
                 </div>
               )}
-
-              <HalalTrustBanner />
 
               <ProviderDetailSections
                 badges={provider.badges ?? []}

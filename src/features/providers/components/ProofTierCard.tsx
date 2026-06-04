@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { BeerOff, Check, ChevronDown, Dices, PiggyBank } from 'lucide-react';
+import { BeerOff, ChevronDown, Dices, PiggyBank, SquareMenu } from 'lucide-react';
+import { HalalIcon as HugeHalalIcon } from 'hugeicons-react';
 import type { ReactNode } from 'react';
 
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -58,7 +59,7 @@ function SealRow({
     <div className="mx-auto flex w-fit items-center justify-center" role="group">
       <Image
         alt={altText}
-        className="block"
+        className="block -mb-4"
         height={120}
         priority={false}
         src={src}
@@ -74,7 +75,7 @@ function SealRow({
 
 function SummaryText({ text }: { text: string }) {
   if (!text.includes('{{highlight}}')) {
-    return <p className="text-sm text-content">{text}</p>;
+    return <p className="text-base text-content mb-3">{text}</p>;
   }
 
   const segments: ReactNode[] = [];
@@ -90,7 +91,7 @@ function SummaryText({ text }: { text: string }) {
     if (inner[1]) segments.push(inner[1]);
   }
 
-  return <p className="text-sm text-content">{segments}</p>;
+  return <p className="text-base text-content mb-3">{segments}</p>;
 }
 
 // ---------------------------------------------------------------------------
@@ -233,39 +234,110 @@ export function ProofTierCard({
   const supportsAttestation = listingType === 'food' || listingType === 'store';
 
   return (
-    <section aria-label={t('providerDetail.proofTier.sectionTitle')} className="space-y-3">
+    <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
       <SealRow activeTier={tier} altText={t(`providerDetail.proofTier.sealAlt${tier.charAt(0).toUpperCase() + tier.slice(1)}`)} />
 
       <SummaryText text={t(summaryKey)} />
 
-      <div className="rounded-lg border border-border/50 bg-white p-3">
-        <p className="mb-2 text-sm font-semibold text-content-heading">
-          {t('providerDetail.proofTier.whatWeVerified')}
-        </p>
-        <ul className="space-y-1.5 text-sm text-content">
-          <li className="flex items-start gap-2">
-            <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-            <span>{t('providerDetail.proofTier.checkMenuReviewed')}</span>
-          </li>
-          {Boolean(hasCertificate) ? (
-            <li className="flex items-start gap-2">
-              <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-              <span>{t('providerDetail.proofTier.checkCertificateOnFile')}</span>
-            </li>
-          ) : null}
-          {onsiteVerified ? (
-            <>
-              <li className="flex items-start gap-2">
-                <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                <span>{t('providerDetail.proofTier.checkOnsiteVisit')}</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                <span>{t('providerDetail.proofTier.checkOwnerConfirmed')}</span>
-              </li>
-            </>
-          ) : null}
-        </ul>
+      <div className="space-y-2">
+          <p className="text-base text-content-heading">
+            {t('providerDetail.proofTier.whatWeVerified')}:
+          </p>
+          <div className="space-y-0">
+            {/* Bronze tier: online-checked items */}
+            {tier === 'bronze' ? (
+              <>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkMenuReviewed')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <BeerOff aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkSellsNoAlcohol')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <PiggyBank aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkSellsNoPork')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <HugeHalalIcon aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkClaimsMeatHalal')}</span>
+                </div>
+              </>
+            ) : null}
+
+            {/* Silver tier: onsite-checked items */}
+            {tier === 'silver' ? (
+              <>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkMenuReviewedOnsite')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <BeerOff aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkSellsProcessNoAlcohol')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <PiggyBank aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkSellsProcessNoPork')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <HugeHalalIcon aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkMeatIsHalal')}</span>
+                </div>
+              </>
+            ) : null}
+
+            {/* Gold tier: full verification items */}
+            {tier === 'gold' ? (
+              <>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkMenuReviewed')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkCertificateOnFile')}</span>
+                </div>
+                {onsiteVerified ? (
+                  <>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkOnsiteVisit')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkOwnerConfirmed')}</span>
+                </div>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+          </div>
 
         {tier === 'gold' && supportsAttestation ? (
           <GoldAttestationSection
@@ -279,7 +351,7 @@ export function ProofTierCard({
 
       <button
         aria-expanded={isExpanded}
-        className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-content-heading"
+        className="mt-3 inline-flex items-center gap-2 text-base font-medium text-content-heading"
         type="button"
         onClick={() => setIsExpanded((prev) => !prev)}
       >

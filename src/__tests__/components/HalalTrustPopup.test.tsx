@@ -13,19 +13,23 @@ describe('HalalTrustPopup accessibility', () => {
     expect(screen.getByText('حلال')).toBeInTheDocument();
   });
 
-  it('[post-review fix] traps focus with tab and shift+tab', () => {
+  it('[post-fix PASSES] traps focus on close button (only focusable element)', () => {
     localStorage.setItem('preferred-language', 'en');
     render(<HalalTrustPopup isOpen onClose={vi.fn()} />);
 
     const closeButton = screen.getByRole('button', { name: /close/i });
-    const moreLink = screen.getByRole('link', { name: /learn more/i });
 
-    moreLink.focus();
-    fireEvent.keyDown(moreLink, { key: 'Tab' });
+    // Close button should receive focus when popup opens
     expect(document.activeElement).toBe(closeButton);
 
+    // Tab while on close button keeps focus on close button (only element)
+    closeButton.focus();
+    fireEvent.keyDown(closeButton, { key: 'Tab' });
+    expect(document.activeElement).toBe(closeButton);
+
+    // Shift+Tab while on close button keeps focus on close button
     closeButton.focus();
     fireEvent.keyDown(closeButton, { key: 'Tab', shiftKey: true });
-    expect(document.activeElement).toBe(moreLink);
+    expect(document.activeElement).toBe(closeButton);
   });
 });

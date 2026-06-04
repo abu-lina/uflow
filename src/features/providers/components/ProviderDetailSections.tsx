@@ -144,8 +144,6 @@ export function ProviderDetailSections({
 }: ProviderDetailSectionsProps) {
   const { t } = useLanguage();
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
-  const supportsAttestation = provider.listing_type === 'food' || provider.listing_type === 'store';
-
   const {
     data: nearbyProviders = [],
     isLoading: isLoadingNearbyProviders,
@@ -222,12 +220,10 @@ export function ProviderDetailSections({
             noPork={provider.no_pork}
             verificationMethod={provider.verification_method}
           />
-
-          {!supportsAttestation && badges.length === 0 && !isLoadingBadges ? null : (
-            <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
-          )}
         </div>
       </ExpandSection>
+
+      <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
 
       <ExpandSection title={t('providerDetail.sections.feedback')}>
         <p className="pt-3 text-sm text-[#7a7a7a]">{t('providerDetail.empty.noFeedback')}</p>

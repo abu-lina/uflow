@@ -655,7 +655,8 @@ describe('ProviderDetailModal Component', () => {
 
       // BadgeLabel components render with role="status"
       const badgeLabels = screen.getAllByRole('status');
-      expect(badgeLabels.length).toBe(2);
+      // TrustBadgesSection now renders outside the closed Halal Check section
+      expect(badgeLabels.length).toBe(4);
     });
 
     it('should show empty state text when no badges exist [post-fix]', () => {

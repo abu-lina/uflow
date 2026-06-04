@@ -39,7 +39,6 @@ import {
 } from '@/services/communityServices';
 import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
-import { HalalTrustBanner } from '@/features/providers/components/HalalTrustBanner';
 import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
 
 interface ProviderDetailPageProps {
@@ -590,7 +589,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
 
           <div className="mx-6 mt-4 space-y-4">
             <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
-            <HalalTrustBanner />
           </div>
         </div>
         </div>
@@ -1027,7 +1025,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
 
             <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
 
-            <HalalTrustBanner />
 
             {/* Action Buttons */}
             {customActionButtons ? (
