@@ -18,7 +18,7 @@ Status: Stage 1 Complete
 
 | Item | Detail |
 |------|--------|
-| **Commit SHA** | `TBD` |
+| **Commit SHA** | `3970c015` |
 | **Branch** | `main` |
 | **Commit message** | `chore(admin): remove unused ReviewStatusFilter import in test (Plan 136)` |
 | **Stage** | 1 (local commit only) |

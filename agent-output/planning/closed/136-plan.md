@@ -2,7 +2,7 @@
 ID: 136
 Origin: 136
 UUID: 8f1d3e6c
-Status: Active
+Status: Committed
 ---
 
 # Plan 136 — Remove unused `ReviewStatusFilter` import
@@ -30,3 +30,10 @@ None. Source type is unchanged; only an unused import is removed from a test fil
 - `eslint --max-warnings=0` against the file returns exit 0.
 - `npm test` passes.
 - No runtime impact (type-only import, elided at compile time).
+
+---
+
+## Changelog
+| Date | Agent | Action | Status |
+|------|-------|--------|--------|
+| 2026-06-03 | DevOps | Document closed | Committed |

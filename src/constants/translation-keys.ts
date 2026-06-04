@@ -103,6 +103,7 @@ export const TRANSLATION_KEYS = {
   // Categories
   CATEGORIES: {
     FOOD: 'categories.food',
+    AMERICAN: 'categories.american',
     CLOTHING: 'categories.clothing',
     ELECTRONICS: 'categories.electronics',
     BOOKS: 'categories.books',
