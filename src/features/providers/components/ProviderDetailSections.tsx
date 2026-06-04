@@ -6,13 +6,14 @@ import {
   HandHeart,
   HeartHandshake,
   Moon,
+  UtensilsCrossed,
   Users,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
 import { ExpandSection } from '@/components/ui/ExpandSection';
-import { ProofTierCard, computeSealTier } from '@/features/providers/components/ProofTierCard';
+import { ProofTierCard } from '@/features/providers/components/ProofTierCard';
 import { PrayerRug } from '@/components/icons/PrayerRug';
 import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -143,13 +144,6 @@ export function ProviderDetailSections({
 }: ProviderDetailSectionsProps) {
   const { t } = useLanguage();
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
-  const tier = computeSealTier(provider.verification_method, provider.has_certificate);
-  const tierTitleKey = tier === 'bronze'
-    ? 'providerDetail.proofTier.tier1Title'
-    : tier === 'silver'
-      ? 'providerDetail.proofTier.tier2Title'
-      : 'providerDetail.proofTier.tier3Title';
-
   const {
     data: nearbyProviders = [],
     isLoading: isLoadingNearbyProviders,
@@ -196,11 +190,27 @@ export function ProviderDetailSections({
         </div>
       </ExpandSection>
 
+      <ExpandSection title={t('providerDetail.sections.menu')}>
+        <div className="space-y-2 pt-3">
+          {provider.offers?.length ? (
+            provider.offers.map((offer, index) => (
+              <DetailListItem
+                key={`${offer.name_de}-${index}`}
+                icon={<UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
+                label={offer.name_de}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noMenu')}</p>
+          )}
+        </div>
+      </ExpandSection>
+
       <ExpandSection title={t('providerDetail.sections.openingHours')}>
         {renderOpeningHours(provider.opening_hours, t)}
       </ExpandSection>
 
-      <ExpandSection title={`${t('providerDetail.proofTier.sectionTitle')} · ${t(tierTitleKey)}`}>
+      <ExpandSection title={t('providerDetail.proofTier.sectionTitle')}>
         <div className="space-y-3 pt-3">
           <ProofTierCard
             hasCertificate={provider.has_certificate}

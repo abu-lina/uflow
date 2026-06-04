@@ -81,6 +81,41 @@ describe('ProviderDetailSections', () => {
     expect(screen.queryByText('No pork')).not.toBeInTheDocument();
   });
 
+  it('[post-review fix] renders values and menu as icon + text rows', () => {
+    useQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+    });
+
+    const { container } = render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{
+          ...mockProviders[0],
+          muslim_owned: true,
+          offers: [{ name_de: 'Falafel Teller' }],
+          needs: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+
+    const menuItem = screen.getByText('Falafel Teller');
+    expect(menuItem).toBeInTheDocument();
+    expect(menuItem).toHaveClass('text-base', 'font-semibold', 'text-content-heading');
+
+    const menuItemRow = menuItem.closest('div');
+    expect(menuItemRow).toBeTruthy();
+    expect(menuItemRow?.firstElementChild).toHaveClass('bg-[#E3F2EF]');
+    expect(menuItemRow?.firstElementChild).toHaveClass('h-12', 'w-12');
+
+    // At least one values/amenities row should also render with icon container.
+    const iconSlots = container.querySelectorAll('span.bg-\\[\\#E3F2EF\\]');
+    expect(iconSlots.length).toBeGreaterThanOrEqual(2);
+  });
 
   it('[figma alignment] renders opening-hours rows with stronger day/time typography', () => {
     useQueryMock.mockReturnValue({
