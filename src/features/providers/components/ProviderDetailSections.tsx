@@ -5,6 +5,7 @@ import {
   CircleParking,
   HandHeart,
   HeartHandshake,
+  MapPin,
   Moon,
   UtensilsCrossed,
   Users,
@@ -233,9 +234,11 @@ export function ProviderDetailSections({
             <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noNearby')}</p>
           ) : (
             nearbyProviders.map((nearby) => (
-              <p key={nearby.provider_id} className="text-sm text-content-heading">
-                {nearby.provider_name}
-              </p>
+              <DetailListItem
+                key={nearby.provider_id}
+                icon={<MapPin aria-hidden="true" className="h-6 w-6" />}
+                label={nearby.provider_name}
+              />
             ))
           )}
         </div>
