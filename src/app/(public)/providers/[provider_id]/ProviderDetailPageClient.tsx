@@ -143,6 +143,7 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
   // Render the actual provider detail page on mobile
   return (
     <ProviderDetailPageComponent
+      backPath="/providers"
       customActionButtons={
         isAdmin ? <AdminProviderDetailButtons providerId={providerId} variant="mobile" /> : undefined
       }

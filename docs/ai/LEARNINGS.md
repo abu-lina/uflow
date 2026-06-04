@@ -106,3 +106,11 @@ Short log of learnings from plan → build → review → test loops. Append one
 - `src/translations/en.ts` + `de.ts` — empty-state text
 
 **Next**: Load translation keys are still generic ("Loading providers...") — update when touching the section again.
+
+## 2026-06-04 — Back button unresponsive: `router.back()` is unreliable
+
+**Context**: Back chevron on provider detail page was sometimes unresponsive. Root cause: `router.back()` silently does nothing when there's no browser history (direct link, bookmark, external referrer). The button rendered but had no effect.
+
+**What worked**: Replacing `router.back()` with explicit `router.push('/providers')` via the existing `backPath` prop. The mechanism was already there (used by desktop modal) — just wasn't wired for mobile. One-line fix.
+
+**Pattern to reuse**: When navigation needs "go back to overview," always use an explicit path over `router.back()`. Only use `router.back()` when you're certain there's a history entry to target (e.g., modal overlays).
