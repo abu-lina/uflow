@@ -6,7 +6,6 @@ import {
   HandHeart,
   HeartHandshake,
   Moon,
-  UtensilsCrossed,
   Users,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -193,22 +192,6 @@ export function ProviderDetailSections({
                 label={item.label}
               />
             ))
-          )}
-        </div>
-      </ExpandSection>
-
-      <ExpandSection title={t('providerDetail.sections.menu')}>
-        <div className="space-y-2 pt-3">
-          {provider.offers?.length ? (
-            provider.offers.map((offer, index) => (
-              <DetailListItem
-                key={`${offer.name_de}-${index}`}
-                icon={<UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
-                label={offer.name_de}
-              />
-            ))
-          ) : (
-            <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noMenu')}</p>
           )}
         </div>
       </ExpandSection>

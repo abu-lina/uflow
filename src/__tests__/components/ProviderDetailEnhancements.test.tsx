@@ -54,7 +54,6 @@ describe('Provider detail enhancements (Plan 113)', () => {
     );
 
     expect(screen.getByText('Values & Amenities')).toBeInTheDocument();
-    expect(screen.getByText('Menu')).toBeInTheDocument();
     expect(screen.getByText('Opening Hours')).toBeInTheDocument();
     expect(screen.getByText('Feedback')).toBeInTheDocument();
     expect(screen.getByText(/Halal Check/)).toBeInTheDocument();
