@@ -947,7 +947,6 @@ export const en = {
       "valuesAmenities": "Values & Amenities",
       "menu": "Menu",
       "openingHours": "Opening Hours",
-      "feedback": "Feedback",
       "nearby": "Nearby"
     },
     "days": {
@@ -1039,7 +1038,6 @@ export const en = {
       "noOpeningHours": "No opening hours available.",
       "noValuesAmenities": "No values or amenities available.",
       "noMenu": "No menu items available.",
-      "noFeedback": "No reviews yet.",
       "noNearby": "No nearby providers found."
     },
     "loading": {

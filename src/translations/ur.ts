@@ -947,7 +947,6 @@ export const ur = {
       "valuesAmenities": "اقدار اور سہولیات",
       "menu": "مینیو",
       "openingHours": "اوقاتِ کار",
-      "feedback": "فیڈبیک",
       "nearby": "قریب"
     },
     "days": {
@@ -1040,7 +1039,6 @@ export const ur = {
       "noOpeningHours": "اوقاتِ کار دستیاب نہیں ہیں۔",
       "noValuesAmenities": "اقدار یا سہولیات دستیاب نہیں۔",
       "noMenu": "مینیو آئٹمز دستیاب نہیں۔",
-      "noFeedback": "ابھی تک کوئی جائزہ نہیں۔",
       "noNearby": "قریب کوئی فراہم کنندہ نہیں ملا۔"
     },
     "loading": {

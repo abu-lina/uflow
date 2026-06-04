@@ -225,7 +225,7 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Halal-Prüfung/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Halal Check/ }));
     expect(screen.getByTestId('trust-badges-section-mock')).toBeInTheDocument();
     expect(screen.getByText(/badges:1/)).toBeInTheDocument();
   });

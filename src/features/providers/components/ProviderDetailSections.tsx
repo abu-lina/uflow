@@ -225,10 +225,6 @@ export function ProviderDetailSections({
 
       <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
 
-      <ExpandSection title={t('providerDetail.sections.feedback')}>
-        <p className="pt-3 text-sm text-[#7a7a7a]">{t('providerDetail.empty.noFeedback')}</p>
-      </ExpandSection>
-
       <ExpandSection title={t('providerDetail.sections.nearby')}>
         <div className="space-y-2 pt-3">
           {isLoadingNearbyProviders || isFetchingNearbyProviders ? (

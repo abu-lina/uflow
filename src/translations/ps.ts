@@ -947,7 +947,6 @@ export const ps = {
       "valuesAmenities": "ارزښتونه او اسانتياوې",
       "menu": "مېنو",
       "openingHours": "د کار وختونه",
-      "feedback": "فیډبک",
       "nearby": "نږدې"
     },
     "days": {
@@ -1040,7 +1039,6 @@ export const ps = {
       "noOpeningHours": "د کار وختونه شتون نه لري.",
       "noValuesAmenities": "ارزښتونه یا اسانتياوې شتون نه لري.",
       "noMenu": "د مېنو توکي شتون نه لري.",
-      "noFeedback": "لا تر اوسه بیاکتنې نشته.",
       "noNearby": "نږدې هیڅ وړاندې کوونکی ونه موندل شو."
     },
     "loading": {

@@ -947,7 +947,6 @@ export const ar = {
       "valuesAmenities": "القيم والمرافق",
       "menu": "القائمة",
       "openingHours": "ساعات العمل",
-      "feedback": "التقييمات",
       "nearby": "بالقرب"
     },
     "days": {
@@ -1040,7 +1039,6 @@ export const ar = {
       "noOpeningHours": "لا توجد ساعات عمل متاحة.",
       "noValuesAmenities": "لا توجد قيم أو مرافق متاحة.",
       "noMenu": "لا توجد عناصر قائمة متاحة.",
-      "noFeedback": "لا توجد تقييمات بعد.",
       "noNearby": "لم يتم العثور على مزودين قريبين."
     },
     "loading": {
