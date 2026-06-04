@@ -35,6 +35,8 @@ export const SOURCE_ENRICHABLE_FIELDS: ReadonlyArray<string> = [
   'address_zip',
   'address_city',
   'address_country',
+  'opening_hours',
+  'no_alcohol',
 ] as const;
 
 const adminFieldSet = new Set(ADMIN_CONTROLLED_FIELDS);

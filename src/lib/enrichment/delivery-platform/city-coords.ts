@@ -1,0 +1,132 @@
+/**
+ * Static city → coordinates map for German cities.
+ * Generated from the provider dataset. Used by StaticCityGeocoder.
+ *
+ * Covers all 83 unique cities found in the food providers dataset.
+ * Normalized names (no phone numbers, consistent casing).
+ */
+export const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
+  // ── Major cities (10+ providers) ──────────────────────────────────
+  'Berlin': { lat: 52.5200, lon: 13.4050 },
+  'München': { lat: 48.1351, lon: 11.5820 },
+  'Frankfurt am Main': { lat: 50.1109, lon: 8.6821 },
+  'Stuttgart': { lat: 48.7758, lon: 9.1829 },
+  'Köln': { lat: 50.9375, lon: 6.9603 },
+  'Mannheim': { lat: 49.4875, lon: 8.4660 },
+  'Augsburg': { lat: 48.3705, lon: 10.8978 },
+  'Hamburg': { lat: 53.5511, lon: 9.9937 },
+  'Dortmund': { lat: 51.5136, lon: 7.4653 },
+  'Nürnberg': { lat: 49.4521, lon: 11.0767 },
+  'Düsseldorf': { lat: 51.2277, lon: 6.7735 },
+  'Bielefeld': { lat: 52.0302, lon: 8.5325 },
+  'Kassel': { lat: 51.3127, lon: 9.4797 },
+  'Offenbach am Main': { lat: 50.1055, lon: 8.7611 },
+  'Bochum': { lat: 51.4818, lon: 7.2162 },
+  'Wiesbaden': { lat: 50.0782, lon: 8.2398 },
+  'Bremen': { lat: 53.0793, lon: 8.8017 },
+  'Hanau': { lat: 50.1329, lon: 8.9170 },
+  'Darmstadt': { lat: 49.8728, lon: 8.6512 },
+  'Paderborn': { lat: 51.7189, lon: 8.7575 },
+  'Germering': { lat: 48.1374, lon: 11.3614 },
+  'Essen': { lat: 51.4556, lon: 7.0116 },
+  'Duisburg': { lat: 51.4344, lon: 6.7624 },
+  'Böblingen': { lat: 48.6850, lon: 9.0113 },
+
+  // ── Medium cities (2-9 providers) ─────────────────────────────────
+  'Hannover': { lat: 52.3759, lon: 9.7320 },
+  'Ingolstadt': { lat: 48.7665, lon: 11.4258 },
+  'Leipzig': { lat: 51.3397, lon: 12.3731 },
+  'Ludwigsburg': { lat: 48.8954, lon: 9.1895 },
+  'Wuppertal': { lat: 51.2562, lon: 7.1508 },
+  'Hagen': { lat: 51.3670, lon: 7.4633 },
+
+  // ── Small cities (1 provider each) ────────────────────────────────
+  'Recklinghausen': { lat: 51.6167, lon: 7.1975 },
+  'Herford': { lat: 52.1152, lon: 8.6711 },
+  'Bad Oeynhausen': { lat: 52.2014, lon: 8.7981 },
+  'Schweinfurt': { lat: 50.0451, lon: 10.2341 },
+  'Freising': { lat: 48.4008, lon: 11.7440 },
+  'Bergisch Gladbach': { lat: 50.9929, lon: 7.1277 },
+  'Hofheim am Taunus': { lat: 50.0949, lon: 8.4229 },
+  'Norderstedt': { lat: 53.7090, lon: 9.9892 },
+  'Schorndorf': { lat: 48.8055, lon: 9.5273 },
+  'Metzingen': { lat: 48.5397, lon: 9.2831 },
+  'Sulzbach (Taunus)': { lat: 50.1326, lon: 8.5280 },
+  'Siegburg': { lat: 50.7928, lon: 7.2071 },
+  'Reutlingen': { lat: 48.4920, lon: 9.2114 },
+  'Aachen': { lat: 50.7753, lon: 6.0839 },
+  'Frechen': { lat: 50.9096, lon: 6.8082 },
+  'Erkelenz': { lat: 51.0810, lon: 6.3161 },
+  'Baesweiler': { lat: 50.9075, lon: 6.1826 },
+  'Erding': { lat: 48.3064, lon: 11.9077 },
+  'Leverkusen': { lat: 51.0324, lon: 6.9878 },
+  'Rostock': { lat: 54.0924, lon: 12.0991 },
+  'Mönchengladbach': { lat: 51.1805, lon: 6.4428 },
+  'Witten': { lat: 51.4370, lon: 7.3351 },
+  'Gelsenkirchen': { lat: 51.5177, lon: 7.0857 },
+  'Arnsberg': { lat: 51.4002, lon: 8.0606 },
+  'Münster': { lat: 51.9607, lon: 7.6261 },
+  'Dachau': { lat: 48.2595, lon: 11.4347 },
+  'Aschaffenburg': { lat: 49.9707, lon: 9.1385 },
+  'Langen': { lat: 49.9915, lon: 8.6667 },
+  'Dreieich': { lat: 50.0120, lon: 8.7124 },
+  'Uhingen': { lat: 48.7042, lon: 9.5856 },
+  'Ebersbach an der Fils': { lat: 48.7149, lon: 9.5259 },
+  'Kirchheim unter Teck': { lat: 48.6481, lon: 9.4510 },
+  'Leinfelden': { lat: 48.6967, lon: 9.1428 },
+  'Pforzheim': { lat: 48.8909, lon: 8.7026 },
+  'Gröbenzell': { lat: 48.1942, lon: 11.3709 },
+  'Herne': { lat: 51.5380, lon: 7.2200 },
+  'Datteln': { lat: 51.6515, lon: 7.3386 },
+  'Kerpen': { lat: 50.3098, lon: 6.7293 },
+  'Oberhaching': { lat: 48.0262, lon: 11.5962 },
+  'Ottobrunn': { lat: 48.0648, lon: 11.6648 },
+  'Oberschleißheim': { lat: 48.2549, lon: 11.5546 },
+  'Villingen': { lat: 48.0597, lon: 8.4599 },
+  'Ulm': { lat: 48.4011, lon: 9.9876 },
+  'Heilbronn': { lat: 49.1427, lon: 9.2109 },
+  'Bonn': { lat: 50.7374, lon: 7.0982 },
+  'Oldenburg': { lat: 53.1435, lon: 8.2146 },
+  'Osnabrück': { lat: 52.2799, lon: 8.0472 },
+  'Heidelberg': { lat: 49.3988, lon: 8.6724 },
+  'Solingen': { lat: 51.1698, lon: 7.0844 },
+  'Regensburg': { lat: 49.0134, lon: 12.1016 },
+  'Würzburg': { lat: 49.7913, lon: 9.9534 },
+  'Wolfsburg': { lat: 52.4227, lon: 10.7865 },
+  'Göttingen': { lat: 51.5328, lon: 9.9352 },
+  'Dresden': { lat: 51.0504, lon: 13.7373 },
+  'Karlsruhe': { lat: 49.0069, lon: 8.4037 },
+  'Krefeld': { lat: 51.3388, lon: 6.5853 },
+  'Mainz': { lat: 49.9929, lon: 8.2473 },
+  'Lübeck': { lat: 53.8655, lon: 10.6866 },
+  'Erfurt': { lat: 50.9787, lon: 11.0328 },
+  'Oberhausen': { lat: 51.4984, lon: 6.8519 },
+  'Halle': { lat: 51.4828, lon: 11.9700 },
+  'Magdeburg': { lat: 52.1205, lon: 11.6276 },
+  'Freiburg': { lat: 47.9990, lon: 7.8421 },
+  'Potsdam': { lat: 52.3906, lon: 13.0646 },
+  'Saarbrücken': { lat: 49.2402, lon: 6.9970 },
+  'Hamm': { lat: 51.6803, lon: 7.8209 },
+  'Ludwigshafen': { lat: 49.4811, lon: 8.4353 },
+  'Braunschweig': { lat: 52.2689, lon: 10.5268 },
+  'Kiel': { lat: 54.3233, lon: 10.1228 },
+  'Chemnitz': { lat: 50.8278, lon: 12.9214 },
+  'Altenstadt': { lat: 47.8237, lon: 10.8735 },
+};
+
+/**
+ * Alias map: variant city names → canonical key in CITY_COORDS.
+ * Handles inconsistencies in the provider dataset.
+ */
+export const CITY_ALIASES: Record<string, string> = {
+  'Frankfurt': 'Frankfurt am Main',
+  'Frankfurt am Main069 21001381': 'Frankfurt am Main',  // phone number appended
+  'LANGEN': 'Langen',
+  'Neu': 'München',  // likely incomplete entry, fallback to Munich area
+  'Altenstadt': { lat: 47.8237, lon: 10.8735 },
+};
+
+  /**
+   * NOTE: If you add new cities here, also add corresponding test cases
+   * in geocoder.test.ts -> "includes all provider dataset cities"
+   */

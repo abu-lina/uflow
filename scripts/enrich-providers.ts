@@ -42,6 +42,12 @@ import {
   type ParsedEnrichmentData,
   type EnrichmentCandidate,
 } from '../src/lib/enrichment/joinhalal-enricher';
+import {
+  enrichFromWolt,
+  type DeliveryPlatformSnapshot,
+} from '../src/lib/enrichment/delivery-enricher';
+import { createWoltClient } from '../src/lib/enrichment/delivery-platform/wolt-client';
+import { StaticCityGeocoder } from '../src/lib/enrichment/delivery-platform/geocoder';
 
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
@@ -121,11 +127,6 @@ async function main(): Promise<void> {
   console.log(`   Source: ${source}`);
   console.log(`   Limit: ${limit ?? 'all eligible'}\n`);
 
-  if (source !== 'joinhalal') {
-    console.error(`❌ Unsupported source: ${source}. Only 'joinhalal' is supported in Phase 1.`);
-    process.exit(1);
-  }
-
   const stats: RunStats = {
     source,
     triggeredBy: isDryRun ? 'cli_dry_run' : 'cli_write',
@@ -137,6 +138,16 @@ async function main(): Promise<void> {
     circuitBreakerTriggered: false,
     startedAt: new Date().toISOString(),
   };
+
+  if (source === 'wolt') {
+    await runWoltEnrichment(stats, isWrite, limit);
+    return;
+  }
+
+  if (source !== 'joinhalal') {
+    console.error(`❌ Unsupported source: ${source}. Only 'joinhalal' and 'wolt' are supported.`);
+    process.exit(1);
+  }
 
   // 1. Load offers catalog for resolving Speisen → offer IDs
   const { data: offersData, error: offersError } = await supabase
@@ -380,6 +391,213 @@ async function writeRunLog(stats: RunStats): Promise<void> {
   } else {
     console.log(`  📝 Run log saved.`);
   }
+}
+
+// ─── Wolt Enrichment ──────────────────────────────────────────────────────────
+
+async function runWoltEnrichment(
+  stats: RunStats,
+  isWrite: boolean,
+  limit: number | undefined,
+): Promise<void> {
+  console.log('  🌐 Wolt enrichment mode');
+
+  // 1. Fetch eligible food providers
+  let query = supabase
+    .from('providers')
+    .select(
+      'provider_id, provider_name, address_city, listing_type, opening_hours, no_alcohol, enrichment_eligible'
+    )
+    .eq('listing_type', 'food')
+    .eq('enrichment_eligible', true);
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data: providers, error: provError } = await query;
+  if (provError) {
+    console.error('❌ Failed to fetch providers:', provError.message);
+    process.exit(1);
+  }
+
+  const providerRows = providers ?? [];
+  stats.providersSelected = providerRows.length;
+  console.log(`  📋 Found ${providerRows.length} eligible food providers\n`);
+
+  if (providerRows.length === 0) {
+    console.log('  ℹ️  No eligible providers found. Nothing to enrich.');
+    await writeRunLog(stats);
+    return;
+  }
+
+  // 2. Create Wolt client
+  const geocoder = new StaticCityGeocoder();
+  const woltClient = createWoltClient(undefined, geocoder);
+
+  // 3. Process each provider
+  const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
+
+  for (const provider of providerRows) {
+    // Circuit breaker check
+    if (stats.providersProcessed > 0) {
+      const failRate = stats.failureCount / stats.providersProcessed;
+      if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 5) {
+        console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
+        stats.circuitBreakerTriggered = true;
+        break;
+      }
+    }
+
+    process.stdout.write(`  🔍 ${provider.provider_name} ... `);
+
+    try {
+      const snapshot: DeliveryPlatformSnapshot = {
+        provider_id: provider.provider_id,
+        provider_name: provider.provider_name,
+        address_city: provider.address_city,
+        listing_type: provider.listing_type,
+        opening_hours: provider.opening_hours,
+        no_alcohol: provider.no_alcohol,
+      };
+
+      const result = await enrichFromWolt(snapshot, woltClient);
+      stats.providersProcessed++;
+
+      if (result.error) {
+        console.log(`⚠️  ${result.error}`);
+        stats.failureCount++;
+        continue;
+      }
+
+      if (result.candidates.length === 0) {
+        console.log('✅ no changes');
+        stats.unchangedCount++;
+      } else {
+        console.log(`📝 ${result.candidates.length} candidate(s) (slug: ${result.venueSlug})`);
+        for (const c of result.candidates) {
+          allCandidates.push({ ...c, providerName: provider.provider_name });
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.log(`❌ ${msg}`);
+      stats.failureCount++;
+      stats.providersProcessed++;
+    }
+  }
+
+  stats.candidatesCreated = allCandidates.length;
+  stats.finishedAt = new Date().toISOString();
+
+  // 4. Report
+  console.log(`\n${'─'.repeat(60)}`);
+  console.log(`  📊 Wolt Enrichment Summary`);
+  console.log(`     Selected:   ${stats.providersSelected}`);
+  console.log(`     Processed:  ${stats.providersProcessed}`);
+  console.log(`     Unchanged:  ${stats.unchangedCount}`);
+  console.log(`     Candidates: ${stats.candidatesCreated}`);
+  console.log(`     Failed:     ${stats.failureCount}`);
+  if (stats.circuitBreakerTriggered) {
+    console.log(`     ⚡ Circuit breaker was triggered`);
+  }
+  console.log(`${'─'.repeat(60)}`);
+
+  if (allCandidates.length > 0) {
+    console.log(`\n  📋 Candidate Preview (first 10):`);
+    for (const c of allCandidates.slice(0, 10)) {
+      console.log(`     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`);
+    }
+    if (allCandidates.length > 10) {
+      console.log(`     ... and ${allCandidates.length - 10} more`);
+    }
+  }
+
+  // 5. Write candidates + delivery links if not dry-run
+  if (isWrite && allCandidates.length > 0) {
+    console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
+    let written = 0;
+
+    for (const candidate of allCandidates) {
+      const { error } = await supabase
+        .from('enrichment_candidates')
+        .upsert(
+          {
+            provider_id: candidate.provider_id,
+            source: candidate.source,
+            source_url: candidate.source_url,
+            field_name: candidate.field_name,
+            proposed_value: candidate.proposed_value,
+            current_value: candidate.current_value,
+            status: 'pending',
+            enriched_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'provider_id,field_name,source',
+            ignoreDuplicates: true,
+          }
+        );
+
+      if (error) {
+        console.error(`     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`);
+      } else {
+        written++;
+      }
+    }
+
+    console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
+
+    // Update last_enriched_at for processed providers
+    const processedIds = [...new Set(allCandidates.map((c) => c.provider_id))];
+
+    // Write delivery links for matched providers (those with venue slugs)
+    console.log(`  🔗 Writing delivery links...`);
+    let linksWritten = 0;
+    for (const pid of processedIds) {
+      // Find the result for this provider to get the slug
+      const providerName = allCandidates.find((c) => c.provider_id === pid)?.providerName ?? '';
+      const sourceUrl = allCandidates.find((c) => c.provider_id === pid)?.source_url ?? '';
+
+      if (sourceUrl) {
+        const slugMatch = sourceUrl.match(/venue\/([^/]+)$/);
+        const slug = slugMatch ? slugMatch[1] : null;
+
+        const { error: linkError } = await supabase
+          .from('provider_delivery_links')
+          .upsert(
+            {
+              provider_id: pid,
+              platform: 'wolt',
+              platform_url: sourceUrl,
+              platform_slug: slug,
+              is_active: true,
+              last_verified_at: new Date().toISOString(),
+            },
+            {
+              onConflict: 'provider_id,platform',
+              ignoreDuplicates: false,
+            }
+          );
+
+        if (linkError) {
+          console.error(`     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`);
+        } else {
+          linksWritten++;
+        }
+      }
+
+      await supabase
+        .from('providers')
+        .update({ last_enriched_at: new Date().toISOString() })
+        .eq('provider_id', pid);
+    }
+    console.log(`  ✅ ${linksWritten}/${processedIds.length} delivery links written`);
+  } else if (isDryRun) {
+    console.log(`\n  ℹ️  Dry-run complete. Use --write to stage candidates.`);
+  }
+
+  // 6. Write run log
+  await writeRunLog(stats);
 }
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
