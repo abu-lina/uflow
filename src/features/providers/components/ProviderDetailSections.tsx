@@ -130,10 +130,12 @@ function renderOpeningHours(
 
 function DetailListItem({ label, icon, onClick }: { label: string; icon: ReactNode; onClick?: () => void }) {
   const Component = onClick ? 'button' : 'div';
+  const className = `flex w-full items-center gap-3 rounded-xl p-2${onClick ? ' cursor-pointer' : ''}`;
   return (
     <Component
+      className={className}
       onClick={onClick}
-      className="flex w-full cursor-pointer items-center gap-3 rounded-xl p-2"
+      type={Component === 'button' ? 'button' : undefined}
     >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E3F2EF] text-primary">
         {icon}

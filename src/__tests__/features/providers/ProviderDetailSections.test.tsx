@@ -1,12 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { fireEvent, screen } from '@testing-library/react';
 
 import { render } from '@/__tests__/utils/test-utils';
 import { mockProviders } from '@/__tests__/mocks/providerData';
-import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
+import type { ProviderDetailSections as PDS_Type } from '@/features/providers/components/ProviderDetailSections';
 import { BadgeKey, EntityType, TrustLevel } from '@/types/badges';
 
 const useQueryMock = vi.fn();
+
+let ProviderDetailSections: typeof PDS_Type;
+
+beforeAll(async () => {
+  ProviderDetailSections = (await import(
+    '@/features/providers/components/ProviderDetailSections'
+  )).ProviderDetailSections;
+});
 
 vi.mock('@/components/providers/TrustBadgesSection', () => ({
   TrustBadgesSection: ({ badges, isLoading }: { badges: unknown[]; isLoading: boolean }) => (
@@ -313,5 +321,73 @@ describe('ProviderDetailSections', () => {
     expect(screen.queryByText('Only halal meat')).not.toBeInTheDocument();
     // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]
     expect(screen.getAllByRole('group').length).toBeGreaterThan(0);
+  });
+
+  it('[plan-142] navigates to nearby provider page when nearby item is clicked', async () => {
+    const localMockPush = vi.fn();
+    const navMod = await import('next/navigation');
+    navMod.useRouter = vi.fn(() => ({
+      push: localMockPush,
+      replace: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+      refresh: vi.fn(),
+      prefetch: vi.fn(),
+    }));
+
+    useQueryMock.mockReturnValue({
+      data: [{ provider_id: 'nearby-1', provider_name: 'Restaurant A' }],
+      isLoading: false,
+      isFetching: false,
+    });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nearby' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Restaurant A' }));
+
+    expect(localMockPush).toHaveBeenCalledWith('/providers/nearby-1');
+  });
+
+  it('[plan-142] non-navigable items do not trigger navigation', async () => {
+    const localMockPush = vi.fn();
+    const navMod = await import('next/navigation');
+    navMod.useRouter = vi.fn(() => ({
+      push: localMockPush,
+      replace: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+      refresh: vi.fn(),
+      prefetch: vi.fn(),
+    }));
+
+    useQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isFetching: false,
+    });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{
+          ...mockProviders[0],
+          offers: [{ name_de: 'Falafel Teller' }],
+          needs: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(screen.getByText('Falafel Teller'));
+
+    expect(localMockPush).not.toHaveBeenCalled();
   });
 });
