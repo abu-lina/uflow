@@ -997,7 +997,7 @@ export const de = {
       "noGamblingFallbackDetail": "Anbietet"
     },
     "proofTier": {
-      "sectionTitle": "Halal-Prüfung",
+      "sectionTitle": "Halal Check",
       "tier1Title": "Online geprüft",
       "tier1Detail": "Halal-Kriterien vor der Aufnahme über Speisekarte und Online-Recherche bestätigt.",
       "tier2Title": "Vor-Ort geprüft",
