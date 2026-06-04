@@ -1038,7 +1038,7 @@ export const de = {
       "noOpeningHours": "Keine Öffnungszeiten hinterlegt.",
       "noValuesAmenities": "Keine Werte oder Amenities hinterlegt.",
       "noMenu": "Keine Menüpunkte vorhanden.",
-      "noNearby": "Keine Anbieter in deiner Nähe gefunden."
+      "noNearby": "Keine Restaurants in der Nähe gefunden."
     },
     "loading": {
       "nearby": "Anbieter werden geladen..."

@@ -247,6 +247,46 @@ describe('ProviderDetailSections', () => {
     expect(screen.getByTestId('trust-badges-section-mock')).toBeInTheDocument();
   });
 
+  it('[plan-141] uses food-specific queryKey for nearby section', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    const queryKeys = useQueryMock.mock.calls
+      .map((args) => (args as unknown[])[0])
+      .map((first) => (first as Record<string, unknown>).queryKey);
+    expect(queryKeys).toContainEqual(expect.arrayContaining(['provider-nearby-food']));
+  });
+
+  it('[plan-141] renders nearby provider names from query data', () => {
+    useQueryMock.mockReturnValue({
+      data: [
+        { provider_id: 'nearby-1', provider_name: 'Restaurant A' },
+        { provider_id: 'nearby-2', provider_name: 'Restaurant B' },
+      ],
+      isLoading: false,
+      isFetching: false,
+    });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nearby' }));
+    expect(screen.getByText('Restaurant A')).toBeInTheDocument();
+    expect(screen.getByText('Restaurant B')).toBeInTheDocument();
+  });
+
   it('[post-fix PASSES] does not show no proofs fallback when attestation card is rendered', () => {
     useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
 

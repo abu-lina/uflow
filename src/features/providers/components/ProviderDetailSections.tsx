@@ -150,22 +150,41 @@ export function ProviderDetailSections({
     isLoading: isLoadingNearbyProviders,
     isFetching: isFetchingNearbyProviders,
   } = useQuery({
-    queryKey: ['provider-nearby-city', provider.provider_id, provider.address_city],
+    queryKey: ['provider-nearby-food', provider.provider_id, provider.location_latitude, provider.location_longitude, provider.address_city],
     queryFn: async () => {
-      if (!provider.address_city) {
-        return [] as Array<{ provider_id: string; provider_name: string }>;
+      type NearbyResult = { provider_id: string; provider_name: string; distance_km?: number };
+
+      if (provider.location_latitude != null && provider.location_longitude != null) {
+        const { data, error } = await supabase.rpc('find_nearby_food_providers', {
+          p_lat: provider.location_latitude,
+          p_lon: provider.location_longitude,
+          p_exclude_id: provider.provider_id,
+          p_radius_km: 10,
+          p_limit: 5,
+        });
+
+        if (!error && data && data.length > 0) {
+          return data as NearbyResult[];
+        }
+        if (error) {
+          console.error('[find_nearby_food_providers] RPC error:', error);
+        }
       }
+
+      if (!provider.address_city) return [];
 
       const { data, error } = await supabase
         .from('providers')
         .select('provider_id, provider_name')
         .eq('address_city', provider.address_city)
+        .eq('listing_type', 'food')
         .eq('review_status', 'approved')
         .neq('provider_id', provider.provider_id)
         .limit(5);
 
       if (error) {
-        return [] as Array<{ provider_id: string; provider_name: string }>;
+        console.error('[find_nearby_food_providers] Fallback error:', error);
+        return [];
       }
 
       return data ?? [];
