@@ -1,0 +1,942 @@
+[
+  {
+    "id": "",
+    "name": "",
+    "slug": "t-evhid-restauran-t",
+    "url": "https://wolt.com/en/deu/stuttgart/restaurant/t-evhid-restauran-t",
+    "address": "",
+    "postCode": "70190",
+    "city": "Stuttgart",
+    "country": "",
+    "rating": null,
+    "ratingScore": null,
+    "reviewCount": 0,
+    "priceRange": null,
+    "currency": "",
+    "tags": [],
+    "estimateRange": null,
+    "estimateMinutes": null,
+    "online": false,
+    "delivers": false,
+    "deliveryBasePriceInCents": 99,
+    "deliveryMethods": ["homedelivery", "takeaway"],
+    "shortDescription": null,
+    "description": "Tevhid spoils you with authentic Turkish specialities - from fresh salads and vegetarian delicacies to falafel, halloumi and yufka. Enjoy crispy lahmacun, savoury pide, succulent grilled dishes and even pizza. There's something for every taste here!\n\nSeller: Company name: Wolt Enterprises Deutschland GmbH, Address: Stralauer Allee 6, 10245 Berlin, General Manager: Hadi Zaklouta, Commercial register number: HRB 217122 B, Register court: Charlottenburg District Court, E-Mail: support@wolt.com",
+    "productLine": "",
+    "imageUrl": null,
+    "imageBlurhash": null,
+    "brandLogoImageUrl": "https://imageproxy.wolt.com/assets/683ea34a10dcc9d77bebcc26",
+    "previewItems": [],
+    "website": "https://wolt.com/de/deu/stuttgart/restaurant/t-evhid-restauran-t",
+    "phone": "+497116152542",
+    "traderName": null,
+    "traderAddress": null,
+    "openingTimesSchedule": [
+      {
+        "day": "Monday",
+        "open": "11:00",
+        "close": "21:30"
+      },
+      {
+        "day": "Tuesday",
+        "open": "Closed",
+        "close": ""
+      },
+      {
+        "day": "Wednesday",
+        "open": "11:00",
+        "close": "21:30"
+      },
+      {
+        "day": "Thursday",
+        "open": "11:00",
+        "close": "21:30"
+      },
+      {
+        "day": "Friday",
+        "open": "11:00",
+        "close": "21:30"
+      },
+      {
+        "day": "Saturday",
+        "open": "11:45",
+        "close": "22:30"
+      },
+      {
+        "day": "Sunday",
+        "open": "12:00",
+        "close": "21:30"
+      }
+    ],
+    "deliveryTimesSchedule": [
+      {
+        "day": "Monday",
+        "open": "11:00",
+        "close": "21:30"
+      },
+      {
+        "day": "Tuesday",
+        "open": "Closed",
+        "close": ""
+      },
+      {
+        "day": "Wednesday",
+        "open": "11:00",
+        "close": "21:30"
+      },
+      {
+        "day": "Thursday",
+        "open": "11:00",
+        "close": "21:30"
+      },
+      {
+        "day": "Friday",
+        "open": "11:00",
+        "close": "21:30"
+      },
+      {
+        "day": "Saturday",
+        "open": "11:45",
+        "close": "22:30"
+      },
+      {
+        "day": "Sunday",
+        "open": "12:00",
+        "close": "21:30"
+      }
+    ],
+    "menuItems": [
+      {
+        "id": "01464c039889420d2f7b3644",
+        "name": "Baklava",
+        "description": "4 Stück\nBlätterteig mit Nüssen und Zuckersirup",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "NACHTISCH 🍰",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683ee1962c97c6c5c80d4033",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "0325946d048ecde06575e07f",
+        "name": "Sigara Böregi",
+        "description": "frittierte Teigröllchen gefüllt mit Schafskäse und mit Soße",
+        "priceInCents": 1050,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683dad7acf23e599638e67a1",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "0b980ee1c5ade2c08f9f7aa2",
+        "name": "Reis",
+        "description": "gekochter Reis",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "BEILAGEN 🍟",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa4f",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "10b3c8b519c772dc8df899f2",
+        "name": "Salat mit Hähnchenbrustfilet",
+        "description": "mit gegrilltem Hähnchenbrustfilet",
+        "priceInCents": 1390,
+        "originalPriceInCents": null,
+        "category": "SALATE 🥗",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa97",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "1a32f0b270f6ec2e5aa2ac43",
+        "name": "Pide mit Käse",
+        "description": "türkisches Fladenbrot mit Käse",
+        "priceInCents": 1090,
+        "originalPriceInCents": null,
+        "category": "PIDE 🫓",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683da9fd2c97c6c5c80d1d5a",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "1ad5958b14e3cc67d3069502",
+        "name": "Pembe Sultan",
+        "description": "Rote Beete mit Knoblauch-Joghurt",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa84",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "1dccb2b44112d61d81987fd4",
+        "name": "Adana Kebab",
+        "description": "gegrillte Rind-Hackfleischspieße, pikant gewürzt",
+        "priceInCents": 2090,
+        "originalPriceInCents": null,
+        "category": "WOLT SPECIALS 🌟",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683dac23550029d6e49a5794",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "1e48f4a2b2eb61bf71b3aafa",
+        "name": "Pizza Gemüse",
+        "description": "mit verschiedenen Gemüsesorten",
+        "priceInCents": 1090,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67c060637d14106f0111c3a6",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "21fc37562e2ae2f5e3382c1c",
+        "name": "Hummus",
+        "description": "Kichererbsenmus mit Sesampaste, Knoblauch und Olivenöl",
+        "priceInCents": 590,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa87",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "2806b51f1e8a159e20586ccd",
+        "name": "Grillgemüse",
+        "description": "verschiedene gegrillte Gemüsesorten",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "BEILAGEN 🍟",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67c06aac7d14106f0111ca49",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "2918c4233550024f2e2b0afd",
+        "name": "Fritz-Spritz Bio-Apfelschorle 0,33 l",
+        "description": "Bio-Apfelsaftschorle, Mischung aus Apfelsaft und Mineralwasser, ohne Zuckerzusatz, mit Kohlensäure",
+        "priceInCents": 390,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68882c28ca1ef7f461e6",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "29e952030b848fd4a8508a95",
+        "name": "Pide mit Sucuk und Käse",
+        "description": "türkisches Fladenbrot mit Rind-Knoblauchwurst und Käse",
+        "priceInCents": 1190,
+        "originalPriceInCents": null,
+        "category": "PIDE 🫓",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa89",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "2b2576a84a04140b8a58509a",
+        "name": "Elephant Bay Peach 0,33 l",
+        "description": "Erfrischungsgetränk mit Pfirsichgeschmack, Zucker, mit Kohlensäure",
+        "priceInCents": 390,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68bab6b7de2eca58b544",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "2b4c80c1ba9d747c283ec998",
+        "name": "Kuzu Sis",
+        "description": "gegrillte Lammfleischspieße",
+        "priceInCents": 2290,
+        "originalPriceInCents": null,
+        "category": "GRILLGERICHTE 🔥",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa5e",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "2bb7dba0f3ee3747f82de078",
+        "name": "Sahnetorte",
+        "description": "mit Sahne und Kuchenboden",
+        "priceInCents": 650,
+        "originalPriceInCents": null,
+        "category": "NACHTISCH 🍰",
+        "imageUrl": null,
+        "dietaryPreferences": []
+      },
+      {
+        "id": "302fab6a7ad9fb54b2b8ff09",
+        "name": "Mercimek",
+        "description": "Linsensuppe türkischer Art",
+        "priceInCents": 700,
+        "originalPriceInCents": null,
+        "category": "SUPPEN 🍲",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683da928af3d6eb90ae0829b",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "325ed20ae7711ec82de083fa",
+        "name": "Elephant Bay Lemon 0,33 l",
+        "description": "Erfrischungsgetränk mit Zitronengeschmack, Zucker, mit Kohlensäure",
+        "priceInCents": 390,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68c92c28ca1ef7f461fb",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "37549ebaaac5fb3e91c0f7ec",
+        "name": "Tavuk Sac Kavurma",
+        "description": "Hähnchenfleisch-Geschnetzeltes",
+        "priceInCents": 2190,
+        "originalPriceInCents": null,
+        "category": "PFANNENGERICHTE 🥘",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9797b4dc058c923024b0",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "39933149968b9e70eedcc158",
+        "name": "Pizza Margherita",
+        "description": null,
+        "priceInCents": 990,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa53",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "3a257a26a92838687c1613e7",
+        "name": "Thunfisch-Salat",
+        "description": "mit Thunfisch, Zwiebeln und Oliven",
+        "priceInCents": 1090,
+        "originalPriceInCents": null,
+        "category": "SALATE 🥗",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa67",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "3c707606e873841d8dbb9910",
+        "name": "Ali Nazik",
+        "description": "Lammfleisch mit gewürfelten Auberginen, Joghurt und Butteraufguss",
+        "priceInCents": 2290,
+        "originalPriceInCents": null,
+        "category": "GRILLGERICHTE 🔥",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683daaf7550029d6e49a578f",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "3f588898557f0ab09feeeffb",
+        "name": "Tavuk Sis",
+        "description": "gegrillte Hähnchenspieße",
+        "priceInCents": 1990,
+        "originalPriceInCents": null,
+        "category": "GRILLGERICHTE 🔥",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa76",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "4608c6001c165c77646f22bb",
+        "name": "Sütlac",
+        "description": "Milchreis",
+        "priceInCents": 650,
+        "originalPriceInCents": null,
+        "category": "NACHTISCH 🍰",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aaa1",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "4610de65058e9905361d91e8",
+        "name": "Tiramisu",
+        "description": "mit Mascarponecreme, Löffelbiskuit und Kakao",
+        "priceInCents": 650,
+        "originalPriceInCents": null,
+        "category": "NACHTISCH 🍰",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683dad14cf23e599638e67a0",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "4753d4f6e68f4b6eec1f4f94",
+        "name": "Fritz-Kola MischMasch 0,33 l",
+        "description": "Koffeinhaltiges Erfrischungsgetränk mit Cola- und Orangenaroma, Zucker, mit Kohlensäure",
+        "priceInCents": 390,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac689d89f6b4551b29a5c8",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "4a57303241fcfffc32d02e08",
+        "name": "Tevhid Grillplatte",
+        "description": "gemischte Grillplatte mit Rind-Dönerfleisch",
+        "priceInCents": 5490,
+        "originalPriceInCents": null,
+        "category": "GRILLGERICHTE 🔥",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa6f",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "4b59235af15b8be8739eda0b",
+        "name": "Lahmacun",
+        "description": "dünner Fladen mit gewürztem Rinderhackfleisch",
+        "priceInCents": 990,
+        "originalPriceInCents": null,
+        "category": "LAHMACUN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d7de6cf23e599638e670e",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "4c655ea257de5262fc054205",
+        "name": "Besteck",
+        "description": "das Restaurant fügt Besteck wie Messer, Löffel, Gabeln usw. hinzu, falls vorhanden",
+        "priceInCents": 0,
+        "originalPriceInCents": null,
+        "category": "BESTECK ",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac628a89f6b4551b29a3b5",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "5086bf8c560e29bc0fd85d1b",
+        "name": "Elephant Bay Granatapfel 0,33 l",
+        "description": "Erfrischungsgetränk mit Granatapfelgeschmack, Zucker, mit Kohlensäure",
+        "priceInCents": 390,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68c12c28ca1ef7f461f9",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "58e5484691d169f9e7f3ef7d",
+        "name": "Kleiner Beilagensalat",
+        "description": "Blattsalate mit Tomaten, Gurken und hausgemachtem Dressing",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "BEILAGEN 🍟",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa64",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "6cba8b904a528c0f9ac6c39c",
+        "name": "Falafel-Teller",
+        "description": "Falafel mit Salat und einer Beilage deiner Wahl",
+        "priceInCents": 1350,
+        "originalPriceInCents": null,
+        "category": "VEGETARISCH 🌱",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa54",
+        "dietaryPreferences": ["vegetarian"]
+      },
+      {
+        "id": "6f3c8d82c40f8f62f97aa172",
+        "name": "Pizza 4 Jahreszeiten",
+        "description": "mit Champignons, Paprika, Oliven und Rinderschinken",
+        "priceInCents": 1290,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa8c",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "77632950c6df67990df86e02",
+        "name": "Pizza Tonno",
+        "description": "mit Thunfisch und Zwiebeln",
+        "priceInCents": 1090,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa8d",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "7d6451fdbee5f3885916798c",
+        "name": "Pizza Sucuk",
+        "description": "mit Rind-Sucuk",
+        "priceInCents": 1190,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa80",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "7e93cb66a00633c3e2b0e14e",
+        "name": "Pommes frites",
+        "description": "frittierte Kartoffelstreifen",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "BEILAGEN 🍟",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa50",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "80bd85dc98b854c1d8be0445",
+        "name": "Pide mit Spinat",
+        "description": "türkisches Fladenbrot mit Spinat",
+        "priceInCents": 1090,
+        "originalPriceInCents": null,
+        "category": "PIDE 🫓",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa9c",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "841432ff0266900d09930549",
+        "name": "Backdöner",
+        "description": "Dönerfleisch mit Salat",
+        "priceInCents": 1590,
+        "originalPriceInCents": null,
+        "category": "DÖNER 🥙",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa96",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "8831a6d66d1970d9bf19a355",
+        "name": "Gemüsepfanne",
+        "description": "verschiedenes Gemüse in Tomatensoße",
+        "priceInCents": 1290,
+        "originalPriceInCents": null,
+        "category": "PFANNENGERICHTE 🥘",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa73",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "909e29cc82b314db88a395c8",
+        "name": "Döner im Brot",
+        "description": "Dönerfleisch im Brot mit Zutaten deiner Wahl",
+        "priceInCents": 990,
+        "originalPriceInCents": null,
+        "category": "DÖNER 🥙",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa68",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "928ecf5b74d904e01bc2f5fa",
+        "name": "Kelle Paca",
+        "description": "Lammkopfsuppe mit Fleisch",
+        "priceInCents": 750,
+        "originalPriceInCents": null,
+        "category": "SUPPEN 🍲",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683da97ef446b603a8c9f0ec",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "936d2d3a8c7059f0114a56dd",
+        "name": "Kuzu Sac Kavurma",
+        "description": "Lammfleisch-Geschnetzeltes in spezieller Pfanne",
+        "priceInCents": 2390,
+        "originalPriceInCents": null,
+        "category": "PFANNENGERICHTE 🥘",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa92",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "95394e347d5e85427042967b",
+        "name": "Yogurtlu Patlican",
+        "description": "gegrillte Auberginen mit Knoblauch-Joghurt",
+        "priceInCents": 590,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa93",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "96f4df614dc4302eea8f7a3e",
+        "name": "Fritz-Kola Superzero 0,33 l",
+        "description": "Kalorienfreies koffeinhaltiges Erfrischungsgetränk mit Cola-Geschmack, ohne Zucker, Kohlensäure",
+        "priceInCents": 390,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac688f2c28ca1ef7f461e8",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "98ba22fc3a8af17f2b819081",
+        "name": "Cig Köfte (vegan)",
+        "description": "Traditionelle Bulgurspezialität mit einer herzhaften, komplett fleischfreien Füllung aus Zwiebeln, Walnüssen und orientalischen Gewürzen",
+        "priceInCents": 790,
+        "originalPriceInCents": null,
+        "category": "VEGETARISCH 🌱",
+        "imageUrl": "https://imageproxy.wolt.com/assets/6a213a043168d5b28912567f",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "9b9ca5053a82105c3336e3df",
+        "name": "Pide mit Gemüse",
+        "description": "türkisches Fladenbrot mit verschiedenen Gemüsesorten",
+        "priceInCents": 1090,
+        "originalPriceInCents": null,
+        "category": "PIDE 🫓",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa9b",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "9c57393e3894a9b597f3d409",
+        "name": "Havuc Tarator",
+        "description": "ausgedünstete Karotten mit Knoblauch-Joghurt",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa8f",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "9c96551d010095d9a70d549f",
+        "name": "Izgara Köfte",
+        "description": "Lamm-Frikadellen vom Grill",
+        "priceInCents": 2090,
+        "originalPriceInCents": null,
+        "category": "GRILLGERICHTE 🔥",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa7b",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "a0162484607d4a692caa4469",
+        "name": "Alwa Live Wasser Still 0,25 l",
+        "description": "Natürliches Mineralwasser ohne Kohlensäure",
+        "priceInCents": 305,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683ea2b7dbf3d326e1bddbb5",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "a12d710555b954d698553e66",
+        "name": "Künefe",
+        "description": "engelshaarteig mit Mozzarella-Füllung und warmem Zuckersirup",
+        "priceInCents": 850,
+        "originalPriceInCents": null,
+        "category": "NACHTISCH 🍰",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa7d",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "a9a296afec146ffaaffb122b",
+        "name": "Pide Kebab",
+        "description": "türkisches Fladenbrot mit Rind-Dönerfleisch und Käse",
+        "priceInCents": 1190,
+        "originalPriceInCents": null,
+        "category": "PIDE 🫓",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa61",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "b13014e210c2630517a7c02e",
+        "name": "Iskender",
+        "description": "Dönerfleisch auf Brot mit Joghurt und Tomatensoße",
+        "priceInCents": 1590,
+        "originalPriceInCents": null,
+        "category": "DÖNER 🥙",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa6d",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "b659e697f711d9ceaad52a4f",
+        "name": "Lahmacun Spezial",
+        "description": "Lahmacun mit Rind-Dönerfleisch",
+        "priceInCents": 1190,
+        "originalPriceInCents": null,
+        "category": "LAHMACUN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d7e0453ac53f5ec03a9b1",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "bd703f2c094a83f2bbabe013",
+        "name": "Pizza Funghi",
+        "description": "mit Champignons",
+        "priceInCents": 1050,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa9f",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "bf3d180ecbc0d530ee1a0318",
+        "name": "Falafel Yufka",
+        "description": "Falafel in Yufka-Fladen mit Zutaten deiner Wahl",
+        "priceInCents": 950,
+        "originalPriceInCents": null,
+        "category": "VEGETARISCH 🌱",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa81",
+        "dietaryPreferences": ["vegetarian"]
+      },
+      {
+        "id": "c4201fdb345ba03f01f56548",
+        "name": "Acili Ezme",
+        "description": "scharf\nklein gehacktes Gemüse mit Kräutern",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa83",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "c9619da48a86f7bf1661e524",
+        "name": "Künefe mit Kaymak",
+        "description": "engelshaarteig mit Mozzarella-Füllung, warmer Zuckersirup und fester Sahnecreme",
+        "priceInCents": 950,
+        "originalPriceInCents": null,
+        "category": "NACHTISCH 🍰",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa6c",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "cb37ac1248285fb8d4786438",
+        "name": "Haydari",
+        "description": "Knoblauch-Joghurt mit Gewürzen",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d7da5cf23e599638e670d",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "cd25893400567decb315915b",
+        "name": "Pizza Döner",
+        "description": "mit Rind-Dönerfleisch",
+        "priceInCents": 1290,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa59",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "cff5c2032360317df066c5fe",
+        "name": "Gemischte Grillplatte",
+        "description": "verschiedene gegrillte Fleischsorten (Hähnchen, Lamm und Rind) in einer Größe deiner Wahl",
+        "priceInCents": 2690,
+        "originalPriceInCents": null,
+        "category": "GRILLGERICHTE 🔥",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa5c",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "d1a9e0497636383b05b549a0",
+        "name": "Halloumi im Brot",
+        "description": "Halloumi im Brot mit Zutaten deiner Wahl",
+        "priceInCents": 990,
+        "originalPriceInCents": null,
+        "category": "VEGETARISCH 🌱",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa99",
+        "dietaryPreferences": ["vegetarian"]
+      },
+      {
+        "id": "d2abcd0a02bac2ae097d7d83",
+        "name": "Halloumi-Teller",
+        "description": "Halloumi mit Salat und einer Beilage deiner Wahl",
+        "priceInCents": 1350,
+        "originalPriceInCents": null,
+        "category": "VEGETARISCH 🌱",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa86",
+        "dietaryPreferences": ["vegetarian"]
+      },
+      {
+        "id": "d6ab6356dbdaf2a3d51188a1",
+        "name": "Dönerbox",
+        "description": "Dönerfleisch mit einer Beilage deiner Wahl",
+        "priceInCents": 990,
+        "originalPriceInCents": null,
+        "category": "DÖNER 🥙",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67c05cd93b60946f71ca4cdc",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "d71be24ba37239dd89202010",
+        "name": "Gemischter Vorspeisenteller",
+        "description": "Mischung aus verschiedenen Vorspeisen",
+        "priceInCents": 1690,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683dadac550029d6e49a579a",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "da73ea77d40f04551801c4df",
+        "name": "Hirtensalat mit Schafskäse",
+        "description": "mit Schafskäse und Oliven",
+        "priceInCents": 1090,
+        "originalPriceInCents": null,
+        "category": "SALATE 🥗",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa64",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "dbebd3ccdf9144c888a978a4",
+        "name": "Pizza Schinken",
+        "description": "mit Tomatensoße, Mozzarella und Rinderschinken",
+        "priceInCents": 1190,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa75",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "dd3ce487af6c5e65b7d4e0a7",
+        "name": "Adana Kebab",
+        "description": "gegrillte Rind-Hackfleischspieße, pikant gewürzt",
+        "priceInCents": 2090,
+        "originalPriceInCents": null,
+        "category": "GRILLGERICHTE 🔥",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683dac23550029d6e49a5794",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "de1459757be71ebec9328478",
+        "name": "Dönerteller",
+        "description": "Dönerfleisch mit Salat und einer Beilage deiner Wahl",
+        "priceInCents": 1550,
+        "originalPriceInCents": null,
+        "category": "DÖNER 🥙",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683dade1550029d6e49a579c",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "df41bdf3a90f7f277c96e20c",
+        "name": "XXL Döner",
+        "description": "Dönerfleisch im Brot mit Zutaten deiner Wahl",
+        "priceInCents": 1290,
+        "originalPriceInCents": null,
+        "category": "DÖNER 🥙",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa68",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "e0eaec52d0ae9495bde25ff1",
+        "name": "Ülker Camlica Gazoz 0,33 l",
+        "description": "Türkisches Erfrischungsgetränk, kohlensäurehaltig, mit natürlichem Aroma",
+        "priceInCents": 315,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68aa2c28ca1ef7f461f3",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "e19c4b49470f53941dd23441",
+        "name": "Gemischter Salat",
+        "description": null,
+        "priceInCents": 990,
+        "originalPriceInCents": null,
+        "category": "SALATE 🥗",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aaa0",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "e287d23fbd2a36d753eaa7f5",
+        "name": "Icli Köfte (vegan)",
+        "description": "Traditionelle Bulgurspezialität mit einer herzhaften, komplett fleischfreien Füllung aus Zwiebeln, Walnüssen und orientalischen Gewürzen",
+        "priceInCents": 330,
+        "originalPriceInCents": null,
+        "category": "VEGETARISCH 🌱",
+        "imageUrl": "https://imageproxy.wolt.com/assets/6a213a879205260330d01ca2",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "e7b08ca1cdbe1f4f9ad924bd",
+        "name": "Fritz-Kola 0,33 l",
+        "description": "Koffeinhaltiges Erfrischungsgetränk mit Cola-Geschmack, Zucker, mit Kohlensäure",
+        "priceInCents": 390,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68812c28ca1ef7f461e5",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "e8252e7a72164c94ddbc7fd0",
+        "name": "Pizza Salami",
+        "description": "mit Rind-Salami",
+        "priceInCents": 1190,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa56",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "e92640d88ed875c43330baf5",
+        "name": "Ülker Cola Turka 0,33 l",
+        "description": "Koffeinhaltiges Erfrischungsgetränk mit Cola-Geschmack, Zucker, Kohlensäure",
+        "priceInCents": 315,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68a489f6b4551b29a5c9",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "eb212631ff50797a6587e7e9",
+        "name": "Pide mit Hackfleisch",
+        "description": "türkisches Fladenbrot mit gewürztem Rinderhackfleisch",
+        "priceInCents": 1190,
+        "originalPriceInCents": null,
+        "category": "PIDE 🫓",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa4e",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "ecb95e5ccc2b670cea292cc6",
+        "name": "Yufka Döner",
+        "description": "Dönerfleisch in Yufka-Fladen mit Zutaten deiner Wahl",
+        "priceInCents": 1050,
+        "originalPriceInCents": null,
+        "category": "DÖNER 🥙",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa77",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "ed2f361858216be08d4e5455",
+        "name": "Falafel im Brot",
+        "description": "Falafel im Brot mit Zutaten deiner Wahl",
+        "priceInCents": 890,
+        "originalPriceInCents": null,
+        "category": "VEGETARISCH 🌱",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9797b4dc058c923024af",
+        "dietaryPreferences": ["vegetarian"]
+      },
+      {
+        "id": "ed4986bc7847ce7edcece7e9",
+        "name": "Pizza Hawaii",
+        "description": "mit Rinderschinken und Ananas",
+        "priceInCents": 1290,
+        "originalPriceInCents": null,
+        "category": "PIZZEN 🍕",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa7f",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "eea9e9ef1240df5df4ca03de",
+        "name": "Fritz-Limo Orange 0,33 l",
+        "description": "Kohlensäurehaltiges Erfrischungsgetränk mit Orangengeschmack, Zucker, enthält natürliche Aromen",
+        "priceInCents": 390,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68952c28ca1ef7f461ee",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "f38da5dd97b2ceda4032e6f5",
+        "name": "Beyti Kebab",
+        "description": "Rind-Hackspieß eingerollt in Yufka mit Joghurt und Tomatensoße",
+        "priceInCents": 1990,
+        "originalPriceInCents": null,
+        "category": "GRILLGERICHTE 🔥",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683ee1872c97c6c5c80d402f",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "fb7af556fa711bcc540a17f2",
+        "name": "Alwa Live Mineralwasser 0,25 l",
+        "description": "Natürliches Mineralwasser mit Kohlensäure",
+        "priceInCents": 305,
+        "originalPriceInCents": null,
+        "category": "ALKOHOLFREIE GETRÄNKE 🥤",
+        "imageUrl": "https://imageproxy.wolt.com/assets/67ac68b12c28ca1ef7f461f5",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "fdf317177c5239c71fa4921e",
+        "name": "Cacik",
+        "description": "Knoblauch-Joghurt mit Gurken und Kräutern",
+        "priceInCents": 550,
+        "originalPriceInCents": null,
+        "category": "VORSPEISEN 🍆",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d7d6fb4dc058c923023f9",
+        "dietaryPreferences": []
+      },
+      {
+        "id": "fdfc8bc94e4be56e9a15ac9e",
+        "name": "Halloumi Yufka",
+        "description": "Halloumi in Yufka-Fladen mit Zutaten deiner Wahl",
+        "priceInCents": 950,
+        "originalPriceInCents": null,
+        "category": "VEGETARISCH 🌱",
+        "imageUrl": "https://imageproxy.wolt.com/assets/683d9bae53ac53f5ec03aa94",
+        "dietaryPreferences": ["vegetarian"]
+      }
+    ],
+    "scrapedAt": "2026-06-04T22:43:50.929Z"
+  }
+]

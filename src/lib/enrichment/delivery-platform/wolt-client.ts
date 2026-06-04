@@ -60,7 +60,7 @@ class WoltHttpClient implements WoltClient {
       const items = asArray<Record<string, unknown>>(section?.items);
       for (const item of items) {
         const venue = item?.venue as Record<string, unknown> | undefined;
-        if (item?.type === 'restaurant' && venue?.slug) {
+        if (venue?.slug) {
           venues.push({
             name: (venue.name as string) ?? (venue.slug as string),
             slug: venue.slug as string,

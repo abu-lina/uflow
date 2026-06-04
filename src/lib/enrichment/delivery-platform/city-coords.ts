@@ -123,10 +123,5 @@ export const CITY_ALIASES: Record<string, string> = {
   'Frankfurt am Main069 21001381': 'Frankfurt am Main',  // phone number appended
   'LANGEN': 'Langen',
   'Neu': 'München',  // likely incomplete entry, fallback to Munich area
-  'Altenstadt': { lat: 47.8237, lon: 10.8735 },
 };
 
-  /**
-   * NOTE: If you add new cities here, also add corresponding test cases
-   * in geocoder.test.ts -> "includes all provider dataset cities"
-   */

@@ -75,15 +75,16 @@ export async function enrichFromWolt(
     };
   }
 
-  const menuData = await woltClient.fetchMenuData(match.woltVenue.slug);
-  const menuItemNames = menuData.items.map((i) => i.name);
+  // Use venue_preview_items from discovery API (menu endpoint deprecated)
+  const previewItems =
+    (match.woltVenue.venue_preview_items as Array<{ name?: string }>) ?? [];
+  const menuItemNames = previewItems
+    .filter((i): i is { name: string } => typeof i?.name === 'string')
+    .map((i) => i.name);
   const alcoholResult = detectAlcohol(menuItemNames);
 
-  const woltHours = match.woltVenue['opening_hours'] as
-    | Array<{ day: number; opens: string; closes: string }>
-    | null
-    | undefined;
-  const normalizedHours = normalizeWoltOpeningHours(woltHours);
+  // Opening hours not available in current Wolt API response
+  const normalizedHours = null;
 
   let proposedNoAlcohol: boolean | null = null;
   if (alcoholResult.signal === 'definite_alcohol') {

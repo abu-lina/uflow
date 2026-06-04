@@ -406,7 +406,7 @@ async function runWoltEnrichment(
   let query = supabase
     .from('providers')
     .select(
-      'provider_id, provider_name, address_city, listing_type, opening_hours, no_alcohol, enrichment_eligible'
+      'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible'
     )
     .eq('listing_type', 'food')
     .eq('enrichment_eligible', true);
@@ -419,6 +419,21 @@ async function runWoltEnrichment(
   if (provError) {
     console.error('❌ Failed to fetch providers:', provError.message);
     process.exit(1);
+  }
+
+  // Fetch no_alcohol from food_providers (extension table)
+  const providerIds = (providers ?? []).map(p => p.provider_id);
+  let noAlcoholMap: Record<string, boolean | null> = {};
+  if (providerIds.length > 0) {
+    const { data: foodProviders, error: fpError } = await supabase
+      .from('food_providers')
+      .select('provider_id, no_alcohol')
+      .in('provider_id', providerIds);
+    if (!fpError && foodProviders) {
+      for (const fp of foodProviders) {
+        noAlcoholMap[fp.provider_id] = fp.no_alcohol ?? null;
+      }
+    }
   }
 
   const providerRows = providers ?? [];
@@ -458,7 +473,7 @@ async function runWoltEnrichment(
         address_city: provider.address_city,
         listing_type: provider.listing_type,
         opening_hours: provider.opening_hours,
-        no_alcohol: provider.no_alcohol,
+        no_alcohol: noAlcoholMap[provider.provider_id] ?? null,
       };
 
       const result = await enrichFromWolt(snapshot, woltClient);

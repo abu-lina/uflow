@@ -16,7 +16,7 @@ export interface ProviderMatchConfig {
 }
 
 const DEFAULT_CONFIG: ProviderMatchConfig = {
-  nameSimilarityThreshold: 0.6,
+  nameSimilarityThreshold: 0.5,
   requireCityMatch: true,
 };
 
@@ -79,7 +79,7 @@ export function matchProviderToVenues(
     if (!normVenueName) continue;
 
     const nameScore = stringSimilarity(normProviderName, normVenueName);
-    const cityMatch = normProviderCity && normVenueCity && normProviderCity === normVenueCity;
+    const cityMatch = !normVenueCity || (normProviderCity && normProviderCity === normVenueCity);
 
     if (nameScore === 1 && cityMatch) {
       return {

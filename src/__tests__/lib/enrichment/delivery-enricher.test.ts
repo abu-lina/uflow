@@ -15,22 +15,18 @@ function createMockWoltClient(overrides?: Partial<WoltClient>): WoltClient {
           name: 'Döner Haus',
           slug: 'doner-haus',
           city: 'Berlin',
-          opening_hours: [{ day: 0, opens: '09:00', closes: '22:00' }],
+          venue_preview_items: [
+            { name: 'Pizza Margherita', price: 850 },
+            { name: 'Döner Teller', price: 1200 },
+            { name: 'Bier 0.5L', price: 400 },
+          ],
         },
       ],
       lat: 52.52,
       lon: 13.405,
     }),
-    fetchMenuData: vi.fn().mockResolvedValue({
-      items: [
-        { name: 'Pizza Margherita', category: 'Pizza' },
-        { name: 'Döner Teller', category: 'Hauptgerichte' },
-      ],
-      categories: [
-        { name: 'Pizza', items: ['Pizza Margherita'] },
-        { name: 'Hauptgerichte', items: ['Döner Teller'] },
-      ],
-    }),
+fetchMenuData: vi.fn().mockResolvedValue({ items: [], categories: [] }),
+    // Note: menu extraction uses venue_preview_items from discovery API
     ...overrides,
   };
 }
