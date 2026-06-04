@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { BeerOff, Check, ChevronDown, Dices, PiggyBank } from 'lucide-react';
+import { BeerOff, ChevronDown, Dices, PiggyBank, SquareMenu } from 'lucide-react';
+import { HalalIcon as HugeHalalIcon } from 'hugeicons-react';
 import type { ReactNode } from 'react';
 
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -238,82 +239,105 @@ export function ProofTierCard({
 
       <SummaryText text={t(summaryKey)} />
 
-      <div className="space-y-3">
-        <div className="rounded-lg border border-border/50 bg-white p-3">
-          <p className="mb-2 text-sm font-semibold text-content-heading">
-            {t('providerDetail.proofTier.whatWeVerified')}
+      <div className="space-y-2">
+          <p className="text-base text-content-heading">
+            {t('providerDetail.proofTier.whatWeVerified')}:
           </p>
-          <ul className="space-y-1.5 text-sm text-content">
+          <div className="space-y-0">
             {/* Bronze tier: online-checked items */}
             {tier === 'bronze' ? (
               <>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkMenuReviewed')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkSellsNoAlcohol')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkSellsNoPork')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkClaimsMeatHalal')}</span>
-                </li>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkMenuReviewed')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <BeerOff aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkSellsNoAlcohol')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <PiggyBank aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkSellsNoPork')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <HugeHalalIcon aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkClaimsMeatHalal')}</span>
+                </div>
               </>
             ) : null}
 
             {/* Silver tier: onsite-checked items */}
             {tier === 'silver' ? (
               <>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkMenuReviewedOnsite')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkSellsProcessNoAlcohol')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkSellsProcessNoPork')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkMeatIsHalal')}</span>
-                </li>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkMenuReviewedOnsite')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <BeerOff aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkSellsProcessNoAlcohol')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <PiggyBank aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkSellsProcessNoPork')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <HugeHalalIcon aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkMeatIsHalal')}</span>
+                </div>
               </>
             ) : null}
 
-            {/* Gold tier: full verification items (existing) */}
+            {/* Gold tier: full verification items */}
             {tier === 'gold' ? (
               <>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkMenuReviewed')}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                  <span>{t('providerDetail.proofTier.checkCertificateOnFile')}</span>
-                </li>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkMenuReviewed')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkCertificateOnFile')}</span>
+                </div>
                 {onsiteVerified ? (
                   <>
-                    <li className="flex items-start gap-2">
-                      <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                      <span>{t('providerDetail.proofTier.checkOnsiteVisit')}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check aria-hidden className="mt-0.5 h-4 w-4 text-[#2B6D66]" />
-                      <span>{t('providerDetail.proofTier.checkOwnerConfirmed')}</span>
-                    </li>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkOnsiteVisit')}</span>
+                </div>
+                <div className="flex w-full items-center gap-1 rounded-xl">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+                    <SquareMenu aria-hidden className="h-6 w-6" />
+                  </span>
+                  <span className="text-sm font-semibold text-content-heading">{t('providerDetail.proofTier.checkOwnerConfirmed')}</span>
+                </div>
                   </>
                 ) : null}
               </>
             ) : null}
-          </ul>
+          </div>
 
         {tier === 'gold' && supportsAttestation ? (
           <GoldAttestationSection
@@ -323,7 +347,6 @@ export function ProofTierCard({
             t={t}
           />
         ) : null}
-        </div>
       </div>
 
       <button

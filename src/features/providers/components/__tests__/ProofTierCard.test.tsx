@@ -175,7 +175,7 @@ describe('ProofTierCard', () => {
 
   it('[TDD gate] retains checklist and expandable explanation', () => {
     render(<ProofTierCard verificationMethod="online" hasCertificate={false} />);
-    expect(screen.getByText('providerDetail.proofTier.whatWeVerified')).toBeInTheDocument();
+    expect(screen.getByText(v => v.startsWith('providerDetail.proofTier.whatWeVerified'))).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'providerDetail.proofTier.whatIsThis' }),
     ).toBeInTheDocument();

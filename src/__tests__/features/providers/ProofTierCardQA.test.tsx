@@ -177,7 +177,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
 
   it('[QA] whatWeVerified checklist is always present', () => {
     render(<ProofTierCard verificationMethod="online" hasCertificate={false} />);
-    expect(screen.getByText('providerDetail.proofTier.whatWeVerified')).toBeInTheDocument();
+    expect(screen.getByText(v => v.startsWith('providerDetail.proofTier.whatWeVerified'))).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
   });
 });
