@@ -74,7 +74,7 @@ function SealRow({
 
 function SummaryText({ text }: { text: string }) {
   if (!text.includes('{{highlight}}')) {
-    return <p className="text-sm text-content mb-3">{text}</p>;
+    return <p className="text-base text-content mb-3">{text}</p>;
   }
 
   const segments: ReactNode[] = [];
@@ -90,7 +90,7 @@ function SummaryText({ text }: { text: string }) {
     if (inner[1]) segments.push(inner[1]);
   }
 
-  return <p className="text-sm text-content mb-3">{segments}</p>;
+  return <p className="text-base text-content mb-3">{segments}</p>;
 }
 
 // ---------------------------------------------------------------------------
