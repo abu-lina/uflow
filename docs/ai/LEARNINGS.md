@@ -36,3 +36,23 @@ Short log of learnings from plan → build → review → test loops. Append one
 - 4 test files updated for new behavior
 
 **Next**: Consider reducing HalalTrustPopup view limit from 10 to 3, and audit other dead links in the app.
+
+## 2026-06-04 — Checklist Redesign with Per-Item Icons (S134)
+
+**What**: Redesigned the "What we verified" checklist from a framed `<ul>` with uniform `Check` icons to a frameless `DetailListItem`-style layout with per-item icons (`SquareMenu`, `BeerOff`, `PiggyBank`, `HalalIcon`).
+
+**Why**: The old design had all items using the same `Check` icon inside a bordered frame, making it visually flat and indistinguishable from similar lists elsewhere. The new design uses distinct icons per verification type (menu, alcohol, pork, halal) matching the `DetailListItem` pattern already used in `ProviderDetailSections.tsx`.
+
+**How**: 
+- `hugeicons-react` has a `HalalIcon` component — but the same file already defined a local `function HalalIcon()` for the `GoldAttestationSection`. Import with alias (`import { HalalIcon as HugeHalalIcon } from 'hugeicons-react'`) to avoid naming conflicts with local definitions.
+- Per-item icons require individual JSX per item — can't use a template/map loop when each item needs a different lucide icon. Each icon becomes an explicit `<div>` per item.
+- When appending a colon outside `t()`, test assertions using `getByText` exact match break. Use `getByText(v => v.startsWith(...))` matcher instead.
+- `tsc` passes with zero errors even when mixing icons from two different packages (lucide-react + hugeicons-react).
+
+**Files changed**:
+- `src/features/providers/components/ProofTierCard.tsx` — complete checklist rewrite
+- `src/features/providers/components/__tests__/ProofTierCard.test.tsx` — test fix for colon
+- `src/__tests__/features/providers/ProofTierCardQA.test.tsx` — test fix for colon
+- `package.json` + `package-lock.json` — added `hugeicons-react` dependency
+
+**Next**: None — session complete.
