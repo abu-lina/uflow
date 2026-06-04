@@ -58,7 +58,7 @@ function SealRow({
     <div className="mx-auto flex w-fit items-center justify-center" role="group">
       <Image
         alt={altText}
-        className="block -mb-2"
+        className="block -mb-4"
         height={120}
         priority={false}
         src={src}
