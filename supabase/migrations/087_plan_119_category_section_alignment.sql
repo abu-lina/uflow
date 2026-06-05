@@ -13,7 +13,7 @@ declare
   v_match_count int;
   v_category_id uuid;
 begin
-  select count(*), min(category_id)
+  select count(*), min(category_id::text)::uuid
   into v_match_count, v_category_id
   from public.categories
   where name_de = 'Gesundheit & Sport';
