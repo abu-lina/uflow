@@ -294,7 +294,11 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         <ProviderEditForm
           enableLocalStorage={true}
           localStoragePrefix="admin_"
-          onSubmitForm={async (formData) => { await saveProviderEdits(formData); }}
+          onSubmitForm={async (formData) => { 
+            await saveProviderEdits(formData);
+            await queryClient.invalidateQueries({ queryKey: ['provider', providerId] });
+            router.push(`/providers/${providerId}`);
+          }}
           provider={provider}
           reviewFooterActions={{
             reject: {
