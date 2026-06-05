@@ -7,22 +7,8 @@
 -- 4) Enforce providers.listing_type NOT NULL
 -- 5) Add section-scoped CHECK constraints for semantic validity
 
--- 1) Extend enum with idempotent guard
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_enum e
-    JOIN pg_type t ON t.oid = e.enumtypid
-    JOIN pg_namespace n ON n.oid = t.typnamespace
-    WHERE n.nspname = 'public'
-      AND t.typname = 'listing_type_enum'
-      AND e.enumlabel = 'ummah'
-  ) THEN
-    ALTER TYPE public.listing_type_enum ADD VALUE 'ummah';
-  END IF;
-END
-$$;
+-- 1) Extend enum with idempotent guard — MOVED to 0060_plan_145_enum_value.sql
+--    (PostgreSQL 14+ requires ALTER TYPE ADD VALUE in its own transaction)
 
 -- 2) Backfill NULL listing_type values to ummah
 UPDATE public.providers
