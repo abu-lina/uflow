@@ -430,20 +430,19 @@ export default function CitySelectionClient({ initialCities }: { initialCities?:
           ? `${city.city_name}, ${tRef.current('waitlist.citySelection.providerCount_other').replace('{{count}}', String(city.provider_count))}`
           : city.city_name;
 
-      // Conditionally include animation props only when shouldAnimate is true
-      // When false, explicitly set initial={false} to disable all Framer Motion processing
-      const motionProps = shouldAnimate
-        ? {
-            animate: { opacity: 1, x: 0 },
-            initial: { opacity: 0, x: -20 },
-            transition: prefersReducedMotion
-              ? { duration: 0 }
-              : { duration: 0.3, delay: index * 0.05 },
-          }
-        : {
-            initial: false, // Explicitly disable Framer Motion processing
-            animate: false, // Explicitly disable animation
-          };
+      // Stable animate target — always targets the final visible state.
+      // When shouldAnimate is true: entrance animation plays (opacity 0→1, x -20→0).
+      // When shouldAnimate is false: skip entrance, but keep the same animate target
+      // so Framer Motion doesn't reset the animation state (avoids flicker).
+      const motionProps = {
+        animate: { opacity: 1, x: 0 },
+        initial: shouldAnimate ? { opacity: 0, x: -20 } : false,
+        transition: shouldAnimate
+          ? prefersReducedMotion
+            ? { duration: 0 }
+            : { duration: 0.3, delay: index * 0.05 }
+          : { duration: 0 },
+      };
 
       return (
         <motion.button
@@ -555,14 +554,18 @@ export default function CitySelectionClient({ initialCities }: { initialCities?:
 
                 {/* Search Input */}
                 <motion.div
-                  animate={!hasAnimated && !isLoading ? { opacity: 1, x: 0 } : false}
+                  animate={{ opacity: 1, x: 0 }}
                   className="flex flex-col gap-2"
                   initial={
-                    !hasAnimated && !isLoading ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }
+                    !hasAnimated && !isLoading ? { opacity: 0, x: -20 } : false
                   }
                   layout={false}
                   transition={
-                    prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: 0.15 }
+                    !hasAnimated && !isLoading
+                      ? prefersReducedMotion
+                        ? { duration: 0 }
+                        : { duration: 0.3, delay: 0.15 }
+                      : { duration: 0 }
                   }
                 >
                   {/* Search Input */}
