@@ -57,6 +57,7 @@ export interface AdminProviderEditData {
     platform_slug?: string;
     is_active: boolean;
   }>;
+  reviewStatus?: 'pending' | 'approved' | 'rejected' | 'needs_revision';
 }
 
 export function buildBasicFieldsPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
@@ -76,6 +77,7 @@ export function buildBasicFieldsPayload(data: Partial<AdminProviderEditData>): R
   if (data.socialInstagram !== undefined) payload.social_instagram = data.socialInstagram;
   if (data.providerImages !== undefined) payload.provider_images = data.providerImages;
   if (data.openingHours !== undefined) payload.opening_hours = data.openingHours;
+  if (data.reviewStatus !== undefined) payload.review_status = data.reviewStatus;
 
   return payload;
 }

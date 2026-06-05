@@ -144,6 +144,9 @@ BEGIN
       provider_images     = CASE WHEN v_providers ? 'provider_images'
                             THEN v_providers->'provider_images'
                             ELSE provider_images END,
+      review_status      = CASE WHEN v_providers ? 'review_status'
+                            THEN NULLIF(v_providers->>'review_status', '')::review_status
+                            ELSE review_status END,
       opening_hours       = CASE WHEN v_providers ? 'opening_hours'
                             THEN v_providers->'opening_hours'
                             ELSE opening_hours END,

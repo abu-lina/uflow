@@ -81,6 +81,7 @@ export const providerEditUpdateSchema = z.object({
       { message: 'providerImages must be valid JSON with shape { urls: string[] }' }
     ),
   communityServiceIds: z.array(z.string().uuid()).optional(),
+  reviewStatus: z.enum(['pending', 'approved', 'rejected', 'needs_revision']).optional(),
   openingHours: z.any().optional(),
   verificationMethod: z.enum(['online', 'onsite']).nullable().optional(),
   hasCertificate: z.boolean().optional(),
