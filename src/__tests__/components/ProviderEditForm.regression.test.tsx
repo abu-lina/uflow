@@ -455,40 +455,6 @@ describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
     });
   });
 
-  it('[post-fix PASSES] admin form reads admin-prefixed offers count', async () => {
-    localStorage.setItem(`admin_edit_offers_${pid}`, JSON.stringify(['offer-1', 'offer-2', 'offer-3']));
-
-    render(
-      <ProviderEditForm
-        enableLocalStorage={true}
-        localStoragePrefix="admin_"
-        provider={baseProvider}
-        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/3/)).toBeInTheDocument();
-    });
-  });
-
-  it('[post-fix PASSES] admin form reads admin-prefixed needs count', async () => {
-    localStorage.setItem(`admin_edit_needs_${pid}`, JSON.stringify(['need-1', 'need-2']));
-
-    render(
-      <ProviderEditForm
-        enableLocalStorage={true}
-        localStoragePrefix="admin_"
-        provider={baseProvider}
-        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/2/)).toBeInTheDocument();
-    });
-  });
-
   it('[post-fix PASSES] admin form ignores unprefixed owner draft state (context isolation)', async () => {
     // Owner flow wrote category to unprefixed key
     localStorage.setItem(`edit_category_${pid}`, 'cat-food');

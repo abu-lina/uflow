@@ -20,8 +20,8 @@ interface ProviderEditFormProps {
   onSave?: () => void;
   /** Custom submit handler — when provided, replaces the built-in Supabase write. */
   onSubmitForm?: (data: ProviderEditFormData) => Promise<void>;
-  /** Base URL for sub-page navigation (category, offers, needs, images, social).
-   *  Defaults to `/profile/providers/${provider.provider_id}/edit`. */
+  /** Base URL for sub-page navigation (category, images, social, menu, etc.).
+    *  Defaults to `/profile/providers/${provider.provider_id}/edit`. */
   subPageBaseUrl?: string;
   /** Whether to read/write localStorage for sub-page state.
    *  Set to false in admin context to avoid stale owner state. Defaults to true. */
@@ -64,9 +64,38 @@ export interface ProviderEditFormData {
   email: string;
   phone: string;
   images: string;
-  selectedOfferIds: string[];
-  selectedNeedIds: string[];
   selectedCommunityServiceIds: string[];
+  menuItems: Array<{
+    id?: string;
+    name_de: string;
+    name_en?: string;
+    description_de?: string;
+    price_cents: number;
+    category?: string;
+    sort_order: number;
+    is_available: boolean;
+  }>;
+  deliveryLinks: Array<{
+    platform: 'wolt' | 'lieferando' | 'ubereats';
+    platform_url: string;
+    platform_slug?: string;
+    is_active: boolean;
+  }>;
+  openingHours: Record<string, { open: string; close: string } | null> | null;
+  verificationMethod: string | null;
+  hasCertificate: boolean;
+  certificateUrl: string | null;
+  noAlcohol: boolean;
+  noPork: boolean;
+  noGambling: boolean;
+  muslimOwned: boolean;
+  hasPrayerSpace: boolean;
+  familyFriendly: boolean;
+  womenFriendly: boolean;
+  childrenFriendly: boolean;
+  makesDonations: boolean;
+  hasParking: boolean;
+  economicSolidarity: boolean;
 }
 
 export function ProviderEditForm({
@@ -84,11 +113,12 @@ export function ProviderEditForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeFooterAction, setActiveFooterAction] = useState<'reject' | 'approve' | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [expandedSections, setExpandedSections] = useState({
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     basics: true,
     location: true,
     contact: true,
     media: true,
+    providerDetails: true,
   });
   const { user } = useAuth();
   const { t, language } = useLanguage();
@@ -121,9 +151,24 @@ export function ProviderEditForm({
     email: provider.contact_email || '',
     phone: provider.contact_phone || '',
     images: provider.provider_images || '[]',
-    selectedOfferIds: provider.offers_ids || [],
-    selectedNeedIds: provider.needs_ids || [],
     selectedCommunityServiceIds: [], // Will be populated from relationships
+    menuItems: [],
+    deliveryLinks: [],
+    openingHours: (provider as unknown as Record<string, unknown>).opening_hours as Record<string, { open: string; close: string } | null> | null ?? null,
+    verificationMethod: (provider as unknown as Record<string, unknown>).verification_method as string | null ?? null,
+    hasCertificate: (provider as unknown as Record<string, unknown>).has_certificate as boolean ?? false,
+    certificateUrl: (provider as unknown as Record<string, unknown>).certificate_url as string | null ?? null,
+    noAlcohol: false,
+    noPork: false,
+    noGambling: false,
+    muslimOwned: (provider as unknown as Record<string, unknown>).muslim_owned as boolean ?? false,
+    hasPrayerSpace: (provider as unknown as Record<string, unknown>).has_prayer_space as boolean ?? false,
+    familyFriendly: (provider as unknown as Record<string, unknown>).family_friendly as boolean ?? false,
+    womenFriendly: (provider as unknown as Record<string, unknown>).women_friendly as boolean ?? false,
+    childrenFriendly: (provider as unknown as Record<string, unknown>).children_friendly as boolean ?? false,
+    makesDonations: (provider as unknown as Record<string, unknown>).makes_donations as boolean ?? false,
+    hasParking: (provider as unknown as Record<string, unknown>).has_parking as boolean ?? false,
+    economicSolidarity: (provider as unknown as Record<string, unknown>).economic_solidarity as boolean ?? false,
   });
 
   // Sync form state from localStorage (runs on mount + when page regains focus after sub-page navigation)
@@ -137,18 +182,6 @@ export function ProviderEditForm({
       setFormData(prev => prev.categoryId !== storedCategory ? { ...prev, categoryId: storedCategory } : prev);
     }
 
-    const storedOffers = localStorage.getItem(`${pfx}edit_offers_${pid}`);
-    if (storedOffers) {
-      const parsed = JSON.parse(storedOffers) as string[];
-      setFormData(prev => JSON.stringify(prev.selectedOfferIds) !== storedOffers ? { ...prev, selectedOfferIds: parsed } : prev);
-    }
-
-    const storedNeeds = localStorage.getItem(`${pfx}edit_needs_${pid}`);
-    if (storedNeeds) {
-      const parsed = JSON.parse(storedNeeds) as string[];
-      setFormData(prev => JSON.stringify(prev.selectedNeedIds) !== storedNeeds ? { ...prev, selectedNeedIds: parsed } : prev);
-    }
-
     const storedSocial = localStorage.getItem(`${pfx}edit_social_${pid}`);
     if (storedSocial) {
       const parsed = JSON.parse(storedSocial) as string[];
@@ -158,6 +191,53 @@ export function ProviderEditForm({
     const storedImages = localStorage.getItem(`${pfx}edit_images_${pid}`);
     if (storedImages) {
       setFormData(prev => prev.images !== storedImages ? { ...prev, images: storedImages } : prev);
+    }
+
+    const storedMenu = localStorage.getItem(`${pfx}edit_menu_${pid}`);
+    if (storedMenu) {
+      try {
+        const parsed = JSON.parse(storedMenu);
+        if (Array.isArray(parsed)) setFormData(prev => ({ ...prev, menuItems: parsed }));
+      } catch { /* ignore */ }
+    }
+
+    const storedDelivery = localStorage.getItem(`${pfx}edit_delivery_${pid}`);
+    if (storedDelivery) {
+      try {
+        const parsed = JSON.parse(storedDelivery);
+        if (Array.isArray(parsed)) setFormData(prev => ({ ...prev, deliveryLinks: parsed }));
+      } catch { /* ignore */ }
+    }
+
+    const storedHours = localStorage.getItem(`${pfx}edit_hours_${pid}`);
+    if (storedHours) {
+      try {
+        setFormData(prev => ({ ...prev, openingHours: JSON.parse(storedHours) }));
+      } catch { /* ignore */ }
+    }
+
+    const storedHalal = localStorage.getItem(`${pfx}edit_halal_${pid}`);
+    if (storedHalal) {
+      try {
+        const parsed = JSON.parse(storedHalal);
+        setFormData(prev => ({
+          ...prev,
+          verificationMethod: parsed.verificationMethod ?? prev.verificationMethod,
+          hasCertificate: parsed.hasCertificate ?? prev.hasCertificate,
+          certificateUrl: parsed.certificateUrl ?? prev.certificateUrl,
+          noAlcohol: parsed.noAlcohol ?? prev.noAlcohol,
+          noPork: parsed.noPork ?? prev.noPork,
+          noGambling: parsed.noGambling ?? prev.noGambling,
+        }));
+      } catch { /* ignore */ }
+    }
+
+    const storedValues = localStorage.getItem(`${pfx}edit_values_${pid}`);
+    if (storedValues) {
+      try {
+        const parsed = JSON.parse(storedValues);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch { /* ignore */ }
     }
   }, [enableLocalStorage, localStoragePrefix, provider.provider_id]);
 
@@ -288,8 +368,6 @@ export function ProviderEditForm({
           contact_email: submitData.email,
           contact_phone: submitData.phone,
           provider_images: submitData.images,
-          offers_ids: submitData.selectedOfferIds,
-          needs_ids: submitData.selectedNeedIds,
           updated_at: new Date().toISOString(),
         })
         .eq('provider_id', provider.provider_id);
@@ -475,39 +553,6 @@ export function ProviderEditForm({
               )
             )}
 
-            {/* Offers Field */}
-            <div 
-              className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
-              onClick={() => router.push(`${editBaseUrl}/offers`)}
-            >
-              <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.whatDoIOffer')} *</span>
-                <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
-                  {(formData.selectedOfferIds || []).length > 0 
-                    ? t('editProvider.offersSelected').replace('{{count}}', (formData.selectedOfferIds || []).length.toString())
-                    : t('editProvider.selectOffers')
-                  }
-                </span>
-              </div>
-              <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
-            </div>
-
-            {/* Needs Field */}
-            <div 
-              className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
-              onClick={() => router.push(`${editBaseUrl}/needs`)}
-            >
-              <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.whatDoINeed')}</span>
-                <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
-                  {(formData.selectedNeedIds || []).length > 0 
-                    ? t('editProvider.needsSelected').replace('{{count}}', (formData.selectedNeedIds || []).length.toString())
-                    : t('editProvider.selectNeeds')
-                  }
-                </span>
-              </div>
-              <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
-            </div>
           </div>
           )}
         </div>
@@ -787,6 +832,129 @@ export function ProviderEditForm({
               </div>
             </button>}
           </div>
+          )}
+        </div>
+
+        {/* Provider Details Section */}
+        <div className="flex flex-col gap-4">
+          <button
+            className="flex items-center justify-between w-full pl-3 pr-2"
+            type="button"
+            onClick={() => setExpandedSections(prev => ({ ...prev, providerDetails: !prev.providerDetails }))}
+          >
+            <h2 className="text-lg font-medium text-[#232323]">Provider Details</h2>
+            <Icon 
+              className={`h-6 w-6 text-[#232323] transition-transform ${expandedSections.providerDetails ? 'rotate-180' : ''}`}
+              icon="material-symbols:expand-more"
+            />
+          </button>
+          
+          {expandedSections.providerDetails && (
+            <div className="space-y-3">
+              {/* Menu — only for food */}
+              {formData.listingType === 'food' && (
+                <button
+                  className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
+                  type="button"
+                  onClick={() => router.push(`${editBaseUrl}/menu`)}
+                >
+                  <div className="flex flex-1 flex-col gap-1 items-start">
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Menu</span>
+                    <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
+                      {formData.menuItems.length > 0
+                        ? `${formData.menuItems.length} items`
+                        : 'Add dishes'}
+                    </div>
+                  </div>
+                  <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+                </button>
+              )}
+
+              {/* Halal Check */}
+              <button
+                className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
+                type="button"
+                onClick={() => router.push(`${editBaseUrl}/halal`)}
+              >
+                <div className="flex flex-1 flex-col gap-1 items-start">
+                  <span className="text-xs font-normal text-[#999999] leading-[15px]">Halal Check</span>
+                  <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
+                    {formData.hasCertificate ? 'Gold' : formData.verificationMethod === 'onsite' ? 'Silver' : formData.verificationMethod === 'online' ? 'Bronze' : 'Not set'}
+                  </div>
+                </div>
+                <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+              </button>
+
+              {/* Delivery Links */}
+              <button
+                className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
+                type="button"
+                onClick={() => router.push(`${editBaseUrl}/delivery`)}
+              >
+                <div className="flex flex-1 flex-col gap-1 items-start">
+                  <span className="text-xs font-normal text-[#999999] leading-[15px]">Delivery Links</span>
+                  <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
+                    {formData.deliveryLinks.length > 0
+                      ? `${formData.deliveryLinks.length} links`
+                      : 'Add delivery platforms'}
+                  </div>
+                </div>
+                <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+              </button>
+
+              {/* Opening Hours */}
+              <button
+                className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
+                type="button"
+                onClick={() => router.push(`${editBaseUrl}/hours`)}
+              >
+                <div className="flex flex-1 flex-col gap-1 items-start">
+                  <span className="text-xs font-normal text-[#999999] leading-[15px]">Opening Hours</span>
+                  <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
+                    {formData.openingHours && Object.values(formData.openingHours).some(v => v !== null)
+                      ? 'Set'
+                      : 'Set opening hours'}
+                  </div>
+                </div>
+                <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+              </button>
+
+              {/* Values & Amenities */}
+              <button
+                className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
+                type="button"
+                onClick={() => router.push(`${editBaseUrl}/values`)}
+              >
+                <div className="flex flex-1 flex-col gap-1 items-start">
+                  <span className="text-xs font-normal text-[#999999] leading-[15px]">Values & Amenities</span>
+                  <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
+                    {(['muslimOwned', 'familyFriendly', 'womenFriendly', 'childrenFriendly', 'hasPrayerSpace', 'hasParking', 'makesDonations', 'economicSolidarity'] as const)
+                      .filter(k => formData[k])
+                      .length > 0
+                      ? 'Configured'
+                      : 'Set values & amenities'}
+                  </div>
+                </div>
+                <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+              </button>
+
+              {/* Enrichment Review — only in admin context */}
+              {reviewFooterActions && (
+                <button
+                  className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
+                  type="button"
+                  onClick={() => router.push(`${editBaseUrl}/enrichment`)}
+                >
+                  <div className="flex flex-1 flex-col gap-1 items-start">
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Enrichment Review</span>
+                    <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
+                      Review enrichment candidates
+                    </div>
+                  </div>
+                  <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

@@ -5,6 +5,7 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { sanitizeTextInput } from '@/utils/sanitizeInput';
+import type { AdminProviderWithExtensions } from '@/types/adminProvider';
 
 // Provider type matching the database schema
 interface Provider {
@@ -158,18 +159,27 @@ export async function updateProviderReview(
 /**
  * Get a single provider by ID for admin editing.
  * Uses service-role to bypass RLS (can load non-approved providers).
+ * Plan 145: Left-joins extension tables (food_providers, store_providers),
+ * food_menu, and provider_delivery_links for the edit form.
  */
-export async function getProviderForAdmin(providerId: string): Promise<Provider | null> {
+export async function getProviderForAdmin(providerId: string): Promise<AdminProviderWithExtensions | null> {
   const supabase = getSupabaseAdmin();
 
   const { data: rows, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select(`
+      *,
+      category:categories(name_de, name_en, category_images),
+      food_providers(*),
+      store_providers(*),
+      food_menu(*),
+      provider_delivery_links(*)
+    `)
     .eq('provider_id', providerId);
 
   if (error) {
     throw new Error(`Failed to fetch provider: ${error.message}`);
   }
 
-  return (rows as Provider[] | null)?.[0] ?? null;
+  return (rows as AdminProviderWithExtensions[] | null)?.[0] ?? null;
 }

@@ -109,9 +109,26 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       contactPhone: formData.phone || null,
       socialWebsite: formData.website || null,
       socialInstagram: formData.instagram || null,
-      offersIds: formData.selectedOfferIds,
-      needsIds: formData.selectedNeedIds,
       communityServiceIds: formData.selectedCommunityServiceIds,
+
+      // New fields
+      menuItems: formData.menuItems,
+      deliveryLinks: formData.deliveryLinks,
+      openingHours: formData.openingHours || null,
+      verificationMethod: formData.verificationMethod,
+      hasCertificate: formData.hasCertificate,
+      certificateUrl: formData.certificateUrl || null,
+      muslimOwned: formData.muslimOwned,
+      hasPrayerSpace: formData.hasPrayerSpace,
+      familyFriendly: formData.familyFriendly,
+      womenFriendly: formData.womenFriendly,
+      childrenFriendly: formData.childrenFriendly,
+      makesDonations: formData.makesDonations,
+      hasParking: formData.hasParking,
+      economicSolidarity: formData.economicSolidarity,
+      noAlcohol: formData.noAlcohol,
+      noPork: formData.noPork,
+      noGambling: formData.noGambling,
     };
 
     // Only include providerImages if normalisation returned a value

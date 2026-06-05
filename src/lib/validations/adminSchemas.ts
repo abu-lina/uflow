@@ -30,6 +30,23 @@ export const providerReviewUpdateSchema = z.object({
   },
 );
 
+const menuItemSchema = z.object({
+  name_de: z.string().min(1),
+  name_en: z.string().optional(),
+  description_de: z.string().optional(),
+  price_cents: z.number().int().min(0),
+  category: z.string().optional(),
+  sort_order: z.number().int().min(0),
+  is_available: z.boolean(),
+});
+
+const deliveryLinkSchema = z.object({
+  platform: z.enum(['wolt', 'lieferando', 'ubereats']),
+  platform_url: z.string().url(),
+  platform_slug: z.string().optional(),
+  is_active: z.boolean(),
+});
+
 /**
  * Provider edit update schema (admin/moderator editing provider fields)
  */
@@ -63,9 +80,24 @@ export const providerEditUpdateSchema = z.object({
       },
       { message: 'providerImages must be valid JSON with shape { urls: string[] }' }
     ),
-  offersIds: z.array(z.string().uuid()).optional(),
-  needsIds: z.array(z.string().uuid()).optional(),
   communityServiceIds: z.array(z.string().uuid()).optional(),
+  openingHours: z.any().optional(),
+  verificationMethod: z.enum(['online', 'onsite']).nullable().optional(),
+  hasCertificate: z.boolean().optional(),
+  certificateUrl: z.string().url().max(2000).nullable().optional(),
+  noAlcohol: z.boolean().optional(),
+  noPork: z.boolean().optional(),
+  noGambling: z.boolean().optional(),
+  muslimOwned: z.boolean().optional(),
+  hasPrayerSpace: z.boolean().optional(),
+  familyFriendly: z.boolean().optional(),
+  womenFriendly: z.boolean().optional(),
+  childrenFriendly: z.boolean().optional(),
+  makesDonations: z.boolean().optional(),
+  hasParking: z.boolean().optional(),
+  economicSolidarity: z.boolean().optional(),
+  menuItems: z.array(menuItemSchema).optional(),
+  deliveryLinks: z.array(deliveryLinkSchema).optional(),
 });
 
 /**
@@ -90,8 +122,6 @@ export const communityServiceEditUpdateSchema = z.object({
   socialWebsite: z.string().url().max(2000).nullable().optional(),
   socialInstagram: z.string().max(200).nullable().optional(),
   communityServiceImages: z.array(z.string().url()).max(20).nullable().optional(),
-  offersIds: z.array(z.string().uuid()).optional(),
-  needsIds: z.array(z.string().uuid()).optional(),
 });
 
 /**

@@ -1,48 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock supabase admin client
-const mockSelect = vi.fn();
-const mockEq = vi.fn();
-const mockUpdate = vi.fn();
-const mockFrom = vi.fn();
-const mockSingle = vi.fn();
+const mockRpc = vi.fn();
 
 vi.mock('@/lib/supabase/admin', () => ({
   getSupabaseAdmin: () => ({
-    from: mockFrom,
+    rpc: mockRpc,
   }),
 }));
 
-vi.mock('@/utils/sanitizeInput', () => ({
-  sanitizeTextInput: (text: string) => text,
-}));
-
-import { updateProviderFields, type AdminProviderEditData } from '@/services/admin/providerEdit';
+import { updateProviderFields, type AdminProviderEditData, buildBasicFieldsPayload } from '@/services/admin/providerEdit';
 
 describe('updateProviderFields', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Default chain: from().update().eq().select()
-    mockSelect.mockResolvedValue({ data: [], error: null });
-    mockEq.mockReturnValue({ eq: mockEq, select: mockSelect });
-    mockUpdate.mockReturnValue({ eq: mockEq });
-    mockFrom.mockReturnValue({ update: mockUpdate, select: mockSingle });
   });
 
   const validProviderId = '123e4567-e89b-12d3-a456-426614174000';
   const validAdminId = '223e4567-e89b-12d3-a456-426614174001';
 
-  it('updates provider fields via service-role client', async () => {
-    const mockProvider = {
-      provider_id: validProviderId,
-      provider_name: 'Updated Name',
-      provider_description: 'Updated description',
-      review_status: 'pending',
-      updated_at: new Date().toISOString(),
-    };
-
-    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
+  it('calls admin_update_provider RPC with correct payload', async () => {
+    mockRpc.mockResolvedValue({ data: { provider_id: validProviderId, provider_name: 'Updated Name' }, error: null });
 
     const editData: AdminProviderEditData = {
       providerName: 'Updated Name',
@@ -51,18 +28,20 @@ describe('updateProviderFields', () => {
 
     const result = await updateProviderFields(validProviderId, editData, validAdminId);
 
-    expect(result).toEqual(mockProvider);
-    expect(mockFrom).toHaveBeenCalledWith('providers');
-    expect(mockUpdate).toHaveBeenCalled();
+    expect(result).toEqual({ provider_id: validProviderId, provider_name: 'Updated Name' });
+    expect(mockRpc).toHaveBeenCalledWith('admin_update_provider', {
+      p_provider_id: validProviderId,
+      p_data: expect.objectContaining({
+        providers: expect.objectContaining({
+          provider_name: 'Updated Name',
+          provider_description: 'Updated description',
+        }),
+      }),
+    });
   });
 
-  it('includes all provided fields in the update payload', async () => {
-    const mockProvider = {
-      provider_id: validProviderId,
-      provider_name: 'Test',
-      updated_at: new Date().toISOString(),
-    };
-    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
+  it('includes all provided fields in the RPC payload', async () => {
+    mockRpc.mockResolvedValue({ data: { provider_id: validProviderId }, error: null });
 
     const editData: AdminProviderEditData = {
       providerName: 'Test Provider',
@@ -81,9 +60,8 @@ describe('updateProviderFields', () => {
 
     await updateProviderFields(validProviderId, editData, validAdminId);
 
-    // Verify update was called with the right data
-    const updatePayload = mockUpdate.mock.calls[0][0];
-    expect(updatePayload).toMatchObject({
+    const rpcPayload = mockRpc.mock.calls[0][1].p_data;
+    expect(rpcPayload.providers).toMatchObject({
       provider_name: 'Test Provider',
       provider_description: 'A description',
       category_id: 'cat-123',
@@ -97,111 +75,74 @@ describe('updateProviderFields', () => {
       social_instagram: '@example',
       provider_images: '{"urls":[]}',
     });
-    expect(updatePayload.updated_at).toBeDefined();
   });
 
-  it('throws error when provider is not found', async () => {
-    mockSelect.mockResolvedValue({ data: [], error: null });
+  it('throws error when RPC returns an error', async () => {
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'DB error' } });
+
+    await expect(
+      updateProviderFields(validProviderId, { providerName: 'Test' }, validAdminId)
+    ).rejects.toThrow('DB error');
+  });
+
+  it('throws error when RPC returns no data', async () => {
+    mockRpc.mockResolvedValue({ data: null, error: null });
 
     await expect(
       updateProviderFields(validProviderId, { providerName: 'Test' }, validAdminId)
     ).rejects.toThrow('Provider not found');
   });
 
-  it('throws error when database update fails', async () => {
-    mockSelect.mockResolvedValue({ data: null, error: { message: 'DB error' } });
+  it('buildBasicFieldsPayload only includes defined fields', async () => {
+    mockRpc.mockResolvedValue({ data: { provider_id: validProviderId }, error: null });
 
-    await expect(
-      updateProviderFields(validProviderId, { providerName: 'Test' }, validAdminId)
-    ).rejects.toThrow('Failed to update provider');
+    await updateProviderFields(validProviderId, { providerName: 'Name Only' }, validAdminId);
+
+    const rpcPayload = mockRpc.mock.calls[0][1].p_data;
+    expect(rpcPayload.providers.provider_name).toBe('Name Only');
+    expect(rpcPayload.providers).not.toHaveProperty('address_street');
+    expect(rpcPayload.providers).not.toHaveProperty('category_id');
   });
 
-  it('sanitizes text fields before saving', async () => {
-    const mockProvider = {
-      provider_id: validProviderId,
-      provider_name: 'Clean Name',
-      updated_at: new Date().toISOString(),
-    };
-    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
+  it('includes listing_type when explicitly provided', async () => {
+    mockRpc.mockResolvedValue({ data: { provider_id: validProviderId }, error: null });
 
-    await updateProviderFields(
-      validProviderId,
-      { providerName: '<script>alert("xss")</script>Clean Name' },
-      validAdminId
-    );
+    await updateProviderFields(validProviderId, { providerName: 'Name Only', listingType: 'store' }, validAdminId);
 
-    // sanitizeTextInput is mocked to pass-through, but verify it was called
-    const updatePayload = mockUpdate.mock.calls[0][0];
-    expect(updatePayload.provider_name).toBeDefined();
-  });
-
-  it('only includes defined fields in the update (partial updates)', async () => {
-    const mockProvider = {
-      provider_id: validProviderId,
-      provider_name: 'Name Only',
-      updated_at: new Date().toISOString(),
-    };
-    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
-
-    await updateProviderFields(
-      validProviderId,
-      { providerName: 'Name Only' },
-      validAdminId
-    );
-
-    const updatePayload = mockUpdate.mock.calls[0][0];
-    expect(updatePayload.provider_name).toBe('Name Only');
-    expect(updatePayload.updated_at).toBeDefined();
-    // Fields not provided should not be in the payload
-    expect(updatePayload).not.toHaveProperty('address_street');
-    expect(updatePayload).not.toHaveProperty('category_id');
-  });
-
-  it('includes listing_type when explicitly provided by admin edit flow', async () => {
-    const mockProvider = {
-      provider_id: validProviderId,
-      provider_name: 'Name Only',
-      updated_at: new Date().toISOString(),
-    };
-    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
-
-    await updateProviderFields(
-      validProviderId,
-      {
-        providerName: 'Name Only',
-        listingType: 'store',
-      } as AdminProviderEditData & { listingType: 'food' | 'store' | 'ummah' | null },
-      validAdminId
-    );
-
-    const updatePayload = mockUpdate.mock.calls[0][0];
-    expect(updatePayload).toMatchObject({
+    const rpcPayload = mockRpc.mock.calls[0][1].p_data;
+    expect(rpcPayload.providers).toMatchObject({
       provider_name: 'Name Only',
       listing_type: 'store',
     });
   });
 
-  it('allows ummah as listing_type in admin edit payload', async () => {
-    const mockProvider = {
-      provider_id: validProviderId,
-      provider_name: 'Name Only',
-      updated_at: new Date().toISOString(),
-    };
-    mockSelect.mockResolvedValue({ data: [mockProvider], error: null });
+  it('includes listing_type ummah in payload', async () => {
+    mockRpc.mockResolvedValue({ data: { provider_id: validProviderId }, error: null });
 
-    await updateProviderFields(
-      validProviderId,
-      {
-        providerName: 'Name Only',
-        listingType: 'ummah',
-      },
-      validAdminId
-    );
+    await updateProviderFields(validProviderId, { providerName: 'Name Only', listingType: 'ummah' }, validAdminId);
 
-    const updatePayload = mockUpdate.mock.calls[0][0];
-    expect(updatePayload).toMatchObject({
+    const rpcPayload = mockRpc.mock.calls[0][1].p_data;
+    expect(rpcPayload.providers).toMatchObject({
       provider_name: 'Name Only',
       listing_type: 'ummah',
+    });
+  });
+});
+
+describe('buildBasicFieldsPayload', () => {
+  it('builds correct snake_case payload from camelCase input', () => {
+    const result = buildBasicFieldsPayload({
+      providerName: 'Test',
+      providerDescription: 'Desc',
+      categoryId: 'cat-1',
+      listingType: 'food',
+    });
+
+    expect(result).toEqual({
+      provider_name: 'Test',
+      provider_description: 'Desc',
+      category_id: 'cat-1',
+      listing_type: 'food',
     });
   });
 });

@@ -30,7 +30,12 @@ interface PaginationInfo {
   hasMore: boolean;
 }
 
-export function EnrichmentReviewPanel() {
+interface EnrichmentReviewPanelProps {
+  /** When set, filters candidates to a single provider */
+  providerId?: string;
+}
+
+export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps) {
   const [candidates, setCandidates] = useState<EnrichmentCandidate[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +46,9 @@ export function EnrichmentReviewPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/enrichment/candidates?limit=50&offset=${offset}`);
+      const queryParams = new URLSearchParams({ limit: '50', offset: String(offset) });
+      if (providerId) queryParams.set('providerId', providerId);
+      const res = await fetch(`/api/admin/enrichment/candidates?${queryParams}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? `HTTP ${res.status}`);

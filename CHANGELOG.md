@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-06-01
 
+### Added
+
+- **Provider edit page rebuild (Plan 145)**: Complete overhaul of the admin provider edit form. Added 6 new sections:
+  - **Menu**: Structured dish list with name, price, category, availability (food providers only)
+  - **Halal Check**: 3-tier selector (Bronze=online, Silver=onsite, Gold=certified)
+  - **Certificate Upload**: PDF/image upload to Supabase Storage (max 5MB)
+  - **Delivery Links**: Manage Wolt, Lieferando, UberEats URLs per provider
+  - **Opening Hours**: 7-day editor with open/close times and closed-all-day toggle
+  - **Values & Amenities**: Toggle switches for 11 booleans (muslim_owned, prayer_space, etc.)
+- **Enrichment Review pages**: Standalone dashboard at `/dashboard/enrichment` and per-provider sub-page in edit form
+- **admin_update_provider RPC**: Atomic multi-table writes via Supabase RPC (transaction-safe)
+- **New admin API endpoints**: `GET /api/admin/providers/:id/menu`, `GET /api/admin/providers/:id/delivery-links`, `POST /api/admin/upload-certificate`
+
+### Removed
+
+- **Deprecated offers/needs**: Removed from edit form (columns already dropped from DB)
+- **Redundant migration**: Merged `delivery_platform_links.sql` into Plan 145 migration
+
+
 ### Changed
 
 - **Halal Check trust model rework (Plan 133 + Plan 134)**: Provider detail now presents a clearer trust hierarchy. `HalalTrustBanner` remains the baseline gate above detail sections, while the `Halal Check` section shows tiered platform verification in `ProofTierCard` followed by supporting provider attestation rows.

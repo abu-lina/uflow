@@ -5,10 +5,12 @@
  * Write model decision: Uses service-role (getSupabaseAdmin) for consistency
  * with Plan 058's admin read path. The server boundary validates admin
  * authorization before any write, so bypassing RLS is controlled.
+ *
+ * Plan 145: All multi-table writes are wrapped in the admin_update_provider
+ * RPC function for atomic transaction safety.
  */
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { sanitizeTextInput } from '@/utils/sanitizeInput';
 
 export interface AdminProviderEditData {
   providerName?: string;
@@ -24,14 +26,169 @@ export interface AdminProviderEditData {
   socialWebsite?: string | null;
   socialInstagram?: string | null;
   providerImages?: string | null;
-  offersIds?: string[];
-  needsIds?: string[];
   communityServiceIds?: string[];
+  openingHours?: Record<string, unknown> | null;
+  verificationMethod?: 'online' | 'onsite' | null;
+  hasCertificate?: boolean;
+  certificateUrl?: string | null;
+  noAlcohol?: boolean;
+  noPork?: boolean;
+  noGambling?: boolean;
+  muslimOwned?: boolean;
+  hasPrayerSpace?: boolean;
+  familyFriendly?: boolean;
+  womenFriendly?: boolean;
+  childrenFriendly?: boolean;
+  makesDonations?: boolean;
+  hasParking?: boolean;
+  economicSolidarity?: boolean;
+  menuItems?: Array<{
+    name_de: string;
+    name_en?: string;
+    description_de?: string;
+    price_cents: number;
+    category?: string;
+    sort_order: number;
+    is_available: boolean;
+  }>;
+  deliveryLinks?: Array<{
+    platform: 'wolt' | 'lieferando' | 'ubereats';
+    platform_url: string;
+    platform_slug?: string;
+    is_active: boolean;
+  }>;
+}
+
+export function buildBasicFieldsPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+
+  if (data.providerName !== undefined) payload.provider_name = data.providerName;
+  if (data.providerDescription !== undefined) payload.provider_description = data.providerDescription;
+  if (data.categoryId !== undefined) payload.category_id = data.categoryId;
+  if (data.listingType !== undefined) payload.listing_type = data.listingType;
+  if (data.addressStreet !== undefined) payload.address_street = data.addressStreet;
+  if (data.addressZip !== undefined) payload.address_zip = data.addressZip;
+  if (data.addressCity !== undefined) payload.address_city = data.addressCity;
+  if (data.addressCountry !== undefined) payload.address_country = data.addressCountry;
+  if (data.contactEmail !== undefined) payload.contact_email = data.contactEmail;
+  if (data.contactPhone !== undefined) payload.contact_phone = data.contactPhone;
+  if (data.socialWebsite !== undefined) payload.social_website = data.socialWebsite;
+  if (data.socialInstagram !== undefined) payload.social_instagram = data.socialInstagram;
+  if (data.providerImages !== undefined) payload.provider_images = data.providerImages;
+  if (data.openingHours !== undefined) payload.opening_hours = data.openingHours;
+
+  return payload;
+}
+
+export function buildExtensionFieldsPayload(
+  data: Partial<AdminProviderEditData>,
+  listingType?: 'food' | 'store' | string | null
+): Record<string, unknown> {
+  const hasExtensionFields =
+    data.verificationMethod !== undefined ||
+    data.hasCertificate !== undefined ||
+    data.certificateUrl !== undefined ||
+    data.noAlcohol !== undefined ||
+    data.noPork !== undefined ||
+    data.noGambling !== undefined;
+
+  if (!hasExtensionFields) return {};
+
+  const ext: Record<string, unknown> = {};
+
+  if (data.verificationMethod !== undefined) ext.verification_method = data.verificationMethod;
+  if (data.hasCertificate !== undefined) ext.has_certificate = data.hasCertificate;
+  if (data.certificateUrl !== undefined) ext.certificate_url = data.certificateUrl;
+  if (data.noAlcohol !== undefined) ext.no_alcohol = data.noAlcohol;
+  if (data.noPork !== undefined) ext.no_pork = data.noPork;
+  if (data.noGambling !== undefined) ext.no_gambling = data.noGambling;
+
+  if (listingType === 'food') {
+    return { food_providers: ext };
+  }
+  if (listingType === 'store') {
+    // Store only has no_gambling of the three booleans
+    const storeExt: Record<string, unknown> = { ...ext };
+    delete storeExt.no_alcohol;
+    delete storeExt.no_pork;
+    return { store_providers: storeExt };
+  }
+
+  return {};
+}
+
+export function buildAmenitiesPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+
+  if (data.muslimOwned !== undefined) payload.muslim_owned = data.muslimOwned;
+  if (data.hasPrayerSpace !== undefined) payload.has_prayer_space = data.hasPrayerSpace;
+  if (data.familyFriendly !== undefined) payload.family_friendly = data.familyFriendly;
+  if (data.womenFriendly !== undefined) payload.women_friendly = data.womenFriendly;
+  if (data.childrenFriendly !== undefined) payload.children_friendly = data.childrenFriendly;
+  if (data.makesDonations !== undefined) payload.makes_donations = data.makesDonations;
+  if (data.hasParking !== undefined) payload.has_parking = data.hasParking;
+  if (data.economicSolidarity !== undefined) payload.economic_solidarity = data.economicSolidarity;
+
+  return payload;
+}
+
+export function buildMenuPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+  if (data.menuItems === undefined) return {};
+  return { menu_items: data.menuItems };
+}
+
+export function buildDeliveryLinksPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+  if (data.deliveryLinks === undefined) return {};
+  return { delivery_links: data.deliveryLinks };
+}
+
+export function buildCommunityServicePayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+  if (data.communityServiceIds === undefined) return {};
+  return { community_service_ids: data.communityServiceIds };
+}
+
+function buildRpcPayload(
+  editData: AdminProviderEditData,
+  listingType?: 'food' | 'store' | string | null
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+
+  const basicFields = buildBasicFieldsPayload(editData);
+  if (Object.keys(basicFields).length > 0) {
+    payload.providers = basicFields;
+  }
+
+  const amenities = buildAmenitiesPayload(editData);
+  if (Object.keys(amenities).length > 0) {
+    payload.providers = { ...(payload.providers as Record<string, unknown> || {}), ...amenities };
+  }
+
+  const extensions = buildExtensionFieldsPayload(editData, listingType);
+  if (Object.keys(extensions).length > 0) {
+    Object.assign(payload, extensions);
+  }
+
+  const menu = buildMenuPayload(editData);
+  if (Object.keys(menu).length > 0) {
+    Object.assign(payload, menu);
+  }
+
+  const delivery = buildDeliveryLinksPayload(editData);
+  if (Object.keys(delivery).length > 0) {
+    Object.assign(payload, delivery);
+  }
+
+  const communityService = buildCommunityServicePayload(editData);
+  if (Object.keys(communityService).length > 0) {
+    Object.assign(payload, communityService);
+  }
+
+  return payload;
 }
 
 /**
  * Update provider fields as admin/moderator.
- * Only includes fields that are explicitly provided in editData (partial update).
+ * Uses the admin_update_provider RPC function for atomic multi-table writes.
  */
 export async function updateProviderFields(
   providerId: string,
@@ -40,155 +197,21 @@ export async function updateProviderFields(
 ): Promise<Record<string, unknown>> {
   const supabase = getSupabaseAdmin();
 
-  // Build update payload from only the provided fields
-  const updatePayload: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-  };
+  const rpcPayload = buildRpcPayload(editData, editData.listingType);
 
-  if (editData.providerName !== undefined) {
-    updatePayload.provider_name = sanitizeTextInput(editData.providerName);
-  }
-  if (editData.providerDescription !== undefined) {
-    updatePayload.provider_description = editData.providerDescription
-      ? sanitizeTextInput(editData.providerDescription)
-      : null;
-  }
-  if (editData.categoryId !== undefined) {
-    updatePayload.category_id = editData.categoryId;
-  }
-  if (editData.listingType !== undefined) {
-    updatePayload.listing_type = editData.listingType;
-  }
-  if (editData.addressStreet !== undefined) {
-    updatePayload.address_street = editData.addressStreet
-      ? sanitizeTextInput(editData.addressStreet)
-      : null;
-  }
-  if (editData.addressZip !== undefined) {
-    updatePayload.address_zip = editData.addressZip
-      ? sanitizeTextInput(editData.addressZip)
-      : null;
-  }
-  if (editData.addressCity !== undefined) {
-    updatePayload.address_city = editData.addressCity
-      ? sanitizeTextInput(editData.addressCity)
-      : null;
-  }
-  if (editData.addressCountry !== undefined) {
-    updatePayload.address_country = editData.addressCountry
-      ? sanitizeTextInput(editData.addressCountry)
-      : null;
-  }
-  if (editData.contactEmail !== undefined) {
-    updatePayload.contact_email = editData.contactEmail
-      ? sanitizeTextInput(editData.contactEmail)
-      : null;
-  }
-  if (editData.contactPhone !== undefined) {
-    updatePayload.contact_phone = editData.contactPhone
-      ? sanitizeTextInput(editData.contactPhone)
-      : null;
-  }
-  if (editData.socialWebsite !== undefined) {
-    updatePayload.social_website = editData.socialWebsite
-      ? sanitizeTextInput(editData.socialWebsite)
-      : null;
-  }
-  if (editData.socialInstagram !== undefined) {
-    updatePayload.social_instagram = editData.socialInstagram
-      ? sanitizeTextInput(editData.socialInstagram)
-      : null;
-  }
-  if (editData.providerImages !== undefined) {
-    // providerImages is validated at the schema layer (Plan 060 M-1)
-    updatePayload.provider_images = editData.providerImages
-      ? sanitizeTextInput(editData.providerImages)
-      : null;
-  }
-
-  if (editData.offersIds !== undefined) {
-    const { error: clearOffersError } = await supabase
-      .from('provider_offers')
-      .delete()
-      .eq('provider_id', providerId);
-
-    if (clearOffersError) {
-      throw new Error(`Failed to clear provider offers: ${clearOffersError.message}`);
-    }
-
-    if (editData.offersIds.length > 0) {
-      const offerRows = editData.offersIds.map((offerId) => ({ provider_id: providerId, offer_id: offerId }));
-      const { error: insertOffersError } = await supabase.from('provider_offers').insert(offerRows);
-      if (insertOffersError) {
-        throw new Error(`Failed to update provider offers: ${insertOffersError.message}`);
-      }
-    }
-  }
-
-  if (editData.needsIds !== undefined) {
-    const { error: clearNeedsError } = await supabase
-      .from('provider_needs')
-      .delete()
-      .eq('provider_id', providerId);
-
-    if (clearNeedsError) {
-      throw new Error(`Failed to clear provider needs: ${clearNeedsError.message}`);
-    }
-
-    if (editData.needsIds.length > 0) {
-      const needRows = editData.needsIds.map((needId) => ({ provider_id: providerId, need_id: needId }));
-      const { error: insertNeedsError } = await supabase.from('provider_needs').insert(needRows);
-      if (insertNeedsError) {
-        throw new Error(`Failed to update provider needs: ${insertNeedsError.message}`);
-      }
-    }
-  }
-
-  // Update community service relationships via provider_engagements
-  // M-5a: provider_community_services dropped; now use provider_engagements
-  if (editData.communityServiceIds !== undefined) {
-    // Delete existing engagement relationships
-    const { error: deleteError } = await supabase
-      .from('provider_engagements')
-      .delete()
-      .eq('initiating_provider_id', providerId);
-
-    if (deleteError) {
-      throw new Error(`Failed to clear community services: ${deleteError.message}`);
-    }
-
-    // Insert new relationships
-    if (editData.communityServiceIds.length > 0) {
-      const rows = editData.communityServiceIds.map(serviceId => ({
-        initiating_provider_id: providerId,
-        engaged_provider_id: serviceId,
-        engagement_type: 'support',
-      }));
-      const { error: insertError } = await supabase
-        .from('provider_engagements')
-        .insert(rows);
-
-      if (insertError) {
-        throw new Error(`Failed to update community services: ${insertError.message}`);
-      }
-    }
-  }
-
-  const { data: rows, error } = await supabase
-    .from('providers')
-    .update(updatePayload)
-    .eq('provider_id', providerId)
-    .select();
+  const { data, error } = await supabase
+    .rpc('admin_update_provider', {
+      p_provider_id: providerId,
+      p_data: rpcPayload,
+    });
 
   if (error) {
     throw new Error(`Failed to update provider: ${error.message}`);
   }
 
-  const data = (rows as Record<string, unknown>[] | null)?.[0] ?? null;
-
   if (!data) {
     throw new Error('Provider not found');
   }
 
-  return data;
+  return data as Record<string, unknown>;
 }
