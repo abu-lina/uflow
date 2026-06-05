@@ -129,6 +129,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       noAlcohol: formData.noAlcohol,
       noPork: formData.noPork,
       noGambling: formData.noGambling,
+      reviewStatus: formData.reviewStatus,
     };
 
     // Only include providerImages if normalisation returned a value
@@ -158,10 +159,27 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       };
     };
 
+    // If reviewStatus was changed, sync it via the review-provider API
+    if (formData.reviewStatus && formData.reviewStatus !== provider?.review_status) {
+      const reviewResponse = await fetch('/api/admin/review-provider', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          providerId,
+          reviewStatus: formData.reviewStatus,
+          expectedUpdatedAt: responseData.data?.updated_at,
+        }),
+      });
+
+      if (!reviewResponse.ok) {
+        console.error('Failed to sync review status');
+      }
+    }
+
     return {
       updatedAt: responseData.data?.updated_at,
     };
-  }, [providerId, t]);
+  }, [providerId, provider?.review_status, t]);
 
   const reviewProvider = useCallback(async (reviewStatus: 'approved' | 'rejected', expectedUpdatedAt?: string, reviewFeedback?: string) => {
     const response = await fetch('/api/admin/review-provider', {
@@ -276,6 +294,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         <ProviderEditForm
           enableLocalStorage={true}
           localStoragePrefix="admin_"
+          onSubmitForm={async (formData) => { await saveProviderEdits(formData); }}
           provider={provider}
           reviewFooterActions={{
             reject: {

@@ -121,3 +121,20 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Learning**: When verifying fixes from a rejected review, verify each fix in the source code (not just tests), run the full test suite for the affected module, and run `tsc --noEmit`. The root cause (stats TDZ) was a runtime crash that tests alone wouldn't catch — type checking and code reading were essential.
 - **Change to prevent repeat**: Include `tsc --noEmit` in the verification checklist for re-reviews. Verify each fix at the code level, not just via test output.
 - **Task/PR**: Plan 144 — Wolt Delivery Platform Enrichment
+
+## 2026-06-05 — Plan 145: Provider Edit Page Rebuild
+
+**What happened**: Complete 8-phase pipeline to rebuild the admin provider edit page. Added 6 new sections, removed deprecated offers/needs, created transaction-safe RPC, storage bucket for certificates, and enrichment review pages.
+
+**Key learning**: Migration files in the repo are not the source of truth — the live database can differ significantly. We initially planned based on migration files (which showed `proof_tier`, `halal_level`, `offers_ids`/`needs_ids` columns), but querying Supabase directly revealed these columns were already dropped/renamed. This changed the halal check data model from 3-tier to 2-tier + certificate, and simplified the offers/needs removal (columns already gone). Always query the live database schema early in the analysis phase.
+
+**What worked well**:
+- Breaking the implementation into Foundation (DB + API) and UI (sub-pages + form) chunks kept delegation sizes manageable
+- Architect review caught transaction safety and storage security issues before they reached production
+- Using a Supabase RPC for atomic multi-table writes instead of individual JS-level writes
+
+**What to do differently**: Query live schema in Phase 1 (Analyst) instead of relying on migration files. This would have caught schema drift earlier and saved 2-3 hours of rework.
+
+**Files affected**: 38 files, 5279 insertions, 855 deletions
+**Tests**: 1461 passing, 0 failed
+**Version**: 0.13.0 (unreleased)

@@ -258,7 +258,7 @@ describe('ProviderEditForm regressions', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('[post-fix PASSES] moderation footer replaces generic save with reject and approve actions', () => {
+  it('[post-fix PASSES] moderation footer shows save button instead of reject and approve actions', () => {
     render(
       <ProviderEditForm
         enableLocalStorage={false}
@@ -276,9 +276,9 @@ describe('ProviderEditForm regressions', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Reject' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
   });
 
   it('[pre-fix FAILS] moderation section selector uses translation keys for label and options', () => {
@@ -304,22 +304,22 @@ describe('ProviderEditForm regressions', () => {
     expect(select).toHaveTextContent('Business (i18n)');
   });
 
-  it('[post-fix PASSES] moderation footer sends current form data to the selected action', async () => {
-    const approveAction = vi.fn().mockResolvedValue(undefined);
-    const rejectAction = vi.fn().mockResolvedValue(undefined);
+  it('[post-fix PASSES] save button in admin mode sends current form data to onSubmitForm', async () => {
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
 
     render(
       <ProviderEditForm
         enableLocalStorage={false}
+        onSubmitForm={onSubmitForm}
         provider={baseProvider}
         reviewFooterActions={{
           reject: {
             label: 'Reject',
-            onClick: rejectAction,
+            onClick: vi.fn(),
           },
           approve: {
             label: 'Approve',
-            onClick: approveAction,
+            onClick: vi.fn(),
           },
         }}
       />
@@ -329,26 +329,24 @@ describe('ProviderEditForm regressions', () => {
       target: { value: 'Reviewed and enriched description' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
-      expect(approveAction).toHaveBeenCalledWith(
+      expect(onSubmitForm).toHaveBeenCalledWith(
         expect.objectContaining({
           providerDescription: 'Reviewed and enriched description',
         })
       );
     });
-
-    expect(rejectAction).not.toHaveBeenCalled();
-    expect(mockProviderUpdate).not.toHaveBeenCalled();
   });
 
-  it('[post-fix PASSES] moderation approve is not blocked when provider website is schemeless', async () => {
-    const approveAction = vi.fn().mockResolvedValue(undefined);
+  it('[post-fix PASSES] admin save normalizes schemeless website before submitting to onSubmitForm', async () => {
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
 
     render(
       <ProviderEditForm
         enableLocalStorage={false}
+        onSubmitForm={onSubmitForm}
         provider={{ ...baseProvider, social_website: 'www.example.com' }}
         reviewFooterActions={{
           reject: {
@@ -357,16 +355,16 @@ describe('ProviderEditForm regressions', () => {
           },
           approve: {
             label: 'Approve',
-            onClick: approveAction,
+            onClick: vi.fn().mockResolvedValue(undefined),
           },
         }}
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
-      expect(approveAction).toHaveBeenCalledWith(
+      expect(onSubmitForm).toHaveBeenCalledWith(
         expect.objectContaining({
           website: 'https://www.example.com',
         })
@@ -374,12 +372,13 @@ describe('ProviderEditForm regressions', () => {
     });
   });
 
-  it('[post-fix PASSES] admin moderation flow should allow editing Section (listing_type)', async () => {
-    const approveAction = vi.fn().mockResolvedValue(undefined);
+  it('[post-fix PASSES] admin save should persist listing_type change via onSubmitForm', async () => {
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
 
     render(
       <ProviderEditForm
         enableLocalStorage={false}
+        onSubmitForm={onSubmitForm}
         provider={{ ...baseProvider, listing_type: 'food' }}
         reviewFooterActions={{
           reject: {
@@ -388,7 +387,7 @@ describe('ProviderEditForm regressions', () => {
           },
           approve: {
             label: 'Approve',
-            onClick: approveAction,
+            onClick: vi.fn().mockResolvedValue(undefined),
           },
         }}
       />
@@ -396,10 +395,10 @@ describe('ProviderEditForm regressions', () => {
 
     const sectionSelect = screen.getByLabelText('Section Label (i18n)');
     fireEvent.change(sectionSelect, { target: { value: 'store' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
-      expect(approveAction).toHaveBeenCalledWith(
+      expect(onSubmitForm).toHaveBeenCalledWith(
         expect.objectContaining({
           listingType: 'store',
         })

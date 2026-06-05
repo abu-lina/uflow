@@ -148,7 +148,7 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="flex h-screen-fix flex-col">
       <PageHeader title="Values & Amenities" variant="back-and-title" onBack={() => router.back()} />
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-24 gap-6 overflow-y-auto">
+      <main className="flex flex-1 flex-col px-6 pb-28 pt-24 gap-6 overflow-y-auto">
         {groups.map(group => (
           <div key={group.title} className="flex flex-col gap-3">
             <h3 className="text-sm font-medium text-[#999999]">{group.title}</h3>

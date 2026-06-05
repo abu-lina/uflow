@@ -96,6 +96,7 @@ export interface ProviderEditFormData {
   makesDonations: boolean;
   hasParking: boolean;
   economicSolidarity: boolean;
+  reviewStatus?: string;
 }
 
 export function ProviderEditForm({
@@ -161,6 +162,7 @@ export function ProviderEditForm({
     noAlcohol: false,
     noPork: false,
     noGambling: false,
+    reviewStatus: undefined,
     muslimOwned: (provider as unknown as Record<string, unknown>).muslim_owned as boolean ?? false,
     hasPrayerSpace: (provider as unknown as Record<string, unknown>).has_prayer_space as boolean ?? false,
     familyFriendly: (provider as unknown as Record<string, unknown>).family_friendly as boolean ?? false,
@@ -311,8 +313,8 @@ export function ProviderEditForm({
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     const normalizedWebsite = normalizeWebsiteUrl(formData.website) ?? '';
     const submitData = normalizedWebsite !== formData.website
       ? { ...formData, website: normalizedWebsite }
@@ -322,11 +324,6 @@ export function ProviderEditForm({
       setFormData(submitData);
     }
 
-    // Admin review footer uses explicit approve/reject actions instead of generic form submit.
-    if (reviewFooterActions) {
-      return;
-    }
-    
     // If a custom submit handler is provided (admin context), use it
     if (onSubmitForm) {
       setIsSubmitting(true);
@@ -551,6 +548,29 @@ export function ProviderEditForm({
                   </div>
                 </div>
               )
+            )}
+
+            {/* Review Status — admin only */}
+            {reviewFooterActions && (
+              <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
+                <div className="flex flex-1 flex-col gap-1">
+                  <label className="text-xs font-normal text-[#999999] leading-[15px]" htmlFor="review-status">
+                    Review Status
+                  </label>
+                  <select
+                    aria-label="Review Status"
+                    className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] outline-none bg-transparent p-0"
+                    id="review-status"
+                    value={formData.reviewStatus ?? 'pending'}
+                    onChange={(e) => handleInputChange('reviewStatus', e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="needs_revision">Needs Revision</option>
+                  </select>
+                </div>
+              </div>
             )}
 
           </div>
@@ -972,31 +992,16 @@ export function ProviderEditForm({
           <div className="flex w-full gap-3.5 px-6 pt-4" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
             <Button
               fullWidth
-              aria-label={reviewFooterActions.reject['aria-label'] || reviewFooterActions.reject.label}
               className="!h-[48px] !min-h-[48px] !max-h-[48px]"
               disabled={isSubmitting}
-              loading={isSubmitting && activeFooterAction === 'reject'}
-              loadingText={reviewFooterActions.reject.label}
-              variant={reviewFooterActions.reject.variant || 'danger'}
+              loading={isSubmitting}
+              loadingText="Saving"
+              variant="primary"
               onClick={() => {
-                void handleReviewFooterAction('reject', reviewFooterActions.reject);
+                void handleSubmit();
               }}
             >
-              {reviewFooterActions.reject.label}
-            </Button>
-            <Button
-              fullWidth
-              aria-label={reviewFooterActions.approve['aria-label'] || reviewFooterActions.approve.label}
-              className="!h-[48px] !min-h-[48px] !max-h-[48px]"
-              disabled={isSubmitting}
-              loading={isSubmitting && activeFooterAction === 'approve'}
-              loadingText={reviewFooterActions.approve.label}
-              variant={reviewFooterActions.approve.variant || 'success'}
-              onClick={() => {
-                void handleReviewFooterAction('approve', reviewFooterActions.approve);
-              }}
-            >
-              {reviewFooterActions.approve.label}
+              Save
             </Button>
           </div>
         </footer>
