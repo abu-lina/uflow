@@ -27,7 +27,8 @@ ALTER TABLE public.community_services
 
 -- ─── 4. Update RPC: get_community_services_for_provider ─────────────────────
 -- Remove barakah_effects from RETURNS TABLE and SELECT body.
-CREATE OR REPLACE FUNCTION public.get_community_services_for_provider(provider_uuid uuid)
+DROP FUNCTION IF EXISTS public.get_community_services_for_provider(uuid);
+CREATE FUNCTION public.get_community_services_for_provider(provider_uuid uuid)
 RETURNS TABLE(
   community_service_id uuid,
   community_service_name text,
