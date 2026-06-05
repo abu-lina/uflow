@@ -127,17 +127,12 @@ BEGIN
     UPDATE public.providers SET
       provider_name       = COALESCE(v_providers->>'provider_name', provider_name),
       provider_description = COALESCE(v_providers->>'provider_description', provider_description),
-      category_id         = COALESCE(
-        CASE WHEN v_providers ? 'category_id'
-          THEN NULLIF(v_providers->>'category_id', '')::uuid
-          ELSE category_id::text
-        END::uuid,
-        category_id
-      ),
-      listing_type        = COALESCE(
-        NULLIF(v_providers->>'listing_type', '')::text,
-        listing_type
-      ),
+      category_id         = CASE WHEN v_providers ? 'category_id'
+                            THEN NULLIF(v_providers->>'category_id', '')::uuid
+                            ELSE category_id END,
+      listing_type        = CASE WHEN v_providers ? 'listing_type'
+                            THEN NULLIF(v_providers->>'listing_type', '')::listing_type_enum
+                            ELSE listing_type END,
       address_street      = COALESCE(v_providers->>'address_street', address_street),
       address_zip         = COALESCE(v_providers->>'address_zip', address_zip),
       address_city        = COALESCE(v_providers->>'address_city', address_city),
@@ -146,14 +141,12 @@ BEGIN
       contact_phone       = COALESCE(v_providers->>'contact_phone', contact_phone),
       social_website      = COALESCE(v_providers->>'social_website', social_website),
       social_instagram    = COALESCE(v_providers->>'social_instagram', social_instagram),
-      provider_images     = COALESCE(v_providers->>'provider_images', provider_images),
-      opening_hours       = COALESCE(
-        CASE WHEN v_providers ? 'opening_hours'
-          THEN v_providers->'opening_hours'
-          ELSE to_jsonb(opening_hours)
-        END,
-        to_jsonb(opening_hours)
-      ),
+      provider_images     = CASE WHEN v_providers ? 'provider_images'
+                            THEN v_providers->'provider_images'
+                            ELSE provider_images END,
+      opening_hours       = CASE WHEN v_providers ? 'opening_hours'
+                            THEN v_providers->'opening_hours'
+                            ELSE opening_hours END,
       muslim_owned        = COALESCE((v_providers->>'muslim_owned')::boolean, muslim_owned),
       has_prayer_space    = COALESCE((v_providers->>'has_prayer_space')::boolean, has_prayer_space),
       family_friendly     = COALESCE((v_providers->>'family_friendly')::boolean, family_friendly),
