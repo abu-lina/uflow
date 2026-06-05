@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import CitySelectionPage from './page';
+import CitySelectionClient from './CitySelectionClient';
 
 const mockPush = vi.fn();
 
@@ -90,7 +90,7 @@ vi.mock('@/lib/utils/onboarding-state', () => ({
   setOnboardingState: vi.fn(),
 }));
 
-describe('CitySelectionPage redirect behavior', () => {
+describe('CitySelectionClient redirect behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -110,11 +110,27 @@ describe('CitySelectionPage redirect behavior', () => {
   });
 
   it('[post-fix PASSES] routes to / after selecting city and pressing CTA', () => {
-    render(<CitySelectionPage />);
+    render(<CitySelectionClient />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Berlin, 10 providers' }));
     fireEvent.click(screen.getByRole('button', { name: 'Show city' }));
 
     expect(mockPush).toHaveBeenCalledWith('/');
+  });
+
+  it('[post-fix PASSES] renders cities when initialCities prop is provided', () => {
+    render(<CitySelectionClient initialCities={[]} />);
+
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
+    expect(screen.getByText('Frankfurt')).toBeInTheDocument();
+    expect(screen.getByText('Stuttgart')).toBeInTheDocument();
+  });
+
+  it('[post-fix PASSES] works without initialCities prop (backward compatible)', () => {
+    render(<CitySelectionClient />);
+
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
+    expect(screen.getByText('Frankfurt')).toBeInTheDocument();
+    expect(screen.getByText('Stuttgart')).toBeInTheDocument();
   });
 });
