@@ -946,6 +946,7 @@ export const ur = {
     "sections": {
       "valuesAmenities": "اقدار اور سہولیات",
       "menu": "مینیو",
+      "offers": "پیشکش",
       "openingHours": "اوقاتِ کار",
       "nearby": "قریب"
     },
@@ -1039,6 +1040,7 @@ export const ur = {
       "noOpeningHours": "اوقاتِ کار دستیاب نہیں ہیں۔",
       "noValuesAmenities": "اقدار یا سہولیات دستیاب نہیں۔",
       "noMenu": "مینیو آئٹمز دستیاب نہیں۔",
+      "noOffers": "کوئی پیشکش دستیاب نہیں۔",
       "noNearby": "قریب کوئی فراہم کنندہ نہیں ملا۔"
     },
     "loading": {

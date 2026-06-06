@@ -8,6 +8,7 @@ import {
   HeartHandshake,
   MapPin,
   Moon,
+  Tag,
   UtensilsCrossed,
   Users,
 } from 'lucide-react';
@@ -218,18 +219,19 @@ export function ProviderDetailSections({
         </div>
       </ExpandSection>
 
-      <ExpandSection title={t('providerDetail.sections.menu')}>
+      {/* Menu (food) — Offers (store) */}
+      <ExpandSection title={t(provider.listing_type === 'store' ? 'providerDetail.sections.offers' : 'providerDetail.sections.menu')}>
         <div className="space-y-2 pt-3">
           {provider.offers?.length ? (
             provider.offers.map((offer, index) => (
               <DetailListItem
                 key={`${offer.name_de}-${index}`}
-                icon={<UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
+                icon={provider.listing_type === 'store' ? <Tag aria-hidden="true" className="h-6 w-6" /> : <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
                 label={offer.name_de}
               />
             ))
           ) : (
-            <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noMenu')}</p>
+            <p className="text-sm text-[#7a7a7a]">{t(provider.listing_type === 'store' ? 'providerDetail.empty.noOffers' : 'providerDetail.empty.noMenu')}</p>
           )}
         </div>
       </ExpandSection>

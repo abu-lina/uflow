@@ -946,6 +946,7 @@ export const en = {
     "sections": {
       "valuesAmenities": "Values & Amenities",
       "menu": "Menu",
+      "offers": "Offers",
       "openingHours": "Opening Hours",
       "nearby": "Nearby"
     },
@@ -1038,6 +1039,7 @@ export const en = {
       "noOpeningHours": "No opening hours available.",
       "noValuesAmenities": "No values or amenities available.",
       "noMenu": "No menu items available.",
+      "noOffers": "No offers available.",
       "noNearby": "No nearby restaurants found."
     },
     "loading": {

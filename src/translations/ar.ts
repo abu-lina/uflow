@@ -946,6 +946,7 @@ export const ar = {
     "sections": {
       "valuesAmenities": "القيم والمرافق",
       "menu": "القائمة",
+      "offers": "العروض",
       "openingHours": "ساعات العمل",
       "nearby": "بالقرب"
     },
@@ -1039,6 +1040,7 @@ export const ar = {
       "noOpeningHours": "لا توجد ساعات عمل متاحة.",
       "noValuesAmenities": "لا توجد قيم أو مرافق متاحة.",
       "noMenu": "لا توجد عناصر قائمة متاحة.",
+      "noOffers": "لا توجد عروض متاحة.",
       "noNearby": "لم يتم العثور على مزودين قريبين."
     },
     "loading": {

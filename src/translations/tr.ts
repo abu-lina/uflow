@@ -946,6 +946,7 @@ export const tr = {
     "sections": {
       "valuesAmenities": "Değerler ve Olanaklar",
       "menu": "Menü",
+      "offers": "Teklifler",
       "openingHours": "Çalışma Saatleri",
       "nearby": "Yakında"
     },
@@ -1039,6 +1040,7 @@ export const tr = {
       "noOpeningHours": "Çalışma saatleri mevcut değil.",
       "noValuesAmenities": "Değer veya olanak bulunamadı.",
       "noMenu": "Menü öğesi bulunamadı.",
+      "noOffers": "Teklif bulunamadı.",
       "noNearby": "Yakında sağlayıcı bulunamadı."
     },
     "loading": {
