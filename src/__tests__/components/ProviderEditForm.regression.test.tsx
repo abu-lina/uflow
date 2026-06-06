@@ -489,3 +489,130 @@ describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
     });
   });
 });
+
+describe('ProviderEditForm inline localStorage (Plan 152)', () => {
+  const pid = baseProvider.provider_id;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+
+    mockCategoriesOrder.mockResolvedValue({ data: [], error: null });
+    mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
+
+    mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
+    mockProviderCommunityServicesSelect.mockReturnValue({ eq: mockProviderCommunityServicesSelectEq });
+
+    mockProviderCommunityServicesDeleteEq.mockResolvedValue({ error: null });
+    mockProviderCommunityServicesDelete.mockReturnValue({ eq: mockProviderCommunityServicesDeleteEq });
+  });
+
+  it('stale empty string in localStorage does NOT overwrite DB value', () => {
+    localStorage.setItem(
+      `admin_edit_inline_${pid}`,
+      JSON.stringify({ instagram: '' })
+    );
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={{
+          ...baseProvider,
+          social_instagram: '@realhandle',
+        }}
+      />
+    );
+
+    const input = screen.getByPlaceholderText('Instagram') as HTMLInputElement;
+    expect(input.value).toBe('@realhandle');
+  });
+
+  it('non-empty localStorage value restores on mount', () => {
+    localStorage.setItem(
+      `admin_edit_inline_${pid}`,
+      JSON.stringify({ instagram: '@saved' })
+    );
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={{
+          ...baseProvider,
+          social_instagram: '@dbvalue',
+        }}
+      />
+    );
+
+    const input = screen.getByPlaceholderText('Instagram') as HTMLInputElement;
+    expect(input.value).toBe('@saved');
+  });
+
+  it('null in localStorage falls through to DB value', () => {
+    localStorage.setItem(
+      `admin_edit_inline_${pid}`,
+      JSON.stringify({ instagram: null })
+    );
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={{
+          ...baseProvider,
+          social_instagram: '@dbvalue',
+        }}
+      />
+    );
+
+    const input = screen.getByPlaceholderText('Instagram') as HTMLInputElement;
+    expect(input.value).toBe('@dbvalue');
+  });
+
+  it('typing survives after sync with stale empty string', () => {
+    localStorage.setItem(
+      `admin_edit_inline_${pid}`,
+      JSON.stringify({ instagram: '' })
+    );
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={{
+          ...baseProvider,
+          social_instagram: '@realhandle',
+        }}
+      />
+    );
+
+    const input = screen.getByPlaceholderText('Instagram') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'testhandle' } });
+    expect(input.value).toBe('testhandle');
+
+    fireEvent(window, new Event('focus'));
+    expect(input.value).toBe('testhandle');
+  });
+
+  it('empty string in localStorage does not overwrite phone field', () => {
+    localStorage.setItem(
+      `admin_edit_inline_${pid}`,
+      JSON.stringify({ phone: '' })
+    );
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={{
+          ...baseProvider,
+          contact_phone: '+49123456789',
+        }}
+      />
+    );
+
+    const input = screen.getByPlaceholderText('Phone') as HTMLInputElement;
+    expect(input.value).toBe('+49123456789');
+  });
+});

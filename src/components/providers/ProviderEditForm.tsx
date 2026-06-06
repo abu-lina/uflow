@@ -248,19 +248,19 @@ export function ProviderEditForm({
         const parsed = JSON.parse(storedInline);
         setFormData(prev => ({
           ...prev,
-          providerName: parsed.providerName ?? prev.providerName,
-          providerDescription: parsed.providerDescription ?? prev.providerDescription,
-          listingType: parsed.listingType ?? prev.listingType,
-          street: parsed.street ?? prev.street,
-          zipCode: parsed.zipCode ?? prev.zipCode,
-          city: parsed.city ?? prev.city,
-          country: parsed.country ?? prev.country,
+          providerName: parsed.providerName || prev.providerName,
+          providerDescription: parsed.providerDescription || prev.providerDescription,
+          listingType: parsed.listingType || prev.listingType,
+          street: parsed.street || prev.street,
+          zipCode: parsed.zipCode || prev.zipCode,
+          city: parsed.city || prev.city,
+          country: parsed.country || prev.country,
           isOnlineBusiness: parsed.isOnlineBusiness ?? prev.isOnlineBusiness,
           showAddress: parsed.showAddress ?? prev.showAddress,
-          website: parsed.website ?? prev.website,
-          instagram: parsed.instagram ?? prev.instagram,
-          email: parsed.email ?? prev.email,
-          phone: parsed.phone ?? prev.phone,
+          website: parsed.website || prev.website,
+          instagram: parsed.instagram || prev.instagram,
+          email: parsed.email || prev.email,
+          phone: parsed.phone || prev.phone,
         }));
       } catch { /* ignore */ }
     }
@@ -306,15 +306,11 @@ export function ProviderEditForm({
         syncFromLocalStorage();
       }
     };
-    const handleFocus = () => syncFromLocalStorage();
-
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('pageshow', handleFocus);
+    window.addEventListener('pageshow', handleVisibility);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('pageshow', handleFocus);
+      window.removeEventListener('pageshow', handleVisibility);
     };
   }, [enableLocalStorage, syncFromLocalStorage]);
 
