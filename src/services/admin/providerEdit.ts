@@ -12,6 +12,21 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
+export interface LocationEditData {
+  location_id?: string;
+  location_name?: string | null;
+  address_street?: string | null;
+  address_zip?: string | null;
+  address_city?: string | null;
+  address_country?: string | null;
+  location_latitude?: number | null;
+  location_longitude?: number | null;
+  opening_hours?: Record<string, unknown> | null;
+  show_address?: boolean;
+  contact_phone?: string | null;
+  is_primary?: boolean;
+}
+
 export interface AdminProviderEditData {
   providerName?: string;
   providerDescription?: string | null;
@@ -57,6 +72,7 @@ export interface AdminProviderEditData {
     platform_slug?: string;
     is_active: boolean;
   }>;
+  locations?: LocationEditData[];
   reviewStatus?: 'pending' | 'approved' | 'rejected' | 'needs_revision';
 }
 
@@ -149,6 +165,11 @@ export function buildCommunityServicePayload(data: Partial<AdminProviderEditData
   return { community_service_ids: data.communityServiceIds };
 }
 
+export function buildLocationsPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+  if (data.locations === undefined) return {};
+  return { locations: data.locations };
+}
+
 function buildRpcPayload(
   editData: AdminProviderEditData,
   listingType?: 'food' | 'store' | string | null
@@ -183,6 +204,11 @@ function buildRpcPayload(
   const communityService = buildCommunityServicePayload(editData);
   if (Object.keys(communityService).length > 0) {
     Object.assign(payload, communityService);
+  }
+
+  const locations = buildLocationsPayload(editData);
+  if (Object.keys(locations).length > 0) {
+    Object.assign(payload, locations);
   }
 
   return payload;

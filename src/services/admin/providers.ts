@@ -170,6 +170,7 @@ export async function getProviderForAdmin(providerId: string): Promise<AdminProv
     .select(`
       *,
       category:categories(name_de, name_en, category_images),
+      locations(*),
       food_providers(*),
       store_providers(*),
       food_menu(*),

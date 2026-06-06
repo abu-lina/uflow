@@ -11,6 +11,7 @@ import {
   type SearchFilterKey,
 } from '@/features/search/constants/filterKeys';
 import type { OpeningHours } from '@/types/openingHours';
+import type { Location } from '@/types/location';
 
 export interface Provider {
   provider_id: string;
@@ -72,6 +73,7 @@ export interface Provider {
   // From store_providers extension table (joined in search queries)
   no_gambling?: boolean;
   opening_hours?: OpeningHours | null;
+  locations?: Location[];
 }
 export interface SearchResult {
   id: string;
@@ -117,13 +119,14 @@ export interface SearchResult {
   has_parking?: boolean;
   economic_solidarity?: boolean;
   opening_hours?: OpeningHours | null;
+  locations?: Location[];
 }
 
 /**
  * Transforms a provider to SearchResult format
  * Plan 058: Includes review_status and review_feedback when available
  */
-function transformProviderToSearchResult(provider: Provider): SearchResult {
+export function transformProviderToSearchResult(provider: Provider): SearchResult {
   return {
     id: provider.provider_id,
     name: provider.provider_name,
@@ -163,6 +166,7 @@ function transformProviderToSearchResult(provider: Provider): SearchResult {
     has_parking: provider.has_parking,
     economic_solidarity: provider.economic_solidarity,
     opening_hours: provider.opening_hours ?? null,
+    locations: provider.locations,
   };
 }
 
@@ -340,12 +344,19 @@ async function searchProvidersOnly(
   return { results: sortedResults, hasMore };
 }
 
-export async function getProviders(limit?: number): Promise<Provider[]> {
+export async function getProviders(limit?: number, includeLocations?: boolean): Promise<Provider[]> {
   try {
     let query = supabase
       .from('providers')
       .select('*, category:categories(name_de, name_en)')
       .order('created_at', { ascending: false });
+
+    if (includeLocations) {
+      query = supabase
+        .from('providers')
+        .select('*, category:categories(name_de, name_en), locations(*)')
+        .order('created_at', { ascending: false });
+    }
     
     // Add limit if provided (for performance optimization)
     if (limit !== undefined && limit > 0) {
@@ -391,7 +402,8 @@ export async function getProviderById(id: string): Promise<Provider | null> {
       .from('providers')
       .select(`
         *,
-        category:categories(name_de, name_en)
+        category:categories(name_de, name_en),
+        locations(*)
       `)
       .eq('provider_id', id)
       .maybeSingle();
@@ -941,7 +953,7 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
   if (providerIds.length > 0) {
     const { data: providers, error: providersError } = await supabase
       .from('providers')
-      .select('*, category:categories(name_de, name_en)')
+      .select('*, category:categories(name_de, name_en), locations(*)')
       .in('provider_id', providerIds)
       .returns<Provider[]>();
 

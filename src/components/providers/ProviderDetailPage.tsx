@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
@@ -40,6 +40,7 @@ import {
 import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
 import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
+import type { Location } from '@/types/location';
 
 interface ProviderDetailPageProps {
   provider: Provider;
@@ -58,7 +59,36 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   const HALAL_POPUP_MAX_VIEWS = 10;
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { t, language } = useLanguage();
+
+  const locations = (provider.locations as Location[] | undefined) || [];
+
+  const selectedLocationId = searchParams.get('location') ?? null;
+  const selectedLocation = useMemo(() => {
+    if (selectedLocationId) {
+      return locations.find((l: Location) => l.location_id === selectedLocationId) ?? null;
+    }
+    return locations.find((l: Location) => l.is_primary) ?? locations[0] ?? null;
+  }, [locations, selectedLocationId]);
+
+  const handleLocationSelect = (locationId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('location', locationId);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
+
+  const getAddressForLocation = (loc: Location | null): string => {
+    if (!loc) return '';
+    const parts = [loc.address_street, loc.address_zip && loc.address_city ? `${loc.address_zip} ${loc.address_city}` : loc.address_city].filter(Boolean);
+    return parts.join(', ');
+  };
+
+  const isAddressNavigableForLocation = (loc: Location | null): boolean => {
+    if (!loc) return false;
+    return !!(loc.address_street || loc.address_city);
+  };
 
   // Helper function to get category name based on language
   const getCategoryName = (category: { name_de?: string; name_en?: string } | undefined) => {
@@ -352,39 +382,39 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             <h2 className="font-inter-tight text-xl font-semibold text-content-heading">
               {provider.provider_name}
             </h2>
-            <OpenStatusLine provider={provider} />
-            {provider.address_city ? (
-              <button
-                className="mt-1 text-left text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline"
-                disabled={
-                  !isAddressNavigable(
-                    provider.address_street ?? undefined,
-                    provider.address_zip ?? undefined,
-                    provider.address_city ?? undefined,
-                  )
-                }
-                title={t('providerDetail.container.addressTapToNavigate')}
-                onClick={() => {
-                  const address = formatAddress(
-                    provider.address_street ?? undefined,
-                    provider.address_zip ?? undefined,
-                    provider.address_city ?? undefined,
-                  );
-                  if (
-                    isAddressNavigable(
+            <OpenStatusLine provider={provider} locationId={selectedLocationId ?? undefined} />
+            {(selectedLocation?.address_city || provider.address_city) ? (
+              <div className="mt-1">
+                <button
+                  className="text-left text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline"
+                  disabled={
+                    !isAddressNavigableForLocation(selectedLocation) &&
+                    !isAddressNavigable(
                       provider.address_street ?? undefined,
                       provider.address_zip ?? undefined,
                       provider.address_city ?? undefined,
                     )
-                  ) {
-                    openNavigation(address);
                   }
-                }}
-              >
-                {provider.address_street && provider.address_zip
-                  ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
-                  : provider.address_city}
-              </button>
+                  title={t('providerDetail.container.addressTapToNavigate')}
+                  onClick={() => {
+                    const address = getAddressForLocation(selectedLocation) || formatAddress(
+                      provider.address_street ?? undefined,
+                      provider.address_zip ?? undefined,
+                      provider.address_city ?? undefined,
+                    );
+                    if (address) {
+                      openNavigation(address);
+                    }
+                  }}
+                >
+                  {getAddressForLocation(selectedLocation) || (
+                    provider.address_street && provider.address_zip
+                      ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
+                      : provider.address_city
+                  )}
+                </button>
+
+              </div>
             ) : (
               <div className="mt-1 text-gray-600">{t('providerDetail.container.online')}</div>
             )}
@@ -588,7 +618,14 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
           )}
 
           <div className="mx-6 mt-4 space-y-4">
-            <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
+            <ProviderDetailSections
+              badges={provider.badges ?? []}
+              isLoadingBadges={false}
+              provider={provider}
+              locations={locations}
+              selectedLocationId={selectedLocationId}
+              onLocationSelect={handleLocationSelect}
+            />
           </div>
         </div>
         </div>
@@ -750,7 +787,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               <h2 className="font-inter-tight text-3xl font-bold text-content-heading">
                 {provider.provider_name}
               </h2>
-              <OpenStatusLine provider={provider} />
+              <OpenStatusLine provider={provider} locationId={selectedLocationId ?? undefined} />
               <p className="mt-2 text-gray-600">{getCategoryName(provider.category)}</p>
 
               {/* Contact Actions */}
@@ -1023,8 +1060,14 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               </div>
             )}
 
-            <ProviderDetailSections badges={provider.badges ?? []} isLoadingBadges={false} provider={provider} />
-
+            <ProviderDetailSections
+              badges={provider.badges ?? []}
+              isLoadingBadges={false}
+              provider={provider}
+              locations={locations}
+              selectedLocationId={selectedLocationId}
+              onLocationSelect={handleLocationSelect}
+            />
 
             {/* Action Buttons */}
             {customActionButtons ? (

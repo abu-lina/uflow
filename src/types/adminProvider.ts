@@ -1,3 +1,5 @@
+import type { Location } from '@/types/location';
+
 export interface AdminProviderMenu {
   id?: string;
   name_de: string;
@@ -63,6 +65,7 @@ export interface AdminProviderWithExtensions {
   has_parking?: boolean;
   economic_solidarity?: boolean;
   opening_hours?: Record<string, unknown> | null;
+  locations?: Location[];
   created_at: string;
   updated_at: string;
   food_providers?: FoodProviderExtension | null;

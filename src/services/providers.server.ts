@@ -25,7 +25,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
   
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories(name_de, name_en, category_images), locations(*)')
     .eq('provider_id', id)
     .single();
 
@@ -109,7 +109,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
  * @param limit - Optional number of providers to fetch
  * @returns Array of providers
  */
-export async function getProviders(limit?: number): Promise<Provider[]> {
+export async function getProviders(limit?: number, includeLocations?: boolean): Promise<Provider[]> {
   const supabase = createSupabaseServerClient();
   
   let query = supabase
@@ -117,6 +117,14 @@ export async function getProviders(limit?: number): Promise<Provider[]> {
     .select('*, category:categories(name_de, name_en)')
     .eq('review_status', 'approved')
     .order('created_at', { ascending: false });
+
+  if (includeLocations) {
+    query = supabase
+      .from('providers')
+      .select('*, category:categories(name_de, name_en), locations(*)')
+      .eq('review_status', 'approved')
+      .order('created_at', { ascending: false });
+  }
 
   if (limit) {
     query = query.limit(limit);
@@ -141,7 +149,7 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
 
   const { data: bookmarks, error } = await supabase
     .from('bookmarks')
-    .select('provider_id, providers(*, category:categories(name_de, name_en))')
+    .select('provider_id, providers(*, category:categories(name_de, name_en), locations(*))')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -179,6 +187,7 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
         category: provider.category,
         type: 'provider' as const,
         originalProvider: provider,
+        locations: provider.locations,
       });
     }
   }

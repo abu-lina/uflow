@@ -1,11 +1,13 @@
 import React from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId, parseCategoryImages } from '@/utils/imageUtils';
 import type { Provider } from '@/services/providers';
+import type { Location } from '@/types/location';
+
 
 interface CategoryInfo {
   name_de: string;
@@ -20,7 +22,22 @@ interface MobileProviderDetailProps {
 
 export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ provider, onBack }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { t, language } = useLanguage();
+
+  const locations = (provider.locations as Location[] | undefined) || [];
+  const selectedLocationId = searchParams.get('location') ?? null;
+  const selectedLocation = locations.find((l: Location) => l.location_id === selectedLocationId)
+    ?? locations.find((l: Location) => l.is_primary)
+    ?? locations[0]
+    ?? null;
+
+  const handleLocationSelect = (locationId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('location', locationId);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
   
   // Helper function to get category name based on language
   const getCategoryName = (category: CategoryInfo | undefined) => {
@@ -191,6 +208,8 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
           </div>
         )}
       </div>
+
+
     </div>
   );
 };

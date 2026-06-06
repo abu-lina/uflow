@@ -22,7 +22,11 @@ if (!supabaseAnonKey) {
 }
 
 // Validate URL format (only if value is provided and non-empty)
-if (supabaseUrl && supabaseUrl.trim().length > 0) {
+// Allow local Supabase URLs (http://127.0.0.1 or http://localhost) for local development
+const isLocalUrl = supabaseUrl && (
+  supabaseUrl.startsWith('http://127.0.0.1') || supabaseUrl.startsWith('http://localhost')
+);
+if (supabaseUrl && supabaseUrl.trim().length > 0 && !isLocalUrl) {
   if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
     throw new Error(
       `Invalid NEXT_PUBLIC_SUPABASE_URL format: "${supabaseUrl}". ` +

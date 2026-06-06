@@ -8,6 +8,7 @@ import {
   HeartHandshake,
   MapPin,
   Moon,
+  Store,
   Tag,
   UtensilsCrossed,
   Users,
@@ -23,11 +24,15 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import type { OpeningHours } from '@/types/openingHours';
 import type { BadgeWithConfirmationStatus, ProviderBadgeWithType } from '@/types/badges';
+import type { Location } from '@/types/location';
 
 interface ProviderDetailSectionsProps {
   provider: Provider;
   badges: (BadgeWithConfirmationStatus | ProviderBadgeWithType)[];
   isLoadingBadges: boolean;
+  locations?: Location[];
+  selectedLocationId?: string | null;
+  onLocationSelect?: (locationId: string) => void;
 }
 
 const DAY_ORDER: Array<{ key: keyof OpeningHours; labelKey: string }> = [
@@ -129,7 +134,7 @@ function renderOpeningHours(
   );
 }
 
-function DetailListItem({ label, icon, onClick }: { label: string; icon: ReactNode; onClick?: () => void }) {
+function DetailListItem({ label, icon, onClick, isSelected }: { label: string; icon: ReactNode; onClick?: () => void; isSelected?: boolean }) {
   const Component = onClick ? 'button' : 'div';
   const className = `flex w-full items-center gap-3 rounded-xl p-2${onClick ? ' cursor-pointer' : ''}`;
   return (
@@ -138,7 +143,7 @@ function DetailListItem({ label, icon, onClick }: { label: string; icon: ReactNo
       onClick={onClick}
       type={Component === 'button' ? 'button' : undefined}
     >
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E3F2EF] text-primary">
+      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isSelected ? 'bg-primary text-white' : 'bg-[#E3F2EF] text-primary'}`}>
         {icon}
       </span>
       <span className="text-base font-semibold text-content-heading">{label}</span>
@@ -150,6 +155,9 @@ export function ProviderDetailSections({
   provider,
   badges,
   isLoadingBadges,
+  locations,
+  selectedLocationId,
+  onLocationSelect,
 }: ProviderDetailSectionsProps) {
   const { t } = useLanguage();
   const router = useRouter();
@@ -252,6 +260,24 @@ export function ProviderDetailSections({
           />
         </div>
       </ExpandSection>
+
+      {(locations?.length ?? 0) > 0 && (
+        <div id="standorte-section">
+        <ExpandSection title="Weitere Standorte">
+          <div className="space-y-2 pt-3">
+            {locations!.map((loc) => (
+              <DetailListItem
+                key={loc.location_id}
+                icon={<Store aria-hidden="true" className="h-6 w-6" />}
+                label={loc.location_name || loc.address_city || 'Standort'}
+                onClick={() => onLocationSelect?.(loc.location_id)}
+                isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
+              />
+            ))}
+          </div>
+          </ExpandSection>
+        </div>
+      )}
 
       <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
 

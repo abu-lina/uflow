@@ -114,6 +114,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       // New fields
       menuItems: formData.menuItems,
       deliveryLinks: formData.deliveryLinks,
+      locations: formData.locations,
       openingHours: formData.openingHours || null,
       verificationMethod: formData.verificationMethod,
       hasCertificate: formData.hasCertificate,

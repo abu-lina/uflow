@@ -47,6 +47,18 @@ const deliveryLinkSchema = z.object({
   is_active: z.boolean(),
 });
 
+const locationSchema = z.object({
+  location_id: z.string(),
+  location_name: z.string().nullable().optional(),
+  address_street: z.string().nullable().optional(),
+  address_zip: z.string().nullable().optional(),
+  address_city: z.string().nullable().optional(),
+  address_country: z.string().nullable().optional(),
+  contact_phone: z.string().nullable().optional(),
+  show_address: z.boolean(),
+  is_primary: z.boolean(),
+});
+
 /**
  * Provider edit update schema (admin/moderator editing provider fields)
  */
@@ -99,6 +111,7 @@ export const providerEditUpdateSchema = z.object({
   economicSolidarity: z.boolean().optional(),
   menuItems: z.array(menuItemSchema).optional(),
   deliveryLinks: z.array(deliveryLinkSchema).optional(),
+  locations: z.array(locationSchema).optional(),
 });
 
 /**

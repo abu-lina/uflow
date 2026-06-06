@@ -2,15 +2,26 @@
 
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
+import type { Location } from '@/types/location';
 import { getOpenStatus } from '@/utils/openStatus';
 
 interface OpenStatusLineProps {
   provider: Provider;
+  locationId?: string;
 }
 
-export function OpenStatusLine({ provider }: OpenStatusLineProps) {
+export function OpenStatusLine({ provider, locationId }: OpenStatusLineProps) {
   const { t } = useLanguage();
-  const status = getOpenStatus(provider.opening_hours ?? null);
+
+  const resolvedHours = (() => {
+    if (locationId && provider.locations) {
+      const location = provider.locations.find((l: Location) => l.location_id === locationId);
+      if (location?.opening_hours) return location.opening_hours;
+    }
+    return provider.opening_hours ?? null;
+  })();
+
+  const status = getOpenStatus(resolvedHours);
 
   if (!status.visible) {
     return null;

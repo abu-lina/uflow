@@ -81,6 +81,17 @@ export interface ProviderEditFormData {
     platform_slug?: string;
     is_active: boolean;
   }>;
+  locations: Array<{
+    location_id: string;
+    location_name: string | null;
+    address_street: string | null;
+    address_zip: string | null;
+    address_city: string | null;
+    address_country: string | null;
+    contact_phone: string | null;
+    show_address: boolean;
+    is_primary: boolean;
+  }>;
   openingHours: Record<string, { open: string; close: string } | null> | null;
   verificationMethod: string | null;
   hasCertificate: boolean;
@@ -155,6 +166,7 @@ export function ProviderEditForm({
     selectedCommunityServiceIds: [], // Will be populated from relationships
     menuItems: [],
     deliveryLinks: [],
+    locations: [],
     openingHours: (provider as unknown as Record<string, unknown>).opening_hours as Record<string, { open: string; close: string } | null> | null ?? null,
     verificationMethod: (provider as unknown as Record<string, unknown>).verification_method as string | null ?? null,
     hasCertificate: (provider as unknown as Record<string, unknown>).has_certificate as boolean ?? false,
@@ -208,6 +220,14 @@ export function ProviderEditForm({
       try {
         const parsed = JSON.parse(storedDelivery);
         if (Array.isArray(parsed)) setFormData(prev => ({ ...prev, deliveryLinks: parsed }));
+      } catch { /* ignore */ }
+    }
+
+    const storedLocations = localStorage.getItem(`${pfx}edit_locations_${pid}`);
+    if (storedLocations) {
+      try {
+        const parsed = JSON.parse(storedLocations);
+        if (Array.isArray(parsed)) setFormData(prev => ({ ...prev, locations: parsed }));
       } catch { /* ignore */ }
     }
 
@@ -738,6 +758,23 @@ export function ProviderEditForm({
                     />
                   </div>
                 </div>
+
+                {/* Locations Management */}
+                <button
+                  className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
+                  type="button"
+                  onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/locations`)}
+                >
+                  <div className="flex flex-1 flex-col gap-1 items-start">
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">Locations</span>
+                    <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
+                      {formData.locations.length > 0
+                        ? `${formData.locations.length} locations`
+                        : 'Manage multiple locations'}
+                    </div>
+                  </div>
+                  <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+                </button>
               </>
             ) : (
               /* Online Business State */

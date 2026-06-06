@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Icon } from '@iconify/react';
@@ -34,6 +34,7 @@ import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import { ProviderDetailSections } from '@/features/providers/components/ProviderDetailSections';
 import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup';
+import type { Location } from '@/types/location';
 import {
   PLACEHOLDER_IMAGE,
   getCategoryCardBackgroundColor,
@@ -60,8 +61,26 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const HALAL_POPUP_MAX_VIEWS = 10;
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const isMobile = useIsMobile();
   const { t, language } = useLanguage();
+
+  const locations = (provider.locations as Location[] | undefined) || [];
+
+  const selectedLocationId = searchParams.get('location') ?? null;
+  const selectedLocation = useMemo(() => {
+    if (selectedLocationId) {
+      return locations.find((l: Location) => l.location_id === selectedLocationId) ?? null;
+    }
+    return locations.find((l: Location) => l.is_primary) ?? locations[0] ?? null;
+  }, [locations, selectedLocationId]);
+
+  const handleLocationSelect = (locationId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('location', locationId);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   // M-5a: all providers (including ummah) bookmark via provider_id
   const bookmarkableEntityId = provider.provider_id;
@@ -415,45 +434,43 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   {provider.provider_name}
                 </div>
               </div>
-              <OpenStatusLine provider={provider} />
-              {formatAddress(
-                provider.address_street ?? undefined,
-                provider.address_zip ?? undefined,
-                provider.address_city ?? undefined,
-              ) ? (
-                <button
-                  className="justify-start self-stretch text-left font-inter text-base font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline"
-                  disabled={
-                    !isAddressNavigable(
-                      provider.address_street ?? undefined,
-                      provider.address_zip ?? undefined,
-                      provider.address_city ?? undefined,
-                    )
-                  }
-                  title={t('providerDetail.container.addressTapToNavigate')}
-                  onClick={() => {
-                    const address = formatAddress(
-                      provider.address_street ?? undefined,
-                      provider.address_zip ?? undefined,
-                      provider.address_city ?? undefined,
-                    );
-                    if (
-                      isAddressNavigable(
+              <OpenStatusLine provider={provider} locationId={selectedLocationId ?? undefined} />
+              {(selectedLocation?.address_city || provider.address_city) ? (
+                <div className="self-stretch">
+                  <button
+                    className="justify-start text-left font-inter text-base font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline"
+                    disabled={
+                      !(selectedLocation?.address_street || selectedLocation?.address_city) &&
+                      !isAddressNavigable(
                         provider.address_street ?? undefined,
                         provider.address_zip ?? undefined,
                         provider.address_city ?? undefined,
                       )
-                    ) {
-                      openNavigation(address);
                     }
-                  }}
-                >
-                  {formatAddress(
-                    provider.address_street ?? undefined,
-                    provider.address_zip ?? undefined,
-                    provider.address_city ?? undefined,
-                  )}
-                </button>
+                    title={t('providerDetail.container.addressTapToNavigate')}
+                    onClick={() => {
+                      const address = selectedLocation
+                        ? [selectedLocation.address_street, selectedLocation.address_zip, selectedLocation.address_city].filter(Boolean).join(', ')
+                        : formatAddress(
+                            provider.address_street ?? undefined,
+                            provider.address_zip ?? undefined,
+                            provider.address_city ?? undefined,
+                          );
+                      if (address) {
+                        openNavigation(address);
+                      }
+                    }}
+                  >
+                    {selectedLocation
+                      ? [selectedLocation.address_street, selectedLocation.address_zip, selectedLocation.address_city].filter(Boolean).join(', ')
+                      : formatAddress(
+                          provider.address_street ?? undefined,
+                          provider.address_zip ?? undefined,
+                          provider.address_city ?? undefined,
+                        )}
+                  </button>
+
+                </div>
               ) : (
                 <div className="justify-start self-stretch font-inter text-base font-normal text-uFlowText2">
                   {provider.category?.name_de || ''}
@@ -754,6 +771,9 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 badges={provider.badges ?? []}
                 isLoadingBadges={false}
                 provider={provider}
+                locations={locations}
+                selectedLocationId={selectedLocationId}
+                onLocationSelect={handleLocationSelect}
               />
             </div>
           </div>

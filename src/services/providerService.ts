@@ -14,6 +14,30 @@ export interface CreateProviderResult {
   community_service_id?: string;
 }
 
+async function createPrimaryLocation(
+  providerId: string,
+  formData: ExtendedProviderFormData
+): Promise<void> {
+  const { error: locationError } = await supabase
+    .from('locations')
+    .insert([{
+      provider_id: providerId,
+      location_name: null,
+      address_street: formData.isOnlineBusiness ? null : (formData.street || null),
+      address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
+      address_city: formData.isOnlineBusiness ? null : (formData.city || null),
+      address_country: formData.isOnlineBusiness ? null : (formData.country || null),
+      show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
+      contact_phone: formData.phone || null,
+      is_primary: true,
+    }]);
+
+  if (locationError) {
+    console.error('Error creating primary location:', locationError);
+    throw locationError;
+  }
+}
+
 async function syncEntityRelations(
   table: 'provider_offers' | 'provider_needs' | 'community_service_offers' | 'community_service_needs',
   entityColumn: 'provider_id',
@@ -160,6 +184,7 @@ export async function createProviderOrService(
         generatedServiceId,
         formData.needs_ids || [],
       ),
+      createPrimaryLocation(generatedServiceId, formData),
     ]);
 
     return { community_service_id: generatedServiceId };
@@ -258,6 +283,7 @@ export async function createProviderOrService(
         generatedProviderId,
         formData.needs_ids || [],
       ),
+      createPrimaryLocation(generatedProviderId, formData),
     ]);
 
     if (requestedBadgeKeys.length > 0) {

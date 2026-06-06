@@ -19,6 +19,7 @@ import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
 import { computeHalalStars } from '@/utils/sectionBadges';
 import { getOpenStatus } from '@/utils/openStatus';
+import type { Location } from '@/types/location';
 
 interface ProviderCardProps extends Omit<Provider, 'id'> {
   className?: string;
@@ -49,6 +50,7 @@ export const ProviderCard = React.memo(
         address_street,
         address_zip,
         address_city,
+        locations,
         category_id,
         category,
         gradient = false,
@@ -137,18 +139,36 @@ export const ProviderCard = React.memo(
       // When fill animation is active (shouldAnimateFill), use bookmarked state to ensure animation shows
       const displayBookmarked =
         showAllahumaBarik || isLoading || shouldAnimateFill ? bookmarked : isBookmarked;
+      const primaryLocation = locations && locations.length > 0
+        ? locations.find((l: Location) => l.is_primary) || locations[0]
+        : null;
+
       let address = '';
-      if (address_street && address_zip && address_city) {
-        address = `${address_street}, ${address_zip} ${address_city}`;
-      } else if (address_street && address_city) {
-        address = `${address_street}, ${address_city}`;
-      } else if (address_zip && address_city) {
-        address = `${address_zip} ${address_city}`;
-      } else if (address_city) {
-        address = address_city;
-      } else {
-        // No address means online business
-        address = t('providers.online');
+      if (primaryLocation) {
+        const { address_street: locStreet, address_zip: locZip, address_city: locCity } = primaryLocation;
+        if (locStreet && locZip && locCity) {
+          address = `${locStreet}, ${locZip} ${locCity}`;
+        } else if (locStreet && locCity) {
+          address = `${locStreet}, ${locCity}`;
+        } else if (locZip && locCity) {
+          address = `${locZip} ${locCity}`;
+        } else if (locCity) {
+          address = locCity;
+        }
+      }
+
+      if (!address) {
+        if (address_street && address_zip && address_city) {
+          address = `${address_street}, ${address_zip} ${address_city}`;
+        } else if (address_street && address_city) {
+          address = `${address_street}, ${address_city}`;
+        } else if (address_zip && address_city) {
+          address = `${address_zip} ${address_city}`;
+        } else if (address_city) {
+          address = address_city;
+        } else {
+          address = t('providers.online');
+        }
       }
 
       // Get category name based on current language
@@ -431,18 +451,18 @@ export const ProviderCard = React.memo(
                     className="w-full min-w-0 truncate text-left font-inter text-xs font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline sm:text-sm"
                     disabled={
                       !isAddressNavigable(
-                        address_street ?? undefined,
-                        address_zip ?? undefined,
-                        address_city ?? undefined,
+                        primaryLocation?.address_street ?? address_street ?? undefined,
+                        primaryLocation?.address_zip ?? address_zip ?? undefined,
+                        primaryLocation?.address_city ?? address_city ?? undefined,
                       )
                     }
                     title={address ? `${address} - ${t('providers.addressTapToNavigate')}` : ''}
                     onClick={() => {
                       if (
                         isAddressNavigable(
-                          address_street ?? undefined,
-                          address_zip ?? undefined,
-                          address_city ?? undefined,
+                          primaryLocation?.address_street ?? address_street ?? undefined,
+                          primaryLocation?.address_zip ?? address_zip ?? undefined,
+                          primaryLocation?.address_city ?? address_city ?? undefined,
                         )
                       ) {
                         openNavigation(address);
@@ -451,6 +471,13 @@ export const ProviderCard = React.memo(
                   >
                     {address}
                   </button>
+                  {locations && locations.length > 1 && (
+                    <div className="mt-1 inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px]">
+                      <span className="font-inter-tight text-sm font-medium text-content">
+                        {locations.length} Standorte
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {specialtyNames.length > 0 && (
                   <div className="w-full min-w-0">
