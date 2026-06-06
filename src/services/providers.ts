@@ -15,7 +15,7 @@ import type { OpeningHours } from '@/types/openingHours';
 export interface Provider {
   provider_id: string;
   provider_name: string;
-  provider_images: string | null;
+  provider_images: string | { urls?: string[] } | null;
   category_id: string | null;
   address_city: string | null;
   social_website: string | null;
@@ -32,6 +32,7 @@ export interface Provider {
   offers_ids: string[];
   needs_ids: string[];
   show_address?: boolean;
+  /** Maps to DB column: provider_description */
   description?: string | null;
   offers?: Array<{ name_de: string }>;
   needs?: Array<{ name_de: string }>;
@@ -46,8 +47,6 @@ export interface Provider {
   review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   review_feedback?: string | null;
   badges?: ProviderBadgeWithType[];
-  /** @deprecated Dropped in M-5a schema migration — always undefined at runtime */
-  community_service_id?: string | null;
   // Plan 089: section classification columns
   listing_type?: 'food' | 'store' | 'ummah' | null;
   muslim_owned?: boolean;
@@ -58,18 +57,26 @@ export interface Provider {
   makes_donations?: boolean;
   has_parking?: boolean;
   economic_solidarity?: boolean;
+  recommender_email?: string | null;
+  import_source?: string | null;
+  import_source_id?: string | null;
+  import_source_url?: string | null;
+  last_enriched_at?: string | null;
+  enrichment_eligible?: boolean;
   // M-5 extension table columns (now in food_providers / store_providers; undefined when not joined)
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
+  // From food_providers extension table (joined in search queries)
   no_alcohol?: boolean;
   no_pork?: boolean;
+  // From store_providers extension table (joined in search queries)
   no_gambling?: boolean;
   opening_hours?: OpeningHours | null;
 }
 export interface SearchResult {
   id: string;
   name: string;
-  images: string | null;
+  images: string | { urls?: string[] } | null;
   category_id: string | null;
   address_city: string | null;
   social_website: string | null;
@@ -120,7 +127,7 @@ function transformProviderToSearchResult(provider: Provider): SearchResult {
   return {
     id: provider.provider_id,
     name: provider.provider_name,
-    images: provider.provider_images,
+    images: typeof provider.provider_images === 'string' ? provider.provider_images : JSON.stringify(provider.provider_images),
     category_id: provider.category_id,
     address_city: provider.address_city,
     social_website: provider.social_website,

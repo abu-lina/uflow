@@ -68,7 +68,6 @@ export interface BadgeType {
 export interface ProviderBadge {
   id: string;
   provider_id?: string | null;
-  community_service_id?: string | null;
 
   // Legacy compatibility fields still used by existing UI/API shapes.
   entity_id: string; // provider_id or community_service_id
@@ -223,7 +222,6 @@ export interface BadgeWithConfirmationStatus extends ProviderBadgeWithType {
  */
 export interface CreateProviderBadgeInput {
   provider_id?: string;
-  community_service_id?: string;
   entity_id: string;
   entity_type: EntityType;
   badge_type_id: string;

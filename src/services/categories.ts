@@ -8,12 +8,13 @@ export interface Category {
   description_de?: string;
   description_en?: string;
   category_images?: Record<string, unknown>; // JSONB for category images
-  applicable_section: 'food' | 'store' | 'business' | 'ummah' | 'all';
+  applicable_section: 'food' | 'store' | 'ummah' | 'all';
+  category_type?: 'cuisine' | 'dish_type' | 'dietary' | 'meal' | 'store_type';
   created_at: string;
   updated_at: string;
 }
 
-export const PROVIDER_CATEGORY_SECTION_SCOPES = ['food', 'store', 'business', 'all'] as const;
+export const PROVIDER_CATEGORY_SECTION_SCOPES = ['food', 'store', 'all'] as const;
 
 // Fetch categories that are referenced by providers OR community services
 export async function fetchUsedCategories(): Promise<Category[]> {
@@ -119,7 +120,7 @@ export async function fetchCategoriesBySection(section: import('@/config/section
   if (categoryIds.length === 0) return [];
 
   const applicableSectionScopes =
-    section === 'store' ? ['store', 'business', 'all'] : [section, 'all'];
+    section === 'store' ? ['store', 'all'] : [section, 'all'];
 
   const { data: categories, error: categoriesError } = await supabase
     .from('categories')
@@ -240,11 +241,10 @@ export async function getCategoryById(id: string): Promise<Category | null> {
 }
 
 // Fetch categories filtered by section (food, store/business, ummah)
-export async function getCategoriesForSection(section: 'food' | 'store' | 'business' | 'ummah'): Promise<Category[]> {
-  const normalizedSection = section === 'business' ? 'store' : section;
-  const sectionScopes = normalizedSection === 'store'
-    ? ['store', 'business', 'all']
-    : [normalizedSection, 'all'];
+export async function getCategoriesForSection(section: 'food' | 'store' | 'ummah'): Promise<Category[]> {
+  const sectionScopes = section === 'store'
+    ? ['store', 'all']
+    : [section, 'all'];
 
   const { data, error } = await supabase
     .from('categories')
@@ -262,7 +262,7 @@ export async function getCategoriesForSection(section: 'food' | 'store' | 'busin
 }
 
 // Fetch categories for provider creation. If listingType provided, scoped to that section; otherwise returns all provider-applicable categories (food + business + all).
-export async function getProviderCategories(listingType?: 'food' | 'store' | 'business'): Promise<Category[]> {
+export async function getProviderCategories(listingType?: 'food' | 'store'): Promise<Category[]> {
   if (listingType) {
     return getCategoriesForSection(listingType);
   }

@@ -161,3 +161,19 @@ Short log of learnings from plan → build → review → test loops. Append one
   - `agent-output/implementation/148-implementation-rpc-fix.md`
   - `agent-output/code-review/148-code-review-rpc-fix.md`
   - `agent-output/qa/148-qa-rpc-fix.md`
+
+## 2026-06-06 — Provider edit form inline state persistence
+
+**Context**: Plan 149 — users lost inline form edits (name, description) when navigating to sub-pages (category, images, etc.) in the admin provider edit form.
+
+**Problem**: `syncFromLocalStorage` only restored sub-page data (category, social, images, menu, delivery, hours, halal, values). Inline fields (name, description, address, contact) were React state only and lost on unmount.
+
+**Solution**: Added `saveInlineDataToLocalStorage` that persists inline fields to localStorage under `{prefix}edit_inline_{pid}`. All `router.push()` calls to sub-pages were replaced with `saveInlineDataAndNavigate()` which saves before navigating. `syncFromLocalStorage` now restores inline fields on return.
+
+**Pattern**: For any multi-page edit form using sub-page navigation + localStorage, ensure ALL fields (not just sub-page fields) are persisted before navigating away. The pattern is: save-before-navigate + restore-on-return.
+
+## 2026-06-06 — Category taxonomy redesign: enum + seed data in single migration
+
+**Context**: Plan 150 — adding `category_type` enum/column and 34 new category rows.
+
+**Learning**: When adding an enum column to a table that already has rows, you DON'T need to backfill every existing row with the new column. The column is nullable by default with `ADD COLUMN IF NOT EXISTS`. Existing rows keep NULL, new INSERTs specify the value. This is fine because the enum is metadata — existing rows will get their category_type assigned in a follow-up if needed. The idempotent INSERT pattern using `WHERE NOT EXISTS` on names is the safe approach for seed data that may already exist across environments. Using `gen_random_uuid()` for `category_id` in the SELECT simplifies UUID generation while still being idempotent (the name guard prevents duplicates).

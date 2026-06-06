@@ -128,7 +128,6 @@ export const SearchResultsList = memo(function SearchResultsList({
       no_gambling: result.originalProvider?.no_gambling,
       opening_hours: result.opening_hours ?? result.originalProvider?.opening_hours ?? null,
       category: result.category,
-      community_service_id: result.listing_type === 'ummah' ? result.id : undefined,
     }),
     [],
   );

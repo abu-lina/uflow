@@ -163,13 +163,13 @@ describe('categories service', () => {
   });
 
   describe('Plan 119 regression — store section scopes', () => {
-    it('[pre-fix FAILS] [post-fix PASSES] queries store section with store+business+all scopes', async () => {
+    it('[pre-fix FAILS] [post-fix PASSES] queries store section with store+all scopes', async () => {
       const chain = createChainMock({ data: [], error: null });
       mockFrom.mockReturnValue(chain);
 
       await getCategoriesForSection('store');
 
-      expect(chain.in).toHaveBeenCalledWith('applicable_section', ['store', 'business', 'all']);
+      expect(chain.in).toHaveBeenCalledWith('applicable_section', ['store', 'all']);
     });
 
     it('[pre-fix FAILS] [post-fix PASSES] provider category list includes store scope in fallback set', async () => {
@@ -178,7 +178,7 @@ describe('categories service', () => {
 
       await getProviderCategories();
 
-      expect(chain.in).toHaveBeenCalledWith('applicable_section', ['food', 'store', 'business', 'all']);
+      expect(chain.in).toHaveBeenCalledWith('applicable_section', ['food', 'store', 'all']);
     });
   });
 });

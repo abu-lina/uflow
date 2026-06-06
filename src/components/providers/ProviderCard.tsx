@@ -73,13 +73,6 @@ export const ProviderCard = React.memo(
         listing_type,
         verification_method,
         has_certificate,
-        muslim_owned,
-        makes_donations,
-        economic_solidarity,
-        has_prayer_space,
-        family_friendly,
-        women_friendly,
-        has_parking,
         opening_hours,
         offers,
       },
@@ -185,29 +178,7 @@ export const ProviderCard = React.memo(
       const openStatusLabel = openStatus.isOpen
         ? t('providerDetail.openStatus.open')
         : t('providerDetail.openStatus.closed');
-      const trustValues = [
-        muslim_owned
-          ? { id: 'muslimOwned', label: t('providerDetail.trustBadges.muslimOwned') }
-          : null,
-        makes_donations
-          ? { id: 'acceptsDonations', label: t('providerDetail.trustBadges.acceptsDonations') }
-          : null,
-        economic_solidarity
-          ? { id: 'solidarity', label: t('providerDetail.trustBadges.solidarity') }
-          : null,
-        has_prayer_space
-          ? { id: 'prayerSpace', label: t('providerDetail.trustBadges.prayerSpace') }
-          : null,
-        has_parking ? { id: 'parking', label: t('providerDetail.trustBadges.parking') } : null,
-        family_friendly
-          ? { id: 'familyFriendly', label: t('providerDetail.trustBadges.familyFriendly') }
-          : null,
-        women_friendly
-          ? { id: 'womenFriendly', label: t('providerDetail.trustBadges.womenFriendly') }
-          : null,
-      ].filter((value): value is { id: string; label: string } => value !== null);
-      const visibleTrustValues = trustValues.slice(0, 2);
-      const hiddenTrustValuesCount = Math.max(0, trustValues.length - visibleTrustValues.length);
+
 
       const handleBookmark = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -480,30 +451,6 @@ export const ProviderCard = React.memo(
                   >
                     {address}
                   </button>
-                  {trustValues.length > 0 && (
-                    <div className="mt-1 w-full" data-testid="provider-trust-values">
-                      <div className="flex w-full min-w-0 items-center gap-1 overflow-hidden">
-                        {visibleTrustValues.map((value) => (
-                          <span
-                            key={value.id}
-                            className={`inline-flex h-5 min-w-0 shrink items-center justify-center rounded-[3.7px] border border-[#CDCDCD] bg-[#F4F4F4] px-[4px] font-inter-tight text-[11px] font-medium uppercase leading-4 text-[#152E2C] ${visibleTrustValues.length === 2 ? 'max-w-[calc(50%-0.25rem)]' : 'max-w-full'}`}
-                            data-chip-type="trust-value"
-                            title={value.label}
-                          >
-                            <span className="truncate">{value.label}</span>
-                          </span>
-                        ))}
-                        {hiddenTrustValuesCount > 0 && (
-                          <span
-                            className="inline-flex aspect-square h-5 shrink-0 items-center justify-center rounded-[3.7px] border border-[#CDCDCD] bg-[#F4F4F4] p-0 font-inter-tight text-[11px] font-medium leading-4 text-[#152E2C]"
-                            data-chip-type="trust-overflow"
-                          >
-                            +{hiddenTrustValuesCount}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
                 {specialtyNames.length > 0 && (
                   <div className="w-full min-w-0">

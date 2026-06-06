@@ -16,7 +16,7 @@ export interface CreateProviderResult {
 
 async function syncEntityRelations(
   table: 'provider_offers' | 'provider_needs' | 'community_service_offers' | 'community_service_needs',
-  entityColumn: 'provider_id' | 'community_service_id',
+  entityColumn: 'provider_id',
   relationColumn: 'offer_id' | 'need_id',
   entityId: string,
   relationIds: string[]

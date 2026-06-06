@@ -131,7 +131,7 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
     const inCalls = (categoriesChain.in as ReturnType<typeof vi.fn>).mock.calls;
     expect(inCalls).toEqual(
       expect.arrayContaining([
-        ['applicable_section', ['store', 'business', 'all']],
+        ['applicable_section', ['store', 'all']],
       ]),
     );
   });

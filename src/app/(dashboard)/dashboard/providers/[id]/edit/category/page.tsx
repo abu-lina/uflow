@@ -26,7 +26,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
       setCategoriesLoading(true);
       try {
         // Try to read listing_type from localStorage
-        let listingType: 'food' | 'store' | 'business' | undefined;
+        let listingType: 'food' | 'store' | undefined;
         try {
           const stored = localStorage.getItem(`admin_edit_inline_${providerId}`);
           if (stored) {

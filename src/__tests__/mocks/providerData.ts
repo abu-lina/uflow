@@ -94,7 +94,7 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[0].provider_id,
     name: mockProviders[0].provider_name,
-    images: mockProviders[0].provider_images,
+    images: mockProviders[0].provider_images as string,
     category_id: mockProviders[0].category_id,
     address_city: mockProviders[0].address_city,
     social_website: mockProviders[0].social_website,
@@ -117,7 +117,7 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[1].provider_id,
     name: mockProviders[1].provider_name,
-    images: mockProviders[1].provider_images,
+    images: mockProviders[1].provider_images as string,
     category_id: mockProviders[1].category_id,
     address_city: mockProviders[1].address_city,
     social_website: mockProviders[1].social_website,
@@ -140,7 +140,7 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[2].provider_id,
     name: mockProviders[2].provider_name,
-    images: mockProviders[2].provider_images,
+    images: mockProviders[2].provider_images as string,
     category_id: mockProviders[2].category_id,
     address_city: mockProviders[2].address_city,
     social_website: mockProviders[2].social_website,
@@ -167,7 +167,7 @@ export const mockBilalSearchResults: SearchResult[] = [
   {
     id: mockProviders[0].provider_id,
     name: mockProviders[0].provider_name,
-    images: mockProviders[0].provider_images,
+    images: mockProviders[0].provider_images as string,
     category_id: mockProviders[0].category_id,
     address_city: mockProviders[0].address_city,
     social_website: mockProviders[0].social_website,
