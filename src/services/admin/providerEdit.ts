@@ -52,7 +52,7 @@ export interface AdminProviderEditData {
     is_available: boolean;
   }>;
   deliveryLinks?: Array<{
-    platform: 'wolt' | 'lieferando' | 'ubereats';
+    platform: 'wolt' | 'lieferando' | 'ubereats' | 'website';
     platform_url: string;
     platform_slug?: string;
     is_active: boolean;

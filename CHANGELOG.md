@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased] - 2026-06-06
+
+### Fixed
+
+- Provider edit form now saves inline field state before sub-page navigation (no more lost edits)
+- Review status now shows stored value instead of always defaulting to "Pending"
+- Category selection page now filters by listing_type (food/store)
+- Halal check page reads from store_providers extension table for store-type providers
+
+### Changed
+
+- Moved Section (listing_type) dropdown to directly under Description field
+- Delivery Links renamed to "Order Links" for store-type providers
+- Delivery/order links now support custom website URLs beyond Wolt/Lieferando/UberEats
+- Values page: Food section hidden for non-food, Store section hidden for non-store providers
+
+
 All notable changes to UFlow will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

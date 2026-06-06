@@ -63,6 +63,7 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
   const STORAGE_KEY = `admin_edit_values_${id}`;
 
   const [values, setValues] = useState<ValuesData>(DEFAULT_VALUES);
+  const [listingType, setListingType] = useState<'food' | 'store' | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -80,6 +81,7 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
         if (!p) return;
         const fp = p.food_providers;
         const sp = p.store_providers;
+        setListingType(p.listing_type === 'food' || p.listing_type === 'store' ? p.listing_type : null);
         setValues({
           muslimOwned: p.muslim_owned ?? false,
           familyFriendly: p.family_friendly ?? false,
@@ -106,7 +108,7 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
     setValues(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const groups: ToggleGroup[] = [
+  const baseGroups: ToggleGroup[] = [
     {
       title: 'General',
       fields: [
@@ -130,19 +132,27 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
         { key: 'economicSolidarity', label: 'Economic solidarity', icon: 'material-symbols:handshake' },
       ],
     },
-    {
-      title: 'Food-specific',
-      fields: [
-        { key: 'noAlcohol', label: 'No alcohol', icon: 'material-symbols:no-drinks' },
-        { key: 'noPork', label: 'No pork', icon: 'material-symbols:no-food' },
-      ],
-    },
-    {
-      title: 'Store-specific',
-      fields: [
-        { key: 'noGambling', label: 'No gambling', icon: 'material-symbols:gambling' },
-      ],
-    },
+  ];
+
+  const foodGroup: ToggleGroup = {
+    title: 'Food-specific',
+    fields: [
+      { key: 'noAlcohol', label: 'No alcohol', icon: 'material-symbols:no-drinks' },
+      { key: 'noPork', label: 'No pork', icon: 'material-symbols:no-food' },
+    ],
+  };
+
+  const gamblingGroup: ToggleGroup = {
+    title: 'Gambling',
+    fields: [
+      { key: 'noGambling', label: 'No gambling', icon: 'material-symbols:gambling' },
+    ],
+  };
+
+  const groups: ToggleGroup[] = [
+    ...baseGroups,
+    ...(listingType === 'food' || listingType === 'store' ? [gamblingGroup] : []),
+    ...(listingType === 'food' ? [foodGroup] : []),
   ];
 
   return (

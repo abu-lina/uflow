@@ -8,19 +8,35 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { FooterAction } from '@/components/ui/FooterAction';
 import type { AdminProviderDeliveryLink } from '@/types/adminProvider';
 
-const PLATFORMS = ['wolt', 'lieferando', 'ubereats'] as const;
+const PLATFORMS = ['wolt', 'lieferando', 'ubereats', 'website'] as const;
+
+const PLATFORM_LABELS: Record<string, string> = {
+  wolt: 'Wolt',
+  lieferando: 'Lieferando',
+  ubereats: 'Uber Eats',
+  website: 'Website / Other',
+};
 
 const PLATFORM_ICONS: Record<string, string> = {
   wolt: 'simple-icons:wolt',
   lieferando: 'simple-icons:lieferando',
   ubereats: 'simple-icons:ubereats',
+  website: 'material-symbols:language',
 };
 
 const DEFAULT_LINK: AdminProviderDeliveryLink = {
-  platform: 'wolt',
+  platform: 'website',
   platform_url: '',
+  platform_slug: '',
   is_active: true,
 };
+
+function PlatformNameDisplay({ platform, platform_slug }: { platform: string; platform_slug?: string | null }) {
+  if (platform === 'website' && platform_slug) {
+    return <>{platform_slug}</>;
+  }
+  return <>{PLATFORM_LABELS[platform] ?? platform}</>;
+}
 
 export default function EditDeliveryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -83,7 +99,7 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="flex h-screen-fix flex-col">
-      <PageHeader title="Delivery Links" variant="back-and-title" onBack={() => router.back()} />
+      <PageHeader title="Delivery / Order Links" variant="back-and-title" onBack={() => router.back()} />
       <main className="flex flex-1 flex-col px-6 pb-4 pt-24 gap-4 overflow-y-auto">
         <div className="flex flex-col gap-3">
           {links.map((link, i) => (
@@ -96,9 +112,21 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
                   onChange={(e) => updateLink(i, 'platform', e.target.value)}
                 >
                   {PLATFORMS.map(p => (
-                    <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                    <option key={p} value={p}>{PLATFORM_LABELS[p]}</option>
                   ))}
                 </select>
+
+                {/* Custom name input for website links */}
+                {link.platform === 'website' && (
+                  <input
+                    className="text-[13px] font-medium text-[#272727] outline-none bg-transparent"
+                    placeholder="e.g. Online-Shop, Bestellseite"
+                    type="text"
+                    value={link.platform_slug ?? ''}
+                    onChange={(e) => updateLink(i, 'platform_slug', e.target.value)}
+                  />
+                )}
+
                 <input
                   className="text-[13px] font-medium text-[#272727] outline-none bg-transparent truncate"
                   placeholder="https://..."
@@ -134,9 +162,21 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
               onChange={(e) => setNewLink(prev => ({ ...prev, platform: e.target.value as AdminProviderDeliveryLink['platform'] }))}
             >
               {PLATFORMS.map(p => (
-                <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                <option key={p} value={p}>{PLATFORM_LABELS[p]}</option>
               ))}
             </select>
+
+            {/* Custom name input for new website links */}
+            {newLink.platform === 'website' && (
+              <input
+                className="text-[13px] font-medium text-[#272727] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                placeholder="Name, e.g. Online-Shop"
+                type="text"
+                value={newLink.platform_slug ?? ''}
+                onChange={(e) => setNewLink(prev => ({ ...prev, platform_slug: e.target.value }))}
+              />
+            )}
+
             <input
               className="text-[13px] font-medium text-[#272727] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
               placeholder="URL *"
@@ -169,7 +209,7 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
             onClick={() => setShowAddForm(true)}
           >
             <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:add" />
-            <span className="text-sm font-medium text-[#999999]">Add delivery link</span>
+            <span className="text-sm font-medium text-[#999999]">Add link</span>
           </button>
         )}
       </main>

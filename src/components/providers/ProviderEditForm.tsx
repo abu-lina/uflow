@@ -151,7 +151,7 @@ export function ProviderEditForm({
     instagram: provider.social_instagram || '',
     email: provider.contact_email || '',
     phone: provider.contact_phone || '',
-    images: provider.provider_images || '[]',
+    images: typeof provider.provider_images === 'string' ? (provider.provider_images || '[]') : JSON.stringify(provider.provider_images || {}),
     selectedCommunityServiceIds: [], // Will be populated from relationships
     menuItems: [],
     deliveryLinks: [],
@@ -162,7 +162,7 @@ export function ProviderEditForm({
     noAlcohol: false,
     noPork: false,
     noGambling: false,
-    reviewStatus: undefined,
+    reviewStatus: provider.review_status || 'pending',
     muslimOwned: (provider as unknown as Record<string, unknown>).muslim_owned as boolean ?? false,
     hasPrayerSpace: (provider as unknown as Record<string, unknown>).has_prayer_space as boolean ?? false,
     familyFriendly: (provider as unknown as Record<string, unknown>).family_friendly as boolean ?? false,
@@ -241,7 +241,57 @@ export function ProviderEditForm({
         setFormData(prev => ({ ...prev, ...parsed }));
       } catch { /* ignore */ }
     }
+
+    const storedInline = localStorage.getItem(`${pfx}edit_inline_${pid}`);
+    if (storedInline) {
+      try {
+        const parsed = JSON.parse(storedInline);
+        setFormData(prev => ({
+          ...prev,
+          providerName: parsed.providerName ?? prev.providerName,
+          providerDescription: parsed.providerDescription ?? prev.providerDescription,
+          listingType: parsed.listingType ?? prev.listingType,
+          street: parsed.street ?? prev.street,
+          zipCode: parsed.zipCode ?? prev.zipCode,
+          city: parsed.city ?? prev.city,
+          country: parsed.country ?? prev.country,
+          isOnlineBusiness: parsed.isOnlineBusiness ?? prev.isOnlineBusiness,
+          showAddress: parsed.showAddress ?? prev.showAddress,
+          website: parsed.website ?? prev.website,
+          instagram: parsed.instagram ?? prev.instagram,
+          email: parsed.email ?? prev.email,
+          phone: parsed.phone ?? prev.phone,
+        }));
+      } catch { /* ignore */ }
+    }
   }, [enableLocalStorage, localStoragePrefix, provider.provider_id]);
+
+  const saveInlineDataToLocalStorage = useCallback(() => {
+    if (!enableLocalStorage) return;
+    const pid = provider.provider_id;
+    const pfx = localStoragePrefix;
+    const inlineData = {
+      providerName: formData.providerName,
+      providerDescription: formData.providerDescription,
+      listingType: formData.listingType,
+      street: formData.street,
+      zipCode: formData.zipCode,
+      city: formData.city,
+      country: formData.country,
+      isOnlineBusiness: formData.isOnlineBusiness,
+      showAddress: formData.showAddress,
+      website: formData.website,
+      instagram: formData.instagram,
+      email: formData.email,
+      phone: formData.phone,
+    };
+    localStorage.setItem(`${pfx}edit_inline_${pid}`, JSON.stringify(inlineData));
+  }, [enableLocalStorage, localStoragePrefix, provider.provider_id, formData]);
+
+  const saveInlineDataAndNavigate = useCallback((url: string) => {
+    saveInlineDataToLocalStorage();
+    router.push(url);
+  }, [saveInlineDataToLocalStorage, router]);
 
   // Run on mount
   useEffect(() => {
@@ -495,24 +545,6 @@ export function ProviderEditForm({
               </div>
             </div>
 
-            {/* Category Field */}
-            <div 
-              className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
-              onClick={() => router.push(`${editBaseUrl}/category`)}
-            >
-              <div className="flex flex-1 flex-col gap-1">
-                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.category')} *</span>
-                <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
-                  {(() => {
-                    const category = categories.find(cat => cat.category_id === formData.categoryId);
-                    if (!category) return t('providers.selectCategory');
-                    return language === 'en' ? (category.name_en || category.name_de) : category.name_de;
-                  })()}
-                </span>
-              </div>
-              <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
-            </div>
-
             {/* Plan 089 M8: Section (listing_type) field */}
             {(provider.listing_type !== undefined || reviewFooterActions) && (
               reviewFooterActions ? (
@@ -572,6 +604,24 @@ export function ProviderEditForm({
                 </div>
               </div>
             )}
+
+            {/* Category Field */}
+            <div 
+              className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
+              onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/category`)}
+            >
+              <div className="flex flex-1 flex-col gap-1">
+                <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.category')} *</span>
+                <span className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px]">
+                  {(() => {
+                    const category = categories.find(cat => cat.category_id === formData.categoryId);
+                    if (!category) return t('providers.selectCategory');
+                    return language === 'en' ? (category.name_en || category.name_de) : category.name_de;
+                  })()}
+                </span>
+              </div>
+              <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+            </div>
 
           </div>
           )}
@@ -811,7 +861,7 @@ export function ProviderEditForm({
             <button
               className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
               type="button"
-              onClick={() => router.push(`${editBaseUrl}/images`)}
+              onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/images`)}
             >
               <div className="flex flex-1 flex-col gap-1 items-start">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.images')}</span>
@@ -836,7 +886,7 @@ export function ProviderEditForm({
             {!hideSocialInitiatives && <button
               className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
               type="button"
-              onClick={() => router.push(`${editBaseUrl}/social`)}
+              onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/social`)}
             >
               <div className="flex flex-1 flex-col gap-1 items-start">
                 <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('editProvider.socialInitiatives')}</span>
@@ -876,7 +926,7 @@ export function ProviderEditForm({
                 <button
                   className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
                   type="button"
-                  onClick={() => router.push(`${editBaseUrl}/menu`)}
+                  onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/menu`)}
                 >
                   <div className="flex flex-1 flex-col gap-1 items-start">
                     <span className="text-xs font-normal text-[#999999] leading-[15px]">Menu</span>
@@ -894,7 +944,7 @@ export function ProviderEditForm({
               <button
                 className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
                 type="button"
-                onClick={() => router.push(`${editBaseUrl}/halal`)}
+                onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/halal`)}
               >
                 <div className="flex flex-1 flex-col gap-1 items-start">
                   <span className="text-xs font-normal text-[#999999] leading-[15px]">Halal Check</span>
@@ -905,28 +955,32 @@ export function ProviderEditForm({
                 <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
               </button>
 
-              {/* Delivery Links */}
-              <button
-                className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
-                type="button"
-                onClick={() => router.push(`${editBaseUrl}/delivery`)}
-              >
-                <div className="flex flex-1 flex-col gap-1 items-start">
-                  <span className="text-xs font-normal text-[#999999] leading-[15px]">Delivery Links</span>
-                  <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
-                    {formData.deliveryLinks.length > 0
-                      ? `${formData.deliveryLinks.length} links`
-                      : 'Add delivery platforms'}
+              {/* Delivery / Order Links — conditional on listing type */}
+              {(formData.listingType === 'food' || formData.listingType === 'store' || !formData.listingType) && (
+                <button
+                  className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
+                  type="button"
+                  onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/delivery`)}
+                >
+                  <div className="flex flex-1 flex-col gap-1 items-start">
+                    <span className="text-xs font-normal text-[#999999] leading-[15px]">
+                      {formData.listingType === 'store' ? 'Order Links' : 'Delivery Links'}
+                    </span>
+                    <div className="text-[15px] font-medium text-[#272727] leading-[18px]">
+                      {formData.deliveryLinks.length > 0
+                        ? `${formData.deliveryLinks.length} links`
+                        : formData.listingType === 'store' ? 'Add order platforms' : 'Add delivery platforms'}
+                    </div>
                   </div>
-                </div>
-                <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
-              </button>
+                  <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
+                </button>
+              )}
 
               {/* Opening Hours */}
               <button
                 className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
                 type="button"
-                onClick={() => router.push(`${editBaseUrl}/hours`)}
+                onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/hours`)}
               >
                 <div className="flex flex-1 flex-col gap-1 items-start">
                   <span className="text-xs font-normal text-[#999999] leading-[15px]">Opening Hours</span>
@@ -943,7 +997,7 @@ export function ProviderEditForm({
               <button
                 className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
                 type="button"
-                onClick={() => router.push(`${editBaseUrl}/values`)}
+                onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/values`)}
               >
                 <div className="flex flex-1 flex-col gap-1 items-start">
                   <span className="text-xs font-normal text-[#999999] leading-[15px]">Values & Amenities</span>
@@ -963,7 +1017,7 @@ export function ProviderEditForm({
                 <button
                   className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
                   type="button"
-                  onClick={() => router.push(`${editBaseUrl}/enrichment`)}
+                  onClick={() => saveInlineDataAndNavigate(`${editBaseUrl}/enrichment`)}
                 >
                   <div className="flex flex-1 flex-col gap-1 items-start">
                     <span className="text-xs font-normal text-[#999999] leading-[15px]">Enrichment Review</span>

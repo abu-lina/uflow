@@ -138,3 +138,26 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Files affected**: 38 files, 5279 insertions, 855 deletions
 **Tests**: 1461 passing, 0 failed
 **Version**: 0.13.0 (unreleased)
+
+### 2026-06-05 — Plan 147: Add store category via migration
+- **Context**: Added "Lebensmittel" (Groceries) category under Store section via idempotent SQL migration.
+- **Learning**: When subagents of type planner, implementer, and code-reviewer fail with `ProviderModelNotFoundError`, the `general` subagent type works as a fallback for writing files and documents. This suggests a configuration gap for domain-specific subagents vs the general-purpose agent.
+- **What to do differently**: File an issue to investigate the subagent model provider config, or update the pipeline to route through `general` as a default fallback.
+- **Files affected**: 2 new files
+  - `supabase/migrations/097_plan_147_add_store_category_lebensmittel.sql`
+  - `agent-output/planning/147-plan-store-category.md`
+  - `agent-output/implementation/147-implementation-store-category.md`
+  - `agent-output/code-review/147-code-review-store-category.md`
+  - `agent-output/qa/147-qa-store-category.md`
+
+### 2026-06-05 — Plan 148: NOT NULL violation in RPC on NULLIF(null, '')
+- **Context**: Debugged a 500 error in PATCH /api/admin/edit-provider caused by a NULLIF expression in a PL/pgSQL RPC function.
+- **Learning**: `NULLIF(column->>'key', '')` does NOT protect against absent JSONB keys. When `->>` returns NULL, `NULLIF(NULL, '')` returns NULL (PostgreSQL: NULL ≠ '' is unknown, not true, so NULLIF returns the first argument). If the target column is NOT NULL, the INSERT fails. Use `COALESCE(NULLIF(column->>'key', ''), default_value)` instead.
+- **What to do differently**: Review all RPC INSERT blocks for `NULLIF` usage on NOT NULL columns — they should all be wrapped in `COALESCE` with an explicit default.
+- **Files affected**: 2 new files
+  - `supabase/migrations/098_plan_148_fix_rpc_verification_method_not_null.sql`
+  - `agent-output/analysis/148-analysis-edit-provider-500.md`
+  - `agent-output/planning/148-plan-rpc-not-null-fix.md`
+  - `agent-output/implementation/148-implementation-rpc-fix.md`
+  - `agent-output/code-review/148-code-review-rpc-fix.md`
+  - `agent-output/qa/148-qa-rpc-fix.md`

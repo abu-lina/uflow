@@ -25,7 +25,18 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
     async function fetchCategories() {
       setCategoriesLoading(true);
       try {
-        const categoriesData = await getProviderCategories();
+        // Try to read listing_type from localStorage
+        let listingType: 'food' | 'store' | 'business' | undefined;
+        try {
+          const stored = localStorage.getItem(`admin_edit_inline_${providerId}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.listingType === 'food' || parsed.listingType === 'store') {
+              listingType = parsed.listingType;
+            }
+          }
+        } catch {}
+        const categoriesData = await getProviderCategories(listingType);
         setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);

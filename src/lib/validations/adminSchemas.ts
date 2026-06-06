@@ -41,7 +41,7 @@ const menuItemSchema = z.object({
 });
 
 const deliveryLinkSchema = z.object({
-  platform: z.enum(['wolt', 'lieferando', 'ubereats']),
+  platform: z.enum(['wolt', 'lieferando', 'ubereats', 'website']),
   platform_url: z.string().url(),
   platform_slug: z.string().optional(),
   is_active: z.boolean(),

@@ -67,11 +67,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
       .then(res => res.json())
       .then(json => {
         const fp = json.data?.food_providers;
-        if (fp) {
+        const sp = json.data?.store_providers;
+        const extData = fp || sp;
+        if (extData) {
           setData({
-            verificationMethod: fp.verification_method ?? null,
-            hasCertificate: fp.has_certificate ?? false,
-            certificateUrl: fp.certificate_url ?? null,
+            verificationMethod: extData.verification_method ?? null,
+            hasCertificate: extData.has_certificate ?? false,
+            certificateUrl: extData.certificate_url ?? null,
           });
         }
       })

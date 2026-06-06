@@ -10,7 +10,7 @@ export interface AdminProviderMenu {
 }
 
 export interface AdminProviderDeliveryLink {
-  platform: 'wolt' | 'lieferando' | 'ubereats';
+  platform: 'wolt' | 'lieferando' | 'ubereats' | 'website';
   platform_url: string;
   platform_slug?: string;
   is_active: boolean;
@@ -23,6 +23,7 @@ export interface FoodProviderExtension {
   no_alcohol: boolean;
   no_pork: boolean;
   no_gambling: boolean;
+  proof_tier?: number;
 }
 
 export interface StoreProviderExtension {
@@ -30,6 +31,7 @@ export interface StoreProviderExtension {
   has_certificate: boolean;
   certificate_url: string | null;
   no_gambling: boolean;
+  proof_tier?: number;
 }
 
 export interface AdminProviderWithExtensions {
