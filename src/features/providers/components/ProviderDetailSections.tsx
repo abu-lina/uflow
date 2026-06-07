@@ -210,7 +210,7 @@ export function ProviderDetailSections({
   });
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-8 self-stretch">
       <ExpandSection defaultOpen title={t('providerDetail.sections.valuesAmenities')}>
         <div className="space-y-2 pt-3">
           {amenities.length === 0 ? (

@@ -43,7 +43,7 @@ export function ExpandSection({
   };
 
   return (
-    <div className="rounded-2xl bg-background shadow-sm">
+    <div className="w-full rounded-2xl bg-background shadow-sm">
       <button
         aria-expanded={isOpen}
         className="flex w-full items-center justify-between p-4"
