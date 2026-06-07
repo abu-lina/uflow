@@ -112,8 +112,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
 
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
-  const [expandedOffers, setExpandedOffers] = useState(false);
-  const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedProviders, setExpandedProviders] = useState(false);
 
   // Use React Query for bookmark status (cached, non-blocking)
@@ -518,83 +516,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
               </div>
             )}
 
-            {/* Offers & Needs Section */}
-            {((communityService.offers && communityService.offers.length > 0) || (communityService.needs && communityService.needs.length > 0)) && (
-              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
-                <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                  {/* Offers Section */}
-                  {communityService.offers && communityService.offers.length > 0 && (
-                    <div className="flex w-full flex-col gap-2.5">
-                      <button
-                        className="flex w-full items-center justify-between"
-                        onClick={() => setExpandedOffers(!expandedOffers)}
-                      >
-                        <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                          {t('providers.weOffer')}
-                        </div>
-                        <ChevronDown 
-                          className={`h-6 w-6 text-gray-600 transition-transform ${
-                            expandedOffers ? 'rotate-180' : ''
-                          }`} 
-                        />
-                      </button>
-                      {expandedOffers && (
-                        <div className="mt-2">
-                          <div className="flex flex-wrap gap-2">
-                            {communityService.offers.map((offer, index) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                              >
-                                {offer.name_de}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Divider */}
-                  {communityService.offers && communityService.offers.length > 0 && communityService.needs && communityService.needs.length > 0 && (
-                    <hr className="w-full border-gray-200" />
-                  )}
-
-                  {/* Needs Section */}
-                  {communityService.needs && communityService.needs.length > 0 && (
-                    <div className="flex w-full flex-col gap-2.5">
-                      <button
-                        className="flex w-full items-center justify-between"
-                        onClick={() => setExpandedNeeds(!expandedNeeds)}
-                      >
-                        <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                          {t('providers.weAreLookingFor')}
-                        </div>
-                        <ChevronDown 
-                          className={`h-6 w-6 text-gray-600 transition-transform ${
-                            expandedNeeds ? 'rotate-180' : ''
-                          }`} 
-                        />
-                      </button>
-                      {expandedNeeds && (
-                        <div className="mt-2">
-                          <div className="flex flex-wrap gap-2">
-                            {communityService.needs.map((need, index) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                              >
-                                {need.name_de}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
         {/* Actions Bar */}

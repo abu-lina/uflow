@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Icon } from '@iconify/react';
-import { ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
 import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
@@ -188,8 +188,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
 
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
-  const [expandedOffers, setExpandedOffers] = useState(false);
-  const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [showHalalPopup, setShowHalalPopup] = useState(false);
 
   // Track image loading states for skeleton display
@@ -684,89 +682,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   </div>
                 </div>
               )}
-              {/* Offers & Needs Section - with fade-in animation */}
-              {((provider.offers && provider.offers.length > 0) ||
-                (provider.needs && provider.needs.length > 0)) && (
-                <div
-                  className="animate-fadeIn flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100"
-                  style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}
-                >
-                  <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                    {/* Offers Section */}
-                    {provider.offers && provider.offers.length > 0 && (
-                      <div className="flex w-full flex-col gap-2.5">
-                        <button
-                          className="flex w-full items-center justify-between"
-                          onClick={() => setExpandedOffers(!expandedOffers)}
-                        >
-                          <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
-                            {t('providers.weOffer')}
-                          </div>
-                          <ChevronDown
-                            className={`h-6 w-6 text-gray-600 transition-transform ${
-                              expandedOffers ? 'rotate-180' : ''
-                            }`}
-                          />
-                        </button>
-                        {expandedOffers && (
-                          <div className="mt-2">
-                            <div className="flex flex-wrap gap-2">
-                              {provider.offers.map((offer, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                                >
-                                  {offer.name_de}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Divider */}
-                    {provider.offers &&
-                      provider.offers.length > 0 &&
-                      provider.needs &&
-                      provider.needs.length > 0 && <hr className="w-full border-gray-200" />}
-
-                    {/* Needs Section */}
-                    {provider.needs && provider.needs.length > 0 && (
-                      <div className="flex w-full flex-col gap-2.5">
-                        <button
-                          className="flex w-full items-center justify-between"
-                          onClick={() => setExpandedNeeds(!expandedNeeds)}
-                        >
-                          <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
-                            {t('providers.weAreLookingFor')}
-                          </div>
-                          <ChevronDown
-                            className={`h-6 w-6 text-gray-600 transition-transform ${
-                              expandedNeeds ? 'rotate-180' : ''
-                            }`}
-                          />
-                        </button>
-                        {expandedNeeds && (
-                          <div className="mt-2">
-                            <div className="flex flex-wrap gap-2">
-                              {provider.needs.map((need, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                                >
-                                  {need.name_de}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               <ProviderDetailSections
                 badges={provider.badges ?? []}
                 isLoadingBadges={false}

@@ -195,8 +195,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
     setShowHalalPopup(false);
   }, []);
 
-  const [expandedOffers, setExpandedOffers] = useState(false);
-  const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedBarakah, setExpandedBarakah] = useState(true);
   const [expandedProviders, setExpandedProviders] = useState(false);
 
@@ -537,84 +535,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                 )}
               </div>
             )
-          )}
-
-          {/* Combined Offers & Needs Section */}
-          {((provider.offers && provider.offers.length > 0) ||
-            (provider.needs && provider.needs.length > 0)) && (
-            <div className="mx-6 mt-4 rounded-2xl bg-white shadow-sm">
-              {/* Offers Section */}
-              {provider.offers && provider.offers.length > 0 && (
-                <div className="p-4">
-                  <button
-                    className="flex w-full items-center justify-between"
-                    onClick={() => setExpandedOffers(!expandedOffers)}
-                  >
-                    <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
-                      {t('providers.weOffer')}
-                    </h3>
-                    <ChevronDown
-                      className={`h-6 w-6 text-gray-600 transition-transform ${
-                        expandedOffers ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-                  {expandedOffers && (
-                    <div className="mt-2">
-                      <div className="flex flex-wrap gap-2">
-                        {provider.offers.map((offer, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                          >
-                            {offer.name_de}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Divider */}
-              {provider.offers &&
-                provider.offers.length > 0 &&
-                provider.needs &&
-                provider.needs.length > 0 && <hr className="mx-4 border-gray-200" />}
-
-              {/* Needs Section */}
-              {provider.needs && provider.needs.length > 0 && (
-                <div className="p-4">
-                  <button
-                    className="flex w-full items-center justify-between"
-                    onClick={() => setExpandedNeeds(!expandedNeeds)}
-                  >
-                    <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
-                      {t('providers.weAreLookingFor')}
-                    </h3>
-                    <ChevronDown
-                      className={`h-6 w-6 text-gray-600 transition-transform ${
-                        expandedNeeds ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-                  {expandedNeeds && (
-                    <div className="mt-2">
-                      <div className="flex flex-wrap gap-2">
-                        {provider.needs.map((need, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                          >
-                            {need.name_de}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
           )}
 
           <div className="mx-6 mt-4 space-y-4">
@@ -977,84 +897,6 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                         </button>
                       );
                     })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Combined Offers & Needs Section */}
-            {((provider.offers && provider.offers.length > 0) ||
-              (provider.needs && provider.needs.length > 0)) && (
-              <div className="rounded-2xl bg-white shadow-sm">
-                {/* Offers Section */}
-                {provider.offers && provider.offers.length > 0 && (
-                  <div className="p-6">
-                    <button
-                      className="flex w-full items-center justify-between"
-                      onClick={() => setExpandedOffers(!expandedOffers)}
-                    >
-                      <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
-                        {t('providers.weOffer')}
-                      </h3>
-                      <ChevronDown
-                        className={`h-7 w-7 text-gray-600 transition-transform ${
-                          expandedOffers ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
-                    {expandedOffers && (
-                      <div className="mt-3">
-                        <div className="flex flex-wrap gap-2">
-                          {provider.offers.map((offer, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                            >
-                              {offer.name_de}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Divider */}
-                {provider.offers &&
-                  provider.offers.length > 0 &&
-                  provider.needs &&
-                  provider.needs.length > 0 && <hr className="mx-4 border-gray-200" />}
-
-                {/* Needs Section */}
-                {provider.needs && provider.needs.length > 0 && (
-                  <div className="p-6">
-                    <button
-                      className="flex w-full items-center justify-between"
-                      onClick={() => setExpandedNeeds(!expandedNeeds)}
-                    >
-                      <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
-                        {t('providers.weAreLookingFor')}
-                      </h3>
-                      <ChevronDown
-                        className={`h-7 w-7 text-gray-600 transition-transform ${
-                          expandedNeeds ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
-                    {expandedNeeds && (
-                      <div className="mt-3">
-                        <div className="flex flex-wrap gap-2">
-                          {provider.needs.map((need, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                            >
-                              {need.name_de}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

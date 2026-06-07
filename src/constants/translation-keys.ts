@@ -139,8 +139,6 @@ export const TRANSLATION_KEYS = {
     ONLINE: 'providers.online',
     DONATIONS: 'providers.donations',
     INITIATIVES_SUPPORTED: 'providers.initiativesSupported',
-    WE_OFFER: 'providers.weOffer',
-    WE_NEED: 'providers.weNeed',
     SELECT_CATEGORY: 'providers.selectCategory',
   },
 } as const;
