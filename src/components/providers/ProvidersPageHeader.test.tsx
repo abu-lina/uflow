@@ -28,7 +28,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
 import { ProvidersPageHeader } from './ProvidersPageHeader';
 
 describe('ProvidersPageHeader (Plan 109)', () => {
-  it('renders search context and keeps section tabs outside header', () => {
+  it('renders search context with section tabs in header (desktop header redesign)', () => {
     render(
       <ProvidersPageHeader
         categoryId="cat-1"
@@ -40,7 +40,7 @@ describe('ProvidersPageHeader (Plan 109)', () => {
 
     expect(screen.getByRole('searchbox')).toHaveValue('Doner');
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    // Section tabs are now rendered in ProvidersContent (scrolls with page, not inside fixed header)
-    expect(screen.queryByRole('tablist', { name: /browse sections/i })).not.toBeInTheDocument();
+    // Section tabs ARE rendered inside the fixed header (desktop header redesign)
+    expect(screen.getByRole('tablist', { name: /browse sections/i })).toBeInTheDocument();
   });
 });

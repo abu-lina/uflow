@@ -153,7 +153,8 @@ describe('providers service', () => {
       expect(mockRpc).toHaveBeenCalledWith('search_provider_ids_by_name', {
         search_query: 'test query',
       });
-      expect(mockIlike).not.toHaveBeenCalled();
+      // searchProviders now uses ILIKE for category name search (legitimate, alongside tsvector for providers)
+      expect(mockIlike).toHaveBeenCalled();
     });
 
     it('filters out null and empty cities', async () => {
