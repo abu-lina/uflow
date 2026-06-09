@@ -31,11 +31,19 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 vi.mock('@/components/providers/ProvidersPageHeader', () => ({
-  ProvidersPageHeader: () => (
+  ProvidersPageHeader: ({ onSectionChange }: { onSectionChange?: () => void }) => (
     <header
       className="fixed left-0 right-0 top-0 z-50"
       data-testid="providers-search-header"
-    />
+    >
+      <div aria-label="browse sections" data-testid="providers-section-selector" role="tablist" />
+    </header>
+  ),
+}));
+
+vi.mock('@/features/search/components/SectionSelector', () => ({
+  SectionSelector: () => (
+    <div aria-label="browse sections" data-testid="providers-section-selector" role="tablist" />
   ),
 }));
 
@@ -134,7 +142,7 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 
 describe('ProvidersContent layout regression (Plan 109)', () => {
-  it('keeps providers search header fixed while section tabs are rendered in main content', () => {
+  it('renders section tabs inside the fixed mobile header above the search bar', () => {
     render(<ProvidersContent />);
 
     const fixedSearchHeader = screen.getByTestId('providers-search-header');
@@ -142,9 +150,9 @@ describe('ProvidersContent layout regression (Plan 109)', () => {
 
     const sectionTablist = screen.getByRole('tablist', { name: /browse sections/i });
     expect(sectionTablist).toBeInTheDocument();
-    expect(fixedSearchHeader).not.toContainElement(sectionTablist);
+    expect(fixedSearchHeader).toContainElement(sectionTablist);
 
     const main = screen.getByRole('main');
-    expect(within(main).getByRole('tablist', { name: /browse sections/i })).toBeInTheDocument();
+    expect(within(main).queryByRole('tablist', { name: /browse sections/i })).not.toBeInTheDocument();
   });
 });

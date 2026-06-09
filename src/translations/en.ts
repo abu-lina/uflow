@@ -152,6 +152,8 @@ export const en = {
     "open": "Open search",
     "submit": "Submit search",
     "filter": "Filter by location",
+    "personSingular": "{{count}} Person",
+    "personPlural": "{{count}} People",
     "context": {
       "allResults": "All results",
       "edit": "Edit search",

@@ -20,7 +20,7 @@ interface SectionSelectorProps {
  * when a different section is selected.
  *
  * Labels are i18n-aware via useLanguage(). The internal section value
- * for "Stores" remains 'business' throughout the data model.
+ * for "Stores" is 'store' in the canonical Section type.
  *
  * The active tab is marked with aria-selected=true per ARIA tablist pattern.
  */

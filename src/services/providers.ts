@@ -531,10 +531,11 @@ export async function searchProviders(
   if (query) {
     // First, search for matching offers, needs, and provider names using full-text search (tsvector)
     // All three now use GIN indexes for fast searches (Plan 007: ILIKE removal)
-    const [matchingOffers, matchingNeeds, matchingProviderNames] = await Promise.all([
+    const [matchingOffers, matchingNeeds, matchingProviderNames, matchingCategoryIds] = await Promise.all([
       searchOffers(query),
       searchNeeds(query),
       supabase.rpc('search_provider_ids_by_name', { search_query: query }),
+      supabase.from('categories').select('category_id').ilike('name_de', `%${query}%`),
     ]);
 
     const matchingOfferIds = matchingOffers.map(offer => offer.offer_id);
@@ -542,6 +543,8 @@ export async function searchProviders(
     const matchingProviderIds = Array.isArray(matchingProviderNames.data)
       ? matchingProviderNames.data.map((p: { provider_id: string }) => p.provider_id)
       : [];
+    const categoryNameMatchIds: string[] = (matchingCategoryIds.data || [])
+      .map((c: { category_id: string }) => c.category_id);
 
     const [providerOfferMatches, providerNeedMatches] = await Promise.all([
       matchingOfferIds.length > 0
@@ -565,6 +568,7 @@ export async function searchProviders(
     // 1. Provider name matches (using tsvector RPC — replaces previous ILIKE)
     // 2. Provider offers any of the matching offers (tsvector search)
     // 3. Provider fulfills any of the matching needs (tsvector search)
+    // 4. Category name matches (cuisine/category search)
     const searchConditions: string[] = [];
 
     if (matchingProviderIds.length > 0) {
@@ -577,6 +581,10 @@ export async function searchProviders(
 
     if (providersByNeeds.length > 0) {
       searchConditions.push(`provider_id.in.(${Array.from(new Set(providersByNeeds)).join(',')})`);
+    }
+
+    if (categoryNameMatchIds.length > 0) {
+      searchConditions.push(`category_id.in.(${categoryNameMatchIds.join(',')})`);
     }
 
     if (searchConditions.length > 0) {

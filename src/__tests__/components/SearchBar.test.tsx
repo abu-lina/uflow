@@ -54,13 +54,6 @@ describe('SearchBar Component', () => {
       expect(locationButtons.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should render category filter button', () => {
-      renderSearchBar();
-
-      // Category filter is rendered with "All" text
-      expect(screen.getByText('All')).toBeInTheDocument();
-    });
-
     it('[post-review fix] uses gap-0 in search icon/input row', () => {
       const { container } = renderSearchBar();
       const searchRow = container.querySelector('div.relative.flex.flex-1.flex-row.items-center.gap-0');
@@ -130,41 +123,13 @@ describe('SearchBar Component', () => {
   });
 
   describe('Filter Functionality', () => {
-    it('should have category dropdown button', () => {
-      renderSearchBar();
-
-      // Category button shows "All" text
-      const allText = screen.getByText('All');
-      expect(allText).toBeInTheDocument();
-
-      // Its parent button should have aria-haspopup
-      const button = allText.closest('button');
-      expect(button).toHaveAttribute('aria-haspopup', 'listbox');
-    });
-
     it('should have location dropdown button', () => {
       renderSearchBar();
 
-      // Both category and location buttons exist with aria-haspopup
+      // Location, Wer, and Filter buttons exist with aria-haspopup
       const buttons = screen.getAllByRole('button');
       const dropdownButtons = buttons.filter((b) => b.getAttribute('aria-haspopup') === 'listbox');
-      expect(dropdownButtons.length).toBe(2);
-    });
-
-    it('should toggle category dropdown on click', async () => {
-      renderSearchBar();
-
-      const allText = screen.getByText('All');
-      const categoryButton = allText.closest('button') as HTMLButtonElement;
-
-      // Initially collapsed
-      expect(categoryButton).toHaveAttribute('aria-expanded', 'false');
-
-      // Click to expand
-      fireEvent.click(categoryButton);
-
-      // Should be expanded
-      expect(categoryButton).toHaveAttribute('aria-expanded', 'true');
+      expect(dropdownButtons.length).toBe(3);
     });
   });
 

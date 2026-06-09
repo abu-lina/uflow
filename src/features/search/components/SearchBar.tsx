@@ -2,80 +2,65 @@
 // React imports
 import { Suspense, useEffect, useState, useRef } from 'react';
 
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 
 // Third-party imports
-import { ChevronDown, Search, X } from 'lucide-react';
-
+import { ChevronDown, Search, X, Loader2 } from 'lucide-react';
 // Local imports
 import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
+import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { fetchUsedCategories, fetchFilteredCategories, type Category } from '@/services/categories';
+
 import { logSupabaseError } from '@/utils/errorUtils';
 
 interface SearchBarProps {
   className?: string;
-  hideCategoryFilter?: boolean;
   // Custom cities to use instead of fetching from database
   customCities?: string[];
   // Callbacks for parent to handle behavior
-  onSearchSubmit?: (query: string, category: string | null, location: string) => void;
+  onSearchSubmit?: (query: string, location: string) => void;
   onClearSearch?: () => void;
-  onCategoryChange?: (category: string | null) => void;
   onLocationChange?: (location: string) => void;
 }
 
 function SearchBarContent({
   className = '',
-  hideCategoryFilter,
   customCities,
   onSearchSubmit,
   onClearSearch,
-  onCategoryChange,
   onLocationChange,
 }: SearchBarProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
   const { t, language } = useLanguage();
   // State for input and dropdowns
   const [isTyping, setIsTyping] = useState(false);
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const {
     searchQuery,
     setSearchQuery,
-    selectedCategory,
-    setSelectedCategory,
     selectedLocation,
     setSelectedLocation,
+    selectedSection,
   } = useSearch();
-  const [categories, setCategories] = useState<Category[]>([]);
 
   // Locations array stores actual city names; LOCATION_ALL is added in the dropdown as first option
   const [locations, setLocations] = useState<string[]>([]);
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const werDropdownRef = useRef<HTMLDivElement>(null);
+  const [isWerOpen, setIsWerOpen] = useState(false);
+  const [selectedWer, setSelectedWer] = useState(1);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [hasMounted, setHasMounted] = useState(false);
 
-  // Helper function to get category name based on language
-  // Categories are stored in DE/EN only, so we use English for non-German languages when available
-  const getCategoryName = (category: Category) => {
-    // For English, prefer English name
-    if (language === 'en') {
-      return category.name_en || category.name_de || category.category_id || t('search.unnamed');
-    }
-
-    // For German, prefer German name
-    if (language === 'de') {
-      return category.name_de || category.name_en || category.category_id || t('search.unnamed');
-    }
-
-    // For all other languages (ar, tr, ur, ps), prefer English over German
-    // This provides better internationalization than showing German text
-    return category.name_en || category.name_de || category.category_id || t('search.unnamed');
-  };
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [suggestions, setSuggestions] = useState<Array<{ label: string; type: 'provider' | 'menuItem' | 'cuisine' }>>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   // Handle clicks outside dropdowns
   useEffect(() => {
@@ -89,56 +74,40 @@ function SearchBarContent({
       }
 
       if (
-        categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsCategoryOpen(false);
-      }
-      if (
         locationDropdownRef.current &&
         !locationDropdownRef.current.contains(event.target as Node)
       ) {
         setIsLocationOpen(false);
       }
+      if (
+        werDropdownRef.current &&
+        !werDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsWerOpen(false);
+      }
+      if (
+        filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsFilterOpen(false);
+      }
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setSuggestions([]);
+      }
     }
 
     // Add event listener if any dropdown is open
-    if (isCategoryOpen || isLocationOpen) {
+    if (isLocationOpen || isWerOpen || isFilterOpen || suggestions.length > 0) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isCategoryOpen, isLocationOpen]);
-
-  // Fetch categories based on current filters
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        // If we have location or search query filters, use filtered categories
-        // Check against LOCATION_ALL (empty string) for "all locations" state
-        if ((selectedLocation && selectedLocation !== LOCATION_ALL) || searchQuery.trim()) {
-          const filteredCategories = await fetchFilteredCategories(selectedLocation, searchQuery);
-          setCategories(filteredCategories);
-        } else {
-          const allCategories = await fetchUsedCategories();
-          setCategories(allCategories);
-        }
-      } catch (error) {
-        logSupabaseError('SearchBar.fetchCategories', error);
-        setCategories([]);
-        // Re-throw to ensure error is visible in console
-        if (error instanceof Error) {
-          console.error('Error fetching categories:', error.message, error);
-        } else {
-          console.error('Error fetching categories:', error);
-        }
-      }
-    }
-
-    void fetchCategories();
-  }, [selectedLocation, searchQuery, t]);
+  }, [isLocationOpen, isWerOpen, isFilterOpen, suggestions.length]);
 
   // Fetch cities based on current filters
   useEffect(() => {
@@ -153,9 +122,9 @@ function SearchBarContent({
         // Use dynamic import to avoid module initialization issues
         const { fetchProviderCities, fetchFilteredCities } = await import('@/services/providers');
 
-        // If we have category or search query filters, use filtered cities
-        if (selectedCategory || searchQuery.trim()) {
-          const filteredCities = await fetchFilteredCities(selectedCategory, searchQuery);
+        // If we have search query filters, use filtered cities
+        if (searchQuery.trim()) {
+          const filteredCities = await fetchFilteredCities('', searchQuery);
           setLocations(filteredCities);
         } else {
           // Otherwise, fetch all cities
@@ -180,61 +149,113 @@ function SearchBarContent({
     }
 
     void fetchCities();
-  }, [selectedCategory, searchQuery, customCities, t]);
+  }, [searchQuery, customCities, t]);
 
   // Sync state with URL params only on initial mount or when the page changes
   useEffect(() => {
     if (!hasSyncedFromUrl.current) {
       const q = searchParams.get('q') || '';
-      const category = searchParams.get('category') || null;
       // Map legacy translated values ("Überall", "Everywhere") to canonical sentinel
       const locationParam = searchParams.get('location') || '';
       const isAllLocations =
         !locationParam || locationParam === 'Überall' || locationParam === 'Everywhere';
       const location = isAllLocations ? LOCATION_ALL : locationParam;
       setSearchQuery(q);
-      setSelectedCategory(category === t('search.all') ? null : category);
       setSelectedLocation(location);
       hasSyncedFromUrl.current = true;
     }
-  }, [pathname, searchParams, setSearchQuery, setSelectedCategory, setSelectedLocation, t]);
+  }, [pathname, searchParams, setSearchQuery, setSelectedLocation, t]);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
+  // Debounced search suggestions
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timeout = setTimeout(async () => {
+      setIsLoadingSuggestions(true);
+      try {
+        // Search providers (restaurant names), food_menu items, and categories directly
+        const [providerRes, menuRes, categoryRes] = await Promise.all([
+          supabase.from('providers').select('provider_name').ilike('provider_name', `%${query}%`).limit(5),
+          supabase.from('food_menu').select('name_de, name_en').ilike('name_de', `%${query}%`).limit(5),
+          supabase.from('categories').select('name_de, name_en').ilike('name_de', `%${query}%`).limit(5),
+        ]);
+
+        if (cancelled) return;
+
+        const providerNames: Array<{ label: string; type: 'provider' }> = (providerRes.data || [])
+          .map((p) => ({ label: p.provider_name, type: 'provider' as const }))
+          .filter((p) => p.label);
+
+        const menuItems: Array<{ label: string; type: 'menuItem' }> = (menuRes.data || [])
+          .map((m) => ({ label: m.name_de || m.name_en || '', type: 'menuItem' as const }))
+          .filter((m) => m.label);
+
+        const categories: Array<{ label: string; type: 'cuisine' }> = (categoryRes.data || [])
+          .map((c) => ({ label: c.name_de || c.name_en || '', type: 'cuisine' as const }))
+          .filter((c) => c.label);
+
+        const combined: Array<{ label: string; type: 'provider' | 'menuItem' | 'cuisine' }> = [
+          ...providerNames,
+          ...menuItems,
+          ...categories,
+        ];
+
+        // Deduplicate by label
+        const seen = new Set<string>();
+        const deduped = combined.filter((item) => {
+          if (seen.has(item.label)) return false;
+          seen.add(item.label);
+          return true;
+        });
+
+        setSuggestions(deduped.slice(0, 10));
+      } catch (err) {
+        console.debug('[SearchBar] Suggestions error:', err);
+        if (!cancelled) setSuggestions([]);
+      } finally {
+        if (!cancelled) setIsLoadingSuggestions(false);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [searchQuery]);
+
   // Handle search submission
   const handleSearch = () => {
     // Call parent callback to handle the search
-    onSearchSubmit?.(searchQuery, selectedCategory, selectedLocation);
+    onSearchSubmit?.(searchQuery, selectedLocation);
   };
 
   // Handle key press for search
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSearch();
+      setSuggestions([]);
     }
-  };
-
-  // Helper to get the label for the selected category
-  const getCategoryLabel = (catId: string | null) => {
-    if (!catId || catId === t('search.all')) {
-      return t('search.all');
-    }
-    const cat = categories.find((c) => c.category_id === catId);
-    return cat ? getCategoryName(cat) : t('search.unnamed');
   };
 
   return (
     <div
       aria-label={t('search.ariaLabel')}
-      className={`relative flex h-10 w-full flex-row items-center gap-4 rounded-lg bg-white px-2 ${className}`}
+      className={`relative flex h-12 w-full flex-row items-center gap-4 rounded-2xl bg-white border border-border-light px-2 ${className}`}
       role="search"
     >
       <div suppressHydrationWarning className="flex w-full flex-row items-center justify-between">
         {/* Search Section */}
         <div className="relative flex flex-1 flex-row items-center gap-0">
-          <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
+                <Search size={24} className="text-neutral-500" />
           <input
             ref={inputRef}
             className={`w-full appearance-none truncate border-none bg-transparent px-1 text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
@@ -264,85 +285,47 @@ function SearchBarContent({
               <X className="text-gray-400" size={16} />
             </button>
           )}
+          {/* Loading indicator for suggestions */}
+          {isLoadingSuggestions && searchQuery.trim().length >= 2 && (
+            <div className="absolute left-0 top-full z-50 mt-1 w-full">
+              <div className="flex items-center justify-center rounded-lg bg-white py-3 shadow-lg ring-1 ring-black/5">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+              </div>
+            </div>
+          )}
+          {/* Suggestions dropdown */}
+          {searchQuery.trim().length >= 2 && suggestions.length > 0 && (
+            <div
+              ref={suggestionsRef}
+              className="absolute left-0 top-full z-50 mt-1 w-full rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-80 overflow-y-auto"
+            >
+              {suggestions.map((item, idx) => (
+                <button
+                  key={`${item.type}-${item.label}-${idx}`}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-gray-50"
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setSearchQuery(item.label);
+                    setSuggestions([]);
+                    onSearchSubmit?.(item.label, selectedLocation);
+                  }}
+                >
+                  <span className="text-xs font-medium uppercase text-gray-400 w-14 shrink-0">
+                    {item.type === 'provider' ? 'Restaurant' :
+                     item.type === 'cuisine' ? 'Küche' : 'Menü'}
+                  </span>
+                  <span className="text-gray-800">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Filters Section */}
         <div className="flex flex-row items-center gap-4">
           {/* Divider */}
           <div className="h-6 border-l border-[#999999]" />
-
-          {/* Categories */}
-          {!hideCategoryFilter ? (
-            <>
-              <div className="relative flex flex-row items-center">
-                <button
-                  aria-expanded={isCategoryOpen}
-                  aria-haspopup="listbox"
-                  className="flex items-center gap-1"
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsCategoryOpen(!isCategoryOpen);
-                    if (!isCategoryOpen) {
-                      setIsLocationOpen(false);
-                    }
-                  }}
-                >
-                  <span className="base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
-                    {getCategoryLabel(selectedCategory)}
-                  </span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={`size-6·text-content transition-transform duration-200 ${
-                      isCategoryOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-                {isCategoryOpen && (
-                  <div
-                    ref={categoryDropdownRef}
-                    className="dropdown-container absolute left-0 top-full z-50 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-                  >
-                    <button
-                      key="Alle"
-                      className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                        !selectedCategory ? 'bg-gray-50' : ''
-                      }`}
-                      onClick={() => {
-                        setSelectedCategory(null);
-                        setIsCategoryOpen(false);
-                        setIsLocationOpen(false);
-                        // Call parent callback to handle category change
-                        onCategoryChange?.(null);
-                      }}
-                    >
-                      {t('search.all')}
-                    </button>
-                    {categories.map((cat, idx) => (
-                      <button
-                        key={cat.category_id || idx}
-                        className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                          selectedCategory === cat.category_id ? 'bg-gray-50' : ''
-                        }`}
-                        onClick={() => {
-                          const newCategory = cat.category_id ?? null;
-                          setSelectedCategory(newCategory);
-                          setIsCategoryOpen(false);
-                          setIsLocationOpen(false);
-                          // Call parent callback to handle category change
-                          onCategoryChange?.(newCategory);
-                        }}
-                      >
-                        {getCategoryName(cat)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {/* Divider */}
-              <div className="h-6 border-l border-[#999999]" />
-            </>
-          ) : null}
 
           {/* Location */}
           <div className="relative flex flex-row items-center">
@@ -354,17 +337,14 @@ function SearchBarContent({
               onClick={(e) => {
                 e.stopPropagation();
                 setIsLocationOpen(!isLocationOpen);
-                if (!isLocationOpen) {
-                  setIsCategoryOpen(false);
-                }
               }}
             >
-              <span className="text-base·font-normal·text-content max-w-[120px] truncate sm:max-w-none">
-                {selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation}
+              <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
+                {t('suchen.wo.selectedWhere', { city: selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation })}
               </span>
               <ChevronDown
                 aria-hidden="true"
-                className={`size-6·text-content transition-transform duration-200 ${
+                className={`size-6 text-neutral-500 transition-transform duration-200 ${
                   isLocationOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -372,7 +352,7 @@ function SearchBarContent({
             {isLocationOpen && (
               <div
                 ref={locationDropdownRef}
-                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
               >
                 {/* "Everywhere" option using canonical sentinel */}
                 <button
@@ -383,7 +363,6 @@ function SearchBarContent({
                   onClick={() => {
                     setSelectedLocation(LOCATION_ALL);
                     setIsLocationOpen(false);
-                    setIsCategoryOpen(false);
                     onLocationChange?.(LOCATION_ALL);
                   }}
                 >
@@ -399,7 +378,6 @@ function SearchBarContent({
                     onClick={() => {
                       setSelectedLocation(location);
                       setIsLocationOpen(false);
-                      setIsCategoryOpen(false);
                       onLocationChange?.(location);
                     }}
                   >
@@ -409,6 +387,152 @@ function SearchBarContent({
               </div>
             )}
           </div>
+
+          {/* Divider */}
+          <div className="h-6 border-l border-[#999999]" />
+
+          {/* Wer */}
+          <div className="relative flex flex-row items-center">
+            <button
+              aria-expanded={isWerOpen}
+              aria-haspopup="listbox"
+              className="flex items-center gap-1"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsWerOpen(!isWerOpen);
+                if (!isWerOpen) {
+                  setIsLocationOpen(false);
+                }
+              }}
+            >
+              <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
+                {t('suchen.accordions.wer')}: {selectedWer === 1 ? t('search.personSingular', { count: 1 }) : t('search.personPlural', { count: selectedWer })}
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className={`size-6 text-neutral-500 transition-transform duration-200 ${
+                  isWerOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {isWerOpen && (
+              <div
+                ref={werDropdownRef}
+                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+              >
+                {[1, 2, 3, 4, 5].map((count) => (
+                  <button
+                    key={count}
+                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                      selectedWer === count ? 'bg-gray-50' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedWer(count);
+                      setIsWerOpen(false);
+                      setIsLocationOpen(false);
+                    }}
+                  >
+                    {count === 1 ? t('search.personSingular', { count: 1 }) : t('search.personPlural', { count })}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="h-6 border-l border-[#999999]" />
+
+          {/* Filter */}
+          <div className="relative flex flex-row items-center">
+            <button
+              aria-expanded={isFilterOpen}
+              aria-haspopup="listbox"
+              className="flex items-center gap-1"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsFilterOpen(!isFilterOpen);
+                if (!isFilterOpen) {
+                  setIsLocationOpen(false);
+                  setIsWerOpen(false);
+                }
+              }}
+            >
+              <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
+                {selectedFilters.length > 0
+                  ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
+                  : t('suchen.accordions.filter')}
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className={`size-6 text-neutral-500 transition-transform duration-200 ${
+                  isFilterOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {isFilterOpen && (
+              <div
+                ref={filterDropdownRef}
+                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-56 max-h-80 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+              >
+                {(selectedSection === 'ummah'
+                  ? [
+                      { key: 'kostenlos', labelKey: 'suchen.filter.ummahItems.kostenlos.title' },
+                      { key: 'online', labelKey: 'suchen.filter.ummahItems.online.title' },
+                      { key: 'sprache', labelKey: 'suchen.filter.ummahItems.sprache.title' },
+                      { key: 'zertifiziert', labelKey: 'suchen.filter.ummahItems.zertifiziert.title' },
+                      { key: 'geschlechtergetrennt', labelKey: 'suchen.filter.ummahItems.geschlechtergetrennt.title' },
+                    ]
+                  : selectedSection === 'store'
+                  ? [
+                      { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
+                      { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
+                      { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
+                      { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
+                    ]
+                  : [
+                      { key: 'muslim', labelKey: 'suchen.filter.items.muslim.title' },
+                      { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
+                      { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
+                      { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
+                      { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
+                    ]
+                ).map((item) => {
+                  const isSelected = selectedFilters.includes(item.key);
+                  return (
+                    <button
+                      key={item.key}
+                      className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${
+                        isSelected ? 'bg-gray-50 font-medium' : ''
+                      }`}
+                      type="button"
+                      onClick={() => {
+                        setSelectedFilters((prev) =>
+                          prev.includes(item.key)
+                            ? prev.filter((f) => f !== item.key)
+                            : [...prev, item.key]
+                        );
+                      }}
+                    >
+                      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                        isSelected ? 'bg-primary border-primary' : 'border-gray-300'
+                      }`}>
+                        {isSelected && (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </span>
+                      {t(item.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+
         </div>
       </div>
     </div>
@@ -420,11 +544,11 @@ export function SearchBar(props: SearchBarProps) {
     <Suspense
       fallback={
         <div
-          className={`flex h-10 w-full flex-row items-center gap-4 rounded-lg bg-white px-2 ${props.className} `}
+          className={`flex h-12 w-full flex-row items-center gap-4 rounded-2xl bg-white border border-border-light px-2 ${props.className} `}
         >
           <div className="flex w-full flex-row items-center justify-between">
             <div className="relative flex flex-1 flex-row items-center gap-0">
-              <Search aria-hidden="true" className="size-6 shrink-0 text-[#1B1D1D]" />
+        <Search size={24} className="text-neutral-500" />
               <input
                 disabled
                 className="w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] text-gray-400 outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0"

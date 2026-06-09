@@ -20,8 +20,8 @@ export default function FigmaTestPage() {
         onBack="/"
       />
       
-      {/* Figma uses pt-[calc(env(safe-area-inset-top)+88px)] */}
-      <main className="pt-[calc(env(safe-area-inset-top)+88px)] px-6 pb-8">
+      {/* Figma uses pt-[calc(env(safe-area-inset-top)+160px)] */}
+      <main className="pt-[calc(env(safe-area-inset-top)+160px)] px-6 pb-8">
         <div className="space-y-6">
           {/* Colorful content to see the blur effect */}
           <div className="card bg-gradient-to-br from-blue-500 to-purple-600 text-white p-6 rounded-lg">

@@ -352,9 +352,9 @@ export const ProviderCard = React.memo(
               </>
             )}
             {!showSkeleton && (
-              <div className="absolute bottom-3 left-3">
-                <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px]">
-                  <div className="justify-center text-center font-inter-tight text-sm font-medium text-content">
+              <div className="absolute bottom-3 left-3 right-3">
+                <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px] max-w-full">
+                  <div className="justify-start text-left font-inter-tight text-sm font-medium text-content truncate whitespace-nowrap">
                     {categoryName}
                   </div>
                 </div>
@@ -472,8 +472,8 @@ export const ProviderCard = React.memo(
                     {address}
                   </button>
                   {locations && locations.length > 1 && (
-                    <div className="mt-1 inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px]">
-                      <span className="font-inter-tight text-sm font-medium text-content">
+                    <div className="mt-1 inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px] max-w-full">
+                      <span className="font-inter-tight text-sm font-medium text-content truncate whitespace-nowrap">
                         {locations.length} Standorte
                       </span>
                     </div>

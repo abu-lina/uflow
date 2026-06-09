@@ -143,3 +143,6 @@ imports/lottie/.temp-gif-frames/.flowbaby/
 # AI agent configuration directories (local tool installs, not project source)
 .agents/
 .claude/
+.env.local.localdb
+.env.local.remote-backup
+supabase/seed-multi-location-example.sql

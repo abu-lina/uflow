@@ -66,7 +66,7 @@ vi.mock('sonner', () => ({
 }));
 
 describe('RootPageContent layout regression (Plan 109)', () => {
-  it('keeps search bar fixed while section tabs remain in scroll body', async () => {
+  it('renders section tabs above the search bar in the fixed header on mobile', async () => {
     render(<RootPageContent />);
 
     await waitFor(() => {
@@ -79,10 +79,7 @@ describe('RootPageContent layout regression (Plan 109)', () => {
 
     const sectionTablist = screen.getByRole('tablist', { name: /browse sections/i });
     expect(sectionTablist).toBeInTheDocument();
-    expect(searchHeader).not.toContainElement(sectionTablist);
-
-    // Header only contains the search bar for this contract.
-    const headerRegion = within(searchHeader as HTMLElement);
-    expect(headerRegion.queryByRole('tablist', { name: /browse sections/i })).not.toBeInTheDocument();
+    // Section tabs are now inside the fixed header, above the search bar
+    expect(searchHeader).toContainElement(sectionTablist);
   });
 });

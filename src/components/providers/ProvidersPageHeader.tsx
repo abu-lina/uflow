@@ -1,6 +1,7 @@
 'use client';
 
 import { SearchContextBar } from '@/features/search/components/SearchContextBar';
+import { SectionSelector } from '@/features/search/components/SectionSelector';
 import type { Section } from '@/providers/search-provider';
 
 interface ProvidersPageHeaderProps {
@@ -9,6 +10,7 @@ interface ProvidersPageHeaderProps {
   categoryId?: string | null;
   categoryLabel?: string | null;
   peopleSummary?: string | null;
+  onSectionChange?: (section: Section) => void;
 }
 
 export function ProvidersPageHeader({
@@ -17,6 +19,7 @@ export function ProvidersPageHeader({
   categoryId,
   categoryLabel,
   peopleSummary,
+  onSectionChange,
 }: ProvidersPageHeaderProps) {
   return (
     <header
@@ -47,6 +50,12 @@ export function ProvidersPageHeader({
           paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
         }}
       >
+        <div className="pb-3">
+          <SectionSelector
+            selectedSection={section}
+            onSectionChange={onSectionChange || (() => {})}
+          />
+        </div>
         <SearchContextBar
           categoryId={categoryId}
           categoryLabel={categoryLabel}

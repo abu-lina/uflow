@@ -241,29 +241,28 @@ export function RootPageContent() {
                       paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
                     }}
                   >
+                    <div className="pb-3">
+                      <SectionSelector
+                        selectedSection={activeSection}
+                        onSectionChange={setActiveSection}
+                      />
+                    </div>
                     <HomeSearchBar activeSection={activeSection} />
                   </div>
                 </header>
 
-                {/* Scrollable body: spacer + section tabs + gallery */}
+                {/* Scrollable body: spacer + gallery */}
                 <div
                   className="w-full"
                   style={{
                     paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
                   }}
                 >
-                  {/* Spacer to push content below fixed search bar */}
+                  {/* Spacer to push content below fixed header */}
                   <div
                     className="sm:hidden"
-                    style={{ height: 'max(88px, calc(env(safe-area-inset-top) + 88px))' }}
+                    style={{ height: 'max(152px, calc(env(safe-area-inset-top) + 152px))' }}
                   />
-                  {/* Section tabs scroll with content */}
-                  <div className="px-4 pb-3 sm:hidden">
-                    <SectionSelector
-                      selectedSection={activeSection}
-                      onSectionChange={setActiveSection}
-                    />
-                  </div>
                   <div className="px-4">
                     <CategoryGallerySection section={activeSection} />
                   </div>

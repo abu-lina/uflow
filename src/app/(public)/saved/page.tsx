@@ -520,7 +520,6 @@ export default function SavedProvidersPage() {
         {shouldShowSearchBar && (
           <SearchBar
             customCities={showSkeleton ? [] : bookmarkedCities}
-            hideCategoryFilter={true}
           />
         )}
 

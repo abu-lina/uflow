@@ -7,8 +7,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
 import { SectionSelector } from '@/features/search/components/SectionSelector';
+import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
@@ -517,6 +517,12 @@ export function ProvidersContent({
               paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
             }}
           >
+            <div className="pb-3">
+              <SectionSelector
+                selectedSection={section}
+                onSectionChange={handleSectionChange}
+              />
+            </div>
             <div className="mx-auto max-w-72">
               <MobileGreetingHeader cityName={defaultLocation} />
             </div>
@@ -527,6 +533,7 @@ export function ProvidersContent({
         <ProvidersPageHeader
           categoryId={category}
           categoryLabel={selectedCategoryLabel}
+          onSectionChange={handleSectionChange}
           peopleSummary={peopleSummary}
           searchTerm={query}
           section={section}
@@ -536,24 +543,17 @@ export function ProvidersContent({
       <main
         className={`mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden ${
           showGreeting
-            ? 'pt-0 sm:pt-8 md:pt-28'
-            : 'pt-0 sm:pt-8 md:pt-28'
+            ? 'pt-0 sm:pt-0 md:pt-52'
+            : 'pt-0 sm:pt-0 md:pt-52'
         }`}
       >
         {!showGreeting && (
           <>
-            {/* Spacer pushes content below fixed search bar on mobile */}
+            {/* Spacer pushes content below fixed mobile header */}
             <div
               className="sm:hidden"
-              style={{ height: 'max(88px, calc(env(safe-area-inset-top) + 88px))' }}
+              style={{ height: 'max(152px, calc(env(safe-area-inset-top) + 152px))' }}
             />
-            {/* Section tabs scroll with content */}
-            <div className="px-4 pb-3 sm:hidden">
-              <SectionSelector
-                selectedSection={section}
-                onSectionChange={handleSectionChange}
-              />
-            </div>
           </>
         )}
         {/* Plan 058: Admin status filter - only visible to admin/moderator users */}

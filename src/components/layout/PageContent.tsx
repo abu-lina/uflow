@@ -112,7 +112,7 @@ export function PageContent({
         // Top padding: safe area + header height (88px)
         // Desktop: Header at top-20 (80px) + header height (24px padding + 48px content + 8px padding = 80px) = 160px bottom
         // Desktop: 32px gap = 192px total from top
-        'pt-[calc(env(safe-area-inset-top)+88px)]',
+        'pt-[calc(env(safe-area-inset-top)+160px)]',
         // Desktop: When centering vertically, use equal top/bottom spacing for perfect centering
         // Header: safe-area + 24px padding + 48px height + 8px bottom = safe-area + 80px  
         // Footer: ~68px (py-6 = 24px*2 + content ~20px)
@@ -120,7 +120,7 @@ export function PageContent({
         // Then flexbox will center the content in the remaining space
         centerVertically 
           ? 'md:pt-[calc(env(safe-area-inset-top)+80px)] md:pb-[80px] md:h-full md:flex md:items-center md:justify-center'
-          : 'md:pt-[calc(env(safe-area-inset-top)+192px)]',
+          : 'md:pt-[calc(env(safe-area-inset-top)+160px)]',
         paddingX,
         // When centering vertically, bottom padding is handled above
         centerVertically ? '' : bottomPadding,

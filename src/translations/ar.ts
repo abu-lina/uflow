@@ -152,6 +152,8 @@ export const ar = {
     "open": "فتح البحث",
     "submit": "تنفيذ البحث",
     "filter": "تصفية حسب الموقع",
+    "personSingular": "{{count}} شخص",
+    "personPlural": "{{count}} أشخاص",
     "context": {
       "allResults": "جميع النتائج",
       "edit": "تعديل البحث",

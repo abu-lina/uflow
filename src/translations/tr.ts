@@ -152,6 +152,8 @@ export const tr = {
     "open": "Aramayı aç",
     "submit": "Aramayı gönder",
     "filter": "Konuma göre filtrele",
+    "personSingular": "{{count}} Kişi",
+    "personPlural": "{{count}} Kişi",
     "context": {
       "allResults": "Tüm sonuçlar",
       "edit": "Aramayı düzenle",

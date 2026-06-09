@@ -165,9 +165,9 @@ const config: Config = {
         'auth-title-padding-right': '16px',
 
         // Calculated header spacing utilities
-        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 24px)',
-        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 24px)',
-        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 24px)',
+        'header-spacing': 'calc(env(safe-area-inset-top) + 160px)',
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 160px)',
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 160px)',
 
         // Bottom action bar spacing
         'bottom-spacing-12': 'calc(48px + 1rem + max(12px, env(safe-area-inset-bottom)))',
@@ -379,9 +379,9 @@ const config: Config = {
         'header-height-mobile': '40px',
         'header-height-tablet': '48px',
         'header-height-desktop': '56px',
-        'header-spacing': 'calc(env(safe-area-inset-top) + 16px + 40px + 24px)',
-        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 24px + 48px + 24px)',
-        'header-spacing-md': 'calc(env(safe-area-inset-top) + 24px + 56px + 24px)',
+        'header-spacing': 'calc(env(safe-area-inset-top) + 160px)',
+        'header-spacing-sm': 'calc(env(safe-area-inset-top) + 160px)',
+        'header-spacing-md': 'calc(env(safe-area-inset-top) + 160px)',
       },
 
       // ============================================

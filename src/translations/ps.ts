@@ -152,6 +152,8 @@ export const ps = {
     "open": "لټون پرانیزه",
     "submit": "لټون واستوه",
     "filter": "د ځای له مخې فلټر کړه",
+    "personSingular": "{{count}} کس",
+    "personPlural": "{{count}} کسانو",
     "context": {
       "allResults": "All results",
       "edit": "Edit search",

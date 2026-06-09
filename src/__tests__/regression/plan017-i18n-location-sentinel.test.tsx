@@ -55,7 +55,7 @@ describe('Plan 017 — SearchBar i18n location display', () => {
 
     // Default language in tests is EN (via LanguageProvider default or localStorage)
     // The location dropdown button should show "Everywhere" when LOCATION_ALL is active
-    expect(screen.getByText('Everywhere')).toBeInTheDocument();
+    expect(screen.getByText(/Everywhere/)).toBeInTheDocument();
     // Must NOT show the hardcoded German string
     expect(screen.queryByText('Überall')).not.toBeInTheDocument();
   });

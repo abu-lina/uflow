@@ -152,6 +152,8 @@ export const ur = {
     "open": "تلاش کھولیں",
     "submit": "تلاش بھیجیں",
     "filter": "مقام کے لحاظ سے فلٹر کریں",
+    "personSingular": "{{count}} شخص",
+    "personPlural": "{{count}} لوگ",
     "context": {
       "allResults": "All results",
       "edit": "Edit search",
