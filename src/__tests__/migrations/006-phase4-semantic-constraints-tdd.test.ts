@@ -11,11 +11,8 @@ describe('migration 006 phase4 semantic constraints', () => {
 
   const sql = readFileSync(migrationPath, 'utf8');
 
-  it('extends listing_type_enum with ummah in an idempotent guard', () => {
-    expect(sql).toContain('listing_type_enum');
-    expect(sql).toContain("'ummah'");
-    expect(sql).toMatch(/IF NOT EXISTS \(\s*SELECT 1[\s\S]*pg_enum[\s\S]*listing_type_enum[\s\S]*'ummah'/i);
-    expect(sql).toContain('ALTER TYPE public.listing_type_enum ADD VALUE');
+  it('has the idempotent enum guard moved to 0060', () => {
+    expect(sql).toContain('MOVED to 0060_plan_145_enum_value.sql');
   });
 
   it('backfills null listing_type and enforces not null', () => {
