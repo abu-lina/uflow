@@ -197,6 +197,7 @@ jobs:
               -e TURNSTILE_SECRET_KEY="${{ steps.resolve-uat-env.outputs.turnstile_secret_key }}" \
               -e TEST_API_KEY="${{ steps.resolve-uat-env.outputs.test_api_key }}" \
               -e ADMIN_DEBUG_KEY="${{ steps.resolve-uat-env.outputs.admin_debug_key }}" \
+              -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
               -v uflow-uat-image-cache:/app/.next/cache/images \
               --name uflow-uat-new \
@@ -250,6 +251,7 @@ jobs:
               -e TURNSTILE_SECRET_KEY="${{ steps.resolve-uat-env.outputs.turnstile_secret_key }}" \
               -e TEST_API_KEY="${{ steps.resolve-uat-env.outputs.test_api_key }}" \
               -e ADMIN_DEBUG_KEY="${{ steps.resolve-uat-env.outputs.admin_debug_key }}" \
+              -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
               -v uflow-uat-image-cache:/app/.next/cache/images \
               --name uflow-uat \
