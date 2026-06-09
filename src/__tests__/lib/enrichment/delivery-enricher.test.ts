@@ -134,6 +134,7 @@ describe('buildDeliveryCandidates', () => {
     const candidates = buildDeliveryCandidates(
       'prov-001',
       'https://wolt.com/de/deu/venue/test',
+      'wolt',
       currentHours,
       null,
       proposedHours,
@@ -152,6 +153,7 @@ describe('buildDeliveryCandidates', () => {
     const candidates = buildDeliveryCandidates(
       'prov-001',
       'https://wolt.com/de/deu/venue/test',
+      'wolt',
       null,
       null,
       null,
@@ -171,6 +173,7 @@ describe('buildDeliveryCandidates', () => {
     const candidates = buildDeliveryCandidates(
       'prov-001',
       'https://wolt.com/de/deu/venue/test',
+      'wolt',
       currentHours,
       null,
       currentHours,
@@ -187,6 +190,7 @@ describe('buildDeliveryCandidates', () => {
     const candidates = buildDeliveryCandidates(
       'prov-001',
       'https://wolt.com/de/deu/venue/test',
+      'wolt',
       currentHours,
       null,
       proposedHours,
@@ -204,6 +208,7 @@ describe('buildDeliveryCandidates', () => {
     const candidates = buildDeliveryCandidates(
       'prov-001',
       'https://wolt.com/de/deu/venue/test',
+      'wolt',
       null,
       null,
       proposedHours,

@@ -1,34 +1,17 @@
-import type { OpeningHours } from '@/types/openingHours';
-import { detectConflict, type EnrichmentCandidate } from './joinhalal-enricher';
-import type { WoltClient } from './delivery-platform/wolt-client';
-import { matchProviderToVenues } from './delivery-platform/provider-matcher';
-import { normalizeWoltOpeningHours } from './delivery-platform/normalizer';
-import { detectAlcohol } from './delivery-platform/alcohol-detector';
+import type {
+  LieferandoClient,
+  LieferandoSearchResult,
+} from './lieferando-types';
+import type { Geocoder } from './geocoder';
+import type { DeliveryPlatformSnapshot, DeliveryEnrichmentResult } from '../delivery-enricher';
+import { matchProviderToVenues } from './provider-matcher';
+import { detectConflict, type EnrichmentCandidate } from '../joinhalal-enricher';
+import { detectAlcohol } from './alcohol-detector';
 
-export interface DeliveryPlatformSnapshot {
-  provider_id: string;
-  provider_name: string;
-  address_city: string | null;
-  listing_type: string | null;
-  opening_hours: OpeningHours | null;
-  no_alcohol: boolean | null;
-}
-
-export interface DeliveryEnrichmentResult {
-  providerId: string;
-  venueSlug: string | null;
-  matchConfidence: number | null;
-  candidates: EnrichmentCandidate[];
-  error: string | null;
-}
-
-function extractWoltVenueUrl(slug: string): string {
-  return `https://wolt.com/de/deu/venue/${slug}`;
-}
-
-export async function enrichFromWolt(
+export async function enrichFromLieferando(
   provider: DeliveryPlatformSnapshot,
-  woltClient: WoltClient,
+  client: LieferandoClient,
+  geocoder: Geocoder,
 ): Promise<DeliveryEnrichmentResult> {
   const { provider_id, provider_name, address_city } = provider;
 
@@ -42,7 +25,7 @@ export async function enrichFromWolt(
     };
   }
 
-  const coords = await woltClient.geocodeCity(address_city);
+  const coords = await geocoder.geocode(address_city);
   if (!coords) {
     return {
       providerId: provider_id,
@@ -53,38 +36,39 @@ export async function enrichFromWolt(
     };
   }
 
-  const searchResult = await woltClient.searchVenuesByLocation(coords.lat, coords.lon);
-  if (searchResult.venues.length === 0) {
+  const restaurants = await client.searchRestaurants(address_city);
+  if (restaurants.length === 0) {
     return {
       providerId: provider_id,
       venueSlug: null,
       matchConfidence: null,
       candidates: [],
-      error: 'No Wolt venues found for location',
+      error: 'No Lieferando restaurants found for city',
     };
   }
 
-  const match = matchProviderToVenues(provider_name, address_city, searchResult.venues);
+  const match = matchProviderToVenues<LieferandoSearchResult>(
+    provider_name,
+    address_city,
+    restaurants,
+  );
   if (!match) {
     return {
       providerId: provider_id,
       venueSlug: null,
       matchConfidence: null,
       candidates: [],
-      error: 'No Wolt venue matched',
+      error: 'No Lieferando restaurant matched',
     };
   }
 
-  // Use venue_preview_items from discovery API (menu endpoint deprecated)
-  const previewItems =
-    (match.venue.venue_preview_items as Array<{ name?: string }>) ?? [];
-  const menuItemNames = previewItems
-    .filter((i): i is { name: string } => typeof i?.name === 'string')
-    .map((i) => i.name);
-  const alcoholResult = detectAlcohol(menuItemNames);
+  const restaurantData = await client.getRestaurantPage(match.venue.slug);
 
-  // Opening hours not available in current Wolt API response
-  const normalizedHours = null;
+  const allMenuItemNames = restaurantData.menuCategories
+    .flatMap((cat) => cat.items)
+    .map((item) => item.name);
+
+  const alcoholResult = detectAlcohol(allMenuItemNames);
 
   let proposedNoAlcohol: boolean | null = null;
   if (alcoholResult.signal === 'definite_alcohol') {
@@ -93,14 +77,12 @@ export async function enrichFromWolt(
     proposedNoAlcohol = true;
   }
 
-  const sourceUrl = extractWoltVenueUrl(match.venue.slug);
-  const candidates = buildDeliveryCandidates(
+  const candidates = buildLieferandoCandidates(
     provider_id,
-    sourceUrl,
-    'wolt',
+    restaurantData.deliveryUrl,
     provider.opening_hours,
     provider.no_alcohol,
-    normalizedHours,
+    restaurantData.openingHours,
     proposedNoAlcohol,
   );
 
@@ -113,10 +95,9 @@ export async function enrichFromWolt(
   };
 }
 
-export function buildDeliveryCandidates(
+function buildLieferandoCandidates(
   providerId: string,
   sourceUrl: string,
-  source: string,
   currentOpeningHours: unknown,
   currentNoAlcohol: unknown,
   proposedOpeningHours: unknown,
@@ -128,7 +109,7 @@ export function buildDeliveryCandidates(
   if (hoursConflict !== 'no-change') {
     candidates.push({
       provider_id: providerId,
-      source,
+      source: 'lieferando',
       source_url: sourceUrl,
       field_name: 'opening_hours',
       proposed_value: proposedOpeningHours,
@@ -140,7 +121,7 @@ export function buildDeliveryCandidates(
   if (alcoholConflict !== 'no-change') {
     candidates.push({
       provider_id: providerId,
-      source,
+      source: 'lieferando',
       source_url: sourceUrl,
       field_name: 'no_alcohol',
       proposed_value: proposedNoAlcohol,

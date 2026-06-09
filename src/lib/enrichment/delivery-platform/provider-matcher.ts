@@ -1,11 +1,17 @@
 import { distance as levenshteinDistance } from 'fastest-levenshtein';
-import type { WoltVenue } from './wolt-client';
 
-export interface MatchCandidate {
+export interface VenueLike {
+  name: string;
+  slug: string;
+  city?: string;
+  [key: string]: unknown;
+}
+
+export interface MatchCandidate<T extends VenueLike = VenueLike> {
   providerId: string;
   providerName: string;
   providerCity: string;
-  woltVenue: WoltVenue;
+  venue: T;
   confidence: number;
   matchType: 'exact_name_city' | 'fuzzy_name_city' | 'fuzzy_name_only';
 }
@@ -20,7 +26,6 @@ const DEFAULT_CONFIG: ProviderMatchConfig = {
   requireCityMatch: true,
 };
 
-// sorted by length descending so longer suffixes match before shorter substrings
 const SUFFIXES = [
   ' gmbh & co. kg', ' ug & co. kg', ' restaurant', ' e. k.', ' e. v.',
   ' gmbh', ' e.k.', ' e.v.', ' ug',
@@ -52,12 +57,12 @@ export function stringSimilarity(a: string, b: string): number {
   return 1 - dist / maxLen;
 }
 
-export function matchProviderToVenues(
+export function matchProviderToVenues<T extends VenueLike>(
   providerName: string,
   providerCity: string,
-  venues: WoltVenue[],
+  venues: T[],
   config?: ProviderMatchConfig
-): MatchCandidate | null {
+): MatchCandidate<T> | null {
   const cfg = { ...DEFAULT_CONFIG, ...config };
 
   if (venues.length === 0) return null;
@@ -68,7 +73,7 @@ export function matchProviderToVenues(
 
   if (!normProviderName) return null;
 
-  let bestCandidate: MatchCandidate | null = null;
+  let bestCandidate: MatchCandidate<T> | null = null;
   let bestScore = -1;
 
   for (const venue of venues) {
@@ -86,20 +91,20 @@ export function matchProviderToVenues(
         providerId: '',
         providerName,
         providerCity,
-        woltVenue: venue,
+        venue,
         confidence: 1,
         matchType: 'exact_name_city',
       };
     }
 
-  const highSimilarity = nameScore >= 1.0;
+    const highSimilarity = nameScore >= 1.0;
 
-  if (!cityMatch && cfg.requireCityMatch && !highSimilarity) {
-    continue;
-  }
+    if (!cityMatch && cfg.requireCityMatch && !highSimilarity) {
+      continue;
+    }
 
-  const effectiveThreshold = highSimilarity ? 0 : cfg.nameSimilarityThreshold;
-  if (nameScore >= effectiveThreshold) {
+    const effectiveThreshold = highSimilarity ? 0 : cfg.nameSimilarityThreshold;
+    if (nameScore >= effectiveThreshold) {
       const matchType = cityMatch ? 'fuzzy_name_city' : 'fuzzy_name_only';
       const confidence = cityMatch ? nameScore : nameScore * 0.8;
 
@@ -109,7 +114,7 @@ export function matchProviderToVenues(
           providerId: '',
           providerName,
           providerCity,
-          woltVenue: venue,
+          venue,
           confidence: Math.min(confidence, 1),
           matchType,
         };

@@ -1,3 +1,6 @@
+# ⚠️ DEPRECATED: Use .github/workflows/enrich-food-providers.yml instead.
+# This workflow is kept for backward compatibility but will be removed in a future release.
+
 name: Enrich Wolt
 
 on:
@@ -12,9 +15,7 @@ on:
         required: false
         type: boolean
         default: true
-  schedule:
-    # Run weekly on Sunday at 3am UTC
-    - cron: '0 3 * * 0'
+  # schedule: []  # Disabled — use enrich-food-providers.yml instead
 
 jobs:
   enrich:

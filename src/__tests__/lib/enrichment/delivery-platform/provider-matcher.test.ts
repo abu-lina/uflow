@@ -5,6 +5,7 @@ import {
   normalizeName,
 } from '@/lib/enrichment/delivery-platform/provider-matcher';
 import type { WoltVenue } from '@/lib/enrichment/delivery-platform/wolt-client';
+import type { VenueLike } from '@/lib/enrichment/delivery-platform/provider-matcher';
 
 function makeVenue(name: string, slug: string, city?: string): WoltVenue {
   return { name, slug, city };
@@ -74,7 +75,7 @@ describe('matchProviderToVenues', () => {
     expect(result).not.toBeNull();
     expect(result!.matchType).toBe('exact_name_city');
     expect(result!.confidence).toBe(1);
-    expect(result!.woltVenue.slug).toBe('doner-haus');
+    expect(result!.venue.slug).toBe('doner-haus');
   });
 
   it('fuzzy match with normalization', () => {
@@ -141,6 +142,40 @@ describe('matchProviderToVenues', () => {
     const result = matchProviderToVenues('Döner Haus', 'Berlin', multiVenues);
     expect(result).not.toBeNull();
     expect(result!.confidence).toBe(1);
-    expect(result!.woltVenue.slug).toBe('doner-haus');
+    expect(result!.venue.slug).toBe('doner-haus');
+  });
+});
+
+describe('generic matcher (LieferandoSearchResult)', () => {
+  interface LieferandoLike {
+    name: string;
+    slug: string;
+    city: string;
+    isActive: boolean;
+    [key: string]: unknown;
+  }
+
+  function makeLFRestaurant(name: string, slug: string, city: string, active = true): LieferandoLike {
+    return { name, slug, city, isActive: active };
+  }
+
+  it('works with Lieferando-like venues', () => {
+    const venues = [
+      makeLFRestaurant('Döner Haus', 'doner-haus-123', 'Berlin'),
+      makeLFRestaurant('Pizza Platz', 'pizza-platz-456', 'Berlin'),
+    ];
+    const result = matchProviderToVenues('Döner Haus', 'Berlin', venues);
+    expect(result).not.toBeNull();
+    expect(result!.matchType).toBe('exact_name_city');
+    expect(result!.venue.slug).toBe('doner-haus-123');
+    expect(result!.venue.isActive).toBe(true);
+  });
+
+  it('returns null for no match across different types', () => {
+    const venues = [
+      makeLFRestaurant('Asia Imbiss', 'asia-imbiss-789', 'Hamburg'),
+    ];
+    const result = matchProviderToVenues('Döner Haus', 'Berlin', venues);
+    expect(result).toBeNull();
   });
 });
