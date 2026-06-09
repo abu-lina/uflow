@@ -111,11 +111,13 @@ function SearchBarContent({
 
   // Fetch cities based on current filters
   useEffect(() => {
+    let cancelled = false;
+    
     async function fetchCities() {
       try {
         // If custom cities are provided, use them instead of fetching from database
         if (customCities) {
-          setLocations(customCities);
+          if (!cancelled) setLocations(customCities);
           return;
         }
 
@@ -125,16 +127,16 @@ function SearchBarContent({
         // If we have search query filters, use filtered cities
         if (searchQuery.trim()) {
           const filteredCities = await fetchFilteredCities('', searchQuery);
-          setLocations(filteredCities);
+          if (!cancelled) setLocations(filteredCities);
         } else {
           // Otherwise, fetch all cities
           const allCities = await fetchProviderCities();
-          setLocations(allCities);
+          if (!cancelled) setLocations(allCities);
         }
       } catch (error) {
         logSupabaseError('SearchBar.fetchCities', error);
         // Set fallback to empty array, so the UI still works (just "Everywhere" option)
-        setLocations([]);
+        if (!cancelled) setLocations([]);
 
         // Don't re-throw - we've handled it gracefully
         // The error is already logged by logSupabaseError
@@ -149,6 +151,10 @@ function SearchBarContent({
     }
 
     void fetchCities();
+    
+    return () => {
+      cancelled = true;
+    };
   }, [searchQuery, customCities, t]);
 
   // Sync state with URL params only on initial mount or when the page changes

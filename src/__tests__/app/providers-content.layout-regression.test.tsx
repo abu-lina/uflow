@@ -31,7 +31,7 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 vi.mock('@/components/providers/ProvidersPageHeader', () => ({
-  ProvidersPageHeader: ({ onSectionChange }: { onSectionChange?: () => void }) => (
+  ProvidersPageHeader: () => (
     <header
       className="fixed left-0 right-0 top-0 z-50"
       data-testid="providers-search-header"
