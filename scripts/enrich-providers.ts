@@ -321,8 +321,10 @@ async function main(): Promise<void> {
 
       if (candidates.length > 0) {
         if (isAutoApply) {
-          await autoApplyJoinHalalFields(provider, candidates, stats);
-          statusParts.push(`${candidates.length} field(s) auto-applied`);
+          const applied = await autoApplyJoinHalalFields(provider, candidates, stats);
+          if (applied > 0) {
+            statusParts.push(`${applied} field(s) auto-applied`);
+          }
         } else {
           statusParts.push(`${candidates.length} candidate(s)`);
           for (const c of candidates) {
@@ -1427,8 +1429,9 @@ async function autoApplyDeliveryFields(
     stats.candidatesCreated += appliedFields.length;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.log(`❌ auto-apply failed: ${msg}`);
+    console.log(`❌ auto-apply failed ${msg}`);
     stats.failureCount++;
+    return 0;
   }
 }
 
@@ -1531,8 +1534,9 @@ async function autoApplyLieferandoFields(
     stats.candidatesCreated += appliedFields.length;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.log(`❌ auto-apply failed: ${msg}`);
+    console.log(`❌ auto-apply failed ${msg}`);
     stats.failureCount++;
+    return 0;
   }
 }
 
@@ -1542,7 +1546,7 @@ async function autoApplyJoinHalalFields(
   provider: ProviderRow,
   candidates: EnrichmentCandidate[],
   stats: RunStats
-): Promise<void> {
+): Promise<number> {
   const providersPayload: Record<string, unknown> = {};
 
   for (const c of candidates) {
@@ -1573,9 +1577,7 @@ async function autoApplyJoinHalalFields(
   const appliedViaRpc = Object.keys(providersPayload).length;
 
   if (appliedViaRpc === 0) {
-    console.log('✅ no auto-applicable fields');
-    stats.unchangedCount++;
-    return;
+    return 0;
   }
 
   try {
@@ -1629,8 +1631,9 @@ async function autoApplyJoinHalalFields(
     stats.candidatesCreated += appliedFields.length;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.log(`❌ auto-apply failed: ${msg}`);
+    console.log(`❌ auto-apply failed ${msg}`);
     stats.failureCount++;
+    return 0;
   }
 }
 
