@@ -31,6 +31,11 @@ export interface JoinHalalSchemaData {
   email?: string;
   telephone?: string;
   sameAs?: string | string[];
+  openingHoursSpecification?: unknown;
+  openingHours?: unknown;
+  image?: string | string[];
+  servesCuisine?: string | string[];
+  priceRange?: string;
   additionalProperty?: Array<{
     '@type'?: string;
     name?: string;
@@ -332,6 +337,79 @@ export function extractSpeisen(schema: JoinHalalSchemaData): string[] {
     .filter((s) => s.length > 0);
 
   return Array.from(new Set(items));
+}
+
+// ---------------------------------------------------------------------------
+// extractEnrichmentData (Plan 159)
+// ---------------------------------------------------------------------------
+
+export interface JoinHalalEnrichmentData {
+  description: string | null;
+  openingHours: Record<string, unknown> | null;
+  latitude: number | null;
+  longitude: number | null;
+  image: string | null;
+  servesCuisine: string | null;
+  priceRange: string | null;
+}
+
+/**
+ * Extracts additional enrichment data from JoinHalal Schema.org data
+ * that wasn't captured during initial import.
+ */
+export function extractEnrichmentData(schema: JoinHalalSchemaData): JoinHalalEnrichmentData {
+  const result: JoinHalalEnrichmentData = {
+    description: null,
+    openingHours: null,
+    latitude: null,
+    longitude: null,
+    image: null,
+    servesCuisine: null,
+    priceRange: null,
+  };
+
+  if (schema.description && typeof schema.description === 'string') {
+    result.description = schema.description.trim();
+  }
+
+  const ohs = schema.openingHoursSpecification;
+  if (ohs) {
+    result.openingHours = { source: 'joinhalal', hours: ohs } as unknown as Record<string, unknown>;
+  } else if (schema.openingHours) {
+    result.openingHours = { source: 'joinhalal', hours: schema.openingHours } as unknown as Record<string, unknown>;
+  }
+
+  if (schema.geo) {
+    const geo = schema.geo;
+    if (geo.latitude) {
+      const lat = parseFloat(geo.latitude);
+      if (!isNaN(lat)) result.latitude = lat;
+    }
+    if (geo.longitude) {
+      const lon = parseFloat(geo.longitude);
+      if (!isNaN(lon)) result.longitude = lon;
+    }
+  }
+
+  if (schema.image && typeof schema.image === 'string') {
+    result.image = schema.image;
+  } else if (schema.image && Array.isArray(schema.image)) {
+    result.image = schema.image[0] as string || null;
+  }
+
+  if (schema.servesCuisine) {
+    if (typeof schema.servesCuisine === 'string') {
+      result.servesCuisine = schema.servesCuisine;
+    } else if (Array.isArray(schema.servesCuisine)) {
+      result.servesCuisine = schema.servesCuisine.join(', ');
+    }
+  }
+
+  if (schema.priceRange && typeof schema.priceRange === 'string') {
+    result.priceRange = schema.priceRange;
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------

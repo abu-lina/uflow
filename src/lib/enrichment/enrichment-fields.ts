@@ -37,6 +37,9 @@ export const SOURCE_ENRICHABLE_FIELDS: ReadonlyArray<string> = [
   'address_country',
   'opening_hours',
   'no_alcohol',
+  'provider_description',
+  'location_latitude',
+  'location_longitude',
 ] as const;
 
 const adminFieldSet = new Set(ADMIN_CONTROLLED_FIELDS);

@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type { Browser, Page } from 'playwright';
 import type {
   LieferandoSearchResult,
   LieferandoRestaurantData,
@@ -14,6 +15,7 @@ const DEFAULT_CONFIG: Required<LieferandoClientConfig> = {
   requestDelayMs: 750,
   maxRetries: 3,
   userAgent: 'UFlow-Enrichment/1.0 (+https://ummahflow.com/enrichment)',
+  headless: true,
 };
 
 function parsePriceCents(priceText: string): number {
@@ -132,105 +134,196 @@ function parseMenuCategories($: CheerioDoc): LieferandoMenuCategory[] {
   return categories;
 }
 
-class LieferandoHttpClient implements LieferandoClient {
+class LieferandoPlaywrightClient implements LieferandoClient {
   private config: Required<LieferandoClientConfig>;
   private lastRequestTime = 0;
+  private browser: Browser | null = null;
 
   constructor(config: Required<LieferandoClientConfig>) {
     this.config = config;
   }
 
+  private async getBrowser(): Promise<Browser> {
+    if (!this.browser || !this.browser.isConnected()) {
+      const { chromium } = await import('playwright');
+      this.browser = await chromium.launch({
+        headless: this.config.headless,
+        args: [
+          '--disable-blink-features=AutomationControlled',
+          '--no-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-web-security',
+        ],
+      });
+    }
+    return this.browser;
+  }
+
+  private async createPage(): Promise<Page> {
+    const browser = await this.getBrowser();
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      viewport: { width: 1920, height: 1080 },
+    });
+    return context.newPage();
+  }
+
   async searchRestaurants(city: string): Promise<LieferandoSearchResult[]> {
+    await this.rateLimit();
     const citySlug = city.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zäöüß-]/g, '');
     const url = `${BASE_URL}/speisekarte/${encodeURIComponent(citySlug)}`;
 
-    const html = await this.fetchHtmlWithRetry(url);
-    const $ = cheerio.load(html);
+    const page = await this.createPage();
+    try {
+      await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
+      await page.waitForSelector('a[href*="/speisekarte/"]', { timeout: 15000 }).catch(() => {});
 
-    return parseRestaurantCards($, city);
+      const results = await page.evaluate((cityName) => {
+        const cardNodes = document.querySelectorAll('a[href*="/speisekarte/"]');
+        const cards = Array.prototype.slice.call(cardNodes);
+        const results: Array<{name: string; slug: string; city: string; rating: number | null; isActive: boolean}> = [];
+        const seen = new Set<string>();
+
+        cards.forEach((el) => {
+          const href = (el as HTMLAnchorElement).href || '';
+          const match = href.match(/\/speisekarte\/([^/]+)/);
+          const slug = match ? match[1] : '';
+          if (!slug || seen.has(slug)) return;
+          seen.add(slug);
+
+          const name = (el.textContent || '').trim() || slug;
+          const ratingEl = el.querySelector('[class*="rating"], [class*="sterne"]');
+          const ratingText = ratingEl ? (ratingEl.textContent || '').trim() : '';
+          const rating = ratingText ? parseFloat(ratingText.replace(',', '.')) : null;
+
+          results.push({
+            name,
+            slug,
+            city: cityName,
+            rating: (rating !== null && !isNaN(rating)) ? rating : null,
+            isActive: true,
+          });
+        });
+
+        return results;
+      }, city);
+
+      return results;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Lieferando search error for ${city}: ${msg}`);
+    } finally {
+      await page.close();
+    }
   }
 
   async getRestaurantPage(slug: string): Promise<LieferandoRestaurantData> {
+    await this.rateLimit();
     const url = `${BASE_URL}/speisekarte/${encodeURIComponent(slug)}`;
 
-    const html = await this.fetchHtmlWithRetry(url);
-    const $ = cheerio.load(html);
+    const page = await this.createPage();
+    try {
+      await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
 
-    const jsonLd = extractJsonLd($);
+      const data = await page.evaluate(() => {
+        const scriptNodes = document.querySelectorAll('script[type="application/ld+json"]');
+        const scripts = Array.prototype.slice.call(scriptNodes);
+        let jsonLd: Record<string, unknown> | null = null;
+        for (const script of scripts) {
+          try {
+            const parsed = JSON.parse(script.textContent || '{}');
+            if (parsed['@type'] === 'Restaurant' || parsed['@type'] === 'FoodEstablishment') {
+              jsonLd = parsed;
+              break;
+            }
+          } catch {
+            // skip malformed JSON-LD
+          }
+        }
 
-    const name =
-      (jsonLd?.name as string) ??
-      $('h1').first().text().trim() ??
-      slug;
+        const name = (jsonLd?.name as string) || document.querySelector('h1')?.textContent?.trim() || '';
+        const address = ((jsonLd?.address as Record<string, unknown>)?.streetAddress as string) || '';
+        const phone = (jsonLd?.telephone as string) || null;
 
-    const address =
-      (jsonLd?.address as Record<string, unknown>)?.streetAddress as string ?? '';
+        const descEl = document.querySelector('[class*="description"], [class*="beschreibung"], meta[name="description"]');
+        const description = descEl?.getAttribute('content') || descEl?.textContent?.trim() || null;
 
-    const phone = (jsonLd?.telephone as string) ?? null;
+        const rating = jsonLd?.aggregateRating
+          ? ((jsonLd.aggregateRating as Record<string, unknown>)?.ratingValue as number) || null
+          : null;
 
-    const description =
-      $('[class*="description"], [class*="beschreibung"], meta[name="description"]').first().attr('content') ??
-      $('[class*="description"], [class*="beschreibung"]').first().text().trim() ??
-      null;
+        const categories: Array<{name: string; items: Array<{name: string; description: string | null; priceCents: number}>}> = [];
+        const catNodeList = document.querySelectorAll('[class*="category"], [class*="menu-category"], [class*="gericht-gruppe"], section');
+        const catElements = Array.prototype.slice.call(catNodeList);
 
-    const openingHoursRaw = jsonLd?.openingHoursSpecification ?? null;
-    const openingHours = openingHoursRaw
-      ? ({ source: 'lieferando', hours: openingHoursRaw } as unknown as Record<string, unknown>)
-      : null;
+        catElements.forEach((cat) => {
+          const header = cat.querySelector('h2, h3, [class*="category-name"], [class*="category-title"]');
+          if (!header) return;
+          const catName = header.textContent?.trim() || 'Sonstige';
 
-    const rating = jsonLd?.aggregateRating
-      ? ((jsonLd.aggregateRating as Record<string, unknown>)?.ratingValue as number) ?? null
-      : null;
+          const items: Array<{name: string; description: string | null; priceCents: number}> = [];
+          const itemNodeList = cat.querySelectorAll('[class*="menu-item"], [class*="gericht"]');
+          const itemElements = Array.prototype.slice.call(itemNodeList);
 
-    const menuCategories = parseMenuCategories($);
+          itemElements.forEach((item) => {
+            const nameEl = item.querySelector('[class*="item-name"], [class*="gericht-name"], h4');
+            const name = nameEl?.textContent?.trim() || (item.childNodes[0]?.textContent || '').trim();
+            if (!name) return;
 
-    return {
-      name,
-      slug,
-      address,
-      phone,
-      openingHours,
-      description,
-      rating,
-      menuCategories,
-      deliveryUrl: url,
-    };
+            const descEl = item.querySelector('[class*="item-description"], [class*="gericht-beschreibung"], p');
+            const description = descEl ? descEl.textContent?.trim() || null : null;
+
+            const priceEl = item.querySelector('[class*="item-price"], [class*="gericht-preis"], [class*="price"]');
+            const priceText = priceEl ? priceEl.textContent?.trim() || '0,00 €' : '0,00 €';
+            const cleaned = priceText.replace(/[^\d,]/g, '').replace(',', '.');
+            const priceCents = Math.round((parseFloat(cleaned) || 0) * 100);
+
+            items.push({ name, description: description || null, priceCents });
+          });
+
+          if (items.length > 0) {
+            categories.push({ name: catName, items });
+          }
+        });
+
+        return {
+          name,
+          slug: '',
+          address,
+          phone,
+          description,
+          rating,
+          menuCategories: categories,
+          deliveryUrl: window.location.href,
+          openingHours: null,
+        };
+      });
+
+      return {
+        ...data,
+        slug,
+        openingHours: null,
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Lieferando error for slug ${slug}: ${msg}`);
+    } finally {
+      await page.close();
+    }
   }
 
-  private async fetchHtmlWithRetry(url: string, attempt = 0): Promise<string> {
-    await this.rateLimit();
-
-    const response = await fetch(url, {
-      headers: { 'User-Agent': this.config.userAgent },
-    });
-
-    if (response.ok) {
-      return response.text();
+  async close(): Promise<void> {
+    if (this.browser) {
+      await this.browser.close();
+      this.browser = null;
     }
-
-    if (response.status === 429 || response.status >= 500) {
-      if (attempt < this.config.maxRetries) {
-        const backoff = Math.pow(2, attempt) * 1000;
-        await new Promise((resolve) => setTimeout(resolve, backoff));
-        return this.fetchHtmlWithRetry(url, attempt + 1);
-      }
-      throw new Error(`Lieferando error: HTTP ${response.status} after ${this.config.maxRetries} retries`);
-    }
-
-    if (response.status === 404) {
-      throw new Error(`Lieferando 404: resource not found at ${url}`);
-    }
-
-    throw new Error(`Lieferando error: HTTP ${response.status}`);
   }
 
   private async rateLimit(): Promise<void> {
     const now = Date.now();
     const elapsed = now - this.lastRequestTime;
     if (elapsed < this.config.requestDelayMs) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, this.config.requestDelayMs - elapsed)
-      );
+      await new Promise((resolve) => setTimeout(resolve, this.config.requestDelayMs - elapsed));
     }
     this.lastRequestTime = Date.now();
   }
@@ -243,7 +336,7 @@ export function createLieferandoClient(
     ...DEFAULT_CONFIG,
     ...config,
   };
-  return new LieferandoHttpClient(merged);
+  return new LieferandoPlaywrightClient(merged);
 }
 
 export { parsePriceCents, extractJsonLd, parseMenuCategories, parseRestaurantCards };

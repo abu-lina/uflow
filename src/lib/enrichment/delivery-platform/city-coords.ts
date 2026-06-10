@@ -112,6 +112,8 @@ export const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
   'Kiel': { lat: 54.3233, lon: 10.1228 },
   'Chemnitz': { lat: 50.8278, lon: 12.9214 },
   'Altenstadt': { lat: 47.8237, lon: 10.8735 },
+  'Lauf an der Pegnitz': { lat: 49.5130, lon: 11.2778 },
+  'Starnberg': { lat: 48.0025, lon: 11.3433 },
 };
 
 /**
@@ -123,5 +125,8 @@ export const CITY_ALIASES: Record<string, string> = {
   'Frankfurt am Main069 21001381': 'Frankfurt am Main',  // phone number appended
   'LANGEN': 'Langen',
   'Neu': 'München',  // likely incomplete entry, fallback to Munich area
+  'Böblingen': 'Böblingen',
+  'Frankfurt Am Main': 'Frankfurt am Main',
+  'Neu-Ulm': 'Ulm',
 };
 

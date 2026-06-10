@@ -28,8 +28,8 @@ export interface WoltClient {
 }
 
 const DEFAULT_CONFIG: Required<WoltClientConfig> = {
-  requestDelayMs: 250,
-  maxRetries: 3,
+  requestDelayMs: 500,
+  maxRetries: 5,
   userAgent: 'UFlow-Enrichment/1.0 (+https://ummahflow.com/enrichment)',
 };
 
@@ -137,7 +137,7 @@ class WoltHttpClient implements WoltClient {
 
     if (response.status === 429 || response.status >= 500) {
       if (attempt < this.config.maxRetries) {
-        const backoff = Math.pow(2, attempt) * 1000;
+        const backoff = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
         await new Promise((resolve) => setTimeout(resolve, backoff));
         return this.fetchWithRetry(url, attempt + 1);
       }

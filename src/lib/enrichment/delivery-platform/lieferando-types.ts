@@ -36,6 +36,7 @@ export interface LieferandoClientConfig {
   requestDelayMs?: number;
   maxRetries?: number;
   userAgent?: string;
+  headless?: boolean;
 }
 
 export interface LieferandoClient {

@@ -172,8 +172,32 @@ Short log of learnings from plan → build → review → test loops. Append one
 
 **Pattern**: For any multi-page edit form using sub-page navigation + localStorage, ensure ALL fields (not just sub-page fields) are persisted before navigating away. The pattern is: save-before-navigate + restore-on-return.
 
-## 2026-06-06 — Category taxonomy redesign: enum + seed data in single migration
+## 2026-06-09 — Cheerio type mismatch: Root vs CheerioAPI (Plan 156 M2)
 
-**Context**: Plan 150 — adding `category_type` enum/column and 34 new category rows.
+**Context**: Plan 156 M2 — using cheerio 1.x for Lieferando HTML parsing.
 
-**Learning**: When adding an enum column to a table that already has rows, you DON'T need to backfill every existing row with the new column. The column is nullable by default with `ADD COLUMN IF NOT EXISTS`. Existing rows keep NULL, new INSERTs specify the value. This is fine because the enum is metadata — existing rows will get their category_type assigned in a follow-up if needed. The idempotent INSERT pattern using `WHERE NOT EXISTS` on names is the safe approach for seed data that may already exist across environments. Using `gen_random_uuid()` for `category_id` in the SELECT simplifies UUID generation while still being idempotent (the name guard prevents duplicates).
+**Learning**: `cheerio.load()` returns `CheerioAPI` in the declaration files, but when the return value is used in tests or passed between modules, TypeScript infers the type as `Root` (from `domhandler`'s internal type). These are structurally incompatible — `Root` lacks `version` and `load` properties that `CheerioAPI` requires. The fix: use `type CheerioDoc = ReturnType<typeof cheerio.load>` as the parameter type in internal parsing functions instead of importing `CheerioAPI` from cheerio. This avoids the type mismatch entirely because TypeScript infers the concrete type from the module's own load function.
+
+**Change**: Document this pattern for future cheerio usage — always use `ReturnType<typeof cheerio.load>` for the document type, not the named `CheerioAPI` export. If cheerio upgrades change this, update the manual fixture.
+
+**Task**: Plan 156, M2
+
+## 2026-06-10 — JoinHalal enrichment RPC mismatch (Plan 159)
+
+**Context**: Plan 159 — extending JoinHalal enrichment with auto-apply for new fields.
+
+**Learning**: The plan's `autoApplyJoinHalalFields` function described individual RPC parameters (`p_provider_name`, `p_description`, etc.), but the actual `admin_update_provider` RPC takes `(p_provider_id UUID, p_data JSONB)`. The script already uses the JSONB payload pattern in `autoApplyDeliveryFields` via `buildAutoApplyPayload`. Always check the actual RPC signature (in `supabase/migrations/`) rather than relying on plan pseudocode. For JoinHalal fields, the JSONB payload goes under `p_data.providers.{field_name}`.
+
+**Change**: Used `supabase.rpc('admin_update_provider', { p_provider_id, p_data: { providers: { ... } } })` matching the existing Wolt/Lieferando auto-apply pattern.
+
+**Task**: Plan 159
+
+## 2026-06-10 — Enrichment source selection: re-fetch import source vs external search
+
+**Context**: Plan 156-159 — building auto-enrichment for food providers.
+
+**Learning**: When choosing enrichment sources for imported data, the import source itself is almost always better than external delivery platforms. For JoinHalal imports (80%+ of providers), re-fetching the original page gives rich Schema.org data (description, geo, opening hours, images, cuisine) with zero search friction — we already have the exact URL. In contrast, delivery platforms (Wolt, Lieferando, UberEats) require unreliable search-by-name-and-location, suffer from anti-bot measures, and often don't list small halal restaurants at all. The takeaway: always design the import to capture enough context for later enrichment (import_source_url, original schema), and prefer re-fetching the source over external matching.
+
+**Change**: Scoped delivery platform enrichment to experimental (UberEats) or fallback. Made JoinHalal first-class with auto-apply. Updated workflow to run JoinHalal first.
+
+**Task**: Plan 159

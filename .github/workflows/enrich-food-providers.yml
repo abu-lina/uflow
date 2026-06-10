@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       sources:
-        description: 'Sources to run (comma-separated: wolt,lieferando,ubereats)'
+        description: 'Sources to run (comma-separated: wolt,lieferando,ubereats,joinhalal)'
         required: false
-        default: 'wolt,lieferando,ubereats'
+        default: 'wolt,lieferando,ubereats,joinhalal'
         type: string
       mode:
         description: 'Execution mode'
@@ -44,10 +44,10 @@ jobs:
         id: resolve-sources
         run: |
           SOURCES="${{ github.event.inputs.sources }}"
-          echo "resolved_sources=${SOURCES:-wolt,lieferando,ubereats}" >> "$GITHUB_OUTPUT"
+          echo "resolved_sources=${SOURCES:-wolt,lieferando,ubereats,joinhalal}" >> "$GITHUB_OUTPUT"
 
-      - name: Install Playwright Chromium (UberEats only)
-        if: contains(steps.resolve-sources.outputs.resolved_sources, 'ubereats')
+      - name: Install Playwright Chromium
+        if: contains(steps.resolve-sources.outputs.resolved_sources, 'ubereats') || contains(steps.resolve-sources.outputs.resolved_sources, 'lieferando')
         run: npx playwright install chromium --with-deps
 
       - name: Run enrichment sources
@@ -60,7 +60,7 @@ jobs:
           MODE="${{ github.event.inputs.mode || 'auto-apply' }}"
           LIMIT="${{ github.event.inputs.limit }}"
           mkdir -p /tmp/enrichment-logs
-          for SOURCE in wolt lieferando ubereats; do
+          for SOURCE in joinhalal wolt lieferando ubereats; do
             if echo "$SOURCES" | grep -qw "$SOURCE"; then
               echo ""
               echo "═══════════════════════════════════════════════"

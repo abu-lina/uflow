@@ -26,6 +26,10 @@ export interface ProviderSnapshot {
   address_zip: string | null;
   address_city: string | null;
   address_country: string | null;
+  provider_description?: string | null;
+  opening_hours?: unknown;
+  location_latitude?: number | null;
+  location_longitude?: number | null;
 }
 
 /**
@@ -43,6 +47,10 @@ export type ParsedEnrichmentData = Partial<
     | 'address_zip'
     | 'address_city'
     | 'address_country'
+    | 'provider_description'
+    | 'opening_hours'
+    | 'location_latitude'
+    | 'location_longitude'
   >
 >;
 

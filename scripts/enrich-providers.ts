@@ -31,6 +31,7 @@ import * as path from 'path';
 import {
   extractSchemaOrgFromHtml,
   extractSpeisen,
+  extractEnrichmentData,
 } from '../src/utils/joinhalal-parser';
 import {
   resolveOfferIds,
@@ -123,7 +124,7 @@ interface ProviderRow {
   provider_name: string;
   import_source: string | null;
   import_source_url: string | null;
-  offers_ids: string[] | null;
+  offers_ids?: string[] | null;
   contact_phone: string | null;
   social_website: string | null;
   social_instagram: string | null;
@@ -132,6 +133,10 @@ interface ProviderRow {
   address_city: string | null;
   address_country: string | null;
   enrichment_eligible: boolean;
+  provider_description: string | null;
+  opening_hours: unknown;
+  location_latitude: number | null;
+  location_longitude: number | null;
 }
 
 interface RunStats {
@@ -142,6 +147,7 @@ interface RunStats {
   candidatesCreated: number;
   unchangedCount: number;
   failureCount: number;
+  skippedCount: number;
   circuitBreakerTriggered: boolean;
   startedAt: string;
   finishedAt?: string;
@@ -174,6 +180,7 @@ async function main(): Promise<void> {
     candidatesCreated: 0,
     unchangedCount: 0,
     failureCount: 0,
+    skippedCount: 0,
     circuitBreakerTriggered: false,
     startedAt: new Date().toISOString(),
     autoAppliedCount: 0,
@@ -201,8 +208,8 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (isAutoApply && !['wolt', 'ubereats'].includes(source)) {
-    console.error(`❌ Auto-apply mode is only supported for 'wolt' and 'ubereats' sources.`);
+  if (isAutoApply && !['wolt', 'ubereats', 'joinhalal', 'lieferando'].includes(source)) {
+    console.error(`❌ Auto-apply mode is only supported for 'wolt', 'ubereats', 'joinhalal', and 'lieferando' sources.`);
     process.exit(1);
   }
 
@@ -236,10 +243,9 @@ async function main(): Promise<void> {
   let query = supabase
     .from('providers')
     .select(
-      'provider_id, provider_name, import_source, import_source_url, offers_ids, contact_phone, social_website, social_instagram, address_street, address_zip, address_city, address_country, enrichment_eligible'
+      'provider_id, provider_name, import_source, import_source_url, contact_phone, social_website, social_instagram, address_street, address_zip, address_city, address_country, enrichment_eligible, provider_description, opening_hours, location_latitude, location_longitude'
     )
     .eq('import_source', source)
-    .eq('review_status', 'approved')
     .eq('enrichment_eligible', true)
     .is('provider_owner_id', null)
     .not('import_source_url', 'is', null);
@@ -271,7 +277,7 @@ async function main(): Promise<void> {
     // Circuit breaker check
     if (stats.providersProcessed > 0) {
       const failRate = stats.failureCount / stats.providersProcessed;
-      if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 5) {
+      if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 10) {
         console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
         stats.circuitBreakerTriggered = true;
         break;
@@ -302,6 +308,10 @@ async function main(): Promise<void> {
         address_zip: provider.address_zip,
         address_city: provider.address_city,
         address_country: provider.address_country,
+        provider_description: provider.provider_description,
+        opening_hours: provider.opening_hours,
+        location_latitude: provider.location_latitude,
+        location_longitude: provider.location_longitude,
       };
 
       const candidates = buildEnrichmentCandidates(snapshot, parsed, source, url);
@@ -309,6 +319,8 @@ async function main(): Promise<void> {
       if (candidates.length === 0) {
         console.log('✅ no changes');
         stats.unchangedCount++;
+      } else if (isAutoApply) {
+        await autoApplyJoinHalalFields(provider, candidates, stats);
       } else {
         console.log(`📝 ${candidates.length} candidate(s)`);
         for (const c of candidates) {
@@ -332,14 +344,24 @@ async function main(): Promise<void> {
   console.log(`     Selected:   ${stats.providersSelected}`);
   console.log(`     Processed:  ${stats.providersProcessed}`);
   console.log(`     Unchanged:  ${stats.unchangedCount}`);
-  console.log(`     Candidates: ${stats.candidatesCreated}`);
+  if (isAutoApply) {
+    console.log(`     Auto-applied: ${stats.autoAppliedCount}`);
+  } else {
+    console.log(`     Candidates: ${stats.candidatesCreated}`);
+  }
   console.log(`     Failed:     ${stats.failureCount}`);
+  if (stats.skippedCount) {
+    console.log(`     Skipped:    ${stats.skippedCount}`);
+  }
   if (stats.circuitBreakerTriggered) {
     console.log(`     ⚡ Circuit breaker was triggered`);
   }
+  if (isAutoApply && stats.autoAppliedFields.length > 0) {
+    console.log(`     Fields:     ${[...new Set(stats.autoAppliedFields)].join(', ')}`);
+  }
   console.log(`${'─'.repeat(60)}`);
 
-  if (allCandidates.length > 0) {
+  if (!isAutoApply && allCandidates.length > 0) {
     console.log(`\n  📋 Candidate Preview (first 10):`);
     for (const c of allCandidates.slice(0, 10)) {
       console.log(`     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`);
@@ -349,8 +371,8 @@ async function main(): Promise<void> {
     }
   }
 
-  // 5. Write candidates if not dry-run
-  if (isWrite && allCandidates.length > 0) {
+  // 5. Write candidates if not dry-run (skip during auto-apply — already applied directly)
+  if (!isAutoApply && isWrite && allCandidates.length > 0) {
     console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
     let written = 0;
 
@@ -395,8 +417,10 @@ async function main(): Promise<void> {
     }
 
     console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
+  } else if (isAutoApply) {
+    console.log(`\n  ✅ Auto-apply complete.`);
   } else if (isDryRun) {
-    console.log(`\n  ℹ️  Dry-run complete. Use --write to stage candidates.`);
+    console.log(`\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply directly.`);
   }
 
   // 6. Write run log
@@ -422,6 +446,21 @@ function parseEnrichmentData(html: string, offers: Offer[]): ParsedEnrichmentDat
   }
   if (schema.url) {
     parsed.social_website = schema.url;
+  }
+
+  const enrichmentData = extractEnrichmentData(schema);
+
+  if (enrichmentData.description) {
+    parsed.provider_description = enrichmentData.description;
+  }
+  if (enrichmentData.openingHours) {
+    parsed.opening_hours = enrichmentData.openingHours;
+  }
+  if (enrichmentData.latitude !== null) {
+    parsed.location_latitude = enrichmentData.latitude;
+  }
+  if (enrichmentData.longitude !== null) {
+    parsed.location_longitude = enrichmentData.longitude;
   }
 
   return Object.keys(parsed).length > 0 ? parsed : null;
@@ -546,7 +585,7 @@ async function runWoltEnrichment(
     // Circuit breaker check
     if (stats.providersProcessed > 0) {
       const failRate = stats.failureCount / stats.providersProcessed;
-      if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 5) {
+      if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 10) {
         console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
         stats.circuitBreakerTriggered = true;
         break;
@@ -554,6 +593,12 @@ async function runWoltEnrichment(
     }
 
     process.stdout.write(`  🔍 ${provider.provider_name} ... `);
+
+    if (!provider.address_city || !(await geocoder.geocode(provider.address_city))) {
+      console.log(`  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`);
+      stats.skippedCount = (stats.skippedCount || 0) + 1;
+      continue;
+    }
 
     try {
       const snapshot: DeliveryPlatformSnapshot = {
@@ -569,6 +614,21 @@ async function runWoltEnrichment(
       stats.providersProcessed++;
 
       if (result.error) {
+        const nonEssentialErrors = [
+          'not in coverage area',
+          'City not found',
+          'No Lieferando restaurants found',
+          'No Lieferando restaurant matched',
+          'No UberEats venues found',
+          'No venues found',
+          'has no city set',
+          'venue matched',
+        ];
+        const isNonEssential = nonEssentialErrors.some(e => result.error!.includes(e));
+        if (isNonEssential) {
+          console.log(`⚠️  ${result.error}`);
+          continue;
+        }
         console.log(`⚠️  ${result.error}`);
         stats.failureCount++;
         continue;
@@ -608,6 +668,9 @@ async function runWoltEnrichment(
     console.log(`     Candidates: ${stats.candidatesCreated}`);
   }
   console.log(`     Failed:     ${stats.failureCount}`);
+  if (stats.skippedCount) {
+    console.log(`     Skipped:    ${stats.skippedCount}`);
+  }
   if (stats.circuitBreakerTriggered) {
     console.log(`     ⚡ Circuit breaker was triggered`);
   }
@@ -776,7 +839,7 @@ async function runLieferandoEnrichment(
   for (const provider of providerRows) {
     if (stats.providersProcessed > 0) {
       const failRate = stats.failureCount / stats.providersProcessed;
-      if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 5) {
+      if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 10) {
         console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
         stats.circuitBreakerTriggered = true;
         break;
@@ -784,6 +847,12 @@ async function runLieferandoEnrichment(
     }
 
     process.stdout.write(`  🔍 ${provider.provider_name} ... `);
+
+    if (!provider.address_city || !(await geocoder.geocode(provider.address_city))) {
+      console.log(`  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`);
+      stats.skippedCount = (stats.skippedCount || 0) + 1;
+      continue;
+    }
 
     try {
       const snapshot: DeliveryPlatformSnapshot = {
@@ -799,6 +868,21 @@ async function runLieferandoEnrichment(
       stats.providersProcessed++;
 
       if (result.error) {
+        const nonEssentialErrors = [
+          'not in coverage area',
+          'City not found',
+          'No Lieferando restaurants found',
+          'No Lieferando restaurant matched',
+          'No UberEats venues found',
+          'No venues found',
+          'has no city set',
+          'venue matched',
+        ];
+        const isNonEssential = nonEssentialErrors.some(e => result.error!.includes(e));
+        if (isNonEssential) {
+          console.log(`⚠️  ${result.error}`);
+          continue;
+        }
         console.log(`⚠️  ${result.error}`);
         stats.failureCount++;
         continue;
@@ -837,6 +921,9 @@ async function runLieferandoEnrichment(
     console.log(`     Candidates: ${stats.candidatesCreated}`);
   }
   console.log(`     Failed:     ${stats.failureCount}`);
+  if (stats.skippedCount) {
+    console.log(`     Skipped:    ${stats.skippedCount}`);
+  }
   if (stats.circuitBreakerTriggered) {
     console.log(`     ⚡ Circuit breaker was triggered`);
   }
@@ -1001,11 +1088,14 @@ async function runUberEatsEnrichment(
 
     const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
 
+    // 2. Create UberEats client + geocoder
+    const geocoder = new StaticCityGeocoder();
+
     for (const provider of providerRows) {
       // Circuit breaker check
       if (stats.providersProcessed > 0) {
         const failRate = stats.failureCount / stats.providersProcessed;
-        if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 5) {
+        if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 10) {
           console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
           stats.circuitBreakerTriggered = true;
           break;
@@ -1013,6 +1103,12 @@ async function runUberEatsEnrichment(
       }
 
       process.stdout.write(`  🔍 ${provider.provider_name} ... `);
+
+      if (!provider.address_city || !(await geocoder.geocode(provider.address_city))) {
+        console.log(`  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`);
+        stats.skippedCount = (stats.skippedCount || 0) + 1;
+        continue;
+      }
 
       try {
         const snapshot: DeliveryPlatformSnapshot = {
@@ -1028,6 +1124,21 @@ async function runUberEatsEnrichment(
         stats.providersProcessed++;
 
         if (result.error) {
+          const nonEssentialErrors = [
+            'not in coverage area',
+            'City not found',
+            'No Lieferando restaurants found',
+            'No Lieferando restaurant matched',
+            'No UberEats venues found',
+            'No venues found',
+            'has no city set',
+            'venue matched',
+          ];
+          const isNonEssential = nonEssentialErrors.some(e => result.error!.includes(e));
+          if (isNonEssential) {
+            console.log(`⚠️  ${result.error}`);
+            continue;
+          }
           console.log(`⚠️  ${result.error}`);
           stats.failureCount++;
           continue;
@@ -1070,6 +1181,9 @@ async function runUberEatsEnrichment(
       console.log(`     Candidates: ${stats.candidatesCreated}`);
     }
     console.log(`     Failed:     ${stats.failureCount}`);
+    if (stats.skippedCount) {
+      console.log(`     Skipped:    ${stats.skippedCount}`);
+    }
     if (stats.circuitBreakerTriggered) {
       console.log(`     ⚡ Circuit breaker was triggered`);
     }
@@ -1359,6 +1473,104 @@ async function autoApplyLieferandoFields(
       .eq('provider_id', provider.provider_id);
 
     for (const c of result.candidates) {
+      if (!appliedFields.includes(c.field_name)) continue;
+
+      await supabase
+        .from('enrichment_candidates')
+        .upsert(
+          {
+            provider_id: c.provider_id,
+            source: c.source,
+            source_url: c.source_url,
+            field_name: c.field_name,
+            proposed_value: c.proposed_value,
+            current_value: c.current_value,
+            status: 'auto_applied',
+            enriched_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'provider_id,field_name,source',
+            ignoreDuplicates: true,
+          },
+        );
+    }
+
+    console.log(`✅ auto-applied ${appliedFields.length} field(s): ${appliedFields.join(', ')}`);
+    stats.autoAppliedCount += appliedFields.length;
+    stats.autoAppliedFields.push(...appliedFields);
+    stats.candidatesCreated += appliedFields.length;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.log(`❌ auto-apply failed: ${msg}`);
+    stats.failureCount++;
+  }
+}
+
+// ─── Auto-Apply for JoinHalal ────────────────────────────────────────────────
+
+async function autoApplyJoinHalalFields(
+  provider: ProviderRow,
+  candidates: EnrichmentCandidate[],
+  stats: RunStats
+): Promise<void> {
+  const providersPayload: Record<string, unknown> = {};
+
+  for (const c of candidates) {
+    if (c.current_value !== null && c.current_value !== undefined && c.current_value !== '' &&
+        !(Array.isArray(c.current_value) && c.current_value.length === 0)) {
+      continue;
+    }
+
+    const fieldName = c.field_name;
+    const value = c.proposed_value;
+
+    if (fieldName === 'provider_description') {
+      providersPayload.provider_description = value;
+    } else if (fieldName === 'opening_hours') {
+      providersPayload.opening_hours = value;
+    } else if (fieldName === 'contact_phone') {
+      providersPayload.contact_phone = value;
+    } else if (fieldName === 'social_website') {
+      providersPayload.social_website = value;
+    }
+  }
+
+  const rpcPayload: Record<string, unknown> = {};
+  if (Object.keys(providersPayload).length > 0) {
+    rpcPayload.providers = providersPayload;
+  }
+
+  const appliedViaRpc = Object.keys(providersPayload).length;
+
+  if (appliedViaRpc === 0) {
+    console.log('✅ no auto-applicable fields');
+    stats.unchangedCount++;
+    return;
+  }
+
+  try {
+    if (Object.keys(rpcPayload).length > 0) {
+      const { error: rpcError } = await supabase
+        .rpc('admin_update_provider', {
+          p_provider_id: provider.provider_id,
+          p_data: rpcPayload,
+        });
+
+      if (rpcError) {
+        console.log(`❌ RPC failed: ${rpcError.message}`);
+        stats.failureCount++;
+        return;
+      }
+    }
+
+    await supabase
+      .from('providers')
+      .update({ last_enriched_at: new Date().toISOString() })
+      .eq('provider_id', provider.provider_id);
+
+    const appliedFields = Object.keys(providersPayload);
+
+    for (const c of candidates) {
       if (!appliedFields.includes(c.field_name)) continue;
 
       await supabase
