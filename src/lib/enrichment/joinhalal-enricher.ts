@@ -32,6 +32,12 @@ export interface ProviderSnapshot {
   location_longitude?: number | null;
 }
 
+export interface MenuItem {
+  name_de: string;
+  is_available: boolean;
+  sort_order: number;
+}
+
 /**
  * Parsed data from an external source, ready for comparison.
  * Only source-enrichable fields should be present.
@@ -52,7 +58,9 @@ export type ParsedEnrichmentData = Partial<
     | 'location_latitude'
     | 'location_longitude'
   >
->;
+> & {
+  menu_items?: MenuItem[];
+};
 
 /**
  * An enrichment candidate ready to be staged in the DB.

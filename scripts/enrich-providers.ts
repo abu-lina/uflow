@@ -42,6 +42,7 @@ import {
   type ProviderSnapshot,
   type ParsedEnrichmentData,
   type EnrichmentCandidate,
+  type MenuItem,
 } from '../src/lib/enrichment/joinhalal-enricher';
 import {
   enrichFromWolt,
@@ -316,16 +317,34 @@ async function main(): Promise<void> {
 
       const candidates = buildEnrichmentCandidates(snapshot, parsed, source, url);
 
-      if (candidates.length === 0) {
+      const statusParts: string[] = [];
+
+      if (candidates.length > 0) {
+        if (isAutoApply) {
+          await autoApplyJoinHalalFields(provider, candidates, stats);
+          statusParts.push(`${candidates.length} field(s) auto-applied`);
+        } else {
+          statusParts.push(`${candidates.length} candidate(s)`);
+          for (const c of candidates) {
+            allCandidates.push({ ...c, providerName: provider.provider_name });
+          }
+        }
+      }
+
+      if (parsed.menu_items && parsed.menu_items.length > 0) {
+        if (isAutoApply) {
+          await autoApplyMenuItems(provider, parsed.menu_items, stats);
+          statusParts.push(`${parsed.menu_items.length} menu item(s) auto-applied`);
+        } else {
+          statusParts.push(`${parsed.menu_items.length} menu item(s) found (use --mode auto-apply to write)`);
+        }
+      }
+
+      if (statusParts.length === 0) {
         console.log('✅ no changes');
         stats.unchangedCount++;
-      } else if (isAutoApply) {
-        await autoApplyJoinHalalFields(provider, candidates, stats);
       } else {
-        console.log(`📝 ${candidates.length} candidate(s)`);
-        for (const c of candidates) {
-          allCandidates.push({ ...c, providerName: provider.provider_name });
-        }
+        console.log(`✅ ${statusParts.join(', ')}`);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -462,6 +481,17 @@ function parseEnrichmentData(html: string, offers: Offer[]): ParsedEnrichmentDat
   if (enrichmentData.longitude !== null) {
     parsed.location_longitude = enrichmentData.longitude;
   }
+
+
+  // Extract menu items from Speisen
+  if (speisen.length > 0) {
+    parsed.menu_items = speisen.map((name, i) => ({
+      name_de: name,
+      is_available: true,
+      sort_order: i,
+    }));
+  }
+
 
   return Object.keys(parsed).length > 0 ? parsed : null;
 }
@@ -1600,6 +1630,68 @@ async function autoApplyJoinHalalFields(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.log(`❌ auto-apply failed: ${msg}`);
+    stats.failureCount++;
+  }
+}
+
+
+// ─── Menu Item Enrichment ───────────────────────────────────────────────────────
+
+/**
+ * Auto-applies menu items from JoinHalal Speisen data.
+ * Only writes if the provider has no existing menu items.
+ * Uses admin_update_provider RPC which does full array replacement (DELETE + INSERT).
+ */
+async function autoApplyMenuItems(
+  provider: ProviderRow,
+  menuItems: MenuItem[],
+  stats: RunStats
+): Promise<void> {
+  if (!menuItems || menuItems.length === 0) return;
+
+  // Check if provider already has menu items
+  const { count: existingCount, error: countError } = await supabase
+    .from('food_menu')
+    .select('*', { count: 'exact', head: true })
+    .eq('provider_id', provider.provider_id);
+
+  if (countError) {
+    console.log(`  ⚠️  menu count check failed: ${countError.message}`);
+    stats.failureCount++;
+    return;
+  }
+
+  if (existingCount && existingCount > 0) {
+    // Provider already has menu items — skip to avoid overwriting richer data
+    return;
+  }
+
+  // Build menu_items payload for RPC
+  const menuPayload = menuItems.map((item, i) => ({
+    name_de: item.name_de,
+    is_available: item.is_available,
+    sort_order: i,
+  }));
+
+  try {
+    const { error: rpcError } = await supabase
+      .rpc('admin_update_provider', {
+        p_provider_id: provider.provider_id,
+        p_data: {
+          menu_items: menuPayload,
+        },
+      });
+
+    if (rpcError) {
+      console.log(`  ⚠️  menu RPC failed: ${rpcError.message}`);
+      stats.failureCount++;
+      return;
+    }
+
+    stats.autoAppliedCount++;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.log(`  ⚠️  menu write failed: ${msg}`);
     stats.failureCount++;
   }
 }
