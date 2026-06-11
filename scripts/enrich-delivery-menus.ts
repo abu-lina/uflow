@@ -1,10 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { createWoltClient } from '../src/lib/enrichment/delivery-platform/wolt-client';
 import { createLieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-client';
 import { createUberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-client';
-import { StaticCityGeocoder } from '../src/lib/enrichment/delivery-platform/geocoder';
+import { fetchWoltRestaurant } from '../src/lib/enrichment/delivery-platform/apify-wolt-client';
 import type { LieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-types';
 import type { UberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-types';
 
@@ -12,6 +11,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('Missing required environment variables.');
@@ -65,6 +65,7 @@ interface RunStats {
   skipped: number;
   failed: number;
   menuItemsWritten: number;
+  openingHoursWritten: number;
 }
 
 async function main(): Promise<void> {
@@ -105,6 +106,11 @@ async function main(): Promise<void> {
     };
   }).sort((a, b) => a.provider_name.localeCompare(b.provider_name));
 
+  if (!APIFY_API_TOKEN && links.some((l) => l.platform === 'wolt')) {
+    console.error('APIFY_API_TOKEN is required for Wolt enrichment but not set in .env.local');
+    process.exit(1);
+  }
+
   const applyLimit = limit ?? links.length;
   const batch = links.slice(0, applyLimit);
   const stats: RunStats = {
@@ -113,6 +119,7 @@ async function main(): Promise<void> {
     skipped: 0,
     failed: 0,
     menuItemsWritten: 0,
+    openingHoursWritten: 0,
   };
 
   console.log(`  Found ${links.length} active delivery link(s) for food providers`);
@@ -122,20 +129,10 @@ async function main(): Promise<void> {
     console.log('');
   }
 
-  const geocoder = new StaticCityGeocoder();
-  let woltClient: ReturnType<typeof createWoltClient> | null = null;
   let lieferandoClient: LieferandoClient | null = null;
   let ubereatsClient: UberEatsClient | null = null;
 
   for (const link of batch) {
-    const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
-    if (!slug) {
-      process.stdout.write(`  ${link.provider_name} (${link.platform}) ... `);
-      console.log(`no slug could be extracted from URL`);
-      stats.failed++;
-      continue;
-    }
-
     process.stdout.write(`  ${link.provider_name} (${link.platform}) ... `);
 
     try {
@@ -156,6 +153,8 @@ async function main(): Promise<void> {
         continue;
       }
 
+      // ----- Fetch data from platform -----
+
       let menuItems: Array<{
         name_de: string;
         description_de: string | null;
@@ -165,20 +164,41 @@ async function main(): Promise<void> {
         sort_order: number;
       }> = [];
 
+      // Opening hours collected from Wolt (Apify) — null for other platforms
+      let openingHoursToWrite: Record<string, unknown> | null = null;
+
       if (link.platform === 'wolt') {
-        if (!woltClient) {
-          woltClient = createWoltClient(undefined, geocoder);
+        // Use Apify Wolt actor instead of custom HTTP client
+        const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
+
+        if (!result) {
+          console.log(`not found on Wolt`);
+          stats.skipped++;
+          continue;
         }
-        const data = await woltClient.fetchMenuData(slug);
-        menuItems = data.items.map((item, i) => ({
-          name_de: item.name,
-          description_de: item.description || null,
-          category: item.category || null,
-          price_cents: null,
-          is_available: true,
-          sort_order: i,
-        }));
+
+        menuItems = result.menuItems;
+
+        // Additive-only: only write opening hours if provider has none
+        if (result.openingHours) {
+          const { data: currentProvider } = await supabase
+            .from('providers')
+            .select('opening_hours')
+            .eq('provider_id', link.provider_id)
+            .single();
+
+          if (!currentProvider?.opening_hours) {
+            openingHoursToWrite = result.openingHours as unknown as Record<string, unknown>;
+          }
+        }
       } else if (link.platform === 'lieferando') {
+        const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
+        if (!slug) {
+          console.log(`no slug could be extracted from URL`);
+          stats.failed++;
+          continue;
+        }
+
         if (!lieferandoClient) {
           lieferandoClient = createLieferandoClient();
         }
@@ -194,6 +214,13 @@ async function main(): Promise<void> {
           }))
         );
       } else if (link.platform === 'ubereats') {
+        const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
+        if (!slug) {
+          console.log(`no slug could be extracted from URL`);
+          stats.failed++;
+          continue;
+        }
+
         if (!ubereatsClient) {
           ubereatsClient = createUberEatsClient();
         }
@@ -216,17 +243,26 @@ async function main(): Promise<void> {
         continue;
       }
 
+      // ----- Write to database -----
+
       if (isDryRun) {
-        console.log(`would write ${menuItems.length} menu item(s)`);
+        let msg = `would write ${menuItems.length} menu item(s)`;
+        if (openingHoursToWrite) {
+          msg += ` and opening hours`;
+        }
+        console.log(msg);
         stats.menuItemsWritten += menuItems.length;
         stats.processed++;
       } else {
+        const p_data: Record<string, unknown> = { menu_items: menuItems };
+        if (openingHoursToWrite) {
+          p_data.providers = { opening_hours: openingHoursToWrite };
+        }
+
         const { error: rpcError } = await supabase
           .rpc('admin_update_provider', {
             p_provider_id: link.provider_id,
-            p_data: {
-              menu_items: menuItems,
-            },
+            p_data,
           });
 
         if (rpcError) {
@@ -244,7 +280,12 @@ async function main(): Promise<void> {
           .eq('provider_id', link.provider_id)
           .eq('platform', link.platform);
 
-        console.log(`${menuItems.length} menu item(s) written`);
+        let msg = `${menuItems.length} menu item(s) written`;
+        if (openingHoursToWrite) {
+          msg += ` + opening hours`;
+          stats.openingHoursWritten++;
+        }
+        console.log(msg);
         stats.menuItemsWritten += menuItems.length;
         stats.processed++;
       }
@@ -266,11 +307,12 @@ async function main(): Promise<void> {
 
   console.log(`\n${'─'.repeat(50)}`);
   console.log(`  Summary`);
-  console.log(`     Total:              ${stats.total}`);
-  console.log(`     Processed:          ${stats.processed}`);
-  console.log(`     Skipped (has menu): ${stats.skipped}`);
-  console.log(`     Failed:             ${stats.failed}`);
-  console.log(`     Menu items written: ${stats.menuItemsWritten}`);
+  console.log(`     Total:                  ${stats.total}`);
+  console.log(`     Processed:              ${stats.processed}`);
+  console.log(`     Skipped (has menu):     ${stats.skipped}`);
+  console.log(`     Failed:                 ${stats.failed}`);
+  console.log(`     Menu items written:     ${stats.menuItemsWritten}`);
+  console.log(`     Opening hours written:  ${stats.openingHoursWritten}`);
   console.log(`${'─'.repeat(50)}`);
 
   if (isDryRun) {

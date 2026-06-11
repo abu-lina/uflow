@@ -32,6 +32,8 @@ import {
   extractSchemaOrgFromHtml,
   extractSpeisen,
   extractEnrichmentData,
+  extractDeliveryLinks,
+  type DeliveryLink,
 } from '../src/utils/joinhalal-parser';
 import {
   resolveOfferIds,
@@ -317,6 +319,17 @@ async function main(): Promise<void> {
 
       const candidates = buildEnrichmentCandidates(snapshot, parsed, source, url);
 
+      // Extract delivery platform links from Schema.org Lieferservice field
+      let deliveryLinks: DeliveryLink[] = [];
+      try {
+        const schema = extractSchemaOrgFromHtml(html);
+        if (schema) {
+          deliveryLinks = extractDeliveryLinks(schema);
+        }
+      } catch {
+        // Non-critical: delivery links are optional
+      }
+
       const statusParts: string[] = [];
 
       if (candidates.length > 0) {
@@ -339,6 +352,15 @@ async function main(): Promise<void> {
           statusParts.push(`${parsed.menu_items.length} menu item(s) auto-applied`);
         } else {
           statusParts.push(`${parsed.menu_items.length} menu item(s) found (use --mode auto-apply to write)`);
+        }
+      }
+
+      if (deliveryLinks.length > 0) {
+        if (isAutoApply) {
+          await autoApplyDeliveryLinks(provider, deliveryLinks, stats);
+          statusParts.push(`${deliveryLinks.length} delivery link(s) auto-applied`);
+        } else {
+          statusParts.push(`${deliveryLinks.length} delivery link(s) found (use --mode auto-apply to write)`);
         }
       }
 
@@ -1695,6 +1717,52 @@ async function autoApplyMenuItems(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.log(`  ⚠️  menu write failed: ${msg}`);
+    stats.failureCount++;
+  }
+}
+
+
+// ─── Delivery Link Enrichment ────────────────────────────────────────────
+
+/**
+ * Auto-applies delivery platform links (Wolt, Lieferando, UberEats)
+ * extracted from JoinHalal Schema.org Lieferservice field.
+ *
+ * Uses the admin_update_provider RPC which does full array replacement
+ * for delivery_links. Only writes if there are no existing links for the
+ * same platform (PRIMARY KEY constraint prevents duplicates).
+ */
+async function autoApplyDeliveryLinks(
+  provider: ProviderRow,
+  deliveryLinks: DeliveryLink[],
+  stats: RunStats
+): Promise<void> {
+  if (!deliveryLinks || deliveryLinks.length === 0) return;
+
+  try {
+    const { error: rpcError } = await supabase
+      .rpc('admin_update_provider', {
+        p_provider_id: provider.provider_id,
+        p_data: {
+          delivery_links: deliveryLinks.map((dl) => ({
+            platform: dl.platform,
+            platform_url: dl.platform_url,
+            platform_slug: dl.platform_slug,
+            is_active: true,
+          })),
+        },
+      });
+
+    if (rpcError) {
+      console.log(`  ⚠️  delivery link RPC failed: ${rpcError.message}`);
+      stats.failureCount++;
+      return;
+    }
+
+    stats.autoAppliedCount++;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.log(`  ⚠️  delivery link write failed: ${msg}`);
     stats.failureCount++;
   }
 }
