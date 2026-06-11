@@ -85,6 +85,23 @@ jobs:
           echo "  ✅ All enrichment sources complete"
           echo "═══════════════════════════════════════════════"
 
+      - name: Run delivery menu enrichment (URL-based)
+        if: always()
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+        run: |
+          echo ""
+          echo "═══════════════════════════════════════════════"
+          echo "  ▶️  Running delivery menu enrichment"
+          echo "═══════════════════════════════════════════════"
+          npx tsx scripts/enrich-delivery-menus.ts > "/tmp/enrichment-logs/delivery-menus.log" 2>&1
+          cat "/tmp/enrichment-logs/delivery-menus.log"
+          echo ""
+          echo "  ✅ Delivery menu enrichment complete"
+          echo "═══════════════════════════════════════════════"
+
       - name: Upload run logs
         if: always()
         uses: actions/upload-artifact@v4
