@@ -85,6 +85,10 @@ jobs:
           echo "  ✅ All enrichment sources complete"
           echo "═══════════════════════════════════════════════"
 
+      - name: Install Playwright for delivery menu enrichment
+        if: always()
+        run: npx playwright install chromium --with-deps
+
       - name: Run delivery menu enrichment (URL-based)
         if: always()
         env:
