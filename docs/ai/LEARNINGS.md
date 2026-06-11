@@ -201,3 +201,13 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Change**: Scoped delivery platform enrichment to experimental (UberEats) or fallback. Made JoinHalal first-class with auto-apply. Updated workflow to run JoinHalal first.
 
 **Task**: Plan 159
+
+## 2026-06-10 — Direct-URL enrichment vs search-based (Plan 160)
+
+**Context**: Plan 160 — building delivery link menu fetch.
+
+**Learning**: Search-by-name-and-location enrichment (the original approach) is fundamentally unreliable for small/niche restaurants. The failure isn't in the code — it's in the data quality: most halal restaurants simply aren't discoverable via platform search APIs. A human-in-the-loop approach where the user manually finds the restaurant URL and adds it to the provider flips the problem: instead of "find this restaurant among 1000 venues in this city", it becomes "fetch this one page we know exists". This converts a search problem into a retrieval problem, which has near-100% success when the URL is valid. The tradeoff is human effort (finding URLs) vs automated processing (fetching is already automated).
+
+**Change**: Created `scripts/add-delivery-link.ts` (human adds URL) and `scripts/enrich-delivery-menus.ts` (system fetches menu). Both scripts share `extractSlug` logic and the `admin_update_provider` RPC for menu writing.
+
+**Task**: Plan 160
