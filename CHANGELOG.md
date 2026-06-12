@@ -1,6 +1,10 @@
 # Changelog
 
-## [Unreleased] - 2026-06-06
+## [Unreleased] - 2026-06-12
+
+### Added
+
+- **Admin delete provider (Plan 162)**: Red "Delete Provider" button on /dashboard/providers/[id]/edit with confirmation dialog. Cascading delete (all child tables have ON DELETE CASCADE). Security: auth required, admin/moderator only, rate limited (20/hr, 5/min), audit logged.
 
 ### Fixed
 
@@ -16,46 +20,6 @@
 - Delivery/order links now support custom website URLs beyond Wolt/Lieferando/UberEats
 - Values page: Food section hidden for non-food, Store section hidden for non-store providers
 
-
-All notable changes to UFlow will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased] - 2026-06-01
-
-### Added
-
-- **Provider edit page rebuild (Plan 145)**: Complete overhaul of the admin provider edit form. Added 6 new sections:
-  - **Menu**: Structured dish list with name, price, category, availability (food providers only)
-  - **Halal Check**: 3-tier selector (Bronze=online, Silver=onsite, Gold=certified)
-  - **Certificate Upload**: PDF/image upload to Supabase Storage (max 5MB)
-  - **Delivery Links**: Manage Wolt, Lieferando, UberEats URLs per provider
-  - **Opening Hours**: 7-day editor with open/close times and closed-all-day toggle
-  - **Values & Amenities**: Toggle switches for 11 booleans (muslim_owned, prayer_space, etc.)
-- **Enrichment Review pages**: Standalone dashboard at `/dashboard/enrichment` and per-provider sub-page in edit form
-- **admin_update_provider RPC**: Atomic multi-table writes via Supabase RPC (transaction-safe)
-- **New admin API endpoints**: `GET /api/admin/providers/:id/menu`, `GET /api/admin/providers/:id/delivery-links`, `POST /api/admin/upload-certificate`
-
-### Removed
-
-- **Deprecated offers/needs**: Removed from edit form (columns already dropped from DB)
-- **Redundant migration**: Merged `delivery_platform_links.sql` into Plan 145 migration
-
-
-### Changed
-
-- **Halal Check trust model rework (Plan 133 + Plan 134)**: Provider detail now presents a clearer trust hierarchy. `HalalTrustBanner` remains the baseline gate above detail sections, while the `Halal Check` section shows tiered platform verification in `ProofTierCard` followed by supporting provider attestation rows.
-- **Trust-centered wording update (Plan 133 delta)**: Updated proof-tier messaging across all six locales to trust-focused labels: section title `Halal Check`, tier labels `Online Checked`, `On-site Checked`, and `Certificate Provided`, with matching explainer copy.
-- **Attestation visual hierarchy refinement (Plan 134)**: Reduced attestation row visual weight (smaller icon footprint and subtler separation) so proof tier remains the dominant trust signal while keeping all attestation commitments visible and accessible.
-- **Verification UX rethink (Plan 135)**: Reworked provider-detail verification from a single tier number to a two-dimensional model (`verification_method` + `has_certificate`) with a 4-level visual scale (`Online`, `Online + Certificate`, `On-site`, `On-site + Certificate`) and a new "What we verified" checklist.
-- **Wax Seal Trust Tiers (Plan 138)**: Replaced the arc gauge + dimension matrix in `ProofTierCard` with three progressive wax seal images (Bronze / Silver / Gold), a highlight-formatted summary sentence, and inline gold-tier attestation. Falls back to coloured circles when seal images are absent. Old arc SVG (`VerificationArc`) and dimension status chips fully removed. Plans 136 and 137 closed as superseded.
-
-### Fixed
-
-- **Proof tier fallback semantics (Plan 133 delta)**: `NULL`/undefined `proof_tier` now defaults to Tier 1 (`Online Checked`) instead of a pending state, matching the actual listing workflow where online checks happen before publication.
-- **JoinHalal RPC compatibility (Plan 133)**: `upsert_joinhalal_providers` no longer references dropped legacy columns and now writes proof-tier and related data through current schema paths.
-- **Empty attestation noise removed (Plan 135)**: `AttestationCard` now returns `null` when no declarations exist, removing fallback placeholder content and keeping focus on concrete verification evidence.
 
 ## [0.12.17] - 2026-05-14
 

@@ -157,6 +157,29 @@ export async function updateProviderReview(
 }
 
 /**
+ * Delete a provider by ID.
+ * Uses .select() after delete to detect non-existent providers.
+ * All child tables have ON DELETE CASCADE, so cleanup is automatic.
+ */
+export async function deleteProvider(providerId: string): Promise<void> {
+  const supabase = getSupabaseAdmin();
+
+  const { data: rows, error } = await supabase
+    .from('providers')
+    .delete()
+    .eq('provider_id', providerId)
+    .select();
+
+  if (error) {
+    throw new Error(`Failed to delete provider: ${error.message}`);
+  }
+
+  if (!rows || rows.length === 0) {
+    throw new Error('Provider not found');
+  }
+}
+
+/**
  * Get a single provider by ID for admin editing.
  * Uses service-role to bypass RLS (can load non-approved providers).
  * Plan 145: Left-joins extension tables (food_providers, store_providers),
