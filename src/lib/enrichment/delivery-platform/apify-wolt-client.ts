@@ -84,6 +84,7 @@ export interface ApifyWoltResult {
 // ---------------------------------------------------------------------------
 
 const DAY_NAME_MAP: Record<string, keyof OpeningHours> = {
+  // English
   monday: 'monday',
   tuesday: 'tuesday',
   wednesday: 'wednesday',
@@ -91,6 +92,14 @@ const DAY_NAME_MAP: Record<string, keyof OpeningHours> = {
   friday: 'friday',
   saturday: 'saturday',
   sunday: 'sunday',
+  // German (Apify returns these for German Wolt pages)
+  montag: 'monday',
+  dienstag: 'tuesday',
+  mittwoch: 'wednesday',
+  donnerstag: 'thursday',
+  freitag: 'friday',
+  samstag: 'saturday',
+  sonntag: 'sunday',
 };
 
 /**
