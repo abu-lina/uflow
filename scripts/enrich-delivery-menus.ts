@@ -27,6 +27,7 @@ const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run');
 const limitArg = getArgValue('--limit');
 const limit = limitArg ? parseInt(limitArg, 10) : undefined;
+const providerIdFilter = getArgValue('--provider-id');
 
 function getArgValue(flag: string): string | undefined {
   const idx = args.indexOf(flag);
