@@ -65,6 +65,20 @@ async function main() {
     .eq('platform', 'wolt');
 
   console.log(`✅ Done — ${result.menuItems.length} menu items + opening hours written`);
+
+  // Verify
+  const { count: verifyCount } = await supabase
+    .from('food_menu')
+    .select('*', { count: 'exact', head: true })
+    .eq('provider_id', providerId);
+  console.log(`  Verified: ${verifyCount} menu item(s) in food_menu for this provider`);
+
+  const { data: verifyProvider } = await supabase
+    .from('providers')
+    .select('opening_hours')
+    .eq('provider_id', providerId)
+    .single();
+  console.log(`  Opening hours stored: ${verifyProvider?.opening_hours != null}`);
 }
 
 main().catch((err) => {
