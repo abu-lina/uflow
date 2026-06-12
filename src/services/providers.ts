@@ -13,6 +13,16 @@ import {
 import type { OpeningHours } from '@/types/openingHours';
 import type { Location } from '@/types/location';
 
+export interface FoodMenuItem {
+  name_de: string;
+  name_en?: string | null;
+  description_de?: string | null;
+  price_cents?: number | null;
+  category?: string | null;
+  sort_order?: number | null;
+  is_available?: boolean;
+}
+
 export interface Provider {
   provider_id: string;
   provider_name: string;
@@ -73,6 +83,7 @@ export interface Provider {
   // From store_providers extension table (joined in search queries)
   no_gambling?: boolean;
   opening_hours?: OpeningHours | null;
+  food_menu_items?: FoodMenuItem[];
   locations?: Location[];
 }
 export interface SearchResult {
@@ -95,6 +106,7 @@ export interface SearchResult {
   offers_ids: string[];
   needs_ids: string[];
   offers?: Array<{ name_de: string }>;
+  food_menu_items?: FoodMenuItem[];
   needs?: Array<{ name_de: string }>;
   badges?: ProviderBadgeWithType[];
   category?: {

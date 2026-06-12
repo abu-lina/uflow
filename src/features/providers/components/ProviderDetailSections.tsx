@@ -140,8 +140,8 @@ function DetailListItem({ label, icon, onClick, isSelected }: { label: string; i
   return (
     <Component
       className={className}
-      onClick={onClick}
       type={Component === 'button' ? 'button' : undefined}
+      onClick={onClick}
     >
       <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isSelected ? 'bg-primary text-white' : 'bg-[#E3F2EF] text-primary'}`}>
         {icon}
@@ -230,17 +230,27 @@ export function ProviderDetailSections({
       {/* Menu (food) — Offers (store) */}
       <ExpandSection title={t(provider.listing_type === 'store' ? 'providerDetail.sections.offers' : 'providerDetail.sections.menu')}>
         <div className="space-y-2 pt-3">
-          {provider.offers?.length ? (
-            provider.offers.map((offer, index) => (
-              <DetailListItem
-                key={`${offer.name_de}-${index}`}
-                icon={provider.listing_type === 'store' ? <Tag aria-hidden="true" className="h-6 w-6" /> : <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
-                label={offer.name_de}
-              />
-            ))
-          ) : (
-            <p className="text-sm text-[#7a7a7a]">{t(provider.listing_type === 'store' ? 'providerDetail.empty.noOffers' : 'providerDetail.empty.noMenu')}</p>
-          )}
+          {(() => {
+            if (provider.listing_type === 'food' && provider.food_menu_items?.length) {
+              return provider.food_menu_items.map((item, index) => (
+                <DetailListItem
+                  key={`menu-${index}`}
+                  icon={<UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
+                  label={item.name_de}
+                />
+              ));
+            }
+            if (provider.offers?.length) {
+              return provider.offers.map((offer, index) => (
+                <DetailListItem
+                  key={`${offer.name_de}-${index}`}
+                  icon={provider.listing_type === 'store' ? <Tag aria-hidden="true" className="h-6 w-6" /> : <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
+                  label={offer.name_de}
+                />
+              ));
+            }
+            return <p className="text-sm text-[#7a7a7a]">{t(provider.listing_type === 'store' ? 'providerDetail.empty.noOffers' : 'providerDetail.empty.noMenu')}</p>;
+          })()}
         </div>
       </ExpandSection>
 
@@ -269,9 +279,9 @@ export function ProviderDetailSections({
               <DetailListItem
                 key={loc.location_id}
                 icon={<Store aria-hidden="true" className="h-6 w-6" />}
+                isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
                 label={loc.location_name || loc.address_city || 'Standort'}
                 onClick={() => onLocationSelect?.(loc.location_id)}
-                isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
               />
             ))}
           </div>

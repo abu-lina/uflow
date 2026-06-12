@@ -91,6 +91,13 @@ export async function getProviderById(id: string): Promise<Provider | null> {
   const offers = offersResult.data || [];
   const needs = needsResult.data || [];
 
+  const foodMenuResult = await supabase
+    .from('food_menu')
+    .select('name_de, name_en, description_de, price_cents, category, sort_order, is_available')
+    .eq('provider_id', id)
+    .order('sort_order', { ascending: true })
+    .order('name_de', { ascending: true });
+
   return {
     ...data,
     ...(foodProvider.data ?? {}),
@@ -99,6 +106,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
     needs_ids: needIds,
     offers,
     needs,
+    food_menu_items: foodMenuResult.data || [],
     badges,
   } as Provider;
 }

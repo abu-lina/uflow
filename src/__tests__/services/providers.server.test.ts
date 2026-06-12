@@ -127,6 +127,18 @@ describe('providers.server.getProviderById', () => {
         };
       }
 
+      if (table === 'food_menu') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => ({
+                order: async () => ({ data: [], error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+
       throw new Error(`Unexpected table: ${table}`);
     });
   });
@@ -206,6 +218,18 @@ describe('providers.server.getProviderById', () => {
           select: () => ({
             eq: () => ({
               maybeSingle: async () => ({ data: null, error: null }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'food_menu') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => ({
+                order: async () => ({ data: [], error: null }),
+              }),
             }),
           }),
         };
