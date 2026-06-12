@@ -136,6 +136,7 @@ async function main(): Promise<void> {
     process.stdout.write(`  ${link.provider_name} (${link.platform}) ... `);
 
     try {
+      // Check if provider already has menu items
       const { count: existingCount, error: countError } = await supabase
         .from('food_menu')
         .select('*', { count: 'exact', head: true })
@@ -147,13 +148,69 @@ async function main(): Promise<void> {
         continue;
       }
 
-      if (existingCount && existingCount > 0) {
+      const hasMenus = existingCount != null && existingCount > 0;
+
+      // -----------------------------------------------------------------------
+      // Wolt (Apify): always try to fetch opening hours, even if menus exist
+      // -----------------------------------------------------------------------
+
+      if (link.platform === 'wolt') {
+        // Check if we already have opening hours
+        const { data: existingProvider } = await supabase
+          .from('providers')
+          .select('opening_hours')
+          .eq('provider_id', link.provider_id)
+          .single();
+
+        const hasHours = existingProvider?.opening_hours != null;
+
+        if (hasMenus && hasHours) {
+          console.log(`already has ${existingCount} menu item(s) and opening hours`);
+          stats.skipped++;
+          continue;
+        }
+
+        // Fetch from Apify (always — needs opening hours or menus)
+        const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
+
+        if (!result) {
+          console.log(`not found on Wolt`);
+          stats.skipped++;
+          continue;
+        }
+
+        // Determine what needs writing
+        const menusToWrite = hasMenus ? [] : result.menuItems;
+        const hoursToWrite = !hasHours && result.openingHours
+          ? (result.openingHours as unknown as Record<string, unknown>)
+          : null;
+
+        if (menusToWrite.length === 0 && !hoursToWrite) {
+          if (hasMenus) {
+            console.log(`already has ${existingCount} menu item(s), no opening hours available from Apify`);
+          } else {
+            console.log(`no menu items from Apify`);
+          }
+          stats.skipped++;
+          continue;
+        }
+
+        await writeResult(link, menusToWrite, hoursToWrite, isDryRun, stats);
+        continue;
+      }
+
+      // -----------------------------------------------------------------------
+      // Non-Wolt platforms: skip entirely if menus already exist
+      // (these don't provide opening hours, so no value re-fetching)
+      // -----------------------------------------------------------------------
+
+      if (hasMenus) {
         console.log(`already has ${existingCount} menu item(s)`);
         stats.skipped++;
         continue;
       }
 
-      // ----- Fetch data from platform -----
+      // ----- Fetch menu items from platform -----
 
       let menuItems: Array<{
         name_de: string;
@@ -164,34 +221,7 @@ async function main(): Promise<void> {
         sort_order: number;
       }> = [];
 
-      // Opening hours collected from Wolt (Apify) — null for other platforms
-      let openingHoursToWrite: Record<string, unknown> | null = null;
-
-      if (link.platform === 'wolt') {
-        // Use Apify Wolt actor instead of custom HTTP client
-        const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
-
-        if (!result) {
-          console.log(`not found on Wolt`);
-          stats.skipped++;
-          continue;
-        }
-
-        menuItems = result.menuItems;
-
-        // Additive-only: only write opening hours if provider has none
-        if (result.openingHours) {
-          const { data: currentProvider } = await supabase
-            .from('providers')
-            .select('opening_hours')
-            .eq('provider_id', link.provider_id)
-            .single();
-
-          if (!currentProvider?.opening_hours) {
-            openingHoursToWrite = result.openingHours as unknown as Record<string, unknown>;
-          }
-        }
-      } else if (link.platform === 'lieferando') {
+      if (link.platform === 'lieferando') {
         const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
         if (!slug) {
           console.log(`no slug could be extracted from URL`);
@@ -243,52 +273,8 @@ async function main(): Promise<void> {
         continue;
       }
 
-      // ----- Write to database -----
-
-      if (isDryRun) {
-        let msg = `would write ${menuItems.length} menu item(s)`;
-        if (openingHoursToWrite) {
-          msg += ` and opening hours`;
-        }
-        console.log(msg);
-        stats.menuItemsWritten += menuItems.length;
-        stats.processed++;
-      } else {
-        const p_data: Record<string, unknown> = { menu_items: menuItems };
-        if (openingHoursToWrite) {
-          p_data.providers = { opening_hours: openingHoursToWrite };
-        }
-
-        const { error: rpcError } = await supabase
-          .rpc('admin_update_provider', {
-            p_provider_id: link.provider_id,
-            p_data,
-          });
-
-        if (rpcError) {
-          console.log(`RPC write failed: ${rpcError.message}`);
-          stats.failed++;
-          continue;
-        }
-
-        await supabase
-          .from('provider_delivery_links')
-          .update({
-            last_verified_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('provider_id', link.provider_id)
-          .eq('platform', link.platform);
-
-        let msg = `${menuItems.length} menu item(s) written`;
-        if (openingHoursToWrite) {
-          msg += ` + opening hours`;
-          stats.openingHoursWritten++;
-        }
-        console.log(msg);
-        stats.menuItemsWritten += menuItems.length;
-        stats.processed++;
-      }
+      // ----- Write to database (non-Wolt: menus only) -----
+      await writeResult(link, menuItems, null, isDryRun, stats);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.log(`Fetch failed: ${msg}`);
@@ -309,7 +295,7 @@ async function main(): Promise<void> {
   console.log(`  Summary`);
   console.log(`     Total:                  ${stats.total}`);
   console.log(`     Processed:              ${stats.processed}`);
-  console.log(`     Skipped (has menu):     ${stats.skipped}`);
+  console.log(`     Skipped:                ${stats.skipped}`);
   console.log(`     Failed:                 ${stats.failed}`);
   console.log(`     Menu items written:     ${stats.menuItemsWritten}`);
   console.log(`     Opening hours written:  ${stats.openingHoursWritten}`);
@@ -318,6 +304,81 @@ async function main(): Promise<void> {
   if (isDryRun) {
     console.log(`\n  Dry-run complete. Re-run without --dry-run to write.`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Helper: write menu items and/or opening hours to the database
+// ---------------------------------------------------------------------------
+async function writeResult(
+  link: DeliveryLinkRow,
+  menuItems: Array<{ name_de: string; description_de: string | null; category: string | null; price_cents: number | null; is_available: boolean; sort_order: number }>,
+  openingHoursToWrite: Record<string, unknown> | null,
+  isDryRun: boolean,
+  stats: RunStats,
+): Promise<void> {
+  const hasMenus = menuItems.length > 0;
+
+  if (isDryRun) {
+    let msg = '';
+    if (hasMenus) {
+      msg = `would write ${menuItems.length} menu item(s)`;
+      if (openingHoursToWrite) msg += ' and opening hours';
+    } else {
+      msg = 'opening hours only (would write)';
+    }
+    console.log(msg);
+    if (hasMenus) stats.menuItemsWritten += menuItems.length;
+    if (openingHoursToWrite) stats.openingHoursWritten++;
+    stats.processed++;
+    return;
+  }
+
+  // Build payload
+  const p_data: Record<string, unknown> = {};
+  if (hasMenus) {
+    p_data.menu_items = menuItems;
+  }
+  if (openingHoursToWrite) {
+    p_data.providers = { opening_hours: openingHoursToWrite };
+  }
+
+  if (Object.keys(p_data).length === 0) {
+    stats.skipped++;
+    return;
+  }
+
+  const { error: rpcError } = await supabase
+    .rpc('admin_update_provider', {
+      p_provider_id: link.provider_id,
+      p_data,
+    });
+
+  if (rpcError) {
+    console.log(`RPC write failed: ${rpcError.message}`);
+    stats.failed++;
+    return;
+  }
+
+  await supabase
+    .from('provider_delivery_links')
+    .update({
+      last_verified_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('provider_id', link.provider_id)
+    .eq('platform', link.platform);
+
+  let msg = '';
+  if (hasMenus) {
+    msg = `${menuItems.length} menu item(s) written`;
+    if (openingHoursToWrite) msg += ' + opening hours';
+  } else {
+    msg = 'opening hours written';
+  }
+  console.log(msg);
+  if (hasMenus) stats.menuItemsWritten += menuItems.length;
+  if (openingHoursToWrite) stats.openingHoursWritten++;
+  stats.processed++;
 }
 
 main().catch((err) => {
