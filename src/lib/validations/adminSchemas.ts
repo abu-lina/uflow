@@ -67,7 +67,7 @@ export const providerEditUpdateSchema = z.object({
   providerName: z.string().min(1).max(200).optional(),
   providerDescription: z.string().max(5000).nullable().optional(),
   categoryId: z.string().uuid().optional(),
-  listingType: z.enum(['food', 'store']).nullable().optional(),
+  listingType: z.enum(['food', 'store', 'ummah']).nullable().optional(),
   addressStreet: z.string().max(500).nullable().optional(),
   addressZip: z.string().max(20).nullable().optional(),
   addressCity: z.string().max(200).nullable().optional(),

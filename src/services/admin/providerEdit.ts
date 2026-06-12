@@ -57,6 +57,7 @@ export interface AdminProviderEditData {
   makesDonations?: boolean;
   hasParking?: boolean;
   economicSolidarity?: boolean;
+  showAddress?: boolean;
   menuItems?: Array<{
     name_de: string;
     name_en?: string;
@@ -94,6 +95,7 @@ export function buildBasicFieldsPayload(data: Partial<AdminProviderEditData>): R
   if (data.providerImages !== undefined) payload.provider_images = data.providerImages;
   if (data.openingHours !== undefined) payload.opening_hours = data.openingHours;
   if (data.reviewStatus !== undefined) payload.review_status = data.reviewStatus;
+  if (data.showAddress !== undefined) payload.show_address = data.showAddress;
 
   return payload;
 }
@@ -103,12 +105,12 @@ export function buildExtensionFieldsPayload(
   listingType?: 'food' | 'store' | string | null
 ): Record<string, unknown> {
   const hasExtensionFields =
-    data.verificationMethod !== undefined ||
-    data.hasCertificate !== undefined ||
-    data.certificateUrl !== undefined ||
-    data.noAlcohol !== undefined ||
-    data.noPork !== undefined ||
-    data.noGambling !== undefined;
+    (data.verificationMethod !== undefined && data.verificationMethod !== null) ||
+    data.hasCertificate === true ||
+    (data.certificateUrl !== undefined && data.certificateUrl !== null) ||
+    data.noAlcohol === true ||
+    data.noPork === true ||
+    data.noGambling === true;
 
   if (!hasExtensionFields) return {};
 

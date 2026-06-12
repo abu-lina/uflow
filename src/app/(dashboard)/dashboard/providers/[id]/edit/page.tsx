@@ -135,6 +135,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       noPork: formData.noPork,
       noGambling: formData.noGambling,
       reviewStatus: formData.reviewStatus,
+      showAddress: formData.isOnlineBusiness ? false : formData.showAddress,
     };
 
     // Only include providerImages if normalisation returned a value

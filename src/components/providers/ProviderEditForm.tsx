@@ -281,6 +281,7 @@ export function ProviderEditForm({
           instagram: parsed.instagram || prev.instagram,
           email: parsed.email || prev.email,
           phone: parsed.phone || prev.phone,
+          reviewStatus: parsed.reviewStatus || prev.reviewStatus,
         }));
       } catch { /* ignore */ }
     }
@@ -304,6 +305,7 @@ export function ProviderEditForm({
       instagram: formData.instagram,
       email: formData.email,
       phone: formData.phone,
+      reviewStatus: formData.reviewStatus,
     };
     localStorage.setItem(`${pfx}edit_inline_${pid}`, JSON.stringify(inlineData));
   }, [enableLocalStorage, localStoragePrefix, provider.provider_id, formData]);
