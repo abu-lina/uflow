@@ -90,7 +90,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run delivery menu enrichment (URL-based)
-        if: always()
+        continue-on-error: true
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -101,9 +101,13 @@ jobs:
           echo "  ▶️  Running delivery menu enrichment"
           echo "═══════════════════════════════════════════════"
           npx tsx scripts/enrich-delivery-menus.ts > "/tmp/enrichment-logs/delivery-menus.log" 2>&1
+          RC=$?
           cat "/tmp/enrichment-logs/delivery-menus.log"
-          echo ""
-          echo "  ✅ Delivery menu enrichment complete"
+          if [ $RC -ne 0 ]; then
+            echo "  ⚠️  Delivery menu enrichment completed with warnings (exit $RC)"
+          else
+            echo "  ✅ Delivery menu enrichment complete"
+          fi
           echo "═══════════════════════════════════════════════"
 
       - name: Upload run logs

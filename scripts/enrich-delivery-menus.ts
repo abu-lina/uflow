@@ -138,33 +138,80 @@ async function main(): Promise<void> {
 
   const providerIds = [...new Set(batch.map((l) => l.provider_id))];
 
-  // Batch-query existing menu counts
-  const { data: menuCounts, error: menuCountError } = await supabase
-    .from('food_menu')
-    .select('provider_id')
-    .in('provider_id', providerIds);
+  // -----------------------------------------------------------------------
+  // Batch-query existing state (menu counts + opening hours)
+  // Chunk the provider IDs to avoid Supabase REST API URL limits.
+  // If batch query fails, fall back to sequential lookups (slower but safe).
+  // -----------------------------------------------------------------------
 
-  if (menuCountError) {
-    console.error(`Failed to query menu counts: ${menuCountError.message}`);
-    process.exit(1);
+  const CHUNK_SIZE = 50;
+  function chunkArray<T>(arr: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
   }
 
-  const menuCountMap = new Map<string, number>();
-  for (const row of menuCounts ?? []) {
-    const pid = row.provider_id as string;
-    menuCountMap.set(pid, (menuCountMap.get(pid) ?? 0) + 1);
+  async function buildMenuCountMap(): Promise<Map<string, number>> {
+    const map = new Map<string, number>();
+    for (const chunk of chunkArray(providerIds, CHUNK_SIZE)) {
+      const { data, error } = await supabase
+        .from('food_menu')
+        .select('provider_id')
+        .in('provider_id', chunk);
+      if (error) {
+        console.warn(`  Batch menu query failed for ${
+          chunk.length} IDs (${error.message}), falling back to sequential`);
+        // Fallback: query one by one
+        for (const pid of chunk) {
+          const { count } = await supabase
+            .from('food_menu')
+            .select('*', { count: 'exact', head: true })
+            .eq('provider_id', pid);
+          map.set(pid, count ?? 0);
+        }
+      } else {
+        for (const row of data ?? []) {
+          const pid = row.provider_id as string;
+          map.set(pid, (map.get(pid) ?? 0) + 1);
+        }
+      }
+    }
+    return map;
   }
 
-  // Batch-query existing opening hours
-  const { data: existingHours } = await supabase
-    .from('providers')
-    .select('provider_id, opening_hours')
-    .in('provider_id', providerIds);
-
-  const hasHoursMap = new Map<string, boolean>();
-  for (const row of existingHours ?? []) {
-    hasHoursMap.set(row.provider_id as string, (row.opening_hours as unknown) != null);
+  async function buildHasHoursMap(): Promise<Map<string, boolean>> {
+    const map = new Map<string, boolean>();
+    for (const chunk of chunkArray(providerIds, CHUNK_SIZE)) {
+      const { data, error } = await supabase
+        .from('providers')
+        .select('provider_id, opening_hours')
+        .in('provider_id', chunk);
+      if (error) {
+        console.warn(`  Batch hours query failed for ${
+          chunk.length} IDs (${error.message}), falling back to sequential`);
+        for (const pid of chunk) {
+          const { data: row } = await supabase
+            .from('providers')
+            .select('opening_hours')
+            .eq('provider_id', pid)
+            .single();
+          map.set(pid, (row as Record<string, unknown> | null)?.opening_hours != null);
+        }
+      } else {
+        for (const row of data ?? []) {
+          map.set(row.provider_id as string, (row.opening_hours as unknown) != null);
+        }
+      }
+    }
+    return map;
   }
+
+  const [menuCountMap, hasHoursMap] = await Promise.all([
+    buildMenuCountMap(),
+    buildHasHoursMap(),
+  ]);
 
   // -----------------------------------------------------------------------
   // Prepare tasks: classify each link by what work is needed
