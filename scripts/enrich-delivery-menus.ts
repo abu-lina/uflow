@@ -233,14 +233,11 @@ async function main(): Promise<void> {
     const hasHours = hasHoursMap.get(link.provider_id) ?? false;
 
     if (link.platform === 'wolt') {
-      if (hasMenus && hasHours) {
-        process.stdout.write(`  ${link.provider_name} (${link.platform}) ... already has ${existingCount} menu item(s) and opening hours\n`);
-        immediateSkipped++;
-        continue;
-      }
+      // Always fetch from Apify — its data (with prices, descriptions,
+      // categories) is richer than joinhalal Speisen (names only).
       woltTasks.push({
         link,
-        fetchMenus: !hasMenus,
+        fetchMenus: true,
         fetchHours: !hasHours,
       });
     } else {
