@@ -150,11 +150,17 @@ async function runActor(
 ): Promise<string> {
   const url = `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs?token=${apiToken}&waitForFinish=60`;
 
+  // Extract city from URL: https://wolt.com/{lang}/{country}/{city}/restaurant/{slug}
+  const cityMatch = restaurantUrl.match(/\/restaurant\/[^/]+$/);
+  const pathBeforeSlug = cityMatch ? restaurantUrl.slice(0, cityMatch.index) : '';
+  const city = pathBeforeSlug.split('/').filter(Boolean).pop() ?? '';
+
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       restaurantUrl,
+      city,
       includeDetails: true,
       maxItems: 0, // 0 = unlimited
     }),
