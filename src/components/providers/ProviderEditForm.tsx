@@ -1078,7 +1078,7 @@ export function ProviderEditForm({
             boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
           }}
         >
-          <div className="flex w-full gap-3.5 px-6 pt-4" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+          <div className="flex w-full gap-3.5 px-6 pt-4 md:max-w-2xl md:mx-auto" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
             <Button
               fullWidth
               className="!h-[48px] !min-h-[48px] !max-h-[48px]"

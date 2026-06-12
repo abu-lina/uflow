@@ -334,7 +334,8 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         variant="back-and-title"
         onBack={`/providers`}
       />
-      <main className="flex flex-1 flex-col pt-[calc(env(safe-area-inset-top)+24px+40px)] px-6 pb-4">
+      <main className="flex flex-1 flex-col pt-[calc(env(safe-area-inset-top)+24px+40px)] md:pt-[calc(env(safe-area-inset-top)+80px)] px-6 pb-4">
+        <div className="w-full md:max-w-2xl md:mx-auto">
         <ProviderEditForm
           enableLocalStorage={true}
           localStoragePrefix="admin_"
@@ -374,6 +375,8 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
           <p className="mt-2 text-xs text-content-muted text-center">
             This action cannot be undone. All data associated with this provider will be permanently removed.
           </p>
+        </div>
+
         </div>
 
         <RejectModal
