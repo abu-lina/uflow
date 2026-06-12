@@ -132,86 +132,161 @@ async function main(): Promise<void> {
   let lieferandoClient: LieferandoClient | null = null;
   let ubereatsClient: UberEatsClient | null = null;
 
+  // -----------------------------------------------------------------------
+  // Phase 1: Pre-check all providers for existing menus + opening hours
+  // -----------------------------------------------------------------------
+
+  const providerIds = [...new Set(batch.map((l) => l.provider_id))];
+
+  // Batch-query existing menu counts
+  const { data: menuCounts, error: menuCountError } = await supabase
+    .from('food_menu')
+    .select('provider_id')
+    .in('provider_id', providerIds);
+
+  if (menuCountError) {
+    console.error(`Failed to query menu counts: ${menuCountError.message}`);
+    process.exit(1);
+  }
+
+  const menuCountMap = new Map<string, number>();
+  for (const row of menuCounts ?? []) {
+    const pid = row.provider_id as string;
+    menuCountMap.set(pid, (menuCountMap.get(pid) ?? 0) + 1);
+  }
+
+  // Batch-query existing opening hours
+  const { data: existingHours } = await supabase
+    .from('providers')
+    .select('provider_id, opening_hours')
+    .in('provider_id', providerIds);
+
+  const hasHoursMap = new Map<string, boolean>();
+  for (const row of existingHours ?? []) {
+    hasHoursMap.set(row.provider_id as string, (row.opening_hours as unknown) != null);
+  }
+
+  // -----------------------------------------------------------------------
+  // Prepare tasks: classify each link by what work is needed
+  // -----------------------------------------------------------------------
+
+  interface MenuTask {
+    link: DeliveryLinkRow;
+    fetchMenus: boolean;  // true if menu items need fetching
+    fetchHours: boolean;  // true if opening hours need fetching (Wolt only)
+  }
+
+  const woltTasks: MenuTask[] = [];
+  const nonWoltTasks: MenuTask[] = [];
+  let immediateSkipped = 0;
+
   for (const link of batch) {
+    const existingCount = menuCountMap.get(link.provider_id) ?? 0;
+    const hasMenus = existingCount > 0;
+    const hasHours = hasHoursMap.get(link.provider_id) ?? false;
+
+    if (link.platform === 'wolt') {
+      if (hasMenus && hasHours) {
+        process.stdout.write(`  ${link.provider_name} (${link.platform}) ... already has ${existingCount} menu item(s) and opening hours\n`);
+        immediateSkipped++;
+        continue;
+      }
+      woltTasks.push({
+        link,
+        fetchMenus: !hasMenus,
+        fetchHours: !hasHours,
+      });
+    } else {
+      if (hasMenus) {
+        process.stdout.write(`  ${link.provider_name} (${link.platform}) ... already has ${existingCount} menu item(s)\n`);
+        immediateSkipped++;
+        continue;
+      }
+      nonWoltTasks.push({
+        link,
+        fetchMenus: true,
+        fetchHours: false,
+      });
+    }
+  }
+
+  stats.skipped += immediateSkipped;
+
+  console.log(`\n  Pre-check: ${batch.length} links → ${immediateSkipped} skipped, ${woltTasks.length} Wolt, ${nonWoltTasks.length} non-Wolt\n`);
+
+  // -----------------------------------------------------------------------
+  // Phase 2: Process Wolt tasks concurrently (Apify calls are slow)
+  // -----------------------------------------------------------------------
+
+  const CONCURRENCY = 5;
+
+  async function processWoltTasks(tasks: MenuTask[]): Promise<void> {
+    let idx = 0;
+
+    async function worker(): Promise<void> {
+      while (idx < tasks.length) {
+        const task = tasks[idx++];
+        const { link, fetchMenus, fetchHours } = task;
+        const prefix = `  ${link.provider_name} (${link.platform})`;
+
+        try {
+          process.stdout.write(`${prefix} ... `);
+
+          // Apify calls are rate-limited; fetch always since we need something
+          const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
+
+          if (!result) {
+            console.log('not found on Wolt');
+            stats.skipped++;
+            continue;
+          }
+
+          const menusToWrite = result.menuItems; // always fresh from Apify (used if fetchMenus true)
+          const hoursToWrite = fetchHours && result.openingHours
+            ? (result.openingHours as unknown as Record<string, unknown>)
+            : null;
+
+          if (!fetchMenus && !hoursToWrite) {
+            // We only needed hours and they're not available
+            if (result.openingHours) {
+              console.log('opening hours not available from Apify');
+            } else {
+              console.log('opening hours not available from Apify');
+            }
+            stats.skipped++;
+            continue;
+          }
+
+          await writeResult(
+            link,
+            fetchMenus ? menusToWrite : [],
+            hoursToWrite,
+            isDryRun,
+            stats,
+          );
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.log(`${prefix} ... Fetch failed: ${msg}`);
+          stats.failed++;
+        }
+      }
+    }
+
+    const workers = Array.from({ length: CONCURRENCY }, () => worker());
+    await Promise.allSettled(workers);
+  }
+
+  await processWoltTasks(woltTasks);
+
+  // -----------------------------------------------------------------------
+  // Phase 3: Process non-Wolt tasks (Lieferando, UberEats) sequentially
+  // -----------------------------------------------------------------------
+
+  for (const task of nonWoltTasks) {
+    const { link } = task;
     process.stdout.write(`  ${link.provider_name} (${link.platform}) ... `);
 
     try {
-      // Check if provider already has menu items
-      const { count: existingCount, error: countError } = await supabase
-        .from('food_menu')
-        .select('*', { count: 'exact', head: true })
-        .eq('provider_id', link.provider_id);
-
-      if (countError) {
-        console.log(`menu count check failed: ${countError.message}`);
-        stats.failed++;
-        continue;
-      }
-
-      const hasMenus = existingCount != null && existingCount > 0;
-
-      // -----------------------------------------------------------------------
-      // Wolt (Apify): always try to fetch opening hours, even if menus exist
-      // -----------------------------------------------------------------------
-
-      if (link.platform === 'wolt') {
-        // Check if we already have opening hours
-        const { data: existingProvider } = await supabase
-          .from('providers')
-          .select('opening_hours')
-          .eq('provider_id', link.provider_id)
-          .single();
-
-        const hasHours = existingProvider?.opening_hours != null;
-
-        if (hasMenus && hasHours) {
-          console.log(`already has ${existingCount} menu item(s) and opening hours`);
-          stats.skipped++;
-          continue;
-        }
-
-        // Fetch from Apify (always — needs opening hours or menus)
-        const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
-
-        if (!result) {
-          console.log(`not found on Wolt`);
-          stats.skipped++;
-          continue;
-        }
-
-        // Determine what needs writing
-        const menusToWrite = hasMenus ? [] : result.menuItems;
-        const hoursToWrite = !hasHours && result.openingHours
-          ? (result.openingHours as unknown as Record<string, unknown>)
-          : null;
-
-        if (menusToWrite.length === 0 && !hoursToWrite) {
-          if (hasMenus) {
-            console.log(`already has ${existingCount} menu item(s), no opening hours available from Apify`);
-          } else {
-            console.log(`no menu items from Apify`);
-          }
-          stats.skipped++;
-          continue;
-        }
-
-        await writeResult(link, menusToWrite, hoursToWrite, isDryRun, stats);
-        continue;
-      }
-
-      // -----------------------------------------------------------------------
-      // Non-Wolt platforms: skip entirely if menus already exist
-      // (these don't provide opening hours, so no value re-fetching)
-      // -----------------------------------------------------------------------
-
-      if (hasMenus) {
-        console.log(`already has ${existingCount} menu item(s)`);
-        stats.skipped++;
-        continue;
-      }
-
-      // ----- Fetch menu items from platform -----
-
       let menuItems: Array<{
         name_de: string;
         description_de: string | null;
@@ -224,7 +299,7 @@ async function main(): Promise<void> {
       if (link.platform === 'lieferando') {
         const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
         if (!slug) {
-          console.log(`no slug could be extracted from URL`);
+          console.log('no slug could be extracted from URL');
           stats.failed++;
           continue;
         }
@@ -246,7 +321,7 @@ async function main(): Promise<void> {
       } else if (link.platform === 'ubereats') {
         const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
         if (!slug) {
-          console.log(`no slug could be extracted from URL`);
+          console.log('no slug could be extracted from URL');
           stats.failed++;
           continue;
         }
@@ -268,12 +343,11 @@ async function main(): Promise<void> {
       }
 
       if (menuItems.length === 0) {
-        console.log(`no menu items found`);
+        console.log('no menu items found');
         stats.skipped++;
         continue;
       }
 
-      // ----- Write to database (non-Wolt: menus only) -----
       await writeResult(link, menuItems, null, isDryRun, stats);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
