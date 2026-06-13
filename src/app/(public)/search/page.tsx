@@ -66,7 +66,12 @@ function SearchPageContent() {
   const [menuItemResults, setMenuItemResults] = useState<FoodMenuItem[]>([]);
   const [isLoadingMenuItems, setIsLoadingMenuItems] = useState(false);
   const [isErrorMenuItems, setIsErrorMenuItems] = useState(false);
-  const [selectedWas, setSelectedWas] = useState<WasSelection | null>(null);
+const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
+    if (urlSection === 'food') {
+      return { type: 'all-restaurants' as const, label: t('suchen.was.everything') };
+    }
+    return null;
+  });
   const [openAccordion, setOpenAccordion] = useState<AccordionKey | null>('was');
   const [recentSearches, setRecentSearches] = useState<WasSelection[]>(() => {
     try {
@@ -394,7 +399,11 @@ function SearchPageContent() {
 
   useEffect(() => {
     setWasQuery('');
-    setSelectedWas(null);
+    setSelectedWas(
+    selectedSection === 'food'
+      ? { type: 'all-restaurants' as const, label: t('suchen.was.everything') }
+      : null
+  );
     setSelectedFilters([]);
     setOpenAccordion((prev) => (selectedSection === 'store' && prev === 'wer' ? 'was' : prev));
   }, [selectedSection]);
@@ -635,7 +644,7 @@ function SearchPageContent() {
                   recentSearches={recentSearches}
                   selectedWas={selectedWas}
                   t={t}
-                  onClearSelection={() => setSelectedWas(null)}
+                  onClearSelection={() => setSelectedWas({ type: 'all-restaurants' as const, label: t('suchen.was.everything') })}
                   onSelect={handleWasSelect}
                 />
                 <WasMealResults
@@ -729,7 +738,7 @@ function SearchPageContent() {
             setWasResults([]);
             setIsLoadingWas(false);
             setIsErrorWas(false);
-            setSelectedWas(null);
+            setSelectedWas({ type: 'all-restaurants' as const, label: t('suchen.was.everything') });
             setOpenAccordion('was');
             setWoInputQuery('');
             setSelectedWoCity(null);

@@ -200,6 +200,7 @@ export const en = {
       "showAllCuisines": "Show all cuisines",
       "showAllDishes": "Show all dishes",
       "allRestaurants": "All Restaurants",
+      "everything": "Everything",
       "ummah": {
         "searchPlaceholder": "Which service are you looking for?",
         "serviceTypeLabel": "Service",
