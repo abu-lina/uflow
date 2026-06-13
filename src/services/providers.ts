@@ -793,6 +793,8 @@ export async function fetchPopularCities(limit = 5, section?: Section): Promise<
       query = query.eq('listing_type', section);
     }
 
+    query = query.eq('review_status', 'approved');
+
     const { data, error } = await query.returns<{ address_city: string | null }[]>();
 
     if (error) {
