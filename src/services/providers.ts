@@ -776,18 +776,24 @@ export interface PopularCity {
 }
 
 /**
- * Fetch most popular cities by listing count across all providers (food, store, ummah).
+ * Fetch most popular cities by listing count across providers.
+ * Optionally filter by section (listing_type).
  */
-export async function fetchPopularCities(limit = 5): Promise<PopularCity[]> {
+export async function fetchPopularCities(limit = 5, section?: Section): Promise<PopularCity[]> {
   if (limit <= 0) {
     return [];
   }
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('providers')
-      .select('address_city')
-      .returns<{ address_city: string | null }[]>();
+      .select('address_city');
+
+    if (section) {
+      query = query.eq('listing_type', section);
+    }
+
+    const { data, error } = await query.returns<{ address_city: string | null }[]>();
 
     if (error) {
       throw error;

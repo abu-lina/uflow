@@ -165,14 +165,15 @@ function SearchPageContent() {
     void loadCities();
   }, []);
 
-  // Load city counts once to power popular-city rows and provider-count subtitles.
+  // Load city counts to power popular-city rows and provider-count subtitles.
+  // Refetches when section changes so counts are section-filtered.
   useEffect(() => {
     async function loadPopularCities() {
       setIsLoadingPopularCities(true);
       setIsErrorPopularCities(false);
 
       try {
-        const rows = await fetchPopularCities(500);
+        const rows = await fetchPopularCities(500, selectedSection);
         setCityCounts(rows);
       } catch {
         setCityCounts([]);
@@ -183,7 +184,7 @@ function SearchPageContent() {
     }
 
     void loadPopularCities();
-  }, []);
+  }, [selectedSection]);
 
   // Debounced meal search in the "Was?" accordion.
   useEffect(() => {
@@ -514,7 +515,6 @@ function SearchPageContent() {
           city,
           provider_count: countByCity.get(city) ?? 0,
         }));
-  const popularCities = cityCounts.slice(0, 3);
   const woAccordionTitle = selectedWoCity
     ? `${t('suchen.accordions.wo')}: ${selectedWoCity}`
     : t('suchen.accordions.woEmpty');
@@ -576,7 +576,7 @@ function SearchPageContent() {
               isError={isErrorPopularCities}
               isLoading={isLoadingCities || isLoadingPopularCities}
               isValidNoProviderCity={isValidNoProviderCity}
-              popularCities={popularCities}
+              popularCities={cityCounts}
               query={woSearchQuery}
               recentSearches={recentWoSearches}
               selectedCity={selectedWoCity}
