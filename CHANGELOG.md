@@ -8,6 +8,7 @@
 
 ### Fixed
 
+- **Mobile header gap (Plan 167)**: Fixed excessive 96px gap between header and content on `/create`, `/saved`, `/profile` and other mobile pages by correcting Tailwind `header-spacing` tokens from flat `160px` to per-breakpoint values (80px mobile / 96px tablet / 104px desktop). `PageContent.tsx` inline padding updated to match.
 - Provider edit form now saves inline field state before sub-page navigation (no more lost edits)
 - Review status now shows stored value instead of always defaulting to "Pending"
 - Category selection page now filters by listing_type (food/store)
