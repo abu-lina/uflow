@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useImageFallback } from '@/hooks/useImageFallback';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Category } from '@/services/categories';
-import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, parseCategoryImages } from '@/utils/imageUtils';
 
 interface UnifiedGalleryProps {
   categoryId: string;
@@ -35,6 +35,8 @@ export default function UnifiedGallery({
     displayImages.push(PLACEHOLDER_IMAGE);
   }
 
+  const categoryUrls = new Set(parseCategoryImages(category?.category_images ?? null));
+
   if (loading) {
     return (
       <div className={className}>
@@ -60,6 +62,9 @@ export default function UnifiedGallery({
           <div
             key={index}
             className="relative h-full w-1/3 overflow-hidden"
+            style={categoryUrls.has(imageUrl) ? {
+              backgroundColor: getCategoryCardBackgroundColor(categoryId, String(index)),
+            } : undefined}
           >
             <Image
               fill
