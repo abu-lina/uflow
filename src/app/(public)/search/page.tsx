@@ -349,10 +349,14 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
   }, [wasQuery, selectedSection]);
 
   // Hydrate Wo default from onboarding-selected city (client storage only).
+  // Session flag prevents re-hydration after user explicitly cleared this session.
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
+
+    const clearedThisSession = sessionStorage.getItem('uflow:wo-cleared-this-session');
+    if (clearedThisSession) return;
 
     const storedCity = localStorage.getItem('selectedCity') ?? sessionStorage.getItem('selectedCity');
     if (storedCity) {
@@ -504,6 +508,9 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
   const handleWoClearSelection = () => {
     setSelectedWoCity(null);
     setWoInputQuery('');
+    localStorage.removeItem('selectedCity');
+    sessionStorage.removeItem('selectedCity');
+    sessionStorage.setItem('uflow:wo-cleared-this-session', 'true');
   };
 
   const handleToggleFilter = (key: string) => {
@@ -746,6 +753,9 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
             setWerResetSignal((prev) => prev + 1);
             setSelectedFilters([]);
             handleSectionChange('food');
+            localStorage.removeItem('selectedCity');
+            sessionStorage.removeItem('selectedCity');
+            sessionStorage.setItem('uflow:wo-cleared-this-session', 'true');
           }}
         >
           {t('suchen.clearAll')}

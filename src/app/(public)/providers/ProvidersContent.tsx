@@ -25,7 +25,7 @@ import { useProviderReview } from '@/features/admin/hooks/useProviderReview';
 import { RejectModal } from '@/features/admin/components/RejectModal';
 import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 
-import { useSearch } from '@/providers/search-provider';
+import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';
 import { getCategories } from '@/services/categories';
@@ -128,12 +128,13 @@ export function ProvidersContent({
   const rawLocationParam = searchParams.get('location'); // null | string
   const normalizedUrlLocation =
     rawLocationParam === null
-      ? null // param absent — fall through to context
+      ? LOCATION_ALL // param absent → all locations (never fall through to context)
       : rawLocationParam === 'Everywhere' || rawLocationParam === 'Überall'
-        ? '' // legacy all-locations labels → LOCATION_ALL sentinel
+        ? LOCATION_ALL // legacy all-locations labels → LOCATION_ALL sentinel
         : rawLocationParam; // real city name or '' (LOCATION_ALL)
-  // Priority: defaultLocation > URL param ('' preserved) > context > LOCATION_ALL ('')
-  const location = defaultLocation ?? normalizedUrlLocation ?? selectedLocation ?? '';
+  // Priority: defaultLocation > URL param ('' preserved) > LOCATION_ALL ('')
+  // URL is sole source of truth. Context is never used as fallback for location.
+  const location = defaultLocation ?? normalizedUrlLocation;
   const query = searchParams.get('q') || '';
 
   // URL param is the canonical source of truth for category filter.
