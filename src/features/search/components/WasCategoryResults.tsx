@@ -110,7 +110,7 @@ export function WasCategoryResults({
   }
 
   const shouldShowRecent = recentSearches.length > 0;
-  const shouldShowAllRestaurants = !shouldShowRecent && selectedWas?.type !== 'all-restaurants';
+  const shouldShowAllRestaurants = selectedWas?.type !== 'all-restaurants';
 
   if (items.length === 0 && recentSearches.length === 0 && !selectedWas && !shouldShowAllRestaurants) {
     return null;

@@ -271,7 +271,7 @@ describe('WasCategoryResults (Plan 169 — Alle Restaurants)', () => {
     });
   });
 
-  it('does not render "Alle Restaurants" when recent searches exist', () => {
+  it('renders "Alle Restaurants" even when recent searches exist', () => {
     render(
       <WasCategoryResults
         items={[
@@ -291,7 +291,7 @@ describe('WasCategoryResults (Plan 169 — Alle Restaurants)', () => {
       />,
     );
 
-    expect(screen.queryByText('Alle Restaurants')).not.toBeInTheDocument();
+    expect(screen.getByText('Alle Restaurants')).toBeInTheDocument();
     expect(screen.getByText('ZULETZT GESUCHT')).toBeInTheDocument();
   });
 
