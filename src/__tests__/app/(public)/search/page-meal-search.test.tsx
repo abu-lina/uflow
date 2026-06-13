@@ -221,6 +221,7 @@ vi.mock('lucide-react', () => ({
   Globe: () => <span>globe</span>,
   Languages: () => <span>languages</span>,
   BadgeCheck: () => <span>badge-check</span>,
+  LayoutGrid: () => <span>layout-grid</span>,
   Users: () => <span>users</span>,
   BriefcaseBusiness: () => <span>briefcase-business</span>,
 }));

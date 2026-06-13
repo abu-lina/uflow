@@ -145,7 +145,7 @@ describe('providerEditUpdateSchema — Plan 145 new fields', () => {
     const nullType = providerEditUpdateSchema.safeParse({ ...base, listingType: null });
     expect(nullType.success).toBe(true);
 
-    const invalid = providerEditUpdateSchema.safeParse({ ...base, listingType: 'ummah' });
+    const invalid = providerEditUpdateSchema.safeParse({ ...base, listingType: 'invalid_type' });
     expect(invalid.success).toBe(false);
   });
 });
