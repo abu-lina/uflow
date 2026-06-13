@@ -57,8 +57,8 @@ export function LocationCard({ location, isSelected = false, onSelect }: Locatio
           <a
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary"
             href={mapsUrl}
-            target="_blank"
             rel="noopener noreferrer"
+            target="_blank"
             title="In Maps öffnen"
             onClick={(e) => e.stopPropagation()}
           >

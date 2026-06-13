@@ -137,8 +137,8 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
               </div>
               <label className="flex items-center gap-1 text-xs text-[#999999]">
                 <input
-                  type="checkbox"
                   checked={link.is_active}
+                  type="checkbox"
                   onChange={(e) => updateLink(i, 'is_active', e.target.checked)}
                 />
                 Active

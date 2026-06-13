@@ -432,7 +432,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   {provider.provider_name}
                 </div>
               </div>
-              <OpenStatusLine provider={provider} locationId={selectedLocationId ?? undefined} />
+              <OpenStatusLine locationId={selectedLocationId ?? undefined} provider={provider} />
               {(selectedLocation?.address_city || provider.address_city) ? (
                 <div className="self-stretch">
                   <button
@@ -685,8 +685,8 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
               <ProviderDetailSections
                 badges={provider.badges ?? []}
                 isLoadingBadges={false}
-                provider={provider}
                 locations={locations}
+                provider={provider}
                 selectedLocationId={selectedLocationId}
                 onLocationSelect={handleLocationSelect}
               />

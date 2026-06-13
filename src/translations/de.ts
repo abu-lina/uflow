@@ -199,6 +199,7 @@ export const de = {
       "removeSelection": "Auswahl entfernen",
       "showAllCuisines": "Zeige alle Küchen",
       "showAllDishes": "Zeige alle Gerichte",
+      "allRestaurants": "Alle Restaurants",
       "ummah": {
         "searchPlaceholder": "Welchen Dienst suchst du?",
         "serviceTypeLabel": "Dienst",

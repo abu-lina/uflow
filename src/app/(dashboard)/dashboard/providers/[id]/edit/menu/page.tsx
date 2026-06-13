@@ -107,9 +107,9 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
                 />
                 <input
                   className="w-24 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                  min={0}
                   placeholder="Price (cent)"
                   type="number"
-                  min={0}
                   value={item.price_cents}
                   onChange={(e) => updateItem(i, 'price_cents', parseInt(e.target.value) || 0)}
                 />
@@ -127,9 +127,9 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
                 </select>
                 <input
                   className="w-16 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                  min={0}
                   placeholder="Sort"
                   type="number"
-                  min={0}
                   value={item.sort_order}
                   onChange={(e) => updateItem(i, 'sort_order', parseInt(e.target.value) || 0)}
                 />
@@ -143,8 +143,8 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               />
               <label className="flex items-center gap-2 text-xs text-[#999999]">
                 <input
-                  type="checkbox"
                   checked={item.is_available}
+                  type="checkbox"
                   onChange={(e) => updateItem(i, 'is_available', e.target.checked)}
                 />
                 Available
@@ -170,9 +170,9 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               />
               <input
                 className="w-24 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                min={0}
                 placeholder="Price (cent)"
                 type="number"
-                min={0}
                 value={newItem.price_cents}
                 onChange={(e) => setNewItem(prev => ({ ...prev, price_cents: parseInt(e.target.value) || 0 }))}
               />

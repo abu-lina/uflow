@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { UtensilsCrossed, X } from 'lucide-react';
+import { LayoutGrid, UtensilsCrossed, X } from 'lucide-react';
 import { RowItem } from '@/components/ui/RowItem';
 import { getFeatureFlag } from '@/config/feature-flags';
 import type { FoodCategory } from '@/services/offers';
@@ -10,7 +10,7 @@ import { safeJsonParse } from '@/utils/json';
 
 export interface WasSelection {
   label: string;
-  type: 'category' | 'dish' | 'service-type';
+  type: 'category' | 'dish' | 'service-type' | 'all-restaurants';
   categoryId?: string;
   categoryImages?: string | null;
   providerCount?: number;
@@ -109,7 +109,10 @@ export function WasCategoryResults({
     );
   }
 
-  if (items.length === 0 && recentSearches.length === 0 && !selectedWas) {
+  const shouldShowRecent = recentSearches.length > 0;
+  const shouldShowAllRestaurants = !shouldShowRecent && selectedWas?.type !== 'all-restaurants';
+
+  if (items.length === 0 && recentSearches.length === 0 && !selectedWas && !shouldShowAllRestaurants) {
     return null;
   }
 
@@ -119,7 +122,6 @@ export function WasCategoryResults({
   const visiblePopularItems = isShowAllPreviewEnabled
     ? (showAllPopular ? items : items.slice(0, 3))
     : items.slice(0, 3);
-  const shouldShowRecent = recentSearches.length > 0;
   const shouldShowPopular = !shouldShowRecent && items.length > 0;
   const hasMorePopularItems = isShowAllPreviewEnabled && !showAllPopular && items.length > 3;
   const hasMoreRecentSearches = isShowAllPreviewEnabled && !showAllRecent && recentSearches.length > 3;
@@ -173,6 +175,10 @@ export function WasCategoryResults({
                       )}
                       label={selectedWas.label}
                     />
+                  ) : selectedWas.type === 'all-restaurants' ? (
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                      <LayoutGrid aria-hidden="true" className="h-5 w-5" />
+                    </div>
                   ) : null}
                   <div className="min-w-0">
                     <p className="truncate font-inter-tight text-base font-semibold text-text-primary">
@@ -198,6 +204,28 @@ export function WasCategoryResults({
               </div>
             </div>
           </>
+        )}
+        {/* "Alle Restaurants" - always shown unless recent searches exist or already selected */}
+        {shouldShowAllRestaurants && (
+          <div className="space-y-1">
+            <RowItem
+              selectable
+              ariaLabel={t('suchen.was.allRestaurants')}
+              className="transition-colors hover:bg-neutral-muted"
+              icon={
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                  <LayoutGrid aria-hidden="true" className="h-5 w-5" />
+                </div>
+              }
+              title={t('suchen.was.allRestaurants')}
+              onSelect={() =>
+                onSelect({
+                  label: t('suchen.was.allRestaurants'),
+                  type: 'all-restaurants',
+                })
+              }
+            />
+          </div>
         )}
         {shouldShowPopular && (
           <>

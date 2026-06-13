@@ -211,3 +211,26 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Change**: Created `scripts/add-delivery-link.ts` (human adds URL) and `scripts/enrich-delivery-menus.ts` (system fetches menu). Both scripts share `extractSlug` logic and the `admin_update_provider` RPC for menu writing.
 
 **Task**: Plan 160
+
+### 2026-06-12 — Test expectations as regression sensors for schema changes
+- **Context**: Plan 165 — added `'ummah'` to Zod schema listingType enum (P0 fix), causing existing test `"restricts listingType to food, store, or null"` to fail.
+- **Learning**: Tests that assert schema value restriction (e.g., `'ummah'` is rejected) are dual-purpose: they validate current behavior AND serve as regression sensors when values are intentionally expanded. The expected test failure is a feature, not a bug — it confirms the schema change took effect. Document expected failures explicitly in the plan to avoid false alarm during verification.
+- **Change to prevent repeat**:
+  - Include expected test failures in the plan's TDD compliance table, annotated with pre-fix/post-fix status
+  - Run `npm test` first before any changes to establish baseline failures
+- **Task/PR**: Plan 165
+
+## 2026-06-10 — Direct-URL enrichment vs search-based (Plan 160)
+- **Context**: Analysis 164 reported 11 stale + 36 new = 47 categories needing work, with a naive final pool of 9 + 11 + 36 = 56 entries. Italian, Indian, and Thai appeared in both stale-fix AND new-cuisine tables.
+- **Learning**: When upstream docs partition data into groups (stale vs new), always cross-reference by UUID to detect overlapping entries. The true unique count was 53 (= 9 valid + 8 non-overlapping stale fixes + 36 new).
+- **Change to prevent repeat**:
+  - Planner: when inheriting counts from analysis, verify by comparing UUID/key sets between groups, not by summing raw counts
+  - Analyst: if a category appears in both a "stale fix" and "new entry" table, note the overlap explicitly in findings
+- **Task/PR**: Plan 164
+
+## 2026-06-13 — Mobile header gap: Tailwind token cascade
+
+- **Context**: Plan 167 — mobile had 96px excess gap between header and content because `header-spacing` tokens were all flattened to `160px` and `PageContent.tsx` used a single flat value.
+- **Learning**: Tailwind config spacing tokens cascade to all consumers automatically — fixing `header-spacing` in `tailwind.config.ts` also fixed `HeaderSpacer.tsx` without a code change. But `PageContent.tsx` used inline `pt-[calc(...)]` instead of the token (`pt-header-spacing`), so it needed a manual fix. The root cause was a Tailwind config flatten (all breakpoints set to the same value), which masked the breakpoint mismatch until deployment.
+- **Change to prevent repeat**: When reviewing Tailwind config changes, check that per-breakpoint tokens (sm/md) actually differ from the base value. When hand-authoring calc expressions in components, prefer using the token name instead to stay DRY and auto-fix from config changes.
+- **Task/PR**: Plan 167

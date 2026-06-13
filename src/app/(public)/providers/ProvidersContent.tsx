@@ -533,10 +533,10 @@ export function ProvidersContent({
         <ProvidersPageHeader
           categoryId={category}
           categoryLabel={selectedCategoryLabel}
-          onSectionChange={handleSectionChange}
           peopleSummary={peopleSummary}
           searchTerm={query}
           section={section}
+          onSectionChange={handleSectionChange}
         />
       )}
 

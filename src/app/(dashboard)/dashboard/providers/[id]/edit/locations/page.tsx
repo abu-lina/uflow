@@ -167,16 +167,16 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 text-xs text-[#999999]">
                   <input
-                    type="checkbox"
                     checked={loc.show_address}
+                    type="checkbox"
                     onChange={(e) => updateLocation(i, 'show_address', e.target.checked)}
                   />
                   Show address
                 </label>
                 <label className="flex items-center gap-2 text-xs text-[#999999]">
                   <input
-                    type="checkbox"
                     checked={loc.is_primary}
+                    type="checkbox"
                     onChange={(e) => updateLocation(i, 'is_primary', e.target.checked)}
                   />
                   Primary

@@ -259,9 +259,72 @@ function SearchBarContent({
       role="search"
     >
       <div suppressHydrationWarning className="flex w-full flex-row items-center justify-between">
-        {/* Search Section */}
+        {/* Location — Where first */}
+        <div className="relative flex flex-row items-center">
+          <button
+            aria-expanded={isLocationOpen}
+            aria-haspopup="listbox"
+            className="flex items-center gap-1"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsLocationOpen(!isLocationOpen);
+            }}
+          >
+            <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
+              {t('suchen.wo.selectedWhere', { city: selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation })}
+            </span>
+            <ChevronDown
+              aria-hidden="true"
+              className={`size-6 text-neutral-500 transition-transform duration-200 ${
+                isLocationOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          {isLocationOpen && (
+            <div
+              ref={locationDropdownRef}
+              className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+            >
+              {/* "Everywhere" option using canonical sentinel */}
+              <button
+                key="__everywhere__"
+                className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                  selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
+                }`}
+                onClick={() => {
+                  setSelectedLocation(LOCATION_ALL);
+                  setIsLocationOpen(false);
+                  onLocationChange?.(LOCATION_ALL);
+                }}
+              >
+                {t('search.everywhere')}
+              </button>
+              {/* City options */}
+              {locations.map((location) => (
+                <button
+                  key={location}
+                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                    location === selectedLocation ? 'bg-gray-50' : ''
+                  }`}
+                  onClick={() => {
+                    setSelectedLocation(location);
+                    setIsLocationOpen(false);
+                    onLocationChange?.(location);
+                  }}
+                >
+                  {location}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="h-6 border-l border-[#999999]" />
+
+        {/* Search Section — What second */}
         <div className="relative flex flex-1 flex-row items-center gap-0">
-                <Search size={24} className="text-neutral-500" />
+                <Search className="text-neutral-500" size={24} />
           <input
             ref={inputRef}
             className={`w-full appearance-none truncate border-none bg-transparent px-1 text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
@@ -328,217 +391,146 @@ function SearchBarContent({
           )}
         </div>
 
-        {/* Filters Section */}
-        <div className="flex flex-row items-center gap-4">
-          {/* Divider */}
-          <div className="h-6 border-l border-[#999999]" />
+        <div className="h-6 border-l border-[#999999]" />
 
-          {/* Location */}
-          <div className="relative flex flex-row items-center">
-            <button
-              aria-expanded={isLocationOpen}
-              aria-haspopup="listbox"
-              className="flex items-center gap-1"
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsLocationOpen(!isLocationOpen);
-              }}
+        {/* Wer */}
+        <div className="relative flex flex-row items-center">
+          <button
+            aria-expanded={isWerOpen}
+            aria-haspopup="listbox"
+            className="flex items-center gap-1"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsWerOpen(!isWerOpen);
+              if (!isWerOpen) {
+                setIsLocationOpen(false);
+              }
+            }}
+          >
+            <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
+              {t('suchen.accordions.wer')}: {selectedWer === 1 ? t('search.personSingular', { count: 1 }) : t('search.personPlural', { count: selectedWer })}
+            </span>
+            <ChevronDown
+              aria-hidden="true"
+              className={`size-6 text-neutral-500 transition-transform duration-200 ${
+                isWerOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          {isWerOpen && (
+            <div
+              ref={werDropdownRef}
+              className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
             >
-              <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
-                {t('suchen.wo.selectedWhere', { city: selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation })}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className={`size-6 text-neutral-500 transition-transform duration-200 ${
-                  isLocationOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {isLocationOpen && (
-              <div
-                ref={locationDropdownRef}
-                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-              >
-                {/* "Everywhere" option using canonical sentinel */}
+              {[1, 2, 3, 4, 5].map((count) => (
                 <button
-                  key="__everywhere__"
+                  key={count}
                   className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                    selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
+                    selectedWer === count ? 'bg-gray-50' : ''
                   }`}
                   onClick={() => {
-                    setSelectedLocation(LOCATION_ALL);
+                    setSelectedWer(count);
+                    setIsWerOpen(false);
                     setIsLocationOpen(false);
-                    onLocationChange?.(LOCATION_ALL);
                   }}
                 >
-                  {t('search.everywhere')}
+                  {count === 1 ? t('search.personSingular', { count: 1 }) : t('search.personPlural', { count })}
                 </button>
-                {/* City options */}
-                {locations.map((location) => (
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="h-6 border-l border-[#999999]" />
+
+        {/* Filter */}
+        <div className="relative flex flex-row items-center">
+          <button
+            aria-expanded={isFilterOpen}
+            aria-haspopup="listbox"
+            className="flex items-center gap-1"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsFilterOpen(!isFilterOpen);
+              if (!isFilterOpen) {
+                setIsLocationOpen(false);
+                setIsWerOpen(false);
+              }
+            }}
+          >
+            <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
+              {selectedFilters.length > 0
+                ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
+                : t('suchen.accordions.filter')}
+            </span>
+            <ChevronDown
+              aria-hidden="true"
+              className={`size-6 text-neutral-500 transition-transform duration-200 ${
+                isFilterOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          {isFilterOpen && (
+            <div
+              ref={filterDropdownRef}
+              className="dropdown-container absolute right-0 top-full z-50 mt-1 w-56 max-h-80 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+            >
+              {(selectedSection === 'ummah'
+                ? [
+                    { key: 'kostenlos', labelKey: 'suchen.filter.ummahItems.kostenlos.title' },
+                    { key: 'online', labelKey: 'suchen.filter.ummahItems.online.title' },
+                    { key: 'sprache', labelKey: 'suchen.filter.ummahItems.sprache.title' },
+                    { key: 'zertifiziert', labelKey: 'suchen.filter.ummahItems.zertifiziert.title' },
+                    { key: 'geschlechtergetrennt', labelKey: 'suchen.filter.ummahItems.geschlechtergetrennt.title' },
+                  ]
+                : selectedSection === 'store'
+                ? [
+                    { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
+                    { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
+                    { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
+                    { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
+                  ]
+                : [
+                    { key: 'muslim', labelKey: 'suchen.filter.items.muslim.title' },
+                    { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
+                    { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
+                    { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
+                    { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
+                  ]
+              ).map((item) => {
+                const isSelected = selectedFilters.includes(item.key);
+                return (
                   <button
-                    key={location}
-                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                      location === selectedLocation ? 'bg-gray-50' : ''
+                    key={item.key}
+                    className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${
+                      isSelected ? 'bg-gray-50 font-medium' : ''
                     }`}
+                    type="button"
                     onClick={() => {
-                      setSelectedLocation(location);
-                      setIsLocationOpen(false);
-                      onLocationChange?.(location);
+                      setSelectedFilters((prev) =>
+                        prev.includes(item.key)
+                          ? prev.filter((f) => f !== item.key)
+                          : [...prev, item.key]
+                      );
                     }}
                   >
-                    {location}
+                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                      isSelected ? 'bg-primary border-primary' : 'border-gray-300'
+                    }`}>
+                      {isSelected && (
+                        <svg fill="none" height="10" viewBox="0 0 10 10" width="10">
+                          <path d="M2 5L4 7L8 3" stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"/>
+                        </svg>
+                      )}
+                    </span>
+                    {t(item.labelKey)}
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="h-6 border-l border-[#999999]" />
-
-          {/* Wer */}
-          <div className="relative flex flex-row items-center">
-            <button
-              aria-expanded={isWerOpen}
-              aria-haspopup="listbox"
-              className="flex items-center gap-1"
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsWerOpen(!isWerOpen);
-                if (!isWerOpen) {
-                  setIsLocationOpen(false);
-                }
-              }}
-            >
-              <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
-                {t('suchen.accordions.wer')}: {selectedWer === 1 ? t('search.personSingular', { count: 1 }) : t('search.personPlural', { count: selectedWer })}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className={`size-6 text-neutral-500 transition-transform duration-200 ${
-                  isWerOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {isWerOpen && (
-              <div
-                ref={werDropdownRef}
-                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-              >
-                {[1, 2, 3, 4, 5].map((count) => (
-                  <button
-                    key={count}
-                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                      selectedWer === count ? 'bg-gray-50' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedWer(count);
-                      setIsWerOpen(false);
-                      setIsLocationOpen(false);
-                    }}
-                  >
-                    {count === 1 ? t('search.personSingular', { count: 1 }) : t('search.personPlural', { count })}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="h-6 border-l border-[#999999]" />
-
-          {/* Filter */}
-          <div className="relative flex flex-row items-center">
-            <button
-              aria-expanded={isFilterOpen}
-              aria-haspopup="listbox"
-              className="flex items-center gap-1"
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsFilterOpen(!isFilterOpen);
-                if (!isFilterOpen) {
-                  setIsLocationOpen(false);
-                  setIsWerOpen(false);
-                }
-              }}
-            >
-              <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
-                {selectedFilters.length > 0
-                  ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
-                  : t('suchen.accordions.filter')}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className={`size-6 text-neutral-500 transition-transform duration-200 ${
-                  isFilterOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {isFilterOpen && (
-              <div
-                ref={filterDropdownRef}
-                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-56 max-h-80 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-              >
-                {(selectedSection === 'ummah'
-                  ? [
-                      { key: 'kostenlos', labelKey: 'suchen.filter.ummahItems.kostenlos.title' },
-                      { key: 'online', labelKey: 'suchen.filter.ummahItems.online.title' },
-                      { key: 'sprache', labelKey: 'suchen.filter.ummahItems.sprache.title' },
-                      { key: 'zertifiziert', labelKey: 'suchen.filter.ummahItems.zertifiziert.title' },
-                      { key: 'geschlechtergetrennt', labelKey: 'suchen.filter.ummahItems.geschlechtergetrennt.title' },
-                    ]
-                  : selectedSection === 'store'
-                  ? [
-                      { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
-                      { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
-                      { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
-                      { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
-                    ]
-                  : [
-                      { key: 'muslim', labelKey: 'suchen.filter.items.muslim.title' },
-                      { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
-                      { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
-                      { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
-                      { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
-                    ]
-                ).map((item) => {
-                  const isSelected = selectedFilters.includes(item.key);
-                  return (
-                    <button
-                      key={item.key}
-                      className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${
-                        isSelected ? 'bg-gray-50 font-medium' : ''
-                      }`}
-                      type="button"
-                      onClick={() => {
-                        setSelectedFilters((prev) =>
-                          prev.includes(item.key)
-                            ? prev.filter((f) => f !== item.key)
-                            : [...prev, item.key]
-                        );
-                      }}
-                    >
-                      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                        isSelected ? 'bg-primary border-primary' : 'border-gray-300'
-                      }`}>
-                        {isSelected && (
-                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </span>
-                      {t(item.labelKey)}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -554,7 +546,7 @@ export function SearchBar(props: SearchBarProps) {
         >
           <div className="flex w-full flex-row items-center justify-between">
             <div className="relative flex flex-1 flex-row items-center gap-0">
-        <Search size={24} className="text-neutral-500" />
+        <Search className="text-neutral-500" size={24} />
               <input
                 disabled
                 className="w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] text-gray-400 outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0"

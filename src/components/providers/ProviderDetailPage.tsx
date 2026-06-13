@@ -380,7 +380,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             <h2 className="font-inter-tight text-xl font-semibold text-content-heading">
               {provider.provider_name}
             </h2>
-            <OpenStatusLine provider={provider} locationId={selectedLocationId ?? undefined} />
+            <OpenStatusLine locationId={selectedLocationId ?? undefined} provider={provider} />
             {(selectedLocation?.address_city || provider.address_city) ? (
               <div className="mt-1">
                 <button
@@ -541,8 +541,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             <ProviderDetailSections
               badges={provider.badges ?? []}
               isLoadingBadges={false}
-              provider={provider}
               locations={locations}
+              provider={provider}
               selectedLocationId={selectedLocationId}
               onLocationSelect={handleLocationSelect}
             />
@@ -707,7 +707,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
               <h2 className="font-inter-tight text-3xl font-bold text-content-heading">
                 {provider.provider_name}
               </h2>
-              <OpenStatusLine provider={provider} locationId={selectedLocationId ?? undefined} />
+              <OpenStatusLine locationId={selectedLocationId ?? undefined} provider={provider} />
               <p className="mt-2 text-gray-600">{getCategoryName(provider.category)}</p>
 
               {/* Contact Actions */}
@@ -905,8 +905,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
             <ProviderDetailSections
               badges={provider.badges ?? []}
               isLoadingBadges={false}
-              provider={provider}
               locations={locations}
+              provider={provider}
               selectedLocationId={selectedLocationId}
               onLocationSelect={handleLocationSelect}
             />

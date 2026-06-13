@@ -19,16 +19,11 @@ import { FilterSection } from '@/features/search/components/FilterSection';
 import { UmmahFilterSection } from '@/features/search/components/UmmahFilterSection';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
+import { buildSearchParams, toFoodRecentSearches } from '@/lib/search-params';
 import { getResultsPathForSection } from '@/config/sectionFilters';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 import { type PopularCity, fetchPopularCities, fetchProviderCities, checkCityExists } from '@/services/providers';
-
-function toFoodRecentSearches(entries: WasSelection[]): WasSelection[] {
-  return entries
-    .filter((entry) => entry.type === 'category' || entry.type === 'dish')
-    .slice(0, 3);
-}
 
 /**
  * /search — dedicated search detail page (Figma node 212:785 "CreateSouk").
@@ -464,12 +459,7 @@ function SearchPageContent() {
 
   const handleSearch = () => {
     if (!selectedWas) return;
-    const params = new URLSearchParams({ section: selectedSection });
-    if (selectedWas.type === 'category' && selectedWas.categoryId) {
-      params.set('category', selectedWas.categoryId);
-    } else {
-      params.set('q', selectedWas.label);
-    }
+    const params = buildSearchParams(selectedWas, selectedSection);
     if (selectedFilters.length > 0) {
       params.set('filters', selectedFilters.join(','));
     }
@@ -555,6 +545,49 @@ function SearchPageContent() {
 
         {/* ── Accordion body ───────────────────────────────────────────── */}
         <div className="flex flex-col gap-2">
+        {/* Wo — now first */}
+        <ExpandSection
+          isOpen={openAccordion === 'wo'}
+          title={woAccordionTitle}
+          onToggle={(next) => setOpenAccordion(next ? 'wo' : null)}
+        >
+          <div className="mt-3">
+            {/* City search input */}
+            <div className="flex items-center gap-3 px-3 h-10 rounded-xl bg-neutral-muted focus-within:ring-2 focus-within:ring-primary/20 transition-colors">
+              <MapPin className="w-4 h-4 text-text-muted shrink-0" />
+              <input
+                aria-label={t('suchen.citySearchPlaceholder')}
+                className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none border-0 focus:outline-none focus:ring-0"
+                placeholder={t('suchen.citySearchPlaceholder')}
+                type="search"
+                value={woSearchQuery}
+                onChange={(e) => {
+                  setWoInputQuery(e.target.value);
+                  if (selectedWoCity) {
+                    setSelectedWoCity(null);
+                  }
+                }}
+              />
+            </div>
+
+            <WoCityResults
+              filteredCities={filteredCities}
+              isCheckingCityValidity={isCheckingCityValidity}
+              isError={isErrorPopularCities}
+              isLoading={isLoadingCities || isLoadingPopularCities}
+              isValidNoProviderCity={isValidNoProviderCity}
+              popularCities={popularCities}
+              query={woSearchQuery}
+              recentSearches={recentWoSearches}
+              selectedCity={selectedWoCity}
+              t={t}
+              userEmail={userEmail}
+              onClearSelection={handleWoClearSelection}
+              onSelect={handleWoSelect}
+            />
+          </div>
+        </ExpandSection>
+
         {/* Was? — controlled accordion; title shows selection when closed */}
         <ExpandSection
           isOpen={openAccordion === 'was'}
@@ -638,49 +671,6 @@ function SearchPageContent() {
                 />
               </>
             )}
-          </div>
-        </ExpandSection>
-
-        {/* Wo / Wer / Filter — collapsed rows */}
-        <ExpandSection
-          isOpen={openAccordion === 'wo'}
-          title={woAccordionTitle}
-          onToggle={(next) => setOpenAccordion(next ? 'wo' : null)}
-        >
-          <div className="mt-3">
-            {/* City search input */}
-            <div className="flex items-center gap-3 px-3 h-10 rounded-xl bg-neutral-muted focus-within:ring-2 focus-within:ring-primary/20 transition-colors">
-              <MapPin className="w-4 h-4 text-text-muted shrink-0" />
-              <input
-                aria-label={t('suchen.citySearchPlaceholder')}
-                className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none border-0 focus:outline-none focus:ring-0"
-                placeholder={t('suchen.citySearchPlaceholder')}
-                type="search"
-                value={woSearchQuery}
-                onChange={(e) => {
-                  setWoInputQuery(e.target.value);
-                  if (selectedWoCity) {
-                    setSelectedWoCity(null);
-                  }
-                }}
-              />
-            </div>
-
-            <WoCityResults
-              filteredCities={filteredCities}
-              isCheckingCityValidity={isCheckingCityValidity}
-              isError={isErrorPopularCities}
-              isLoading={isLoadingCities || isLoadingPopularCities}
-              isValidNoProviderCity={isValidNoProviderCity}
-              popularCities={popularCities}
-              query={woSearchQuery}
-              recentSearches={recentWoSearches}
-              selectedCity={selectedWoCity}
-              t={t}
-              userEmail={userEmail}
-              onClearSelection={handleWoClearSelection}
-              onSelect={handleWoSelect}
-            />
           </div>
         </ExpandSection>
 
