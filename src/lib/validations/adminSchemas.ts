@@ -72,6 +72,7 @@ export const providerEditUpdateSchema = z.object({
   addressZip: z.string().max(20).nullable().optional(),
   addressCity: z.string().max(200).nullable().optional(),
   addressCountry: z.string().max(200).nullable().optional(),
+  showAddress: z.boolean().optional(),
   contactEmail: z.string().email().max(320).nullable().optional(),
   contactPhone: z.string().max(50).nullable().optional(),
   socialWebsite: z.string().url().max(2000).nullable().optional(),
