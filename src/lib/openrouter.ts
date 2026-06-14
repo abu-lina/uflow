@@ -62,9 +62,20 @@ export async function sendChatRequest(
 ): Promise<ChatCompletionResult> {
   const config = getLLMConfig();
 
+  // Sanitize messages for strict API validation (Mistral rejects extra fields)
+  const sanitizedMessages = messages.map((msg) => {
+    const clean: Record<string, unknown> = { role: msg.role, content: msg.content };
+    if (msg.tool_call_id) clean.tool_call_id = msg.tool_call_id;
+    // Only assistant messages may have tool_calls
+    if (msg.role === 'assistant' && msg.tool_calls && msg.tool_calls.length > 0) {
+      clean.tool_calls = msg.tool_calls;
+    }
+    return clean;
+  });
+
   const body: OpenRouterRequest = {
     model: config.model,
-    messages,
+    messages: sanitizedMessages as unknown as ChatMessage[],
     max_tokens: options?.max_tokens ?? 768,
     temperature: options?.temperature ?? 0.7,
   };
