@@ -231,7 +231,7 @@ describe('Tool Executor', () => {
         expect(parsed.results[0].provider_name).toBe('Döner Haus');
       });
 
-      it('throws if query is missing', async () => {
+      it('returns all results when query is missing', async () => {
         const toolCall: ToolCall = {
           id: 'call_6',
           type: 'function',
@@ -241,9 +241,9 @@ describe('Tool Executor', () => {
           },
         };
 
-        await expect(executeToolCall(toolCall)).rejects.toThrow(
-          'query is required',
-        );
+        const result = await executeToolCall(toolCall);
+        const parsed = JSON.parse(result);
+        expect(parsed.results).toBeDefined();
       });
     });
 

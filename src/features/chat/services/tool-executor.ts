@@ -190,10 +190,11 @@ export async function executeToolCall(
 
   switch (name) {
     case 'search_providers': {
-      const query = args.query;
-      if (!query || typeof query !== 'string') {
-        throw new Error('query is required for search_providers');
-      }
+      const rawQuery = args.query as string | undefined;
+      // Strip generic terms that won't match provider names in tsvector search
+      const GENERIC_TERMS = /^(essen|food|restaurant|eat|store|shop|service|help|something|anything|all|everything)$/i;
+      const query = (!rawQuery || GENERIC_TERMS.test(rawQuery)) ? '' : rawQuery;
+
 
       const supabase = createSupabaseServerClient();
       const { data, error } = await supabase.rpc('search_providers_chat', {
