@@ -58,8 +58,8 @@ const mockSupabaseServer = {
   single: vi.fn(),
   maybeSingle: vi.fn(),
 };
-vi.mock('@/lib/supabase/server', () => ({
-  createSupabaseServerClient: vi.fn(() => mockSupabaseServer),
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: vi.fn(() => mockSupabaseServer),
 }));
 
 import { POST } from '@/app/api/chat/route';

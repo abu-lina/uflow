@@ -198,7 +198,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    while (toolCalls.length > 0 && toolCallCount < MAX_TOOL_CALLS) {
+    // Single tool call round-trip — execute all tools, then ONE follow-up LLM call
+    // This avoids the slow multi-iteration while loop (up to 5 extra LLM calls)
+    if (toolCalls.length > 0 && toolCallCount < MAX_TOOL_CALLS) {
       toolCallCount++;
 
       const toolMessages: ChatMessage[] = [];
@@ -230,7 +232,7 @@ export async function POST(request: Request): Promise<NextResponse> {
               providerResults = parsed.results;
             }
           } catch {
-            // Ignore parse errors from tool execution
+            // Ignore parse errors
           }
         }
 
@@ -242,24 +244,21 @@ export async function POST(request: Request): Promise<NextResponse> {
         messages.push(toolMessages[toolMessages.length - 1]);
       }
 
+      // One follow-up call with tool results (no while loop — single round-trip only)
       llmResponse = await measureDependency(
         ctx,
-        'openrouter.chat_completion',
+        'openrouter.chat_completion_followup',
         () =>
           sendChatRequest(
-            [
-              ...messages,
-              ...toolMessages,
-            ],
+            messages,
             {
               tools: TOOL_DEFINITIONS,
               tool_choice: 'auto',
             },
           ),
       );
-
-      toolCalls = llmResponse.message.tool_calls || [];
     }
+
 
     const finalMessage = llmResponse.message;
 

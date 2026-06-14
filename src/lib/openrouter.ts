@@ -26,6 +26,7 @@ interface SendChatRequestOptions {
   tool_choice?: 'auto' | 'none';
   max_tokens?: number;
   temperature?: number;
+  timeout?: number;
 }
 
 export async function sendChatRequest(
@@ -42,7 +43,7 @@ export async function sendChatRequest(
   const body: OpenRouterRequest = {
     model,
     messages,
-    max_tokens: options?.max_tokens ?? 1024,
+    max_tokens: options?.max_tokens ?? 512,
     temperature: options?.temperature ?? 0.7,
   };
 
@@ -51,30 +52,38 @@ export async function sendChatRequest(
     body.tool_choice = options.tool_choice ?? 'auto';
   }
 
-  const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-      'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com',
-      'X-Title': 'UFlow Chatbot',
-    },
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 15000);
 
-  if (!response.ok) {
-    throw new Error(`OpenRouter API error: ${response.status}`);
+  try {
+    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com',
+        'X-Title': 'UFlow Chatbot',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.status}`);
+    }
+
+    const data: OpenRouterResponse = await response.json();
+
+    if (!data.choices || data.choices.length === 0) {
+      throw new Error('OpenRouter returned empty response');
+    }
+
+    return {
+      id: data.id,
+      message: data.choices[0].message,
+      usage: data.usage,
+    };
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data: OpenRouterResponse = await response.json();
-
-  if (!data.choices || data.choices.length === 0) {
-    throw new Error('OpenRouter returned empty response');
-  }
-
-  return {
-    id: data.id,
-    message: data.choices[0].message,
-    usage: data.usage,
-  };
 }
