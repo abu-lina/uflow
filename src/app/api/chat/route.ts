@@ -258,6 +258,13 @@ export async function POST(request: Request): Promise<NextResponse> {
           ),
       );
     }
+    // Strip unexecuted tool calls from final response — client can't process them
+    if (llmResponse.message.content === null && llmResponse.message.tool_calls?.length) {
+      llmResponse.message.content = 'I found some information. Is there anything specific you would like to know?';
+    }
+    // Never expose raw tool calls to the client in the final message
+    (llmResponse.message as Record<string, unknown>).tool_calls = undefined;
+
 
 
     const finalMessage = llmResponse.message;
