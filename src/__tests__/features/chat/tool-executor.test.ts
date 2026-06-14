@@ -217,16 +217,16 @@ describe('Tool Executor', () => {
         const parsed = JSON.parse(result);
 
         expect(mockRpcSearch).toHaveBeenCalledWith('search_providers_chat', {
-          search_query: 'Döner',
-          category_filter: null,
-          city_filter: 'Berlin',
-          listing_type_filter: 'food',
-          muslim_owned: null,
-          has_prayer_space: null,
-          family_friendly: null,
-          women_friendly: null,
-          halal_level_min: null,
-          limit_count: 5,
+          p_search_query: 'Döner',
+          p_category_filter: null,
+          p_city_filter: 'Berlin',
+          p_listing_type_filter: 'food',
+          p_muslim_owned: null,
+          p_has_prayer_space: null,
+          p_family_friendly: null,
+          p_women_friendly: null,
+          p_halal_level_min: null,
+          p_limit_count: 5,
         });
         expect(parsed.results).toHaveLength(1);
         expect(parsed.results[0].provider_name).toBe('Döner Haus');

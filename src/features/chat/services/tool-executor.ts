@@ -208,16 +208,16 @@ export async function executeToolCall(
 
       const supabase = createSupabaseServerClient();
       const { data, error } = await supabase.rpc('search_providers_chat', {
-        search_query: query as string,
-        category_filter: (args.category as string) || null,
-        city_filter: (args.city as string) || null,
-        listing_type_filter: (args.listing_type as string) || null,
-        muslim_owned: (args.muslim_owned as boolean) ?? null,
-        has_prayer_space: (args.has_prayer_space as boolean) ?? null,
-        family_friendly: (args.family_friendly as boolean) ?? null,
-        women_friendly: (args.women_friendly as boolean) ?? null,
-        halal_level_min: (args.halal_level as number) ?? null,
-        limit_count: (args.limit as number) || 5,
+        p_search_query: query as string,
+        p_category_filter: (args.category as string) || null,
+        p_city_filter: (args.city as string) || null,
+        p_listing_type_filter: (args.listing_type as string) || null,
+        p_muslim_owned: (args.muslim_owned as boolean) ?? null,
+        p_has_prayer_space: (args.has_prayer_space as boolean) ?? null,
+        p_family_friendly: (args.family_friendly as boolean) ?? null,
+        p_women_friendly: (args.women_friendly as boolean) ?? null,
+        p_halal_level_min: (args.halal_level as number) ?? null,
+        p_limit_count: (args.limit as number) || 5,
       });
 
       if (error) throw error;
