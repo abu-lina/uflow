@@ -52,6 +52,8 @@ export function ChatWidget() {
                 role={msg.role}
                 content={msg.content}
                 results={msg.results}
+                options={msg.options}
+                onOptionSelect={(option) => sendMessage(option)}
               />
             ))}
             {isLoading && (

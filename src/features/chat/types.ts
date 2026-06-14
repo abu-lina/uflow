@@ -8,6 +8,7 @@ export interface ChatMessage {
   tool_calls?: ToolCall[];
   tool_call_id?: string;
   results?: ProviderCardData[];
+  options?: string[];
 }
 
 export interface ToolCallFunction {
@@ -88,6 +89,7 @@ export interface ChatResponse {
     tool_calls?: ToolCall[];
   };
   results?: ProviderCardData[];
+  options?: string[];
   guardrail?: 'redirect' | 'block';
 }
 

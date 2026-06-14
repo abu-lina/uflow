@@ -1,6 +1,7 @@
 'use client';
 
 import { ProviderCard } from '@/features/chat/components/ProviderCard';
+import { QuickReplies } from '@/features/chat/components/QuickReplies';
 import type { ProviderCardData } from '@/features/chat/types';
 
 interface ChatMessageProps {
@@ -8,9 +9,11 @@ interface ChatMessageProps {
   content: string;
   isLoading?: boolean;
   results?: ProviderCardData[];
+  options?: string[];
+  onOptionSelect?: (option: string) => void;
 }
 
-export function ChatMessage({ role, content, isLoading = false, results }: ChatMessageProps) {
+export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect }: ChatMessageProps) {
   const isUser = role === 'user';
   const isTool = role === 'tool';
 
@@ -49,6 +52,9 @@ export function ChatMessage({ role, content, isLoading = false, results }: ChatM
               <ProviderCard key={provider.provider_id} provider={provider} />
             ))}
           </div>
+        )}
+        {options && onOptionSelect && role === 'assistant' && (
+          <QuickReplies options={options} onSelect={onOptionSelect} disabled={isLoading} />
         )}
       </div>
     </div>

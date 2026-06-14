@@ -24,6 +24,35 @@ const CHAT_HISTORY_LIMIT = parseInt(
 );
 const MAX_TOOL_CALLS = 2;
 
+
+function extractOptions(content: string): string[] | undefined {
+  if (!content) return undefined;
+  
+  const options: string[] = [];
+  
+  // Pattern 1: Numbered list (1. Option, 2. Option)
+  const numberedMatch = content.match(/^\d+\.\s+(.+)$/gm);
+  if (numberedMatch && numberedMatch.length >= 2) {
+    return numberedMatch.map(m => m.replace(/^\d+\.\s+/, '').trim());
+  }
+  
+  // Pattern 2: Ja/Nein questions
+  if (/möchtest du|soll ich|willst du|brauchst du|kann ich/i.test(content)) {
+    if (/(ja|nein|yes|no)/i.test(content)) {
+      options.push('Ja', 'Nein');
+    }
+  }
+  
+  // Pattern 3: Bullet points (• or -)
+  const bulletMatch = content.match(/^[•\-]\s+(.+)$/gm);
+  if (bulletMatch && bulletMatch.length >= 2) {
+    return bulletMatch.map(m => m.replace(/^[•\-]\s+/, '').trim());
+  }
+  
+  return options.length > 0 ? options : undefined;
+}
+
+
 export async function POST(request: Request): Promise<NextResponse> {
   const ctx = createRequestContext('/api/chat');
 
@@ -272,6 +301,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
 
     const finalMessage = llmResponse.message;
+    const options = extractOptions(finalMessage.content || '');
 
     const totalTokens = llmResponse.usage?.total_tokens || 0;
 
@@ -315,6 +345,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     if (providerResults) {
       responsePayload.results = providerResults;
+    }
+    if (options) {
+      responsePayload.options = options;
     }
 
     if (guardrailResult.status === 'redirect') {

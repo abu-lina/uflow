@@ -50,6 +50,7 @@ export function useChat(): UseChatReturn {
           role: data.message.role || 'assistant',
           content: data.message.content || '',
           results: data.results,
+          options: data.options,
         };
 
         setMessages((prev) => [...prev, assistantMessage]);
