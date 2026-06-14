@@ -16,6 +16,12 @@ Short log of learnings from plan → build → review → test loops. Append one
 
 (Add new entries below.)
 
+### 2026-06-13 — Search Location Filter Persistence (Plan 172)
+- **Context**: Client-state precedence over URL params caused stale location filter to persist even after user explicitly cleared it.
+- **Learning**: Two-tier bugs (primary: fallback chain falls through to context; secondary: storage re-hydration on remount) need both fixed together — fixing only one leaves the bug partially live. The session guard pattern (`uflow:wo-cleared-this-session` flag) is reusable for any per-session "user has made a choice" gate.
+- **Change to prevent repeat**: Add a checklist item for "does the fix need both a URL-origin fix AND a storage/context guard?" when the bug involves state persistence across navigation.
+- **Task/PR**: Plan 172
+
 ### 2026-06-04 — Nearby Click Navigation (Plan 142)
 
 **What**: Made nearby provider list items clickable with `router.push` navigation. Added `onClick` prop to `DetailListItem` and conditional `<button>` / `<div>` rendering.
@@ -228,9 +234,52 @@ Short log of learnings from plan → build → review → test loops. Append one
   - Analyst: if a category appears in both a "stale fix" and "new entry" table, note the overlap explicitly in findings
 - **Task/PR**: Plan 164
 
+### 2026-06-13 — Plan 169: "Alle Restaurants" sentinel type in search filter
+- **Context**: Adding a static "Alle Restaurants" entry before dynamically loaded POPULAR categories with a dedicated `'all-restaurants'` sentinel type.
+- **Learning**: When the plan says "if inline, extract it" for a utility function used by tests, extract it unconditionally — avoids import-path guesswork and keeps the regression test importing from the same source of truth as production code. The early-return guard needs to reference `shouldShowAllRestaurants` but `shouldShowRecent` is defined later in the original code — reordering the variable definitions fixed it cleanly.
+- **Change to prevent repeat**: Introduce `shouldShowRecent` before the early return when adding a visibility condition that depends on it. Pre-extract utility functions early when tests need them, rather than leaving conditional extraction to implementation time.
+- **Task/PR**: Plan 169
+
 ## 2026-06-13 — Mobile header gap: Tailwind token cascade
 
 - **Context**: Plan 167 — mobile had 96px excess gap between header and content because `header-spacing` tokens were all flattened to `160px` and `PageContent.tsx` used a single flat value.
 - **Learning**: Tailwind config spacing tokens cascade to all consumers automatically — fixing `header-spacing` in `tailwind.config.ts` also fixed `HeaderSpacer.tsx` without a code change. But `PageContent.tsx` used inline `pt-[calc(...)]` instead of the token (`pt-header-spacing`), so it needed a manual fix. The root cause was a Tailwind config flatten (all breakpoints set to the same value), which masked the breakpoint mismatch until deployment.
 - **Change to prevent repeat**: When reviewing Tailwind config changes, check that per-breakpoint tokens (sm/md) actually differ from the base value. When hand-authoring calc expressions in components, prefer using the token name instead to stay DRY and auto-fix from config changes.
 - **Task/PR**: Plan 167
+## 2026-06-13 — Filter reorder: Where before What
+
+- **Context**: User requested filter order change so Where (location) appears before What (search) in both search page accordion and SearchBar.
+- **Learning**: Filter ordering is defined in two separate contexts — the accordion-based search page (`page.tsx`) and the inline SearchBar (`SearchBar.tsx`). Both need coordinated reordering. The SearchBar also required removing a wrapping filters div when restructuring the layout.
+- **Change to prevent repeat**: When reordering UI elements across the app, always search for both contexts (accordion/page and inline/header) to ensure consistency.
+- **Task/PR**: Direct user request
+
+## 2026-06-13 — Plan 170: Section-scoped city counts
+
+**Context**: "281 Anbieter" appeared hardcoded in the Wo (Where) accordion. Root cause was 3 linked issues: `fetchPopularCities()` had no `listing_type` filter (combined all sections), the `loadPopularCities` effect had empty `[]` deps (never refetched on section change), and `countByCity` Map was built from only top-3 cities (selected/recent cities outside top 3 showed 0).
+
+**Fix**: Added optional `section` param to `fetchPopularCities()`, added `.eq('listing_type', section)` when provided; changed `loadPopularCities` effect dep to `[selectedSection]`; passed full `cityCounts` array instead of `slice(0,3)`.
+
+**Takeaway**: When users report a "hardcoded" value that isn't in source code, it's often a stale or incorrectly-scoped data fetch. Trace the data flow from DB to UI — the number is real but comes from the wrong query scope.
+
+## 2026-06-13 — Plan 169: Decoupled rendering pattern for static list entries
+
+**Context**: Added an "Alle Restaurants" entry to the search filter's "Was?" accordion. The render was initially tied to `shouldShowPopular`, which depends on `items.length > 0` (API-driven). The Architect caught this: on a fresh database with no providers, the entry would be invisible.
+
+**Pattern**: When adding a static entry to a dynamic list:
+1. Give it its own visibility condition (`shouldShowAllRestaurants`) independent of the API-driven condition.
+2. The early return guard must account for it: don't `return null` when the static entry is the only thing to render.
+3. Same applies to any future "Alle" entries in other sections (ummah, store).
+
+**File affected**: `src/features/search/components/WasCategoryResults.tsx` — early return guard (line ~115), `shouldShowAllRestaurants` variable (line ~113), RowItem render before POPULAR block (lines ~208-229).
+
+### 2026-06-13 — Branch-first workflow: create branch before any code changes
+- **Context**: CI Pipeline #411/#412 failed on pre-existing test issues because Plan 172 changes were made directly on the working tree, then committed to a branch at deploy time. If the branch had been created upfront, the CI feedback loop would have been faster.
+- **Learning**: The orchestrator should create a dedicated feature branch at the start of Phase 3 (Implementer) — before any code is written — not at Phase 6 (DevOps). This gives CI visibility during implementation and avoids deployment-time surprises from pre-existing failures.
+- **Change to prevent repeat**: Insert a branch-creation step between Planner → Implementer handoff. The orchestrator creates `fix/<ID>-<slug>` (or `feature/<ID>-<slug>`) from main, pushes it, and passes the branch name to the implementer. All subsequent commits (implementer, code-reviewer fixes, QA fixes) go onto that branch. The DevOps phase then only needs to push/PR.
+- **Task/PR**: Plan 172, PR #249
+
+### 2026-06-13 — Check actual database schema from Supabase, not local files
+- **Context**: The `adminSchemas.test.ts` fix revealed a mismatch between the local test file and the actual database state. The test expected `listingType` to reject `'ummah'`, but the schema at `adminSchemas.ts:70` already accepted it (`z.enum(['food', 'store', 'ummah'])`). The DB migration and local validation were out of sync. Relying on local files (types, migrations) for schema truth is fragile — they can diverge from the actual database.
+- **Learning**: When investigating bugs or planning changes that depend on database schema (enum values, column types, constraints), verify against the actual Supabase database — not local type definitions or migration files. Use `supabase db dump --schema public`, `supabase db diff`, or direct SQL queries (`SELECT * FROM information_schema.columns`, enum introspection) to get ground truth.
+- **Change to prevent repeat**: Add a "verify DB schema from Supabase" step to the Analyst phase when the bug involves data validation, database enums, or column constraints. The analysis doc should cite actual DB state, not just local files.
+- **Task/PR**: Plan 172, PR #249
