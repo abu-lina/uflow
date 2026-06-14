@@ -329,7 +329,7 @@ describe('Tool Executor', () => {
           muslim_owned: true,
         };
 
-        const result = mapChatArgsToFormData(args, 'user-123');
+        const result = await mapChatArgsToFormData(args, 'user-123');
 
         expect(result.formData.title).toBe('Test Restaurant');
         expect(result.formData.category).toBe('cat-1');
@@ -356,7 +356,7 @@ describe('Tool Executor', () => {
           city: 'Köln',
         };
 
-        const result = mapChatArgsToFormData(args, 'user-456');
+        const result = await mapChatArgsToFormData(args, 'user-456');
 
         const requiredFields = [
           'creationMode', 'entityType', 'title', 'category', 'description',

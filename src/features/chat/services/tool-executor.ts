@@ -289,7 +289,7 @@ export async function executeToolCall(
         throw new Error(`City "${city}" not found`);
       }
 
-      const { formData, user } = mapChatArgsToFormData(args, userId);
+      const { formData, user } = await mapChatArgsToFormData(args, userId);
 
       const result = await createProviderOrService(formData, user, false);
 
@@ -315,17 +315,37 @@ function buildTags(args: Record<string, unknown>): string[] {
   return tags;
 }
 
-export function mapChatArgsToFormData(
+export async function mapChatArgsToFormData(
   args: Record<string, unknown>,
   userId: string,
-): { formData: ProviderFormData; user: User } {
+): Promise<{ formData: ProviderFormData; user: User }> {
   const tags = buildTags(args);
+
+  // Resolve category: if it looks like a name (not UUID), try to resolve it
+  let categoryId = (args.category_id as string) || (args.category as string) || '';
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (categoryId && !UUID_REGEX.test(categoryId)) {
+    // Category is a name — resolve it via the categories table
+    try {
+      const lookupSupabase = createSupabaseServerClient();
+      const { data: catData } = await lookupSupabase
+        .from('categories')
+        .select('category_id')
+        .ilike('name_de', `%${categoryId}%`)
+        .limit(1);
+      if (catData && catData.length > 0) {
+        categoryId = catData[0].category_id;
+      }
+    } catch {
+      // Keep as-is if lookup fails
+    }
+  }
 
   const formData: ProviderFormData = {
     creationMode: 'owner',
     entityType: 'provider',
     title: (args.name as string) || '',
-    category: (args.category_id as string) || '',
+    category: categoryId,
     description: (args.description as string) || '',
     isOnlineBusiness: false,
     street: (args.street as string) || '',
