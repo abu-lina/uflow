@@ -99,21 +99,21 @@ export async function POST(request: Request): Promise<NextResponse> {
           }
         }
 
-        const { data: newConv } = await supabase
+        const convId = crypto.randomUUID();
+        const { error: insertError } = await supabase
           .from('conversations')
           .insert({
+            id: convId,
             user_id: user.id,
             title: trimmedMessage.slice(0, 100),
             is_active: true,
-          })
-          .select('id')
-          .single();
+          });
 
-        if (!newConv) {
-          throw new Error('Failed to create conversation');
+        if (insertError) {
+          throw new Error(`Failed to create conversation: ${insertError.message}`);
         }
 
-        return newConv.id;
+        return convId;
       },
     );
 
