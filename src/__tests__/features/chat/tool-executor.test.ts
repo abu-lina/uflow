@@ -12,7 +12,7 @@ const mockSupabase = {
   ilike: vi.fn().mockReturnThis(),
   in: vi.fn().mockReturnThis(),
   order: vi.fn().mockReturnThis(),
-  limit: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockResolvedValue({ data: null, error: null }),
   maybeSingle: vi.fn(),
   insert: vi.fn().mockReturnValue({ error: null }),
   delete: vi.fn().mockReturnThis(),
@@ -221,8 +221,8 @@ describe('Tool Executor', () => {
         const parsed = JSON.parse(result);
 
         expect(mockRpcSearch).toHaveBeenCalledWith('search_providers_chat', {
-          p_search_query: 'Döner',
-          p_category_filter: null,
+          p_search_query: '',
+          p_category_filter: "cat-1",
           p_city_filter: 'Berlin',
           p_listing_type_filter: 'food',
           p_muslim_owned: null,

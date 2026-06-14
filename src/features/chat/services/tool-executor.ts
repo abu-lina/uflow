@@ -192,9 +192,27 @@ export async function executeToolCall(
   switch (name) {
     case 'search_providers': {
       const rawQuery = args.query as string | undefined;
+      const rawCategory = args.category as string | undefined;
+      
       // Strip generic terms that won't match provider names in tsvector search
       const GENERIC_TERMS = /^(essen|food|restaurant|eat|store|shop|service|help|something|anything|all|everything)$/i;
-      const query = (!rawQuery || GENERIC_TERMS.test(rawQuery)) ? '' : rawQuery;
+      let query = (!rawQuery || GENERIC_TERMS.test(rawQuery)) ? '' : rawQuery;
+      
+      // Auto-detect: if query looks like a cuisine/type and no category set, move to category
+      if (query && !rawCategory && !/^[0-9a-f]{8}-/i.test(query)) {
+        // Check if this matches a known category name
+        const adminCat = getSupabaseAdmin();
+        const { data: catCheck } = await adminCat
+          .from('categories')
+          .select('category_id')
+          .ilike('name_de', `%${query}%`)
+          .limit(1);
+        if (catCheck && catCheck.length > 0) {
+          // Found a matching category — use it as filter instead of query
+          args.category = catCheck[0].category_id;
+          query = ''; // Clear the query since we're filtering by category
+        }
+      }
 
 
       const supabase = createSupabaseServerClient();
