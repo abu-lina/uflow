@@ -19,7 +19,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         properties: {
           query: {
             type: 'string',
-            description: 'Free-text search query (e.g., "döner", "clothing store")',
+            description: 'Free-text search query. Leave EMPTY for broad searches like "what restaurants are in Berlin". Only use specific terms like "döner" or "pizza" when user asks for something specific. Database is mostly German — use German terms.',
           },
           category: {
             type: 'string',
@@ -56,7 +56,6 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
             default: 5,
           },
         },
-        required: ['query'],
       },
     },
   },
