@@ -135,7 +135,7 @@ BEGIN
              @@ plainto_tsquery('german', p_search_query)
       )
       AND (p_category_filter IS NULL OR p.category_id = p_category_filter)
-      AND (p_city_filter IS NULL OR p.address_city = p_city_filter)
+      AND (p_city_filter IS NULL OR p.address_city ILIKE p_city_filter || '%')
       AND (p_listing_type_filter IS NULL OR p.listing_type::TEXT = p_listing_type_filter)
       AND (p_muslim_owned IS NULL OR p.muslim_owned = p_muslim_owned)
       AND (p_has_prayer_space IS NULL OR p.has_prayer_space = p_has_prayer_space)
