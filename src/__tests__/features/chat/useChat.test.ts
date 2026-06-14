@@ -1,0 +1,133 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+
+const { mockFetch } = vi.hoisted(() => ({
+  mockFetch: vi.fn(),
+}));
+vi.stubGlobal('fetch', mockFetch);
+
+import { useChat } from '@/features/chat/hooks/useChat';
+
+describe('useChat', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          conversation_id: 'conv-1',
+          message: { role: 'assistant', content: 'Hallo! Wie kann ich helfen?' },
+        }),
+    });
+  });
+
+  it('initializes with empty messages and not loading', () => {
+    const { result } = renderHook(() => useChat());
+
+    expect(result.current.messages).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('adds user message and sends to API', async () => {
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.sendMessage('Hallo');
+    });
+
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.messages[0].role).toBe('user');
+    expect(result.current.messages[0].content).toBe('Hallo');
+    expect(result.current.messages[1].role).toBe('assistant');
+  });
+
+  it('sets conversation_id after first message', async () => {
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.sendMessage('Hallo');
+    });
+
+    expect(result.current.conversationId).toBe('conv-1');
+  });
+
+  it('sets loading state while waiting for response', async () => {
+    let resolvePromise: (value: unknown) => void;
+    mockFetch.mockReturnValue(
+      new Promise((resolve) => {
+        resolvePromise = resolve;
+      }),
+    );
+
+    const { result } = renderHook(() => useChat());
+
+    let sendPromise: Promise<void>;
+    await act(async () => {
+      sendPromise = result.current.sendMessage('Test');
+    });
+
+    expect(result.current.isLoading).toBe(true);
+
+    await act(async () => {
+      resolvePromise!({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            conversation_id: 'conv-1',
+            message: { role: 'assistant', content: 'Response' },
+          }),
+      });
+      await sendPromise;
+    });
+
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('handles API errors gracefully', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'Server error' }),
+    });
+
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.sendMessage('Test');
+    });
+
+    expect(result.current.error).toBeTruthy();
+  });
+
+  it('clears error when sending a new message', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'Server error' }),
+    });
+
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.sendMessage('Test');
+    });
+
+    expect(result.current.error).toBeTruthy();
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          conversation_id: 'conv-1',
+          message: { role: 'assistant', content: 'OK' },
+        }),
+    });
+
+    await act(async () => {
+      await result.current.sendMessage('Retry');
+    });
+
+    expect(result.current.error).toBeNull();
+  });
+});

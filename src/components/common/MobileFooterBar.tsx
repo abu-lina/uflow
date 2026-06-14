@@ -6,33 +6,37 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
-import { CreateIcon } from '@/components/ui/icons/CreateIcon';
+import { ChatIcon } from '@/components/ui/icons/ChatIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { useAuth } from '@/providers/auth-provider';
+import { ChatWidget } from '@/features/chat/components/ChatWidget';
 
 // Height is set to 72px for modern, touch-friendly, and visually balanced mobile nav bar.
 const navItems = [
   {
+    id: 'home',
     label: 'Home',
     href: '/',
     icon: (isActive: boolean) => <ExploreIcon isActive={isActive} />,
     noFrame: true,
   },
   {
-    label: 'Create',
-    href: '/create',
-    icon: (isActive: boolean) => <CreateIcon isActive={isActive} />,
+    id: 'chat',
+    label: 'Chat',
+    href: null,
+    icon: (isActive: boolean) => <ChatIcon isActive={isActive} />,
     noFrame: true,
   },
   {
+    id: 'saved',
     label: 'Saved',
     href: '/saved',
     icon: (isActive: boolean) => <SavedIcon isActive={isActive} />,
     noFrame: true,
-    // framed by default
   },
   {
+    id: 'profile',
     label: 'Profile',
     href: '/profile',
     icon: (isActive: boolean) => <ProfileIcon isActive={isActive} />,
@@ -45,6 +49,7 @@ export function MobileFooterBar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
   // Prefetch home route on mount to ensure it's available
@@ -77,8 +82,52 @@ export function MobileFooterBar() {
     pathname === '/stores' ||
     pathname === '/ummah';
 
+  function isNavItemActive(itemId: string): boolean {
+    switch (itemId) {
+      case 'home':
+        return isExploreActive;
+      case 'chat':
+        return isChatOpen;
+      case 'saved':
+        return pathname === '/saved';
+      case 'profile':
+        return pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup';
+      default:
+        return false;
+    }
+  }
+
+  function handleNavClick(itemId: string) {
+    if (itemId === 'chat') {
+      setIsChatOpen(true);
+      return;
+    }
+  }
+
   return (
     <>
+      {/* Chat Modal - Mobile */}
+      {isChatOpen && (
+        <div className="md:hidden fixed inset-0 z-[60] bg-white flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-teal-600 text-white">
+            <h3 className="font-semibold text-sm">UFlow Assistant</h3>
+            <button
+              onClick={() => setIsChatOpen(false)}
+              aria-label="Chat schließen"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-teal-700 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <ChatWidget />
+          </div>
+        </div>
+      )}
+
       <nav
         ref={navRef}
         className="pointer-events-auto pt-footer-safe pb-safe fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center border-t border-gray-200/30 px-6 sm:px-8"
@@ -93,53 +142,51 @@ export function MobileFooterBar() {
         <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
           {navItems.map((item) => (
             <div
-              key={item.href}
+              key={item.id}
               className="flex flex-row items-center justify-center gap-2.5 p-1 transition-transform active:scale-[0.99]"
               style={{ width: 40, height: 40 }}
             >
-              <Link
-                aria-label={item.label}
-                className={`flex items-center justify-center transition-opacity duration-75 ${
-                  isNavigating ? 'pointer-events-none opacity-50' : 'opacity-100'
-                }`}
-                href={item.href === '/profile' && !user ? '/login' : item.href}
-                prefetch={true}
-                scroll={false}
-                onClick={(e) => {
-                  // Special handling for profile - redirect to login if not authenticated
-                  if (item.href === '/profile' && !user) {
-                    e.preventDefault();
-                    setIsNavigating(true);
-                    router.push('/login');
-                    setTimeout(() => setIsNavigating(false), 150);
-                    return;
-                  }
+              {item.href ? (
+                <Link
+                  aria-label={item.label}
+                  className={`flex items-center justify-center transition-opacity duration-75 ${
+                    isNavigating ? 'pointer-events-none opacity-50' : 'opacity-100'
+                  }`}
+                  href={item.href === '/profile' && !user ? '/login' : item.href}
+                  prefetch={true}
+                  scroll={false}
+                  onClick={(e) => {
+                    if (item.href === '/profile' && !user) {
+                      e.preventDefault();
+                      setIsNavigating(true);
+                      router.push('/login');
+                      setTimeout(() => setIsNavigating(false), 150);
+                      return;
+                    }
 
-                  // For all routes including root, let Next.js Link handle navigation naturally
-                  // Track navigation state for UI feedback only
-                  if (pathname !== item.href && !isNavigating) {
-                    setIsNavigating(true);
-                    // Next.js Link handles the actual navigation client-side
-                    setTimeout(() => setIsNavigating(false), 150);
-                  }
-                }}
-                onMouseEnter={() => handleNavIntent(item.href)}
-                onTouchStart={() => handleNavIntent(item.href)}
-              >
-                {/* All nav items use function icons (custom SVGs) */}
-                {typeof item.icon === 'function' &&
-                  item.icon(
-                    item.href === '/profile'
-                      ? pathname.startsWith('/profile') ||
-                          pathname === '/login' ||
-                          pathname === '/signup'
-                      : item.href === '/create'
-                        ? pathname.startsWith('/create') || pathname === '/create'
-                        : item.href === '/'
-                          ? isExploreActive
-                          : pathname === item.href,
-                  )}
-              </Link>
+                    if (pathname !== item.href && !isNavigating) {
+                      setIsNavigating(true);
+                      setTimeout(() => setIsNavigating(false), 150);
+                    }
+                  }}
+                  onMouseEnter={() => handleNavIntent(item.href!)}
+                  onTouchStart={() => handleNavIntent(item.href!)}
+                >
+                  {typeof item.icon === 'function' &&
+                    item.icon(isNavItemActive(item.id))}
+                </Link>
+              ) : (
+                <button
+                  aria-label={item.label}
+                  className="flex items-center justify-center transition-opacity duration-75"
+                  onClick={() => handleNavClick(item.id)}
+                  onMouseEnter={() => {}}
+                  onTouchStart={() => {}}
+                >
+                  {typeof item.icon === 'function' &&
+                    item.icon(isNavItemActive(item.id))}
+                </button>
+              )}
             </div>
           ))}
         </div>
