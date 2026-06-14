@@ -5,6 +5,9 @@ import type {
   ToolDefinition,
 } from '@/features/chat/types';
 
+// Primary: Mistral AI (EU-hosted, GDPR compliant)
+// Fallback: OpenRouter (US-hosted, multi-provider)
+const MISTRAL_BASE_URL = 'https://api.mistral.ai/v1';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 
 export interface ChatCompletionResult {
@@ -29,19 +32,38 @@ interface SendChatRequestOptions {
   timeout?: number;
 }
 
+function getLLMConfig() {
+  const mistralKey = process.env.MISTRAL_API_KEY;
+  if (mistralKey) {
+    return {
+      apiKey: mistralKey,
+      baseUrl: MISTRAL_BASE_URL,
+      model: process.env.MISTRAL_MODEL || 'mistral-small-latest',
+      provider: 'Mistral AI',
+    };
+  }
+
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  if (openRouterKey) {
+    return {
+      apiKey: openRouterKey,
+      baseUrl: OPENROUTER_BASE_URL,
+      model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct',
+      provider: 'OpenRouter',
+    };
+  }
+
+  throw new Error('No AI provider configured. Set MISTRAL_API_KEY or OPENROUTER_API_KEY.');
+}
+
 export async function sendChatRequest(
   messages: ChatMessage[],
   options?: SendChatRequestOptions,
 ): Promise<ChatCompletionResult> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENROUTER_API_KEY is not configured');
-  }
-
-  const model = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+  const config = getLLMConfig();
 
   const body: OpenRouterRequest = {
-    model,
+    model: config.model,
     messages,
     max_tokens: options?.max_tokens ?? 768,
     temperature: options?.temperature ?? 0.7,
@@ -56,26 +78,25 @@ export async function sendChatRequest(
   const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 30000);
 
   try {
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com',
-        'X-Title': 'UFlow Chatbot',
+        Authorization: `Bearer ${config.apiKey}`,
       },
       body: JSON.stringify(body),
       signal: controller.signal,
     });
 
     if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status}`);
+      const errorBody = await response.text().catch(() => '');
+      throw new Error(`${config.provider} API error ${response.status}: ${errorBody.slice(0, 200)}`);
     }
 
     const data: OpenRouterResponse = await response.json();
 
     if (!data.choices || data.choices.length === 0) {
-      throw new Error('OpenRouter returned empty response');
+      throw new Error(`${config.provider} returned empty response`);
     }
 
     return {

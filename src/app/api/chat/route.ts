@@ -323,7 +323,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const message =
       error instanceof Error ? error.message : 'Internal server error';
 
-    if (message.includes('OpenRouter API error') || message.includes('fetch')) {
+    if (message.includes('API error') || message.includes('fetch') || message.includes('No AI provider')) {
       return NextResponse.json(
         { error: 'Chat service is temporarily unavailable. Please try again later.' },
         { status: 503, headers: { 'X-Correlation-ID': ctx.correlationId } },
