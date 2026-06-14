@@ -198,9 +198,24 @@ export async function executeToolCall(
 
 
       const supabase = createSupabaseServerClient();
+      
+      // Resolve category name to UUID if needed
+      let categoryFilter = (args.category as string) || null;
+      if (categoryFilter && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryFilter)) {
+        const adminForCat = getSupabaseAdmin();
+        const { data: catData } = await adminForCat
+          .from('categories')
+          .select('category_id')
+          .ilike('name_de', `%${categoryFilter}%`)
+          .limit(1);
+        if (catData && catData.length > 0) {
+          categoryFilter = catData[0].category_id;
+        }
+      }
+
       const { data, error } = await supabase.rpc('search_providers_chat', {
         p_search_query: query as string,
-        p_category_filter: (args.category as string) || null,
+        p_category_filter: categoryFilter,
         p_city_filter: (args.city as string) || null,
         p_listing_type_filter: (args.listing_type as string) || null,
         p_muslim_owned: (args.muslim_owned as boolean) ?? null,
