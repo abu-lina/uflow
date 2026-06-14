@@ -13,6 +13,15 @@ interface ChatMessageProps {
   onOptionSelect?: (option: string) => void;
 }
 
+
+function renderContent(text: string): string {
+  // Simple markdown: **bold** → <strong>, *italic* → <em>
+  // Order matters: bold before italic to avoid conflicts
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+
 export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect }: ChatMessageProps) {
   const isUser = role === 'user';
   const isTool = role === 'tool';
@@ -45,7 +54,12 @@ export function ChatMessage({ role, content, isLoading = false, results, options
               : 'bg-gray-100 text-gray-900 rounded-bl-none'
         }`}
       >
-        {content && <p className="text-sm whitespace-pre-wrap">{content}</p>}
+        {content && (
+          <p
+            className="text-sm whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: renderContent(content) }}
+          />
+        )}
         {results && results.length > 0 && (
           <div className={content ? 'mt-2' : ''}>
             {results.map((provider) => (
