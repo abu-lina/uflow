@@ -50,11 +50,6 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
             type: 'boolean',
             description: 'Filter for women-friendly providers',
           },
-          halal_level: {
-            type: 'integer',
-            enum: [1, 2, 3],
-            description: 'Halal certification level: 1=fully certified, 2=partially, 3=self-declared',
-          },
           limit: {
             type: 'integer',
             description: 'Max results (default 5)',
@@ -156,11 +151,6 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           has_prayer_space: { type: 'boolean' },
           family_friendly: { type: 'boolean' },
           women_friendly: { type: 'boolean' },
-          halal_level: {
-            type: 'integer',
-            enum: [1, 2, 3],
-            description: 'For food listing_type only',
-          },
           no_alcohol: {
             type: 'boolean',
             description: 'For food listing_type only',
@@ -216,7 +206,6 @@ export async function executeToolCall(
         p_has_prayer_space: (args.has_prayer_space as boolean) ?? null,
         p_family_friendly: (args.family_friendly as boolean) ?? null,
         p_women_friendly: (args.women_friendly as boolean) ?? null,
-        p_halal_level_min: (args.halal_level as number) ?? null,
         p_limit_count: (args.limit as number) || 5,
       });
 

@@ -225,7 +225,6 @@ describe('Tool Executor', () => {
           p_has_prayer_space: null,
           p_family_friendly: null,
           p_women_friendly: null,
-          p_halal_level_min: null,
           p_limit_count: 5,
         });
         expect(parsed.results).toHaveLength(1);
@@ -328,7 +327,6 @@ describe('Tool Executor', () => {
           city: 'Berlin',
           phone: '+4930123456',
           muslim_owned: true,
-          halal_level: 1,
         };
 
         const result = mapChatArgsToFormData(args, 'user-123');
