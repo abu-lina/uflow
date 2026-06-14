@@ -22,7 +22,7 @@ const CHAT_HISTORY_LIMIT = parseInt(
   process.env.CHAT_HISTORY_LIMIT || '20',
   10,
 );
-const MAX_TOOL_CALLS = 5;
+const MAX_TOOL_CALLS = 2;
 
 export async function POST(request: Request): Promise<NextResponse> {
   const ctx = createRequestContext('/api/chat');
@@ -198,9 +198,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    // Single tool call round-trip — execute all tools, then ONE follow-up LLM call
-    // This avoids the slow multi-iteration while loop (up to 5 extra LLM calls)
-    if (toolCalls.length > 0 && toolCallCount < MAX_TOOL_CALLS) {
+    // Limited tool call loop (max 2 iterations) — handles search→details chaining
+    // 2 iterations covers: initial tools → follow-up → final response OR one more tool round
+    while (toolCalls.length > 0 && toolCallCount < MAX_TOOL_CALLS) {
       toolCallCount++;
 
       const toolMessages: ChatMessage[] = [];
@@ -244,7 +244,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         messages.push(toolMessages[toolMessages.length - 1]);
       }
 
-      // One follow-up call with tool results (no while loop — single round-trip only)
+      // Follow-up call with tool results — LLM may return more tools or final text
       llmResponse = await measureDependency(
         ctx,
         'openrouter.chat_completion_followup',
