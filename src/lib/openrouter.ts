@@ -43,7 +43,7 @@ export async function sendChatRequest(
   const body: OpenRouterRequest = {
     model,
     messages,
-    max_tokens: options?.max_tokens ?? 512,
+    max_tokens: options?.max_tokens ?? 768,
     temperature: options?.temperature ?? 0.7,
   };
 
@@ -53,7 +53,7 @@ export async function sendChatRequest(
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 15000);
+  const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 30000);
 
   try {
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
