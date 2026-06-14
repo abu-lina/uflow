@@ -363,7 +363,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         />
 
         {/* Delete Provider Section */}
-        <div className="mt-8 border-t border-neutral-200 pt-6">
+        <div className="mt-8 border-t border-neutral-200 pt-6 mb-[calc(5rem+env(safe-area-inset-bottom))]">
           <button
             aria-label="Delete provider permanently"
             className="w-full rounded-lg bg-danger px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-danger-dark"
