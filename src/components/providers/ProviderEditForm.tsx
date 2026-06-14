@@ -275,7 +275,7 @@ export function ProviderEditForm({
           zipCode: parsed.zipCode || prev.zipCode,
           city: parsed.city || prev.city,
           country: parsed.country || prev.country,
-          isOnlineBusiness: parsed.isOnlineBusiness ?? prev.isOnlineBusiness,
+          isOnlineBusiness: !(parsed.city || prev.city) && !(parsed.zipCode || prev.zipCode),
           showAddress: parsed.showAddress ?? prev.showAddress,
           website: parsed.website || prev.website,
           instagram: parsed.instagram || prev.instagram,
@@ -283,6 +283,10 @@ export function ProviderEditForm({
           phone: parsed.phone || prev.phone,
           reviewStatus: parsed.reviewStatus || prev.reviewStatus,
         }));
+        // Guard: if isOnlineBusiness contradicts populated address data, reset
+        if (parsed.isOnlineBusiness === true && (parsed.city || provider.address_city || parsed.zipCode || provider.address_zip)) {
+          setFormData(prev => ({ ...prev, isOnlineBusiness: false }));
+        }
       } catch { /* ignore */ }
     }
   }, [enableLocalStorage, localStoragePrefix, provider.provider_id]);
@@ -423,11 +427,11 @@ export function ProviderEditForm({
           provider_description: submitData.providerDescription || null,
           category_id: submitData.categoryId,
           // If online business, all address fields are null
-          address_street: submitData.isOnlineBusiness ? null : (submitData.street || null),
-          address_zip: submitData.isOnlineBusiness ? null : (submitData.zipCode || null),
-          address_city: submitData.isOnlineBusiness ? null : (submitData.city || null),
-          address_country: submitData.isOnlineBusiness ? null : (submitData.country || null),
-          show_address: submitData.isOnlineBusiness ? false : submitData.showAddress,
+          address_street: submitData.isOnlineBusiness && !submitData.street ? null : (submitData.street || null),
+          address_zip: submitData.isOnlineBusiness && !submitData.zipCode ? null : (submitData.zipCode || null),
+          address_city: submitData.isOnlineBusiness && !submitData.city ? null : (submitData.city || null),
+          address_country: submitData.isOnlineBusiness && !submitData.country ? null : (submitData.country || null),
+          show_address: submitData.isOnlineBusiness && !submitData.city ? false : submitData.showAddress,
           social_website: submitData.website || null,
           social_instagram: submitData.instagram,
           contact_email: submitData.email,
