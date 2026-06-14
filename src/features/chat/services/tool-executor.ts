@@ -14,7 +14,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     function: {
       name: 'search_providers',
       description:
-        'Search for restaurants, stores, and community services on UFlow. Use for exploration queries like "find halal restaurants in Berlin" or "find Muslim-friendly stores".',
+        'Search providers on UFlow. IMPORTANT: For cuisine searches ("afghanisch", "italienisch", "döner"), use the CATEGORY parameter (not query). For name searches ("Burger Hannes"), use query. For broad searches, leave query empty.',
       parameters: {
         type: 'object',
         properties: {
@@ -24,7 +24,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           },
           category: {
             type: 'string',
-            description: 'Category UUID filter (optional)',
+            description: 'Filter by cuisine/category — use the CATEGORY NAME like "Afghanisch", "Pakistanisch", "Döner". NOT a UUID — just the name. MUST use this for cuisine searches, not query.',
           },
           city: {
             type: 'string',
