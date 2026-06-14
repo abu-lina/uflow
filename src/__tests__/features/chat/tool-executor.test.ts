@@ -22,6 +22,10 @@ vi.mock('@/lib/supabase/server', () => ({
   createSupabaseServerClient: vi.fn(() => mockSupabase),
 }));
 
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: vi.fn(() => mockSupabase),
+}));
+
 // Also mock the client-side supabase for providerService
 vi.mock('@/lib/supabase/client', () => ({
   supabase: {
@@ -248,7 +252,7 @@ describe('Tool Executor', () => {
     });
 
     describe('register_provider', () => {
-      it('validates required fields', async () => {
+      it('validates required fields and creates provider', async () => {
         const toolCall: ToolCall = {
           id: 'call_7',
           type: 'function',
@@ -263,14 +267,12 @@ describe('Tool Executor', () => {
           },
         };
 
-        vi.mocked(checkCityExists).mockResolvedValue(true);
-
         const result = await executeToolCall(toolCall, 'user-123');
         const parsed = JSON.parse(result);
 
-        expect(checkCityExists).toHaveBeenCalledWith('Berlin');
         expect(parsed.success).toBe(true);
         expect(parsed.review_status).toBe('pending');
+        expect(parsed.provider_id).toBeDefined();
       });
 
       it('rejects invalid listing_type', async () => {
@@ -294,7 +296,15 @@ describe('Tool Executor', () => {
       });
 
       it('rejects registration when city does not exist', async () => {
-        vi.mocked(checkCityExists).mockResolvedValue(false);
+        // Mock the admin client to return empty for city lookup
+        const mockAdminForCity = {
+          from: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
+          ilike: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        };
+        const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
+        vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminForCity as any);
 
         const toolCall: ToolCall = {
           id: 'call_9',

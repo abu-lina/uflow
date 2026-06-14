@@ -3,6 +3,7 @@ import 'server-only';
 import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { getProviderById, fetchProviderCities, checkCityExists } from '@/services/providers';
 import { createProviderOrService } from '@/services/providerService';
 import type { ToolCall, ToolDefinition } from '@/features/chat/types';
@@ -284,18 +285,54 @@ export async function executeToolCall(
         throw new Error('city is required for registration');
       }
 
-      const cityExists = await checkCityExists(city);
-      if (!cityExists) {
+      // Use admin client for city check (bypasses RLS)
+      const adminSupabase = getSupabaseAdmin();
+      const { data: cityData } = await adminSupabase
+        .from('cities')
+        .select('city_name')
+        .ilike('city_name', city)
+        .limit(1);
+      if (!cityData || cityData.length === 0) {
         throw new Error(`City "${city}" not found`);
       }
 
       const { formData, user } = await mapChatArgsToFormData(args, userId);
 
-      const result = await createProviderOrService(formData, user, false);
+      // Use admin client for provider creation (bypasses RLS)
+      const adminForCreate = getSupabaseAdmin();
+      const providerId = crypto.randomUUID();
+      
+      const { error: createError } = await adminForCreate
+        .from('providers')
+        .insert({
+          provider_id: providerId,
+          listing_type: formData.entityType === 'provider' ? (formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7' ? 'ummah' : 'food') : 'store',
+          provider_name: formData.title,
+          provider_description: formData.description || null,
+          address_city: formData.city || null,
+          address_street: formData.street || null,
+          address_zip: formData.zip || null,
+          address_country: formData.country || 'DE',
+          category_id: formData.category || null,
+          contact_email: formData.email || null,
+          contact_phone: formData.phone || null,
+          social_website: formData.website || null,
+          show_address: formData.showAddress !== false,
+          review_status: 'pending',
+          user_created_id: userId,
+          muslim_owned: formData.tags?.includes('muslim') || false,
+          has_prayer_space: formData.tags?.includes('prayer') || false,
+          family_friendly: formData.tags?.includes('family_friendly') || false,
+          women_friendly: formData.tags?.includes('women_friendly') || false,
+        });
+
+      if (createError) {
+        throw new Error(`Registration failed: ${createError.message}`);
+      }
 
       return JSON.stringify({
         success: true,
-        provider_id: result.provider_id,
+        provider_id: providerId,
         review_status: 'pending',
       });
     }
@@ -327,7 +364,7 @@ export async function mapChatArgsToFormData(
   if (categoryId && !UUID_REGEX.test(categoryId)) {
     // Category is a name — resolve it via the categories table
     try {
-      const lookupSupabase = createSupabaseServerClient();
+      const lookupSupabase = getSupabaseAdmin();
       const { data: catData } = await lookupSupabase
         .from('categories')
         .select('category_id')
