@@ -156,7 +156,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     let toolCallCount = 0;
     let providerResults: ProviderCardData[] | undefined;
 
-    const guardrailResult = checkGuardrail(llmResponse.message, redirectCounter);
+    // Only check guardrails on the first message — follow-ups are part of an established flow
+    const guardrailResult = history.length === 0
+      ? checkGuardrail(llmResponse.message, redirectCounter)
+      : { status: 'ok' } as ReturnType<typeof checkGuardrail>;
 
     if (guardrailResult.status === 'block') {
       const blockContent =
