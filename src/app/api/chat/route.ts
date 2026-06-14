@@ -198,12 +198,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    // Limited tool call loop (max 2 iterations) — handles search→details chaining
-    // 2 iterations covers: initial tools → follow-up → final response OR one more tool round
-    while (toolCalls.length > 0 && toolCallCount < MAX_TOOL_CALLS) {
-      toolCallCount++;
+    // Execute tools once, then force text-only follow-up (no more tool calls)
 
-      const toolMessages: ChatMessage[] = [];
+    if (toolCalls.length > 0 && toolCallCount < MAX_TOOL_CALLS) {
+      toolCallCount++;
 
       for (const toolCall of toolCalls) {
         let toolResult: string;
@@ -218,12 +216,6 @@ export async function POST(request: Request): Promise<NextResponse> {
             error: error instanceof Error ? error.message : 'Tool execution failed',
           });
         }
-
-        toolMessages.push({
-          role: 'tool',
-          content: toolResult,
-          tool_call_id: toolCall.id,
-        });
 
         if (toolCall.function.name === 'search_providers') {
           try {
@@ -241,10 +233,14 @@ export async function POST(request: Request): Promise<NextResponse> {
           content: llmResponse.message.content || '',
           tool_calls: [toolCall],
         });
-        messages.push(toolMessages[toolMessages.length - 1]);
+        messages.push({
+          role: 'tool',
+          content: toolResult,
+          tool_call_id: toolCall.id,
+        });
       }
 
-      // Follow-up call with tool results — LLM may return more tools or final text
+      // Force a TEXT-ONLY follow-up — prevent LLM from calling tools again
       llmResponse = await measureDependency(
         ctx,
         'openrouter.chat_completion_followup',
@@ -252,8 +248,8 @@ export async function POST(request: Request): Promise<NextResponse> {
           sendChatRequest(
             messages,
             {
-              tools: TOOL_DEFINITIONS,
-              tool_choice: 'auto',
+              // No tools — force the LLM to generate a text answer from the results
+              max_tokens: 768,
             },
           ),
       );
