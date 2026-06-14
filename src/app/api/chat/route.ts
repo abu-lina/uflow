@@ -6,7 +6,7 @@ import {
 } from '@/lib/telemetry/perf-telemetry';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { sendChatRequest } from '@/lib/openrouter';
 import { executeToolCall, TOOL_DEFINITIONS } from '@/features/chat/services/tool-executor';
 import {
@@ -77,7 +77,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = getSupabaseAdmin();
 
     let existingRedirectCount = 0;
 
