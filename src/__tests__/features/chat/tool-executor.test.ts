@@ -315,6 +315,63 @@ describe('Tool Executor', () => {
           'City "FakeCity" not found',
         );
       });
+
+      it('[G3] maps chat args to typed registration form data', async () => {
+        const { mapChatArgsToFormData } = await import(
+          '@/features/chat/services/tool-executor'
+        );
+
+        const args = {
+          name: 'Test Restaurant',
+          listing_type: 'food',
+          category_id: 'cat-1',
+          city: 'Berlin',
+          phone: '+4930123456',
+          muslim_owned: true,
+          halal_level: 1,
+        };
+
+        const result = mapChatArgsToFormData(args, 'user-123');
+
+        expect(result.formData.title).toBe('Test Restaurant');
+        expect(result.formData.category).toBe('cat-1');
+        expect(result.formData.city).toBe('Berlin');
+        expect(result.formData.phone).toBe('+4930123456');
+        expect(result.formData.tags).toContain('muslim');
+        expect(result.formData.creationMode).toBe('owner');
+        expect(result.formData.entityType).toBe('provider');
+        expect(result.formData.isOnlineBusiness).toBe(false);
+        expect(result.formData.showAddress).toBe(true);
+        expect(result.formData.country).toBe('DE');
+        expect(result.user.id).toBe('user-123');
+      });
+
+      it('[G3] validates that formData has all required ProviderFormData fields', async () => {
+        const { mapChatArgsToFormData } = await import(
+          '@/features/chat/services/tool-executor'
+        );
+
+        const args = {
+          name: 'Minimal Store',
+          listing_type: 'store',
+          category_id: 'cat-2',
+          city: 'Köln',
+        };
+
+        const result = mapChatArgsToFormData(args, 'user-456');
+
+        const requiredFields = [
+          'creationMode', 'entityType', 'title', 'category', 'description',
+          'isOnlineBusiness', 'street', 'zip', 'city', 'country', 'showAddress',
+          'website', 'instagram', 'phone', 'email', 'offers_ids', 'needs_ids',
+          'images', 'selectedCommunityServiceIds', 'tags',
+          'socialCategory', 'socialTitle', 'socialDescription',
+        ] as const;
+
+        for (const field of requiredFields) {
+          expect(result.formData).toHaveProperty(field);
+        }
+      });
     });
   });
 });

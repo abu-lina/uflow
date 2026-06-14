@@ -7,6 +7,7 @@ export interface ChatMessage {
   content: string;
   tool_calls?: ToolCall[];
   tool_call_id?: string;
+  results?: ProviderCardData[];
 }
 
 export interface ToolCallFunction {

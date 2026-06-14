@@ -16,6 +16,7 @@ import {
 import { buildSystemPrompt } from '@/features/chat/prompts/system-prompt';
 import { MAX_MESSAGE_LENGTH } from '@/features/chat/types';
 import type { ChatMessage, ToolCall } from '@/features/chat/types';
+import type { ProviderCardData } from '@/features/chat/types';
 
 const CHAT_HISTORY_LIMIT = parseInt(
   process.env.CHAT_HISTORY_LIMIT || '20',
@@ -78,6 +79,8 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const supabase = createSupabaseServerClient();
 
+    let existingRedirectCount = 0;
+
     const conversationId = await measureDependency(
       ctx,
       'supabase.conversations.ensure',
@@ -85,12 +88,13 @@ export async function POST(request: Request): Promise<NextResponse> {
         if (body.conversation_id) {
           const { data: existing } = await supabase
             .from('conversations')
-            .select('id, user_id')
+            .select('id, user_id, redirect_count')
             .eq('id', body.conversation_id)
             .eq('user_id', user.id)
             .maybeSingle();
 
           if (existing) {
+            existingRedirectCount = existing.redirect_count ?? 0;
             return existing.id;
           }
         }
@@ -136,7 +140,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       { role: 'user', content: trimmedMessage },
     ];
 
-    const redirectCounter = createRedirectCounter();
+    const redirectCounter = createRedirectCounter(existingRedirectCount);
 
     let llmResponse = await measureDependency(
       ctx,
@@ -150,6 +154,49 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     let toolCalls = llmResponse.message.tool_calls || [];
     let toolCallCount = 0;
+    let providerResults: ProviderCardData[] | undefined;
+
+    const guardrailResult = checkGuardrail(llmResponse.message, redirectCounter);
+
+    if (guardrailResult.status === 'block') {
+      const blockContent =
+        'I can only help you find and register services on UFlow. Please ask me about restaurants, stores, or community services.';
+
+      await measureDependency(ctx, 'supabase.messages.save', async () => {
+        await supabase.from('messages').insert({
+          conversation_id: conversationId,
+          role: 'user',
+          content: trimmedMessage,
+          token_count: llmResponse.usage?.total_tokens || 0,
+        });
+
+        await supabase.from('messages').insert({
+          conversation_id: conversationId,
+          role: 'assistant',
+          content: blockContent,
+          token_count: llmResponse.usage?.total_tokens || 0,
+        });
+
+        await supabase
+          .from('conversations')
+          .update({
+            updated_at: new Date().toISOString(),
+            redirect_count: redirectCounter.count,
+          })
+          .eq('id', conversationId);
+      });
+
+      logRequestTiming(ctx);
+
+      return NextResponse.json(
+        {
+          conversation_id: conversationId,
+          message: { role: 'assistant', content: sanitizeOutput(blockContent) },
+          guardrail: 'block',
+        },
+        { headers: { 'X-Correlation-ID': ctx.correlationId } },
+      );
+    }
 
     while (toolCalls.length > 0 && toolCallCount < MAX_TOOL_CALLS) {
       toolCallCount++;
@@ -175,6 +222,17 @@ export async function POST(request: Request): Promise<NextResponse> {
           content: toolResult,
           tool_call_id: toolCall.id,
         });
+
+        if (toolCall.function.name === 'search_providers') {
+          try {
+            const parsed = JSON.parse(toolResult);
+            if (parsed.results && Array.isArray(parsed.results) && parsed.results.length > 0) {
+              providerResults = parsed.results;
+            }
+          } catch {
+            // Ignore parse errors from tool execution
+          }
+        }
 
         messages.push({
           role: 'assistant',
@@ -204,7 +262,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     const finalMessage = llmResponse.message;
-    const guardrailResult = checkGuardrail(finalMessage, redirectCounter);
 
     const totalTokens = llmResponse.usage?.total_tokens || 0;
 
@@ -228,7 +285,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
       await supabase
         .from('conversations')
-        .update({ updated_at: new Date().toISOString() })
+        .update({
+          updated_at: new Date().toISOString(),
+          redirect_count: redirectCounter.count,
+        })
         .eq('id', conversationId);
     });
 
@@ -243,12 +303,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       } as Record<string, unknown>,
     };
 
-    if (guardrailResult.status === 'block') {
-      responsePayload.guardrail = 'block';
-      (responsePayload.message as Record<string, unknown>).content = sanitizeOutput(
-        'I can only help you find and register services on UFlow. Please ask me about restaurants, stores, or community services.',
-      );
-    } else if (guardrailResult.status === 'redirect') {
+    if (providerResults) {
+      responsePayload.results = providerResults;
+    }
+
+    if (guardrailResult.status === 'redirect') {
       responsePayload.guardrail = 'redirect';
     }
 

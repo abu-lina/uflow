@@ -130,4 +130,61 @@ describe('useChat', () => {
 
     expect(result.current.error).toBeNull();
   });
+
+  it('[G1] captures results from API response and attaches to assistant message', async () => {
+    const mockResults = [
+      {
+        provider_id: 'p1',
+        provider_name: 'Döner Haus',
+        address_city: 'Berlin',
+        category_name: 'Türkisch',
+        listing_type: 'food',
+        muslim_owned: true,
+        has_prayer_space: false,
+        family_friendly: true,
+        women_friendly: false,
+      },
+    ];
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          conversation_id: 'conv-1',
+          message: { role: 'assistant', content: 'Ich habe folgende Restaurants gefunden:' },
+          results: mockResults,
+        }),
+    });
+
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.sendMessage('Finde Döner in Berlin');
+    });
+
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.messages[0].role).toBe('user');
+    expect(result.current.messages[1].role).toBe('assistant');
+    expect(result.current.messages[1].content).toBe('Ich habe folgende Restaurants gefunden:');
+    expect(result.current.messages[1].results).toEqual(mockResults);
+  });
+
+  it('[G1] handles API response without results gracefully', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          conversation_id: 'conv-1',
+          message: { role: 'assistant', content: 'Hallo!' },
+        }),
+    });
+
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.sendMessage('Hallo');
+    });
+
+    expect(result.current.messages[1].results).toBeUndefined();
+  });
 });

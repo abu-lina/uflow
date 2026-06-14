@@ -90,4 +90,39 @@ describe('ChatWidget', () => {
 
     expect(sendMessage).toHaveBeenCalledWith('Test message');
   });
+
+  it('[G1] renders ProviderCard when message has results', () => {
+    const mockResults = [
+      {
+        provider_id: 'p1',
+        provider_name: 'Döner Haus',
+        address_city: 'Berlin',
+        category_name: 'Türkisch',
+        listing_type: 'food',
+        muslim_owned: true,
+        has_prayer_space: false,
+        family_friendly: true,
+        women_friendly: false,
+      },
+    ];
+
+    mockUseChat.mockReturnValue(
+      mockChatState({
+        messages: [
+          { role: 'user', content: 'Finde Döner in Berlin' },
+          {
+            role: 'assistant',
+            content: 'Ich habe folgende Restaurants gefunden:',
+            results: mockResults,
+          },
+        ],
+      }),
+    );
+
+    render(<ChatWidget />);
+
+    expect(screen.getByText('Döner Haus')).toBeInTheDocument();
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
+    expect(screen.getByText('Muslim-geführt')).toBeInTheDocument();
+  });
 });

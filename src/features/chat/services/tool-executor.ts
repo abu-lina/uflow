@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { User } from '@supabase/supabase-js';
+import type { ProviderFormData } from '@/providers/form-provider';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getProviderById, fetchProviderCities, checkCityExists } from '@/services/providers';
 import { createProviderOrService } from '@/services/providerService';
@@ -298,29 +300,9 @@ export async function executeToolCall(
         throw new Error(`City "${city}" not found`);
       }
 
-      const result = await createProviderOrService(
-        {
-          title: args.name as string,
-          category: args.category_id as string,
-          city: city,
-          street: (args.street as string) || '',
-          zip: (args.zip as string) || '',
-          country: (args.country as string) || 'DE',
-          phone: (args.phone as string) || '',
-          email: (args.email as string) || '',
-          description: (args.description as string) || '',
-          website: (args.website as string) || '',
-          tags: buildTags(args),
-          images: [],
-          offers_ids: [],
-          needs_ids: [],
-          isOnlineBusiness: false,
-          showAddress: true,
-          creationMode: 'owner',
-        } as never,
-        { id: userId } as never,
-        false,
-      );
+      const { formData, user } = mapChatArgsToFormData(args, userId);
+
+      const result = await createProviderOrService(formData, user, false);
 
       return JSON.stringify({
         success: true,
@@ -342,4 +324,47 @@ function buildTags(args: Record<string, unknown>): string[] {
   if (args.family_friendly) tags.push('family_friendly');
   if (args.women_friendly) tags.push('women_friendly');
   return tags;
+}
+
+export function mapChatArgsToFormData(
+  args: Record<string, unknown>,
+  userId: string,
+): { formData: ProviderFormData; user: User } {
+  const tags = buildTags(args);
+
+  const formData: ProviderFormData = {
+    creationMode: 'owner',
+    entityType: 'provider',
+    title: (args.name as string) || '',
+    category: (args.category_id as string) || '',
+    description: (args.description as string) || '',
+    isOnlineBusiness: false,
+    street: (args.street as string) || '',
+    zip: (args.zip as string) || '',
+    city: (args.city as string) || '',
+    country: (args.country as string) || 'DE',
+    showAddress: true,
+    website: (args.website as string) || '',
+    instagram: '',
+    phone: (args.phone as string) || '',
+    email: (args.email as string) || '',
+    offers_ids: [],
+    needs_ids: [],
+    images: [],
+    selectedCommunityServiceIds: [],
+    tags,
+    socialCategory: '',
+    socialTitle: '',
+    socialDescription: '',
+  };
+
+  const user: User = {
+    id: userId,
+    aud: 'authenticated',
+    app_metadata: {},
+    user_metadata: {},
+    created_at: new Date().toISOString(),
+  };
+
+  return { formData, user };
 }

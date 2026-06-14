@@ -1,12 +1,16 @@
 'use client';
 
+import { ProviderCard } from '@/features/chat/components/ProviderCard';
+import type { ProviderCardData } from '@/features/chat/types';
+
 interface ChatMessageProps {
   role: 'user' | 'assistant' | 'tool' | 'system';
   content: string;
   isLoading?: boolean;
+  results?: ProviderCardData[];
 }
 
-export function ChatMessage({ role, content, isLoading = false }: ChatMessageProps) {
+export function ChatMessage({ role, content, isLoading = false, results }: ChatMessageProps) {
   const isUser = role === 'user';
   const isTool = role === 'tool';
 
@@ -38,7 +42,14 @@ export function ChatMessage({ role, content, isLoading = false }: ChatMessagePro
               : 'bg-gray-100 text-gray-900 rounded-bl-none'
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap">{content}</p>
+        {content && <p className="text-sm whitespace-pre-wrap">{content}</p>}
+        {results && results.length > 0 && (
+          <div className={content ? 'mt-2' : ''}>
+            {results.map((provider) => (
+              <ProviderCard key={provider.provider_id} provider={provider} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

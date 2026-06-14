@@ -11,8 +11,8 @@ export interface GuardrailResult {
 
 const MAX_CONSECUTIVE_REDIRECTS = 2;
 
-export function createRedirectCounter(): RedirectCounter {
-  return { count: 0 };
+export function createRedirectCounter(initialCount?: number): RedirectCounter {
+  return { count: initialCount ?? 0 };
 }
 
 /**

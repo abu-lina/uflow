@@ -103,6 +103,23 @@ describe('Guardrails — Function-Calling Gate', () => {
       expect(counter.count).toBe(0);
     });
 
+    it('[G2] creates a counter with persisted initial count', () => {
+      const counter = createRedirectCounter(1);
+      expect(counter.count).toBe(1);
+    });
+
+    it('[G2] persisted counter reaches block after one more redirect', () => {
+      const counter = createRedirectCounter(1);
+
+      const result = checkGuardrail(
+        { role: 'assistant', content: 'Das liegt außerhalb meines Bereichs.' },
+        counter,
+      );
+
+      expect(result.status).toBe('block');
+      expect(result.redirectCount).toBe(2);
+    });
+
     it('increments correctly', () => {
       const counter = createRedirectCounter();
       counter.count++;

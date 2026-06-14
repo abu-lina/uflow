@@ -51,6 +51,7 @@ export function ChatWidget() {
                 key={i}
                 role={msg.role}
                 content={msg.content}
+                results={msg.results}
               />
             ))}
             {isLoading && (
