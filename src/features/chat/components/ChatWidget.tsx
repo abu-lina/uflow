@@ -20,13 +20,13 @@ export function ChatWidget() {
       <div className="flex-1 overflow-y-auto p-4">
         {!hasMessages && (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 px-4">
-            <div className="w-16 h-16 mb-4 rounded-full bg-teal-100 flex items-center justify-center">
+            <div className="w-16 h-16 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
               <svg
                 width="28"
                 height="28"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#589D96"
+                stroke="currentColor" className="text-primary"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -77,7 +77,7 @@ export function ChatWidget() {
                 </p>
                 <a
                   href="/login"
-                  className="inline-block mt-3 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+                  className="inline-block mt-3 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
                 >
                   Jetzt anmelden
                 </a>

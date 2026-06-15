@@ -17,7 +17,7 @@ export function ProviderCard({ provider }: ProviderCardProps) {
   return (
     <Link
       href={`/providers/${provider.provider_id}`}
-      className="block p-3 bg-white rounded-xl border border-gray-200 hover:border-teal-300 hover:shadow-sm transition-all mb-2"
+      className="block p-3 bg-white rounded-xl border border-gray-200 hover:border-primary/40 hover:shadow-sm transition-all mb-2"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -40,7 +40,7 @@ export function ProviderCard({ provider }: ProviderCardProps) {
               {badges.map((badge) => (
                 <span
                   key={badge}
-                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-50 text-teal-700"
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary-dark"
                 >
                   {badge}
                 </span>

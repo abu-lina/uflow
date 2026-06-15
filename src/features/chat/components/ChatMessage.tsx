@@ -48,7 +48,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
       <div
         className={`px-4 py-3 rounded-2xl max-w-[80%] ${
           isUser
-            ? 'bg-teal-600 text-white rounded-br-none'
+            ? 'bg-primary text-white rounded-br-none'
             : isTool
               ? 'bg-gray-50 text-gray-500 text-xs italic rounded-bl-none'
               : 'bg-gray-100 text-gray-900 rounded-bl-none'

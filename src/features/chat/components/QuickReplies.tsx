@@ -17,7 +17,7 @@ export function QuickReplies({ options, onSelect, disabled }: QuickRepliesProps)
           type="button"
           onClick={() => onSelect(option)}
           disabled={disabled}
-          className="px-3 py-1.5 text-sm bg-teal-50 text-teal-700 border border-teal-200 rounded-full hover:bg-teal-100 hover:border-teal-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-sm bg-primary/10 text-primary-dark border border-primary/20 rounded-full hover:bg-primary/20 hover:border-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {option}
         </button>
