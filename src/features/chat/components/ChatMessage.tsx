@@ -14,15 +14,17 @@ interface ChatMessageProps {
   onOptionSelect?: (option: string) => void;
 }
 
+const bubbleStyles: Record<string, string> = {
+  user: 'bg-gray-100 text-neutral-800 rounded-2xl rounded-br-none px-4 py-3 max-w-[80%]',
+  tool: 'bg-gray-50 text-gray-500 text-xs italic rounded-2xl rounded-bl-none px-4 py-3 max-w-[80%]',
+  assistant: 'text-neutral-800 w-full',
+};
 
 export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect }: ChatMessageProps) {
-  const isUser = role === 'user';
-  const isTool = role === 'tool';
-
   if (isLoading && role === 'assistant') {
     return (
-      <div data-role="assistant" className="flex justify-start mb-4">
-        <div className="bg-gray-100 rounded-2xl rounded-bl-none px-4 py-3 max-w-[80%]">
+      <div data-role="assistant" className="flex mb-4 px-4">
+        <div className="bg-gray-100 rounded-2xl rounded-bl-none px-4 py-3">
           <div data-testid="typing-indicator" className="flex gap-1">
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -33,20 +35,12 @@ export function ChatMessage({ role, content, isLoading = false, results, options
     );
   }
 
+  const isUser = role === 'user';
+  const bubbleClass = bubbleStyles[role] || bubbleStyles.assistant;
+
   return (
-    <div
-      data-role={role}
-      className={`flex mb-4 ${isUser ? 'justify-end pr-4' : 'justify-start'}`}
-    >
-      <div
-        className={`${
-          isUser
-            ? 'bg-gray-100 text-neutral-800 rounded-2xl rounded-br-none px-4 py-3 max-w-[80%]'
-            : isTool
-              ? 'bg-gray-50 text-gray-500 text-xs italic rounded-2xl rounded-bl-none px-4 py-3 max-w-[80%]'
-              : 'text-neutral-800 px-6'
-        }`}
-      >
+    <div data-role={role} className={`flex mb-4 px-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={bubbleClass}>
         {content && (
           <div className="text-sm leading-snug space-y-1">
             <ReactMarkdown>{content}</ReactMarkdown>
