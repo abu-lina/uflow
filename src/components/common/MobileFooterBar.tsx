@@ -83,7 +83,7 @@ export function MobileFooterBar() {
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
+        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-10">
           {navItems.map((item) => (
             <div
               key={item.href}
