@@ -88,8 +88,12 @@ export async function sendChatRequest(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 30000);
 
-  try {
-    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+  let lastError: Error | null = null;
+  const maxRetries = 2;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(`${config.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -99,23 +103,34 @@ export async function sendChatRequest(
       signal: controller.signal,
     });
 
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => '');
-      throw new Error(`${config.provider} API error ${response.status}: ${errorBody.slice(0, 200)}`);
+      if (response.status === 429 && attempt < maxRetries) {
+        // Rate limited — wait and retry with exponential backoff
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        lastError = new Error(`${config.provider} rate limited, retrying...`);
+        continue;
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => '');
+        throw new Error(`${config.provider} API error ${response.status}: ${errorBody.slice(0, 200)}`);
+      }
+
+      const data: OpenRouterResponse = await response.json();
+
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error(`${config.provider} returned empty response`);
+      }
+
+      return {
+        id: data.id,
+        message: data.choices[0].message,
+        usage: data.usage,
+      };
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data: OpenRouterResponse = await response.json();
-
-    if (!data.choices || data.choices.length === 0) {
-      throw new Error(`${config.provider} returned empty response`);
-    }
-
-    return {
-      id: data.id,
-      message: data.choices[0].message,
-      usage: data.usage,
-    };
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw lastError || new Error(`${config.provider} request failed after ${maxRetries + 1} attempts`);
 }
