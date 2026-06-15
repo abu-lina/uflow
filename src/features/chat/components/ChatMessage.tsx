@@ -15,7 +15,7 @@ interface ChatMessageProps {
 }
 
 const bubbleStyles: Record<string, string> = {
-  user: 'bg-gray-100 text-neutral-800 rounded-2xl rounded-br-none px-4 py-3 max-w-[80%]',
+  user: 'bg-gray-200 text-neutral-800 rounded-2xl rounded-br-none px-4 py-3 max-w-[80%]',
   tool: 'bg-gray-50 text-gray-500 text-xs italic rounded-2xl rounded-bl-none px-4 py-3 max-w-[80%]',
   assistant: 'text-neutral-800 w-full',
 };
