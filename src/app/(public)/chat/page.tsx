@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import { ChatWidget } from '@/features/chat/components/ChatWidget';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -16,17 +16,27 @@ export default function ChatPage() {
       <header
         className="fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2"
         style={{
+          transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
           background: 'white',
+          backdropFilter: 'none',
           borderBottom: '1px solid #f3f4f6',
+          isolation: 'isolate',
+          marginLeft: '-1px',
+          marginRight: '-1px',
+          paddingLeft: '1px',
+          paddingRight: '1px',
         }}
       >
         <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
           <button
             onClick={() => router.back()}
             aria-label="Zurück"
-            className="mr-3 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center justify-center w-8 h-8 -ml-1"
           >
-            <ArrowLeft size={20} className="text-content-heading" />
+            <Icon
+              icon="material-symbols:chevron-left"
+              className="w-8 h-8 text-content-heading pointer-events-none"
+            />
           </button>
           <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
             Chat
