@@ -52,7 +52,7 @@ export function ChatInput({ onSend, isLoading = false }: ChatInputProps) {
         placeholder="Nachricht schreiben..."
         disabled={isLoading}
         rows={1}
-        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-white"
         aria-label="Chat message input"
       />
       <button
