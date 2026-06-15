@@ -91,7 +91,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
     ? 'none'
     : forceMobileFooter
       ? 'footer'
-    : isDiscoveryHome || isProvidersDiscovery
+    : isDiscoveryHome || isProvidersDiscovery || pathname === '/saved' || pathname === '/profile' || pathname === '/chat'
       ? 'footer'
     : showMobileFooter
       ? 'footer'
