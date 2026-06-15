@@ -25,6 +25,19 @@ const CHAT_HISTORY_LIMIT = parseInt(
 const MAX_TOOL_CALLS = 2;
 
 
+// Simple in-memory throttle: enforce min 1.5s between requests per user (free tier: 1 RPS)
+const userThrottle = new Map<string, number>();
+const MIN_REQUEST_GAP_MS = 1500;
+
+async function throttleRequest(userId: string): Promise<void> {
+  const lastRequest = userThrottle.get(userId) || 0;
+  const elapsed = Date.now() - lastRequest;
+  if (elapsed < MIN_REQUEST_GAP_MS) {
+    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_GAP_MS - elapsed));
+  }
+  userThrottle.set(userId, Date.now());
+}
+
 function extractOptions(content: string): string[] | undefined {
   if (!content) return undefined;
   
@@ -105,6 +118,9 @@ export async function POST(request: Request): Promise<NextResponse> {
         { status: 400, headers: { 'X-Correlation-ID': ctx.correlationId } },
       );
     }
+
+    // Throttle to respect free tier rate limit
+    await throttleRequest(user.id);
 
     const supabase = getSupabaseAdmin();
 
