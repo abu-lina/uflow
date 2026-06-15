@@ -36,7 +36,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
   return (
     <div
       data-role={role}
-      className={`flex mb-4 ${isUser ? 'justify-end' : 'justify-start'}`}
+      className={`flex mb-4 ${isUser ? 'justify-end pr-4' : 'justify-start'}`}
     >
       <div
         className={`${
