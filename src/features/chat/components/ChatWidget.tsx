@@ -5,7 +5,7 @@ import { useChat } from '@/features/chat/hooks/useChat';
 import { ChatMessage } from '@/features/chat/components/ChatMessage';
 import { ChatInput } from '@/features/chat/components/ChatInput';
 
-export function ChatWidget() {
+export function ChatWidget({ userName }: { userName?: string }) {
   const { messages, isLoading, error, sendMessage } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -35,11 +35,10 @@ export function ChatWidget() {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-700 mb-1">
-              UFlow Assistant
+              As-Salamu-Aleikum{userName ? ` ${userName}` : ''}
             </h3>
             <p className="text-sm max-w-[280px]">
-              Ich helfe dir, Restaurants, Geschäfte und Community-Dienste zu
-              finden oder zu registrieren. Wie kann ich dir helfen?
+              Wie kann ich dir helfen?
             </p>
           </div>
         )}

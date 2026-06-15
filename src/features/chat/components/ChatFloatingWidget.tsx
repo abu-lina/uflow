@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import { ChatWidget } from '@/features/chat/components/ChatWidget';
 import { MessageCircle } from 'lucide-react';
+import { useAuth } from '@/providers/auth-provider';
 
 export function ChatFloatingWidget() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const userName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0];
 
   return (
     <>
@@ -47,7 +50,7 @@ export function ChatFloatingWidget() {
               </button>
             </div>
             <div className="flex-1 overflow-hidden">
-              <ChatWidget />
+              <ChatWidget userName={userName} />
             </div>
           </div>
         </>

@@ -29,9 +29,9 @@ describe('ChatWidget', () => {
 
     render(<ChatWidget />);
 
-    expect(screen.getByText(/UFlow Assistant/i)).toBeInTheDocument();
+    expect(screen.getByText(/As-Salamu-Aleikum/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Restaurants, Geschäfte/i),
+      screen.getByText(/Wie kann ich dir helfen/i),
     ).toBeInTheDocument();
   });
 
