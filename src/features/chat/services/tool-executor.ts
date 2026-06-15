@@ -405,9 +405,13 @@ export async function mapChatArgsToFormData(
         .limit(1);
       if (catData && catData.length > 0) {
         categoryId = catData[0].category_id;
+      } else {
+        // Category not found — throw clear error so LLM can suggest alternatives
+        throw new Error(`Kategorie "${categoryId}" existiert nicht. Bitte wähle eine gültige Kategorie aus der Liste.`);
       }
-    } catch {
-      // Keep as-is if lookup fails
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith('Kategorie')) throw e;
+      // Keep as-is if lookup fails for other reasons
     }
   }
 

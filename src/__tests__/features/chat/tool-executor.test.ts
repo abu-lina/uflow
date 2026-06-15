@@ -164,8 +164,8 @@ describe('Tool Executor', () => {
     describe('get_categories', () => {
       it('queries categories table', async () => {
         const mockCategories = [
-          { category_id: 'cat-1', name_de: 'Türkisch' },
-          { category_id: 'cat-2', name_de: 'Arabisch' },
+          { category_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', name_de: 'Türkisch' },
+          { category_id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901', name_de: 'Arabisch' },
         ];
 
         mockSupabase.maybeSingle.mockResolvedValue({ data: null, error: null });
@@ -222,7 +222,7 @@ describe('Tool Executor', () => {
 
         expect(mockRpcSearch).toHaveBeenCalledWith('search_providers_chat', {
           p_search_query: '',
-          p_category_filter: "cat-1",
+          p_category_filter: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
           p_city_filter: 'Berlin',
           p_listing_type_filter: 'food',
           p_muslim_owned: null,
@@ -261,7 +261,7 @@ describe('Tool Executor', () => {
             arguments: JSON.stringify({
               name: 'Test Restaurant',
               listing_type: 'food',
-              category_id: 'cat-1',
+              category_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
               city: 'Berlin',
             }),
           },
@@ -284,7 +284,7 @@ describe('Tool Executor', () => {
             arguments: JSON.stringify({
               name: 'Test',
               listing_type: 'invalid',
-              category_id: 'cat-1',
+              category_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
               city: 'Berlin',
             }),
           },
@@ -314,7 +314,7 @@ describe('Tool Executor', () => {
             arguments: JSON.stringify({
               name: 'Test',
               listing_type: 'food',
-              category_id: 'cat-1',
+              category_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
               city: 'FakeCity',
             }),
           },
@@ -333,7 +333,7 @@ describe('Tool Executor', () => {
         const args = {
           name: 'Test Restaurant',
           listing_type: 'food',
-          category_id: 'cat-1',
+          category_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
           city: 'Berlin',
           phone: '+4930123456',
           muslim_owned: true,
@@ -342,7 +342,7 @@ describe('Tool Executor', () => {
         const result = await mapChatArgsToFormData(args, 'user-123');
 
         expect(result.formData.title).toBe('Test Restaurant');
-        expect(result.formData.category).toBe('cat-1');
+        expect(result.formData.category).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
         expect(result.formData.city).toBe('Berlin');
         expect(result.formData.phone).toBe('+4930123456');
         expect(result.formData.tags).toContain('muslim');
@@ -362,7 +362,7 @@ describe('Tool Executor', () => {
         const args = {
           name: 'Minimal Store',
           listing_type: 'store',
-          category_id: 'cat-2',
+          category_id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
           city: 'Köln',
         };
 
