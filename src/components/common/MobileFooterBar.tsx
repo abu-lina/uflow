@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
-import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { useAuth } from '@/providers/auth-provider';
@@ -17,12 +16,6 @@ const navItems = [
     label: 'Home',
     href: '/',
     icon: (isActive: boolean) => <ExploreIcon isActive={isActive} />,
-    noFrame: true,
-  },
-  {
-    label: 'Create',
-    href: '/create',
-    icon: (isActive: boolean) => <CreateIcon isActive={isActive} />,
     noFrame: true,
   },
   {
@@ -133,8 +126,6 @@ export function MobileFooterBar() {
                       ? pathname.startsWith('/profile') ||
                           pathname === '/login' ||
                           pathname === '/signup'
-                      : item.href === '/create'
-                        ? pathname.startsWith('/create') || pathname === '/create'
                         : item.href === '/'
                           ? isExploreActive
                           : pathname === item.href,
