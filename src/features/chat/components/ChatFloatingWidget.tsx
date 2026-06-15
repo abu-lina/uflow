@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChatWidget } from '@/features/chat/components/ChatWidget';
 import { MessageCircle } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
 
 export function ChatFloatingWidget() {
+  const router = useRouter();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const userName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0];
@@ -16,7 +18,7 @@ export function ChatFloatingWidget() {
       <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50">
         {!isOpen && (
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => { if (window.innerWidth < 768) { router.push('/chat'); } else { setIsOpen(true); } }}
             aria-label="Chat öffnen"
             className="w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark hover:shadow-xl transition-all flex items-center justify-center"
           >
