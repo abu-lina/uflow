@@ -85,13 +85,6 @@ export async function sendChatRequest(
     body.tool_choice = options.tool_choice ?? 'auto';
   }
 
-  // Global throttle: enforce 1 RPS across ALL calls (free tier limit)
-  const globalThrottle = (globalThis as Record<string, unknown>).__mistralThrottle as number || 0;
-  const elapsed = Date.now() - globalThrottle;
-  if (elapsed < 2000) {
-    console.log(`[Mistral Throttle] Waiting ${2000 - elapsed}ms (last call ${elapsed}ms ago)`);
-    await new Promise(resolve => setTimeout(resolve, 2000 - elapsed));
-  }
   let lastError: Error | null = null;
   const maxRetries = 2;
 
@@ -139,8 +132,6 @@ export async function sendChatRequest(
       };
     } finally {
       clearTimeout(timeout);
-      // Record completion time for next throttle check
-      (globalThis as Record<string, unknown>).__mistralThrottle = Date.now();
     }
   }
 
