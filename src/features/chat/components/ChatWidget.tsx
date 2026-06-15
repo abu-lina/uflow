@@ -26,7 +26,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
               <span className="text-[#60606F] text-base font-medium leading-snug">
                 As-Salamu-Aleikum{userName ? ` ${userName}` : ''},
               </span>
-              <span className="text-primary text-2xl font-semibold leading-snug">
+              <span className="text-primary text-xl font-semibold leading-snug">
                 Wie kann ich dir helfen?
               </span>
             </div>
