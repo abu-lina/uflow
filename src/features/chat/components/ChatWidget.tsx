@@ -32,7 +32,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
             </div>
 
             {/* Suggestion cards */}
-            <div className="flex flex-col gap-4 bg-white rounded-xl">
+            <div className="flex flex-col gap-4 bg-white rounded-xl p-4">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <span className="font-inter-tight text-lg font-semibold text-text-primary">
