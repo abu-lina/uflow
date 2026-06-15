@@ -272,7 +272,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         });
       }
 
-      // Force a TEXT-ONLY follow-up — prevent LLM from calling tools again
+      // TEXT-ONLY follow-up using Small model (higher free tier limits)
+      // Large model is only needed for the initial tool-calling decision
       llmResponse = await measureDependency(
         ctx,
         'openrouter.chat_completion_followup',
@@ -280,9 +281,10 @@ export async function POST(request: Request): Promise<NextResponse> {
           sendChatRequest(
             messages,
             {
-              // No tools — force the LLM to generate a text answer from the results
               max_tokens: 768,
+              // Override to Small for simple text generation
             },
+            'mistral-small-latest',
           ),
       );
     }

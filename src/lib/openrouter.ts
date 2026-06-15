@@ -59,6 +59,7 @@ function getLLMConfig() {
 export async function sendChatRequest(
   messages: ChatMessage[],
   options?: SendChatRequestOptions,
+  forceModel?: string,
 ): Promise<ChatCompletionResult> {
   const config = getLLMConfig();
 
@@ -74,7 +75,7 @@ export async function sendChatRequest(
   });
 
   const body: OpenRouterRequest = {
-    model: config.model,
+    model: forceModel || config.model,
     messages: sanitizedMessages as unknown as ChatMessage[],
     max_tokens: options?.max_tokens ?? 768,
     temperature: options?.temperature ?? 0.7,
