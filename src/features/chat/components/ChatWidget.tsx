@@ -82,7 +82,7 @@ export function ChatWidget() {
                   Jetzt anmelden
                 </a>
               </>
-            ) : error.includes('unavailable') || error.includes('temporarily') ? (
+            ) : error.includes('unavailable') || error.includes('temporarily') || error.includes('rate limited') || error.includes('429') ? (
               <>
                 <p className="font-medium">Der Dienst ist kurzzeitig nicht erreichbar</p>
                 <p className="mt-1">

@@ -86,7 +86,7 @@ export async function sendChatRequest(
   }
 
   let lastError: Error | null = null;
-  const maxRetries = 3;
+  const maxRetries = 5;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
