@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import { ChatWidget } from '@/features/chat/components/ChatWidget';
+import { MessageCircle } from 'lucide-react';
 
 export function ChatFloatingWidget() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="hidden md:block fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50">
       {isOpen ? (
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden" style={{ width: '400px', height: '600px', maxHeight: 'calc(100vh - 100px)' }}>
+        // Full-screen on mobile, floating panel on desktop
+        <div className="fixed inset-0 md:inset-auto md:bottom-20 md:right-4 z-50 bg-white md:rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden md:w-[400px] md:h-[600px] md:max-h-[calc(100vh-100px)]">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-teal-600 text-white">
             <h3 className="font-semibold text-sm">UFlow Assistant</h3>
             <button
@@ -33,18 +35,7 @@ export function ChatFloatingWidget() {
           aria-label="Chat öffnen"
           className="w-14 h-14 rounded-full bg-teal-600 text-white shadow-lg hover:bg-teal-700 hover:shadow-xl transition-all flex items-center justify-center"
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
+          <MessageCircle size={24} strokeWidth={2} />
         </button>
       )}
     </div>
