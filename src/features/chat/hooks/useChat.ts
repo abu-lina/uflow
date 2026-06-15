@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { ChatMessage } from '@/features/chat/types';
 
 interface UseChatReturn {
@@ -12,6 +12,7 @@ interface UseChatReturn {
 }
 
 export function useChat(): UseChatReturn {
+  const sendingRef = useRef(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +20,8 @@ export function useChat(): UseChatReturn {
 
   const sendMessage = useCallback(
     async (content: string) => {
+      if (sendingRef.current || isLoading) return;
+      sendingRef.current = true;
       setError(null);
       setIsLoading(true);
 
@@ -60,6 +63,7 @@ export function useChat(): UseChatReturn {
         setError(message);
       } finally {
         setIsLoading(false);
+        sendingRef.current = false;
       }
     },
     [conversationId],
