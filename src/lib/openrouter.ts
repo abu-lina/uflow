@@ -85,13 +85,12 @@ export async function sendChatRequest(
     body.tool_choice = options.tool_choice ?? 'auto';
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 30000);
-
   let lastError: Error | null = null;
   const maxRetries = 2;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 30000);
     try {
       const response = await fetch(`${config.baseUrl}/chat/completions`, {
       method: 'POST',
