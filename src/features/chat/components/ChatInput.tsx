@@ -61,7 +61,7 @@ export function ChatInput({ onSend, isLoading = false }: ChatInputProps) {
         className="inline-flex items-center justify-center font-inter-tight text-base font-medium transition-all duration-150 ease-out disabled:opacity-50 active:scale-[0.98] bg-primary text-white hover:bg-primary-dark active:bg-primary-darker h-12 px-4 rounded-xl gap-2 shadow-[0_8px_24px_rgba(88,157,150,0.25)]"
         aria-label="Send message"
       >
-        <ArrowUp size={18} strokeWidth={2.5} />
+        <ArrowUp size={22} strokeWidth={2.5} />
       </button>
     </div>
   );
