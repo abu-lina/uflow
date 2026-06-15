@@ -18,7 +18,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto">
         {!hasMessages && (
           <div className="flex flex-col h-full px-5 pt-8 pb-8 gap-8 overflow-y-auto">
             {/* Greeting */}
@@ -32,7 +32,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
             </div>
 
             {/* Suggestion cards */}
-            <div className="flex flex-col gap-4 bg-white rounded-xl p-4">
+            <div className="flex flex-col gap-4 bg-white rounded-xl">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <span className="text-lg font-semibold text-neutral-800">
