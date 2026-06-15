@@ -17,7 +17,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto">
         {!hasMessages && (
           <div className="flex flex-col h-full px-5 pt-8 pb-8 gap-8 overflow-y-auto">
