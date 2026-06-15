@@ -12,20 +12,30 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-white">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white">
-        <button
-          onClick={() => router.back()}
-          aria-label="Zurück"
-          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <ArrowLeft size={20} className="text-neutral-800" />
-        </button>
-        <h1 className="text-lg font-semibold text-neutral-800">Chat</h1>
-      </div>
+      {/* Header — matching profile page style */}
+      <header
+        className="fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2"
+        style={{
+          background: 'white',
+          borderBottom: '1px solid #f3f4f6',
+        }}
+      >
+        <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
+          <button
+            onClick={() => router.back()}
+            aria-label="Zurück"
+            className="mr-3 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft size={20} className="text-content-heading" />
+          </button>
+          <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
+            Chat
+          </h1>
+        </div>
+      </header>
 
-      {/* Chat content */}
-      <div className="flex-1 overflow-hidden">
+      {/* Chat content — offset for fixed header */}
+      <div className="flex-1 overflow-hidden mt-[calc(env(safe-area-inset-top)+16px+56px)] sm:mt-[calc(env(safe-area-inset-top)+24px+56px)]">
         <ChatWidget userName={userName} />
       </div>
     </div>
