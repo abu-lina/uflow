@@ -23,7 +23,7 @@ const bubbleStyles: Record<string, string> = {
 export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect }: ChatMessageProps) {
   if (isLoading && role === 'assistant') {
     return (
-      <div data-role="assistant" className="flex mb-4 px-4">
+      <div data-role="assistant" className="flex mb-4 px-6">
         <div className="bg-gray-100 rounded-2xl rounded-bl-none px-4 py-3">
           <div data-testid="typing-indicator" className="flex gap-1">
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -39,7 +39,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
   const bubbleClass = bubbleStyles[role] || bubbleStyles.assistant;
 
   return (
-    <div data-role={role} className={`flex mb-4 px-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div data-role={role} className={`flex mb-4 px-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={bubbleClass}>
         {content && (
           <div className="text-sm leading-snug space-y-1">
