@@ -48,7 +48,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
         }`}
       >
         {content && (
-          <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none prose-p:my-0.5 prose-li:my-0">
+          <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none prose-p:my-0.5 prose-li:my-0 prose-ul:my-0.5">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         )}
