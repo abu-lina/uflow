@@ -91,8 +91,6 @@ export async function sendChatRequest(
   if (elapsed < 1200) {
     await new Promise(resolve => setTimeout(resolve, 1200 - elapsed));
   }
-  (globalThis as Record<string, unknown>).__mistralThrottle = Date.now();
-
   let lastError: Error | null = null;
   const maxRetries = 2;
 
@@ -136,6 +134,8 @@ export async function sendChatRequest(
       };
     } finally {
       clearTimeout(timeout);
+      // Record completion time for next throttle check
+      (globalThis as Record<string, unknown>).__mistralThrottle = Date.now();
     }
   }
 
