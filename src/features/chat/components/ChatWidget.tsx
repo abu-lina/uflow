@@ -68,9 +68,33 @@ export function ChatWidget() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mt-4">
-            <p className="font-medium">Entschuldigung, ein Fehler ist aufgetreten.</p>
-            <p className="text-red-600 mt-1">{error}</p>
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm mt-4">
+            {error.includes('Authentication required') || error.includes('authentifizieren') ? (
+              <>
+                <p className="font-medium">Anmeldung erforderlich</p>
+                <p className="mt-1">
+                  Um ein Restaurant zu registrieren, musst du angemeldet sein.
+                </p>
+                <a
+                  href="/login"
+                  className="inline-block mt-3 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+                >
+                  Jetzt anmelden
+                </a>
+              </>
+            ) : error.includes('unavailable') || error.includes('temporarily') ? (
+              <>
+                <p className="font-medium">Der Dienst ist kurzzeitig nicht erreichbar</p>
+                <p className="mt-1">
+                  Bitte versuche es in ein paar Sekunden erneut. Der Chatbot versucht es automatisch.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">Entschuldigung, ein Fehler ist aufgetreten.</p>
+                <p className="text-amber-700 mt-1">{error}</p>
+              </>
+            )}
           </div>
         )}
       </div>
