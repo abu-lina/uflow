@@ -88,8 +88,9 @@ export async function sendChatRequest(
   // Global throttle: enforce 1 RPS across ALL calls (free tier limit)
   const globalThrottle = (globalThis as Record<string, unknown>).__mistralThrottle as number || 0;
   const elapsed = Date.now() - globalThrottle;
-  if (elapsed < 1200) {
-    await new Promise(resolve => setTimeout(resolve, 1200 - elapsed));
+  if (elapsed < 2000) {
+    console.log(`[Mistral Throttle] Waiting ${2000 - elapsed}ms (last call ${elapsed}ms ago)`);
+    await new Promise(resolve => setTimeout(resolve, 2000 - elapsed));
   }
   let lastError: Error | null = null;
   const maxRetries = 2;
@@ -109,8 +110,12 @@ export async function sendChatRequest(
     });
 
       if (response.status === 429 && attempt < maxRetries) {
-        // Rate limited — wait and retry with exponential backoff
-        const delay = Math.pow(2, attempt) * 1000;
+        // Rate limited — use Retry-After header or exponential backoff
+        const retryAfter = response.headers.get('retry-after');
+        const delay = retryAfter 
+          ? parseInt(retryAfter, 10) * 1000 
+          : Math.pow(2, attempt + 1) * 1000;  // 2s, 4s, 8s
+        console.log(`[Mistral] Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, delay));
         lastError = new Error(`${config.provider} rate limited, retrying...`);
         continue;
