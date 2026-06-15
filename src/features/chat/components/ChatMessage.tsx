@@ -44,7 +44,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
             ? 'bg-gray-100 text-neutral-800 rounded-2xl rounded-br-none px-4 py-3 max-w-[80%]'
             : isTool
               ? 'bg-gray-50 text-gray-500 text-xs italic rounded-2xl rounded-bl-none px-4 py-3 max-w-[80%]'
-              : 'text-neutral-800 max-w-full px-6'
+              : 'text-neutral-800'
         }`}
       >
         {content && (
