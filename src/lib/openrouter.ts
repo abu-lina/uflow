@@ -85,6 +85,14 @@ export async function sendChatRequest(
     body.tool_choice = options.tool_choice ?? 'auto';
   }
 
+  // Global throttle: enforce 1 RPS across ALL calls (free tier limit)
+  const globalThrottle = (globalThis as Record<string, unknown>).__mistralThrottle as number || 0;
+  const elapsed = Date.now() - globalThrottle;
+  if (elapsed < 1200) {
+    await new Promise(resolve => setTimeout(resolve, 1200 - elapsed));
+  }
+  (globalThis as Record<string, unknown>).__mistralThrottle = Date.now();
+
   let lastError: Error | null = null;
   const maxRetries = 2;
 
