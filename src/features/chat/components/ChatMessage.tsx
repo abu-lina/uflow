@@ -1,5 +1,6 @@
 'use client';
 
+import ReactMarkdown from 'react-markdown';
 import { ProviderCard } from '@/features/chat/components/ProviderCard';
 import { QuickReplies } from '@/features/chat/components/QuickReplies';
 import type { ProviderCardData } from '@/features/chat/types';
@@ -13,14 +14,6 @@ interface ChatMessageProps {
   onOptionSelect?: (option: string) => void;
 }
 
-
-function renderContent(text: string): string {
-  // Simple markdown: **bold** → <strong>, *italic* → <em>
-  // Order matters: bold before italic to avoid conflicts
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>');
-}
 
 export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect }: ChatMessageProps) {
   const isUser = role === 'user';
@@ -55,10 +48,9 @@ export function ChatMessage({ role, content, isLoading = false, results, options
         }`}
       >
         {content && (
-          <p
-            className="text-sm whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: renderContent(content) }}
-          />
+          <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
         )}
         {results && results.length > 0 && (
           <div className={content ? 'mt-2' : ''}>
