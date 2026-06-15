@@ -46,12 +46,12 @@ export function ChatMessage({ role, content, isLoading = false, results, options
       className={`flex mb-4 ${isUser ? 'justify-end' : 'justify-start'}`}
     >
       <div
-        className={`px-4 py-3 rounded-2xl max-w-[80%] ${
+        className={`${
           isUser
-            ? 'bg-primary text-white rounded-br-none'
+            ? 'bg-primary text-white rounded-2xl rounded-br-none px-4 py-3 max-w-[80%]'
             : isTool
-              ? 'bg-gray-50 text-gray-500 text-xs italic rounded-bl-none'
-              : 'bg-gray-100 text-gray-900 rounded-bl-none'
+              ? 'bg-gray-50 text-gray-500 text-xs italic rounded-2xl rounded-bl-none px-4 py-3 max-w-[80%]'
+              : 'text-neutral-800 max-w-full'
         }`}
       >
         {content && (
