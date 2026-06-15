@@ -19,7 +19,7 @@ export default function ChatPage() {
           transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
           background: 'white',
           backdropFilter: 'none',
-          borderBottom: '1px solid #f3f4f6',
+          
           isolation: 'isolate',
           marginLeft: '-1px',
           marginRight: '-1px',
