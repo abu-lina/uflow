@@ -86,7 +86,7 @@ export async function sendChatRequest(
   }
 
   let lastError: Error | null = null;
-  const maxRetries = 2;
+  const maxRetries = 3;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
@@ -108,7 +108,8 @@ export async function sendChatRequest(
         const delay = retryAfter 
           ? parseInt(retryAfter, 10) * 1000 
           : Math.pow(2, attempt + 1) * 1000;  // 2s, 4s, 8s
-        console.log(`[Mistral] Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+        // User sees loading spinner — retry is transparent to them
+        console.log(`[Mistral] 429 — retrying in ${delay}ms (try ${attempt + 1}/${maxRetries + 1})`);
         await new Promise(resolve => setTimeout(resolve, delay));
         lastError = new Error(`${config.provider} rate limited, retrying...`);
         continue;
