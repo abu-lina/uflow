@@ -17,9 +17,9 @@ export function QuickReplies({ options, onSelect, disabled }: QuickRepliesProps)
           type="button"
           onClick={() => onSelect(option)}
           disabled={disabled}
-          className="px-3 py-1.5 text-sm bg-primary/10 text-primary-dark border border-primary/20 rounded-full hover:bg-primary/20 hover:border-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-sm bg-primary/10 text-primary-dark border border-primary/20 rounded-xl hover:bg-primary/20 hover:border-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {option}
+          {option.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')}
         </button>
       ))}
     </div>
