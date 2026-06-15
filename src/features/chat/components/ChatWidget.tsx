@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { ChevronUp, Plus, Info } from 'lucide-react';
+import { ChevronUp, Plus, Info, Sparkles } from 'lucide-react';
 import { useChat } from '@/features/chat/hooks/useChat';
 import { ChatMessage } from '@/features/chat/components/ChatMessage';
 import { ChatInput } from '@/features/chat/components/ChatInput';
@@ -47,12 +47,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
                 className="flex items-center gap-4 text-left"
               >
                 <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 16H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-3.75" />
-                    <path d="M5 12a7 7 0 0 1 7-7 7 7 0 0 1 7 7" />
-                    <path d="M5 16a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2" />
-                    <path d="M6.67 12 12.8 16.6a2 2 0 0 0 2.8-.4l3.15-4.2" />
-                  </svg>
+                  <Sparkles size={24} className="text-primary" strokeWidth={2} />
                 </div>
                 <div className="flex-1">
                   <div className="font-inter-tight text-base font-semibold text-text-primary">Empfehlung erhalten</div>
