@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import { ChevronUp, Plus, Info } from 'lucide-react';
 import { useChat } from '@/features/chat/hooks/useChat';
 import { ChatMessage } from '@/features/chat/components/ChatMessage';
 import { ChatInput } from '@/features/chat/components/ChatInput';
@@ -19,27 +20,74 @@ export function ChatWidget({ userName }: { userName?: string }) {
     <div className="flex flex-col h-full bg-white">
       <div className="flex-1 overflow-y-auto p-4">
         {!hasMessages && (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 px-4">
-            <div className="w-16 h-16 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor" className="text-primary"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
+          <div className="flex flex-col h-full px-5 pt-8 pb-8 gap-8 overflow-y-auto">
+            {/* Greeting */}
+            <div className="flex flex-col">
+              <span className="text-[#60606F] text-base font-medium leading-snug">
+                As-Salamu-Aleikum{userName ? ` ${userName}` : ''},
+              </span>
+              <span className="text-primary text-2xl font-semibold leading-snug">
+                Wie kann ich dir helfen?
+              </span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-1">
-              As-Salamu-Aleikum{userName ? ` ${userName}` : ''}
-            </h3>
-            <p className="text-sm max-w-[280px]">
-              Wie kann ich dir helfen?
-            </p>
+
+            {/* Suggestion cards */}
+            <div className="flex flex-col gap-4 bg-white rounded-xl p-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold text-neutral-800">
+                  Dinge die du tun kannst!
+                </span>
+                <ChevronUp size={20} className="text-neutral-800" />
+              </div>
+
+              {/* Card 1: Empfehlung */}
+              <button
+                onClick={() => sendMessage('Empfiehl mir etwas')}
+                className="flex items-center gap-4 text-left"
+              >
+                <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 16H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-3.75" />
+                    <path d="M5 12a7 7 0 0 1 7-7 7 7 0 0 1 7 7" />
+                    <path d="M5 16a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2" />
+                    <path d="M6.67 12 12.8 16.6a2 2 0 0 0 2.8-.4l3.15-4.2" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-neutral-800 text-base">Empfehlung erhalten</div>
+                  <div className="font-light text-neutral-800 text-base">Erhalte Empfehlungen</div>
+                </div>
+              </button>
+
+              {/* Card 2: Registrieren */}
+              <button
+                onClick={() => sendMessage('Ich möchte ein Restaurant registrieren')}
+                className="flex items-center gap-4 text-left"
+              >
+                <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Plus size={24} className="text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-neutral-800 text-base">Registriere Dich</div>
+                  <div className="font-light text-neutral-800 text-base">Registriere deinen Service</div>
+                </div>
+              </button>
+
+              {/* Card 3: Informationen */}
+              <button
+                onClick={() => sendMessage('Welche Kriterien wendet UFlow an?')}
+                className="flex items-center gap-4 text-left"
+              >
+                <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Info size={24} className="text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-neutral-800 text-base">Informationen</div>
+                  <div className="font-light text-neutral-800 text-base">Welche Kriterien wenden wir an.</div>
+                </div>
+              </button>
+            </div>
           </div>
         )}
 
