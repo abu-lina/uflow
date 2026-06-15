@@ -35,7 +35,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
             <div className="flex flex-col gap-4 bg-white rounded-xl">
               {/* Header */}
               <div className="flex items-center justify-between">
-                <span className="text-lg font-semibold text-neutral-800">
+                <span className="font-inter-tight text-lg font-semibold text-text-primary">
                   Dinge die du tun kannst!
                 </span>
                 <ChevronUp size={20} className="text-neutral-800" />
@@ -55,8 +55,8 @@ export function ChatWidget({ userName }: { userName?: string }) {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold text-neutral-800 text-base">Empfehlung erhalten</div>
-                  <div className="font-light text-neutral-800 text-base">Erhalte Empfehlungen</div>
+                  <div className="font-inter-tight text-base font-semibold text-text-primary">Empfehlung erhalten</div>
+                  <div className="font-inter text-sm text-text-muted">Erhalte Empfehlungen</div>
                 </div>
               </button>
 
@@ -69,8 +69,8 @@ export function ChatWidget({ userName }: { userName?: string }) {
                   <Plus size={24} className="text-primary" strokeWidth={2} />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold text-neutral-800 text-base">Registriere Dich</div>
-                  <div className="font-light text-neutral-800 text-base">Registriere deinen Service</div>
+                  <div className="font-inter-tight text-base font-semibold text-text-primary">Registriere Dich</div>
+                  <div className="font-inter text-sm text-text-muted">Registriere deinen Service</div>
                 </div>
               </button>
 
@@ -83,8 +83,8 @@ export function ChatWidget({ userName }: { userName?: string }) {
                   <Info size={24} className="text-primary" strokeWidth={2} />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold text-neutral-800 text-base">Informationen</div>
-                  <div className="font-light text-neutral-800 text-base">Welche Kriterien wenden wir an.</div>
+                  <div className="font-inter-tight text-base font-semibold text-text-primary">Informationen</div>
+                  <div className="font-inter text-sm text-text-muted">Welche Kriterien wenden wir an.</div>
                 </div>
               </button>
             </div>
