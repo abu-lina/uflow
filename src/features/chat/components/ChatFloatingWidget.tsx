@@ -1,13 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ChatWidget } from '@/features/chat/components/ChatWidget';
 import { MessageCircle } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
 
 export function ChatFloatingWidget() {
+  const pathname = usePathname();
   const router = useRouter();
+
+  // Don't show FAB on /chat page
+  if (pathname === '/chat') return null;
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const userName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0];
