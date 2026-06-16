@@ -163,11 +163,9 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
     const systemPrompt = await buildSystemPrompt(true);
 
-    // Detect registration mode
-    const lastAssistantMsg = history.length >= 1 && history[history.length - 1]?.role === 'assistant'
-      ? history[history.length - 1].content || ''
-      : '';
-    const isRegistrationMode = /(?:Wie heißt|In welcher Stadt|Welche (?:Kategorie|Küche)|Adresse|Telefon|Beschreibung|Muslim|registrier)/i.test(lastAssistantMsg);
+    // Detect registration mode: check if first message or any recent message indicates registration
+    const firstUserMsg = history.find(m => m.role === 'user')?.content || '';
+    const isRegistrationMode = /(?:registrieren|anmelden|eintragen|hinzufügen|neues restaurant|neuen laden)/i.test(firstUserMsg);
 
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
