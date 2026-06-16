@@ -43,7 +43,7 @@ export function ChatFloatingWidget() {
           {/* Modal panel */}
           <div className="fixed inset-4 md:inset-auto md:bottom-20 md:right-4 z-50 bg-white rounded-3xl shadow-xl shadow-black/5 border border-gray-100 flex flex-col overflow-hidden md:w-[400px] md:h-[600px] md:max-h-[calc(100vh-100px)]">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-primary text-white rounded-t-3xl">
-              <h3 className="font-semibold text-sm">UFlow Assistant</h3>
+              <h3 className="font-semibold text-sm">Ummah Flow Assistant</h3>
               <button
                 onClick={() => setIsOpen(false)}
                 aria-label="Chat schließen"
