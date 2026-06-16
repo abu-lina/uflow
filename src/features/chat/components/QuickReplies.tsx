@@ -14,7 +14,7 @@ export function QuickReplies({ options, onSelect, disabled }: QuickRepliesProps)
   if (!options.length) return null;
 
   // Detect multi-select mode: options contain "(Ja/Nein)" or are binary choices
-  const isMultiSelect = options.some(o => o.includes('?') || o.includes('(Ja') || o.includes('Nein'));
+  const isMultiSelect = options.length >= 3 || options.some(o => o.includes('?') || o.includes('(Ja') || o.includes('Nein'));
 
   const toggleOption = (index: number) => {
     const next = new Set(selected);

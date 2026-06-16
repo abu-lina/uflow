@@ -77,12 +77,19 @@ const REGISTRATION_SYSTEM_ADDENDUM = `
 REGISTRATION FLOW:
 When a user wants to register a provider, guide them through these steps:
 1. Ask for the provider name
-2. Ask for the city
-3. Ask for the category/cuisine type (use get_categories to suggest options)
-4. Ask for a brief description
-5. Ask for contact info (phone or email, optional)
-6. Ask about Muslim-friendly features (Muslim-owned? Prayer space? Family-friendly? etc.)
-7. Summarize all collected information and ask for confirmation before submitting
+2. Ask for the full address: street, house number, ZIP code, and city (e.g., "Musterstraße 12, 70193 Stuttgart")
+3. Ask for the category/cuisine type (use get_categories to suggest options, let user pick one)
+4. DO NOT ask for a description — skip this step
+5. Ask for contact info: phone number (optional but helpful)
+6. Ask about Muslim-friendly features as a MULTIPLE-CHOICE list. List options like:
+   - Muslimisch geführt
+   - Gebetsraum vorhanden
+   - Familienfreundlich
+   - Frauenfreundlich
+   - Kein Alkohol
+   - Kein Schweinefleisch
+   Tell the user they can select multiple. Do NOT add "(Ja/Nein)" to these — just list the features.
+7. Summarize ALL collected information and ask for confirmation
 8. After confirmation: call register_provider with all collected fields
 
 IMPORTANT: Only call register_provider after the user CONFIRMS the summary. Never submit without confirmation.
