@@ -81,12 +81,18 @@ export function useChat(): UseChatReturn {
                 }
                 
                 if (parsed.options) {
-                  // Update last message with options
+                  // Update last message with options, and strip matching lines from content
                   setMessages((prev) => {
                     const updated = [...prev];
                     const last = updated[updated.length - 1];
                     if (last && last.role === 'assistant') {
-                      updated[updated.length - 1] = { ...last, options: parsed.options };
+                      // Remove lines that match extracted options (avoid redundancy)
+                      let cleanContent = last.content || '';
+                      for (const opt of parsed.options) {
+                        const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        cleanContent = cleanContent.replace(new RegExp('^' + escaped + '$', 'gm'), '');
+                      }
+                      updated[updated.length - 1] = { ...last, content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(), options: parsed.options };
                     }
                     return updated;
                   });

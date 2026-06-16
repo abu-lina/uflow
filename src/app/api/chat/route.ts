@@ -499,13 +499,17 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
     const finalMessage = llmResponse.message;
     const options = extractOptions(finalMessage.content || '');
-    // Strip redundant numbered/bullet lists from content when options are available as buttons
+    // Strip redundant lists from content when options are available as buttons
     if (options && options.length > 0 && finalMessage.content) {
-      finalMessage.content = finalMessage.content
+      let cleaned = finalMessage.content
         .replace(/^\d+\.\s+.+$/gm, '')
-        .replace(/^[•\-]\s+.+$/gm, '')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
+        .replace(/^[•\-]\s+.+$/gm, '');
+      // Strip lines that match extracted options exactly
+      for (const opt of options) {
+        const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        cleaned = cleaned.replace(new RegExp('^' + escaped + '$', 'gm'), '');
+      }
+      finalMessage.content = cleaned.replace(/\n{3,}/g, '\n\n').trim();
     }
 
     const totalTokens = llmResponse.usage?.total_tokens || 0;
