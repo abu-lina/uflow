@@ -161,7 +161,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     );
 
-    const systemPrompt = buildSystemPrompt(true);
+    const systemPrompt = await buildSystemPrompt(true);
 
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },

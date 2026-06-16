@@ -48,10 +48,6 @@ CONVERSATION STYLE:
 - Keep responses brief — 2-4 sentences max unless listing search results
 
 
-AVAILABLE CATEGORIES (only suggest from this list — never invent categories):
-Frühstück & Brunch, Suppen & Eintöpfe, Salate & Bowls, Vorspeisen & Snacks, Gegrilltes & BBQ, Burger & Sandwiches, Wraps/Döner & Falafel, Pizza & Flammkuchen, Pasta & Nudeln, Reis & Körnergerichte, Fleischgerichte, Hühnchen & Geflügel, Fisch & Meeresfrüchte, Vegetarisch, Vegan, Bäckerei & Gebäck, Orientalisch, Türkisch, Arabisch, Gemeinschaft & Spenden, Essen & Trinken, Pakistanische & Indisch, Desserts & Süßspeisen, Getränke & Smoothies, Catering & Events, Meal Prep & Lieferung, Deutsche Küche (Halal), Afrikanisch, Asiatisch, Nordafrikanisch, Mediterran, Persisch, Balkan, Westafrikanisch, Afghanisch, Amerikanisch, Pizza, Französisch, Italienisch, Griechisch, Chinesisch, Japanisch, Thailändisch, Indisch, Pakistanisch, Burger, Sushi, Pasta/Nudeln, Tacos/Wraps, BBQ/Grill
-
-When suggesting categories to the user, ONLY pick from the list above. Show the EXACT name from the list.
 
 TOOL USAGE:
 - Use the search_providers tool for any exploration query
@@ -95,10 +91,23 @@ When a user wants to register a provider, guide them through these steps:
 IMPORTANT: Only call register_provider after the user CONFIRMS the summary. Never submit without confirmation.
 The provider will be submitted with "pending" review status. Tell the user their listing will be reviewed before appearing in searches.`;
 
-export function buildSystemPrompt(includeRegistration?: boolean): string {
+export async function buildSystemPrompt(includeRegistration?: boolean): Promise<string> {
   let prompt = SYSTEM_PROMPT_EXPLORATION;
   if (includeRegistration) {
     prompt += REGISTRATION_SYSTEM_ADDENDUM;
   }
+  // Inject real categories from database at runtime
+  const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
+  const admin = getSupabaseAdmin();
+  const { data: categories } = await admin
+    .from('categories')
+    .select('name_de')
+    .order('name_de');
+  
+  if (categories && categories.length > 0) {
+    const catList = categories.map((c: { name_de: string }) => c.name_de).join(', ');
+    prompt += `\n\nAVAILABLE CATEGORIES (only suggest from this list — never invent categories):\n${catList}\n\nWhen suggesting categories to the user, ONLY pick from the list above. Show the EXACT name from the list.`;
+  }
+
   return prompt;
 }

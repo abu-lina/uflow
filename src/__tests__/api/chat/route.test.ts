@@ -170,7 +170,7 @@ describe('POST /api/chat', () => {
       const messages = mockSendChat.mock.calls[0][0];
       const systemMessage = messages.find((m: { role: string }) => m.role === 'system');
       expect(systemMessage).toBeDefined();
-      expect(systemMessage.content).toContain('UFlow Assistant');
+      expect(systemMessage.content).toContain('Ummah Flow Assistant');
     });
   });
 
