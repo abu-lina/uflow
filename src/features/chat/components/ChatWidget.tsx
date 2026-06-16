@@ -136,6 +136,14 @@ export function ChatWidget({ userName }: { userName?: string }) {
               <>
                 <p className="font-medium">Entschuldigung, ein Fehler ist aufgetreten.</p>
                 <p className="text-amber-700 mt-1">{error}</p>
+                <p className="mt-2">
+                  <a
+                    href="/create"
+                    className="text-primary font-medium underline underline-offset-2 hover:opacity-70 transition-opacity"
+                  >
+                    Zur manuellen Registrierung
+                  </a>
+                </p>
               </>
             )}
           </div>
