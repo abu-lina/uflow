@@ -115,6 +115,19 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     type: 'function',
     function: {
+      name: 'check_registration_status',
+      description: 'Check the review status of a users registered providers. Useful when a user asks "wurde mein Restaurant schon genehmigt?" or "Status meiner Registrierung".',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Provider name to check (optional — leave empty to list all)' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'register_provider',
       description:
         'Register a new restaurant, store, or community service on UFlow. Collect all required fields before calling this.',
@@ -390,6 +403,18 @@ export async function executeToolCall(
         provider_id: providerId,
         review_status: 'pending',
       });
+    }
+
+    case 'check_registration_status': {
+      const checkName = args.name as string | undefined;
+      const admin = getSupabaseAdmin();
+      let query = admin.from('providers').select('provider_name, review_status, created_at').eq('user_created_id', userId).order('created_at', { ascending: false });
+      if (checkName) {
+        query = query.ilike('provider_name', `%${checkName}%`);
+      }
+      const { data, error } = await query;
+      if (error) throw new Error(`Status check failed: ${error.message}`);
+      return JSON.stringify(data?.length ? data : { message: 'Keine Einträge gefunden.' });
     }
 
     default:
