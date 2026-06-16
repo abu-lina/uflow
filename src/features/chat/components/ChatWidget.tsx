@@ -87,7 +87,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
         )}
 
         {hasMessages && (
-          <div className="space-y-2">
+          <div className="">
             {messages.map((msg, i) => (
               <ChatMessage
                 key={i}
