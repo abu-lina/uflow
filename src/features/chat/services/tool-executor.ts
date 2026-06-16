@@ -330,6 +330,7 @@ export async function executeToolCall(
       }
 
       const { formData, user } = await mapChatArgsToFormData(args, userId);
+      const regListingType = (args.listing_type as string) || 'food';
 
       // Use admin client for provider creation (bypasses RLS)
       const adminForCreate = getSupabaseAdmin();
@@ -339,7 +340,7 @@ export async function executeToolCall(
         .from('providers')
         .insert({
           provider_id: providerId,
-          listing_type: formData.entityType === 'provider' ? (formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7' ? 'ummah' : 'food') : 'store',
+          listing_type: listingType,
           provider_name: formData.title,
           provider_description: formData.description || null,
           address_city: formData.city || null,
@@ -363,6 +364,27 @@ export async function executeToolCall(
         throw new Error(`Registration failed: ${createError.message}`);
       }
 
+      // Insert Muslim-friendly flags into extension tables
+      if (regListingType === 'food' || listingType === 'store') {
+        const extTable = regListingType === 'food' ? 'food_providers' : 'store_providers';
+        const noAlcohol = !!(args.no_alcohol as boolean);
+        const noPork = !!(args.no_pork as boolean);
+        const noGambling = !!(args.no_gambling as boolean);
+        
+        const { error: extError } = await adminForCreate
+          .from(extTable)
+          .upsert({
+            provider_id: providerId,
+            no_alcohol: noAlcohol,
+            no_pork: listingType === 'food' ? noPork : false,
+            no_gambling: listingType === 'store' ? noGambling : false,
+          }, { onConflict: 'provider_id' });
+        
+        if (extError) {
+          console.error(`[Registration] Failed to insert into ${extTable}:`, extError);
+        }
+      }
+
       return JSON.stringify({
         success: true,
         provider_id: providerId,
@@ -380,6 +402,8 @@ function buildTags(args: Record<string, unknown>): string[] {
   if (args.muslim_owned) tags.push('muslim');
   if (args.has_prayer_space) tags.push('prayer');
   if (args.makes_donations) tags.push('donations');
+  if (args.no_alcohol) tags.push('no_alcohol');
+  if (args.no_pork) tags.push('no_pork');
   if (args.family_friendly) tags.push('family_friendly');
   if (args.women_friendly) tags.push('women_friendly');
   return tags;

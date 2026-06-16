@@ -15,6 +15,7 @@ const mockSupabase = {
   limit: vi.fn().mockResolvedValue({ data: null, error: null }),
   maybeSingle: vi.fn(),
   insert: vi.fn().mockReturnValue({ error: null }),
+  upsert: vi.fn().mockResolvedValue({ error: null }),
   delete: vi.fn().mockReturnThis(),
 };
 
@@ -38,6 +39,7 @@ vi.mock('@/lib/supabase/client', () => ({
     limit: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn(),
     insert: vi.fn().mockReturnValue({ error: null }),
+  upsert: vi.fn().mockResolvedValue({ error: null }),
     delete: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     rpc: vi.fn(),
