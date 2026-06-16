@@ -28,9 +28,15 @@ export function QuickReplies({ options, onSelect, disabled }: QuickRepliesProps)
 
   const confirmSelection = () => {
     const selectedTexts = Array.from(selected)
-      .map(i => options[i])
+      .map(i => options[i]
+        .replace(/\s*\(Ja\/Nein\)\s*/g, '')  // Remove "(Ja/Nein)" suffix
+        .replace(/\?.*$/, '')                      // Remove question mark and everything after
+        .trim()
+      )
+      .filter(Boolean)
       .join(', ');
-    if (selectedTexts) onSelect(selectedTexts);
+    const prefix = selected.size > 1 ? 'Folgendes trifft zu: ' : '';
+    if (selectedTexts) onSelect(prefix + selectedTexts);
   };
 
   if (isMultiSelect) {
