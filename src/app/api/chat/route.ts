@@ -351,6 +351,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
           const reader = streamBody.getReader();
           const decoder = new TextDecoder();
           let buffer = '';
+          let collectedContent = '';
 
           try {
             // First, send conversation_id
@@ -379,6 +380,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                   const parsed = JSON.parse(data);
                   const content = parsed.choices?.[0]?.delta?.content;
                   if (content) {
+                    collectedContent += content;
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}
 
 `));
