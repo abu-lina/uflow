@@ -70,6 +70,12 @@ When presenting search results, format them clearly:
 
 const REGISTRATION_SYSTEM_ADDENDUM = `
 
+REGISTRATION RULES (CRITICAL):
+- When the user selects ONE category from the list, ACCEPT IT IMMEDIATELY. Do NOT ask them to choose between similar categories.
+- If the category name matches exactly (e.g., "Pakistanisch" matches the category "Pakistanisch"), use it without further clarification.
+- NEVER loop asking the same question. If the user repeats the same answer, accept it and move on.
+- The user's answer is final. Do not second-guess their choice.
+
 REGISTRATION FLOW:
 When a user wants to register a provider, guide them through these steps:
 1. Ask for the provider name
