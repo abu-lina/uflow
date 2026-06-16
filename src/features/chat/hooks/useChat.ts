@@ -88,17 +88,15 @@ export function useChat(): UseChatReturn {
                     if (last && last.role === 'assistant') {
                       // Remove lines that match extracted options (avoid redundancy)
                       let cleanContent = last.content || '';
+                      // Remove lines that CONTAIN any extracted option text (handles *, **, bullets)
                       for (const opt of parsed.options) {
                         const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        cleanContent = cleanContent.replace(new RegExp('^' + escaped + '$', 'gm'), '');
-                        // Also match with markdown bold markers
-                        cleanContent = cleanContent.replace(new RegExp('^\\*\\*' + escaped + '\\*\\*\\s*' + '(' + escaped + ')?\\s*$', 'gm'), '');
+                        cleanContent = cleanContent.replace(new RegExp('^.*' + escaped + '.*$', 'gm'), '');
                       }
                       // Also strip the comma-separated line containing all options
                       if (parsed.options.length >= 3) {
                         const joined = parsed.options.join(', ');
                         cleanContent = cleanContent.replace(joined, '');
-                        // Also try with &amp; encoding
                         const joinedAmp = parsed.options.join(', ').replace(/&/g, '&amp;');
                         cleanContent = cleanContent.replace(joinedAmp, '');
                       }
