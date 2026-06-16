@@ -380,6 +380,24 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
           } catch (e) { controller.error(e); }
         },
       });
+      // Save messages so next request can detect registration mode from history
+      await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        role: 'user',
+        content: trimmedMessage,
+        token_count: 0,
+      });
+      await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        role: 'assistant',
+        content: '(streaming)',
+        token_count: 0,
+      });
+      await supabase.from('conversations').update({
+        updated_at: new Date().toISOString(),
+        redirect_count: redirectCounter.count,
+      }).eq('id', conversationId);
+
       return new Response(stream, {
         headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Correlation-ID': ctx.correlationId },
       });
