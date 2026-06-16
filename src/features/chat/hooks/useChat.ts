@@ -91,6 +91,8 @@ export function useChat(): UseChatReturn {
                       for (const opt of parsed.options) {
                         const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                         cleanContent = cleanContent.replace(new RegExp('^' + escaped + '$', 'gm'), '');
+                        // Also match with markdown bold markers
+                        cleanContent = cleanContent.replace(new RegExp('^\\*\\*' + escaped + '\\*\\*\\s*' + '(' + escaped + ')?\\s*$', 'gm'), '');
                       }
                       // Also strip the comma-separated line containing all options
                       if (parsed.options.length >= 3) {
