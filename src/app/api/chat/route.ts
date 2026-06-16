@@ -7,7 +7,7 @@ import {
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { sendChatRequest } from '@/lib/openrouter';
+import { sendChatRequest, streamChatCompletion } from '@/lib/openrouter';
 import { executeToolCall, TOOL_DEFINITIONS } from '@/features/chat/services/tool-executor';
 import {
   checkGuardrail,
@@ -53,7 +53,7 @@ function extractOptions(content: string): string[] | undefined {
 }
 
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<NextResponse | Response> {
   const ctx = createRequestContext('/api/chat');
 
   try {
@@ -272,21 +272,70 @@ export async function POST(request: Request): Promise<NextResponse> {
         });
       }
 
-      // TEXT-ONLY follow-up using Small model (higher free tier limits)
-      // Large model is only needed for the initial tool-calling decision
-      llmResponse = await measureDependency(
-        ctx,
-        'openrouter.chat_completion_followup',
-        () =>
-          sendChatRequest(
-            messages,
-            {
-              max_tokens: 768,
-              // Override to Small for simple text generation
-            },
-            'mistral-small-latest',
-          ),
+      // Stream the follow-up response via SSE
+      const streamBody = await streamChatCompletion(
+        messages,
+        { max_tokens: 768, model: 'mistral-small-latest' },
       );
+
+      // Return SSE response directly — no more processing
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          const reader = streamBody.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          try {
+            // First, send conversation_id
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ conversation_id: conversationId })}
+
+`));
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const data = line.slice(6);
+                if (data === '[DONE]') {
+                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                  controller.close();
+                  return;
+                }
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content;
+                  if (content) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}
+
+`));
+                  }
+                } catch {
+                  // Skip unparseable chunks
+                }
+              }
+            }
+          } catch (e) {
+            controller.error(e);
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          'X-Correlation-ID': ctx.correlationId,
+        },
+      });
     }
     // Strip unexecuted tool calls from final response — client can't process them
     // Strip tool_calls from final response — client can't process them

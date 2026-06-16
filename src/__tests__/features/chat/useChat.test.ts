@@ -13,6 +13,7 @@ describe('useChat', () => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
       ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: () =>
         Promise.resolve({
           conversation_id: 'conv-1',
@@ -117,6 +118,7 @@ describe('useChat', () => {
 
     mockFetch.mockResolvedValue({
       ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: () =>
         Promise.resolve({
           conversation_id: 'conv-1',
@@ -148,6 +150,7 @@ describe('useChat', () => {
 
     mockFetch.mockResolvedValue({
       ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: () =>
         Promise.resolve({
           conversation_id: 'conv-1',
@@ -172,6 +175,7 @@ describe('useChat', () => {
   it('[G1] handles API response without results gracefully', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: () =>
         Promise.resolve({
           conversation_id: 'conv-1',

@@ -139,3 +139,36 @@ export async function sendChatRequest(
 
   throw lastError || new Error(`${config.provider} request failed after ${maxRetries + 1} attempts`);
 }
+
+export async function streamChatCompletion(
+  messages: ChatMessage[],
+  options?: { max_tokens?: number; temperature?: number; model?: string },
+): Promise<ReadableStream<Uint8Array>> {
+  const config = getLLMConfig();
+
+  const body: Record<string, unknown> = {
+    model: options?.model || config.model,
+    messages,
+    max_tokens: options?.max_tokens ?? 768,
+    temperature: options?.temperature ?? 0.7,
+    stream: true,
+  };
+
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30000),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '');
+    throw new Error(`${config.provider} API error ${response.status}: ${errorBody.slice(0, 200)}`);
+  }
+
+  if (!response.body) throw new Error('No response body');
+  return response.body;
+}
