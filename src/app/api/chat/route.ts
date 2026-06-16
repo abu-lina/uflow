@@ -491,7 +491,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     (llmResponse.message as Record<string, unknown>).tool_calls = undefined;
     // Ensure we never return empty content to the client
     if (!llmResponse.message.content) {
-      llmResponse.message.content = 'Entschuldigung, ich konnte keine Antwort generieren. Bitte versuche es erneut.';
+      llmResponse.message.content = 'Entschuldigung, es gab ein Problem. Bitte versuche es erneut oder starte eine neue Registrierung mit "Ich möchte ein Restaurant registrieren".';
     }
 
 
