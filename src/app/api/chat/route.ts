@@ -163,8 +163,18 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
     const systemPrompt = await buildSystemPrompt(true);
 
+    // Detect registration mode
+    const lastAssistantMsg = history.length >= 1 && history[history.length - 1]?.role === 'assistant'
+      ? history[history.length - 1].content || ''
+      : '';
+    const isRegistrationMode = /(?:Wie heißt|In welcher Stadt|Welche (?:Kategorie|Küche)|Adresse|Telefon|Beschreibung|Muslim|registrier)/i.test(lastAssistantMsg);
+
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
+      ...(isRegistrationMode ? [{
+        role: 'system' as const,
+        content: 'CRITICAL: You are in REGISTRATION MODE. The user is answering your registration questions. Do NOT call search_providers. Continue collecting registration data.',
+      }] : []),
       ...history,
       { role: 'user', content: trimmedMessage },
     ];
