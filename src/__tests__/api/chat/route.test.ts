@@ -24,6 +24,22 @@ const { mockSendChat } = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/openrouter', () => ({
   sendChatRequest: mockSendChat,
+  streamChatCompletion: vi.fn().mockImplementation(() => {
+    const encoder = new TextEncoder();
+    let sent = false;
+    return {
+      getReader: () => ({
+        read: () => {
+          if (!sent) {
+            sent = true;
+            return Promise.resolve({ done: false, value: encoder.encode('data: {"choices":[{"delta":{"content":"Hallo! Wie kann ich helfen?"}}]}\n\ndata: [DONE]\n\n') });
+          }
+          return Promise.resolve({ done: true, value: undefined });
+        },
+        releaseLock: () => {},
+      }),
+    };
+  }),
 }));
 
 const { mockExecuteTool } = vi.hoisted(() => ({
@@ -150,12 +166,11 @@ describe('POST /api/chat', () => {
 
     it('returns chat response with conversation_id', async () => {
       const response = await POST(createRequest({ message: 'Hallo' }));
-      const data = await response.json();
+      const text = await response.text();
 
       expect(response.status).toBe(200);
-      expect(data.conversation_id).toBeDefined();
-      expect(data.message.content).toBe('Hallo! Wie kann ich helfen?');
-      expect(data.message.role).toBe('assistant');
+      expect(text).toContain('conversation_id');
+      expect(text).toContain('Hallo! Wie kann ich helfen?');
     });
 
     it('creates a new conversation when conversation_id is not provided', async () => {

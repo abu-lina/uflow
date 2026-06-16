@@ -337,6 +337,41 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
         },
       });
     }
+    // Stream all responses for typewriter effect
+    if (toolCallCount === 0 && (guardrailResult.status as string) !== 'block') {
+      const streamBody = await streamChatCompletion(
+        messages,
+        { max_tokens: 768, model: 'mistral-small-latest' },
+      );
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          const reader = streamBody.getReader();
+          const decoder = new TextDecoder();
+          let buf = '';
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ conversation_id: conversationId })}\n\n`));
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buf += decoder.decode(value, { stream: true });
+              const sseLines = buf.split('\n');
+              buf = sseLines.pop() || '';
+              for (const sl of sseLines) {
+                if (!sl.startsWith('data: ')) continue;
+                const d = sl.slice(6);
+                if (d === '[DONE]') { controller.enqueue(encoder.encode('data: [DONE]\n\n')); controller.close(); return; }
+                try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } catch {}
+              }
+            }
+          } catch (e) { controller.error(e); }
+        },
+      });
+      return new Response(stream, {
+        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Correlation-ID': ctx.correlationId },
+      });
+    }
+
     // Strip unexecuted tool calls from final response — client can't process them
     // Strip tool_calls from final response — client can't process them
     (llmResponse.message as Record<string, unknown>).tool_calls = undefined;
