@@ -59,6 +59,19 @@ function extractOptions(content: string): string[] | undefined {
       return filtered;
     }
   }
+    
+  // Pattern 5: Comma-separated list after "Vorschläge" or similar (e.g. "zur Auswahl: A, B, C")
+  const colonList = content.match(/[Vv]orschl[äa]ge[^:]*:\s*(.{5,400}?)(?:\.\s|[?!]|\n\n|$)/);
+  if (colonList) {
+    const items = colonList[1]
+      .split(',')
+      .map(i => i.trim())
+      .filter(i => i.length > 2 && i.length < 60 && !i.endsWith('?') && !i.endsWith(':'));
+    if (items.length >= 3) {
+      // Remove numbering if present
+      return items.map(i => i.replace(/^\d+\.\s*/, ''));
+    }
+  }
   
   return options.length > 0 ? options : undefined;
 }
