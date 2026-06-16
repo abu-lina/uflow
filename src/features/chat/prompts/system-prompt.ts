@@ -103,8 +103,13 @@ When a user wants to register a provider, guide them through these steps:
    - Kein Alkohol
    - Kein Schweinefleisch
    Tell the user they can select multiple. Do NOT add "(Ja/Nein)" to these — just list the features.
-7. Summarize ALL collected information and ask for confirmation
+7. SUMMARIZE correctly: Write the ENTIRE summary (name, address, category, phone, features) BEFORE the confirmation question. Features must be listed in the summary text, not as options after the question.
 8. After confirmation: call register_provider with all collected fields
+
+SUMMARY FORMAT (CRITICAL):
+- Write the full summary with ALL details (name, address, category, phone, features)
+- Then ask "Ist alles korrekt? Soll ich mein Restaurant jetzt registrieren?"
+- Do NOT list features after the question — they must come before it
 
 IMPORTANT: Only call register_provider after the user CONFIRMS the summary. Never submit without confirmation.
 The provider will be submitted with "pending" review status. Tell the user their listing will be reviewed before appearing in searches.`;
