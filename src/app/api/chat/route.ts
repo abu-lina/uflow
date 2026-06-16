@@ -49,6 +49,17 @@ function extractOptions(content: string): string[] | undefined {
     return bulletMatch.map(m => m.replace(/^[•\-]\s+/, '').trim());
   }
   
+  // Pattern 4: Newline-separated simple options (plain text list without numbers)
+  const lineMatch = content.match(/^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&()\/,.-]*(?: [A-Za-zÄÖÜäöüß&()\/,.-]+)*$/gm);
+  if (lineMatch && lineMatch.length >= 3) {
+    const filtered = lineMatch
+      .map(l => l.trim())
+      .filter(l => l.length > 2 && l.length < 100 && !l.endsWith('?'));
+    if (filtered.length >= 3) {
+      return filtered;
+    }
+  }
+  
   return options.length > 0 ? options : undefined;
 }
 
@@ -372,6 +383,12 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                 const data = line.slice(6);
                 if (data === '[DONE]') {
                   controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                  try {
+                    const opts = extractOptions(collectedContent || '');
+                    if (opts && opts.length > 0) {
+                      controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
+                    }
+                  } catch {}
                   controller.close();
                   return;
                 }
@@ -429,7 +446,17 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
               for (const sl of sseLines) {
                 if (!sl.startsWith('data: ')) continue;
                 const d = sl.slice(6);
-                if (d === '[DONE]') { controller.enqueue(encoder.encode('data: [DONE]\n\n')); controller.close(); return; }
+                if (d === '[DONE]') {
+                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                  try {
+                    const opts = extractOptions(collectedContent || '');
+                    if (opts && opts.length > 0) {
+                      controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
+                    }
+                  } catch {}
+                  controller.close();
+                  return;
+                }
                 try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) { collectedContent += c; controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } } catch {}
               }
             }
