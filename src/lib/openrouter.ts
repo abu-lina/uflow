@@ -91,7 +91,7 @@ export async function sendChatRequest(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 30000);
+    const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 60000);
     try {
       const response = await fetch(`${config.baseUrl}/chat/completions`, {
       method: 'POST',

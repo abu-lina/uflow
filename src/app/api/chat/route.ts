@@ -19,7 +19,7 @@ import type { ChatMessage, ToolCall } from '@/features/chat/types';
 import type { ProviderCardData } from '@/features/chat/types';
 
 const CHAT_HISTORY_LIMIT = parseInt(
-  process.env.CHAT_HISTORY_LIMIT || '20',
+  process.env.CHAT_HISTORY_LIMIT || '10',
   10,
 );
 const MAX_TOOL_CALLS = 2;
