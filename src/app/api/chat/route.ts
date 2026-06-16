@@ -395,13 +395,13 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                 if (!line.startsWith('data: ')) continue;
                 const data = line.slice(6);
                 if (data === '[DONE]') {
-                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                   try {
                     const opts = extractOptions(collectedContent || '');
                     if (opts && opts.length > 0) {
                       controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
                     }
                   } catch {}
+                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                   controller.close();
                   return;
                 }
@@ -460,13 +460,13 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                 if (!sl.startsWith('data: ')) continue;
                 const d = sl.slice(6);
                 if (d === '[DONE]') {
-                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                   try {
                     const opts = extractOptions(collectedContent || '');
                     if (opts && opts.length > 0) {
                       controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
                     }
                   } catch {}
+                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                   controller.close();
                   return;
                 }
