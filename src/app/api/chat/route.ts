@@ -415,6 +415,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
           const reader = streamBody.getReader();
           const decoder = new TextDecoder();
           let buf = '';
+          let collectedContent = '';
           try {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ conversation_id: conversationId })}\n\n`));
             while (true) {
@@ -427,7 +428,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                 if (!sl.startsWith('data: ')) continue;
                 const d = sl.slice(6);
                 if (d === '[DONE]') { controller.enqueue(encoder.encode('data: [DONE]\n\n')); controller.close(); return; }
-                try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } catch {}
+                try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) { collectedContent += c; controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } } catch {}
               }
             }
           } catch (e) { controller.error(e); }

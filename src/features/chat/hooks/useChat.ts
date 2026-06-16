@@ -80,6 +80,18 @@ export function useChat(): UseChatReturn {
                   setConversationId(parsed.conversation_id);
                 }
                 
+                if (parsed.options) {
+                  // Update last message with options
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const last = updated[updated.length - 1];
+                    if (last && last.role === 'assistant') {
+                      updated[updated.length - 1] = { ...last, options: parsed.options };
+                    }
+                    return updated;
+                  });
+                  continue;
+                }
                 if (parsed.content) {
                   streamedContent += parsed.content;
                   // Update the last message progressively
