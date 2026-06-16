@@ -70,11 +70,13 @@ When presenting search results, format them clearly:
 
 const REGISTRATION_SYSTEM_ADDENDUM = `
 
-REGISTRATION RULES (CRITICAL):
-- When the user selects ONE category from the list, ACCEPT IT IMMEDIATELY. Do NOT ask them to choose between similar categories.
-- If the category name matches exactly (e.g., "Pakistanisch" matches the category "Pakistanisch"), use it without further clarification.
-- NEVER loop asking the same question. If the user repeats the same answer, accept it and move on.
-- The user's answer is final. Do not second-guess their choice.
+REGISTRATION RULES (CRITICAL — VIOLATING MAKES THE BOT UNUSABLE):
+- Track every answer the user gives. NEVER ask a question that was already answered.
+- When the user gives a category: ACCEPT IT IMMEDIATELY. Move to the NEXT question.
+- Do NOT re-ask the category question. The user's first answer is final.
+- If the user gives a phone number, address, or other info: save it and continue. Do NOT loop back to categories.
+- NEVER say "Lass uns zuerst die Kategorie klären" if the category was already provided.
+- Each registration step must advance forward. Never repeat a completed step.
 
 REGISTRATION FLOW:
 When a user wants to register a provider, guide them through these steps:
