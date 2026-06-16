@@ -92,6 +92,14 @@ export function useChat(): UseChatReturn {
                         const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                         cleanContent = cleanContent.replace(new RegExp('^' + escaped + '$', 'gm'), '');
                       }
+                      // Also strip the comma-separated line containing all options
+                      if (parsed.options.length >= 3) {
+                        const joined = parsed.options.join(', ');
+                        cleanContent = cleanContent.replace(joined, '');
+                        // Also try with &amp; encoding
+                        const joinedAmp = parsed.options.join(', ').replace(/&/g, '&amp;');
+                        cleanContent = cleanContent.replace(joinedAmp, '');
+                      }
                       updated[updated.length - 1] = { ...last, content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(), options: parsed.options };
                     }
                     return updated;

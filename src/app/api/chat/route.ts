@@ -509,6 +509,11 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
         const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         cleaned = cleaned.replace(new RegExp('^' + escaped + '$', 'gm'), '');
       }
+      // Also strip comma-separated option lines (Pattern 5 style)
+      if (options.length >= 3) {
+        const joined = options.join(', ');
+        cleaned = cleaned.replace(joined, '');
+      }
       finalMessage.content = cleaned.replace(/\n{3,}/g, '\n\n').trim();
     }
 
