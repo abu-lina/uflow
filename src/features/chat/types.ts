@@ -9,6 +9,7 @@ export interface ChatMessage {
   tool_call_id?: string;
   results?: ProviderCardData[];
   options?: string[];
+  singleSelect?: boolean;
 }
 
 export interface ToolCallFunction {
@@ -90,6 +91,7 @@ export interface ChatResponse {
   };
   results?: ProviderCardData[];
   options?: string[];
+  singleSelect?: boolean;
   guardrail?: 'redirect' | 'block';
 }
 

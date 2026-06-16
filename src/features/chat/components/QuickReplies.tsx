@@ -6,15 +6,16 @@ interface QuickRepliesProps {
   options: string[];
   onSelect: (option: string) => void;
   disabled?: boolean;
+  singleSelect?: boolean;
 }
 
-export function QuickReplies({ options, onSelect, disabled }: QuickRepliesProps) {
+export function QuickReplies({ options, onSelect, disabled, singleSelect }: QuickRepliesProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   if (!options.length) return null;
 
   // Detect multi-select mode: options contain "(Ja/Nein)" or are binary choices
-  const isMultiSelect = options.length >= 3 || options.some(o => o.includes('?') || o.includes('(Ja') || o.includes('Nein'));
+  const isMultiSelect = !singleSelect && (options.length >= 3 || options.some(o => o.includes('?') || o.includes('(Ja') || o.includes('Nein')));
 
   const toggleOption = (index: number) => {
     const next = new Set(selected);

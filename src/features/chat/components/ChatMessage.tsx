@@ -12,6 +12,7 @@ interface ChatMessageProps {
   results?: ProviderCardData[];
   options?: string[];
   onOptionSelect?: (option: string) => void;
+  singleSelect?: boolean;
 }
 
 const bubbleStyles: Record<string, string> = {
@@ -20,7 +21,7 @@ const bubbleStyles: Record<string, string> = {
   assistant: 'text-neutral-800 w-full',
 };
 
-export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect }: ChatMessageProps) {
+export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect, singleSelect }: ChatMessageProps) {
   if (isLoading && role === 'assistant') {
     return (
       <div data-role="assistant" className="flex my-4 px-6">
@@ -54,7 +55,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
           </div>
         )}
         {options && onOptionSelect && role === 'assistant' && (
-          <QuickReplies options={options} onSelect={onOptionSelect} disabled={isLoading} />
+          <QuickReplies options={options} onSelect={onOptionSelect} disabled={isLoading} singleSelect={singleSelect} />
         )}
       </div>
     </div>

@@ -96,6 +96,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
                 results={msg.results}
                 options={msg.options}
                 onOptionSelect={(option) => sendMessage(option)}
+                singleSelect={msg.singleSelect}
               />
             ))}
             {isLoading && (

@@ -100,7 +100,7 @@ export function useChat(): UseChatReturn {
                         const joinedAmp = parsed.options.join(', ').replace(/&/g, '&amp;');
                         cleanContent = cleanContent.replace(joinedAmp, '');
                       }
-                      updated[updated.length - 1] = { ...last, content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(), options: parsed.options };
+                      updated[updated.length - 1] = { ...last, content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(), options: parsed.options, singleSelect: /(?:kategorie|küche|küchenart|küche)/i.test(last.content || '') };
                     }
                     return updated;
                   });
@@ -148,6 +148,7 @@ export function useChat(): UseChatReturn {
             content: data.message.content || '',
             results: data.results,
             options: data.options,
+            singleSelect: /(?:kategorie|küche|küchenart)/i.test(data.message.content || ''),
           };
 
           setMessages((prev) => [...prev, assistantMessage]);
