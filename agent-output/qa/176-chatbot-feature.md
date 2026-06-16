@@ -580,6 +580,129 @@ Pre-existing failure `006-phase4-semantic-constraints-behavior.test.ts` is now S
 
 ---
 
+## 12. QA Agent Re-Verification (2026-06-16)
+
+### 12.1 Test Re-Run
+
+| Gate | Result |
+|------|--------|
+| `npm test` | 1712 passed, 22 skipped (210 passed, 2 skipped) |
+| `npm run type-check` | Clean — 0 errors |
+
+No regressions from previous QA run. All chatbot-specific tests pass.
+
+### 12.2 NEW FINDINGS
+
+#### H3: Store registration stores as `listing_type = 'food'` (HIGH)
+
+**Severity**: HIGH — blocks store registration
+
+**Location**: `src/features/chat/services/tool-executor.ts:341-342`
+
+**Description**: The `register_provider` tool accepts `listing_type` as a required field (`'food' | 'store' | 'ummah'`) and validates it at line 311-313, but **never uses it** in the actual DB insert. The insert at lines 341-342 computes listing_type from hardcoded logic:
+
+```typescript
+listing_type: formData.entityType === 'provider'
+  ? (formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7' ? 'ummah' : 'food')
+  : 'store',
+```
+
+Since `formData.entityType` is always set to `'provider'` (line 420), the result is:
+- If category UUID matches `4470c3e0-458f-40a6-a96e-ca0fbdf145d7` → `'ummah'`
+- Everything else → `'food'`
+- **`'store'` is impossible to achieve**
+
+The `args.listing_type` value (e.g., `'store'`) is completely ignored. A user who says "I want to register a store" will have their provider saved as `'food'`.
+
+**Impact**: Store registration through chatbot is broken. Stores are silently misclassified as food providers.
+
+**Recommendation**: Use `args.listing_type` directly instead of the hardcoded mapping:
+```typescript
+listing_type: args.listing_type || 'food',
+```
+
+---
+
+#### H4: `no_alcohol`, `no_pork`, `no_gambling`, `makes_donations` fields not stored (HIGH)
+
+**Severity**: HIGH — feature flags lost on registration
+
+**Location**: `src/features/chat/services/tool-executor.ts:336-360`
+
+**Description**: The `register_provider` tool definition captures `no_alcohol`, `no_pork`, `no_gambling`, and `makes_donations` flags, but none are passed to the DB insert. They're captured in `args` but not in `buildTags()` and not in the `providers` insert.
+
+The `no_alcohol` and `no_pork` flags require insertion into `food_providers` table, but the registration code only inserts into `providers`.
+
+**Impact**: Food-specific and store-specific flags are lost during registration. No `food_providers` entry is created.
+
+**Recommendation**: Insert into `food_providers` when listing_type is 'food', passing `no_alcohol`, `no_pork`, `halal_level`.
+
+---
+
+#### H5: Hardcoded category UUID for listing_type determination (MEDIUM)
+
+**Severity**: MEDIUM — fragile
+
+**Location**: `src/features/chat/services/tool-executor.ts:342`
+
+**Description**: UUID `4470c3e0-458f-40a6-a96e-ca0fbdf145d7` is hardcoded to detect "Ummah" category. If this UUID changes in a DB migration, all registrations default to 'food'.
+
+**Recommendation**: Look up the category's `applicable_section` dynamically.
+
+---
+
+### 12.3 Guardrail Cross-Check
+
+G2 fix from iteration 2 is **confirmed**:
+- Migration 110 adds `redirect_count` column ✅
+- Route loads persisted count (line 190) ✅
+- Persisted after every response ✅
+- Guardrail check before tool loop (line 266) ✅
+
+**Note**: Guardrail only fires on first message (`history.length === 0` at line 266). Follow-ups bypass guardrail entirely. Design choice, not a bug.
+
+---
+
+### 12.4 AC Verification (Updated)
+
+| AC | Description | Previous | Updated | Notes |
+|----|-------------|----------|---------|-------|
+| 1 | Low/free cost | ✅ PASS | ✅ PASS | Unchanged |
+| 2 | DB-only data | ✅ PASS | ✅ PASS | Unchanged |
+| 3 | Off-topic guardrails | ✅ PASS | ✅ PASS | First-message-only; cross-request works |
+| 4 | Multi-turn interaction | ✅ PASS | ✅ PASS | Unchanged |
+| 5 | Exploration + registration | ✅ PASS | ⚠️ **CONDITIONAL** | H3: Store registration broken; H4: flags not stored |
+
+---
+
+### 12.5 Overall QA Verdict
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  QA VERDICT: CONDITIONAL                                      ║
+║                                                                ║
+║  Previous iteration resolved all 3 UAT blockers (G1, G2, G3). ║
+║  Test suite passes, type-check clean, 5 ACs structurally met. ║
+║                                                                ║
+║  TWO NEW HIGH findings discovered in code review:              ║
+║                                                                ║
+║  H3: Store registration silently saves as 'food'.             ║
+║      args.listing_type validated but ignored in DB insert.     ║
+║      Blocks store registration through chatbot.               ║
+║                                                                ║
+║  H4: Food-specific flags (no_alcohol, no_pork) not stored.    ║
+║      No food_providers entry created during registration.      ║
+║      Feature flags are lost.                                   ║
+║                                                                ║
+║  Test gap: register_provider tests don't verify listing_type   ║
+║  or flag values in the DB insert.                              ║
+║                                                                ║
+║  Gate: CONDITIONAL → UAT can proceed but must be aware that   ║
+║  store registration through chatbot is broken. H3 + H4        ║
+║  should be fixed before production release.                   ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
 ## 11. Summary of Changes (c62d9997)
 
 | File | Lines Changed | Purpose |
