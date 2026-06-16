@@ -181,12 +181,17 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
     const redirectCounter = createRedirectCounter(existingRedirectCount);
 
+    // In registration mode, remove search tools to prevent accidental searches
+    const availableTools = isRegistrationMode
+      ? TOOL_DEFINITIONS.filter(t => t.function.name !== 'search_providers')
+      : TOOL_DEFINITIONS;
+
     let llmResponse = await measureDependency(
       ctx,
       'openrouter.chat_completion',
       () =>
         sendChatRequest(messages, {
-          tools: TOOL_DEFINITIONS,
+          tools: availableTools,
           tool_choice: 'auto',
         }),
     );
