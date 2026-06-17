@@ -68,7 +68,7 @@ describe('ChatMessage', () => {
     expect(screen.getByText('Berlin | Türkisch')).toBeInTheDocument();
   });
 
-  it('renders content text alongside SuggestionCards', () => {
+  it('hides content text when results are present', () => {
     render(
       <ChatMessage
         role="assistant"
@@ -77,7 +77,7 @@ describe('ChatMessage', () => {
       />,
     );
 
-    expect(screen.getByText('Hier sind die Ergebnisse:')).toBeInTheDocument();
+    expect(screen.queryByText('Hier sind die Ergebnisse:')).not.toBeInTheDocument();
     expect(screen.getByText('Döner Haus')).toBeInTheDocument();
   });
 

@@ -58,7 +58,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
   return (
     <div className={`flex my-4 px-6 ${isUser ? 'justify-end' : 'justify-start'}`} data-role={role}>
       <div className={bubbleClass}>
-        {content && (
+        {content && (!results || results.length === 0) && (
           <div className="text-sm leading-snug space-y-1">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
