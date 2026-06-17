@@ -30,7 +30,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
 import { getAllBookmarkedItems, fetchBookmarkedCities } from '@/services/providers';
-import { getFirstImageUrl, formatProviderAddress, getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { getFirstImageUrl, formatProviderAddress, getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE, parseCategoryImages, getCategoryCardBackgroundColor } from '@/utils/imageUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { signInWithEmailConfirmation, signInWithMagicLink } from '@/lib/auth';
 import { useAppStage } from '@/hooks/useAppStage';
@@ -556,15 +556,21 @@ export default function SavedProvidersPage() {
             {filteredProviders.map((provider) => {
               const isUmmah = provider.listing_type === 'ummah';
               const fallbackUrls = getAllTrustedImageUrlsWithFallback(
-  provider.images,
-  provider.category?.category_images
-);
-const imageUrl = fallbackUrls.length > 0 ? fallbackUrls[0] : PLACEHOLDER_IMAGE;
+                provider.images,
+                provider.category?.category_images
+              );
+              const imageUrl = fallbackUrls.length > 0 ? fallbackUrls[0] : PLACEHOLDER_IMAGE;
+              const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
+              const isCategoryFallback = getFirstImageUrl(provider.images) === PLACEHOLDER_IMAGE && categoryUrls.length > 0;
+              const categoryBgColor = isCategoryFallback
+                ? getCategoryCardBackgroundColor(provider.category_id, provider.id)
+                : undefined;
               const address = formatProviderAddress(provider.address_street, provider.address_city);
               
               return (
                 <li key={provider.id}>
                   <SelectableCard
+                    backgroundColor={categoryBgColor}
                     actionType="unsave"
                     bottomText={address}
                     category={provider.category?.name_de || ''}
