@@ -141,7 +141,8 @@ export const tr = {
   "sections": {
     "food": "Yemek",
     "ummah": "Ümmet",
-    "stores": "Mağazalar"
+    "stores": "Mağazalar",
+    "soon": "Yakında"
   },
   "search": {
     "placeholder": "Ümmetinde ara",

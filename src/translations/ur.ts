@@ -141,7 +141,8 @@ export const ur = {
   "sections": {
     "food": "کھانا",
     "ummah": "امت",
-    "stores": "دکانیں"
+    "stores": "دکانیں",
+    "soon": "جلد"
   },
   "search": {
     "placeholder": "اپنی امت میں تلاش کریں",
