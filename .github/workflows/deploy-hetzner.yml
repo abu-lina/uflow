@@ -148,6 +148,7 @@ jobs:
               -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
               -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
+              -e MISTRAL_API_KEY="${{ secrets.MISTRAL_API_KEY }}" \
               -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-new \
               --restart unless-stopped \
@@ -201,6 +202,7 @@ jobs:
               -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
               -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
+              -e MISTRAL_API_KEY="${{ secrets.MISTRAL_API_KEY }}" \
               -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-app \
               --restart unless-stopped \
