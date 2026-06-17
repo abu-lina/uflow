@@ -142,7 +142,11 @@ export function transformProviderToSearchResult(provider: Provider): SearchResul
   return {
     id: provider.provider_id,
     name: provider.provider_name,
-    images: typeof provider.provider_images === 'string' ? provider.provider_images : JSON.stringify(provider.provider_images),
+    images: provider.provider_images == null
+      ? null
+      : typeof provider.provider_images === 'string'
+        ? provider.provider_images
+        : JSON.stringify(provider.provider_images),
     category_id: provider.category_id,
     address_city: provider.address_city,
     social_website: provider.social_website,

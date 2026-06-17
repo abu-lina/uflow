@@ -33,6 +33,7 @@ export function getFirstImageUrl(providerImages: ProviderImages): string {
     
     if (typeof providerImages === 'string') {
       imagesData = JSON.parse(providerImages);
+      if (imagesData === null) return PLACEHOLDER_IMAGE;
     } else if (Array.isArray(providerImages)) {
       imagesData.urls = providerImages;
     } else if (
@@ -67,6 +68,7 @@ export function getAllTrustedImageUrls(providerImages: ProviderImages): string[]
     
     if (typeof providerImages === 'string') {
       imagesData = JSON.parse(providerImages);
+      if (imagesData === null) return [];
     } else if (Array.isArray(providerImages)) {
       imagesData.urls = providerImages;
     } else if (

@@ -130,6 +130,32 @@ describe('multi-location provider service', () => {
   });
 
   describe('transformProviderToSearchResult', () => {
+    it('[post-fix PASSES] sets images to null when provider_images is null', () => {
+      const provider: Provider = {
+        provider_id: 'p-1',
+        provider_name: 'Test',
+        provider_images: null,
+        category_id: null,
+        address_city: null,
+        social_website: null,
+        social_instagram: null,
+        contact_email: null,
+        contact_phone: null,
+        address_street: null,
+        address_country: null,
+        address_zip: null,
+        location_latitude: null,
+        location_longitude: null,
+        created_at: null,
+        updated_at: null,
+        offers_ids: [],
+        needs_ids: [],
+      };
+
+      const result = transformProviderToSearchResult(provider);
+      expect(result.images).toBeNull();
+    });
+
     it('[post-fix PASSES] passes through locations from provider to SearchResult', () => {
       const mockLocations: Location[] = [
         { location_id: 'loc-1', provider_id: 'p-1', location_name: 'Berlin Mitte', address_street: 'Str 1', address_zip: '10115', address_city: 'Berlin', address_country: 'DE', location_latitude: null, location_longitude: null, opening_hours: null, show_address: true, contact_phone: null, is_primary: true, created_at: null, updated_at: null },
