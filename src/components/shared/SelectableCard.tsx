@@ -12,6 +12,9 @@ interface SelectableCardProps {
   title: string;
   category?: string;
   
+  // Background color for the image container (used when showing category fallback images)
+  backgroundColor?: string;
+  
   // Optional bottom text (address or donation count)
   bottomText?: string;
   
@@ -35,6 +38,7 @@ export function SelectableCard({
   imageUrl,
   title,
   category,
+  backgroundColor,
   bottomText,
   isSelected = false,
   actionType: _actionType = 'select',
@@ -92,7 +96,7 @@ export function SelectableCard({
       onClick={onClick}
     >
       {/* Image Container */}
-      <div className="relative flex h-[145.41px] w-[160px] md:h-[218.12px] md:w-[240px] flex-col justify-between items-center p-0 gap-[5px] rounded-t-2xl overflow-hidden">
+      <div className="relative flex h-[145.41px] w-[160px] md:h-[218.12px] md:w-[240px] flex-col justify-between items-center p-0 gap-[5px] rounded-t-2xl overflow-hidden" style={backgroundColor ? { backgroundColor } : undefined}>
         <Image
           alt={title}
           className="h-full w-full rounded-t-2xl object-cover"
