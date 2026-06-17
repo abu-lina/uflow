@@ -138,6 +138,11 @@ vi.mock('@/components/ui/form-skeleton', () => ({
   FormSkeleton: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// Mock scrollIntoView for jsdom (only when Element exists)
+if (typeof Element !== 'undefined') {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 // Cleanup
 afterAll(() => {
   consoleSpy.mockRestore();

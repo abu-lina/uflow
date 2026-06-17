@@ -129,6 +129,18 @@ export const rateLimiters = {
     perHour: (identifier: string) =>
       checkRateLimit(identifier, 20, 60 * 60 * 1000, 'admin-review-hour'),
   },
+
+  /**
+   * Chat endpoint (Plan 176)
+   * - 20 messages per minute per user
+   * - 200 messages per day per user
+   */
+  chat: {
+    perMinute: (identifier: string) =>
+      checkRateLimit(identifier, 20, 60 * 1000, 'chat-minute'),
+    perDay: (identifier: string) =>
+      checkRateLimit(identifier, 200, 86_400_000, 'chat-day'),
+  },
 };
 
 /**

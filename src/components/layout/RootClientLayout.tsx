@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
+import { ChatFloatingWidget } from '@/features/chat/components/ChatFloatingWidget';
 import { CityEarlyAccessNavbar } from '@/components/shared/CityEarlyAccessNavbar';
 import { DesktopFooter } from '@/components/layout/DesktopFooter';
 import { PageTransition } from '@/components/ui/PageTransition';
@@ -90,7 +91,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
     ? 'none'
     : forceMobileFooter
       ? 'footer'
-    : isDiscoveryHome || isProvidersDiscovery
+    : isDiscoveryHome || isProvidersDiscovery || pathname === '/saved' || pathname === '/profile' || pathname === '/login' || pathname === '/signup'
       ? 'footer'
     : showMobileFooter
       ? 'footer'
@@ -184,6 +185,9 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         {process.env.NODE_ENV === 'production' && (
           <PushNotificationPrompt autoShow={true} showDelay={5000} />
         )}
+
+        {/* Chat Floating Widget (Desktop) */}
+        <ChatFloatingWidget />
       </div>
     </LoadingProvider>
   );
