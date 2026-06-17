@@ -5,6 +5,7 @@ import { ChevronUp, Plus, Info, Sparkles } from 'lucide-react';
 import { useChat } from '@/features/chat/hooks/useChat';
 import { ChatMessage } from '@/features/chat/components/ChatMessage';
 import { ChatInput } from '@/features/chat/components/ChatInput';
+import { SuggestionCard } from '@/features/chat/components/SuggestionCard';
 
 export function ChatWidget({ userName }: { userName?: string }) {
   const { messages, isLoading, error, sendMessage } = useChat();
@@ -38,50 +39,29 @@ export function ChatWidget({ userName }: { userName?: string }) {
                 <span className="font-inter-tight text-lg font-semibold text-text-primary">
                   Dinge die du tun kannst!
                 </span>
-                <ChevronUp size={20} className="text-neutral-800" />
+                <ChevronUp className="text-neutral-800" size={20} />
               </div>
 
-              {/* Card 1: Empfehlung */}
-              <button
+              <SuggestionCard
+                icon={<Sparkles className="text-primary" size={24} />}
+                subtitle="Erhalte Empfehlungen"
+                title="Empfehlung erhalten"
                 onClick={() => sendMessage('Empfiehl mir etwas')}
-                className="flex items-center gap-4 text-left"
-              >
-                <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Sparkles size={24} className="text-primary" strokeWidth={2} />
-                </div>
-                <div className="flex-1">
-                  <div className="font-inter-tight text-base font-semibold text-text-primary">Empfehlung erhalten</div>
-                  <div className="font-inter text-sm text-text-muted">Erhalte Empfehlungen</div>
-                </div>
-              </button>
+              />
 
-              {/* Card 2: Registrieren */}
-              <button
+              <SuggestionCard
+                icon={<Plus className="text-primary" size={24} />}
+                subtitle="Registriere deinen Service"
+                title="Registriere Dich"
                 onClick={() => sendMessage('Ich möchte ein Restaurant registrieren')}
-                className="flex items-center gap-4 text-left"
-              >
-                <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Plus size={24} className="text-primary" strokeWidth={2} />
-                </div>
-                <div className="flex-1">
-                  <div className="font-inter-tight text-base font-semibold text-text-primary">Registriere Dich</div>
-                  <div className="font-inter text-sm text-text-muted">Registriere deinen Service</div>
-                </div>
-              </button>
+              />
 
-              {/* Card 3: Informationen */}
-              <button
+              <SuggestionCard
+                icon={<Info className="text-primary" size={24} />}
+                subtitle="Welche Kriterien wenden wir an."
+                title="Informationen"
                 onClick={() => sendMessage('Welche Kriterien wendet UFlow an?')}
-                className="flex items-center gap-4 text-left"
-              >
-                <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Info size={24} className="text-primary" strokeWidth={2} />
-                </div>
-                <div className="flex-1">
-                  <div className="font-inter-tight text-base font-semibold text-text-primary">Informationen</div>
-                  <div className="font-inter text-sm text-text-muted">Welche Kriterien wenden wir an.</div>
-                </div>
-              </button>
+              />
             </div>
           </div>
         )}
@@ -91,19 +71,19 @@ export function ChatWidget({ userName }: { userName?: string }) {
             {messages.map((msg, i) => (
               <ChatMessage
                 key={i}
-                role={msg.role}
                 content={msg.content}
-                results={msg.results}
                 options={msg.options}
-                onOptionSelect={(option) => sendMessage(option)}
+                results={msg.results}
+                role={msg.role}
                 singleSelect={msg.singleSelect}
+                onOptionSelect={(option) => sendMessage(option)}
               />
             ))}
             {isLoading && (
               <ChatMessage
-                role="assistant"
                 content=""
                 isLoading={true}
+                role="assistant"
               />
             )}
             <div ref={messagesEndRef} />
@@ -119,8 +99,8 @@ export function ChatWidget({ userName }: { userName?: string }) {
                   Um ein Restaurant zu registrieren, musst du angemeldet sein.
                 </p>
                 <a
-                  href="/login"
                   className="inline-block mt-3 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
+                  href="/login"
                 >
                   Jetzt anmelden
                 </a>
@@ -138,8 +118,8 @@ export function ChatWidget({ userName }: { userName?: string }) {
                 <p className="text-amber-700 mt-1">{error}</p>
                 <p className="mt-2">
                   <a
-                    href="/create"
                     className="text-primary font-medium underline underline-offset-2 hover:opacity-70 transition-opacity"
+                    href="/create"
                   >
                     Zur manuellen Registrierung
                   </a>
@@ -150,7 +130,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
         )}
       </div>
 
-      <ChatInput onSend={sendMessage} isLoading={isLoading} />
+      <ChatInput isLoading={isLoading} onSend={sendMessage} />
     </div>
   );
 }
