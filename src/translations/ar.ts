@@ -141,7 +141,8 @@ export const ar = {
   "sections": {
     "food": "طعام",
     "ummah": "أمة",
-    "stores": "محلات"
+    "stores": "محلات",
+    "soon": "قريباً"
   },
   "search": {
     "placeholder": "ابحث في أمتك",

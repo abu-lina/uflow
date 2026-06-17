@@ -163,11 +163,11 @@ vi.mock('@/components/layout/PageContent', () => ({
 }));
 
 vi.mock('@/features/search/components/SectionSelector', () => ({
-  SectionSelector: ({ onSectionChange }: { onSectionChange: (section: 'food' | 'ummah' | 'business') => void }) => (
+  SectionSelector: ({ onSectionChange }: { onSectionChange: (section: 'food' | 'ummah' | 'store') => void }) => (
     <div>
       <button type="button" onClick={() => onSectionChange('food')}>Section food</button>
       <button type="button" onClick={() => onSectionChange('ummah')}>Section ummah</button>
-      <button type="button" onClick={() => onSectionChange('business')}>Section business</button>
+      <button type="button" onClick={() => onSectionChange('store')}>Section store</button>
     </div>
   ),
 }));
@@ -222,31 +222,27 @@ describe('Search page Wo defaults and selection behavior', () => {
     sessionStorage.clear();
   });
 
-  it('hides Wer accordion when business section is active from initial URL', async () => {
+  it('shows Wer accordion when inactive section resolves to food', async () => {
     mockSection = 'business';
 
     render(<SearchPage />);
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Wer: For me' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Wer: For me' })).toBeInTheDocument();
     });
   });
 
-  it('resets to Was accordion when switching from Wer-open food to business', async () => {
-    // Plan 107 made selectedSection URL-authoritative: router.replace is called but the
-    // mock doesn't navigate. Simulate the full flow by updating mockSection + rerender,
-    // which matches what would happen after the URL changes in a real browser.
+  it('keeps Wer accordion open when switching from food to inactive section', async () => {
     const { rerender } = render(<SearchPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
     expect(screen.getByRole('button', { name: 'Männer erhöhen' })).toBeInTheDocument();
 
-    // Simulate URL param update to business after router.replace resolves
     mockSection = 'business';
     rerender(<SearchPage />);
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Wer: For me' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Wer: For me' })).toBeInTheDocument();
     });
   });
 

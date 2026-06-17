@@ -6,6 +6,7 @@ import {
   SECTION_ICON_RENDERERS,
   SECTION_ORDER,
 } from '@/features/search/constants/sectionIconRenderers';
+import { SECTION_META } from '@/config/sectionFilters';
 
 interface SectionSelectorProps {
   selectedSection: Section;
@@ -23,14 +24,14 @@ interface SectionSelectorProps {
  * for "Stores" is 'store' in the canonical Section type.
  *
  * The active tab is marked with aria-selected=true per ARIA tablist pattern.
+ * Inactive sections (per SECTION_META) are disabled with muted styling
+ * and show a "Soon" badge.
  */
 export function SectionSelector({ selectedSection, onSectionChange, className = '' }: SectionSelectorProps) {
   const { t } = useLanguage();
 
   const getSectionLabel = (section: Section): string => {
-    if (section === 'food') return t('sections.food');
-    if (section === 'ummah') return t('sections.ummah');
-    return t('sections.stores');
+    return t(SECTION_META[section].labelKey);
   };
 
   return (
@@ -40,25 +41,34 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
       role="tablist"
     >
       {SECTION_ORDER.map((value) => {
+        const meta = SECTION_META[value];
         const label = getSectionLabel(value);
         const renderIcon = SECTION_ICON_RENDERERS[value];
         const isActive = selectedSection === value;
+        const isDisabled = !meta.active;
         return (
           <button
             key={value}
             aria-label={label}
             aria-selected={isActive}
+            disabled={isDisabled}
             className={[
               'flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 px-3 overflow-hidden font-inter-tight font-medium text-base transition-colors',
               isActive
                 ? 'bg-primary text-white'
                 : 'text-neutral-500 hover:text-neutral-700',
+              isDisabled && 'opacity-50 cursor-not-allowed',
             ].join(' ')}
             role="tab"
             onClick={() => onSectionChange(value)}
           >
             {renderIcon(isActive)}
             <span>{label}</span>
+            {isDisabled && meta.badgeKey && (
+              <span className="text-[10px] px-1 py-0.5 rounded bg-neutral-200 text-neutral-600 ml-1">
+                {t(meta.badgeKey)}
+              </span>
+            )}
           </button>
         );
       })}

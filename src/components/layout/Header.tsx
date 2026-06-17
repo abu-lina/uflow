@@ -22,6 +22,7 @@ import {
   getResultsPathForSection,
   inferSectionFromCategory,
   resolveSectionFromRoute,
+  SECTION_META,
 } from '@/config/sectionFilters';
 
 // Dynamic imports for modals (Plan 007: reduce shared bundle)
@@ -48,6 +49,7 @@ export function Header() {
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();
   const handleSectionChange = (section: Section) => {
+    if (!SECTION_META[section].active) return;
     setSelectedSection(section);
     const params = new URLSearchParams({ section });
     router.push(`${getResultsPathForSection(section)}?${params.toString()}`);

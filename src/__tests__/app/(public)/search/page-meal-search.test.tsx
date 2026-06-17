@@ -118,14 +118,14 @@ vi.mock('@/features/search/components/SectionSelector', () => ({
     selectedSection,
     onSectionChange,
   }: {
-    selectedSection: 'food' | 'ummah' | 'business';
-    onSectionChange: (section: 'food' | 'ummah' | 'business') => void;
+    selectedSection: 'food' | 'ummah' | 'store';
+    onSectionChange: (section: 'food' | 'ummah' | 'store') => void;
   }) => (
     <div>
       <p>SectionSelector: {selectedSection}</p>
       <button type="button" onClick={() => onSectionChange('food')}>Go Food</button>
       <button type="button" onClick={() => onSectionChange('ummah')}>Go Ummah</button>
-      <button type="button" onClick={() => onSectionChange('business')}>Go Business</button>
+      <button type="button" onClick={() => onSectionChange('store')}>Go Store</button>
     </div>
   ),
 }));
@@ -416,7 +416,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     expect(screen.getByRole('heading', { name: 'Wo?' })).toBeInTheDocument();
   });
 
-  it('clears food WAS selection when switching from food to ummah section', async () => {
+  it('does not clear WAS selection when clicking inactive ummah section tab', async () => {
     const { rerender } = render(<SearchPage />);
 
     const input = screen.getByRole('searchbox', { name: 'Angebote suchen' });
@@ -437,20 +437,19 @@ describe('/search page meal search wiring (Plan 096)', () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.queryByText('Was: Doener')).not.toBeInTheDocument();
-    expect(screen.getByText('Was?')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Suchen' })).toBeDisabled();
-    expect(screen.getByRole('checkbox', { name: /Kostenlos/i })).toBeInTheDocument();
+    // Ummah is inactive — click is no-op, WAS selection remains
+    expect(screen.getByText('Was: Doener')).toBeInTheDocument();
+    expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it('[regression] syncs search URL section when switching to ummah and stores', () => {
+  it('[regression] does not sync URL or clear WAS when clicking inactive ummah or store', () => {
     render(<SearchPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Go Ummah' }));
-    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=ummah');
+    expect(mockRouterReplace).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Go Business' }));
-    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=business');
+    fireEvent.click(screen.getByRole('button', { name: 'Go Store' }));
+    expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
   it('[regression] does not call replace when clicking already-active section tab', () => {
@@ -461,7 +460,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it('[regression] syncs selected section from URL changes while mounted', async () => {
+  it('[regression] resolves inactive section URL params to food', async () => {
     const { rerender } = render(<SearchPage />);
 
     expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
@@ -472,16 +471,17 @@ describe('/search page meal search wiring (Plan 096)', () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.getByText('SectionSelector: ummah')).toBeInTheDocument();
+    // Inactive sections resolve to 'food'
+    expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
   });
 
-  it('[regression] handles delayed router.replace section updates without state rollback', async () => {
+  it('[regression] does not navigate state or update URL when clicking inactive sections', async () => {
     replaceDelayMs = 100;
     const { rerender } = render(<SearchPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Go Ummah' }));
 
-    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=ummah');
+    expect(mockRouterReplace).not.toHaveBeenCalled();
     expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
 
     await act(async () => {
@@ -490,6 +490,6 @@ describe('/search page meal search wiring (Plan 096)', () => {
       rerender(<SearchPage />);
     });
 
-    expect(screen.getByText('SectionSelector: ummah')).toBeInTheDocument();
+    expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
   });
 });

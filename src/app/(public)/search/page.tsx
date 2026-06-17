@@ -20,7 +20,7 @@ import { UmmahFilterSection } from '@/features/search/components/UmmahFilterSect
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
 import { buildSearchParams, toFoodRecentSearches } from '@/lib/search-params';
-import { getResultsPathForSection } from '@/config/sectionFilters';
+import { getResultsPathForSection, SECTION_META } from '@/config/sectionFilters';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 import { type PopularCity, fetchPopularCities, fetchProviderCities, checkCityExists } from '@/services/providers';
@@ -47,8 +47,9 @@ function SearchPageContent() {
   type AccordionKey = 'was' | 'wo' | 'wer' | 'filter';
 
   const resolveSection = (rawSection: string | null): Section => {
-    if (rawSection === 'ummah' || rawSection === 'store' || rawSection === 'business') {
-      return rawSection === 'business' ? 'store' : rawSection;
+    const section = rawSection === 'business' ? 'store' : rawSection;
+    if (section === 'ummah' || section === 'store') {
+      return SECTION_META[section].active ? section : 'food';
     }
     return 'food';
   };
@@ -423,6 +424,7 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
   }, [urlQuery]);
 
   const handleSectionChange = (section: Section) => {
+    if (!SECTION_META[section].active) return;
     if (section === urlSection) {
       return;
     }

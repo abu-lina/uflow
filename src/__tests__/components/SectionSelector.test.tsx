@@ -24,6 +24,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'sections.food': 'Food',
         'sections.ummah': 'Ummah',
         'sections.stores': 'Stores',
+        'sections.soon': 'Soon',
       };
       return map[key] ?? key;
     },
@@ -55,10 +56,36 @@ describe('SectionSelector (Plan 089 M6)', () => {
     expect(onSectionChange).toHaveBeenCalledWith('food');
   });
 
-  it('calls onSectionChange with store when stores button is clicked', () => {
+  it('does not call onSectionChange when stores button (inactive) is clicked', () => {
     const onSectionChange = vi.fn();
     render(<SectionSelector selectedSection="food" onSectionChange={onSectionChange} />);
+    const storesTab = screen.getByRole('tab', { name: /stores/i });
+    expect(storesTab).toBeDisabled();
+    fireEvent.click(storesTab);
+    expect(onSectionChange).not.toHaveBeenCalled();
+  });
+
+  it('renders disabled attribute on inactive section tabs', () => {
+    render(<SectionSelector selectedSection="food" onSectionChange={vi.fn()} />);
+    expect(screen.getByRole('tab', { name: /food/i })).not.toBeDisabled();
+    expect(screen.getByRole('tab', { name: /ummah/i })).toBeDisabled();
+    expect(screen.getByRole('tab', { name: /stores/i })).toBeDisabled();
+  });
+
+  it('renders Soon badge on inactive section tabs', () => {
+    render(<SectionSelector selectedSection="food" onSectionChange={vi.fn()} />);
+    const ummahTab = screen.getByRole('tab', { name: /ummah/i });
+    const storesTab = screen.getByRole('tab', { name: /stores/i });
+    expect(ummahTab).toHaveTextContent('Soon');
+    expect(storesTab).toHaveTextContent('Soon');
+  });
+
+  it('clicking inactive section tab does not call onSectionChange', () => {
+    const onSectionChange = vi.fn();
+    render(<SectionSelector selectedSection="food" onSectionChange={onSectionChange} />);
+    fireEvent.click(screen.getByRole('tab', { name: /ummah/i }));
+    expect(onSectionChange).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('tab', { name: /stores/i }));
-    expect(onSectionChange).toHaveBeenCalledWith('store');
+    expect(onSectionChange).not.toHaveBeenCalled();
   });
 });
