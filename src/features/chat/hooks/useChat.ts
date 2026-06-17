@@ -80,6 +80,17 @@ export function useChat(): UseChatReturn {
                   setConversationId(parsed.conversation_id);
                 }
                 
+                if (parsed.results) {
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const last = updated[updated.length - 1];
+                    if (last && last.role === 'assistant') {
+                      updated[updated.length - 1] = { ...last, results: parsed.results };
+                    }
+                    return updated;
+                  });
+                  continue;
+                }
                 if (parsed.options) {
                   // Update last message with options, and strip matching lines from content
                   setMessages((prev) => {

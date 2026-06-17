@@ -401,6 +401,9 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                       controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
                     }
                   } catch {}
+                  if (providerResults && providerResults.length > 0) {
+                    controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
+                  }
                   controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                   controller.close();
                   return;
@@ -466,6 +469,9 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                       controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
                     }
                   } catch {}
+                  if (providerResults && providerResults.length > 0) {
+                    controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
+                  }
                   controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                   controller.close();
                   return;
