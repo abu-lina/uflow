@@ -71,7 +71,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
                 icon={getProviderIcon(provider.listing_type)}
                 title={provider.provider_name}
                 subtitle={[provider.address_city, provider.category_name].filter(Boolean).join(' | ')}
-                onClick={() => onOptionSelect?.('Mehr Details zu ' + provider.provider_name)}
+                href={`/providers/${provider.provider_id}`}
               />
             ))}
           </div>

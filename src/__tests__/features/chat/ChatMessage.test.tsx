@@ -106,7 +106,7 @@ describe('ChatMessage', () => {
     expect(screen.getByText('München | Türkisch')).toBeInTheDocument();
   });
 
-  it('calls onOptionSelect with "Mehr Details zu {name}" when clicking a provider card', () => {
+  it('renders provider card as a link to the provider detail page', () => {
     const onOptionSelect = vi.fn();
 
     render(
@@ -118,8 +118,8 @@ describe('ChatMessage', () => {
       />,
     );
 
-    fireEvent.click(screen.getByText('Döner Haus'));
+    const link = screen.getByRole('link', { name: /Döner Haus/ });
 
-    expect(onOptionSelect).toHaveBeenCalledWith('Mehr Details zu Döner Haus');
+    expect(link).toHaveAttribute('href', '/providers/p1');
   });
 });
