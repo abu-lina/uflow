@@ -76,7 +76,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
             ))}
           </div>
         )}
-        {options && onOptionSelect && role === 'assistant' && (
+        {options && onOptionSelect && role === 'assistant' && (!results || results.length === 0) && (
           singleSelect ? (
             <div className="flex flex-col gap-3 mt-3">
               {options.map((option) => (

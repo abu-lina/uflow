@@ -122,4 +122,37 @@ describe('ChatMessage', () => {
 
     expect(link).toHaveAttribute('href', '/providers/p1');
   });
+
+  it('suppresses options when results are already shown', () => {
+    const onOptionSelect = vi.fn();
+
+    render(
+      <ChatMessage
+        role="assistant"
+        content="Ich habe Vorschläge:"
+        results={[mockProvider]}
+        options={['Option A', 'Option B']}
+        onOptionSelect={onOptionSelect}
+      />,
+    );
+
+    expect(screen.getByText('Döner Haus')).toBeInTheDocument();
+    expect(screen.queryByTestId('quick-replies')).not.toBeInTheDocument();
+  });
+
+  it('renders options when no results exist', () => {
+    const onOptionSelect = vi.fn();
+
+    render(
+      <ChatMessage
+        role="assistant"
+        content="Was möchtest du wissen?"
+        options={['Option A', 'Option B']}
+        onOptionSelect={onOptionSelect}
+      />,
+    );
+
+    expect(screen.getByText('Was möchtest du wissen?')).toBeInTheDocument();
+    expect(screen.getByTestId('quick-replies')).toBeInTheDocument();
+  });
 });
