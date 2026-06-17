@@ -202,7 +202,7 @@ export const shouldShowMobileFooter = (
     // Note: Splash screen check removed for Stage 3 since it's full access
     
     // Check excluded pages (pages that never show footer)
-    const footerExcludedPages = ['/signup/check-email', '/waitlist'];
+    const footerExcludedPages = ['/signup/check-email', '/waitlist', '/chat'];
     if (footerExcludedPages.includes(pathname)) {
       return false;
     }
@@ -246,7 +246,7 @@ export const shouldShowMobileFooter = (
   }
 
   // 4. Check excluded pages (pages that never show footer)
-  const footerExcludedPages = ['/signup/check-email', '/waitlist'];
+  const footerExcludedPages = ['/signup/check-email', '/waitlist', '/chat'];
   if (footerExcludedPages.includes(pathname)) {
     return false;
   }
@@ -383,6 +383,7 @@ export const shouldShowCityEarlyAccessNavbar = (
     '/signup/check-email',
     '/waitlist',
     '/welcome',
+    '/chat',
   ];
 
   const excludedPatterns = [
