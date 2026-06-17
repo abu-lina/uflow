@@ -370,7 +370,7 @@ export async function getProviders(limit?: number, includeLocations?: boolean): 
     if (includeLocations) {
       query = supabase
         .from('providers')
-        .select('*, category:categories(name_de, name_en), locations(*)')
+        .select('*, category:categories(name_de, name_en, category_images), locations(*)')
         .order('created_at', { ascending: false });
     }
     
@@ -985,7 +985,7 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
   if (providerIds.length > 0) {
     const { data: providers, error: providersError } = await supabase
       .from('providers')
-      .select('*, category:categories(name_de, name_en), locations(*)')
+      .select('*, category:categories(name_de, name_en, category_images), locations(*)')
       .in('provider_id', providerIds)
       .returns<Provider[]>();
 
