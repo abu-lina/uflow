@@ -122,14 +122,14 @@ export async function getProviders(limit?: number, includeLocations?: boolean): 
   
   let query = supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en)')
+    .select('*, category:categories(name_de, name_en, category_images)')
     .eq('review_status', 'approved')
     .order('created_at', { ascending: false });
 
   if (includeLocations) {
     query = supabase
       .from('providers')
-      .select('*, category:categories(name_de, name_en), locations(*)')
+      .select('*, category:categories(name_de, name_en, category_images), locations(*)')
       .eq('review_status', 'approved')
       .order('created_at', { ascending: false });
   }
@@ -157,7 +157,7 @@ export async function getAllBookmarkedItems(userId: string): Promise<SearchResul
 
   const { data: bookmarks, error } = await supabase
     .from('bookmarks')
-    .select('provider_id, providers(*, category:categories(name_de, name_en), locations(*))')
+    .select('provider_id, providers(*, category:categories(name_de, name_en, category_images), locations(*))')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -247,7 +247,7 @@ export async function getCreatedProviders(userId: string): Promise<Provider[]> {
   
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en)')
+    .select('*, category:categories(name_de, name_en, category_images)')
     .eq('user_created_id', userId)
     .order('created_at', { ascending: false });
 
@@ -272,7 +272,7 @@ export async function getRecommendations(_userId: string): Promise<Provider[]> {
   // Simple implementation: return recently added approved providers
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en)')
+    .select('*, category:categories(name_de, name_en, category_images)')
     .eq('review_status', 'approved')
     .order('created_at', { ascending: false })
     .limit(10);
