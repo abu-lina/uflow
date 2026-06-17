@@ -91,7 +91,7 @@ describe('ChatWidget', () => {
     expect(sendMessage).toHaveBeenCalledWith('Test message');
   });
 
-  it('[G1] renders ProviderCard when message has results', () => {
+  it('renders SuggestionCard when message has results', () => {
     const mockResults = [
       {
         provider_id: 'p1',
@@ -122,7 +122,6 @@ describe('ChatWidget', () => {
     render(<ChatWidget />);
 
     expect(screen.getByText('Döner Haus')).toBeInTheDocument();
-    expect(screen.getByText('Berlin')).toBeInTheDocument();
-    expect(screen.getByText('Muslim-geführt')).toBeInTheDocument();
+    expect(screen.getByText('Berlin | Türkisch')).toBeInTheDocument();
   });
 });

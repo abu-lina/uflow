@@ -41,23 +41,40 @@ describe('SuggestionCard', () => {
   });
 
   it('applies custom className', () => {
-    render(
+    const { container } = render(
       <SuggestionCard
         icon={<Sparkles size={24} />}
         title="Styled"
         className="custom-class"
       />
     );
-    expect(screen.getByRole('button')).toHaveClass('custom-class');
+    expect(container.firstChild).toHaveClass('custom-class');
   });
 
-  it('renders as a button', () => {
+  it('renders as a button when onClick is provided', () => {
     render(
       <SuggestionCard
         icon={<Sparkles size={24} />}
         title="Button Test"
+        onClick={() => {}}
       />
     );
     expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('renders as a link when href is provided', () => {
+    render(
+      <SuggestionCard
+        icon={<Sparkles size={24} />}
+        title="Link Card"
+        subtitle="Navigates to detail page"
+        href="/providers/123"
+      />
+    );
+    const link = screen.getByRole('link');
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/providers/123');
+    expect(screen.getByText('Link Card')).toBeInTheDocument();
+    expect(screen.getByText('Navigates to detail page')).toBeInTheDocument();
   });
 });

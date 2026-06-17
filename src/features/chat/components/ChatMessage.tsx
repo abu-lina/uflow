@@ -1,11 +1,12 @@
 'use client';
 
 import ReactMarkdown from 'react-markdown';
-import { ProviderCard } from '@/features/chat/components/ProviderCard';
 import { QuickReplies } from '@/features/chat/components/QuickReplies';
 import { SuggestionCard } from '@/features/chat/components/SuggestionCard';
 import { getRecommendationIcon } from '@/utils/chat-icons';
+import { UtensilsCrossed, Store, Heart } from 'lucide-react';
 import type { ProviderCardData } from '@/features/chat/types';
+import type { ReactNode } from 'react';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant' | 'tool' | 'system';
@@ -22,6 +23,19 @@ const bubbleStyles: Record<string, string> = {
   tool: 'bg-gray-50 text-gray-500 text-xs italic rounded-2xl rounded-bl-none px-4 py-3 max-w-[80%]',
   assistant: 'text-neutral-800 w-full',
 };
+
+function getProviderIcon(listingType: string | null): ReactNode {
+  switch (listingType) {
+    case 'food':
+      return <UtensilsCrossed className="text-primary" size={24} />;
+    case 'store':
+      return <Store className="text-primary" size={24} />;
+    case 'ummah':
+      return <Heart className="text-primary" size={24} />;
+    default:
+      return <Store className="text-primary" size={24} />;
+  }
+}
 
 export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect, singleSelect }: ChatMessageProps) {
   if (isLoading && role === 'assistant') {
@@ -50,9 +64,15 @@ export function ChatMessage({ role, content, isLoading = false, results, options
           </div>
         )}
         {results && results.length > 0 && (
-          <div className={content ? 'mt-2' : ''}>
+          <div className="flex flex-col gap-3 mt-2">
             {results.map((provider) => (
-              <ProviderCard key={provider.provider_id} provider={provider} />
+              <SuggestionCard
+                key={provider.provider_id}
+                icon={getProviderIcon(provider.listing_type)}
+                title={provider.provider_name}
+                subtitle={[provider.address_city, provider.category_name].filter(Boolean).join(' | ')}
+                href={`/providers/${provider.provider_id}`}
+              />
             ))}
           </div>
         )}

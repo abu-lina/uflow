@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ChatMessage } from '@/features/chat/components/ChatMessage';
 import type { ProviderCardData } from '@/features/chat/types';
 
@@ -55,7 +55,7 @@ describe('ChatMessage', () => {
     expect(container).toBeInTheDocument();
   });
 
-  it('[G1] renders ProviderCard when results are passed', () => {
+  it('renders SuggestionCard for each provider result', () => {
     render(
       <ChatMessage
         role="assistant"
@@ -65,12 +65,10 @@ describe('ChatMessage', () => {
     );
 
     expect(screen.getByText('Döner Haus')).toBeInTheDocument();
-    expect(screen.getByText('Berlin')).toBeInTheDocument();
-    expect(screen.getByText('Muslim-geführt')).toBeInTheDocument();
-    expect(screen.getByText('Familienfreundlich')).toBeInTheDocument();
+    expect(screen.getByText('Berlin | Türkisch')).toBeInTheDocument();
   });
 
-  it('[G1] renders content text alongside ProviderCards', () => {
+  it('renders content text alongside SuggestionCards', () => {
     render(
       <ChatMessage
         role="assistant"
@@ -83,14 +81,15 @@ describe('ChatMessage', () => {
     expect(screen.getByText('Döner Haus')).toBeInTheDocument();
   });
 
-  it('[G1] renders multiple ProviderCards for multiple results', () => {
+  it('renders multiple SuggestionCards for multiple results', () => {
     const providers = [
       mockProvider,
       {
         ...mockProvider,
         provider_id: 'p2',
         provider_name: 'Kebab Haus',
-        provider_address: 'München',
+        address_city: 'München',
+        category_name: 'Türkisch',
       },
     ];
 
@@ -104,5 +103,23 @@ describe('ChatMessage', () => {
 
     expect(screen.getByText('Döner Haus')).toBeInTheDocument();
     expect(screen.getByText('Kebab Haus')).toBeInTheDocument();
+    expect(screen.getByText('München | Türkisch')).toBeInTheDocument();
+  });
+
+  it('renders provider card as a link to the provider detail page', () => {
+    const onOptionSelect = vi.fn();
+
+    render(
+      <ChatMessage
+        role="assistant"
+        content="Ergebnisse:"
+        results={[mockProvider]}
+        onOptionSelect={onOptionSelect}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: /Döner Haus/ });
+
+    expect(link).toHaveAttribute('href', '/providers/p1');
   });
 });
