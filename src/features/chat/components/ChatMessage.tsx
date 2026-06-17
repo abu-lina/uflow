@@ -3,6 +3,8 @@
 import ReactMarkdown from 'react-markdown';
 import { ProviderCard } from '@/features/chat/components/ProviderCard';
 import { QuickReplies } from '@/features/chat/components/QuickReplies';
+import { SuggestionCard } from '@/features/chat/components/SuggestionCard';
+import { getRecommendationIcon } from '@/utils/chat-icons';
 import type { ProviderCardData } from '@/features/chat/types';
 
 interface ChatMessageProps {
@@ -24,9 +26,9 @@ const bubbleStyles: Record<string, string> = {
 export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect, singleSelect }: ChatMessageProps) {
   if (isLoading && role === 'assistant') {
     return (
-      <div data-role="assistant" className="flex my-4 px-6">
+      <div className="flex my-4 px-6" data-role="assistant">
         <div className="bg-gray-100 rounded-2xl rounded-bl-none px-4 py-3">
-          <div data-testid="typing-indicator" className="flex gap-1">
+          <div className="flex gap-1" data-testid="typing-indicator">
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
             <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -40,7 +42,7 @@ export function ChatMessage({ role, content, isLoading = false, results, options
   const bubbleClass = bubbleStyles[role] || bubbleStyles.assistant;
 
   return (
-    <div data-role={role} className={`flex my-4 px-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex my-4 px-6 ${isUser ? 'justify-end' : 'justify-start'}`} data-role={role}>
       <div className={bubbleClass}>
         {content && (
           <div className="text-sm leading-snug space-y-1">
@@ -55,7 +57,21 @@ export function ChatMessage({ role, content, isLoading = false, results, options
           </div>
         )}
         {options && onOptionSelect && role === 'assistant' && (
-          <QuickReplies options={options} onSelect={onOptionSelect} disabled={isLoading} singleSelect={singleSelect} />
+          singleSelect ? (
+            <div className="flex flex-col gap-3 mt-3">
+              {options.map((option) => (
+                <SuggestionCard
+                  key={option}
+                  disabled={isLoading}
+                  icon={getRecommendationIcon(option)}
+                  title={option.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')}
+                  onClick={() => onOptionSelect(option)}
+                />
+              ))}
+            </div>
+          ) : (
+            <QuickReplies disabled={isLoading} options={options} singleSelect={singleSelect} onSelect={onOptionSelect} />
+          )
         )}
       </div>
     </div>
