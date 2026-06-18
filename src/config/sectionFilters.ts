@@ -13,6 +13,20 @@
 /** Canonical section type. */
 export type Section = 'food' | 'ummah' | 'store';
 
+/** Section metadata for active/inactive state and i18n label keys. */
+export interface SectionMeta {
+  active: boolean;
+  labelKey: string;
+  badgeKey?: string;
+}
+
+/** Per-section metadata registry. Single source of truth for active state. */
+export const SECTION_META: Record<Section, SectionMeta> = {
+  food: { active: true, labelKey: 'sections.food' },
+  ummah: { active: false, labelKey: 'sections.ummah', badgeKey: 'sections.soon' },
+  store: { active: false, labelKey: 'sections.stores', badgeKey: 'sections.soon' },
+};
+
 /** Boolean filter attribute keys that exist as columns on providers. */
 export type SectionFilter =
   | 'muslim_owned'

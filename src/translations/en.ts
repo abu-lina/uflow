@@ -141,7 +141,8 @@ export const en = {
   "sections": {
     "food": "Food",
     "ummah": "Ummah",
-    "stores": "Stores"
+    "stores": "Stores",
+    "soon": "Soon"
   },
   "search": {
     "placeholder": "Search in your Ummah",

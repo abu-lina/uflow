@@ -148,6 +148,11 @@ vi.mock('@/lib/search-params', () => ({
 
 vi.mock('@/config/sectionFilters', () => ({
   getResultsPathForSection: vi.fn(() => '/food'),
+  SECTION_META: {
+    food: { active: true, labelKey: 'sections.food' },
+    ummah: { active: false, labelKey: 'sections.ummah', badgeKey: 'sections.soon' },
+    store: { active: false, labelKey: 'sections.stores', badgeKey: 'sections.soon' },
+  },
 }));
 
 vi.mock('lucide-react', () => {

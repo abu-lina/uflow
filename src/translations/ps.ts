@@ -141,7 +141,8 @@ export const ps = {
   "sections": {
     "food": "خواړه",
     "ummah": "امت",
-    "stores": "دکانونه"
+    "stores": "دکانونه",
+    "soon": "ژر"
   },
   "search": {
     "placeholder": "په خپل امت کې لټون وکړئ",

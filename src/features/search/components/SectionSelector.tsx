@@ -2,10 +2,12 @@
 
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Section } from '@/providers/search-provider';
+import { toast } from 'sonner';
 import {
   SECTION_ICON_RENDERERS,
   SECTION_ORDER,
 } from '@/features/search/constants/sectionIconRenderers';
+import { SECTION_META } from '@/config/sectionFilters';
 
 interface SectionSelectorProps {
   selectedSection: Section;
@@ -23,14 +25,13 @@ interface SectionSelectorProps {
  * for "Stores" is 'store' in the canonical Section type.
  *
  * The active tab is marked with aria-selected=true per ARIA tablist pattern.
+ * Inactive sections (per SECTION_META) are dimmed (35% opacity) and show a toast on tap
  */
 export function SectionSelector({ selectedSection, onSectionChange, className = '' }: SectionSelectorProps) {
   const { t } = useLanguage();
 
   const getSectionLabel = (section: Section): string => {
-    if (section === 'food') return t('sections.food');
-    if (section === 'ummah') return t('sections.ummah');
-    return t('sections.stores');
+    return t(SECTION_META[section].labelKey);
   };
 
   return (
@@ -40,9 +41,11 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
       role="tablist"
     >
       {SECTION_ORDER.map((value) => {
+        const meta = SECTION_META[value];
         const label = getSectionLabel(value);
         const renderIcon = SECTION_ICON_RENDERERS[value];
         const isActive = selectedSection === value;
+        const isDisabled = !meta.active;
         return (
           <button
             key={value}
@@ -53,9 +56,19 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
               isActive
                 ? 'bg-primary text-white'
                 : 'text-neutral-500 hover:text-neutral-700',
+              isDisabled && 'opacity-[0.35]',
             ].join(' ')}
             role="tab"
-            onClick={() => onSectionChange(value)}
+            onClick={() => {
+              if (isDisabled) {
+                toast.info(`${label} is coming soon`, {
+                  description: "We're working on it — stay tuned.",
+                  position: 'bottom-center',
+                });
+              } else {
+                onSectionChange(value);
+              }
+            }}
           >
             {renderIcon(isActive)}
             <span>{label}</span>
