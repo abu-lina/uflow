@@ -545,7 +545,7 @@ export const ProviderCard = React.memo(
                   <div className="flex w-full gap-3.5">
                     {/* Plan 058: Moderation Mode - Show Approve/Reject buttons for admin review */}
                     {mode === 'moderation' ? (
-                      <div className="flex w-full gap-2">
+                      <div className="hidden w-full gap-2 sm:flex">
                         <Button
                           aria-label="Approve"
                           className="h-12 flex-1 items-center justify-center gap-1.5"
