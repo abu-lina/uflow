@@ -10,10 +10,21 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SectionSelector } from '@/features/search/components/SectionSelector';
+import { toast } from 'sonner';
 
 // ─── Mock next-intl ──────────────────────────────────────────────────────────
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
+}));
+
+// ─── Mock sonner for toast tests ────────────────────────────────────────────────
+vi.mock('sonner', () => ({
+  toast: {
+    info: vi.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+  },
 }));
 
 // ─── Mock LanguageProvider (Plan 090 M1: SectionSelector now uses useLanguage) ──
@@ -60,16 +71,20 @@ describe('SectionSelector (Plan 089 M6)', () => {
     const onSectionChange = vi.fn();
     render(<SectionSelector selectedSection="food" onSectionChange={onSectionChange} />);
     const storesTab = screen.getByRole('tab', { name: /stores/i });
-    expect(storesTab).toBeDisabled();
     fireEvent.click(storesTab);
     expect(onSectionChange).not.toHaveBeenCalled();
   });
 
-  it('renders disabled attribute on inactive section tabs', () => {
+  it('renders inactive sections with reduced opacity', () => {
     render(<SectionSelector selectedSection="food" onSectionChange={vi.fn()} />);
-    expect(screen.getByRole('tab', { name: /food/i })).not.toBeDisabled();
-    expect(screen.getByRole('tab', { name: /ummah/i })).toBeDisabled();
-    expect(screen.getByRole('tab', { name: /stores/i })).toBeDisabled();
+    const ummahTab = screen.getByRole('tab', { name: /ummah/i });
+    const storesTab = screen.getByRole('tab', { name: /stores/i });
+    // Inactive tabs should have reduced opacity
+    expect(ummahTab.className).toContain('opacity');
+    expect(storesTab.className).toContain('opacity');
+    // Verify that inactive tabs are not disabled (they are tappable)
+    expect(ummahTab).not.toBeDisabled();
+    expect(storesTab).not.toBeDisabled();
   });
 
   it('renders Soon badge on inactive section tabs', () => {
@@ -80,12 +95,14 @@ describe('SectionSelector (Plan 089 M6)', () => {
     expect(storesTab).toHaveTextContent('Soon');
   });
 
-  it('clicking inactive section tab does not call onSectionChange', () => {
+  it('clicking inactive section tab shows coming soon toast instead of calling onSectionChange', () => {
     const onSectionChange = vi.fn();
     render(<SectionSelector selectedSection="food" onSectionChange={onSectionChange} />);
     fireEvent.click(screen.getByRole('tab', { name: /ummah/i }));
     expect(onSectionChange).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('tab', { name: /stores/i }));
-    expect(onSectionChange).not.toHaveBeenCalled();
+    expect(vi.mocked(toast.info)).toHaveBeenCalledWith(
+      'Ummah is coming soon',
+      expect.objectContaining({ description: "We're working on it — stay tuned." })
+    );
   });
 });

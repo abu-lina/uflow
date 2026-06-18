@@ -18,6 +18,7 @@ import { useSearch } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { toast } from 'sonner';
 import {
   getResultsPathForSection,
   inferSectionFromCategory,
@@ -49,7 +50,14 @@ export function Header() {
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();
   const handleSectionChange = (section: Section) => {
-    if (!SECTION_META[section].active) return;
+    if (!SECTION_META[section].active) {
+      const label = t(SECTION_META[section].labelKey);
+      toast.info(`${label} is coming soon`, {
+        description: "We're working on it — stay tuned.",
+        position: 'bottom-center',
+      });
+      return;
+    }
     setSelectedSection(section);
     const params = new URLSearchParams({ section });
     router.push(`${getResultsPathForSection(section)}?${params.toString()}`);

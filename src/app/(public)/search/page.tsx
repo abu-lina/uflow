@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
 import { buildSearchParams, toFoodRecentSearches } from '@/lib/search-params';
 import { getResultsPathForSection, SECTION_META } from '@/config/sectionFilters';
+import { toast } from 'sonner';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 import { type PopularCity, fetchPopularCities, fetchProviderCities, checkCityExists } from '@/services/providers';
@@ -424,11 +425,17 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
   }, [urlQuery]);
 
   const handleSectionChange = (section: Section) => {
-    if (!SECTION_META[section].active) return;
+    if (!SECTION_META[section].active) {
+      const label = t(SECTION_META[section].labelKey);
+      toast.info(`${label} is coming soon`, {
+        description: "We're working on it — stay tuned.",
+        position: 'bottom-center',
+      });
+      return;
+    }
     if (section === urlSection) {
       return;
     }
-
     const params = new URLSearchParams(searchParams.toString());
     params.set('section', section);
     router.replace(`/search?${params.toString()}`);

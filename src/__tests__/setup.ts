@@ -39,7 +39,12 @@ vi.mock('next/router', () => ({
 
 // Mock sonner
 vi.mock('sonner', () => ({
-  toast: vi.fn(),
+  toast: Object.assign(vi.fn(), {
+    info: vi.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+  }),
 }));
 
 // Mock zod

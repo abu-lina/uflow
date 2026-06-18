@@ -68,3 +68,8 @@ Status: Active
 
 - Branch: feature/184-deactivate-ummah-stores
 - Commit message: feat: deactivate ummah and stores sections with Soon badge (ID 184)
+
+## 7. Post-Review UX Update
+- Changed inactive tabs from disabled (silent no-op) to tappable with 35% opacity
+- On tap: shows sonner toast "[Section] is coming soon" at bottom-center
+- Updated SectionSelector, Header handleSectionChange, search page handleSectionChange

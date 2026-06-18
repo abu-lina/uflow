@@ -2,6 +2,7 @@
 
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Section } from '@/providers/search-provider';
+import { toast } from 'sonner';
 import {
   SECTION_ICON_RENDERERS,
   SECTION_ORDER,
@@ -24,7 +25,7 @@ interface SectionSelectorProps {
  * for "Stores" is 'store' in the canonical Section type.
  *
  * The active tab is marked with aria-selected=true per ARIA tablist pattern.
- * Inactive sections (per SECTION_META) are disabled with muted styling
+ * Inactive sections (per SECTION_META) are dimmed (35% opacity) with a "Soon" badge
  * and show a "Soon" badge.
  */
 export function SectionSelector({ selectedSection, onSectionChange, className = '' }: SectionSelectorProps) {
@@ -51,16 +52,24 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
             key={value}
             aria-label={label}
             aria-selected={isActive}
-            disabled={isDisabled}
             className={[
               'flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 px-3 overflow-hidden font-inter-tight font-medium text-base transition-colors',
               isActive
                 ? 'bg-primary text-white'
                 : 'text-neutral-500 hover:text-neutral-700',
-              isDisabled && 'opacity-50 cursor-not-allowed',
+              isDisabled && 'opacity-[0.35]',
             ].join(' ')}
             role="tab"
-            onClick={() => onSectionChange(value)}
+            onClick={() => {
+              if (isDisabled) {
+                toast.info(`${label} is coming soon`, {
+                  description: "We're working on it — stay tuned.",
+                  position: 'bottom-center',
+                });
+              } else {
+                onSectionChange(value);
+              }
+            }}
           >
             {renderIcon(isActive)}
             <span>{label}</span>
