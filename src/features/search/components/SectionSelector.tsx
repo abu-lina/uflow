@@ -25,7 +25,7 @@ interface SectionSelectorProps {
  * for "Stores" is 'store' in the canonical Section type.
  *
  * The active tab is marked with aria-selected=true per ARIA tablist pattern.
- * Inactive sections (per SECTION_META) are dimmed (35% opacity) with a "Soon" badge
+ * Inactive sections (per SECTION_META) are dimmed (35% opacity) and show a toast on tap
  * and show a "Soon" badge.
  */
 export function SectionSelector({ selectedSection, onSectionChange, className = '' }: SectionSelectorProps) {
@@ -73,11 +73,6 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
           >
             {renderIcon(isActive)}
             <span>{label}</span>
-            {isDisabled && meta.badgeKey && (
-              <span className="text-[10px] px-1 py-0.5 rounded bg-neutral-200 text-neutral-600 ml-1">
-                {t(meta.badgeKey)}
-              </span>
-            )}
           </button>
         );
       })}

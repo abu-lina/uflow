@@ -87,13 +87,6 @@ describe('SectionSelector (Plan 089 M6)', () => {
     expect(storesTab).not.toBeDisabled();
   });
 
-  it('renders Soon badge on inactive section tabs', () => {
-    render(<SectionSelector selectedSection="food" onSectionChange={vi.fn()} />);
-    const ummahTab = screen.getByRole('tab', { name: /ummah/i });
-    const storesTab = screen.getByRole('tab', { name: /stores/i });
-    expect(ummahTab).toHaveTextContent('Soon');
-    expect(storesTab).toHaveTextContent('Soon');
-  });
 
   it('clicking inactive section tab shows coming soon toast instead of calling onSectionChange', () => {
     const onSectionChange = vi.fn();
