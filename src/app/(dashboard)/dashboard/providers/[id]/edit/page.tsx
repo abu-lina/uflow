@@ -297,7 +297,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         <PageHeader
           title={t('editProvider.title')}
           variant="back-and-title"
-          onBack="/providers"
+          onBack={() => router.back()}
         />
         <main className="flex flex-1 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -312,7 +312,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         <PageHeader
           title={t('editProvider.title')}
           variant="back-and-title"
-          onBack="/providers"
+          onBack={() => router.back()}
         />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
           <p className="text-center text-gray-500">{error || 'Provider not found'}</p>
@@ -332,7 +332,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       <PageHeader
         title={t('editProvider.title')}
         variant="back-and-title"
-        onBack={`/providers`}
+        onBack={() => router.back()}
       />
       <main className="flex flex-1 flex-col pt-[calc(env(safe-area-inset-top)+24px+40px)] md:pt-[calc(env(safe-area-inset-top)+80px)] px-6 pb-4">
         <div className="w-full md:max-w-2xl md:mx-auto">
