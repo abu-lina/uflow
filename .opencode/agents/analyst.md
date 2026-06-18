@@ -1,10 +1,13 @@
 ---
 description: Research and analysis specialist. Root cause investigation, POCs, unknown-to-known conversion.
 mode: subagent
-model: anthropic/claude-opus-4-20250514
+model: opencode-go/deepseek-v4-pro
 permission:
   read: allow
-  edit: deny
+  edit:
+    "agent-output/analysis/*.md": allow
+    "agent-output/.next-id": allow
+    "*": deny
   bash: ask
   glob: allow
   grep: allow

@@ -1,10 +1,12 @@
 ---
 description: Reviews code quality, architecture alignment, and maintainability before QA testing.
 mode: subagent
-model: openai/gpt-5.3-codex
+model: opencode-go/kimi-k2.7-code
 permission:
   read: allow
-  edit: deny
+  edit:
+    "agent-output/code-review/*.md": allow
+    "*": deny
   glob: allow
   grep: allow
   bash: ask

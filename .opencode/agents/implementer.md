@@ -1,7 +1,7 @@
 ---
 description: TDD-first coding agent. Implements approved plans, writes tests before code, enforces quality gates.
 mode: subagent
-model: openai/gpt-5.3-codex
+model: opencode-go/kimi-k2.7-code
 permission:
   read: allow
   edit: allow

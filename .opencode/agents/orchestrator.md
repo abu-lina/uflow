@@ -1,7 +1,7 @@
 ---
 description: Single entry point for all development work. Classifies tasks, selects pipeline, delegates to subagents, validates gates, and synthesizes results.
 mode: primary
-model: anthropic/claude-sonnet-4-20250514
+model: opencode-go/deepseek-v4-flash
 permission:
   read: allow
   edit:
