@@ -283,3 +283,15 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Learning**: When investigating bugs or planning changes that depend on database schema (enum values, column types, constraints), verify against the actual Supabase database — not local type definitions or migration files. Use `supabase db dump --schema public`, `supabase db diff`, or direct SQL queries (`SELECT * FROM information_schema.columns`, enum introspection) to get ground truth.
 - **Change to prevent repeat**: Add a "verify DB schema from Supabase" step to the Analyst phase when the bug involves data validation, database enums, or column constraints. The analysis doc should cite actual DB state, not just local files.
 - **Task/PR**: Plan 172, PR #249
+
+### 2026-06-18 — Modal close navigation (Plan 185)
+- **Context**: Provider detail modal close always navigated to hardcoded `/providers` instead of returning to the previous page.
+- **Learning**: When a modal is rendered on a detail page and the expected behavior is "go back to wherever the user came from", use `router.back()` instead of `router.push('/static-path')`. This preserves the full URL (including query params) from the referrer. The `handleBack` function in the mobile component already had the correct fallback pattern (`if (backPath) push else back()`) — just needed the hardcoded prop removed.
+- **Change to prevent repeat**: When reviewing navigation-on-close patterns for modals/modalsheets, check: is the back target dynamic (use `router.back()`) or static (use `router.push`)? Static targets lose referrer context.
+- **Task/PR**: Plan 185, PR #263
+
+### 2026-06-18 — Subagent model/perm root cause (Plan 186)
+- **Context**: "The [subagent] encountered an error" appeared in almost every session. The analyst, code-reviewer, and planner all failed intermittently.
+- **Learning**: Two root causes: (1) All subagents were configured with `anthropic/` and `openai/` model prefixes that don't exist in opencode Go — only `opencode-go/` models are available. (2) Analyst and code-reviewer had `edit: deny` globally with no path-specific overrides, so they couldn't create documents in their `agent-output/` directories. Always verify subagent model availability (`opencode models`) and edit permission path overrides when agents fail to initialize.
+- **Change to prevent repeat**: When adding or modifying subagent configurations, verify the model ID exists in `opencode models` output and that document-creating agents have path-specific `edit` overrides matching the QA/Planner pattern.
+- **Task/PR**: Plan 186, PR #264

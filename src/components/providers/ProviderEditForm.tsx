@@ -276,7 +276,7 @@ export function ProviderEditForm({
           city: parsed.city || prev.city,
           country: parsed.country || prev.country,
           isOnlineBusiness: !(parsed.city || prev.city) && !(parsed.zipCode || prev.zipCode),
-          showAddress: parsed.showAddress ?? prev.showAddress,
+          showAddress: parsed.showAddress || prev.showAddress,
           website: parsed.website || prev.website,
           instagram: parsed.instagram || prev.instagram,
           email: parsed.email || prev.email,
