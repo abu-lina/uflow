@@ -26,7 +26,6 @@ interface SectionSelectorProps {
  *
  * The active tab is marked with aria-selected=true per ARIA tablist pattern.
  * Inactive sections (per SECTION_META) are dimmed (35% opacity) and show a toast on tap
- * and show a "Soon" badge.
  */
 export function SectionSelector({ selectedSection, onSectionChange, className = '' }: SectionSelectorProps) {
   const { t } = useLanguage();
