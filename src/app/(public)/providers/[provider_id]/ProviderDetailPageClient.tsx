@@ -69,7 +69,7 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
 
   // Handle modal close - navigate back to providers page
   const handleModalClose = () => {
-    router.push('/providers');
+    router.back();
   };
 
   // Show loading skeleton while fetching (only if no initial data)
@@ -143,7 +143,6 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
   // Render the actual provider detail page on mobile
   return (
     <ProviderDetailPageComponent
-      backPath="/providers"
       customActionButtons={
         isAdmin ? <AdminProviderDetailButtons providerId={providerId} variant="mobile" /> : undefined
       }
