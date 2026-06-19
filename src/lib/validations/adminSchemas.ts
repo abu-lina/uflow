@@ -88,7 +88,7 @@ export const providerEditUpdateSchema = z.object({
           if (Array.isArray(parsed)) return parsed.every((u: unknown) => typeof u === 'string');
           if (typeof parsed === 'object') {
             // Accept { urls: string[] } or empty object
-            if (!('urls' in parsed)) return true;
+            if (!('urls' in parsed)) return Object.keys(parsed).length === 0;
             return Array.isArray(parsed.urls)
               && parsed.urls.every((u: unknown) => typeof u === 'string');
           }
