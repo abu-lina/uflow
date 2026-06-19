@@ -55,7 +55,7 @@ const locationSchema = z.object({
   address_city: z.string().nullable().optional(),
   address_country: z.string().nullable().optional(),
   contact_phone: z.string().nullable().optional(),
-  show_address: z.boolean(),
+  show_address: z.boolean().optional(),
   is_primary: z.boolean(),
 });
 
@@ -83,15 +83,21 @@ export const providerEditUpdateSchema = z.object({
         if (val === null || val === undefined) return true;
         try {
           const parsed = JSON.parse(val);
-          return parsed !== null
-            && typeof parsed === 'object'
-            && Array.isArray(parsed.urls)
-            && parsed.urls.every((u: unknown) => typeof u === 'string');
+          // Accept null/empty objects and arrays as valid (treat as 'no images')
+          if (parsed === null) return true;
+          if (Array.isArray(parsed)) return parsed.every((u: unknown) => typeof u === 'string');
+          if (typeof parsed === 'object') {
+            // Accept { urls: string[] } or empty object
+            if (!('urls' in parsed)) return true;
+            return Array.isArray(parsed.urls)
+              && parsed.urls.every((u: unknown) => typeof u === 'string');
+          }
+          return false;
         } catch {
           return false;
         }
       },
-      { message: 'providerImages must be valid JSON with shape { urls: string[] }' }
+      { message: 'providerImages must be valid JSON' }
     ),
   communityServiceIds: z.array(z.string().uuid()).optional(),
   reviewStatus: z.enum(['pending', 'approved', 'rejected', 'needs_revision']).optional(),
