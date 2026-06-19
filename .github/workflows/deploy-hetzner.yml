@@ -211,11 +211,17 @@ jobs:
             echo "✅ Container swap complete"
 
             echo "🔧 Updating Nginx..."
-            if [ ! -f /tmp/nginx-template.conf ]; then
-              echo "❌ Error: nginx-template.conf not found in /tmp"
+            # scp-action v1.0.0 preserves relative source path, so file may be
+            # at /tmp/nginx-template.conf (legacy) or /tmp/deploy/nginx/nginx-template.conf
+            if [ -f /tmp/nginx-template.conf ]; then
+              CONFIG_SRC=/tmp/nginx-template.conf
+            elif [ -f /tmp/deploy/nginx/nginx-template.conf ]; then
+              CONFIG_SRC=/tmp/deploy/nginx/nginx-template.conf
+            else
+              echo "❌ Error: nginx-template.conf not found (checked /tmp/ and /tmp/deploy/nginx/)"
               exit 1
             fi
-            sed "s/{{DOMAIN}}/ummahflow.com/g" /tmp/nginx-template.conf > /etc/nginx/sites-available/ummahflow
+            sed "s/{{DOMAIN}}/ummahflow.com/g" "$CONFIG_SRC" > /etc/nginx/sites-available/ummahflow
 
             echo "🧪 Testing Nginx config..."
             if nginx -t; then
