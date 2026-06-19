@@ -42,7 +42,7 @@ jobs:
           fi
 
       - name: Upload Nginx config to Hetzner
-        if: steps.nginx-check.outputs.changed == 'true'
+        if: steps.nginx-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
         with:
           host: ${{ secrets.HETZNER_HOST }}
@@ -211,6 +211,10 @@ jobs:
             echo "✅ Container swap complete"
 
             echo "🔧 Updating Nginx..."
+            if [ ! -f /tmp/nginx-template.conf ]; then
+              echo "❌ Error: nginx-template.conf not found in /tmp"
+              exit 1
+            fi
             sed "s/{{DOMAIN}}/ummahflow.com/g" /tmp/nginx-template.conf > /etc/nginx/sites-available/ummahflow
 
             echo "🧪 Testing Nginx config..."
