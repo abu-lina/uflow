@@ -1,7 +1,7 @@
 ---
 description: DevOps specialist responsible for packaging, versioning, deployment readiness, and release execution with user confirmation.
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
+model: opencode-go/deepseek-v4-flash
 permission:
   read: allow
   edit:

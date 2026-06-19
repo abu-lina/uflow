@@ -1,11 +1,12 @@
 ---
 description: High-rigor planning assistant. Produces implementation-ready plans from tasks or analysis findings.
 mode: subagent
-model: anthropic/claude-opus-4-20250514
+model: opencode-go/deepseek-v4-pro
 permission:
   read: allow
   edit:
     "agent-output/planning/*.md": allow
+    "agent-output/.next-id": allow
     "*": deny
   glob: allow
   grep: allow
