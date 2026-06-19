@@ -15,37 +15,29 @@ Status: Active
 
 ## Bug Summary
 
-When editing a provider via the admin edit page (`/dashboard/providers/[id]/edit`), saving changes (e.g., opening hours) causes the provider overview to display "Online" as the location, even though the provider has a physical address and the user did not select "Online Business".
+Editing a provider via the admin edit page (`/dashboard/providers/[id]/edit`) causes the provider overview to display "Online" as the location, even though the provider has a physical address and the user did not select "Online Business".
 
 ---
 
 ## Root Cause
 
-**Primary Bug**: `showAddress` uses `??` (nullish coalescing) in localStorage sync, treating `false` as a valid override.
+**Primary Bug**: The admin edit page unconditionally sends `locations: formData.locations` in the PATCH request body. The `ProviderEditForm` initializes `locations: []` (empty array) because the `Provider` type doesn't include a `locations` field. This empty array reaches the `admin_update_provider` RPC, causing it to delete ALL locations for the provider.
 
-**File**: `src/components/providers/ProviderEditForm.tsx:279`
-```typescript
-showAddress: parsed.showAddress ?? prev.showAddress,
-```
+**Trigger chain**:
 
-The `??` operator preserves `false` from localStorage even when the provider's DB record has `show_address: true`. This means:
+1. Admin opens edit page → provider data loaded via admin API (includes locations)
+2. `ProviderEditForm` initializes `formData.locations = []` (line 169, type mismatch — Provider type has no `locations`)
+3. User changes some fields (e.g., category) and saves
+4. `page.tsx` line 121 sends `locations: []` → PATCH /api/admin/edit-provider
+5. `buildLocationsPayload` returns `{ locations: [] }` (defined, not undefined)
+6. RPC `admin_update_provider` enters locations block (key exists in payload)
+7. `jsonb_array_length([]) = 0` → no locations processed → `v_existing_ids` stays empty
+8. RPC deletes ALL locations: `DELETE FROM locations WHERE location_id <> ALL(ARRAY[]::uuid[])`
+9. Trigger `trg_sync_primary_city` fires on DELETE of primary location (migration 101)
+10. Trigger sets `providers.address_city = NULL` on the provider
+11. Overview page (`ProviderDetailPage` line 384) checks `provider.address_city` → NULL → shows "Online"
 
-1. On save, `formData.showAddress = false` is sent to the API
-2. The RPC sets `show_address = false` in the DB  
-3. The overview page reads the provider — the overview display is keyed off `address_city`, but ancillary display components (e.g., `ProviderCard`) may fall through to "Online" when `address_city` is the only available indicator combined with `show_address = false`
-
-**Secondary issue**: Once `showAddress: false` enters localStorage (from a prior toggle-on in any session), it persists indefinitely because no code path clears it. The `??` operator prevents the DB-provided `true` from ever overriding it.
-
----
-
-## Trigger Sequence
-
-1. User toggles "Online Business" ON in any session → `showAddress = false` saved to `localStorage` key `admin_edit_inline_{id}`
-2. In a later session, `syncFromLocalStorage` reads the stale `false`
-3. `parsed.showAddress ?? prev.showAddress` = `false ?? true` = `false` (bug!)
-4. Form sends `showAddress: false` on save
-5. RPC sets `show_address = false` in the providers table
-6. Overview components read `show_address = false` and display "Online" instead of the physical address
+**Secondary Bug**: `showAddress` uses `??` instead of `||` in `syncFromLocalStorage` (line 279 of ProviderEditForm.tsx). The `??` operator preserves stale `false` from localStorage even when DB has `show_address: true`. Fix already applied in PR #265.
 
 ---
 
@@ -53,81 +45,56 @@ The `??` operator preserves `false` from localStorage even when the provider's D
 
 | File | Line | Role |
 |------|------|------|
-| `src/components/providers/ProviderEditForm.tsx` | 279 | **Bug**: `??` preserves `false` from localStorage |
-| `src/components/providers/ProviderEditForm.tsx` | 307 | Saves `showAddress` to localStorage |
-| `src/components/providers/ProviderEditForm.tsx` | 160 | Initializes `showAddress` from provider data |
-| `src/app/(dashboard)/dashboard/providers/[id]/edit/page.tsx` | 108-112, 138 | Builds request body with address/showAddress |
-| `src/services/admin/providerEdit.ts` | 80-101 | `buildBasicFieldsPayload` passes fields to RPC |
-| `supabase/migrations/106_plan_165_show_address_admin_edit.sql` | 80 | RPC: `COALESCE((show_address)::boolean, show_address)` |
-| `src/components/providers/ProviderCard.tsx` | 160-171 | Falls through to "Online" when address missing |
-| `src/components/providers/ProviderDetailPage.tsx` | 384-418 | Shows "Online" when `address_city` missing |
-| `src/components/providers/ProofTierCard.tsx` | 21 | Unrelated: defaults `verification_method` to `'online'` for halal seal |
+| `src/app/(dashboard)/dashboard/providers/[id]/edit/page.tsx` | 121 | **Bug**: sends `locations: formData.locations` (always `[]`) |
+| `src/components/providers/ProviderEditForm.tsx` | 169 | Initializes `locations: []` — type mismatch |
+| `src/services/admin/providerEdit.ts` | 170-173 | `buildLocationsPayload` returns `{ locations: [] }` when array is empty |
+| `supabase/migrations/106_plan_165_show_address_admin_edit.sql` | 180-238 | RPC enters locations block when key exists, deletes all on empty array |
+| `supabase/migrations/101_plan_151_multi_location.sql` | 33-57 | Sync trigger `trg_sync_primary_city` — sets `address_city = NULL` when location deleted |
+| `src/app/(public)/providers/[provider_id]/page.tsx` | 14-31 | SSR fetch via `getProviderById` |
+| `src/components/providers/ProviderDetailPage.tsx` | 384 | Shows "Online" when `address_city` is NULL |
+| `src/components/providers/ProviderCard.tsx` | 160-171 | Shows "Online" when `address_city` is NULL |
 
 ---
 
-## Data Flow
+## Fix Applied
 
+In `page.tsx`, line 121:
 ```
-Form init: showAddress = provider.show_address ?? true
-  → Toggle "Online Business" ON → showAddress = false
-    → Navigate to sub-page → saveInlineData → localStorage.admin_edit_inline_{id}: { showAddress: false }
-    → Return → syncFromLocalStorage → parsed.showAddress ?? prev.showAddress = false (BUG)
-  → Save → PATCH /api/admin/edit-provider → showAddress: false
-    → admin_update_provider RPC → SET show_address = false
-      → Overview page reads DB → provider.show_address = false
-        → ProviderCard/ProviderDetailPage shows "Online"
+- locations: formData.locations,
++ locations: formData.locations && formData.locations.length > 0 ? formData.locations : undefined,
 ```
+
+Also fixed similar fields with the same pattern:
+- `communityServiceIds: formData.selectedCommunityServiceIds` → only include if non-empty
+- `menuItems: formData.menuItems` → only include if non-empty
+- `deliveryLinks: formData.deliveryLinks` → only include if non-empty
 
 ---
 
-## Fix
+## Also Fixed (PR #265)
 
-Change line 279 from:
-```typescript
-showAddress: parsed.showAddress ?? prev.showAddress,
+`ProviderEditForm.tsx:279` — Changed `??` to `||` for `showAddress` in `syncFromLocalStorage`:
 ```
-to:
-```typescript
-showAddress: parsed.showAddress ?? prev.showAddress,
+- showAddress: parsed.showAddress ?? prev.showAddress,
++ showAddress: parsed.showAddress || prev.showAddress,
 ```
 
-Wait — that's the same. The fix is to use `||` instead of `??`:
-```typescript
-showAddress: parsed.showAddress || prev.showAddress,
-```
-
-This way:
-- `false || true` = `true` (DB value wins over stale localStorage `false`)
-- `false || false` = `false` (legitimately toggled-on state preserved within a session)
+This prevents stale `showAddress: false` from localStorage overriding the DB's `show_address: true`.
 
 ---
 
 ## Confidence
 
-**Level 2 (Observed)** — The `??` operator semantics are confirmed by TypeScript/JS spec. The localStorage persistence path is confirmed by code reading. The RPC correctly writes whatever `show_address` value it receives.
+**Level 1 (Proven)** — Bug chain fully verified by code reading:
+- RPC deletes locations with `WHERE location_id <> ALL(ARRAY[]::uuid[])` → matches ALL rows
+- Trigger `sync_primary_location_city()` on DELETE sets `address_city = NULL`
+- Form initializes `locations: []` unconditionally
+- `page.tsx` sends `locations: formData.locations` unconditionally
 
 ---
 
-## What Was Ruled Out
+## Prevention
 
-- **verification_method defaulting to 'online'**: This is about the halal seal (ProofTierCard), not the address display. Separate concern.
-- **Address fields being nulled**: For a provider WITH an address, `isOnlineBusiness` correctly initializes to `false` and is recalculated from address data on sync. Address field values are preserved.
-- **RPC clearing address fields**: `COALESCE(v_providers->>'address_city', address_city)` preserves existing values when key is missing.
-- **Opening hours save path**: Hours are saved to localStorage only, then included in the main form submit. No separate save path that could clear address fields.
-
----
-
-## Remaining Gaps
-
-| # | Unknown | Blocker | Required Action |
-|---|---------|---------|-----------------|
-| 1 | Exact sequence that puts `showAddress: false` into localStorage for users who never toggle online | Need user session logs or UAT reproduction | Deploy fix, then monitor |
-| 2 | Whether `show_address = false` also affects the ProviderDetailPage address display or only the ProviderCard | Can't check production DB | UAT: set show_address=false for a test provider and check both views |
-
----
-
-## Recommendations
-
-1. Fix line 279: change `??` to `||` for `showAddress`
-2. Add a unit test: localStorage has `showAddress: false` but DB has `show_address: true` → sync produces `true`
-3. Consider also adding a regression test for the full PATCH flow
+1. RPC should be more defensive: only process locations block when array is non-empty
+2. Form should load locations from provider data when available
+3. Trigger should not null `address_city` on location deletion without a fallback

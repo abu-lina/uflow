@@ -114,12 +114,12 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       contactPhone: formData.phone || null,
       socialWebsite: formData.website || null,
       socialInstagram: formData.instagram || null,
-      communityServiceIds: formData.selectedCommunityServiceIds,
+      communityServiceIds: formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0 ? formData.selectedCommunityServiceIds : undefined,
 
       // New fields
-      menuItems: formData.menuItems,
-      deliveryLinks: formData.deliveryLinks,
-      locations: formData.locations,
+      menuItems: formData.menuItems && formData.menuItems.length > 0 ? formData.menuItems : undefined,
+      deliveryLinks: formData.deliveryLinks && formData.deliveryLinks.length > 0 ? formData.deliveryLinks : undefined,
+      locations: formData.locations && formData.locations.length > 0 ? formData.locations : undefined,
       openingHours: formData.openingHours || null,
       verificationMethod: formData.verificationMethod,
       hasCertificate: formData.hasCertificate,
