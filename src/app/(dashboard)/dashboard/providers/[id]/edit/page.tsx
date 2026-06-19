@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { RejectModal } from '@/features/admin/components/RejectModal';
 import { DeleteProviderModal } from '@/features/admin/components/DeleteProviderModal';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
 import type { Provider } from '@/services/providers';
 
 interface AdminProviderEditPageProps {
@@ -122,7 +123,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       openingHours: formData.openingHours || null,
       verificationMethod: formData.verificationMethod,
       hasCertificate: formData.hasCertificate,
-      certificateUrl: formData.certificateUrl || null,
+      certificateUrl: formData.certificateUrl ? normalizeWebsiteUrl(formData.certificateUrl) : null,
       muslimOwned: formData.muslimOwned,
       hasPrayerSpace: formData.hasPrayerSpace,
       familyFriendly: formData.familyFriendly,
