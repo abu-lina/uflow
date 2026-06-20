@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { deriveReviewStatus } from '@/utils/halal-derivation';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
@@ -157,7 +158,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
       setIsUploading(false);
     }
 
-    const reviewStatus = allAttested ? 'approved' : 'rejected';
+    const reviewStatus = deriveReviewStatus(data.noAlcohol, data.noPork, data.noGambling);
     const saveData: HalalData = { ...data, certificateUrl: certUrl, certificateFile: null, reviewStatus };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     router.back();
