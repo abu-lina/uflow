@@ -111,4 +111,64 @@ describe('detectAlcohol', () => {
     expect(result.signal).toBe('definite_alcohol');
     expect(result.matchedItems).toEqual(['Bier']);
   });
+
+  // ─── Plan 193: Brand keyword tests ─────────────────────────────────────
+
+  it('detects Paulaner as alcohol (beer brand)', () => {
+    expect(detectAlcohol(['Paulaner']).signal).toBe('definite_alcohol');
+    expect(detectAlcohol(['Paulaner Weißbier']).signal).toBe('definite_alcohol');
+  });
+
+  it('does not flag Paulaner alkoholfrei (non-alcoholic variant)', () => {
+    const result = detectAlcohol(['Paulaner alkoholfrei']);
+    expect(result.signal).toBe('definite_no_alcohol');
+  });
+
+  it('detects Becks as alcohol (beer brand)', () => {
+    expect(detectAlcohol(['Becks']).signal).toBe('definite_alcohol');
+  });
+
+  it('detects Krombacher as alcohol', () => {
+    expect(detectAlcohol(['Krombacher']).signal).toBe('definite_alcohol');
+  });
+
+  it('detects Warsteiner as alcohol', () => {
+    expect(detectAlcohol(['Warsteiner']).signal).toBe('definite_alcohol');
+  });
+
+  it('detects Erdinger as alcohol', () => {
+    expect(detectAlcohol(['Erdinger']).signal).toBe('definite_alcohol');
+  });
+
+  it('detects Desperados as alcohol', () => {
+    expect(detectAlcohol(['Desperados']).signal).toBe('definite_alcohol');
+  });
+
+  it('detects Jack Daniels as alcohol (multi-word brand)', () => {
+    const result = detectAlcohol(['Jack Daniels Cola']);
+    expect(result.signal).toBe('definite_alcohol');
+    expect(result.matchedKeywords).toContain('Jack Daniels');
+  });
+
+  it('detects Campari as alcohol', () => {
+    expect(detectAlcohol(['Campari']).signal).toBe('definite_alcohol');
+  });
+
+  it('detects Aperol as alcohol', () => {
+    expect(detectAlcohol(['Aperol Spritz']).signal).toBe('definite_alcohol');
+  });
+
+  it('detects multiple brand keywords together', () => {
+    const result = detectAlcohol(['Paulaner', 'Desperados', 'Cola']);
+    expect(result.signal).toBe('definite_alcohol');
+    expect(result.matchedKeywords).toContain('Paulaner');
+    expect(result.matchedKeywords).toContain('Desperados');
+    expect(result.matchedItems).toHaveLength(2);
+  });
+
+  it('handles brand names appearing in longer item descriptions', () => {
+    const result = detectAlcohol(['0,5l Paulaner vom Fass']);
+    expect(result.signal).toBe('definite_alcohol');
+    expect(result.matchedKeywords).toContain('Paulaner');
+  });
 });
