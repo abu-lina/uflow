@@ -48,6 +48,10 @@ export default function MediaUploadPage() {
       icon: 'mdi:account-group',
     },
     {
+      title: 'Halal',
+      icon: 'mdi:check-decagram',
+    },
+    {
       title: t('create.steps.media'),
       icon: 'mdi:image-multiple',
     },
@@ -134,7 +138,7 @@ export default function MediaUploadPage() {
       <PageHeader
         title={t('create.media.title')}
         variant="back-and-title"
-        onBack="/create/contact"
+        onBack="/create/halal"
       />
 
       <PageContent 
@@ -147,7 +151,7 @@ export default function MediaUploadPage() {
         <div className="flex w-full flex-1 flex-col gap-8">
           {/* Step Indicator */}
           <div className="mb-6">
-            <StepIndicator currentStep={3} steps={STEPS} />
+            <StepIndicator currentStep={4} steps={STEPS} />
           </div>
 
 

@@ -135,7 +135,7 @@ export default function ContactPage() {
       }
     } else {
       // Owner mode: navigate to media step
-      router.push('/create/media');
+      router.push('/create/halal');
     }
   };
 

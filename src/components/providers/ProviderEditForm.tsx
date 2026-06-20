@@ -244,12 +244,13 @@ export function ProviderEditForm({
         const parsed = JSON.parse(storedHalal);
         setFormData(prev => ({
           ...prev,
-          verificationMethod: parsed.verificationMethod ?? prev.verificationMethod,
+          verificationMethod: parsed.verificationMethod || null,
           hasCertificate: parsed.hasCertificate ?? prev.hasCertificate,
           certificateUrl: parsed.certificateUrl ?? prev.certificateUrl,
           noAlcohol: parsed.noAlcohol ?? prev.noAlcohol,
           noPork: parsed.noPork ?? prev.noPork,
           noGambling: parsed.noGambling ?? prev.noGambling,
+          reviewStatus: parsed.reviewStatus ?? prev.reviewStatus,
         }));
       } catch { /* ignore */ }
     }
@@ -603,30 +604,6 @@ export function ProviderEditForm({
                 </div>
               )
             )}
-
-            {/* Review Status — admin only */}
-            {reviewFooterActions && (
-              <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-                <div className="flex flex-1 flex-col gap-1">
-                  <label className="text-xs font-normal text-[#999999] leading-[15px]" htmlFor="review-status">
-                    Review Status
-                  </label>
-                  <select
-                    aria-label="Review Status"
-                    className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] outline-none bg-transparent p-0"
-                    id="review-status"
-                    value={formData.reviewStatus ?? 'pending'}
-                    onChange={(e) => handleInputChange('reviewStatus', e.target.value)}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="needs_revision">Needs Revision</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
             {/* Category Field */}
             <div 
               className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm cursor-pointer"
