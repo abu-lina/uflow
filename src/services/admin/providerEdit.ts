@@ -116,7 +116,7 @@ export function buildExtensionFieldsPayload(
 
   const ext: Record<string, unknown> = {};
 
-  if (data.verificationMethod !== undefined) ext.verification_method = data.verificationMethod;
+  if (data.verificationMethod) ext.verification_method = data.verificationMethod;
   if (data.hasCertificate !== undefined) ext.has_certificate = data.hasCertificate;
   if (data.certificateUrl !== undefined) ext.certificate_url = data.certificateUrl;
   if (data.noAlcohol !== undefined) ext.no_alcohol = data.noAlcohol;

@@ -100,7 +100,7 @@ BEGIN
       no_alcohol, no_pork, no_gambling, updated_at
     ) VALUES (
       p_provider_id,
-      NULLIF(v_food_providers->>'verification_method', ''),
+      COALESCE(NULLIF(v_food_providers->>'verification_method', ''), 'online'),
       COALESCE((v_food_providers->>'has_certificate')::boolean, false),
       NULLIF(v_food_providers->>'certificate_url', ''),
       COALESCE((v_food_providers->>'no_alcohol')::boolean, false),
@@ -109,7 +109,7 @@ BEGIN
       v_updated_at
     )
     ON CONFLICT (provider_id) DO UPDATE SET
-      verification_method = COALESCE(NULLIF(EXCLUDED.verification_method, ''), food_providers.verification_method),
+      verification_method = COALESCE(NULLIF(EXCLUDED.verification_method, ''), food_providers.verification_method, 'online'),
       has_certificate     = COALESCE(EXCLUDED.has_certificate, food_providers.has_certificate),
       certificate_url     = COALESCE(NULLIF(EXCLUDED.certificate_url, ''), food_providers.certificate_url),
       no_alcohol          = COALESCE(EXCLUDED.no_alcohol, food_providers.no_alcohol),
@@ -125,7 +125,7 @@ BEGIN
       no_alcohol, no_pork, no_gambling, updated_at
     ) VALUES (
       p_provider_id,
-      NULLIF(v_store_providers->>'verification_method', ''),
+      COALESCE(NULLIF(v_store_providers->>'verification_method', ''), 'online'),
       COALESCE((v_store_providers->>'has_certificate')::boolean, false),
       NULLIF(v_store_providers->>'certificate_url', ''),
       COALESCE((v_store_providers->>'no_alcohol')::boolean, false),
@@ -134,7 +134,7 @@ BEGIN
       v_updated_at
     )
     ON CONFLICT (provider_id) DO UPDATE SET
-      verification_method = COALESCE(NULLIF(EXCLUDED.verification_method, ''), store_providers.verification_method),
+      verification_method = COALESCE(NULLIF(EXCLUDED.verification_method, ''), store_providers.verification_method, 'online'),
       has_certificate     = COALESCE(EXCLUDED.has_certificate, store_providers.has_certificate),
       certificate_url     = COALESCE(NULLIF(EXCLUDED.certificate_url, ''), store_providers.certificate_url),
       no_alcohol          = COALESCE(EXCLUDED.no_alcohol, store_providers.no_alcohol),
